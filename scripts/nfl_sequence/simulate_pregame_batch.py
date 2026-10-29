@@ -437,7 +437,8 @@ def run_batch(args):
                                                            formation=args.playcall_formation,
                                                            player_shares=args.playcall_player_shares,
                                                            exact_yardline=args.playcall_exact_yardline,
-                                                           coverage=args.playcall_coverage)
+                                                           coverage=args.playcall_coverage,
+                                                           point_splits=args.playcall_point_splits)
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
@@ -635,6 +636,8 @@ def main(argv=None):
                     help='research try-policy ablation; unconditional remains the control/default')
     ap.add_argument('--no-safety-table', action='store_true',
                     help='control arm: disable observed safety free kicks and retain the old safety blocker')
+    ap.add_argument('--playcall-point-splits', action='store_true',
+                    help='SLC v1 research: team score-state shifts of the dropback rate from prior seasons')
     ap.add_argument('--playcall-coverage', action='store_true',
                     help='SLC v1 research: defensive coverage on dropbacks from prior-season defense shares, conditioning the outcome')
     ap.add_argument('--playcall-player-shares', action='store_true',

@@ -73,13 +73,14 @@ def priors(db, cutoff_season):
     try:
         marks = ','.join('?' * len(seasons))
         rows = con.execute(
-            f"SELECT game_id, play_id, down, ydstogo, play_type FROM nfl_pbp WHERE season IN ({marks}) AND week <= 18 "
+            f"SELECT game_id, play_id, down, ydstogo, play_type, posteam FROM nfl_pbp WHERE season IN ({marks}) AND week <= 18 "
             f"AND down BETWEEN 1 AND 4 AND ydstogo IS NOT NULL", list(seasons)).fetchall()
     finally:
         con.close()
     cells = defaultdict(lambda: {'formation': Counter(), 'personnel': Counter()})
     league = defaultdict(lambda: {'formation': Counter(), 'personnel': Counter()})
-    for game_id, play_id, down, togo, play_type in rows:
+    team_cells = defaultdict(lambda: {'formation': Counter(), 'personnel': Counter()})  # the offense's own tendencies
+    for game_id, play_id, down, togo, play_type, posteam in rows:
         intent = intent_of_play_type(play_type)
         if intent is None:
             continue
@@ -88,12 +89,32 @@ def priors(db, cutoff_season):
         for table in (cells[key], league[intent]):
             table['formation'][formation] += 1
             table['personnel'][personnel] += 1
-    return {'cells': dict(cells), 'league': dict(league), 'seasons': [int(s) for s in seasons],
-            'strength': PRIOR_STRENGTH}
+        if posteam:
+            team_table = team_cells[(posteam,) + key]
+            team_table['formation'][formation] += 1
+            team_table['personnel'][personnel] += 1
+    return {'cells': dict(cells), 'league': dict(league), 'team_cells': dict(team_cells),
+            'seasons': [int(s) for s in seasons], 'strength': PRIOR_STRENGTH}
 
 
-def distribution(priors_table, intent, down, togo, field):
-    """The shrunk distribution over labels of `field` ('formation' or 'personnel') for this situation."""
+def distribution(priors_table, intent, down, togo, field, team=None):
+    """The distribution over labels of `field` for this situation. With a team, the team's own tendencies in the situation,
+    shrunk to the league-cell distribution with the same strength; a team with no history in the situation gets the league cell."""
+    base = _cell_distribution(priors_table, intent, down, togo, field)
+    if team is None:
+        return base
+    own = priors_table.get('team_cells', {}).get((team, intent, int(down), e0.ydstogo_bucket(togo)), {}).get(field, Counter())
+    own_total = sum(own.values())
+    if not own_total:
+        return base
+    strength = priors_table['strength']
+    labels = set(base) | set(own)
+    out = {label: (own[label] + strength * base.get(label, 0.0)) / (own_total + strength) for label in labels}
+    total = sum(out.values())
+    return {label: share / total for label, share in out.items()}
+
+
+def _cell_distribution(priors_table, intent, down, togo, field):
     league = priors_table['league'][intent][field]
     league_total = sum(league.values())
     cell = priors_table['cells'].get((intent, int(down), e0.ydstogo_bucket(togo)), {}).get(field, Counter())
@@ -108,7 +129,7 @@ def distribution(priors_table, intent, down, togo, field):
     return {label: share / total for label, share in out.items()}
 
 
-def choose(priors_table, intent, down, togo, seed_text):
+def choose(priors_table, intent, down, togo, seed_text, team=None):
     """(formation, personnel) for this play, drawn before the outcome from a seeded stream.
 
     The decision is among known labels only: UNKNOWN is a data label (a play with no published formation), and no offense
@@ -116,7 +137,7 @@ def choose(priors_table, intent, down, togo, seed_text):
     rng = random.Random(int.from_bytes(hashlib.sha256(seed_text.encode()).digest()[:8], 'big'))
     result = {}
     for field in ('formation', 'personnel'):
-        shares = {label: share for label, share in distribution(priors_table, intent, down, togo, field).items()
+        shares = {label: share for label, share in distribution(priors_table, intent, down, togo, field, team).items()
                   if label != UNKNOWN and share > 0}
         labels = sorted(shares)
         total = sum(shares[label] for label in labels)
