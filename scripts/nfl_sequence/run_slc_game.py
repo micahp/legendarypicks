@@ -38,6 +38,10 @@ def parse_args(argv=None):
     ap.add_argument('--dirichlet-shares', action='store_true',
                     help='SLC v1 research: per-game Dirichlet target and carry shares (fitted on the prior season), drawn once per team '
                          'and game; implies the player-share adapter')
+    ap.add_argument('--qb-decisions', action='store_true',
+                    help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
+    ap.add_argument('--player-outcomes', action='store_true',
+                    help='SLC research: QB, receiver and rusher event, yardage and touchdown distributions; outcomes can change team scoring')
     ap.add_argument('--seed', type=int, required=True)
     ap.add_argument('--db', default=e1.DEFAULT_DB)
     ap.add_argument('--out', type=Path, required=True)
@@ -69,6 +73,7 @@ def main():
     ref, excluded = slc_engine.load_reference(args.db, snapshot, args.artifact, team_outcomes=args.team_outcomes,
                                                 formation=args.formation, player_shares=player_shares_for(args),
                                                 dirichlet_shares=args.dirichlet_shares,
+                                                qb_decisions=args.qb_decisions, player_outcomes=args.player_outcomes,
                                                 source_commit=source_provenance['base_commit'])
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
@@ -80,18 +85,34 @@ def main():
     evaluation = snapshot.get('evaluation', {})  # the snapshot's own provenance result (pregame_snapshot.input_provenance)
     artifact = json.loads(args.artifact.read_text())
     connected = ['score-clock play-call layer (slc_playcall_v1)']
-    not_connected = ['team offense and defense splits', 'playbooks', 'QB and role decisions',
-                     'coaching (excluded from v1)']
+    not_connected = ['playbooks', 'coaching (excluded from v1)']
+    if args.team_outcomes:
+        connected.append('team offense and defense outcome splits')
+    else:
+        not_connected.append('team offense and defense outcome splits')
+    if args.formation:
+        connected.append('formation-conditioned outcomes')
+    else:
+        not_connected.append('formation-conditioned outcomes')
     if args.dirichlet_shares:
         connected.append('pre-event player target and carry assignment (Dirichlet-multinomial shares)')
     else:
         not_connected.append('pre-event participant selection')
+    if args.qb_decisions:
+        connected.append('QB-specific target-role and scramble decisions')
+    else:
+        not_connected.append('QB-specific decision model')
+    if args.player_outcomes:
+        connected.append('participant-conditioned event, yardage and touchdown outcomes')
+    else:
+        not_connected.append('player-specific outcome distributions')
     trace = {
-        'model_id': slc_engine.MODEL_ID,
+        'model_id': slc_engine.model_id(ref),
         'components_connected': connected,
         'components_not_connected': not_connected,
         'source': source_provenance,
         'seed': args.seed, 'team_outcomes': bool(args.team_outcomes), 'formation': bool(args.formation),
+        'qb_decisions': bool(args.qb_decisions), 'player_outcomes': bool(args.player_outcomes),
         'game': {'game_id': schedule['game_id'], 'season': schedule['season'], 'week': schedule['week'],
                  'side_teams': slc_engine.side_teams(snapshot)},
         'snapshot': {'snapshot_sha256': snapshot['snapshot_sha256'], 'as_of': snapshot['as_of'],
@@ -102,7 +123,9 @@ def main():
                                                                              max(artifact['fit_seasons'])],
                      'reference_season': artifact['reference_season'],
                      'summary': slc_engine.summary(decisions),
-                     'player_share_distribution': (slc_engine.describe(ref) or {}).get('player_share_distribution')},
+                     'player_share_distribution': (slc_engine.describe(ref) or {}).get('player_share_distribution'),
+                     'qb_decision_model': (slc_engine.describe(ref) or {}).get('qb_decision_model'),
+                     'player_outcome_model': (slc_engine.describe(ref) or {}).get('player_outcome_model')},
         'pool': {'eligible_before': [int(schedule['season']), int(schedule['week'])],
                  'excluded_kickoffs': excluded if isinstance(excluded, (int, float, str, dict, list)) else str(excluded)},
         'contract': {
@@ -114,7 +137,8 @@ def main():
             'evaluation': 'exploratory single-game run',
             'cutoff_safe': True,
             'cutoff_safe_scope': 'the pool holds only plays before the game and the play-call artifact is fitted before its season',
-            'player_stats': 'historical allocation from sampled historical participants; not a player projection',
+            'player_stats': ('participant-conditioned research distributions' if args.player_outcomes else
+                             'historical allocation from sampled historical participants; not a player projection'),
         },
         'diagnosis': {
             'status': record.get('status'), 'blocker': record.get('blocker'),

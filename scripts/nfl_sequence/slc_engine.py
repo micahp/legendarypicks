@@ -19,6 +19,9 @@ import pre_event  # noqa: E402
 import slc_playcall as slc  # noqa: E402
 
 MODEL_ID = 'slc_v1_incomplete'
+QB_DECISION_MODEL_ID = 'slc_v1_qb_decisions_research'
+PLAYER_OUTCOME_MODEL_ID = 'slc_v1_player_outcomes_research'
+COMBINED_PLAYER_MODEL_ID = 'slc_v1_qb_decisions_player_outcomes_research'
 
 
 def require_snapshot(snapshot):
@@ -46,7 +49,7 @@ def check_artifact_cutoff(artifact, season):
 def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=False, player_shares=False,
                    exact_yardline=False, coverage=False, point_splits=False, streak=False, streak_file=None,
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
-                   playbook=False, source_commit=None):
+                   playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -57,7 +60,27 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playcall_formation=formation, playcall_player_shares=(player_shares or dirichlet_shares),
                    playcall_target_roles=target_roles, playcall_decision=decision,
                    playcall_exact_yardline=exact_yardline, playcall_coverage=coverage,
-                   playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league)
+                   playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league,
+                   playcall_qb_decisions=qb_decisions, playcall_player_outcomes=player_outcomes)
+    # These are independent research inputs. Each is fitted strictly before the target season.
+    if qb_decisions or player_outcomes:
+        if not source_commit:
+            raise ValueError('QB decisions and player outcomes need a source commit for their model manifests')
+    if qb_decisions:
+        import qb_decisions as qb_model
+        qb_table = qb_model.load(db, season)
+        qb_table['scramble_cells'] = {
+            qb_model.cell_of(row['down'], row['ydstogo'], row['yardline_100'])
+            for cell in ref.pool.values() for _event, row, _runoff, _spot in cell
+            if row.get('qb_scramble') == 1
+        }
+        ref.contextual_sampler.qb_decision_table = qb_table
+        ref.contextual_sampler.qb_decision_manifest = qb_model.manifest(qb_table, source_commit)
+    if player_outcomes:
+        import player_outcomes as outcome_model
+        outcome_table = outcome_model.load(db, season)
+        ref.contextual_sampler.player_outcome_table = outcome_table
+        ref.contextual_sampler.player_outcome_manifest = outcome_model.manifest(outcome_table, source_commit)
     ref.contextual_sampler.decision_filter = decision_filter  # an experiment switch: False draws rows from the whole cell
     if dirichlet_shares:  # per-game Dirichlet target and carry shares, fitted on the season before the game season
         if not source_commit:
@@ -77,6 +100,9 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         import streak_splits as ss
         records = _json.loads(Path(streak_file).read_text())['teams']
         ref.contextual_sampler.current_streak = {team: ss.bucket_from_text(rec.get('streak', '')) for team, rec in records.items()}
+    # Include every enabled model table and manifest in the reference identity. e2 computes an initial fingerprint before
+    # these optional adapters are attached, so the final reference must be fingerprinted after all loading is complete.
+    ref.model_inputs = er._reference_fingerprint(ref)
     return ref, excluded
 
 
@@ -95,13 +121,25 @@ def play(seed, ref, snapshot):
                                                     player_shares=sampler.player_shares,
                                                     defense_priors=sampler.defense_priors,
                                                     role_table=sampler.role_table, decision_table=sampler.decision_table,
-                                                    share_table=sampler.share_table, playbook_table=sampler.playbook_table)
+                                                    share_table=sampler.share_table, playbook_table=sampler.playbook_table,
+                                                    qb_decision_table=sampler.qb_decision_table)
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
     finally:
         sampler.participant_chooser = None
     decisions = list(sampler.decisions)
     sampler.decisions.clear()
+    if sampler.player_outcome_table is not None:
+        attribution = 'pregame_participant_and_conditioned_outcome_model'
+        record['stats']['player_attribution'] = attribution
+        for player_line in record['stats']['player']:
+            player_line['attribution'] = attribution
+        record['stats']['player_note'] = (
+            'Participants are selected from the frozen pregame roster before the outcome. QB, receiver and rusher outcome '
+            'rows are reweighted by cutoff-safe player distributions before the game-state transition. Box-score passing, '
+            'receiving and rushing yards use their corresponding nflverse fields when present; the state transition uses '
+            'yards_gained. This is a research projection layer; historical source outcomes and the current model do not '
+            'establish calibrated forecasts.')
     return record, decisions
 
 
@@ -110,6 +148,7 @@ def summary(decisions):
             'scrimmage': sum(d['intent'] != 'kick' for d in decisions),
             'dropback': sum(d['intent'] == 'dropback' for d in decisions),
             'run': sum(d['intent'] == 'run' for d in decisions),
+            'qb_scramble': sum(d.get('qb_action') == 'scramble' for d in decisions),
             'kick_fallback': sum(d['intent'] == 'kick' for d in decisions)}
 
 
@@ -119,10 +158,33 @@ def describe(ref):
         return None
     sampler = ref.contextual_sampler
     artifact = sampler.layer.artifact
-    description = {'model_id': MODEL_ID, 'artifact_id': artifact['artifact_id'], 'artifact_sha256': artifact['sha256'],
+    description = {'model_id': model_id(ref), 'artifact_id': artifact['artifact_id'], 'artifact_sha256': artifact['sha256'],
                    'fit_seasons': sorted(int(s) for s in artifact['fit_seasons']),
                    'reference_season': int(artifact['reference_season']), 'side_teams': sampler.describe().get('side_teams')}
     share_manifest = getattr(sampler, 'share_model_manifest', None)
     if share_manifest is not None:
         description['player_share_distribution'] = share_manifest
+    qb_manifest = getattr(sampler, 'qb_decision_manifest', None)
+    if qb_manifest is not None:
+        description['qb_decision_model'] = qb_manifest
+    outcome_manifest = getattr(sampler, 'player_outcome_manifest', None)
+    if outcome_manifest is not None:
+        description['player_outcome_model'] = outcome_manifest
+    integration_hashes = sampler.describe().get('integration_code_sha256')
+    if integration_hashes is not None:
+        description['integration_code_sha256'] = integration_hashes
     return description
+
+
+def model_id(ref):
+    sampler = getattr(ref, 'contextual_sampler', None)
+    if sampler is not None:
+        qb = sampler.qb_decision_table is not None
+        outcomes = sampler.player_outcome_table is not None
+        if qb and outcomes:
+            return COMBINED_PLAYER_MODEL_ID
+        if qb:
+            return QB_DECISION_MODEL_ID
+        if outcomes:
+            return PLAYER_OUTCOME_MODEL_ID
+    return MODEL_ID

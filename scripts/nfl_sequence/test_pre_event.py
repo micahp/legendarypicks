@@ -2,12 +2,14 @@ import random
 import sys
 import types
 import unittest
+from collections import Counter
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import game_state as gs  # noqa: E402
 import pre_event as pe  # noqa: E402
+import qb_decisions as qbd  # noqa: E402
 import slc_playcall as slc  # noqa: E402
 from test_slc_playcall import STATE, blank_artifact, cell  # noqa: E402
 
@@ -55,6 +57,48 @@ class Choice(unittest.TestCase):
             p for p in SNAPSHOT['rosters']['home']['players'] if p['gsis_id'] != 'AQB1']}}}
         with self.assertRaises(ValueError):
             pe.choose(broken, 'home', 'dropback', seed=7, index=0)
+
+    def test_qb_specific_target_role_is_drawn_before_the_outcome_and_honors_availability(self):
+        cell = qbd.cell_of(STATE['down'], STATE['togo'], STATE['yl'])
+        table = {
+            'qb_cell': {('AAA', 'AQB1', cell): Counter({'pass': 100})},
+            'team_cell': {('AAA', cell): Counter({'pass': 100})},
+            'league_cell': {cell: Counter({'pass': 100})},
+            'target_qb_cell': {('AAA', 'AQB1', cell): Counter({'WR': 100})},
+            'target_team_cell': {('AAA', cell): Counter({'WR': 100})},
+            'target_league_cell': {cell: Counter({'WR': 100})},
+            'scramble_cells': set(), 'row_target_roles': {},
+        }
+        snapshot = {**SNAPSHOT, 'rosters': {**SNAPSHOT['rosters'], 'home': {
+            **SNAPSHOT['rosters']['home'],
+            'injury_report': {'players': [{'gsis_id': 'AWR1', 'report_status': 'Out'}]}}}}
+        chosen = pe.choose(snapshot, 'home', 'dropback', 7, 0, state=STATE, qb_decision_table=table)
+        self.assertEqual(chosen['qb_decision']['target_role'], 'WR')
+        self.assertEqual(chosen['receiver']['gsis_id'], 'AWR2')
+        self.assertEqual(chosen['labels']['A'], 'WR')
+
+    def test_qb_scramble_is_a_pre_event_run_and_a_ruled_out_qb_is_skipped(self):
+        cell = qbd.cell_of(STATE['down'], STATE['togo'], STATE['yl'])
+        table = {
+            'qb_cell': {('AAA', 'AQB1', cell): Counter({'scramble': 100})},
+            'team_cell': {('AAA', cell): Counter({'scramble': 100})},
+            'league_cell': {cell: Counter({'scramble': 100})},
+            'target_qb_cell': {}, 'target_team_cell': {}, 'target_league_cell': {},
+            'scramble_cells': {cell}, 'row_target_roles': {},
+        }
+        chosen = pe.choose(SNAPSHOT, 'home', 'dropback', 7, 0, state=STATE, qb_decision_table=table)
+        self.assertEqual(chosen['passer']['gsis_id'], 'AQB1')
+        self.assertEqual(chosen['rusher']['gsis_id'], 'AQB1')
+        self.assertEqual(chosen['qb_decision']['action'], 'scramble')
+        self.assertNotIn('receiver', chosen)
+
+        snapshot = {**SNAPSHOT, 'rosters': {**SNAPSHOT['rosters'], 'home': {
+            **SNAPSHOT['rosters']['home'],
+            'injury_report': {'players': [{'gsis_id': 'AQB1', 'report_status': 'Out'}]}}}}
+        chosen = pe.choose(snapshot, 'home', 'dropback', 7, 0, state=STATE, qb_decision_table=table)
+        self.assertEqual(chosen['passer']['gsis_id'], 'AQB2')
+        self.assertEqual(chosen['rusher']['gsis_id'], 'AQB2')
+        self.assertEqual(chosen['qb_decision']['action'], 'scramble')
 
 
 class DrawOrder(unittest.TestCase):
