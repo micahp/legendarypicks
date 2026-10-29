@@ -43,14 +43,15 @@ def check_artifact_cutoff(artifact, season):
                          f"that ends before {season}")
 
 
-def load_reference(db, snapshot, artifact_path, team_outcomes=False):
+def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=False):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
     season = int(schedule['season'])
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
     return er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
-                   playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes)
+                   playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
+                   playcall_formation=formation)
 
 
 def is_slc(ref):
@@ -63,7 +64,8 @@ def play(seed, ref, snapshot):
         raise ValueError('the reference was not loaded with the SLC play-call layer')
     sampler = ref.contextual_sampler
     sampler.decisions.clear()
-    sampler.participant_chooser = pre_event.chooser(require_snapshot(snapshot), seed)
+    sampler.participant_chooser = pre_event.chooser(require_snapshot(snapshot), seed,
+                                                    formation_priors=sampler.formation_priors)
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
     finally:

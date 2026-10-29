@@ -33,6 +33,7 @@ def main():
     ap.add_argument('--roster-provenance')
     ap.add_argument('--team-outcomes', action='store_true',
                     help='SLC v1 research: prior-season team event splits within the play-call intent')
+    ap.add_argument('--formation', action='store_true', help='SLC v1 research: pre-event formation and personnel, outcomes conditioned on formation')
     ap.add_argument('--seed', type=int, required=True)
     ap.add_argument('--db', default=e1.DEFAULT_DB)
     ap.add_argument('--out', type=Path, required=True)
@@ -51,7 +52,8 @@ def main():
     if args.roster_snapshot:
         pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
 
-    ref, excluded = slc_engine.load_reference(args.db, snapshot, args.artifact, team_outcomes=args.team_outcomes)
+    ref, excluded = slc_engine.load_reference(args.db, snapshot, args.artifact, team_outcomes=args.team_outcomes,
+                                                formation=args.formation)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
     pregame_snapshot.reseal(snapshot)
@@ -66,7 +68,7 @@ def main():
         'components_connected': ['score-clock play-call layer (slc_playcall_v1)'],
         'components_not_connected': ['team offense and defense splits', 'playbooks', 'QB and role decisions',
                                      'pre-event participant selection', 'coaching (excluded from v1)'],
-        'seed': args.seed, 'team_outcomes': bool(args.team_outcomes),
+        'seed': args.seed, 'team_outcomes': bool(args.team_outcomes), 'formation': bool(args.formation),
         'game': {'game_id': schedule['game_id'], 'season': schedule['season'], 'week': schedule['week'],
                  'side_teams': slc_engine.side_teams(snapshot)},
         'snapshot': {'snapshot_sha256': snapshot['snapshot_sha256'], 'as_of': snapshot['as_of'],
