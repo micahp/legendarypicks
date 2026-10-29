@@ -68,6 +68,19 @@ def player_shares_positions(role):
     return ps.TARGET_POSITIONS if role == 'receive' else ps.CARRY_POSITIONS
 
 
+def combine_role_priors(decision_prior, target_role_prior, available_roles):
+    """Combine the two category-A priors by normalized geometric mean over roster-available roles."""
+    roles = sorted(set(decision_prior) & set(target_role_prior) & set(available_roles))
+    weights = {role: (max(0.0, decision_prior[role]) * max(0.0, target_role_prior[role])) ** 0.5
+               for role in roles}
+    total = sum(weights.values())
+    if not roles:
+        return {}
+    if total <= 0:
+        return {role: 1.0 / len(roles) for role in roles}
+    return {role: weight / total for role, weight in weights.items()}
+
+
 def _by_player_share(players, table, team, role, positions, draw):
     """A rostered player in the given positions, drawn in proportion to his prior-season share (the adapter)."""
     import player_shares as ps
@@ -93,19 +106,50 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     observed = snapshot['model_reference']['observed_reference']
     base = f"{snapshot['snapshot_sha256']}:{seed}:{index}"
     chosen = {'side': side, 'team': team}
+    if share_table is not None:
+        chosen['participant_share_model'] = 'dirichlet_multinomial'
+    elif player_shares is not None:
+        chosen['participant_share_model'] = 'fixed_player_share'
+    elif player_shares is None:
+        chosen['participant_share_model'] = 'position_usage'
     labels = None
     if decision_table is not None and state is not None:  # decision model categories A to N, drawn before the outcome
         import decision_layer
-        labels = decision_layer.draw(decision_table, team, state['down'], state['togo'], state['yl'], intent, f'{base}:labels')
+        label_only = None
+        if role_table is not None and intent == 'dropback':
+            label_only = tuple(category for category in decision_layer.PASS_CATS + decision_layer.ALIGN_CATS
+                               if category != 'A')
+        labels = decision_layer.draw(decision_table, team, state['down'], state['togo'], state['yl'], intent,
+                                     f'{base}:labels', only=label_only)
+        if role_table is not None and intent == 'dropback':
+            import target_roles
+            decision_distribution = decision_layer.distribution(
+                decision_table, team, decision_layer.cell_of(state['down'], state['togo'], state['yl']), 'A')
+            target_distribution = target_roles.distribution(
+                role_table, team, state['down'], state['togo'], state['yl'])
+            present = {target_roles.role_of(p['pos_abb']) for p in available_players
+                       if p['pos_abb'] in player_shares_positions('receive')}
+            roles = combine_role_priors(decision_distribution, target_distribution, present | {'Other'})
+            if roles:
+                role_draw = _draw(f'{base}:combined-target-role')
+                selected_role = role_draw.choices(sorted(roles), weights=[roles[r] for r in sorted(roles)], k=1)[0]
+                labels = dict(labels or {})
+                labels['A'] = selected_role
+                chosen['target_role'] = selected_role
+                chosen['target_role_prior_used'] = True
+                chosen['target_role_prior_combined'] = True
         if playbook_table is not None and labels is not None:  # the playbook's pass depth, location and run gap, where it has a prior
             book = decision_layer.draw(playbook_table, team, state['down'], state['togo'], state['yl'], intent,
                                        f'{base}:playbook', only=('D', 'E', 'C'))
             fallback = []
+            used = []
             for cat in book:  # the categories this intent takes; a category the playbook has no prior for keeps the decision label
                 if book[cat] is not None:
                     labels[cat] = book[cat]
+                    used.append(cat)
                 else:
                     fallback.append(cat)
+            chosen['playbook_used'] = used
             if fallback:
                 chosen['playbook_fallback'] = fallback
         chosen['labels'] = labels
@@ -173,12 +217,13 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                     present = {p['pos_abb'] for p in receivers}
                     if role in ('RB', 'WR', 'TE') and role in present:
                         positions = (role,)
-                elif role_table is not None and state is not None:  # the team decision model's category A
+                elif role_table is not None and state is not None:  # the team target-role model when no decision label exists
                     import target_roles
                     present = {p['pos_abb'] for p in receivers if p['pos_abb'] in ('RB', 'WR', 'TE')}
                     role = target_roles.draw(role_table, team, state['down'], state['togo'], state['yl'], f'{base}:role',
                                              available=present | {'Other'})
                     chosen['target_role'] = role
+                    chosen['target_role_prior_used'] = True
                     if role in ('RB', 'WR', 'TE'):
                         positions = (role,)
                 if share_table is not None:  # the game's Dirichlet target shares over the eligible players, then this play's draw
@@ -277,6 +322,10 @@ def ids(pre):
     out = {role: player['gsis_id'] for role, player in pre.items() if isinstance(player, dict) and 'gsis_id' in player}
     if pre.get('target_role') is not None:  # the decision model's category, not a player: kept so the record shows it
         out['target_role'] = pre['target_role']
+    for key in ('participant_share_model', 'target_role_prior_used', 'target_role_prior_combined',
+                'playbook_used', 'playbook_fallback'):
+        if pre.get(key) is not None:
+            out[key] = pre[key]
     if pre.get('labels') is not None:  # the drawn decision labels, for the record
         out['labels'] = pre['labels']
     if pre.get('qb_decision') is not None:

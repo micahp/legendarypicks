@@ -18,12 +18,24 @@ import simulate_pregame_game as game_cli  # noqa: E402
 import game_state as gs  # noqa: E402
 import pregame_snapshot  # noqa: E402
 import slc_engine  # noqa: E402
+import slc_config  # noqa: E402
+import historical_archive  # noqa: E402
 
 
 def parse_args(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--artifact', type=Path, required=True, help='play-call artifact fitted before the game season')
+    ap.add_argument('--slc-profile', choices=('custom', 'v1_full_stack'), default='custom',
+                    help='named fail-closed SLC configuration')
+    ap.add_argument('--slc-disable-layer', action='append', default=[],
+                    help='controlled ablation; repeat to disable multiple optional layers')
     ap.add_argument('--snapshot-file', type=Path, help='hash-pinned pregame snapshot JSON')
+    ap.add_argument('--historical-archive-reconstruction', action='store_true',
+                    help='explicitly run verified archived inputs as retrospective, never prospective')
+    ap.add_argument('--readiness-matrix', type=Path)
+    ap.add_argument('--archive-manifest', type=Path)
+    ap.add_argument('--archive-root', type=Path)
+    ap.add_argument('--historical-streak-file', type=Path)
     ap.add_argument('--game-id', help='published nfl_schedule game_id, when building the snapshot')
     ap.add_argument('--as-of', help='timezone-qualified ISO-8601 pregame cutoff, when building the snapshot')
     ap.add_argument('--kickoff-utc')
@@ -83,6 +95,58 @@ def main():
                                               args.allow_unverified_current_schedule_exploratory))
     else:
         raise SystemExit('SLC v1 needs a pregame snapshot: give --snapshot-file, or --game-id and --as-of')
+    archive_validation = None
+    archive_block = snapshot.get('archive_reconstruction')
+    retrospective_marker = (snapshot.get('evaluation', {}).get('class') == historical_archive.MODE
+                             or snapshot.get('schedule', {}).get('availability_classification') == historical_archive.MODE)
+    if args.historical_archive_reconstruction:
+        if not args.snapshot_file:
+            raise ValueError('historical archive reconstruction requires a frozen --snapshot-file')
+        if not (args.readiness_matrix and args.archive_manifest and args.archive_root):
+            raise ValueError('historical archive reconstruction requires readiness, archive manifest, and archive root')
+        if args.roster_snapshot:
+            raise ValueError('archival reconstruction snapshot is already frozen; later roster overrides are refused')
+        streak_path = args.historical_streak_file
+        if not streak_path:
+            relative = (archive_block or {}).get('streak_context', {}).get('file')
+            if relative:
+                streak_path = (args.snapshot_file.resolve().parent / relative).resolve()
+        archive_validation = historical_archive.validate_snapshot(
+            snapshot, readiness_matrix=args.readiness_matrix, archive_manifest=args.archive_manifest,
+            archive_root=args.archive_root, streak_file=streak_path,
+            expected_game_id=snapshot['schedule']['game_id'])
+        if args.slc_profile == 'v1_full_stack' and not args.streak_file:
+            args.streak_file = Path(streak_path)
+    elif archive_block:
+        raise ValueError('archival reconstruction snapshot requires explicit --historical-archive-reconstruction mode')
+    elif retrospective_marker:
+        raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
+    elif args.historical_streak_file:
+        raise ValueError('--historical-streak-file is only valid in historical archive reconstruction mode')
+
+    supplied = {
+        'playcall_team_outcomes': bool(args.team_outcomes), 'playcall_formation': bool(args.formation),
+        'playcall_coverage': bool(args.coverage), 'playcall_player_shares': bool(args.player_shares),
+        'playcall_dirichlet_shares': bool(args.dirichlet_shares), 'playcall_qb_decisions': bool(args.qb_decisions),
+        'playcall_player_outcomes': bool(args.player_outcomes), 'playcall_target_roles': bool(args.target_roles),
+        'playcall_decision': bool(args.decision), 'playcall_playbook': bool(args.playbook),
+        'playcall_point_splits': bool(args.point_splits), 'playcall_streak_splits': bool(args.streak_splits),
+        'playcall_streak_league': bool(args.streak_league), 'playcall_exact_yardline': bool(args.exact_yardline),
+    }
+    if args.decision_unfiltered:
+        supplied['playcall_decision_unfiltered'] = True
+    resolved_profile = slc_config.resolve_profile(
+        args.slc_profile, options=supplied, artifact_path=args.artifact,
+        streak_file=args.streak_file, disable_layers=args.slc_disable_layer,
+        decision_filter=not args.decision_unfiltered)
+    if args.slc_profile == 'v1_full_stack' and args.player_outcomes_receiver_only:
+        raise ValueError('v1_full_stack requires all configured player-outcome roles; receiver-only is an ablation')
+    if args.slc_profile == 'v1_full_stack':
+        for option, value in resolved_profile['options'].items():
+            name = option[len('playcall_'):] if option.startswith('playcall_') else option
+            setattr(args, name, value)
+        args.player_shares = resolved_profile['options'].get('playcall_player_shares', False)
+        args.decision_unfiltered = not resolved_profile['decision_filter']
     if bool(args.roster_snapshot) != bool(args.roster_provenance):
         raise SystemExit('--roster-snapshot and --roster-provenance must be supplied together')
     if args.roster_snapshot:
@@ -100,6 +164,8 @@ def main():
                                                 player_outcomes_receiver_only=args.player_outcomes_receiver_only,
                                                 playbook=args.playbook,
                                                 source_commit=source_provenance['base_commit'])
+    playcall_layer = slc_engine.describe(ref)
+    slc_config.validate_engine_layers(resolved_profile, playcall_layer)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
     pregame_snapshot.reseal(snapshot)
@@ -109,7 +175,13 @@ def main():
     schedule = snapshot['schedule']
     evaluation = snapshot.get('evaluation', {})  # the snapshot's own provenance result (pregame_snapshot.input_provenance)
     artifact = json.loads(args.artifact.read_text())
-    playcall_layer = slc_engine.describe(ref) or {}
+    playcall_layer = playcall_layer or {}
+    input_provenance = {
+        'mode': 'retrospective_archive_reconstruction' if archive_validation else 'prospective_snapshot',
+        'snapshot_sha256': snapshot['snapshot_sha256'], 'recorded_cutoff_utc': snapshot['as_of'],
+        'snapshot_evaluation': snapshot.get('evaluation'), 'archive_validation': archive_validation,
+    }
+    profile_manifest = slc_config.build_manifest(resolved_profile, playcall_layer, snapshot, input_provenance)
     feature_labels = {
         'score_clock_playcalling': 'score-clock play calling',
         'team_offense_defense_outcomes': 'team offense/defense outcomes',
@@ -133,7 +205,8 @@ def main():
     not_connected = [label for key, label in feature_labels.items() if active.get(key) is not True]
     not_connected.append('coaching tendencies (separate research)')
     trace = {
-        'model_id': slc_engine.model_id(ref),
+        'model_id': profile_manifest['model_id'],
+        'slc_profile_manifest': profile_manifest,
         'components_connected': connected,
         'components_not_connected': not_connected,
         'source': source_provenance,
@@ -153,6 +226,7 @@ def main():
                      'roster_snapshot_id': snapshot['roster_snapshot_id'],
                      'schedule_availability': schedule['availability_classification'],
                      'evaluation_class': evaluation.get('class'), 'inputs_verified': evaluation.get('verified')},
+        'historical_archive_reconstruction': archive_validation,
         'playcall': {'artifact_sha256': artifact['sha256'], 'fit_seasons': [min(artifact['fit_seasons']),
                                                                              max(artifact['fit_seasons'])],
                      'reference_season': artifact['reference_season'],
@@ -168,7 +242,7 @@ def main():
             'valid_full_game_engine': record.get('valid_full_game'),
             'valid_full_game_claim': bool(record.get('valid_full_game') and evaluation.get('verified')),
             'valid_full_game_claim_requires': 'engine valid_full_game and every snapshot input verified (evaluation.verified)',
-            'evaluation': 'exploratory single-game run',
+            'evaluation': profile_manifest['evaluation_class'],
             'cutoff_safe': True,
             'cutoff_safe_scope': 'the pool holds only plays before the game and the play-call artifact is fitted before its season',
             'player_stats': ('participant-conditioned research distributions' if args.player_outcomes else

@@ -72,6 +72,22 @@ class Layer(unittest.TestCase):
 
 
 class Sampler(unittest.TestCase):
+    def test_missing_team_outcome_support_is_recorded_as_a_fallback(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+
+        class MissingTendency:
+            def ratio(self, side, team, _cell, _event):
+                raise ValueError(f'no prior sample for {side}:{team}')
+
+        sampler.team_outcomes = MissingTendency()
+        weight = sampler._outcome_weight('pass_complete', 'A', 'B', ('situation',))
+        self.assertEqual(weight, 1.0)
+        self.assertEqual(sampler._current_team_outcome_fallbacks, [
+            'no_prior_sample:offense:AAA:pass_complete',
+            'no_prior_sample:defense:BBB:pass_complete',
+        ])
+
     def test_a_near_certain_dropback_draws_only_dropback_outcomes(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
         pool = cell([('run', 'run'), ('pass_complete', 'pass'), ('pass_incomplete', 'pass'), ('sack', 'pass')])

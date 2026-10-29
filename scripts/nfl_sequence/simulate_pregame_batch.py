@@ -48,6 +48,9 @@ import sim_run_registry  # noqa: E402
 import try_policy as try_policy_module  # noqa: E402
 import simulate_pregame_game as game_cli  # noqa: E402
 import slc_engine  # noqa: E402
+import slc_config  # noqa: E402
+import slc_outputs  # noqa: E402
+import historical_archive  # noqa: E402
 
 SCHEMA = 'lp-statistical-game-batch-1'
 PLAYER_CATEGORIES = {
@@ -103,6 +106,18 @@ def _reproduction_command(args, seed):
         command.append('--no-safety-table')
     if args.playcall_artifact:
         command.extend(['--playcall-artifact', str(args.playcall_artifact)])
+    if args.slc_profile != 'custom':
+        command.extend(['--slc-profile', args.slc_profile])
+    for layer in args.slc_disable_layer:
+        command.extend(['--slc-disable-layer', layer])
+    if args.historical_archive_reconstruction:
+        command.append('--historical-archive-reconstruction')
+        command.extend(['--readiness-matrix', str(args.readiness_matrix), '--archive-manifest', str(args.archive_manifest),
+                        '--archive-root', str(args.archive_root)])
+        if args.historical_streak_file:
+            command.extend(['--historical-streak-file', str(args.historical_streak_file)])
+    if args.export_boxscores:
+        command.append('--export-boxscores')
 
     if args.playcall_point_splits_cache:
         command.extend(['--playcall-point-splits-cache', str(args.playcall_point_splits_cache)])
@@ -405,7 +420,14 @@ def _replay_examples(outcomes):
 ERROR_STATUSES = ('simulation_error', 'validation_error')
 
 
-def _simulate_seed(seed, ref, snapshot):
+class FinishedSeeds(dict):
+    """Latest row per seed plus an audit count of retry/duplicate rows in the append-only ledger."""
+    def __init__(self):
+        super().__init__()
+        self.duplicate_rows = 0
+
+
+def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False):
     record = None
     error = None
     validation_error = False
@@ -422,6 +444,23 @@ def _simulate_seed(seed, ref, snapshot):
     outcome = _record_outcome(seed, record, error, validation_error)
     if decisions is not None:
         outcome['playcall'] = slc_engine.summary(decisions)
+    if export_boxscores:
+        try:
+            boxscore = slc_outputs.build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_validation)
+            if profile_manifest['profile'] != 's0' and boxscore['reconciliation']['status'] != 'passed':
+                raise ValueError(f"player/team accounting mismatch: {boxscore['reconciliation']}")
+            outcome['boxscore'] = boxscore
+        except Exception as exc:
+            boxscore_error = f'{type(exc).__name__}: {exc}'
+            if outcome['status'] not in ERROR_STATUSES:
+                outcome = _record_outcome(seed, record, boxscore_error, validation_error=True)
+                if decisions is not None:
+                    outcome['playcall'] = slc_engine.summary(decisions)
+            # Preserve an auditable error line even when strict roster identity or reconciliation fails.
+            minimal = slc_outputs.build_boxscore(seed, outcome, None, snapshot, profile_manifest, archive_validation)
+            outcome['boxscore_error'] = boxscore_error
+            minimal['boxscore_error'] = boxscore_error
+            outcome['boxscore'] = minimal
     contribution = None
     if outcome['valid_full_game'] and record:
         contribution = {
@@ -444,7 +483,7 @@ def _open_seed_ledger(path, header, resume):
     lines = path.read_text().splitlines()
     if not lines or json.loads(lines[0]).get('header') != header:
         raise ValueError(f'{path} was written from different inputs; use a new --out or remove the ledger')
-    finished = {}
+    finished = FinishedSeeds()
     for index, line in enumerate(lines[1:], start=2):
         try:
             row = json.loads(line)
@@ -454,20 +493,102 @@ def _open_seed_ledger(path, header, resume):
             print(f'{path}: dropping a partial last line left by an interrupted run', file=sys.stderr)
             lines = lines[:-1]
             break
+        if row['seed'] in finished:
+            finished.duplicate_rows += 1
         finished[row['seed']] = row
     path.write_text(''.join(line + '\n' for line in lines))
     return finished, path.open('a')
 
 
-def _seed_outcome(seed, finished, ledger, ref, snapshot):
+def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=None, archive_validation=None,
+                  export_boxscores=False):
     """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
     cached = finished.get(seed)
-    if cached is not None and cached['outcome']['status'] not in ERROR_STATUSES:
+    has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
+    if (cached is not None and cached['outcome']['status'] not in ERROR_STATUSES
+            and (not export_boxscores or has_boxscore)):
         return cached['outcome'], cached['players']
-    outcome, contribution = _simulate_seed(seed, ref, snapshot)
-    ledger.write(json.dumps({'seed': seed, 'outcome': outcome, 'players': contribution}, sort_keys=True) + '\n')
+    outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation, export_boxscores)
+    row = {'seed': seed, 'outcome': outcome, 'players': contribution}
+    ledger.write(json.dumps(row, sort_keys=True) + '\n')
     ledger.flush()
+    if seed in finished and hasattr(finished, 'duplicate_rows'):
+        finished.duplicate_rows += 1
+    finished[seed] = row
     return outcome, contribution
+
+
+def _write_boxscore_header(handle, profile_manifest, snapshot):
+    handle.write(json.dumps({'schema': 'lp-nfl-slc-boxscore-jsonl-1', 'type': 'manifest',
+                             'game_id': snapshot['schedule']['game_id'],
+                             'model_id': profile_manifest['model_id'],
+                             'configuration_hash': profile_manifest['configuration_hash'],
+                             'source_cutoff': snapshot['as_of'],
+                             'evaluation_class': profile_manifest['evaluation_class']},
+                            sort_keys=True) + '\n')
+
+
+def _prepare_boxscore_sidecar(path, finished, profile_manifest, snapshot):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('w') as handle:
+        _write_boxscore_header(handle, profile_manifest, snapshot)
+        for seed, row in sorted(finished.items()):
+            box = row.get('outcome', {}).get('boxscore')
+            if box:
+                handle.write(json.dumps({'type': 'game', **box}, sort_keys=True, separators=(',', ':')) + '\n')
+    return path.open('a'), {seed for seed, row in finished.items() if row.get('outcome', {}).get('boxscore')}
+
+
+def _execution_verification(outcomes, profile_manifest):
+    fields = {
+        'score_clock_playcalling': 'score_clock_playcalling',
+        'team_offense_defense_outcomes': 'team_offense_defense_outcomes',
+        'formation_personnel_outcomes': 'formation_personnel_outcomes',
+        'defensive_coverage_outcomes': 'defensive_coverage_outcomes',
+        'dirichlet_player_target_carry_shares': 'dirichlet_player_target_carry_shares',
+        'qb_decisions': 'qb_decisions', 'player_conditioned_outcomes': 'player_conditioned_outcomes',
+        'target_role_priors': 'target_role_priors', 'decision_labels': 'decision_labels',
+        'decision_row_filter': 'decision_row_filter', 'playbook_priors': 'playbook_priors',
+        'point_splits': 'point_splits_evaluated', 'team_streak_splits': 'team_streak_splits_evaluated',
+        'league_streak_splits': 'league_streak_splits_evaluated',
+        'exact_yardline_outcomes': 'exact_yardline_outcomes', 'current_streak_context': 'current_streak_context',
+    }
+    counts = {layer: 0 for layer in fields}
+    fallback_events = defaultdict(int)
+    games_with_trace = 0
+    for outcome in outcomes:
+        playcall = outcome.get('playcall') or {}
+        execution = playcall.get('layer_execution') or {}
+        if playcall:
+            games_with_trace += 1
+        for layer, field in fields.items():
+            counts[layer] += int(execution.get(field, 0) or 0)
+        for name, count in (playcall.get('fallback_events') or {}).items():
+            fallback_events[name] += int(count)
+    missing_layer_inputs = []
+    for layer, record in (profile_manifest.get('layers') or {}).items():
+        if not record.get('enabled'):
+            continue
+        if not record.get('model_artifact_sha256'):
+            missing_layer_inputs.append({'layer': layer, 'input': 'model_artifact_sha256'})
+        for source, digest in (record.get('implementation_sha256') or {}).items():
+            if not digest:
+                missing_layer_inputs.append({'layer': layer, 'input': f'implementation:{source}'})
+        if not (record.get('input_provenance') or {}).get('reference_sha256'):
+            missing_layer_inputs.append({'layer': layer, 'input': 'reference_sha256'})
+    layers = {}
+    for layer, enabled in profile_manifest['enabled_layers'].items():
+        hits = counts.get(layer, 0)
+        layers[layer] = {'enabled': bool(enabled), 'runtime_applications': hits,
+                         'status': ('not_enabled' if not enabled else 'executed' if hits else 'enabled_no_observed_application')}
+    return {
+        'simulation_seeds_with_playcall_trace': games_with_trace,
+        'layers': layers,
+        'fallback_events': dict(sorted(fallback_events.items())),
+        'missing_layer_inputs': missing_layer_inputs,
+        'note': ('A layer is only reported executed when its instrumented decision path ran. State-conditional layers can have '
+                 'zero applications in a small sample; that remains visible and does not count as a silent fallback.'),
+    }
 
 
 def run_batch(args):
@@ -495,6 +616,37 @@ def run_batch(args):
         snapshot = pregame_snapshot.build(
             args.db, args.game_id, args.as_of, args.kickoff_utc, args.kickoff_source_url,
             allow_unverified_current_schedule_exploratory=args.allow_unverified_current_schedule_exploratory)
+    archive_validation = None
+    archive_block = snapshot.get('archive_reconstruction')
+    retrospective_marker = (snapshot.get('evaluation', {}).get('class') == historical_archive.MODE
+                             or snapshot.get('schedule', {}).get('availability_classification') == historical_archive.MODE)
+    if args.historical_archive_reconstruction:
+        if not args.snapshot_file:
+            raise ValueError('historical archive reconstruction requires a frozen --snapshot-file')
+        if not (args.readiness_matrix and args.archive_manifest and args.archive_root):
+            raise ValueError('historical archive reconstruction requires --readiness-matrix, --archive-manifest, and --archive-root')
+        if args.roster_snapshot or args.availability_snapshot or args.availability_store:
+            raise ValueError('archival reconstruction snapshots are already frozen; later roster/availability overrides are refused')
+        streak_file = args.historical_streak_file
+        if not streak_file:
+            relative_streak = (archive_block or {}).get('streak_context', {}).get('file')
+            if relative_streak:
+                streak_file = str((Path(args.snapshot_file).resolve().parent / relative_streak).resolve())
+        archive_validation = historical_archive.validate_snapshot(
+            snapshot, readiness_matrix=args.readiness_matrix, archive_manifest=args.archive_manifest,
+            archive_root=args.archive_root, streak_file=streak_file, expected_game_id=args.game_id)
+        if args.slc_profile == 'v1_full_stack' and not args.playcall_streak_file:
+            args.playcall_streak_file = Path(streak_file)
+    elif archive_block:
+        raise ValueError('archival reconstruction snapshot requires explicit --historical-archive-reconstruction mode')
+    elif retrospective_marker:
+        raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
+    resolved_profile = slc_config.apply_profile_to_args(args)
+    if args.slc_profile == 'v1_full_stack' and not args.historical_archive_reconstruction:
+        # Prospective snapshots continue through the existing capture checks; archival inputs use the separate mode above.
+        evaluation = snapshot.get('evaluation', {})
+        if evaluation.get('class') == historical_archive.MODE:
+            raise ValueError('retrospective archive snapshot cannot be run under prospective input mode')
     source_snapshot_sha256 = snapshot['snapshot_sha256']
     if bool(args.roster_snapshot) != bool(args.roster_provenance):
         raise ValueError('--roster-snapshot and --roster-provenance must be supplied together')
@@ -564,6 +716,18 @@ def run_batch(args):
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
     pregame_snapshot.reseal(snapshot)
     playcall_description = slc_engine.describe(ref)
+    if slc_engine.is_slc(ref):
+        slc_config.validate_engine_layers(resolved_profile, playcall_description)
+    elif resolved_profile['profile'] != 's0' and any(resolved_profile['enabled_layers'].values()):
+        raise RuntimeError('resolved SLC layers were requested but the reference loaded without the SLC engine')
+    input_provenance = {
+        'mode': 'retrospective_archive_reconstruction' if archive_validation else 'prospective_snapshot',
+        'snapshot_sha256': snapshot['snapshot_sha256'],
+        'recorded_cutoff_utc': snapshot['as_of'],
+        'snapshot_evaluation': snapshot.get('evaluation'),
+        'archive_validation': archive_validation,
+    }
+    profile_manifest = slc_config.build_manifest(resolved_profile, playcall_description, snapshot, input_provenance)
 
     baseline_files = {name: hashlib.sha256((REPO / name).read_bytes()).hexdigest() for name in V1_FILES}
     baseline_started = time.monotonic()
@@ -587,6 +751,9 @@ def run_batch(args):
         'player_outcome_model_manifest': (playcall_description or {}).get('player_outcome_model'),
         'context_mode': args.context_mode, 'try_policy': args.try_policy, 'safety_kick_table': safety_kick_table,
         'seed_start': args.seed_start, 'playcall_artifact_sha256': (playcall_description or {}).get('artifact_sha256'),
+        'slc_profile': profile_manifest,
+        'historical_archive_reconstruction': archive_validation,
+        'boxscore_export': bool(args.export_boxscores),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
@@ -607,13 +774,26 @@ def run_batch(args):
     }
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume)
+    boxscore_handle = None
+    exported_seed_ids = set()
+    boxscore_path = Path(args.out).with_suffix('.boxscores.jsonl')
+    if args.export_boxscores:
+        boxscore_handle, exported_seed_ids = _prepare_boxscore_sidecar(
+            boxscore_path, finished, profile_manifest, snapshot)
     started = time.monotonic()
     for player_id in _player_template(snapshot):
         player_totals[player_id]
     try:
         for seed in range(args.seed_start, args.seed_start + args.games):
-            outcome, contribution = _seed_outcome(seed, finished, ledger, ref, snapshot)
+            outcome, contribution = _seed_outcome(
+                seed, finished, ledger, ref, snapshot, profile_manifest=profile_manifest,
+                archive_validation=archive_validation, export_boxscores=args.export_boxscores)
             outcomes.append(outcome)
+            if boxscore_handle is not None and seed not in exported_seed_ids and outcome.get('boxscore'):
+                boxscore_handle.write(json.dumps({'type': 'game', **outcome['boxscore']},
+                                                 sort_keys=True, separators=(',', ':')) + '\n')
+                boxscore_handle.flush()
+                exported_seed_ids.add(seed)
             if outcome['status'] in ERROR_STATUSES:
                 errors += 1
             if contribution is not None:
@@ -633,6 +813,8 @@ def run_batch(args):
                 raise RuntimeError(f'{errors} error seeds after {completed} of {args.games}; stopped. Finished seeds are '
                                    f'in {ledger_path}; fix the cause and rerun with --resume')
     finally:
+        if boxscore_handle is not None:
+            boxscore_handle.close()
         ledger.close()
 
     simulation_seconds = time.monotonic() - started
@@ -651,6 +833,11 @@ def run_batch(args):
     replay_examples = _replay_examples(outcomes)
     if replay_examples:
         replay_examples['reproduction_command'] = _reproduction_command(args, replay_examples['closest_to_mean_margin']['seed'])
+    boxscore_summary = (slc_outputs.aggregate_boxscores(
+        [outcome['boxscore'] for outcome in outcomes if outcome.get('boxscore')], requested_games=args.games)
+                        if args.export_boxscores else None)
+    if boxscore_summary is not None:
+        boxscore_summary['duplicate_ledger_rows'] = finished.duplicate_rows
     payload = {
         'contract': {'name': 'gridiron.lp-full-game-batch', 'version': '1.0.0'},
         'schema': SCHEMA,
@@ -660,6 +847,11 @@ def run_batch(args):
         'simulation': {
             'model': 'seeded statistical full-game simulator', 'requested_games': args.games,
             'model_id': slc_engine.model_id(ref),
+            'resolved_model_id': profile_manifest['model_id'],
+            'slc_profile': profile_manifest['profile'],
+            'configuration_hash': profile_manifest['configuration_hash'],
+            'evaluation_class': profile_manifest['evaluation_class'],
+            'prospective': profile_manifest['prospective'],
             'seed_start': args.seed_start, 'seed_end_inclusive': args.seed_start + args.games - 1,
             'seed_rule': 'one deterministic game per consecutive non-negative integer seed',
             'regulation_score_policy': ('all runs whose simulation reached the regulation end, including ties and '
@@ -693,14 +885,22 @@ def run_batch(args):
         'pregame_context': contextual,
         'contextual_pool_manifest': ref.contextual_pool_manifest,
         'playcall_layer': playcall_description,
+        'slc_profile_manifest': profile_manifest,
+        'historical_archive_reconstruction': archive_validation,
+        'execution_verification': _execution_verification(outcomes, profile_manifest),
         'data_sources': {
             'database': 'SQLite, opened read-only',
             'source_snapshot_sha256': source_snapshot_sha256,
             'input_availability': {
-                'classification': 'chronological_filter_only',
-                'historical_replay_fairness': 'exploratory_until_row_level_source_availability_is_verified',
-                'limitations': ['nfl_pbp has no row-level publication/ingestion timestamp',
-                                'historical schedule score revisions are not available in the current database'],
+                'classification': ('retrospective_archive_reconstruction' if archive_validation
+                                   else 'chronological_filter_only'),
+                'historical_replay_fairness': ('retrospective_only_exact_source_release_hashes_and_publication_times_verified; '
+                                               'local_capture_time_unknown' if archive_validation else
+                                               'exploratory_until_row_level_source_availability_is_verified'),
+                'limitations': (['official source release dates and hashes are verified; local historical acquisition time is unknown']
+                                if archive_validation else
+                                ['nfl_pbp has no row-level publication/ingestion timestamp',
+                                 'historical schedule score revisions are not available in the current database']),
             },
             'play_window': ('nfl_pbp seasons 2022-2025, weeks 1-18' if not cutoff_pool_mode else
                             f"nfl_pbp seasons 2022 through weeks before {snapshot['schedule']['season']} week "
@@ -712,6 +912,10 @@ def run_batch(args):
         'baseline_v1': baseline,
         'comparison_to_v1': comparison,
         'summary': summary,
+        'boxscore_export': {'enabled': bool(args.export_boxscores),
+                            'schema': slc_outputs.BOX_SCHEMA if args.export_boxscores else None,
+                            'path': str(boxscore_path) if args.export_boxscores else None},
+        'boxscore_distributions': boxscore_summary,
         'player_projections': _player_projections(snapshot, player_totals, games_with_player_stats),
         'replay_examples': replay_examples,
         'game_info': game_info,
@@ -741,6 +945,20 @@ def main(argv=None):
                     help=('explicitly use the current schedule row when no as-of version exists; preserves its real '
                           'ingestion timestamp and classifies the v1 comparison as exploratory'))
     ap.add_argument('--snapshot-file', help='hash-pinned pregame snapshot JSON or game payload containing one')
+    ap.add_argument('--slc-profile', choices=('custom', 's0', 'v1_full_stack'), default='custom',
+                    help='named fail-closed layer configuration; custom preserves the legacy manual feature flags')
+    ap.add_argument('--slc-disable-layer', action='append', default=[],
+                    help='SLC ablation: disable one named optional layer; repeat for multiple layers')
+    ap.add_argument('--historical-archive-reconstruction', action='store_true',
+                    help='explicitly admit pinned archival inputs as retrospective; this does not relax prospective capture checks')
+    ap.add_argument('--readiness-matrix', type=Path,
+                    help='per-game readiness matrix required by historical archive reconstruction')
+    ap.add_argument('--archive-manifest', type=Path,
+                    help='dated source release hashes and publication times required by historical archive reconstruction')
+    ap.add_argument('--archive-root', type=Path,
+                    help='local archived source files; every file is rehashed against both manifests')
+    ap.add_argument('--historical-streak-file', type=Path,
+                    help='optional explicit path for the pinned archive-reconstructed pregame streak file')
     ap.add_argument('--games', type=int, default=10000)
     ap.add_argument('--seed-start', type=int, default=1)
     ap.add_argument('--db', default=e1.DEFAULT_DB, help='SQLite database opened read-only')
@@ -813,6 +1031,8 @@ def main(argv=None):
                     help='print a progress line every N games; use 0 to disable')
     ap.add_argument('--resume', action='store_true',
                     help='continue the seed ledger next to --out (<out stem>.seeds.jsonl); refuses a ledger from other inputs')
+    ap.add_argument('--export-boxscores', action='store_true',
+                    help='write a versioned per-seed box-score JSONL sidecar and valid-game distributions')
     ap.add_argument('--max-simulation-errors', type=int,
                     help='stop once more than this many seeds have errored; finished seeds stay in the ledger')
     ap.add_argument('--out', required=True)
