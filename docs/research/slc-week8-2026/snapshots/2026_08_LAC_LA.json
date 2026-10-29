@@ -1,0 +1,480 @@
+{
+ "as_of": "2026-10-29T00:02:21Z",
+ "capture": {
+  "files": [
+   {
+    "acquired_at_utc": "2026-10-28T23:59:53Z",
+    "bytes": 3180052,
+    "last_modified_utc": "2026-10-28T13:58:09Z",
+    "name": "depth_charts_2026.parquet",
+    "sha256": "5649117a1abe4fd413e5286e5802092a80d858bc4847cbf5e8f79ebdff46cbae",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+   },
+   {
+    "acquired_at_utc": "2026-10-28T23:59:54Z",
+    "bytes": 51877,
+    "last_modified_utc": "2026-10-28T13:57:55Z",
+    "name": "injuries_2026.parquet",
+    "sha256": "2d9ae1129e9cd3249b6f1334557679dee5de465f0728aeeaaabd68f8a89b9539",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+   },
+   {
+    "acquired_at_utc": "2026-10-29T00:00:26Z",
+    "bytes": 522840,
+    "last_modified_utc": "2026-10-28T23:46:31Z",
+    "name": "games.parquet",
+    "sha256": "883f03d71a02fa11d7b286236c8456e6c3bc3a7a179c0cb83bbd051e1ef95dbd",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet"
+   }
+  ],
+  "frozen_at_utc": "2026-10-29T00:02:21Z",
+  "kickoff_rule": "nflverse gametime as America/New_York"
+ },
+ "evaluation": {
+  "class": "prospective_forecast",
+  "unverified_inputs": [],
+  "verified": true
+ },
+ "model_reference": {
+  "participant_assignment_version": "pregame-role-usage-v1",
+  "play_pool": "nfl_pbp seasons 2022-2025 only; no 2026 outcome is in the pool",
+  "rule_version": "NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix"
+ },
+ "roster_snapshot_id": "capture:6971219f3e60c4399774b7f2e029835580a692a8d7ef7657edc8f697882f5f00",
+ "rosters": {
+  "away": {
+   "injury_report": {
+    "available": false,
+    "players": [],
+    "rows": 0
+   },
+   "players": [
+    {
+     "gsis_id": "00-0039915",
+     "player_id": 14674,
+     "player_name": "Ladd McConkey",
+     "pos_abb": "WR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0036355",
+     "player_id": 9846,
+     "player_name": "Justin Herbert",
+     "pos_abb": "QB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0038046",
+     "player_id": 12813,
+     "player_name": "Charlie Kolar",
+     "pos_abb": "TE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0040666",
+     "player_id": 9059,
+     "player_name": "Omarion Hampton",
+     "pos_abb": "RB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0038614",
+     "player_id": 14422,
+     "player_name": "Scott Matlock",
+     "pos_abb": "FB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0038544",
+     "player_id": 11832,
+     "player_name": "Quentin Johnston",
+     "pos_abb": "WR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0040464",
+     "player_id": 22726,
+     "player_name": "DJ Uiagalelei",
+     "pos_abb": "QB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0040189",
+     "player_id": 7656,
+     "player_name": "Oronde Gadsden",
+     "pos_abb": "TE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0038454",
+     "player_id": 15576,
+     "player_name": "Keaton Mitchell",
+     "pos_abb": "RB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0035125",
+     "player_id": 10821,
+     "player_name": "Alec Ingold",
+     "pos_abb": "FB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0040727",
+     "player_id": 9280,
+     "player_name": "Tre' Harris",
+     "pos_abb": "WR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0037012",
+     "player_id": 13063,
+     "player_name": "Trey Lance",
+     "pos_abb": "QB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0039489",
+     "player_id": 19282,
+     "player_name": "Hayden Rucci",
+     "pos_abb": "TE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0039391",
+     "player_id": 22946,
+     "player_name": "Kimani Vidal",
+     "pos_abb": "RB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0040184",
+     "player_id": 13048,
+     "player_name": "KeAndre Lambert-Smith",
+     "pos_abb": "WR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0033885",
+     "player_id": 16530,
+     "player_name": "David Njoku",
+     "pos_abb": "TE",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0041550",
+     "player_id": 22128,
+     "player_name": "Brenen Thompson",
+     "pos_abb": "WR",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0040311",
+     "player_id": 23514,
+     "player_name": "Theo Wease Jr.",
+     "pos_abb": "WR",
+     "pos_rank": 6,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    },
+    {
+     "gsis_id": "00-0038573",
+     "player_id": 5360,
+     "player_name": "Derius Davis",
+     "pos_abb": "WR",
+     "pos_rank": 7,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LAC"
+    }
+   ],
+   "snapshot_at": "2026-10-28T13:58:02Z",
+   "source": "nflverse_depth_charts_capture",
+   "team": "LAC",
+   "unresolved_depth_rows": 0
+  },
+  "home": {
+   "injury_report": {
+    "available": false,
+    "players": [],
+    "rows": 0
+   },
+   "players": [
+    {
+     "gsis_id": "00-0039075",
+     "player_id": 16247,
+     "player_name": "Puka Nacua",
+     "pos_abb": "WR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0026498",
+     "player_id": 21030,
+     "player_name": "Matthew Stafford",
+     "pos_abb": "QB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0033110",
+     "player_id": 9964,
+     "player_name": "Tyler Higbee",
+     "pos_abb": "TE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0037840",
+     "player_id": 24227,
+     "player_name": "Kyren Williams",
+     "pos_abb": "RB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0040590",
+     "player_id": 16108,
+     "player_name": "Konata Mumpfield",
+     "pos_abb": "WR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0039107",
+     "player_id": 1718,
+     "player_name": "Stetson Bennett IV",
+     "pos_abb": "QB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0036244",
+     "player_id": 17186,
+     "player_name": "Colby Parkinson",
+     "pos_abb": "TE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0039738",
+     "player_id": 4775,
+     "player_name": "Blake Corum",
+     "pos_abb": "RB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0039751",
+     "player_id": 23895,
+     "player_name": "Jordan Whittington",
+     "pos_abb": "WR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0041568",
+     "player_id": 20307,
+     "player_name": "Ty Simpson",
+     "pos_abb": "QB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0039074",
+     "player_id": 441,
+     "player_name": "Davis Allen",
+     "pos_abb": "TE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0041415",
+     "player_id": 4615,
+     "player_name": "Dean Connors",
+     "pos_abb": "RB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0036849",
+     "player_id": 881,
+     "player_name": "Tutu Atwell",
+     "pos_abb": "WR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0041414",
+     "player_id": 3482,
+     "player_name": "Matthew Caldwell",
+     "pos_abb": "QB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0041510",
+     "player_id": 12725,
+     "player_name": "Max Klare",
+     "pos_abb": "TE",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0037557",
+     "player_id": 18805,
+     "player_name": "Ronnie Rivers",
+     "pos_abb": "RB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0041399",
+     "player_id": 5214,
+     "player_name": "CJ Daniels",
+     "pos_abb": "WR",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0040737",
+     "player_id": 7010,
+     "player_name": "Terrance Ferguson",
+     "pos_abb": "TE",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0035602",
+     "player_id": 974,
+     "player_name": "Alex Bachman",
+     "pos_abb": "WR",
+     "pos_rank": 6,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    },
+    {
+     "gsis_id": "00-0031381",
+     "player_id": 187,
+     "player_name": "Davante Adams",
+     "pos_abb": "WR",
+     "pos_rank": 7,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "LA"
+    }
+   ],
+   "snapshot_at": "2026-10-28T13:58:02Z",
+   "source": "nflverse_depth_charts_capture",
+   "team": "LA",
+   "unresolved_depth_rows": 0
+  }
+ },
+ "schedule": {
+  "availability_classification": "captured_before_cutoff",
+  "away_team": "LAC",
+  "game_id": "2026_08_LAC_LA",
+  "game_type": "REG",
+  "gameday": "2026-11-01",
+  "gametime": "16:05",
+  "gametime_timezone": "America/New_York",
+  "home_team": "LA",
+  "ingested_at": null,
+  "kickoff_source_url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet",
+  "scheduled_kickoff_utc": "2026-11-01T21:05:00Z",
+  "season": 2026,
+  "source": "nflverse_games_capture",
+  "week": 8
+ },
+ "schema": "lp-nfl-pregame-snapshot-1",
+ "snapshot_sha256": "3c13a5fae0f8a93daa42c0201024ff1d20e8df86be55e7a50e393494b9a27f99"
+}
