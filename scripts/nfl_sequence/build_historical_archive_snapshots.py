@@ -158,6 +158,15 @@ def _cross_role_front_backup(retained, *, group, pos, expected_roles, game_id, t
     return candidates[0]
 
 
+def _emergency_long_snapper(retained, *, game_id, team):
+    """Use a game-week-eligible center only as an explicit retrospective emergency LS."""
+    candidates = [p for p in retained if p['roster_eligible'] and p['group'] == '3WR 1TE'
+                  and p['pos_abb'] == 'C']
+    if not candidates:
+        raise ValueError(f'{game_id}: {team} has no eligible archived center for emergency long-snapper reconstruction')
+    return sorted(candidates, key=lambda p: (p['pos_rank'], p['gsis_id']))[0]
+
+
 def _iso_utc(value):
     parsed = datetime.fromisoformat(str(value).replace('Z', '+00:00'))
     if parsed.tzinfo is None:
@@ -394,21 +403,36 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
         exact = next((p for p in same_position if p['pos_rank'] == rank), None)
         chosen = exact or next((p for p in same_position if not p['starter']), None)
         if chosen is None:
-            chosen = _cross_role_front_backup(retained, group=group, pos=pos,
-                                              expected_roles=expected_roles, game_id=game_id, team=team)
-            source_role = {'group': chosen['group'], 'pos_abb': chosen['pos_abb'],
-                           'pos_rank': chosen['pos_rank']}
-            # Preserve unique source role rows; the intended assignment is explicit and separately recorded.
-            occupied_ranks = [p['pos_rank'] for p in retained if p['group'] == group and p['pos_abb'] == pos]
-            chosen['source_role_before_fallback'] = source_role
-            chosen['pos_abb'] = pos
-            chosen['pos_rank'] = max(occupied_ranks, default=0) + 1
-            chosen['starter_assignment'] = {'group': group, 'pos_abb': pos, 'starter_rank': rank,
-                                            'classification': 'retrospective_role_fallback'}
+            if group == 'Special Teams' and pos == 'LS':
+                center = _emergency_long_snapper(retained, game_id=game_id, team=team)
+                source_role = {'group': center['group'], 'pos_abb': center['pos_abb'],
+                               'pos_rank': center['pos_rank']}
+                chosen = dict(center)
+                occupied_ranks = [p['pos_rank'] for p in retained if p['group'] == group and p['pos_abb'] == pos]
+                chosen.update({'group': group, 'pos_abb': pos,
+                               'pos_rank': max(occupied_ranks, default=0) + 1,
+                               'unit': 'special_teams', 'starter': False,
+                               'source_role_before_fallback': source_role,
+                               'starter_assignment': {'group': group, 'pos_abb': pos, 'starter_rank': rank,
+                                                      'classification': 'retrospective_emergency_role_fallback'}})
+                retained.append(chosen)
+                reason = 'no eligible archived long snapper; eligible center assigned as an unverified emergency snapper'
+            else:
+                chosen = _cross_role_front_backup(retained, group=group, pos=pos,
+                                                  expected_roles=expected_roles, game_id=game_id, team=team)
+                source_role = {'group': chosen['group'], 'pos_abb': chosen['pos_abb'],
+                               'pos_rank': chosen['pos_rank']}
+                # Preserve unique source role rows; the intended assignment is explicit and separately recorded.
+                occupied_ranks = [p['pos_rank'] for p in retained if p['group'] == group and p['pos_abb'] == pos]
+                chosen['source_role_before_fallback'] = source_role
+                chosen['pos_abb'] = pos
+                chosen['pos_rank'] = max(occupied_ranks, default=0) + 1
+                chosen['starter_assignment'] = {'group': group, 'pos_abb': pos, 'starter_rank': rank,
+                                                'classification': 'retrospective_role_fallback'}
+                reason = 'no eligible same-position depth player; selected eligible same-front backup'
             record = {'group': group, 'pos_abb': pos, 'starter_rank': rank,
                       'promoted_gsis_id': chosen['gsis_id'], 'source_role': source_role,
-                      'assigned_role_rank': chosen['pos_rank'],
-                      'reason': 'no eligible same-position depth player; selected eligible same-front backup'}
+                      'assigned_role_rank': chosen['pos_rank'], 'reason': reason}
             promotions.append(record)
             role_fallbacks.append(record)
         chosen['starter'] = True

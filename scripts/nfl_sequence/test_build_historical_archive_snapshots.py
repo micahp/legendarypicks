@@ -68,5 +68,21 @@ class DefensiveFrontFallback(unittest.TestCase):
                                              game_id='test', team='MIA')
 
 
+class EmergencyLongSnapperFallback(unittest.TestCase):
+    def test_uses_only_an_eligible_center_from_the_frozen_roster(self):
+        players = [
+            {'gsis_id': 'inactive-center', 'group': '3WR 1TE', 'pos_abb': 'C', 'pos_rank': 1,
+             'roster_eligible': False},
+            {'gsis_id': 'active-center', 'group': '3WR 1TE', 'pos_abb': 'C', 'pos_rank': 2,
+             'roster_eligible': True},
+        ]
+        chosen = builder._emergency_long_snapper(players, game_id='test', team='NO')
+        self.assertEqual(chosen['gsis_id'], 'active-center')
+
+    def test_fails_if_frozen_roster_has_no_eligible_center(self):
+        with self.assertRaisesRegex(ValueError, 'no eligible archived center'):
+            builder._emergency_long_snapper([], game_id='test', team='NO')
+
+
 if __name__ == '__main__':
     unittest.main()
