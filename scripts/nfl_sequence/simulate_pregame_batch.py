@@ -441,6 +441,7 @@ def run_batch(args):
                                                            point_splits=(str(args.playcall_point_splits_cache) if args.playcall_point_splits_cache else args.playcall_point_splits),
                                                            streak=(str(args.playcall_streak_cache) if args.playcall_streak_cache else args.playcall_streak_splits),
                                                            streak_file=args.playcall_streak_file,
+                                                           target_roles=args.playcall_target_roles,
                                                            streak_league=(str(args.playcall_streak_cache) if (args.playcall_streak_cache and args.playcall_streak_league)
                                                                           else args.playcall_streak_league))
     elif args.context_mode == 'unconditioned':
@@ -645,6 +646,8 @@ def main(argv=None):
     ap.add_argument('--playcall-streak-splits', action='store_true',
                     help='SLC v1 research: team win-loss streak splits from prior seasons (needs --playcall-streak-file)')
     ap.add_argument('--playcall-streak-cache', type=Path, default=None, help='frame cache for the streak splits')
+    ap.add_argument('--playcall-target-roles', action='store_true',
+                    help='SLC v1 research: decision model category A (target role) as a team-by-situation pre-event prior')
     ap.add_argument('--playcall-streak-league', action='store_true',
                     help='SLC v1 research: league-wide streak splits (dropback shift and outcome mix by streak state)')
     ap.add_argument('--playcall-streak-file', type=Path, default=None,
