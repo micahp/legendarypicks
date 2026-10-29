@@ -1,0 +1,397 @@
+{
+  "archive_manifest_sha256": "2b91e02bff322dbe01654ba0a676ad7ceae5ba8832c679793969cd6c88273f46",
+  "arms": [
+    "S0",
+    "SLC_v1_full_stack"
+  ],
+  "artifact_file_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+  "artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+  "created_at_utc": "2026-10-29T21:54:35.573816Z",
+  "database_path": "/tmp/picks-dal-phi-simulation-copy.db",
+  "database_size_bytes": 3332153344,
+  "driver_command": [
+    "scripts/nfl_sequence/run_slc_archival_comparison.py",
+    "--phase",
+    "smoke",
+    "--readiness-matrix",
+    "docs/research/slc-week1-7-readiness-2026-10-29/readiness_matrix.csv",
+    "--archive-manifest",
+    "docs/research/slc-week1-7-readiness-2026-10-29/archive_manifest.json",
+    "--archive-root",
+    "/tmp/slc-readiness-audit-20261029",
+    "--snapshot-dir",
+    "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots",
+    "--artifact",
+    "docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+    "--db",
+    "/tmp/picks-dal-phi-simulation-copy.db",
+    "--out-root",
+    "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison",
+    "--games",
+    "2",
+    "--seed-start",
+    "1"
+  ],
+  "evaluation_class": "retrospective_archive_reconstruction",
+  "games": 2,
+  "outputs_directory": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke",
+  "overlap_choices": {
+    "decision_filter": "enabled",
+    "playbook": "replaces decision categories C/D/E when its cell prior exists",
+    "player_shares": "Dirichlet-multinomial only; fixed shares disabled",
+    "target_role_category_A": "normalized geometric mean of team target-role and decision priors, renormalized to frozen eligible roles"
+  },
+  "phase": "smoke",
+  "primary_game_ids": [
+    "2026_05_CHI_GB",
+    "2026_05_CIN_MIA",
+    "2026_05_CLE_NYJ",
+    "2026_05_HOU_TEN",
+    "2026_05_IND_PIT",
+    "2026_05_MIN_NO",
+    "2026_05_BAL_ATL",
+    "2026_06_SEA_DEN",
+    "2026_06_HOU_JAX",
+    "2026_06_BAL_CLE",
+    "2026_06_CHI_ATL",
+    "2026_06_NO_NYG",
+    "2026_06_NYJ_NE",
+    "2026_06_PIT_TB",
+    "2026_06_TEN_IND",
+    "2026_06_LAC_KC",
+    "2026_06_DAL_GB",
+    "2026_07_NE_CHI",
+    "2026_07_PIT_NO",
+    "2026_07_CIN_BAL",
+    "2026_07_CLE_TEN",
+    "2026_07_IND_MIN",
+    "2026_07_NYG_HOU",
+    "2026_07_SF_ATL",
+    "2026_07_TB_CAR",
+    "2026_07_DEN_ARI",
+    "2026_07_GB_DET",
+    "2026_07_KC_SEA"
+  ],
+  "prospective": false,
+  "readiness_matrix_sha256": "3702009e706a2ba73b6b6a9901db263a7c404c2a758caa31e6d6db9eeb47603b",
+  "readiness_population": {
+    "cutoff-valid": 28,
+    "exploratory reconstruction": 51,
+    "refused": 28
+  },
+  "schema": "lp-nfl-slc-week5-7-run-manifest-1",
+  "seed_end_inclusive": 2,
+  "seed_start": 1,
+  "smoke_report": null,
+  "snapshot_pins": {
+    "2026_05_BAL_ATL": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_05_BAL_ATL.json",
+      "snapshot_sha256": "71ee31d703e4f187fb30185dc31a63bf286cc4e9f1277f3e6510d5001aecc98f",
+      "source_hashes": {
+        "depth": "11d1ef46643386eba5bee36db33fa15b0ac5101b8cd143f91d73d8e223499954",
+        "injury": "e70b3aa763525c75c9b5da8c466e963de9049942bd0c1b5a201f7b59c78053ce",
+        "roster": "616c14421784b76be42b98ad075f090d0e29a300901592cd5b557ff1d17c8df7",
+        "schedule": "4a9fbd4af41f185a8584b6d7977ba2163c101d0b107d49f679aa1ee34cebde40"
+      },
+      "streak_sha256": "8b5854174cdad67be48769bb563b06039feba64a560c232826bfc78ad97d3734"
+    },
+    "2026_05_CHI_GB": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_05_CHI_GB.json",
+      "snapshot_sha256": "db57b2621d76a0637625be8ae046f644ea469214ba9fc5d59237e798dabe6f50",
+      "source_hashes": {
+        "depth": "11d1ef46643386eba5bee36db33fa15b0ac5101b8cd143f91d73d8e223499954",
+        "injury": "e70b3aa763525c75c9b5da8c466e963de9049942bd0c1b5a201f7b59c78053ce",
+        "roster": "616c14421784b76be42b98ad075f090d0e29a300901592cd5b557ff1d17c8df7",
+        "schedule": "4a9fbd4af41f185a8584b6d7977ba2163c101d0b107d49f679aa1ee34cebde40"
+      },
+      "streak_sha256": "58543ae3201f79f1c90ec36df03cd644b7c84718b7f2c49efd688cec755762e6"
+    },
+    "2026_05_CIN_MIA": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_05_CIN_MIA.json",
+      "snapshot_sha256": "1a492482e982cc1c9158b0676955c9df9786643cf665620f68653284e4e25866",
+      "source_hashes": {
+        "depth": "11d1ef46643386eba5bee36db33fa15b0ac5101b8cd143f91d73d8e223499954",
+        "injury": "e70b3aa763525c75c9b5da8c466e963de9049942bd0c1b5a201f7b59c78053ce",
+        "roster": "616c14421784b76be42b98ad075f090d0e29a300901592cd5b557ff1d17c8df7",
+        "schedule": "4a9fbd4af41f185a8584b6d7977ba2163c101d0b107d49f679aa1ee34cebde40"
+      },
+      "streak_sha256": "f3a0faa3169ad777cf7bc810a375e9986cf4df4a04a8cc9cc74c5a60a203dc1b"
+    },
+    "2026_05_CLE_NYJ": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_05_CLE_NYJ.json",
+      "snapshot_sha256": "1c65d43ea7582bb123a94d7de5e2b6efa386edb0a0df6093758ced1647feced9",
+      "source_hashes": {
+        "depth": "11d1ef46643386eba5bee36db33fa15b0ac5101b8cd143f91d73d8e223499954",
+        "injury": "e70b3aa763525c75c9b5da8c466e963de9049942bd0c1b5a201f7b59c78053ce",
+        "roster": "616c14421784b76be42b98ad075f090d0e29a300901592cd5b557ff1d17c8df7",
+        "schedule": "4a9fbd4af41f185a8584b6d7977ba2163c101d0b107d49f679aa1ee34cebde40"
+      },
+      "streak_sha256": "8549666bf535404b22c7a54fa14b0d535bd1d9725cc6e2bf56bae36028976ae8"
+    },
+    "2026_05_HOU_TEN": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_05_HOU_TEN.json",
+      "snapshot_sha256": "6d0e57b5019bdaf46a50249d5b2e3521ae9b3a259a7cc2aaf9c91b3c0b01930a",
+      "source_hashes": {
+        "depth": "11d1ef46643386eba5bee36db33fa15b0ac5101b8cd143f91d73d8e223499954",
+        "injury": "e70b3aa763525c75c9b5da8c466e963de9049942bd0c1b5a201f7b59c78053ce",
+        "roster": "616c14421784b76be42b98ad075f090d0e29a300901592cd5b557ff1d17c8df7",
+        "schedule": "4a9fbd4af41f185a8584b6d7977ba2163c101d0b107d49f679aa1ee34cebde40"
+      },
+      "streak_sha256": "f7678a3372c26533b1bc4d607c2eb352e2dd7bb376757ad0abdd7f4769026293"
+    },
+    "2026_05_IND_PIT": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_05_IND_PIT.json",
+      "snapshot_sha256": "964714faa312671d54bc8a96bcdfedb515723f39da46c4fc41c58d30147aa4db",
+      "source_hashes": {
+        "depth": "11d1ef46643386eba5bee36db33fa15b0ac5101b8cd143f91d73d8e223499954",
+        "injury": "e70b3aa763525c75c9b5da8c466e963de9049942bd0c1b5a201f7b59c78053ce",
+        "roster": "616c14421784b76be42b98ad075f090d0e29a300901592cd5b557ff1d17c8df7",
+        "schedule": "4a9fbd4af41f185a8584b6d7977ba2163c101d0b107d49f679aa1ee34cebde40"
+      },
+      "streak_sha256": "0df733926f0e66d3e2756bf9cde2a0b747acdaa44db45a49e0c546605c451802"
+    },
+    "2026_05_MIN_NO": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_05_MIN_NO.json",
+      "snapshot_sha256": "38861a9f5b55357d9ce7eea432ce6a994dbf502790c399fc7518b56266cc4d14",
+      "source_hashes": {
+        "depth": "11d1ef46643386eba5bee36db33fa15b0ac5101b8cd143f91d73d8e223499954",
+        "injury": "e70b3aa763525c75c9b5da8c466e963de9049942bd0c1b5a201f7b59c78053ce",
+        "roster": "616c14421784b76be42b98ad075f090d0e29a300901592cd5b557ff1d17c8df7",
+        "schedule": "4a9fbd4af41f185a8584b6d7977ba2163c101d0b107d49f679aa1ee34cebde40"
+      },
+      "streak_sha256": "6ed45d8d13477caa4df0948113e55e91fd0aedb9545fa996251305312218c7a6"
+    },
+    "2026_06_BAL_CLE": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_06_BAL_CLE.json",
+      "snapshot_sha256": "dc3accfbc1a470c7ff95ec59b055460e2e1d2b3bbb8e218496c6fe53536de891",
+      "source_hashes": {
+        "depth": "1e1f6ad3cb20699034ae31b16c581a69197e3f17fb912606303abd440c8567a7",
+        "injury": "a030a16fa65d6d50fa91a96c9586c955fdee0908b2963b64df238f79104f4d70",
+        "roster": "02164d2bf3baf174b93fee19f259241f5553409cbde47944a08d8483f19babb3",
+        "schedule": "613041e076d78436508a8ff6bfa2ee9997fb3082b718a70254c27765a29dab6c"
+      },
+      "streak_sha256": "71765ac65634ea2b59fe9232bc54df394b95c0d8d71b9b487c32b98174d4e3f0"
+    },
+    "2026_06_CHI_ATL": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_06_CHI_ATL.json",
+      "snapshot_sha256": "8c44f52e57c20e827b833067b093fb8e403304cb4c70900607b018e66d5cdefc",
+      "source_hashes": {
+        "depth": "1e1f6ad3cb20699034ae31b16c581a69197e3f17fb912606303abd440c8567a7",
+        "injury": "a030a16fa65d6d50fa91a96c9586c955fdee0908b2963b64df238f79104f4d70",
+        "roster": "02164d2bf3baf174b93fee19f259241f5553409cbde47944a08d8483f19babb3",
+        "schedule": "613041e076d78436508a8ff6bfa2ee9997fb3082b718a70254c27765a29dab6c"
+      },
+      "streak_sha256": "5438c5bb755b8a1126e6f4a98a73958c224ed71da8ee57d86060cfaec7821212"
+    },
+    "2026_06_DAL_GB": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_06_DAL_GB.json",
+      "snapshot_sha256": "424915926ed3a67a77987188879b755daa282da413829392dc61f7ff78e488ef",
+      "source_hashes": {
+        "depth": "1e1f6ad3cb20699034ae31b16c581a69197e3f17fb912606303abd440c8567a7",
+        "injury": "a030a16fa65d6d50fa91a96c9586c955fdee0908b2963b64df238f79104f4d70",
+        "roster": "02164d2bf3baf174b93fee19f259241f5553409cbde47944a08d8483f19babb3",
+        "schedule": "613041e076d78436508a8ff6bfa2ee9997fb3082b718a70254c27765a29dab6c"
+      },
+      "streak_sha256": "a7d312c3c25521f6a63b4e51d40cb974a8dfb3094eb2626f287f2c016e0839ab"
+    },
+    "2026_06_HOU_JAX": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_06_HOU_JAX.json",
+      "snapshot_sha256": "7dad7266a3eddfa967889f621bcc5b87c2e5bfb8feb31a2fd4476b7832bd04f1",
+      "source_hashes": {
+        "depth": "1e1f6ad3cb20699034ae31b16c581a69197e3f17fb912606303abd440c8567a7",
+        "injury": "a030a16fa65d6d50fa91a96c9586c955fdee0908b2963b64df238f79104f4d70",
+        "roster": "02164d2bf3baf174b93fee19f259241f5553409cbde47944a08d8483f19babb3",
+        "schedule": "613041e076d78436508a8ff6bfa2ee9997fb3082b718a70254c27765a29dab6c"
+      },
+      "streak_sha256": "dc48b240609b50afaad26e2f13cb1ab670cccdb30089e2ccfb46805306e49055"
+    },
+    "2026_06_LAC_KC": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_06_LAC_KC.json",
+      "snapshot_sha256": "8145c1234aae35113ed35a00df0ce10cfed48a24b82efd69c295e37092aeb15b",
+      "source_hashes": {
+        "depth": "1e1f6ad3cb20699034ae31b16c581a69197e3f17fb912606303abd440c8567a7",
+        "injury": "a030a16fa65d6d50fa91a96c9586c955fdee0908b2963b64df238f79104f4d70",
+        "roster": "02164d2bf3baf174b93fee19f259241f5553409cbde47944a08d8483f19babb3",
+        "schedule": "613041e076d78436508a8ff6bfa2ee9997fb3082b718a70254c27765a29dab6c"
+      },
+      "streak_sha256": "667e62759e583055ebef888765709ac5e3469d198983b4f02c95a7b4ee5cd6fb"
+    },
+    "2026_06_NO_NYG": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_06_NO_NYG.json",
+      "snapshot_sha256": "0fb97410059019212db0d5b317073cf33be7d9c7c00d4b2f874c1a57940029b4",
+      "source_hashes": {
+        "depth": "1e1f6ad3cb20699034ae31b16c581a69197e3f17fb912606303abd440c8567a7",
+        "injury": "a030a16fa65d6d50fa91a96c9586c955fdee0908b2963b64df238f79104f4d70",
+        "roster": "02164d2bf3baf174b93fee19f259241f5553409cbde47944a08d8483f19babb3",
+        "schedule": "613041e076d78436508a8ff6bfa2ee9997fb3082b718a70254c27765a29dab6c"
+      },
+      "streak_sha256": "54478918d103f176f4f6ab83fb5401ab33347094ead437e9d458bf907a177986"
+    },
+    "2026_06_NYJ_NE": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_06_NYJ_NE.json",
+      "snapshot_sha256": "7c0f72001d91f6bf744606570da3d34767be862ba57575dae757450722da87d2",
+      "source_hashes": {
+        "depth": "1e1f6ad3cb20699034ae31b16c581a69197e3f17fb912606303abd440c8567a7",
+        "injury": "a030a16fa65d6d50fa91a96c9586c955fdee0908b2963b64df238f79104f4d70",
+        "roster": "02164d2bf3baf174b93fee19f259241f5553409cbde47944a08d8483f19babb3",
+        "schedule": "613041e076d78436508a8ff6bfa2ee9997fb3082b718a70254c27765a29dab6c"
+      },
+      "streak_sha256": "659d5227e985bb5975ff343f11a2ed448016c5c665c62205c9a54b3223be6e3e"
+    },
+    "2026_06_PIT_TB": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_06_PIT_TB.json",
+      "snapshot_sha256": "8cbcee03972936a3496edb327c5b292e5ad87bba5aa8d9ef5627f0fdd1570a40",
+      "source_hashes": {
+        "depth": "1e1f6ad3cb20699034ae31b16c581a69197e3f17fb912606303abd440c8567a7",
+        "injury": "a030a16fa65d6d50fa91a96c9586c955fdee0908b2963b64df238f79104f4d70",
+        "roster": "02164d2bf3baf174b93fee19f259241f5553409cbde47944a08d8483f19babb3",
+        "schedule": "613041e076d78436508a8ff6bfa2ee9997fb3082b718a70254c27765a29dab6c"
+      },
+      "streak_sha256": "86612a6605c51b6085e48e14bbafdb44826ab1312cffb4b0b0d3cb1708cd0967"
+    },
+    "2026_06_SEA_DEN": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_06_SEA_DEN.json",
+      "snapshot_sha256": "34617cde9fcdb09f9571e34f80577c19862580468965aa583d9981896ee9f861",
+      "source_hashes": {
+        "depth": "1e1f6ad3cb20699034ae31b16c581a69197e3f17fb912606303abd440c8567a7",
+        "injury": "a030a16fa65d6d50fa91a96c9586c955fdee0908b2963b64df238f79104f4d70",
+        "roster": "02164d2bf3baf174b93fee19f259241f5553409cbde47944a08d8483f19babb3",
+        "schedule": "613041e076d78436508a8ff6bfa2ee9997fb3082b718a70254c27765a29dab6c"
+      },
+      "streak_sha256": "eeab1c2b3d0438e54045346c46dbdab3f78d0de931749c16ef40aecdbf756978"
+    },
+    "2026_06_TEN_IND": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_06_TEN_IND.json",
+      "snapshot_sha256": "b65ce8cd1f9b887666495dc654893a63989c3436235e2d04474f181006b8fc9f",
+      "source_hashes": {
+        "depth": "1e1f6ad3cb20699034ae31b16c581a69197e3f17fb912606303abd440c8567a7",
+        "injury": "a030a16fa65d6d50fa91a96c9586c955fdee0908b2963b64df238f79104f4d70",
+        "roster": "02164d2bf3baf174b93fee19f259241f5553409cbde47944a08d8483f19babb3",
+        "schedule": "613041e076d78436508a8ff6bfa2ee9997fb3082b718a70254c27765a29dab6c"
+      },
+      "streak_sha256": "8742ac1f8eec253542ea067029dc4f6bb11733f007c0769961e2f28fb508f0f1"
+    },
+    "2026_07_CIN_BAL": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_CIN_BAL.json",
+      "snapshot_sha256": "6ce8802642f108bb53ed816e2d4c529254bf9cad7e599fc23193c4bdc197878d",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "309a266116252d4da23883e5020f13eafc7c4c719448c0e639c3df8f144c9e73"
+    },
+    "2026_07_CLE_TEN": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_CLE_TEN.json",
+      "snapshot_sha256": "e4545228b06cef1f2ca0d7780ae9396b51eab3814348c6c683eac717efb59a8c",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "f93d5b501247f38ee249090fa2347937de971e245674a6edbd42fa36c935aaef"
+    },
+    "2026_07_DEN_ARI": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_DEN_ARI.json",
+      "snapshot_sha256": "3a96a3e5c9182d5b1355981fd0c3092ae7ca09ca9fa02fff41f7d45ab2c3d50c",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "12df0424ec24ffb65cd7a0a50c44abc4a7bf41c1cc9051073a55008347ec8789"
+    },
+    "2026_07_GB_DET": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_GB_DET.json",
+      "snapshot_sha256": "19066fa911c233fec3c1ed4ed8944bce4c93ed595e059f8a11dc62f2397733f2",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "f4f423dfab1f4a08e0141603e2d75a3a0bb6a2de223612de909d20efd929d83f"
+    },
+    "2026_07_IND_MIN": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_IND_MIN.json",
+      "snapshot_sha256": "5f73007c19d3699f02fed9376c5a1a1c5c497822dd07dc5a39391d72834585f5",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "3984ae72fbca15b41559a0d0be220754d069c07010876b2486210f3300bc718e"
+    },
+    "2026_07_KC_SEA": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_KC_SEA.json",
+      "snapshot_sha256": "7e09a3eb22ca0dfac5533f6385c2d02d71362b2b7f79a5751c14ec306ba69bb3",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "b349bdaa9df458f4542e193c13bee3aea151c884080cc253ecb0ca22f7c8b7fa"
+    },
+    "2026_07_NE_CHI": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_NE_CHI.json",
+      "snapshot_sha256": "b1d8f323ef10c55097c1d45fd6f852af9dc82ba6ae318e1bf6afb6ca3b6a760d",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "ebff93b38eec80e45100799583842d4b701f7adf6eea08a1732b1a31bcef4672"
+    },
+    "2026_07_NYG_HOU": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_NYG_HOU.json",
+      "snapshot_sha256": "00fe16bf8c0ac64aef1d5842e72247cee2a21b8f9525d14d0617aa5891d50524",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "f0a006dd9ec9c1859479a93cf4b8e32e4522977bec3f7b9363531ee5468bf1a0"
+    },
+    "2026_07_PIT_NO": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_PIT_NO.json",
+      "snapshot_sha256": "402d6b21624d1907cd077f7ad79ac0120a8d414cdb3ec07d1785d2c268e9bf42",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "c75c66802efae56fbbed9907a784bfeb6c7149dcf281857b3a66c664c673e8f4"
+    },
+    "2026_07_SF_ATL": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_SF_ATL.json",
+      "snapshot_sha256": "33fa855134c1c0f03d0ce14113d40ce17f209b27349d5bac4d9286439dbd40d3",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "167c34e0e57374b99b13f9b3ba6c09e5789d1d37f13e5256804880710de5a666"
+    },
+    "2026_07_TB_CAR": {
+      "path": "/tmp/slc-week5-7-archival-20261029-e5b98c32/snapshots/snapshots/2026_07_TB_CAR.json",
+      "snapshot_sha256": "c8730c3e40bd463aaa05eba8a8a60db58f99ddd4e81c0d1c032c3feadb6d092b",
+      "source_hashes": {
+        "depth": "b02291852c44ada787905172b46f7a5de426b3bad9a31499acb507337baaba7a",
+        "injury": "7e310f5fbd3abc46dac27d6876543a8f7ef4e4bcaa67c64c009949024c349920",
+        "roster": "440eea90b634ec40343bb31021a190b919dc96756e2e7e8fb8c1a28f860a793d",
+        "schedule": "abcf524c702914bbc3d93e8cfd293a19a10767e1f5e4668844dc21e982b7dec8"
+      },
+      "streak_sha256": "6a4b3377f466ecbc3ce15dbdac484c059dd628961a9afc3a9ba2f41b58dd2522"
+    }
+  },
+  "source_revision": "9eb2d580848da84cc6b82f834fd821a16bb63709"
+}
