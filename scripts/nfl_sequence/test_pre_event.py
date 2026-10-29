@@ -63,9 +63,9 @@ class DrawOrder(unittest.TestCase):
         calls = []
         chooser = pe.chooser(SNAPSHOT, seed=7)
 
-        def recording(intent, offense):
+        def recording(intent, offense, state=None):
             calls.append('participants')
-            return chooser(intent, offense)
+            return chooser(intent, offense, state)
         sampler.participant_chooser = recording
 
         class Recording(random.Random):
