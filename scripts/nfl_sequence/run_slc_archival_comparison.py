@@ -124,6 +124,17 @@ def _line_reader(pipe, output_queue):
         output_queue.put(None)
 
 
+def _terminate_child(process):
+    if process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+
+
 def _run_command(command, *, log_path, label, progress_path):
     log_path.parent.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
@@ -135,30 +146,76 @@ def _run_command(command, *, log_path, label, progress_path):
         reader = threading.Thread(target=_line_reader, args=(process.stdout, lines), daemon=True)
         reader.start()
         stream_closed = False
-        while not stream_closed or process.poll() is None:
-            try:
-                line = lines.get(timeout=30)
-            except queue.Empty:
-                elapsed = time.monotonic() - started
-                note = f'{_now()} still running {label}; elapsed={elapsed:.0f}s\n'
-                print(note, end='', flush=True)
-                log.write(note)
+        try:
+            while not stream_closed or process.poll() is None:
+                try:
+                    line = lines.get(timeout=30)
+                except queue.Empty:
+                    elapsed = time.monotonic() - started
+                    note = f'{_now()} still running {label}; elapsed={elapsed:.0f}s\n'
+                    print(note, end='', flush=True)
+                    log.write(note)
+                    log.flush()
+                    _append_jsonl(progress_path, {'event': 'heartbeat', 'label': label,
+                                                   'elapsed_seconds': round(elapsed, 1), 'time_utc': _now()})
+                    continue
+                if line is None:
+                    stream_closed = True
+                    continue
+                print(f'[{label}] {line}', end='', flush=True)
+                log.write(line)
                 log.flush()
-                _append_jsonl(progress_path, {'event': 'heartbeat', 'label': label,
-                                               'elapsed_seconds': round(elapsed, 1), 'time_utc': _now()})
-                continue
-            if line is None:
-                stream_closed = True
-                continue
-            print(f'[{label}] {line}', end='', flush=True)
-            log.write(line)
+            return_code = process.wait()
+        except KeyboardInterrupt:
+            _terminate_child(process)
+            elapsed = round(time.monotonic() - started, 3)
+            note = f'{_now()} interrupted {label}; child stopped; checkpoint={log_path}\n'
+            print(note, end='', flush=True)
+            log.write(note)
             log.flush()
-        return_code = process.wait()
+            _append_jsonl(progress_path, {'event': 'command_interrupted', 'label': label,
+                                           'elapsed_seconds': elapsed, 'log': str(log_path),
+                                           'time_utc': _now()})
+            return 130, elapsed
+        finally:
+            if process.stdout:
+                process.stdout.close()
     elapsed = round(time.monotonic() - started, 3)
     _append_jsonl(progress_path, {'event': 'command_finished', 'label': label, 'return_code': return_code,
                                  'elapsed_seconds': elapsed, 'log': str(log_path), 'time_utc': _now()})
     print(f'{_now()} finished {label}; exit={return_code}; elapsed={elapsed:.1f}s', flush=True)
     return return_code, elapsed
+
+
+def _prepare_shared_frame_cache(args, progress_path):
+    args.frame_cache.parent.mkdir(parents=True, exist_ok=True)
+    code = (
+        "import json,sys;from pathlib import Path;sys.path.insert(0,'scripts/nfl_sequence');"
+        "import playcall_model as pm;"
+        "frame=pm.load_frame_cached(Path(sys.argv[1]),range(2010,2026),db=Path(sys.argv[2]));"
+        "print(json.dumps({'cache_status':frame.cache_status,'rows':len(frame),"
+        "'fingerprint':json.loads(frame.fingerprint),"
+        "'frame_content_sha256':pm.frame_content_hash(frame)},sort_keys=True),flush=True)"
+    )
+    log_path = args.out_root / 'logs' / f'playcall-frame-cache-{args.phase}.log'
+    command = [sys.executable, '-c', code, str(args.frame_cache), str(args.db)]
+    return_code, _elapsed = _run_command(command, log_path=log_path,
+                                          label='shared 2010-2025 play-call frame',
+                                          progress_path=progress_path)
+    if return_code:
+        raise RuntimeError(f'play-call frame cache preparation failed; see {log_path}')
+    rows = [line for line in log_path.read_text().splitlines() if line.strip()]
+    frame_info = json.loads(rows[-1])
+    cache_info = {
+        'path': str(args.frame_cache), 'sha256': _sha(args.frame_cache),
+        'size_bytes': args.frame_cache.stat().st_size,
+        'fingerprint': frame_info['fingerprint'],
+        'frame_content_sha256': frame_info['frame_content_sha256'],
+        'rows': frame_info['rows'], 'seasons': list(range(2010, 2026)),
+    }
+    print(f'{_now()} shared frame cache {frame_info["cache_status"]}; rows={frame_info["rows"]}; '
+          f'sha256={cache_info["sha256"]}; path={args.frame_cache}', flush=True)
+    return cache_info
 
 
 def _append_jsonl(path, payload):
@@ -183,6 +240,8 @@ def _command_for(args, phase_dir, row, arm, snapshot_path):
                '--progress-every', '1', '--max-simulation-errors', '0', '--export-boxscores', '--out', str(out)]
     if arm != 'S0':
         command.extend(['--playcall-artifact', str(args.artifact)])
+        command.extend(['--playcall-point-splits-cache', str(args.frame_cache),
+                        '--playcall-streak-cache', str(args.frame_cache)])
     if args.resume:
         command.append('--resume')
     return command, out
@@ -202,7 +261,8 @@ def _load_run(phase_dir, game_id, arm):
     return payload, boxes
 
 
-def _build_smoke_report(args, phase_dir, candidates, classes, artifact_sha, snapshot_pins, failures):
+def _build_smoke_report(args, phase_dir, candidates, classes, artifact_sha, snapshot_pins, failures,
+                        frame_cache_info):
     layer_apps = {layer: 0 for layer in RUNTIME_FIELDS}
     fallbacks = {}
     game_rows = []
@@ -295,6 +355,7 @@ def _build_smoke_report(args, phase_dir, candidates, classes, artifact_sha, snap
         'seed_start': args.seed_start, 'seed_end_inclusive': args.seed_start + args.games - 1,
         'artifact_sha256': artifact_sha, 'readiness_matrix_sha256': _sha(args.readiness_matrix),
         'archive_manifest_sha256': _sha(args.archive_manifest), 'snapshot_pins': snapshot_pins,
+        'shared_playcall_frame_cache': frame_cache_info,
         'runtime_layer_applications': layer_apps, 'fallback_events': dict(sorted(fallbacks.items())),
         'status_counts': statuses, 'paired_seed_count': paired_seed_count,
         'reconciliation_failures': reconciliation_failures, 'games_detail': game_rows, 'failures': errors,
@@ -375,7 +436,8 @@ def _player_metric(box, team, player_id, stat):
     return line.get(category, {}).get(field, 0)
 
 
-def _build_diagnostic_report(args, phase_dir, candidates, classes, artifact_sha, snapshot_pins, failures):
+def _build_diagnostic_report(args, phase_dir, candidates, classes, artifact_sha, snapshot_pins, failures,
+                             frame_cache_info):
     actual = _actual_scores(args.db, [row['game_id'] for row in candidates])
     metric_game_deltas = {}
     per_game = []
@@ -530,6 +592,7 @@ def _build_diagnostic_report(args, phase_dir, candidates, classes, artifact_sha,
         'seed_end_inclusive': args.seed_start + args.games - 1,
         'artifact_sha256': artifact_sha, 'readiness_matrix_sha256': _sha(args.readiness_matrix),
         'archive_manifest_sha256': _sha(args.archive_manifest), 'snapshot_pins': snapshot_pins,
+        'shared_playcall_frame_cache': frame_cache_info,
         'actual_result_source': {'table': 'nfl_schedule', 'database': str(args.db),
                                  'timing': 'queried after simulation; excluded from historical model inputs'},
         'winner_probability_postgame_diagnostics': {'games_with_observed_result': len(proper_scores),
@@ -564,6 +627,8 @@ def main(argv=None):
     parser.add_argument('--artifact', type=Path, required=True)
     parser.add_argument('--db', type=Path, required=True)
     parser.add_argument('--out-root', type=Path, required=True)
+    parser.add_argument('--frame-cache', type=Path,
+                        help='shared fingerprinted 2010-2025 play-call frame cache; defaults inside OUT_ROOT')
     parser.add_argument('--smoke-report', type=Path,
                         help='diagnostic phase requires a passing smoke report; defaults to OUT_ROOT/smoke/smoke_report.json')
     parser.add_argument('--games', type=int, help='seeds per arm; smoke defaults to 2, diagnostic defaults to 25')
@@ -577,6 +642,8 @@ def main(argv=None):
     args.artifact = args.artifact.resolve()
     args.db = args.db.resolve()
     args.out_root = args.out_root.resolve()
+    args.frame_cache = (args.frame_cache or
+                        args.out_root / 'model-cache' / 'playcall-frame-2010-2025.npz').resolve()
     args.games = args.games if args.games is not None else (2 if args.phase == 'smoke' else 25)
     if args.games < 1 or args.seed_start < 0:
         parser.error('--games must be positive and --seed-start must be non-negative')
@@ -596,6 +663,10 @@ def main(argv=None):
 
     phase_dir = args.out_root / args.phase
     _prepare_phase(args, phase_dir)
+    progress_path = phase_dir / 'progress.jsonl'
+    frame_cache_info = _prepare_shared_frame_cache(args, progress_path)
+    if args.phase == 'diagnostic' and smoke.get('shared_playcall_frame_cache') != frame_cache_info:
+        raise ValueError('diagnostic frame cache fingerprint differs from the passing smoke gate')
     manifest_path = phase_dir / 'run_manifest.json'
     manifest = {
         'schema': 'lp-nfl-slc-week5-7-run-manifest-1', 'phase': args.phase,
@@ -607,6 +678,7 @@ def main(argv=None):
         'seed_end_inclusive': args.seed_start + args.games - 1,
         'readiness_population': classes, 'primary_game_ids': [row['game_id'] for row in candidates],
         'snapshot_pins': snapshot_pins,
+        'shared_playcall_frame_cache': frame_cache_info,
         'driver_command': list(sys.argv if argv is None else [sys.argv[0], *argv]),
         'source_revision': subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=REPO, check=True,
                                           capture_output=True, text=True).stdout.strip(),
@@ -624,13 +696,13 @@ def main(argv=None):
         old = _read_json(manifest_path)
         resume_keys = ('phase', 'artifact_file_sha256', 'artifact_sha256', 'readiness_matrix_sha256',
                        'archive_manifest_sha256', 'database_path', 'database_size_bytes', 'games',
-                       'seed_start', 'primary_game_ids', 'snapshot_pins', 'source_revision')
+                       'seed_start', 'primary_game_ids', 'snapshot_pins', 'source_revision',
+                       'shared_playcall_frame_cache')
         if {key: old.get(key) for key in resume_keys} != {key: manifest.get(key) for key in resume_keys}:
             raise ValueError('existing run manifest does not match resume inputs')
     else:
         manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
 
-    progress_path = phase_dir / 'progress.jsonl'
     failures = []
     total_commands = len(candidates) * 2
     done = 0
@@ -652,12 +724,30 @@ def main(argv=None):
                            'log': str(log_path), 'elapsed_seconds': elapsed}
                 failures.append(failure)
                 _append_jsonl(phase_dir / 'failure_ledger.jsonl', failure)
+                if args.phase == 'smoke' or rc == 130:
+                    break
+
+        if args.phase == 'smoke' and not failures:
+            for arm in ('S0', 'SLC_v1_full_stack'):
+                run_path = phase_dir / row['game_id'] / f'{arm}.json'
+                valid = _read_json(run_path).get('boxscore_distributions', {}).get('valid_complete_games', 0)
+                if valid != args.games:
+                    failure = {'game_id': row['game_id'], 'arm': arm,
+                               'error': f'smoke produced {valid}/{args.games} valid complete games'}
+                    failures.append(failure)
+                    _append_jsonl(phase_dir / 'failure_ledger.jsonl', failure)
+            if failures:
+                break
+        elif failures and (args.phase == 'smoke' or any(item.get('return_code') == 130 for item in failures)):
+            break
 
     if args.phase == 'smoke':
-        report = _build_smoke_report(args, phase_dir, candidates, classes, artifact['sha256'], snapshot_pins, failures)
+        report = _build_smoke_report(args, phase_dir, candidates, classes, artifact['sha256'], snapshot_pins,
+                                     failures, frame_cache_info)
         report_path = phase_dir / 'smoke_report.json'
     else:
-        report = _build_diagnostic_report(args, phase_dir, candidates, classes, artifact['sha256'], snapshot_pins, failures)
+        report = _build_diagnostic_report(args, phase_dir, candidates, classes, artifact['sha256'], snapshot_pins,
+                                          failures, frame_cache_info)
         report_path = phase_dir / 'diagnostic_report.json'
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
     print(f'{_now()} wrote {report_path}; gate_passed={report.get("gate_passed", "not_applicable")}', flush=True)
