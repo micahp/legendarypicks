@@ -70,6 +70,12 @@ VERIFIED_NAME_VARIANTS = {
     # Packers materials confirm T.J. is Tedarrell Slaton's nickname.
     # https://www.packers.com/news/inbox-it-serves-a-playmaking-purpose
     '00-0036642': frozenset({('tj slaton', 'tedarrell slaton')}),
+    # NFL media guides use both Josh and Joshua Uche for the same player.
+    # https://static.www.nfl.com/league/apps/league-site/media-guides/2024/NE.pdf
+    '00-0036159': frozenset({('josh uche', 'joshua uche')}),
+    # NFL's official player feature gives Julius "JuJu" Brents.
+    # https://www.nfl.com/causes/my-cause-my-cleats/2024/colts
+    '00-0039156': frozenset({('juju brents', 'julius brents')}),
 }
 
 
