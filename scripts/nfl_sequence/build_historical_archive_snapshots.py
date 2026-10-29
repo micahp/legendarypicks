@@ -67,6 +67,9 @@ VERIFIED_NAME_VARIANTS = {
     # Bengals materials identify Daxton Hill as Dax Hill and report that he prefers Dax.
     # https://www.bengals.com/news/daxton-hill-press-conference-transcripts
     '00-0037743': frozenset({('dax hill', 'daxton hill')}),
+    # Packers materials confirm T.J. is Tedarrell Slaton's nickname.
+    # https://www.packers.com/news/inbox-it-serves-a-playmaking-purpose
+    '00-0036642': frozenset({('t j slaton', 'tedarrell slaton')}),
 }
 
 
@@ -279,6 +282,7 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
     retained = []
     source_role_keys = set()
     missing_ids = set()
+    name_mismatches = []
     for record in depth_rows.to_dict('records'):
         gsis_id = _text(record.get('gsis_id'))
         group, pos = _text(record.get('pos_grp')), _text(record.get('pos_abb'))
@@ -298,8 +302,9 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
         source_name = _text(record.get('player_name')) or roster_entry.get('full_name')
         canonical_name = player_identity['canonical_name']
         if not source_name or not canonical_name or not _identity_name_matches(gsis_id, source_name, canonical_name):
-            raise ValueError(f'{game_id}: GSIS {gsis_id} identity/name mismatch: archive={source_name!r}; '
-                             f'canonical={canonical_name!r}')
+            name_mismatches.append({'gsis_id': gsis_id, 'archive_name': source_name,
+                                    'canonical_name': canonical_name})
+            continue
         role_key = (group, pos, rank)
         if role_key in source_role_keys:
             raise ValueError(f'{game_id}: duplicate archived depth role for {team} {role_key}')
@@ -327,6 +332,8 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
             'snapshot_at': depth_date,
             'source': 'nflverse_depth_charts_archived',
         })
+    if name_mismatches:
+        raise ValueError(f'{game_id}: unresolved archived/canonical name mismatches for {team}: {name_mismatches}')
     if missing_ids:
         raise ValueError(f'{game_id}: {team} depth players have no unique canonical ID: {sorted(missing_ids)[:5]}')
 

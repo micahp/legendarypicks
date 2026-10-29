@@ -13,6 +13,7 @@ class VerifiedIdentityNameVariants(unittest.TestCase):
         self.assertTrue(builder._identity_name_matches('00-0035118', 'Matt Orzech', 'Matthew Orzech'))
         self.assertTrue(builder._identity_name_matches('00-0035118', 'Matthew Orzech', 'Matt Orzech'))
         self.assertTrue(builder._identity_name_matches('00-0037743', 'Dax Hill', 'Daxton Hill'))
+        self.assertTrue(builder._identity_name_matches('00-0036642', 'T.J. Slaton Jr.', 'Tedarrell Slaton'))
         self.assertFalse(builder._identity_name_matches('00-0000000', 'Matt Orzech', 'Matthew Orzech'))
         self.assertFalse(builder._identity_name_matches('00-0035118', 'Matt Jones', 'Matthew Orzech'))
 
