@@ -1,0 +1,8 @@
+{"arm": "SLC_v1_full_stack", "elapsed_seconds": 285.324, "game_id": "2026_05_CHI_GB", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CHI_GB/SLC_v1_full_stack.log", "return_code": 1}
+{"arm": "SLC_v1_full_stack", "elapsed_seconds": 276.584, "game_id": "2026_05_CHI_GB", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CHI_GB/SLC_v1_full_stack.log", "return_code": 1}
+{"arm": "SLC_v1_full_stack", "elapsed_seconds": 281.241, "game_id": "2026_05_CIN_MIA", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CIN_MIA/SLC_v1_full_stack.log", "return_code": 1}
+{"arm": "SLC_v1_full_stack", "elapsed_seconds": 284.271, "game_id": "2026_05_CLE_NYJ", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CLE_NYJ/SLC_v1_full_stack.log", "return_code": 1}
+{"arm": "SLC_v1_full_stack", "elapsed_seconds": 293.684, "game_id": "2026_05_HOU_TEN", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_HOU_TEN/SLC_v1_full_stack.log", "return_code": 1}
+{"arm": "SLC_v1_full_stack", "elapsed_seconds": 283.816, "game_id": "2026_05_IND_PIT", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_IND_PIT/SLC_v1_full_stack.log", "return_code": 1}
+{"arm": "SLC_v1_full_stack", "elapsed_seconds": 295.032, "game_id": "2026_05_MIN_NO", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_MIN_NO/SLC_v1_full_stack.log", "return_code": 1}
+{"arm": "SLC_v1_full_stack", "elapsed_seconds": 298.473, "game_id": "2026_05_BAL_ATL", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_BAL_ATL/SLC_v1_full_stack.log", "return_code": 1}

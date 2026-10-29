@@ -1,0 +1,124 @@
+{"elapsed_seconds": 16.727, "event": "command_finished", "label": "smoke 2026_05_CHI_GB S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CHI_GB/S0.log", "return_code": 0, "time_utc": "2026-10-29T21:54:52.311468Z"}
+{"completed_commands": 1, "event": "pair_progress", "label": "smoke 2026_05_CHI_GB S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_CHI_GB/S0.json", "return_code": 0, "time_utc": "2026-10-29T21:54:52.315163Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T21:55:22.325121Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T21:55:52.331146Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T21:56:22.336346Z"}
+{"elapsed_seconds": 120.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T21:56:52.351332Z"}
+{"elapsed_seconds": 150.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T21:57:22.364547Z"}
+{"elapsed_seconds": 180.1, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T21:57:52.374248Z"}
+{"elapsed_seconds": 210.1, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T21:58:22.378500Z"}
+{"elapsed_seconds": 15.695, "event": "command_finished", "label": "smoke 2026_05_CHI_GB S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CHI_GB/S0.log", "return_code": 0, "time_utc": "2026-10-29T22:22:59.572971Z"}
+{"completed_commands": 1, "event": "pair_progress", "label": "smoke 2026_05_CHI_GB S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_CHI_GB/S0.json", "return_code": 0, "time_utc": "2026-10-29T22:22:59.578360Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:23:29.589061Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:23:59.597370Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:24:29.615819Z"}
+{"elapsed_seconds": 120.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:24:59.626882Z"}
+{"elapsed_seconds": 150.1, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:25:29.635048Z"}
+{"elapsed_seconds": 180.1, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:25:59.651364Z"}
+{"elapsed_seconds": 210.1, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:26:29.658073Z"}
+{"elapsed_seconds": 240.1, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:26:59.665116Z"}
+{"elapsed_seconds": 270.1, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:27:29.680577Z"}
+{"elapsed_seconds": 285.324, "event": "command_finished", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CHI_GB/SLC_v1_full_stack.log", "return_code": 1, "time_utc": "2026-10-29T22:27:44.906724Z"}
+{"completed_commands": 2, "event": "pair_progress", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_CHI_GB/SLC_v1_full_stack.json", "return_code": 1, "time_utc": "2026-10-29T22:27:44.922090Z", "total_commands": 56}
+{"elapsed_seconds": 15.427, "event": "command_finished", "label": "smoke 2026_05_CIN_MIA S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CIN_MIA/S0.log", "return_code": 0, "time_utc": "2026-10-29T22:28:00.359172Z"}
+{"completed_commands": 3, "event": "pair_progress", "label": "smoke 2026_05_CIN_MIA S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_CIN_MIA/S0.json", "return_code": 0, "time_utc": "2026-10-29T22:28:00.364808Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:28:30.376925Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:29:00.388931Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:29:30.401429Z"}
+{"elapsed_seconds": 13.874, "event": "command_finished", "label": "smoke 2026_05_CHI_GB S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CHI_GB/S0.log", "return_code": 0, "time_utc": "2026-10-29T22:44:30.258101Z"}
+{"completed_commands": 1, "event": "pair_progress", "label": "smoke 2026_05_CHI_GB S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_CHI_GB/S0.json", "return_code": 0, "time_utc": "2026-10-29T22:44:30.273208Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:45:00.287715Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:45:30.295812Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:46:00.302392Z"}
+{"elapsed_seconds": 120.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:46:30.314151Z"}
+{"elapsed_seconds": 150.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:47:00.320321Z"}
+{"elapsed_seconds": 180.0, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:47:30.328787Z"}
+{"elapsed_seconds": 210.1, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:48:00.337139Z"}
+{"elapsed_seconds": 240.1, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:48:30.348383Z"}
+{"elapsed_seconds": 270.1, "event": "heartbeat", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "time_utc": "2026-10-29T22:49:00.355860Z"}
+{"elapsed_seconds": 276.584, "event": "command_finished", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CHI_GB/SLC_v1_full_stack.log", "return_code": 1, "time_utc": "2026-10-29T22:49:06.867337Z"}
+{"completed_commands": 2, "event": "pair_progress", "label": "smoke 2026_05_CHI_GB SLC_v1_full_stack", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_CHI_GB/SLC_v1_full_stack.json", "return_code": 1, "time_utc": "2026-10-29T22:49:06.883231Z", "total_commands": 56}
+{"elapsed_seconds": 12.939, "event": "command_finished", "label": "smoke 2026_05_CIN_MIA S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CIN_MIA/S0.log", "return_code": 0, "time_utc": "2026-10-29T22:49:19.841759Z"}
+{"completed_commands": 3, "event": "pair_progress", "label": "smoke 2026_05_CIN_MIA S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_CIN_MIA/S0.json", "return_code": 0, "time_utc": "2026-10-29T22:49:19.845689Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:49:49.853774Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:50:19.860319Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:50:49.877627Z"}
+{"elapsed_seconds": 120.0, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:51:19.887164Z"}
+{"elapsed_seconds": 150.0, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:51:49.893405Z"}
+{"elapsed_seconds": 180.1, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:52:19.903364Z"}
+{"elapsed_seconds": 210.1, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:52:49.920851Z"}
+{"elapsed_seconds": 240.1, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:53:19.936147Z"}
+{"elapsed_seconds": 270.1, "event": "heartbeat", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "time_utc": "2026-10-29T22:53:49.941941Z"}
+{"elapsed_seconds": 281.241, "event": "command_finished", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CIN_MIA/SLC_v1_full_stack.log", "return_code": 1, "time_utc": "2026-10-29T22:54:01.090228Z"}
+{"completed_commands": 4, "event": "pair_progress", "label": "smoke 2026_05_CIN_MIA SLC_v1_full_stack", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_CIN_MIA/SLC_v1_full_stack.json", "return_code": 1, "time_utc": "2026-10-29T22:54:01.109292Z", "total_commands": 56}
+{"elapsed_seconds": 16.657, "event": "command_finished", "label": "smoke 2026_05_CLE_NYJ S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CLE_NYJ/S0.log", "return_code": 0, "time_utc": "2026-10-29T22:54:17.789277Z"}
+{"completed_commands": 5, "event": "pair_progress", "label": "smoke 2026_05_CLE_NYJ S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_CLE_NYJ/S0.json", "return_code": 0, "time_utc": "2026-10-29T22:54:17.795749Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "time_utc": "2026-10-29T22:54:47.808670Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "time_utc": "2026-10-29T22:55:17.816367Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "time_utc": "2026-10-29T22:55:47.834397Z"}
+{"elapsed_seconds": 120.0, "event": "heartbeat", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "time_utc": "2026-10-29T22:56:17.850470Z"}
+{"elapsed_seconds": 150.1, "event": "heartbeat", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "time_utc": "2026-10-29T22:56:47.863635Z"}
+{"elapsed_seconds": 180.1, "event": "heartbeat", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "time_utc": "2026-10-29T22:57:17.871315Z"}
+{"elapsed_seconds": 210.1, "event": "heartbeat", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "time_utc": "2026-10-29T22:57:47.886395Z"}
+{"elapsed_seconds": 240.1, "event": "heartbeat", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "time_utc": "2026-10-29T22:58:17.893098Z"}
+{"elapsed_seconds": 270.1, "event": "heartbeat", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "time_utc": "2026-10-29T22:58:47.901710Z"}
+{"elapsed_seconds": 284.271, "event": "command_finished", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_CLE_NYJ/SLC_v1_full_stack.log", "return_code": 1, "time_utc": "2026-10-29T22:59:02.075333Z"}
+{"completed_commands": 6, "event": "pair_progress", "label": "smoke 2026_05_CLE_NYJ SLC_v1_full_stack", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_CLE_NYJ/SLC_v1_full_stack.json", "return_code": 1, "time_utc": "2026-10-29T22:59:02.085747Z", "total_commands": 56}
+{"elapsed_seconds": 16.54, "event": "command_finished", "label": "smoke 2026_05_HOU_TEN S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_HOU_TEN/S0.log", "return_code": 0, "time_utc": "2026-10-29T22:59:18.645841Z"}
+{"completed_commands": 7, "event": "pair_progress", "label": "smoke 2026_05_HOU_TEN S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_HOU_TEN/S0.json", "return_code": 0, "time_utc": "2026-10-29T22:59:18.649802Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "time_utc": "2026-10-29T22:59:48.658992Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:00:18.667411Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:00:48.685000Z"}
+{"elapsed_seconds": 120.0, "event": "heartbeat", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:01:18.691957Z"}
+{"elapsed_seconds": 150.0, "event": "heartbeat", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:01:48.702154Z"}
+{"elapsed_seconds": 180.1, "event": "heartbeat", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:02:18.715768Z"}
+{"elapsed_seconds": 210.1, "event": "heartbeat", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:02:48.730562Z"}
+{"elapsed_seconds": 240.1, "event": "heartbeat", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:03:18.748348Z"}
+{"elapsed_seconds": 270.1, "event": "heartbeat", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:03:48.771880Z"}
+{"elapsed_seconds": 293.684, "event": "command_finished", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_HOU_TEN/SLC_v1_full_stack.log", "return_code": 1, "time_utc": "2026-10-29T23:04:12.337825Z"}
+{"completed_commands": 8, "event": "pair_progress", "label": "smoke 2026_05_HOU_TEN SLC_v1_full_stack", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_HOU_TEN/SLC_v1_full_stack.json", "return_code": 1, "time_utc": "2026-10-29T23:04:12.347822Z", "total_commands": 56}
+{"elapsed_seconds": 17.132, "event": "command_finished", "label": "smoke 2026_05_IND_PIT S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_IND_PIT/S0.log", "return_code": 0, "time_utc": "2026-10-29T23:04:29.490959Z"}
+{"completed_commands": 9, "event": "pair_progress", "label": "smoke 2026_05_IND_PIT S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_IND_PIT/S0.json", "return_code": 0, "time_utc": "2026-10-29T23:04:29.497853Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "time_utc": "2026-10-29T23:04:59.510388Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "time_utc": "2026-10-29T23:05:29.526690Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "time_utc": "2026-10-29T23:05:59.543652Z"}
+{"elapsed_seconds": 120.1, "event": "heartbeat", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "time_utc": "2026-10-29T23:06:29.564647Z"}
+{"elapsed_seconds": 150.1, "event": "heartbeat", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "time_utc": "2026-10-29T23:06:59.575780Z"}
+{"elapsed_seconds": 180.1, "event": "heartbeat", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "time_utc": "2026-10-29T23:07:29.581941Z"}
+{"elapsed_seconds": 210.1, "event": "heartbeat", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "time_utc": "2026-10-29T23:07:59.589864Z"}
+{"elapsed_seconds": 240.1, "event": "heartbeat", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "time_utc": "2026-10-29T23:08:29.606500Z"}
+{"elapsed_seconds": 270.1, "event": "heartbeat", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "time_utc": "2026-10-29T23:08:59.624236Z"}
+{"elapsed_seconds": 283.816, "event": "command_finished", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_IND_PIT/SLC_v1_full_stack.log", "return_code": 1, "time_utc": "2026-10-29T23:09:13.320409Z"}
+{"completed_commands": 10, "event": "pair_progress", "label": "smoke 2026_05_IND_PIT SLC_v1_full_stack", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_IND_PIT/SLC_v1_full_stack.json", "return_code": 1, "time_utc": "2026-10-29T23:09:13.324703Z", "total_commands": 56}
+{"elapsed_seconds": 17.076, "event": "command_finished", "label": "smoke 2026_05_MIN_NO S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_MIN_NO/S0.log", "return_code": 0, "time_utc": "2026-10-29T23:09:30.409209Z"}
+{"completed_commands": 11, "event": "pair_progress", "label": "smoke 2026_05_MIN_NO S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_MIN_NO/S0.json", "return_code": 0, "time_utc": "2026-10-29T23:09:30.417967Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "time_utc": "2026-10-29T23:10:00.429137Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "time_utc": "2026-10-29T23:10:30.436870Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "time_utc": "2026-10-29T23:11:00.444390Z"}
+{"elapsed_seconds": 120.0, "event": "heartbeat", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "time_utc": "2026-10-29T23:11:30.457758Z"}
+{"elapsed_seconds": 150.1, "event": "heartbeat", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "time_utc": "2026-10-29T23:12:00.476244Z"}
+{"elapsed_seconds": 180.1, "event": "heartbeat", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "time_utc": "2026-10-29T23:12:30.492824Z"}
+{"elapsed_seconds": 210.1, "event": "heartbeat", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "time_utc": "2026-10-29T23:13:00.512639Z"}
+{"elapsed_seconds": 240.1, "event": "heartbeat", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "time_utc": "2026-10-29T23:13:30.521496Z"}
+{"elapsed_seconds": 270.1, "event": "heartbeat", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "time_utc": "2026-10-29T23:14:00.539451Z"}
+{"elapsed_seconds": 295.032, "event": "command_finished", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_MIN_NO/SLC_v1_full_stack.log", "return_code": 1, "time_utc": "2026-10-29T23:14:25.454523Z"}
+{"completed_commands": 12, "event": "pair_progress", "label": "smoke 2026_05_MIN_NO SLC_v1_full_stack", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_MIN_NO/SLC_v1_full_stack.json", "return_code": 1, "time_utc": "2026-10-29T23:14:25.468058Z", "total_commands": 56}
+{"elapsed_seconds": 16.822, "event": "command_finished", "label": "smoke 2026_05_BAL_ATL S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_BAL_ATL/S0.log", "return_code": 0, "time_utc": "2026-10-29T23:14:42.309600Z"}
+{"completed_commands": 13, "event": "pair_progress", "label": "smoke 2026_05_BAL_ATL S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_BAL_ATL/S0.json", "return_code": 0, "time_utc": "2026-10-29T23:14:42.322095Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "time_utc": "2026-10-29T23:15:12.340850Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "time_utc": "2026-10-29T23:15:42.354607Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "time_utc": "2026-10-29T23:16:12.367555Z"}
+{"elapsed_seconds": 120.0, "event": "heartbeat", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "time_utc": "2026-10-29T23:16:42.375298Z"}
+{"elapsed_seconds": 150.1, "event": "heartbeat", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "time_utc": "2026-10-29T23:17:12.392288Z"}
+{"elapsed_seconds": 180.1, "event": "heartbeat", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "time_utc": "2026-10-29T23:17:42.403285Z"}
+{"elapsed_seconds": 210.1, "event": "heartbeat", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "time_utc": "2026-10-29T23:18:12.411148Z"}
+{"elapsed_seconds": 240.1, "event": "heartbeat", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "time_utc": "2026-10-29T23:18:42.417642Z"}
+{"elapsed_seconds": 270.1, "event": "heartbeat", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "time_utc": "2026-10-29T23:19:12.426812Z"}
+{"elapsed_seconds": 298.473, "event": "command_finished", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_05_BAL_ATL/SLC_v1_full_stack.log", "return_code": 1, "time_utc": "2026-10-29T23:19:40.808558Z"}
+{"completed_commands": 14, "event": "pair_progress", "label": "smoke 2026_05_BAL_ATL SLC_v1_full_stack", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_05_BAL_ATL/SLC_v1_full_stack.json", "return_code": 1, "time_utc": "2026-10-29T23:19:40.816721Z", "total_commands": 56}
+{"elapsed_seconds": 19.934, "event": "command_finished", "label": "smoke 2026_06_SEA_DEN S0", "log": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/logs/2026_06_SEA_DEN/S0.log", "return_code": 0, "time_utc": "2026-10-29T23:20:00.764002Z"}
+{"completed_commands": 15, "event": "pair_progress", "label": "smoke 2026_06_SEA_DEN S0", "output": "/tmp/slc-week5-7-archival-20261029-9eb2d580/comparison/smoke/2026_06_SEA_DEN/S0.json", "return_code": 0, "time_utc": "2026-10-29T23:20:00.769714Z", "total_commands": 56}
+{"elapsed_seconds": 30.0, "event": "heartbeat", "label": "smoke 2026_06_SEA_DEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:20:30.786199Z"}
+{"elapsed_seconds": 60.0, "event": "heartbeat", "label": "smoke 2026_06_SEA_DEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:21:00.806866Z"}
+{"elapsed_seconds": 90.0, "event": "heartbeat", "label": "smoke 2026_06_SEA_DEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:21:30.814403Z"}
+{"elapsed_seconds": 120.0, "event": "heartbeat", "label": "smoke 2026_06_SEA_DEN SLC_v1_full_stack", "time_utc": "2026-10-29T23:22:00.827435Z"}
