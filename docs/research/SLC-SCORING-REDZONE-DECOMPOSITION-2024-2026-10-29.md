@@ -39,4 +39,19 @@ Therefore the prior actual rate of 3.94 trips/team-game and 0.623 touchdowns/tri
 - PBP-row digest: `ff4f42477b082bf03d6837faf456e68b2d544ccaa3e45d4f2cc8ddd08ab1d72a`.
 - Decomposition source SHA-256: `7113f069bc3b1ee5d7aae6064c670cddf83b325da802de35a3b7a000b26423b8`.
 
-The next red-zone experiment should compare default and exact-yardline draws on the same seeds and matched games, reporting trip terminals, touchdowns by run/pass, yards-to-go, turnover-on-downs and field-goal attempt rates. The current result locates the observed gap in conversion and red-zone play volume, but does not validate a fix.
+## Exact-yardline paired ablation
+
+A corrected default-versus-exact-yardline replay completed on the same 228 game clusters. It produced 433 common game-seed pairs from two requested seeds per game. Each arm had 442 complete game-seeds and 16 incomplete seeds; the engine reported no exceptions. The paired intervals resample 228 NFL games 10,000 times. They do not include a separate Monte Carlo seed-uncertainty estimate.
+
+| Metric | Default | Exact yardline | Actual, same cohort | Exact minus default, 95% game-cluster interval |
+|---|---:|---:|---:|---:|
+| Trips per team-game | 3.287 | 3.373 | 3.311 | +0.086 [+0.008, +0.164] |
+| Offensive TDs per trip | 0.494 | 0.537 | 0.583 | +0.043 [+0.018, +0.067] |
+| Run/pass plays inside the 20 per team-game | 10.306 | 9.578 | 9.669 | -0.728 [-1.037, -0.422] |
+| Offensive TDs per red-zone run/pass play | 0.157 | 0.188 | 0.193 | +0.031 [+0.022, +0.041] |
+| Run share of red-zone run/pass plays | 0.490 | 0.468 | 0.492 | -0.022 [-0.035, -0.009] |
+| Goal-to-go share of red-zone run/pass plays | 0.434 | 0.390 | 0.386 | -0.044 [-0.060, -0.027] |
+
+Exact-yardline sampling raises red-zone touchdown conversion and brings red-zone play volume close to the observed rate. Conversion remains below the matched actual rate by 0.047 touchdowns per trip; trips move slightly above actual. This is evidence that the sampling mode changes these outcomes on the paired cohort, not evidence that the overall red-zone or full-game model is calibrated.
+
+The full machine-readable run is on the faster host at `/tmp/lp-slc-week8-10k-20261029/SLC-SCORING-REDZONE-EXACT-YARDLINE-CALIBRATION-2024.json` (909,437 bytes, SHA-256 `f09d79a77a3e02d190e84017756dcdeffd6b7d42ce9a84e6dfa0e849b13c0109`). A committed [summary JSON](SLC-SCORING-REDZONE-EXACT-YARDLINE-CALIBRATION-2024-2026-10-29.json) records the cohort, metrics, intervals and raw-artifact hash. The executing script SHA-256 is `e30ea26dd1e047241ad31d7c55f2a16665d9ba3301671b3431f40e76942ecf13`; its flushed log is `/tmp/lp-slc-week8-10k-20261029/logs/exact-yardline-2024.log`. The run used the 2024 retrospective cohort and remains exploratory because historical schedule availability is unverified.

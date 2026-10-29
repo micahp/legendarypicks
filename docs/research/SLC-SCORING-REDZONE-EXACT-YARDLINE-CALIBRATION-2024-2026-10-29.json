@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "season": 2024,
+    "weeks": [2, 18],
+    "schedule_games": 256,
+    "valid_pregame_snapshots": 229,
+    "skipped_snapshot_games": 27,
+    "matched_game_clusters": 228,
+    "requested_seeds_per_game": 2,
+    "completed_game_seeds_per_arm": 442,
+    "incomplete_game_seeds_per_arm": 16,
+    "common_game_seed_pairs": 433,
+    "engine_errors": 0,
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 81029,
+    "uncertainty": "paired NFL game-cluster percentile intervals; separate Monte Carlo seed uncertainty is not included",
+    "evaluation": "exploratory retrospective replay; historical schedule availability is unverified",
+    "raw_result_path_on_fast_host": "/tmp/lp-slc-week8-10k-20261029/SLC-SCORING-REDZONE-EXACT-YARDLINE-CALIBRATION-2024.json",
+    "raw_result_bytes": 909437,
+    "raw_result_sha256": "f09d79a77a3e02d190e84017756dcdeffd6b7d42ce9a84e6dfa0e849b13c0109",
+    "raw_log_path_on_fast_host": "/tmp/lp-slc-week8-10k-20261029/logs/exact-yardline-2024.log",
+    "execution_script_sha256": "e30ea26dd1e047241ad31d7c55f2a16665d9ba3301671b3431f40e76942ecf13"
+  },
+  "metrics": {
+    "trips_per_team_game": {
+      "default": 3.287280701754386,
+      "exact_yardline": 3.3728070175438596,
+      "actual": 3.31140350877193,
+      "exact_minus_default": 0.08552631578947345,
+      "cluster_bootstrap_95pct_ci": [0.007675438596491002, 0.1644736842105261]
+    },
+    "offense_td_per_trip": {
+      "default": 0.49399599733155436,
+      "exact_yardline": 0.5367360208062418,
+      "actual": 0.5834437086092715,
+      "exact_minus_default": 0.04274002347468747,
+      "cluster_bootstrap_95pct_ci": [0.017528493348206275, 0.0669418751107218]
+    },
+    "rz_plays_per_team_game": {
+      "default": 10.305921052631579,
+      "exact_yardline": 9.577850877192983,
+      "actual": 9.668859649122806,
+      "exact_minus_default": -0.7280701754385959,
+      "cluster_bootstrap_95pct_ci": [-1.037280701754387, -0.4221491228070171]
+    },
+    "offense_td_per_rz_play": {
+      "default": 0.1571443770613895,
+      "exact_yardline": 0.18832283915283343,
+      "actual": 0.19301428895441144,
+      "exact_minus_default": 0.031178462091443926,
+      "cluster_bootstrap_95pct_ci": [0.021723030446949593, 0.04063649525066246]
+    },
+    "run_share_of_rz_plays": {
+      "default": 0.49037131609745715,
+      "exact_yardline": 0.4682312535775615,
+      "actual": 0.4917214787933772,
+      "exact_minus_default": -0.022140062519895642,
+      "cluster_bootstrap_95pct_ci": [-0.0350977216421286, -0.009492051789709133]
+    },
+    "goal_to_go_share_of_rz_plays": {
+      "default": 0.43355676135759125,
+      "exact_yardline": 0.38969662278191186,
+      "actual": 0.3864821955091858,
+      "exact_minus_default": -0.043860138575679386,
+      "cluster_bootstrap_95pct_ci": [-0.06015347657998954, -0.027467097561757026]
+    }
+  }
+}

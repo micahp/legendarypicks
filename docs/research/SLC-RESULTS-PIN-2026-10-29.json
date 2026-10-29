@@ -24,39 +24,104 @@
     "execution_script_sha256": "7113f069bc3b1ee5d7aae6064c670cddf83b325da802de35a3b7a000b26423b8",
     "matched_games": 228,
     "report_path": "docs/research/SLC-SCORING-REDZONE-DECOMPOSITION-2024-2026-10-29.md",
-    "report_sha256": "8b4ab3da9e91d07a6621c036d50c48a89e8d41b82fdd4fb1cf0cf650f4bf79d2",
+    "report_sha256": "d8d569f053ed89d2cd437dfa3a919f3c0e06cd47b03349a9eee825176316ccd3",
     "result_path": "docs/research/SLC-SCORING-REDZONE-DECOMPOSITION-2024-CORRECTED-2026-10-29.json",
     "result_sha256": "d373ffbac77485cdc2f51df067f01d5f0a444cdcc42f4da9ce790985ac82af51",
     "seed_uncertainty_separately_estimated": false
   },
   "current_research_checkout": {
     "branch": "research/slc-decision-layer-2026-10-29",
-    "head": "5e6c8de15edffe6aeee983ee0b643b976f188b02",
+    "head": "5abd157e887c1c4ad3219002626b31255d7672f8",
     "local_changes_uncommitted_at_pin_update": true,
     "remote_matched_at_inspection": true
   },
   "exact_yardline_paired_run_2024": {
-    "comparison": "same game and seed IDs, default versus exact-yardline outcomes",
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 81029,
+    "common_game_seed_pairs": 433,
+    "completed_as_of_utc": "2026-10-29 18:17:24 UTC",
+    "completed_game_seeds_per_arm": 442,
     "control_pane": "shell:0.0",
     "database": "/tmp/picks-dal-phi-simulation-copy.db",
+    "engine_errors": 0,
     "execution_script_sha256": "e30ea26dd1e047241ad31d7c55f2a16665d9ba3301671b3431f40e76942ecf13",
     "host": "vmi3108149",
-    "latest_progress": {
-      "arm": "default",
-      "complete_game_seeds": 175,
-      "engine_errors": 0,
-      "exact_yardline_arm_started": false,
-      "games_completed": 100,
-      "games_total": 256,
-      "incomplete_game_seeds": 9
-    },
+    "incomplete_game_seeds_per_arm": 16,
     "log_path": "/tmp/lp-slc-week8-10k-20261029/logs/exact-yardline-2024.log",
+    "matched_game_clusters": 228,
+    "metrics": {
+      "goal_to_go_share_of_rz_plays": {
+        "actual": 0.3864821955091858,
+        "ci95": [
+          -0.06015347657998954,
+          -0.027467097561757026
+        ],
+        "default": 0.43355676135759125,
+        "exact": 0.38969662278191186,
+        "exact_minus_default": -0.043860138575679386
+      },
+      "offense_td_per_rz_play": {
+        "actual": 0.19301428895441144,
+        "ci95": [
+          0.021723030446949593,
+          0.04063649525066246
+        ],
+        "default": 0.1571443770613895,
+        "exact": 0.18832283915283343,
+        "exact_minus_default": 0.031178462091443926
+      },
+      "offense_td_per_trip": {
+        "actual": 0.5834437086092715,
+        "ci95": [
+          0.017528493348206275,
+          0.0669418751107218
+        ],
+        "default": 0.49399599733155436,
+        "exact": 0.5367360208062418,
+        "exact_minus_default": 0.04274002347468747
+      },
+      "run_share_of_rz_plays": {
+        "actual": 0.4917214787933772,
+        "ci95": [
+          -0.0350977216421286,
+          -0.009492051789709133
+        ],
+        "default": 0.49037131609745715,
+        "exact": 0.4682312535775615,
+        "exact_minus_default": -0.022140062519895642
+      },
+      "rz_plays_per_team_game": {
+        "actual": 9.668859649122806,
+        "ci95": [
+          -1.037280701754387,
+          -0.4221491228070171
+        ],
+        "default": 10.305921052631579,
+        "exact": 9.577850877192983,
+        "exact_minus_default": -0.7280701754385959
+      },
+      "trips_per_team_game": {
+        "actual": 3.31140350877193,
+        "ci95": [
+          0.007675438596491002,
+          0.1644736842105261
+        ],
+        "default": 3.287280701754386,
+        "exact": 3.3728070175438596,
+        "exact_minus_default": 0.08552631578947345
+      }
+    },
+    "result_bytes": 909437,
     "result_path": "/tmp/lp-slc-week8-10k-20261029/SLC-SCORING-REDZONE-EXACT-YARDLINE-CALIBRATION-2024.json",
-    "resume_checkpoint": null,
+    "result_sha256": "f09d79a77a3e02d190e84017756dcdeffd6b7d42ce9a84e6dfa0e849b13c0109",
     "schedule_games": 256,
+    "seed_uncertainty_separately_estimated": false,
     "seeds_per_game": 2,
-    "status": "in_progress",
-    "status_as_of_utc": "2026-10-29 17:52:24 UTC"
+    "skipped_snapshots": 27,
+    "status": "completed",
+    "summary_path": "docs/research/SLC-SCORING-REDZONE-EXACT-YARDLINE-CALIBRATION-2024-2026-10-29.json",
+    "summary_sha256": "8bfd5729b9e3843541d504bc3f55e65075344d42798e79d902955857ed9e862f",
+    "valid_pregame_snapshots": 229
   },
   "input_fingerprints": {
     "2024_replay_actual_database_rows_sha256": {
@@ -88,7 +153,7 @@
   },
   "layer_calibration_audit": {
     "path": "docs/research/SLC-LAYER-CALIBRATION-AUDIT-2026-10-29.md",
-    "sha256": "dca3115c5605ed03cdc450153f59f41693766b14f1b8810f0bae012e36d74032",
+    "sha256": "c339bcdcf7627aef66f104e9389e5ff43ff18f81ef8b94a495edbaaffa07fa54",
     "verdict": "integrated but not calibrated end to end"
   },
   "pin_date": "2026-10-29",
@@ -202,5 +267,29 @@
     "scripts/nfl_sequence/validate_share_distributions.py": "74c2771dbc7bb8c87b1254b2089ecc255750069a51d9007a2902646ce11b0bb3"
   },
   "source_commit_for_runs": "8073dc4660404244cfe1dec31c9def0f57a8cedc",
-  "source_worktree_dirty_for_runs": true
+  "source_worktree_dirty_for_runs": true,
+  "week8_10k_resumed_configuration": {
+    "completed_layer_set": false,
+    "enabled_optional_flags": [
+      "team_outcomes",
+      "formation",
+      "coverage",
+      "dirichlet_shares",
+      "qb_decisions",
+      "player_outcomes"
+    ],
+    "existing_ledgers_and_logs_preserved": true,
+    "jobs": 7,
+    "max_concurrent_workers": 5,
+    "omitted_requested_flags": [
+      "target_roles",
+      "decision_labels_and_filter",
+      "playbook",
+      "point_splits",
+      "team_streak_splits",
+      "league_streak_splits",
+      "exact_yardline"
+    ],
+    "status": "launched_by_hermes2_after_exact_result_was_saved"
+  }
 }
