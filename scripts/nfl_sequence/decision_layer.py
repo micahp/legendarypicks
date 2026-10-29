@@ -196,14 +196,18 @@ def distribution(table, team, cell, cat):
     return {v: share / total for v, share in out.items()}
 
 
-def draw(table, team, down, togo, yl, intent, seed_text):
-    """One label per applicable category, drawn before the outcome. None for a category with no prior in its cell."""
+def draw(table, team, down, togo, yl, intent, seed_text, only=None):
+    """One label per applicable category, drawn before the outcome. None for a category with no prior in its cell.
+
+    `only` limits the draw to those categories (the playbook input draws pass depth, pass location and run gap only)."""
     if intent == 'dropback':
         cats = [c for c in CATS if c in PASS_CATS or c in ALIGN_CATS]
     elif intent == 'run':
         cats = [c for c in CATS if c in RUN_CATS or c in ALIGN_CATS]
     else:
         return None
+    if only is not None:
+        cats = [c for c in cats if c in only]
     rng = random.Random(int.from_bytes(hashlib.sha256(seed_text.encode()).digest()[:8], 'big'))
     cell = cell_of(down, togo, yl)
     out = {}
