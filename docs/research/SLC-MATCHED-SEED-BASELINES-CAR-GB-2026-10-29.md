@@ -15,3 +15,9 @@ splits were added after this arm was started and are reported separately below.
 
 Team score-state splits of the dropback rate (prior seasons, relative to each team's overall rate), 100 seeds, paired against
 score-clock SLC: margin -0.74 ± 1.37, total -0.94 ± 1.31, home win share 0.47. Within noise on this snapshot.
+
+## All new layers with team formation and point splits (added 2026-10-29)
+
+All the new layers, with team-level formation and personnel tendencies and team score-state splits added, 100 seeds, paired against
+score-clock SLC: margin +3.17 ± 1.56, total +3.21 ± 1.69, home win share 0.62. Smaller than the arm without them (+4.65 ± 1.70), but
+the two differ by less than their standard errors, so the change is not established.
