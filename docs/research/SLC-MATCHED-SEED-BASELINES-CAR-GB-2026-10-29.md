@@ -10,3 +10,8 @@ Formation and personnel, team event splits, defensive coverage, player shares an
 score-clock SLC: margin +4.65 ± 1.70, total +4.27 ± 1.66, home win share 0.62. The total moves up by about 4 points, toward the 2024
 regular-season level, but this is one snapshot and is not a calibration. The team-level formation tendencies and the team score-state
 splits were added after this arm was started and are reported separately below.
+
+## Point-based splits alone (added 2026-10-29)
+
+Team score-state splits of the dropback rate (prior seasons, relative to each team's overall rate), 100 seeds, paired against
+score-clock SLC: margin -0.74 ± 1.37, total -0.94 ± 1.31, home win share 0.47. Within noise on this snapshot.
