@@ -46,7 +46,7 @@ def check_artifact_cutoff(artifact, season):
 def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=False, player_shares=False,
                    exact_yardline=False, coverage=False, point_splits=False, streak=False, streak_file=None,
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
-                   playbook=False):
+                   playbook=False, source_commit=None):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -54,14 +54,19 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
     ref, excluded = er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
-                   playcall_formation=formation, playcall_player_shares=player_shares,
+                   playcall_formation=formation, playcall_player_shares=(player_shares or dirichlet_shares),
                    playcall_target_roles=target_roles, playcall_decision=decision,
                    playcall_exact_yardline=exact_yardline, playcall_coverage=coverage,
                    playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league)
     ref.contextual_sampler.decision_filter = decision_filter  # an experiment switch: False draws rows from the whole cell
     if dirichlet_shares:  # per-game Dirichlet target and carry shares, fitted on the season before the game season
+        if not source_commit:
+            raise ValueError('Dirichlet player shares need a source commit for their model manifest')
         import share_distributions
-        ref.contextual_sampler.share_table = share_distributions.load(db, int(schedule['season']))
+        table = share_distributions.load(db, season)
+        ref.contextual_sampler.share_table = table
+        ref.contextual_sampler.share_model_manifest = share_distributions.manifest(table, cutoff=season,
+                                                                                    git_commit=source_commit)
     if playbook:  # the playbook files as the prior for pass depth, pass location and run gap; needs the decision labels on
         if not decision:
             raise ValueError('the playbook input replaces decision labels, so it needs decision=True')
@@ -114,6 +119,10 @@ def describe(ref):
         return None
     sampler = ref.contextual_sampler
     artifact = sampler.layer.artifact
-    return {'model_id': MODEL_ID, 'artifact_id': artifact['artifact_id'], 'artifact_sha256': artifact['sha256'],
-            'fit_seasons': sorted(int(s) for s in artifact['fit_seasons']),
-            'reference_season': int(artifact['reference_season']), 'side_teams': sampler.describe().get('side_teams')}
+    description = {'model_id': MODEL_ID, 'artifact_id': artifact['artifact_id'], 'artifact_sha256': artifact['sha256'],
+                   'fit_seasons': sorted(int(s) for s in artifact['fit_seasons']),
+                   'reference_season': int(artifact['reference_season']), 'side_teams': sampler.describe().get('side_teams')}
+    share_manifest = getattr(sampler, 'share_model_manifest', None)
+    if share_manifest is not None:
+        description['player_share_distribution'] = share_manifest
+    return description

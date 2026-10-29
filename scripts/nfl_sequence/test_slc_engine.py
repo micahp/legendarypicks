@@ -2,6 +2,8 @@ import json
 import sys
 import tempfile
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -77,6 +79,35 @@ class Summary(unittest.TestCase):
     def test_the_counts_separate_scrimmage_kicks_and_dropbacks(self):
         decisions = [{'intent': 'dropback'}, {'intent': 'run'}, {'intent': 'run'}, {'intent': 'kick'}]
         self.assertEqual(se.summary(decisions), {'decisions': 4, 'scrimmage': 3, 'dropback': 1, 'run': 2, 'kick_fallback': 1})
+
+
+class PlayerShareManifest(unittest.TestCase):
+    def test_loading_dirichlet_shares_attaches_the_model_version_cutoff_and_fit(self):
+        import share_distributions as sd
+        layer_artifact = {**artifact(list(range(2010, 2026)), 2026), 'artifact_id': 'a', 'sha256': 'b'}
+        sampler = SimpleNamespace(layer=SimpleNamespace(artifact=layer_artifact),
+                                  share_model_manifest=None, describe=lambda: {'side_teams': {'A': 'AAA', 'B': 'BBB'}})
+        ref = SimpleNamespace(contextual_sampler=sampler)
+        table = {'phi': {'receive': 24.4, 'carry': 7.5}, 'base': {'receive': {}, 'carry': {}},
+                 'fit': {'receive': {'phi': 24.4, 'team_games': 544},
+                         'carry': {'phi': 7.5, 'team_games': 544}}, 'season': 2025,
+                 'model': 'dirichlet-multinomial-mle-v2'}
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path = Path(tmp) / 'artifact.json'
+            artifact_path.write_text(json.dumps(artifact(list(range(2010, 2026)), 2026)))
+            with patch.object(se.er, 'load', return_value=(ref, 0)) as load_ref, \
+                 patch.object(sd, 'load', return_value=table):
+                loaded, _excluded = se.load_reference('/read-only.db', SNAPSHOT, artifact_path, dirichlet_shares=True,
+                                                       source_commit='abc123')
+        self.assertTrue(load_ref.call_args.kwargs['playcall_player_shares'])
+        manifest = loaded.contextual_sampler.share_model_manifest
+        self.assertEqual(manifest['model_version'], 'dirichlet-multinomial-mle-v2')
+        self.assertEqual(manifest['source_season'], 2025)
+        self.assertEqual(manifest['cutoff_season'], 2026)
+        self.assertEqual(manifest['git_commit'], 'abc123')
+        self.assertEqual(manifest['concentration']['receive']['team_games'], 544)
+        with patch.object(se, 'is_slc', return_value=True):
+            self.assertEqual(se.describe(loaded)['player_share_distribution'], manifest)
 
 
 if __name__ == '__main__':
