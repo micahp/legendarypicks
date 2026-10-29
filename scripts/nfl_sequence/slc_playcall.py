@@ -176,6 +176,7 @@ class PlayCallSampler:
         # Per-player event and joint yards/touchdown outcome profiles, off unless explicitly loaded.
         self.player_outcome_table = None
         self.player_outcome_roles = None
+        self._current_team_outcome_fallbacks = []
 
     def _team(self, label):
         if self.side_teams is None:
@@ -222,6 +223,7 @@ class PlayCallSampler:
         if state is None or any(state.get(k) is None for k in ('quarter', 'clock', 'down', 'togo', 'yl', 'score_diff')):
             raise e1.SamplingUnavailable('playcall_state_incomplete')
         entry = self._entry(cell)
+        self._current_team_outcome_fallbacks = []
         total = sum(entry['base'].values())
         kick_keys = [k for k in entry['base'] if k[0] == KICK_INTENT]
         kick_share = sum(entry['base'][k] for k in kick_keys) / total
@@ -266,6 +268,10 @@ class PlayCallSampler:
         use_labels = bool(labels) and self.decision_outcomes
         use_player_outcomes = self.player_outcome_table is not None
         labels_matched = []
+        labels_unmatched = []
+        formation_fallback = None
+        coverage_fallback = None
+        streak_fallback = None
         weights = []
         for k in keys:
             weight = entry['base'][k]
@@ -302,13 +308,22 @@ class PlayCallSampler:
                     raise e1.SamplingUnavailable(f'non_scramble_run_source_rows_missing:{entry["key"]}')
         if use_formation:
             matched = [c for c in candidates if c[1].get('formation', UNKNOWN) == formation]
-            candidates = matched or candidates  # no row with this formation in the cell: the cell's rows
+            if matched:
+                candidates = matched
+            else:
+                formation_fallback = 'no_source_rows_for_chosen_formation'
         if use_coverage:
             matched = [c for c in candidates if c[1].get('coverage', UNKNOWN) == coverage]
-            candidates = matched or candidates
+            if matched:
+                candidates = matched
+            else:
+                coverage_fallback = 'no_source_rows_for_chosen_coverage'
         if use_streak:
             matched = [c for c in candidates if c[1].get('streak', 'NONE') == streak_bucket]
-            candidates = matched or candidates
+            if matched:
+                candidates = matched
+            else:
+                streak_fallback = 'no_source_rows_for_current_streak'
         if use_labels and self.decision_filter:  # the row takes each drawn label in category order, where the cell has such a row
             for cat in decision_layer.CATS:
                 value = labels.get(cat)
@@ -318,6 +333,8 @@ class PlayCallSampler:
                 if matched:
                     candidates = matched
                     labels_matched.append(cat)
+                else:
+                    labels_unmatched.append(cat)
         qb_target_role_conditioned = False
         qb_target_role_fallback = None
         if (self.qb_decision_table is not None and called_intent == 'dropback' and not scramble and qb_decision
@@ -331,9 +348,15 @@ class PlayCallSampler:
                 qb_target_role_conditioned = True
             else:
                 qb_target_role_fallback = 'no_target_identity_match_in_event_cell'
+        exact_yardline_conditioned = False
+        exact_yardline_fallback = None
         if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
             exact = [c for c in candidates if c[1].get('yardline_100') is not None and int(c[1]['yardline_100']) == int(state['yl'])]
-            candidates = exact or candidates  # a touchdown flag then comes from the same distance the state is at
+            if exact:
+                candidates = exact  # a touchdown flag then comes from the same distance the state is at
+                exact_yardline_conditioned = True
+            else:
+                exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
         if use_player_outcomes:
             import player_outcomes
             row_weights = [player_outcomes.row_weight(self.player_outcome_table, key[1], c[1], pre_event, state,
@@ -348,9 +371,19 @@ class PlayCallSampler:
             'participants': pe.ids(pre_event),
             'formation': formation, 'personnel': pre_event.get('personnel') if pre_event else None,
             'formation_conditioned': bool(use_formation), 'coverage': coverage, 'coverage_conditioned': bool(use_coverage),
+            'exact_yardline_conditioned': exact_yardline_conditioned,
+            'exact_yardline_fallback': exact_yardline_fallback,
+            'formation_fallback': formation_fallback, 'coverage_fallback': coverage_fallback,
+            'streak_fallback': streak_fallback,
             'streak_outcome_conditioned': bool(use_streak),
             'labels': labels, 'labels_conditioned': bool(use_labels), 'labels_matched': labels_matched,
+            'labels_unmatched': labels_unmatched,
+            'decision_row_filter_applied': bool(use_labels and self.decision_filter),
             'team_outcome_split': self.team_outcomes is not None,
+            'team_outcome_fallbacks': list(self._current_team_outcome_fallbacks),
+            'point_split_applied': self.point_shifts is not None and team in self.layer.team_index,
+            'team_streak_split_applied': self.streak_shifts is not None and team in self.current_streak,
+            'league_streak_split_applied': self.streak_league is not None and team in self.current_streak,
             'qb_action': qb_decision.get('action') if qb_decision else None,
             'qb_scramble_probability': qb_decision.get('scramble_probability') if qb_decision else None,
             'qb_scramble_fallback': qb_decision.get('scramble_fallback') if qb_decision else None,
@@ -415,6 +448,9 @@ class PlayCallSampler:
             try:
                 weight *= self.team_outcomes.ratio(side, team, cell, event)
             except ValueError:  # no prior-season sample for this team
+                self._current_team_outcome_fallbacks.append(
+                    f'no_prior_sample:{side}:{team}:{event}'
+                )
                 continue
         return weight
 

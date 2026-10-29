@@ -78,20 +78,20 @@ class Mapping(unittest.TestCase):
 class Summary(unittest.TestCase):
     def test_the_counts_separate_scrimmage_kicks_and_dropbacks(self):
         decisions = [{'intent': 'dropback'}, {'intent': 'run'}, {'intent': 'run'}, {'intent': 'kick'}]
-        self.assertEqual(se.summary(decisions), {'decisions': 4, 'scrimmage': 3, 'dropback': 1, 'run': 2,
-                                                  'qb_scramble': 0, 'qb_target_role_decisions': 0,
-                                                  'qb_target_role_conditioned': 0, 'qb_target_role_fallbacks': 0,
-                                                  'qb_target_role_draw_fallbacks': 0,
-                                                  'qb_target_role_no_history': 0, 'kick_fallback': 1})
+        result = se.summary(decisions)
+        self.assertEqual((result['decisions'], result['scrimmage'], result['dropback'], result['run']), (4, 3, 1, 2))
+        self.assertEqual(result['kick_fallback'], 1)
+        self.assertEqual(result['fallback_events'], {})
+        self.assertEqual(result['layer_execution']['score_clock_playcalling'], 4)
 
 
 class PlayerShareManifest(unittest.TestCase):
     def test_loading_dirichlet_shares_attaches_the_model_version_cutoff_and_fit(self):
         import share_distributions as sd
-        layer_artifact = {**artifact(list(range(2010, 2026)), 2026), 'artifact_id': 'a', 'sha256': 'b'}
-        sampler = SimpleNamespace(layer=SimpleNamespace(artifact=layer_artifact),
-                                  share_model_manifest=None, qb_decision_table=None, player_outcome_table=None,
-                                  describe=lambda: {'side_teams': {'A': 'AAA', 'B': 'BBB'}})
+        layer_artifact = {**artifact(list(range(2010, 2026)), 2026), 'artifact_id': 'a', 'sha256': 'b',
+                          'frame_sha256': 'frame-hash'}
+        sampler = se.slc.PlayCallSampler(SimpleNamespace(artifact=layer_artifact),
+                                         side_teams={'A': 'AAA', 'B': 'BBB'})
         ref = SimpleNamespace(contextual_sampler=sampler)
         table = {'phi': {'receive': 24.4, 'carry': 7.5}, 'base': {'receive': {}, 'carry': {}},
                  'fit': {'receive': {'phi': 24.4, 'team_games': 544},
