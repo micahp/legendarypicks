@@ -144,6 +144,7 @@ class PlayCallSampler:
         # formation-conditioned outcome draws, on when the engine has formation labels and priors (formation_layer)
         self.formation_outcomes = False
         self.formation_priors = None
+        self.player_shares = None  # prior-season player shares for the pre-event participant adapter (player_shares)
 
     def _team(self, label):
         if self.side_teams is None:
