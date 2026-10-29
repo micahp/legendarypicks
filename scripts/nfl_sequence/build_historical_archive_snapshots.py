@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import sqlite3
 import sys
+import unicodedata
 try:
     from zoneinfo import ZoneInfo
 except ImportError:  # Python 3.8 backend environment
@@ -76,6 +77,22 @@ VERIFIED_NAME_VARIANTS = {
     # NFL's official player feature gives Julius "JuJu" Brents.
     # https://www.nfl.com/causes/my-cause-my-cleats/2024/colts
     '00-0039156': frozenset({('juju brents', 'julius brents')}),
+    # Exact display-name variants found across the dated roster/depth archive and
+    # canonical GSIS registry. GSIS remains the join key; these do not join by name.
+    '00-0034413': frozenset({('foyesade oluokun', 'foye oluokun')}),
+    '00-0036348': frozenset({('joshua metellus', 'josh metellus')}),
+    '00-0036535': frozenset({('william sherman', 'will sherman')}),
+    '00-0036629': frozenset({('cam bynum', 'camryn bynum')}),
+    '00-0036919': frozenset({('kenny gainwell', 'kenneth gainwell')}),
+    '00-0037292': frozenset({('drew ogletree', 'andrew ogletree')}),
+    '00-0037758': frozenset({('cor dale flott', 'cordale flott')}),
+    '00-0039176': frozenset({('cj okoye', 'basil okoye')}),
+    '00-0039324': frozenset({('chris roland wallace', 'christian roland wallace')}),
+    '00-0039422': frozenset({('nate thomas', 'nathan thomas')}),
+    '00-0039790': frozenset({('olu fashanu', 'olumuyiwa fashanu')}),
+    '00-0039821': frozenset({('dru phillips', 'andru phillips')}),
+    '00-0040186': frozenset({('kiko mauigoa', 'francisco mauigoa')}),
+    '00-0040744': frozenset({('jaylahn tuimoloau', 'jt tuimoloau')}),
 }
 
 
@@ -103,9 +120,11 @@ def _int(value, label):
 
 
 def _name_key(value):
-    # Sources vary on periods in initialisms ("DJ" vs "D.J."). Remove periods
-    # after letters before tokenizing; stable GSIS IDs remain the join key.
-    value = re.sub(r'(?<=[a-z])\.(?=[a-z\s]|$)', '', str(value).lower())
+    # Sources vary on periods, accents and initialisms ("DJ" vs "D.J.").
+    # Stable GSIS IDs remain the join key.
+    value = unicodedata.normalize('NFKD', str(value).lower())
+    value = ''.join(char for char in value if not unicodedata.combining(char))
+    value = re.sub(r'(?<=[a-z])\.(?=[a-z\s]|$)', '', value)
     key = re.sub(r'[^a-z0-9]+', ' ', value).strip()
     return re.sub(r'\s+(jr|sr|ii|iii|iv)$', '', key)
 
