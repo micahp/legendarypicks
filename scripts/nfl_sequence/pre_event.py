@@ -73,7 +73,7 @@ def _by_player_share(players, table, team, role, positions, draw):
 
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
-           share_table=None):
+           share_table=None, playbook_table=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -88,6 +88,17 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     if decision_table is not None and state is not None:  # decision model categories A to N, drawn before the outcome
         import decision_layer
         labels = decision_layer.draw(decision_table, team, state['down'], state['togo'], state['yl'], intent, f'{base}:labels')
+        if playbook_table is not None and labels is not None:  # the playbook's pass depth, location and run gap, where it has a prior
+            book = decision_layer.draw(playbook_table, team, state['down'], state['togo'], state['yl'], intent,
+                                       f'{base}:playbook', only=('D', 'E', 'C'))
+            fallback = []
+            for cat in book:  # the categories this intent takes; a category the playbook has no prior for keeps the decision label
+                if book[cat] is not None:
+                    labels[cat] = book[cat]
+                else:
+                    fallback.append(cat)
+            if fallback:
+                chosen['playbook_fallback'] = fallback
         chosen['labels'] = labels
     if intent == 'dropback':
         chosen['passer'] = _passer(players, team, _draw(f'{base}:passer:trick'), trick_passer_rate)
@@ -157,7 +168,7 @@ def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw
 
 
 def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None,
-            share_table=None):
+            share_table=None, playbook_table=None):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
@@ -168,7 +179,7 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
         side = 'home' if offense == 'A' else 'away'
         return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state,
                       player_shares=player_shares, defense_priors=defense_priors, role_table=role_table,
-                      decision_table=decision_table, share_table=share_table)
+                      decision_table=decision_table, share_table=share_table, playbook_table=playbook_table)
     return pick
 
 
