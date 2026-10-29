@@ -27,6 +27,7 @@ import e0_single_play as e0  # noqa: E402
 import e1_drive as e1  # noqa: E402
 import playcall_model as pm  # noqa: E402
 import formation_layer  # noqa: E402
+import point_splits  # noqa: E402
 import pre_event as pe  # noqa: E402
 import run_playcall_eval as rpe  # noqa: E402
 
@@ -147,6 +148,8 @@ class PlayCallSampler:
         self.player_shares = None  # prior-season player shares for the pre-event participant adapter (player_shares)
         # red-zone geometry: inside the 20, draw the outcome only from rows at the state's exact yard line when there are any
         self.exact_yardline = False
+        # team score-state splits: log-odds shifts of the dropback rate by score bucket (point_splits), None when off
+        self.point_shifts = None
         # defensive coverage on dropbacks: the defense's prior shares (defense_layer) and the coverage-conditioned outcomes
         self.coverage_outcomes = False
         self.defense_priors = None
@@ -192,6 +195,11 @@ class PlayCallSampler:
         team = self._team(offense)
         p = self.layer.p_dropback(state['down'], state['togo'], state['yl'], state['score_diff'], state['quarter'],
                                   state['clock'], team)
+        point_shift = 0.0
+        if self.point_shifts is not None and team in self.layer.team_index:
+            bucket = pm.score_bucket(state['score_diff'])
+            point_shift = point_splits.shift_for(self.point_shifts, self.layer.team_index[team], bucket)
+            p = point_splits.adjust(p, point_shift)  # the team's score-state deviation, in log-odds
         if kick_keys and rng.random() < kick_share:
             intent, fallback = KICK_INTENT, 'kick decision: historical share of this situation cell (not yet modelled)'
         else:
@@ -243,7 +251,8 @@ class PlayCallSampler:
                       'togo': int(state['togo']), 'yardline_100': int(state['yl']),
                       'score_diff': int(state['score_diff']), 'offense': offense, 'defense': defense, 'team': team},
             'component': ARTIFACT_ID, 'artifact_sha256': self.layer.artifact['sha256'],
-            'p_dropback': round(p, 6), 'kick_share': round(kick_share, 6), 'intent': intent, 'event': event,
+            'p_dropback': round(p, 6), 'point_shift': round(point_shift, 6), 'kick_share': round(kick_share, 6),
+            'intent': intent, 'event': event,
             'fallback': fallback, 'source': {'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season']},
         })
         return event, row, runoff, spot

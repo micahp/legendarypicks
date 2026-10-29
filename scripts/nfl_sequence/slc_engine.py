@@ -44,7 +44,7 @@ def check_artifact_cutoff(artifact, season):
 
 
 def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=False, player_shares=False,
-                   exact_yardline=False, coverage=False):
+                   exact_yardline=False, coverage=False, point_splits=False):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -53,7 +53,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     return er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
                    playcall_formation=formation, playcall_player_shares=player_shares,
-                   playcall_exact_yardline=exact_yardline, playcall_coverage=coverage)
+                   playcall_exact_yardline=exact_yardline, playcall_coverage=coverage,
+                   playcall_point_splits=point_splits)
 
 
 def is_slc(ref):
