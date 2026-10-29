@@ -26,6 +26,7 @@ sys.path.insert(0, str(HERE))
 import e0_single_play as e0  # noqa: E402
 import e1_drive as e1  # noqa: E402
 import playcall_model as pm  # noqa: E402
+import pre_event as pe  # noqa: E402
 import run_playcall_eval as rpe  # noqa: E402
 
 ARTIFACT_ID = 'slc_playcall_v1'
@@ -135,6 +136,7 @@ class PlayCallSampler:
         self.side_teams = dict(side_teams) if side_teams is not None else None
         self.decisions = []
         self._cells = {}
+        self.participant_chooser = None  # set per game by slc_engine: chooses the rusher or target before the outcome is drawn
 
     def _team(self, label):
         if self.side_teams is None:
@@ -179,9 +181,13 @@ class PlayCallSampler:
         keys = sorted(k for k in entry['base'] if k[0] == intent)
         if not keys:
             raise e1.SamplingUnavailable(f'playcall_no_{intent}_outcomes_in_cell:{entry["key"]}')
+        pre_event = self.participant_chooser(intent, offense) if self.participant_chooser is not None else None
         key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]
         event, row, runoff, spot = rng.choice(entry['by_key'][key])
+        if pre_event is not None:
+            row = dict(row, pre_event=pre_event)  # the chosen participants travel with the outcome; the row itself is not changed
         self.decisions.append({
+            'participants': pe.ids(pre_event),
             'state': {'quarter': int(state['quarter']), 'clock': int(state['clock']), 'down': int(state['down']),
                       'togo': int(state['togo']), 'yardline_100': int(state['yl']),
                       'score_diff': int(state['score_diff']), 'offense': offense, 'defense': defense, 'team': team},

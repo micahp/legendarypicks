@@ -15,6 +15,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import e2_reference as er  # noqa: E402
 import game_state as gs  # noqa: E402
+import pre_event  # noqa: E402
 import slc_playcall as slc  # noqa: E402
 
 MODEL_ID = 'slc_v1_incomplete'
@@ -62,7 +63,11 @@ def play(seed, ref, snapshot):
         raise ValueError('the reference was not loaded with the SLC play-call layer')
     sampler = ref.contextual_sampler
     sampler.decisions.clear()
-    record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(require_snapshot(snapshot)))
+    sampler.participant_chooser = pre_event.chooser(require_snapshot(snapshot), seed)
+    try:
+        record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
+    finally:
+        sampler.participant_chooser = None
     decisions = list(sampler.decisions)
     sampler.decisions.clear()
     return record, decisions

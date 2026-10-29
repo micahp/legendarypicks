@@ -44,6 +44,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e1_drive as e1  # noqa: E402
 import game_stats  # noqa: E402
+import pre_event as pe  # noqa: E402
 import reducer  # noqa: E402
 
 NORMAL_MODE = 'normal_nfl_game'
@@ -253,12 +254,53 @@ class Reference:
         self.contextual_sampler = contextual_sampler
         self.contextual_pool_manifest = {}
 
+    def _pre_event_participants(self, play, facts, pre, out, src, offense_team):
+        """The players chosen before the outcome was drawn (pre_event.py). The outcome decides what they do, not who they are."""
+        event = play['event_type']
+        passing = event in pe.PASS_EVENTS or (event == 'fumble_lost' and facts.get('play_type') == 'pass')
+        rushing = event == 'run' or (event == 'fumble_lost' and facts.get('play_type') == 'run')
+        assigned = {}
+        try:
+            if passing:
+                assigned['passer'] = pre['passer']
+                if event != 'sack':  # a sack has no target
+                    assigned['receiver'] = pre['receiver']
+            if rushing:
+                assigned['rusher'] = pre['rusher']
+        except KeyError as exc:
+            raise ValueError(f"pre-event selection for {event} has no {exc.args[0]}") from exc
+        out.update(passer_id=None, rusher_id=None, receiver_id=None)
+        out['sampled_play_context'] = {
+            'posteam': facts.get('posteam'), 'defteam': facts.get('defteam'), 'play_type': facts.get('play_type'),
+            'air_yards': facts.get('air_yards'), 'yards_after_catch': facts.get('yards_after_catch'),
+            'timeout_team': facts.get('timeout_team'), 'out_of_bounds': facts.get('out_of_bounds'),
+        }
+        for key in ('posteam', 'defteam', 'air_yards', 'yards_after_catch', 'timeout_team', 'out_of_bounds'):
+            out[key] = None
+        for role, player in assigned.items():
+            out[f'{role}_id'] = player['gsis_id']
+            out[f'{role}_name'] = player['player_name']
+            out[f'{role}_position'] = player['pos_abb']
+            out[f'{role}_team'] = pre['team']
+            out[f'{role}_side'] = offense_team
+        out['attribution'] = 'pre_event_selection'
+        out['sampled_from'] = src
+        return out
+
     def participants_for(self, play, offense_team=None, snapshot=None, seed=None):
         src = play['outcome']['sampled_from']
         facts = self.participants.get((src['game_id'], src['play_id']), {})
         keys = ('passer_id', 'rusher_id', 'receiver_id', 'posteam', 'defteam', 'air_yards', 'yards_after_catch', 'timeout',
                 'timeout_team', 'out_of_bounds')
         out = {k: facts.get(k) for k in keys}
+        pre = play['outcome'].get('pre_event')
+        if pre is not None:
+            return self._pre_event_participants(play, facts, pre, out, src, offense_team)
+        if getattr(getattr(self, 'contextual_sampler', None), 'participant_chooser', None) is not None:
+            if play['event_type'] in pe.PASS_EVENTS or play['event_type'] in ('run', 'fumble_lost'):
+                raise ValueError(f"pre-event participants are missing for {play['event_type']} at sequence {play.get('sequence')}")
+            out.update(attribution='no_participant_modelled', sampled_from=src)  # kicks: no ball carrier or target is modelled
+            return out
         if snapshot is None:
             out.update(attribution='sampled_observed_play', sampled_from=src)
             return out
