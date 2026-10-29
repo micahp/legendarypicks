@@ -5,7 +5,7 @@
 - **Branch:** `research/slc-decision-layer-2026-10-29`
 - **Branch HEAD:** `5e6c8de15edffe6aeee983ee0b643b976f188b02`; remote matched at inspection.
 - **Base commit:** `5e6c8de15edffe6aeee983ee0b643b976f188b02`; the pushed branch matched this commit when this change set was reviewed.
-- **Run status:** one all-layer execution smoke completed. A corrected exact-yardline paired replay is active on the faster host through tmux pane `shell:0.0`; no Week 8 10K batch, production promotion or deployment has been performed.
+- **Run status:** the all-layer execution smoke and corrected exact-yardline paired replay completed. Hermes2 resumed the Week 8 10K work through tmux pane `shell:0.0` after the exact result was saved. No production promotion or deployment was performed.
 - **Current calibration verdict:** no full-stack calibration. See [layer calibration audit](research/SLC-LAYER-CALIBRATION-AUDIT-2026-10-29.md).
 
 ## What the latest evidence says
@@ -15,7 +15,7 @@
 - The 2024-fit/2025-held-out Dirichlet-multinomial share model improves joint log scores by 4.303 targets and 5.543 carries per team-game on returning players with same-team history. Zero rates and lower/median count quantiles remain miscalibrated.
 - Receiver-conditioned event and completion-result scores improve on the 2025 holdout. QB target-role and completion-result scores regress; rushing results are inconclusive.
 - Team outcomes, formation, coverage, playbook, point and streak results are small exploratory paired runs. They do not establish calibrated team scores or winner probabilities.
-- The old exact-yardline claim is invalid: its trip definition, touchdown classification and incomplete-seed handling were inconsistent. The earlier local rerun was interrupted and produced no result. The corrected paired run now writes `/tmp/lp-slc-week8-10k-20261029/SLC-SCORING-REDZONE-EXACT-YARDLINE-CALIBRATION-2024.json`, with a flushed log at `/tmp/lp-slc-week8-10k-20261029/logs/exact-yardline-2024.log`. At the latest update the default arm had processed 100/256 schedule games (175 complete game-seeds, 9 incomplete, 0 engine errors); the exact-yardline arm is pending. Do not cite this as a completed comparison until the JSON is saved and reviewed.
+- The old exact-yardline claim is invalid: its trip definition, touchdown classification and incomplete-seed handling were inconsistent. The corrected replay completed with 228 matched game clusters, 433 common game-seed pairs, 442 complete game-seeds and 16 incomplete seeds per arm, and zero engine errors. Exact-minus-default was +0.043 touchdowns per trip [0.018, 0.067] and -0.728 red-zone plays per team-game [-1.037, -0.422]. Exact conversion remains 0.537 versus 0.583 actual; play volume is 9.578 versus 9.669 actual. Intervals use 10,000 game-cluster resamples and omit separate seed uncertainty. Full result: `/tmp/lp-slc-week8-10k-20261029/SLC-SCORING-REDZONE-EXACT-YARDLINE-CALIBRATION-2024.json`, 909,437 bytes, SHA-256 `f09d79a77a3e02d190e84017756dcdeffd6b7d42ce9a84e6dfa0e849b13c0109`; log: `/tmp/lp-slc-week8-10k-20261029/logs/exact-yardline-2024.log`.
 - No target CAR–GB game outcome was read. The current-streak input uses only games before the frozen Week 8 cutoff. All fitted SLC sources in the smoke are cut before 2026 Week 1.
 
 ## Executable engine evidence
@@ -73,6 +73,10 @@ Before a large run, execute a 100-seed pilot, check the finished/valid/error cou
 
 Use the same seed IDs and frozen inputs for pooled score-clock, team-conditioned, player-conditioned and all-layer arms. Report the decision-filter-on and decision-filter-off arms separately. Do not claim a layer improves from the full-stack result alone.
 
+## Live Week 8 run configuration check
+
+The resumed 7-job batch was launched with pooled and team-conditioned controls, plus a `full-player-stack` arm. The shell-pane resumer currently enables team outcomes, formation, coverage, Dirichlet shares, QB decisions and player-conditioned outcomes. It omits target-role priors, decision labels and filter, playbook priors, point splits, team and league streak splits, the current-streak input, and exact-yardline outcomes. The active batch therefore does not match the all-layer command above. Preserve its existing ledgers and logs; do not describe those outputs as the all-layer forecast. Hermes2 has been asked to preserve the running jobs and report the least disruptive path to the requested full-layer configuration.
+
 ## Calibration order
 
 1. **Pace and game mechanics:** resolve the excess plays through clock stoppages, drives, possession changes and game duration. Recheck plays and possessions against the same historical cohort.
@@ -86,4 +90,4 @@ For every comparison, record the exact source cutoff, model version, artifact/in
 
 ## Current local changes
 
-This change set includes the corrected red-zone diagnostic and report, updated model/context documents, layer-calibration audit, engine manifest and runner wiring, and the paired exact-yardline comparison. The run status above is a timestamped progress snapshot, not a result. Coaching tendencies remain separate research and are not part of the executable SLC layer set.
+This change set includes the corrected red-zone diagnostic and report, updated model/context documents, layer-calibration audit, engine manifest and runner wiring, and the completed paired exact-yardline comparison. The raw exact-yardline artifact remains on the faster host and is identified by its path and SHA-256 above. Coaching tendencies remain separate research and are not part of the executable SLC layer set.
