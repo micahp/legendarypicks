@@ -58,6 +58,10 @@ STARTER_ROLES = {
     'Special Teams': {('PK', 1), ('P', 1), ('LS', 1), ('H', 1), ('KR', 1), ('PR', 1)},
 }
 EXPECTED_STARTERS = 28
+DEFENSIVE_FRONT_COMPATIBILITY = {
+    'interior': frozenset({'LDT', 'RDT', 'NT'}),
+    'edge': frozenset({'LDE', 'RDE'}),
+}
 # NFL's official 2022 Rams and 2025 Packers media guides use both "Matthew Orzech" and
 # "Matt Orzech" for this player. Keep the exception keyed by GSIS and exact normalized
 # names; never use it to join identities. Sources:
@@ -137,6 +141,21 @@ def _identity_name_matches(gsis_id, source_name, canonical_name):
     reverse = (canonical_key, source_key)
     return pair in VERIFIED_NAME_VARIANTS.get(str(gsis_id), ()) or reverse in VERIFIED_NAME_VARIANTS.get(
         str(gsis_id), ())
+
+
+def _cross_role_front_backup(retained, *, group, pos, expected_roles, game_id, team):
+    """Choose an eligible same-front backup for an unfilled defensive-line role."""
+    compatible_positions = next((roles for roles in DEFENSIVE_FRONT_COMPATIBILITY.values() if pos in roles), None)
+    if group not in ('Base 3-4 D', 'Base 4-3 D') or compatible_positions is None:
+        raise ValueError(f'{game_id}: {team} has no available depth player for starter role {group}/{pos}/1')
+    reserved = {(g, p, r) for g, p, r in expected_roles if p != pos}
+    candidates = [p for p in retained if p['roster_eligible'] and not p['starter']
+                  and p['group'] == group and p['unit'] == 'defense' and p['pos_abb'] in compatible_positions
+                  and (p['group'], p['pos_abb'], p['pos_rank']) not in reserved]
+    if not candidates:
+        raise ValueError(f'{game_id}: {team} has no eligible compatible defensive-front backup for {pos}/1')
+    candidates.sort(key=lambda p: (p['pos_rank'], p['gsis_id']))
+    return candidates[0]
 
 
 def _iso_utc(value):
@@ -367,6 +386,7 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
 
     # If the listed starter is not on the archived game-week roster, promote the best rostered player for that role.
     promotions = []
+    role_fallbacks = []
     for group, pos, rank in sorted(expected_roles):
         same_position = sorted((p for p in retained if p['roster_eligible']
                                 and p['group'] == group and p['pos_abb'] == pos),
@@ -374,11 +394,28 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
         exact = next((p for p in same_position if p['pos_rank'] == rank), None)
         chosen = exact or next((p for p in same_position if not p['starter']), None)
         if chosen is None:
-            raise ValueError(f'{game_id}: {team} has no available depth player for starter role {group}/{pos}/{rank}')
+            chosen = _cross_role_front_backup(retained, group=group, pos=pos,
+                                              expected_roles=expected_roles, game_id=game_id, team=team)
+            source_role = {'group': chosen['group'], 'pos_abb': chosen['pos_abb'],
+                           'pos_rank': chosen['pos_rank']}
+            # Preserve unique source role rows; the intended assignment is explicit and separately recorded.
+            occupied_ranks = [p['pos_rank'] for p in retained if p['group'] == group and p['pos_abb'] == pos]
+            chosen['source_role_before_fallback'] = source_role
+            chosen['pos_abb'] = pos
+            chosen['pos_rank'] = max(occupied_ranks, default=0) + 1
+            chosen['starter_assignment'] = {'group': group, 'pos_abb': pos, 'starter_rank': rank,
+                                            'classification': 'retrospective_role_fallback'}
+            record = {'group': group, 'pos_abb': pos, 'starter_rank': rank,
+                      'promoted_gsis_id': chosen['gsis_id'], 'source_role': source_role,
+                      'assigned_role_rank': chosen['pos_rank'],
+                      'reason': 'no eligible same-position depth player; selected eligible same-front backup'}
+            promotions.append(record)
+            role_fallbacks.append(record)
         chosen['starter'] = True
         if chosen['pos_rank'] != rank:
-            promotions.append({'group': group, 'pos_abb': pos, 'starter_rank': rank,
-                               'promoted_gsis_id': chosen['gsis_id'], 'promoted_depth_rank': chosen['pos_rank']})
+            if not chosen.get('starter_assignment'):
+                promotions.append({'group': group, 'pos_abb': pos, 'starter_rank': rank,
+                                   'promoted_gsis_id': chosen['gsis_id'], 'promoted_depth_rank': chosen['pos_rank']})
     if sum(bool(player['starter']) for player in retained) != EXPECTED_STARTERS:
         raise ValueError(f'{game_id}: {team} archive roster does not resolve to exactly {EXPECTED_STARTERS} starter roles')
     if not any(p['pos_abb'] == 'QB' and p['pos_rank'] == 1 and p['roster_eligible'] for p in retained):
@@ -395,6 +432,7 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
         'missing': [],
         'players': sorted(retained, key=lambda p: (p['group'], p['pos_abb'], p['pos_rank'], p['gsis_id'])),
         'promotions': promotions,
+        'role_fallbacks': role_fallbacks,
         'injury_report': {'rows': len(injury_rows), 'available': bool(injury_rows), 'players': injury_rows},
         'source_row_counts': {'depth_rows': len(depth_rows), 'week_roster_rows': len(roster_rows),
                               'matched_players': len(retained)},

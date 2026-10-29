@@ -46,5 +46,27 @@ class VerifiedIdentityNameVariants(unittest.TestCase):
         self.assertTrue(builder._identity_name_matches('00-0038642', 'D.J. Ivey', 'DJ Ivey'))
 
 
+class DefensiveFrontFallback(unittest.TestCase):
+    def test_missing_interior_starter_uses_unreserved_eligible_front_backup(self):
+        expected = {('Base 4-3 D', 'LDT', 1), ('Base 4-3 D', 'RDT', 1)}
+        players = [
+            {'gsis_id': 'sieler', 'group': 'Base 4-3 D', 'pos_abb': 'RDT', 'pos_rank': 1,
+             'unit': 'defense', 'roster_eligible': True, 'starter': False},
+            {'gsis_id': 'biggers', 'group': 'Base 4-3 D', 'pos_abb': 'RDT', 'pos_rank': 2,
+             'unit': 'defense', 'roster_eligible': True, 'starter': False},
+        ]
+        chosen = builder._cross_role_front_backup(players, group='Base 4-3 D', pos='LDT',
+                                                  expected_roles=expected, game_id='test', team='MIA')
+        self.assertEqual(chosen['gsis_id'], 'biggers')
+
+    def test_fallback_fails_when_no_eligible_compatible_front_backup_exists(self):
+        players = [{'gsis_id': 'edge', 'group': 'Base 4-3 D', 'pos_abb': 'RDE', 'pos_rank': 2,
+                    'unit': 'defense', 'roster_eligible': True, 'starter': False}]
+        with self.assertRaisesRegex(ValueError, 'no eligible compatible defensive-front backup'):
+            builder._cross_role_front_backup(players, group='Base 4-3 D', pos='LDT',
+                                             expected_roles={('Base 4-3 D', 'LDT', 1)},
+                                             game_id='test', team='MIA')
+
+
 if __name__ == '__main__':
     unittest.main()
