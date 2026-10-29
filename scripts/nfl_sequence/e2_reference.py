@@ -485,7 +485,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          eligible_before=None, contextual_context=None, contextual_mode=None, contextual_bandwidth=1.0,
          contextual_min_effective_games=10.0, team_tendency=False, team_tendency_teams=None,
          playcall_artifact=None, playcall_teams=None, playcall_team_outcomes=False, playcall_formation=False,
-         playcall_player_shares=False):
+         playcall_player_shares=False, playcall_exact_yardline=False, playcall_coverage=False):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -561,6 +561,15 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             fl.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], participation)
             contextual_sampler.formation_priors = fl.priors(db, int(eligible_before[0]))
             contextual_sampler.formation_outcomes = True
+        contextual_sampler.exact_yardline = bool(playcall_exact_yardline)
+        if playcall_coverage:  # defensive coverage on dropbacks: the defense's prior shares; outcomes conditioned on it
+            if eligible_before is None:
+                raise ValueError('coverage priors need an eligible-before cutoff')
+            import defense_layer as dl
+            seasons = sorted({int(row['season']) for row in rows})
+            dl.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], dl.load_coverage(db, seasons))
+            contextual_sampler.defense_priors = dl.priors(db, int(eligible_before[0]))
+            contextual_sampler.coverage_outcomes = True
         if playcall_player_shares:  # prior-season player target and carry shares for the pre-event adapter
             if eligible_before is None:
                 raise ValueError('player shares need an eligible-before cutoff')
