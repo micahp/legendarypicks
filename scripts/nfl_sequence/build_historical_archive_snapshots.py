@@ -69,7 +69,7 @@ VERIFIED_NAME_VARIANTS = {
     '00-0037743': frozenset({('dax hill', 'daxton hill')}),
     # Packers materials confirm T.J. is Tedarrell Slaton's nickname.
     # https://www.packers.com/news/inbox-it-serves-a-playmaking-purpose
-    '00-0036642': frozenset({('t j slaton', 'tedarrell slaton')}),
+    '00-0036642': frozenset({('tj slaton', 'tedarrell slaton')}),
 }
 
 
@@ -97,7 +97,10 @@ def _int(value, label):
 
 
 def _name_key(value):
-    key = re.sub(r'[^a-z0-9]+', ' ', str(value).lower()).strip()
+    # Sources vary on periods in initialisms ("DJ" vs "D.J."). Remove periods
+    # after letters before tokenizing; stable GSIS IDs remain the join key.
+    value = re.sub(r'(?<=[a-z])\.(?=[a-z\s]|$)', '', str(value).lower())
+    key = re.sub(r'[^a-z0-9]+', ' ', value).strip()
     return re.sub(r'\s+(jr|sr|ii|iii|iv)$', '', key)
 
 
