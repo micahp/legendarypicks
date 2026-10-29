@@ -42,7 +42,7 @@ def team_stats(drives, points):
             yards = out['yards_gained'] or 0
             if ev == 'run':
                 t['rush_att'] += 1
-                t['rush_yds'] += _credited(play, yards)
+                t['rush_yds'] += _credited(play, _player_yards(play, 'rushing_yards', yards))
             elif ev in ('pass_complete', 'pass_incomplete', 'interception', 'sack'):
                 if ev == 'sack':
                     t['sacks_taken'] += 1
@@ -51,7 +51,9 @@ def team_stats(drives, points):
                     t['pass_att'] += 1
                     if ev == 'pass_complete':
                         t['pass_comp'] += 1
-                        t['pass_yds'] += _credited(play, yards)
+                        t['pass_yds'] += _credited(play, _player_yards(play, 'passing_yards', yards))
+                        if 'receiving_yards' in (part.get('sampled_play_context') or {}):
+                            t['receiving_yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
             if out['turnover'] and ev in ('interception', 'fumble_lost'):
                 t['turnovers'] += 1
             if ev == 'interception':
@@ -103,6 +105,13 @@ def _credited(play, yards):
     return yards
 
 
+def _player_yards(play, field, fallback):
+    """Use the source's role-specific box-score field when supplied; otherwise retain transition yardage."""
+    context = play.get('participants', {}).get('sampled_play_context') or {}
+    value = context.get(field)
+    return fallback if value is None else int(value)
+
+
 def player_lines(drives):
     """Per-player passing, rushing, receiving and miscellaneous lines with attribution metadata."""
     lines = {}
@@ -125,7 +134,7 @@ def player_lines(drives):
             if ev == 'run' and part['rusher_id']:
                 r = line(part['rusher_id'], part, 'rusher')['rushing']
                 r['att'] += 1
-                r['yds'] += _credited(play, yards)
+                r['yds'] += _credited(play, _player_yards(play, 'rushing_yards', yards))
                 r['td'] += int(td)
             if ev == 'fumble_lost':
                 role = 'rusher' if part.get('rusher_id') else 'passer'
@@ -143,14 +152,14 @@ def player_lines(drives):
                     p['int'] += 1
                 if ev == 'pass_complete':
                     p['comp'] += 1
-                    p['yds'] += _credited(play, yards)
+                    p['yds'] += _credited(play, _player_yards(play, 'passing_yards', yards))
                     p['td'] += int(td)
             if ev in ('pass_complete', 'pass_incomplete', 'interception') and part['receiver_id']:
                 c = line(part['receiver_id'], part, 'receiver')['receiving']
                 c['tgt'] += 1
                 if ev == 'pass_complete':
                     c['rec'] += 1
-                    c['yds'] += _credited(play, yards)
+                    c['yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
                     c['td'] += int(td)
     out = []
     for pid in sorted(lines):
@@ -170,9 +179,13 @@ def compute(drives, points):
     players = player_lines(drives)
     attributions = {row['attribution'] for row in players}
     attribution = next(iter(attributions)) if len(attributions) == 1 else ATTRIBUTION
-    if attribution == 'pregame_depth_chart_role_sample':
+    if attribution in ('pregame_depth_chart_role_sample', 'pre_event_selection'):
         _verify_pregame_reconciliation(team_stats(drives, points), players)
-    note = ('Team play outcomes come from historical E1 samples. The passer is the frozen QB1; eligible receiver and '
+    note = ('Team play outcomes come from historical E1 samples. Participants were selected before the outcome from the '
+            'frozen pregame roster, using the enabled target-role and share priors; these lines are allocations, not '
+            'player-conditioned outcome projections.'
+            if attribution == 'pre_event_selection' else
+            'Team play outcomes come from historical E1 samples. The passer is the frozen QB1; eligible receiver and '
             'ball-carrier positions follow historical shares, then players are sampled by depth rank. Individual lines are '
             'allocations, not player-specific projections.'
             if attribution == 'pregame_depth_chart_role_sample' else
@@ -204,7 +217,6 @@ def _verify_pregame_reconciliation(teams, players):
             'fumbles_lost': sum(player.get('miscellaneous', {}).get('fumbles_lost', 0) for player in rows),
             'pass_tgt': sum(player.get('receiving', {}).get('tgt', 0) for player in rows),
             'pass_comp_receiving': sum(player.get('receiving', {}).get('rec', 0) for player in rows),
-            'pass_yds_receiving': sum(player.get('receiving', {}).get('yds', 0) for player in rows),
             'offensive_turnovers': (sum(player.get('passing', {}).get('int', 0) for player in rows)
                                     + sum(player.get('miscellaneous', {}).get('fumbles_lost', 0) for player in rows)),
         }
@@ -218,8 +230,13 @@ def _verify_pregame_reconciliation(teams, players):
             'offensive_turnovers': team.get('turnovers', 0),
             'sack_yds': team.get('sack_yds', 0), 'pass_tgt': team.get('pass_tgt', 0),
             'pass_comp_receiving': team.get('pass_comp', 0),
-            'pass_yds_receiving': team.get('pass_yds', 0),
         }
+        if 'receiving_yds' in team:
+            checks['receiving_yds'] = sum(player.get('receiving', {}).get('yds', 0) for player in rows)
+            expected['receiving_yds'] = team['receiving_yds']
+        else:
+            checks['pass_yds_receiving'] = sum(player.get('receiving', {}).get('yds', 0) for player in rows)
+            expected['pass_yds_receiving'] = team.get('pass_yds', 0)
         mismatches = {key: (checks[key], expected[key]) for key in checks if checks[key] != expected[key]}
         if mismatches:
             raise AssertionError(f'pregame player/team stats do not reconcile for {side}: {mismatches}')

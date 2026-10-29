@@ -1,6 +1,8 @@
 # SLC v1 model card (research, 2026-10-29)
 
 **Model id:** `slc_v1_incomplete` (the engine's `MODEL_ID`; outputs carry the `_incomplete` label).
+Optional research IDs: `slc_v1_qb_decisions_research`, `slc_v1_player_outcomes_research`, and
+`slc_v1_qb_decisions_player_outcomes_research`.
 **Status:** research only. Not adopted, not deployed, not a forecast of record. The Week 8 2026 lock exists as a frozen artifact and
 has no graded outcome yet.
 **Scope:** NFL regular-season game simulation: play calling, outcomes, scoring and clock, from a pregame snapshot.
@@ -24,6 +26,8 @@ Each item is on by default unless marked as a flag.
 | Team playbook priors for pass depth, pass location and run gap | `playbook_prior.py` | flag `--playcall-playbook` (requires decision layer; off by default) |
 | Decision model category A (target role), prior by situation | `target_roles.py` | flag `--playcall-target-roles` |
 | Decision model categories A to N as labels, with the lifts and row filter | `decision_layer.py` | flag `--playcall-decision` (filter on by default) |
+| QB action and target-role decisions, keyed by QB, team and situation | `qb_decisions.py`, `pre_event.py`, `slc_playcall.py` | `--playcall-qb-decisions` or `--qb-decisions`; off |
+| Player-conditioned event and result distributions for the selected passer, receiver and rusher | `player_outcomes.py`, `slc_playcall.py`, `game_stats.py` | `--playcall-player-outcomes` or `--player-outcomes`; off |
 | Team and league win-loss record for display | `wl_streak.py` | display only, not a model input |
 
 ## What is not connected
@@ -32,8 +36,13 @@ Each item is on by default unless marked as a flag.
   nfl_pbp counts and drawn once per team and role. It is behind --playcall-dirichlet-shares and off by default. The external
   target-count Monte Carlo and zero-truncated negative-binomial carry-count models remain unported. The held-out check is in
   SLC-PLAYER-SHARE-VALIDATION-2026-10-29.md.
-- **QB opportunity model.** A validation target only. It is a team-attempts decomposition (plays per game times pass propensity
-  times QB share) from another branch. It is not an input to SLC.
+- **External QB opportunity model.** A validation target only. It is a team-attempts decomposition (plays per game times pass
+  propensity times QB share) from another branch. It is not an input to SLC. The in-play QB decision slice is separate and limited
+  to scramble propensity and target-role selection.
+- **Full player-conditioned sequence.** The first QB decision and player event/result distributions are wired into the single-game
+  and batch runners, but remain experimental and off by default. The QB model does not cover progressions, throwaways, pressure
+  response or defensive adaptation. The outcome model uses marginal player distributions with clipped likelihood ratios; the joint
+  passer-receiver model and full-game calibration remain open.
 - **Red-zone yardage.** The replay still gains about three yards fewer than actual on red-zone passes and two fewer on red-zone runs
   (`SLC-YARDS-REPLAY-2024-2026-10-29.md`). The exact yard-line draw closed about 30 percent of the trip gap earlier.
 - **Out of v1 by design:** coaching, and physical movement.
@@ -64,6 +73,13 @@ changed on all 99 paired valid seeds while team scores stayed identical. The mat
 effect. The 2024 formation replay uses 229 of 256 eligible games and does not establish a scoring change. See the result reports for
 cohort rules and limits.
 
+The QB/player-outcome score report fits 2022-2024 and scores 2025, with paired uncertainty resampled by NFL game. Receiver event and
+completion-result distributions improve log loss by +0.00746 and +0.02066 per event; both 95 percent game-bootstrap intervals are
+above zero. QB scramble/pass action has a small negative score difference whose interval includes zero. The QB-specific target-role
+distribution is worse by -0.00734 log loss per target (95 percent interval -0.00889 to -0.00572). QB completion-result log loss is
+worse by -0.00448 (95 percent interval -0.00707 to -0.00200). Rusher event and result score changes are small and uncertain. These
+are marginal source-row scores, not full-game calibration. See `SLC-QB-PLAYER-OUTCOME-VALIDATION-2026-10-29.md`.
+
 ## Holdout
 
 2026 is the sealed holdout. No 2026 game outcome was used to fit, tune, or select any component. The decision prior is built from
@@ -76,8 +92,9 @@ the prior season only (2025 for a 2026 forecast). The Week 8 lock (`ad7e26d9`) w
 3. Simulated scrimmage plays run about 9 to 11 percent above 2025; the excess appears in the clock and drive model. This remains
    uninvestigated.
 4. The share model's lower and median count quantiles remain too low on the 2025 holdout, and the full frozen-roster population was not scored.
-5. Player shares change who receives targets and carries, but outcomes are not conditioned on the selected player's completion,
-   interception, sack, yards or touchdown distribution. Player-conditioned outcomes remain the next model gap.
+5. The player-conditioned adapter improves receiver event and receiving-yard scores on the 2025 holdout, but QB target-role and
+   completion-yard scores regress, while rusher scores show no clear gain. The player-conditioned layer has not cleared calibration
+   gates and remains off by default.
 6. Most evidence is one snapshot (CAR-GB) at 100 seeds. Margins carry about ±1.6 standard error per arm, so margin differences of
    this size are not team effects.
 7. Some earlier arms ran on older code. Score-clock was rerun on current code (`score_clock_v2`) and matched the earlier totals exactly.
@@ -93,5 +110,7 @@ snapshots.
 ## Reproduce
 
 `python3 scripts/nfl_sequence/simulate_pregame_batch.py --snapshot-file docs/research/slc-week8-2026/snapshots/2026_08_CAR_GB.json --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --playcall-player-shares --playcall-decision --games 100 --seed-start 1 --out <json>`
+
+`python3 scripts/nfl_sequence/validate_qb_player_outcomes.py --out-json docs/research/SLC-QB-PLAYER-OUTCOME-VALIDATION-2026-10-29.json --out-md docs/research/SLC-QB-PLAYER-OUTCOME-VALIDATION-2026-10-29.md`
 
 Tests: `python3 -m unittest test_decision_layer test_participant_invariants test_pre_event test_slc_playcall test_player_shares test_streak_splits` (in `scripts/nfl_sequence`).

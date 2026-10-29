@@ -1,0 +1,335 @@
+{
+  "code_sha256": {
+    "e1_drive.py": "9c7c591bc20da206d690835191e15db0e5c80620904e72b2988e9645908cb431",
+    "e2_reference.py": "f3a1363dac6b50d7532a91f7ce16faed5d59f8181dfffd20ebb3ae3b356efa3a",
+    "game_state.py": "34b67a2d60f47b3145296c4e352bbaa13679ec5444ffe5f0420ab22fef7100f9",
+    "game_stats.py": "5fc5e4a27fd1325206759c290fd6fab29d5a9d9710bbba232dd89d2da55565b6",
+    "player_outcomes.py": "4cc0a4ababffd880faeefa857585332f296d2caea59c0b375e07e570bfbec757",
+    "pre_event.py": "7e4938a8c869d99dffdffc017c5886a75160efefa8eaf29545e7e297ce88ab88",
+    "qb_decisions.py": "99437b5e73fce058befee4716e6b13466f8df2cbb41c4628f3076eb91134073c",
+    "run_slc_game.py": "ad18840b0a7e73ffb44b45a15c63f4b755e1b9bf4150f44d9ba400240d6abd13",
+    "simulate_pregame_batch.py": "ae699f5a723ef29a8bb820fa72a2b1997c948e608c87376d6e3ec2707a58dbf6",
+    "slc_engine.py": "87dbb109c87edcabd098b75b8b35626942dc63b0ef11b8757dd66df0a283a415",
+    "slc_playcall.py": "999eb83e6bc11106bdee1fbe56fbda0de3a5f563a57442255e483a174364fc71",
+    "validate_qb_player_outcomes.py": "f4854b92f231484bd61c70f207db95ac352791c26e118092a5be5b79e554b61a"
+  },
+  "created_on": "2026-10-29",
+  "fit": {
+    "cutoff_season_exclusive": 2025,
+    "source_seasons": [
+      2022,
+      2023,
+      2024
+    ]
+  },
+  "holdout": {
+    "e1_exclusions": {
+      "negative derived clock runoff": 5,
+      "no same-quarter next snap for clock runoff": 3,
+      "penalty (not modelled)": 687,
+      "punt without a clean receiving-team snap": 219,
+      "turnover that is a touchdown (not modelled)": 43,
+      "turnover without a clean new-offense snap": 92
+    },
+    "nfl_pbp_rows": 46452,
+    "player_outcome_e1_eligible_rows": 34785,
+    "season": 2025,
+    "source_sha256": "e01717d86aae54e835991321f73dd465a32dae9005ea173e8fc32ce83ef2371f"
+  },
+  "interpretation": {
+    "limits": [
+      "QB action and target-role scores cover held-out nfl_pbp dropbacks and identified targets; target roles are not conditioned on a reconstructed frozen injury report.",
+      "Player outcome scores use only 2025 rows eligible for the SLC E1 outcome pool and compare marginal player distributions with role-level pooled distributions.",
+      "Scores do not reproduce SLC candidate-cell reweighting, the joint passer-receiver weighting, full-game state feedback, or scoring calibration.",
+      "QB outcomes cover completions, incompletions, interceptions and sacks; this first slice does not model QB progressions, pressure response, throwaways or defensive adaptation.",
+      "Game movement uses yards_gained. Player result distributions and box-score lines use passing_yards, receiving_yards or rushing_yards where present; missing role-specific fields fall back only for emitted box-score lines."
+    ],
+    "positive_improvement": "the cutoff-safe player/QB model has lower held-out log loss or Brier score than its stated pooled baseline",
+    "uncertainty": "paired percentile bootstrap, resampling whole NFL games with replacement"
+  },
+  "models": {
+    "player_outcomes": {
+      "conditioning": "event type plus joint yards-bin and touchdown label; result sampled before state transition",
+      "cutoff_season": 2025,
+      "git_commit": null,
+      "model_version": "slc-player-outcomes-v1",
+      "player_units": {
+        "qb": 111,
+        "receiver": 768,
+        "rusher": 568
+      },
+      "prior_strength_opportunities": 40.0,
+      "ratio_clip": [
+        0.25,
+        4.0
+      ],
+      "source": "nflverse nfl_pbp pass, rush, sack, completion and interception fields; participant keys are GSIS ids",
+      "source_code_sha256": "4cc0a4ababffd880faeefa857585332f296d2caea59c0b375e07e570bfbec757",
+      "source_counts": {
+        "completions_missing_receiving_yards": 0,
+        "non_qb_passers_excluded": 157,
+        "qb_completions_missing_passing_yards": 0,
+        "qb_dropbacks_with_id": 58124,
+        "rushes_missing_rushing_yards": 111,
+        "rushes_with_rusher_id": 44174,
+        "targets_missing_receiver_id": 6434,
+        "targets_with_receiver_id": 52052
+      },
+      "source_seasons": [
+        2022,
+        2023,
+        2024
+      ],
+      "source_sha256": "3447a684e1c2c69c2700cf03e574072b1fd1cbc0d3a707b6ed5cbd88479765be",
+      "transfer_rule": "outcome observations are retained by stable player id; QB decision tendencies are separately keyed by team and QB",
+      "transferred_player_units": {
+        "qb": 42,
+        "receiver": 181,
+        "rusher": 138
+      },
+      "yardage_fallback": "a missing role-specific player yard field omits that result adjustment; emitted box-score yards use yards_gained when the source field is null",
+      "yardage_fields": {
+        "game_state_transition": "yards_gained",
+        "quarterback_completion": "passing_yards",
+        "quarterback_sack": "yards_gained",
+        "receiver_completion": "receiving_yards",
+        "rusher_attempt": "rushing_yards"
+      }
+    },
+    "qb_decisions": {
+      "cutoff_season": 2025,
+      "git_commit": null,
+      "model_version": "slc-qb-decisions-v1",
+      "scramble_definition": "qb_scramble among nflverse qb_dropback rows; scrambler identity uses rusher_player_id joined by GSIS id when its canonical position is QB",
+      "shrinkage_strength": 20.0,
+      "source": "nfl_pbp qb_dropback, qb_scramble, pass_attempt, passer_player_id and rusher_player_id; canonical QB and receiver positions joined by GSIS id",
+      "source_code_sha256": "99437b5e73fce058befee4716e6b13466f8df2cbb41c4628f3076eb91134073c",
+      "source_counts": {
+        "non_qb_passers_excluded": 162,
+        "qb_dropbacks_in_model_state": 61019,
+        "qb_dropbacks_missing_id": 0,
+        "qb_scrambles": 2991,
+        "qb_scrambles_missing_qb_identity": 0,
+        "qb_team_units": 167,
+        "target_rows_with_mapped_receiver_id": 51688,
+        "target_rows_without_position": 0
+      },
+      "source_seasons": [
+        2022,
+        2023,
+        2024
+      ],
+      "source_sha256": "97dc0898d1a68b8a9665b65b14e8f02c2412891f8fb7b1eef00e742312692e39",
+      "transfer_rule": "QB decision histories remain keyed by team and passer; a new team uses its team and league priors"
+    }
+  },
+  "qb_decision_source_counts": {
+    "dropbacks": 19702,
+    "dropbacks_with_qb_history": 12449,
+    "targets_with_qb_target_history": 10470,
+    "targets_with_receiver_id": 16588
+  },
+  "report_version": "slc-qb-player-outcomes-holdout-v1",
+  "scores": {
+    "qb_action": {
+      "baseline_brier": 0.10477571237376644,
+      "baseline_log_loss": 0.21774545952819924,
+      "brier_improvement": -0.00012834405310223424,
+      "brier_improvement_game_bootstrap_95": [
+        -0.00036159141227770137,
+        0.00010458805611967643
+      ],
+      "games": 272,
+      "history_rows": 12449,
+      "log_loss_improvement": -0.0009852022908066519,
+      "log_loss_improvement_game_bootstrap_95": [
+        -0.002117101026053298,
+        0.0001450287489818613
+      ],
+      "model_brier": 0.1049040564268687,
+      "model_log_loss": 0.21873066181900588,
+      "n": 19702,
+      "players": 77
+    },
+    "qb_event": {
+      "baseline_brier": 0.5323127535448056,
+      "baseline_log_loss": 0.9157483060153224,
+      "brier_improvement": 0.00016975443483658418,
+      "brier_improvement_game_bootstrap_95": [
+        -0.0005305543791963693,
+        0.0008125587662430483
+      ],
+      "games": 272,
+      "history_rows": 15731,
+      "log_loss_improvement": 0.00016160455190613557,
+      "log_loss_improvement_game_bootstrap_95": [
+        -0.0011748478166399869,
+        0.001531000895379214
+      ],
+      "model_brier": 0.532142999109969,
+      "model_log_loss": 0.9155867014634163,
+      "n": 18235,
+      "players": 77
+    },
+    "qb_result_pass_complete": {
+      "baseline_brier": 0.772565801261228,
+      "baseline_log_loss": 1.6944811352549018,
+      "brier_improvement": -0.0007471884078853477,
+      "brier_improvement_game_bootstrap_95": [
+        -0.001501572439943663,
+        -6.346733517577079e-05
+      ],
+      "games": 272,
+      "history_rows": 9594,
+      "log_loss_improvement": -0.0044765455274441155,
+      "log_loss_improvement_game_bootstrap_95": [
+        -0.007067086333523059,
+        -0.0019971850179899995
+      ],
+      "model_brier": 0.7733129896691132,
+      "model_log_loss": 1.698957680782346,
+      "n": 11030,
+      "players": 75
+    },
+    "qb_result_sack": {
+      "baseline_brier": 0.6717763285801281,
+      "baseline_log_loss": 1.2145886478368018,
+      "brier_improvement": 0.0014513169667640824,
+      "brier_improvement_game_bootstrap_95": [
+        -0.00252779008885094,
+        0.005610238874655379
+      ],
+      "games": 270,
+      "history_rows": 1015,
+      "log_loss_improvement": 0.0002369325089482049,
+      "log_loss_improvement_game_bootstrap_95": [
+        -0.00930459071620273,
+        0.008555212633166243
+      ],
+      "model_brier": 0.6703250116133641,
+      "model_log_loss": 1.2143517153278536,
+      "n": 1251,
+      "players": 66
+    },
+    "qb_target_role": {
+      "baseline_brier": 0.5720275830847992,
+      "baseline_log_loss": 0.976440337561954,
+      "brier_improvement": -0.0035528463324056383,
+      "brier_improvement_game_bootstrap_95": [
+        -0.004484549887736733,
+        -0.0027265978271244296
+      ],
+      "games": 272,
+      "history_rows": 10470,
+      "log_loss_improvement": -0.007341088979125854,
+      "log_loss_improvement_game_bootstrap_95": [
+        -0.008886294524611791,
+        -0.005724299984131971
+      ],
+      "model_brier": 0.5755804294172049,
+      "model_log_loss": 0.9837814265410799,
+      "n": 16588,
+      "players": 76
+    },
+    "receiver_event": {
+      "baseline_brier": 0.44816936482211583,
+      "baseline_log_loss": 0.6970969714337772,
+      "brier_improvement": 0.0060170040460231005,
+      "brier_improvement_game_bootstrap_95": [
+        0.00447506121928769,
+        0.007536561760983247
+      ],
+      "games": 272,
+      "history_rows": 13981,
+      "log_loss_improvement": 0.007455504340724644,
+      "log_loss_improvement_game_bootstrap_95": [
+        0.005489387050520521,
+        0.009361953474066539
+      ],
+      "model_brier": 0.4421523607760927,
+      "model_log_loss": 0.6896414670930526,
+      "n": 16320,
+      "players": 500
+    },
+    "receiver_result_pass_complete": {
+      "baseline_brier": 0.7729356026147935,
+      "baseline_log_loss": 1.6962455334030377,
+      "brier_improvement": 0.0059231109010196015,
+      "brier_improvement_game_bootstrap_95": [
+        0.004283803773979966,
+        0.007569166359748275
+      ],
+      "games": 272,
+      "history_rows": 9453,
+      "log_loss_improvement": 0.02066281843916348,
+      "log_loss_improvement_game_bootstrap_95": [
+        0.01540522424041223,
+        0.025899086630691192
+      ],
+      "model_brier": 0.767012491713774,
+      "model_log_loss": 1.6755827149638742,
+      "n": 11041,
+      "players": 474
+    },
+    "rusher_event": {
+      "baseline_brier": 0.009884046263149286,
+      "baseline_log_loss": 0.031508744249591755,
+      "brier_improvement": 5.000638267898904e-06,
+      "brier_improvement_game_bootstrap_95": [
+        -2.4774698771738257e-05,
+        3.918773076801276e-05
+      ],
+      "games": 272,
+      "history_rows": 11360,
+      "log_loss_improvement": 0.00011793146270894025,
+      "log_loss_improvement_game_bootstrap_95": [
+        -0.0007372223326552498,
+        0.0009661224817305881
+      ],
+      "model_brier": 0.009879045624881386,
+      "model_log_loss": 0.03139081278688282,
+      "n": 13900,
+      "players": 329
+    },
+    "rusher_result_fumble_lost": {
+      "baseline_brier": 0.6835340610773013,
+      "baseline_log_loss": 1.344677167326741,
+      "brier_improvement": 0.0014672517466985358,
+      "brier_improvement_game_bootstrap_95": [
+        -0.0037535721034069407,
+        0.006548364544743095
+      ],
+      "games": 61,
+      "history_rows": 44,
+      "log_loss_improvement": -0.0010887834941172695,
+      "log_loss_improvement_game_bootstrap_95": [
+        -0.011154960002481066,
+        0.009672651985361743
+      ],
+      "model_brier": 0.6820668093306028,
+      "model_log_loss": 1.3457659508208584,
+      "n": 69,
+      "players": 55
+    },
+    "rusher_result_run": {
+      "baseline_brier": 0.7234300978558946,
+      "baseline_log_loss": 1.4813501560110904,
+      "brier_improvement": -0.000638571905970841,
+      "brier_improvement_game_bootstrap_95": [
+        -0.0018033281525024383,
+        0.000528658339032474
+      ],
+      "games": 272,
+      "history_rows": 11295,
+      "log_loss_improvement": 0.0006896654768540903,
+      "log_loss_improvement_game_bootstrap_95": [
+        -0.002790344527324967,
+        0.003980878098846512
+      ],
+      "model_brier": 0.7240686697618655,
+      "model_log_loss": 1.4806604905342367,
+      "n": 13831,
+      "players": 328
+    }
+  }
+}

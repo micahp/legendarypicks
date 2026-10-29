@@ -73,7 +73,7 @@ def _by_player_share(players, table, team, role, positions, draw):
 
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
-           share_table=None, playbook_table=None, share_cache=None):
+           share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -101,43 +101,91 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                 chosen['playbook_fallback'] = fallback
         chosen['labels'] = labels
     if intent == 'dropback':
-        chosen['passer'] = _passer(players, team, _draw(f'{base}:passer:trick'), trick_passer_rate)
-        receivers = [p for p in players if p['gsis_id'] != chosen['passer']['gsis_id']]  # a passer does not also receive
-        backups = sorted((p for p in receivers if p['pos_abb'] == 'QB'), key=lambda p: (p['pos_rank'], p['gsis_id']))
-        if backups and _draw(f'{base}:receiver:qb').random() < qb_receiver_rate:  # a QB catches: the backup, to the starter
-            chosen['receiver'] = backups[0]
-        elif player_shares is None:
-            chosen['receiver'] = _by_usage(receivers, observed['receiver_position_usage'], team, 'receiver',
-                                           _draw(f'{base}:receiver:position'))
-        else:  # the adapter: rostered receivers in proportion to their prior-season target shares
-            positions = player_shares_positions('receive')
-            if labels is not None and labels.get('A') is not None:  # decision category A: the target's role, from its prior
-                role = labels['A']
-                chosen['target_role'] = role
-                present = {p['pos_abb'] for p in players}
-                if role in ('RB', 'WR', 'TE') and role in present:
-                    positions = (role,)
-            elif role_table is not None and state is not None:  # decision model category A: the target's role first
-                import target_roles
-                present = {p['pos_abb'] for p in players if p['pos_abb'] in ('RB', 'WR', 'TE')}
-                role = target_roles.draw(role_table, team, state['down'], state['togo'], state['yl'], f'{base}:role',
-                                         available=present | {'Other'})
-                chosen['target_role'] = role
-                if role in ('RB', 'WR', 'TE'):
-                    positions = (role,)
-            if share_table is not None:  # the game's Dirichlet target shares over the eligible players, then this play's draw
-                import share_distributions
-                population = share_distributions.eligible_players(
-                    [p for p in receivers if p['pos_abb'] in player_shares_positions('receive')],
-                    roster.get('injury_report'))
-                eligible = [p for p in population if p['pos_abb'] in positions]
-                if not eligible:  # fail loudly: the adapter below does not know about injuries
-                    raise ValueError(f'no eligible receivers for {team} after the injury report')
-                chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), snapshot['snapshot_sha256'],
-                                                    _draw(f'{base}:receiver:dirichlet'), share_cache, population=population)
+        qbd_players = players
+        if qb_decision_table is not None:
+            import share_distributions
+            qbd_players = share_distributions.eligible_players(players, roster.get('injury_report'))
+            eligible_qbs = sorted((p for p in qbd_players if p['pos_abb'] == 'QB'),
+                                  key=lambda p: (p['pos_rank'], p['gsis_id']))
+            if not eligible_qbs:
+                raise ValueError(f'pregame snapshot has no available quarterback for {team}')
+            chosen['passer'] = eligible_qbs[0]
+            trick = _draw(f'{base}:passer:trick')
+            if trick.random() < trick_passer_rate:
+                throwers = sorted((p for p in qbd_players if p['pos_abb'] in ('RB', 'WR', 'TE')),
+                                  key=lambda p: (p['pos_rank'], p['gsis_id']))
+                if throwers:
+                    chosen['passer'] = trick.choices(throwers, weights=[1 / p['pos_rank'] for p in throwers], k=1)[0]
+        else:
+            chosen['passer'] = _passer(players, team, _draw(f'{base}:passer:trick'), trick_passer_rate)
+        if qb_decision_table is not None and chosen['passer']['pos_abb'] == 'QB' and state is not None:
+            import qb_decisions
+            available_roles = {qb_decisions.target_role(p['pos_abb']) for p in qbd_players
+                               if p['pos_abb'] in player_shares_positions('receive')}
+            qb_decision = qb_decisions.draw(
+                qb_decision_table, team, chosen['passer']['gsis_id'], state['down'], state['togo'], state['yl'],
+                available_roles, f'{base}:qb-decision')
+            chosen['qb_decision'] = qb_decision
+            if qb_decision['action'] == 'scramble':
+                chosen['rusher'] = chosen['passer']
+                chosen['labels'] = None  # passing labels do not describe the QB's scramble decision
             else:
-                chosen['receiver'] = _by_player_share(receivers, player_shares, team, 'receive', positions,
-                                                      _draw(f'{base}:receiver:player'))
+                labels = dict(labels or {})
+                labels['A'] = qb_decision['target_role']
+                chosen['labels'] = labels
+                chosen['target_role'] = qb_decision['target_role']
+        receivers = [p for p in qbd_players if p['gsis_id'] != chosen['passer']['gsis_id']]
+        if chosen.get('qb_decision', {}).get('action') == 'scramble':
+            pass  # the selected QB is the runner; a target is not assigned to a scramble
+        else:
+            backups = sorted((p for p in receivers if p['pos_abb'] == 'QB'), key=lambda p: (p['pos_rank'], p['gsis_id']))
+            if backups and _draw(f'{base}:receiver:qb').random() < qb_receiver_rate:  # a QB catches: the backup, to the starter
+                chosen['receiver'] = backups[0]
+                if chosen.get('qb_decision') is not None:
+                    chosen['qb_decision']['target_role'] = 'Other'
+                    chosen['target_role'] = 'Other'
+                    chosen['labels']['A'] = 'Other'
+            elif player_shares is None:
+                role = (chosen.get('qb_decision') or {}).get('target_role')
+                if role in ('RB', 'WR', 'TE'):
+                    eligible = sorted((p for p in receivers if p['pos_abb'] == role),
+                                      key=lambda p: (p['pos_rank'], p['gsis_id']))
+                    if not eligible:
+                        raise ValueError(f'QB decision selected unavailable target role {role} for {team}')
+                    chosen['receiver'] = _draw(f'{base}:receiver:qb-role').choices(
+                        eligible, weights=[1 / p['pos_rank'] for p in eligible], k=1)[0]
+                else:
+                    chosen['receiver'] = _by_usage(receivers, observed['receiver_position_usage'], team, 'receiver',
+                                                   _draw(f'{base}:receiver:position'))
+            else:  # the adapter: rostered receivers in proportion to their prior-season target shares
+                positions = player_shares_positions('receive')
+                if labels is not None and labels.get('A') is not None:  # decision category A, including the QB-specific role
+                    role = labels['A']
+                    chosen['target_role'] = role
+                    present = {p['pos_abb'] for p in receivers}
+                    if role in ('RB', 'WR', 'TE') and role in present:
+                        positions = (role,)
+                elif role_table is not None and state is not None:  # the team decision model's category A
+                    import target_roles
+                    present = {p['pos_abb'] for p in receivers if p['pos_abb'] in ('RB', 'WR', 'TE')}
+                    role = target_roles.draw(role_table, team, state['down'], state['togo'], state['yl'], f'{base}:role',
+                                             available=present | {'Other'})
+                    chosen['target_role'] = role
+                    if role in ('RB', 'WR', 'TE'):
+                        positions = (role,)
+                if share_table is not None:  # the game's Dirichlet target shares over the eligible players, then this play's draw
+                    import share_distributions
+                    population = share_distributions.eligible_players(
+                        [p for p in receivers if p['pos_abb'] in player_shares_positions('receive')],
+                        roster.get('injury_report'))
+                    eligible = [p for p in population if p['pos_abb'] in positions]
+                    if not eligible:  # fail loudly: the adapter below does not know about injuries
+                        raise ValueError(f'no eligible receivers for {team} after the injury report')
+                    chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), snapshot['snapshot_sha256'],
+                                                        _draw(f'{base}:receiver:dirichlet'), share_cache, population=population)
+                else:
+                    chosen['receiver'] = _by_player_share(receivers, player_shares, team, 'receive', positions,
+                                                          _draw(f'{base}:receiver:player'))
     else:
         if player_shares is None:
             chosen['rusher'] = _by_usage(players, observed['runner_position_usage'], team, 'rusher',
@@ -197,7 +245,7 @@ def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw
 
 
 def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None,
-            share_table=None, playbook_table=None):
+            share_table=None, playbook_table=None, qb_decision_table=None):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
@@ -210,7 +258,7 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
         return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state,
                       player_shares=player_shares, defense_priors=defense_priors, role_table=role_table,
                       decision_table=decision_table, share_table=share_table, playbook_table=playbook_table,
-                      share_cache=share_cache)
+                      share_cache=share_cache, qb_decision_table=qb_decision_table)
     return pick
 
 
@@ -223,4 +271,6 @@ def ids(pre):
         out['target_role'] = pre['target_role']
     if pre.get('labels') is not None:  # the drawn decision labels, for the record
         out['labels'] = pre['labels']
+    if pre.get('qb_decision') is not None:
+        out['qb_decision'] = pre['qb_decision']
     return out
