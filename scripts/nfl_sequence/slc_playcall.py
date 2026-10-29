@@ -169,6 +169,8 @@ class PlayCallSampler:
         self.decision_filter = True  # False: the lifts shape the outcome, but the row is drawn from the whole cell (an experiment)
         # per-game Dirichlet target and carry shares (share_distributions), None when off: the receiver and rusher are drawn from them
         self.share_table = None
+        # the playbook files as the pre-event prior for pass depth, pass location and run gap (playbook_prior), None when off
+        self.playbook_table = None
 
     def _team(self, label):
         if self.side_teams is None:
