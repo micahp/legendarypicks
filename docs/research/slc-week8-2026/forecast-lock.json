@@ -1,0 +1,809 @@
+{
+ "evaluation_class": "prospective_forecast",
+ "games": [
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "be61f7249d6b5c62cca53bcba5e8a307801130698b32b45adbd91961c93ff787",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.498,
+    "home_win_probability_se": 0.0224,
+    "mean_away_points": 20.75,
+    "mean_home_points": 20.18,
+    "mean_margin_home": -0.57,
+    "mean_total": 40.92,
+    "seeds": 500,
+    "ties_at_regulation_end": 1,
+    "valid_engine_games": 489
+   },
+   "game_id": "2026_08_ARI_DAL",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T18:00:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "78ddacdc3df7a8f508df5989c60d054bbb7d0a929d2b948fde9fca19cce912e1",
+   "snapshot_sha256": "78452a420dc73206554600afc39effb5946cfcc87931d200cb850113765c4733",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "e36da4dbf460b5e72933cb9fc38d4ce478bd43dc01c2fa7b965722ba8ec8f956",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.532,
+    "home_win_probability_se": 0.0223,
+    "mean_away_points": 19.61,
+    "mean_home_points": 20.67,
+    "mean_margin_home": 1.06,
+    "mean_total": 40.28,
+    "seeds": 500,
+    "ties_at_regulation_end": 1,
+    "valid_engine_games": 490
+   },
+   "game_id": "2026_08_ATL_TB",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T18:00:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "741718fa733eda852d2d5f8e1eba1b804f29c596c2c1d047e8c7151a14bc9324",
+   "snapshot_sha256": "92ca721b08a76a42bddaf609e644e175628f6eaa57a1f3fe174677a90dd76f79",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "ae56848d7f1055056aa9cb2a83a11f304a2061c776bbd02ca1b43088cb68f270",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.512,
+    "home_win_probability_se": 0.0224,
+    "mean_away_points": 19.88,
+    "mean_home_points": 20.82,
+    "mean_margin_home": 0.94,
+    "mean_total": 40.7,
+    "seeds": 500,
+    "ties_at_regulation_end": 5,
+    "valid_engine_games": 489
+   },
+   "game_id": "2026_08_BAL_BUF",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T18:00:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "dfe4eacfe2a19b46ca52361a692d2abdcbdd1681fafbaddc432ef2aa46b68c40",
+   "snapshot_sha256": "97ac907bae1dbb2b993907b6c3c8bf8dc28d5ca225b9db0f30e95a01b2c72ef6",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "4704c3a1f357d30eeb8389c28a9019e032756b57180674fa024b97cb22bdc412",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.51,
+    "home_win_probability_se": 0.0224,
+    "mean_away_points": 19.85,
+    "mean_home_points": 20.04,
+    "mean_margin_home": 0.18,
+    "mean_total": 39.89,
+    "seeds": 500,
+    "ties_at_regulation_end": 2,
+    "valid_engine_games": 491
+   },
+   "game_id": "2026_08_CAR_GB",
+   "injury_report_available": {
+    "away": true,
+    "home": true
+   },
+   "injury_rows": {
+    "away": 7,
+    "home": 9
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-10-30T00:15:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "fdeb03e7761c423f0c8f3bc09ab8e40931489d18407374d1ef70fcff0baf205f",
+   "snapshot_sha256": "35a295d98022e5b5ec9ac0fded4bbe04cf94e50c962cd8da6d6e2c1a4a2f6e77",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "e31ad481bfd4b70f3e86935d6a44c17285b5fd5e413a2ebacdf42838c48aab70",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.516,
+    "home_win_probability_se": 0.0223,
+    "mean_away_points": 19.61,
+    "mean_home_points": 20.02,
+    "mean_margin_home": 0.41,
+    "mean_total": 39.63,
+    "seeds": 500,
+    "ties_at_regulation_end": 2,
+    "valid_engine_games": 491
+   },
+   "game_id": "2026_08_CHI_SEA",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-03T01:15:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "995c53afc22bd7dc5328c51e71d92bc15875c489087bcf1375ed51d12dd8f421",
+   "snapshot_sha256": "30832d34d3318a11cfce1f396964347299cd3645494cd522dca673dbd9e95729",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "a4966cfd34af6e3a23d29ac1709fdd0126aaac558dbdc2cc47e43924d2c8981a",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.484,
+    "home_win_probability_se": 0.0223,
+    "mean_away_points": 19.91,
+    "mean_home_points": 19.71,
+    "mean_margin_home": -0.2,
+    "mean_total": 39.61,
+    "seeds": 500,
+    "ties_at_regulation_end": 3,
+    "valid_engine_games": 486
+   },
+   "game_id": "2026_08_CLE_PIT",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T18:00:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "5b21d7083f714fbd4fb53c32e3cc9628ffbb006b458251a460d8bdc0df7a109e",
+   "snapshot_sha256": "01173abf541861cb5dd7a350469a8c95bff5f5a123d8b6976991ec6a46a36681",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "7ff30bd943a1eaea577228dbbf590b52a7d420df41cbb7f13d5d7278a4cd0f46",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.472,
+    "home_win_probability_se": 0.0223,
+    "mean_away_points": 20.41,
+    "mean_home_points": 20.06,
+    "mean_margin_home": -0.35,
+    "mean_total": 40.47,
+    "seeds": 500,
+    "ties_at_regulation_end": 1,
+    "valid_engine_games": 490
+   },
+   "game_id": "2026_08_IND_JAX",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T18:00:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "6b91add1b518138de3b0967c91e062b5bcf2a01bddaae4368f99cd2314f9c47c",
+   "snapshot_sha256": "4ae2426576f3ee10eac58ffab0a31b860c431def77604c2b229be883ca544fed",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "2c269d819b14ff2d9283bc92f7d370af4c54a4056c1e4a008d4407eef9765c55",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.486,
+    "home_win_probability_se": 0.0224,
+    "mean_away_points": 21.59,
+    "mean_home_points": 20.9,
+    "mean_margin_home": -0.69,
+    "mean_total": 42.48,
+    "seeds": 500,
+    "ties_at_regulation_end": 4,
+    "valid_engine_games": 485
+   },
+   "game_id": "2026_08_KC_DEN",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T21:25:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "5e9246b5fd13be75eac0a895e66f16c9f49292d4af3b4e28fe25707dd9d6a07e",
+   "snapshot_sha256": "7c63aea4a225bf07bd8588bccf86e0d8f0356a2dd871c1b4e90d2c3a9548835c",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "24b3176b2b62f021f385cdf18c066d0bced2e2562fe2f4e0c75e258718c82efd",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.528,
+    "home_win_probability_se": 0.0223,
+    "mean_away_points": 20.04,
+    "mean_home_points": 20.69,
+    "mean_margin_home": 0.64,
+    "mean_total": 40.73,
+    "seeds": 500,
+    "ties_at_regulation_end": 3,
+    "valid_engine_games": 485
+   },
+   "game_id": "2026_08_LAC_LA",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T21:05:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "37584590cf4b88dd96506f2beb0c015e20028dcdca50d73ed90700413b75301e",
+   "snapshot_sha256": "3c13a5fae0f8a93daa42c0201024ff1d20e8df86be55e7a50e393494b9a27f99",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "6c811a837aa6de0078b79bc4067cd119674273956ad0cd9cc1fef327ad9549e3",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.508,
+    "home_win_probability_se": 0.0224,
+    "mean_away_points": 20.6,
+    "mean_home_points": 20.61,
+    "mean_margin_home": 0.02,
+    "mean_total": 41.21,
+    "seeds": 500,
+    "ties_at_regulation_end": 3,
+    "valid_engine_games": 486
+   },
+   "game_id": "2026_08_LV_NYJ",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T18:00:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "84e633f31c98db615db524ce2d70ab9b6d9008e78d6bbffa9fc596c4b8a121cc",
+   "snapshot_sha256": "1941fff894898ec44682088fa6fed15e51c1ba97bd15f7a7f46a1304caae0756",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "be1bb2e4258df463c1bd64b7ad94e97699845c6e687376557bd4aeef9c6441ae",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.482,
+    "home_win_probability_se": 0.0223,
+    "mean_away_points": 20.91,
+    "mean_home_points": 20.59,
+    "mean_margin_home": -0.32,
+    "mean_total": 41.51,
+    "seeds": 500,
+    "ties_at_regulation_end": 1,
+    "valid_engine_games": 488
+   },
+   "game_id": "2026_08_MIN_DET",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T18:00:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "067b0c43ceced305ae15df07d88b14f992072d5bcae7c04d1cfcfca3b3e7cdac",
+   "snapshot_sha256": "23c7b239344aea78414ac29959c0edb30a76dda3b27e763699744954fc520eaa",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "06d109028b9f456a993e9960253d64cda3ef4265ded85af74fa5e52ac5cbfa5b",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.466,
+    "home_win_probability_se": 0.0223,
+    "mean_away_points": 20.68,
+    "mean_home_points": 19.78,
+    "mean_margin_home": -0.89,
+    "mean_total": 40.46,
+    "seeds": 500,
+    "ties_at_regulation_end": 4,
+    "valid_engine_games": 483
+   },
+   "game_id": "2026_08_NE_MIA",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T21:25:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "932457750ae81f1e9b3ded31c95a2bda9a516fa0421e48a2b8e680159309ca2c",
+   "snapshot_sha256": "552be6205bff20b97e57dbf12c881670463eb4eae54e3df6f7f3b6bd7e59d458",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "42ba42440ea6b7e8c6b374f871b4ba01489d0cdb24943c6c6f2f8e38aaba698e",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.54,
+    "home_win_probability_se": 0.0223,
+    "mean_away_points": 19.84,
+    "mean_home_points": 20.64,
+    "mean_margin_home": 0.8,
+    "mean_total": 40.47,
+    "seeds": 500,
+    "ties_at_regulation_end": 4,
+    "valid_engine_games": 489
+   },
+   "game_id": "2026_08_PHI_WAS",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-02T01:20:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "436ece0de17c2f6f1a8397a3424f7ac509f43899c7c3ad5c1a9f676bea4333ed",
+   "snapshot_sha256": "fbf6f4ed873f5a177748e28f97d36e2a1140eac87fe0a9190e982ae7da536c03",
+   "week": 8
+  },
+  {
+   "as_of_cutoff_utc": "2026-10-29T00:02:21Z",
+   "batch_output_sha256": "ee60a7dc7110e7104361faf1b78d59993c3420c8c6bd863e3348fd14e583150a",
+   "connected_layers": [
+    "game-state reducer and legal transitions (reducer.py, game_state.py)",
+    "E1 drive sampler with the live pre-play state (e1_drive.py, game_state.py)",
+    "score-clock play-call layer, every scrimmage play chosen before its outcome (slc_playcall.py, slc_engine.py)",
+    "E2 clock, scoring, possession and overtime rules (game_state.py)",
+    "pregame depth roster used for participant usage (pregame_snapshot.py, game_state.participants_for)",
+    "post-event player statistics as role allocations (game_stats.py)"
+   ],
+   "depth_snapshot_at": {
+    "away": "2026-10-28T13:58:02Z",
+    "home": "2026-10-28T13:58:02Z"
+   },
+   "evaluation_class": "prospective_forecast",
+   "forecast": {
+    "completed": 500,
+    "errors": 0,
+    "home_win_probability": 0.512,
+    "home_win_probability_se": 0.0224,
+    "mean_away_points": 19.95,
+    "mean_home_points": 20.47,
+    "mean_margin_home": 0.52,
+    "mean_total": 40.41,
+    "seeds": 500,
+    "ties_at_regulation_end": 3,
+    "valid_engine_games": 483
+   },
+   "game_id": "2026_08_TEN_CIN",
+   "injury_report_available": {
+    "away": false,
+    "home": false
+   },
+   "injury_rows": {
+    "away": 0,
+    "home": 0
+   },
+   "inputs_verified": true,
+   "kickoff_utc": "2026-11-01T18:00:00Z",
+   "missing_layers": [
+    "team offense and defense splits: not integrated (only a team-by-down term inside the play-call artifact)",
+    "team-specific playbooks: not integrated",
+    "QB and role decision models: not integrated (decision_model.py is not imported at this commit)",
+    "pre-event player selection: not integrated (participants are assigned after the outcome is drawn)",
+    "injury report: captured, but not consumed by the engine",
+    "kick and punt decisions: historical share fallback, labelled on every decision",
+    "coaching: excluded from v1 by decision"
+   ],
+   "model_commit": "ad7e26d9",
+   "model_id": "slc_v1_incomplete",
+   "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+   "schedule_verified": true,
+   "seed_ledger_sha256": "1bd795069d4f8484a39cbb04d714d74616c864eaf813a0933eb309cb86c1861a",
+   "snapshot_sha256": "288e5a77560b1974c1ad415fe4735e45591df3579f853a938c6299dc672cab08",
+   "week": 8
+  }
+ ],
+ "model_commit": "ad7e26d9",
+ "model_id": "slc_v1_incomplete",
+ "note": "locked only when committed and pushed before the game kickoff; the push time is the git commit time",
+ "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+ "schema": "lp-slc-week8-forecast-lock-1",
+ "written_at_utc": "2026-10-29T01:44:45Z"
+}
