@@ -175,6 +175,7 @@ class PlayCallSampler:
         self.qb_decision_table = None
         # Per-player event and joint yards/touchdown outcome profiles, off unless explicitly loaded.
         self.player_outcome_table = None
+        self.player_outcome_roles = None
 
     def _team(self, label):
         if self.side_teams is None:
@@ -281,7 +282,8 @@ class PlayCallSampler:
                 weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
             if use_player_outcomes:
                 import player_outcomes
-                weight *= player_outcomes.event_weight(self.player_outcome_table, k[1], pre_event)
+                weight *= player_outcomes.event_weight(self.player_outcome_table, k[1], pre_event,
+                                                       enabled_roles=self.player_outcome_roles)
             weights.append(weight)
         if (self.team_outcomes is None and not use_formation and not use_coverage and not use_streak and not use_labels
                 and not use_player_outcomes):
@@ -334,7 +336,8 @@ class PlayCallSampler:
             candidates = exact or candidates  # a touchdown flag then comes from the same distance the state is at
         if use_player_outcomes:
             import player_outcomes
-            row_weights = [player_outcomes.row_weight(self.player_outcome_table, key[1], c[1], pre_event, state)
+            row_weights = [player_outcomes.row_weight(self.player_outcome_table, key[1], c[1], pre_event, state,
+                                                      enabled_roles=self.player_outcome_roles)
                            for c in candidates]
             event, row, runoff, spot = rng.choices(candidates, weights=row_weights, k=1)[0]
         else:
@@ -351,9 +354,15 @@ class PlayCallSampler:
             'qb_action': qb_decision.get('action') if qb_decision else None,
             'qb_scramble_probability': qb_decision.get('scramble_probability') if qb_decision else None,
             'qb_scramble_fallback': qb_decision.get('scramble_fallback') if qb_decision else None,
+            'qb_target_role': qb_decision.get('target_role') if qb_decision else None,
+            'qb_target_role_probabilities': qb_decision.get('target_role_probabilities') if qb_decision else None,
+            'qb_target_role_draw_fallback': qb_decision.get('target_role_fallback') if qb_decision else None,
+            'qb_target_role_history_n': qb_decision.get('target_role_history_n') if qb_decision else None,
             'qb_target_role_conditioned': qb_target_role_conditioned,
             'qb_target_role_fallback': qb_target_role_fallback,
             'player_outcomes_conditioned': use_player_outcomes,
+            'player_outcome_roles': (list(player_outcomes.normalize_roles(self.player_outcome_roles))
+                                     if use_player_outcomes else []),
             'player_outcome_support': self._player_support(pre_event) if use_player_outcomes else None,
             'state': {'quarter': int(state['quarter']), 'clock': int(state['clock']), 'down': int(state['down']),
                       'togo': int(state['togo']), 'yardline_100': int(state['yl']),
@@ -372,7 +381,8 @@ class PlayCallSampler:
         table = self.player_outcome_table
         return {role: player_outcomes.support(table, model_role, (pre_event.get(role) or {}).get('gsis_id'))
                 for role, model_role in (('passer', 'qb'), ('receiver', 'receiver'), ('rusher', 'rusher'))
-                if pre_event and pre_event.get(role)}
+                if (pre_event and pre_event.get(role)
+                    and model_role in player_outcomes.normalize_roles(self.player_outcome_roles))}
 
     def _label_lift(self, entry, key, value):
         """P(outcome type | label) over the labelled rows, divided by those rows' own share of the outcome, shrunk to that share.

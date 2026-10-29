@@ -2,6 +2,7 @@ import sys
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -11,6 +12,18 @@ import simulate_pregame_batch as batch  # noqa: E402
 
 
 class BatchAggregation(unittest.TestCase):
+    def test_batch_receiver_only_flag_is_opt_in_and_requires_player_outcomes(self):
+        common = ['--snapshot-file', 'snapshot.json', '--games', '1', '--seed-start', '1', '--out', 'out.json',
+                  '--playcall-artifact', 'artifact.json']
+        with patch.object(batch, 'run_batch') as run_batch:
+            batch.main(common + ['--playcall-player-outcomes', '--playcall-player-outcomes-receiver-only'])
+        self.assertTrue(run_batch.call_args.args[0].playcall_player_outcomes_receiver_only)
+
+        with patch.object(batch, 'run_batch') as run_batch:
+            with self.assertRaises(SystemExit):
+                batch.main(common + ['--playcall-player-outcomes-receiver-only'])
+        run_batch.assert_not_called()
+
     def test_player_template_keeps_full_depth_backup_roles(self):
         snapshot = {
             'rosters': {

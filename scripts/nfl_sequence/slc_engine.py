@@ -49,11 +49,14 @@ def check_artifact_cutoff(artifact, season):
 def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=False, player_shares=False,
                    exact_yardline=False, coverage=False, point_splits=False, streak=False, streak_file=None,
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
-                   playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False):
+                   playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
+                   player_outcomes_receiver_only=False):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
     season = int(schedule['season'])
+    if player_outcomes_receiver_only and not player_outcomes:
+        raise ValueError('receiver-only player outcomes require player_outcomes=True')
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
     ref, excluded = er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
@@ -80,7 +83,9 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         import player_outcomes as outcome_model
         outcome_table = outcome_model.load(db, season)
         ref.contextual_sampler.player_outcome_table = outcome_table
-        ref.contextual_sampler.player_outcome_manifest = outcome_model.manifest(outcome_table, source_commit)
+        ref.contextual_sampler.player_outcome_roles = ('receiver',) if player_outcomes_receiver_only else None
+        ref.contextual_sampler.player_outcome_manifest = outcome_model.manifest(
+            outcome_table, source_commit, enabled_roles=ref.contextual_sampler.player_outcome_roles)
     ref.contextual_sampler.decision_filter = decision_filter  # an experiment switch: False draws rows from the whole cell
     if dirichlet_shares:  # per-game Dirichlet target and carry shares, fitted on the season before the game season
         if not source_commit:
@@ -130,13 +135,15 @@ def play(seed, ref, snapshot):
     decisions = list(sampler.decisions)
     sampler.decisions.clear()
     if sampler.player_outcome_table is not None:
+        roles = (sampler.player_outcome_manifest or {}).get('enabled_roles', ['qb', 'receiver', 'rusher'])
+        role_text = ', '.join(roles)
         attribution = 'pregame_participant_and_conditioned_outcome_model'
         record['stats']['player_attribution'] = attribution
         for player_line in record['stats']['player']:
             player_line['attribution'] = attribution
         record['stats']['player_note'] = (
-            'Participants are selected from the frozen pregame roster before the outcome. QB, receiver and rusher outcome '
-            'rows are reweighted by cutoff-safe player distributions before the game-state transition. Box-score passing, '
+            f'Participants are selected from the frozen pregame roster before the outcome. {role_text} outcome rows are '
+            'reweighted by cutoff-safe player distributions before the game-state transition. Box-score passing, '
             'receiving and rushing yards use their corresponding nflverse fields when present; the state transition uses '
             'yards_gained. This is a research projection layer; historical source outcomes and the current model do not '
             'establish calibrated forecasts.')
@@ -144,11 +151,18 @@ def play(seed, ref, snapshot):
 
 
 def summary(decisions):
+    target_decisions = [d for d in decisions if d.get('qb_target_role') is not None]
     return {'decisions': len(decisions),
             'scrimmage': sum(d['intent'] != 'kick' for d in decisions),
             'dropback': sum(d['intent'] == 'dropback' for d in decisions),
             'run': sum(d['intent'] == 'run' for d in decisions),
             'qb_scramble': sum(d.get('qb_action') == 'scramble' for d in decisions),
+            'qb_target_role_decisions': len(target_decisions),
+            'qb_target_role_conditioned': sum(bool(d.get('qb_target_role_conditioned')) for d in target_decisions),
+            'qb_target_role_fallbacks': sum(d.get('qb_target_role_fallback') is not None for d in target_decisions),
+            'qb_target_role_draw_fallbacks': sum(d.get('qb_target_role_draw_fallback') is not None
+                                                 for d in target_decisions),
+            'qb_target_role_no_history': sum(d.get('qb_target_role_history_n') == 0 for d in target_decisions),
             'kick_fallback': sum(d['intent'] == 'kick' for d in decisions)}
 
 

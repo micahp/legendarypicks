@@ -23,6 +23,20 @@ QB_EVENTS = ('pass_complete', 'pass_incomplete', 'interception', 'sack')
 RECEIVER_EVENTS = ('pass_complete', 'pass_incomplete', 'interception')
 RUSHER_EVENTS = ('run', 'fumble_lost')
 EVENTS = {'qb': QB_EVENTS, 'receiver': RECEIVER_EVENTS, 'rusher': RUSHER_EVENTS}
+ROLE_ORDER = ('qb', 'receiver', 'rusher')
+
+
+def normalize_roles(roles=None):
+    """Return active outcome roles in canonical order; None selects the full model."""
+    if roles is None:
+        return ROLE_ORDER
+    selected = set(roles)
+    unknown = selected - set(ROLE_ORDER)
+    if unknown:
+        raise ValueError(f'unknown player-outcome roles: {sorted(unknown)}')
+    if not selected:
+        raise ValueError('player-outcome role selection cannot be empty')
+    return tuple(role for role in ROLE_ORDER if role in selected)
 
 
 def _yards_bin(yards, role, event):
@@ -258,20 +272,22 @@ def _geometric_mean(ratios):
     return math.exp(sum(math.log(ratio) for ratio in ratios) / len(ratios)) if ratios else 1.0
 
 
-def event_weight(table, event, participants):
+def event_weight(table, event, participants, enabled_roles=None):
     """Likelihood-ratio adjustment for the selected participants' event probabilities."""
     ratios = []
-    if event in QB_EVENTS:
+    enabled = set(normalize_roles(enabled_roles))
+    if 'qb' in enabled and event in QB_EVENTS:
         ratios.append(event_ratio(table, 'qb', _player_id(participants, 'passer'), event))
-    if event in RECEIVER_EVENTS:
+    if 'receiver' in enabled and event in RECEIVER_EVENTS:
         ratios.append(event_ratio(table, 'receiver', _player_id(participants, 'receiver'), event))
-    if event in RUSHER_EVENTS:
+    if 'rusher' in enabled and event in RUSHER_EVENTS:
         ratios.append(event_ratio(table, 'rusher', _player_id(participants, 'rusher'), event))
     return _geometric_mean(ratios)
 
 
-def row_weight(table, event, row, participants, state=None):
+def row_weight(table, event, row, participants, state=None, enabled_roles=None):
     """Likelihood-ratio adjustment for participant-specific yards and touchdown outcomes."""
+    enabled = set(normalize_roles(enabled_roles))
     roles = []
     if event == 'pass_complete':
         roles = [('qb', _player_id(participants, 'passer'), 'passing_yards'),
@@ -284,6 +300,8 @@ def row_weight(table, event, row, participants, state=None):
     row_key = (row.get('game_id'), int(row['play_id'])) if row.get('play_id') is not None else None
     source_metrics = table.get('row_stats', {}).get(row_key) if row_key is not None else None
     for role, player, yard_field in roles:
+        if role not in enabled:
+            continue
         # The simulation transition is still based on yards_gained. Player distributions and emitted player lines use
         # nflverse's role-specific passing, receiving and rushing yard fields where those source values are present.
         yards = (source_metrics.get(yard_field) if source_metrics is not None
@@ -307,7 +325,7 @@ def support(table, role, player):
     return sum(table['event_counts'].get(role, {}).get(player, Counter()).values())
 
 
-def manifest(table, git_commit):
+def manifest(table, git_commit, enabled_roles=None):
     return {
         'model_version': table['model_version'], 'source_seasons': table['source_seasons'],
         'cutoff_season': table['cutoff_season'], 'git_commit': git_commit,
@@ -318,6 +336,7 @@ def manifest(table, git_commit):
                            'quarterback_sack': 'yards_gained'},
         'yardage_fallback': 'a missing role-specific player yard field omits that result adjustment; emitted box-score yards use yards_gained when the source field is null',
         'source_sha256': table['sha256'], 'prior_strength_opportunities': PRIOR_STRENGTH,
+        'enabled_roles': list(normalize_roles(enabled_roles)),
         'ratio_clip': [MIN_RATIO, MAX_RATIO], 'player_units': dict(table['player_units']),
         'transferred_player_units': dict(table['transferred_player_units']),
         'source_counts': dict(table['source_counts']),
