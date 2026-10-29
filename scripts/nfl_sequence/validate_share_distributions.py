@@ -47,8 +47,9 @@ def main():
         base = fitted['base']
         phi = fitted['phi']
         test_games, _ = sdm.team_game_counts(DB, args.test_season, role)
-        fixed_ll, dm_ll, observed, pred_fixed, pred_dm, per_game_diff = [], [], defaultdict_list(), defaultdict_list(), \
-            defaultdict_list(), []
+        fixed_ll, dm_ll, observed, pred_fixed, pred_dm, test_totals, unit_share, per_game_diff = (
+            [], [], defaultdict_list(), defaultdict_list(), defaultdict_list(), defaultdict_list(), {}, [])
+        per_game_diff_by_game = defaultdict_list()
         for team, by_game in test_games.items():
             roster = {p: base[(team, p)] for p in fit_season_counts.get(team, {})}
             if not roster:
@@ -65,32 +66,63 @@ def main():
                 fixed_ll.append(f)
                 dm_ll.append(d)
                 per_game_diff.append(d - f)
+                per_game_diff_by_game[game].append(d - f)
                 for p, b in shares.items():
-                    observed[p].append(kept.get(p, 0))
+                    unit = (team, p)  # keep traded players separate in player-level calibration summaries
+                    observed[unit].append(kept.get(p, 0))
+                    test_totals[unit].append(total)
+                    unit_share[unit] = b
                     mf, vf, zf = fixed_predictions(total, b)
                     md, vd, zd = dm_predictions(total, b, phi)
-                    pred_fixed[p].append((mf, vf, zf))
-                    pred_dm[p].append((md, vd, zd))
-        low, high = sv.bootstrap_mean_interval(per_game_diff, reps=2000, seed=1)
-        players = sorted(observed)
-        obs_var = [statistics.variance(observed[p]) for p in players if len(observed[p]) > 1]
+                    pred_fixed[unit].append((mf, vf, zf))
+                    pred_dm[unit].append((md, vd, zd))
+        low, high = sv.bootstrap_cluster_mean_interval(per_game_diff_by_game, reps=2000, seed=1)
+        units = sorted(observed)
+        observed_quantiles = [sv.empirical_count_quantiles(observed[unit]) for unit in units]
+        fixed_quantiles = [sv.predictive_quantiles(test_totals[unit], unit_share[unit]) for unit in units]
+        dm_quantiles = [sv.predictive_quantiles(test_totals[unit], unit_share[unit], phi=phi) for unit in units]
+
+        def mean_quantiles(summaries):
+            return {q: round(statistics.fmean(summary[q] for summary in summaries), 4) for q in ('10', '50', '90')}
+
+        variance_units = [unit for unit in units if len(observed[unit]) > 1]
+        obs_var = [statistics.variance(observed[unit]) for unit in variance_units]
+        fixed_var = [sv.predictive_sample_variance([(mean, variance) for mean, variance, _zero in pred_fixed[unit]])
+                     for unit in variance_units]
+        dm_var = [sv.predictive_sample_variance([(mean, variance) for mean, variance, _zero in pred_dm[unit]])
+                  for unit in variance_units]
+        observed_mean = statistics.fmean(value for unit in units for value in observed[unit])
+        fixed_mean = statistics.fmean(mean for unit in units for mean, _var, _zero in pred_fixed[unit])
+        dm_mean = statistics.fmean(mean for unit in units for mean, _var, _zero in pred_dm[unit])
         result['roles'][role] = {
             'phi_fit': round(phi, 3), 'phi_interval_fit': [round(x, 3) for x in fitted['phi_interval']],
             'beta_binomial_phi_fit': fitted['beta_binomial_phi'], 'fit_team_games': fitted['team_games'],
-            'test_team_games_scored': len(per_game_diff), 'players_scored': len(players),
+            'fit_game_clusters': len({game for by_game in fit_games.values() for game in by_game}),
+            'fit_teams': fitted['teams'], 'test_team_games_scored': len(per_game_diff),
+            'test_game_clusters_scored': len(per_game_diff_by_game),
+            'unique_players_scored': len({player for _team, player in units}), 'player_team_units_scored': len(units),
             'loglik_per_team_game': {'fixed_share': round(statistics.fmean(fixed_ll), 4),
                                      'dirichlet_multinomial': round(statistics.fmean(dm_ll), 4)},
             'dirichlet_minus_fixed_per_team_game': {'mean': round(statistics.fmean(per_game_diff), 4),
                                                     'interval_95': [round(low, 4), round(high, 4)]},
             'calibration': {
-                'observed_variance_mean_over_players': round(statistics.fmean(obs_var), 4),
-                'fixed_share_predicted_variance': round(statistics.fmean(v for p in players for _m, v, _z in pred_fixed[p]), 4),
-                'dirichlet_predicted_variance': round(statistics.fmean(v for p in players for _m, v, _z in pred_dm[p]), 4),
-                'observed_zero_rate': round(statistics.fmean(1.0 if x == 0 else 0.0 for p in players for x in observed[p]), 4),
-                'fixed_share_predicted_zero_rate': round(statistics.fmean(z for p in players for _m, _v, z in pred_fixed[p]), 4),
-                'dirichlet_predicted_zero_rate': round(statistics.fmean(z for p in players for _m, _v, z in pred_dm[p]), 4),
+                'observed_mean_count': round(observed_mean, 4),
+                'fixed_share_predicted_mean_count': round(fixed_mean, 4),
+                'dirichlet_predicted_mean_count': round(dm_mean, 4),
+                'observed_variance_mean_over_player_team_units': round(statistics.fmean(obs_var), 4),
+                'fixed_share_predicted_variance': round(statistics.fmean(fixed_var), 4),
+                'dirichlet_predicted_variance': round(statistics.fmean(dm_var), 4),
+                'variance_player_team_units': len(variance_units),
+                'observed_zero_rate': round(statistics.fmean(1.0 if x == 0 else 0.0 for unit in units for x in observed[unit]), 4),
+                'fixed_share_predicted_zero_rate': round(statistics.fmean(z for unit in units for _m, _v, z in pred_fixed[unit]), 4),
+                'dirichlet_predicted_zero_rate': round(statistics.fmean(z for unit in units for _m, _v, z in pred_dm[unit]), 4),
+                'mean_count_quantiles_over_player_team_units': {
+                    'observed': mean_quantiles(observed_quantiles),
+                    'fixed_share': mean_quantiles(fixed_quantiles),
+                    'dirichlet_multinomial': mean_quantiles(dm_quantiles),
+                },
             },
-            'restriction': 'team-games scored on the players with fit-season history on the same team; zero-total team-games skipped',
+            'restriction': 'team-games scored on the players with fit-season history on the same team; zero-total team-games skipped; uncertainty resamples both teams together by game id',
         }
     args.out.write_text(json.dumps(result, indent=1, sort_keys=True) + '\n')
     print(json.dumps(result, indent=1, sort_keys=True))

@@ -38,6 +38,18 @@ class Summaries(unittest.TestCase):
         self.assertAlmostEqual(out['variance'], 20.0 / 3.0)
         self.assertEqual(out['quantiles']['50'], 3.0)
 
+    def test_fixed_share_prediction_quantiles_mix_the_games_opportunity_totals(self):
+        self.assertEqual(sv.predictive_quantiles([2, 2], 0.5), {'10': 0, '50': 1, '90': 2})
+
+    def test_dirichlet_marginal_prediction_quantiles_use_the_beta_binomial(self):
+        self.assertEqual(sv.predictive_quantiles([4], 0.5, phi=2.0), {'10': 0, '50': 2, '90': 4})
+
+    def test_empirical_count_quantiles_use_the_same_discrete_inverse_cdf_convention(self):
+        self.assertEqual(sv.empirical_count_quantiles([0, 2, 4, 6]), {'10': 0, '50': 2, '90': 6})
+
+    def test_predicted_variance_includes_between_game_opportunity_volume(self):
+        self.assertAlmostEqual(sv.predictive_sample_variance([(0.5, 0.25), (1.5, 0.75)]), 1.0)
+
 
 class Uncertainty(unittest.TestCase):
     def test_the_bootstrap_interval_over_games_brackets_a_known_difference(self):
@@ -46,6 +58,11 @@ class Uncertainty(unittest.TestCase):
         low, high = sv.bootstrap_mean_interval(diffs, reps=500, seed=1)
         self.assertLess(low, 1.0)
         self.assertGreater(high, 1.0)
+
+    def test_the_cluster_bootstrap_keeps_both_team_rows_from_each_game_together(self):
+        low, high = sv.bootstrap_cluster_mean_interval({'G1': [0.0, 0.0], 'G2': [10.0, 10.0]}, reps=1000, seed=1)
+        self.assertEqual(low, 0.0)
+        self.assertEqual(high, 10.0)
 
 
 if __name__ == '__main__':
