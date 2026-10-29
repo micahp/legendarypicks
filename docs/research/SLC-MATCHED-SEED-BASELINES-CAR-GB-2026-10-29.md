@@ -26,3 +26,8 @@ the two differ by less than their standard errors, so the change is not establis
 
 Team-level streak splits of the dropback rate (prior seasons, relative to each team's overall rate), 100 seeds, paired against
 score-clock SLC: margin +0.08 ± 0.32, total -0.44 ± 0.42, home win share 0.49. No detectable effect on this snapshot.
+
+## League-wide win-loss streak splits alone (added 2026-10-29)
+
+League-wide streak splits (dropback shift by streak state and outcome mix by the offense's streak, from prior-season play-by-play),
+100 seeds, paired against score-clock SLC: margin +1.44 ± 1.66, total +0.54 ± 1.79, home win share 0.54. Within noise.
