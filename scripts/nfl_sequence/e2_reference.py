@@ -585,12 +585,12 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                 else pm3.load_frame(seasons, db=db)
             con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
             try:
-                rows = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
-                                   "WHERE game_type='REG' AND season < ? AND home_score IS NOT NULL", (cutoff,)).fetchall()
+                schedule_rows = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
+                                            "WHERE game_type='REG' AND season < ? AND home_score IS NOT NULL", (cutoff,)).fetchall()
             finally:
                 con.close()
             results = []
-            for season, week, game_id, home, away, hs, aw in rows:
+            for season, week, game_id, home, away, hs, aw in schedule_rows:
                 outcome = None if hs == aw else hs > aw
                 results.append((season, week, game_id, home, outcome))
                 results.append((season, week, game_id, away, None if outcome is None else not outcome))
