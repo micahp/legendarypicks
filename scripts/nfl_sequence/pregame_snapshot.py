@@ -208,16 +208,23 @@ def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenanc
 
 
 HISTORICAL_DEPTH_LAST_SEASON = 2024
-EVALUATION_CLASSES = ('backtest', 'exploratory_replay')
+EVALUATION_CLASSES = ('backtest', 'exploratory_replay', 'prospective_forecast')
 # A source enters this table only with a documented capture time: when its content became publicly available. A loader import
 # time, a publisher's artifact date and a historical season file do not qualify. Nothing qualifies yet.
-VERIFIED_CAPTURE_SOURCES = {}
+VERIFIED_CAPTURE_SOURCES = {
+    # the raw file is hash-pinned, acquired before the cutoff, and its publisher time precedes our acquisition (pregame_capture)
+    'nflverse_depth_charts_capture': 'captured raw depth charts',
+}
+CAPTURED_SCHEDULE = 'captured_before_cutoff'
 
 
 def input_provenance(game, rosters):
     """The pregame inputs with no verified availability time. A backtest needs none; an exploratory replay records them."""
     unverified = []
-    if game.get('availability_classification', 'versioned_as_of') != 'versioned_as_of':
+    availability = game.get('availability_classification', 'versioned_as_of')
+    if availability == CAPTURED_SCHEDULE:
+        pass  # a hash-pinned capture acquired before the cutoff (pregame_capture checks the chain)
+    elif availability != 'versioned_as_of':
         unverified.append('schedule: no versioned row observed by the cutoff; the current row was used')
     else:
         unverified.append('schedule: observed_at is a loader import time, not a capture time')
@@ -268,6 +275,8 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
           allow_unverified_current_schedule_exploratory: bool = False, evaluation: str | None = None) -> dict:
     """evaluation is 'backtest' or 'exploratory_replay'. A backtest is refused while any input lacks a verified availability time;
     an exploratory replay is built and labelled. Default: backtest for 2026 and later, exploratory for earlier seasons."""
+    if evaluation == 'prospective_forecast':
+        raise ValueError('prospective forecasts come from pregame_capture only, from captured raw inputs')
     cutoff = parse_as_of(as_of)
     scheduled_start = parse_as_of(kickoff_utc) if kickoff_utc else None
     if bool(scheduled_start) != bool(kickoff_source_url):
