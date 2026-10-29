@@ -24,7 +24,7 @@ def actual_team_games():
         "WHERE season=2024 AND game_type='REG' AND home_score IS NOT NULL AND week >= 2")}
     plays = con.execute(
         "SELECT game_id, drive, posteam, qtr, play_type, series_result, game_seconds_remaining FROM nfl_pbp "
-        "WHERE season=2024 AND week BETWEEN 2 AND 18 AND game_type IS NOT NULL AND posteam IS NOT NULL AND drive IS NOT NULL "
+        "WHERE season=2024 AND week BETWEEN 2 AND 18 AND posteam IS NOT NULL AND drive IS NOT NULL "
         "ORDER BY game_id, play_id")
     drives = collections.OrderedDict()
     for game_id, drive, posteam, qtr, play_type, series, secs in plays:
