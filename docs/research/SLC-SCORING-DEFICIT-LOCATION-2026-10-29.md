@@ -10,4 +10,4 @@ The earlier 19.47 versus 19.70 comparison included blocked partial runs and used
 
 ## Open
 
-The red-zone decomposition script was written but the saved session ended before it was run. The current reports make no red-zone mechanism claim.
+The corrected red-zone decomposition is complete in [the matched analysis](SLC-SCORING-REDZONE-DECOMPOSITION-2024-2026-10-29.md). It finds no trip-rate deficit on 228 matched games, but it does find low offensive touchdown conversion and excess plays inside the 20. The earlier exact-yardline trip-gap claim is withdrawn; a corrected exact-yardline ablation remains open.

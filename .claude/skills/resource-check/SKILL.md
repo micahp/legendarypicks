@@ -5,6 +5,8 @@ description: MUST load before running ANY CPU/memory/IO-heavy batch job on this 
 
 # Resource Check
 
+Before writing or launching a multi-unit job, also load [resumable-long-runs](../resumable-long-runs/SKILL.md). It requires a runtime and memory estimate, live progress, durable checkpoints and resume validation for long jobs.
+
 Load this before dispatching any heavy batch job on this box (backfills, chunked
 loops, bulk scrapes, anything spawning subprocesses or multiprocessing workers) —
 whether you run it yourself or hand it to Hermes.

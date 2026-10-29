@@ -35,9 +35,20 @@ def parse_args(argv=None):
     ap.add_argument('--team-outcomes', action='store_true',
                     help='SLC v1 research: prior-season team event splits within the play-call intent')
     ap.add_argument('--formation', action='store_true', help='SLC v1 research: pre-event formation and personnel, outcomes conditioned on formation')
+    ap.add_argument('--coverage', action='store_true', help='SLC v1 research: defensive coverage priors and coverage-conditioned outcomes')
+    ap.add_argument('--player-shares', action='store_true', help='SLC v1 research: prior-season player target and carry shares')
     ap.add_argument('--dirichlet-shares', action='store_true',
                     help='SLC v1 research: per-game Dirichlet target and carry shares (fitted on the prior season), drawn once per team '
                          'and game; implies the player-share adapter')
+    ap.add_argument('--exact-yardline', action='store_true', help='SLC v1 research: condition red-zone outcome draws on exact yard line')
+    ap.add_argument('--point-splits', action='store_true', help='SLC v1 research: team score-state play-call shifts')
+    ap.add_argument('--streak-splits', action='store_true', help='SLC v1 research: team streak play-call shifts')
+    ap.add_argument('--streak-league', action='store_true', help='SLC v1 research: league streak play-call and outcome shifts')
+    ap.add_argument('--streak-file', type=Path, help='cutoff-safe team streak records for this pregame snapshot')
+    ap.add_argument('--target-roles', action='store_true', help='SLC v1 research: team target-role priors by situation')
+    ap.add_argument('--decision', action='store_true', help='SLC v1 research: decision labels, outcome lifts and optional row filter')
+    ap.add_argument('--decision-unfiltered', action='store_true', help='disable the decision-label row filter while retaining outcome lifts')
+    ap.add_argument('--playbook', action='store_true', help='SLC v1 research: use playbook priors for decision categories C, D and E')
     ap.add_argument('--qb-decisions', action='store_true',
                     help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
     ap.add_argument('--player-outcomes', action='store_true',
@@ -50,12 +61,14 @@ def parse_args(argv=None):
     args = ap.parse_args(argv)
     if args.player_outcomes_receiver_only and not args.player_outcomes:
         ap.error('--player-outcomes-receiver-only requires --player-outcomes')
+    if args.decision_unfiltered and not args.decision:
+        ap.error('--decision-unfiltered requires --decision')
     return args
 
 
 def player_shares_for(args):
     """The player-share adapter is on whenever the Dirichlet shares are: the shares are drawn over the adapter's players."""
-    return bool(args.dirichlet_shares)
+    return bool(args.player_shares or args.dirichlet_shares)
 
 
 def main():
@@ -77,9 +90,15 @@ def main():
 
     ref, excluded = slc_engine.load_reference(args.db, snapshot, args.artifact, team_outcomes=args.team_outcomes,
                                                 formation=args.formation, player_shares=player_shares_for(args),
+                                                exact_yardline=args.exact_yardline, coverage=args.coverage,
+                                                point_splits=args.point_splits, streak=args.streak_splits,
+                                                streak_file=str(args.streak_file) if args.streak_file else None,
+                                                streak_league=args.streak_league, target_roles=args.target_roles,
+                                                decision=args.decision, decision_filter=not args.decision_unfiltered,
                                                 dirichlet_shares=args.dirichlet_shares,
                                                 qb_decisions=args.qb_decisions, player_outcomes=args.player_outcomes,
                                                 player_outcomes_receiver_only=args.player_outcomes_receiver_only,
+                                                playbook=args.playbook,
                                                 source_commit=source_provenance['base_commit'])
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
@@ -90,38 +109,46 @@ def main():
     schedule = snapshot['schedule']
     evaluation = snapshot.get('evaluation', {})  # the snapshot's own provenance result (pregame_snapshot.input_provenance)
     artifact = json.loads(args.artifact.read_text())
-    connected = ['score-clock play-call layer (slc_playcall_v1)']
-    not_connected = ['playbooks', 'coaching (excluded from v1)']
-    if args.team_outcomes:
-        connected.append('team offense and defense outcome splits')
-    else:
-        not_connected.append('team offense and defense outcome splits')
-    if args.formation:
-        connected.append('formation-conditioned outcomes')
-    else:
-        not_connected.append('formation-conditioned outcomes')
-    if args.dirichlet_shares:
-        connected.append('pre-event player target and carry assignment (Dirichlet-multinomial shares)')
-    else:
-        not_connected.append('pre-event participant selection')
-    if args.qb_decisions:
-        connected.append('QB-specific target-role and scramble decisions')
-    else:
-        not_connected.append('QB-specific decision model')
-    if args.player_outcomes:
-        connected.append('participant-conditioned event, yardage and touchdown outcomes')
-    else:
-        not_connected.append('player-specific outcome distributions')
+    playcall_layer = slc_engine.describe(ref) or {}
+    feature_labels = {
+        'score_clock_playcalling': 'score-clock play calling',
+        'team_offense_defense_outcomes': 'team offense/defense outcomes',
+        'formation_personnel_outcomes': 'formation/personnel outcomes',
+        'defensive_coverage_outcomes': 'defensive coverage outcomes',
+        'fixed_player_target_carry_shares': 'fixed player target/carry shares',
+        'dirichlet_player_target_carry_shares': 'Dirichlet player target/carry shares',
+        'qb_decisions': 'QB decisions',
+        'player_conditioned_outcomes': 'player-conditioned outcomes',
+        'target_role_priors': 'team target-role priors',
+        'decision_labels': 'decision labels and outcome lifts',
+        'playbook_priors': 'playbook priors',
+        'point_splits': 'team point splits',
+        'team_streak_splits': 'team streak splits',
+        'league_streak_splits': 'league streak splits',
+        'exact_yardline_outcomes': 'exact-yardline outcomes',
+        'current_streak_context': 'current pregame streak context',
+    }
+    active = playcall_layer.get('enabled_layers', {})
+    connected = [label for key, label in feature_labels.items() if active.get(key) is True]
+    not_connected = [label for key, label in feature_labels.items() if active.get(key) is not True]
+    not_connected.append('coaching tendencies (separate research)')
     trace = {
         'model_id': slc_engine.model_id(ref),
         'components_connected': connected,
         'components_not_connected': not_connected,
         'source': source_provenance,
         'seed': args.seed, 'team_outcomes': bool(args.team_outcomes), 'formation': bool(args.formation),
+        'coverage': bool(args.coverage), 'player_shares': player_shares_for(args),
+        'dirichlet_shares': bool(args.dirichlet_shares), 'exact_yardline': bool(args.exact_yardline),
+        'point_splits': bool(args.point_splits), 'streak_splits': bool(args.streak_splits),
+        'streak_league': bool(args.streak_league), 'target_roles': bool(args.target_roles),
+        'decision': bool(args.decision), 'decision_filter': (not args.decision_unfiltered if args.decision else None),
+        'playbook': bool(args.playbook),
         'qb_decisions': bool(args.qb_decisions), 'player_outcomes': bool(args.player_outcomes),
         'player_outcomes_receiver_only': bool(args.player_outcomes_receiver_only),
         'game': {'game_id': schedule['game_id'], 'season': schedule['season'], 'week': schedule['week'],
                  'side_teams': slc_engine.side_teams(snapshot)},
+        'playcall_layer': playcall_layer,
         'snapshot': {'snapshot_sha256': snapshot['snapshot_sha256'], 'as_of': snapshot['as_of'],
                      'roster_snapshot_id': snapshot['roster_snapshot_id'],
                      'schedule_availability': schedule['availability_classification'],

@@ -7,6 +7,7 @@ A game without a snapshot is refused: the first-piece path has no pregame missed
 different model under the SLC name.
 """
 import copy
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -22,6 +23,14 @@ MODEL_ID = 'slc_v1_incomplete'
 QB_DECISION_MODEL_ID = 'slc_v1_qb_decisions_research'
 PLAYER_OUTCOME_MODEL_ID = 'slc_v1_player_outcomes_research'
 COMBINED_PLAYER_MODEL_ID = 'slc_v1_qb_decisions_player_outcomes_research'
+
+
+def _file_sha256(path):
+    digest = hashlib.sha256()
+    with Path(path).open('rb') as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def require_snapshot(snapshot):
@@ -65,6 +74,13 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playcall_exact_yardline=exact_yardline, playcall_coverage=coverage,
                    playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league,
                    playcall_qb_decisions=qb_decisions, playcall_player_outcomes=player_outcomes)
+    sampler = ref.contextual_sampler
+    sampler.source_cutoff = {'eligible_before': [season, 1]}
+    sampler.optional_input_sha256 = {}
+    for name, value in (('point_splits_cache', point_splits), ('streak_splits_cache', streak),
+                        ('streak_league_cache', streak_league)):
+        if isinstance(value, str):
+            sampler.optional_input_sha256[name] = _file_sha256(value)
     # These are independent research inputs. Each is fitted strictly before the target season.
     if qb_decisions or player_outcomes:
         if not source_commit:
@@ -100,11 +116,19 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
             raise ValueError('the playbook input replaces decision labels, so it needs decision=True')
         import playbook_prior
         ref.contextual_sampler.playbook_table = playbook_prior.load(int(schedule['season']))
+        import glob
+        from playbook_crosscheck import PLAYBOOKS
+        paths = sorted(glob.glob(f'{PLAYBOOKS}/*-{int(schedule["season"]) - 1}.json'))
+        if not paths:
+            raise ValueError(f'no playbook source files for {int(schedule["season"]) - 1}')
+        for path in paths:
+            sampler.optional_input_sha256[f'playbook:{Path(path).name}'] = _file_sha256(path)
     if streak_file is not None:  # each team's current streak as of the cutoff, from the verified records
         import json as _json
         import streak_splits as ss
         records = _json.loads(Path(streak_file).read_text())['teams']
         ref.contextual_sampler.current_streak = {team: ss.bucket_from_text(rec.get('streak', '')) for team, rec in records.items()}
+        sampler.optional_input_sha256['current_streak_file'] = _file_sha256(streak_file)
     # Include every enabled model table and manifest in the reference identity. e2 computes an initial fingerprint before
     # these optional adapters are attached, so the final reference must be fingerprinted after all loading is complete.
     ref.model_inputs = er._reference_fingerprint(ref)
@@ -172,9 +196,31 @@ def describe(ref):
         return None
     sampler = ref.contextual_sampler
     artifact = sampler.layer.artifact
+    decision_enabled = bool(sampler.decision_outcomes)
+    enabled_layers = {
+        'score_clock_playcalling': True,
+        'team_offense_defense_outcomes': sampler.team_outcomes is not None,
+        'formation_personnel_outcomes': bool(sampler.formation_outcomes),
+        'defensive_coverage_outcomes': bool(sampler.coverage_outcomes),
+        'fixed_player_target_carry_shares': sampler.player_shares is not None,
+        'dirichlet_player_target_carry_shares': sampler.share_table is not None,
+        'qb_decisions': sampler.qb_decision_table is not None,
+        'player_conditioned_outcomes': sampler.player_outcome_table is not None,
+        'target_role_priors': sampler.role_table is not None,
+        'decision_labels': decision_enabled,
+        'decision_row_filter': bool(sampler.decision_filter) if decision_enabled else None,
+        'playbook_priors': sampler.playbook_table is not None,
+        'point_splits': sampler.point_shifts is not None,
+        'team_streak_splits': sampler.streak_shifts is not None,
+        'league_streak_splits': sampler.streak_league is not None,
+        'exact_yardline_outcomes': bool(sampler.exact_yardline),
+        'current_streak_context': bool(sampler.current_streak),
+    }
     description = {'model_id': model_id(ref), 'artifact_id': artifact['artifact_id'], 'artifact_sha256': artifact['sha256'],
                    'fit_seasons': sorted(int(s) for s in artifact['fit_seasons']),
-                   'reference_season': int(artifact['reference_season']), 'side_teams': sampler.describe().get('side_teams')}
+                   'reference_season': int(artifact['reference_season']), 'side_teams': sampler.describe().get('side_teams'),
+                   'source_cutoff': getattr(sampler, 'source_cutoff', None), 'enabled_layers': enabled_layers,
+                   'optional_input_sha256': dict(sorted(getattr(sampler, 'optional_input_sha256', {}).items()))}
     share_manifest = getattr(sampler, 'share_model_manifest', None)
     if share_manifest is not None:
         description['player_share_distribution'] = share_manifest
@@ -184,9 +230,14 @@ def describe(ref):
     outcome_manifest = getattr(sampler, 'player_outcome_manifest', None)
     if outcome_manifest is not None:
         description['player_outcome_model'] = outcome_manifest
-    integration_hashes = sampler.describe().get('integration_code_sha256')
-    if integration_hashes is not None:
-        description['integration_code_sha256'] = integration_hashes
+    integration_files = ('e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
+                         'team_tendency.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
+                         'streak_splits.py', 'target_roles.py', 'decision_layer.py', 'player_shares.py',
+                         'share_distributions.py', 'qb_decisions.py', 'player_outcomes.py', 'playbook_prior.py',
+                         'run_slc_game.py', 'simulate_pregame_batch.py', 'slc_engine.py', 'slc_playcall.py')
+    description['integration_code_sha256'] = {
+        name: _file_sha256(HERE / name) for name in integration_files if (HERE / name).exists()
+    }
     return description
 
 
