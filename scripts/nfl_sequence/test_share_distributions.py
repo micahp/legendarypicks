@@ -55,18 +55,36 @@ class Draw(unittest.TestCase):
         self.assertGreater(shares['NOBODY'], 0.0)
 
 
+def concentrated(role, leader, share):
+    """A share table whose base puts `share` on the leader and splits the rest over the other players."""
+    rest = [g for g in BASE if g != leader]
+    base = {('AAA', leader): share}
+    base.update({('AAA', g): (1 - share) / len(rest) for g in rest})
+    return {'phi': {'receive': 17.0, 'carry': 17.0}, 'base': {'receive': base, 'carry': base}, 'season': 2025, 'players': {}}
+
+
 class Receiver(unittest.TestCase):
-    """Within one game the receiver follows that game's shares. A near one-hot draw means every play in the game goes to one player."""
+    """Within one game the receiver follows that game's Dirichlet shares, so one game's targets concentrate on its leader."""
 
     def test_within_a_game_the_receiver_follows_the_game_share(self):
-        players = [p for p in SNAPSHOT['rosters']['home']['players'] if p['pos_abb'] in ('WR', 'TE', 'RB')]
-        receivers = set()
+        share = concentrated('receive', 'AWR1', 0.9)
+        counts = {}
         for index in range(30):
             chosen = pe.choose(SNAPSHOT, 'home', 'dropback', seed=5, index=index, player_shares={'receive': {}, 'carry': {}},
-                               share_table=table(0.01))
-            receivers.add(chosen['receiver']['gsis_id'])
-        self.assertEqual(len(receivers), 1)
-        self.assertIn(receivers.pop(), {p['gsis_id'] for p in players})
+                               share_table=share)
+            counts[chosen['receiver']['gsis_id']] = counts.get(chosen['receiver']['gsis_id'], 0) + 1
+        self.assertGreaterEqual(counts.get('AWR1', 0), 20, counts)
+
+
+class Carry(unittest.TestCase):
+    def test_within_a_game_the_rusher_follows_the_game_carry_share(self):
+        share = concentrated('carry', 'ARB1', 0.9)
+        counts = {}
+        for index in range(30):
+            chosen = pe.choose(SNAPSHOT, 'home', 'run', seed=5, index=index, player_shares={'receive': {}, 'carry': {}},
+                               share_table=share)
+            counts[chosen['rusher']['gsis_id']] = counts.get(chosen['rusher']['gsis_id'], 0) + 1
+        self.assertGreaterEqual(counts.get('ARB1', 0), 20, counts)
 
     def test_without_a_share_table_the_receiver_is_unchanged(self):
         chosen = pe.choose(SNAPSHOT, 'home', 'dropback', seed=5, index=0, player_shares={'receive': {}, 'carry': {}})
