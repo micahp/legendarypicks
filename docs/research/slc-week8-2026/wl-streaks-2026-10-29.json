@@ -1,0 +1,499 @@
+{
+ "as_of_utc": "2026-10-29T00:00:26Z",
+ "note": "display only; not a model input",
+ "source": "captured games file (sha256 in capture manifest), final games before the Week 8 acquisition",
+ "teams": {
+  "ARI": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 2
+  },
+  "ATL": {
+   "games": 7,
+   "losses": 4,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 3
+  },
+  "BAL": {
+   "games": 7,
+   "losses": 3,
+   "streak": "L2",
+   "ties": 0,
+   "wins": 4
+  },
+  "BUF": {
+   "games": 6,
+   "losses": 1,
+   "streak": "W2",
+   "ties": 0,
+   "wins": 5
+  },
+  "CAR": {
+   "games": 6,
+   "losses": 3,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 3
+  },
+  "CHI": {
+   "games": 7,
+   "losses": 2,
+   "streak": "W2",
+   "ties": 0,
+   "wins": 5
+  },
+  "CIN": {
+   "games": 6,
+   "losses": 2,
+   "streak": "W2",
+   "ties": 0,
+   "wins": 4
+  },
+  "CLE": {
+   "games": 7,
+   "losses": 2,
+   "streak": "W2",
+   "ties": 0,
+   "wins": 5
+  },
+  "DAL": {
+   "games": 7,
+   "losses": 4,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 3
+  },
+  "DEN": {
+   "games": 7,
+   "losses": 2,
+   "streak": "W3",
+   "ties": 0,
+   "wins": 5
+  },
+  "DET": {
+   "games": 6,
+   "losses": 2,
+   "streak": "W2",
+   "ties": 0,
+   "wins": 4
+  },
+  "GB": {
+   "games": 7,
+   "losses": 3,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 4
+  },
+  "HOU": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 2
+  },
+  "IND": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L3",
+   "ties": 0,
+   "wins": 2
+  },
+  "JAX": {
+   "games": 6,
+   "losses": 2,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 4
+  },
+  "KC": {
+   "games": 6,
+   "losses": 1,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 5
+  },
+  "LA": {
+   "games": 7,
+   "losses": 4,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 3
+  },
+  "LAC": {
+   "games": 6,
+   "losses": 6,
+   "streak": "L6",
+   "ties": 0,
+   "wins": 0
+  },
+  "LV": {
+   "games": 7,
+   "losses": 4,
+   "streak": "L4",
+   "ties": 0,
+   "wins": 3
+  },
+  "MIA": {
+   "games": 6,
+   "losses": 5,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 1
+  },
+  "MIN": {
+   "games": 6,
+   "losses": 0,
+   "streak": "W6",
+   "ties": 0,
+   "wins": 6
+  },
+  "NE": {
+   "games": 7,
+   "losses": 3,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 4
+  },
+  "NO": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 2
+  },
+  "NYG": {
+   "games": 7,
+   "losses": 2,
+   "streak": "W1",
+   "ties": 1,
+   "wins": 4
+  },
+  "NYJ": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L2",
+   "ties": 0,
+   "wins": 2
+  },
+  "PHI": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L5",
+   "ties": 0,
+   "wins": 2
+  },
+  "PIT": {
+   "games": 7,
+   "losses": 2,
+   "streak": "W3",
+   "ties": 0,
+   "wins": 5
+  },
+  "SEA": {
+   "games": 7,
+   "losses": 3,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 4
+  },
+  "SF": {
+   "games": 7,
+   "losses": 1,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 6
+  },
+  "TB": {
+   "games": 7,
+   "losses": 5,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 2
+  },
+  "TEN": {
+   "games": 7,
+   "losses": 6,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 1
+  },
+  "WAS": {
+   "games": 6,
+   "losses": 4,
+   "streak": "L2",
+   "ties": 1,
+   "wins": 1
+  }
+ },
+ "week8_games": [
+  {
+   "away": {
+    "games": 6,
+    "losses": 3,
+    "streak": "L1",
+    "team": "CAR",
+    "ties": 0,
+    "wins": 3
+   },
+   "game_id": "2026_08_CAR_GB",
+   "home": {
+    "games": 7,
+    "losses": 3,
+    "streak": "L1",
+    "team": "GB",
+    "ties": 0,
+    "wins": 4
+   }
+  },
+  {
+   "away": {
+    "games": 7,
+    "losses": 5,
+    "streak": "L1",
+    "team": "ARI",
+    "ties": 0,
+    "wins": 2
+   },
+   "game_id": "2026_08_ARI_DAL",
+   "home": {
+    "games": 7,
+    "losses": 4,
+    "streak": "W1",
+    "team": "DAL",
+    "ties": 0,
+    "wins": 3
+   }
+  },
+  {
+   "away": {
+    "games": 7,
+    "losses": 4,
+    "streak": "W1",
+    "team": "ATL",
+    "ties": 0,
+    "wins": 3
+   },
+   "game_id": "2026_08_ATL_TB",
+   "home": {
+    "games": 7,
+    "losses": 5,
+    "streak": "W1",
+    "team": "TB",
+    "ties": 0,
+    "wins": 2
+   }
+  },
+  {
+   "away": {
+    "games": 7,
+    "losses": 3,
+    "streak": "L2",
+    "team": "BAL",
+    "ties": 0,
+    "wins": 4
+   },
+   "game_id": "2026_08_BAL_BUF",
+   "home": {
+    "games": 6,
+    "losses": 1,
+    "streak": "W2",
+    "team": "BUF",
+    "ties": 0,
+    "wins": 5
+   }
+  },
+  {
+   "away": {
+    "games": 7,
+    "losses": 2,
+    "streak": "W2",
+    "team": "CLE",
+    "ties": 0,
+    "wins": 5
+   },
+   "game_id": "2026_08_CLE_PIT",
+   "home": {
+    "games": 7,
+    "losses": 2,
+    "streak": "W3",
+    "team": "PIT",
+    "ties": 0,
+    "wins": 5
+   }
+  },
+  {
+   "away": {
+    "games": 7,
+    "losses": 5,
+    "streak": "L3",
+    "team": "IND",
+    "ties": 0,
+    "wins": 2
+   },
+   "game_id": "2026_08_IND_JAX",
+   "home": {
+    "games": 6,
+    "losses": 2,
+    "streak": "L1",
+    "team": "JAX",
+    "ties": 0,
+    "wins": 4
+   }
+  },
+  {
+   "away": {
+    "games": 7,
+    "losses": 4,
+    "streak": "L4",
+    "team": "LV",
+    "ties": 0,
+    "wins": 3
+   },
+   "game_id": "2026_08_LV_NYJ",
+   "home": {
+    "games": 7,
+    "losses": 5,
+    "streak": "L2",
+    "team": "NYJ",
+    "ties": 0,
+    "wins": 2
+   }
+  },
+  {
+   "away": {
+    "games": 6,
+    "losses": 0,
+    "streak": "W6",
+    "team": "MIN",
+    "ties": 0,
+    "wins": 6
+   },
+   "game_id": "2026_08_MIN_DET",
+   "home": {
+    "games": 6,
+    "losses": 2,
+    "streak": "W2",
+    "team": "DET",
+    "ties": 0,
+    "wins": 4
+   }
+  },
+  {
+   "away": {
+    "games": 7,
+    "losses": 6,
+    "streak": "L1",
+    "team": "TEN",
+    "ties": 0,
+    "wins": 1
+   },
+   "game_id": "2026_08_TEN_CIN",
+   "home": {
+    "games": 6,
+    "losses": 2,
+    "streak": "W2",
+    "team": "CIN",
+    "ties": 0,
+    "wins": 4
+   }
+  },
+  {
+   "away": {
+    "games": 6,
+    "losses": 6,
+    "streak": "L6",
+    "team": "LAC",
+    "ties": 0,
+    "wins": 0
+   },
+   "game_id": "2026_08_LAC_LA",
+   "home": {
+    "games": 7,
+    "losses": 4,
+    "streak": "W1",
+    "team": "LA",
+    "ties": 0,
+    "wins": 3
+   }
+  },
+  {
+   "away": {
+    "games": 6,
+    "losses": 1,
+    "streak": "L1",
+    "team": "KC",
+    "ties": 0,
+    "wins": 5
+   },
+   "game_id": "2026_08_KC_DEN",
+   "home": {
+    "games": 7,
+    "losses": 2,
+    "streak": "W3",
+    "team": "DEN",
+    "ties": 0,
+    "wins": 5
+   }
+  },
+  {
+   "away": {
+    "games": 7,
+    "losses": 3,
+    "streak": "L1",
+    "team": "NE",
+    "ties": 0,
+    "wins": 4
+   },
+   "game_id": "2026_08_NE_MIA",
+   "home": {
+    "games": 6,
+    "losses": 5,
+    "streak": "W1",
+    "team": "MIA",
+    "ties": 0,
+    "wins": 1
+   }
+  },
+  {
+   "away": {
+    "games": 7,
+    "losses": 5,
+    "streak": "L5",
+    "team": "PHI",
+    "ties": 0,
+    "wins": 2
+   },
+   "game_id": "2026_08_PHI_WAS",
+   "home": {
+    "games": 6,
+    "losses": 4,
+    "streak": "L2",
+    "team": "WAS",
+    "ties": 1,
+    "wins": 1
+   }
+  },
+  {
+   "away": {
+    "games": 7,
+    "losses": 2,
+    "streak": "W2",
+    "team": "CHI",
+    "ties": 0,
+    "wins": 5
+   },
+   "game_id": "2026_08_CHI_SEA",
+   "home": {
+    "games": 7,
+    "losses": 3,
+    "streak": "W1",
+    "team": "SEA",
+    "ties": 0,
+    "wins": 4
+   }
+  }
+ ]
+}
