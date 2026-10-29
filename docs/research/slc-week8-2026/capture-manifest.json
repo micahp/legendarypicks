@@ -1,0 +1,31 @@
+{
+ "files": [
+  {
+   "acquired_at_utc": "2026-10-28T23:59:53Z",
+   "bytes": 3180052,
+   "last_modified_utc": "2026-10-28T13:58:09Z",
+   "name": "depth_charts_2026.parquet",
+   "sha256": "5649117a1abe4fd413e5286e5802092a80d858bc4847cbf5e8f79ebdff46cbae",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+  },
+  {
+   "acquired_at_utc": "2026-10-28T23:59:54Z",
+   "bytes": 51877,
+   "last_modified_utc": "2026-10-28T13:57:55Z",
+   "name": "injuries_2026.parquet",
+   "sha256": "2d9ae1129e9cd3249b6f1334557679dee5de465f0728aeeaaabd68f8a89b9539",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+  },
+  {
+   "acquired_at_utc": "2026-10-29T00:00:26Z",
+   "bytes": 522840,
+   "last_modified_utc": "2026-10-28T23:46:31Z",
+   "name": "games.parquet",
+   "sha256": "883f03d71a02fa11d7b286236c8456e6c3bc3a7a179c0cb83bbd051e1ef95dbd",
+   "url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet"
+  }
+ ],
+ "frozen_at_utc": "2026-10-29T00:02:21Z",
+ "purpose": "week 8 2026 prospective inputs",
+ "schema": "lp-slc-pregame-capture-1"
+}

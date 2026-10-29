@@ -1,0 +1,430 @@
+{
+ "as_of": "2026-10-29T00:02:21Z",
+ "capture": {
+  "files": [
+   {
+    "acquired_at_utc": "2026-10-28T23:59:53Z",
+    "bytes": 3180052,
+    "last_modified_utc": "2026-10-28T13:58:09Z",
+    "name": "depth_charts_2026.parquet",
+    "sha256": "5649117a1abe4fd413e5286e5802092a80d858bc4847cbf5e8f79ebdff46cbae",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+   },
+   {
+    "acquired_at_utc": "2026-10-28T23:59:54Z",
+    "bytes": 51877,
+    "last_modified_utc": "2026-10-28T13:57:55Z",
+    "name": "injuries_2026.parquet",
+    "sha256": "2d9ae1129e9cd3249b6f1334557679dee5de465f0728aeeaaabd68f8a89b9539",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+   },
+   {
+    "acquired_at_utc": "2026-10-29T00:00:26Z",
+    "bytes": 522840,
+    "last_modified_utc": "2026-10-28T23:46:31Z",
+    "name": "games.parquet",
+    "sha256": "883f03d71a02fa11d7b286236c8456e6c3bc3a7a179c0cb83bbd051e1ef95dbd",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet"
+   }
+  ],
+  "frozen_at_utc": "2026-10-29T00:02:21Z",
+  "kickoff_rule": "nflverse gametime as America/New_York"
+ },
+ "evaluation": {
+  "class": "prospective_forecast",
+  "unverified_inputs": [],
+  "verified": true
+ },
+ "model_reference": {
+  "participant_assignment_version": "pregame-role-usage-v1",
+  "play_pool": "nfl_pbp seasons 2022-2025 only; no 2026 outcome is in the pool",
+  "rule_version": "NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix"
+ },
+ "roster_snapshot_id": "capture:15195c8de687580e527b260b89dd3a694b0e8c475c44aad8f3ab8e5a35d1b202",
+ "rosters": {
+  "away": {
+   "injury_report": {
+    "available": false,
+    "players": [],
+    "rows": 0
+   },
+   "players": [
+    {
+     "gsis_id": "00-0041438",
+     "player_id": 21700,
+     "player_name": "Carnell Tate",
+     "pos_abb": "WR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0040676",
+     "player_id": 23258,
+     "player_name": "Cam Ward",
+     "pos_abb": "QB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0040584",
+     "player_id": 9725,
+     "player_name": "Gunnar Helm",
+     "pos_abb": "TE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0035261",
+     "player_id": 17817,
+     "player_name": "Tony Pollard",
+     "pos_abb": "RB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0038117",
+     "player_id": 18996,
+     "player_name": "Wan'Dale Robinson",
+     "pos_abb": "WR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0033869",
+     "player_id": 22518,
+     "player_name": "Mitchell Trubisky",
+     "pos_abb": "QB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0038115",
+     "player_id": 1651,
+     "player_name": "Daniel Bellinger",
+     "pos_abb": "TE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0039032",
+     "player_id": 20931,
+     "player_name": "Tyjae Spears",
+     "pos_abb": "RB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0040170",
+     "player_id": 954,
+     "player_name": "Elic Ayomanor",
+     "pos_abb": "WR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0039648",
+     "player_id": 14335,
+     "player_name": "David Martin-Robinson",
+     "pos_abb": "TE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0037594",
+     "player_id": 4030,
+     "player_name": "Julius Chestnut",
+     "pos_abb": "RB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0034837",
+     "player_id": 18722,
+     "player_name": "Calvin Ridley",
+     "pos_abb": "WR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0036876",
+     "player_id": 8371,
+     "player_name": "Kylen Granson",
+     "pos_abb": "TE",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0040886",
+     "player_id": 20359,
+     "player_name": "Nicholas Singleton",
+     "pos_abb": "RB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0040705",
+     "player_id": 5820,
+     "player_name": "Chimere Dike",
+     "pos_abb": "WR",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0040901",
+     "player_id": 12317,
+     "player_name": "Jaren Kanak",
+     "pos_abb": "TE",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    },
+    {
+     "gsis_id": "00-0036924",
+     "player_id": 3789,
+     "player_name": "Michael Carter",
+     "pos_abb": "RB",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "TEN"
+    }
+   ],
+   "snapshot_at": "2026-10-28T13:58:02Z",
+   "source": "nflverse_depth_charts_capture",
+   "team": "TEN",
+   "unresolved_depth_rows": 0
+  },
+  "home": {
+   "injury_report": {
+    "available": false,
+    "players": [],
+    "rows": 0
+   },
+   "players": [
+    {
+     "gsis_id": "00-0036900",
+     "player_id": 3984,
+     "player_name": "Ja'Marr Chase",
+     "pos_abb": "WR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0036442",
+     "player_id": 3288,
+     "player_name": "Joe Burrow",
+     "pos_abb": "QB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0034829",
+     "player_id": 7955,
+     "player_name": "Mike Gesicki",
+     "pos_abb": "TE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0038597",
+     "player_id": 2772,
+     "player_name": "Chase Brown",
+     "pos_abb": "RB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0036410",
+     "player_id": 9973,
+     "player_name": "Tee Higgins",
+     "pos_abb": "WR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0026158",
+     "player_id": 7148,
+     "player_name": "Joe Flacco",
+     "pos_abb": "QB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0035631",
+     "player_id": 19468,
+     "player_name": "Drew Sample",
+     "pos_abb": "TE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0033526",
+     "player_id": 17437,
+     "player_name": "Samaje Perine",
+     "pos_abb": "RB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0040785",
+     "player_id": 15277,
+     "player_name": "Dohnte Meyers",
+     "pos_abb": "WR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0039631",
+     "player_id": 8368,
+     "player_name": "Cam Grandy",
+     "pos_abb": "TE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0040208",
+     "player_id": 2696,
+     "player_name": "Tahj Brooks",
+     "pos_abb": "RB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0038839",
+     "player_id": 22307,
+     "player_name": "Mitchell Tinsley",
+     "pos_abb": "WR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0041116",
+     "player_id": 6639,
+     "player_name": "Jack Endries",
+     "pos_abb": "TE",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0041069",
+     "player_id": 24984,
+     "player_name": "Colbie Young",
+     "pos_abb": "WR",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0039814",
+     "player_id": 410,
+     "player_name": "Erick All Jr.",
+     "pos_abb": "TE",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0038619",
+     "player_id": 10852,
+     "player_name": "Andrei Iosivas",
+     "pos_abb": "WR",
+     "pos_rank": 6,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    },
+    {
+     "gsis_id": "00-0034613",
+     "player_id": 10573,
+     "player_name": "Tanner Hudson",
+     "pos_abb": "TE",
+     "pos_rank": 6,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CIN"
+    }
+   ],
+   "snapshot_at": "2026-10-28T13:58:02Z",
+   "source": "nflverse_depth_charts_capture",
+   "team": "CIN",
+   "unresolved_depth_rows": 0
+  }
+ },
+ "schedule": {
+  "availability_classification": "captured_before_cutoff",
+  "away_team": "TEN",
+  "game_id": "2026_08_TEN_CIN",
+  "game_type": "REG",
+  "gameday": "2026-11-01",
+  "gametime": "13:00",
+  "gametime_timezone": "America/New_York",
+  "home_team": "CIN",
+  "ingested_at": null,
+  "kickoff_source_url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet",
+  "scheduled_kickoff_utc": "2026-11-01T18:00:00Z",
+  "season": 2026,
+  "source": "nflverse_games_capture",
+  "week": 8
+ },
+ "schema": "lp-nfl-pregame-snapshot-1",
+ "snapshot_sha256": "288e5a77560b1974c1ad415fe4735e45591df3579f853a938c6299dc672cab08"
+}

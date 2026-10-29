@@ -1,0 +1,480 @@
+{
+ "as_of": "2026-10-29T00:02:21Z",
+ "capture": {
+  "files": [
+   {
+    "acquired_at_utc": "2026-10-28T23:59:53Z",
+    "bytes": 3180052,
+    "last_modified_utc": "2026-10-28T13:58:09Z",
+    "name": "depth_charts_2026.parquet",
+    "sha256": "5649117a1abe4fd413e5286e5802092a80d858bc4847cbf5e8f79ebdff46cbae",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+   },
+   {
+    "acquired_at_utc": "2026-10-28T23:59:54Z",
+    "bytes": 51877,
+    "last_modified_utc": "2026-10-28T13:57:55Z",
+    "name": "injuries_2026.parquet",
+    "sha256": "2d9ae1129e9cd3249b6f1334557679dee5de465f0728aeeaaabd68f8a89b9539",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+   },
+   {
+    "acquired_at_utc": "2026-10-29T00:00:26Z",
+    "bytes": 522840,
+    "last_modified_utc": "2026-10-28T23:46:31Z",
+    "name": "games.parquet",
+    "sha256": "883f03d71a02fa11d7b286236c8456e6c3bc3a7a179c0cb83bbd051e1ef95dbd",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet"
+   }
+  ],
+  "frozen_at_utc": "2026-10-29T00:02:21Z",
+  "kickoff_rule": "nflverse gametime as America/New_York"
+ },
+ "evaluation": {
+  "class": "prospective_forecast",
+  "unverified_inputs": [],
+  "verified": true
+ },
+ "model_reference": {
+  "participant_assignment_version": "pregame-role-usage-v1",
+  "play_pool": "nfl_pbp seasons 2022-2025 only; no 2026 outcome is in the pool",
+  "rule_version": "NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix"
+ },
+ "roster_snapshot_id": "capture:2ef40591b82638e10ee39a6ab0553e2681685641feb71795a73f7fd4f60c9f87",
+ "rosters": {
+  "away": {
+   "injury_report": {
+    "available": false,
+    "players": [],
+    "rows": 0
+   },
+   "players": [
+    {
+     "gsis_id": "00-0039919",
+     "player_id": 16752,
+     "player_name": "Rome Odunze",
+     "pos_abb": "WR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0039918",
+     "player_id": 24033,
+     "player_name": "Caleb Williams",
+     "pos_abb": "QB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0040126",
+     "player_id": 13816,
+     "player_name": "Colston Loveland",
+     "pos_abb": "TE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0036275",
+     "player_id": 21575,
+     "player_name": "D'Andre Swift",
+     "pos_abb": "RB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0040735",
+     "player_id": 3194,
+     "player_name": "Luther Burden III",
+     "pos_abb": "WR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0038416",
+     "player_id": 988,
+     "player_name": "Tyson Bagent",
+     "pos_abb": "QB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0041558",
+     "player_id": 19238,
+     "player_name": "Sam Roush",
+     "pos_abb": "TE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0040236",
+     "player_id": 15662,
+     "player_name": "Kyle Monangai",
+     "pos_abb": "RB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0032464",
+     "player_id": 18339,
+     "player_name": "Kalif Raymond",
+     "pos_abb": "WR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0028986",
+     "player_id": 12394,
+     "player_name": "Case Keenum",
+     "pos_abb": "QB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0041170",
+     "player_id": 13132,
+     "player_name": "Hayden Large",
+     "pos_abb": "TE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0039021",
+     "player_id": 11762,
+     "player_name": "Roschon Johnson",
+     "pos_abb": "RB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0041051",
+     "player_id": 22107,
+     "player_name": "Zavion Thomas",
+     "pos_abb": "WR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0036290",
+     "player_id": 12751,
+     "player_name": "Cole Kmet",
+     "pos_abb": "TE",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0038440",
+     "player_id": 19865,
+     "player_name": "Zavier Scott",
+     "pos_abb": "RB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0040277",
+     "player_id": 23116,
+     "player_name": "Jahdae Walker",
+     "pos_abb": "WR",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0037031",
+     "player_id": 12298,
+     "player_name": "Nikola Kalinic",
+     "pos_abb": "TE",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    },
+    {
+     "gsis_id": "00-0037329",
+     "player_id": 2758,
+     "player_name": "Brittain Brown",
+     "pos_abb": "RB",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CHI"
+    }
+   ],
+   "snapshot_at": "2026-10-28T13:58:02Z",
+   "source": "nflverse_depth_charts_capture",
+   "team": "CHI",
+   "unresolved_depth_rows": 0
+  },
+  "home": {
+   "injury_report": {
+    "available": false,
+    "players": [],
+    "rows": 0
+   },
+   "players": [
+    {
+     "gsis_id": "00-0038543",
+     "player_id": 20826,
+     "player_name": "Jaxon Smith-Njigba",
+     "pos_abb": "WR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0034869",
+     "player_id": 5276,
+     "player_name": "Sam Darnold",
+     "pos_abb": "QB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0039793",
+     "player_id": 1247,
+     "player_name": "AJ Barner",
+     "pos_abb": "TE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0038797",
+     "player_id": 24461,
+     "player_name": "Emanuel Wilson",
+     "pos_abb": "RB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0038488",
+     "player_id": 19348,
+     "player_name": "Brady Russell",
+     "pos_abb": "FB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0037545",
+     "player_id": 19984,
+     "player_name": "Rashid Shaheed",
+     "pos_abb": "WR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0035704",
+     "player_id": 13664,
+     "player_name": "Drew Lock",
+     "pos_abb": "QB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0033576",
+     "player_id": 19596,
+     "player_name": "Eric Saubert",
+     "pos_abb": "TE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0039165",
+     "player_id": 3967,
+     "player_name": "Zach Charbonnet",
+     "pos_abb": "RB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0040649",
+     "player_id": 16991,
+     "player_name": "Robbie Ouzts",
+     "pos_abb": "FB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0033908",
+     "player_id": 12959,
+     "player_name": "Cooper Kupp",
+     "pos_abb": "WR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0040673",
+     "player_id": 15484,
+     "player_name": "Jalen Milroe",
+     "pos_abb": "QB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0040058",
+     "player_id": 12301,
+     "player_name": "Nick Kallerup",
+     "pos_abb": "TE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0039299",
+     "player_id": 10218,
+     "player_name": "George Holani",
+     "pos_abb": "RB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0040648",
+     "player_id": 10430,
+     "player_name": "Tory Horton",
+     "pos_abb": "WR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0040739",
+     "player_id": 819,
+     "player_name": "Elijah Arroyo",
+     "pos_abb": "TE",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0037745",
+     "player_id": 12150,
+     "player_name": "Velus Jones Jr.",
+     "pos_abb": "RB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0037156",
+     "player_id": 3970,
+     "player_name": "Irv Charles",
+     "pos_abb": "WR",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0041178",
+     "player_id": 9829,
+     "player_name": "Robert Henry Jr.",
+     "pos_abb": "RB",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0038752",
+     "player_id": 2075,
+     "player_name": "Jake Bobo",
+     "pos_abb": "WR",
+     "pos_rank": 6,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    },
+    {
+     "gsis_id": "00-0041512",
+     "player_id": 18003,
+     "player_name": "Jadarian Price",
+     "pos_abb": "RB",
+     "pos_rank": 6,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "SEA"
+    }
+   ],
+   "snapshot_at": "2026-10-28T13:58:02Z",
+   "source": "nflverse_depth_charts_capture",
+   "team": "SEA",
+   "unresolved_depth_rows": 0
+  }
+ },
+ "schedule": {
+  "availability_classification": "captured_before_cutoff",
+  "away_team": "CHI",
+  "game_id": "2026_08_CHI_SEA",
+  "game_type": "REG",
+  "gameday": "2026-11-02",
+  "gametime": "20:15",
+  "gametime_timezone": "America/New_York",
+  "home_team": "SEA",
+  "ingested_at": null,
+  "kickoff_source_url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet",
+  "scheduled_kickoff_utc": "2026-11-03T01:15:00Z",
+  "season": 2026,
+  "source": "nflverse_games_capture",
+  "week": 8
+ },
+ "schema": "lp-nfl-pregame-snapshot-1",
+ "snapshot_sha256": "30832d34d3318a11cfce1f396964347299cd3645494cd522dca673dbd9e95729"
+}
