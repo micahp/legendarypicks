@@ -1,8 +1,9 @@
 """Yards per run and pass play by field zone, replay against 2024 (research, exploratory).
 
 The replay is the default SLC path (the same snapshots, cutoff and artifact as scoring_calibration_2024.py). For each simulated run or
-pass play, the yards gained are the state's yard line before minus the yard line after, when the play stays on the field. The actual
-yards come from the play-by-play column yards_gained. Zones are the yard line before the play: 1-19, 20-49, 50-99. Output: mean yards,
+pass play, the yards gained are the state's yard line before minus the yard line after, when the play stays on the field; a touchdown gains the yard line before (it
+has no spot after). Sacks, interceptions and lost fumbles are excluded on both sides, so the two sides count the same plays. The
+actual yards come from the play-by-play column yards_gained. Zones are the yard line before the play: 1-19, 20-49, 50-99. Output: mean yards,
 the share of plays that gain a first down (sim: the next play is first down for the same offense; actual: the first-down flag),
 and counts, per play type and zone.
 
@@ -55,18 +56,19 @@ def simulated(seeds):
             for drive in record['drives']:
                 plays = drive.get('plays', [])
                 for i, play in enumerate(plays):
-                    kind = {'run': 'run', 'pass_complete': 'pass', 'pass_incomplete': 'pass', 'sack': 'pass',
-                            'interception': 'pass'}.get(play['event_type'])
+                    kind = {'run': 'run', 'pass_complete': 'pass', 'pass_incomplete': 'pass'}.get(play['event_type'])
                     before = play['state_before']['yardline_100']
                     after = play['state_after'].get('yardline_100')
-                    if kind is None or before is None or after is None or play['state_after'].get('down') is None:
+                    if kind is None or before is None:
                         continue
-                    if play['event_type'] == 'sack':
-                        gain = None
+                    if play['outcome']['touchdown']:  # a touchdown has no spot after it: the gain is the distance to the goal
+                        gain = before
+                    elif after is None or play['state_after'].get('down') is None:
+                        continue
                     else:
                         gain = before - after
                     z = zone(before)
-                    if gain is None or z is None:
+                    if z is None:
                         continue
                     row = acc[(kind, z)]
                     row[0] += 1
@@ -82,16 +84,18 @@ def simulated(seeds):
 def actual():
     con = sqlite3.connect(f'file:{DB}?mode=ro', uri=True)
     acc = collections.defaultdict(lambda: [0, 0.0, 0, 0])
-    rows = con.execute("SELECT game_id, drive, posteam, play_id, down, play_type, yardline_100, yards_gained FROM nfl_pbp "
-                       "WHERE season=2024 AND week BETWEEN 2 AND 18 AND posteam IS NOT NULL AND drive IS NOT NULL "
-                       "ORDER BY game_id, drive, posteam, play_id").fetchall()
+    rows = con.execute("SELECT game_id, drive, posteam, play_id, down, play_type, yardline_100, yards_gained, sack, interception, "
+                       "fumble_lost FROM nfl_pbp WHERE season=2024 AND week BETWEEN 2 AND 18 AND posteam IS NOT NULL "
+                       "AND drive IS NOT NULL ORDER BY game_id, drive, posteam, play_id").fetchall()
     drives = collections.defaultdict(list)
     for row in rows:
         drives[(row[0], row[1], row[2])].append(row)
     for plays in drives.values():
         for i, play in enumerate(plays):
-            _g, _d, _t, _p, down, play_type, yl, gained = play
+            _g, _d, _t, _p, down, play_type, yl, gained, sack, interception, fumble_lost = play
             if play_type not in ('run', 'pass') or yl is None or gained is None:
+                continue
+            if sack == 1 or interception == 1 or fumble_lost == 1:  # the same exclusions as the replay
                 continue
             z = zone(int(yl))
             row = acc[(play_type, z)]
@@ -119,7 +123,9 @@ def main():
     ap.add_argument('--out', type=Path, required=True)
     args = ap.parse_args()
     result = {'replay': table(simulated(args.seeds)), 'actual_2024': table(actual()),
-              'definitions': 'run or pass plays with a known yard line; sacks excluded from yardage; zone by yard line before the play'}
+              'definitions': ('run or pass plays with a known yard line; sacks, interceptions and lost fumbles excluded on both '
+                              'sides; touchdowns included on both sides (replay gain = yard line before the play); zone by yard '
+                              'line before the play')}
     args.out.write_text(json.dumps(result, indent=1, sort_keys=True) + '\n')
     print(json.dumps(result, sort_keys=True)[:600])
 
