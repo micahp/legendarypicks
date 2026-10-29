@@ -166,6 +166,7 @@ class PlayCallSampler:
         # decision model categories A to N (decision_layer): the prior tables, and the outcome lifts and filters on the drawn labels
         self.decision_table = None
         self.decision_outcomes = False
+        self.decision_filter = True  # False: the lifts shape the outcome, but the row is drawn from the whole cell (an experiment)
 
     def _team(self, label):
         if self.side_teams is None:
@@ -280,7 +281,7 @@ class PlayCallSampler:
         if use_streak:
             matched = [c for c in candidates if c[1].get('streak', 'NONE') == streak_bucket]
             candidates = matched or candidates
-        if use_labels:  # the row takes each drawn label in category order, where the cell has a row that carries it
+        if use_labels and self.decision_filter:  # the row takes each drawn label in category order, where the cell has such a row
             for cat in decision_layer.CATS:
                 value = labels.get(cat)
                 if value is None:
