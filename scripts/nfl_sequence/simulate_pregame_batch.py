@@ -442,6 +442,7 @@ def run_batch(args):
                                                            streak=(str(args.playcall_streak_cache) if args.playcall_streak_cache else args.playcall_streak_splits),
                                                            streak_file=args.playcall_streak_file,
                                                            target_roles=args.playcall_target_roles,
+                                                           decision=args.playcall_decision,
                                                            streak_league=(str(args.playcall_streak_cache) if (args.playcall_streak_cache and args.playcall_streak_league)
                                                                           else args.playcall_streak_league))
     elif args.context_mode == 'unconditioned':
@@ -488,6 +489,7 @@ def run_batch(args):
         'seed_start': args.seed_start, 'playcall_artifact_sha256': (slc_engine.describe(ref) or {}).get('artifact_sha256'),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage), 'playcall_player_shares': bool(args.playcall_player_shares),
+        'playcall_decision': bool(args.playcall_decision),
         'playcall_exact_yardline': bool(args.playcall_exact_yardline),
     }
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
@@ -648,6 +650,9 @@ def main(argv=None):
     ap.add_argument('--playcall-streak-cache', type=Path, default=None, help='frame cache for the streak splits')
     ap.add_argument('--playcall-target-roles', action='store_true',
                     help='SLC v1 research: decision model category A (target role) as a team-by-situation pre-event prior')
+    ap.add_argument('--playcall-decision', action='store_true',
+                    help='SLC v1 research: decision model categories A to N as pre-event draws (team priors from the prior season) '
+                         'and outcomes conditioned on them')
     ap.add_argument('--playcall-streak-league', action='store_true',
                     help='SLC v1 research: league-wide streak splits (dropback shift and outcome mix by streak state)')
     ap.add_argument('--playcall-streak-file', type=Path, default=None,
