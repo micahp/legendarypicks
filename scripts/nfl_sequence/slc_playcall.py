@@ -26,10 +26,12 @@ sys.path.insert(0, str(HERE))
 import e0_single_play as e0  # noqa: E402
 import e1_drive as e1  # noqa: E402
 import playcall_model as pm  # noqa: E402
+import formation_layer  # noqa: E402
 import pre_event as pe  # noqa: E402
 import run_playcall_eval as rpe  # noqa: E402
 
 ARTIFACT_ID = 'slc_playcall_v1'
+UNKNOWN = formation_layer.UNKNOWN
 SCRIMMAGE_INTENTS = ('run', 'dropback')
 KICK_INTENT = 'kick'
 BLOCK_GROUPS = ('down_dist', 'field', 'score', 'clock', 'score_clock', 'down_field', 'team_down')
@@ -139,6 +141,9 @@ class PlayCallSampler:
         self.participant_chooser = None  # set per game by slc_engine: chooses the rusher or target before the outcome is drawn
         # a team_tendency.TeamTendencies from prior seasons: reweights the outcome drawn within the intent (None: no split)
         self.team_outcomes = None
+        # formation-conditioned outcome draws, on when the engine has formation labels and priors (formation_layer)
+        self.formation_outcomes = False
+        self.formation_priors = None
 
     def _team(self, label):
         if self.side_teams is None:
@@ -160,8 +165,11 @@ class PlayCallSampler:
                 raise ValueError('a pool cell mixes situations; the play-call layer cannot be applied')
             by_key[(intent_of(sample[0], sample[1]), sample[0])].append(sample)
         base = Counter({k: len(v) for k, v in by_key.items()})
-        entry = {'key': key, 'base': base, 'by_key': {k: sorted(v, key=lambda s: (s[1]['game_id'], s[1]['play_id']))
-                                                       for k, v in by_key.items()}}
+        by_formation = defaultdict(Counter)  # outcome-type counts by the play's published formation (UNKNOWN when none)
+        for sample in cell:
+            by_formation[sample[1].get('formation', UNKNOWN)][(intent_of(sample[0], sample[1]), sample[0])] += 1
+        entry = {'key': key, 'base': base, 'by_formation': dict(by_formation),
+                 'by_key': {k: sorted(v, key=lambda s: (s[1]['game_id'], s[1]['play_id'])) for k, v in by_key.items()}}
         self._cells[id(cell)] = (cell, entry)
         return entry
 
@@ -183,17 +191,31 @@ class PlayCallSampler:
         keys = sorted(k for k in entry['base'] if k[0] == intent)
         if not keys:
             raise e1.SamplingUnavailable(f'playcall_no_{intent}_outcomes_in_cell:{entry["key"]}')
-        pre_event = self.participant_chooser(intent, offense) if self.participant_chooser is not None else None
-        if self.team_outcomes is None:
-            key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]
-        else:  # team splits weight which outcome type is drawn within the intent; the intent above is unchanged
-            key = rng.choices(keys, weights=[entry['base'][k] * self._outcome_weight(k[1], offense, defense, entry['key'])
-                                             for k in keys])[0]
-        event, row, runoff, spot = rng.choice(entry['by_key'][key])
+        pre_event = self.participant_chooser(intent, offense, state) if self.participant_chooser is not None else None
+        formation = pre_event.get('formation') if pre_event else None  # chosen before the outcome, from the situation alone
+        weights = []
+        for k in keys:
+            weight = entry['base'][k]
+            if formation is not None and self.formation_outcomes:
+                weight = self._formation_weight(entry, k, formation) * total
+            if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
+                weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
+            weights.append(weight)
+        if self.team_outcomes is None and formation is None:
+            key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]  # the unchanged baseline draw
+        else:
+            key = rng.choices(keys, weights=weights)[0]
+        candidates = entry['by_key'][key]
+        if formation is not None and self.formation_outcomes:
+            matched = [c for c in candidates if c[1].get('formation', UNKNOWN) == formation]
+            candidates = matched or candidates  # no row with this formation in the cell: the cell's rows
+        event, row, runoff, spot = rng.choice(candidates)
         if pre_event is not None:
             row = dict(row, pre_event=pre_event)  # the chosen participants travel with the outcome; the row itself is not changed
         self.decisions.append({
             'participants': pe.ids(pre_event),
+            'formation': formation, 'personnel': pre_event.get('personnel') if pre_event else None,
+            'formation_conditioned': bool(formation is not None and self.formation_outcomes),
             'team_outcome_split': self.team_outcomes is not None,
             'state': {'quarter': int(state['quarter']), 'clock': int(state['clock']), 'down': int(state['down']),
                       'togo': int(state['togo']), 'yardline_100': int(state['yl']),
@@ -203,6 +225,13 @@ class PlayCallSampler:
             'fallback': fallback, 'source': {'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season']},
         })
         return event, row, runoff, spot
+
+    def _formation_weight(self, entry, key, formation):
+        """P(outcome type | formation) for this cell, shrunk to the cell's own share with the formation layer's strength."""
+        base_share = entry['base'][key] / sum(entry['base'].values())
+        counts = entry['by_formation'].get(formation, Counter())
+        n_formation = sum(counts.values())
+        return (counts[key] + formation_layer.PRIOR_STRENGTH * base_share) / (n_formation + formation_layer.PRIOR_STRENGTH)
 
     def _outcome_weight(self, event, offense, defense, cell):
         """Offense and defense event ratios for this cell, multiplied. A team with no prior-season sample adds no effect."""

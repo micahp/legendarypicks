@@ -38,8 +38,10 @@ def _by_usage(players, usage, team, label, draw):
     return draw.choices(eligible, weights=[1 / p['pos_rank'] for p in eligible], k=1)[0]
 
 
-def choose(snapshot, side, intent, seed, index):
-    """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome."""
+def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None):
+    """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
+
+    With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
     if intent not in ('run', 'dropback'):
         return None
     roster = snapshot['rosters'][side]
@@ -54,19 +56,23 @@ def choose(snapshot, side, intent, seed, index):
     else:
         chosen['rusher'] = _by_usage(players, observed['runner_position_usage'], team, 'rusher',
                                      _draw(f'{base}:rusher:position'))
+    if formation_priors is not None and state is not None:
+        import formation_layer  # local: the formation layer is optional
+        chosen['formation'], chosen['personnel'] = formation_layer.choose(
+            formation_priors, intent, state['down'], state['togo'], f'{base}:formation')
     return chosen
 
 
-def chooser(snapshot, seed):
+def chooser(snapshot, seed, formation_priors=None):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
 
-    def pick(intent, offense):
+    def pick(intent, offense, state=None):
         index = counter['index']
         counter['index'] += 1
         side = 'home' if offense == 'A' else 'away'
-        return choose(snapshot, side, intent, seed, index)
+        return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state)
     return pick
 
 
