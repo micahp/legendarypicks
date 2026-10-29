@@ -20,6 +20,7 @@ Each item is on by default unless marked as a flag.
 | Defensive coverage on dropbacks | `defense_layer.py` | flag `--playcall-coverage` |
 | Exact yard line inside the 20 | `slc_playcall.py` | flag `--playcall-exact-yardline` |
 | Player target and carry shares (observed prior-season shares) | `player_shares.py` | flag `--playcall-player-shares` |
+| Per-game Dirichlet target and carry shares | `share_distributions.py` | flag `--playcall-dirichlet-shares` (implies player shares; off by default) |
 | Decision model category A (target role), prior by situation | `target_roles.py` | flag `--playcall-target-roles` |
 | Decision model categories A to N as labels, with the lifts and row filter | `decision_layer.py` | flag `--playcall-decision` (filter on by default) |
 | Team and league win-loss record for display | `wl_streak.py` | display only, not a model input |
@@ -29,8 +30,10 @@ Each item is on by default unless marked as a flag.
 - **Playbook layer.** The team playbook files (Gridiron Physics, 2025 season, 76 team-season files) are not an input. The
   categories they describe are the decision model's categories, and those are connected through the decision layer. The playbook
   files are not yet used as a separate cross-check.
-- **Receiver and carry Monte Carlo distributions.** Only the observed prior-season share adapter is connected. The research
-  distributions (Dirichlet target shares, zero-truncated negative binomial carries) are not ported.
+- **External player-count distributions.** SLC has a separate per-game Dirichlet-multinomial share layer, fitted on prior-season
+  nfl_pbp counts and drawn once per team and role. It is behind --playcall-dirichlet-shares and off by default. The external
+  target-count Monte Carlo and zero-truncated negative-binomial carry-count models remain unported. The held-out check is in
+  SLC-PLAYER-SHARE-VALIDATION-2026-10-29.md.
 - **QB opportunity model.** A validation target only. It is a team-attempts decomposition (plays per game times pass propensity
   times QB share) from another branch. It is not an input to SLC.
 - **Red-zone yardage.** The replay still gains about three yards fewer than actual on red-zone passes and two fewer on red-zone runs
@@ -54,6 +57,12 @@ Score-clock SLC itself totals about 40 points a game on this snapshot, under the
 arm totals about 50, over by about four. The filter accounts for about +6.4 points of that uplift, from a selection effect. See
 `SLC-DECISION-LAYER-UPLIFT-2026-10-29.md`. No arm here is a calibration to the real league total.
 
+Player-share validation fits 2024 and scores 2025 on returning players with same-team history. The Dirichlet-multinomial improves
+held-out log score by +4.30 per team-game for target counts and +5.54 for carry counts under the reported team-game bootstrap. It moves variance and zero
+rates toward the observed values, while remaining underdispersed. On the same-source CAR-GB check, the fixed-share and Dirichlet
+arms had identical team scores on all 99 paired valid seeds. The 2024 formation replay uses 229 of 256 eligible games and does not
+establish a scoring change. See the two result reports for cohort rules and limitations.
+
 ## Holdout
 
 2026 is the sealed holdout. No 2026 game outcome was used to fit, tune, or select any component. The decision prior is built from
@@ -67,6 +76,7 @@ the prior season only (2025 for a 2026 forecast). The Week 8 lock (`ad7e26d9`) w
    this size are not team effects.
 4. Some earlier arms ran on older code. Score-clock was rerun on current code (`score_clock_v2`) and matched the earlier totals exactly.
 5. Pass length is taken from the nflverse play-by-play snapshot dated 2026-10-27, read only for seasons before the cutoff.
+6. The 2024 scoring replay has only 89.5 percent game coverage, with missing snapshots concentrated in CIN.
 
 ## Intended use and limits
 

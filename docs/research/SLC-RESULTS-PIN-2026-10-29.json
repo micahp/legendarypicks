@@ -1,0 +1,102 @@
+{
+  "branch": "research/slc-decision-layer-2026-10-29",
+  "input_fingerprints": {
+    "2024_replay_actual_database_rows_sha256": {
+      "play_by_play_rows_37459": "4e585ad6a240152174d69657a61e791e8c2a3eeef697142bab2e984c8494aec4",
+      "return_touchdown_rows_47": "7321c820100f514c3c5b609e3026c8c29f5526ca138756e84455c55a04a1e728",
+      "schedule_games_229": "198394fb40eb09ae5259f20fd10539c59e7e230000078c95c01b7e1c2e07bfc2"
+    },
+    "2024_replay_playcall_artifact": {
+      "path": "docs/research/SLC-PLAYCALL-ARTIFACT-FIT-2010-2023-v1.json",
+      "sha256": "f79400a9f3a6fe2180bc4717cc828022f16cd2371b2170cbaff0c47e86b7081f"
+    },
+    "playcall_artifact": {
+      "path": "docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+      "sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5"
+    },
+    "pre_2024_play_pool_rows_94556_sha256": "3c8d56d129de5a239d8d5c2b11b4659dc4e7be251f69eb9f59c7905b62e5b311",
+    "share_validation_database_rows_sha256": {
+      "2024_carry_rows_14317": "3af33b1f668b27662d9590738c756970325406166af20e2045be5f28c55989e6",
+      "2024_receive_rows_17103": "87c27e23725f023173fda77ff3644c827b4b0aa158fb0fc4a35b094b9820b3bd",
+      "2025_carry_rows_14200": "0e326a7559349988fef10c6ba3e42c5d685bb6786bb051caa536fed82aac0992",
+      "2025_receive_rows_16699": "b27a2e32b8014da2d92bca13ab26211070596c34683e339ae3ba54b4af5f9e99"
+    },
+    "week8_context_frame_sha256": "fc7d65860d9fb2e0a26015455241bfe7ee88a58c9c6902cb05a55ea5fc485e0d",
+    "week8_observed_reference_sha256": "dbdd8cd870e2fc2863595086edb25d9b9465cc1b2e8eb844c543d820cca90879",
+    "week8_snapshot_file": {
+      "path": "docs/research/slc-week8-2026/snapshots/2026_08_CAR_GB.json",
+      "sha256": "8e3a99aabde7cc5c0331ed4ce00f645b41a891be7ce6a8fe53ed99f02b597e6c"
+    }
+  },
+  "pin_date": "2026-10-29",
+  "player_share_validation": {
+    "committed_result_path": "docs/research/SLC-PLAYER-SHARE-VALIDATION-2026-10-29.json",
+    "committed_result_sha256": "760a8b0b017cbcb1994e60afd04be87081e307c7cc93062d072d5e6d91130da1",
+    "fit_season": 2024,
+    "recomputed_output_path": "/tmp/slc-share-validation-recomputed.json",
+    "recomputed_output_sha256": "760a8b0b017cbcb1994e60afd04be87081e307c7cc93062d072d5e6d91130da1",
+    "saved_output_path": "/tmp/claude-0/-root/4a715766-ff4b-4980-99e5-dc209eaac7d4/scratchpad/cutoff/validation/share_validation_2024_2025.json",
+    "saved_output_sha256": "760a8b0b017cbcb1994e60afd04be87081e307c7cc93062d072d5e6d91130da1",
+    "test_season": 2025
+  },
+  "same_source_week8_pair": {
+    "both_source_commit": "8073dc4660404244cfe1dec31c9def0f57a8cedc",
+    "both_source_worktrees_dirty": true,
+    "common_blocked_seed": 32,
+    "control_command": "simulate_pregame_batch.py --snapshot-file docs/research/slc-week8-2026/snapshots/2026_08_CAR_GB.json --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --playcall-player-shares --games 100 --seed-start 1",
+    "control_output": {
+      "path": "/tmp/slc-shares-v2-current.json",
+      "seed_ledger_sha256": "cd105929476afca4ab660c0ce8cc27bb3627a7fa9e38b292e26f28f7e8889af3",
+      "sha256": "4c75a1afe34d03ab3f69929ed8def9601d0fbf104b3efbe6671beddbcbcf022d"
+    },
+    "dirichlet_command": "simulate_pregame_batch.py --snapshot-file docs/research/slc-week8-2026/snapshots/2026_08_CAR_GB.json --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --playcall-player-shares --playcall-dirichlet-shares --games 100 --seed-start 1",
+    "dirichlet_output": {
+      "path": "/tmp/claude-0/-root/4a715766-ff4b-4980-99e5-dc209eaac7d4/scratchpad/cutoff/baselines/dirichlet_v2.json",
+      "seed_ledger_sha256": "5d4d58696b0e2ce10d78abc794b80153ee66f36a1a891dc86bff4dad87d5f9e6",
+      "sha256": "1960df4f276334d9b8041b92b34380366d05529c67d598ea1b0389a5a4b115ae"
+    },
+    "game_id": "2026_08_CAR_GB",
+    "paired_valid_full_games": 99,
+    "same_producer_file_hashes": true,
+    "same_snapshot_and_reference": true,
+    "scores_identical_on_all_paired_seeds": true,
+    "seeds": [
+      1,
+      100
+    ]
+  },
+  "scoring_replay_2024": {
+    "baseline_raw_seed_output_sha256": "9da6510017e10662e2ecfbcbc0e727b677cf7d27f2a901f89841ed83edc2fca2",
+    "baseline_recomputed_exactly": true,
+    "baseline_recomputed_summary_sha256": "46daaf5b5bbcb551670f925b4fba412948f647d52dc99ee72bcf0f36aaeef654",
+    "baseline_saved_summary_sha256": "46daaf5b5bbcb551670f925b4fba412948f647d52dc99ee72bcf0f36aaeef654",
+    "committed_result_path": "docs/research/SLC-SCORING-CALIBRATION-2024-FORMATION-COMPARE-2026-10-29.json",
+    "committed_result_sha256": "f609484b62dd2fce39ad7ea2ad27cbab4d6d8b610e95b503988a9ffd3ad2b607",
+    "formation_baseline_paired_seed_count": 1071,
+    "formation_raw_seed_output_sha256": "139f7181e9cbcff5d802a0561a4d4656cb35fa9c23c51203299fb8b553c554d9",
+    "formation_recomputed_summary_sha256": "d91ae5781e88ec1998a4815e334f90bef3ecfc94f0094836b6febef699f88f8c",
+    "game_clusters": 229
+  },
+  "source_code_sha256": {
+    "scripts/nfl_sequence/contextual_pool.py": "9d0af355e0c62d23014bf5387af69c555f8e1e4276d37fed1b4bd65f2c2f8104",
+    "scripts/nfl_sequence/e1_drive.py": "38c77412c821e84d9722edb13b3818e86440c8e6c984c118a3823d13efb7b408",
+    "scripts/nfl_sequence/e2_reference.py": "3b68bef5f7356370b14807d364070004c89c1b4fb15a2ac2b75a70c3551734b5",
+    "scripts/nfl_sequence/game_state.py": "cd7a61df6b75579e6b0dc0b8c3779ce6bb3d0447acabc2a612e32f883dcca470",
+    "scripts/nfl_sequence/game_stats.py": "827d5d4e06487c9c42704215e11de9301af040a40d3b869805d445576508b1cd",
+    "scripts/nfl_sequence/pre_event.py": "53dfc34f5d72dd73ae9fc67a47b6e05555d0ee2c866c24159d67d166622fdb62",
+    "scripts/nfl_sequence/pregame_snapshot.py": "71ddf00559cfda165062dcc0e2a38e29ef39ecb9e2f384a7e471aeb59b89d922",
+    "scripts/nfl_sequence/reducer.py": "4723341694efb7106676b2033ebac005e03c9f55a32c5e118df399e117fa0f06",
+    "scripts/nfl_sequence/scoring_calibration_2024.py": "1856ac515a9da3803e5201bff564db58f64b00a65fb577a41c8331212cdaac9a",
+    "scripts/nfl_sequence/scoring_cohort.py": "d90dfedd87745a271382d631a1abc16855901c3c1b4b20a22c9ac2ca7d2664a2",
+    "scripts/nfl_sequence/scoring_compare_2024.py": "6667add341f63192f7a3755d1108abf8406ea28aaab6e5408eb43d2aa9cf89f3",
+    "scripts/nfl_sequence/scoring_compare_2024_matched.py": "db109e745b6ef05b3ee4585a71723d2648701cdb988ff18b1c8a3edeb21fc50f",
+    "scripts/nfl_sequence/share_distributions.py": "2ad4c702326e0274821dce6eac542d0b202ad9d220353b93526ef64513ba0b29",
+    "scripts/nfl_sequence/share_validation.py": "1beb8d0fc361089c3027692dc03b91958f91c2ac947312df0b3ed91a2799ec7c",
+    "scripts/nfl_sequence/simulate_pregame_batch.py": "dedecdfac345684e682421f0f2a763edaca48005c238495893f374370618c03b",
+    "scripts/nfl_sequence/slc_engine.py": "1e89773779a12bdce7c8a859e67e4b23cc16ade258092dd65db48f2d578dc222",
+    "scripts/nfl_sequence/slc_playcall.py": "cc9314d28b8ddfea25e5ec71d01435f8fea62d7294200a2da2644941abf816f0",
+    "scripts/nfl_sequence/validate_share_distributions.py": "51fc66a3b46749c47eb465cc6f41d7474c1629b72565d2f1f326c47a3aeb7f66"
+  },
+  "source_commit_for_runs": "8073dc4660404244cfe1dec31c9def0f57a8cedc",
+  "source_worktree_dirty_for_runs": true
+}

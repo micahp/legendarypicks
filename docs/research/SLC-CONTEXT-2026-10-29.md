@@ -79,3 +79,14 @@ filter accounts for +6.39 ± 1.78 of the decision layer's +10.36 total uplift. T
 
 `35e7d864`, `0eae58b5`, `5437ad7d`, `18ddc892`, `94260513`, `ddc289cd`, `2bb41d30`, `7d66f989`, `b7bad9bb`, plus the uncommitted
 playbook work.
+
+
+## Results finalized after this context snapshot
+
+- The 2024-fit, 2025-held-out Dirichlet-multinomial player-share check reproduced byte-for-byte from the current read-only dev database. It improved held-out log score by +4.30 per team-game for targets and +5.54 for carries on returning players with same-team history. Predicted variance and zero rates moved toward the observations but remained low.
+- A current-source player-share control was run against the saved Dirichlet arm. Both used the same snapshot, reference frame, artifact and source hashes. The 99 paired valid full-game seeds had identical total points and margin.
+- The cohort-corrected 2024 scoring replay covers 229 of 256 games in weeks 2 to 18. Formation shifts scoring by +0.2745 points per team-game with a game-clustered standard error of 0.2572 on 1,071 paired game and seed runs. Missing snapshots include 16 CIN games, so this is not a full-season estimate.
+- Reports and hashes: SLC-PLAYER-SHARE-VALIDATION-2026-10-29.md, SLC-SCORING-CALIBRATION-2024-MATCHED-2026-10-29.md, and SLC-RESULTS-PIN-2026-10-29.json.
+- No default changed. The Week 8 lock remains untouched. No 2026 outcome was read.
+- The result source state is commit 8073dc46 plus the existing dirty simulator files. The red-zone decomposition script has no saved result. Existing source and test changes remain outside the result-only commit.
+

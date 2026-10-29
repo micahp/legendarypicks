@@ -1,45 +1,77 @@
 {
- "actual_2024_regular_season": {
-  "drives": 10.768,
-  "plays_per_drive": 5.833,
-  "points": 22.912,
-  "points_per_drive": 2.128,
-  "team_games": 512,
-  "terminals_per_team_game": {
-   "end_of_period": 0.246,
-   "field_goal": 1.691,
-   "missed_field_goal": 0.332,
-   "other": 0.541,
-   "punt": 3.734,
-   "safety": 0.025,
-   "touchdown": 2.562,
-   "turnover": 1.062,
-   "turnover_on_downs": 0.572
+  "actual_defense_and_special_teams_return_touchdown_points_per_team_game": {
+    "extra_points_included": false,
+    "mean": 0.616,
+    "scoring_value_per_touchdown": 6
+  },
+  "cohort": {
+    "baseline_blocked_seeds": 35,
+    "baseline_completed_seeds": 1110,
+    "formation_blocked_seeds": 40,
+    "formation_completed_seeds": 1105,
+    "game_coverage": 0.89453125,
+    "games_with_valid_snapshots_and_completed_runs": 229,
+    "games_without_valid_snapshots": 27,
+    "missing_snapshot_team_counts": {
+      "CIN": 16,
+      "CLE": 1,
+      "DAL": 1,
+      "JAX": 3,
+      "KC": 1,
+      "LAC": 1,
+      "LV": 1,
+      "SF": 3
+    },
+    "paired_completed_game_seeds": 1071,
+    "paired_game_clusters": 229,
+    "regular_season_games_weeks_2_to_18": 256,
+    "seeds_requested_per_game": 5,
+    "week_1_games_without_prior_depth_chart": 16
+  },
+  "limitations": [
+    "Only 229 of 256 regular-season games from weeks 2 to 18 had valid reconstructed snapshots.",
+    "Sixteen omitted games involve CIN, so the cohort is team-selective.",
+    "The replay is retrospective and exploratory. nfl_pbp has no row-level publication timestamp.",
+    "Actual points include defense and special teams scores that are not fully represented by the simulator."
+  ],
+  "method": {
+    "actual_points": "Final NFL schedule points for the same 229 games; this includes actual defense and special teams scoring.",
+    "estimator": "Mean paired total points difference over common completed game-seeds, divided by two for points per team-game.",
+    "included_statuses": [
+      "complete_regulation",
+      "complete_overtime"
+    ],
+    "pair_key": [
+      "game_id",
+      "seed"
+    ],
+    "uncertainty": "Game-clustered standard error across 229 games."
+  },
+  "paired_points_per_team_game": {
+    "actual": 22.559,
+    "actual_team_games": 458,
+    "baseline": 19.8595,
+    "formation": 20.134,
+    "formation_minus_baseline": {
+      "game_clustered_standard_error": 0.2572,
+      "game_clusters": 229,
+      "mean": 0.2745,
+      "paired_game_seeds": 1071
+    }
+  },
+  "scope": {
+    "exploratory_replay": true,
+    "model_id": "slc_v1_incomplete",
+    "playcall_artifact_fit_through": 2023,
+    "pool_seasons": [
+      2022,
+      2023
+    ],
+    "reference_cutoff": [
+      2024,
+      1
+    ],
+    "target_season": 2024,
+    "uses_2026_outcomes": false
   }
- },
- "definitions": "points include overtime; drives are possessions; plays are run and pass plays only; actual terminals from the play-by-play series result",
- "sim_meta": {
-  "errors": 0,
-  "games": 229,
-  "skipped": 43,
-  "team_games": 2290
- },
- "simulated_2024_replay": {
-  "drives": 11.369,
-  "plays_per_drive": 6.565,
-  "points": 19.697,
-  "points_per_drive": 1.733,
-  "team_games": 2290,
-  "terminals_per_team_game": {
-   "end_of_overtime": 0.001,
-   "end_of_regulation": 0.474,
-   "field_goal_attempt": 2.197,
-   "halftime": 0.474,
-   "punt": 4.213,
-   "safety": 0.041,
-   "touchdown": 2.023,
-   "turnover": 1.097,
-   "turnover_on_downs": 0.848
-  }
- }
 }
