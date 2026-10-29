@@ -19,6 +19,8 @@ class VerifiedIdentityNameVariants(unittest.TestCase):
 
     def test_normalized_equal_names_still_require_a_stable_id_join(self):
         self.assertTrue(builder._identity_name_matches('00-0000000', 'K. Williams Jr.', 'K. Williams'))
+        self.assertTrue(builder._identity_name_matches('00-0038642', 'DJ Ivey', 'D.J. Ivey'))
+        self.assertTrue(builder._identity_name_matches('00-0038642', 'D.J. Ivey', 'DJ Ivey'))
 
 
 if __name__ == '__main__':
