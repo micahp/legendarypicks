@@ -6,6 +6,7 @@ game), its mean (the prior-season base share), its spread (the Dirichlet varianc
 import random
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -198,6 +199,50 @@ class ChooserGates(unittest.TestCase):
         finally:
             sd_mod.game_shares = real
         self.assertEqual(calls.count('receive'), 1)
+
+    def test_role_filtered_receiver_plays_reuse_the_same_team_game_draw(self):
+        import decision_layer
+        import share_distributions as sd_mod
+        roles = iter(('WR', 'TE'))
+        calls = []
+        real = sd_mod.game_shares
+
+        def counting(*args, **kwargs):
+            calls.append(tuple(args[3]))
+            return real(*args, **kwargs)
+
+        with patch.object(decision_layer, 'draw', side_effect=lambda *a, **kw: {'A': next(roles)}), \
+             patch.object(sd_mod, 'game_shares', side_effect=counting):
+            cache = {}
+            for index, role in enumerate(('WR', 'TE')):
+                chosen = pe.choose(SNAPSHOT, 'home', 'dropback', seed=5, index=index, state=dict(STATE),
+                                   player_shares={'receive': {}, 'carry': {}}, decision_table={},
+                                   share_table=concentrated('receive', 'AWR1', 0.9), share_cache=cache,
+                                   trick_passer_rate=0, qb_receiver_rate=0)
+                self.assertEqual(chosen['target_role'], role)
+                self.assertEqual(chosen['receiver']['pos_abb'], role)
+        self.assertEqual(len(calls), 1)
+
+    def test_role_filtered_carry_plays_reuse_the_same_team_game_draw(self):
+        import decision_layer
+        import share_distributions as sd_mod
+        roles = iter(('RB', 'QB'))
+        calls = []
+        real = sd_mod.game_shares
+
+        def counting(*args, **kwargs):
+            calls.append(tuple(args[3]))
+            return real(*args, **kwargs)
+
+        with patch.object(decision_layer, 'draw', side_effect=lambda *a, **kw: {'B': next(roles)}), \
+             patch.object(sd_mod, 'game_shares', side_effect=counting):
+            cache = {}
+            for index, role in enumerate(('RB', 'QB')):
+                chosen = pe.choose(SNAPSHOT, 'home', 'run', seed=5, index=index, state=dict(STATE),
+                                   player_shares={'receive': {}, 'carry': {}}, decision_table={},
+                                   share_table=concentrated('carry', 'ARB1', 0.9), share_cache=cache)
+                self.assertEqual(chosen['rusher']['pos_abb'], role)
+        self.assertEqual(len(calls), 1)
 
     def test_a_player_listed_out_never_takes_an_opportunity(self):
         import copy

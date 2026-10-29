@@ -393,6 +393,7 @@ def _seed_outcome(seed, finished, ledger, ref, snapshot):
 
 def run_batch(args):
     batch_started = time.monotonic()
+    source_provenance = game_cli.producer_source()
     snapshot_started = batch_started
     if args.snapshot_file:
         if args.allow_unverified_current_schedule_exploratory:
@@ -446,6 +447,7 @@ def run_batch(args):
                                                            decision_filter=not args.playcall_decision_unfiltered,
                                                            dirichlet_shares=args.playcall_dirichlet_shares,
                                                            playbook=args.playcall_playbook,
+                                                           source_commit=source_provenance['base_commit'],
                                                            streak_league=(str(args.playcall_streak_cache) if (args.playcall_streak_cache and args.playcall_streak_league)
                                                                           else args.playcall_streak_league))
     elif args.context_mode == 'unconditioned':
@@ -488,10 +490,14 @@ def run_batch(args):
     ledger_header = {
         'schema': SCHEMA, 'game_id': args.game_id, 'as_of': snapshot['as_of'],
         'source_snapshot_sha256': source_snapshot_sha256, 'observed_reference_sha256': ref.model_inputs['sha256'],
+        'source_commit': source_provenance['base_commit'],
+        'producer_file_sha256': source_provenance['producer_file_sha256'],
+        'player_share_model_manifest': (slc_engine.describe(ref) or {}).get('player_share_distribution'),
         'context_mode': args.context_mode, 'try_policy': args.try_policy, 'safety_kick_table': safety_kick_table,
         'seed_start': args.seed_start, 'playcall_artifact_sha256': (slc_engine.describe(ref) or {}).get('artifact_sha256'),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
-        'playcall_coverage': bool(args.playcall_coverage), 'playcall_player_shares': bool(args.playcall_player_shares),
+        'playcall_coverage': bool(args.playcall_coverage),
+        'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
         'playcall_decision': bool(args.playcall_decision), 'playcall_dirichlet_shares': bool(args.playcall_dirichlet_shares),
         'playcall_playbook': bool(args.playcall_playbook),
         'playcall_exact_yardline': bool(args.playcall_exact_yardline),
@@ -578,7 +584,7 @@ def run_batch(args):
             'game_generation': round(simulation_seconds, 4),
             'total_before_report_write': round(time.monotonic() - batch_started, 4),
         },
-        'source': {**game_cli.producer_source(), 'v1_model_file_sha256': baseline_files},
+        'source': {**source_provenance, 'v1_model_file_sha256': baseline_files},
         'pregame_snapshot': snapshot,
         'pregame_context': contextual,
         'contextual_pool_manifest': ref.contextual_pool_manifest,
@@ -660,7 +666,7 @@ def main(argv=None):
                          'needs --playcall-decision')
     ap.add_argument('--playcall-dirichlet-shares', action='store_true',
                     help='SLC v1 research: per-game Dirichlet target and carry shares, fitted on the prior season; the receiver and '
-                         'rusher are drawn from each game\'s shares')
+                         'rusher are drawn from each game\'s shares; implies --playcall-player-shares')
     ap.add_argument('--playcall-decision-unfiltered', action='store_true',
                     help='experiment: with --playcall-decision, the outcome lifts apply but the row is drawn from the whole cell')
     ap.add_argument('--playcall-decision', action='store_true',

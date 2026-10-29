@@ -14,6 +14,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import e1_drive as e1  # noqa: E402
+import simulate_pregame_game as game_cli  # noqa: E402
 import game_state as gs  # noqa: E402
 import pregame_snapshot  # noqa: E402
 import slc_engine  # noqa: E402
@@ -50,6 +51,7 @@ def player_shares_for(args):
 
 def main():
     args = parse_args()
+    source_provenance = game_cli.producer_source()
 
     if args.snapshot_file:
         snapshot = pregame_snapshot.load_frozen_snapshot(str(args.snapshot_file))
@@ -66,7 +68,8 @@ def main():
 
     ref, excluded = slc_engine.load_reference(args.db, snapshot, args.artifact, team_outcomes=args.team_outcomes,
                                                 formation=args.formation, player_shares=player_shares_for(args),
-                                                dirichlet_shares=args.dirichlet_shares)
+                                                dirichlet_shares=args.dirichlet_shares,
+                                                source_commit=source_provenance['base_commit'])
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
     pregame_snapshot.reseal(snapshot)
@@ -76,11 +79,18 @@ def main():
     schedule = snapshot['schedule']
     evaluation = snapshot.get('evaluation', {})  # the snapshot's own provenance result (pregame_snapshot.input_provenance)
     artifact = json.loads(args.artifact.read_text())
+    connected = ['score-clock play-call layer (slc_playcall_v1)']
+    not_connected = ['team offense and defense splits', 'playbooks', 'QB and role decisions',
+                     'coaching (excluded from v1)']
+    if args.dirichlet_shares:
+        connected.append('pre-event player target and carry assignment (Dirichlet-multinomial shares)')
+    else:
+        not_connected.append('pre-event participant selection')
     trace = {
         'model_id': slc_engine.MODEL_ID,
-        'components_connected': ['score-clock play-call layer (slc_playcall_v1)'],
-        'components_not_connected': ['team offense and defense splits', 'playbooks', 'QB and role decisions',
-                                     'pre-event participant selection', 'coaching (excluded from v1)'],
+        'components_connected': connected,
+        'components_not_connected': not_connected,
+        'source': source_provenance,
         'seed': args.seed, 'team_outcomes': bool(args.team_outcomes), 'formation': bool(args.formation),
         'game': {'game_id': schedule['game_id'], 'season': schedule['season'], 'week': schedule['week'],
                  'side_teams': slc_engine.side_teams(snapshot)},
@@ -91,7 +101,8 @@ def main():
         'playcall': {'artifact_sha256': artifact['sha256'], 'fit_seasons': [min(artifact['fit_seasons']),
                                                                              max(artifact['fit_seasons'])],
                      'reference_season': artifact['reference_season'],
-                     'summary': slc_engine.summary(decisions)},
+                     'summary': slc_engine.summary(decisions),
+                     'player_share_distribution': (slc_engine.describe(ref) or {}).get('player_share_distribution')},
         'pool': {'eligible_before': [int(schedule['season']), int(schedule['week'])],
                  'excluded_kickoffs': excluded if isinstance(excluded, (int, float, str, dict, list)) else str(excluded)},
         'contract': {

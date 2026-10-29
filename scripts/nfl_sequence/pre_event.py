@@ -127,12 +127,14 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                     positions = (role,)
             if share_table is not None:  # the game's Dirichlet target shares over the eligible players, then this play's draw
                 import share_distributions
-                eligible = share_distributions.eligible_players([p for p in receivers if p['pos_abb'] in positions],
-                                                                roster.get('injury_report'))
+                population = share_distributions.eligible_players(
+                    [p for p in receivers if p['pos_abb'] in player_shares_positions('receive')],
+                    roster.get('injury_report'))
+                eligible = [p for p in population if p['pos_abb'] in positions]
                 if not eligible:  # fail loudly: the adapter below does not know about injuries
                     raise ValueError(f'no eligible receivers for {team} after the injury report')
                 chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), snapshot['snapshot_sha256'],
-                                                    _draw(f'{base}:receiver:dirichlet'), share_cache)
+                                                    _draw(f'{base}:receiver:dirichlet'), share_cache, population=population)
             else:
                 chosen['receiver'] = _by_player_share(receivers, player_shares, team, 'receive', positions,
                                                       _draw(f'{base}:receiver:player'))
@@ -148,12 +150,14 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                     positions = carried
             if share_table is not None:  # the game's Dirichlet carry shares over the eligible players, then this play's draw
                 import share_distributions
-                eligible = share_distributions.eligible_players([p for p in players if p['pos_abb'] in positions],
-                                                                roster.get('injury_report'))
+                population = share_distributions.eligible_players(
+                    [p for p in players if p['pos_abb'] in player_shares_positions('carry')],
+                    roster.get('injury_report'))
+                eligible = [p for p in population if p['pos_abb'] in positions]
                 if not eligible:
                     raise ValueError(f'no eligible rushers for {team} after the injury report')
                 chosen['rusher'] = _by_game_share(eligible, share_table, team, 'carry', str(seed), snapshot['snapshot_sha256'],
-                                                  _draw(f'{base}:rusher:dirichlet'), share_cache)
+                                                  _draw(f'{base}:rusher:dirichlet'), share_cache, population=population)
             else:
                 chosen['rusher'] = _by_player_share(players, player_shares, team, 'carry', positions,
                                                     _draw(f'{base}:rusher:player'))
@@ -168,19 +172,27 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     return chosen
 
 
-def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw, cache=None):
+def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw, cache=None, population=None):
     """A rostered player drawn in proportion to his share in this game's Dirichlet draw (share_distributions).
 
-    With a cache (one per game and seed, held by the chooser), each team and role is drawn once and every play reuses the draw."""
+    The draw is over the full eligible team-role population. A decision-layer position filter only restricts this play's candidate
+    set; it does not create another share draw. With a cache (one per game and seed, held by the chooser), each team and role is
+    drawn once and every play reuses the draw."""
     import share_distributions
-    gsis = [p['gsis_id'] for p in candidates]
-    key = (team, role, game_id, tuple(sorted(gsis)))
+    population = candidates if population is None else population
+    population_ids = tuple(sorted(p['gsis_id'] for p in population))
+    candidate_ids = {p['gsis_id'] for p in candidates}
+    if not candidate_ids.issubset(population_ids):
+        raise ValueError(f'{role} candidates for {team} are outside the game share population')
+    key = (team, role, game_id)
     if cache is not None and key in cache:
-        shares = cache[key]
+        cached_ids, shares = cache[key]
+        if cached_ids != population_ids:
+            raise ValueError(f'{role} eligible population changed within {team} game {game_id}')
     else:
-        shares = share_distributions.game_shares(share_table, team, game_id, gsis, role, seed_text)
+        shares = share_distributions.game_shares(share_table, team, game_id, population_ids, role, seed_text)
         if cache is not None:
-            cache[key] = shares
+            cache[key] = (population_ids, shares)
     return draw.choices(candidates, weights=[shares[p['gsis_id']] for p in candidates], k=1)[0]
 
 
