@@ -24,4 +24,4 @@ def refuse_if_holdout(season, what):
 def refuse_unless_cutoff(season, what, cutoff):
     """A season at or after the holdout is readable only with an explicit cutoff."""
     if int(season) >= HOLDOUT_SEASON and cutoff is None:
-        raise ValueError(f'{what}: season {season} needs an explicit pregame cutoff')
+        raise ValueError(f'{what}: season {season} is the sealed {HOLDOUT_SEASON} holdout and needs an explicit pregame cutoff')

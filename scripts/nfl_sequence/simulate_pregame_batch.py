@@ -432,7 +432,8 @@ def run_batch(args):
         if args.team_tendency or args.context_mode != 'unconditioned' or args.try_policy != 'unconditional' or args.no_safety_table:
             raise SystemExit('--playcall-artifact is the SLC v1 policy: it takes no team-tendency, contextual, try-policy or '
                              'safety option')
-        ref, excluded_kickoffs = slc_engine.load_reference(args.db, snapshot, args.playcall_artifact)
+        ref, excluded_kickoffs = slc_engine.load_reference(args.db, snapshot, args.playcall_artifact,
+                                                           team_outcomes=args.playcall_team_outcomes)
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
@@ -475,6 +476,7 @@ def run_batch(args):
         'source_snapshot_sha256': source_snapshot_sha256, 'observed_reference_sha256': ref.model_inputs['sha256'],
         'context_mode': args.context_mode, 'try_policy': args.try_policy, 'safety_kick_table': safety_kick_table,
         'seed_start': args.seed_start, 'playcall_artifact_sha256': (slc_engine.describe(ref) or {}).get('artifact_sha256'),
+        'playcall_team_outcomes': bool(args.playcall_team_outcomes),
     }
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume)
@@ -627,6 +629,9 @@ def main(argv=None):
                     help='research try-policy ablation; unconditional remains the control/default')
     ap.add_argument('--no-safety-table', action='store_true',
                     help='control arm: disable observed safety free kicks and retain the old safety blocker')
+    ap.add_argument('--playcall-team-outcomes', action='store_true',
+                    help='SLC v1 research: reweight which historical outcome is drawn by prior-season team event splits '
+                         '(offense and defense), within the play-call intent. Needs --playcall-artifact')
     ap.add_argument('--playcall-artifact',
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')
