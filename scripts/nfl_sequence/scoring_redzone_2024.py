@@ -57,6 +57,13 @@ def simulated(args):
                     redzone[f"outcome_{drive.get('terminal')}"] += 1
                 for i, play in enumerate(plays):
                     state = play['state_before']
+                    if state['yardline_100'] <= 20:
+                        zone = fourth if state['down'] == 4 else redzone
+                        zone[f"rz_plays_{'4th' if state['down'] == 4 else 'other'}"] += 1
+                        zone[f"rz_decision_{play['decision']['type']}"] += 1
+                        if play['event_type'] in ('run', 'pass_complete', 'pass_incomplete', 'interception', 'sack', 'fumble_lost'):
+                            redzone['rz_scrimmage_plays'] += 1
+                            redzone['rz_scrimmage_td'] += bool(play['outcome'].get('sampled_touchdown_flag'))
                     if state['down'] != 4:
                         continue
                     kind = play['decision']['type']
@@ -71,7 +78,7 @@ def simulated(args):
 
 
 def actual(con):
-    rows = con.execute("SELECT game_id, drive, posteam, play_id, down, play_type, yardline_100, series_result FROM nfl_pbp "
+    rows = con.execute("SELECT game_id, drive, posteam, play_id, down, play_type, yardline_100, series_result, touchdown FROM nfl_pbp "
                        "WHERE season=2024 AND week BETWEEN 2 AND 18 AND posteam IS NOT NULL AND drive IS NOT NULL "
                        "ORDER BY game_id, drive, play_id").fetchall()
     drives = collections.defaultdict(list)
@@ -90,6 +97,13 @@ def actual(con):
             else:
                 redzone['outcome_other'] += 1
         for i, play in enumerate(plays):
+            if play[6] is not None and play[6] <= 20:
+                zone = fourth if play[4] == 4 else redzone
+                zone[f"rz_plays_{'4th' if play[4] == 4 else 'other'}"] += 1
+                zone[f"rz_decision_{play[5]}"] += 1
+                if play[5] in ('run', 'pass'):
+                    redzone['rz_scrimmage_plays'] += 1
+                    redzone['rz_scrimmage_td'] += bool(play[8] == 1)
             if play[4] != 4:
                 continue
             fourth['tries'] += 1
@@ -124,7 +138,7 @@ def main():
     result = {
         'replay': {'fourth_down': rates(sim_fourth), 'redzone': rates(sim_red)},
         'actual_2024': {'fourth_down': rates(act_fourth), 'redzone': rates(act_red)},
-        'definitions': 'fourth down: run or pass on down 4; converted: the next play in the drive is first down; red zone: '
+        'definitions': 'rz_scrimmage: run or pass plays inside the 20; rz_scrimmage_td: those whose outcome is a touchdown. fourth down: run or pass on down 4; converted: the next play in the drive is first down; red zone: '
                        'the drive reaches 20 or closer at any scrimmage play. Replay weeks 2-18, 2 seeds per game, exploratory.',
     }
     args.out.write_text(json.dumps(result, indent=1, sort_keys=True) + '\n')
