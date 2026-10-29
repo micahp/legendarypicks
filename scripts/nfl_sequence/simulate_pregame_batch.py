@@ -438,7 +438,10 @@ def run_batch(args):
                                                            player_shares=args.playcall_player_shares,
                                                            exact_yardline=args.playcall_exact_yardline,
                                                            coverage=args.playcall_coverage,
-                                                           point_splits=args.playcall_point_splits)
+                                                           point_splits=args.playcall_point_splits_cache or args.playcall_point_splits,
+                                                           streak=args.playcall_streak_splits or args.playcall_streak_cache,
+                                                           streak_file=args.playcall_streak_file,
+                                                           streak_league=args.playcall_streak_league)
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
@@ -636,6 +639,15 @@ def main(argv=None):
                     help='research try-policy ablation; unconditional remains the control/default')
     ap.add_argument('--no-safety-table', action='store_true',
                     help='control arm: disable observed safety free kicks and retain the old safety blocker')
+    ap.add_argument('--playcall-point-splits-cache', type=Path, default=None,
+                    help='frame cache for the point splits; used instead of rebuilding the frame from the database')
+    ap.add_argument('--playcall-streak-splits', action='store_true',
+                    help='SLC v1 research: team win-loss streak splits from prior seasons (needs --playcall-streak-file)')
+    ap.add_argument('--playcall-streak-cache', type=Path, default=None, help='frame cache for the streak splits')
+    ap.add_argument('--playcall-streak-league', action='store_true',
+                    help='SLC v1 research: league-wide streak splits (dropback shift and outcome mix by streak state)')
+    ap.add_argument('--playcall-streak-file', type=Path, default=None,
+                    help='the verified W-L records (wl-streaks JSON) giving each team\'s current streak')
     ap.add_argument('--playcall-point-splits', action='store_true',
                     help='SLC v1 research: team score-state shifts of the dropback rate from prior seasons')
     ap.add_argument('--playcall-coverage', action='store_true',
