@@ -48,6 +48,29 @@ def resolve_player_ids(gsis_ids: set[str], db_path: str) -> dict[str, int]:
         con.close()
 
 
+def drop_off_roster(team: str, rows: dict, starts: set, on_roster) -> tuple[dict, set, list, list]:
+    """Remove depth rows for players who are not on this team's jersey-week roster.
+
+    rows maps (group, pos, rank, gsis) to a player name; starts holds the builder-selected starter roles; on_roster(gsis)
+    says whether the player is on the roster. Each starting role a removed player held goes to the best rostered backup
+    at the same group and position, and the rostered backup keeps its own rank. Returns (kept rows, starter roles,
+    removed role rows, promotions). Raises ValueError when a starting role has no rostered backup.
+    """
+    removed = sorted(role for role in rows if not on_roster(role[3]))
+    kept = {role: name for role, name in rows.items() if on_roster(role[3])}
+    active = set(starts) - set(removed)
+    promotions = []
+    for role in sorted(set(starts) & set(removed)):
+        group, pos, rank, gsis = role
+        backups = sorted((r for r in kept if r[0] == group and r[1] == pos and r not in active), key=lambda r: r[2])
+        if not backups:
+            raise ValueError(f'{team} has no rostered backup for {pos} {rank} after {gsis} left the week roster')
+        active.add(backups[0])
+        promotions.append({'group': group, 'pos_abb': pos, 'pos_rank': rank, 'replaced_gsis_id': gsis,
+                           'promoted_gsis_id': backups[0][3], 'promoted_pos_rank': backups[0][2]})
+    return kept, active, removed, promotions
+
+
 def build(args) -> tuple[dict, dict]:
     starter_path = Path(args.starter_snapshot)
     starter_provenance_path = Path(args.starter_provenance)
@@ -73,8 +96,8 @@ def build(args) -> tuple[dict, dict]:
     roster_table = pq.read_table(roster_path, columns=ROSTER_COLUMNS).to_pydict()
     regular_weeks = [week for week, kind in zip(roster_table['week'], roster_table['game_type']) if kind == 'REG']
     jersey_week = max(regular_weeks) if regular_weeks else None
-    if jersey_week != 7:
-        raise ValueError(f'nflverse roster source is at week {jersey_week}; the frozen game is week 7')
+    if jersey_week != args.jersey_week:
+        raise ValueError(f'nflverse roster source is at week {jersey_week}; the frozen game is week {args.jersey_week}')
 
     jersey_by_id = {}
     target_teams = {starter['rosters'][side]['team'] for side in ('away', 'home')}
@@ -117,14 +140,21 @@ def build(args) -> tuple[dict, dict]:
         if len(starts) != 28 or not starts.issubset(rows):
             raise ValueError(f'{team} full depth chart does not contain the 28 builder-selected starters')
         staged[side] = (team_roster, depth_date, rows, starts)
-    unique_ids = {role[3] for _, _, rows, _ in staged.values() for role in rows}
+    def on_roster(team, gsis_id):
+        entry = jersey_by_id.get(gsis_id)
+        return entry is not None and entry[0] == team and entry[1] is not None
+
+    unique_ids = {role[3] for team_roster, _, rows, _ in staged.values() for role in rows
+                  if on_roster(team_roster['team'], role[3])}
     player_ids = resolve_player_ids(unique_ids, args.db)
     rosters = {}
     for side, (team_roster, depth_date, rows, starts) in staged.items():
         team = team_roster['team']
+        kept, active, removed, promotions = drop_off_roster(
+            team, rows, starts, lambda gsis_id, team=team: on_roster(team, gsis_id))
         players = []
         role_keys = set()
-        for group, pos, rank, gsis_id in sorted(rows):
+        for group, pos, rank, gsis_id in sorted(kept):
             roster_entry = jersey_by_id.get(gsis_id)
             if roster_entry is None or roster_entry[0] != team or roster_entry[1] is None:
                 raise ValueError(f'{team} full depth chart player {gsis_id} has no week {jersey_week} jersey number')
@@ -133,18 +163,20 @@ def build(args) -> tuple[dict, dict]:
                 raise ValueError(f'{team} full depth chart has duplicate role {role_key}')
             role_keys.add(role_key)
             players.append({
-                'gsis_id': gsis_id, 'player_id': player_ids[gsis_id], 'player_name': rows[(group, pos, rank, gsis_id)],
+                'gsis_id': gsis_id, 'player_id': player_ids[gsis_id], 'player_name': kept[(group, pos, rank, gsis_id)],
                 'pos_abb': pos, 'pos_rank': rank, 'group': group,
                 'unit': 'offense' if group == '3WR 1TE' else 'special_teams' if group == 'Special Teams' else 'defense',
                 'snapshot_at': depth_date, 'source': 'nflverse_depth_charts', 'team': team,
                 'jersey_number': int(roster_entry[1]),
-                'starter': (group, pos, rank, gsis_id) in starts,
+                'starter': (group, pos, rank, gsis_id) in active,
             })
         if sum(player['starter'] for player in players) != 28:
             raise ValueError(f'{team} full depth chart must mark exactly 28 starter roles')
         rosters[side] = {
             'team': team, 'depth_chart_dt': depth_date, 'defense_group': team_roster['defense_group'],
             'jersey_week': jersey_week, 'players': players, 'missing': [],
+            'not_on_roster': sorted({gsis_id for _, _, _, gsis_id in removed}),
+            'promotions': promotions,
         }
 
     generated_at = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -203,6 +235,8 @@ def main():
     parser.add_argument('--db', required=True, help='LP identity database opened read-only')
     parser.add_argument('--out', required=True)
     parser.add_argument('--provenance-out', required=True)
+    parser.add_argument('--jersey-week', type=int, default=7,
+                        help='regular-season week the nflverse roster source must be at (the frozen game week)')
     args = parser.parse_args()
     doc, provenance = build(args)
     for side in ('away', 'home'):
