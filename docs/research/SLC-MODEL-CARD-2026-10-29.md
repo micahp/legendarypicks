@@ -43,8 +43,10 @@ Each item is on by default unless marked as a flag.
   and batch runners, but remain experimental and off by default. The QB model does not cover progressions, throwaways, pressure
   response or defensive adaptation. The outcome model uses marginal player distributions with clipped likelihood ratios; the joint
   passer-receiver model and full-game calibration remain open.
-- **Red-zone yardage.** The replay still gains about three yards fewer than actual on red-zone passes and two fewer on red-zone runs
-  (`SLC-YARDS-REPLAY-2024-2026-10-29.md`). The exact yard-line draw closed about 30 percent of the trip gap earlier.
+- **Red-zone outcomes.** The replay has about the same number of trips per team-game as actual, but fewer touchdowns per trip and
+  more red-zone plays (`SLC-SCORING-REDZONE-DECOMPOSITION-2024-2026-10-29.md`). Red-zone play yardage is also low in the separate
+  matched-play report (`SLC-YARDS-REPLAY-2024-2026-10-29.md`). The earlier claim that exact-yardline sampling closed 30 percent of
+  the trip gap is withdrawn pending a corrected matched-seed experiment.
 - **Out of v1 by design:** coaching, and physical movement.
 
 ## Evidence

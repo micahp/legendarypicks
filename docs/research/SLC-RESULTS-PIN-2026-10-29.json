@@ -1,5 +1,63 @@
 {
+  "all_layer_engine_smoke": {
+    "calibration_evidence": false,
+    "completed_valid_games": 1,
+    "current_streak_input_sha256": "691c7d4a5b66ca7e9f7e5643571e0df8da89fa36084a0273ea286b4fe7cf0b50",
+    "decisions": 150,
+    "enabled_feature_count": 17,
+    "observed_reference_sha256": "0f793fd0edf5c20f8c1d00aeaa5782b7069b2acc8b2d01150f32f65fe223b6a6",
+    "output_path": "docs/research/SLC-ALL-LAYERS-ENGINE-SMOKE-2026_08_CAR_GB-2026-10-29.json",
+    "output_sha256": "4fee19c6809ce7dc1918f496ddab47b5d92a9c33c9ce9113995409a90f927bb4",
+    "requested_games": 1,
+    "seed_ledger_path": "docs/research/SLC-ALL-LAYERS-ENGINE-SMOKE-2026_08_CAR_GB-2026-10-29.seeds.jsonl",
+    "seed_ledger_sha256": "81201706895db916962df32db8e20237e8b2b1a5724ca81f0f4f8a7fb03df33b",
+    "simulation_errors": 0,
+    "snapshot_sha256": "35a295d98022e5b5ec9ac0fded4bbe04cf94e50c962cd8da6d6e2c1a4a2f6e77",
+    "source_commit": "5e6c8de15edffe6aeee983ee0b643b976f188b02"
+  },
   "branch": "research/slc-decision-layer-2026-10-29",
+  "corrected_redzone_decomposition_2024": {
+    "bootstrap_game_clusters": 228,
+    "bootstrap_replicates": 10000,
+    "completed_game_seeds": 442,
+    "current_script_sha256": "e30ea26dd1e047241ad31d7c55f2a16665d9ba3301671b3431f40e76942ecf13",
+    "execution_script_sha256": "7113f069bc3b1ee5d7aae6064c670cddf83b325da802de35a3b7a000b26423b8",
+    "matched_games": 228,
+    "report_path": "docs/research/SLC-SCORING-REDZONE-DECOMPOSITION-2024-2026-10-29.md",
+    "report_sha256": "8b4ab3da9e91d07a6621c036d50c48a89e8d41b82fdd4fb1cf0cf650f4bf79d2",
+    "result_path": "docs/research/SLC-SCORING-REDZONE-DECOMPOSITION-2024-CORRECTED-2026-10-29.json",
+    "result_sha256": "d373ffbac77485cdc2f51df067f01d5f0a444cdcc42f4da9ce790985ac82af51",
+    "seed_uncertainty_separately_estimated": false
+  },
+  "current_research_checkout": {
+    "branch": "research/slc-decision-layer-2026-10-29",
+    "head": "5e6c8de15edffe6aeee983ee0b643b976f188b02",
+    "local_changes_uncommitted_at_pin_update": true,
+    "remote_matched_at_inspection": true
+  },
+  "exact_yardline_paired_run_2024": {
+    "comparison": "same game and seed IDs, default versus exact-yardline outcomes",
+    "control_pane": "shell:0.0",
+    "database": "/tmp/picks-dal-phi-simulation-copy.db",
+    "execution_script_sha256": "e30ea26dd1e047241ad31d7c55f2a16665d9ba3301671b3431f40e76942ecf13",
+    "host": "vmi3108149",
+    "latest_progress": {
+      "arm": "default",
+      "complete_game_seeds": 175,
+      "engine_errors": 0,
+      "exact_yardline_arm_started": false,
+      "games_completed": 100,
+      "games_total": 256,
+      "incomplete_game_seeds": 9
+    },
+    "log_path": "/tmp/lp-slc-week8-10k-20261029/logs/exact-yardline-2024.log",
+    "result_path": "/tmp/lp-slc-week8-10k-20261029/SLC-SCORING-REDZONE-EXACT-YARDLINE-CALIBRATION-2024.json",
+    "resume_checkpoint": null,
+    "schedule_games": 256,
+    "seeds_per_game": 2,
+    "status": "in_progress",
+    "status_as_of_utc": "2026-10-29 17:52:24 UTC"
+  },
   "input_fingerprints": {
     "2024_replay_actual_database_rows_sha256": {
       "play_by_play_rows_37459": "4e585ad6a240152174d69657a61e791e8c2a3eeef697142bab2e984c8494aec4",
@@ -28,31 +86,45 @@
       "sha256": "8e3a99aabde7cc5c0331ed4ce00f645b41a891be7ce6a8fe53ed99f02b597e6c"
     }
   },
+  "layer_calibration_audit": {
+    "path": "docs/research/SLC-LAYER-CALIBRATION-AUDIT-2026-10-29.md",
+    "sha256": "dca3115c5605ed03cdc450153f59f41693766b14f1b8810f0bae012e36d74032",
+    "verdict": "integrated but not calibrated end to end"
+  },
   "pin_date": "2026-10-29",
   "player_share_validation": {
     "committed_result_path": "docs/research/SLC-PLAYER-SHARE-VALIDATION-2026-10-29.json",
     "committed_result_sha256": "cfb15fc9be8a641e6b30de883c08f2c5628e6fdc33d7baa181563978896caf1d",
-    "fit_season": 2024,
     "fit_game_clusters": 272,
+    "fit_season": 2024,
     "recomputed_output_path": "/tmp/slc-share-validation-team-player-cluster-v2.json",
     "recomputed_output_sha256": "cfb15fc9be8a641e6b30de883c08f2c5628e6fdc33d7baa181563978896caf1d",
     "reproducibility_commit": "3227a907febc33a99dbd446a3ecadc8a95e2b356",
     "source_base_commit": "5a0b9e8c08e89ef27db0608ed5be54a185e9a8fa",
-    "source_worktree_dirty": true,
     "source_code_sha256": {
       "scripts/nfl_sequence/share_distributions.py": "2ad4c702326e0274821dce6eac542d0b202ad9d220353b93526ef64513ba0b29",
       "scripts/nfl_sequence/share_validation.py": "4421512d44e25fca157be8c119b12109b3b47f042998b201b0491ea456163c03",
       "scripts/nfl_sequence/validate_share_distributions.py": "74c2771dbc7bb8c87b1254b2089ecc255750069a51d9007a2902646ce11b0bb3"
     },
+    "source_worktree_dirty": true,
     "test_game_clusters_scored": {
-      "receive": 272,
-      "carry": 271
+      "carry": 271,
+      "receive": 272
     },
+    "test_season": 2025,
     "variance_player_team_units": {
-      "receive": 506,
-      "carry": 332
-    },
-    "test_season": 2025
+      "carry": 332,
+      "receive": 506
+    }
+  },
+  "reproducibility_commit": "567845ffe1d72acbb07c1140ff8745d674a2584a",
+  "same_source_playbook_pair": {
+    "paired_valid_seeds": 98,
+    "reported_source_base_commit": "000ff3fa5b7770da47a5e38e55cc2189f4ea301d",
+    "reported_source_worktree_dirty": true,
+    "reproducibility_source_commit": "567845ffe1d72acbb07c1140ff8745d674a2584a",
+    "result_path": "docs/research/SLC-PLAYBOOK-MATCHED-2026-10-29.json",
+    "result_sha256": "3b77922ae75aae7e0ebce5ed6b61d8b4ded691564694f929306109976a304961"
   },
   "same_source_week8_pair": {
     "both_source_commit": "8073dc4660404244cfe1dec31c9def0f57a8cedc",
@@ -72,33 +144,25 @@
     },
     "game_id": "2026_08_CAR_GB",
     "paired_valid_full_games": 99,
-    "same_producer_file_hashes": true,
-    "same_snapshot_and_reference": true,
-    "scores_identical_on_all_paired_seeds": true,
     "player_opportunity_counts_changed": {
       "receiving_targets": {
-        "paired_seeds_with_any_player_count_change": 99,
         "mean_player_count_l1": 64.5051,
+        "paired_seeds_with_any_player_count_change": 99,
         "total_player_count_l1": 6386
       },
       "rushing_carries": {
-        "paired_seeds_with_any_player_count_change": 99,
         "mean_player_count_l1": 48.9899,
+        "paired_seeds_with_any_player_count_change": 99,
         "total_player_count_l1": 4850
       }
     },
+    "same_producer_file_hashes": true,
+    "same_snapshot_and_reference": true,
+    "scores_identical_on_all_paired_seeds": true,
     "seeds": [
       1,
       100
     ]
-  },
-  "same_source_playbook_pair": {
-    "paired_valid_seeds": 98,
-    "reproducibility_source_commit": "567845ffe1d72acbb07c1140ff8745d674a2584a",
-    "reported_source_base_commit": "000ff3fa5b7770da47a5e38e55cc2189f4ea301d",
-    "reported_source_worktree_dirty": true,
-    "result_path": "docs/research/SLC-PLAYBOOK-MATCHED-2026-10-29.json",
-    "result_sha256": "3b77922ae75aae7e0ebce5ed6b61d8b4ded691564694f929306109976a304961"
   },
   "scoring_replay_2024": {
     "baseline_raw_seed_output_sha256": "9da6510017e10662e2ecfbcbc0e727b677cf7d27f2a901f89841ed83edc2fca2",
@@ -114,29 +178,29 @@
   },
   "source_code_sha256": {
     "scripts/nfl_sequence/contextual_pool.py": "9d0af355e0c62d23014bf5387af69c555f8e1e4276d37fed1b4bd65f2c2f8104",
+    "scripts/nfl_sequence/decision_layer.py": "a29771e8fe7554e77b2c8164ce108bd64d1692b7f75b521d9b6ded57b9fe570d",
     "scripts/nfl_sequence/e1_drive.py": "38c77412c821e84d9722edb13b3818e86440c8e6c984c118a3823d13efb7b408",
     "scripts/nfl_sequence/e2_reference.py": "3b68bef5f7356370b14807d364070004c89c1b4fb15a2ac2b75a70c3551734b5",
     "scripts/nfl_sequence/game_state.py": "cd7a61df6b75579e6b0dc0b8c3779ce6bb3d0447acabc2a612e32f883dcca470",
     "scripts/nfl_sequence/game_stats.py": "827d5d4e06487c9c42704215e11de9301af040a40d3b869805d445576508b1cd",
-    "scripts/nfl_sequence/decision_layer.py": "a29771e8fe7554e77b2c8164ce108bd64d1692b7f75b521d9b6ded57b9fe570d",
+    "scripts/nfl_sequence/playbook_prior.py": "02a6c82cf1b2e5bac0130be12c638711cd174d06e4ccb4732ddcbc5519588c08",
+    "scripts/nfl_sequence/player_shares.py": "2dbb494fb2099f2b28ee21aae12a61394b914ef26e2253d557a8ebbae3c093a2",
     "scripts/nfl_sequence/pre_event.py": "53dfc34f5d72dd73ae9fc67a47b6e05555d0ee2c866c24159d67d166622fdb62",
     "scripts/nfl_sequence/pregame_snapshot.py": "71ddf00559cfda165062dcc0e2a38e29ef39ecb9e2f384a7e471aeb59b89d922",
     "scripts/nfl_sequence/reducer.py": "4723341694efb7106676b2033ebac005e03c9f55a32c5e118df399e117fa0f06",
-    "scripts/nfl_sequence/run_slc_game.py": "f7ef85a492c12112e206f396b0b6196711022fc6e105bc5bc6eca504d8f873cd",
+    "scripts/nfl_sequence/run_slc_game.py": "d430ce1d25c483e8ab7083b5235acde827ed5f47a136158abcf0c9da3933ff6a",
     "scripts/nfl_sequence/scoring_calibration_2024.py": "1856ac515a9da3803e5201bff564db58f64b00a65fb577a41c8331212cdaac9a",
     "scripts/nfl_sequence/scoring_cohort.py": "d90dfedd87745a271382d631a1abc16855901c3c1b4b20a22c9ac2ca7d2664a2",
     "scripts/nfl_sequence/scoring_compare_2024.py": "6667add341f63192f7a3755d1108abf8406ea28aaab6e5408eb43d2aa9cf89f3",
     "scripts/nfl_sequence/scoring_compare_2024_matched.py": "db109e745b6ef05b3ee4585a71723d2648701cdb988ff18b1c8a3edeb21fc50f",
+    "scripts/nfl_sequence/scoring_redzone_decomp_2024.py": "e30ea26dd1e047241ad31d7c55f2a16665d9ba3301671b3431f40e76942ecf13",
     "scripts/nfl_sequence/share_distributions.py": "2ad4c702326e0274821dce6eac542d0b202ad9d220353b93526ef64513ba0b29",
     "scripts/nfl_sequence/share_validation.py": "4421512d44e25fca157be8c119b12109b3b47f042998b201b0491ea456163c03",
-    "scripts/nfl_sequence/simulate_pregame_batch.py": "dedecdfac345684e682421f0f2a763edaca48005c238495893f374370618c03b",
-    "scripts/nfl_sequence/slc_engine.py": "1e89773779a12bdce7c8a859e67e4b23cc16ade258092dd65db48f2d578dc222",
-    "scripts/nfl_sequence/player_shares.py": "2dbb494fb2099f2b28ee21aae12a61394b914ef26e2253d557a8ebbae3c093a2",
-    "scripts/nfl_sequence/playbook_prior.py": "02a6c82cf1b2e5bac0130be12c638711cd174d06e4ccb4732ddcbc5519588c08",
+    "scripts/nfl_sequence/simulate_pregame_batch.py": "e315f9de225359276a2b0babf069b3223d1da99065a901300c415242ce3b2299",
+    "scripts/nfl_sequence/slc_engine.py": "e2545b94c6c73942be88e061c8d6c6b2a1f9bc0afb5ed1fd3cbc171c88cac320",
     "scripts/nfl_sequence/slc_playcall.py": "cc9314d28b8ddfea25e5ec71d01435f8fea62d7294200a2da2644941abf816f0",
     "scripts/nfl_sequence/validate_share_distributions.py": "74c2771dbc7bb8c87b1254b2089ecc255750069a51d9007a2902646ce11b0bb3"
   },
-  "reproducibility_commit": "567845ffe1d72acbb07c1140ff8745d674a2584a",
   "source_commit_for_runs": "8073dc4660404244cfe1dec31c9def0f57a8cedc",
   "source_worktree_dirty_for_runs": true
 }

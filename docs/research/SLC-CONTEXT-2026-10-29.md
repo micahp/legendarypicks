@@ -1,7 +1,20 @@
 # SLC context summary, 2026-10-29
 
+## Current status update, 2026-10-29
+
+This summary began before the red-zone rerun and full-stack engine smoke below. Current source of truth:
+[layer calibration audit](SLC-LAYER-CALIBRATION-AUDIT-2026-10-29.md) and [Week 8 handoff](../HANDOFF-SLC-WEEK8-10K-2026-10-29.md).
+
+- Research checkout is `/root/lp-slc-preevent`, branch `research/slc-decision-layer-2026-10-29`, HEAD `5e6c8de15edffe6aeee983ee0b643b976f188b02`; remote matched at inspection. Local engine, runner and research-document changes are uncommitted. No 10K run or promotion was performed.
+- The corrected 2024 red-zone replay is saved. It finds trips at 3.294 versus 3.311 per team-game, but conversion at 0.495 versus 0.583 touchdowns per trip and red-zone plays at 10.350 versus 9.669 per team-game. The former claim of too few trips is withdrawn.
+- The all-layer batch engine completed one frozen CAR–GB game with all 17 reported feature flags enabled, 150 decisions, and no simulation or validation errors. This verifies execution and manifest wiring only, not calibration.
+- The earlier local exact-yardline run was interrupted after 15 minutes and produced no output. A corrected paired rerun is now active on the faster host through tmux pane `shell:0.0`. At the latest progress update, the default arm was at 100/256 schedule games, with 175 complete game-seeds, 9 incomplete seeds, and 0 engine errors; the exact-yardline arm is pending. The JSON target is `/tmp/lp-slc-week8-10k-20261029/SLC-SCORING-REDZONE-EXACT-YARDLINE-CALIBRATION-2024.json` and the flushed log is `/tmp/lp-slc-week8-10k-20261029/logs/exact-yardline-2024.log`. This is run-status evidence only; no comparison result is available yet.
+- The CAR–GB smoke uses a pregame streak record built from games before the frozen Week 8 cutoff. No target-game outcome was read. The share, QB and outcome fitting cutoffs remain before the relevant evaluation season.
+- None of the SLC layer stack is calibrated end to end. Read the audit for the evidence and per-layer gates; keep research switches opt-in.
+
 Research branch: `research/slc-decision-layer-2026-10-29` (pushed through `94260513`; later commits listed below). Snapshot used
-throughout: `2026_08_CAR_GB` (Week 8 2026), 100 seeds per arm, valid full games only, paired by seed. 2026 outcomes not used anywhere.
+throughout the original comparisons: `2026_08_CAR_GB` (Week 8 2026), 100 seeds per arm, valid full games only, paired by seed.
+The target CAR–GB result was not read; the later full-stack smoke uses prior 2026 games only for pregame streak context.
 
 ## Working rules set this session
 
@@ -87,9 +100,9 @@ filter accounts for +6.39 ± 1.78 of the decision layer's +10.36 total uplift. T
 - The same-source playbook pair completed 100 player-share control games and 98 playbook games, with 98 shared valid seeds. Mean paired changes were -0.86 total points (SE 1.76) and -0.47 home-margin points (SE 1.80). The two blocked playbook seeds and all input/output hashes are recorded in SLC-PLAYBOOK-MATCHED-2026-10-29.json.
 - The cohort-corrected 2024 scoring replay covers 229 of 256 games in weeks 2 to 18. Formation shifts scoring by +0.2745 points per team-game with a game-clustered standard error of 0.2572 on 1,071 paired game and seed runs. Missing snapshots include 16 CIN games, so this is not a full-season estimate.
 - The historical holdout scores cover returning same-team players only: 506 receiver player-team units and 332 carry player-team units, including only players with 2024 same-team history. The full frozen-roster population is not evaluated.
-- The simulated pace excess remains about 10 percent and is not fixed. The red-zone yardage gap also remains open. The red-zone decomposition script has no saved result.
+- The simulated pace excess remains about 10 percent and is not fixed. The corrected red-zone decomposition is now saved and shows a conversion/play-volume gap rather than too few trips. Red-zone yardage remains open; the corrected exact-yardline matched comparison is tracked separately.
 - Reports and hashes: SLC-PLAYER-SHARE-VALIDATION-2026-10-29.md, SLC-PLAYBOOK-MATCHED-2026-10-29.md, SLC-SCORING-CALIBRATION-2024-MATCHED-2026-10-29.md, and SLC-RESULTS-PIN-2026-10-29.json.
-- No default changed. The Week 8 lock remains untouched. No 2026 outcome was read. Share-model source and runner wiring are committed at 567845ff and 5a0b9e8c; team-player grouping and game-cluster validation are committed at 3227a907.
+- No default changed. The Week 8 lock remains untouched. No target-game outcome was read. Share-model source and runner wiring are committed at 567845ff and 5a0b9e8c; team-player grouping and game-cluster validation are committed at 3227a907.
 
 
 ## QB decisions and player outcomes added after this context snapshot
@@ -100,5 +113,5 @@ filter accounts for +6.39 ± 1.78 of the decision layer's +10.36 total uplift. T
 - The reproducible validation fits 2022-2024 and scores 2025. It covers 46,452 holdout PBP rows; 34,785 rows are eligible for the SLC E1 outcome pool. Paired uncertainty is resampled by NFL game. Receiver event and completion-result log-loss improvements are +0.00746 and +0.02066, with both intervals above zero. QB action is -0.00099 with an interval spanning zero. QB target-role is -0.00734 (95% interval -0.00889 to -0.00572), and QB completion-result is -0.00448 (95% interval -0.00707 to -0.00200). Rusher results are close to zero and uncertain.
 - These are marginal source-row scores; they do not show full-game calibration or the joint passer-receiver outcome distribution. Frozen injury eligibility is not reconstructed in QB target-role scoring. The QB layer does not model progressions, throwaways, pressure response or defensive adaptation. No default changed, no production promotion or 10K batch was run, and no 2026 outcome was read.
 - Report and reproduction: `SLC-QB-PLAYER-OUTCOME-VALIDATION-2026-10-29.md` and `scripts/nfl_sequence/validate_qb_player_outcomes.py`.
-- This integration remains uncommitted and unpushed on `research/slc-decision-layer-2026-10-29`. The focused suite passed before the final source-identity and role-yardage edits; it was not rerun after those edits.
+- The QB and player-outcome layers are in the research branch and remain off by default. Current local engine/runner manifest edits are uncommitted. The focused suite passed before later source-identity and role-yardage edits; that historical test statement does not verify the current dirty checkout.
 

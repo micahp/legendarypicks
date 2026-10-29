@@ -1,0 +1,234 @@
+{
+ "as_of_utc": "2026-10-29T00:02:21Z",
+ "game_id": "2026_08_CAR_GB",
+ "source": "nfl_schedule regular-season final rows with gameday strictly before the target game date",
+ "source_cutoff_date_exclusive": "2026-10-29",
+ "source_query_sha256": "59a05f56c9a613989c153a4a3f40f1c569d27fc1e4fe8be4c3702de55dea5775",
+ "source_rows": 107,
+ "teams": {
+  "ARI": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 2
+  },
+  "ATL": {
+   "games": 7,
+   "losses": 4,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 3
+  },
+  "BAL": {
+   "games": 7,
+   "losses": 3,
+   "streak": "L2",
+   "ties": 0,
+   "wins": 4
+  },
+  "BUF": {
+   "games": 6,
+   "losses": 1,
+   "streak": "W2",
+   "ties": 0,
+   "wins": 5
+  },
+  "CAR": {
+   "games": 6,
+   "losses": 3,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 3
+  },
+  "CHI": {
+   "games": 7,
+   "losses": 2,
+   "streak": "W2",
+   "ties": 0,
+   "wins": 5
+  },
+  "CIN": {
+   "games": 6,
+   "losses": 2,
+   "streak": "W2",
+   "ties": 0,
+   "wins": 4
+  },
+  "CLE": {
+   "games": 7,
+   "losses": 2,
+   "streak": "W2",
+   "ties": 0,
+   "wins": 5
+  },
+  "DAL": {
+   "games": 7,
+   "losses": 4,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 3
+  },
+  "DEN": {
+   "games": 7,
+   "losses": 2,
+   "streak": "W3",
+   "ties": 0,
+   "wins": 5
+  },
+  "DET": {
+   "games": 6,
+   "losses": 2,
+   "streak": "W2",
+   "ties": 0,
+   "wins": 4
+  },
+  "GB": {
+   "games": 7,
+   "losses": 3,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 4
+  },
+  "HOU": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 2
+  },
+  "IND": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L3",
+   "ties": 0,
+   "wins": 2
+  },
+  "JAX": {
+   "games": 6,
+   "losses": 2,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 4
+  },
+  "KC": {
+   "games": 6,
+   "losses": 1,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 5
+  },
+  "LAC": {
+   "games": 6,
+   "losses": 6,
+   "streak": "L6",
+   "ties": 0,
+   "wins": 0
+  },
+  "LAR": {
+   "games": 7,
+   "losses": 4,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 3
+  },
+  "LV": {
+   "games": 7,
+   "losses": 4,
+   "streak": "L4",
+   "ties": 0,
+   "wins": 3
+  },
+  "MIA": {
+   "games": 6,
+   "losses": 5,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 1
+  },
+  "MIN": {
+   "games": 6,
+   "losses": 0,
+   "streak": "W6",
+   "ties": 0,
+   "wins": 6
+  },
+  "NE": {
+   "games": 7,
+   "losses": 3,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 4
+  },
+  "NO": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 2
+  },
+  "NYG": {
+   "games": 7,
+   "losses": 2,
+   "streak": "W1",
+   "ties": 1,
+   "wins": 4
+  },
+  "NYJ": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L2",
+   "ties": 0,
+   "wins": 2
+  },
+  "PHI": {
+   "games": 7,
+   "losses": 5,
+   "streak": "L5",
+   "ties": 0,
+   "wins": 2
+  },
+  "PIT": {
+   "games": 7,
+   "losses": 2,
+   "streak": "W3",
+   "ties": 0,
+   "wins": 5
+  },
+  "SEA": {
+   "games": 7,
+   "losses": 3,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 4
+  },
+  "SF": {
+   "games": 7,
+   "losses": 1,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 6
+  },
+  "TB": {
+   "games": 7,
+   "losses": 5,
+   "streak": "W1",
+   "ties": 0,
+   "wins": 2
+  },
+  "TEN": {
+   "games": 7,
+   "losses": 6,
+   "streak": "L1",
+   "ties": 0,
+   "wins": 1
+  },
+  "WSH": {
+   "games": 6,
+   "losses": 4,
+   "streak": "L1",
+   "ties": 1,
+   "wins": 1
+  }
+ }
+}
