@@ -434,7 +434,10 @@ def run_batch(args):
                              'safety option')
         ref, excluded_kickoffs = slc_engine.load_reference(args.db, snapshot, args.playcall_artifact,
                                                            team_outcomes=args.playcall_team_outcomes,
-                                                           formation=args.playcall_formation)
+                                                           formation=args.playcall_formation,
+                                                           player_shares=args.playcall_player_shares,
+                                                           exact_yardline=args.playcall_exact_yardline,
+                                                           coverage=args.playcall_coverage)
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
@@ -478,6 +481,8 @@ def run_batch(args):
         'context_mode': args.context_mode, 'try_policy': args.try_policy, 'safety_kick_table': safety_kick_table,
         'seed_start': args.seed_start, 'playcall_artifact_sha256': (slc_engine.describe(ref) or {}).get('artifact_sha256'),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
+        'playcall_coverage': bool(args.playcall_coverage), 'playcall_player_shares': bool(args.playcall_player_shares),
+        'playcall_exact_yardline': bool(args.playcall_exact_yardline),
     }
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume)
@@ -630,6 +635,12 @@ def main(argv=None):
                     help='research try-policy ablation; unconditional remains the control/default')
     ap.add_argument('--no-safety-table', action='store_true',
                     help='control arm: disable observed safety free kicks and retain the old safety blocker')
+    ap.add_argument('--playcall-coverage', action='store_true',
+                    help='SLC v1 research: defensive coverage on dropbacks from prior-season defense shares, conditioning the outcome')
+    ap.add_argument('--playcall-player-shares', action='store_true',
+                    help='SLC v1 research: pre-event receivers and carriers drawn by prior-season player shares')
+    ap.add_argument('--playcall-exact-yardline', action='store_true',
+                    help='SLC v1 research: inside the 20, draw the outcome from rows at the exact yard line')
     ap.add_argument('--playcall-formation', action='store_true',
                     help='SLC v1 research: pre-event formation and personnel from prior seasons, and outcomes conditioned '
                          'on the chosen formation. Needs --playcall-artifact')
