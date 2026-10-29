@@ -570,7 +570,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             import point_splits as sp
             seasons = range(2010, int(eligible_before[0]))
             if isinstance(playcall_point_splits, str):  # a frame cache whose fingerprint matches the same seasons
-                frame = pm2.load_frame_cached(playcall_point_splits, seasons, db=db)
+                frame = pm2.load_frame_cached(Path(playcall_point_splits), seasons, db=db)
             else:
                 frame = pm2.load_frame(seasons, db=db)
             contextual_sampler.point_shifts = sp.priors(frame, int(eligible_before[0]))
@@ -581,7 +581,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             import streak_splits as ss
             cutoff = int(eligible_before[0])
             seasons = range(2010, cutoff)
-            frame = pm3.load_frame_cached(playcall_streak, seasons, db=db) if isinstance(playcall_streak, str) \
+            frame = pm3.load_frame_cached(Path(playcall_streak), seasons, db=db) if isinstance(playcall_streak, str) \
                 else pm3.load_frame(seasons, db=db)
             con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
             try:
@@ -603,7 +603,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             import streak_splits as ss2
             cutoff = int(eligible_before[0])
             seasons = range(2010, cutoff)
-            frame = pm4.load_frame_cached(playcall_streak_league, seasons, db=db) if isinstance(playcall_streak_league, str) \
+            frame = pm4.load_frame_cached(Path(playcall_streak_league), seasons, db=db) if isinstance(playcall_streak_league, str) \
                 else pm4.load_frame(seasons, db=db)
             con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
             try:
