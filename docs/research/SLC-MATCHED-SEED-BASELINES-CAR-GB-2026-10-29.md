@@ -31,3 +31,44 @@ score-clock SLC: margin +0.08 ± 0.32, total -0.44 ± 0.42, home win share 0.49.
 
 League-wide streak splits (dropback shift by streak state and outcome mix by the offense's streak, from prior-season play-by-play),
 100 seeds, paired against score-clock SLC: margin +1.44 ± 1.66, total +0.54 ± 1.79, home win share 0.54. Within noise.
+
+## Basis of the figures in this note (added 2026-10-29)
+
+The seed comparisons from here on use only `valid_full_game` seeds, paired by seed. Earlier sections in this note used seeds with a
+final score, which included games blocked before regulation. Where the two differ, the valid-only figures below supersede the earlier
+ones. For coverage on seeds 1 to 100, the valid-only figures are margin +1.48 ± 1.69 and total +3.13 ± 1.79 (95 paired seeds). The
+earlier figures in the coverage section were margin +1.41 ± 1.62 and total +1.69 ± 1.85.
+
+## Coverage at 300 seeds (added 2026-10-29)
+
+Coverage on dropbacks, seeds 1 to 300, paired against score-clock SLC on the same seeds (`score_clock_300`): margin +0.74 ± 0.97,
+total +1.26 ± 0.98, home win +0.04 ± 0.04 (292 paired valid games). Within noise on this snapshot.
+
+## Individual-bucket win-loss streak splits (added 2026-10-29)
+
+Buckets are now the individual streak lengths, W1 to W4, W5+, NONE, L1 to L4 and L5+ (`streak_splits.py`), 100 seeds, paired
+against score-clock SLC, valid games only.
+
+- Team: margin -0.49 ± 0.72, total -0.49 ± 0.86 (99 paired). The coarse buckets on the same seeds gave margin +0.08 ± 0.32. No
+  detectable effect either way.
+- League: margin +1.73 ± 1.60, total +2.15 ± 1.68 (96 paired). The coarse buckets gave margin +1.36 ± 1.70, total +1.59 ± 1.80
+  (95 paired). Within noise.
+
+The record of each bucket's win share and points is in `SLC-STREAK-BUCKETS-RECORD-POINTS-2026-10-29.md`.
+
+## Target roles (added 2026-10-29)
+
+Decision category A (target role) on the current code: 100 seeds, paired against score-clock SLC and the player-share arm, valid
+games only. Margin 0.00 and total 0.00, with zero standard error. The arm is identical to both on every paired seed.
+
+This is the design, not a dead flag. On the 20-seed check (`target_role_check2.log`), the role is drawn on 1,536 dropbacks
+(WR 983, TE 276, RB 268, Other 9), and the receiver differs from the player-share arm on 1,405 of 2,932 decisions. The plays are
+identical on all 20 seeds. The outcome is drawn from the play pool and does not depend on who the receiver is, so changing the
+receiver changes credit, not points. The role can move points only when it also conditions the outcome, which the decision labels
+do (see the next section).
+
+## Decision categories A to N (added 2026-10-29)
+
+The decision layer with its lifts and row filter, and the arm with the row filter off, are in
+`SLC-DECISION-LAYER-UPLIFT-2026-10-29.md`. The filter accounts for about +6.4 points a game of the +10.4 total uplift, and the
+filtered total is about four points above the real league total. The uplift should not be quoted as a calibration gain.
