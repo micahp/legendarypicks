@@ -1,0 +1,40 @@
+{
+ "layered": {
+  "completed": 100,
+  "errors": 0,
+  "home_win_share": 0.67,
+  "mean_away_points": 17.03,
+  "mean_home_points": 21.97,
+  "seeds": 100
+ },
+ "note": "wiring and distribution comparison on one snapshot; not a forecast test; the arms share seeds and the engine",
+ "paired_vs_score_clock": {
+  "layered": {
+   "mean_total_points_difference": -0.89,
+   "pairs": 100,
+   "standard_error": 1.663
+  },
+  "s0": {
+   "mean_total_points_difference": -0.24,
+   "pairs": 100,
+   "standard_error": 1.711
+  }
+ },
+ "s0": {
+  "completed": 100,
+  "errors": 0,
+  "home_win_share": 0.44,
+  "mean_away_points": 20.25,
+  "mean_home_points": 19.4,
+  "seeds": 100
+ },
+ "score_clock": {
+  "completed": 100,
+  "errors": 0,
+  "home_win_share": 0.5,
+  "mean_away_points": 20.11,
+  "mean_home_points": 19.78,
+  "seeds": 100
+ },
+ "snapshot": "docs/research/slc-week8-2026/snapshots/2026_08_CAR_GB.json"
+}
