@@ -446,6 +446,8 @@ def run_batch(args):
                                                            decision=args.playcall_decision,
                                                            decision_filter=not args.playcall_decision_unfiltered,
                                                            dirichlet_shares=args.playcall_dirichlet_shares,
+                                                           qb_decisions=args.playcall_qb_decisions,
+                                                           player_outcomes=args.playcall_player_outcomes,
                                                            playbook=args.playcall_playbook,
                                                            source_commit=source_provenance['base_commit'],
                                                            streak_league=(str(args.playcall_streak_cache) if (args.playcall_streak_cache and args.playcall_streak_league)
@@ -493,12 +495,16 @@ def run_batch(args):
         'source_commit': source_provenance['base_commit'],
         'producer_file_sha256': source_provenance['producer_file_sha256'],
         'player_share_model_manifest': (slc_engine.describe(ref) or {}).get('player_share_distribution'),
+        'qb_decision_model_manifest': (slc_engine.describe(ref) or {}).get('qb_decision_model'),
+        'player_outcome_model_manifest': (slc_engine.describe(ref) or {}).get('player_outcome_model'),
         'context_mode': args.context_mode, 'try_policy': args.try_policy, 'safety_kick_table': safety_kick_table,
         'seed_start': args.seed_start, 'playcall_artifact_sha256': (slc_engine.describe(ref) or {}).get('artifact_sha256'),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
         'playcall_decision': bool(args.playcall_decision), 'playcall_dirichlet_shares': bool(args.playcall_dirichlet_shares),
+        'playcall_qb_decisions': bool(args.playcall_qb_decisions),
+        'playcall_player_outcomes': bool(args.playcall_player_outcomes),
         'playcall_playbook': bool(args.playcall_playbook),
         'playcall_exact_yardline': bool(args.playcall_exact_yardline),
     }
@@ -562,6 +568,7 @@ def run_batch(args):
         'teams': {'home': snapshot['schedule']['home_team'], 'away': snapshot['schedule']['away_team']},
         'simulation': {
             'model': 'seeded statistical full-game simulator', 'requested_games': args.games,
+            'model_id': slc_engine.model_id(ref),
             'seed_start': args.seed_start, 'seed_end_inclusive': args.seed_start + args.games - 1,
             'seed_rule': 'one deterministic game per consecutive non-negative integer seed',
             'regulation_score_policy': ('all runs whose simulation reached the regulation end, including ties and '
@@ -576,6 +583,8 @@ def run_batch(args):
                              else 'cutoff_eligible_uniform_pool'),
             'safety_kick_table': ('observed_2022_2025' if safety_kick_table else 'disabled_control'),
             'try_policy': 'K=1 research policy' if args.try_policy == 'k1' else 'unconditional control',
+            'qb_decisions': bool(args.playcall_qb_decisions),
+            'player_conditioned_outcomes': bool(args.playcall_player_outcomes),
         },
         'runtime_seconds': {
             'snapshot_load': round(snapshot_seconds, 4),
@@ -667,6 +676,10 @@ def main(argv=None):
     ap.add_argument('--playcall-dirichlet-shares', action='store_true',
                     help='SLC v1 research: per-game Dirichlet target and carry shares, fitted on the prior season; the receiver and '
                          'rusher are drawn from each game\'s shares; implies --playcall-player-shares')
+    ap.add_argument('--playcall-qb-decisions', action='store_true',
+                    help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
+    ap.add_argument('--playcall-player-outcomes', action='store_true',
+                    help='SLC research: player-conditioned QB, receiver and rusher event/yards/touchdown outcome distributions')
     ap.add_argument('--playcall-decision-unfiltered', action='store_true',
                     help='experiment: with --playcall-decision, the outcome lifts apply but the row is drawn from the whole cell')
     ap.add_argument('--playcall-decision', action='store_true',

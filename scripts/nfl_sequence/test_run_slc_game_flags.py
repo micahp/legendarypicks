@@ -26,6 +26,16 @@ class Flags(unittest.TestCase):
     def test_without_the_flag_the_player_share_adapter_is_as_before(self):
         self.assertFalse(rg.player_shares_for(rg.parse_args(REQUIRED)))
 
+    def test_qb_and_player_outcome_models_are_off_by_default(self):
+        args = rg.parse_args(REQUIRED)
+        self.assertFalse(args.qb_decisions)
+        self.assertFalse(args.player_outcomes)
+
+    def test_qb_and_player_outcome_models_have_independent_opt_in_flags(self):
+        args = rg.parse_args(REQUIRED + ['--qb-decisions', '--player-outcomes'])
+        self.assertTrue(args.qb_decisions)
+        self.assertTrue(args.player_outcomes)
+
 
 if __name__ == '__main__':
     unittest.main()

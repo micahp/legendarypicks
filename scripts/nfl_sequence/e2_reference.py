@@ -220,20 +220,22 @@ def extras_team(code):
     return EXTRAS_TEAM_CODES.get(code, code)
 
 
-def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS, eligible_before=None):
+def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS, eligible_before=None, include_player_yardage=False):
     """Observed play facts keyed by (game_id, play_id), for the window.
 
     From the dev table: passer, rusher and receiver ids, the posting team, air yards, and receiving yards. Yards after
     catch are derived as receiving yards minus air yards (labelled `derived` in the record; the curated table has no
-    yards_after_catch). From the rebuilt play_extras CSV: timeout called (and by which team) and out_of_bounds. A play
-    with no entry in the CSV has timeout 0 and out_of_bounds 0.
+    yards_after_catch). With include_player_yardage, passing and rushing yards are also retained for player box scores.
+    From the rebuilt play_extras CSV: timeout called (and by which team) and out_of_bounds. A play with no entry in the
+    CSV has timeout 0 and out_of_bounds 0.
     """
     import csv
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         cut_sql, cut_args = _cutoff_sql(eligible_before)
+        player_yardage = ', passing_yards, rushing_yards' if include_player_yardage else ''
         rows = con.execute(f"""SELECT game_id, play_id, passer_player_id, rusher_player_id, receiver_player_id,
-        posteam, defteam, air_yards, receiving_yards, play_type FROM nfl_pbp WHERE {mk.WINDOW}{cut_sql}""",
+        posteam, defteam, air_yards, receiving_yards, play_type{player_yardage} FROM nfl_pbp WHERE {mk.WINDOW}{cut_sql}""",
                            cut_args).fetchall()
     finally:
         con.close()
@@ -245,14 +247,16 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS, eligible_before=None
             flags[(r['game_id'], int(float(r['play_id'])))] = (int(r['timeout']), extras_team(r['timeout_team']),
                                                                 int(r['out_of_bounds']))
     out = {}
-    for g, p, pa, ru, re_, posteam, defteam, air, rec_yds, play_type in rows:
+    for values in rows:
+        g, p, pa, ru, re_, posteam, defteam, air, rec_yds, play_type = values[:10]
         t, t_team, oob = flags.get((g, int(p)), (0, '', 0))
         yac = (rec_yds - air) if (rec_yds is not None and air is not None and re_) else None
-        out[(g, int(p))] = {'passer_id': pa, 'rusher_id': ru, 'receiver_id': re_, 'posteam': posteam,
-                            'defteam': defteam,
-                            'air_yards': air, 'yards_after_catch': yac, 'play_type': play_type,
-                            'timeout': t, 'timeout_team': t_team,
-                            'out_of_bounds': oob}
+        facts = {'passer_id': pa, 'rusher_id': ru, 'receiver_id': re_, 'posteam': posteam,
+                 'defteam': defteam, 'air_yards': air, 'yards_after_catch': yac, 'play_type': play_type,
+                 'timeout': t, 'timeout_team': t_team, 'out_of_bounds': oob}
+        if include_player_yardage:
+            facts.update(receiving_yards=rec_yds, passing_yards=values[10], rushing_yards=values[11])
+        out[(g, int(p))] = facts
     return out
 
 
@@ -487,7 +491,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          playcall_artifact=None, playcall_teams=None, playcall_team_outcomes=False, playcall_formation=False,
          playcall_player_shares=False, playcall_exact_yardline=False, playcall_coverage=False,
          playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False, playcall_target_roles=False,
-         playcall_decision=False):
+         playcall_decision=False, playcall_qb_decisions=False, playcall_player_outcomes=False):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -522,7 +526,8 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     if team_tendency and not team_tendency_teams:
         raise ValueError('team tendencies need the side map {"A": home, "B": away} from the frozen schedule')
     rows = e1.load(db, eligible_before=eligible_before)
-    pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only)
+    pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only,
+                                        include_qb_scrambles=playcall_qb_decisions)
     contextual_sampler = None
     contextual_pool_manifest = {}
     if contextual_mode is not None:
@@ -683,7 +688,9 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                                       if overtime_table else (None, None))
     choice_p, choice_sha = (load_overtime_choice_model(eligible_before=eligible_before)
                             if overtime_table else (None, None))
-    reference = gs.Reference(pool, kpool, kicks, load_participants(db, eligible_before=eligible_before),
+    reference = gs.Reference(pool, kpool, kicks,
+                             load_participants(db, eligible_before=eligible_before,
+                                               include_player_yardage=playcall_player_outcomes),
                              load_missed_field_goal_pool(db, eligible_before=eligible_before), blocked,
                              try_policy=try_policy,
                              safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss,

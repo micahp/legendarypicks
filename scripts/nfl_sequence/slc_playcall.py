@@ -171,6 +171,10 @@ class PlayCallSampler:
         self.share_table = None
         # the playbook files as the pre-event prior for pass depth, pass location and run gap (playbook_prior), None when off
         self.playbook_table = None
+        # QB-specific pre-event target-role and scramble choices, off unless explicitly loaded.
+        self.qb_decision_table = None
+        # Per-player event and joint yards/touchdown outcome profiles, off unless explicitly loaded.
+        self.player_outcome_table = None
 
     def _team(self, label):
         if self.side_teams is None:
@@ -241,13 +245,17 @@ class PlayCallSampler:
         else:
             intent = 'dropback' if rng.random() < p else 'run'
             fallback = None
-        keys = sorted(k for k in entry['base'] if k[0] == intent)
+        called_intent = intent
+        pre_event = self.participant_chooser(called_intent, offense, state) if self.participant_chooser is not None else None
+        qb_decision = pre_event.get('qb_decision') if pre_event else None
+        scramble = bool(qb_decision and qb_decision.get('action') == 'scramble')
+        outcome_intent = 'run' if scramble else called_intent
+        keys = sorted(k for k in entry['base'] if k[0] == outcome_intent)
         if not keys:
-            raise e1.SamplingUnavailable(f'playcall_no_{intent}_outcomes_in_cell:{entry["key"]}')
-        pre_event = self.participant_chooser(intent, offense, state) if self.participant_chooser is not None else None
+            raise e1.SamplingUnavailable(f'playcall_no_{outcome_intent}_outcomes_in_cell:{entry["key"]}')
         formation = pre_event.get('formation') if pre_event else None  # chosen before the outcome, from the situation alone
         coverage = pre_event.get('coverage') if pre_event else None  # a dropback decision: the defense's coverage
-        if intent != 'dropback':
+        if called_intent != 'dropback' or scramble:
             coverage = None
         use_formation = formation is not None and self.formation_outcomes
         use_coverage = coverage is not None and self.coverage_outcomes
@@ -255,6 +263,7 @@ class PlayCallSampler:
         use_streak = streak_bucket is not None
         labels = pre_event.get('labels') if pre_event else None  # decision categories A to N, drawn before the outcome
         use_labels = bool(labels) and self.decision_outcomes
+        use_player_outcomes = self.player_outcome_table is not None
         labels_matched = []
         weights = []
         for k in keys:
@@ -270,12 +279,25 @@ class PlayCallSampler:
                                                          for c, v in labels.items() if v is not None])
             if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
                 weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
+            if use_player_outcomes:
+                import player_outcomes
+                weight *= player_outcomes.event_weight(self.player_outcome_table, k[1], pre_event)
             weights.append(weight)
-        if self.team_outcomes is None and not use_formation and not use_coverage and not use_streak and not use_labels:
+        if (self.team_outcomes is None and not use_formation and not use_coverage and not use_streak and not use_labels
+                and not use_player_outcomes):
             key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]  # the unchanged baseline draw
         else:
             key = rng.choices(keys, weights=weights)[0]
         candidates = entry['by_key'][key]
+        if self.qb_decision_table is not None:
+            if scramble:
+                candidates = [c for c in candidates if c[1].get('qb_scramble') == 1]
+                if not candidates:
+                    raise e1.SamplingUnavailable(f'qb_scramble_source_rows_missing:{entry["key"]}')
+            elif called_intent == 'run':
+                candidates = [c for c in candidates if c[1].get('qb_scramble') != 1]
+                if not candidates:
+                    raise e1.SamplingUnavailable(f'non_scramble_run_source_rows_missing:{entry["key"]}')
         if use_formation:
             matched = [c for c in candidates if c[1].get('formation', UNKNOWN) == formation]
             candidates = matched or candidates  # no row with this formation in the cell: the cell's rows
@@ -294,10 +316,29 @@ class PlayCallSampler:
                 if matched:
                     candidates = matched
                     labels_matched.append(cat)
+        qb_target_role_conditioned = False
+        qb_target_role_fallback = None
+        if (self.qb_decision_table is not None and called_intent == 'dropback' and not scramble and qb_decision
+                and key[1] in ('pass_complete', 'pass_incomplete', 'interception')):
+            import qb_decisions
+            target_role = qb_decision.get('target_role')
+            matched = [c for c in candidates
+                       if qb_decisions.row_target_role(self.qb_decision_table, c[1]) == target_role]
+            if matched:
+                candidates = matched
+                qb_target_role_conditioned = True
+            else:
+                qb_target_role_fallback = 'no_target_identity_match_in_event_cell'
         if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
             exact = [c for c in candidates if c[1].get('yardline_100') is not None and int(c[1]['yardline_100']) == int(state['yl'])]
             candidates = exact or candidates  # a touchdown flag then comes from the same distance the state is at
-        event, row, runoff, spot = rng.choice(candidates)
+        if use_player_outcomes:
+            import player_outcomes
+            row_weights = [player_outcomes.row_weight(self.player_outcome_table, key[1], c[1], pre_event, state)
+                           for c in candidates]
+            event, row, runoff, spot = rng.choices(candidates, weights=row_weights, k=1)[0]
+        else:
+            event, row, runoff, spot = rng.choice(candidates)
         if pre_event is not None:
             row = dict(row, pre_event=pre_event)  # the chosen participants travel with the outcome; the row itself is not changed
         self.decisions.append({
@@ -307,6 +348,13 @@ class PlayCallSampler:
             'streak_outcome_conditioned': bool(use_streak),
             'labels': labels, 'labels_conditioned': bool(use_labels), 'labels_matched': labels_matched,
             'team_outcome_split': self.team_outcomes is not None,
+            'qb_action': qb_decision.get('action') if qb_decision else None,
+            'qb_scramble_probability': qb_decision.get('scramble_probability') if qb_decision else None,
+            'qb_scramble_fallback': qb_decision.get('scramble_fallback') if qb_decision else None,
+            'qb_target_role_conditioned': qb_target_role_conditioned,
+            'qb_target_role_fallback': qb_target_role_fallback,
+            'player_outcomes_conditioned': use_player_outcomes,
+            'player_outcome_support': self._player_support(pre_event) if use_player_outcomes else None,
             'state': {'quarter': int(state['quarter']), 'clock': int(state['clock']), 'down': int(state['down']),
                       'togo': int(state['togo']), 'yardline_100': int(state['yl']),
                       'score_diff': int(state['score_diff']), 'offense': offense, 'defense': defense, 'team': team},
@@ -314,10 +362,17 @@ class PlayCallSampler:
             'p_dropback': round(p, 6), 'point_shift': round(point_shift, 6), 'streak_shift': round(streak_shift, 6),
             'streak_bucket': self.current_streak.get(team), 'league_streak_shift': round(league_streak_shift, 6),
             'kick_share': round(kick_share, 6),
-            'intent': intent, 'event': event,
+            'intent': called_intent, 'outcome_intent': outcome_intent, 'event': event,
             'fallback': fallback, 'source': {'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season']},
         })
         return event, row, runoff, spot
+
+    def _player_support(self, pre_event):
+        import player_outcomes
+        table = self.player_outcome_table
+        return {role: player_outcomes.support(table, model_role, (pre_event.get(role) or {}).get('gsis_id'))
+                for role, model_role in (('passer', 'qb'), ('receiver', 'receiver'), ('rusher', 'rusher'))
+                if pre_event and pre_event.get(role)}
 
     def _label_lift(self, entry, key, value):
         """P(outcome type | label) over the labelled rows, divided by those rows' own share of the outcome, shrunk to that share.
@@ -354,9 +409,23 @@ class PlayCallSampler:
         return weight
 
     def describe(self):
-        return {'component': ARTIFACT_ID, 'artifact_sha256': self.layer.artifact['sha256'],
-                'frame_sha256': self.layer.artifact['frame_sha256'], 'side_teams': self.side_teams,
-                'reference_season': self.layer.artifact['reference_season']}
+        out = {'component': ARTIFACT_ID, 'artifact_sha256': self.layer.artifact['sha256'],
+               'frame_sha256': self.layer.artifact['frame_sha256'], 'side_teams': self.side_teams,
+               'reference_season': self.layer.artifact['reference_season']}
+        if getattr(self, 'qb_decision_manifest', None) is not None:
+            out['qb_decision_model'] = self.qb_decision_manifest
+        if getattr(self, 'player_outcome_manifest', None) is not None:
+            out['player_outcome_model'] = self.player_outcome_manifest
+        if getattr(self, 'share_model_manifest', None) is not None:
+            out['player_share_distribution'] = self.share_model_manifest
+        if getattr(self, 'qb_decision_manifest', None) is not None or getattr(self, 'player_outcome_manifest', None) is not None:
+            integration_files = ('e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
+                                 'qb_decisions.py', 'player_outcomes.py', 'run_slc_game.py',
+                                 'simulate_pregame_batch.py', 'slc_engine.py', 'slc_playcall.py')
+            out['integration_code_sha256'] = {
+                name: hashlib.sha256((HERE / name).read_bytes()).hexdigest() for name in integration_files
+            }
+        return out
 
 
 def main(argv=None):

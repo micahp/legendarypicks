@@ -103,7 +103,7 @@ def load_seasons(db, seasons):
     return [r for r in rows if r['season'] in seasons]
 
 
-def classify(row, nxt, excluded):
+def classify(row, nxt, excluded, include_qb_scrambles=False):
     """Return (event, clock_runoff_seconds, spot) or None, counting every exclusion."""
     if row['penalty'] == 1:
         excluded['penalty (not modelled)'] += 1
@@ -111,7 +111,7 @@ def classify(row, nxt, excluded):
     if row['two_point_attempt'] == 1:
         excluded['two_point_attempt (not modelled)'] += 1
         return None
-    if row['qb_scramble'] == 1:
+    if row['qb_scramble'] == 1 and not include_qb_scrambles:
         excluded['qb_scramble (not in E1 vocabulary)'] += 1
         return None
     if row['down'] is None or row['ydstogo'] is None or row['yardline_100'] is None:
@@ -156,7 +156,7 @@ def classify(row, nxt, excluded):
     return None
 
 
-def build_pool(rows, regulation_only=False):
+def build_pool(rows, regulation_only=False, include_qb_scrambles=False):
     """The sampling pool, keyed on down, distance and field position.
 
     With `regulation_only`, overtime rows (quarter 5 or later) are not sampled. A regulation-only candidate must not draw its
@@ -174,7 +174,7 @@ def build_pool(rows, regulation_only=False):
             if row['play_type'] not in PLAY_TYPES or row['down'] is None or not 1 <= row['down'] <= 4:
                 continue
             nxt = plays[i + 1] if i + 1 < len(plays) else None
-            hit = classify(row, nxt, excluded)
+            hit = classify(row, nxt, excluded, include_qb_scrambles=include_qb_scrambles)
             if hit is None:
                 continue
             event, runoff, spot = hit

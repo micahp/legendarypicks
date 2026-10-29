@@ -91,3 +91,14 @@ filter accounts for +6.39 ± 1.78 of the decision layer's +10.36 total uplift. T
 - Reports and hashes: SLC-PLAYER-SHARE-VALIDATION-2026-10-29.md, SLC-PLAYBOOK-MATCHED-2026-10-29.md, SLC-SCORING-CALIBRATION-2024-MATCHED-2026-10-29.md, and SLC-RESULTS-PIN-2026-10-29.json.
 - No default changed. The Week 8 lock remains untouched. No 2026 outcome was read. Share-model source and runner wiring are committed at 567845ff and 5a0b9e8c; team-player grouping and game-cluster validation are committed at 3227a907.
 
+
+## QB decisions and player outcomes added after this context snapshot
+
+- The research branch now has `qb_decisions.py` and `player_outcomes.py` wired into the frozen-roster participant chooser, SLC reference loader, single-game runner and batch runner. Both layers default off: `--qb-decisions` / `--playcall-qb-decisions` and `--player-outcomes` / `--playcall-player-outcomes`.
+- QB decisions cover QB-specific pass-versus-scramble propensity and target-role selection by team and situation. Scramble identity uses `rusher_player_id` only when the canonical GSIS position is QB. Trick passers are excluded from QB decision fitting.
+- Player outcomes reweight selected participants' event and result rows before the game-state transition. Player box-score yards use `passing_yards`, `receiving_yards` and `rushing_yards` where present; field movement continues to use `yards_gained`. Reference fingerprints and manifests include the enabled model sources and versions.
+- The reproducible validation fits 2022-2024 and scores 2025. It covers 46,452 holdout PBP rows; 34,785 rows are eligible for the SLC E1 outcome pool. Paired uncertainty is resampled by NFL game. Receiver event and completion-result log-loss improvements are +0.00746 and +0.02066, with both intervals above zero. QB action is -0.00099 with an interval spanning zero. QB target-role is -0.00734 (95% interval -0.00889 to -0.00572), and QB completion-result is -0.00448 (95% interval -0.00707 to -0.00200). Rusher results are close to zero and uncertain.
+- These are marginal source-row scores; they do not show full-game calibration or the joint passer-receiver outcome distribution. Frozen injury eligibility is not reconstructed in QB target-role scoring. The QB layer does not model progressions, throwaways, pressure response or defensive adaptation. No default changed, no production promotion or 10K batch was run, and no 2026 outcome was read.
+- Report and reproduction: `SLC-QB-PLAYER-OUTCOME-VALIDATION-2026-10-29.md` and `scripts/nfl_sequence/validate_qb_player_outcomes.py`.
+- This integration remains uncommitted and unpushed on `research/slc-decision-layer-2026-10-29`. The focused suite passed before the final source-identity and role-yardage edits; it was not rerun after those edits.
+
