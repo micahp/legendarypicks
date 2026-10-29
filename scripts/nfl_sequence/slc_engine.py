@@ -10,6 +10,8 @@ import copy
 import hashlib
 import json
 import sys
+from collections.abc import Mapping
+from collections import Counter
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -31,6 +33,33 @@ def _file_sha256(path):
         for chunk in iter(lambda: source.read(1024 * 1024), b''):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _stable_model_value(value):
+    if isinstance(value, Mapping):
+        entries = [(_stable_model_value(key), _stable_model_value(item)) for key, item in value.items()]
+        entries.sort(key=lambda pair: json.dumps(pair[0], sort_keys=True, default=str))
+        return {'__mapping__': entries}
+    if isinstance(value, (tuple, list)):
+        return [_stable_model_value(item) for item in value]
+    if isinstance(value, (set, frozenset)):
+        entries = [_stable_model_value(item) for item in value]
+        return sorted(entries, key=lambda item: json.dumps(item, sort_keys=True, default=str))
+    if hasattr(value, 'tolist'):
+        return _stable_model_value(value.tolist())
+    if hasattr(value, 'item'):
+        try:
+            return value.item()
+        except (TypeError, ValueError):
+            pass
+    if hasattr(value, '__dict__'):
+        return _stable_model_value(vars(value))
+    return value
+
+
+def _model_hash(value):
+    encoded = json.dumps(_stable_model_value(value), sort_keys=True, separators=(',', ':'), default=str).encode()
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def require_snapshot(snapshot):
@@ -77,6 +106,16 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     sampler = ref.contextual_sampler
     sampler.source_cutoff = {'eligible_before': [season, 1]}
     sampler.optional_input_sha256 = {}
+    if decision:
+        import decision_layer as decision_inputs
+        decision_paths = [Path(decision_inputs.PLAYERS_PARQUET)] + [
+            Path(decision_inputs.PBP_PARQUET.format(season=year))
+            for year in range(decision_inputs.FIRST_CHARTED_SEASON, season)
+        ]
+        for path in decision_paths:
+            if not path.is_file():
+                raise ValueError(f'decision-label source artifact is missing: {path}')
+            sampler.optional_input_sha256[f'decision_source:{path.name}'] = _file_sha256(path)
     for name, value in (('point_splits_cache', point_splits), ('streak_splits_cache', streak),
                         ('streak_league_cache', streak_league)):
         if isinstance(value, str):
@@ -121,8 +160,16 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         paths = sorted(glob.glob(f'{PLAYBOOKS}/*-{int(schedule["season"]) - 1}.json'))
         if not paths:
             raise ValueError(f'no playbook source files for {int(schedule["season"]) - 1}')
+        from playbook_crosscheck import TEAM_CODE
+        available_teams = set()
         for path in paths:
+            playbook_source = json.loads(Path(path).read_text())
+            available_teams.add(TEAM_CODE.get(playbook_source.get('team_id'), playbook_source.get('team_id')))
             sampler.optional_input_sha256[f'playbook:{Path(path).name}'] = _file_sha256(path)
+        required_teams = set((sampler.describe() or {}).get('side_teams', {}).values())
+        missing_teams = sorted(required_teams - available_teams)
+        if missing_teams:
+            raise ValueError(f'playbook prior is missing target-game teams {missing_teams} for season {season - 1}')
     if streak_file is not None:  # each team's current streak as of the cutoff, from the verified records
         import json as _json
         import streak_splits as ss
@@ -176,6 +223,23 @@ def play(seed, ref, snapshot):
 
 def summary(decisions):
     target_decisions = [d for d in decisions if d.get('qb_target_role') is not None]
+    fallbacks = Counter()
+    for decision in decisions:
+        if decision.get('fallback'):
+            fallbacks[str(decision['fallback'])] += 1
+        for key in ('qb_scramble_fallback', 'qb_target_role_fallback', 'qb_target_role_draw_fallback',
+                    'exact_yardline_fallback', 'formation_fallback', 'coverage_fallback', 'streak_fallback'):
+            if decision.get(key):
+                fallbacks[str(decision[key])] += 1
+        for category in decision.get('labels_unmatched', []):
+            fallbacks[f'decision_row_missing_category_{category}'] += 1
+        for fallback in decision.get('team_outcome_fallbacks', []):
+            fallbacks[str(fallback)] += 1
+        for category in (decision.get('participants') or {}).get('playbook_fallback', []):
+            fallbacks[f'playbook_missing_category_{category}'] += 1
+        for role, support in (decision.get('player_outcome_support') or {}).items():
+            if not support:
+                fallbacks[f'player_outcome_no_history_{role}'] += 1
     return {'decisions': len(decisions),
             'scrimmage': sum(d['intent'] != 'kick' for d in decisions),
             'dropback': sum(d['intent'] == 'dropback' for d in decisions),
@@ -187,7 +251,35 @@ def summary(decisions):
             'qb_target_role_draw_fallbacks': sum(d.get('qb_target_role_draw_fallback') is not None
                                                  for d in target_decisions),
             'qb_target_role_no_history': sum(d.get('qb_target_role_history_n') == 0 for d in target_decisions),
-            'kick_fallback': sum(d['intent'] == 'kick' for d in decisions)}
+            'player_outcome_zero_support_roles': sum(
+                not support for d in decisions for support in (d.get('player_outcome_support') or {}).values()),
+            'kick_fallback': sum(d['intent'] == 'kick' for d in decisions),
+            'layer_execution': {
+                'score_clock_playcalling': len(decisions),
+                'team_offense_defense_outcomes': sum(bool(d.get('team_outcome_split')) for d in decisions),
+                'formation_personnel_outcomes': sum(bool(d.get('formation_conditioned')) for d in decisions),
+                'defensive_coverage_outcomes': sum(bool(d.get('coverage_conditioned')) for d in decisions),
+                'dirichlet_player_target_carry_shares': sum(
+                    (d.get('participants') or {}).get('participant_share_model') == 'dirichlet_multinomial'
+                    for d in decisions),
+                'qb_decisions': sum(d.get('qb_action') is not None for d in decisions),
+                'player_conditioned_outcomes': sum(bool(d.get('player_outcomes_conditioned')) for d in decisions),
+                'target_role_priors': sum(bool((d.get('participants') or {}).get('target_role_prior_used'))
+                                          for d in decisions),
+                'decision_labels': sum(bool(d.get('labels_conditioned')) for d in decisions),
+                'decision_row_filter': sum(bool(d.get('decision_row_filter_applied')) for d in decisions),
+                'decision_row_filter_matches': sum(bool(d.get('labels_matched')) for d in decisions),
+                'playbook_priors': sum(bool((d.get('participants') or {}).get('playbook_used')) for d in decisions),
+                'point_splits_evaluated': sum(bool(d.get('point_split_applied')) for d in decisions),
+                'point_splits_nonzero': sum(bool(d.get('point_shift')) for d in decisions),
+                'team_streak_splits_evaluated': sum(bool(d.get('team_streak_split_applied')) for d in decisions),
+                'team_streak_splits_nonzero': sum(bool(d.get('streak_shift')) for d in decisions),
+                'league_streak_splits_evaluated': sum(bool(d.get('league_streak_split_applied')) for d in decisions),
+                'league_streak_splits_nonzero': sum(bool(d.get('league_streak_shift')) for d in decisions),
+                'exact_yardline_outcomes': sum(bool(d.get('exact_yardline_conditioned')) for d in decisions),
+                'current_streak_context': sum(d.get('streak_bucket') is not None for d in decisions),
+            },
+            'fallback_events': dict(sorted(fallbacks.items()))}
 
 
 def describe(ref):
@@ -208,7 +300,7 @@ def describe(ref):
         'player_conditioned_outcomes': sampler.player_outcome_table is not None,
         'target_role_priors': sampler.role_table is not None,
         'decision_labels': decision_enabled,
-        'decision_row_filter': bool(sampler.decision_filter) if decision_enabled else None,
+        'decision_row_filter': bool(decision_enabled and sampler.decision_filter),
         'playbook_priors': sampler.playbook_table is not None,
         'point_splits': sampler.point_shifts is not None,
         'team_streak_splits': sampler.streak_shifts is not None,
@@ -216,10 +308,45 @@ def describe(ref):
         'exact_yardline_outcomes': bool(sampler.exact_yardline),
         'current_streak_context': bool(sampler.current_streak),
     }
+    reference_sha = (getattr(ref, 'model_inputs', None) or {}).get('sha256')
+    component_values = {
+        'score_clock_playcalling': {'artifact_sha256': artifact['sha256']},
+        'team_offense_defense_outcomes': sampler.team_outcomes,
+        'formation_personnel_outcomes': {'priors': sampler.formation_priors,
+                                        'outcomes_enabled': sampler.formation_outcomes},
+        'defensive_coverage_outcomes': {'priors': sampler.defense_priors,
+                                      'outcomes_enabled': sampler.coverage_outcomes},
+        'fixed_player_target_carry_shares': sampler.player_shares,
+        'dirichlet_player_target_carry_shares': sampler.share_table,
+        'qb_decisions': sampler.qb_decision_table,
+        'player_conditioned_outcomes': {'table': sampler.player_outcome_table,
+                                        'roles': sampler.player_outcome_roles},
+        'target_role_priors': sampler.role_table,
+        'decision_labels': {'table': sampler.decision_table, 'enabled': sampler.decision_outcomes,
+                            'source_files': {key: value for key, value in sampler.optional_input_sha256.items()
+                                             if key.startswith('decision_source:')}},
+        'decision_row_filter': {'artifact_sha256': artifact['sha256'], 'enabled': bool(sampler.decision_filter)},
+        'playbook_priors': {'table': sampler.playbook_table,
+                            'files': {key: value for key, value in sampler.optional_input_sha256.items()
+                                      if key.startswith('playbook:')}},
+        'point_splits': sampler.point_shifts,
+        'team_streak_splits': sampler.streak_shifts,
+        'league_streak_splits': sampler.streak_league,
+        'exact_yardline_outcomes': {'reference_sha256': reference_sha,
+                                    'rule': 'exact yard line inside the 20 where source rows exist'},
+        'current_streak_context': {'file_sha256': sampler.optional_input_sha256.get('current_streak_file'),
+                                   'current_streak': sampler.current_streak},
+    }
+    layer_artifact_sha256 = {
+        key: (_model_hash(value) if value is not None else None)
+        for key, value in component_values.items()
+    }
+    layer_artifact_sha256['score_clock_playcalling'] = artifact['sha256']
     description = {'model_id': model_id(ref), 'artifact_id': artifact['artifact_id'], 'artifact_sha256': artifact['sha256'],
                    'fit_seasons': sorted(int(s) for s in artifact['fit_seasons']),
                    'reference_season': int(artifact['reference_season']), 'side_teams': sampler.describe().get('side_teams'),
-                   'source_cutoff': getattr(sampler, 'source_cutoff', None), 'enabled_layers': enabled_layers,
+                   'source_cutoff': getattr(sampler, 'source_cutoff', None), 'reference_sha256': reference_sha,
+                   'layer_artifact_sha256': layer_artifact_sha256, 'enabled_layers': enabled_layers,
                    'optional_input_sha256': dict(sorted(getattr(sampler, 'optional_input_sha256', {}).items()))}
     share_manifest = getattr(sampler, 'share_model_manifest', None)
     if share_manifest is not None:
@@ -231,6 +358,7 @@ def describe(ref):
     if outcome_manifest is not None:
         description['player_outcome_model'] = outcome_manifest
     integration_files = ('e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
+                         'playcall_model.py',
                          'team_tendency.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
                          'streak_splits.py', 'target_roles.py', 'decision_layer.py', 'player_shares.py',
                          'share_distributions.py', 'qb_decisions.py', 'player_outcomes.py', 'playbook_prior.py',
