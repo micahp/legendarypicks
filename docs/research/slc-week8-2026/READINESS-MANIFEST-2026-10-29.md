@@ -36,5 +36,5 @@ commit; it is on `research/slc-preevent-2026-10-29`), injury report effects (the
 - Mean points are about 20 per team, below the 2024 average of 22.9. That is the scoring gap in `SLC-SCORING-CALIBRATION-2024-2026-10-29.md`.
 - Injury reports exist for CAR–GB only. The other 13 games have no injury rows at capture.
 - Inputs are verified by hash, acquisition time, publisher time and cutoff. The raw files are outside the repository.
-- The paired-seed check (20 of 20 seeds identical between this commit and the pre-event branch with its layers off) is in
-  `SLC-READINESS-2026-10-28.md`'s successor notes; it was run on CAR–GB only.
+- The paired-seed check (20 of 20 seeds identical between this commit and the pre-event branch with its layers off) was run on
+  CAR–GB only. It is recorded here, not in a separate note.
