@@ -287,3 +287,22 @@ class LabelLiftBase(unittest.TestCase):
         entry = sampler._entry(rows)
         for key in (('dropback', 'pass_complete'), ('run', 'run')):
             self.assertAlmostEqual(sampler._label_lift(entry, key, 'E=left'), 1.0, delta=0.02, msg=str(key))
+
+
+class RowFilter(unittest.TestCase):
+    """The label row filter can be switched off: the outcome still follows the lifts, but the row need not carry the drawn label."""
+
+    def test_with_the_row_filter_off_the_sampled_row_need_not_carry_the_drawn_label(self):
+        table = table_forcing({'E': 'left'}, CELL)
+        pool = labelled_cell([('pass_complete', 'pass', {})] * 50 + [('pass_complete', 'pass', {'E': 'left'})] * 50)
+        unlabelled = 0
+        for seed in range(1, 41):
+            sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+            sampler.decision_table = table
+            sampler.decision_outcomes = True
+            sampler.decision_filter = False
+            sampler.participant_chooser = pe.chooser(SNAPSHOT, seed=seed, decision_table=table)
+            _event, row, _runoff, _spot = sampler.sample(random.Random(seed), pool, 'A', 'B', state=dict(STATE))
+            if not row['labels']:
+                unlabelled += 1
+        self.assertGreater(unlabelled, 0)
