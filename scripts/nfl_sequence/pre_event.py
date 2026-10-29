@@ -72,7 +72,8 @@ def _by_player_share(players, table, team, role, positions, draw):
 
 
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
-           role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE):
+           role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
+           share_table=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -113,8 +114,13 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                 chosen['target_role'] = role
                 if role in ('RB', 'WR', 'TE'):
                     positions = (role,)
-            chosen['receiver'] = _by_player_share(receivers, player_shares, team, 'receive', positions,
-                                                  _draw(f'{base}:receiver:player'))
+            eligible = [p for p in receivers if p['pos_abb'] in positions]
+            if share_table is not None and eligible:  # the game's Dirichlet target shares, then this play's draw from them
+                chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), snapshot['snapshot_sha256'],
+                                                    _draw(f'{base}:receiver:dirichlet'))
+            else:
+                chosen['receiver'] = _by_player_share(receivers, player_shares, team, 'receive', positions,
+                                                      _draw(f'{base}:receiver:player'))
     else:
         if player_shares is None:
             chosen['rusher'] = _by_usage(players, observed['runner_position_usage'], team, 'rusher',
@@ -125,8 +131,13 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                 carried = CARRY_ROLE_POSITIONS.get(labels['B'])
                 if carried and any(p['pos_abb'] in carried for p in players):
                     positions = carried
-            chosen['rusher'] = _by_player_share(players, player_shares, team, 'carry', positions,
-                                                _draw(f'{base}:rusher:player'))
+            eligible = [p for p in players if p['pos_abb'] in positions]
+            if share_table is not None and eligible:  # the game's Dirichlet carry shares, then this play's draw from them
+                chosen['rusher'] = _by_game_share(eligible, share_table, team, 'carry', str(seed), snapshot['snapshot_sha256'],
+                                                  _draw(f'{base}:rusher:dirichlet'))
+            else:
+                chosen['rusher'] = _by_player_share(players, player_shares, team, 'carry', positions,
+                                                    _draw(f'{base}:rusher:player'))
     if formation_priors is not None and state is not None:
         import formation_layer  # local: the formation layer is optional
         chosen['formation'], chosen['personnel'] = formation_layer.choose(
@@ -138,7 +149,15 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     return chosen
 
 
-def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None):
+def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw):
+    """A rostered player drawn in proportion to his share in this game's Dirichlet draw (share_distributions)."""
+    import share_distributions
+    shares = share_distributions.game_shares(share_table, team, game_id, [p['gsis_id'] for p in candidates], role, seed_text)
+    return draw.choices(candidates, weights=[shares[p['gsis_id']] for p in candidates], k=1)[0]
+
+
+def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None,
+            share_table=None):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
@@ -149,7 +168,7 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
         side = 'home' if offense == 'A' else 'away'
         return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state,
                       player_shares=player_shares, defense_priors=defense_priors, role_table=role_table,
-                      decision_table=decision_table)
+                      decision_table=decision_table, share_table=share_table)
     return pick
 
 
