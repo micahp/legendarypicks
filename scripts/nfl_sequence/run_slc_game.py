@@ -42,10 +42,15 @@ def parse_args(argv=None):
                     help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
     ap.add_argument('--player-outcomes', action='store_true',
                     help='SLC research: QB, receiver and rusher event, yardage and touchdown distributions; outcomes can change team scoring')
+    ap.add_argument('--player-outcomes-receiver-only', action='store_true',
+                    help='research ablation: apply player-conditioned event and result weights to receivers only; requires --player-outcomes')
     ap.add_argument('--seed', type=int, required=True)
     ap.add_argument('--db', default=e1.DEFAULT_DB)
     ap.add_argument('--out', type=Path, required=True)
-    return ap.parse_args(argv)
+    args = ap.parse_args(argv)
+    if args.player_outcomes_receiver_only and not args.player_outcomes:
+        ap.error('--player-outcomes-receiver-only requires --player-outcomes')
+    return args
 
 
 def player_shares_for(args):
@@ -74,6 +79,7 @@ def main():
                                                 formation=args.formation, player_shares=player_shares_for(args),
                                                 dirichlet_shares=args.dirichlet_shares,
                                                 qb_decisions=args.qb_decisions, player_outcomes=args.player_outcomes,
+                                                player_outcomes_receiver_only=args.player_outcomes_receiver_only,
                                                 source_commit=source_provenance['base_commit'])
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
@@ -113,6 +119,7 @@ def main():
         'source': source_provenance,
         'seed': args.seed, 'team_outcomes': bool(args.team_outcomes), 'formation': bool(args.formation),
         'qb_decisions': bool(args.qb_decisions), 'player_outcomes': bool(args.player_outcomes),
+        'player_outcomes_receiver_only': bool(args.player_outcomes_receiver_only),
         'game': {'game_id': schedule['game_id'], 'season': schedule['season'], 'week': schedule['week'],
                  'side_teams': slc_engine.side_teams(snapshot)},
         'snapshot': {'snapshot_sha256': snapshot['snapshot_sha256'], 'as_of': snapshot['as_of'],

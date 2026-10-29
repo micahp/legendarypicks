@@ -5,8 +5,8 @@ choice depends on the pregame roster and usage shares only, and it is made befor
 determines what happens to the chosen player (a completion, an incompletion, a sack, a rush), and the player is not re-chosen
 after the outcome.
 
-The outcome is not yet conditioned on the player. Yards and results still come from the historical row of the play's situation
-cell. That is a known limit of this version: participant-conditioned outcomes are not built.
+When the player-outcome adapter is enabled, the selected participant reweights eligible event and result rows before the game-state
+transition. With that adapter off, the historical row is sampled without player-specific outcome weights.
 
 Every draw is seeded from the snapshot hash, the game seed and the decision index, so a replay with the same inputs is identical.
 """
@@ -29,9 +29,16 @@ TRICK_PASSER_RATE = 63 / 35293
 QB_RECEIVER_RATE = 17 / 33802
 
 
-def _passer(players, team, draw, trick_rate):
-    """The starting QB, or with the trick rate a rostered back or receiver who throws instead."""
-    starter = _qb1(players, team)
+def _passer(players, team, draw, trick_rate, injury_report=None):
+    """The starting or next eligible QB, or a rostered back or receiver who throws at the trick rate."""
+    if injury_report is None:
+        starter = _qb1(players, team)
+    else:
+        eligible_qbs = sorted((p for p in players if p['pos_abb'] == 'QB'),
+                              key=lambda p: (p['pos_rank'], p['gsis_id']))
+        if not eligible_qbs:
+            raise ValueError(f'pregame snapshot has no available quarterback for {team}')
+        starter = eligible_qbs[0]
     if draw.random() >= trick_rate:
         return starter
     throwers = sorted((p for p in players if p['pos_abb'] in ('RB', 'WR', 'TE')), key=lambda p: (p['pos_rank'], p['gsis_id']))
@@ -81,6 +88,8 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
         return None
     roster = snapshot['rosters'][side]
     team, players = roster['team'], roster['players']
+    import share_distributions
+    available_players = share_distributions.eligible_players(players, roster.get('injury_report'))
     observed = snapshot['model_reference']['observed_reference']
     base = f"{snapshot['snapshot_sha256']}:{seed}:{index}"
     chosen = {'side': side, 'team': team}
@@ -101,10 +110,8 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                 chosen['playbook_fallback'] = fallback
         chosen['labels'] = labels
     if intent == 'dropback':
-        qbd_players = players
+        qbd_players = available_players
         if qb_decision_table is not None:
-            import share_distributions
-            qbd_players = share_distributions.eligible_players(players, roster.get('injury_report'))
             eligible_qbs = sorted((p for p in qbd_players if p['pos_abb'] == 'QB'),
                                   key=lambda p: (p['pos_rank'], p['gsis_id']))
             if not eligible_qbs:
@@ -117,7 +124,8 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                 if throwers:
                     chosen['passer'] = trick.choices(throwers, weights=[1 / p['pos_rank'] for p in throwers], k=1)[0]
         else:
-            chosen['passer'] = _passer(players, team, _draw(f'{base}:passer:trick'), trick_passer_rate)
+            chosen['passer'] = _passer(qbd_players, team, _draw(f'{base}:passer:trick'), trick_passer_rate,
+                                       injury_report=roster.get('injury_report'))
         if qb_decision_table is not None and chosen['passer']['pos_abb'] == 'QB' and state is not None:
             import qb_decisions
             available_roles = {qb_decisions.target_role(p['pos_abb']) for p in qbd_players
@@ -188,18 +196,18 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                                           _draw(f'{base}:receiver:player'))
     else:
         if player_shares is None:
-            chosen['rusher'] = _by_usage(players, observed['runner_position_usage'], team, 'rusher',
+            chosen['rusher'] = _by_usage(available_players, observed['runner_position_usage'], team, 'rusher',
                                          _draw(f'{base}:rusher:position'))
         else:
             positions = player_shares_positions('carry')
             if labels is not None and labels.get('B') is not None:  # decision category B: the carrier's role, from its prior
                 carried = CARRY_ROLE_POSITIONS.get(labels['B'])
-                if carried and any(p['pos_abb'] in carried for p in players):
+                if carried and any(p['pos_abb'] in carried for p in available_players):
                     positions = carried
             if share_table is not None:  # the game's Dirichlet carry shares over the eligible players, then this play's draw
                 import share_distributions
                 population = share_distributions.eligible_players(
-                    [p for p in players if p['pos_abb'] in player_shares_positions('carry')],
+                    [p for p in available_players if p['pos_abb'] in player_shares_positions('carry')],
                     roster.get('injury_report'))
                 eligible = [p for p in population if p['pos_abb'] in positions]
                 if not eligible:
@@ -207,7 +215,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                 chosen['rusher'] = _by_game_share(eligible, share_table, team, 'carry', str(seed), snapshot['snapshot_sha256'],
                                                   _draw(f'{base}:rusher:dirichlet'), share_cache, population=population)
             else:
-                chosen['rusher'] = _by_player_share(players, player_shares, team, 'carry', positions,
+                chosen['rusher'] = _by_player_share(available_players, player_shares, team, 'carry', positions,
                                                     _draw(f'{base}:rusher:player'))
     if formation_priors is not None and state is not None:
         import formation_layer  # local: the formation layer is optional

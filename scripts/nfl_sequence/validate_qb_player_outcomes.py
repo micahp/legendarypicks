@@ -90,7 +90,7 @@ def _summary(records, categories, seed):
     }
 
 
-def _holdout_rows(db):
+def _holdout_rows(db, season=HOLDOUT_SEASON):
     columns = ('season', 'game_id', 'play_id', 'posteam', 'passer_player_id', 'rusher_player_id',
                'receiver_player_id', 'qb_dropback', 'qb_scramble', 'pass_attempt', 'rush_attempt',
                'complete_pass', 'sack', 'interception', 'fumble_lost', 'yards_gained', 'passing_yards',
@@ -113,7 +113,7 @@ def _holdout_rows(db):
             "WHERE lower(league)='nfl' GROUP BY nfl_gsis_id) s ON s.nfl_gsis_id=p.rusher_player_id "
             "LEFT JOIN (SELECT nfl_gsis_id, MIN(position) AS position FROM players "
             "WHERE lower(league)='nfl' GROUP BY nfl_gsis_id) q ON q.nfl_gsis_id=p.passer_player_id "
-            "WHERE p.season=? AND p.week BETWEEN 1 AND 18 ORDER BY p.game_id,p.play_id", (HOLDOUT_SEASON,)
+            "WHERE p.season=? AND p.week BETWEEN 1 AND 18 ORDER BY p.game_id,p.play_id", (int(season),)
         ).fetchall()
     finally:
         con.close()

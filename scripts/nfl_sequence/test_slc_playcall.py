@@ -10,6 +10,7 @@ sys.path.insert(0, str(HERE))
 import e1_drive as e1  # noqa: E402
 import playcall_model as pm  # noqa: E402
 import slc_playcall as slc  # noqa: E402
+import slc_engine as se  # noqa: E402
 
 TEAMS = {'AAA': 0, 'BBB': 1}
 SIZES = {'down_dist': 24, 'field': 5, 'score': 15, 'clock': 8, 'score_clock': 120, 'down_field': 20}
@@ -157,6 +158,85 @@ class Sampler(unittest.TestCase):
 
         self.assertGreater(good_completions, bad_completions + 100)
         self.assertTrue(all(d['player_outcomes_conditioned'] for d in good.decisions + bad.decisions))
+
+    def test_receiver_only_outcomes_ignore_qb_identity_and_condition_on_receiver_identity(self):
+        event_counts = {'pass_complete': 100, 'pass_incomplete': 100}
+        outcome_table = {
+            'base_events': {'qb': event_counts, 'receiver': event_counts, 'rusher': {}},
+            'event_counts': {
+                'qb': {'AQBGOOD': {'pass_complete': 100}, 'AQBBAD': {'pass_incomplete': 100}},
+                'receiver': {'AWRGOOD': {'pass_complete': 100}, 'AWRBAD': {'pass_incomplete': 100}},
+                'rusher': {},
+            },
+            'base_results': {'qb': {}, 'receiver': {}, 'rusher': {}},
+            'row_stats': {},
+        }
+        pool = cell([('pass_complete', 'pass'), ('pass_incomplete', 'pass')])
+
+        def sampler(passer, receiver):
+            result = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+            result.player_outcome_table = outcome_table
+            result.player_outcome_roles = ('receiver',)
+            result.participant_chooser = lambda *_: {'passer': {'gsis_id': passer}, 'receiver': {'gsis_id': receiver}}
+            return result
+
+        good_receiver_good_qb = sampler('AQBGOOD', 'AWRGOOD')
+        good_receiver_bad_qb = sampler('AQBBAD', 'AWRGOOD')
+        bad_receiver_good_qb = sampler('AQBGOOD', 'AWRBAD')
+        outcomes_by_seed = [[], [], []]
+        for seed in range(200):
+            for result, target in zip((good_receiver_good_qb, good_receiver_bad_qb, bad_receiver_good_qb), outcomes_by_seed):
+                target.append(result.sample(random.Random(seed), pool, 'A', 'B', state=STATE)[0])
+
+        self.assertEqual(outcomes_by_seed[0], outcomes_by_seed[1])
+        self.assertGreater(outcomes_by_seed[0].count('pass_complete'),
+                           outcomes_by_seed[2].count('pass_complete') + 100)
+        self.assertTrue(all(d['player_outcome_roles'] == ['receiver']
+                            for d in good_receiver_good_qb.decisions))
+
+    def test_qb_target_role_filters_source_rows_and_records_its_available_probabilities(self):
+        pool = cell([('pass_complete', 'pass'), ('pass_complete', 'pass')])
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.qb_decision_table = {'row_target_roles': {
+            (pool[0][1]['game_id'], pool[0][1]['play_id']): 'WR',
+            (pool[1][1]['game_id'], pool[1][1]['play_id']): 'TE',
+        }}
+        sampler.participant_chooser = lambda *_: {
+            'passer': {'gsis_id': 'AQB1', 'pos_abb': 'QB'},
+            'receiver': {'gsis_id': 'AWR1', 'pos_abb': 'WR'},
+            'qb_decision': {'action': 'pass', 'target_role': 'WR', 'target_role_history_n': 30,
+                            'target_role_probabilities': {'WR': 0.75, 'TE': 0.25}},
+        }
+
+        _event, row, _runoff, _spot = sampler.sample(random.Random(3), pool, 'A', 'B', state=STATE)
+
+        self.assertEqual(row['play_id'], 0)
+        self.assertTrue(sampler.decisions[-1]['qb_target_role_conditioned'])
+        self.assertEqual(sampler.decisions[-1]['qb_target_role'], 'WR')
+        self.assertEqual(sampler.decisions[-1]['qb_target_role_probabilities'], {'WR': 0.75, 'TE': 0.25})
+        self.assertIsNone(sampler.decisions[-1]['qb_target_role_fallback'])
+
+    def test_missing_source_rows_for_the_chosen_qb_role_fall_back_and_are_countable(self):
+        pool = cell([('pass_complete', 'pass')])
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.qb_decision_table = {'row_target_roles': {
+            (pool[0][1]['game_id'], pool[0][1]['play_id']): 'TE',
+        }}
+        sampler.participant_chooser = lambda *_: {
+            'passer': {'gsis_id': 'AQB1', 'pos_abb': 'QB'},
+            'receiver': {'gsis_id': 'AWR1', 'pos_abb': 'WR'},
+            'qb_decision': {'action': 'pass', 'target_role': 'WR', 'target_role_history_n': 2,
+                            'target_role_probabilities': {'WR': 1.0}},
+        }
+
+        _event, row, _runoff, _spot = sampler.sample(random.Random(3), pool, 'A', 'B', state=STATE)
+
+        self.assertEqual(row['play_id'], 0)
+        self.assertEqual(row['pre_event']['receiver']['pos_abb'], 'WR')
+        self.assertFalse(sampler.decisions[-1]['qb_target_role_conditioned'])
+        self.assertEqual(sampler.decisions[-1]['qb_target_role_fallback'],
+                         'no_target_identity_match_in_event_cell')
+        self.assertEqual(se.summary(sampler.decisions)['qb_target_role_fallbacks'], 1)
 
     def test_a_missing_intent_in_the_cell_fails_closed(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})

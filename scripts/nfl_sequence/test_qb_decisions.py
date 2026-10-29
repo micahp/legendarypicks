@@ -60,10 +60,49 @@ class QbDecisionModel(unittest.TestCase):
                  for i in range(300)]
         roles = [result['target_role'] for result in draws if result['action'] == 'pass']
         self.assertGreater(roles.count('WR'), roles.count('RB'))
+        self.assertEqual(set(draws[0]['target_role_probabilities']), {'WR', 'RB'})
+        self.assertAlmostEqual(sum(draws[0]['target_role_probabilities'].values()), 1.0)
         only_rb = qbd.draw(table, 'AAA', 'QA', 1, 10, 75, {'RB'}, 'one-role')
         self.assertEqual(only_rb['target_role'], 'RB')
+        self.assertEqual(only_rb['target_role_probabilities'], {'RB': 1.0})
         with self.assertRaises(ValueError):
             qbd.draw(table, 'AAA', 'QA', 1, 10, 75, set(), 'empty-role-group')
+
+    def test_qb_role_history_is_team_specific_after_a_transfer(self):
+        table = qbd.load(self.db, 2025)
+        cell = qbd.cell_of(1, 10, 75)
+        old_team, old_n = qbd._target_distribution(table, 'AAA', 'QA', cell)
+        new_team, new_n = qbd._target_distribution(table, 'BBB', 'QA', cell)
+
+        self.assertEqual((old_n, new_n), (10, 1))
+        self.assertGreater(old_team['WR'], new_team['WR'])
+        self.assertGreater(new_team['TE'], old_team['TE'])
+        self.assertEqual(table['target_qb_cell'][('AAA', 'QA', cell)]['WR'], 10)
+        self.assertEqual(table['target_qb_cell'][('BBB', 'QA', cell)]['TE'], 1)
+
+    def test_new_qb_with_no_cell_history_uses_the_team_prior(self):
+        table = qbd.load(self.db, 2025)
+        cell = qbd.cell_of(1, 10, 75)
+        team_prior, _ = qbd._target_distribution(table, 'AAA', None, cell)
+        new_qb, support = qbd._target_distribution(table, 'AAA', 'QNEW', cell)
+
+        self.assertEqual(support, 0)
+        self.assertEqual(new_qb, team_prior)
+
+    def test_zero_mass_on_available_roles_falls_back_to_a_normalized_roster_draw(self):
+        table = qbd.load(self.db, 2025)
+        cell = qbd.cell_of(1, 10, 75)
+        table['scramble_cells'] = set()
+        table['target_qb_cell'][('AAA', 'QNEW', cell)] = Counter({'Other': 5})
+        table['target_team_cell'][('AAA', cell)] = Counter({'Other': 5})
+        table['target_league_cell'][cell] = Counter({'Other': 5})
+
+        draws = [qbd.draw(table, 'AAA', 'QNEW', 1, 10, 75, {'WR', 'TE'}, f'fallback-{i}')
+                 for i in range(80)]
+        self.assertTrue(all(draw['target_role_fallback'] == 'no_model_mass_for_available_roles' for draw in draws))
+        self.assertTrue(all(set(draw['target_role_probabilities']) == {'WR', 'TE'} for draw in draws))
+        self.assertTrue(all(sum(draw['target_role_probabilities'].values()) == 1.0 for draw in draws))
+        self.assertEqual({draw['target_role'] for draw in draws}, {'WR', 'TE'})
 
     def test_new_qb_backs_off_and_unsupported_scrambles_are_disabled(self):
         table = qbd.load(self.db, 2025)

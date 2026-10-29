@@ -199,11 +199,15 @@ def draw(table, team, qb, down, togo, yardline, available_roles, seed_text):
     if not roles:
         raise ValueError(f'QB {qb} has no eligible target roles on team {team}')
     distribution, target_n = _target_distribution(table, team, qb, cell)
-    weights = [distribution[role] for role in roles]
-    total = sum(weights)
-    weights = [weight / total for weight in weights]
+    eligible_mass = sum(max(0.0, distribution[role]) for role in roles)
+    if eligible_mass <= 0:
+        role_probabilities = {role: 1.0 / len(roles) for role in roles}
+        out['target_role_fallback'] = 'no_model_mass_for_available_roles'
+    else:
+        role_probabilities = {role: max(0.0, distribution[role]) / eligible_mass for role in roles}
+    weights = [role_probabilities[role] for role in roles]
     out['target_role'] = rng.choices(roles, weights=weights, k=1)[0]
-    out['target_role_probabilities'] = {role: distribution[role] for role in roles}
+    out['target_role_probabilities'] = role_probabilities
     out['target_role_history_n'] = target_n
     return out
 

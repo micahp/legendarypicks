@@ -36,6 +36,14 @@ class Flags(unittest.TestCase):
         self.assertTrue(args.qb_decisions)
         self.assertTrue(args.player_outcomes)
 
+    def test_receiver_only_ablation_is_opt_in_and_requires_player_outcomes(self):
+        args = rg.parse_args(REQUIRED)
+        self.assertFalse(args.player_outcomes_receiver_only)
+        args = rg.parse_args(REQUIRED + ['--player-outcomes', '--player-outcomes-receiver-only'])
+        self.assertTrue(args.player_outcomes_receiver_only)
+        with self.assertRaises(SystemExit):
+            rg.parse_args(REQUIRED + ['--player-outcomes-receiver-only'])
+
 
 if __name__ == '__main__':
     unittest.main()
