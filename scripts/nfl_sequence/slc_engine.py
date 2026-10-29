@@ -43,11 +43,12 @@ def check_artifact_cutoff(artifact, season):
 
 
 def load_reference(db, snapshot, artifact_path):
-    """(Reference, excluded_kickoffs) for one snapshot. The historical pool keeps only plays before the snapshot's game."""
+    """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
+    season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
-    season, week = int(schedule['season']), int(schedule['week'])
+    season = int(schedule['season'])
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
-    return er.load(db, eligible_before=(season, week), playcall_artifact=str(artifact_path),
+    return er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot))
 
 
