@@ -97,6 +97,67 @@ class Sampler(unittest.TestCase):
         self.assertEqual(decision['state']['team'], 'AAA')
         self.assertAlmostEqual(decision['p_dropback'], 0.5, places=6)
 
+    def test_changing_only_the_selected_receiver_preserves_the_outcome_and_rng_stream(self):
+        """Share-driven participant draws use an independent stream; outcomes ignore the selected identity."""
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('pass_complete', 'pass'), ('pass_complete', 'pass'), ('pass_incomplete', 'pass')])
+        for sample, yards in zip(pool, (5, 23, 0)):
+            sample[1]['yards_gained'] = yards
+
+        paired_results = []
+        paired_rng_states = []
+        for shares in ({'AWR1': 1.0, 'AWR2': 0.0}, {'AWR1': 0.0, 'AWR2': 1.0}):
+            participant_rng = random.Random(773)
+
+            def choose_participant(_intent, _offense, _state):
+                receiver = participant_rng.choices(tuple(shares), weights=tuple(shares.values()), k=1)[0]
+                return {'passer': {'gsis_id': 'AQB1'}, 'receiver': {'gsis_id': receiver}}
+
+            sampler.participant_chooser = choose_participant
+            rng = random.Random(912)
+            event, row, _runoff, _spot = sampler.sample(rng, pool, 'A', 'B', state=STATE)
+            paired_results.append((event, row['game_id'], row['play_id'], row['yards_gained'],
+                                   row['pre_event']['receiver']['gsis_id']))
+            paired_rng_states.append(rng.getstate())
+            self.assertFalse(sampler.decisions[-1]['player_outcomes_conditioned'])
+
+        self.assertEqual(paired_results[0][:4], paired_results[1][:4])
+        self.assertNotEqual(paired_results[0][4], paired_results[1][4])
+        self.assertEqual(paired_rng_states[0], paired_rng_states[1])
+
+    def test_player_outcome_table_makes_the_selected_player_affect_event_sampling(self):
+        """The opt-in outcome table is the sampler path that turns player identity into a scoring input."""
+        event_counts = {'pass_complete': 100, 'pass_incomplete': 100}
+        outcome_table = {
+            'base_events': {'qb': event_counts, 'receiver': event_counts, 'rusher': {}},
+            'event_counts': {
+                'qb': {'AQBGOOD': {'pass_complete': 100}, 'AQBBAD': {'pass_incomplete': 100}},
+                'receiver': {'AWRGOOD': {'pass_complete': 100}, 'AWRBAD': {'pass_incomplete': 100}},
+                'rusher': {},
+            },
+            'base_results': {'qb': {}, 'receiver': {}, 'rusher': {}},
+            'row_stats': {},
+        }
+        pool = cell([('pass_complete', 'pass'), ('pass_incomplete', 'pass')])
+        good = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        bad = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        good.player_outcome_table = outcome_table
+        bad.player_outcome_table = outcome_table
+        good.participant_chooser = lambda *_: {'passer': {'gsis_id': 'AQBGOOD'}, 'receiver': {'gsis_id': 'AWRGOOD'}}
+        bad.participant_chooser = lambda *_: {'passer': {'gsis_id': 'AQBBAD'}, 'receiver': {'gsis_id': 'AWRBAD'}}
+
+        good_completions = 0
+        bad_completions = 0
+        draws = 200
+        for seed in range(draws):
+            good_event = good.sample(random.Random(seed), pool, 'A', 'B', state=STATE)[0]
+            bad_event = bad.sample(random.Random(seed), pool, 'A', 'B', state=STATE)[0]
+            good_completions += good_event == 'pass_complete'
+            bad_completions += bad_event == 'pass_complete'
+
+        self.assertGreater(good_completions, bad_completions + 100)
+        self.assertTrue(all(d['player_outcomes_conditioned'] for d in good.decisions + bad.decisions))
+
     def test_a_missing_intent_in_the_cell_fails_closed(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
         with self.assertRaises(e1.SamplingUnavailable):

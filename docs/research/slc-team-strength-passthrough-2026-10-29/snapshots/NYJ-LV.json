@@ -1,0 +1,639 @@
+{
+  "as_of": "2026-10-29T00:02:21Z",
+  "capture": {
+    "files": [
+      {
+        "acquired_at_utc": "2026-10-28T23:59:53Z",
+        "bytes": 3180052,
+        "last_modified_utc": "2026-10-28T13:58:09Z",
+        "name": "depth_charts_2026.parquet",
+        "sha256": "5649117a1abe4fd413e5286e5802092a80d858bc4847cbf5e8f79ebdff46cbae",
+        "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+      },
+      {
+        "acquired_at_utc": "2026-10-28T23:59:54Z",
+        "bytes": 51877,
+        "last_modified_utc": "2026-10-28T13:57:55Z",
+        "name": "injuries_2026.parquet",
+        "sha256": "2d9ae1129e9cd3249b6f1334557679dee5de465f0728aeeaaabd68f8a89b9539",
+        "url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+      },
+      {
+        "acquired_at_utc": "2026-10-29T00:00:26Z",
+        "bytes": 522840,
+        "last_modified_utc": "2026-10-28T23:46:31Z",
+        "name": "games.parquet",
+        "sha256": "883f03d71a02fa11d7b286236c8456e6c3bc3a7a179c0cb83bbd051e1ef95dbd",
+        "url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet"
+      }
+    ],
+    "frozen_at_utc": "2026-10-29T00:02:21Z",
+    "kickoff_rule": "nflverse gametime as America/New_York"
+  },
+  "evaluation": {
+    "class": "prospective_forecast",
+    "unverified_inputs": [],
+    "verified": true
+  },
+  "model_reference": {
+    "observed_reference": {
+      "blocked_kick_input_source_sha256": {
+        "play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+        "play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+        "play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+        "play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+      },
+      "blocked_kick_manifest_sha256": "33a6d781a714164adbaf0fe2ea924dea2c04ddb61ffc9b7af612193f517fd713",
+      "blocked_kick_outcome_samples": {
+        "field_goal": 86,
+        "punt": 39
+      },
+      "blocked_kick_rates": {
+        "field_goal_blocked_by_snap_bucket": {
+          "1-9": {
+            "attempts": 716,
+            "blocked": 4,
+            "rate": 0.00558659217877095,
+            "wilson_95": [
+              0.00217,
+              0.01428
+            ]
+          },
+          "10-19": {
+            "attempts": 1181,
+            "blocked": 16,
+            "rate": 0.013547840812870448,
+            "wilson_95": [
+              0.00836,
+              0.02189
+            ]
+          },
+          "20-29": {
+            "attempts": 1187,
+            "blocked": 26,
+            "rate": 0.02190395956192081,
+            "wilson_95": [
+              0.01499,
+              0.0319
+            ]
+          },
+          "30-39": {
+            "attempts": 1115,
+            "blocked": 33,
+            "rate": 0.029596412556053813,
+            "wilson_95": [
+              0.02115,
+              0.04127
+            ]
+          },
+          "40-49": {
+            "attempts": 122,
+            "blocked": 7,
+            "rate": 0.05737704918032787,
+            "wilson_95": [
+              0.02807,
+              0.11371
+            ]
+          },
+          "50+": {
+            "attempts": 4,
+            "blocked": 0,
+            "rate": 0.0,
+            "wilson_95": [
+              0.0,
+              0.48989
+            ]
+          }
+        },
+        "punt_blocked": {
+          "attempts": 8442,
+          "blocked": 39,
+          "rate": 0.004619758351101635,
+          "wilson_95": [
+            0.00338,
+            0.00631
+          ]
+        }
+      },
+      "blocked_kick_source_sha256": "0099fce63802f62f4ee028ca58a5f7d08196523f1a3e73494eb475af82ecfd83",
+      "kickoff_samples": 9963,
+      "missed_field_goal_return_buckets": {
+        "1-9": 9,
+        "10-19": 46,
+        "20-29": 175,
+        "30-39": 257,
+        "40-49": 26,
+        "50+": 0
+      },
+      "missed_field_goal_return_samples": 513,
+      "overtime_drive_samples": 140,
+      "overtime_source_sha256": "4d728f9efdf0a85dd77d044755f8f2ac11a774d9bd7aa7c89e12c84f258f52f9",
+      "participant_rows": 188282,
+      "play_cells": 75,
+      "play_extras_sha256": "3ae148f954e1a3ea2d9c88e1c82f91e745f8767bfaa62c275b1b4e988490dd5b",
+      "play_samples": 137373,
+      "receiver_position_usage": {
+        "classified_rows": 68664,
+        "counts_by_position": {
+          "C": 1,
+          "CB": 9,
+          "DE": 2,
+          "DT": 2,
+          "FB": 432,
+          "G": 7,
+          "LB": 3,
+          "OLB": 1,
+          "OT": 18,
+          "QB": 35,
+          "RB": 12204,
+          "S": 3,
+          "TE": 15236,
+          "WR": 40792
+        },
+        "noneligible_position_rows": 81,
+        "shares": {
+          "FB": 0.006291506466270535,
+          "RB": 0.17773505767214262,
+          "TE": 0.22189211231504136,
+          "WR": 0.5940813235465455
+        },
+        "source": "nfl_pbp player GSIS ID joined to players.nfl_gsis_id; position groups from canonical NFL identity"
+      },
+      "runner_position_usage": {
+        "classified_rows": 54897,
+        "counts_by_position": {
+          "CB": 2,
+          "DB": 6,
+          "FB": 178,
+          "LB": 8,
+          "P": 21,
+          "PK": 1,
+          "QB": 7515,
+          "RB": 47204,
+          "S": 13,
+          "TE": 406,
+          "WR": 1762
+        },
+        "noneligible_position_rows": 2219,
+        "shares": {
+          "FB": 0.0032424358343807495,
+          "QB": 0.13689272637849062,
+          "RB": 0.8598648377871286
+        },
+        "source": "nfl_pbp player GSIS ID joined to players.nfl_gsis_id; position groups from canonical NFL identity"
+      },
+      "safety_kick_samples": 46,
+      "safety_kick_source_sha256": "c9580c36fe421e4d5e21e4afb708dc13fbf72a676f180eeea7630955af44e067",
+      "schema": "lp-e2-observed-reference-3",
+      "sha256": "746dead93fece9cc5ca7d9465c80b7cd1f1da1060f66dabf28e6fb355669433b"
+    },
+    "participant_assignment_version": "pregame-role-usage-v1",
+    "play_pool": "nfl_pbp seasons 2022-2025 only; no 2026 outcome is in the pool",
+    "pool_scope": {
+      "eligible_before": [
+        2026,
+        1
+      ],
+      "eligible_play_seasons": [
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "kick_table": "not filtered: the published kick rates include overtime kicks",
+      "overtime_rows_excluded_from_pool": 1214,
+      "overtime_rows_removed_before_kickoff_pool": 1214,
+      "regulation_only": true,
+      "safety_kick_table": "observed 2022-2025 regular-season safety free kicks, usable rows only",
+      "special_teams_artifact_window": "2022-2025"
+    },
+    "rule_version": "NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix"
+  },
+  "roster_snapshot_id": "capture:b676277a52177178a59d76f0c495d4fe1faf54032681edbdbe44ce562bff12be",
+  "rosters": {
+    "away": {
+      "injury_report": {
+        "available": false,
+        "players": [],
+        "rows": 0
+      },
+      "players": [
+        {
+          "gsis_id": "00-0038563",
+          "player_id": 22566,
+          "player_name": "Tre Tucker",
+          "pos_abb": "WR",
+          "pos_rank": 1,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0029604",
+          "player_id": 4832,
+          "player_name": "Kirk Cousins",
+          "pos_abb": "QB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0039338",
+          "player_id": 2288,
+          "player_name": "Brock Bowers",
+          "pos_abb": "TE",
+          "pos_rank": 1,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0040122",
+          "player_id": 11257,
+          "player_name": "Ashton Jeanty",
+          "pos_abb": "RB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0037304",
+          "player_id": 9922,
+          "player_name": "Connor Heyward",
+          "pos_abb": "FB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0037291",
+          "player_id": 16254,
+          "player_name": "Jalen Nailor",
+          "pos_abb": "WR",
+          "pos_rank": 2,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0041562",
+          "player_id": 15217,
+          "player_name": "Fernando Mendoza",
+          "pos_abb": "QB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0039066",
+          "player_id": 14509,
+          "player_name": "Michael Mayer",
+          "pos_abb": "TE",
+          "pos_rank": 2,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0040878",
+          "player_id": 23393,
+          "player_name": "Mike Washington Jr.",
+          "pos_abb": "RB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0035891",
+          "player_id": 23764,
+          "player_name": "Cody White",
+          "pos_abb": "WR",
+          "pos_rank": 3,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0038579",
+          "player_id": 16665,
+          "player_name": "Aidan O'Connell",
+          "pos_abb": "QB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0034365",
+          "player_id": 21995,
+          "player_name": "Ian Thomas",
+          "pos_abb": "TE",
+          "pos_rank": 3,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0039407",
+          "player_id": 13189,
+          "player_name": "Dylan Laube",
+          "pos_abb": "RB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0040581",
+          "player_id": 22230,
+          "player_name": "Dont'e Thornton Jr.",
+          "pos_abb": "WR",
+          "pos_rank": 4,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0040488",
+          "player_id": 19329,
+          "player_name": "Carter Runyon",
+          "pos_abb": "TE",
+          "pos_rank": 4,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0039244",
+          "player_id": 4477,
+          "player_name": "Chris Collier",
+          "pos_abb": "RB",
+          "pos_rank": 4,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0040894",
+          "player_id": 1732,
+          "player_name": "Malik Benson",
+          "pos_abb": "WR",
+          "pos_rank": 5,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0037093",
+          "player_id": 24989,
+          "player_name": "Dareke Young",
+          "pos_abb": "WR",
+          "pos_rank": 6,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        },
+        {
+          "gsis_id": "00-0040729",
+          "player_id": 1519,
+          "player_name": "Jack Bech",
+          "pos_abb": "WR",
+          "pos_rank": 7,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "LV"
+        }
+      ],
+      "snapshot_at": "2026-10-28T13:58:02Z",
+      "source": "nflverse_depth_charts_capture",
+      "team": "LV",
+      "unresolved_depth_rows": 0
+    },
+    "home": {
+      "injury_report": {
+        "available": false,
+        "players": [],
+        "rows": 0
+      },
+      "players": [
+        {
+          "gsis_id": "00-0037740",
+          "player_id": 24468,
+          "player_name": "Garrett Wilson",
+          "pos_abb": "WR",
+          "pos_rank": 1,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0030565",
+          "player_id": 20595,
+          "player_name": "Geno Smith",
+          "pos_abb": "QB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0040736",
+          "player_id": 21806,
+          "player_name": "Mason Taylor",
+          "pos_abb": "TE",
+          "pos_rank": 1,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0038120",
+          "player_id": 8895,
+          "player_name": "Breece Hall",
+          "pos_abb": "RB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0041511",
+          "player_id": 4712,
+          "player_name": "Omar Cooper Jr.",
+          "pos_abb": "WR",
+          "pos_rank": 2,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0041056",
+          "player_id": 12747,
+          "player_name": "Cade Klubnik",
+          "pos_abb": "QB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0041032",
+          "player_id": 19421,
+          "player_name": "Kenyon Sadiq",
+          "pos_abb": "TE",
+          "pos_rank": 2,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0039794",
+          "player_id": 425,
+          "player_name": "Braelon Allen",
+          "pos_abb": "RB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0039890",
+          "player_id": 15539,
+          "player_name": "Adonai Mitchell",
+          "pos_abb": "WR",
+          "pos_rank": 3,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0037805",
+          "player_id": 19296,
+          "player_name": "Jeremy Ruckert",
+          "pos_abb": "TE",
+          "pos_rank": 3,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0039798",
+          "player_id": 5384,
+          "player_name": "Isaiah Davis",
+          "pos_abb": "RB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0033375",
+          "player_id": 17257,
+          "player_name": "Tim Patrick",
+          "pos_abb": "WR",
+          "pos_rank": 4,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0037755",
+          "player_id": 24731,
+          "player_name": "Jelani Woods",
+          "pos_abb": "TE",
+          "pos_rank": 4,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0036842",
+          "player_id": 16647,
+          "player_name": "Kene Nwangwu",
+          "pos_abb": "RB",
+          "pos_rank": 4,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0039451",
+          "player_id": 24145,
+          "player_name": "Isaiah Williams",
+          "pos_abb": "WR",
+          "pos_rank": 5,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0034959",
+          "player_id": 1521,
+          "player_name": "Andrew Beck",
+          "pos_abb": "TE",
+          "pos_rank": 5,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0041239",
+          "player_id": 22472,
+          "player_name": "Chip Trayanum",
+          "pos_abb": "RB",
+          "pos_rank": 5,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0041267",
+          "player_id": 14628,
+          "player_name": "Malik McClain",
+          "pos_abb": "WR",
+          "pos_rank": 6,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        },
+        {
+          "gsis_id": "00-0040582",
+          "player_id": 20504,
+          "player_name": "Arian Smith",
+          "pos_abb": "WR",
+          "pos_rank": 7,
+          "snapshot_at": "2026-10-28T13:58:02Z",
+          "source": "nflverse_depth_charts_capture",
+          "team": "NYJ"
+        }
+      ],
+      "snapshot_at": "2026-10-28T13:58:02Z",
+      "source": "nflverse_depth_charts_capture",
+      "team": "NYJ",
+      "unresolved_depth_rows": 0
+    }
+  },
+  "schedule": {
+    "availability_classification": "captured_before_cutoff",
+    "away_team": "LV",
+    "game_id": "2026_08_LV_NYJ",
+    "game_type": "REG",
+    "gameday": "2026-11-01",
+    "gametime": "13:00",
+    "gametime_timezone": "America/New_York",
+    "home_team": "NYJ",
+    "ingested_at": null,
+    "kickoff_source_url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet",
+    "scheduled_kickoff_utc": "2026-11-01T18:00:00Z",
+    "season": 2026,
+    "source": "nflverse_games_capture",
+    "week": 8
+  },
+  "schema": "lp-nfl-pregame-snapshot-1",
+  "snapshot_sha256": "a5fd642c2354045d7d6d8fdcd55567538f460d1ccdd1720ee0c1446c5cefb492"
+}

@@ -1,0 +1,9 @@
+{
+ "all_changed_values_zero": true,
+ "all_other_artifact_fields_preserved": true,
+ "changed_block": "blocks.team_down",
+ "changed_coefficients": 128,
+ "derived_artifact_sha256": "29bcadd8ec40c07ae5dddc38ddfe84cf9483c98124295ea994d2c32017adede5",
+ "parent_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+ "variant": "team-neutral play-call diagnostic"
+}

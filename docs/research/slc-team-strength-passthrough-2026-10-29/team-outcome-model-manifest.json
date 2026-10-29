@@ -1,0 +1,22 @@
+{
+  "model_id": "team_tendency_v1_log_odds_offense_defense",
+  "model_manifest_sha256": "7ea18e53adf181353caaef60ca4241235d9714cdc42c4db62f7eb3f881485c3b",
+  "prior_strength": 25.0,
+  "ratio_range_global": [
+    0.030712530712530713,
+    26.75409836065574
+  ],
+  "source_code": "scripts/nfl_sequence/team_tendency.py",
+  "source_code_sha256": "0f282f93cec9e1d4db1de4287e5ee3b8990cbf2347eafdef4a597b2b01e844d0",
+  "source_cutoff": "before 2026 season (pregame cutoff 2026 week 1)",
+  "source_seasons": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "tables_sha256": "07279a1e1a659f9485d0c051ed9b4398b297c627e0e0ca1527de0323fe568332",
+  "target_season": 2026,
+  "team_count": 32,
+  "tendency_plays": 138235
+}

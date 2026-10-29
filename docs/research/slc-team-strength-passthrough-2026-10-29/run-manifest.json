@@ -1,0 +1,171 @@
+{
+  "analyzer": {
+    "paired_summary_sha256": "d9f0645a5ea8a0b75377c99f6509689a0fcc0b4867462f0675d47ebe65eeb1f2",
+    "path": "scripts/nfl_sequence/analyze_team_strength_passthrough.py",
+    "sha256": "aa9903337d3d84c3591c6d34add665e979d5b7fe297bda63c7cfc442c1d17af7"
+  },
+  "base_commit": "03c8c1f7ded4b382855534d484697f15d42e8903",
+  "branch": "research/slc-decision-layer-2026-10-29",
+  "context_mode": "unconditioned",
+  "database": "/root/legendarypicks/backend/data/picks.dev.db",
+  "matchups": {
+    "MIA-NE": {
+      "common_valid_seed_count": 35,
+      "game_id": "2026_08_NE_MIA",
+      "reference_fingerprints": {
+        "off": "de9f05ad5f8c57ecd2330cee0fabe9aeeaffdfb4c4dd62b0ebe2a8580dfdad39",
+        "on": "de9f05ad5f8c57ecd2330cee0fabe9aeeaffdfb4c4dd62b0ebe2a8580dfdad39",
+        "team-neutral": "e0f62f72cf218d3df188d0d6860049b313417f02ea985cff2da5a69d7ba197d5"
+      },
+      "snapshot_file": "docs/research/slc-team-strength-passthrough-2026-10-29/snapshots/MIA-NE.json",
+      "snapshot_file_sha256": "80a1f54be5a5f088e13db63f076c71de03a6613703117903fe0727b01d764041",
+      "source_snapshot_sha256": "552be6205bff20b97e57dbf12c881670463eb4eae54e3df6f7f3b6bd7e59d458",
+      "valid_full_games_by_arm": {
+        "off": 37,
+        "on": 39,
+        "team-neutral": 39
+      }
+    },
+    "NYJ-LV": {
+      "common_valid_seed_count": 37,
+      "game_id": "2026_08_LV_NYJ",
+      "reference_fingerprints": {
+        "off": "746dead93fece9cc5ca7d9465c80b7cd1f1da1060f66dabf28e6fb355669433b",
+        "on": "746dead93fece9cc5ca7d9465c80b7cd1f1da1060f66dabf28e6fb355669433b",
+        "team-neutral": "32f4951523c7b5d63ff5ffd1a452c7c8f9c7c551d41ae33e1fa5ce187009b276"
+      },
+      "snapshot_file": "docs/research/slc-team-strength-passthrough-2026-10-29/snapshots/NYJ-LV.json",
+      "snapshot_file_sha256": "c8ff7839b320604613f2d1b6f2b7663f98cb28a1ae330779deb3474b2f736a44",
+      "source_snapshot_sha256": "1941fff894898ec44682088fa6fed15e51c1ba97bd15f7a7f46a1304caae0756",
+      "valid_full_games_by_arm": {
+        "off": 39,
+        "on": 39,
+        "team-neutral": 39
+      }
+    },
+    "SEA-CHI": {
+      "common_valid_seed_count": 38,
+      "game_id": "2026_08_CHI_SEA",
+      "reference_fingerprints": {
+        "off": "49fbc8aada8b85b2d42e405855b76ba16dff5d2b2a0ed0fd29cfa9005c7763ba",
+        "on": "49fbc8aada8b85b2d42e405855b76ba16dff5d2b2a0ed0fd29cfa9005c7763ba",
+        "team-neutral": "a0b9d184e8a889632456a0f3341c420158b35e4c752087a89df09888e5d18447"
+      },
+      "snapshot_file": "docs/research/slc-team-strength-passthrough-2026-10-29/snapshots/SEA-CHI.json",
+      "snapshot_file_sha256": "f2b8057e9b7993b7f3fb2931518b6a029dd5c58a6bdd681c2e19f298738f86f2",
+      "source_snapshot_sha256": "30832d34d3318a11cfce1f396964347299cd3645494cd522dca673dbd9e95729",
+      "valid_full_games_by_arm": {
+        "off": 39,
+        "on": 39,
+        "team-neutral": 40
+      }
+    }
+  },
+  "outcome_validity": "Only valid_full_game seeds enter paired contrasts; use intersection valid in all three arms per matchup",
+  "playcall_artifacts": {
+    "base": {
+      "path": "docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+      "sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7"
+    },
+    "team_neutral": {
+      "path": "docs/research/slc-team-strength-passthrough-2026-10-29/SLC-PLAYCALL-ARTIFACT-TEAM-NEUTRAL.json",
+      "sha256": "37dac8a756af3a7a19d91dc489f35cbd75f3523ae5942246c12ac783e5c8bb02"
+    }
+  },
+  "producer_source_hash_mismatches": [],
+  "producer_source_hashes_match_commit": true,
+  "producer_worktree_dirty_at_run": true,
+  "reference_fingerprint_note": "The off/on observed_reference_sha256 values are identical because the sampler description/fingerprint omits the team-outcome table. The team-outcome table hash and manifest are pinned separately above.",
+  "reproduction": {
+    "analysis_command": "/root/legendarypicks/backend/venv/bin/python scripts/nfl_sequence/analyze_team_strength_passthrough.py --out docs/research/slc-team-strength-passthrough-2026-10-29/paired-summary.json",
+    "arm_arguments": {
+      "off": [
+        "--playcall-artifact",
+        "docs/research/SLC-PLAYCALL-ARTIFACT-v1.json"
+      ],
+      "on": [
+        "--playcall-artifact",
+        "docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+        "--playcall-team-outcomes"
+      ],
+      "team-neutral": [
+        "--playcall-artifact",
+        "docs/research/slc-team-strength-passthrough-2026-10-29/SLC-PLAYCALL-ARTIFACT-TEAM-NEUTRAL.json"
+      ]
+    },
+    "common_arguments": [
+      "--db",
+      "/root/legendarypicks/backend/data/picks.dev.db",
+      "--games",
+      "40",
+      "--seed-start",
+      "1",
+      "--context-mode",
+      "unconditioned",
+      "--try-policy",
+      "unconditional"
+    ],
+    "output_template": "docs/research/slc-team-strength-passthrough-2026-10-29/{matchup}-{arm}.json",
+    "python": "/root/legendarypicks/backend/venv/bin/python",
+    "runner": "scripts/nfl_sequence/simulate_pregame_batch.py",
+    "snapshot_template": "docs/research/slc-team-strength-passthrough-2026-10-29/snapshots/{matchup}.json"
+  },
+  "schema": "slc-team-strength-passthrough-run-manifest-v1",
+  "seed_ids": {
+    "count": 40,
+    "end": 40,
+    "start": 1
+  },
+  "sha256_outputs": {
+    "MIA-NE-off.json": "879ac82b962b8f06cd82f487263e79ded0c0994cc8c39bfc1fb7bbb98bb28773",
+    "MIA-NE-off.seeds.jsonl": "76e02577956b8320bde6bd74d02ddf5d4280a67d7086bc369142a41839b093cd",
+    "MIA-NE-on.json": "fd158c582d49d1a07056c623dd170d791242002af819cf83d9b5d88bb28f7f17",
+    "MIA-NE-on.seeds.jsonl": "f9db7084b2905193d53f30cd2a81c1fe801ec0680d7c5cc40dcb921194029cf3",
+    "MIA-NE-team-neutral.json": "33186be15762bdea3927b50645e0cb480f2bc1693d0c533dc41b833a422c62a5",
+    "MIA-NE-team-neutral.seeds.jsonl": "fb7916eda1e358d4f84ccddbcd711ac3ccad21b1f419427ace847082551090ef",
+    "NYJ-LV-off.json": "8473cb2124eff3884d5debc42180ff9ff3abd557347a46e3be9a411d3128bc6f",
+    "NYJ-LV-off.seeds.jsonl": "2beb58f13524c5a201a3d35098bc476190dce70b3921bd061d9e07ac82c153c7",
+    "NYJ-LV-on.json": "525bf56b8f7b0b9d4a4119354a220f25ac9abc299a4d8c8f9014c176fed0cfcc",
+    "NYJ-LV-on.seeds.jsonl": "1c19148ac0e3e11189282f6e05fda67ecbf7c6ef79a474b667e1a05efea5afa2",
+    "NYJ-LV-team-neutral.json": "69bf976d63b2255ed25ebec2c74157d75514a8f24cb5c69f0c65fc86cc5c219e",
+    "NYJ-LV-team-neutral.seeds.jsonl": "1a66efc65b964cfd07379e89c1a84a07d4af372e5b31e20ab714aa0313ccd110",
+    "SEA-CHI-off.json": "d5fed33a3e99ede2b68e1a056960aad0c18b56ade63c5d9854cb24cfcebc2612",
+    "SEA-CHI-off.seeds.jsonl": "2b852a16373036a19dead6737e846a548633578138aa6386cfb1ee4e5e4a06a4",
+    "SEA-CHI-on.json": "5dc3bdbde72527e4c10bbffffd610ad2b4e5a4d9456e14d3b5594b44e5aac8c1",
+    "SEA-CHI-on.seeds.jsonl": "9e2d75c78ac4fe69ea88d296ef84f6d64ec0c30e53ec39d122bafa4b7864c33c",
+    "SEA-CHI-team-neutral.json": "b4d72c0bf7445bef2074743eb3612e880613069d8e116abf5703f5454ff5016c",
+    "SEA-CHI-team-neutral.seeds.jsonl": "c7453e81f51369d12656f79d7c0789b371cf46be8f3e8124c354d644af64d255",
+    "SLC-PLAYCALL-ARTIFACT-TEAM-NEUTRAL.json": "37dac8a756af3a7a19d91dc489f35cbd75f3523ae5942246c12ac783e5c8bb02",
+    "paired-summary.json": "d9f0645a5ea8a0b75377c99f6509689a0fcc0b4867462f0675d47ebe65eeb1f2",
+    "snapshots/MIA-NE.json": "80a1f54be5a5f088e13db63f076c71de03a6613703117903fe0727b01d764041",
+    "snapshots/NYJ-LV.json": "c8ff7839b320604613f2d1b6f2b7663f98cb28a1ae330779deb3474b2f736a44",
+    "snapshots/SEA-CHI.json": "f2b8057e9b7993b7f3fb2931518b6a029dd5c58a6bdd681c2e19f298738f86f2",
+    "team-neutral-artifact-manifest.json": "17d35b342d888def0b1f9c379e9a1aebeb59e78531fb1f6ed488aa1f866582d3",
+    "team-outcome-model-manifest.json": "4fed38edf2ecf0e91b91aafeb5a7ecc8b683c18c7ea1e279b16c849a3dea7951"
+  },
+  "source_cutoff": "Before 2026 Week 1; source play data seasons 2022-2025",
+  "target_season": 2026,
+  "team_outcome_model_manifest": {
+    "model_id": "team_tendency_v1_log_odds_offense_defense",
+    "model_manifest_sha256": "7ea18e53adf181353caaef60ca4241235d9714cdc42c4db62f7eb3f881485c3b",
+    "prior_strength": 25.0,
+    "ratio_range_global": [
+      0.030712530712530713,
+      26.75409836065574
+    ],
+    "source_code": "scripts/nfl_sequence/team_tendency.py",
+    "source_code_sha256": "0f282f93cec9e1d4db1de4287e5ee3b8990cbf2347eafdef4a597b2b01e844d0",
+    "source_cutoff": "before 2026 season (pregame cutoff 2026 week 1)",
+    "source_seasons": [
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "tables_sha256": "07279a1e1a659f9485d0c051ed9b4398b297c627e0e0ca1527de0323fe568332",
+    "target_season": 2026,
+    "team_count": 32,
+    "tendency_plays": 138235
+  },
+  "try_policy": "unconditional"
+}
