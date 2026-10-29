@@ -342,6 +342,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             play['outcome'].update(kick_metadata)
         if kick_outcome:
             play['outcome']['blocked_kick'] = kick_outcome
+        if row.get('pre_event') is not None:  # SLC: participants chosen before the outcome; absent for the S0 control
+            play['outcome']['pre_event'] = row['pre_event']
         plays.append(play)
         if (quarter_change and kick_outcome is not None
                 and kick_outcome.get('classification_status') == 'period_expired'):

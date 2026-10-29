@@ -57,9 +57,7 @@ def main():
     gs.validate_game(record)
 
     schedule = snapshot['schedule']
-    schedule_verified = schedule['availability_classification'] == 'versioned_as_of'
-    depth_verified = not any('publication_time_unverified' in player and player['publication_time_unverified']
-                             for side in snapshot['rosters'].values() for player in side['players'])
+    evaluation = snapshot.get('evaluation', {})  # the snapshot's own provenance result (pregame_snapshot.input_provenance)
     artifact = json.loads(args.artifact.read_text())
     trace = {
         'model_id': slc_engine.MODEL_ID,
@@ -72,7 +70,7 @@ def main():
         'snapshot': {'snapshot_sha256': snapshot['snapshot_sha256'], 'as_of': snapshot['as_of'],
                      'roster_snapshot_id': snapshot['roster_snapshot_id'],
                      'schedule_availability': schedule['availability_classification'],
-                     'depth_publication_verified': depth_verified},
+                     'evaluation_class': evaluation.get('class'), 'inputs_verified': evaluation.get('verified')},
         'playcall': {'artifact_sha256': artifact['sha256'], 'fit_seasons': [min(artifact['fit_seasons']),
                                                                              max(artifact['fit_seasons'])],
                      'reference_season': artifact['reference_season'],
@@ -83,8 +81,8 @@ def main():
             'mode': record.get('mode'),
             'complete_game': record.get('complete_game'),
             'valid_full_game_engine': record.get('valid_full_game'),
-            'valid_full_game_claim': bool(record.get('valid_full_game') and schedule_verified and depth_verified),
-            'valid_full_game_claim_requires': 'engine valid_full_game, a versioned schedule and verified depth publication times',
+            'valid_full_game_claim': bool(record.get('valid_full_game') and evaluation.get('verified')),
+            'valid_full_game_claim_requires': 'engine valid_full_game and every snapshot input verified (evaluation.verified)',
             'evaluation': 'exploratory single-game run',
             'cutoff_safe': True,
             'cutoff_safe_scope': 'the pool holds only plays before the game and the play-call artifact is fitted before its season',
