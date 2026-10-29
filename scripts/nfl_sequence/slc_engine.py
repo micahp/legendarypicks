@@ -43,7 +43,8 @@ def check_artifact_cutoff(artifact, season):
                          f"that ends before {season}")
 
 
-def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=False, player_shares=False):
+def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=False, player_shares=False,
+                   exact_yardline=False, coverage=False):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -51,7 +52,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
     return er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
-                   playcall_formation=formation, playcall_player_shares=player_shares)
+                   playcall_formation=formation, playcall_player_shares=player_shares,
+                   playcall_exact_yardline=exact_yardline, playcall_coverage=coverage)
 
 
 def is_slc(ref):
@@ -66,7 +68,8 @@ def play(seed, ref, snapshot):
     sampler.decisions.clear()
     sampler.participant_chooser = pre_event.chooser(require_snapshot(snapshot), seed,
                                                     formation_priors=sampler.formation_priors,
-                                                    player_shares=sampler.player_shares)
+                                                    player_shares=sampler.player_shares,
+                                                    defense_priors=sampler.defense_priors)
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
     finally:
