@@ -26,7 +26,8 @@ class Game(unittest.TestCase):
         import pregame_snapshot as ps
         import slc_engine as se
         snapshot = ps.load_frozen_snapshot(str(SNAPSHOT))
-        ref, _excluded = se.load_reference(DB, snapshot, str(ARTIFACT), team_outcomes=True, formation=True)
+        ref, _excluded = se.load_reference(DB, snapshot, str(ARTIFACT), team_outcomes=True, formation=True,
+                                           coverage=True)
         snapshot['model_reference']['observed_reference'] = ref.model_inputs
         cls.record, cls.decisions = se.play(1, ref, snapshot)
         cls.plays = [p for d in cls.record['drives'] for p in d['plays']]
@@ -40,6 +41,13 @@ class Game(unittest.TestCase):
         self.assertTrue(scrimmage)
         self.assertTrue(all(d.get('formation') in ('SHOTGUN', 'UNDER CENTER', 'PISTOL') for d in scrimmage))
         self.assertTrue(all(d.get('formation_conditioned') for d in scrimmage))
+
+    def test_every_dropback_names_a_known_coverage_before_its_outcome(self):
+        dropbacks = [d for d in self.decisions if d['intent'] == 'dropback']
+        self.assertTrue(dropbacks)
+        self.assertTrue(all(d.get('coverage') not in (None, 'UNKNOWN') for d in dropbacks))
+        self.assertTrue(all(d.get('coverage_conditioned') for d in dropbacks))
+        self.assertTrue(all(d.get('coverage') is None for d in self.decisions if d['intent'] == 'run'))
 
     def test_a_pass_or_run_names_its_participants_before_the_outcome_and_the_play_carries_them(self):
         for decision, play in zip(self.decisions, self.plays):
