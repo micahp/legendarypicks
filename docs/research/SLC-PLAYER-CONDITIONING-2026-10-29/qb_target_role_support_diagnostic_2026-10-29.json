@@ -1,0 +1,1726 @@
+{
+  "code_sha256": {
+    "diagnose_qb_target_role.py": "371a477502653e4c32cf1b34e0570f30c013f0ea99cef6a336a3612344a2e49d",
+    "qb_decisions.py": "99437b5e73fce058befee4716e6b13466f8df2cbb41c4628f3076eb91134073c",
+    "validate_qb_player_outcomes.py": "97de187a8b7faa3e784d92c7b9ae081ae8b4107c1daf27dfaa48c01b01eb20cf"
+  },
+  "created_on": "2026-10-29",
+  "limitations": [
+    "The depth-chart feed is a role and roster proxy; it is not a frozen game-day active roster.",
+    "Historical injury rows for 2025 have no date_modified timestamps, so injury eligibility cannot be reconstructed as of kickoff and no claim of fully roster-valid calibration is made.",
+    "The 2024 official depth-chart file is weekly without a publication timestamp; its matching-week roster filter is exploratory.",
+    "This evaluates target-role marginals, not participant selection, full-game outcomes, target counts, scoring, or win probabilities.",
+    "The 2024 sweep is used to select shrinkage strength; only 2025 is the final untouched chronological comparison."
+  ],
+  "method": {
+    "baselines": "league pooled situation distribution and existing SLC team-cell distribution shrunk toward league by 20 rows",
+    "candidate_qb_shrinkage_strengths": [
+      0,
+      5,
+      10,
+      20,
+      40,
+      80,
+      160
+    ],
+    "depth_chart_filter": "2024 official weekly offense depth chart for matching week; 2025 latest official chart timestamp strictly before game-date UTC. Score subsets by normalizing all distributions over listed RB/WR/TE groups. The feed does not provide frozen injury eligibility.",
+    "holdouts": {
+      "2024": "fit 2022-2023; tuning holdout",
+      "2025": "fit 2022-2024; final chronological holdout"
+    },
+    "team_prior_strength": 20.0,
+    "uncertainty": "1000 paired game-cluster bootstrap draws; percentile 95% intervals"
+  },
+  "report_version": "slc-qb-target-role-support-v1",
+  "seasons": {
+    "2024": {
+      "fit": {
+        "cutoff_exclusive": 2024,
+        "source_counts": {
+          "non_qb_passers_excluded": 120,
+          "qb_dropbacks_in_model_state": 40903,
+          "qb_dropbacks_missing_id": 0,
+          "qb_scrambles": 1931,
+          "qb_scrambles_missing_qb_identity": 0,
+          "qb_team_units": 125,
+          "target_rows_with_mapped_receiver_id": 34705,
+          "target_rows_without_position": 0
+        },
+        "source_seasons": [
+          2022,
+          2023
+        ],
+        "source_sha256": "11bf25d2f705fc3260fc120144d4f2b33f6b14323c24d5ee4de74a818fac7e33"
+      },
+      "holdout": {
+        "depth_chart_sha256": "2b5e72fa37f6a498238da30d619cd5d2fe883ffbfdbaaf637301893ad6c22097",
+        "depth_chart_target_coverage": {
+          "actual_role_listed_pct": 0.999293411058117,
+          "receiver_id_listed_pct": 0.9494200082435377,
+          "snapshot_rows_pct": 1.0
+        },
+        "season": 2024,
+        "target_source_counts": {
+          "actual_role_in_chart": 16971,
+          "receiver_id_on_chart": 16124,
+          "target_rows": 16983,
+          "with_pregame_depth_snapshot": 16983
+        }
+      },
+      "populations": {
+        "actual_role_in_pregame_depth_chart": {
+          "fixed_20_support_bins": [],
+          "games": 272,
+          "n": 16971,
+          "shrinkage_sweep": {
+            "qb_0": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.032970725742688604,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.03791450657253475,
+                  -0.02847670446888506
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.8075725543028449,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.9033832629466421,
+                  -0.7127583954071435
+                ],
+                "model_brier": 0.5873171115512776,
+                "model_log_loss": 1.7525844263123245,
+                "n": 16971
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.02994062473040827,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.03421484982484189,
+                  -0.025774426312219854
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.8017157202702145,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.9018124721150158,
+                  -0.7129655464632559
+                ],
+                "model_brier": 0.5873171115512776,
+                "model_log_loss": 1.7525844263123245,
+                "n": 16971
+              }
+            },
+            "qb_10": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.007938090399195977,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.009974494216864112,
+                  -0.005822284934010382
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.015707644832193366,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.019939084283113667,
+                  -0.011703528077400313
+                ],
+                "model_brier": 0.5622844762077781,
+                "model_log_loss": 0.9607195168416944,
+                "n": 16971
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.004907989386915479,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.006086270160397105,
+                  -0.003833972124446276
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.009850810799576596,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.012143570319960785,
+                  -0.007702132901377689
+                ],
+                "model_brier": 0.5622844762077781,
+                "model_log_loss": 0.9607195168416944,
+                "n": 16971
+              }
+            },
+            "qb_160": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.0034577869836182056,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.005199684390526271,
+                  -0.0016450270767230614
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0067210823404910535,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.009484996753070515,
+                  -0.0038154768057952915
+                ],
+                "model_brier": 0.5578041727922004,
+                "model_log_loss": 0.9517329543499967,
+                "n": 16971
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0004276859713377261,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0006134195713987667,
+                  -0.00022355136053852314
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0008642483078742163,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.0012325752623641075,
+                  -0.0005258710356924272
+                ],
+                "model_brier": 0.5578041727922004,
+                "model_log_loss": 0.9517329543499967,
+                "n": 16971
+              }
+            },
+            "qb_20": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.005905255213302645,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.00785010542296276,
+                  -0.003964561307573415
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.011537646773083148,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.01535541361525118,
+                  -0.00813873866654908
+                ],
+                "model_brier": 0.5602516410218854,
+                "model_log_loss": 0.9565495187825739,
+                "n": 16971
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0028751542010222475,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0037119744723465137,
+                  -0.002101827979353848
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.005680812740466232,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.007150209252699909,
+                  -0.004286218629810951
+                ],
+                "model_brier": 0.5602516410218854,
+                "model_log_loss": 0.9565495187825739,
+                "n": 16971
+              }
+            },
+            "qb_40": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.004620402100303694,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0064744883914072335,
+                  -0.0026867044246083123
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.008991364120422746,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.012325402422010303,
+                  -0.005709817945324288
+                ],
+                "model_brier": 0.5589667879088916,
+                "model_log_loss": 0.9540032361299221,
+                "n": 16971
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.001590301088023194,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.002133761449973436,
+                  -0.0010568075217317386
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.003134530087805754,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.004182010346395169,
+                  -0.0021997657913696623
+                ],
+                "model_brier": 0.5589667879088916,
+                "model_log_loss": 0.9540032361299221,
+                "n": 16971
+              }
+            },
+            "qb_5": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.010858525135142193,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.013315678306335677,
+                  -0.008280856377090504
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.02207847106564334,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.02685103587554398,
+                  -0.01747641521571639
+                ],
+                "model_brier": 0.5652049109437258,
+                "model_log_loss": 0.9670903430751269,
+                "n": 16971
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.007828424122861815,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.00948263228847715,
+                  -0.006344919428604743
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.01622163703302659,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.019371347236793898,
+                  -0.01338057987703463
+                ],
+                "model_brier": 0.5652049109437258,
+                "model_log_loss": 0.9670903430751269,
+                "n": 16971
+              }
+            },
+            "qb_80": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.0038700805409908733,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.005685303978949592,
+                  -0.0020675885455528234
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.007526478118689873,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.010897243085598696,
+                  -0.004332561955267553
+                ],
+                "model_brier": 0.5582164663495758,
+                "model_log_loss": 0.952538350128173,
+                "n": 16971
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0008399795287104145,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0011755157023558744,
+                  -0.0004961469096015821
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0016696440860729767,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.00233785457145825,
+                  -0.001074235766349446
+                ],
+                "model_brier": 0.5582164663495758,
+                "model_log_loss": 0.952538350128173,
+                "n": 16971
+              }
+            }
+          }
+        },
+        "all_targets": {
+          "fixed_20_support_bins": [
+            {
+              "brier_improvement_vs_team": 1.6229454624799894e-18,
+              "games": 242,
+              "log_loss_improvement_vs_team": -6.96639282294517e-19,
+              "n": 6813,
+              "support": "0"
+            },
+            {
+              "brier_improvement_vs_team": -0.003477191014947461,
+              "games": 223,
+              "log_loss_improvement_vs_team": -0.006788351102183561,
+              "n": 1229,
+              "support": "1-4"
+            },
+            {
+              "brier_improvement_vs_team": -0.007307595580363851,
+              "games": 237,
+              "log_loss_improvement_vs_team": -0.013250487181851338,
+              "n": 2958,
+              "support": "5-19"
+            },
+            {
+              "brier_improvement_vs_team": -0.004992215258153973,
+              "games": 226,
+              "log_loss_improvement_vs_team": -0.011634991980509494,
+              "n": 2836,
+              "support": "20-49"
+            },
+            {
+              "brier_improvement_vs_team": -0.0028060647291035736,
+              "games": 212,
+              "log_loss_improvement_vs_team": -0.005869623439745987,
+              "n": 3147,
+              "support": "50+"
+            }
+          ],
+          "games": 272,
+          "n": 16983,
+          "shrinkage_sweep": {
+            "qb_0": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.033079284301477975,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.03783957393754953,
+                  -0.028410612177535887
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.8110166145093229,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.9021826502048422,
+                  -0.7164384230386682
+                ],
+                "model_brier": 0.5880799840767058,
+                "model_log_loss": 1.7693910720608699,
+                "n": 16983
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.03003835777507342,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.033905457639081864,
+                  -0.02593151786174425
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.8048710638310992,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.9082540732841698,
+                  -0.7100836560439862
+                ],
+                "model_brier": 0.5880799840767058,
+                "model_log_loss": 1.7693910720608699,
+                "n": 16983
+              }
+            },
+            "qb_10": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.00795600645380315,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.010044025044265041,
+                  -0.005593925309895645
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.016220179307626786,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.020416124486339747,
+                  -0.01226796099536051
+                ],
+                "model_brier": 0.5629567062290255,
+                "model_log_loss": 0.9745946368591841,
+                "n": 16983
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0049150799273987,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.006083149542728529,
+                  -0.0038526545243330623
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.01007462862939702,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.012117165205739154,
+                  -0.007973558263467826
+                ],
+                "model_brier": 0.5629567062290255,
+                "model_log_loss": 0.9745946368591841,
+                "n": 16983
+              }
+            },
+            "qb_160": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.0034689935260510695,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0052786373527232726,
+                  -0.0016766217963772843
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.007040388859370971,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.01012690774110926,
+                  -0.004117649815800056
+                ],
+                "model_brier": 0.5584696933012703,
+                "model_log_loss": 0.9654148464109212,
+                "n": 16983
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0004280669996466635,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0006357782061408306,
+                  -0.00021635853360998394
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0008948381811411351,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.0012425714317416904,
+                  -0.0005295705828611407
+                ],
+                "model_brier": 0.5584696933012703,
+                "model_log_loss": 0.9654148464109212,
+                "n": 16983
+              }
+            },
+            "qb_20": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.005918977734006169,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.008174278118218699,
+                  -0.0038511680523130335
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.011975284341899664,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.015974630144662823,
+                  -0.008568772893039724
+                ],
+                "model_brier": 0.5609196775092292,
+                "model_log_loss": 0.9703497418934568,
+                "n": 16983
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0028780512076017526,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0036849103742940606,
+                  -0.0021051586668315234
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.005829733663669861,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.0074398182094318355,
+                  -0.004371166936478621
+                ],
+                "model_brier": 0.5609196775092292,
+                "model_log_loss": 0.9703497418934568,
+                "n": 16983
+              }
+            },
+            "qb_40": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.004632530196538632,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.006723239659059477,
+                  -0.0026211205561634883
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.009373171957577179,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.012897132287411305,
+                  -0.006271467673709012
+                ],
+                "model_brier": 0.5596332299717648,
+                "model_log_loss": 0.9677476295091381,
+                "n": 16983
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0015916036701341604,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0021534491669280282,
+                  -0.0010846274281205478
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0032276212793471825,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.004167623431096974,
+                  -0.0022925134071120432
+                ],
+                "model_brier": 0.5596332299717648,
+                "model_log_loss": 0.9677476295091381,
+                "n": 16983
+              }
+            },
+            "qb_5": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.01088568309133026,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.013359601470431949,
+                  -0.00832782435952525
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.022684482322261862,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.027634579254929164,
+                  -0.017750630639345146
+                ],
+                "model_brier": 0.5658863828665543,
+                "model_log_loss": 0.9810589398738203,
+                "n": 16983
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.007844756564925857,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.009375192461519171,
+                  -0.006337040998493969
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.01653893164403217,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.019601781867320887,
+                  -0.013650771857302955
+                ],
+                "model_brier": 0.5658863828665543,
+                "model_log_loss": 0.9810589398738203,
+                "n": 16983
+              }
+            },
+            "qb_80": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.003881589438248648,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0057956926150048195,
+                  -0.0018915198535314679
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.007869953395014903,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.010941440120670652,
+                  -0.0049310952327863205
+                ],
+                "model_brier": 0.5588822892134754,
+                "model_log_loss": 0.9662444109465786,
+                "n": 16983
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0008406629118442202,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0011888825118415566,
+                  -0.000490662539509805
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.00172440271678508,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.002323643041950841,
+                  -0.0011299687447716496
+                ],
+                "model_brier": 0.5588822892134754,
+                "model_log_loss": 0.9662444109465786,
+                "n": 16983
+              }
+            }
+          }
+        },
+        "receiver_id_and_role_in_pregame_depth_chart": {
+          "fixed_20_support_bins": [],
+          "games": 272,
+          "n": 16114,
+          "shrinkage_sweep": {
+            "qb_0": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.033440006451538926,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.03832413645308868,
+                  -0.028923701310724595
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.8060989847879607,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.9009166814937615,
+                  -0.7089323830965758
+                ],
+                "model_brier": 0.5924746295834525,
+                "model_log_loss": 1.757693858504317,
+                "n": 16114
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.03003492077100271,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0342866406456512,
+                  -0.025654053238408962
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.7995637025284107,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.8896212543800512,
+                  -0.7118896235299584
+                ],
+                "model_brier": 0.5924746295834525,
+                "model_log_loss": 1.757693858504317,
+                "n": 16114
+              }
+            },
+            "qb_10": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.008512762555045713,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.010966466493844827,
+                  -0.006194869325386651
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.016744134023640927,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.02128158165107776,
+                  -0.012557144944901214
+                ],
+                "model_brier": 0.5675473856869506,
+                "model_log_loss": 0.9683390077400152,
+                "n": 16114
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.00510767687450939,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.006307915135890924,
+                  -0.004021751740867012
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.010208851764100715,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.012563440546724435,
+                  -0.007976741954414543
+                ],
+                "model_brier": 0.5675473856869506,
+                "model_log_loss": 0.9683390077400152,
+                "n": 16114
+              }
+            },
+            "qb_160": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.0038873052163342714,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.00576849041865399,
+                  -0.0021979018200030966
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.007484602568902899,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.010703872364534179,
+                  -0.0042238254907704855
+                ],
+                "model_brier": 0.5629219283482404,
+                "model_log_loss": 0.959079476285284,
+                "n": 16114
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0004822195357979597,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0007110737425755457,
+                  -0.00027035066951261276
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0009493203093626195,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.0013514891206004678,
+                  -0.0005759155140514043
+                ],
+                "model_brier": 0.5629219283482404,
+                "model_log_loss": 0.959079476285284,
+                "n": 16114
+              }
+            },
+            "qb_20": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.006449692392969218,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.008667834397306892,
+                  -0.004301644139428766
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.012499200536454473,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.01645544680275164,
+                  -0.008927784221930938
+                ],
+                "model_brier": 0.5654843155248755,
+                "model_log_loss": 0.9640940742528211,
+                "n": 16114
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0030446067124329877,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0038668616182059388,
+                  -0.0022209439603991027
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0059639182769141005,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.0075070816592440045,
+                  -0.004256815576532244
+                ],
+                "model_brier": 0.5654843155248755,
+                "model_log_loss": 0.9640940742528211,
+                "n": 16114
+              }
+            },
+            "qb_40": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.005123914011299193,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.007305082679444157,
+                  -0.002981465556854637
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.009875715381339573,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.013516761101444601,
+                  -0.0063527543618698305
+                ],
+                "model_brier": 0.5641585371432108,
+                "model_log_loss": 0.9614705890977131,
+                "n": 16114
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0017188283307628298,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0022826138550174663,
+                  -0.0011431531195628588
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0033404331217991388,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.004340904336812838,
+                  -0.002382936824994201
+                ],
+                "model_brier": 0.5641585371432108,
+                "model_log_loss": 0.9614705890977131,
+                "n": 16114
+              }
+            },
+            "qb_5": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.011445758106166016,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.014282126039647177,
+                  -0.008820228665415599
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.023175277578843263,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.027963157917277506,
+                  -0.01818222228036159
+                ],
+                "model_brier": 0.5704803812380738,
+                "model_log_loss": 0.9747701512952015,
+                "n": 16114
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.008040672425629782,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.009695463704018295,
+                  -0.006424795987765751
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.01663999531930307,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.020251033451951776,
+                  -0.01356921801085004
+                ],
+                "model_brier": 0.5704803812380738,
+                "model_log_loss": 0.9747701512952015,
+                "n": 16114
+              }
+            },
+            "qb_80": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.004332794061719811,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.006244665812716021,
+                  -0.0026537492082830583
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.008342735859033888,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.01151926671031578,
+                  -0.005019003025375829
+                ],
+                "model_brier": 0.5633674171936278,
+                "model_log_loss": 0.9599376095753951,
+                "n": 16114
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.000927708381183527,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.001263931345082241,
+                  -0.0005410780213518787
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0018074535994935619,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.002488790895538445,
+                  -0.0011717402037473635
+                ],
+                "model_brier": 0.5633674171936278,
+                "model_log_loss": 0.9599376095753951,
+                "n": 16114
+              }
+            }
+          }
+        }
+      }
+    },
+    "2025": {
+      "fit": {
+        "cutoff_exclusive": 2025,
+        "source_counts": {
+          "non_qb_passers_excluded": 162,
+          "qb_dropbacks_in_model_state": 61019,
+          "qb_dropbacks_missing_id": 0,
+          "qb_scrambles": 2991,
+          "qb_scrambles_missing_qb_identity": 0,
+          "qb_team_units": 167,
+          "target_rows_with_mapped_receiver_id": 51688,
+          "target_rows_without_position": 0
+        },
+        "source_seasons": [
+          2022,
+          2023,
+          2024
+        ],
+        "source_sha256": "97dc0898d1a68b8a9665b65b14e8f02c2412891f8fb7b1eef00e742312692e39"
+      },
+      "holdout": {
+        "depth_chart_sha256": "14f74185b3c2c48df234ced284ba3596bda3333d0b2a8df40841f68cd34539fa",
+        "depth_chart_target_coverage": {
+          "actual_role_listed_pct": 0.997769471907403,
+          "receiver_id_listed_pct": 0.9919821557752593,
+          "snapshot_rows_pct": 1.0
+        },
+        "season": 2025,
+        "target_source_counts": {
+          "actual_role_in_chart": 16551,
+          "receiver_id_on_chart": 16455,
+          "target_rows": 16588,
+          "with_pregame_depth_snapshot": 16588
+        }
+      },
+      "populations": {
+        "actual_role_in_pregame_depth_chart": {
+          "fixed_20_support_bins": [],
+          "games": 272,
+          "n": 16551,
+          "shrinkage_sweep": {
+            "qb_0": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.03297762881890218,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.038381714296022454,
+                  -0.02720231532678216
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.8745985622583797,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -1.0128665993896904,
+                  -0.7516960368609183
+                ],
+                "model_brier": 0.6026322552145943,
+                "model_log_loss": 1.8389525042855293,
+                "n": 16551
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.031669243636849385,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.03654316240621538,
+                  -0.02705412195233069
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.871644900141572,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -1.0023541132480025,
+                  -0.7499912166861353
+                ],
+                "model_brier": 0.6026322552145943,
+                "model_log_loss": 1.8389525042855293,
+                "n": 16551
+              }
+            },
+            "qb_10": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.007087321684852546,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.009434938143239072,
+                  -0.004702191809729058
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.014665732663247982,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.018720720772089743,
+                  -0.0107919755505583
+                ],
+                "model_brier": 0.5767419480805422,
+                "model_log_loss": 0.979019674690392,
+                "n": 16551
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.005778936502799738,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.007059384397177915,
+                  -0.004660003907299088
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.011712070546447342,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.013970568135992905,
+                  -0.009502194979714284
+                ],
+                "model_brier": 0.5767419480805422,
+                "model_log_loss": 0.979019674690392,
+                "n": 16551
+              }
+            },
+            "qb_160": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.001884379863073419,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0035143406551497564,
+                  -3.4392141316235215e-05
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.003998675444647237,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.006979000789248978,
+                  -0.0010175696539257014
+                ],
+                "model_brier": 0.5715390062587671,
+                "model_log_loss": 0.9683526174717991,
+                "n": 16551
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0005759946810206226,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0008148523105797914,
+                  -0.0003406511483723524
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0010450133278465004,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.001452649711447128,
+                  -0.0006431920532004579
+                ],
+                "model_brier": 0.5715390062587671,
+                "model_log_loss": 0.9683526174717991,
+                "n": 16551
+              }
+            },
+            "qb_20": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.004866854770182938,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.007061039214905786,
+                  -0.0027385260112496863
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.009896668468856125,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.013515486380416294,
+                  -0.006157204199216895
+                ],
+                "model_brier": 0.574521481165869,
+                "model_log_loss": 0.9742506104960037,
+                "n": 16551
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0035584695881300957,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.004446574663183906,
+                  -0.0026440847723690373
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.006943006352055311,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.008572015528292442,
+                  -0.005447535217645906
+                ],
+                "model_brier": 0.574521481165869,
+                "model_log_loss": 0.9742506104960037,
+                "n": 16551
+              }
+            },
+            "qb_40": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.0033592064861442984,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.005153270993379814,
+                  -0.0015843950779034512
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0068304309336418845,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.009877590762891207,
+                  -0.003684231951333795
+                ],
+                "model_brier": 0.573013832881837,
+                "model_log_loss": 0.9711843729607834,
+                "n": 16551
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.002050821304091529,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.002639152727928473,
+                  -0.0014487613038827506
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.003876768816841147,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.005035137666327984,
+                  -0.0028443439872641915
+                ],
+                "model_brier": 0.573013832881837,
+                "model_log_loss": 0.9711843729607834,
+                "n": 16551
+              }
+            },
+            "qb_5": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.010126879006589531,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.01280460868618961,
+                  -0.007720179083471677
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.021639707220290728,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.026439071784281974,
+                  -0.017087302885049845
+                ],
+                "model_brier": 0.5797815054022731,
+                "model_log_loss": 0.9859936492474382,
+                "n": 16551
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.008818493824536798,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.010452224961759057,
+                  -0.0073130203897770986
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.018686045103490177,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.02181976755139422,
+                  -0.015882825210665103
+                ],
+                "model_brier": 0.5797815054022731,
+                "model_log_loss": 0.9859936492474382,
+                "n": 16551
+              }
+            },
+            "qb_80": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.002419955102410343,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.004320473832893059,
+                  -0.0006400417761329615
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.005004624139912221,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.008048673275407883,
+                  -0.002118926143940671
+                ],
+                "model_brier": 0.5720745814980998,
+                "model_log_loss": 0.9693585661670613,
+                "n": 16551
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0011115699203575603,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0015065416869076012,
+                  -0.0007371472921186404
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.002050962023111473,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.002727220125549631,
+                  -0.001423490220593642
+                ],
+                "model_brier": 0.5720745814980998,
+                "model_log_loss": 0.9693585661670613,
+                "n": 16551
+              }
+            }
+          }
+        },
+        "all_targets": {
+          "fixed_20_support_bins": [
+            {
+              "brier_improvement_vs_team": -5.183188156400136e-19,
+              "games": 230,
+              "log_loss_improvement_vs_team": -2.736995549020746e-17,
+              "n": 6118,
+              "support": "0"
+            },
+            {
+              "brier_improvement_vs_team": -0.0004521988947873466,
+              "games": 210,
+              "log_loss_improvement_vs_team": -0.0016557379429949968,
+              "n": 1195,
+              "support": "1-4"
+            },
+            {
+              "brier_improvement_vs_team": -0.009858461120995489,
+              "games": 244,
+              "log_loss_improvement_vs_team": -0.01976713172230859,
+              "n": 2499,
+              "support": "5-19"
+            },
+            {
+              "brier_improvement_vs_team": -0.007390970063860244,
+              "games": 240,
+              "log_loss_improvement_vs_team": -0.015880140963370412,
+              "n": 3151,
+              "support": "20-49"
+            },
+            {
+              "brier_improvement_vs_team": -0.0028879989710572755,
+              "games": 230,
+              "log_loss_improvement_vs_team": -0.005616273322546531,
+              "n": 3625,
+              "support": "50+"
+            }
+          ],
+          "games": 272,
+          "n": 16588,
+          "shrinkage_sweep": {
+            "qb_0": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.03291628441718873,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.03850013386543891,
+                  -0.027792363987904613
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.8855094362486802,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -1.023036385069537,
+                  -0.7568915138906565
+                ],
+                "model_brier": 0.603626737536243,
+                "model_log_loss": 1.8579851109425534,
+                "n": 16588
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.031599154451438044,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.036867506493971254,
+                  -0.026283925734881
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.8815447733805929,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -1.0114525442565094,
+                  -0.7582821101525506
+                ],
+                "model_brier": 0.603626737536243,
+                "model_log_loss": 1.8579851109425534,
+                "n": 16588
+              }
+            },
+            "qb_10": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.007088534407950319,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.009508979085793267,
+                  -0.00479774465303393
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.016261180668528327,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.020343601535652827,
+                  -0.01200872937447574
+                ],
+                "model_brier": 0.5777989875269995,
+                "model_log_loss": 0.9887368553624022,
+                "n": 16588
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.005771404442199544,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.006964639725854334,
+                  -0.004503089576646662
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.012296517800449542,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.014765676994790458,
+                  -0.009990443411941073
+                ],
+                "model_brier": 0.5777989875269995,
+                "model_log_loss": 0.9887368553624022,
+                "n": 16588
+              }
+            },
+            "qb_160": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.0018924433752950975,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0037984521108824407,
+                  -0.0002496784724578071
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.005103168014347812,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.00807168000346738,
+                  -0.0019559741944010513
+                ],
+                "model_brier": 0.5726028964943455,
+                "model_log_loss": 0.9775788427082277,
+                "n": 16588
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0005753134095443844,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0007961185297627987,
+                  -0.00035319152669790804
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0011385051462690424,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.0015419622087225555,
+                  -0.0007186777438006321
+                ],
+                "model_brier": 0.5726028964943455,
+                "model_log_loss": 0.9775788427082277,
+                "n": 16588
+              }
+            },
+            "qb_20": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.0048699762981564065,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0070126665633104684,
+                  -0.0027341417034406723
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.011305751847204722,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.015161001206707865,
+                  -0.007327616284950196
+                ],
+                "model_brier": 0.5755804294172079,
+                "model_log_loss": 0.9837814265410783,
+                "n": 16588
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.003552846332405645,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0044053986542590216,
+                  -0.0026301382530401767
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.007341088979125821,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.008940806305027168,
+                  -0.0057601154424413575
+                ],
+                "model_brier": 0.5755804294172079,
+                "model_log_loss": 0.9837814265410783,
+                "n": 16588
+              }
+            },
+            "qb_40": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.003364566728985827,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0052386662863845275,
+                  -0.001516268258507731
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.008099905532442388,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.011539910355568882,
+                  -0.004912278734286502
+                ],
+                "model_brier": 0.5740750198480364,
+                "model_log_loss": 0.98057558022631,
+                "n": 16588
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0020474367632351575,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.002641082766466862,
+                  -0.0015050210846102381
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0041352426643635615,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.005141997559433736,
+                  -0.003119919910686303
+                ],
+                "model_brier": 0.5740750198480364,
+                "model_log_loss": 0.98057558022631,
+                "n": 16588
+              }
+            },
+            "qb_5": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.010125827462336813,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.012897715701396145,
+                  -0.0074898765227936525
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.023470075136106956,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.02832545056554685,
+                  -0.01854100302395614
+                ],
+                "model_brier": 0.580836280581392,
+                "model_log_loss": 0.9959457498299801,
+                "n": 16588
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.008808697496586023,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.010485025090291963,
+                  -0.007195173586675437
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.019505412268028106,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.022661188998236027,
+                  -0.016579116890198583
+                ],
+                "model_brier": 0.580836280581392,
+                "model_log_loss": 0.9959457498299801,
+                "n": 16588
+              }
+            },
+            "qb_80": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.0024270494668307777,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.004169139479256721,
+                  -0.0006771997244344757
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0061751557642639706,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.009142058730227326,
+                  -0.002915193532633781
+                ],
+                "model_brier": 0.5731375025858774,
+                "model_log_loss": 0.9786508304581467,
+                "n": 16588
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.001109919501080071,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0014935337005477823,
+                  -0.000738646408367833
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0022104928961851136,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.002916805502783753,
+                  -0.0015306401999797205
+                ],
+                "model_brier": 0.5731375025858774,
+                "model_log_loss": 0.9786508304581467,
+                "n": 16588
+              }
+            }
+          }
+        },
+        "receiver_id_and_role_in_pregame_depth_chart": {
+          "fixed_20_support_bins": [],
+          "games": 272,
+          "n": 16437,
+          "shrinkage_sweep": {
+            "qb_0": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.03316490911209259,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.039079714362992096,
+                  -0.0278280193960905
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.8806458158897684,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -1.0164707965719035,
+                  -0.7593992775816035
+                ],
+                "model_brier": 0.6035978847039637,
+                "model_log_loss": 1.8461154708527427,
+                "n": 16437
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.03196132584380619,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.037255074386638436,
+                  -0.02734643034616223
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.8778695900930552,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -1.0140472851316615,
+                  -0.7455969968191019
+                ],
+                "model_brier": 0.6035978847039637,
+                "model_log_loss": 1.8461154708527427,
+                "n": 16437
+              }
+            },
+            "qb_10": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.007059657117413627,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.009557677861512914,
+                  -0.004748581557447907
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.014616552414696086,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.018922498519729044,
+                  -0.010685037888148688
+                ],
+                "model_brier": 0.5774926327092819,
+                "model_log_loss": 0.9800862073776658,
+                "n": 16437
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.005856073849127226,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.007138675888880726,
+                  -0.004705943085997175
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.011840326617990855,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.014107689374190949,
+                  -0.009617865988271607
+                ],
+                "model_brier": 0.5774926327092819,
+                "model_log_loss": 0.9800862073776658,
+                "n": 16437
+              }
+            },
+            "qb_160": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.0017925935032624294,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0035435678134523143,
+                  -8.801716149831747e-05
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0038386382020145463,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.0068416012556141315,
+                  -0.0008520916750993766
+                ],
+                "model_brier": 0.5722255690951347,
+                "model_log_loss": 0.9693082931649925,
+                "n": 16437
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0005890102349760391,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0008211632976684148,
+                  -0.00036220709859344967
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0010624124053091894,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.001460318991103513,
+                  -0.000661089919793663
+                ],
+                "model_brier": 0.5722255690951347,
+                "model_log_loss": 0.9693082931649925,
+                "n": 16437
+              }
+            },
+            "qb_20": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.004814895451828759,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.006854191350168128,
+                  -0.0027147164536421063
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.00980093268884046,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.013383134140760297,
+                  -0.006195336848359311
+                ],
+                "model_brier": 0.5752478710436939,
+                "model_log_loss": 0.9752705876518137,
+                "n": 16437
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0036113121835423317,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.004504138875635659,
+                  -0.0027201400543753734
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.007024706892135043,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.008537603152743808,
+                  -0.005560486855760656
+                ],
+                "model_brier": 0.5752478710436939,
+                "model_log_loss": 0.9752705876518137,
+                "n": 16437
+              }
+            },
+            "qb_40": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.003289329814262877,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.005234529815384421,
+                  -0.0013288008450723216
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.006703710711952326,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.010051247435714524,
+                  -0.003405190898777555
+                ],
+                "model_brier": 0.5737223054061338,
+                "model_log_loss": 0.9721733656749195,
+                "n": 16437
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0020857465459765173,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.0027239278908241333,
+                  -0.0015103077713448378
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0039274849152469765,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.004961286405178097,
+                  -0.002872157949257123
+                ],
+                "model_brier": 0.5737223054061338,
+                "model_log_loss": 0.9721733656749195,
+                "n": 16437
+              }
+            },
+            "qb_5": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.010130688302727913,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.01263421330125153,
+                  -0.007572087331888692
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.02165802864809538,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.026455180091987097,
+                  -0.01686142436593522
+                ],
+                "model_brier": 0.5805636638945896,
+                "model_log_loss": 0.9871276836110691,
+                "n": 16437
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.008927105034441574,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.010558433996370268,
+                  -0.007313990818222291
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.018881802851390246,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.02207188743901558,
+                  -0.01579830197110573
+                ],
+                "model_brier": 0.5805636638945896,
+                "model_log_loss": 0.9871276836110691,
+                "n": 16437
+              }
+            },
+            "qb_80": {
+              "vs_league_pooled": {
+                "brier_improvement": -0.0023371418914297213,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.004134311692624265,
+                  -0.000507906449731979
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.004857587555030085,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.008091727599760146,
+                  -0.0019863368380476937
+                ],
+                "model_brier": 0.5727701174832975,
+                "model_log_loss": 0.9703272425180055,
+                "n": 16437
+              },
+              "vs_team_conditioned": {
+                "brier_improvement": -0.0011335586231433518,
+                "brier_improvement_game_bootstrap_95": [
+                  -0.001545231444897696,
+                  -0.000775469707211187
+                ],
+                "games": 272,
+                "log_loss_improvement": -0.0020813617583247605,
+                "log_loss_improvement_game_bootstrap_95": [
+                  -0.002749626818464415,
+                  -0.001444683592194191
+                ],
+                "model_brier": 0.5727701174832975,
+                "model_log_loss": 0.9703272425180055,
+                "n": 16437
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tuning": {
+    "2025_charted_receiver_subset": {
+      "vs_league_pooled": {
+        "brier_improvement": -0.0017925935032624294,
+        "brier_improvement_game_bootstrap_95": [
+          -0.0035435678134523143,
+          -8.801716149831747e-05
+        ],
+        "games": 272,
+        "log_loss_improvement": -0.0038386382020145463,
+        "log_loss_improvement_game_bootstrap_95": [
+          -0.0068416012556141315,
+          -0.0008520916750993766
+        ],
+        "model_brier": 0.5722255690951347,
+        "model_log_loss": 0.9693082931649925,
+        "n": 16437
+      },
+      "vs_team_conditioned": {
+        "brier_improvement": -0.0005890102349760391,
+        "brier_improvement_game_bootstrap_95": [
+          -0.0008211632976684148,
+          -0.00036220709859344967
+        ],
+        "games": 272,
+        "log_loss_improvement": -0.0010624124053091894,
+        "log_loss_improvement_game_bootstrap_95": [
+          -0.001460318991103513,
+          -0.000661089919793663
+        ],
+        "model_brier": 0.5722255690951347,
+        "model_log_loss": 0.9693082931649925,
+        "n": 16437
+      }
+    },
+    "2025_primary": {
+      "vs_league_pooled": {
+        "brier_improvement": -0.0018924433752950975,
+        "brier_improvement_game_bootstrap_95": [
+          -0.0037984521108824407,
+          -0.0002496784724578071
+        ],
+        "games": 272,
+        "log_loss_improvement": -0.005103168014347812,
+        "log_loss_improvement_game_bootstrap_95": [
+          -0.00807168000346738,
+          -0.0019559741944010513
+        ],
+        "model_brier": 0.5726028964943455,
+        "model_log_loss": 0.9775788427082277,
+        "n": 16588
+      },
+      "vs_team_conditioned": {
+        "brier_improvement": -0.0005753134095443844,
+        "brier_improvement_game_bootstrap_95": [
+          -0.0007961185297627987,
+          -0.00035319152669790804
+        ],
+        "games": 272,
+        "log_loss_improvement": -0.0011385051462690424,
+        "log_loss_improvement_game_bootstrap_95": [
+          -0.0015419622087225555,
+          -0.0007186777438006321
+        ],
+        "model_brier": 0.5726028964943455,
+        "model_log_loss": 0.9775788427082277,
+        "n": 16588
+      }
+    },
+    "selected_qb_shrinkage_strength": 160,
+    "selection_rule": "maximize 2024 all-target log-loss improvement over the team-conditioned baseline; this choice is carried unchanged to the 2025 report"
+  }
+}

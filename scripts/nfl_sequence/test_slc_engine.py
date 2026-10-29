@@ -78,7 +78,11 @@ class Mapping(unittest.TestCase):
 class Summary(unittest.TestCase):
     def test_the_counts_separate_scrimmage_kicks_and_dropbacks(self):
         decisions = [{'intent': 'dropback'}, {'intent': 'run'}, {'intent': 'run'}, {'intent': 'kick'}]
-        self.assertEqual(se.summary(decisions), {'decisions': 4, 'scrimmage': 3, 'dropback': 1, 'run': 2, 'kick_fallback': 1})
+        self.assertEqual(se.summary(decisions), {'decisions': 4, 'scrimmage': 3, 'dropback': 1, 'run': 2,
+                                                  'qb_scramble': 0, 'qb_target_role_decisions': 0,
+                                                  'qb_target_role_conditioned': 0, 'qb_target_role_fallbacks': 0,
+                                                  'qb_target_role_draw_fallbacks': 0,
+                                                  'qb_target_role_no_history': 0, 'kick_fallback': 1})
 
 
 class PlayerShareManifest(unittest.TestCase):
@@ -86,7 +90,8 @@ class PlayerShareManifest(unittest.TestCase):
         import share_distributions as sd
         layer_artifact = {**artifact(list(range(2010, 2026)), 2026), 'artifact_id': 'a', 'sha256': 'b'}
         sampler = SimpleNamespace(layer=SimpleNamespace(artifact=layer_artifact),
-                                  share_model_manifest=None, describe=lambda: {'side_teams': {'A': 'AAA', 'B': 'BBB'}})
+                                  share_model_manifest=None, qb_decision_table=None, player_outcome_table=None,
+                                  describe=lambda: {'side_teams': {'A': 'AAA', 'B': 'BBB'}})
         ref = SimpleNamespace(contextual_sampler=sampler)
         table = {'phi': {'receive': 24.4, 'carry': 7.5}, 'base': {'receive': {}, 'carry': {}},
                  'fit': {'receive': {'phi': 24.4, 'team_games': 544},
@@ -96,7 +101,8 @@ class PlayerShareManifest(unittest.TestCase):
             artifact_path = Path(tmp) / 'artifact.json'
             artifact_path.write_text(json.dumps(artifact(list(range(2010, 2026)), 2026)))
             with patch.object(se.er, 'load', return_value=(ref, 0)) as load_ref, \
-                 patch.object(sd, 'load', return_value=table):
+                 patch.object(sd, 'load', return_value=table), \
+                 patch.object(se.er, '_reference_fingerprint', return_value={'sha256': 'reference-hash'}):
                 loaded, _excluded = se.load_reference('/read-only.db', SNAPSHOT, artifact_path, dirichlet_shares=True,
                                                        source_commit='abc123')
         self.assertTrue(load_ref.call_args.kwargs['playcall_player_shares'])
@@ -108,6 +114,31 @@ class PlayerShareManifest(unittest.TestCase):
         self.assertEqual(manifest['concentration']['receive']['team_games'], 544)
         with patch.object(se, 'is_slc', return_value=True):
             self.assertEqual(se.describe(loaded)['player_share_distribution'], manifest)
+
+
+class PlayerOutcomeRoleManifest(unittest.TestCase):
+    def test_receiver_only_role_scope_is_recorded_in_the_model_manifest(self):
+        import player_outcomes as po
+        layer_artifact = {**artifact(list(range(2010, 2026)), 2026), 'artifact_id': 'a', 'sha256': 'b'}
+        sampler = SimpleNamespace(layer=SimpleNamespace(artifact=layer_artifact),
+                                  share_model_manifest=None, qb_decision_table=None,
+                                  player_outcome_table=None,
+                                  describe=lambda: {'side_teams': {'A': 'AAA', 'B': 'BBB'}})
+        ref = SimpleNamespace(contextual_sampler=sampler)
+        table = {'model_version': po.MODEL_VERSION, 'source_seasons': [2022, 2023, 2024, 2025],
+                 'cutoff_season': 2026, 'sha256': 'outcome-hash', 'player_units': {},
+                 'transferred_player_units': {}, 'source_counts': {}}
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact_path = Path(tmp) / 'artifact.json'
+            artifact_path.write_text(json.dumps(artifact(list(range(2010, 2026)), 2026)))
+            with patch.object(se.er, 'load', return_value=(ref, 0)), \
+                 patch.object(se.er, '_reference_fingerprint', return_value={'sha256': 'reference-hash'}), \
+                 patch.object(po, 'load', return_value=table):
+                loaded, _excluded = se.load_reference(
+                    '/read-only.db', SNAPSHOT, artifact_path, player_outcomes=True,
+                    player_outcomes_receiver_only=True, source_commit='abc123')
+        self.assertEqual(loaded.contextual_sampler.player_outcome_roles, ('receiver',))
+        self.assertEqual(loaded.contextual_sampler.player_outcome_manifest['enabled_roles'], ['receiver'])
 
 
 if __name__ == '__main__':

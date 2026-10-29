@@ -448,6 +448,7 @@ def run_batch(args):
                                                            dirichlet_shares=args.playcall_dirichlet_shares,
                                                            qb_decisions=args.playcall_qb_decisions,
                                                            player_outcomes=args.playcall_player_outcomes,
+                                                           player_outcomes_receiver_only=args.playcall_player_outcomes_receiver_only,
                                                            playbook=args.playcall_playbook,
                                                            source_commit=source_provenance['base_commit'],
                                                            streak_league=(str(args.playcall_streak_cache) if (args.playcall_streak_cache and args.playcall_streak_league)
@@ -505,6 +506,7 @@ def run_batch(args):
         'playcall_decision': bool(args.playcall_decision), 'playcall_dirichlet_shares': bool(args.playcall_dirichlet_shares),
         'playcall_qb_decisions': bool(args.playcall_qb_decisions),
         'playcall_player_outcomes': bool(args.playcall_player_outcomes),
+        'playcall_player_outcomes_receiver_only': bool(args.playcall_player_outcomes_receiver_only),
         'playcall_playbook': bool(args.playcall_playbook),
         'playcall_exact_yardline': bool(args.playcall_exact_yardline),
     }
@@ -585,6 +587,7 @@ def run_batch(args):
             'try_policy': 'K=1 research policy' if args.try_policy == 'k1' else 'unconditional control',
             'qb_decisions': bool(args.playcall_qb_decisions),
             'player_conditioned_outcomes': bool(args.playcall_player_outcomes),
+            'player_outcomes_receiver_only': bool(args.playcall_player_outcomes_receiver_only),
         },
         'runtime_seconds': {
             'snapshot_load': round(snapshot_seconds, 4),
@@ -680,6 +683,8 @@ def main(argv=None):
                     help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
     ap.add_argument('--playcall-player-outcomes', action='store_true',
                     help='SLC research: player-conditioned QB, receiver and rusher event/yards/touchdown outcome distributions')
+    ap.add_argument('--playcall-player-outcomes-receiver-only', action='store_true',
+                    help='research ablation: condition player outcome draws on the receiver only; requires --playcall-player-outcomes')
     ap.add_argument('--playcall-decision-unfiltered', action='store_true',
                     help='experiment: with --playcall-decision, the outcome lifts apply but the row is drawn from the whole cell')
     ap.add_argument('--playcall-decision', action='store_true',
@@ -714,6 +719,8 @@ def main(argv=None):
                     help='stop once more than this many seeds have errored; finished seeds stay in the ledger')
     ap.add_argument('--out', required=True)
     args = ap.parse_args(argv)
+    if args.playcall_player_outcomes_receiver_only and not args.playcall_player_outcomes:
+        ap.error('--playcall-player-outcomes-receiver-only requires --playcall-player-outcomes')
     if args.games < 1:
         ap.error('--games must be positive')
     if args.seed_start < 0:

@@ -77,6 +77,32 @@ class Choice(unittest.TestCase):
         self.assertEqual(chosen['receiver']['gsis_id'], 'AWR2')
         self.assertEqual(chosen['labels']['A'], 'WR')
 
+    def test_available_role_with_no_historical_probability_uses_and_records_fallback(self):
+        cell = qbd.cell_of(STATE['down'], STATE['togo'], STATE['yl'])
+        table = {
+            'qb_cell': {('AAA', 'AQB1', cell): Counter({'pass': 100})},
+            'team_cell': {('AAA', cell): Counter({'pass': 100})},
+            'league_cell': {cell: Counter({'pass': 100})},
+            'target_qb_cell': {('AAA', 'AQB1', cell): Counter({'Other': 100})},
+            'target_team_cell': {('AAA', cell): Counter({'Other': 100})},
+            'target_league_cell': {cell: Counter({'Other': 100})},
+            'scramble_cells': set(), 'row_target_roles': {},
+        }
+        snapshot = {**SNAPSHOT, 'rosters': {**SNAPSHOT['rosters'], 'home': {
+            **SNAPSHOT['rosters']['home'],
+            'injury_report': {'players': [
+                {'gsis_id': 'ARB1', 'report_status': 'Out'},
+                {'gsis_id': 'AWR1', 'report_status': 'Out'},
+                {'gsis_id': 'ATE1', 'report_status': 'Out'},
+            ]}}}}
+
+        chosen = pe.choose(snapshot, 'home', 'dropback', 7, 0, state=STATE, qb_decision_table=table)
+
+        self.assertEqual(chosen['qb_decision']['target_role'], 'WR')
+        self.assertEqual(chosen['qb_decision']['target_role_probabilities'], {'WR': 1.0})
+        self.assertEqual(chosen['qb_decision']['target_role_fallback'], 'no_model_mass_for_available_roles')
+        self.assertEqual(chosen['receiver']['gsis_id'], 'AWR2')
+
     def test_qb_scramble_is_a_pre_event_run_and_a_ruled_out_qb_is_skipped(self):
         cell = qbd.cell_of(STATE['down'], STATE['togo'], STATE['yl'])
         table = {
@@ -99,6 +125,22 @@ class Choice(unittest.TestCase):
         self.assertEqual(chosen['passer']['gsis_id'], 'AQB2')
         self.assertEqual(chosen['rusher']['gsis_id'], 'AQB2')
         self.assertEqual(chosen['qb_decision']['action'], 'scramble')
+
+    def test_rostered_out_and_doubtful_players_are_excluded_without_the_qb_model(self):
+        snapshot = {**SNAPSHOT, 'rosters': {**SNAPSHOT['rosters'], 'home': {
+            **SNAPSHOT['rosters']['home'],
+            'injury_report': {'players': [
+                {'gsis_id': 'AQB1', 'report_status': 'Out'},
+                {'gsis_id': 'AWR1', 'report_status': 'Out'},
+                {'gsis_id': 'AWR2', 'report_status': 'Doubtful'},
+                {'gsis_id': 'ARB1', 'report_status': 'Out'},
+            ]}}}}
+        for seed in range(20):
+            dropback = pe.choose(snapshot, 'home', 'dropback', seed=seed, index=0)
+            rush = pe.choose(snapshot, 'home', 'run', seed=seed, index=1)
+            self.assertEqual(dropback['passer']['gsis_id'], 'AQB2')
+            self.assertNotIn(dropback['receiver']['gsis_id'], {'AWR1', 'AWR2'})
+            self.assertNotEqual(rush['rusher']['gsis_id'], 'ARB1')
 
 
 class DrawOrder(unittest.TestCase):
