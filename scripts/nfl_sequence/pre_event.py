@@ -73,7 +73,7 @@ def _by_player_share(players, table, team, role, positions, draw):
 
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
-           share_table=None, playbook_table=None):
+           share_table=None, playbook_table=None, share_cache=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -125,10 +125,14 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                 chosen['target_role'] = role
                 if role in ('RB', 'WR', 'TE'):
                     positions = (role,)
-            eligible = [p for p in receivers if p['pos_abb'] in positions]
-            if share_table is not None and eligible:  # the game's Dirichlet target shares, then this play's draw from them
+            if share_table is not None:  # the game's Dirichlet target shares over the eligible players, then this play's draw
+                import share_distributions
+                eligible = share_distributions.eligible_players([p for p in receivers if p['pos_abb'] in positions],
+                                                                roster.get('injury_report'))
+                if not eligible:  # fail loudly: the adapter below does not know about injuries
+                    raise ValueError(f'no eligible receivers for {team} after the injury report')
                 chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), snapshot['snapshot_sha256'],
-                                                    _draw(f'{base}:receiver:dirichlet'))
+                                                    _draw(f'{base}:receiver:dirichlet'), share_cache)
             else:
                 chosen['receiver'] = _by_player_share(receivers, player_shares, team, 'receive', positions,
                                                       _draw(f'{base}:receiver:player'))
@@ -142,10 +146,14 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                 carried = CARRY_ROLE_POSITIONS.get(labels['B'])
                 if carried and any(p['pos_abb'] in carried for p in players):
                     positions = carried
-            eligible = [p for p in players if p['pos_abb'] in positions]
-            if share_table is not None and eligible:  # the game's Dirichlet carry shares, then this play's draw from them
+            if share_table is not None:  # the game's Dirichlet carry shares over the eligible players, then this play's draw
+                import share_distributions
+                eligible = share_distributions.eligible_players([p for p in players if p['pos_abb'] in positions],
+                                                                roster.get('injury_report'))
+                if not eligible:
+                    raise ValueError(f'no eligible rushers for {team} after the injury report')
                 chosen['rusher'] = _by_game_share(eligible, share_table, team, 'carry', str(seed), snapshot['snapshot_sha256'],
-                                                  _draw(f'{base}:rusher:dirichlet'))
+                                                  _draw(f'{base}:rusher:dirichlet'), share_cache)
             else:
                 chosen['rusher'] = _by_player_share(players, player_shares, team, 'carry', positions,
                                                     _draw(f'{base}:rusher:player'))
@@ -160,10 +168,19 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     return chosen
 
 
-def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw):
-    """A rostered player drawn in proportion to his share in this game's Dirichlet draw (share_distributions)."""
+def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw, cache=None):
+    """A rostered player drawn in proportion to his share in this game's Dirichlet draw (share_distributions).
+
+    With a cache (one per game and seed, held by the chooser), each team and role is drawn once and every play reuses the draw."""
     import share_distributions
-    shares = share_distributions.game_shares(share_table, team, game_id, [p['gsis_id'] for p in candidates], role, seed_text)
+    gsis = [p['gsis_id'] for p in candidates]
+    key = (team, role, game_id, tuple(sorted(gsis)))
+    if cache is not None and key in cache:
+        shares = cache[key]
+    else:
+        shares = share_distributions.game_shares(share_table, team, game_id, gsis, role, seed_text)
+        if cache is not None:
+            cache[key] = shares
     return draw.choices(candidates, weights=[shares[p['gsis_id']] for p in candidates], k=1)[0]
 
 
@@ -172,6 +189,7 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
+    share_cache = {}  # one game and seed: each team's Dirichlet draw is made once and reused by every play
 
     def pick(intent, offense, state=None):
         index = counter['index']
@@ -179,7 +197,8 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
         side = 'home' if offense == 'A' else 'away'
         return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state,
                       player_shares=player_shares, defense_priors=defense_priors, role_table=role_table,
-                      decision_table=decision_table, share_table=share_table, playbook_table=playbook_table)
+                      decision_table=decision_table, share_table=share_table, playbook_table=playbook_table,
+                      share_cache=share_cache)
     return pick
 
 

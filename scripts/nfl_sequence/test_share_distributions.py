@@ -13,6 +13,7 @@ sys.path.insert(0, str(HERE))
 import pre_event as pe  # noqa: E402
 import share_distributions as sd  # noqa: E402
 from test_pre_event import SNAPSHOT  # noqa: E402
+from test_slc_playcall import STATE  # noqa: E402
 
 ROSTER = [('AAA', 'AWR1'), ('AAA', 'AWR2'), ('AAA', 'ATE1'), ('AAA', 'ARB1')]
 BASE = {'AWR1': 0.5, 'AWR2': 0.3, 'ATE1': 0.15, 'ARB1': 0.05}
@@ -93,3 +94,139 @@ class Carry(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+import share_distributions as sdm  # noqa: E402
+import random as _random  # noqa: E402
+
+
+def synthetic_team(phi, team, players, games, rng):
+    """Team-game counts drawn from a Dirichlet-multinomial with known concentration phi and the players' base shares."""
+    shares = [0.4, 0.25, 0.2, 0.1, 0.05][: len(players)]
+    total_share = sum(shares)
+    base = {p: s / total_share for p, s in zip(players, shares)}
+    by_game = {}
+    for g in range(games):
+        n = rng.randint(50, 70)
+        draws = {p: rng.gammavariate(phi * b, 1.0) for p, b in base.items()}
+        tot = sum(draws.values())
+        probs = {p: d / tot for p, d in draws.items()}
+        counts = {p: 0 for p in players}
+        for _ in range(n):
+            r = rng.random()
+            acc = 0.0
+            for p in players:
+                acc += probs[p]
+                if r <= acc:
+                    counts[p] += 1
+                    break
+        by_game[f'{team}-g{g}'] = {p: c for p, c in counts.items() if c}
+    season = {}
+    for counts in by_game.values():
+        for p, c in counts.items():
+            season[p] = season.get(p, 0) + c
+    return by_game, season
+
+
+class Estimator(unittest.TestCase):
+    def test_the_maximum_likelihood_fit_recovers_a_known_concentration(self):
+        rng = _random.Random(11)
+        players = ['P1', 'P2', 'P3', 'P4', 'P5']
+        games, season = synthetic_team(20.0, 'AAA', players, 120, rng)
+        fitted = sdm.fit_from_counts({'AAA': games}, {'AAA': season}, 2025)
+        self.assertGreater(fitted['phi'], 20.0 * 0.6, fitted['phi'])
+        self.assertLess(fitted['phi'], 20.0 * 1.6, fitted['phi'])
+        self.assertLessEqual(fitted['phi_interval'][0], fitted['phi'])
+        self.assertGreaterEqual(fitted['phi_interval'][1], fitted['phi'])
+
+    def test_the_beta_binomial_benchmark_is_fitted_alongside(self):
+        rng = _random.Random(12)
+        games, season = synthetic_team(20.0, 'AAA', ['P1', 'P2', 'P3'], 60, rng)
+        fitted = sdm.fit_from_counts({'AAA': games}, {'AAA': season}, 2025)
+        self.assertIn('beta_binomial_phi', fitted)
+        self.assertGreater(fitted['beta_binomial_phi'], 0)
+
+
+class Transfers(unittest.TestCase):
+    def test_a_player_on_two_teams_has_a_separate_share_on_each(self):
+        base = sdm.base_shares({'AAA': {'X': 30, 'Y': 70}, 'BBB': {'X': 10, 'Z': 90}})
+        self.assertAlmostEqual(base[('AAA', 'X')], 0.3)
+        self.assertAlmostEqual(base[('BBB', 'X')], 0.1)
+        self.assertAlmostEqual(base[('AAA', 'Y')], 0.7)
+
+    def test_a_missing_history_player_gets_the_floor_and_a_share(self):
+        table = {'phi': {'receive': 17.0}, 'base': {'receive': {('AAA', 'X'): 0.9}}}
+        shares = sdm.game_shares(table, 'AAA', 'g1', ['X', 'NEW'], 'receive', 'seed')
+        self.assertGreater(shares['NEW'], 0.0)
+        self.assertAlmostEqual(sum(shares.values()), 1.0)
+
+
+class Eligibility(unittest.TestCase):
+    def test_a_player_out_or_doubtful_is_not_eligible_and_questionable_is(self):
+        players = [{'gsis_id': g} for g in ('A', 'B', 'C', 'D')]
+        report = {'players': [{'gsis_id': 'B', 'report_status': 'Out'}, {'gsis_id': 'C', 'report_status': 'Doubtful'},
+                              {'gsis_id': 'D', 'report_status': 'Questionable'}]}
+        self.assertEqual([p['gsis_id'] for p in sdm.eligible_players(players, report)], ['A', 'D'])
+
+    def test_the_shares_renormalise_over_the_eligible_players(self):
+        table = {'phi': {'receive': 17.0}, 'base': {'receive': {('AAA', 'A'): 0.5, ('AAA', 'B'): 0.5}}}
+        self.assertEqual(sdm.game_shares(table, 'AAA', 'g', ['A'], 'receive', 's'), {'A': 1.0})
+
+    def test_a_single_player_group_always_gives_that_player_the_whole_share(self):
+        table = {'phi': {'receive': 17.0}, 'base': {'receive': {('AAA', 'A'): 0.5}}}
+        shares = sdm.game_shares(table, 'AAA', 'g', ['A'], 'receive', 's')
+        self.assertEqual(shares, {'A': 1.0})
+
+
+class ChooserGates(unittest.TestCase):
+    """The per-game draw is made once per team and game, injured players never take an opportunity, and an empty group fails loudly."""
+
+    def test_the_team_draw_is_made_once_per_game_however_many_plays_there_are(self):
+        import share_distributions as sd_mod
+        calls = []
+        real = sd_mod.game_shares
+
+        def counting(*args, **kwargs):
+            calls.append(args[4])  # the role
+            return real(*args, **kwargs)
+        sd_mod.game_shares = counting
+        try:
+            pick = pe.chooser(SNAPSHOT, seed=5, player_shares={'receive': {}, 'carry': {}},
+                              share_table=concentrated('receive', 'AWR1', 0.9))
+            for _ in range(25):
+                pick('dropback', 'A', dict(STATE))
+        finally:
+            sd_mod.game_shares = real
+        self.assertEqual(calls.count('receive'), 1)
+
+    def test_a_player_listed_out_never_takes_an_opportunity(self):
+        import copy
+        snap = copy.deepcopy(SNAPSHOT)
+        snap['rosters']['home']['injury_report'] = {'players': [{'gsis_id': 'AWR1', 'report_status': 'Out'}]}
+        seen = set()
+        for index in range(40):
+            chosen = pe.choose(snap, 'home', 'dropback', seed=5, index=index, player_shares={'receive': {}, 'carry': {}},
+                               share_table=concentrated('receive', 'AWR1', 0.9))
+            seen.add(chosen['receiver']['gsis_id'])
+        self.assertNotIn('AWR1', seen)
+
+    def test_an_empty_eligible_group_fails_loudly(self):
+        import copy
+        snap = copy.deepcopy(SNAPSHOT)
+        snap['rosters']['home']['injury_report'] = {'players': [{'gsis_id': g, 'report_status': 'Out'}
+                                                                for g in ('AWR1', 'AWR2', 'ATE1', 'ARB1')]}
+        with self.assertRaises(ValueError):
+            pe.choose(snap, 'home', 'dropback', seed=5, index=0, player_shares={'receive': {}, 'carry': {}},
+                      share_table=concentrated('receive', 'AWR1', 0.9))
+
+    def test_a_single_eligible_rusher_always_carries(self):
+        import copy
+        snap = copy.deepcopy(SNAPSHOT)
+        snap['rosters']['home']['injury_report'] = {'players': [{'gsis_id': g, 'report_status': 'Out'}
+                                                                for g in ('AQB1', 'AQB2', 'ARB1', 'AWR1', 'AWR2', 'ATE1')]}
+        snap['rosters']['home']['injury_report']['players'] = [x for x in snap['rosters']['home']['injury_report']['players']
+                                                               if x['gsis_id'] != 'ATE1']
+        for index in range(20):
+            chosen = pe.choose(snap, 'home', 'run', seed=5, index=index, player_shares={'receive': {}, 'carry': {}},
+                               share_table=concentrated('carry', 'ATE1', 0.9))
+            self.assertEqual(chosen['rusher']['gsis_id'], 'ATE1')
