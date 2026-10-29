@@ -21,15 +21,13 @@ Each item is on by default unless marked as a flag.
 | Exact yard line inside the 20 | `slc_playcall.py` | flag `--playcall-exact-yardline` |
 | Player target and carry shares (observed prior-season shares) | `player_shares.py` | flag `--playcall-player-shares` |
 | Per-game Dirichlet target and carry shares | `share_distributions.py` | flag `--playcall-dirichlet-shares` (implies player shares; off by default) |
+| Team playbook priors for pass depth, pass location and run gap | `playbook_prior.py` | flag `--playcall-playbook` (requires decision layer; off by default) |
 | Decision model category A (target role), prior by situation | `target_roles.py` | flag `--playcall-target-roles` |
 | Decision model categories A to N as labels, with the lifts and row filter | `decision_layer.py` | flag `--playcall-decision` (filter on by default) |
 | Team and league win-loss record for display | `wl_streak.py` | display only, not a model input |
 
 ## What is not connected
 
-- **Playbook layer.** The team playbook files (Gridiron Physics, 2025 season, 76 team-season files) are not an input. The
-  categories they describe are the decision model's categories, and those are connected through the decision layer. The playbook
-  files are not yet used as a separate cross-check.
 - **External player-count distributions.** SLC has a separate per-game Dirichlet-multinomial share layer, fitted on prior-season
   nfl_pbp counts and drawn once per team and role. It is behind --playcall-dirichlet-shares and off by default. The external
   target-count Monte Carlo and zero-truncated negative-binomial carry-count models remain unported. The held-out check is in
@@ -57,11 +55,14 @@ Score-clock SLC itself totals about 40 points a game on this snapshot, under the
 arm totals about 50, over by about four. The filter accounts for about +6.4 points of that uplift, from a selection effect. See
 `SLC-DECISION-LAYER-UPLIFT-2026-10-29.md`. No arm here is a calibration to the real league total.
 
-Player-share validation fits 2024 and scores 2025 on returning players with same-team history. The Dirichlet-multinomial improves
-held-out log score by +4.30 per team-game for target counts and +5.54 for carry counts under the reported team-game bootstrap. It moves variance and zero
-rates toward the observed values, while remaining underdispersed. On the same-source CAR-GB check, the fixed-share and Dirichlet
-arms had identical team scores on all 99 paired valid seeds. The 2024 formation replay uses 229 of 256 eligible games and does not
-establish a scoring change. See the two result reports for cohort rules and limitations.
+Player-share validation fits 2024 and scores 2025 on returning players with same-team history (506 receiver and 332 carry player-team
+units). The Dirichlet-multinomial improves held-out log score by +4.30 per team-game for target counts and +5.54 for carry counts,
+with uncertainty resampled by NFL game. Predicted variance and zero rates move closer to observed values, but lower and median count
+quantiles remain too low. On the same-source CAR-GB check, per-player target and carry counts
+changed on all 99 paired valid seeds while team scores stayed identical. The matched playbook input changed mean total points by
+-0.86 (SE 1.76) and home margin by -0.47 (SE 1.80) across 98 paired seeds; this single-matchup result does not establish a scoring
+effect. The 2024 formation replay uses 229 of 256 eligible games and does not establish a scoring change. See the result reports for
+cohort rules and limits.
 
 ## Holdout
 
@@ -72,11 +73,16 @@ the prior season only (2025 for a 2026 forecast). The Week 8 lock (`ad7e26d9`) w
 
 1. The row filter over-samples a subset of labelled rows, and the filtered layer totals about four points above the real league total.
 2. Red-zone yardage remains short (see above).
-3. Most evidence is one snapshot (CAR-GB) at 100 seeds. Margins carry about ±1.6 standard error per arm, so margin differences of
+3. Simulated scrimmage plays run about 9 to 11 percent above 2025; the excess appears in the clock and drive model. This remains
+   uninvestigated.
+4. The share model's lower and median count quantiles remain too low on the 2025 holdout, and the full frozen-roster population was not scored.
+5. Player shares change who receives targets and carries, but outcomes are not conditioned on the selected player's completion,
+   interception, sack, yards or touchdown distribution. Player-conditioned outcomes remain the next model gap.
+6. Most evidence is one snapshot (CAR-GB) at 100 seeds. Margins carry about ±1.6 standard error per arm, so margin differences of
    this size are not team effects.
-4. Some earlier arms ran on older code. Score-clock was rerun on current code (`score_clock_v2`) and matched the earlier totals exactly.
-5. Pass length is taken from the nflverse play-by-play snapshot dated 2026-10-27, read only for seasons before the cutoff.
-6. The 2024 scoring replay has only 89.5 percent game coverage, with missing snapshots concentrated in CIN.
+7. Some earlier arms ran on older code. Score-clock was rerun on current code (`score_clock_v2`) and matched the earlier totals exactly.
+8. Pass length is taken from the nflverse play-by-play snapshot dated 2026-10-27, read only for seasons before the cutoff.
+9. The 2024 scoring replay has only 89.5 percent game coverage, with missing snapshots concentrated in CIN.
 
 ## Intended use and limits
 
