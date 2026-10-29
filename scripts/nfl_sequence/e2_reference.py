@@ -486,7 +486,8 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          contextual_min_effective_games=10.0, team_tendency=False, team_tendency_teams=None,
          playcall_artifact=None, playcall_teams=None, playcall_team_outcomes=False, playcall_formation=False,
          playcall_player_shares=False, playcall_exact_yardline=False, playcall_coverage=False,
-         playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False, playcall_target_roles=False):
+         playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False, playcall_target_roles=False,
+         playcall_decision=False):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -633,6 +634,15 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             dl.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], dl.load_coverage(db, seasons))
             contextual_sampler.defense_priors = dl.priors(db, int(eligible_before[0]))
             contextual_sampler.coverage_outcomes = True
+        if playcall_decision:  # decision model categories A to N: team priors from the most recent prior season; outcomes by label
+            if eligible_before is None:
+                raise ValueError('decision categories need an eligible-before cutoff')
+            import decision_layer as dl2
+            cutoff = int(eligible_before[0])
+            labelled = dl2.load_rows(db, range(dl2.FIRST_CHARTED_SEASON, cutoff))  # raises when no charted season precedes it
+            dl2.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], labelled)
+            contextual_sampler.decision_table = dl2.fit(labelled, prior_season=cutoff - 1)
+            contextual_sampler.decision_outcomes = True
         if playcall_player_shares:  # prior-season player target and carry shares for the pre-event adapter
             if eligible_before is None:
                 raise ValueError('player shares need an eligible-before cutoff')
