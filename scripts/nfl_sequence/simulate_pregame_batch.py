@@ -438,8 +438,8 @@ def run_batch(args):
                                                            player_shares=args.playcall_player_shares,
                                                            exact_yardline=args.playcall_exact_yardline,
                                                            coverage=args.playcall_coverage,
-                                                           point_splits=args.playcall_point_splits_cache or args.playcall_point_splits,
-                                                           streak=args.playcall_streak_splits or args.playcall_streak_cache,
+                                                           point_splits=(str(args.playcall_point_splits_cache) if args.playcall_point_splits_cache else args.playcall_point_splits),
+                                                           streak=(str(args.playcall_streak_cache) if args.playcall_streak_cache else args.playcall_streak_splits),
                                                            streak_file=args.playcall_streak_file,
                                                            streak_league=args.playcall_streak_league)
     elif args.context_mode == 'unconditioned':
