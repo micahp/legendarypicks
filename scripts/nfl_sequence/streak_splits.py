@@ -1,7 +1,8 @@
 """Team win-loss streak splits for play calling: how each team's dropback rate changes with its current streak (SLC v1, research).
 
 A team's streak state before a game is the run of wins or losses it carries into that game, counted within the season from its
-prior results (a new season starts at NONE). The buckets are W3+, W1-2, NONE, L1-2 and L3+. For each team, the prior seasons give a
+prior results (a new season starts at NONE). The buckets are the individual streak lengths: W1 to W4, W5+ for five or more wins,
+NONE, L1 to L4, and L5+ for five or more losses. For each team, the prior seasons give a
 dropback rate in each bucket, shrunk toward the league's rate in the same bucket with the point splits' strength. The shift is the
 log-odds of that bucket rate minus the log-odds of the team's own overall rate, so the team's general pass tendency (the fitted
 team-by-down term) is not counted again. The shift is applied after the artifact's probability, the same way as the point splits.
@@ -14,20 +15,17 @@ from collections import defaultdict
 import playcall_model as pm
 
 PRIOR_STRENGTH = 25.0
-BUCKETS = ('W3+', 'W1-2', 'NONE', 'L1-2', 'L3+')
+STREAK_CAP = 5  # a streak of five or more shares one bucket on each side
+BUCKETS = ('L5+', 'L4', 'L3', 'L2', 'L1', 'NONE', 'W1', 'W2', 'W3', 'W4', 'W5+')
 
 
 def bucket_of(state):
     """state: a signed streak, positive for wins and negative for losses; 0 is no streak."""
-    if state >= 3:
-        return 'W3+'
-    if state > 0:
-        return 'W1-2'
     if state == 0:
         return 'NONE'
-    if state >= -2:
-        return 'L1-2'
-    return 'L3+'
+    if state > 0:
+        return 'W5+' if state >= STREAK_CAP else f'W{state}'
+    return 'L5+' if state <= -STREAK_CAP else f'L{-state}'
 
 
 def streak_states(results):
