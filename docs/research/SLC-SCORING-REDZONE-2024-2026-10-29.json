@@ -1,0 +1,47 @@
+{
+ "actual_2024": {
+  "fourth_down": {
+   "conversion_rate": 0.4655,
+   "converted": 337,
+   "decision_field_goal": 947,
+   "decision_no_play": 256,
+   "decision_punt": 1920,
+   "decision_qb_kneel": 1,
+   "go": 724,
+   "go_rate": 0.1881,
+   "tries": 3848
+  },
+  "redzone": {
+   "drives": 2016,
+   "outcome_field_goal": 547,
+   "outcome_other": 213,
+   "outcome_touchdown": 1256,
+   "touchdown_per_redzone_drive": 0.623
+  }
+ },
+ "definitions": "fourth down: run or pass on down 4; converted: the next play in the drive is first down; red zone: the drive reaches 20 or closer at any scrimmage play. Replay weeks 2-18, 2 seeds per game, exploratory.",
+ "replay": {
+  "fourth_down": {
+   "conversion_rate": 0.4126,
+   "converted": 644,
+   "decision_dropback": 1016,
+   "decision_field_goal_attempt": 1922,
+   "decision_punt": 3775,
+   "decision_run": 545,
+   "go": 1561,
+   "go_rate": 0.2151,
+   "tries": 7258
+  },
+  "redzone": {
+   "drives": 3015,
+   "outcome_end_of_regulation": 42,
+   "outcome_field_goal_attempt": 1034,
+   "outcome_halftime": 57,
+   "outcome_punt": 40,
+   "outcome_touchdown": 1461,
+   "outcome_turnover": 148,
+   "outcome_turnover_on_downs": 233,
+   "touchdown_per_redzone_drive": 0.4846
+  }
+ }
+}
