@@ -28,6 +28,7 @@ import e1_drive as e1  # noqa: E402
 import playcall_model as pm  # noqa: E402
 import formation_layer  # noqa: E402
 import point_splits  # noqa: E402
+import decision_layer  # noqa: E402
 import streak_splits  # noqa: E402
 import pre_event as pe  # noqa: E402
 import run_playcall_eval as rpe  # noqa: E402
@@ -162,6 +163,9 @@ class PlayCallSampler:
         # defensive coverage on dropbacks: the defense's prior shares (defense_layer) and the coverage-conditioned outcomes
         self.coverage_outcomes = False
         self.defense_priors = None
+        # decision model categories A to N (decision_layer): the prior tables, and the outcome lifts and filters on the drawn labels
+        self.decision_table = None
+        self.decision_outcomes = False
 
     def _team(self, label):
         if self.side_teams is None:
@@ -186,13 +190,17 @@ class PlayCallSampler:
         by_formation = defaultdict(Counter)  # outcome-type counts by the play's published formation (UNKNOWN when none)
         by_coverage = defaultdict(Counter)  # and by the published coverage
         by_streak = defaultdict(Counter)  # and by the offense's streak going into the game
+        by_label = defaultdict(Counter)  # and by each decision label ('A=WR'), when the rows carry labels (decision_layer)
         for sample in cell:
             outcome = (intent_of(sample[0], sample[1]), sample[0])
             by_formation[sample[1].get('formation', UNKNOWN)][outcome] += 1
             by_coverage[sample[1].get('coverage', UNKNOWN)][outcome] += 1
             by_streak[sample[1].get('streak', 'NONE')][outcome] += 1
+            for cat, value in (sample[1].get('labels') or {}).items():
+                if value is not None:
+                    by_label[decision_layer.label_key(cat, value)][outcome] += 1
         entry = {'key': key, 'base': base, 'by_formation': dict(by_formation), 'by_coverage': dict(by_coverage),
-                 'by_streak': dict(by_streak),
+                 'by_streak': dict(by_streak), 'by_label': dict(by_label),
                  'by_key': {k: sorted(v, key=lambda s: (s[1]['game_id'], s[1]['play_id'])) for k, v in by_key.items()}}
         self._cells[id(cell)] = (cell, entry)
         return entry
@@ -237,6 +245,9 @@ class PlayCallSampler:
         use_coverage = coverage is not None and self.coverage_outcomes
         streak_bucket = self.current_streak.get(team) if self.streak_outcomes else None
         use_streak = streak_bucket is not None
+        labels = pre_event.get('labels') if pre_event else None  # decision categories A to N, drawn before the outcome
+        use_labels = bool(labels) and self.decision_outcomes
+        labels_matched = []
         weights = []
         for k in keys:
             weight = entry['base'][k]
@@ -246,10 +257,13 @@ class PlayCallSampler:
                 weight *= self._lift(entry, k, coverage, 'by_coverage')
             if use_streak:  # the league's outcome mix for this streak state, relative to the cell
                 weight *= self._lift(entry, k, streak_bucket, 'by_streak')
+            if use_labels:  # the drawn labels' lifts, averaged in log space: the categories overlap, so they do not compound
+                weight *= decision_layer.geometric_mean([self._lift(entry, k, decision_layer.label_key(c, v), 'by_label')
+                                                         for c, v in labels.items() if v is not None])
             if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
                 weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
             weights.append(weight)
-        if self.team_outcomes is None and not use_formation and not use_coverage and not use_streak:
+        if self.team_outcomes is None and not use_formation and not use_coverage and not use_streak and not use_labels:
             key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]  # the unchanged baseline draw
         else:
             key = rng.choices(keys, weights=weights)[0]
@@ -263,6 +277,15 @@ class PlayCallSampler:
         if use_streak:
             matched = [c for c in candidates if c[1].get('streak', 'NONE') == streak_bucket]
             candidates = matched or candidates
+        if use_labels:  # the row takes each drawn label in category order, where the cell has a row that carries it
+            for cat in decision_layer.CATS:
+                value = labels.get(cat)
+                if value is None:
+                    continue
+                matched = [c for c in candidates if (c[1].get('labels') or {}).get(cat) == value]
+                if matched:
+                    candidates = matched
+                    labels_matched.append(cat)
         if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
             exact = [c for c in candidates if c[1].get('yardline_100') is not None and int(c[1]['yardline_100']) == int(state['yl'])]
             candidates = exact or candidates  # a touchdown flag then comes from the same distance the state is at
@@ -274,6 +297,7 @@ class PlayCallSampler:
             'formation': formation, 'personnel': pre_event.get('personnel') if pre_event else None,
             'formation_conditioned': bool(use_formation), 'coverage': coverage, 'coverage_conditioned': bool(use_coverage),
             'streak_outcome_conditioned': bool(use_streak),
+            'labels': labels, 'labels_conditioned': bool(use_labels), 'labels_matched': labels_matched,
             'team_outcome_split': self.team_outcomes is not None,
             'state': {'quarter': int(state['quarter']), 'clock': int(state['clock']), 'down': int(state['down']),
                       'togo': int(state['togo']), 'yardline_100': int(state['yl']),
