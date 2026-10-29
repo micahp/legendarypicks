@@ -191,16 +191,19 @@ class PlayCallSampler:
         by_coverage = defaultdict(Counter)  # and by the published coverage
         by_streak = defaultdict(Counter)  # and by the offense's streak going into the game
         by_label = defaultdict(Counter)  # and by each decision label ('A=WR'), when the rows carry labels (decision_layer)
+        base_labelled = Counter()  # the outcome mix of the labelled rows alone: the charted seasons are a subset of the cell
         for sample in cell:
             outcome = (intent_of(sample[0], sample[1]), sample[0])
             by_formation[sample[1].get('formation', UNKNOWN)][outcome] += 1
             by_coverage[sample[1].get('coverage', UNKNOWN)][outcome] += 1
             by_streak[sample[1].get('streak', 'NONE')][outcome] += 1
-            for cat, value in (sample[1].get('labels') or {}).items():
-                if value is not None:
-                    by_label[decision_layer.label_key(cat, value)][outcome] += 1
+            row_labels = {cat: value for cat, value in (sample[1].get('labels') or {}).items() if value is not None}
+            if row_labels:
+                base_labelled[outcome] += 1  # once per row, however many labels it carries
+            for cat, value in row_labels.items():
+                by_label[decision_layer.label_key(cat, value)][outcome] += 1
         entry = {'key': key, 'base': base, 'by_formation': dict(by_formation), 'by_coverage': dict(by_coverage),
-                 'by_streak': dict(by_streak), 'by_label': dict(by_label),
+                 'by_streak': dict(by_streak), 'by_label': dict(by_label), 'base_labelled': base_labelled,
                  'by_key': {k: sorted(v, key=lambda s: (s[1]['game_id'], s[1]['play_id'])) for k, v in by_key.items()}}
         self._cells[id(cell)] = (cell, entry)
         return entry
@@ -258,7 +261,7 @@ class PlayCallSampler:
             if use_streak:  # the league's outcome mix for this streak state, relative to the cell
                 weight *= self._lift(entry, k, streak_bucket, 'by_streak')
             if use_labels:  # the drawn labels' lifts, averaged in log space: the categories overlap, so they do not compound
-                weight *= decision_layer.geometric_mean([self._lift(entry, k, decision_layer.label_key(c, v), 'by_label')
+                weight *= decision_layer.geometric_mean([self._label_lift(entry, k, decision_layer.label_key(c, v))
                                                          for c, v in labels.items() if v is not None])
             if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
                 weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
@@ -310,6 +313,19 @@ class PlayCallSampler:
             'fallback': fallback, 'source': {'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season']},
         })
         return event, row, runoff, spot
+
+    def _label_lift(self, entry, key, value):
+        """P(outcome type | label) over the labelled rows, divided by those rows' own share of the outcome, shrunk to that share.
+        A cell with no labelled rows, or with no labelled row of this outcome, has no lift (1.0)."""
+        base = entry['base_labelled']
+        total = sum(base.values())
+        if not total or not base[key]:
+            return 1.0
+        base_share = base[key] / total
+        counts = entry['by_label'].get(value, Counter())
+        n_value = sum(counts.values())
+        conditional = (counts[key] + formation_layer.PRIOR_STRENGTH * base_share) / (n_value + formation_layer.PRIOR_STRENGTH)
+        return conditional / base_share
 
     def _lift(self, entry, key, value, table):
         """P(outcome type | value) divided by the cell's own share, for this cell, shrunk to the cell with the layer's strength."""

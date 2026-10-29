@@ -273,3 +273,17 @@ class CarryLabels(unittest.TestCase):
     def test_a_qb_rusher_role_carries_from_the_quarterbacks(self):
         for seed in range(1, 41):
             self.assertEqual(self._run('QB', seed)['rusher']['pos_abb'], 'QB', seed)
+
+
+class LabelLiftBase(unittest.TestCase):
+    """A label that tells nothing within the rows that carry it must not move the outcome mix, even when other rows in the cell lack
+    labels (the charted seasons are a subset of the pool). The lift is taken against the labelled rows' own mix."""
+
+    def test_an_uninformative_label_has_a_neutral_lift_when_some_rows_are_unlabelled(self):
+        rows = labelled_cell([('pass_complete', 'pass', {})] * 100
+                             + [('run', 'run', {'E': 'left'})] * 50
+                             + [('pass_complete', 'pass', {'E': 'left'})] * 50)
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        entry = sampler._entry(rows)
+        for key in (('dropback', 'pass_complete'), ('run', 'run')):
+            self.assertAlmostEqual(sampler._label_lift(entry, key, 'E=left'), 1.0, delta=0.02, msg=str(key))
