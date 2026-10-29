@@ -72,3 +72,17 @@ do (see the next section).
 The decision layer with its lifts and row filter, and the arm with the row filter off, are in
 `SLC-DECISION-LAYER-UPLIFT-2026-10-29.md`. The filter accounts for about +6.4 points a game of the +10.4 total uplift, and the
 filtered total is about four points above the real league total. The uplift should not be quoted as a calibration gain.
+
+## Playbook input against the decision-only arm (added 2026-10-29)
+
+Playbook files as the pre-event prior for pass depth, pass location and run gap, replacing the decision draw for those categories where
+the playbook has a prior. 100 seeds, paired against the decision-only arm on the same code (valid games only): total -0.86 ± 1.76,
+margin -0.47 ± 1.80, home win -0.07 ± 0.08 (98 paired). No detectable difference. The two sources describe the same plays, so this
+is the double count the review flagged: the playbook input adds no information beyond the decision prior. Whether it becomes an input
+by default is for review.
+
+## Team outcome splits alone, current code (added 2026-10-29)
+
+Team outcome splits only (`--playcall-team-outcomes`), 100 seeds, paired against score-clock SLC on the same code (valid games only):
+margin +2.38 ± 1.49, total +2.18 ± 1.36, home win +0.07 ± 0.07 (97 paired). A positive shift on this one matchup, within about 1.6
+standard errors. Team strength enters the engine through these splits, and only through them: the baseline has no team scoring term.
