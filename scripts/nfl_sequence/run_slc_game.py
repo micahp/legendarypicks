@@ -19,7 +19,7 @@ import pregame_snapshot  # noqa: E402
 import slc_engine  # noqa: E402
 
 
-def main():
+def parse_args(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--artifact', type=Path, required=True, help='play-call artifact fitted before the game season')
     ap.add_argument('--snapshot-file', type=Path, help='hash-pinned pregame snapshot JSON')
@@ -34,10 +34,22 @@ def main():
     ap.add_argument('--team-outcomes', action='store_true',
                     help='SLC v1 research: prior-season team event splits within the play-call intent')
     ap.add_argument('--formation', action='store_true', help='SLC v1 research: pre-event formation and personnel, outcomes conditioned on formation')
+    ap.add_argument('--dirichlet-shares', action='store_true',
+                    help='SLC v1 research: per-game Dirichlet target and carry shares (fitted on the prior season), drawn once per team '
+                         'and game; implies the player-share adapter')
     ap.add_argument('--seed', type=int, required=True)
     ap.add_argument('--db', default=e1.DEFAULT_DB)
     ap.add_argument('--out', type=Path, required=True)
-    args = ap.parse_args()
+    return ap.parse_args(argv)
+
+
+def player_shares_for(args):
+    """The player-share adapter is on whenever the Dirichlet shares are: the shares are drawn over the adapter's players."""
+    return bool(args.dirichlet_shares)
+
+
+def main():
+    args = parse_args()
 
     if args.snapshot_file:
         snapshot = pregame_snapshot.load_frozen_snapshot(str(args.snapshot_file))
@@ -53,7 +65,8 @@ def main():
         pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
 
     ref, excluded = slc_engine.load_reference(args.db, snapshot, args.artifact, team_outcomes=args.team_outcomes,
-                                                formation=args.formation)
+                                                formation=args.formation, player_shares=player_shares_for(args),
+                                                dirichlet_shares=args.dirichlet_shares)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
     pregame_snapshot.reseal(snapshot)

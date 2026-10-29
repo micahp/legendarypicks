@@ -30,7 +30,8 @@ def drive_rows(record):
         plays = drive.get('plays', [])
         rows.append({'offense': drive['offense_team'], 'terminal': drive.get('terminal'),
                      'points': (drive.get('points_scored_on_drive') or {}).get('points', 0),
-                     'plays': len(plays), 'quarter_start': drive.get('quarter_start'), 'end_quarter': drive.get('end_quarter'),
+                     'plays': len(plays), 'events': [play['event_type'] for play in plays],
+                     'quarter_start': drive.get('quarter_start'), 'end_quarter': drive.get('end_quarter'),
                      'clock_start': drive.get('clock_start'), 'end_clock': drive.get('end_clock')})
     return rows
 
