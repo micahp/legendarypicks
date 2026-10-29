@@ -118,4 +118,7 @@ def ids(pre):
     """The chosen players' GSIS ids, for the decision record."""
     if pre is None:
         return None
-    return {role: player['gsis_id'] for role, player in pre.items() if isinstance(player, dict)}
+    out = {role: player['gsis_id'] for role, player in pre.items() if isinstance(player, dict)}
+    if pre.get('target_role') is not None:  # the decision model's category, not a player: kept so the record shows it
+        out['target_role'] = pre['target_role']
+    return out
