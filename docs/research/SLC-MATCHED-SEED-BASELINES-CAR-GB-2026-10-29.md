@@ -86,3 +86,10 @@ by default is for review.
 Team outcome splits only (`--playcall-team-outcomes`), 100 seeds, paired against score-clock SLC on the same code (valid games only):
 margin +2.38 ± 1.49, total +2.18 ± 1.36, home win +0.07 ± 0.07 (97 paired). A positive shift on this one matchup, within about 1.6
 standard errors. Team strength enters the engine through these splits, and only through them: the baseline has no team scoring term.
+
+## Formation-conditioned outcomes alone, current code (added 2026-10-29)
+
+Formation and personnel with formation-conditioned outcomes (`--playcall-formation`), 100 seeds, paired against score-clock SLC on the
+same code (valid games only): total +2.03 ± 1.61, margin +0.90 ± 1.95, home win +0.02 ± 0.08 (94 paired). Within noise on this
+matchup. The 2024 replay, which spans the whole season, is the test of whether formation moves the scoring deficit; see the calibration
+note once it is complete.
