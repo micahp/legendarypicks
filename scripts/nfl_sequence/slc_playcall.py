@@ -145,6 +145,11 @@ class PlayCallSampler:
         self.formation_outcomes = False
         self.formation_priors = None
         self.player_shares = None  # prior-season player shares for the pre-event participant adapter (player_shares)
+        # red-zone geometry: inside the 20, draw the outcome only from rows at the state's exact yard line when there are any
+        self.exact_yardline = False
+        # defensive coverage on dropbacks: the defense's prior shares (defense_layer) and the coverage-conditioned outcomes
+        self.coverage_outcomes = False
+        self.defense_priors = None
 
     def _team(self, label):
         if self.side_teams is None:
@@ -167,9 +172,12 @@ class PlayCallSampler:
             by_key[(intent_of(sample[0], sample[1]), sample[0])].append(sample)
         base = Counter({k: len(v) for k, v in by_key.items()})
         by_formation = defaultdict(Counter)  # outcome-type counts by the play's published formation (UNKNOWN when none)
+        by_coverage = defaultdict(Counter)  # and by the published coverage
         for sample in cell:
-            by_formation[sample[1].get('formation', UNKNOWN)][(intent_of(sample[0], sample[1]), sample[0])] += 1
-        entry = {'key': key, 'base': base, 'by_formation': dict(by_formation),
+            outcome = (intent_of(sample[0], sample[1]), sample[0])
+            by_formation[sample[1].get('formation', UNKNOWN)][outcome] += 1
+            by_coverage[sample[1].get('coverage', UNKNOWN)][outcome] += 1
+        entry = {'key': key, 'base': base, 'by_formation': dict(by_formation), 'by_coverage': dict(by_coverage),
                  'by_key': {k: sorted(v, key=lambda s: (s[1]['game_id'], s[1]['play_id'])) for k, v in by_key.items()}}
         self._cells[id(cell)] = (cell, entry)
         return entry
@@ -194,29 +202,42 @@ class PlayCallSampler:
             raise e1.SamplingUnavailable(f'playcall_no_{intent}_outcomes_in_cell:{entry["key"]}')
         pre_event = self.participant_chooser(intent, offense, state) if self.participant_chooser is not None else None
         formation = pre_event.get('formation') if pre_event else None  # chosen before the outcome, from the situation alone
+        coverage = pre_event.get('coverage') if pre_event else None  # a dropback decision: the defense's coverage
+        if intent != 'dropback':
+            coverage = None
+        use_formation = formation is not None and self.formation_outcomes
+        use_coverage = coverage is not None and self.coverage_outcomes
         weights = []
         for k in keys:
             weight = entry['base'][k]
-            if formation is not None and self.formation_outcomes:
-                weight = self._formation_weight(entry, k, formation) * total
+            if use_formation:  # lifts multiply: formation and coverage are treated as independent given the outcome
+                weight *= self._lift(entry, k, formation, 'by_formation')
+            if use_coverage:
+                weight *= self._lift(entry, k, coverage, 'by_coverage')
             if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
                 weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
             weights.append(weight)
-        if self.team_outcomes is None and formation is None:
+        if self.team_outcomes is None and not use_formation and not use_coverage:
             key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]  # the unchanged baseline draw
         else:
             key = rng.choices(keys, weights=weights)[0]
         candidates = entry['by_key'][key]
-        if formation is not None and self.formation_outcomes:
+        if use_formation:
             matched = [c for c in candidates if c[1].get('formation', UNKNOWN) == formation]
             candidates = matched or candidates  # no row with this formation in the cell: the cell's rows
+        if use_coverage:
+            matched = [c for c in candidates if c[1].get('coverage', UNKNOWN) == coverage]
+            candidates = matched or candidates
+        if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
+            exact = [c for c in candidates if c[1].get('yardline_100') is not None and int(c[1]['yardline_100']) == int(state['yl'])]
+            candidates = exact or candidates  # a touchdown flag then comes from the same distance the state is at
         event, row, runoff, spot = rng.choice(candidates)
         if pre_event is not None:
             row = dict(row, pre_event=pre_event)  # the chosen participants travel with the outcome; the row itself is not changed
         self.decisions.append({
             'participants': pe.ids(pre_event),
             'formation': formation, 'personnel': pre_event.get('personnel') if pre_event else None,
-            'formation_conditioned': bool(formation is not None and self.formation_outcomes),
+            'formation_conditioned': bool(use_formation), 'coverage': coverage, 'coverage_conditioned': bool(use_coverage),
             'team_outcome_split': self.team_outcomes is not None,
             'state': {'quarter': int(state['quarter']), 'clock': int(state['clock']), 'down': int(state['down']),
                       'togo': int(state['togo']), 'yardline_100': int(state['yl']),
@@ -227,12 +248,13 @@ class PlayCallSampler:
         })
         return event, row, runoff, spot
 
-    def _formation_weight(self, entry, key, formation):
-        """P(outcome type | formation) for this cell, shrunk to the cell's own share with the formation layer's strength."""
+    def _lift(self, entry, key, value, table):
+        """P(outcome type | value) divided by the cell's own share, for this cell, shrunk to the cell with the layer's strength."""
         base_share = entry['base'][key] / sum(entry['base'].values())
-        counts = entry['by_formation'].get(formation, Counter())
-        n_formation = sum(counts.values())
-        return (counts[key] + formation_layer.PRIOR_STRENGTH * base_share) / (n_formation + formation_layer.PRIOR_STRENGTH)
+        counts = entry[table].get(value, Counter())
+        n_value = sum(counts.values())
+        conditional = (counts[key] + formation_layer.PRIOR_STRENGTH * base_share) / (n_value + formation_layer.PRIOR_STRENGTH)
+        return conditional / base_share
 
     def _outcome_weight(self, event, offense, defense, cell):
         """Offense and defense event ratios for this cell, multiplied. A team with no prior-season sample adds no effect."""

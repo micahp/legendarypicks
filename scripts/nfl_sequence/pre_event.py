@@ -53,7 +53,7 @@ def _by_player_share(players, table, team, role, positions, draw):
     return draw.choices(candidates, weights=weights, k=1)[0]
 
 
-def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None):
+def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -83,10 +83,14 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
         import formation_layer  # local: the formation layer is optional
         chosen['formation'], chosen['personnel'] = formation_layer.choose(
             formation_priors, intent, state['down'], state['togo'], f'{base}:formation')
+    if defense_priors is not None and intent == 'dropback':
+        import defense_layer
+        other = 'away' if side == 'home' else 'home'  # the defense is the other roster's team
+        chosen['coverage'] = defense_layer.choose(defense_priors, snapshot['rosters'][other]['team'], f'{base}:coverage')
     return chosen
 
 
-def chooser(snapshot, seed, formation_priors=None, player_shares=None):
+def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
@@ -96,7 +100,7 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None):
         counter['index'] += 1
         side = 'home' if offense == 'A' else 'away'
         return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state,
-                      player_shares=player_shares)
+                      player_shares=player_shares, defense_priors=defense_priors)
     return pick
 
 
