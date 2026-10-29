@@ -167,6 +167,8 @@ class PlayCallSampler:
         self.decision_table = None
         self.decision_outcomes = False
         self.decision_filter = True  # False: the lifts shape the outcome, but the row is drawn from the whole cell (an experiment)
+        # per-game Dirichlet target and carry shares (share_distributions), None when off: the receiver and rusher are drawn from them
+        self.share_table = None
 
     def _team(self, label):
         if self.side_teams is None:

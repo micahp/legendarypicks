@@ -444,6 +444,7 @@ def run_batch(args):
                                                            target_roles=args.playcall_target_roles,
                                                            decision=args.playcall_decision,
                                                            decision_filter=not args.playcall_decision_unfiltered,
+                                                           dirichlet_shares=args.playcall_dirichlet_shares,
                                                            streak_league=(str(args.playcall_streak_cache) if (args.playcall_streak_cache and args.playcall_streak_league)
                                                                           else args.playcall_streak_league))
     elif args.context_mode == 'unconditioned':
@@ -490,7 +491,7 @@ def run_batch(args):
         'seed_start': args.seed_start, 'playcall_artifact_sha256': (slc_engine.describe(ref) or {}).get('artifact_sha256'),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage), 'playcall_player_shares': bool(args.playcall_player_shares),
-        'playcall_decision': bool(args.playcall_decision),
+        'playcall_decision': bool(args.playcall_decision), 'playcall_dirichlet_shares': bool(args.playcall_dirichlet_shares),
         'playcall_exact_yardline': bool(args.playcall_exact_yardline),
     }
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
@@ -651,6 +652,9 @@ def main(argv=None):
     ap.add_argument('--playcall-streak-cache', type=Path, default=None, help='frame cache for the streak splits')
     ap.add_argument('--playcall-target-roles', action='store_true',
                     help='SLC v1 research: decision model category A (target role) as a team-by-situation pre-event prior')
+    ap.add_argument('--playcall-dirichlet-shares', action='store_true',
+                    help='SLC v1 research: per-game Dirichlet target and carry shares, fitted on the prior season; the receiver and '
+                         'rusher are drawn from each game\'s shares')
     ap.add_argument('--playcall-decision-unfiltered', action='store_true',
                     help='experiment: with --playcall-decision, the outcome lifts apply but the row is drawn from the whole cell')
     ap.add_argument('--playcall-decision', action='store_true',
