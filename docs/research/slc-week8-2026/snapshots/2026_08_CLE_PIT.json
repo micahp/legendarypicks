@@ -1,0 +1,480 @@
+{
+ "as_of": "2026-10-29T00:02:21Z",
+ "capture": {
+  "files": [
+   {
+    "acquired_at_utc": "2026-10-28T23:59:53Z",
+    "bytes": 3180052,
+    "last_modified_utc": "2026-10-28T13:58:09Z",
+    "name": "depth_charts_2026.parquet",
+    "sha256": "5649117a1abe4fd413e5286e5802092a80d858bc4847cbf5e8f79ebdff46cbae",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+   },
+   {
+    "acquired_at_utc": "2026-10-28T23:59:54Z",
+    "bytes": 51877,
+    "last_modified_utc": "2026-10-28T13:57:55Z",
+    "name": "injuries_2026.parquet",
+    "sha256": "2d9ae1129e9cd3249b6f1334557679dee5de465f0728aeeaaabd68f8a89b9539",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+   },
+   {
+    "acquired_at_utc": "2026-10-29T00:00:26Z",
+    "bytes": 522840,
+    "last_modified_utc": "2026-10-28T23:46:31Z",
+    "name": "games.parquet",
+    "sha256": "883f03d71a02fa11d7b286236c8456e6c3bc3a7a179c0cb83bbd051e1ef95dbd",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet"
+   }
+  ],
+  "frozen_at_utc": "2026-10-29T00:02:21Z",
+  "kickoff_rule": "nflverse gametime as America/New_York"
+ },
+ "evaluation": {
+  "class": "prospective_forecast",
+  "unverified_inputs": [],
+  "verified": true
+ },
+ "model_reference": {
+  "participant_assignment_version": "pregame-role-usage-v1",
+  "play_pool": "nfl_pbp seasons 2022-2025 only; no 2026 outcome is in the pool",
+  "rule_version": "NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix"
+ },
+ "roster_snapshot_id": "capture:70b3985966c044079671b02a864351afbcd8218b729cdd35d93a05cb457b43b4",
+ "rosters": {
+  "away": {
+   "injury_report": {
+    "available": false,
+    "players": [],
+    "rows": 0
+   },
+   "players": [
+    {
+     "gsis_id": "00-0041037",
+     "player_id": 2245,
+     "player_name": "Denzel Boston",
+     "pos_abb": "WR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0033537",
+     "player_id": 23449,
+     "player_name": "Deshaun Watson",
+     "pos_abb": "QB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0040663",
+     "player_id": 6853,
+     "player_name": "Harold Fannin Jr.",
+     "pos_abb": "TE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0040784",
+     "player_id": 12240,
+     "player_name": "Quinshon Judkins",
+     "pos_abb": "RB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0031595",
+     "player_id": 3310,
+     "player_name": "Michael Burton",
+     "pos_abb": "FB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0041547",
+     "player_id": 4580,
+     "player_name": "KC Concepcion",
+     "pos_abb": "WR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0040668",
+     "player_id": 19535,
+     "player_name": "Shedeur Sanders",
+     "pos_abb": "QB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0038710",
+     "player_id": 23857,
+     "player_name": "Blake Whiteheart",
+     "pos_abb": "TE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0040162",
+     "player_id": 19473,
+     "player_name": "Dylan Sampson",
+     "pos_abb": "RB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0036407",
+     "player_id": 11411,
+     "player_name": "Jerry Jeudy",
+     "pos_abb": "WR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0040704",
+     "player_id": 7644,
+     "player_name": "Dillon Gabriel",
+     "pos_abb": "QB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0041087",
+     "player_id": 19267,
+     "player_name": "Joe Royer",
+     "pos_abb": "TE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0038794",
+     "player_id": 15026,
+     "player_name": "Jaleel McLaughlin",
+     "pos_abb": "RB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0040782",
+     "player_id": 2146,
+     "player_name": "Isaiah Bond",
+     "pos_abb": "WR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0041092",
+     "player_id": 8545,
+     "player_name": "Taylen Green",
+     "pos_abb": "QB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0039373",
+     "player_id": 6705,
+     "player_name": "Audric Estime",
+     "pos_abb": "RB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0036630",
+     "player_id": 23195,
+     "player_name": "Tylan Wallace",
+     "pos_abb": "WR",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0040466",
+     "player_id": 19533,
+     "player_name": "Raheim Sanders",
+     "pos_abb": "RB",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    },
+    {
+     "gsis_id": "00-0039920",
+     "player_id": 4752,
+     "player_name": "Malachi Corley",
+     "pos_abb": "WR",
+     "pos_rank": 6,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "CLE"
+    }
+   ],
+   "snapshot_at": "2026-10-28T13:58:02Z",
+   "source": "nflverse_depth_charts_capture",
+   "team": "CLE",
+   "unresolved_depth_rows": 0
+  },
+  "home": {
+   "injury_report": {
+    "available": false,
+    "players": [],
+    "rows": 0
+   },
+   "players": [
+    {
+     "gsis_id": "00-0035640",
+     "player_id": 15260,
+     "player_name": "DK Metcalf",
+     "pos_abb": "WR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0023459",
+     "player_id": 19023,
+     "player_name": "Aaron Rodgers",
+     "pos_abb": "QB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0038558",
+     "player_id": 23360,
+     "player_name": "Darnell Washington",
+     "pos_abb": "TE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0037228",
+     "player_id": 23316,
+     "player_name": "Jaylen Warren",
+     "pos_abb": "RB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0041398",
+     "player_id": 16618,
+     "player_name": "Riley Nowakowski",
+     "pos_abb": "FB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0041489",
+     "player_id": 1773,
+     "player_name": "Germie Bernard",
+     "pos_abb": "WR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0034771",
+     "player_id": 19303,
+     "player_name": "Mason Rudolph",
+     "pos_abb": "QB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0036894",
+     "player_id": 7532,
+     "player_name": "Pat Freiermuth",
+     "pos_abb": "TE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0036139",
+     "player_id": 6071,
+     "player_name": "Rico Dowdle",
+     "pos_abb": "RB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0036862",
+     "player_id": 20404,
+     "player_name": "Ben Skowronek",
+     "pos_abb": "WR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0040203",
+     "player_id": 10506,
+     "player_name": "Will Howard",
+     "pos_abb": "QB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0033757",
+     "player_id": 22388,
+     "player_name": "Robert Tonyan",
+     "pos_abb": "TE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0035594",
+     "player_id": 10352,
+     "player_name": "Travis Homer",
+     "pos_abb": "RB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0041397",
+     "player_id": 23709,
+     "player_name": "Kaden Wetjen",
+     "pos_abb": "WR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0041565",
+     "player_id": 412,
+     "player_name": "Drew Allar",
+     "pos_abb": "QB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0038409",
+     "player_id": 16471,
+     "player_name": "Lew Nichols",
+     "pos_abb": "RB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0036252",
+     "player_id": 17733,
+     "player_name": "Michael Pittman Jr.",
+     "pos_abb": "WR",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0041490",
+     "player_id": 9703,
+     "player_name": "Eli Heidenreich",
+     "pos_abb": "RB",
+     "pos_rank": 5,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0039739",
+     "player_id": 24524,
+     "player_name": "Roman Wilson",
+     "pos_abb": "WR",
+     "pos_rank": 6,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    },
+    {
+     "gsis_id": "00-0039626",
+     "player_id": 3201,
+     "player_name": "Cole Burgess",
+     "pos_abb": "WR",
+     "pos_rank": 7,
+     "snapshot_at": "2026-10-28T13:58:02Z",
+     "source": "nflverse_depth_charts_capture",
+     "team": "PIT"
+    }
+   ],
+   "snapshot_at": "2026-10-28T13:58:02Z",
+   "source": "nflverse_depth_charts_capture",
+   "team": "PIT",
+   "unresolved_depth_rows": 0
+  }
+ },
+ "schedule": {
+  "availability_classification": "captured_before_cutoff",
+  "away_team": "CLE",
+  "game_id": "2026_08_CLE_PIT",
+  "game_type": "REG",
+  "gameday": "2026-11-01",
+  "gametime": "13:00",
+  "gametime_timezone": "America/New_York",
+  "home_team": "PIT",
+  "ingested_at": null,
+  "kickoff_source_url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet",
+  "scheduled_kickoff_utc": "2026-11-01T18:00:00Z",
+  "season": 2026,
+  "source": "nflverse_games_capture",
+  "week": 8
+ },
+ "schema": "lp-nfl-pregame-snapshot-1",
+ "snapshot_sha256": "01173abf541861cb5dd7a350469a8c95bff5f5a123d8b6976991ec6a46a36681"
+}
