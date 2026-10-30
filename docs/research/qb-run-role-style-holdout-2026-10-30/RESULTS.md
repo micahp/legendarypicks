@@ -30,6 +30,8 @@ Both windows favor the style adjustment by the Brier point estimate, but neither
 
 In the 2026 sample, the control implies about **14.6** Brissett carries across these 168 ordinary run opportunities; the style adjustment implies about **11.2**, while the observed total is **16**. These are expected role credits within the observed team-run opportunities, not total rushing attempts or full-game SLC projections. The 2026 sample covers seven games, so the result is preliminary, but it shows that the current player-specific adjustment can push Brissett's projected role below his observed rate.
 
+The player-and-team history used for context was 19 QB runs in 321 eligible ordinary run opportunities for Brissett in Cleveland in 2022 (5.92%), three in 145 for New England in 2024 (2.07%), and 13 in 217 for Arizona in 2025 (5.99%); he had no eligible primary-QB run opportunities in 2023. The 2026 Arizona rate is 16/168 (9.52%). These are team-run-role rates under the evaluator's unique-primary-QB definition, not all official QB rushing attempts. The cross-season difference is based on seven 2026 games and does not establish a stable role change or justify a hard cap.
+
 ## Interpretation and next validation
 
 The prototype should remain opt-in. It has not demonstrated a statistically clear aggregate benefit, and the Brissett target window shows a directional underprediction in mean QB role share. The next acceptance step is a paired, same-seed, full-game SLC comparison with the `qb_run_role_style` layer toggled alone, reporting QB carries, scrambles, non-scramble runs, yards, game-level tails, and reconciliation failures. Do not use this evaluation to hard-cap workloads or change SLC defaults.
