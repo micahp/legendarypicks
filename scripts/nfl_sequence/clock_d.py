@@ -136,8 +136,8 @@ class Model:
                 return sample, source
         return None, f'thin runoff cell {(event, stop, late)}'
 
-    def for_game(self, seed):
-        return BoundaryClock(self, seed)
+    def for_game(self, seed, paired_random_streams=None):
+        return BoundaryClock(self, seed, paired_random_streams=paired_random_streams)
 
 
 def fit(rows, flags):
@@ -187,13 +187,14 @@ def fit(rows, flags):
 class BoundaryClock:
     """One game's draws. Its own random stream, so generated outcomes match the control under the same seed."""
 
-    def __init__(self, model, seed):
+    def __init__(self, model, seed, paired_random_streams=None):
         self.model = model
         self.rng = random.Random(seed * 7919 + 17)
+        self.paired_random_streams = paired_random_streams
         self.counts = Counter()
         self.log = []
 
-    def draw(self, row, event, terminal, quarter, qsr):
+    def draw(self, row, event, terminal, quarter, qsr, *, drive_index=None, play_index=None):
         """(runoff, ends_quarter, refusal) for a generated play at quarter clock `qsr`.
 
         `refusal` is None, or the reason a key was thin; then runoff is None and the caller blocks the game.
@@ -206,14 +207,21 @@ class BoundaryClock:
         if p_end is None:
             return None, False, source
         self.counts[f'hazard key from {source}'] += 1
-        if self.rng.random() < p_end:
+        if self.paired_random_streams is None:
+            hazard_rng = runoff_rng = self.rng
+        else:
+            if type(drive_index) is not int or type(play_index) is not int:
+                raise ValueError('paired clock draws require drive and game-wide play indices')
+            hazard_rng = self.paired_random_streams.rng('clock_quarter_end_hazard', drive_index, play_index)
+            runoff_rng = self.paired_random_streams.rng('clock_runoff', drive_index, play_index)
+        if hazard_rng.random() < p_end:
             return self._record(event, stop, quarter, qsr, qsr, True, late)
         sample, source = self.model.runoffs(event, stop, late)
         if sample is None:
             return None, False, source
         self.counts[f'runoff key from {source}'] += 1
         for _ in range(MAX_TRIES):
-            runoff = self.rng.choice(sample)
+            runoff = runoff_rng.choice(sample)
             if runoff < qsr:
                 break
         else:

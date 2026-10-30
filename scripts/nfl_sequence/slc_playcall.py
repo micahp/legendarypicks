@@ -25,6 +25,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import e0_single_play as e0  # noqa: E402
 import e1_drive as e1  # noqa: E402
+import field_goal_feasibility as fg_feasibility  # noqa: E402
 import playcall_model as pm  # noqa: E402
 import formation_layer  # noqa: E402
 import point_splits  # noqa: E402
@@ -222,10 +223,12 @@ class PlayCallSampler:
     def sample(self, rng, cell, offense, defense, state=None):
         if state is None or any(state.get(k) is None for k in ('quarter', 'clock', 'down', 'togo', 'yl', 'score_diff')):
             raise e1.SamplingUnavailable('playcall_state_incomplete')
+        field_goal = state.get('field_goal_feasibility') or fg_feasibility.evaluate(int(state['yl']))
         entry = self._entry(cell)
         self._current_team_outcome_fallbacks = []
         total = sum(entry['base'].values())
-        kick_keys = [k for k in entry['base'] if k[0] == KICK_INTENT]
+        kick_keys = [k for k in entry['base'] if k[0] == KICK_INTENT
+                     and (k[1] != 'field_goal_attempt' or field_goal['eligible'])]
         kick_share = sum(entry['base'][k] for k in kick_keys) / total
         team = self._team(offense)
         p = self.layer.p_dropback(state['down'], state['togo'], state['yl'], state['score_diff'], state['quarter'],
@@ -253,7 +256,8 @@ class PlayCallSampler:
         qb_decision = pre_event.get('qb_decision') if pre_event else None
         scramble = bool(qb_decision and qb_decision.get('action') == 'scramble')
         outcome_intent = 'run' if scramble else called_intent
-        keys = sorted(k for k in entry['base'] if k[0] == outcome_intent)
+        keys = sorted(k for k in entry['base'] if k[0] == outcome_intent
+                      and (k[1] != 'field_goal_attempt' or field_goal['eligible']))
         if not keys:
             raise e1.SamplingUnavailable(f'playcall_no_{outcome_intent}_outcomes_in_cell:{entry["key"]}')
         formation = pre_event.get('formation') if pre_event else None  # chosen before the outcome, from the situation alone
@@ -393,6 +397,8 @@ class PlayCallSampler:
             'qb_target_role_history_n': qb_decision.get('target_role_history_n') if qb_decision else None,
             'qb_target_role_conditioned': qb_target_role_conditioned,
             'qb_target_role_fallback': qb_target_role_fallback,
+            'decision_timing': 'pre_outcome_sample',
+            'field_goal_feasibility': field_goal,
             'player_outcomes_conditioned': use_player_outcomes,
             'player_outcome_roles': (list(player_outcomes.normalize_roles(self.player_outcome_roles))
                                      if use_player_outcomes else []),
@@ -465,9 +471,10 @@ class PlayCallSampler:
         if getattr(self, 'share_model_manifest', None) is not None:
             out['player_share_distribution'] = self.share_model_manifest
         if getattr(self, 'qb_decision_manifest', None) is not None or getattr(self, 'player_outcome_manifest', None) is not None:
-            integration_files = ('e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
+            integration_files = ('clock_d.py', 'e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
                                  'qb_decisions.py', 'player_outcomes.py', 'run_slc_game.py',
-                                 'simulate_pregame_batch.py', 'slc_engine.py', 'slc_playcall.py')
+                                 'paired_random_streams.py', 'simulate_pregame_batch.py',
+                                 'slc_engine.py', 'slc_playcall.py')
             out['integration_code_sha256'] = {
                 name: hashlib.sha256((HERE / name).read_bytes()).hexdigest() for name in integration_files
             }

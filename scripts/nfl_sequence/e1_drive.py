@@ -29,6 +29,8 @@ sys.path.insert(0, str(HERE))
 import e0_single_play as e0  # noqa: E402
 import holdout  # noqa: E402
 import reducer  # noqa: E402  the shared reducer
+import field_goal_feasibility as fg_feasibility  # noqa: E402
+import football_assertions  # noqa: E402
 
 DEFAULT_DB = e0.DEFAULT_DB
 POOL_SEASONS = (2022, 2023, 2024, 2025)
@@ -188,8 +190,20 @@ def flips_between(start_quarter, quarter):
     return sum(1 for b in FLIP_AFTER if start_quarter <= b < quarter)
 
 
+def _credit_field_boundary_yards(event, sampled_yards, yardline):
+    """Stop a sampled scrimmage result at a goal line and retain the raw sample for audit."""
+    if event in ('run', 'pass_complete') and sampled_yards > yardline:
+        return yardline, {'boundary': 'opponent_goal_line', 'sampled_yards_gained': sampled_yards,
+                          'credited_yards_gained': yardline}
+    own_goal_limit = yardline - 100
+    if event in ('run', 'pass_complete', 'sack') and sampled_yards < own_goal_limit:
+        return own_goal_limit, {'boundary': 'own_goal_line', 'sampled_yards_gained': sampled_yards,
+                                'credited_yards_gained': own_goal_limit}
+    return sampled_yards, None
+
+
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
-             score_diff=None):
+             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context."""
@@ -213,29 +227,55 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
     while terminal is None:
         if len(plays) >= MAX_PLAYS:
             return halt(f'exceeded {MAX_PLAYS} plays without a terminal')
+        play_index = play_index_start + len(plays)
+        if paired_random_streams is None:
+            event_rng = row_rng = playcall_rng = special_rng = rng
+            stream_keys = None
+        else:
+            event_rng = paired_random_streams.rng('e1_event_selection', drive_index, play_index)
+            row_rng = paired_random_streams.rng('e1_source_row', drive_index, play_index)
+            playcall_rng = paired_random_streams.rng('e1_playcall', drive_index, play_index)
+            special_rng = paired_random_streams.rng('e1_special_teams', drive_index, play_index)
+            stream_keys = {
+                'event_selection': paired_random_streams.key('e1_event_selection', drive_index, play_index),
+                'source_row': paired_random_streams.key('e1_source_row', drive_index, play_index),
+                'playcall': paired_random_streams.key('e1_playcall', drive_index, play_index),
+                'special_teams': paired_random_streams.key('e1_special_teams', drive_index, play_index),
+            }
+            if clock is not None and getattr(clock, 'paired_random_streams', None) is not None:
+                stream_keys['clock_hazard'] = paired_random_streams.key(
+                    'clock_quarter_end_hazard', drive_index, play_index)
+                stream_keys['clock_runoff'] = paired_random_streams.key('clock_runoff', drive_index, play_index)
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
         cell = pool.get(key, [])
         if len(cell) < MIN_POOL:
             return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
-        shares = Counter(ev for ev, _, _, _ in cell)
+        field_goal_distance = fg_feasibility.evaluate(st['yl'])
+        shares = Counter(ev for ev, _, _, _ in cell
+                         if ev != 'field_goal_attempt' or field_goal_distance['eligible'])
+        if not shares:
+            return halt('no eligible scrimmage or special-teams actions remain in this cell')
         if sampling_policy is None:
-            selected_event = rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
+            selected_event = event_rng.choices(EVENTS, weights=[shares[e] for e in EVENTS])[0]
             cands = sorted([x for x in cell if x[0] == selected_event],
                            key=lambda x: (x[1]['game_id'], x[1]['play_id']))
-            _, row, runoff, spot = rng.choice(cands)
+            _, row, runoff, spot = row_rng.choice(cands)
         else:
             try:
                 selected_event, row, runoff, spot = sampling_policy.sample(
-                    rng, cell, offense=st['offense'], defense=st['defense'],
+                    playcall_rng, cell, offense=st['offense'], defense=st['defense'],
                     state={'quarter': st['quarter'], 'clock': st['clock'], 'down': st['down'], 'togo': st['togo'],
-                           'yl': st['yl'], 'score_diff': score_diff})
+                           'yl': st['yl'], 'score_diff': score_diff,
+                           'field_goal_feasibility': field_goal_distance})
             except SamplingUnavailable as unavailable:
                 return halt(str(unavailable))
         event = selected_event
+        if event == 'field_goal_attempt' and not field_goal_distance['eligible']:
+            return halt('field_goal_attempt_exceeds_historical_feasibility_ceiling')
         kick_outcome = None
         kick_metadata = None
         if special_teams and selected_event in ('punt', 'field_goal_attempt'):
-            resolution = special_teams(selected_event, st, row, runoff, spot, rng)
+            resolution = special_teams(selected_event, st, row, runoff, spot, special_rng)
             if resolution and resolution.get('blocker'):
                 return halt(resolution['blocker'])
             if resolution:
@@ -244,13 +284,41 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 spot = resolution.get('spot', spot)
                 kick_outcome = resolution.get('kick_outcome')
                 kick_metadata = resolution.get('metadata')
-        yards = 0 if event in KICK_EVENTS else int(row['yards_gained'])
+        sampled_yards = None if event in KICK_EVENTS else int(row['yards_gained'])
+        yards = 0 if sampled_yards is None else sampled_yards
+        yardage_boundary_adjustment = None
+        if sampled_yards is not None:
+            yards, yardage_boundary_adjustment = _credit_field_boundary_yards(event, sampled_yards, st['yl'])
         try:
             after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
         except reducer.UnmodelledOutcome as blocked:
             return halt(blocked.reason)
+        except (AssertionError, ValueError) as invalid:
+            policy_decisions = getattr(sampling_policy, 'decisions', None)
+            sampled_decision = policy_decisions[-1] if isinstance(policy_decisions, list) and policy_decisions else None
+            context = {
+                'play_index': play_index_start + len(plays),
+                'state_before': {**st, 'dir': dir_of(st['offense'], st['quarter'])},
+                'decision': {
+                    'event': selected_event,
+                    'sampling_decision': sampled_decision,
+                    'paired_random_stream_keys': stream_keys,
+                    'source_play': {key: row.get(key) for key in ('game_id', 'play_id', 'season', 'week')},
+                },
+                'outcome': {
+                    'event_type': event,
+                    'sampled_yards_gained': sampled_yards,
+                    'credited_yards_gained': yards,
+                    'next_snap_spot': spot,
+                    'kick_outcome': kick_outcome,
+                },
+                'state_after': 'not_applied',
+            }
+            raise football_assertions.FootballAssertionError(
+                football_assertions.classify_failure(invalid), str(invalid), context=context) from invalid
         if clock is not None:
-            runoff, _, refusal = clock.draw(row, event, play_terminal, st['quarter'], st['clock'])
+            runoff, _, refusal = clock.draw(row, event, play_terminal, st['quarter'], st['clock'],
+                                             drive_index=drive_index, play_index=play_index)
             if refusal:
                 return halt(f'clock model refused: {refusal}')
         clock_raw = st['clock'] - runoff
@@ -303,15 +371,21 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         after_has_position = yl_after is not None and not ended_by_clock_only
         after_dir = dir_of(after['offense'], next_quarter) if after_has_position else None
         sequence = len(plays) + 1
+        sampling = {'cell': list(key), 'cell_size': len(cell), 'cell_event_counts': dict(shares),
+                    'field_goal_feasibility': field_goal_distance}
+        if stream_keys is not None:
+            sampling['paired_random_streams'] = stream_keys
         play = {
             'sequence': sequence, 'id': f'{simulation_id}:{sequence}', 'event_type': event,
             'state_before': state_before,
-            'sampling': {'cell': list(key), 'cell_size': len(cell), 'cell_event_counts': dict(shares)},
+            'sampling': sampling,
             'decision': {'type': decision_type, 'concept': None, 'coverage': None,
                          'note': ('4th-down choice sampled from observed plays in the cell (go-for-it, punt or '
                                   'field-goal attempt)') if st['down'] == 4 else None},
             'outcome': {'passer_id': None, 'receiver_id': None, 'rusher_id': None,
                         'yards_gained': None if event in KICK_EVENTS else yards,
+                        'sampled_yards_gained': sampled_yards,
+                        'yardage_boundary_adjustment': yardage_boundary_adjustment,
                         'touchdown': flags['touchdown'],
                         'turnover': flags['turnover'] or flags['turnover_on_downs'],
                         'turnover_on_downs': flags['turnover_on_downs'],
@@ -363,6 +437,29 @@ def check_drive(plays, terminal):
         raise AssertionError('last play does not carry the terminal')
     for i, p in enumerate(plays):
         sb, sa, o = p['state_before'], p['state_after'], p['outcome']
+        if p['event_type'] in ('run', 'pass_complete', 'pass_incomplete', 'sack'):
+            yards = o.get('yards_gained')
+            yardline = sb.get('yardline_100')
+            if not isinstance(yards, int) or not isinstance(yardline, int):
+                raise AssertionError(f'play {i + 1}: scrimmage gain and pre-play spot must be integers')
+            if p['event_type'] == 'pass_incomplete' and yards != 0:
+                raise AssertionError(f'play {i + 1}: an incomplete pass must have zero credited gain')
+            if p['event_type'] == 'sack' and yards > 0:
+                raise AssertionError(f'play {i + 1}: a sack cannot have positive credited gain')
+            if p['event_type'] in ('run', 'pass_complete', 'sack') \
+                    and (yards > yardline or yardline - yards > 100):
+                raise AssertionError(f'play {i + 1}: credited gain crosses a goal line without ending at it')
+            sampled_yards = o.get('sampled_yards_gained')
+            adjustment = o.get('yardage_boundary_adjustment')
+            if sampled_yards is not None and sampled_yards != yards:
+                boundary = 'opponent_goal_line' if sampled_yards > yardline else 'own_goal_line'
+                credited = yardline if boundary == 'opponent_goal_line' else yardline - 100
+                if (not isinstance(adjustment, dict) or adjustment.get('boundary') != boundary
+                        or adjustment.get('sampled_yards_gained') != sampled_yards
+                        or adjustment.get('credited_yards_gained') != credited or yards != credited):
+                    raise AssertionError(f'play {i + 1}: sampled yardage differs without a matching goal-line credit record')
+            elif adjustment is not None:
+                raise AssertionError(f'play {i + 1}: goal-line adjustment has no changed sampled yardage')
         if i:
             prev = plays[i - 1]['state_after']
             for k in ('quarter', 'offense_team', 'down', 'yards_to_go', 'yardline_100', 'clock_seconds'):

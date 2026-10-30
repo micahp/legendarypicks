@@ -52,6 +52,7 @@ import slc_config  # noqa: E402
 import slc_outputs  # noqa: E402
 import historical_archive  # noqa: E402
 import source_preflight  # noqa: E402
+import football_assertions  # noqa: E402
 
 SCHEMA = 'lp-statistical-game-batch-1'
 PLAYER_CATEGORIES = {
@@ -119,6 +120,8 @@ def _reproduction_command(args, seed):
             command.extend(['--historical-streak-file', str(args.historical_streak_file)])
     if args.export_boxscores:
         command.append('--export-boxscores')
+    if getattr(args, 'paired_randomness', False):
+        command.append('--paired-randomness')
 
     if args.playcall_point_splits_cache:
         command.extend(['--playcall-point-splits-cache', str(args.playcall_point_splits_cache)])
@@ -443,23 +446,42 @@ class FinishedSeeds(dict):
         self.duplicate_rows = 0
 
 
-def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False):
+def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False,
+                   paired_randomness=False):
     record = None
     error = None
+    caught_exception = None
     validation_error = False
     decisions = None
     try:
         if slc_engine.is_slc(ref):
-            record, decisions = slc_engine.play(seed, ref, snapshot)
+            record, decisions = slc_engine.play(seed, ref, snapshot, paired_randomness=paired_randomness)
         else:
-            record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
+            record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
+                                  paired_randomness=paired_randomness)
         gs.validate_game(record)
     except Exception as exc:  # every requested seed gets an outcome row, including generator/validator failures
         error = f'{type(exc).__name__}: {exc}'
+        caught_exception = exc
         validation_error = record is not None
     outcome = _record_outcome(seed, record, error, validation_error)
+    if record and record.get('paired_random_streams'):
+        outcome['paired_random_streams'] = record['paired_random_streams']
     if decisions is not None:
         outcome['playcall'] = slc_engine.summary(decisions)
+    if caught_exception is not None:
+        hashes = _artifact_hashes(profile_manifest or {})
+        hashes['snapshot.snapshot_sha256'] = snapshot.get('snapshot_sha256', 'unavailable')
+        outcome['assertion_failure'] = football_assertions.failure_envelope(
+            caught_exception, seed=seed,
+            game_id=(snapshot.get('schedule') or {}).get('game_id', 'unknown'),
+            record=record, decisions=decisions, source_artifact_hashes=hashes)
+    if record and record.get('blocked_attempt'):
+        hashes = _artifact_hashes(profile_manifest or {})
+        hashes['snapshot.snapshot_sha256'] = snapshot.get('snapshot_sha256', 'unavailable')
+        outcome['unresolved_transition'] = football_assertions.unresolved_transition_envelope(
+            record, seed=seed, game_id=(snapshot.get('schedule') or {}).get('game_id', 'unknown'),
+            source_artifact_hashes=hashes)
     require_slc_boxscore_check = (profile_manifest is not None
                                   and profile_manifest.get('profile') != 's0'
                                   and outcome['valid_full_game'])
@@ -475,7 +497,8 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
             game_id = (snapshot.get('schedule') or {}).get('game_id', 'unknown')
             hashes = _artifact_hashes(profile_manifest or {})
             hashes['snapshot.snapshot_sha256'] = snapshot.get('snapshot_sha256', 'unavailable')
-            boxscore_error = (f'STAT_ACCOUNTING: game_id={game_id} seed={seed} play_index=game '
+            failure_class = football_assertions.classify_failure(exc, default='STAT_ACCOUNTING')
+            boxscore_error = (f'{failure_class}: game_id={game_id} seed={seed} play_index=game '
                               f'state_before=game_start decision=boxscore_reconciliation '
                               f'outcome={type(exc).__name__}: {exc} state_after=game_end '
                               f'source_artifact_hashes={hashes}')
@@ -484,6 +507,18 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
                 if decisions is not None:
                     outcome['playcall'] = slc_engine.summary(decisions)
             outcome['boxscore_error'] = boxscore_error
+            accounting_failure = football_assertions.failure_envelope(
+                exc, seed=seed, game_id=game_id, record=record,
+                decisions=decisions, source_artifact_hashes=hashes, failure_class=failure_class)
+            if not isinstance(getattr(exc, 'context', None), dict):
+                accounting_failure.update({
+                    'play_index': None,
+                    'state_before': 'game_start',
+                    'decision': 'boxscore_reconciliation',
+                    'outcome': {'error_type': type(exc).__name__, 'message': str(exc)},
+                    'state_after': 'game_end',
+                })
+            outcome['assertion_failure'] = accounting_failure
             if export_boxscores:
                 # Preserve an auditable error line even when strict roster identity or reconciliation fails.
                 minimal = slc_outputs.build_boxscore(seed, outcome, None, snapshot, profile_manifest, archive_validation)
@@ -544,14 +579,15 @@ def _open_seed_ledger(path, header, resume, *, seed_end=None):
 
 
 def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=None, archive_validation=None,
-                  export_boxscores=False):
+                  export_boxscores=False, paired_randomness=False):
     """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
     cached = finished.get(seed)
     has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
     if (cached is not None and cached['outcome']['status'] not in ERROR_STATUSES
             and (not export_boxscores or has_boxscore)):
         return cached['outcome'], cached['players']
-    outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation, export_boxscores)
+    outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation,
+                                           export_boxscores, paired_randomness)
     row = {'seed': seed, 'outcome': outcome, 'players': contribution}
     ledger.write(json.dumps(row, sort_keys=True) + '\n')
     ledger.flush()
@@ -808,6 +844,7 @@ def run_batch(args):
         'slc_profile': profile_manifest,
         'historical_archive_reconstruction': archive_validation,
         'boxscore_export': bool(args.export_boxscores),
+        'paired_randomness': bool(args.paired_randomness),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
@@ -842,7 +879,8 @@ def run_batch(args):
         for seed in range(args.seed_start, args.seed_start + args.games):
             outcome, contribution = _seed_outcome(
                 seed, finished, ledger, ref, snapshot, profile_manifest=profile_manifest,
-                archive_validation=archive_validation, export_boxscores=args.export_boxscores)
+                archive_validation=archive_validation, export_boxscores=args.export_boxscores,
+                paired_randomness=args.paired_randomness)
             outcomes.append(outcome)
             if boxscore_handle is not None and seed not in exported_seed_ids and outcome.get('boxscore'):
                 boxscore_handle.write(json.dumps({'type': 'game', **outcome['boxscore']},
@@ -909,6 +947,8 @@ def run_batch(args):
             'prospective': profile_manifest['prospective'],
             'seed_start': args.seed_start, 'seed_end_inclusive': args.seed_start + args.games - 1,
             'seed_rule': 'one deterministic game per consecutive non-negative integer seed',
+            'paired_randomness': bool(args.paired_randomness),
+            'paired_random_stream_schema': ('lp.nfl.paired-random-streams.v1' if args.paired_randomness else None),
             'regulation_score_policy': ('all runs whose simulation reached the regulation end, including ties and '
                                         'guarded regulation-end outcomes; descriptive, not validated finals'),
             'valid_score_policy': ('only valid_full_game=true, complete_game=true, untied outcomes; all other '
@@ -1088,6 +1128,9 @@ def main(argv=None):
                     help='continue the seed ledger next to --out (<out stem>.seeds.jsonl); refuses a ledger from other inputs')
     ap.add_argument('--export-boxscores', action='store_true',
                     help='write a versioned per-seed box-score JSONL sidecar and valid-game distributions')
+    ap.add_argument('--paired-randomness', action='store_true',
+                    help='research evaluation mode: isolate random draws by game snapshot, drive, play and semantic event '
+                         'so matched-seed ablations do not shift unrelated random streams')
     ap.add_argument('--max-simulation-errors', type=int,
                     help='stop once more than this many seeds have errored; finished seeds stay in the ledger')
     ap.add_argument('--out', required=True)

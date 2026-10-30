@@ -46,6 +46,9 @@ import e1_drive as e1  # noqa: E402
 import game_stats  # noqa: E402
 import pre_event as pe  # noqa: E402
 import reducer  # noqa: E402
+import football_assertions  # noqa: E402
+import field_goal_feasibility as fg_feasibility  # noqa: E402
+from paired_random_streams import PairedRandomStreams  # noqa: E402
 
 NORMAL_MODE = 'normal_nfl_game'
 EXCEPTION_MODE = 'explicit_exception_scenario'
@@ -539,7 +542,7 @@ def _try_after_touchdown(rng, kicks, p_two=None):
 class _Game:
     """One game in progress. Each drive is an E1 drive; this class decides what follows it."""
 
-    def __init__(self, seed, ref, ledger, rng, pregame_snapshot=None, model_seed=None):
+    def __init__(self, seed, ref, ledger, rng, pregame_snapshot=None, model_seed=None, paired_random_streams=None):
         self.seed = seed
         self.pregame_snapshot = pregame_snapshot
         snapshot_tag = f"-{pregame_snapshot['schedule']['game_id']}-{pregame_snapshot['snapshot_sha256'][:12]}" if pregame_snapshot else ''
@@ -548,9 +551,13 @@ class _Game:
         self.model_seed = seed if model_seed is None else model_seed
         self.next_play_sequence = 1
         self.ref = ref
-        self.clock_draws = ref.clock_model.for_game(seed) if ref.clock_model is not None else None
         self.ledger = ledger
         self.rng = rng
+        self.paired_random_streams = paired_random_streams
+        self._paired_rng_indices = Counter()
+        self.clock_draws = (ref.clock_model.for_game(seed, paired_random_streams=paired_random_streams)
+                            if ref.clock_model is not None and paired_random_streams is not None else
+                            ref.clock_model.for_game(seed) if ref.clock_model is not None else None)
         self.kickoffs = ledger.half_start_kickoffs()
         self.quarter, self.clock = 1, QUARTER_LENGTH
         self.offense = self.defense = None
@@ -566,6 +573,18 @@ class _Game:
 
     def block(self, reason):
         self.blocker, self.status = reason, 'blocked'
+
+    def _rng(self, stream, *coordinates):
+        paired_random_streams = getattr(self, 'paired_random_streams', None)
+        if paired_random_streams is None:
+            return self.rng
+        if not coordinates:
+            indices = getattr(self, '_paired_rng_indices', None)
+            if indices is None:
+                indices = self._paired_rng_indices = Counter()
+            coordinates = (indices[stream],)
+            indices[stream] += 1
+        return paired_random_streams.rng(stream, *coordinates)
 
     def _take_possession(self, offense, yl):
         if self.quarter == 5:
@@ -596,7 +615,7 @@ class _Game:
         table. A kick that runs the clock out ends the quarter on the return.
         """
         pool = self.ref.safety_kick_pool if kind == 'safety_free_kick' else self.ref.kickoff_pool
-        sample = self.rng.choice(pool)
+        sample = self._rng(f'free_kick:{kind}').choice(pool)
         source = {'game_id': sample['game_id'], 'play_id': sample['play_id'], 'game_date': sample['game_date']}
         if kind == 'safety_free_kick':
             source.update(pool=SAFETY_KICK_POOL, safety_play_id=sample['safety_play_id'],
@@ -654,14 +673,14 @@ class _Game:
     def _begin_overtime(self):
         """Rule 16, Articles 2-3: a seeded fair coin toss, then the toss winner's kick-or-receive decision, then one
         10-minute period. A forced first possession (sensitivity) gives the toss winner the receive."""
-        winner = self.ref.overtime_toss or self.rng.choice(sorted(self.ledger.teams))
+        winner = self.ref.overtime_toss or self._rng('overtime_coin_toss').choice(sorted(self.ledger.teams))
         loser = other(winner, self.ledger.teams)
         if self.ref.overtime_toss is not None:
             choice, source = 'receive', 'forced first possession (sensitivity)'
         elif self.ref.overtime_choice is not None:
             choice, source = self.ref.overtime_choice, 'forced decision (labelled control)'
         elif self.ref.overtime_p_kick is not None:
-            choice = 'kick' if self.rng.random() < self.ref.overtime_p_kick else 'receive'
+            choice = 'kick' if self._rng('overtime_first_choice').random() < self.ref.overtime_p_kick else 'receive'
             source = 'observed kick-or-receive model (2025 regular season)'
         else:
             choice, source = 'receive', 'always receive (labelled control)'
@@ -732,7 +751,7 @@ class _Game:
         if not eligible:
             self.block('missed_field_goal_return_pool_unavailable')
             return None
-        sample = self.rng.choice(eligible)
+        sample = self._rng('missed_field_goal_spot').choice(eligible)
         adjustment = sample['spot_adjustment_yards']
         return {'status': 'sampled_historical_next_drive_spot',
                 'baseline_yardline_100': base_spot,
@@ -917,6 +936,9 @@ class _Game:
     def _resolve_special_teams(self, event, state, source_row, runoff, spot, rng):
         """Sample kick outcomes from the observed rate tables and resolve blocked kicks using audited source records."""
         if event == 'field_goal_attempt':
+            feasibility = fg_feasibility.evaluate(state['yl'])
+            if not feasibility['eligible']:
+                return {'blocker': 'field_goal_attempt_exceeds_historical_feasibility_ceiling'}
             bucket = fg_bucket(state['yl'])
             outcomes = self.ref.kicks.get('field_goal_outcomes', {}).get(bucket)
             if outcomes is None:
@@ -929,15 +951,21 @@ class _Game:
             result = 'made' if draw < made else 'missed' if draw < made + missed else 'blocked'
             source = {'table': 'kick_results_2022_2025.csv', 'yardline_bucket': bucket,
                       'counts': {'made': made, 'missed': missed, 'blocked': blocked},
-                      'attempts': attempts}
+                      'attempts': attempts, 'kick_distance_yards': feasibility['kick_distance_yards'],
+                      'historical_ceiling_yards': feasibility['historical_ceiling_yards'],
+                      'bucket_kick_distance_range_yards': feasibility['historical_bucket_kick_distance_range_yards'],
+                      'outcome_probability_basis': feasibility['outcome_probability_basis'],
+                      'feasibility_source_sha256': feasibility['source_sha256']}
             if result != 'blocked':
-                return {'metadata': {'field_goal_result': result, 'field_goal_result_source': source}}
+                return {'metadata': {'field_goal_result': result, 'field_goal_result_source': source,
+                                     'field_goal_feasibility': feasibility}}
             kick_type, outcome = self._sample_blocked_kick('field_goal', rng, state['clock'], state['quarter'])
             if kick_type:
                 return {'blocker': kick_type}
             return {'event': 'blocked_field_goal', 'clock_runoff_seconds': outcome['clock_runoff_seconds'],
                     'kick_outcome': outcome,
-                    'metadata': {'field_goal_result': 'blocked', 'field_goal_result_source': source}}
+                    'metadata': {'field_goal_result': 'blocked', 'field_goal_result_source': source,
+                                 'field_goal_feasibility': feasibility}}
 
         rates = self.ref.blocked_kicks.get('rates', {}).get('punt_blocked', {})
         attempts, blocked = rates.get('attempts', 0), rates.get('blocked', 0)
@@ -1019,7 +1047,7 @@ class _Game:
         if not fits:
             self.block('overtime_drive_not_observed_for_clock')
             return
-        sample = self.rng.choice(fits)
+        sample = self._rng('observed_overtime_drive').choice(fits)
         self.clock = clock - min(sample['duration'], clock)
         points_before = {team: self.points[team] for team in self.ledger.teams}  # a Counter: an absent team is zero
         self.points[offense] += sample['points_offense']
@@ -1057,7 +1085,8 @@ class _Game:
                     source = 'conditional_try_fallback'
                 else:
                     p_two, source = None, 'regulation_try_rates_fallback'
-                try_points, try_rec, why = _try_after_touchdown(self.rng, self.ref.kicks, p_two)
+                try_points, try_rec, why = _try_after_touchdown(
+                    self._rng('post_touchdown_try', self.next_play_sequence), self.ref.kicks, p_two)
                 if why:
                     self.block(why)
                     return
@@ -1104,10 +1133,15 @@ class _Game:
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
                                       self.simulation_id, special_teams=special_teams, partial=attempt,
                                       sampling_policy=self.ref.contextual_sampler,
-                                      score_diff=self.points[self.offense] - self.points[self.defense], **research)
+                                      score_diff=self.points[self.offense] - self.points[self.defense],
+                                      play_index_start=self.next_play_sequence,
+                                      drive_index=len(self.drives) + 1,
+                                      paired_random_streams=self.paired_random_streams, **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
+                                    'state_at_drive_start': {key: start[key] for key in (
+                                        'quarter', 'clock', 'offense', 'defense', 'yl', 'down', 'togo')},
                                     'blocker': terminal, 'plays_before_block': attempt,
                                     'note': 'raw E1 plays before the block; not part of drives or stats'}
             self.block(terminal)
@@ -1155,7 +1189,8 @@ class _Game:
             bucket = fg_bucket(snap_yl)  # the published make-rate cells are keyed on the snap position, so the bucket is too
             result = plays[-1]['outcome'].get('field_goal_result')
             if result not in ('made', 'missed'):
-                made, why = _draw(self.rng, self.ref.kicks['field_goal'].get(bucket, (0, 0)), f'field_goal:{bucket}')
+                made, why = _draw(self._rng('field_goal_outcome', self.next_play_sequence),
+                                  self.ref.kicks['field_goal'].get(bucket, (0, 0)), f'field_goal:{bucket}')
                 if why:
                     self.block(why)
                     return
@@ -1191,7 +1226,8 @@ class _Game:
             if self.ref.try_policy is not None:
                 situation = self._try_situation(scorer)
                 p_two = self.ref.try_policy.p_two(**situation)
-            try_points, try_record, why = _try_after_touchdown(self.rng, self.ref.kicks, p_two)
+            try_points, try_record, why = _try_after_touchdown(
+                self._rng('post_touchdown_try', self.next_play_sequence), self.ref.kicks, p_two)
             if why:
                 self.block(why)
                 return
@@ -1288,6 +1324,9 @@ class _Game:
         }
         if self.blocked_attempt is not None:
             rec['blocked_attempt'] = self.blocked_attempt
+        paired_random_streams = getattr(self, 'paired_random_streams', None)
+        if paired_random_streams is not None:
+            rec['paired_random_streams'] = paired_random_streams.manifest()
         return rec
 
 
@@ -1387,7 +1426,8 @@ def active_unsupported_rules(guarded, blocker):
     return sorted(active)
 
 
-def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None):
+def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None,
+              paired_randomness=False):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
 
     `ref` is the observed Reference (e2_reference.load). It is required, so a game is never played with a silent
@@ -1395,18 +1435,23 @@ def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame
     unless a caller fixes them for a test.
     """
     snapshot_digest = pregame_snapshot['snapshot_sha256'] if pregame_snapshot else ''
+    if paired_randomness and not snapshot_digest:
+        raise ValueError('paired random streams require a frozen pregame snapshot')
     material = f'{seed}:{snapshot_digest}'.encode()
     model_seed = int.from_bytes(hashlib.sha256(material).digest()[:8], 'big')
     rng = random.Random(model_seed)
-    toss_winner = winner or rng.choice(['A', 'B'])
+    streams = PairedRandomStreams(model_seed, snapshot_digest) if paired_randomness else None
+    toss_rng = streams.rng('regulation_coin_toss') if streams else rng
+    choice_rng = streams.rng('regulation_first_choice') if streams else rng
+    toss_winner = winner or toss_rng.choice(['A', 'B'])
     toss_loser = other(toss_winner, ('A', 'B'))
-    choice = winner_choice or rng.choice(['receive', 'defer'])
+    choice = winner_choice or choice_rng.choice(['receive', 'defer'])
     ledger = CoinTossLedger(toss_winner, toss_loser, choice)
     validate_half_start(ledger.half_start_kickoffs())
-    return _Game(seed, ref, ledger, rng, pregame_snapshot, model_seed).run(max_drives).record()
+    return _Game(seed, ref, ledger, rng, pregame_snapshot, model_seed, streams).run(max_drives).record()
 
 
-def validate_game(record):
+def _validate_game_impl(record):
     """Fail closed on the ledger, clock and points invariants of one record. Returns the list of checks that passed.
     """
     checks = []
@@ -1478,6 +1523,28 @@ def validate_game(record):
     for drive in record.get('drives', []):
         for play in drive['plays']:
             event, outcome = play['event_type'], play['outcome']
+            if outcome.get('field_goal_attempt'):
+                before = play.get('state_before') or {}
+                feasibility = fg_feasibility.evaluate(before.get('yardline_100'))
+                if not feasibility['eligible']:
+                    raise AssertionError(
+                        f"drive {drive['index']} play {play['sequence']} attempts a field goal beyond the "
+                        f"historical feasibility ceiling ({feasibility['kick_distance_yards']} yards)")
+                recorded_feasibility = outcome.get('field_goal_feasibility')
+                source = outcome.get('field_goal_result_source')
+                if record.get('valid_full_game') and recorded_feasibility != feasibility:
+                    raise AssertionError(
+                        f"drive {drive['index']} play {play['sequence']} lacks current-state field-goal feasibility evidence")
+                if record.get('valid_full_game') and not isinstance(source, dict):
+                    raise AssertionError(
+                        f"drive {drive['index']} play {play['sequence']} lacks distance-aware field-goal result evidence")
+                if source is not None and (
+                        source.get('yardline_bucket') != fg_bucket(before['yardline_100'])
+                        or source.get('kick_distance_yards') != feasibility['kick_distance_yards']
+                        or source.get('historical_ceiling_yards') != feasibility['historical_ceiling_yards']
+                        or source.get('feasibility_source_sha256') != feasibility['source_sha256']):
+                    raise AssertionError(
+                        f"drive {drive['index']} play {play['sequence']} field-goal result uses stale distance or source data")
             blocked = outcome.get('blocked_kick')
             if event not in ('blocked_punt', 'blocked_field_goal'):
                 if blocked or outcome.get('field_goal_result') == 'blocked':
@@ -1659,3 +1726,24 @@ def validate_game(record):
                 'overtime period, and no unsupported rule')
     checks.append('valid_full_game only when pregame_full_game, complete, unblocked, any tie played out in overtime, and no unsupported rule')
     return checks
+
+
+def validate_game(record):
+    """Run full-game checks and preserve a structured evidence envelope on every hard failure."""
+    try:
+        return _validate_game_impl(record)
+    except football_assertions.FootballAssertionError:
+        raise
+    except Exception as exc:
+        snapshot = (record or {}).get('pregame_snapshot') or {}
+        game_id = ((snapshot.get('schedule') or {}).get('game_id')
+                   or (record or {}).get('game_id') or 'unknown')
+        evidence = football_assertions.failure_envelope(
+            exc, seed=(record or {}).get('seed', 'unknown'), game_id=game_id, record=record)
+        context = {field: evidence[field] for field in (
+            'game_id', 'seed', 'play_index', 'state_before', 'decision', 'outcome', 'state_after',
+            'source_artifact_hashes', 'violated_assertion')}
+        if context['decision'] == 'unavailable':
+            context['decision'] = None
+        raise football_assertions.FootballAssertionError(
+            evidence['failure_class'], str(exc), context=context) from exc

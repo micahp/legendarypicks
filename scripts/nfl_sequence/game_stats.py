@@ -40,7 +40,7 @@ def team_stats(drives, points):
             if ev in ('pass_complete', 'pass_incomplete', 'interception') and part.get('receiver_id'):
                 t['pass_tgt'] += 1
             yards = out['yards_gained'] or 0
-            if ev == 'run':
+            if ev == 'run' or (ev == 'fumble_lost' and part.get('rusher_id')):
                 t['rush_att'] += 1
                 t['rush_yds'] += _credited(play, _player_yards(play, 'rushing_yards', yards))
             elif ev in ('pass_complete', 'pass_incomplete', 'interception', 'sack'):
@@ -89,19 +89,28 @@ def team_stats(drives, points):
             scorer = d.get('touchdown_scored_by') or d['offense_team']
             scored = team(scorer)
             scored['touchdowns'] += 1
-            if not (d['plays'] and d['plays'][-1]['outcome'].get('blocked_kick')):  # an observed overtime drive has no plays
+            last_play = d['plays'][-1] if d['plays'] else None
+            offensive_scoring_play = (last_play and last_play['event_type'] in ('run', 'pass_complete')
+                                      and last_play['outcome'].get('touchdown'))
+            unassigned_overtime_offensive_td = (d.get('observed_overtime_drive') and not d['plays']
+                                                and scorer == d['offense_team'])
+            if scorer == d['offense_team'] and (offensive_scoring_play or unassigned_overtime_offensive_td):
+                # Only a credited scrimmage scoring play creates an offensive TD; returns remain team touchdowns.
                 scored['offensive_touchdowns'] += 1
-            if d.get('observed_overtime_drive'):
-                scored['observed_overtime_touchdowns'] += 1  # counted on the team line, with no play to attribute it to
+            if unassigned_overtime_offensive_td:
+                # The observed OT score has no play/player row, so exclude only this offensive TD from player reconciliation.
+                scored['observed_overtime_touchdowns'] += 1
     for name, pts in points.items():
         team(name)['points'] = pts
     return {name: dict(sorted(t.items())) for name, t in sorted(teams.items())}
 
 
 def _credited(play, yards):
-    """Yards credited to a play: the observed yards, capped at the goal line when the play is a touchdown."""
+    """Credit only the distance the ball can legally travel before becoming dead at either goal line."""
     if play['outcome']['touchdown']:
         return min(yards, play['state_before']['yardline_100'])
+    if play['outcome'].get('safety'):
+        return max(yards, play['state_before']['yardline_100'] - 100)
     return yards
 
 
@@ -136,11 +145,11 @@ def player_lines(drives):
             ev, out, part = play['event_type'], play['outcome'], play['participants']
             yards = out['yards_gained'] or 0
             td = bool(out['touchdown'])
-            if ev == 'run' and part['rusher_id']:
+            if (ev == 'run' or (ev == 'fumble_lost' and part.get('rusher_id'))) and part['rusher_id']:
                 r = line(part['rusher_id'], part, 'rusher')['rushing']
                 r['att'] += 1
                 r['yds'] += _credited(play, _player_yards(play, 'rushing_yards', yards))
-                r['td'] += int(td)
+                r['td'] += int(ev == 'run' and td)
             if ev == 'fumble_lost':
                 role = 'rusher' if part.get('rusher_id') else 'passer'
                 fumbler = part.get(f'{role}_id')
