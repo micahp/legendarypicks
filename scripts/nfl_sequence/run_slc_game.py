@@ -176,7 +176,9 @@ def main():
                                                 playbook=args.playbook,
                                                 source_commit=source_provenance['base_commit'],
                                                 blocker_fixes=args.slc_blocker_fix,
-                                                fg_ordinary_cutoff=args.slc_fg_ordinary_cutoff)
+                                                fg_ordinary_cutoff=args.slc_fg_ordinary_cutoff,
+                                                score_clock_playcalling=resolved_profile['enabled_layers'].get(
+                                                    'score_clock_playcalling', True))
     playcall_layer = slc_engine.describe(ref)
     slc_config.validate_engine_layers(resolved_profile, playcall_layer)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs

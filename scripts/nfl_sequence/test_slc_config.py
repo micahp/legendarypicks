@@ -43,6 +43,17 @@ class FullStackProfile(unittest.TestCase):
         self.assertTrue(ablated['enabled_layers']['decision_labels'])
         self.assertNotEqual(ablated['model_id'], self.resolved['model_id'])
 
+    def test_score_clock_playcalling_can_be_ablated_without_disabling_other_layers(self):
+        ablated = config.resolve_profile('v1_full_stack', artifact_path='a', streak_file='s',
+                                         disable_layers=('score_clock_playcalling',))
+        self.assertFalse(ablated['enabled_layers']['score_clock_playcalling'])
+        self.assertEqual(
+            {key for key in self.resolved['enabled_layers']
+             if self.resolved['enabled_layers'][key] != ablated['enabled_layers'][key]},
+            {'score_clock_playcalling'},
+        )
+        self.assertEqual(ablated['model_id'], 'SLC_v1_ablation_score_clock_playcalling')
+
     def test_qb_run_role_style_is_opt_in_and_can_be_ablated_independently(self):
         self.assertFalse(self.resolved['enabled_layers']['qb_run_role_style'])
         enabled = config.resolve_profile('v1_full_stack', artifact_path='a', streak_file='s',
@@ -132,6 +143,36 @@ class FullStackProfile(unittest.TestCase):
             self.assertIn('input_provenance', layer)
         self.assertEqual(manifest['evaluation_class'], 'retrospective_archive_reconstruction')
         self.assertFalse(manifest['prospective'])
+
+    def test_score_clock_ablation_manifest_records_the_cell_baseline_without_a_model_hash(self):
+        resolved = config.resolve_profile('v1_full_stack', artifact_path='a', streak_file='s',
+                                          disable_layers=('score_clock_playcalling',))
+        description = {
+            'enabled_layers': dict(resolved['enabled_layers']),
+            'artifact_sha256': 'a' * 64,
+            'reference_sha256': 'b' * 64,
+            'layer_artifact_sha256': {
+                **{key: 'c' * 64 for key, enabled in resolved['enabled_layers'].items() if enabled},
+                'score_clock_playcalling': None,
+            },
+            'optional_input_sha256': {'current_streak_file': 'd' * 64},
+            'integration_code_sha256': {name: 'f' * 64 for files in config.LAYER_CODE_FILES.values()
+                                        for name in files},
+            'fit_seasons': [2022, 2023, 2024, 2025],
+            'source_cutoff': {'eligible_before': [2026, 1]},
+            'score_clock_fallback_policy': 'historical_down_distance_field_cell_rate; independent point and streak '
+                                            'layers remain separately switchable',
+        }
+
+        manifest = config.build_manifest(resolved, description,
+                                         {'snapshot_sha256': '1' * 64, 'as_of': '2026-10-09T10:00:00Z',
+                                          'evaluation': {}, 'schedule': {}}, {})
+        layer = manifest['layers']['score_clock_playcalling']
+        self.assertFalse(layer['enabled'])
+        self.assertIsNone(layer['model_artifact_sha256'])
+        self.assertEqual(layer['configuration']['policy'],
+                         'historical_down_distance_field_cell_rate; independent point and streak '
+                         'layers remain separately switchable')
 
     def test_target_role_and_decision_category_a_priors_compose_over_available_roles(self):
         combined = pre_event.combine_role_priors(

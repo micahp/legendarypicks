@@ -84,9 +84,7 @@ ENGINE_LAYER_KEYS = (
     'current_streak_context',
 )
 
-ABLATION_LAYERS = frozenset(ENGINE_LAYER_KEYS) - {
-    'score_clock_playcalling', 'fixed_player_target_carry_shares',
-}
+ABLATION_LAYERS = frozenset(ENGINE_LAYER_KEYS) - {'fixed_player_target_carry_shares'}
 
 
 def _expected_layers(options, *, profile, streak_file, decision_filter, artifact_enabled=False):
@@ -189,8 +187,6 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
             elif layer == 'decision_labels':
                 resolved_options['playcall_decision'] = False
                 resolved_filter = False
-            elif layer == 'score_clock_playcalling':
-                raise ValueError('score-clock play calling is the SLC policy core; use the separate S0 profile for that control')
             else:
                 option = next((name for name, key in OPTION_TO_LAYER.items() if key == layer), None)
                 if option:
@@ -209,6 +205,8 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
             raise ValueError('v1_full_stack requires a frozen pregame streak file')
         layers = _expected_layers(resolved_options, profile=profile, streak_file=resolved_streak_file,
                                   decision_filter=resolved_filter, artifact_enabled=True)
+        if 'score_clock_playcalling' in disabled:
+            layers['score_clock_playcalling'] = False
         if 'qb_run_role_style' in disabled:
             layers['qb_run_role_style'] = False
         disabled_names = sorted(disabled)
@@ -242,6 +240,8 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
                 supplied[option] = False
     layers = _expected_layers(supplied, profile='custom', streak_file=resolved_streak_file,
                               decision_filter=resolved_filter, artifact_enabled=bool(artifact_path))
+    if 'score_clock_playcalling' in disabled:
+        layers['score_clock_playcalling'] = False
     if 'qb_run_role_style' in disabled:
         layers['qb_run_role_style'] = False
     if layers['fixed_player_target_carry_shares'] and layers['dirichlet_player_target_carry_shares']:
@@ -315,7 +315,10 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         'current_streak_context': optional_hashes.get('current_streak_file'),
     }
     settings = {
-        'score_clock_playcalling': {'artifact_id': desc.get('artifact_id'), 'source_cutoff': desc.get('source_cutoff')},
+        'score_clock_playcalling': {
+            'policy': ('score_clock_logistic_artifact' if resolved['enabled_layers']['score_clock_playcalling']
+                       else desc.get('score_clock_fallback_policy')),
+            'artifact_id': desc.get('artifact_id'), 'source_cutoff': desc.get('source_cutoff')},
         'team_offense_defense_outcomes': {'fit_seasons': desc.get('fit_seasons')},
         'formation_personnel_outcomes': {'fit_seasons': desc.get('fit_seasons')},
         'defensive_coverage_outcomes': {'fit_seasons': desc.get('fit_seasons')},
