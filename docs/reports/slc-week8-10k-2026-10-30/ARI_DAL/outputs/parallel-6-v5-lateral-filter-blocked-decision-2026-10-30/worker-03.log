@@ -1,0 +1,10 @@
+input preflight passed: database opened read-only; 3 input files and 0 input directories present
+input preflight passed: season 2026; database tables available; 5 decision Parquets; 32 manifest-pinned playbooks; 16 play-call frame score sources
+progress 250/1667; errors 0; elapsed 1404s; ETA 7957s
+progress 500/1667; errors 0; elapsed 2750s; ETA 6417s
+progress 750/1667; errors 0; elapsed 4060s; ETA 4964s
+progress 1000/1667; errors 0; elapsed 5454s; ETA 3638s
+progress 1250/1667; errors 0; elapsed 6873s; ETA 2293s
+progress 1500/1667; errors 0; elapsed 8271s; ETA 921s
+wrote /root/slc-week8-missing-10k-2026-10-29/artifacts/ARI_DAL/parallel-6-v5-lateral-filter-blocked-decision-2026-10-30/worker-03.json: 1662/1667 valid games, 5 regulation ties, 0 blocked before regulation
+baseline_v1=unavailable reference_sha256=c13724b908475053e4aec2b7c9b6931c8e37b531d75beb6a104f4f7f730e943b
