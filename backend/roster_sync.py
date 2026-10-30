@@ -69,7 +69,7 @@ def configure_espn():
     )
 
 
-def sync_league(con: sqlite3.Connection, league: str) -> dict:
+def _sync_league(con: sqlite3.Connection, league: str) -> dict:
     # Idempotent, and it must run before the first `espn.` call below -- see the
     # docstring: entering here directly is the normal case, not the exception.
     configure_espn()
@@ -538,8 +538,13 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
             "team_changes": team_changes}
 
 
+def sync_league(con: sqlite3.Connection, league: str) -> dict:
+    """Run roster fan-out with batch pacing, then restore the shared client."""
+    with espn.batch_pacing():
+        return _sync_league(con, league)
+
+
 def main(leagues):
-    configure_espn()
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
     for lg in leagues:
