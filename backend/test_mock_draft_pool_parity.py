@@ -184,6 +184,7 @@ class MockDraftPoolParityTests(unittest.TestCase):
         nfl_mock_draft._DB = cls.original_db
 
     def test_literal_expected_values(self):
+        self.assertEqual(self.pool["reference_season"], 2025)
         for player_id, expected in EXPECTED.items():
             with self.subTest(player_id=player_id):
                 row = self.pool_by_id[player_id]

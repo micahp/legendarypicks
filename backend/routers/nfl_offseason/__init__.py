@@ -47,7 +47,7 @@ from .transactions import (  # noqa: E402
 )
 from .aggregates import (  # noqa: E402
     _availability_aggregates, _regular_season_aggregates, _pk_aggregates,
-    _dst_aggregates,
+    _dst_aggregates, _latest_completed_log_season,
 )
 from .board import (  # noqa: E402
     _draft_board_schema, _round, _rounded_ratio, _percentage, _escape_like,

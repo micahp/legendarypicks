@@ -18,6 +18,7 @@ from ..nfl_offseason import (
     _percentage,
     _pk_aggregates,
     _regular_season_aggregates,
+    _latest_completed_log_season,
     _rounded_ratio,
     _round,
     _table_columns,
@@ -160,11 +161,9 @@ def player_detail(player_id: int):
                 season_totals_source = "espn"
 
         # 3. Season stats from player_game_logs
-        _log_season_row = connection.execute(
-            "SELECT MAX(season) FROM player_game_logs WHERE league='nfl'"
-        ).fetchone()
-        _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
-                       else _CURRENT_SEASON - 1)
+        _log_season = (
+            _latest_completed_log_season(connection) or _CURRENT_SEASON - 1
+        )
         rank_context = nfl_player_rank_context(
             connection, player_id, position, _log_season
         )
