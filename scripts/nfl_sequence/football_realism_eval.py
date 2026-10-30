@@ -17,7 +17,7 @@ from pathlib import Path
 SCHEMA = 'lp.nfl.football-realism-distribution-report.v1'
 REFERENCE_SCHEMA = 'lp.nfl.e3-observed-distributions.v1'
 JOINT_REFERENCE_SCHEMA = 'lp.nfl.e3-football-realism-joint-reference.v1'
-BOX_SCHEMA = 'lp-nfl-slc-boxscore-1'
+BOX_SCHEMAS = {'lp-nfl-slc-boxscore-1', 'lp-nfl-slc-boxscore-2'}
 DEFAULT_REFERENCE = Path(__file__).resolve().parents[2] / 'docs/research/e3-observed-distributions-2026-10-24'
 DEFAULT_JOINT_REFERENCE = (Path(__file__).resolve().parents[2]
                            / 'docs/research/e3-football-realism-joint-reference-2026-10-30')
@@ -132,7 +132,7 @@ def _verified_joint_reference(reference_dir, simulation_season):
 def _compact_seed_row(row):
     outcome = row.get('outcome') if isinstance(row.get('outcome'), dict) else {}
     box = outcome.get('boxscore')
-    if box is None and row.get('schema') == BOX_SCHEMA:
+    if box is None and row.get('schema') in BOX_SCHEMAS:
         box = row
     if not isinstance(box, dict):
         return {'seed': row['seed'], 'status': outcome.get('status', 'missing_boxscore'),

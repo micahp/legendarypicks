@@ -103,7 +103,7 @@ class PlayerShareManifest(unittest.TestCase):
                           'frame_sha256': 'frame-hash'}
         sampler = se.slc.PlayCallSampler(SimpleNamespace(artifact=layer_artifact),
                                          side_teams={'A': 'AAA', 'B': 'BBB'})
-        ref = SimpleNamespace(contextual_sampler=sampler)
+        ref = SimpleNamespace(contextual_sampler=sampler, pool={}, participants={}, pool_scope={})
         table = {'phi': {'receive': 24.4, 'carry': 7.5}, 'base': {'receive': {}, 'carry': {}},
                  'fit': {'receive': {'phi': 24.4, 'team_games': 544},
                          'carry': {'phi': 7.5, 'team_games': 544}}, 'season': 2025,
@@ -137,7 +137,7 @@ class PlayerOutcomeRoleManifest(unittest.TestCase):
                                   share_model_manifest=None, qb_decision_table=None,
                                   player_outcome_table=None,
                                   describe=lambda: {'side_teams': {'A': 'AAA', 'B': 'BBB'}})
-        ref = SimpleNamespace(contextual_sampler=sampler)
+        ref = SimpleNamespace(contextual_sampler=sampler, pool={}, participants={}, pool_scope={})
         table = {'model_version': po.MODEL_VERSION, 'source_seasons': [2022, 2023, 2024, 2025],
                  'cutoff_season': 2026, 'sha256': 'outcome-hash', 'player_units': {},
                  'transferred_player_units': {}, 'source_counts': {}}

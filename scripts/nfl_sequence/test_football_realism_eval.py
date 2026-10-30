@@ -213,6 +213,14 @@ class FootballRealismDistributionEvaluation(unittest.TestCase):
         self.assertEqual(evaluation._joint_pair_values(
             compact, 'game', 'total_points', 'offensive_touchdowns'), [])
 
+    def test_standalone_boxscore_rows_accept_schema_v1_and_v2(self):
+        for schema in ('lp-nfl-slc-boxscore-1', 'lp-nfl-slc-boxscore-2'):
+            row = _boxscore(9, 24)
+            row['schema'] = schema
+            compact = evaluation._compact_seed_row(row)
+            self.assertEqual(compact['boxscore']['schema'], schema)
+            self.assertEqual(compact['status'], 'valid_complete')
+
 
 if __name__ == '__main__':
     unittest.main()

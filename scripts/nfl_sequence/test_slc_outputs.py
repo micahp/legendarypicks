@@ -1,3 +1,4 @@
+import copy
 import sys
 import unittest
 from pathlib import Path
@@ -70,6 +71,29 @@ def game_record(home_points=24, away_points=17):
 
 
 class BoxscoreSerialization(unittest.TestCase):
+    def test_starter_metadata_uses_available_qb_depth_rank_and_preserves_unknown_roles(self):
+        snapshot = copy.deepcopy(SNAPSHOT)
+        for side in ('home', 'away'):
+            for player in snapshot['rosters'][side]['players']:
+                player.pop('starter', None)
+        backup = roster_player('GA4', 'Home Backup QB', 'AAA', 'QB')
+        backup.update({'pos_rank': 2})
+        backup.pop('starter')
+        snapshot['rosters']['home']['players'].append(backup)
+
+        indexed = outputs._roster_index(snapshot)
+        self.assertIs(indexed['GA1']['starter'], True)
+        self.assertEqual(indexed['GA1']['starter_basis'], 'depth_chart_rank_and_availability')
+        self.assertIs(indexed['GA4']['starter'], False)
+        self.assertIsNone(indexed['GA2']['starter'])
+        self.assertEqual(indexed['GA2']['starter_basis'], 'unknown')
+
+        snapshot['rosters']['home']['injury_report'] = {
+            'available': True, 'players': [{'gsis_id': 'GA1', 'report_status': 'Out'}]}
+        indexed = outputs._roster_index(snapshot)
+        self.assertIs(indexed['GA1']['starter'], False)
+        self.assertIs(indexed['GA4']['starter'], True)
+
     def test_full_stack_record_is_versioned_reconciled_and_includes_rostered_zeros(self):
         outcome = {'seed': 1, 'status': 'complete', 'valid_full_game': True,
                    'complete_game': True, 'tied_at_regulation_end': False}
@@ -107,6 +131,27 @@ class BoxscoreSerialization(unittest.TestCase):
         box = outputs.build_boxscore(1, {'valid_full_game': True}, record, SNAPSHOT, PROFILE)
         self.assertEqual(box['reconciliation']['status'], 'failed')
         self.assertIn('passing_yards', box['reconciliation']['teams'][0]['mismatches'])
+
+    def test_passing_td_credit_is_not_counted_as_a_second_team_touchdown(self):
+        record = game_record(31, 17)
+        team = record['stats']['team']['A']
+        team.update({'touchdowns': 3, 'offensive_touchdowns': 3, 'pass_att': 2,
+                     'pass_comp': 2, 'pass_yds': 20, 'pass_tgt': 2,
+                     'rush_att': 1, 'rush_yds': 5})
+        quarterback, receiver = record['stats']['player']
+        quarterback['passing'].update({'att': 2, 'comp': 2, 'yds': 20, 'td': 2})
+        receiver['receiving'].update({'tgt': 2, 'rec': 2, 'yds': 20, 'td': 2})
+        record['stats']['player'].append({
+            'player_id': 'GA3', 'player_name': 'Home RB', 'player_team': 'AAA',
+            'player_position': 'RB', 'player_side': 'A', 'attribution': 'pre_event_selection',
+            'rushing': {'att': 1, 'yds': 5, 'td': 1},
+        })
+
+        box = outputs.build_boxscore(1, {'valid_full_game': True}, record, SNAPSHOT, PROFILE)
+
+        self.assertEqual(box['reconciliation']['status'], 'passed')
+        home = next(row for row in box['reconciliation']['teams'] if row['side'] == 'A')
+        self.assertNotIn('offensive_touchdowns', home['mismatches'])
 
     def test_observed_no_play_overtime_touchdown_is_explicitly_unassigned(self):
         record = game_record()
@@ -152,6 +197,32 @@ class DistributionAggregation(unittest.TestCase):
         self.assertEqual(qb['statistics']['passing.att']['mean'], 1.0)
         rb = next(row for row in summary['players'] if row['stable_player_id'] == 'GA3')
         self.assertEqual(rb['statistics']['rushing.att']['probability_zero'], 1.0)
+
+    def test_final_overtime_tie_is_aggregated_but_regulation_tie_is_not(self):
+        regulation_tie = outputs.build_boxscore(
+            1, {'valid_full_game': False, 'tied_at_regulation_end': True, 'status': 'blocked'},
+            game_record(17, 17), SNAPSHOT, PROFILE)
+        final_overtime_tie = outputs.build_boxscore(
+            2, {'valid_full_game': True, 'tied_at_regulation_end': True, 'status': 'complete_overtime'},
+            game_record(17, 17), SNAPSHOT, PROFILE)
+        decisive = outputs.build_boxscore(
+            3, {'valid_full_game': True, 'tied_at_regulation_end': False, 'status': 'complete_regulation'},
+            game_record(24, 17), SNAPSHOT, PROFILE)
+        boxes = [regulation_tie, final_overtime_tie, decisive]
+        frozen_before_aggregation = copy.deepcopy(boxes)
+
+        summary = outputs.aggregate_boxscores(boxes, requested_games=3)
+
+        self.assertEqual(boxes, frozen_before_aggregation)
+        self.assertEqual(summary['valid_complete_games'], 2)
+        self.assertEqual(summary['status_counts']['regulation_tie'], 1)
+        self.assertEqual(summary['winner_probability'], {'home': 0.5, 'away': 0.0, 'tie': 0.5})
+        total_points = summary['game']['total_points']
+        self.assertEqual(total_points['sample_count'], 2)
+        self.assertEqual(total_points['histogram'], {'34': 1, '41': 1})
+        decisive_games = [box for box in boxes if box['status'] == 'valid_complete'
+                          and box['teams'][0]['stats']['points'] != box['teams'][1]['stats']['points']]
+        self.assertEqual(len(decisive_games), 1)
         self.assertEqual(summary['coverage'], 2 / 3)
 
     def test_distribution_summary_has_stable_quantiles_and_exact_histogram(self):

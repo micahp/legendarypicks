@@ -69,6 +69,45 @@ class FailureClassification(unittest.TestCase):
         self.assertEqual(failure['outcome']['event_type'], 'run')
         self.assertEqual(failure['state_after'], play['state_after'])
 
+    def test_stat_accounting_failure_keeps_scoring_play_and_player_credit_evidence(self):
+        scoring_play = {
+            'sequence': 22, 'event_type': 'pass_complete',
+            'state_before': {'quarter': 4, 'clock_seconds': 90, 'yardline_100': 8},
+            'outcome': {'touchdown': True, 'yards_gained': 8},
+            'participants': {'passer_id': 'qb-1', 'receiver_id': 'wr-1'},
+            'state_after': {'quarter': 4, 'clock_seconds': 82, 'yardline_100': 0},
+        }
+        record = {
+            'status': 'complete_regulation', 'points': {'A': 23, 'B': 17},
+            'stats': {
+                'team': {'PIT': {'touchdowns': 3, 'offensive_touchdowns': 3, 'points': 23}},
+                'player': [
+                    {'player_id': 'qb-1', 'player_name': 'Quarterback', 'player_team': 'PIT',
+                     'player_side': 'A', 'passing': {'td': 1}},
+                    {'player_id': 'wr-1', 'player_name': 'Receiver', 'player_team': 'PIT',
+                     'player_side': 'A', 'receiving': {'td': 1}},
+                    {'player_id': 'rb-1', 'player_name': 'Running Back', 'player_team': 'PIT',
+                     'player_side': 'A', 'rushing': {'td': 2}},
+                ],
+            },
+            'drives': [{'index': 7, 'offense_team': 'A', 'terminal': 'touchdown',
+                        'touchdown_scored_by': 'A', 'points_scored_on_drive': {'team': 'A', 'points': 7},
+                        'plays': [scoring_play]}],
+        }
+        failure = failure_envelope(
+            ValueError('STAT_ACCOUNTING: PIT player touchdowns 2 != team touchdowns 3'),
+            seed=3506, game_id='2026_08_CLE_PIT', record=record)
+
+        evidence = failure['game_evidence']
+        self.assertEqual(evidence['team_scoring_stats']['PIT']['offensive_touchdowns'], 3)
+        self.assertEqual(len(evidence['player_touchdown_credits']), 3)
+        self.assertEqual(evidence['player_touchdown_credits'][1]['receiving_td'], 1)
+        scoring_drive = evidence['scoring_drives'][0]
+        self.assertEqual(scoring_drive['drive_index'], 7)
+        self.assertEqual(scoring_drive['scoring_plays'][0]['sequence'], 22)
+        self.assertEqual(scoring_drive['scoring_plays'][0]['participants'],
+                         {'passer_id': 'qb-1', 'receiver_id': 'wr-1'})
+
     def test_unsupported_transition_keeps_explicit_unresolved_state_and_provenance(self):
         record = {
             'drives': [{'plays': [{'sequence': 1}, {'sequence': 2}]}],

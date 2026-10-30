@@ -81,6 +81,76 @@ def _json_safe(value):
     return repr(value)
 
 
+def _accounting_evidence(record):
+    """Keep compact score and player-credit evidence when a whole-game stat check fails."""
+    if not isinstance(record, dict):
+        return None
+    stats = record.get('stats') or {}
+    team_stats = stats.get('team') or {}
+    player_tds = []
+    for player in stats.get('player') or []:
+        passing_td = player.get('passing', {}).get('td', 0)
+        rushing_td = player.get('rushing', {}).get('td', 0)
+        receiving_td = player.get('receiving', {}).get('td', 0)
+        if passing_td or rushing_td or receiving_td:
+            player_tds.append({
+                'player_id': player.get('player_id'),
+                'player_name': player.get('player_name'),
+                'player_team': player.get('player_team'),
+                'player_side': player.get('player_side'),
+                'passing_td': passing_td,
+                'rushing_td': rushing_td,
+                'receiving_td': receiving_td,
+            })
+
+    scoring_drives = []
+    for drive in record.get('drives') or []:
+        drive_plays = drive.get('plays') or []
+        scoring_plays = []
+        for play in drive_plays:
+            outcome = play.get('outcome') or {}
+            if not (outcome.get('touchdown') or outcome.get('safety')
+                    or outcome.get('field_goal_result') == 'made'):
+                continue
+            participants = play.get('participants') or {}
+            scoring_plays.append({
+                'sequence': play.get('sequence'),
+                'event_type': play.get('event_type'),
+                'outcome': outcome,
+                'participants': {
+                    key: participants[key]
+                    for key in ('passer_id', 'passer_name', 'receiver_id', 'receiver_name',
+                                'rusher_id', 'rusher_name', 'returner_id', 'returner_name')
+                    if key in participants
+                },
+                'state_before': play.get('state_before'),
+                'state_after': play.get('state_after'),
+            })
+        points = drive.get('points_scored_on_drive')
+        if drive.get('terminal') == 'touchdown' or points or scoring_plays:
+            scoring_drives.append({
+                'drive_index': drive.get('index'),
+                'offense_team': drive.get('offense_team'),
+                'terminal': drive.get('terminal'),
+                'touchdown_scored_by': drive.get('touchdown_scored_by'),
+                'observed_overtime_drive': drive.get('observed_overtime_drive'),
+                'points_scored_on_drive': points,
+                'scoring_plays': scoring_plays,
+            })
+
+    return _json_safe({
+        'status': record.get('status'),
+        'points': record.get('points'),
+        'team_scoring_stats': {
+            team: {key: values.get(key, 0) for key in (
+                'touchdowns', 'offensive_touchdowns', 'observed_overtime_touchdowns', 'points')}
+            for team, values in team_stats.items()
+        },
+        'player_touchdown_credits': player_tds,
+        'scoring_drives': scoring_drives,
+    })
+
+
 def failure_envelope(error, *, seed, game_id='unknown', record=None, decisions=None,
                      source_artifact_hashes=None, failure_class=None):
     """Build a JSON-serializable failure record with the closest available play evidence."""
@@ -146,7 +216,7 @@ def failure_envelope(error, *, seed, game_id='unknown', record=None, decisions=N
     if snapshot_hash:
         hashes.setdefault('snapshot.snapshot_sha256', snapshot_hash)
 
-    return _json_safe({
+    failure = {
         'schema': SCHEMA,
         'failure_class': category,
         'error_type': error_type,
@@ -160,7 +230,12 @@ def failure_envelope(error, *, seed, game_id='unknown', record=None, decisions=N
         'violated_assertion': (embedded.get('violated_assertion')
                                or getattr(error, 'violated_assertion', None) or message),
         'source_artifact_hashes': hashes,
-    })
+    }
+    if category == 'STAT_ACCOUNTING':
+        evidence = _accounting_evidence(record)
+        if evidence is not None:
+            failure['game_evidence'] = evidence
+    return _json_safe(failure)
 
 
 def unresolved_transition_envelope(record, *, seed, game_id='unknown', source_artifact_hashes=None):

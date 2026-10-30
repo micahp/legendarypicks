@@ -25,9 +25,14 @@ MIN_TEAM_GAMES = 2  # a team needs at least this many games with a sample of thi
 PHI_GRID = [round(math.exp(math.log(1.0) + i * (math.log(1000.0) - math.log(1.0)) / 400), 6) for i in range(401)]
 INELIGIBLE_STATUS = ('Out', 'Doubtful')
 ROLE_SQL = {'receive': ('receiver_player_id', 'pass'), 'carry': ('rusher_player_id', 'run')}
-MODEL_VERSION = 'dirichlet-multinomial-mle-v2'
+MODEL_VERSION = 'dirichlet-multinomial-conditional-share-v3'
 ELIGIBILITY_RULE = ('a rostered player listed Out or Doubtful on the frozen injury report is not eligible; '
-                    'Questionable and players with no report stay eligible; shares re-normalise over the eligible players')
+                    'Questionable and players with no report stay eligible; position-conditioned shares re-normalise within the '
+                    'selected eligible group')
+POSITION_GROUPS = {
+    'receive': {'all': None, 'RB': ('RB',), 'WR': ('WR',), 'TE': ('TE',)},
+    'carry': {'all': None, 'RB': ('RB',), 'QB': ('QB',), 'WR_TE': ('WR', 'TE')},
+}
 
 
 def _rng(text):
@@ -78,8 +83,16 @@ def _bb_loglik(counts, total, base_share, phi):
     """Log-likelihood of each player's count alone under a beta-binomial with mean base_share and concentration phi (the benchmark)."""
     value = 0.0
     for player, b in base_share.items():
-        a, c = phi * b, phi * (1.0 - b)
         n = counts.get(player, 0)
+        if b >= 1.0:
+            if n != total:
+                return float('-inf')
+            continue
+        if b <= 0.0:
+            if n:
+                return float('-inf')
+            continue
+        a, c = phi * b, phi * (1.0 - b)
         value += (math.lgamma(total + 1) - math.lgamma(n + 1) - math.lgamma(total - n + 1)
                   + math.lgamma(n + a) + math.lgamma(total - n + c) + math.lgamma(a + c)
                   - math.lgamma(a) - math.lgamma(c) - math.lgamma(total + a + c))
@@ -87,9 +100,47 @@ def _bb_loglik(counts, total, base_share, phi):
 
 
 def fit(db, season, role):
-    """The concentration phi for one role, fitted by maximum likelihood on the season's team-game counts, with diagnostics."""
+    """Fit whole-role and position-conditional concentrations from historical team-game counts."""
     games, season_counts = team_game_counts(db, season, role)
-    return fit_from_counts(games, season_counts, season)
+    positions = player_positions(db)
+    fitted = {'all': fit_from_counts(games, season_counts, season)}
+    for group, allowed in POSITION_GROUPS[role].items():
+        if group == 'all':
+            continue
+        group_games, group_counts = filter_position_group(games, positions, allowed)
+        if not group_counts:
+            fitted[group] = {**fitted['all'], 'fallback': 'all', 'position_group': group}
+        else:
+            fitted[group] = {**fit_from_counts(group_games, group_counts, season), 'position_group': group}
+    return fitted
+
+
+def player_positions(db):
+    """GSIS id to NFL position for the player identity data in the source database."""
+    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
+    try:
+        rows = con.execute(
+            "SELECT nfl_gsis_id, MIN(position) FROM players WHERE lower(league)='nfl' "
+            "AND nfl_gsis_id IS NOT NULL AND position IS NOT NULL GROUP BY nfl_gsis_id").fetchall()
+    finally:
+        con.close()
+    return {player: position for player, position in rows}
+
+
+def filter_position_group(games, positions, allowed_positions):
+    """Retain a position group in team-game counts and rebuild its team-season base counts."""
+    grouped_games = defaultdict(lambda: defaultdict(dict))
+    grouped_season = defaultdict(lambda: defaultdict(int))
+    for team, by_game in games.items():
+        for game, counts in by_game.items():
+            selected = {player: count for player, count in counts.items()
+                        if positions.get(player) in allowed_positions}
+            if not selected:
+                continue
+            grouped_games[team][game] = selected
+            for player, count in selected.items():
+                grouped_season[team][player] += count
+    return grouped_games, grouped_season
 
 
 def fit_from_counts(games, season_counts, season):
@@ -122,28 +173,54 @@ def fit_from_counts(games, season_counts, season):
 
 
 def load(db, cutoff):
-    """The table the chooser reads, from the season before the cutoff: {'phi': {role: phi}, 'base': {role: {(team, gsis): share}}}."""
+    """The cutoff-safe share table with whole-role and position-conditional concentration fits."""
     season = int(cutoff) - 1
     fitted = {role: fit(db, season, role) for role in ROLE_SQL}
-    return {'phi': {role: fitted[role]['phi'] for role in fitted},
-            'base': {role: fitted[role]['base'] for role in fitted},
-            'fit': {role: {k: v for k, v in fitted[role].items() if k != 'base'} for role in fitted},
+    return {'phi': {role: {group: fit['phi'] for group, fit in fitted[role].items()}
+                     for role in fitted},
+            'base': {role: fitted[role]['all']['base'] for role in fitted},
+            'fit': {role: {group: {k: v for k, v in fit.items() if k != 'base'}
+                           for group, fit in fitted[role].items()} for role in fitted},
             'season': season, 'model': MODEL_VERSION}
 
 
 def eligible_players(players, injury_report):
-    """The players who can take an opportunity: rostered, and not listed Out or Doubtful on the frozen report."""
+    """Players on the frozen roster who are not listed Out or Doubtful on the injury report."""
     status = {p['gsis_id']: p.get('report_status') for p in (injury_report or {}).get('players', [])}
-    return [p for p in players if status.get(p['gsis_id']) not in INELIGIBLE_STATUS]
+    return [p for p in players if p.get('roster_eligible', True)
+            and status.get(p['gsis_id']) not in INELIGIBLE_STATUS]
 
 
-def game_shares(table, team, game_id, eligible, role, seed_text):
-    """One Dirichlet draw over the eligible players for this team and game: alpha = phi times each player's base share, floored.
+def conditional_role_shares(table):
+    """Whether the table draws a separately normalized participant distribution after role selection."""
+    return table.get('model') == MODEL_VERSION
 
-    The result is re-normalised over the eligible players only, so a player who is out does not take a share from the others."""
-    phi = table['phi'][role]
+
+def group_for_positions(role, positions):
+    """Name the historical opportunity group selected by a pre-event position filter."""
+    selected = set(positions)
+    for group, group_positions in POSITION_GROUPS[role].items():
+        if group_positions is not None and selected == set(group_positions):
+            return group
+    return 'all'
+
+
+def game_shares(table, team, game_id, eligible, role, seed_text, group='all'):
+    """One Dirichlet draw over the supplied eligible group for this team and game.
+
+    Conditional-share tables normalize base shares within the selected position group so phi is its total concentration.
+    Legacy tables keep their original whole-roster concentration semantics for exact frozen-run reconstruction."""
+    if not eligible:
+        raise ValueError(f'cannot draw {role} shares for an empty eligible population')
+    role_phi = table['phi'][role]
+    phi = role_phi.get(group, role_phi['all']) if isinstance(role_phi, dict) else role_phi
     base = table['base'][role]
-    alphas = {gsis: phi * max(base.get((team, gsis), 0.0), FLOOR) for gsis in eligible}
+    weights = {gsis: max(base.get((team, gsis), 0.0), FLOOR) for gsis in eligible}
+    weight_total = sum(weights.values())
+    if conditional_role_shares(table):
+        alphas = {gsis: phi * weight / weight_total for gsis, weight in weights.items()}
+    else:
+        alphas = {gsis: phi * weight for gsis, weight in weights.items()}
     rng = _rng(f'{seed_text}:{game_id}:{team}:{role}')
     draws = {gsis: rng.gammavariate(alpha, 1.0) for gsis, alpha in alphas.items()}
     total = sum(draws.values())
