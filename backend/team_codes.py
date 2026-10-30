@@ -1,7 +1,8 @@
-"""Single published vocabulary for all four leagues + NFL positions.
+"""Single published vocabulary for league team codes + NFL positions.
 
-Loads canonical team codes from docs/espn-team-codes-2026-07-27.json.
-Never derives from DB.  Position data is sourced from
+Loads team names from docs/espn-team-codes-2026-07-27.json and adapts NHL codes
+to the NHL publisher's native tricodes, as adopted by migrate_nhl_tricodes.
+Never derives from DB. Position data is sourced from
 docs/espn-position-codes-2026-07-27.json (NFL only for now).
 """
 
@@ -11,7 +12,7 @@ import json
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
-# Load canonical team codes from the ESPN snapshot
+# Load team names from the ESPN snapshot, then apply league-native NHL codes.
 # ---------------------------------------------------------------------------
 
 _HERE = Path(__file__).resolve().parent
@@ -20,10 +21,21 @@ _DOCS = _HERE.parent / "docs"
 with open(_DOCS / "espn-team-codes-2026-07-27.json") as fh:
     _raw = json.load(fh)
 
+_NHL_NATIVE_CODES = {
+    "LA": "LAK",
+    "NJ": "NJD",
+    "SJ": "SJS",
+    "TB": "TBL",
+    "UTAH": "UTA",
+}
+
 CANONICAL: dict[str, frozenset[str]] = {
     league: frozenset(codes)
     for league, codes in _raw.items()
 }
+CANONICAL["nhl"] = frozenset(
+    _NHL_NATIVE_CODES.get(code, code) for code in CANONICAL["nhl"]
+)
 
 # ---------------------------------------------------------------------------
 # Aliases  (non-canonical -> canonical)
@@ -44,11 +56,9 @@ ALIASES: dict[str, dict[str, str]] = {
         "AZ": "ARI",
     },
     "nhl": {
-        "UTA": "UTAH",
-        "LAK": "LA",
-        "TBL": "TB",
-        "SJS": "SJ",
-        "NJD": "NJ",
+        # NHL-specific tables use NHL's published tricodes. ESPN's alternate
+        # spellings normalize into that persisted vocabulary.
+        **_NHL_NATIVE_CODES,
     },
     "nba": {
         # nba.com (team pages' TEAM_ABBREVIATION) -> the ESPN codes this database stores.

@@ -18,6 +18,7 @@ import sqlite3
 import pytest
 
 from conftest import real_db
+from ingest_nhl import NHL_TEAMS
 from team_codes import CANONICAL
 
 # nfl_pbp is absent from picks.db because the retained-play feature has not been
@@ -168,23 +169,26 @@ def test_nfl_pbp_away_team(con):
     _assert_all_canonical(con, "nfl", "nfl_pbp", "away_team")
 
 
-# -- MLB / NHL: the migration was NFL-only -------------------------------------
+# -- MLB / NHL ----------------------------------------------------------------
 #
 # These were `@pytest.mark.skip("migration not yet applied")`. A blanket skip
 # makes no claim, so it cannot go stale loudly — and two of the five had in fact
-# gone stale: NHL player_game_logs.team and .opponent are clean on both
-# databases and are now plain tests below.
+# gone stale: NHL's 2026-09-07 tricode migration moved NHL-specific tables to
+# the NHL publisher's native codes. The shared vocabulary now recognizes that
+# contract, so both player and log columns are checked below.
 #
-# The three that really are dirty are xfail(strict), not skip. Measured
-# 2026-08-13, identical on picks.db and picks.dev.db:
+# The only known dirty columns are MLB game logs, marked xfail(strict) rather
+# than skip. Measured 2026-08-13, identical on picks.db and picks.dev.db:
 #
 #   mlb player_game_logs.team/.opponent   AZ, CWS      (canonical: ARI, CHW)
-#   nhl players.team                      LAK, TBL, UTA, and SJS on prod only
-#
-# The NHL codes are the NHL API's own vocabulary reaching a column that is meant
-# to hold ESPN's — the vocabulary-boundary shape, not a migration that merely
-# has not been run yet. strict=True means the day the migration lands these fail
-# as unexpectedly passing, which is the only reason this comment ever gets read.
+# NHL's native codes are canonical for NHL tables after the tricode migration.
+# Later ingests reintroduced ESPN spellings before this vocabulary was aligned;
+# those stored rows stay explicit strict xfails until the one-shot migration is
+# rerun against both databases.
+
+
+def test_nhl_publisher_codes_match_shared_vocabulary():
+    assert set(NHL_TEAMS) == CANONICAL["nhl"]
 
 
 def test_mlb_players_team(con):
@@ -201,14 +205,25 @@ def test_mlb_player_game_logs_opponent(con):
     _assert_all_canonical(con, "mlb", "player_game_logs", "opponent", "league='mlb'")
 
 
-@pytest.mark.xfail(strict=True, reason="NHL players.team carries NHL-API codes LAK/TBL/UTA (+SJS on prod)")
+@pytest.mark.xfail(
+    strict=True,
+    reason="NHL rows mix legacy ESPN and NHL-native codes; rerun migrate_nhl_tricodes",
+)
 def test_nhl_players_team(con):
     _assert_all_canonical(con, "nhl", "players", "team", "league='nhl'")
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="NHL rows mix legacy ESPN and NHL-native codes; rerun migrate_nhl_tricodes",
+)
 def test_nhl_player_game_logs_team(con):
     _assert_all_canonical(con, "nhl", "player_game_logs", "team", "league='nhl'")
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="NHL rows mix legacy ESPN and NHL-native codes; rerun migrate_nhl_tricodes",
+)
 def test_nhl_player_game_logs_opponent(con):
     _assert_all_canonical(con, "nhl", "player_game_logs", "opponent", "league='nhl'")

@@ -118,8 +118,9 @@ def test_la_to_lar_nfl():
     assert normalize("nfl", "LA") == "LAR"
 
 
-def test_lak_to_la_nhl():
-    assert normalize("nhl", "LAK") == "LA"
+def test_espn_los_angeles_code_to_nhl_tricode():
+    assert normalize("nhl", "LA") == "LAK"
+    assert normalize("nhl", "LAK") == "LAK"
 
 
 def test_az_in_mlb():
