@@ -11,12 +11,13 @@ import hashlib
 import json
 import sys
 from collections.abc import Mapping
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import e2_reference as er  # noqa: E402
+import e0_single_play as e0  # noqa: E402
 import game_state as gs  # noqa: E402
 import pre_event  # noqa: E402
 import slc_playcall as slc  # noqa: E402
@@ -88,7 +89,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    exact_yardline=False, coverage=False, point_splits=False, streak=False, streak_file=None,
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
-                   player_outcomes_receiver_only=False):
+                   player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -96,13 +97,17 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     if player_outcomes_receiver_only and not player_outcomes:
         raise ValueError('receiver-only player outcomes require player_outcomes=True')
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
+    fixes = er.normalize_blocker_fixes(blocker_fixes)
+    run_scramble_backoff = 'run_scramble_backoff' in fixes
     ref, excluded = er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
                    playcall_formation=formation, playcall_player_shares=player_shares,
                    playcall_target_roles=target_roles, playcall_decision=decision,
                    playcall_exact_yardline=exact_yardline, playcall_coverage=coverage,
                    playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league,
-                   playcall_qb_decisions=qb_decisions, playcall_player_outcomes=player_outcomes)
+                   playcall_qb_decisions=(qb_decisions or run_scramble_backoff),
+                   playcall_player_outcomes=player_outcomes, blocker_fixes=fixes,
+                   fg_ordinary_cutoff=fg_ordinary_cutoff)
     sampler = ref.contextual_sampler
     sampler.source_cutoff = {'eligible_before': [season, 1]}
     sampler.optional_input_sha256 = {}
@@ -121,10 +126,10 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         if isinstance(value, str):
             sampler.optional_input_sha256[name] = _file_sha256(value)
     # These are independent research inputs. Each is fitted strictly before the target season.
-    if qb_decisions or player_outcomes:
+    if qb_decisions or run_scramble_backoff or player_outcomes:
         if not source_commit:
             raise ValueError('QB decisions and player outcomes need a source commit for their model manifests')
-    if qb_decisions:
+    if qb_decisions or run_scramble_backoff:
         import qb_decisions as qb_model
         qb_table = qb_model.load(db, season)
         qb_table['scramble_cells'] = {
@@ -132,8 +137,17 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
             for cell in ref.pool.values() for _event, row, _runoff, _spot in cell
             if row.get('qb_scramble') == 1
         }
+        qb_table['scramble_support'] = _scramble_support(qb_table, ref.pool)
         ref.contextual_sampler.qb_decision_table = qb_table
         ref.contextual_sampler.qb_decision_manifest = qb_model.manifest(qb_table, source_commit)
+    if run_scramble_backoff:
+        ref.contextual_sampler.source_pool = ref.pool
+        ref.contextual_sampler.outcome_backoff_enabled = True
+        ref.contextual_sampler.allow_sparse_cells = True
+        ref.contextual_sampler.scramble_backoff_enabled = True
+        ref.contextual_sampler.scramble_bounds = scramble_bounds_from_pool(ref.pool)
+    ref.contextual_sampler.blocker_fixes = fixes
+    ref.contextual_sampler.fg_ordinary_cutoff = float(fg_ordinary_cutoff)
     if player_outcomes:
         import player_outcomes as outcome_model
         outcome_table = outcome_model.load(db, season)
@@ -182,6 +196,70 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     return ref, excluded
 
 
+def _scramble_support(qb_table, pool=None):
+    """Cutoff-safe support by context, counting only scramble outcomes the engine can sample."""
+    from collections import Counter
+    counts = {name: {'scrambles': Counter(), 'dropbacks': Counter()}
+              for name in ('exact_cell', 'down_field', 'down_distance', 'field_zone')}
+    league_scrambles = league_dropbacks = 0
+    for exact, outcomes in qb_table['league_cell'].items():
+        down, distance, field = exact
+        dropbacks = sum(outcomes.values())
+        contexts = {'exact_cell': exact, 'down_field': (down, field), 'down_distance': (down, distance),
+                    'field_zone': field}
+        league_dropbacks += dropbacks
+        for name, key in contexts.items():
+            counts[name]['dropbacks'][key] += dropbacks
+    if pool is None:
+        # Compatibility for direct callers; SLC reference loading supplies the actual E1 sampling pool.
+        for exact, outcomes in qb_table['league_cell'].items():
+            down, distance, field = exact
+            scrambles = outcomes.get('scramble', 0)
+            league_scrambles += scrambles
+            for name, key in {'exact_cell': exact, 'down_field': (down, field),
+                              'down_distance': (down, distance), 'field_zone': field}.items():
+                counts[name]['scrambles'][key] += scrambles
+    else:
+        for cell in pool.values():
+            for event, row, _runoff, _spot in cell:
+                if event != 'run' or row.get('qb_scramble') != 1:
+                    continue
+                exact = qb_decision_cell(row['down'], row['ydstogo'], row['yardline_100'])
+                down, distance, field = exact
+                league_scrambles += 1
+                for name, key in {'exact_cell': exact, 'down_field': (down, field),
+                                  'down_distance': (down, distance), 'field_zone': field}.items():
+                    counts[name]['scrambles'][key] += 1
+    if not league_scrambles:
+        raise ValueError('run_scramble_backoff has no eligible historical QB scramble source rows')
+    support = {name: {key: dict(counter) for key, counter in values.items()}
+               for name, values in counts.items()}
+    support['league_intent'] = {'scrambles': league_scrambles, 'dropbacks': league_dropbacks}
+    return support
+
+
+def qb_decision_cell(down, togo, yardline):
+    import qb_decisions as qb_model
+    return qb_model.cell_of(down, togo, yardline)
+
+
+def scramble_bounds_from_pool(pool):
+    """Observed maximum QB-scramble gain and loss, from eligible cutoff-safe source transitions."""
+    rows = [row for cell in pool.values() for event, row, _runoff, _spot in cell
+            if event == 'run' and row.get('qb_scramble') == 1
+            and row.get('play_type') == 'run' and row.get('yards_gained') is not None
+            and row.get('penalty') != 1 and row.get('two_point_attempt') != 1]
+    if not rows:
+        raise ValueError('run_scramble_backoff has no eligible historical QB scramble gains/losses')
+    longest_gain = max(rows, key=lambda row: (int(row['yards_gained']), row['game_id'], int(row['play_id'])))
+    longest_loss = min(rows, key=lambda row: (int(row['yards_gained']), row['game_id'], int(row['play_id'])))
+    return {'max_gain_yards': max(0, int(longest_gain['yards_gained'])),
+            'max_gain_source': {key: longest_gain[key] for key in ('game_id', 'play_id', 'season', 'week')},
+            'max_loss_yards': max(0, -int(longest_loss['yards_gained'])),
+            'max_loss_source': {key: longest_loss[key] for key in ('game_id', 'play_id', 'season', 'week')},
+            'eligible_scramble_rows': len(rows), 'source_cutoff': 'target-season-before-week-1'}
+
+
 def is_slc(ref):
     return isinstance(getattr(ref, 'contextual_sampler', None), slc.PlayCallSampler)
 
@@ -198,7 +276,8 @@ def play(seed, ref, snapshot):
                                                     defense_priors=sampler.defense_priors,
                                                     role_table=sampler.role_table, decision_table=sampler.decision_table,
                                                     share_table=sampler.share_table, playbook_table=sampler.playbook_table,
-                                                    qb_decision_table=sampler.qb_decision_table)
+                                                    qb_decision_table=sampler.qb_decision_table,
+                                                    scramble_backoff_enabled=sampler.scramble_backoff_enabled)
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
     finally:
@@ -221,7 +300,7 @@ def play(seed, ref, snapshot):
     return record, decisions
 
 
-def summary(decisions):
+def summary(decisions, record=None):
     target_decisions = [d for d in decisions if d.get('qb_target_role') is not None]
     fallbacks = Counter()
     for decision in decisions:
@@ -240,7 +319,7 @@ def summary(decisions):
         for role, support in (decision.get('player_outcome_support') or {}).items():
             if not support:
                 fallbacks[f'player_outcome_no_history_{role}'] += 1
-    return {'decisions': len(decisions),
+    result = {'decisions': len(decisions),
             'scrimmage': sum(d['intent'] != 'kick' for d in decisions),
             'dropback': sum(d['intent'] == 'dropback' for d in decisions),
             'run': sum(d['intent'] == 'run' for d in decisions),
@@ -283,6 +362,80 @@ def summary(decisions):
                 'current_streak_context': sum(d.get('streak_bucket') is not None for d in decisions),
             },
             'fallback_events': dict(sorted(fallbacks.items()))}
+    fixes = sorted({fix for decision in decisions for fix in decision.get('blocker_fixes', [])})
+    if fixes:
+        result['blocker_resolution'] = _blocker_resolution_summary(decisions, fixes, record)
+    return result
+
+
+def _blocker_resolution_summary(decisions, fixes, record=None):
+    outcome_fallbacks = Counter(d.get('outcome_fallback') for d in decisions if d.get('outcome_fallback'))
+    scramble_outcome_fallbacks = Counter(
+        d.get('outcome_fallback') for d in decisions
+        if d.get('outcome_class') == 'qb_scramble' and d.get('outcome_fallback'))
+    scramble_decision_fallbacks = Counter(d.get('qb_scramble_fallback') for d in decisions
+                                          if d.get('qb_scramble_fallback'))
+    scramble_support_levels = Counter(d.get('scramble_support_level') for d in decisions
+                                      if d.get('scramble_support_level'))
+    fg_fallbacks = Counter(d.get('fg_fallback_level') for d in decisions if d.get('fg_fallback_level'))
+    geometry_categories = Counter(d.get('blocked_kick_geometry_category') for d in decisions
+                                  if d.get('blocked_kick_geometry_category'))
+    usage = defaultdict(lambda: {'count': 0, 'support': []})
+
+    def add_usage(kind, level, decision, support):
+        state = decision.get('state') or {}
+        key = (kind, level, state.get('team'), state.get('down'),
+               e0.ydstogo_bucket(state['togo']) if state.get('togo') is not None else None,
+               e0.yardline_bucket(state['yardline_100']) if state.get('yardline_100') is not None else None)
+        usage[key]['count'] += 1
+        if support is not None:
+            usage[key]['support'].append(int(support))
+
+    for decision in decisions:
+        if decision.get('outcome_fallback'):
+            kind = 'scramble_outcome' if decision.get('outcome_class') == 'qb_scramble' else 'outcome'
+            add_usage(kind, decision['outcome_fallback'], decision,
+                      decision.get('outcome_fallback_support_n'))
+        if decision.get('qb_scramble_fallback'):
+            add_usage('scramble_decision', decision['qb_scramble_fallback'], decision,
+                      decision.get('scramble_fallback_support_n'))
+        if decision.get('fg_fallback_level'):
+            add_usage('field_goal', decision['fg_fallback_level'], decision,
+                      decision.get('fg_distribution_support_n'))
+    usage_rows = []
+    for key, value in sorted(usage.items(), key=lambda item: tuple('' if x is None else str(x) for x in item[0])):
+        kind, level, team, down, distance, field = key
+        supports = value['support']
+        usage_rows.append({'kind': kind, 'level': level, 'team': team, 'down': down,
+                           'distance_bucket': distance, 'field_zone_bucket': field, 'count': value['count'],
+                           'support_n': ({'min': min(supports), 'mean': round(sum(supports) / len(supports), 2),
+                                          'max': max(supports)} if supports else None)})
+    kick_outcomes = [play.get('outcome', {}).get('blocked_kick')
+                     or play.get('outcome', {}).get('kick_outcome') or {}
+                     for drive in (record or {}).get('drives', []) for play in drive.get('plays', [])]
+    audited_transitions = sum(bool(outcome.get('source_audit_ref')) for outcome in kick_outcomes)
+    safety_kicks = sum(event.get('kind') == 'safety_free_kick' for event in (record or {}).get('kickoffs', []))
+    return {
+        'enabled_fixes': fixes,
+        'outcome_fallback_level': dict(sorted(outcome_fallbacks.items())),
+        'scramble_outcome_fallback_level': dict(sorted(scramble_outcome_fallbacks.items())),
+        'scramble_decision_fallback_level': dict(sorted(scramble_decision_fallbacks.items())),
+        'scramble_support_level': dict(sorted(scramble_support_levels.items())),
+        'scramble_rejected_bounds': sum(int(d.get('scramble_rejected_bounds', 0)) for d in decisions),
+        'scramble_eligible_candidates': sum(int(d.get('scramble_eligible_candidates', 0)) for d in decisions),
+        'fg_rejected_distance': sum(bool(d.get('fg_rejected_distance')) for d in decisions),
+        'fg_rejection_reason': dict(sorted(Counter(d['fg_rejection_reason'] for d in decisions
+                                                     if d.get('fg_rejection_reason')).items())),
+        'fg_long_range_exception': sum(bool(d.get('fg_long_range_exception')) for d in decisions),
+        'fg_fallback_level': dict(sorted(fg_fallbacks.items())),
+        'blocked_kick_geometry_categories': dict(sorted(geometry_categories.items())),
+        'blocked_kick_geometry_rejected': sum(
+            int(d.get('blocked_kick_geometry_candidates') == 0) for d in decisions
+            if d.get('blocked_kick_geometry_category')),
+        'blocked_kick_source_audit_transitions': audited_transitions,
+        'safety_free_kicks': safety_kicks,
+        'fallback_usage': usage_rows,
+    }
 
 
 def describe(ref):
@@ -351,6 +504,15 @@ def describe(ref):
                    'source_cutoff': getattr(sampler, 'source_cutoff', None), 'reference_sha256': reference_sha,
                    'layer_artifact_sha256': layer_artifact_sha256, 'enabled_layers': enabled_layers,
                    'optional_input_sha256': dict(sorted(getattr(sampler, 'optional_input_sha256', {}).items()))}
+    if sampler.blocker_fixes:
+        description['blocker_resolution'] = {
+                       'enabled_fixes': sorted(sampler.blocker_fixes),
+                       'fg_ordinary_cutoff_yards': sampler.fg_ordinary_cutoff,
+                       'fg_distance_model': ref.kicks.get('field_goal_distance_model'),
+                       'scramble_historical_bounds': sampler.scramble_bounds,
+                       'blocked_kick_fixture_sha256': ref.blocked_kicks.get('sha256'),
+                       'safety_kick_fixture_sha256': ref.safety_kick_sha256,
+                   }
     share_manifest = getattr(sampler, 'share_model_manifest', None)
     if share_manifest is not None:
         description['player_share_distribution'] = share_manifest

@@ -108,18 +108,30 @@ def apply_blocked_kick(st, event, outcome):
         # The kick uses the rest of the half or the game, so no possession carries over and no spot is needed.
         return None, None, flags
     if outcome.get('classification_status') == 'classified_next_snap':
-        # Rule 11-4-2: the receivers' first snap is the observed result of an untouched blocked field goal.
-        if outcome.get('possession_after_role') != 'receiving_team':
-            raise ValueError('next-snap blocked kick needs receiving-team possession')
+        # A source-audited transition may leave either team with the observed next snap.
+        role = outcome.get('possession_after_role')
+        if role not in ('receiving_team', 'kicking_team'):
+            raise ValueError('next-snap blocked kick needs a classified possession role')
         yardline, down, togo = (outcome.get('next_snap_yardline_100'), outcome.get('next_snap_down'),
                                 outcome.get('next_snap_ydstogo'))
-        if not all(isinstance(v, int) for v in (yardline, down, togo)) or not 1 <= yardline <= 99 or not 1 <= down <= 4:
+        if (not all(isinstance(v, int) for v in (yardline, down, togo)) or not 1 <= yardline <= 99
+                or not 1 <= down <= 4 or not 1 <= togo <= min(99, yardline)):
             raise ValueError('next-snap blocked kick needs an observed start spot, down and distance')
-        flags['turnover'] = True
-        return {'offense': st['defense'], 'defense': st['offense'], 'down': down, 'togo': togo,
-                'yl': yardline}, 'turnover', flags
+        if role == 'receiving_team':
+            flags['turnover'] = True
+            return {'offense': st['defense'], 'defense': st['offense'], 'down': down, 'togo': togo,
+                    'yl': yardline}, 'turnover', flags
+        flags['first_down'] = down == 1
+        return {'offense': st['offense'], 'defense': st['defense'], 'down': down, 'togo': togo,
+                'yl': yardline}, None, flags
     if outcome.get('touchdown'):
         role = outcome.get('scoring_role')
+        if role not in ('kicking_team', 'receiving_team'):
+            scoring_team = outcome.get('scoring_team')
+            if scoring_team and scoring_team == outcome.get('posteam'):
+                role = 'kicking_team'
+            elif scoring_team and scoring_team == outcome.get('defteam'):
+                role = 'receiving_team'
         if role not in ('kicking_team', 'receiving_team'):
             raise ValueError('blocked-kick touchdown needs a scoring-team role')
         flags['touchdown'] = True
@@ -201,3 +213,25 @@ def apply_blocked_kick(st, event, outcome):
                 'togo': min(10, endpoint), 'yl': endpoint}, 'turnover', flags
 
     raise ValueError('blocked-kick recovery team is not classified')
+
+
+def project_blocked_kick_next_snap(outcome, st):
+    """Reproject an audited next snap from its source kick line onto the simulated kick line."""
+    role = outcome.get('possession_after_role')
+    delta = outcome.get('next_snap_yards_from_los')
+    if (not isinstance(delta, int) and role in ('receiving_team', 'kicking_team')
+            and isinstance(outcome.get('yardline_100'), int)
+            and isinstance(outcome.get('next_snap_yardline_100'), int)):
+        source_los = outcome['yardline_100']
+        source_next = outcome['next_snap_yardline_100']
+        delta = (source_next - (100 - source_los) if role == 'receiving_team' else source_los - source_next)
+    if role not in ('receiving_team', 'kicking_team') or not isinstance(delta, int):
+        raise ValueError('geometry projection needs an audited possession role and source-line displacement')
+    yardline = 100 - int(st['yl']) + delta if role == 'receiving_team' else int(st['yl']) - delta
+    if not 1 <= yardline <= 99:
+        raise UnmodelledOutcome(f'blocked_kick_next_snap_outside_field:{role}')
+    projected = dict(outcome)
+    projected.update(next_snap_yardline_100=yardline, geometry_projected=True,
+                     projected_from_source_yardline_100=outcome.get('yardline_100'),
+                     projected_kick_yardline_100=int(st['yl']))
+    return projected

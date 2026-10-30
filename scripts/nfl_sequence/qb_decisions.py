@@ -18,6 +18,8 @@ MODEL_VERSION = 'slc-qb-decisions-v1'
 FIRST_SEASON = 2022
 SHRINKAGE = 20.0
 TARGET_ROLES = ('RB', 'WR', 'TE', 'Other')
+SCRAMBLE_SUPPORT_MIN = {'exact_cell': 10, 'down_field': 25, 'down_distance': 25, 'field_zone': 50,
+                        'league_intent': 50}
 
 
 def target_role(position):
@@ -81,6 +83,7 @@ def load(db, cutoff_season):
             f"WHERE lower(league)='nfl' GROUP BY nfl_gsis_id) q ON q.nfl_gsis_id=p.passer_player_id "
             f"WHERE p.season IN ({marks}) AND p.week BETWEEN 1 AND 18 AND p.posteam IS NOT NULL "
             f"AND p.down BETWEEN 1 AND 4 AND p.ydstogo IS NOT NULL AND p.yardline_100 IS NOT NULL "
+            f"AND COALESCE(p.penalty,0) != 1 AND COALESCE(p.two_point_attempt,0) != 1 "
             f"AND (p.qb_dropback=1 OR (p.pass_attempt=1 AND p.passer_player_id IS NOT NULL)) "
             f"ORDER BY p.game_id,p.play_id", seasons).fetchall()
     finally:
@@ -180,11 +183,54 @@ def _target_distribution(table, team, qb, cell):
     return _distribution(own, team_prior), sum(own.values())
 
 
-def draw(table, team, qb, down, togo, yardline, available_roles, seed_text):
+def scramble_support_level(table, cell):
+    """Return the first supported historical scramble context, without changing scramble intent."""
+    support = table.get('scramble_support')
+    if support is None:
+        n = sum(table.get('league_cell', {}).get(cell, {}).values())
+        return ('exact_cell', n) if cell in (table.get('scramble_cells') or set()) and n >= SCRAMBLE_SUPPORT_MIN['exact_cell'] \
+            else (None, 0)
+    down, distance, field = cell
+    candidates = (
+        ('exact_cell', support['exact_cell']['scrambles'].get(cell, 0)),
+        ('down_field', support['down_field']['scrambles'].get((down, field), 0)),
+        ('down_distance', support['down_distance']['scrambles'].get((down, distance), 0)),
+        ('field_zone', support['field_zone']['scrambles'].get(field, 0)),
+        ('league_intent', support.get('league_intent', {}).get('scrambles', 0)),
+    )
+    for level, n in candidates:
+        if n >= SCRAMBLE_SUPPORT_MIN[level]:
+            return level, n
+    return None, 0
+
+
+def scramble_backoff_rate(table, level, cell):
+    support = table.get('scramble_support') or {}
+    down, distance, field = cell
+    key = {'exact_cell': cell, 'down_field': (down, field), 'down_distance': (down, distance),
+           'field_zone': field}.get(level)
+    counts = support.get(level, {})
+    if level == 'league_intent':
+        scrambles = counts.get('scrambles', 0)
+        dropbacks = counts.get('dropbacks', 0)
+    else:
+        scrambles = counts.get('scrambles', {}).get(key, 0)
+        dropbacks = counts.get('dropbacks', {}).get(key, 0)
+    return scrambles / dropbacks if dropbacks else 0.0
+
+
+def draw(table, team, qb, down, togo, yardline, available_roles, seed_text, allow_scramble_backoff=False):
     """Draw a QB action and, if passing, a target role before the outcome is selected."""
     cell = cell_of(down, togo, yardline)
     p_scramble, scramble_n = _scramble_probability(table, team, qb, cell)
-    scramble_supported = table.get('scramble_cells') is None or cell in table['scramble_cells']
+    if allow_scramble_backoff:
+        support_level, support_n = scramble_support_level(table, cell)
+        scramble_supported = support_level is not None
+        if scramble_supported and p_scramble <= 0:
+            p_scramble = scramble_backoff_rate(table, support_level, cell)
+    else:
+        support_level, support_n = None, 0
+        scramble_supported = table.get('scramble_cells') is None or cell in table['scramble_cells']
     if not scramble_supported:
         p_scramble = 0.0
     rng = _rng(seed_text)
@@ -193,6 +239,10 @@ def draw(table, team, qb, down, togo, yardline, available_roles, seed_text):
            'scramble_probability': p_scramble, 'scramble_history_n': scramble_n}
     if not scramble_supported:
         out['scramble_fallback'] = 'no_eligible_scramble_rows_in_cell'
+    elif allow_scramble_backoff:
+        out['scramble_fallback'] = None if support_level == 'exact_cell' else support_level
+        out['scramble_support_level'] = support_level
+        out['scramble_fallback_support_n'] = support_n
     if is_scramble:
         return out
     roles = tuple(role for role in TARGET_ROLES if role in set(available_roles))

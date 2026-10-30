@@ -89,10 +89,17 @@ def team_stats(drives, points):
             scorer = d.get('touchdown_scored_by') or d['offense_team']
             scored = team(scorer)
             scored['touchdowns'] += 1
-            if not (d['plays'] and d['plays'][-1]['outcome'].get('blocked_kick')):  # an observed overtime drive has no plays
+            last_play = d['plays'][-1] if d['plays'] else None
+            offensive_scoring_play = (last_play and last_play['event_type'] in ('run', 'pass_complete')
+                                      and last_play['outcome'].get('touchdown'))
+            unassigned_overtime_offensive_td = (d.get('observed_overtime_drive') and not d['plays']
+                                                and scorer == d['offense_team'])
+            if scorer == d['offense_team'] and (offensive_scoring_play or unassigned_overtime_offensive_td):
+                # Scrimmage touchdowns and observed no-play OT touchdowns are offensive; returns are not.
                 scored['offensive_touchdowns'] += 1
-            if d.get('observed_overtime_drive'):
-                scored['observed_overtime_touchdowns'] += 1  # counted on the team line, with no play to attribute it to
+            if unassigned_overtime_offensive_td:
+                # No player row exists for this observed OT score, so exclude it from player reconciliation.
+                scored['observed_overtime_touchdowns'] += 1
     for name, pts in points.items():
         team(name)['points'] = pts
     return {name: dict(sorted(t.items())) for name, t in sorted(teams.items())}

@@ -20,6 +20,7 @@ import pregame_snapshot  # noqa: E402
 import slc_engine  # noqa: E402
 import slc_config  # noqa: E402
 import historical_archive  # noqa: E402
+import e2_reference as er  # noqa: E402
 
 
 def parse_args(argv=None):
@@ -67,6 +68,10 @@ def parse_args(argv=None):
                     help='SLC research: QB, receiver and rusher event, yardage and touchdown distributions; outcomes can change team scoring')
     ap.add_argument('--player-outcomes-receiver-only', action='store_true',
                     help='research ablation: apply player-conditioned event and result weights to receivers only; requires --player-outcomes')
+    ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
+                    help='opt-in SLC research blocker fix; repeat to enable multiple fixes')
+    ap.add_argument('--slc-fg-ordinary-cutoff', type=float, default=60.0,
+                    help='ordinary field-goal decision maximum in yards when long_field_goal_feasibility is enabled')
     ap.add_argument('--seed', type=int, required=True)
     ap.add_argument('--db', default=e1.DEFAULT_DB)
     ap.add_argument('--out', type=Path, required=True)
@@ -75,6 +80,8 @@ def parse_args(argv=None):
         ap.error('--player-outcomes-receiver-only requires --player-outcomes')
     if args.decision_unfiltered and not args.decision:
         ap.error('--decision-unfiltered requires --decision')
+    if args.slc_blocker_fix and not args.artifact:
+        ap.error('--slc-blocker-fix requires --artifact')
     return args
 
 
@@ -163,7 +170,9 @@ def main():
                                                 qb_decisions=args.qb_decisions, player_outcomes=args.player_outcomes,
                                                 player_outcomes_receiver_only=args.player_outcomes_receiver_only,
                                                 playbook=args.playbook,
-                                                source_commit=source_provenance['base_commit'])
+                                                source_commit=source_provenance['base_commit'],
+                                                blocker_fixes=args.slc_blocker_fix,
+                                                fg_ordinary_cutoff=args.slc_fg_ordinary_cutoff)
     playcall_layer = slc_engine.describe(ref)
     slc_config.validate_engine_layers(resolved_profile, playcall_layer)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
@@ -230,7 +239,7 @@ def main():
         'playcall': {'artifact_sha256': artifact['sha256'], 'fit_seasons': [min(artifact['fit_seasons']),
                                                                              max(artifact['fit_seasons'])],
                      'reference_season': artifact['reference_season'],
-                     'summary': slc_engine.summary(decisions),
+                     'summary': slc_engine.summary(decisions, record),
                      'player_share_distribution': (slc_engine.describe(ref) or {}).get('player_share_distribution'),
                      'qb_decision_model': (slc_engine.describe(ref) or {}).get('qb_decision_model'),
                      'player_outcome_model': (slc_engine.describe(ref) or {}).get('player_outcome_model')},
