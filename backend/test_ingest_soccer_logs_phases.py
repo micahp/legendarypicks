@@ -17,7 +17,6 @@ class SoccerPhaseTests(unittest.TestCase):
         a test rather than from the serving path.
         """
         previous = subject.espn.set_on_exhausted("refuse")
-        subject.espn.set_on_exhausted(previous)
         self.addCleanup(subject.espn.set_on_exhausted, previous)
         self.addCleanup(subject._BATCH_DECLARED.clear)
 

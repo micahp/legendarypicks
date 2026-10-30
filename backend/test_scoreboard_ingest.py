@@ -489,6 +489,7 @@ class TestThePastIsNeverAsked:
     def test_a_finished_day_we_do_not_hold_says_so_instead_of_asking(self, monkeypatch):
         from fastapi.testclient import TestClient
         import sports_service
+        TestDayNavigation._point_router_at_the_fixture(monkeypatch)
         self._no_publisher(monkeypatch)
         client = TestClient(sports_service.app)
         yesterday = (dt.date.today() - dt.timedelta(days=3)).isoformat()
@@ -500,6 +501,7 @@ class TestThePastIsNeverAsked:
     def test_a_finished_day_we_do_hold_is_served_from_the_store(self, monkeypatch):
         from fastapi.testclient import TestClient
         import sports_service
+        TestDayNavigation._point_router_at_the_fixture(monkeypatch)
         self._no_publisher(monkeypatch)
         past = (dt.date.today() - dt.timedelta(days=4)).isoformat()
         scoreboard_store.save("nhl", past, [

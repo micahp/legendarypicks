@@ -403,7 +403,7 @@ class NhlUsesDurableScoreboardFixtures(unittest.TestCase):
         self.con.row_factory = sqlite3.Row
         self.con.execute(
             "INSERT INTO players(name,team,league,active,position) "
-            "VALUES('Mikhail Sergachev','UTAH','nhl',1,'D')"
+            "VALUES('Mikhail Sergachev','UTA','nhl',1,'D')"
         )
         self.con.execute(
             "INSERT INTO scoreboard_snapshots(league,payload) VALUES('nhl',?)",
