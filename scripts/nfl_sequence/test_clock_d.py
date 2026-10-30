@@ -9,6 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import clock_d as cd  # noqa: E402
+from paired_random_streams import PairedRandomStreams  # noqa: E402
 
 
 def model_with(pool, hazard, pool_stop=None, pool_all=None, hazard_bucket=None):
@@ -102,6 +103,23 @@ class Draw(unittest.TestCase):
 
         self.assertEqual(sequence(3), sequence(3), 'the same seed gives the same draws')
         self.assertNotEqual(sequence(3), sequence(4), 'a different seed gives different draws')
+
+    def test_paired_clock_draw_for_a_play_is_not_shifted_by_an_extra_earlier_play(self):
+        pool = {('run', 'clock_runs', False): list(range(1, 60))}
+        model = model_with(pool, {('clock_runs', 900): (0, 60)}, hazard_bucket={900: (0, 60)})
+        streams = PairedRandomStreams(91, 'c' * 64)
+        control = cd.BoundaryClock(model, 91, paired_random_streams=streams)
+        ablation = cd.BoundaryClock(model, 91, paired_random_streams=streams)
+        control.draw(ROW, 'run', None, 1, 800, drive_index=1, play_index=1)
+        paired_later = control.draw(ROW, 'run', None, 1, 800, drive_index=1, play_index=2)
+        ablation_later = ablation.draw(ROW, 'run', None, 1, 800, drive_index=1, play_index=2)
+        self.assertEqual(paired_later, ablation_later)
+
+    def test_paired_clock_requires_explicit_draw_coordinates(self):
+        model = model_with({}, {('clock_runs', 900): (60, 60)}, hazard_bucket={900: (60, 60)})
+        clock = cd.BoundaryClock(model, 91, paired_random_streams=PairedRandomStreams(91, 'c' * 64))
+        with self.assertRaisesRegex(ValueError, 'drive and game-wide play indices'):
+            clock.draw(ROW, 'run', None, 1, 800)
 
 
 class Keys(unittest.TestCase):

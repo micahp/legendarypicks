@@ -15,6 +15,7 @@ def roster_player(gsis_id, name, team, position):
 
 SNAPSHOT = {
     'as_of': '2026-10-09T10:00:00Z',
+    'snapshot_sha256': 'e' * 64,
     'schedule': {'game_id': '2026_05_AAA_BBB', 'home_team': 'AAA', 'away_team': 'BBB'},
     'rosters': {
         'home': {'team': 'AAA', 'players': [roster_player('GA1', 'Home QB', 'AAA', 'QB'),
@@ -41,13 +42,15 @@ def game_record(home_points=24, away_points=17):
         'stats': {
             'player_attribution': 'pre_event_selection',
             'team': {
-                'A': {'points': home_points, 'touchdowns': 1, 'offensive_touchdowns': 1, 'drives': 1,
+                'A': {'points': home_points, 'touchdowns': 1, 'offensive_touchdowns': 1,
+                      'observed_overtime_touchdowns': 0, 'drives': 1,
                       'possession_seconds': 1300, 'plays': 1, 'rush_att': 0, 'rush_yds': 0,
                       'pass_att': 1, 'pass_comp': 1, 'pass_yds': 10, 'interceptions': 0,
                       'pass_tgt': 1, 'sacks_taken': 0, 'sack_yds': 0, 'punts': 0,
                       'fg_att': 0, 'fg_made': 0, 'turnovers': 0, 'fumbles_lost': 0,
                       'turnovers_on_downs': 0},
-                'B': {'points': away_points, 'touchdowns': 0, 'offensive_touchdowns': 0, 'drives': 1,
+                'B': {'points': away_points, 'touchdowns': 0, 'offensive_touchdowns': 0,
+                      'observed_overtime_touchdowns': 0, 'drives': 1,
                       'possession_seconds': 1200, 'plays': 0, 'rush_att': 0, 'rush_yds': 0,
                       'pass_att': 0, 'pass_comp': 0, 'pass_yds': 0, 'interceptions': 0,
                       'pass_tgt': 0, 'sacks_taken': 0, 'sack_yds': 0, 'punts': 1,
@@ -104,6 +107,23 @@ class BoxscoreSerialization(unittest.TestCase):
         box = outputs.build_boxscore(1, {'valid_full_game': True}, record, SNAPSHOT, PROFILE)
         self.assertEqual(box['reconciliation']['status'], 'failed')
         self.assertIn('passing_yards', box['reconciliation']['teams'][0]['mismatches'])
+
+    def test_observed_no_play_overtime_touchdown_is_explicitly_unassigned(self):
+        record = game_record()
+        record['stats']['team']['A']['offensive_touchdowns'] = 2
+        record['stats']['team']['A']['observed_overtime_touchdowns'] = 1
+        box = outputs.build_boxscore(7, {'valid_full_game': True}, record, SNAPSHOT, PROFILE)
+        self.assertEqual(box['status'], 'valid_complete')
+        self.assertEqual(box['teams'][0]['stats']['offensive_touchdowns'], 2)
+        self.assertEqual(box['teams'][0]['stats']['observed_overtime_touchdowns'], 1)
+        self.assertEqual(box['reconciliation']['status'], 'passed')
+
+        record['stats']['team']['A']['observed_overtime_touchdowns'] = 0
+        invalid = outputs.build_boxscore(8, {'valid_full_game': True}, record, SNAPSHOT, PROFILE)
+        self.assertEqual(invalid['reconciliation']['status'], 'failed')
+        mismatch = invalid['reconciliation']['teams'][0]['mismatches']['offensive_touchdowns']
+        self.assertEqual(mismatch['unassigned_observed_overtime'], 0)
+        self.assertEqual(mismatch['reconciled_team_total'], 2)
 
     def test_duplicate_players_and_conflicting_roster_identities_fail(self):
         record = game_record()

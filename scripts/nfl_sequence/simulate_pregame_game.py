@@ -28,6 +28,7 @@ import pregame_snapshot  # noqa: E402
 REPO = HERE.parents[1]
 PRODUCER_FILES = (
     'scripts/nfl_sequence/build_blocked_kick_outcomes.py',
+    'scripts/nfl_sequence/clock_d.py',
     'scripts/nfl_sequence/contextual_pool.py',
     'scripts/nfl_sequence/decision_layer.py',
     'scripts/nfl_sequence/e1_drive.py',
@@ -39,6 +40,7 @@ PRODUCER_FILES = (
     'scripts/nfl_sequence/pregame_context.py',
     'scripts/nfl_sequence/pregame_snapshot.py',
     'scripts/nfl_sequence/pre_event.py',
+    'scripts/nfl_sequence/paired_random_streams.py',
     'scripts/nfl_sequence/reducer.py',
     'scripts/nfl_sequence/run_slc_game.py',
     'scripts/nfl_sequence/share_distributions.py',

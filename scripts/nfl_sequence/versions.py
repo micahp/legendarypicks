@@ -24,7 +24,9 @@ ROOT = Path(__file__).resolve().parents[2]
 RULE_FILES = ('scripts/nfl_sequence/game_state.py', 'scripts/nfl_sequence/rules_matrix.py',
               'scripts/nfl_sequence/e1_drive.py', 'scripts/nfl_sequence/shared_v1.py')
 ENGINE_FILES = ('scripts/nfl_sequence/game_state.py', 'scripts/nfl_sequence/e1_drive.py',
-                'scripts/nfl_sequence/e2_reference.py', 'scripts/nfl_sequence/e0_single_play.py')
+                'scripts/nfl_sequence/e2_reference.py', 'scripts/nfl_sequence/e0_single_play.py',
+                'scripts/nfl_sequence/clock_d.py',
+                'scripts/nfl_sequence/paired_random_streams.py')
 
 
 def _git(*args):

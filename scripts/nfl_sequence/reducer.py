@@ -24,6 +24,21 @@ def _no_flags():
     return {flag: False for flag in FLAGS}
 
 
+def _validate_state(st):
+    if not isinstance(st, dict):
+        raise ValueError('play state must be an offense-relative mapping')
+    offense, defense = st.get('offense'), st.get('defense')
+    down, togo, yardline = st.get('down'), st.get('togo'), st.get('yl')
+    if not offense or not defense or offense == defense:
+        raise ValueError('play state needs two distinct teams')
+    if type(down) is not int or not 1 <= down <= 4:
+        raise ValueError(f'play state down must be 1 through 4 (got {down!r})')
+    if type(yardline) is not int or not 1 <= yardline <= 99:
+        raise ValueError(f'play state yardline must be 1 through 99 (got {yardline!r})')
+    if type(togo) is not int or not 1 <= togo <= yardline:
+        raise ValueError(f'play state distance must be 1 through the distance to goal (got {togo!r})')
+
+
 BLOCKED_KICK_STATUSES = ('classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety', 'classified_next_snap',
                          'period_expired')
 
@@ -48,6 +63,19 @@ def apply_play(st, event, yards, spot=None, kick_outcome=None):
     """
     if event not in EVENT_VOCABULARY:
         raise ValueError(f'unknown event {event!r}; the reducer refuses to guess')
+    _validate_state(st)
+    if event in ('run', 'pass_complete', 'pass_incomplete', 'sack'):
+        if type(yards) is not int:
+            raise ValueError(f'{event} needs an integer yards-gained result (got {yards!r})')
+        if event == 'pass_incomplete' and yards != 0:
+            raise ValueError(f'an incomplete pass must have zero yards gained (got {yards})')
+        if event in ('run', 'pass_complete', 'sack'):
+            if yards > st['yl']:
+                raise ValueError(f'{event} gain {yards} exceeds the {st["yl"]} yards to the goal line')
+            if st['yl'] - yards > 100:
+                raise ValueError(f'{event} loss {yards} carries the ball past its own goal line')
+        if event == 'sack' and yards > 0:
+            raise ValueError('a sack cannot produce positive yardage')
     flags = _no_flags()
     if event == 'field_goal_attempt':
         flags['field_goal_attempt'] = True
@@ -95,6 +123,7 @@ def apply_blocked_kick(st, event, outcome):
     """
     if event not in ('blocked_punt', 'blocked_field_goal'):
         raise ValueError(f'not a blocked-kick event: {event!r}')
+    _validate_state(st)
     if not isinstance(outcome, dict) or outcome.get('classification_status') not in BLOCKED_KICK_STATUSES:
         raise ValueError('blocked kick needs a classified observed outcome')
     expected_type = 'punt' if event == 'blocked_punt' else 'field_goal'
@@ -113,13 +142,20 @@ def apply_blocked_kick(st, event, outcome):
             raise ValueError('next-snap blocked kick needs receiving-team possession')
         yardline, down, togo = (outcome.get('next_snap_yardline_100'), outcome.get('next_snap_down'),
                                 outcome.get('next_snap_ydstogo'))
-        if not all(isinstance(v, int) for v in (yardline, down, togo)) or not 1 <= yardline <= 99 or not 1 <= down <= 4:
-            raise ValueError('next-snap blocked kick needs an observed start spot, down and distance')
+        if (not all(type(v) is int for v in (yardline, down, togo))
+                or not 1 <= yardline <= 99 or not 1 <= down <= 4 or not 1 <= togo <= yardline):
+            raise ValueError('next-snap blocked kick needs a legal observed start spot, down and distance')
         flags['turnover'] = True
         return {'offense': st['defense'], 'defense': st['offense'], 'down': down, 'togo': togo,
                 'yl': yardline}, 'turnover', flags
     if outcome.get('touchdown'):
         role = outcome.get('scoring_role')
+        if role not in ('kicking_team', 'receiving_team'):
+            scoring_team = outcome.get('scoring_team')
+            if scoring_team and scoring_team == outcome.get('posteam'):
+                role = 'kicking_team'
+            elif scoring_team and scoring_team == outcome.get('defteam'):
+                role = 'receiving_team'
         if role not in ('kicking_team', 'receiving_team'):
             raise ValueError('blocked-kick touchdown needs a scoring-team role')
         flags['touchdown'] = True
