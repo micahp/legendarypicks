@@ -1001,7 +1001,8 @@ class _Game:
                     return {'blocker': kick_type}
                 return {'event': 'blocked_field_goal', 'clock_runoff_seconds': outcome['clock_runoff_seconds'],
                         'kick_outcome': outcome,
-                        'metadata': {'field_goal_result': 'blocked', 'field_goal_result_source': source}}
+                        'metadata': {'field_goal_result': 'blocked', 'field_goal_result_source': source,
+                                     'field_goal_feasibility': feasibility}}
             bucket = fg_bucket(state['yl'])
             outcomes = self.ref.kicks.get('field_goal_outcomes', {}).get(bucket)
             if outcomes is None:

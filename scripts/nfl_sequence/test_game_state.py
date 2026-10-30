@@ -203,6 +203,39 @@ class FieldGoalFeasibility(unittest.TestCase):
         self.assertTrue(gs._field_goal_source_is_current(source, feasibility))
         self.assertFalse(gs._field_goal_source_is_current({**source, 'yardline_bucket': '30-39'}, feasibility))
 
+    def test_blocked_distance_model_attempt_keeps_current_state_feasibility_metadata(self):
+        class ContextualSampler:
+            decisions = [{}]
+
+            @staticmethod
+            def _field_goal_probability_result(distance, _rng):
+                return 'blocked', {
+                    'fallback_level': 'league_distance_curve', 'support_n': 500,
+                    'nearby_attempts': 50, 'made': 0.55, 'missed': 0.41, 'blocked': 0.04,
+                }
+
+        model = {
+            'source_file': 'distance-model.csv', 'max_observed_attempt_yards': 70,
+            'max_observed_attempt_source': {'game_id': 'SOURCE', 'play_id': 1},
+            'max_observed_made_yards': 65,
+            'max_observed_made_source': {'game_id': 'SOURCE', 'play_id': 2},
+        }
+        period_end = {'kick_type': 'field_goal', 'classification_status': 'period_expired',
+                      'clock_runoff_seconds': 20}
+        reference = ref(StaticPool('run', 0, 1), kickoff_pool(),
+                        kicks={'field_goal_distance_model': model},
+                        blocked_kicks={'records': {'field_goal': [period_end], 'punt': []},
+                                       'sha256': 'c' * 64})
+        reference.blocker_fixes = frozenset({'long_field_goal_feasibility'})
+        reference.contextual_sampler = ContextualSampler()
+        game = gs._Game(11, reference, gs.CoinTossLedger('A', 'B', 'receive'), random.Random(1))
+
+        resolution = game._resolve_special_teams(
+            'field_goal_attempt', {'yl': 42, 'quarter': 4, 'clock': 15}, {}, 1, None, random.Random(2))
+
+        self.assertEqual(resolution['event'], 'blocked_field_goal')
+        self.assertEqual(resolution['metadata']['field_goal_feasibility'], gs.fg_feasibility.evaluate(42))
+
     def test_a_kick_beyond_the_historical_ceiling_is_refused_before_sampling(self):
         reference = ref(StaticPool('run', 0, 1), kickoff_pool())
         game = gs._Game(10, reference, gs.CoinTossLedger('A', 'B', 'receive'), random.Random(1))
