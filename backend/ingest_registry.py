@@ -29,6 +29,16 @@ runners). Whether rows arrive is the only honest instrument.
 """
 from typing import Dict, List, Optional
 
+from mls_resolution import cutover_enabled
+
+
+def _published_roster_step() -> List[str]:
+    """Use the membership cycle with the same runtime switch as MLS consumers."""
+    step = ["ingest_published_rosters.py", "--apply"]
+    if cutover_enabled():
+        step.append("--mls-cutover")
+    return step
+
 # Jobs share the shape `run_props_ingest.PROVIDERS` uses, plus two keys that registry
 # understands: `env` (per-job child environment) and `freshness` (required, see above).
 #
@@ -463,8 +473,7 @@ JOBS: List[Dict[str, object]] = [
         # spend that budget at the same time. One request per club, ~60 clubs across the
         # three leagues.
         "host_lock": "fotmob",
-        "steps": [["ingest_league_clubs.py"],
-                  ["ingest_published_rosters.py", "--apply"]],
+        "steps": [["ingest_league_clubs.py"], _published_roster_step()],
         "needs_api_base": False,
         "freshness": [
             {

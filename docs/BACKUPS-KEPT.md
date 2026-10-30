@@ -7,7 +7,6 @@ This list is the reason it is kept. Do not delete an entry on a file name alone.
 
 | File | Where | Made | Purpose | Keep until |
 |---|---|---|---|---|
-| `picks.dev.db.bak-pre-mls-identity-closure-20261028-1812` (3.1 GB) | `/root/legendarypicks/backend/data/` | 2026-10-28 18:12 CDT, `VACUUM INTO`, `quick_check` ok | The dev database before the MLS identity closure changes (runtime switch `LP_MLS_CUTOVER`, one-reading date-of-birth rule, name-only settlement guard) are applied to dev | The owner has checked those changes in dev and decided the backup is no longer needed |
 | `picks.db.bak-pre-unbind-20261027` (2.9 GB) | `/root/legendarypicks/backend/data/` | 2026-10-27, incident | Production before the 2026-10-27 identity unbind. Pinned in `docs/incidents/2026-10-27-identity.md` | Never by this list. Pinned |
 | `picks.db.bak-pre-thayllon-20261027` (2.9 GB) | `/root/legendarypicks/backend/data/` | 2026-10-27, incident | Production before the Thayllon identity change. Pinned in `docs/incidents/2026-10-27-identity.md` | Never by this list. Pinned |
 | `picks.db.bak-premigrate-ufc-roster-20261025-232329` (2.9 GB) | `/root/legendarypicks/backend/data/` | 2026-10-25 23:23 | Production before the UFC roster migration. The pinned UFC copy in `docs/incidents/2026-10-27-identity.md` | Never by this list. Pinned |
@@ -37,6 +36,12 @@ sessions outside this repository. Measured with `du` on 2026-10-28: `/root/lp-ba
 3.9 GiB (a project tree that holds backups among other files), `/root/lp-release-v097` 0.8 GiB. Total about 18 GiB. Their owners
 decide. An earlier draft of this list also counted `/root/.codex` and `/root/.hermes`. Those are not backup folders and are
 not counted here.
+
+## Deleted by owner, 2026-10-30
+
+- `/root/legendarypicks/backend/data/picks.dev.db.bak-pre-mls-identity-closure-20261028-1812` (3.05 GiB), made with
+  `VACUUM INTO` and verified with `quick_check`. Deleted at the owner's request. This was the dev database restore point
+  made before the MLS identity closure work.
 
 ## Naming
 
