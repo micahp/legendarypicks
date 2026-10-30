@@ -46,6 +46,24 @@ class DiffDatabasesTests(unittest.TestCase):
         make_db(self.dev, {"player_stats": "id INTEGER"})
         self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))
 
+    def test_dev_only_research_tables_are_advisory(self):
+        research_tables = (
+            "nba_player_boxes_nbacom",
+            "nfl_game_context",
+            "nfl_game_info_load_log",
+            "nfl_game_officials",
+            "nfl_game_officials_raw",
+            "nfl_game_xwalk",
+            "nfl_pbp_penalty",
+            "referee_check",
+        )
+        make_db(self.dev, {table: "id INTEGER" for table in research_tables})
+        self.assertEqual(0, diff.main(["--prod", self.prod, "--dev", self.dev]))
+
+    def test_nba_teams_remains_a_blocking_runtime_table(self):
+        make_db(self.dev, {"nba_teams": "season INTEGER, team TEXT"})
+        self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))
+
     def test_a_column_only_in_dev_blocks(self):
         con = sqlite3.connect(self.dev)
         con.execute("ALTER TABLE players ADD COLUMN position TEXT")

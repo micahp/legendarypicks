@@ -82,6 +82,14 @@ FEATURE_TABLES = {
     "nba_sportsdataverse_games": "NBA SportsDataverse (hoopR) ingest -- not deployed to prod this release",
     "nba_sportsdataverse_releases": "NBA SportsDataverse (hoopR) ingest -- not deployed to prod this release",
     "player_game_logs_sportsdataverse": "NBA SportsDataverse (hoopR) ingest -- not deployed to prod this release",
+    "nba_player_boxes_nbacom": "NBA.com box-score ingest; no released app reader",
+    "nfl_game_context": "NFL game-information research data; no released app reader",
+    "nfl_game_info_load_log": "NFL game-information research load log; no released app reader",
+    "nfl_game_officials": "NFL crew research data; no released app reader",
+    "nfl_game_officials_raw": "NFL crew source capture for research; no released app reader",
+    "nfl_game_xwalk": "NFL game-information research crosswalk; no released app reader",
+    "nfl_pbp_penalty": "NFL retrospective penalty research; no released app reader",
+    "referee_check": "NFL referee research audit; no released app reader",
 }
 
 # Columns on shared tables that belong to the team-stats feature and are
