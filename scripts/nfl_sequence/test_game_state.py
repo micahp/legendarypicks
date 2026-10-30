@@ -177,6 +177,32 @@ class FieldGoalFeasibility(unittest.TestCase):
         self.assertEqual(source['bucket_kick_distance_range_yards'], '47-56')
         self.assertEqual(source['outcome_probability_basis'], 'pinned_2022_2025_historical_snap_yardline_bucket')
 
+    def test_result_source_validator_accepts_current_distance_model_evidence(self):
+        feasibility = gs.fg_feasibility.evaluate(42)
+        distance_source = {
+            'distance_yards': feasibility['kick_distance_yards'],
+            'field_goal_feasibility': feasibility,
+            'table': 'kick_results_2022_2025.csv',
+            'fallback_level': 'league_distance_curve',
+            'probabilities': {'made': 0.55, 'missed': 0.41, 'blocked': 0.04},
+        }
+        self.assertTrue(gs._field_goal_source_is_current(distance_source, feasibility))
+        self.assertFalse(gs._field_goal_source_is_current(
+            {**distance_source, 'distance_yards': feasibility['kick_distance_yards'] + 1}, feasibility))
+        self.assertFalse(gs._field_goal_source_is_current(
+            {**distance_source, 'field_goal_feasibility': {**feasibility, 'snap_yardline_100': 41}}, feasibility))
+
+    def test_result_source_validator_still_checks_pinned_snap_bucket_evidence(self):
+        feasibility = gs.fg_feasibility.evaluate(42)
+        source = {
+            'yardline_bucket': gs.fg_bucket(42),
+            'kick_distance_yards': feasibility['kick_distance_yards'],
+            'historical_ceiling_yards': feasibility['historical_ceiling_yards'],
+            'feasibility_source_sha256': feasibility['source_sha256'],
+        }
+        self.assertTrue(gs._field_goal_source_is_current(source, feasibility))
+        self.assertFalse(gs._field_goal_source_is_current({**source, 'yardline_bucket': '30-39'}, feasibility))
+
     def test_a_kick_beyond_the_historical_ceiling_is_refused_before_sampling(self):
         reference = ref(StaticPool('run', 0, 1), kickoff_pool())
         game = gs._Game(10, reference, gs.CoinTossLedger('A', 'B', 'receive'), random.Random(1))
@@ -525,43 +551,96 @@ class BlockedKickFitsTheState(unittest.TestCase):
         self.assertIsNone(blocker)
         self.assertEqual(outcome['classification_status'], 'period_expired')
 
-    def test_only_period_end_records_for_a_state_with_time_left_refuse_by_name(self):
+    def test_only_period_end_records_without_a_compatible_transition_remain_blocked(self):
         import random
         period_end = {'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
         blocker, outcome = self.sampler([period_end])._sample_blocked_kick('punt', random.Random(0), 30, 4)
-        self.assertEqual(blocker, 'blocked_kick_period_end_not_reached:punt')
+        self.assertEqual(blocker, 'blocked_kick_no_clock_compatible_transition:punt')
         self.assertIsNone(outcome)
 
-    def test_period_expired_draw_weight_is_preserved_across_all_quarters(self):
+    def test_period_expired_outcome_is_eligible_only_when_its_period_can_end(self):
         period_end = {'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
-        recovery = {'classification_status': 'classified_dead_ball_spot', 'clock_runoff_seconds': 4,
-                    'kick_type': 'punt', 'posteam': 'A', 'defteam': 'B'}
+        recovery = {'classification_status': 'classified_next_snap', 'clock_runoff_seconds': 4}
+
+        q1, excluded_q1 = gs._Game._eligible_blocked_kick_categories([period_end, recovery], 9, 1)
+        self.assertNotIn('period_expired', q1)
+        self.assertEqual(q1['next_snap:unknown'], [recovery])
+        self.assertEqual(excluded_q1['period_expired_requires_half_or_game_end'], 1)
+
+        q3, excluded_q3 = gs._Game._eligible_blocked_kick_categories([period_end, recovery], 9, 3)
+        self.assertNotIn('period_expired', q3)
+        self.assertEqual(excluded_q3['period_expired_requires_half_or_game_end'], 1)
+
+        q2_late, excluded_q2_late = gs._Game._eligible_blocked_kick_categories([period_end, recovery], 9, 2)
+        self.assertEqual(q2_late['period_expired'], [period_end])
+        self.assertEqual(excluded_q2_late, {})
+
+        q2_early, excluded_q2_early = gs._Game._eligible_blocked_kick_categories([period_end, recovery], 30, 2)
+        self.assertNotIn('period_expired', q2_early)
+        self.assertEqual(excluded_q2_early['period_expired_source_clock_too_short'], 1)
+
+    def test_unusable_period_expired_rows_are_filtered_before_outcome_draw(self):
+        import random
+        period_end = {'kick_type': 'punt', 'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
+        recovery = {'kick_type': 'punt', 'classification_status': 'classified_next_snap', 'clock_runoff_seconds': 4}
         game = self.sampler([period_end, recovery])
-        class ChoosePeriodExpired:
-            def choice(self, rows):
-                self.rows = rows
-                return next(row for row in rows if row['classification_status'] == 'period_expired')
 
-        for quarter in (1, 2, 3, 4, 5):
-            rng = ChoosePeriodExpired()
-            blocker, outcome = game._sample_blocked_kick('punt', rng, 9, quarter)
-            self.assertEqual(len(rng.rows), 2, f'Q{quarter} must retain the original candidate weights')
-            if quarter in (2, 4):
+        for quarter, clock in ((1, 9), (3, 9), (2, 30), (4, 30)):
+            blocker, outcome = game._sample_blocked_kick('punt', random.Random(0), clock, quarter)
+            self.assertIsNone(blocker)
+            self.assertEqual(outcome['classification_status'], 'classified_next_snap')
+
+    def test_geometry_sampler_uses_live_outcomes_across_quarter_changes_and_period_end_only_at_q2_q4(self):
+        from types import SimpleNamespace
+
+        period_end = {'kick_type': 'punt', 'classification_status': 'period_expired',
+                      'clock_runoff_seconds': 9, 'yardline_100': 50}
+        next_snap = {'kick_type': 'punt', 'classification_status': 'classified_next_snap',
+                     'clock_runoff_seconds': 4, 'yardline_100': 50,
+                     'possession_after_role': 'receiving_team', 'next_snap_yardline_100': 40,
+                     'next_snap_yards_from_los': -10, 'next_snap_down': 1, 'next_snap_ydstogo': 10}
+
+        class ChooseCategory:
+            def __init__(self, wanted):
+                self.wanted = wanted
+
+            def choices(self, categories, weights, k):
+                self.categories = list(categories)
+                return [self.wanted]
+
+            @staticmethod
+            def choice(rows):
+                return rows[0]
+
+        for quarter, clock, wanted in ((1, 9, 'next_snap:receiving_team'),
+                                       (3, 9, 'next_snap:receiving_team'),
+                                       (2, 30, 'next_snap:receiving_team'),
+                                       (2, 9, 'period_expired')):
+            with self.subTest(quarter=quarter, clock=clock):
+                game = object.__new__(gs._Game)
+                game.ref = SimpleNamespace(
+                    blocked_kicks={'records': {'punt': [period_end, next_snap]}, 'sha256': 'd' * 64},
+                    blocker_fixes=('blocked_kick_geometry',))
+                rng = ChooseCategory(wanted)
+                blocker, outcome = game._sample_blocked_kick_by_category(
+                    'punt', [period_end, next_snap], rng, clock, quarter,
+                    {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 5, 'yl': 50})
                 self.assertIsNone(blocker)
-                self.assertEqual(outcome['classification_status'], 'period_expired')
-            else:
-                self.assertEqual(
-                    blocker, f'blocked_kick_period_expired_next_possession_unresolved:punt:Q{quarter}')
-                self.assertIsNone(outcome)
+                self.assertEqual(outcome['classification_status'],
+                                 'period_expired' if wanted == 'period_expired' else 'classified_next_snap')
+                if quarter in (1, 3) or clock > 9:
+                    self.assertNotIn('period_expired', rng.categories)
+                    self.assertEqual(outcome['period_expired_category_exclusions'], {
+                        'period_expired_requires_half_or_game_end': 1
+                    } if quarter in (1, 3) else {'period_expired_source_clock_too_short': 1})
 
-    def test_period_expired_only_pool_is_named_outside_q2_and_q4(self):
+    def test_period_expired_only_pool_with_no_legal_transition_stays_explicitly_blocked(self):
         import random
         period_end = {'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
-        for quarter in (1, 3, 5):
+        for quarter, clock in ((1, 9), (2, 30), (3, 9), (4, 30)):
             blocker, outcome = self.sampler([period_end])._sample_blocked_kick(
-                'punt', random.Random(0), 9, quarter)
-            self.assertEqual(
-                blocker, f'blocked_kick_period_expired_next_possession_unresolved:punt:Q{quarter}')
+                'punt', random.Random(0), clock, quarter)
+            self.assertEqual(blocker, 'blocked_kick_no_clock_compatible_transition:punt')
             self.assertIsNone(outcome)
 
 
