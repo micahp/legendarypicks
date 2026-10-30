@@ -103,6 +103,7 @@ def summarize_outcomes(outcomes, requested, home_market_margin=None, market_tota
     blockers = Counter(row['blocker'] for row in outcomes if row.get('blocker'))
     failures = sum(row.get('status') in ('simulation_error', 'validation_error') for row in outcomes)
     tied = sum(bool(row.get('tied_at_regulation_end')) for row in outcomes)
+    final_ties = sum(row.get('final_tie') is True for row in outcomes)
     blocked = sum(bool(row.get('blocker')) and not row.get('regulation_end_reached') for row in outcomes)
     guarded_at_end = sum(row.get('status') == 'regulation_end_guarded' for row in outcomes)
 
@@ -112,6 +113,7 @@ def summarize_outcomes(outcomes, requested, home_market_margin=None, market_tota
         'valid_full_game_coverage': _round(len(complete) / requested),
         'regulation_end_reached': len(regulation_end),
         'tied_at_regulation_end': tied,
+        'final_ties': final_ties,
         'blocked_before_regulation_end': blocked,
         'regulation_end_guarded': guarded_at_end,
         'simulation_or_validation_errors': failures,
