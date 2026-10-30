@@ -32,6 +32,8 @@ interface ModelInfo { id: string; label: string; note: string }
 interface HistoryRow {
   game_id: string
   kickoff_utc: string
+  home_team: string
+  away_team: string
   p_home: number
   home_win: boolean
   home_score: number
@@ -301,14 +303,14 @@ export default function FbsModelTab() {
                   <div className="divide-y divide-zinc-800">
                     {day.rows.map((row) => {
                       const pickedHome = row.p_home >= 0.5
-                      const picked = pickedHome ? 'home' : 'away'
+                      const pickedTeam = pickedHome ? row.home_team : row.away_team
                       const won = pickedHome ? row.home_win : !row.home_win
                       const lean = pickedHome ? row.p_home : 1 - row.p_home
                       return (
-                        <article key={row.game_id} className="grid grid-cols-3 gap-x-6 gap-y-2 py-3">
-                          <Metric label="Lean" value={`${pct(lean)} ${picked}`} />
-                          <Metric label="Final" value={`${row.away_score}–${row.home_score}`} />
-                          <Metric label="Result" value={won ? '✓ Won' : '✗ Lost'} tone={won ? 'text-emerald-400' : 'text-rose-400'} />
+                        <article key={row.game_id} className="grid gap-x-6 gap-y-3 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto] sm:items-center">
+                          <Metric label="Lean" value={`${pct(lean)} ${pickedTeam}`} />
+                          <FinalScore row={row} />
+                          <Metric label="Pick result" value={won ? '✓ Won' : '✗ Lost'} tone={won ? 'text-emerald-400' : 'text-rose-400'} />
                         </article>
                       )
                     })}
@@ -320,6 +322,38 @@ export default function FbsModelTab() {
         </section>
       ) : null}
 
+    </div>
+  )
+}
+
+function FinalScore({ row }: { row: HistoryRow }) {
+  const higherScoringSide = row.home_score === row.away_score
+    ? null
+    : row.home_score > row.away_score ? 'home' : 'away'
+  const teams = [
+    { side: 'away', name: row.away_team, score: row.away_score },
+    { side: 'home', name: row.home_team, score: row.home_score },
+  ] as const
+
+  return (
+    <div className="min-w-0">
+      <div className="text-xs text-zinc-500">Final</div>
+      <div role="group" aria-label="Final score" className="mt-1 space-y-1">
+        {teams.map(({ side, name, score }) => {
+          const scoredMore = side === higherScoringSide
+          return (
+            <div key={side} role="group" aria-label={`${name}: ${score}${scoredMore ? ', winner' : ''}`} className="flex items-baseline justify-between gap-3 text-sm">
+              <span className={`min-w-0 break-words ${scoredMore ? 'font-semibold text-zinc-100' : 'text-zinc-400'}`}>
+                {name}{scoredMore && <span className="ml-2 text-xs font-normal text-zinc-500">Winner</span>}
+              </span>
+              <span className={`shrink-0 tabular-nums ${scoredMore ? 'font-semibold text-zinc-100' : 'text-zinc-400'}`}>
+                {score}
+              </span>
+            </div>
+          )
+        })}
+        {higherScoringSide === null && <p className="text-xs text-zinc-500">Tie</p>}
+      </div>
     </div>
   )
 }

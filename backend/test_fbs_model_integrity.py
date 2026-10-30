@@ -252,7 +252,11 @@ def test_a_frozen_projection_keeps_its_freeze_time_and_is_graded_once_from_a_ver
     assert game["models"]["g2h"]["frozen_at_utc"] == cutoff.isoformat()
     record = payload["records"]["g2h"]
     assert record["frozen"] == 1 and record["graded"] == 1 and record["accuracy"] == 1.0
-    assert record["history"][0]["graded"] == 1 and record["history"][0]["home_win"] is True
+    history = record["history"][0]
+    assert history["graded"] == 1 and history["home_win"] is True
+    assert history["home_team"] == "Florida International Panthers"
+    assert history["away_team"] == "Middle Tennessee Blue Raiders"
+    assert (history["home_score"], history["away_score"]) == (24, 20)
 
 
 def test_legacy_rows_are_graded_and_counted_in_the_record_but_not_shown_as_cards(con):

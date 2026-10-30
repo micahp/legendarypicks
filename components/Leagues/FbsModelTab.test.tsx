@@ -35,7 +35,8 @@ const payload = {
     g2: { frozen: 2, graded: 0, accuracy: null, brier: null, log_loss: null, history: [] },
     c2: { frozen: 2, graded: 0, accuracy: null, brier: null, log_loss: null, history: [] },
     g2h: { frozen: 2, graded: 1, accuracy: 1, brier: 0.12, log_loss: 0.4, history: [{
-      game_id: 'past-1', kickoff_utc: '2026-10-18T19:00:00Z', p_home: 0.68, home_win: true,
+      game_id: 'past-1', kickoff_utc: '2026-10-18T19:00:00Z', home_team: 'Texas Longhorns',
+      away_team: 'Oklahoma Sooners', p_home: 0.68, home_win: true,
       home_score: 27, away_score: 17, graded: 1, accuracy: 1, brier: 0.12,
     }] },
   },
@@ -93,13 +94,35 @@ describe('FBS model tab', () => {
     expect(screen.getByText(/treat the number as an early read/)).toBeTruthy()
   })
 
-  it('lists a graded projection with its final score and result on the record tab', async () => {
+  it('names both teams and marks the higher-scoring team on the record tab', async () => {
     render(<FbsModelTab />)
     await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
-    expect(screen.getByText('17–27')).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Texas Longhorns: 27, winner' })).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Oklahoma Sooners: 17' })).toBeTruthy()
     expect(screen.getByText('✓ Won').className).toContain('text-emerald-400')
     expect(screen.queryByText('Kickoff')).toBeNull()
+  })
+
+  it('marks the away team when it scores more points', async () => {
+    const history = [{ ...payload.records.g2h.history[0], home_score: 17, away_score: 27, home_win: false }]
+    serve({ ...payload, records: { ...payload.records, g2h: { ...payload.records.g2h, history } } })
+    render(<FbsModelTab />)
+    await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    expect(screen.getByRole('group', { name: 'Oklahoma Sooners: 27, winner' })).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Texas Longhorns: 17' })).toBeTruthy()
+    expect(screen.getByText('✗ Lost')).toBeTruthy()
+  })
+
+  it('does not label either team the winner when the final score is tied', async () => {
+    const history = [{ ...payload.records.g2h.history[0], home_score: 20, away_score: 20, home_win: false }]
+    serve({ ...payload, records: { ...payload.records, g2h: { ...payload.records.g2h, history } } })
+    render(<FbsModelTab />)
+    await waitFor(() => expect(screen.getAllByText(/Texas Longhorns/).length).toBeGreaterThan(0))
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    expect(screen.getByText('Tie')).toBeTruthy()
+    expect(screen.queryByText('Winner')).toBeNull()
   })
 
   it('groups the record under one label per day of games', async () => {

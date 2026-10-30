@@ -860,10 +860,12 @@ def _history(graded: list[sqlite3.Row]) -> list[dict]:
     for count, row in enumerate(graded, 1):
         correct += (row["p_home"] >= 0.5) == (row["result"] == 1)
         brier += (row["p_home"] - row["result"]) ** 2
-        out.append({"game_id": row["game_id"], "kickoff_utc": row["kickoff_utc"], "p_home": round(row["p_home"], 4),
-                    "home_win": bool(row["result"]), "home_score": row["home_score"],
-                    "away_score": row["away_score"], "graded": count,
-                    "accuracy": round(correct / count, 4), "brier": round(brier / count, 4)})
+        out.append({"game_id": row["game_id"], "kickoff_utc": row["kickoff_utc"],
+                    "home_team": row["home_team"], "away_team": row["away_team"],
+                    "p_home": round(row["p_home"], 4), "home_win": bool(row["result"]),
+                    "home_score": row["home_score"], "away_score": row["away_score"],
+                    "graded": count, "accuracy": round(correct / count, 4),
+                    "brier": round(brier / count, 4)})
     return out
 
 
