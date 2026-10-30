@@ -4,8 +4,9 @@
 Per generated play, D decides the clock from the play's own outcome and the state at the snap. It never reads the next
 snap, a known final play, or a quarter-ending marker row of the play being generated.
 
-1. Clock-stop class (`stop_class`), from the generated play and its legal consequence: score, kick, turnover, incomplete
-   pass, sack, out of bounds in the final two minutes of a half (a stop), otherwise the clock runs.
+1. Clock class (`stop_class`), from the generated play and its legal consequence: score, kick, turnover, incomplete
+   pass, sack, or out-of-bounds restart policy. A runner going out of bounds restarts the clock on the snap after the
+   two-minute warning in Q2 or inside the final five minutes in Q4; otherwise it restarts on the referee's ready signal.
 2. Quarter end: a draw against a hazard fitted on training quarter ends, keyed by event, stop class and the quarter
    clock at the snap. When it fires, the play consumes the remaining quarter time. That is a legal transition: the
    quarter ends at this play. It is not a clamp of an interval drawn independently.
@@ -45,8 +46,17 @@ def qsr_bucket(clock):
     return next(b for b in BUCKETS if clock <= b)
 
 
-def stop_class(event, oob, late, terminal):
-    """The legal clock-stop class of a generated play. Uses only the play's own outcome and the state at the snap."""
+def oob_clock_restart(quarter, qsr):
+    """Return the NFL game-clock restart after a scrimmage runner goes out of bounds."""
+    if quarter == 2 and qsr <= LATE_CLOCK:
+        return 'snap'
+    if quarter == 4 and qsr < 300:
+        return 'snap'
+    return 'ready'
+
+
+def stop_class(event, oob, quarter, qsr, terminal):
+    """Classify a generated play from its outcome and snap state, without reading a future play."""
     if terminal in ('touchdown', 'safety'):
         return 'score'
     if event in e1.KICK_EVENTS:
@@ -55,10 +65,11 @@ def stop_class(event, oob, late, terminal):
         return 'turnover'
     if event == 'pass_incomplete':
         return 'incomplete'
+    if oob:
+        # Turnovers return above: after a change of possession, the game clock starts on the snap.
+        return f'oob_{oob_clock_restart(quarter, qsr)}'
     if event == 'sack':
         return 'sack'
-    if oob and late:
-        return 'oob_late'
     return 'clock_runs'
 
 
@@ -169,7 +180,7 @@ def fit(rows, flags):
             oob = flags.get((row['game_id'], int(row['play_id'])), (0, 0))[0]
             late = row['qtr'] in LATE_QUARTERS and qsr <= LATE_CLOCK
             terminal = 'touchdown' if row['touchdown'] == 1 else None
-            stop = stop_class(event, oob, late, terminal)
+            stop = stop_class(event, oob, row['qtr'], qsr, terminal)
             bucket = qsr_bucket(qsr)
             for table, key in ((hazard, (stop, bucket)), (hazard_bucket, bucket)):
                 table[key][1] += 1
@@ -200,7 +211,7 @@ class BoundaryClock:
         """
         late = quarter in LATE_QUARTERS and qsr <= LATE_CLOCK
         oob = self.model.flags.get((row['game_id'], int(row['play_id'])), (0, 0))[0]
-        stop = stop_class(event, oob, late, terminal)
+        stop = stop_class(event, oob, quarter, qsr, terminal)
         bucket = qsr_bucket(qsr)
         p_end, source = self.model.p_end(event, stop, bucket)
         if p_end is None:
