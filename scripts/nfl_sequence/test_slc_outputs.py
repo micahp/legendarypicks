@@ -105,6 +105,23 @@ class BoxscoreSerialization(unittest.TestCase):
         self.assertEqual(box['reconciliation']['status'], 'failed')
         self.assertIn('passing_yards', box['reconciliation']['teams'][0]['mismatches'])
 
+    def test_observed_no_play_overtime_touchdown_is_explicitly_unassigned(self):
+        record = game_record()
+        record['stats']['team']['A']['offensive_touchdowns'] = 2
+        record['stats']['team']['A']['observed_overtime_touchdowns'] = 1
+        box = outputs.build_boxscore(7, {'valid_full_game': True}, record, SNAPSHOT, PROFILE)
+        self.assertEqual(box['status'], 'valid_complete')
+        self.assertEqual(box['teams'][0]['stats']['offensive_touchdowns'], 2)
+        self.assertEqual(box['teams'][0]['stats']['observed_overtime_touchdowns'], 1)
+        self.assertEqual(box['reconciliation']['status'], 'passed')
+
+        record['stats']['team']['A']['observed_overtime_touchdowns'] = 0
+        invalid = outputs.build_boxscore(8, {'valid_full_game': True}, record, SNAPSHOT, PROFILE)
+        self.assertEqual(invalid['reconciliation']['status'], 'failed')
+        mismatch = invalid['reconciliation']['teams'][0]['mismatches']['offensive_touchdowns']
+        self.assertEqual(mismatch['unassigned_observed_overtime'], 0)
+        self.assertEqual(mismatch['reconciled_team_total'], 2)
+
     def test_duplicate_players_and_conflicting_roster_identities_fail(self):
         record = game_record()
         record['stats']['player'].append(dict(record['stats']['player'][0]))

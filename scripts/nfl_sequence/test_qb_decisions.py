@@ -24,7 +24,7 @@ class QbDecisionModel(unittest.TestCase):
         con.execute('''CREATE TABLE nfl_pbp (
             season INT, game_id TEXT, play_id INT, posteam TEXT, passer_player_id TEXT, rusher_player_id TEXT,
             qb_dropback INT, qb_scramble INT, pass_attempt INT, receiver_player_id TEXT,
-            down INT, ydstogo INT, yardline_100 INT, week INT)''')
+            down INT, ydstogo INT, yardline_100 INT, week INT, penalty INT, two_point_attempt INT)''')
         rows = []
         for i in range(20):
             scramble = int(i < 10)
@@ -34,7 +34,13 @@ class QbDecisionModel(unittest.TestCase):
             rows.append((2024, 'g24b', i + 1, 'AAA', 'QB', None, 1, 0, 1, 'RRB', 1, 10, 75, 3))
         rows.append((2024, 'g24c', 1, 'BBB', 'QA', None, 1, 0, 1, 'RTE', 1, 10, 75, 3))
         rows.append((2025, 'g25', 1, 'AAA', 'QA', None, 1, 0, 1, 'RTE', 1, 10, 75, 3))
-        con.executemany('INSERT INTO nfl_pbp VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', rows)
+        rows.append((2026, 'g26', 1, 'AAA', 'QA', None, 1, 0, 1, 'RTE', 1, 10, 75, 3))
+        rows.extend([
+            (2024, 'penalty', 1, 'AAA', 'QA', 'QA', 1, 1, 0, None, 1, 10, 75, 3, 1, 0),
+            (2024, 'two-point', 1, 'AAA', 'QA', 'QA', 1, 1, 0, None, 1, 10, 75, 3, 0, 1),
+        ])
+        rows = [row + (0, 0) if len(row) == 14 else row for row in rows]
+        con.executemany('INSERT INTO nfl_pbp VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', rows)
         con.commit()
         con.close()
 
@@ -52,6 +58,13 @@ class QbDecisionModel(unittest.TestCase):
         moved = qbd.draw(table, 'BBB', 'QA', 1, 10, 75, {'TE', 'WR'}, 'seed-a')
         self.assertEqual(moved['target_role_history_n'], 1)
         self.assertEqual(table['target_qb_cell'][('AAA', 'QA', cell)]['WR'], 10)
+
+    def test_cutoff_excludes_target_season_and_invalid_penalty_or_try_scrambles(self):
+        table = qbd.load(self.db, 2026)
+        cell = qbd.cell_of(1, 10, 75)
+        self.assertEqual(table['source_seasons'], [2022, 2023, 2024, 2025])
+        self.assertNotIn(('g26', 1), table['row_target_roles'])
+        self.assertEqual(table['league_cell'][cell]['scramble'], 10)
 
     def test_target_role_draw_uses_qb_history_and_restricts_to_available_roles(self):
         table = qbd.load(self.db, 2025)

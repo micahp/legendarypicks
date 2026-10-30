@@ -207,6 +207,67 @@ class PregamePlayerUsage(unittest.TestCase):
 
 
 class GameStatsReconciliation(unittest.TestCase):
+    def test_return_touchdown_is_not_offensive_even_when_the_scoring_side_is_the_drive_side(self):
+        play = {
+            'event_type': 'punt_return',
+            'state_before': {'yardline_100': 35},
+            'participants': {'attribution': 'sampled_observed_play'},
+            'outcome': {'yards_gained': 65, 'touchdown': True, 'turnover': False, 'punt': False},
+        }
+        drive = {
+            'offense_team': 'B', 'quarter_start': 1, 'clock_start': 900,
+            'end_quarter': 1, 'end_clock': 890, 'terminal': 'touchdown',
+            'touchdown_scored_by': 'B', 'field_goal_made': None, 'plays': [play],
+        }
+
+        stats = game_stats.compute([drive], {'A': 0, 'B': 6})
+
+        self.assertEqual(stats['team']['B']['touchdowns'], 1)
+        self.assertEqual(stats['team']['B'].get('offensive_touchdowns', 0), 0)
+
+    def test_offensive_run_touchdown_counts_as_an_offensive_team_touchdown(self):
+        play = {
+            'event_type': 'run',
+            'state_before': {'yardline_100': 5},
+            'participants': {
+                'attribution': 'pre_event_selection', 'rusher_id': 'RB1',
+                'rusher_name': 'Runner', 'rusher_position': 'RB', 'rusher_team': 'A', 'rusher_side': 'A',
+            },
+            'outcome': {'yards_gained': 5, 'touchdown': True, 'turnover': False, 'punt': False},
+        }
+        drive = {
+            'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+            'end_quarter': 1, 'end_clock': 890, 'terminal': 'touchdown',
+            'touchdown_scored_by': 'A', 'field_goal_made': None, 'plays': [play],
+        }
+
+        stats = game_stats.compute([drive], {'A': 6, 'B': 0})
+
+        self.assertEqual(stats['team']['A']['offensive_touchdowns'], 1)
+        self.assertEqual(stats['player'][0]['rushing']['td'], 1)
+
+    def test_defensive_return_touchdown_is_not_an_offensive_touchdown(self):
+        play = {
+            'event_type': 'fumble_lost',
+            'state_before': {'yardline_100': 35},
+            'participants': {
+                'attribution': 'pre_event_selection', 'rusher_id': 'RB1',
+                'rusher_name': 'Runner', 'rusher_position': 'RB', 'rusher_team': 'A', 'rusher_side': 'A',
+            },
+            'outcome': {'yards_gained': 0, 'touchdown': True, 'turnover': True, 'punt': False},
+        }
+        drive = {
+            'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+            'end_quarter': 1, 'end_clock': 700, 'terminal': 'touchdown',
+            'touchdown_scored_by': 'B', 'field_goal_made': None, 'plays': [play],
+        }
+
+        stats = game_stats.compute([drive], {'A': 0, 'B': 6})
+
+        self.assertEqual(stats['team']['B']['touchdowns'], 1)
+        self.assertEqual(stats['team']['B'].get('offensive_touchdowns', 0), 0)
+        self.assertEqual(stats['team']['A'].get('offensive_touchdowns', 0), 0)
+
     def test_a_team_whose_only_touchdown_was_a_blocked_kick_return_reconciles_to_zero_offensive_touchdowns(self):
         # The receiving team's blocked-punt return is a touchdown but not an offensive one: its team line has no
         # offensive_touchdowns key, and the reconciliation must read that as zero, not as the total touchdown count.

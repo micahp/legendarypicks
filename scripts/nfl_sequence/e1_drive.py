@@ -215,7 +215,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             return halt(f'exceeded {MAX_PLAYS} plays without a terminal')
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
         cell = pool.get(key, [])
-        if len(cell) < MIN_POOL:
+        if len(cell) < MIN_POOL and not getattr(sampling_policy, 'allow_sparse_cells', False):
             return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
         shares = Counter(ev for ev, _, _, _ in cell)
         if sampling_policy is None:
