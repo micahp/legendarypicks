@@ -13,7 +13,9 @@ D (clock_d.py) is fitted on the training window only. A_train is the E2 cell rul
 A_deployed is the E2 cell rule as shipped, which pools 2022-2025 and so includes the holdout season. It is in-sample for
 the holdout and is labelled that way.
 
-Usage: python3 clock_d_replay.py --window dev|holdout [--out-dir DIR]
+Usage: python3 clock_d_replay.py --window dev|holdout [--train-season-from YEAR]
+       [--train-season-to YEAR] [--train-week-from WEEK] [--train-week-to WEEK]
+       [--replicates N] [--out-dir DIR]
 """
 import argparse
 import json
@@ -30,6 +32,23 @@ TRAIN = (2022, 2022, 1, 5)  # season, season, first week, last week
 DEV_GAMES = ('2022_05_CIN_BAL', '2022_09_GB_DET', '2022_05_MIA_NYJ', '2022_06_SF_ATL', '2022_07_TB_CAR',
              '2022_06_DAL_PHI')
 WINDOWS = {'dev': (2022, 2022, 1, 18, DEV_GAMES), 'holdout': (2025, 2025, 1, 18, None)}
+
+
+def validate_window(season_from, season_to, week_from, week_to, name):
+    """Validate a regular-season window and reject the sealed 2026 holdout."""
+    if season_from < min(e1.POOL_SEASONS) or season_to >= e1.HOLDOUT_SEASON or season_from > season_to:
+        raise ValueError(f'{name} seasons must be ordered within {min(e1.POOL_SEASONS)}-{max(e1.POOL_SEASONS)}')
+    if not 1 <= week_from <= week_to <= 18:
+        raise ValueError(f'{name} weeks must be ordered within 1-18')
+    return season_from, season_to, week_from, week_to
+
+
+def validate_training_window(window, eval_start, evaluation_games=None):
+    """Require chronological training unless the evaluation names its held-out games explicitly."""
+    season_from, season_to, week_from, week_to = validate_window(*window, 'training')
+    if evaluation_games is None and (season_to, week_to) >= eval_start:
+        raise ValueError('training window must end before the evaluation window')
+    return season_from, season_to, week_from, week_to
 
 
 def quarter_plays(rows, flags, counts):
@@ -70,13 +89,15 @@ def run_d(plays, model, seed):
         runoff, ended, refusal = clock.draw(p['row'], p['event'], p['terminal'], p['qtr'], c)
         if refusal:
             return {'refused': refusal}
+        stop = clock.log[-1]['stop']
         if i == n - 1:
             return {'outcome': 'accurate' if ended else 'missed', 'lost': 0,
-                    'leftover': None if ended else c - runoff, 'draws': draws + ([(i, runoff)] if not ended else []),
+                    'leftover': None if ended else c - runoff,
+                    'draws': draws + ([(i, runoff, stop)] if not ended else []),
                     'counts': clock.counts}
         if ended:
             return {'outcome': 'premature', 'lost': n - 1 - i, 'leftover': None, 'draws': draws, 'counts': clock.counts}
-        draws.append((i, runoff))
+        draws.append((i, runoff, stop))
         c -= runoff
     raise AssertionError('empty quarter')
 
@@ -136,12 +157,24 @@ def summarise(name, results, quarters):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--window', choices=sorted(WINDOWS), required=True)
+    ap.add_argument('--train-season-from', type=int, default=TRAIN[0])
+    ap.add_argument('--train-season-to', type=int, default=TRAIN[1])
+    ap.add_argument('--train-week-from', type=int, default=TRAIN[2])
+    ap.add_argument('--train-week-to', type=int, default=TRAIN[3])
+    ap.add_argument('--replicates', type=int, default=REPLICATES)
     ap.add_argument('--out-dir', default=str(Path(__file__).resolve().parents[2] / 'docs' / 'research' / 'e3'))
     args = ap.parse_args()
     season_from, season_to, week_from, week_to, only = WINDOWS[args.window]
+    train_window = validate_training_window(
+        (args.train_season_from, args.train_season_to, args.train_week_from, args.train_week_to),
+        (season_from, week_from), evaluation_games=only)
+    if args.replicates < 1:
+        ap.error('--replicates must be positive')
 
     flags = cd.load_flags()
-    train_rows = [r for r in cd.load_window(e1.DEFAULT_DB, *TRAIN) if r['game_id'] not in DEV_GAMES]
+    all_train_rows = cd.load_window(e1.DEFAULT_DB, *train_window)
+    excluded_games = sorted({r['game_id'] for r in all_train_rows if r['game_id'] in DEV_GAMES})
+    train_rows = [r for r in all_train_rows if r['game_id'] not in DEV_GAMES]
     model = cd.fit(train_rows, flags)
     a_train, _ = e1.build_pool(train_rows)
     eval_rows = cd.load_window(e1.DEFAULT_DB, season_from, season_to, week_from, week_to)
@@ -178,7 +211,7 @@ def main():
                 observed_pairs[p['event']].append(p['runoff'])
                 stop_obs[p['stop']][0] += int(p['runoff'] <= SHORT_SECONDS)
                 stop_obs[p['stop']][1] += 1
-        for rep in range(REPLICATES):
+        for rep in range(args.replicates):
             seed = rep * 100003 + qi
             d = run_d(plays, model, seed)
             a = run_a(plays, a_train, seed)
@@ -187,23 +220,27 @@ def main():
                 if boundary:
                     results[name].append(res if 'refused' not in res else {'refused': res['refused']})
                 if 'draws' in res:
-                    for i, runoff in res['draws']:
+                    for draw in res['draws']:
+                        i, runoff = draw[:2]
                         p = plays[i]
+                        stop = draw[2] if len(draw) == 3 else p['stop']
                         draws_by_event[name][p['event']].append(runoff)
-                        stop_model[name][p['stop']][0] += int(runoff <= SHORT_SECONDS)
-                        stop_model[name][p['stop']][1] += 1
+                        stop_model[name][stop][0] += int(runoff <= SHORT_SECONDS)
+                        stop_model[name][stop][1] += 1
             if 'counts' in d:
                 counts.update({f'D: {k}': v for k, v in d['counts'].items()})
 
     out = {
-        'window': args.window, 'train': {'seasons': [TRAIN[0], TRAIN[1]], 'weeks': [TRAIN[2], TRAIN[3]],
-                                         'excludes': list(DEV_GAMES), 'plays_fitted': sum(
+        'window': args.window, 'train': {'seasons': [train_window[0], train_window[1]],
+                                         'weeks': [train_window[2], train_window[3]],
+                                         'excludes': excluded_games,
+                                         'plays_fitted': sum(
                                              v for k, v in model.fit_counts.items() if k.startswith('plays fitted'))},
         'eval': {'seasons': [season_from, season_to], 'weeks': [week_from, week_to],
                  'games': len({r['game_id'] for r in eval_rows}), 'quarters': len(quarters),
                  'quarters_with_boundary_test': len(quarters) - last_not_ended,
                  'quarters_excluded_from_boundary_test': last_not_ended},
-        'replicates': REPLICATES, 'short_seconds': SHORT_SECONDS,
+        'replicates': args.replicates, 'short_seconds': SHORT_SECONDS,
         'quarter_end': summarise(args.window, results, quarters),
         'runoff_w1_seconds_by_event': {
             name: {e: {'n_observed': len(observed_pairs[e]), 'n_draws': len(draws_by_event[name][e]),
