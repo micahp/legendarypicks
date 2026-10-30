@@ -7,6 +7,7 @@ import sqlite3
 import sys
 import hashlib
 import json
+import math
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -18,6 +19,7 @@ import rule_regimes as rr  # noqa: E402
 
 PLAY_EXTRAS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'play_extras_2022_2025.csv'
 BLOCKED_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'blocked_kick_outcomes_2022_2025.csv'
+AUDITED_BLOCKED_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'blocked_kick_outcomes_2022_2025_audited_v1.csv'
 OVERTIME_DRIVES = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_drives_2022_2025.csv'
 TRY_FALLBACK = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'try_fallback_2022_2025.csv'
 CHOICE_MODEL = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'overtime_choice_model_2025.csv'
@@ -29,6 +31,16 @@ COHORT_UNSAFE_SOURCES = {}  # every source now has a cutoff path (see docs/resea
 SAFETY_KICKS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'safety_kick_outcomes_2022_2025.csv'
 RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
+BLOCKER_FIXES = ('run_scramble_backoff', 'long_field_goal_feasibility', 'blocked_kick_source_audit',
+                 'blocked_kick_geometry', 'safety_free_kick_boundaries')
+
+
+def normalize_blocker_fixes(fixes):
+    fixes = set(fixes or ())
+    unknown = fixes - set(BLOCKER_FIXES)
+    if unknown:
+        raise ValueError(f'unknown SLC blocker fix(s): {sorted(unknown)}')
+    return frozenset(fixes)
 
 
 def load_position_usage(db=e1.DEFAULT_DB, eligible_before=None):
@@ -96,6 +108,9 @@ def _reference_fingerprint(reference):
             add(['blocked-kick-outcome', kick_type, sample])
     add(['blocked-kick-rates', reference.blocked_kicks.get('rates')])
     add(['blocked-kick-source-sha256', reference.blocked_kicks.get('sha256')])
+    if getattr(reference, 'blocker_fixes', None):
+        add(['slc-blocker-fixes', sorted(reference.blocker_fixes),
+             float(getattr(reference, 'fg_ordinary_cutoff', 60.0))])
     add(['blocked-kick-manifest-sha256', reference.blocked_kicks.get('manifest_sha256')])
     add(['blocked-kick-input-source-sha256', reference.blocked_kicks.get('source_hashes')])
     if reference.safety_kick_pool is not None:
@@ -181,7 +196,9 @@ def load_blocked_kicks(path=BLOCKED_KICKS, eligible_before=None):
                       'clock_seconds_remaining', 'clock_runoff_seconds', 'crossed_line',
                       'recovery_spot_yardline_100', 'return_endpoint_yardline_100', 'return_yards',
                       'recovery_yards_from_los', 'return_endpoint_yards_from_los', 'dead_ball_yards_from_los',
-                      'next_snap_yardline_100', 'next_snap_down', 'next_snap_ydstogo', 'touchdown', 'safety',
+                      'next_snap_play_id', 'next_snap_yardline_100', 'next_snap_down', 'next_snap_ydstogo',
+                      'next_snap_yards_from_los',
+                      'touchdown', 'safety',
                       'return_yards_field', 'return_touchdown_field', 'receiving_team_touched_beyond_line')
     with open(path, newline='') as f:
         rows = list(csv.DictReader(f))
@@ -190,6 +207,9 @@ def load_blocked_kicks(path=BLOCKED_KICKS, eligible_before=None):
     seen = set()
     for row in rows:
         for field in integer_fields:
+            if field not in row:
+                row[field] = None
+                continue
             value = row[field]
             row[field] = int(float(value)) if value not in ('', None) else None
         row['blocked'] = row['blocked'] == '1'
@@ -491,7 +511,8 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          playcall_artifact=None, playcall_teams=None, playcall_team_outcomes=False, playcall_formation=False,
          playcall_player_shares=False, playcall_exact_yardline=False, playcall_coverage=False,
          playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False, playcall_target_roles=False,
-         playcall_decision=False, playcall_qb_decisions=False, playcall_player_outcomes=False):
+         playcall_decision=False, playcall_qb_decisions=False, playcall_player_outcomes=False,
+         blocker_fixes=(), fg_ordinary_cutoff=60):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
@@ -519,6 +540,11 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     because both fill the same drive-policy slot. False keeps every existing reference unchanged.
     """
     refuse_unsafe_cutoff(eligible_before)
+    blocker_fixes = normalize_blocker_fixes(blocker_fixes)
+    if blocker_fixes and playcall_artifact is None:
+        raise ValueError('SLC blocker-resolution fixes require --playcall-artifact')
+    if not math.isfinite(float(fg_ordinary_cutoff)) or float(fg_ordinary_cutoff) <= 0:
+        raise ValueError('the ordinary field-goal cutoff must be a positive finite distance')
     if team_tendency and contextual_mode is not None:
         raise ValueError('team tendencies and contextual sampling are alternative drive policies; choose one')
     if team_tendency and eligible_before is None:
@@ -660,7 +686,8 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     kickoff_regime = None
     if kickoff_regime_season is not None:
         kpool, kickoff_regime = regime_kickoffs(kpool, kickoff_regime_season, kickoff_before)
-    kicks = mk.load_kick_table(db, eligible_before=eligible_before)
+    kicks = mk.load_kick_table(db, eligible_before=eligible_before,
+                               include_distance_model='long_field_goal_feasibility' in blocker_fixes)
     # Under a cutoff a bucket can have no observed attempts yet (for example 50+ before 2025). It is left out rather than
     # filled, and the engine then records `field_goal_outcomes_missing:<bucket>` as a blocker if a kick reaches it.
     fg_missing = sorted(set(gs.FG_BUCKETS) - set(kicks['field_goal']))
@@ -668,7 +695,8 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
         raise SystemExit(f"kick table buckets {sorted(kicks['field_goal'])} do not match {list(gs.FG_BUCKETS)}")
     if not set(kicks['field_goal']) <= set(gs.FG_BUCKETS):
         raise SystemExit(f"kick table has unknown buckets {sorted(kicks['field_goal'])}")
-    blocked = load_blocked_kicks(eligible_before=eligible_before)
+    blocked_source = AUDITED_BLOCKED_KICKS if 'blocked_kick_source_audit' in blocker_fixes else BLOCKED_KICKS
+    blocked = load_blocked_kicks(path=blocked_source, eligible_before=eligible_before)
     if eligible_before is not None:
         blocked['rates'] = cutoff_blocked_rates(db, blocked, eligible_before)
     for bucket, expected in blocked['rates']['field_goal_blocked_by_snap_bucket'].items():
@@ -696,6 +724,16 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                              safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss,
                              overtime_try_p_two=try_fallback, overtime_p_kick=choice_p, overtime_choice=overtime_choice,
                              contextual_sampler=contextual_sampler)
+    reference.blocker_fixes = blocker_fixes
+    reference.fg_ordinary_cutoff = float(fg_ordinary_cutoff)
+    if contextual_sampler is not None and 'long_field_goal_feasibility' in blocker_fixes:
+        contextual_sampler.field_goal_distance_model = kicks['field_goal_distance_model']
+        contextual_sampler.fg_ordinary_cutoff = float(fg_ordinary_cutoff)
+    if contextual_sampler is not None and 'run_scramble_backoff' in blocker_fixes:
+        contextual_sampler.source_pool = pool
+        contextual_sampler.outcome_backoff_enabled = True
+        contextual_sampler.allow_sparse_cells = True
+        contextual_sampler.scramble_backoff_enabled = True
     reference.overtime_try_sha256 = try_fallback_sha
     reference.kickoff_regime = kickoff_regime
     reference.overtime_choice_sha256 = choice_sha

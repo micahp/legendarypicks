@@ -6,6 +6,7 @@ The database is opened with mode=ro. load_kick_table() is the table the E2 engin
 printed here is the SQL recorded in docs/SEQUENCE-E2-FIRST-PIECE-2026-10-24.md.
 """
 import argparse
+import csv
 import math
 import sqlite3
 from pathlib import Path
@@ -122,7 +123,125 @@ def load_field_goal_results(path=KICK_RESULTS, eligible_before=None):
     return {'field_goal': field_goal, 'field_goal_outcomes': outcomes, 'excluded': excluded}
 
 
-def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS, eligible_before=None):
+def _logit_fit(attempts):
+    """Fit a league make curve on all attempts, with blocked kicks retained as failures."""
+    rows = [(float(row['kick_distance']), row['field_goal_result'] == 'made') for row in attempts]
+    if not rows:
+        raise ValueError('no made/missed field-goal attempts are available for the requested cutoff')
+    center = sum(distance for distance, _made in rows) / len(rows)
+    scale = 10.0
+    xs = [(distance - center) / scale for distance, _made in rows]
+    ys = [float(made) for _distance, made in rows]
+    rate = (sum(ys) + 0.5) / (len(ys) + 1.0)
+    b0, b1 = math.log(rate / (1.0 - rate)), 0.0
+    ridge = 0.05
+    for _ in range(100):
+        g0 = g1 = h00 = h01 = h11 = 0.0
+        for x, y in zip(xs, ys):
+            z = max(-30.0, min(30.0, b0 + b1 * x))
+            p = 1.0 / (1.0 + math.exp(-z))
+            w = max(1e-9, p * (1.0 - p))
+            g0 += y - p
+            g1 += x * (y - p)
+            h00 += w
+            h01 += w * x
+            h11 += w * x * x
+        g1 -= ridge * b1
+        h11 += ridge
+        determinant = h00 * h11 - h01 * h01
+        if determinant <= 1e-12:
+            break
+        step0 = (g0 * h11 - g1 * h01) / determinant
+        step1 = (g1 * h00 - g0 * h01) / determinant
+        b0 += step0
+        b1 += step1
+        if abs(step0) + abs(step1) < 1e-9:
+            break
+    if b1 > 0:
+        b1 = 0.0
+        b0 = math.log(rate / (1.0 - rate))
+    return {'intercept': b0, 'distance_slope_per_10_yards': b1, 'distance_center_yards': center,
+            'fit_attempts': len(rows), 'fit': 'monotone_logistic_made_vs_missed_or_blocked'}
+
+
+def load_field_goal_model(path=KICK_RESULTS, eligible_before=None, holder_offset=7, end_zone_length=10):
+    """Cutoff-safe FG distance curve, separate block rate, and observed max/made records with source IDs."""
+    attempts = []
+    with open(path, newline='') as source:
+        for row in csv.DictReader(source):
+            if row['play_type'] != 'field_goal' or not before_cutoff(row['season'], row['week'], eligible_before):
+                continue
+            if row.get('field_goal_result') not in ('made', 'missed', 'blocked'):
+                continue
+            try:
+                distance = float(row['kick_distance'])
+            except (TypeError, ValueError):
+                continue
+            if not math.isfinite(distance) or distance <= 0:
+                continue
+            item = dict(row)
+            item['kick_distance'] = distance
+            attempts.append(item)
+    if not attempts:
+        raise ValueError(f'no field-goal attempts available before cutoff {eligible_before}')
+    attempts.sort(key=lambda row: (row['kick_distance'], row['game_id'], int(float(row['play_id']))))
+    longest_attempt = attempts[-1]
+    made_rows = [row for row in attempts if row['field_goal_result'] == 'made']
+    if not made_rows:
+        raise ValueError(f'no made field goals available before cutoff {eligible_before}')
+    longest_made = max(made_rows, key=lambda row: (row['kick_distance'], row['game_id'], int(float(row['play_id']))))
+    curve = _logit_fit(attempts)
+    blocked = sum(row['field_goal_result'] == 'blocked' for row in attempts)
+    by_distance = {}
+    for row in attempts:
+        counts = by_distance.setdefault(str(row['kick_distance']), {'attempts': 0, 'blocked': 0})
+        counts['attempts'] += 1
+        counts['blocked'] += int(row['field_goal_result'] == 'blocked')
+    curve.update({
+        'source_file': Path(path).name,
+        'eligible_before': list(eligible_before) if eligible_before is not None else None,
+        'holder_offset_yards': int(holder_offset), 'end_zone_length_yards': int(end_zone_length),
+        'attempted_n': len(attempts), 'blocked_n': blocked,
+        'global_block_rate': blocked / len(attempts),
+        'block_counts_by_distance': by_distance,
+        'max_observed_attempt_yards': longest_attempt['kick_distance'],
+        'max_observed_attempt_source': {key: longest_attempt[key] for key in ('game_id', 'play_id', 'season', 'week')},
+        'max_observed_made_yards': longest_made['kick_distance'],
+        'max_observed_made_source': {key: longest_made[key] for key in ('game_id', 'play_id', 'season', 'week')},
+    })
+    return curve
+
+
+def field_goal_distribution(model, kick_distance, *, block_shrinkage=30.0, kernel_bandwidth=5.0):
+    """Return make/miss/block probabilities at a distance; blocked kicks remain their own outcome class."""
+    distance = float(kick_distance)
+    if distance > float(model['max_observed_attempt_yards']):
+        raise ValueError(f'field-goal distance {distance:g} exceeds cutoff-specific observed maximum '
+                         f'{model["max_observed_attempt_yards"]:g}')
+    sigma2 = float(kernel_bandwidth) ** 2
+    weighted_attempts = weighted_blocks = 0.0
+    local_rows = 0
+    for observed_distance, counts in model['block_counts_by_distance'].items():
+        weight = math.exp(-0.5 * (float(observed_distance) - distance) ** 2 / sigma2)
+        weighted_attempts += weight * counts['attempts']
+        weighted_blocks += weight * counts['blocked']
+        if abs(float(observed_distance) - distance) <= kernel_bandwidth:
+            local_rows += counts['attempts']
+    prior_n = float(block_shrinkage)
+    p_block = (weighted_blocks + prior_n * float(model['global_block_rate'])) / (weighted_attempts + prior_n)
+    p_make = 1.0 / (1.0 + math.exp(-max(-30.0, min(
+        30.0, model['intercept'] + model['distance_slope_per_10_yards'] *
+        (distance - model['distance_center_yards']) / 10.0))))
+    p_block = min(p_block, 1.0 - p_make)
+    p_miss = 1.0 - p_make - p_block
+    return {'made': p_make, 'missed': p_miss, 'blocked': p_block,
+            'source': 'league_distance_curve', 'support_n': model['attempted_n'],
+            'nearby_attempts': local_rows,
+            'fallback_level': 'league_distance_curve', 'kick_distance_yards': distance,
+            'conditional_make_probability': p_make}
+
+
+def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS, eligible_before=None, include_distance_model=False):
     """Published kick outcomes for the primary window, as (made, missed) pairs. Read-only.
 
     Field goals come from the dev table's `series_result`, as before. Extra points and two-point tries come from the
@@ -132,11 +251,14 @@ def load_kick_table(db=DEFAULT_DB, results=KICK_RESULTS, eligible_before=None):
     """
     fg = load_field_goal_results(results, eligible_before=eligible_before)
     tries = load_try_results(results, eligible_before=eligible_before)
-    return {'field_goal': fg['field_goal'], 'field_goal_outcomes': fg['field_goal_outcomes'],
+    table = {'field_goal': fg['field_goal'], 'field_goal_outcomes': fg['field_goal_outcomes'],
             'extra_point': tries['extra_point'], 'two_point': tries['two_point'],
             'excluded': {'field_goal': fg['excluded'], **tries['excluded']},
             'source': f"{Path(results).name} (publisher fields field_goal_result, extra_point_result, "
                       f"two_point_conv_result; window {WINDOW})"}
+    if include_distance_model:
+        table['field_goal_distance_model'] = load_field_goal_model(results, eligible_before=eligible_before)
+    return table
 
 
 def rows(con, sql):

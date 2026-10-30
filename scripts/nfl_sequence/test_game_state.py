@@ -385,7 +385,7 @@ class GameStatsReconciliation(unittest.TestCase):
         self.assertEqual(stats['team']['B'].get('offensive_touchdowns', 0), 0)
         self.assertEqual(stats['team']['B'].get('observed_overtime_touchdowns', 0), 0)
 
-    def test_offensive_run_touchdown_is_counted_in_both_player_and_team_lines(self):
+    def test_offensive_run_touchdown_counts_as_an_offensive_team_touchdown(self):
         play = {
             'event_type': 'run',
             'state_before': {'yardline_100': 5},
