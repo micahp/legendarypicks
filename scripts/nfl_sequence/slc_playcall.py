@@ -139,6 +139,16 @@ def intent_of(event, row):
     return 'run' if row['play_type'] == 'run' else 'dropback'
 
 
+def historical_cell_dropback_probability(base_counts):
+    """Return the run/pass share in the current down-distance-field cell, excluding kick decisions."""
+    runs = sum(count for (intent, _event), count in base_counts.items() if intent == 'run')
+    dropbacks = sum(count for (intent, _event), count in base_counts.items() if intent == 'dropback')
+    total = runs + dropbacks
+    if total <= 0:
+        raise e1.SamplingUnavailable('no_supported_scrimmage_intent_in_cell')
+    return dropbacks / total
+
+
 class PlayCallSampler:
     """Drive-policy slot: choose the play from the situation, then sample its outcome from the same cell.
 
@@ -148,6 +158,7 @@ class PlayCallSampler:
 
     def __init__(self, layer, side_teams=None):
         self.layer = layer
+        self.score_clock_playcalling_enabled = True
         self.side_teams = dict(side_teams) if side_teams is not None else None
         self.decisions = []
         self._cells = {}
@@ -341,6 +352,14 @@ class PlayCallSampler:
                 return candidates, level
         return None, None
 
+    def _dropback_probability(self, entry, state, team):
+        if self.score_clock_playcalling_enabled:
+            return (self.layer.p_dropback(
+                state['down'], state['togo'], state['yl'], state['score_diff'], state['quarter'],
+                state['clock'], team), 'score_clock_logistic_artifact')
+        return (historical_cell_dropback_probability(entry['base']),
+                'historical_down_distance_field_cell_rate')
+
     def sample(self, rng, cell, offense, defense, state=None):
         if state is None or any(state.get(k) is None for k in ('quarter', 'clock', 'down', 'togo', 'yl', 'score_diff')):
             raise e1.SamplingUnavailable('playcall_state_incomplete')
@@ -372,8 +391,7 @@ class PlayCallSampler:
                          and (k[1] != 'field_goal_attempt' or field_goal['eligible'])]
             kick_share = sum(entry['base'][k] for k in kick_keys) / total if total else 0.0
         team = self._team(offense)
-        p = self.layer.p_dropback(state['down'], state['togo'], state['yl'], state['score_diff'], state['quarter'],
-                                  state['clock'], team)
+        p, call_policy_source = self._dropback_probability(entry, state, team)
         point_shift = 0.0
         if self.point_shifts is not None and team in self.layer.team_index:
             bucket = pm.score_bucket(state['score_diff'])
@@ -591,6 +609,8 @@ class PlayCallSampler:
                       'togo': int(state['togo']), 'yardline_100': int(state['yl']),
                       'score_diff': int(state['score_diff']), 'offense': offense, 'defense': defense, 'team': team},
             'component': ARTIFACT_ID, 'artifact_sha256': self.layer.artifact['sha256'],
+            'score_clock_playcalling_applied': self.score_clock_playcalling_enabled,
+            'call_policy_source': call_policy_source,
             'p_dropback': round(p, 6), 'point_shift': round(point_shift, 6), 'streak_shift': round(streak_shift, 6),
             'streak_bucket': self.current_streak.get(team), 'league_streak_shift': round(league_streak_shift, 6),
             'kick_share': round(kick_share, 6),

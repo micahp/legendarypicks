@@ -10,13 +10,15 @@ from paired_random_streams import PairedRandomStreams
 from paired_seed_ablation import PairingError, compare_ledgers
 
 
-def header(snapshot_hash='a' * 64, *, enabled=True):
+def header(snapshot_hash='a' * 64, *, enabled=True, score_clock=True):
     return {
         'schema': 'lp.nfl.seed-ledger.v1', 'game_id': '2025_01_AAA_BBB', 'as_of': '2025-09-01T00:00:00Z',
         'source_snapshot_sha256': snapshot_hash, 'observed_reference_sha256': 'b' * 64,
         'source_commit': 'c' * 40, 'producer_file_sha256': {'engine.py': 'd' * 64},
         'seed_start': 10, 'paired_randomness': True,
-        'playcall_enabled_layers': {'formation_personnel_outcomes': enabled, 'defensive_coverage_outcomes': True},
+        'playcall_enabled_layers': {'score_clock_playcalling': score_clock,
+                                    'formation_personnel_outcomes': enabled,
+                                    'defensive_coverage_outcomes': True},
     }
 
 
@@ -59,6 +61,14 @@ class PairedSeedAblationTests(unittest.TestCase):
         self.assertTrue(report['valid_for_complete_game_comparison'])
         self.assertEqual([pair['seed'] for pair in report['pairs']], [10, 11])
         self.assertTrue(all(pair['random_streams_match'] for pair in report['pairs']))
+
+    def test_score_clock_is_a_supported_single_layer_paired_ablation(self):
+        self.write_pair(control_header=header(score_clock=True),
+                        ablation_header=header(score_clock=False))
+        report = compare_ledgers(self.control, self.ablation,
+                                 disabled_layer='score_clock_playcalling', expected_games=2)
+        self.assertEqual(report['disabled_layer'], 'score_clock_playcalling')
+        self.assertTrue(report['valid_for_complete_game_comparison'])
 
     def test_snapshot_mismatch_is_refused(self):
         self.write_pair(ablation_header=header('e' * 64, enabled=False))
