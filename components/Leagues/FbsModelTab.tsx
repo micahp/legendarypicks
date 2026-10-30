@@ -342,13 +342,9 @@ function FinalScore({ row }: { row: HistoryRow }) {
         {teams.map(({ side, name, score }) => {
           const scoredMore = side === higherScoringSide
           return (
-            <div key={side} role="group" aria-label={`${name}: ${score}${scoredMore ? ', winner' : ''}`} className="flex items-baseline justify-between gap-3 text-sm">
-              <span className={`min-w-0 break-words ${scoredMore ? 'font-semibold text-zinc-100' : 'text-zinc-400'}`}>
-                {name}{scoredMore && <span className="ml-2 text-xs font-normal text-zinc-500">Winner</span>}
-              </span>
-              <span className={`shrink-0 tabular-nums ${scoredMore ? 'font-semibold text-zinc-100' : 'text-zinc-400'}`}>
-                {score}
-              </span>
+            <div key={side} role="group" aria-label={`${name} ${score}`} className={`flex min-w-0 items-baseline gap-2 text-sm ${scoredMore ? 'font-semibold text-zinc-100' : 'text-zinc-400'}`}>
+              <span className="min-w-0 break-words">{name}</span>
+              <span className="shrink-0 tabular-nums">{score}</span>
             </div>
           )
         })}
