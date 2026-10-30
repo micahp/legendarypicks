@@ -259,6 +259,9 @@ def summary(decisions):
                 'team_offense_defense_outcomes': sum(bool(d.get('team_outcome_split')) for d in decisions),
                 'formation_personnel_outcomes': sum(bool(d.get('formation_conditioned')) for d in decisions),
                 'defensive_coverage_outcomes': sum(bool(d.get('coverage_conditioned')) for d in decisions),
+                'fixed_player_target_carry_shares': sum(
+                    (d.get('participants') or {}).get('participant_share_model') == 'fixed_player_share'
+                    for d in decisions),
                 'dirichlet_player_target_carry_shares': sum(
                     (d.get('participants') or {}).get('participant_share_model') == 'dirichlet_multinomial'
                     for d in decisions),
