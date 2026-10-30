@@ -70,5 +70,6 @@
     "condition_on": ["offensive_plays", "team_opportunities", "score_differential", "quarter", "time_remaining", "player_role"],
     "failed_seed_handling": "retain the seed and its complete failure evidence; never delete or alter an outcome to make a distribution pass"
   },
-  "provenance_artifact": "docs/research/player-workload-reference-2026-10-30/manifest.json"
+  "provenance_artifact": "docs/research/player-workload-reference-2026-10-30-v3/manifest.json",
+  "provenance_sha256": "312591afedbeba27443c0246c7ce8ea5aecb15f2eeb3703b65af817c769e6aea"
 }
