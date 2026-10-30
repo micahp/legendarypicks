@@ -266,6 +266,30 @@ def is_slc(ref):
     return isinstance(getattr(ref, 'contextual_sampler', None), slc.PlayCallSampler)
 
 
+def _legal_turnover_on_downs(play, outcome):
+    before = play.get('state_before') or {}
+    after = play.get('state_after') or {}
+    return (
+        outcome.get('turnover_on_downs') is True
+        and outcome.get('turnover') is True
+        and before.get('down') == 4
+        and after.get('offense_team') == before.get('defense_team')
+        and after.get('defense_team') == before.get('offense_team')
+    )
+
+
+def _decision_resolves_to_event(decision, event):
+    expected_event = decision.get('event')
+    if expected_event == event:
+        return True
+    return (
+        (expected_event, event) in (('punt', 'blocked_punt'),
+                                    ('field_goal_attempt', 'blocked_field_goal'))
+        and decision.get('intent') == 'kick'
+        and decision.get('outcome_intent') == 'kick'
+    )
+
+
 def play(seed, ref, snapshot, *, paired_randomness=False):
     """One SLC game. Returns (record, decisions): the engine record and this game's play-call decisions, in order."""
     if not is_slc(ref):
@@ -310,6 +334,7 @@ PASS_RESULT_EVENTS = {'pass_complete', 'pass_incomplete', 'interception'}
 def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
     """Refuse mismatches between a pre-outcome QB choice and the play/stat event it produced."""
     plays = [play for drive in record.get('drives', []) for play in drive.get('plays', [])]
+    partial_plays = ((record.get('blocked_attempt') or {}).get('plays_before_block') or [])
     snapshot = snapshot or record.get('pregame_snapshot') or {}
     game_id = (snapshot.get('schedule') or {}).get('game_id') or record.get('game_id') or 'unknown'
 
@@ -333,11 +358,23 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
         raise football_assertions.FootballAssertionError(
             failure_class, reason, context=detail)
 
-    if len(decisions) != len(plays):
-        index = min(len(decisions), len(plays))
-        fail(index, decisions[index] if index < len(decisions) else None,
-             plays[index] if index < len(plays) else None,
-             f'play-call decision count {len(decisions)} does not match emitted play count {len(plays)}')
+    expected_decisions = len(plays) + len(partial_plays)
+    if len(decisions) != expected_decisions:
+        index = min(len(decisions), expected_decisions)
+        evidence_play = (plays[index] if index < len(plays) else
+                         partial_plays[index - len(plays)] if index - len(plays) < len(partial_plays) else None)
+        fail(index, decisions[index] if index < len(decisions) else None, evidence_play,
+             f'play-call decision count {len(decisions)} does not match {len(plays)} emitted and '
+             f'{len(partial_plays)} blocked-attempt plays')
+
+    for offset, (decision, play) in enumerate(zip(decisions[len(plays):], partial_plays), len(plays) + 1):
+        event = play.get('event_type')
+        if event not in gs.reducer.EVENT_VOCABULARY:
+            fail(offset, decision, play, f'blocked-attempt play event {event!r} is outside the supported SLC rules vocabulary',
+                 failure_class='UNSUPPORTED_RULE')
+        if not _decision_resolves_to_event(decision, event):
+            fail(offset, decision, play,
+                 f'blocked-attempt decision event {decision.get("event")} disagrees with play event {event}')
 
     for index, (decision, play) in enumerate(zip(decisions, plays), 1):
         event = play.get('event_type')
@@ -389,8 +426,15 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
         if event not in gs.reducer.EVENT_VOCABULARY:
             fail(index, decision, play, f'play event {event!r} is outside the supported SLC rules vocabulary',
                  failure_class='UNSUPPORTED_RULE')
-        if decision.get('event') != event:
+        if not _decision_resolves_to_event(decision, event):
             fail(index, decision, play, f'decision event {decision.get("event")} disagrees with play event {event}')
+
+        if (event in ('run', 'pass_complete', 'pass_incomplete', 'sack')
+                and (outcome.get('turnover') or outcome.get('turnover_on_downs'))
+                and not _legal_turnover_on_downs(play, outcome)):
+            fail(index, decision, play,
+                 'a scrimmage play turnover must be a legal fourth-down turnover on downs and transfer possession; '
+                 'a lost fumble needs fumble_lost')
 
         realized_roles = {
             'pass_complete': ('passer', 'receiver'),
@@ -417,13 +461,11 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
         yards = outcome.get('yards_gained')
         if event == 'pass_incomplete':
             sampled_yards = [sampled.get(field) for field in ('passing_yards', 'receiving_yards')]
-            if (yards != 0 or outcome.get('touchdown') or outcome.get('turnover')
+            if (yards != 0 or outcome.get('touchdown')
                     or any(value not in (None, 0, 0.0) for value in sampled_yards)):
                 fail(index, decision, play,
-                     'an incomplete pass must have zero gain, no score or turnover, and no credited pass or receiving yards')
+                     'an incomplete pass must have zero gain, no score, and no credited pass or receiving yards')
         elif event == 'pass_complete':
-            if outcome.get('turnover'):
-                fail(index, decision, play, 'a completed pass with a lost fumble must use the explicit fumble_lost event')
             passing_yards, receiving_yards = sampled.get('passing_yards'), sampled.get('receiving_yards')
             if (passing_yards is not None and receiving_yards is not None
                     and passing_yards != receiving_yards):
@@ -470,8 +512,6 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
         elif event == 'sack':
             if isinstance(yards, (int, float)) and yards > 0:
                 fail(index, decision, play, 'a sack cannot produce positive rushing or passing gain')
-            if outcome.get('turnover'):
-                fail(index, decision, play, 'a sack fumble must use the explicit fumble_lost event')
         elif event == 'run' and outcome.get('touchdown'):
             before = play.get('state_before') or {}
             if (not isinstance(before.get('yardline_100'), int) or not isinstance(yards, int)
@@ -677,6 +717,9 @@ def _blocker_resolution_summary(decisions, fixes, record=None):
     fg_fallbacks = Counter(d.get('fg_fallback_level') for d in decisions if d.get('fg_fallback_level'))
     geometry_categories = Counter(d.get('blocked_kick_geometry_category') for d in decisions
                                   if d.get('blocked_kick_geometry_category'))
+    period_expired_exclusions = Counter()
+    for decision in decisions:
+        period_expired_exclusions.update(decision.get('blocked_kick_period_expired_exclusions') or {})
     usage = defaultdict(lambda: {'count': 0, 'support': []})
 
     def add_usage(kind, level, decision, support):
@@ -726,6 +769,7 @@ def _blocker_resolution_summary(decisions, fixes, record=None):
         'fg_long_range_exception': sum(bool(d.get('fg_long_range_exception')) for d in decisions),
         'fg_fallback_level': dict(sorted(fg_fallbacks.items())),
         'blocked_kick_geometry_categories': dict(sorted(geometry_categories.items())),
+        'blocked_kick_period_expired_category_exclusions': dict(sorted(period_expired_exclusions.items())),
         'blocked_kick_geometry_rejected': sum(
             int(d.get('blocked_kick_geometry_candidates') == 0) for d in decisions
             if d.get('blocked_kick_geometry_category')),

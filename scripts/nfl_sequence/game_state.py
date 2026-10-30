@@ -172,6 +172,30 @@ def fg_bucket(yardline_100):
     return '50+'
 
 
+def _field_goal_source_is_current(source, feasibility):
+    """Validate either the pinned snap-bucket source or the distance-aware model source against this snap."""
+    if not isinstance(source, dict):
+        return False
+    if source.get('yardline_bucket') is not None:
+        return (
+            source.get('yardline_bucket') == fg_bucket(feasibility.get('snap_yardline_100'))
+            and source.get('kick_distance_yards') == feasibility.get('kick_distance_yards')
+            and source.get('historical_ceiling_yards') == feasibility.get('historical_ceiling_yards')
+            and source.get('feasibility_source_sha256') == feasibility.get('source_sha256')
+        )
+    probabilities = source.get('probabilities')
+    return (
+        source.get('distance_yards') == feasibility.get('kick_distance_yards')
+        and source.get('field_goal_feasibility') == feasibility
+        and isinstance(source.get('table'), str)
+        and isinstance(source.get('fallback_level'), str)
+        and isinstance(probabilities, dict)
+        and all(isinstance(probabilities.get(name), (int, float))
+                and 0 <= probabilities[name] <= 1 for name in ('made', 'missed', 'blocked'))
+        and abs(sum(probabilities[name] for name in ('made', 'missed', 'blocked')) - 1.0) < 1e-9
+    )
+
+
 def drive_index_mismatches(record):
     """Every play state whose drive_index is not its drive's game-level index: (drive numbers, state count, examples).
 
@@ -1021,22 +1045,21 @@ class _Game:
     def _sample_blocked_kick(self, kick_type, rng, clock, quarter, state=None):
         """Draw one observed blocked-kick record that fits the state.
 
-        Period-expired records keep their original draw weight. They can resolve Q2/Q4, where the period end also ends the
-        half or game. If selected at another quarter boundary, they block because the next possession and spot are unknown.
+        A period-expired row is a period-ending context, not a reusable next-possession result. Only Q2/Q4 can use it, and
+        only when its observed play duration can reach the current clock. Q1/Q3 need a classified live-ball transition so
+        the series can continue after the change of ends.
         """
         records = self.ref.blocked_kicks.get('records', {}).get(kick_type, [])
         if not records:
             return 'blocked_kick_outcome_pool_missing', None
         if 'blocked_kick_geometry' in getattr(self.ref, 'blocker_fixes', ()):
             return self._sample_blocked_kick_by_category(kick_type, records, rng, clock, quarter, state)
-        fitting = [r for r in records if r.get('classification_status') != 'period_expired'
-                   or (isinstance(r.get('clock_runoff_seconds'), int) and r['clock_runoff_seconds'] >= clock)]
+        categories, exclusions = self._eligible_blocked_kick_categories(records, clock, quarter)
+        fitting = [record for group in categories.values() for record in group]
         if not fitting:
-            return f'blocked_kick_period_end_not_reached:{kick_type}', None
+            return f'blocked_kick_no_clock_compatible_transition:{kick_type}', None
         sample = rng.choice(fitting)
         status = sample.get('classification_status')
-        if status == 'period_expired' and quarter not in (2, 4):
-            return f'blocked_kick_period_expired_next_possession_unresolved:{kick_type}:Q{quarter}', None
         supported = reducer.BLOCKED_KICK_STATUSES
         if status not in supported:
             return f'blocked_kick_outcome_unresolved:{kick_type}:{status}', None
@@ -1044,6 +1067,7 @@ class _Game:
         if not isinstance(runoff, int) or runoff < 0:
             return f'blocked_kick_clock_unresolved:{kick_type}', None
         outcome = dict(sample)
+        outcome['period_expired_category_exclusions'] = dict(sorted(exclusions.items()))
         outcome['reference_fixture_sha256'] = self.ref.blocked_kicks.get('sha256')
         scoring_team = outcome.get('scoring_team')
         if scoring_team:
@@ -1072,30 +1096,40 @@ class _Game:
             return f'dead_ball:{record.get("possession_after_role") or "unknown"}'
         return f'recovery:{record.get("recovery_role") or "unknown"}:{record.get("crossed_line")}'
 
+    @staticmethod
+    def _eligible_blocked_kick_categories(records, clock, quarter):
+        """Keep terminal period rows only when the NFL state can end and no continuing spot is required."""
+        categories = defaultdict(list)
+        exclusions = Counter()
+        for record in records:
+            category = _Game._blocked_kick_category(record)
+            if category == 'period_expired':
+                if quarter not in (2, 4):
+                    exclusions['period_expired_requires_half_or_game_end'] += 1
+                    continue
+                runoff = record.get('clock_runoff_seconds')
+                if type(runoff) is not int or runoff < clock:
+                    exclusions['period_expired_source_clock_too_short'] += 1
+                    continue
+            categories[category].append(record)
+        return categories, exclusions
+
     def _sample_blocked_kick_by_category(self, kick_type, records, rng, clock, quarter, state):
         """Preserve historical outcome-category weights; require a legal state projection within the drawn category."""
-        categories = defaultdict(list)
-        for record in records:
-            categories[self._blocked_kick_category(record)].append(record)
+        categories, exclusions = self._eligible_blocked_kick_categories(records, clock, quarter)
+        if not categories:
+            self._record_blocked_kick_geometry('no_clock_compatible_transition', 0, exclusions)
+            return f'blocked_kick_no_clock_compatible_transition:{kick_type}', None
         category_names = sorted(categories)
         category = rng.choices(category_names, weights=[len(categories[name]) for name in category_names], k=1)[0]
         selected_rows = categories[category]
         resolved = [row for row in selected_rows if row.get('classification_status') in reducer.BLOCKED_KICK_STATUSES]
         if not resolved:
             status = selected_rows[0].get('classification_status')
-            self._record_blocked_kick_geometry(category, 0)
+            self._record_blocked_kick_geometry(category, 0, exclusions)
             return f'blocked_kick_outcome_unresolved:{kick_type}:{status}', None
-        if category == 'period_expired':
-            if quarter not in (2, 4):
-                self._record_blocked_kick_geometry(category, 0)
-                return f'blocked_kick_period_expired_next_possession_unresolved:{kick_type}:Q{quarter}', None
-            resolved = [row for row in resolved if isinstance(row.get('clock_runoff_seconds'), int)
-                        and row['clock_runoff_seconds'] >= clock]
-            if not resolved:
-                self._record_blocked_kick_geometry(category, 0)
-                return f'blocked_kick_period_end_not_reached:{kick_type}', None
         if state is None:
-            self._record_blocked_kick_geometry(category, 0)
+            self._record_blocked_kick_geometry(category, 0, exclusions)
             return f'blocked_kick_geometry_state_missing:{kick_type}', None
         event = 'blocked_punt' if kick_type == 'punt' else 'blocked_field_goal'
         compatible = []
@@ -1113,20 +1147,19 @@ class _Game:
                 failures[str(exc)] += 1
         if not compatible:
             reason = next(iter(sorted(failures)), 'no compatible source transition')
-            self._record_blocked_kick_geometry(category, 0)
+            self._record_blocked_kick_geometry(category, 0, exclusions)
             return f'blocked_kick_no_legal_geometry:{kick_type}:{category}:{reason}', None
         sample = rng.choice(compatible)
         status = sample.get('classification_status')
         runoff = sample.get('clock_runoff_seconds')
         if not isinstance(runoff, int) or runoff < 0:
             return f'blocked_kick_clock_unresolved:{kick_type}', None
-        if status == 'period_expired' and quarter not in (2, 4):
-            return f'blocked_kick_period_expired_next_possession_unresolved:{kick_type}:Q{quarter}', None
         outcome = dict(projected_by_id[id(sample)])
         outcome['geometry_candidate_count'] = len(compatible)
         outcome['geometry_category'] = category
+        outcome['period_expired_category_exclusions'] = dict(sorted(exclusions.items()))
         outcome['reference_fixture_sha256'] = self.ref.blocked_kicks.get('sha256')
-        self._record_blocked_kick_geometry(category, len(compatible))
+        self._record_blocked_kick_geometry(category, len(compatible), exclusions)
         scoring_team = outcome.get('scoring_team')
         if scoring_team:
             if scoring_team == outcome.get('posteam'):
@@ -1137,11 +1170,12 @@ class _Game:
                 return f'blocked_kick_scoring_team_unresolved:{kick_type}', None
         return None, outcome
 
-    def _record_blocked_kick_geometry(self, category, candidates):
+    def _record_blocked_kick_geometry(self, category, candidates, exclusions=None):
         sampler = getattr(self.ref, 'contextual_sampler', None)
         if sampler is not None and sampler.decisions:
             sampler.decisions[-1].update(blocked_kick_geometry_category=category,
-                                         blocked_kick_geometry_candidates=int(candidates))
+                                         blocked_kick_geometry_candidates=int(candidates),
+                                         blocked_kick_period_expired_exclusions=dict(sorted((exclusions or {}).items())))
 
     def _try_situation(self, scorer):
         """What a try policy conditions on, read before the try is drawn: the scorer's margin after the six points, the
@@ -1670,11 +1704,7 @@ def _validate_game_impl(record):
                 if record.get('valid_full_game') and not isinstance(source, dict):
                     raise AssertionError(
                         f"drive {drive['index']} play {play['sequence']} lacks distance-aware field-goal result evidence")
-                if source is not None and (
-                        source.get('yardline_bucket') != fg_bucket(before['yardline_100'])
-                        or source.get('kick_distance_yards') != feasibility['kick_distance_yards']
-                        or source.get('historical_ceiling_yards') != feasibility['historical_ceiling_yards']
-                        or source.get('feasibility_source_sha256') != feasibility['source_sha256']):
+                if source is not None and not _field_goal_source_is_current(source, feasibility):
                     raise AssertionError(
                         f"drive {drive['index']} play {play['sequence']} field-goal result uses stale distance or source data")
             blocked = outcome.get('blocked_kick')

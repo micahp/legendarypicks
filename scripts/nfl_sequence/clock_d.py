@@ -205,7 +205,7 @@ class BoundaryClock:
         self.counts = Counter()
         self.log = []
 
-    def draw(self, row, event, terminal, quarter, qsr, *, drive_index=None, play_index=None):
+    def draw(self, row, event, terminal, quarter, qsr, *, drive_index=None, play_index=None, force_period_end=False):
         """(runoff, ends_quarter, refusal) for a generated play at quarter clock `qsr`.
 
         `refusal` is None, or the reason a key was thin; then runoff is None and the caller blocks the game.
@@ -213,6 +213,9 @@ class BoundaryClock:
         late = quarter in LATE_QUARTERS and qsr <= LATE_CLOCK
         oob = self.model.flags.get((row['game_id'], int(row['play_id'])), (0, 0))[0]
         stop = stop_class(event, oob, quarter, qsr, terminal)
+        if force_period_end:
+            self.counts['period-ending source outcome'] += 1
+            return self._record(event, stop, quarter, qsr, qsr, True, late, forced_period_end=True)
         bucket = qsr_bucket(qsr)
         p_end, source = self.model.p_end(event, stop, bucket)
         if p_end is None:
@@ -243,7 +246,7 @@ class BoundaryClock:
             self.counts['two-minute stop: runoff cut at 2:00'] += 1
         return self._record(event, stop, quarter, qsr, runoff, False, late)
 
-    def _record(self, event, stop, quarter, qsr, runoff, ended, late):
+    def _record(self, event, stop, quarter, qsr, runoff, ended, late, forced_period_end=False):
         self.log.append({'event': event, 'stop': stop, 'quarter': quarter, 'qsr': qsr, 'runoff': runoff,
-                         'ended': ended, 'late': late})
+                         'ended': ended, 'late': late, 'forced_period_end': bool(forced_period_end)})
         return runoff, ended, None

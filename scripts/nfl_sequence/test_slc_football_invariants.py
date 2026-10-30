@@ -183,6 +183,100 @@ class QBPlayTypeInvariants(unittest.TestCase):
                 self.assert_full_evidence(raised.exception, record, row, call, 44, 'ILLEGAL_STATE')
                 self.assertIn(expected, str(raised.exception))
 
+    def test_fourth_down_incompletion_may_legally_cause_turnover_on_downs(self):
+        row = play('pass_incomplete', 0, participants(passer='QB1', receiver='WR1', play_type='pass'))
+        row['state_before']['down'] = 4
+        row['outcome']['turnover'] = True
+        row['outcome']['turnover_on_downs'] = True
+        row['state_after'].update({
+            'down': 1, 'yards_to_go': 10, 'yardline_100': 70,
+            'offense_team': 'B', 'defense_team': 'A',
+        })
+        call = decision('pass_incomplete', intent='dropback', outcome_intent='dropback',
+                        selected={'passer': 'QB1', 'receiver': 'WR1'})
+        call['state']['down'] = 4
+        result = slc_engine.validate_decision_outcomes(one_play_record(row), [call], seed=45)
+        self.assertEqual(result, {'status': 'passed', 'plays_checked': 1})
+
+    def test_incomplete_pass_cannot_claim_turnover_on_downs_before_fourth_down(self):
+        row = play('pass_incomplete', 0, participants(passer='QB1', receiver='WR1', play_type='pass'))
+        row['outcome'].update({'turnover': True, 'turnover_on_downs': True})
+        call = decision('pass_incomplete', intent='dropback', outcome_intent='dropback',
+                        selected={'passer': 'QB1', 'receiver': 'WR1'})
+        record = one_play_record(row)
+        with self.assertRaises(football_assertions.FootballAssertionError) as raised:
+            slc_engine.validate_decision_outcomes(record, [call], seed=46)
+        self.assert_full_evidence(raised.exception, record, row, call, 46, 'ILLEGAL_STATE')
+        self.assertIn('turnover on downs', str(raised.exception))
+
+    def test_scrimmage_play_turnover_on_downs_requires_possession_transfer(self):
+        row = play('sack', -5, participants(passer='QB1', play_type='pass'))
+        row['state_before']['down'] = 4
+        row['outcome'].update({'turnover': True, 'turnover_on_downs': True})
+        call = decision('sack', intent='dropback', outcome_intent='dropback', selected={'passer': 'QB1'})
+        call['state']['down'] = 4
+        record = one_play_record(row)
+        with self.assertRaises(football_assertions.FootballAssertionError) as raised:
+            slc_engine.validate_decision_outcomes(record, [call], seed=47)
+        self.assert_full_evidence(raised.exception, record, row, call, 47, 'ILLEGAL_STATE')
+        self.assertIn('transfer', str(raised.exception))
+
+    def test_legal_fourth_down_failure_is_allowed_for_each_supported_scrimmage_result(self):
+        cases = (
+            ('run', participants(rusher='RB1', play_type='run'),
+             decision('run', intent='run', outcome_intent='run', selected={'rusher': 'RB1'}), 0),
+            ('pass_complete', participants(passer='QB1', receiver='WR1', play_type='pass'),
+             decision('pass_complete', intent='dropback', outcome_intent='dropback',
+                      selected={'passer': 'QB1', 'receiver': 'WR1'}), 0),
+            ('pass_incomplete', participants(passer='QB1', receiver='WR1', play_type='pass'),
+             decision('pass_incomplete', intent='dropback', outcome_intent='dropback',
+                      selected={'passer': 'QB1', 'receiver': 'WR1'}), 0),
+            ('sack', participants(passer='QB1', play_type='pass'),
+             decision('sack', intent='dropback', outcome_intent='dropback', selected={'passer': 'QB1'}), -5),
+        )
+        for event, part, call, yards in cases:
+            with self.subTest(event=event):
+                row = play(event, yards, part)
+                row['state_before']['down'] = 4
+                row['outcome'].update({'turnover': True, 'turnover_on_downs': True})
+                row['state_after'].update({'down': 1, 'offense_team': 'B', 'defense_team': 'A'})
+                call['state']['down'] = 4
+                self.assertEqual(
+                    slc_engine.validate_decision_outcomes(one_play_record(row), [call], seed=48),
+                    {'status': 'passed', 'plays_checked': 1},
+                )
+
+    def test_blocked_scrimmage_kick_may_resolve_the_selected_kick_action(self):
+        for selected_event, realized_event in (
+                ('punt', 'blocked_punt'), ('field_goal_attempt', 'blocked_field_goal')):
+            with self.subTest(selected_event=selected_event):
+                row = play(realized_event, 0, participants(play_type='punt' if selected_event == 'punt'
+                                                           else 'field_goal'))
+                call = decision(selected_event, intent='kick', outcome_intent='kick')
+                self.assertEqual(
+                    slc_engine.validate_decision_outcomes(one_play_record(row), [call], seed=49),
+                    {'status': 'passed', 'plays_checked': 1},
+                )
+
+    def test_blocked_attempt_play_decisions_are_counted_and_kept_in_event_order(self):
+        committed = play('run', 3, participants(rusher='RB1', play_type='run'))
+        partial = play('pass_complete', 4, participants(passer='QB1', receiver='WR1', play_type='pass'))
+        partial['sequence'] = 2
+        record = one_play_record(committed)
+        record['blocked_attempt'] = {'plays_before_block': [partial]}
+        calls = [
+            decision('run', intent='run', outcome_intent='run', selected={'rusher': 'RB1'}),
+            decision('pass_complete', intent='dropback', outcome_intent='dropback',
+                     selected={'passer': 'QB1', 'receiver': 'WR1'}),
+        ]
+        self.assertEqual(slc_engine.validate_decision_outcomes(record, calls, seed=50),
+                         {'status': 'passed', 'plays_checked': 1})
+
+        calls[1]['event'] = 'pass_incomplete'
+        with self.assertRaises(football_assertions.FootballAssertionError) as raised:
+            slc_engine.validate_decision_outcomes(record, calls, seed=51)
+        self.assertIn('blocked-attempt decision event', str(raised.exception))
+
     def test_interception_flag_without_possession_transfer_is_rejected(self):
         row = play('interception', 0, participants(passer='QB1', receiver='WR1', play_type='pass'),
                    turnover=True)

@@ -72,6 +72,13 @@ class Draw(unittest.TestCase):
         runoff, ended, refusal = self.clock(model).draw(ROW, 'run', None, 1, 25)
         self.assertEqual((runoff, ended, refusal), (25, True, None))
 
+    def test_period_expired_blocked_kick_consumes_exactly_the_remaining_clock(self):
+        clock = self.clock(model_with({}, {}))
+        runoff, ended, refusal = clock.draw(
+            ROW, 'blocked_field_goal', None, 2, 7, force_period_end=True)
+        self.assertEqual((runoff, ended, refusal), (7, True, None))
+        self.assertTrue(clock.log[-1]['forced_period_end'])
+
     def test_a_play_that_does_not_end_the_quarter_consumes_its_runoff(self):
         model = model_with({('run', 'clock_runs', False): [5] * 60}, {('clock_runs', 30): (0, 60)},
                            hazard_bucket={30: (0, 60)})
