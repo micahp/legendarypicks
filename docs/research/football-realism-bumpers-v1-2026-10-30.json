@@ -1,0 +1,74 @@
+{
+  "schema": "lp.nfl.football-realism-boundaries.v1",
+  "version": "football-realism-bumpers-v1",
+  "created_at_utc": "2026-10-30",
+  "forecast_cutoff": {
+    "season": 2026,
+    "through_week": 7,
+    "last_observed_game_date": "2026-10-26"
+  },
+  "historical_reference_windows": {
+    "training": {"season_min": 2022, "season_max": 2024, "season_type": "REG"},
+    "holdout": {"season_min": 2025, "season_max": 2025, "season_type": "REG"},
+    "multi_season": {"season_min": 2022, "season_max": 2025, "season_type": "REG"},
+    "current_season_observed": {"season": 2026, "week_min": 1, "week_max": 7}
+  },
+  "classification": {
+    "hard_failure_classes": ["ILLEGAL_STATE", "NONCAUSAL_INFORMATION", "STAT_ACCOUNTING", "UNSUPPORTED_RULE"],
+    "statistical_warning_class": "DISTRIBUTION_WARNING",
+    "record_exceedance": "Emit RECORD_EXCEEDANCE when a simulated single-game value is greater than the pinned historical record. This is an alert, never a legality rule or a clipping threshold.",
+    "no_silent_clipping": true,
+    "preserve_failed_seeds": true
+  },
+  "historical_single_game_reference_boundaries": {
+    "player_rush_attempts": {"value": 45, "unit": "attempts", "policy": "record_alert_if_greater"},
+    "player_pass_attempts": {"value": 70, "unit": "attempts", "policy": "record_alert_if_greater"},
+    "player_targets": {"value": 28, "unit": "targets", "policy": "record_alert_if_greater"},
+    "player_receptions": {"value": 21, "unit": "receptions", "policy": "record_alert_if_greater"},
+    "player_rushing_yards": {"value": 296, "unit": "yards", "policy": "record_alert_if_greater"},
+    "made_field_goal_distance": {"value": 68, "unit": "yards", "policy": "record_alert_if_greater_and_require_kicker_capability"},
+    "attempted_field_goal_distance": {"value": 76, "unit": "yards", "policy": "policy_ceiling"},
+    "gross_punt_distance": {"value": 98, "unit": "yards", "policy": "policy_ceiling"},
+    "ordinary_scrimmage_gain": {"value": 99, "unit": "yards", "policy": "must_also_obey_available_field_geometry"}
+  },
+  "kick_and_punt_policy": {
+    "ordinary_field_goal_range_yards": {"min": 0, "max_guidance": 65},
+    "extended_field_goal_range_yards": {"min": 69, "max": 76, "requires": ["documented_kicker_capability", "desperation_game_state"]},
+    "attempts_above_76_yards": "disallow_under_v1_policy",
+    "field_goal_distance_calculation": "derive_from_current_ball_spot_and_end-zone geometry",
+    "punt_gross_review_threshold_yards": 85,
+    "punt_gross_policy_ceiling_yards": 98,
+    "punt_geometry": "next_snap_spot_must_be_legal_after_touchback_and_return"
+  },
+  "provisional_player_review_thresholds": {
+    "Jaylen Warren": {"rush_attempts_ordinary_range": [10, 18], "rush_attempts_review_at": 23, "rush_attempts_serious_at": 28},
+    "Christian McCaffrey": {"rush_attempts_ordinary_range": [15, 25], "rush_attempts_review_at": 30, "rush_attempts_serious_at": 35},
+    "lead_back": {"rush_attempts_ordinary_range": [18, 28], "rush_attempts_review_at": 33, "rush_attempts_serious_at": 40},
+    "committee_back": {"rush_attempts_ordinary_range": [6, 16], "rush_attempts_review_at": 22, "rush_attempts_serious_at": 28},
+    "WR1": {"targets_ordinary_range": [7, 13], "targets_review_at": 18, "targets_serious_at": 23},
+    "WR2": {"targets_ordinary_range": [4, 9], "targets_review_at": 14, "targets_serious_at": 19},
+    "starting_TE": {"targets_ordinary_range": [4, 9], "targets_review_at": 14, "targets_serious_at": 19},
+    "pocket_QB": {"non_kneel_rush_attempts_ordinary_range": [0, 2], "rush_attempts_review_at": 4, "rush_yards_review_at": 25, "rush_attempts_serious_at": 6, "rush_yards_serious_at": 50},
+    "mobile_QB": {"rush_attempts_ordinary_range": [5, 12], "rush_attempts_review_at": 15, "rush_attempts_serious_at": 20},
+    "starting_QB": {"pass_attempts_ordinary_range": [25, 45], "pass_attempts_review_at": 55, "pass_attempts_serious_at": 65}
+  },
+  "provisional_distribution_gates": {
+    "Jaylen Warren mean carries": {"fail_outside": [11, 19]},
+    "Jaylen Warren games with 28-plus carries": {"fail_rate_above": 0.01},
+    "Jaylen Warren games with 23-plus carries": {"review_rate_above": 0.05},
+    "Christian McCaffrey games with 30-plus carries": {"review_rate_above": 0.05},
+    "pocket_QB games with 50-plus rushing yards": {"fail_rate_above": 0.005},
+    "pocket_QB games with 6-plus non-kneel rushes": {"fail_rate_above": 0.01},
+    "receiver games with 23-plus targets": {"review_rate_above": 0.01},
+    "starting_QB games with 65-plus pass attempts": {"review_rate_above": 0.01}
+  },
+  "qb_event_categories": ["designed_run", "scramble", "sneak", "kneel", "spike", "throwaway", "slide_or_contact"],
+  "statistical_policy": {
+    "provisional_thresholds_are_laws": false,
+    "replace_thresholds_with_pinned_empirical_quantiles": true,
+    "compare_mean_variance_zero_rate_p95_p99_maximum_and_conditional_usage": true,
+    "condition_on": ["offensive_plays", "team_opportunities", "score_differential", "quarter", "time_remaining", "player_role"],
+    "failed_seed_handling": "retain the seed and its complete failure evidence; never delete or alter an outcome to make a distribution pass"
+  },
+  "provenance_artifact": "docs/research/player-workload-reference-2026-10-30/manifest.json"
+}
