@@ -1,0 +1,20 @@
+input preflight passed: database opened read-only; 3 input files and 0 input directories present
+input preflight passed: season 2026; database tables available; 5 decision Parquets; 32 manifest-pinned playbooks; 16 play-call frame score sources
+progress 100/1666; errors 0; elapsed 316s; ETA 4956s
+progress 200/1666; errors 0; elapsed 618s; ETA 4531s
+progress 300/1666; errors 0; elapsed 913s; ETA 4155s
+progress 400/1666; errors 0; elapsed 1224s; ETA 3872s
+progress 500/1666; errors 0; elapsed 1521s; ETA 3548s
+progress 600/1666; errors 0; elapsed 1816s; ETA 3226s
+progress 700/1666; errors 0; elapsed 2096s; ETA 2893s
+progress 800/1666; errors 0; elapsed 2391s; ETA 2588s
+progress 900/1666; errors 0; elapsed 2629s; ETA 2237s
+progress 1000/1666; errors 0; elapsed 2864s; ETA 1907s
+progress 1100/1666; errors 0; elapsed 3102s; ETA 1596s
+progress 1200/1666; errors 0; elapsed 3303s; ETA 1283s
+progress 1300/1666; errors 0; elapsed 3503s; ETA 986s
+progress 1400/1666; errors 0; elapsed 3708s; ETA 705s
+progress 1500/1666; errors 0; elapsed 3903s; ETA 432s
+progress 1600/1666; errors 0; elapsed 4101s; ETA 169s
+wrote /root/slc-10k-2026-10-29/artifacts/parallel-6/worker-05.json: 1581/1666 valid games, 0 regulation ties, 85 blocked before regulation
+baseline_v1=unavailable reference_sha256=e7e2f33a768229bd6ea8ef5563277b642ded9412505b823d46cf498e07492d88
