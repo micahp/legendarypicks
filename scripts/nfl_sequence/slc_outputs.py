@@ -6,7 +6,7 @@ import math
 import football_assertions
 
 
-BOX_SCHEMA = 'lp-nfl-slc-boxscore-1'
+BOX_SCHEMA = 'lp-nfl-slc-boxscore-2'
 TEAM_FIELDS = {
     'points': 'points', 'touchdowns': 'touchdowns', 'offensive_touchdowns': 'offensive_touchdowns',
     'observed_overtime_touchdowns': 'observed_overtime_touchdowns',
@@ -29,14 +29,47 @@ def _int_or_zero(value):
     return 0 if value is None else int(value)
 
 
+def _depth_chart_qb1(roster):
+    injury_report = roster.get('injury_report') or {}
+    statuses = {p.get('gsis_id'): p.get('report_status')
+                for p in injury_report.get('players', []) if p.get('gsis_id')}
+    available = []
+    for player in roster.get('players', []):
+        if player.get('pos_abb') != 'QB' or not player.get('roster_eligible', True):
+            continue
+        availability = player.get('availability') or {}
+        status = statuses.get(player.get('gsis_id'))
+        if status in ('Out', 'Doubtful') or availability.get('decision') in ('out', 'exclude', 'excluded'):
+            continue
+        try:
+            rank = int(player.get('pos_rank'))
+        except (TypeError, ValueError):
+            continue
+        if rank > 0:
+            available.append((rank, str(player.get('gsis_id') or ''), player))
+    if not available:
+        return None
+    best_rank = min(rank for rank, _, _ in available)
+    leaders = [player for rank, _, player in available if rank == best_rank]
+    return leaders[0].get('gsis_id') if len(leaders) == 1 else None
+
+
 def _roster_index(snapshot):
     by_id = {}
     for side in ('home', 'away'):
         roster = snapshot['rosters'][side]
+        qb1_id = _depth_chart_qb1(roster)
         for player in roster.get('players', []):
             stable_id = player.get('gsis_id')
             if not stable_id:
                 continue
+            if player.get('pos_abb') == 'QB':
+                starter = (str(stable_id) == str(qb1_id)) if qb1_id is not None else None
+                starter_basis = 'depth_chart_rank_and_availability' if qb1_id is not None else 'unknown'
+            else:
+                source_starter = player.get('starter')
+                starter = bool(source_starter) if isinstance(source_starter, bool) else None
+                starter_basis = 'snapshot_starter_field' if starter is not None else 'unknown'
             entry = {
                 'stable_player_id': str(stable_id),
                 'identity_namespace': 'nfl_gsis_id',
@@ -45,7 +78,8 @@ def _roster_index(snapshot):
                 'team': roster['team'],
                 'position': player.get('pos_abb'),
                 'roster_eligible': bool(player.get('roster_eligible', True)),
-                'starter': bool(player.get('starter', False)),
+                'starter': starter,
+                'starter_basis': starter_basis,
             }
             previous = by_id.get(str(stable_id))
             if previous is not None and (previous['team'] != entry['team'] or previous['name'] != entry['name']):
@@ -252,7 +286,9 @@ def reconcile_boxscore(boxscore, *, strict):
                 'receptions': sums['receptions'], 'targets': sums['targets']}
         if sums['receptions'] != team_stats['completions']:
             mismatches['receptions'] = {'players': sums['receptions'], 'team': team_stats['completions']}
-        player_offensive_tds = (sum(p['passing']['td'] + p['rushing']['td'] for p in players))
+        # A passing touchdown is a passer credit on the same play that gives the
+        # scorer a receiving touchdown. Count scorers once via rushing/receiving.
+        player_offensive_tds = sum(p['rushing']['td'] + p['receiving']['td'] for p in players)
         unassigned_offensive_tds = team_stats['observed_overtime_touchdowns']
         reconciled_team_offensive_tds = team_stats['offensive_touchdowns'] - unassigned_offensive_tds
         if player_offensive_tds != reconciled_team_offensive_tds:

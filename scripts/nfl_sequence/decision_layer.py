@@ -75,7 +75,8 @@ def cell_of(down, togo, yl):
 def label_row(r):
     """Labels for one scrimmage play. `r` holds the fields load_rows selects; a category the play does not have is None."""
     out = {c: None for c in CATS}
-    is_pass, is_run = r['is_pass'], r['is_run']
+    is_pass = r['is_pass']
+    is_run = r['is_run'] and not r.get('qb_scramble', False)
     if is_pass and r['receiver_pos'] is not None:
         out['A'] = role_of_receiver(r['receiver_pos'])
     if is_run and r['rusher_pos'] is not None:
@@ -139,7 +140,7 @@ def load_rows(db, seasons):
     try:
         marks = ','.join('?' * len(seasons))
         rows = con.execute(
-            f"SELECT p.game_id, p.play_id, p.season, p.posteam, p.pass_attempt, p.rush_attempt, p.down, p.ydstogo, "
+            f"SELECT p.game_id, p.play_id, p.season, p.posteam, p.pass_attempt, p.rush_attempt, p.qb_scramble, p.down, p.ydstogo, "
             f"p.yardline_100, p.pass_location, p.run_gap, p.shotgun, p.receiver_player_id, p.rusher_player_id, "
             f"c.starting_hash, c.qb_location, c.n_offense_backfield, c.n_defense_box, c.is_play_action, c.is_motion, "
             f"c.n_blitzers, c.n_pass_rushers FROM nfl_pbp p JOIN nfl_hist_ftn_charting c "
@@ -150,10 +151,11 @@ def load_rows(db, seasons):
         con.close()
     length = _pass_length(seasons)
     out = []
-    for (g, p, season, team, pa, ru, down, togo, yl, ploc, rgap, shot, rec, rush,
+    for (g, p, season, team, pa, ru, scramble, down, togo, yl, ploc, rgap, shot, rec, rush,
          hash_, qbl, nob, ndb, pa_flag, motion, blitz, rushers) in rows:
         is_pass = pa == 1
-        r = {'is_pass': is_pass, 'is_run': (ru == 1) and not is_pass, 'receiver_pos': positions.get(rec) if rec else None,
+        r = {'is_pass': is_pass, 'is_run': (ru == 1) and not is_pass and scramble != 1, 'qb_scramble': scramble == 1,
+             'receiver_pos': positions.get(rec) if rec else None,
              'rusher_pos': positions.get(rush) if rush else None, 'pass_length': length.get((g, int(p))),
              'pass_location': ploc, 'run_gap': rgap, 'shotgun': shot, 'is_play_action': pa_flag, 'is_motion': motion,
              'n_blitzers': blitz, 'n_pass_rushers': rushers, 'qb_location': qbl, 'starting_hash': hash_,
@@ -162,7 +164,7 @@ def load_rows(db, seasons):
         if not any(labels.values()):
             continue
         out.append({'game_id': g, 'play_id': int(p), 'season': int(season), 'team': team,
-                    'cell': cell_of(down, togo, yl), 'labels': labels})
+                    'cell': cell_of(down, togo, yl), 'labels': labels, 'qb_scramble': scramble == 1})
     return out
 
 
