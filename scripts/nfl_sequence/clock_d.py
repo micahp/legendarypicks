@@ -11,8 +11,9 @@ snap, a known final play, or a quarter-ending marker row of the play being gener
    clock at the snap. When it fires, the play consumes the remaining quarter time. That is a legal transition: the
    quarter ends at this play. It is not a clamp of an interval drawn independently.
 3. Otherwise the runoff is drawn from the uncensored runoffs of plays with the same key, conditioned on not ending the
-   quarter (draws at or above the remaining time are rejected). Quarter-ending plays are censored, so they are not
-   runoff samples.
+   quarter (draws at or above the remaining time are rejected). A sparse event cell may use another cell with the same
+   stop class. Out-of-bounds restart classes refuse when that evidence is thin; they never borrow the generic runoff
+   pool. Quarter-ending plays are censored, so they are not runoff samples.
 4. The two-minute warning stops the clock at 2:00 in the second and fourth quarters. This is applied as a mandatory stop,
    not sampled. Its timing is not checked against the rulebook text, which is not in the repository.
 
@@ -140,11 +141,15 @@ class Model:
 
     def runoffs(self, event, stop, late):
         for key, table, source in (((event, stop, late), self.pool, 'event, stop and late'),
-                                   ((stop, late), self.pool_stop, 'stop and late'),
-                                   (late, self.pool_all, 'late only')):
+                                   ((stop, late), self.pool_stop, 'stop and late')):
             sample = table.get(key, [])
             if len(sample) >= MIN_KEY:
                 return sample, source
+        if stop in ('oob_snap', 'oob_ready'):
+            return None, f'thin out-of-bounds runoff cell {(event, stop, late)}'
+        sample = self.pool_all.get(late, [])
+        if len(sample) >= MIN_KEY:
+            return sample, 'late only'
         return None, f'thin runoff cell {(event, stop, late)}'
 
     def for_game(self, seed, paired_random_streams=None):

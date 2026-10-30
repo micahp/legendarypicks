@@ -53,6 +53,44 @@ class Choice(unittest.TestCase):
         self.assertIn('rusher', pe.choose(SNAPSHOT, 'home', 'run', seed=7, index=0))
         self.assertIsNone(pe.choose(SNAPSHOT, 'home', 'kick', seed=7, index=0))
 
+    def test_a_backup_qb_cannot_receive_without_an_entry_mechanism(self):
+        ordinary = pe.choose(SNAPSHOT, 'home', 'dropback', seed=7, index=0,
+                             trick_passer_rate=0, qb_receiver_rate=1)
+        self.assertEqual(ordinary['passer']['gsis_id'], 'AQB1')
+        self.assertNotEqual(ordinary['receiver']['gsis_id'], 'AQB2')
+
+        trick = pe.choose(SNAPSHOT, 'home', 'dropback', seed=7, index=0,
+                          trick_passer_rate=1, qb_receiver_rate=1)
+        self.assertNotEqual(trick['passer']['pos_abb'], 'QB')
+        self.assertEqual(trick['receiver']['gsis_id'], 'AQB1')
+
+    def test_a_rostered_backup_qb_cannot_take_a_designed_run_without_becoming_qb1(self):
+        shares = {'receive': {}, 'carry': {('AAA', 'AQB2'): 100.0}}
+        for seed in range(100):
+            chosen = pe.choose(SNAPSHOT, 'home', 'run', seed=seed, index=0, player_shares=shares)
+            self.assertNotEqual(chosen['rusher']['gsis_id'], 'AQB2')
+
+        replaced = {**SNAPSHOT, 'rosters': {**SNAPSHOT['rosters'], 'home': {
+            **SNAPSHOT['rosters']['home'],
+            'injury_report': {'players': [{'gsis_id': 'AQB1', 'report_status': 'Out'}]}}}}
+        promoted = pe.choose(replaced, 'home', 'run', seed=7, index=0, player_shares=shares)
+        self.assertEqual(promoted['rusher']['gsis_id'], 'AQB2')
+
+    def test_dirichlet_carry_share_cannot_select_a_backup_qb_while_qb1_is_active(self):
+        share_table = {
+            'phi': {'receive': 24.0, 'carry': 8.0},
+            'base': {'receive': {}, 'carry': {('AAA', 'AQB2'): 1.0}},
+        }
+        for seed in range(100):
+            chosen = pe.choose(SNAPSHOT, 'home', 'run', seed=seed, index=0, share_table=share_table)
+            self.assertNotEqual(chosen['rusher']['gsis_id'], 'AQB2')
+
+        replaced = {**SNAPSHOT, 'rosters': {**SNAPSHOT['rosters'], 'home': {
+            **SNAPSHOT['rosters']['home'],
+            'injury_report': {'players': [{'gsis_id': 'AQB1', 'report_status': 'Out'}]}}}}
+        promoted = pe.choose(replaced, 'home', 'run', seed=7, index=0, share_table=share_table)
+        self.assertEqual(promoted['rusher']['gsis_id'], 'AQB2')
+
     def test_a_missing_starting_qb_fails_closed(self):
         broken = {**SNAPSHOT, 'rosters': {**SNAPSHOT['rosters'], 'home': {**SNAPSHOT['rosters']['home'], 'players': [
             p for p in SNAPSHOT['rosters']['home']['players'] if p['gsis_id'] != 'AQB1']}}}
@@ -153,18 +191,18 @@ class DirichletPopulationInvariants(unittest.TestCase):
         real = sd_mod.game_shares
         real_choose = pe._by_game_share
 
-        def counting(table, team, game_id, eligible, role, seed_text):
+        def counting(table, team, game_id, eligible, role, seed_text, group='all'):
             if role == 'receive':
                 calls.append(tuple(eligible))
-            return real(table, team, game_id, eligible, role, seed_text)
+            return real(table, team, game_id, eligible, role, seed_text, group=group)
 
         def recording_candidates(candidates, table, team, role, game_id, seed_text, draw,
-                                 cache=None, population=None):
+                                 cache=None, population=None, group='all'):
             if role == 'receive':
                 receiver_candidates.append(tuple(sorted(p['gsis_id'] for p in candidates)))
                 play_populations.append(tuple(sorted(p['gsis_id'] for p in population)))
             return real_choose(candidates, table, team, role, game_id, seed_text, draw,
-                               cache=cache, population=population)
+                               cache=cache, population=population, group=group)
 
         players = SNAPSHOT['rosters']['home']['players']
         receivers = [p for p in players if p['pos_abb'] in pe.player_shares_positions('receive')]

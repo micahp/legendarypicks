@@ -56,6 +56,36 @@ class Draw(unittest.TestCase):
         shares = sd.game_shares(table(17.0), 'AAA', 'g1', ['AWR1', 'NOBODY'], 'receive', 'seed-1')
         self.assertGreater(shares['NOBODY'], 0.0)
 
+    def test_conditional_share_model_uses_phi_after_normalizing_the_position_group(self):
+        conditional = {**table(17.0), 'model': sd.MODEL_VERSION}
+        conditional['phi'] = {'receive': {'all': 17.0, 'WR': 8.0}, 'carry': {'all': 17.0}}
+        base = conditional['base']['receive']
+        # AWR1 and AWR2 form a subgroup whose raw team shares sum to 0.8.
+        xs = [sd.game_shares(conditional, 'AAA', f'g{i}', ['AWR1', 'AWR2'], 'receive', 'seed-1', group='WR')['AWR1']
+              for i in range(3000)]
+        mean = sum(xs) / len(xs)
+        var = sum((x - mean) ** 2 for x in xs) / (len(xs) - 1)
+        subgroup_mean = base[('AAA', 'AWR1')] / (base[('AAA', 'AWR1')] + base[('AAA', 'AWR2')])
+        self.assertAlmostEqual(mean, subgroup_mean, delta=0.02)
+        self.assertAlmostEqual(var, subgroup_mean * (1 - subgroup_mean) / 9.0, delta=0.01)
+
+    def test_historical_position_filter_rebuilds_position_specific_team_game_counts(self):
+        games = {'AAA': {'g1': {'W1': 8, 'W2': 2, 'T1': 5}, 'g2': {'W1': 4, 'T1': 6}}}
+        filtered, totals = sd.filter_position_group(games, {'W1': 'WR', 'W2': 'WR', 'T1': 'TE'}, ('WR',))
+        self.assertEqual(filtered, {'AAA': {'g1': {'W1': 8, 'W2': 2}, 'g2': {'W1': 4}}})
+        self.assertEqual(totals, {'AAA': {'W1': 12, 'W2': 2}})
+
+    def test_selected_position_sets_map_to_fitted_historical_groups(self):
+        self.assertEqual(sd.group_for_positions('receive', ('WR',)), 'WR')
+        self.assertEqual(sd.group_for_positions('receive', ('TE',)), 'TE')
+        self.assertEqual(sd.group_for_positions('carry', ('WR', 'TE')), 'WR_TE')
+        self.assertEqual(sd.group_for_positions('carry', ('RB', 'QB', 'WR', 'TE')), 'all')
+
+    def test_legacy_table_keeps_the_old_whole_roster_concentration(self):
+        legacy = table(17.0)
+        shares = sd.game_shares(legacy, 'AAA', 'g1', ['AWR1', 'AWR2'], 'receive', 'seed-1')
+        self.assertEqual(shares, sd.game_shares(legacy, 'AAA', 'g1', ['AWR1', 'AWR2'], 'receive', 'seed-1'))
+
 
 def concentrated(role, leader, share):
     """A share table whose base puts `share` on the leader and splits the rest over the other players."""
@@ -169,6 +199,10 @@ class Eligibility(unittest.TestCase):
                               {'gsis_id': 'D', 'report_status': 'Questionable'}]}
         self.assertEqual([p['gsis_id'] for p in sdm.eligible_players(players, report)], ['A', 'D'])
 
+    def test_a_player_marked_ineligible_on_the_frozen_roster_cannot_take_an_opportunity(self):
+        players = [{'gsis_id': 'A'}, {'gsis_id': 'B', 'roster_eligible': False}]
+        self.assertEqual([p['gsis_id'] for p in sdm.eligible_players(players, None)], ['A'])
+
     def test_the_shares_renormalise_over_the_eligible_players(self):
         table = {'phi': {'receive': 17.0}, 'base': {'receive': {('AAA', 'A'): 0.5, ('AAA', 'B'): 0.5}}}
         self.assertEqual(sdm.game_shares(table, 'AAA', 'g', ['A'], 'receive', 's'), {'A': 1.0})
@@ -222,6 +256,31 @@ class ChooserGates(unittest.TestCase):
                 self.assertEqual(chosen['target_role'], role)
                 self.assertEqual(chosen['receiver']['pos_abb'], role)
         self.assertEqual(len(calls), 1)
+
+    def test_conditional_role_model_draws_once_for_each_position_group(self):
+        import decision_layer
+        import share_distributions as sd_mod
+        roles = iter(('WR', 'TE'))
+        calls = []
+        real = sd_mod.game_shares
+
+        def counting(*args, **kwargs):
+            calls.append(tuple(args[3]))
+            return real(*args, **kwargs)
+
+        conditional = {**concentrated('receive', 'AWR1', 0.9), 'model': sd_mod.MODEL_VERSION}
+        with patch.object(decision_layer, 'draw', side_effect=lambda *a, **kw: {'A': next(roles)}), \
+             patch.object(sd_mod, 'game_shares', side_effect=counting):
+            cache = {}
+            for index, role in enumerate(('WR', 'TE')):
+                chosen = pe.choose(SNAPSHOT, 'home', 'dropback', seed=5, index=index, state=dict(STATE),
+                                   player_shares={'receive': {}, 'carry': {}}, decision_table={},
+                                   share_table=conditional, share_cache=cache,
+                                   trick_passer_rate=0, qb_receiver_rate=0)
+                self.assertEqual(chosen['target_role'], role)
+                self.assertEqual(chosen['receiver']['pos_abb'], role)
+        self.assertEqual({frozenset(group) for group in calls}, {frozenset({'AWR1', 'AWR2'}), frozenset({'ATE1'})})
+        self.assertEqual(len(calls), 2)
 
     def test_role_filtered_carry_plays_reuse_the_same_team_game_draw(self):
         import decision_layer

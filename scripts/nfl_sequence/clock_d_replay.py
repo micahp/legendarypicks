@@ -18,6 +18,7 @@ Usage: python3 clock_d_replay.py --window dev|holdout [--train-season-from YEAR]
        [--replicates N] [--out-dir DIR]
 """
 import argparse
+import hashlib
 import json
 import random
 from collections import Counter, defaultdict
@@ -28,6 +29,7 @@ import e1_drive as e1
 
 REPLICATES = 20
 SHORT_SECONDS = 15
+BUCKET_LOWER = {15: 0, 30: 15, 60: 30, 120: 60, 900: 120}
 TRAIN = (2022, 2022, 1, 5)  # season, season, first week, last week
 DEV_GAMES = ('2022_05_CIN_BAL', '2022_09_GB_DET', '2022_05_MIA_NYJ', '2022_06_SF_ATL', '2022_07_TB_CAR',
              '2022_06_DAL_PHI')
@@ -82,6 +84,66 @@ def quarter_plays(rows, flags, counts):
     return quarters
 
 
+def oob_stop_class_counts(quarters):
+    """Counts the classifiable training examples for each OOB restart class, quarter, and Model D clock bucket."""
+    grouped = defaultdict(lambda: {
+        'examples': 0, 'quarter_ending_examples': 0, 'uncensored_runoff_examples': 0,
+        'events': Counter(), 'minimum_qsr': None, 'maximum_qsr': None,
+    })
+    for (_game_id, quarter), plays in quarters.items():
+        for play in plays:
+            stop = play['stop']
+            if stop not in ('oob_snap', 'oob_ready'):
+                continue
+            bucket = cd.qsr_bucket(play['qsr'])
+            if quarter == 2:
+                policy_window = ('at_or_inside_two_minutes' if play['qsr'] <= cd.LATE_CLOCK
+                                 else 'outside_two_minute_window')
+            elif quarter == 4:
+                policy_window = ('inside_final_five_minutes' if play['qsr'] < 300
+                                 else 'outside_final_five_minutes')
+            else:
+                policy_window = 'no_automatic_oob_snap_window'
+            stats = grouped[(quarter, bucket, stop, policy_window)]
+            stats['examples'] += 1
+            stats['quarter_ending_examples'] += int(play['ended'])
+            stats['uncensored_runoff_examples'] += int(not play['ended'])
+            stats['events'][play['event']] += 1
+            stats['minimum_qsr'] = (play['qsr'] if stats['minimum_qsr'] is None
+                                    else min(stats['minimum_qsr'], play['qsr']))
+            stats['maximum_qsr'] = (play['qsr'] if stats['maximum_qsr'] is None
+                                    else max(stats['maximum_qsr'], play['qsr']))
+
+    rows = []
+    for quarter in range(1, 5):
+        for bucket in cd.BUCKETS:
+            if quarter == 2:
+                policy_windows = (('at_or_inside_two_minutes' if bucket <= 120
+                                   else 'outside_two_minute_window'),)
+            elif quarter == 4 and bucket == 900:
+                policy_windows = ('inside_final_five_minutes', 'outside_final_five_minutes')
+            elif quarter == 4:
+                policy_windows = ('inside_final_five_minutes',)
+            else:
+                policy_windows = ('no_automatic_oob_snap_window',)
+            for policy_window in policy_windows:
+                for stop in ('oob_snap', 'oob_ready'):
+                    stats = grouped[(quarter, bucket, stop, policy_window)]
+                    lower = 1 if bucket == 15 else BUCKET_LOWER[bucket] + 1
+                    upper = bucket
+                    rows.append({
+                        'quarter': quarter, 'clock_bucket_lower_s': lower, 'clock_bucket_upper_s': upper,
+                        'clock_window': f'{lower}-{upper}s', 'policy_window': policy_window,
+                        'stop_class': stop, 'examples': stats['examples'],
+                        'quarter_ending_examples': stats['quarter_ending_examples'],
+                        'uncensored_runoff_examples': stats['uncensored_runoff_examples'],
+                        'minimum_observed_qsr_s': stats['minimum_qsr'],
+                        'maximum_observed_qsr_s': stats['maximum_qsr'],
+                        'events': dict(sorted(stats['events'].items())),
+                    })
+    return rows
+
+
 def run_d(plays, model, seed):
     clock = cd.BoundaryClock(model, seed)
     c, n, draws = plays[0]['qsr'], len(plays), []
@@ -109,7 +171,7 @@ def run_a(plays, pool, seed):
         row = p['row']
         cell = pool.get((row['down'], e1.e0.ydstogo_bucket(row['ydstogo']), e1.e0.yardline_bucket(row['yardline_100'])),
                         [])
-        runoffs = [x[2] for x in cell if x[0] == p['event']]
+        runoffs = cell.get(p['event'], []) if isinstance(cell, dict) else [x[2] for x in cell if x[0] == p['event']]
         if not runoffs:
             return {'refused': 'no A cell for this play'}
         runoff = rng.choice(runoffs)
@@ -125,11 +187,30 @@ def run_a(plays, pool, seed):
     raise AssertionError('empty quarter')
 
 
+def index_event_runoffs(pool):
+    """Index baseline runoff samples once by E1 situation cell and event for repeated holdout draws."""
+    indexed = {}
+    for cell_key, samples in pool.items():
+        events = defaultdict(list)
+        for event, _row, runoff, _spot in samples:
+            events[event].append(runoff)
+        indexed[cell_key] = {event: tuple(runoffs) for event, runoffs in events.items()}
+    return indexed
+
+
 def w1(a, b):
     a, b = sorted(a), sorted(b)
     grid = [i / 100 for i in range(1, 100)]
     q = lambda s, p: s[min(len(s) - 1, int(p * (len(s) - 1)))]
     return sum(abs(q(a, p) - q(b, p)) for p in grid) / len(grid)
+
+
+def file_sha256(path):
+    digest = hashlib.sha256()
+    with Path(path).open('rb') as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b''):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def summarise(name, results, quarters):
@@ -174,9 +255,13 @@ def main():
     flags = cd.load_flags()
     all_train_rows = cd.load_window(e1.DEFAULT_DB, *train_window)
     excluded_games = sorted({r['game_id'] for r in all_train_rows if r['game_id'] in DEV_GAMES})
+    excluded_rows = [r for r in all_train_rows if r['game_id'] in DEV_GAMES]
     train_rows = [r for r in all_train_rows if r['game_id'] not in DEV_GAMES]
+    train_stop_counts = oob_stop_class_counts(quarter_plays(train_rows, flags, Counter()))
+    excluded_stop_counts = oob_stop_class_counts(quarter_plays(excluded_rows, flags, Counter()))
     model = cd.fit(train_rows, flags)
     a_train, _ = e1.build_pool(train_rows)
+    a_train = index_event_runoffs(a_train)
     eval_rows = cd.load_window(e1.DEFAULT_DB, season_from, season_to, week_from, week_to)
     if only is not None:
         eval_rows = [r for r in eval_rows if r['game_id'] in only]
@@ -185,6 +270,7 @@ def main():
     a_deployed = None
     if args.window == 'holdout':
         a_deployed, _ = e1.build_pool(e1.load(e1.DEFAULT_DB))
+        a_deployed = index_event_runoffs(a_deployed)
 
     results = defaultdict(list)
     observed_pairs = defaultdict(list)  # event -> observed runoffs of plays that were not the quarter's end
@@ -234,8 +320,16 @@ def main():
         'window': args.window, 'train': {'seasons': [train_window[0], train_window[1]],
                                          'weeks': [train_window[2], train_window[3]],
                                          'excludes': excluded_games,
+                                         'source_games_before_dev_exclusion': len({r['game_id'] for r in all_train_rows}),
+                                         'games_fitted': len({r['game_id'] for r in train_rows}),
                                          'plays_fitted': sum(
                                              v for k, v in model.fit_counts.items() if k.startswith('plays fitted'))},
+        'out_of_bounds_training_support': {
+            'effective_training_examples': train_stop_counts,
+            'excluded_dev_game_examples': excluded_stop_counts,
+            'example_scope': ('classifiable plays used by clock_d.fit for hazard support; '
+                              'quarter-ending plays are also listed separately because they are excluded from runoff pools'),
+        },
         'eval': {'seasons': [season_from, season_to], 'weeks': [week_from, week_to],
                  'games': len({r['game_id'] for r in eval_rows}), 'quarters': len(quarters),
                  'quarters_with_boundary_test': len(quarters) - last_not_ended,
@@ -256,6 +350,17 @@ def main():
             f'{stop}|{bucket}': {'plays': v[0], 'observed_quarter_ends': v[1], 'expected_quarter_ends': round(v[2], 1)}
             for (stop, bucket), v in sorted(calib.items())},
         'counts': dict(counts),
+        'source_artifacts': {
+            'sqlite_database': {'path': str(Path(e1.DEFAULT_DB).resolve()),
+                                'sha256': file_sha256(e1.DEFAULT_DB)},
+            'play_extras': {'path': str(cd.EXTRAS.resolve()), 'sha256': file_sha256(cd.EXTRAS)},
+            'clock_d_py': {'path': str(Path(cd.__file__).resolve()),
+                           'sha256': file_sha256(cd.__file__)},
+            'clock_d_replay_py': {'path': str(Path(__file__).resolve()),
+                                  'sha256': file_sha256(__file__)},
+            'e1_drive_py': {'path': str(Path(e1.__file__).resolve()),
+                            'sha256': file_sha256(e1.__file__)},
+        },
     }
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

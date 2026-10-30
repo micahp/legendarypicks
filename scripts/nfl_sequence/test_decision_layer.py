@@ -23,7 +23,7 @@ CELL = dl.cell_of(1, 10, 50)  # the cell of STATE: first and ten at midfield (te
 
 def play(**kw):
     """A labelled-play input with every field empty; keyword arguments set the fields a test cares about."""
-    base = {'is_pass': False, 'is_run': False, 'receiver_pos': None, 'rusher_pos': None, 'pass_length': None,
+    base = {'is_pass': False, 'is_run': False, 'qb_scramble': False, 'receiver_pos': None, 'rusher_pos': None, 'pass_length': None,
             'pass_location': None, 'run_gap': None, 'shotgun': None, 'is_play_action': None, 'is_motion': None,
             'n_blitzers': None, 'n_pass_rushers': None, 'qb_location': None, 'starting_hash': None,
             'n_offense_backfield': None, 'n_defense_box': None}
@@ -53,6 +53,15 @@ class LabelRules(unittest.TestCase):
         qb = dl.label_row(play(is_run=True, rusher_pos='QB', run_gap='guard'))
         self.assertEqual(qb['B'], 'QB')
         self.assertIsNone(qb['C'])
+
+    def test_a_qb_scramble_is_not_an_ordinary_run_role_decision(self):
+        labels = dl.label_row(play(is_run=True, qb_scramble=True, rusher_pos='QB', run_gap='guard'))
+        self.assertIsNone(labels['B'])
+        self.assertIsNone(labels['C'])
+
+    def test_a_designed_qb_run_remains_an_ordinary_run_role_decision(self):
+        labels = dl.label_row(play(is_run=True, qb_scramble=False, rusher_pos='QB'))
+        self.assertEqual(labels['B'], 'QB')
 
     def test_a_wide_receiver_who_carries_is_the_wr_te_rusher_role(self):
         self.assertEqual(dl.label_row(play(is_run=True, rusher_pos='WR'))['B'], 'WR_TE')
@@ -224,12 +233,13 @@ class SamplerWithLabels(unittest.TestCase):
 
 
 DECISION_MODEL_2025 = {  # category_defined_2025 in the frozen validation record (validate2025.json, decision_model.py)
+    # Raw historical B count includes QB scrambles; calibration below removes those separate decision events.
     'A': 16609, 'B': 14168, 'C': 8704, 'D': 17358, 'E': 17358, 'F': 32813, 'G': 18645, 'H': 32813, 'I': 18645,
     'J': 32757, 'K': 32765, 'L': 32773, 'M': 32761, 'N': 18553}
 
 
 class DatabaseCalibration(unittest.TestCase):
-    """The labels built from this database match the decision model's own 2025 counts, category by category."""
+    """Labels match the 2025 reference after QB scrambles leave the ordinary QB-run category."""
 
     @classmethod
     def setUpClass(cls):
@@ -241,7 +251,10 @@ class DatabaseCalibration(unittest.TestCase):
 
     def test_each_category_has_the_decision_model_2025_count(self):
         counts = {c: sum(1 for r in self.rows if r['labels'].get(c) is not None) for c in dl.CATS}
-        diff = {c: counts[c] - DECISION_MODEL_2025[c] for c in dl.CATS if counts[c] != DECISION_MODEL_2025[c]}
+        expected = dict(DECISION_MODEL_2025)
+        expected['B'] -= sum(bool(row['qb_scramble']) for row in self.rows)
+        self.assertEqual(DECISION_MODEL_2025['B'] - expected['B'], 1089)
+        diff = {c: counts[c] - expected[c] for c in dl.CATS if counts[c] != expected[c]}
         self.assertEqual(diff, {}, f'label counts differ from the decision model (ours minus theirs): {diff}')
 
 
