@@ -119,7 +119,22 @@ class BatchAggregation(unittest.TestCase):
         })
         self.assertTrue(result['regulation_end_reached'])
         self.assertTrue(result['tied_at_regulation_end'])
+        self.assertIsNone(result['final_tie'])
         self.assertEqual(result['score_scope'], 'regulation_end_only')
+
+    def test_overtime_final_tie_is_not_misclassified_as_a_regulation_tie(self):
+        result = batch._record_outcome(13, {
+            'status': 'complete_overtime', 'blocker': None, 'tied': True,
+            'regulation_end_reached': True, 'final_quarter': 5, 'final_clock_seconds': 0,
+            'complete_game': True, 'valid_full_game': True, 'points': {'A': 24, 'B': 24},
+        })
+
+        self.assertFalse(result['tied_at_regulation_end'])
+        self.assertTrue(result['final_tie'])
+        report = pregame_batch.summarize_outcomes([result], 1)
+        self.assertEqual(report['valid_full_games'], 1)
+        self.assertEqual(report['tied_at_regulation_end'], 0)
+        self.assertEqual(report['final_ties'], 1)
 
     def test_v1_lock_after_the_simulation_cutoff_is_exploratory(self):
         with tempfile.TemporaryDirectory() as tmp:
