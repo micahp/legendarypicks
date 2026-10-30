@@ -102,6 +102,20 @@ class TheShippedRegistryIsValid(unittest.TestCase):
             for target in job["freshness"]
         ))
 
+    def test_published_roster_cutover_argument_tracks_the_runtime_gate(self):
+        step = ingest_registry._published_roster_step
+        with mock.patch.dict(os.environ, {"LP_MLS_CUTOVER": ""}):
+            self.assertEqual(step(), ["ingest_published_rosters.py", "--apply"])
+        for value in ("1", "true", "YES", " on "):
+            with mock.patch.dict(os.environ, {"LP_MLS_CUTOVER": value}):
+                self.assertEqual(
+                    step(),
+                    ["ingest_published_rosters.py", "--apply", "--mls-cutover"],
+                )
+        for value in ("0", "false", "off", "unexpected"):
+            with mock.patch.dict(os.environ, {"LP_MLS_CUTOVER": value}):
+                self.assertEqual(step(), ["ingest_published_rosters.py", "--apply"])
+
 
 class ARegistryRefusesWhatCannotBeChecked(unittest.TestCase):
     def test_a_job_with_no_freshness_target_is_refused(self):
