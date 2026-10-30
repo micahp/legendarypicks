@@ -77,6 +77,14 @@ def _int(value, default=0):
     return int(float(value))
 
 
+def _is_scrimmage_row(row):
+    two_point = _int(row.get('two_point_attempt')) == 1
+    stat_play = not two_point and any(_int(row.get(field)) == 1
+                                      for field in ('pass_attempt', 'rush_attempt', 'sack'))
+    return (row.get('play_type') in ('pass', 'run') or _int(row.get('qb_kneel')) == 1
+            or _int(row.get('qb_spike')) == 1 or stat_play)
+
+
 def _float(value):
     if value in (None, '', 'NA', 'NULL'):
         return None
@@ -226,8 +234,7 @@ def _load_historical_participation(data_dir, positions, source_counts):
                 if not key[0] or not key[1] or key in all_regular_keys:
                     raise ValueError(f'{pbp_path}: missing or duplicate regular-season play key {key}')
                 all_regular_keys.add(key)
-                if (row.get('play_type') in ('pass', 'run') or _int(row.get('qb_kneel')) == 1
-                        or _int(row.get('qb_spike')) == 1):
+                if _is_scrimmage_row(row):
                     scrimmage_keys.add(key)
         path = Path(data_dir) / f'pbp_participation_{season}.csv'
         row_count = 0
@@ -341,13 +348,16 @@ def _ingest_pbp(path, season, *, players, roster_2026, eligible, positions, play
             is_pass = _int(row.get('pass_attempt')) == 1 and _int(row.get('sack')) != 1 and not two_point
             is_sack = _int(row.get('sack')) == 1 and not two_point
             is_rush = _int(row.get('rush_attempt')) == 1 and not two_point
-            is_play = (row.get('play_type') in ('pass', 'run') or _int(row.get('qb_kneel')) == 1
-                       or _int(row.get('qb_spike')) == 1)
+            is_play = _is_scrimmage_row(row)
             if is_play and not two_point and team:
                 game = team_games[(game_id, team)]
-                game.update({'season': season, 'week': week, 'game_id': game_id, 'team': team,
-                             'game_date': row.get('game_date'), 'home_team': row.get('home_team'),
-                             'away_team': row.get('away_team')})
+                game['season'] = season
+                game['week'] = week
+                game['game_id'] = game_id
+                game['team'] = team
+                game['game_date'] = row.get('game_date')
+                game['home_team'] = row.get('home_team')
+                game['away_team'] = row.get('away_team')
                 game['plays'] += 1
                 game['pass_attempts'] += int(is_pass)
                 game['sacks'] += int(is_sack)
@@ -410,6 +420,8 @@ def _ingest_pbp(path, season, *, players, roster_2026, eligible, positions, play
                     team_games[(game_id, team)]['nonqb_rush_attempts'] += int(pos != 'QB')
                 if pos:
                     pg['position_counts'][pos] += 1
+            elif is_rush and team:
+                team_games[(game_id, team)]['unassigned_rush_attempts'] += 1
             if is_pass and receiver:
                 _ensure_player_game(player_games, game_id, season, week, receiver, team)['stats']['targets'] += 1
                 _add_context_count(situational, season, team, 'targets', ctx, receiver)
@@ -585,7 +597,8 @@ def build(data_dir, out_dir):
             if position_votes[(game_id, pid)]:
                 pg['position_counts'].update(position_votes[(game_id, pid)])
     team_games = defaultdict(lambda: Counter(plays=0, pass_attempts=0, sacks=0, rush_attempts=0,
-                                             qb_rush_attempts=0, nonqb_rush_attempts=0, qb_kneels=0, qb_spikes=0))
+                                             qb_rush_attempts=0, nonqb_rush_attempts=0,
+                                             unassigned_rush_attempts=0, qb_kneels=0, qb_spikes=0))
     game_context = {}
     situational = {'team': Counter(), 'player': Counter()}
     counts = participation_counts
@@ -622,7 +635,8 @@ def build(data_dir, out_dir):
         row = dict(stats)
         row.update({'game_id': game_id, 'team': team})
         row.update({key: game_context.get(game_id, {}).get(key) for key in ('season', 'week', 'game_date', 'home_team', 'away_team')})
-        if row['rush_attempts'] != row['qb_rush_attempts'] + row['nonqb_rush_attempts']:
+        if row['rush_attempts'] != (row['qb_rush_attempts'] + row['nonqb_rush_attempts']
+                                    + row['unassigned_rush_attempts']):
             raise ValueError(f'team rush classification does not reconcile for {game_id}/{team}')
         team_rows.append(row)
     # A team context denominator is the count of team actions in the matching game-state bucket.
@@ -663,7 +677,7 @@ def build(data_dir, out_dir):
     _export_csv(out_dir / 'team_game_usage.csv', team_rows,
                 ('season', 'week', 'game_date', 'game_id', 'team', 'home_team', 'away_team', 'plays',
                  'pass_attempts', 'sacks', 'rush_attempts', 'qb_rush_attempts', 'nonqb_rush_attempts',
-                 'qb_kneels', 'qb_spikes'))
+                 'unassigned_rush_attempts', 'qb_kneels', 'qb_spikes'))
     _export_csv(out_dir / 'situational_player_usage.csv', situational_rows,
                 ('season', 'team', 'metric', 'quarter', 'clock_bucket', 'down', 'distance_bucket',
                  'field_bucket', 'score_bucket', 'team_opportunities', 'player_id', 'player_name',
