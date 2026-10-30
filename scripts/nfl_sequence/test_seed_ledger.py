@@ -46,16 +46,52 @@ class SeedLedger(unittest.TestCase):
 
     def test_resume_keeps_the_last_row_for_a_seed(self):
         handle = self._fresh()
-        handle.write(json.dumps({'seed': 1, 'outcome': {'status': 'simulation_error'}, 'players': None}) + '\n')
-        handle.write(json.dumps({'seed': 1, 'outcome': {'status': 'complete'}, 'players': {}}) + '\n')
+        handle.write(json.dumps({'seed': 1, 'outcome': {'seed': 1, 'status': 'simulation_error'},
+                                 'players': None}) + '\n')
+        handle.write(json.dumps({'seed': 1, 'outcome': {'seed': 1, 'status': 'complete'}, 'players': {}}) + '\n')
         handle.close()
         finished, handle = batch._open_seed_ledger(self.path, HEADER, resume=True)
         handle.close()
         self.assertEqual(finished[1]['outcome']['status'], 'complete')
 
+    def test_resume_rejects_seed_values_that_alias_or_precede_the_requested_seed_range(self):
+        for seed in (True, 1.0, 0):
+            with self.subTest(seed=seed):
+                handle = self._fresh()
+                handle.write(json.dumps({'seed': seed, 'outcome': {'seed': seed, 'status': 'complete'},
+                                         'players': {}}) + '\n')
+                handle.close()
+                before = self.path.read_text()
+                with self.assertRaisesRegex(ValueError, 'invalid seed'):
+                    batch._open_seed_ledger(self.path, HEADER, resume=True)
+                self.assertEqual(self.path.read_text(), before)
+                self.path.unlink()
+
+    def test_resume_rejects_a_row_whose_outcome_seed_differs_from_its_ledger_seed(self):
+        handle = self._fresh()
+        handle.write(json.dumps({'seed': 1, 'outcome': {'seed': 2, 'status': 'complete'}, 'players': {}}) + '\n')
+        handle.close()
+        before = self.path.read_text()
+
+        with self.assertRaisesRegex(ValueError, 'seed mismatch'):
+            batch._open_seed_ledger(self.path, HEADER, resume=True)
+
+        self.assertEqual(self.path.read_text(), before)
+
+    def test_resume_rejects_rows_beyond_the_requested_seed_range(self):
+        handle = self._fresh()
+        handle.write(json.dumps({'seed': 2, 'outcome': {'seed': 2, 'status': 'complete'}, 'players': {}}) + '\n')
+        handle.close()
+        before = self.path.read_text()
+
+        with self.assertRaisesRegex(ValueError, 'outside requested range \\[1, 2\\)'):
+            batch._open_seed_ledger(self.path, HEADER, resume=True, seed_end=2)
+
+        self.assertEqual(self.path.read_text(), before)
+
     def test_partial_last_line_from_an_interrupted_run_is_dropped(self):
         handle = self._fresh()
-        handle.write(json.dumps({'seed': 1, 'outcome': {'status': 'complete'}, 'players': None}) + '\n')
+        handle.write(json.dumps({'seed': 1, 'outcome': {'seed': 1, 'status': 'complete'}, 'players': None}) + '\n')
         handle.write('{"seed": 2, "outc')
         handle.close()
         finished, handle = batch._open_seed_ledger(self.path, HEADER, resume=True)

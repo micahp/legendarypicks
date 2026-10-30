@@ -217,6 +217,29 @@ class GameStatsReconciliation(unittest.TestCase):
             game_stats._verify_pregame_reconciliation({'A': {'offensive_touchdowns': 1}}, [])
 
 
+class PlayerAttributionConsistency(unittest.TestCase):
+    @staticmethod
+    def _run(player_id, attribution):
+        return {'event_type': 'run',
+                'outcome': {'yards_gained': 4, 'touchdown': False},
+                'state_before': {'yardline_100': 50},
+                'participants': {'rusher_id': player_id, 'attribution': attribution}}
+
+    def test_one_player_cannot_accumulate_stats_from_two_attribution_sources(self):
+        drive = {'plays': [self._run('RB1', 'pre_event_selection'),
+                           self._run('RB1', 'sampled_observed_play')]}
+
+        with self.assertRaisesRegex(ValueError, 'player RB1 has mixed attribution sources'):
+            game_stats.player_lines([drive])
+
+    def test_game_cannot_collapse_different_player_attributions_to_the_default_label(self):
+        drive = {'plays': [self._run('RB1', 'pre_event_selection'),
+                           self._run('RB2', 'sampled_observed_play')]}
+
+        with self.assertRaisesRegex(ValueError, 'game mixes player attribution sources'):
+            game_stats.compute([drive], {})
+
+
 class BlockedKickIntegration(unittest.TestCase):
     def observed_block(self, kick_type):
         return {
