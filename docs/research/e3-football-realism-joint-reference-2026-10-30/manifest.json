@@ -1,0 +1,98 @@
+{
+  "database": "Legendary Picks E3 SQLite, opened with mode=ro and PRAGMA query_only=ON",
+  "definitions": {
+    "joint_histograms": "empirical integer-value joint counts; no historical threshold is imposed on individual simulated games",
+    "receiver_targets_with_id": "pass_attempt rows with non-null receiver_player_id; missing IDs are excluded from the attributed target count",
+    "red_zone_trip": "a non-null drive with at least one retained play at yardline_100 0-20; touchdown and field-goal outcomes are attributed to the offense drive",
+    "score_state": "nflverse posteam_score, defteam_score, and score_differential before the play; score differential verified as offense minus defense",
+    "situational_buckets": {
+      "clock": [
+        "q1",
+        "q2",
+        "q2_2min",
+        "q3",
+        "q4",
+        "q4_late",
+        "q4_2min",
+        "ot"
+      ],
+      "distance": [
+        "d1_2",
+        "d3_4",
+        "d5_6",
+        "d7_9",
+        "d10_14",
+        "d15p"
+      ],
+      "field": [
+        "own_deep",
+        "own_side",
+        "opp_side",
+        "red_zone",
+        "goal_line"
+      ],
+      "score": [
+        "dn15p",
+        "dn11_14",
+        "dn8_10",
+        "dn7",
+        "dn4_6",
+        "dn3",
+        "dn1_2",
+        "tied",
+        "up1_2",
+        "up3",
+        "up4_6",
+        "up7",
+        "up8_10",
+        "up11_14",
+        "up15p"
+      ]
+    },
+    "situational_population": "pass, run, punt, field_goal, qb_spike, qb_kneel in regular season, downs 1-4, valid line, distance, clock, and score state"
+  },
+  "generated_at_utc": "2026-10-30T07:43:19Z",
+  "official_pbp_source": {
+    "release_url_template": "https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_{season}.parquet",
+    "repository": "nflverse/nflverse-data",
+    "sha256": {
+      "play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+      "play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+      "play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+      "play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+    }
+  },
+  "schema": "lp.nfl.e3-football-realism-joint-reference.v1",
+  "source_measurements": {
+    "action_rows": 148872,
+    "action_rows_with_pre_snap_score": 148872,
+    "action_rows_without_pre_snap_score": 0,
+    "game_samples": 1087,
+    "key_matched_rows": 188282,
+    "official_regular_season_rows": 188282,
+    "score_differential_mismatches": 0,
+    "situational": {
+      "excluded": {
+        "action_missing_legal_presnap_state": 1419
+      },
+      "included_action_decisions": 147453
+    },
+    "team_game_samples": 2174
+  },
+  "sqlite_reference": {
+    "nfl_pbp_sha256": "745c49c8e0ab18b66c4af77c724e0cbdc7016abca3dbb7be00ccae563eb0cddc",
+    "nfl_schedule_sha256": "388611dd20814f67cd44c3eb1f656785b3a3c4fe8ee38fda6dcbb86150e527ed"
+  },
+  "table_sha256": {
+    "joint_distribution.csv": "23e3e9cf23636d7c4148615e834b0a781ecf63ebac279f5f570d3f421d63d7b2",
+    "situational_action_distribution.csv": "f3968074f010256de0eb960df3701d56a829a912e591bc584512d89a12123011"
+  },
+  "window": {
+    "cutoff_eligible_for_simulation_season": 2026,
+    "season_max": 2025,
+    "season_min": 2022,
+    "season_type": "REG",
+    "week_max": 18,
+    "week_min": 1
+  }
+}

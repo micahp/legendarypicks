@@ -3,10 +3,13 @@ from __future__ import annotations
 
 import math
 
+import football_assertions
+
 
 BOX_SCHEMA = 'lp-nfl-slc-boxscore-1'
 TEAM_FIELDS = {
     'points': 'points', 'touchdowns': 'touchdowns', 'offensive_touchdowns': 'offensive_touchdowns',
+    'observed_overtime_touchdowns': 'observed_overtime_touchdowns',
     'drives': 'drives', 'possession_seconds': 'possession_seconds', 'plays': 'plays',
     'rush_attempts': 'rush_att', 'rushing_yards': 'rush_yds', 'pass_attempts': 'pass_att',
     'completions': 'pass_comp', 'passing_yards': 'pass_yds', 'interceptions': 'interceptions',
@@ -56,7 +59,10 @@ def _red_zone_diagnostics(record):
     for drive in record.get('drives', []):
         side = drive.get('offense_team')
         item = by_side.setdefault(side, {'red_zone_trips': 0, 'red_zone_plays': 0,
-                                         'red_zone_touchdowns': 0, 'red_zone_field_goals': 0})
+                                         'red_zone_touchdowns': 0, 'red_zone_field_goals': 0,
+                                         'red_zone_field_goal_attempts': 0,
+                                         'red_zone_field_goals_made': 0,
+                                         'red_zone_scoring_drives': 0})
         in_zone = [play for play in drive.get('plays', [])
                    if play.get('state_before', {}).get('yardline_100') is not None
                    and int(play['state_before']['yardline_100']) <= 20]
@@ -64,10 +70,17 @@ def _red_zone_diagnostics(record):
             continue
         item['red_zone_trips'] += 1
         item['red_zone_plays'] += len(in_zone)
-        if drive.get('terminal') == 'touchdown':
+        offensive_touchdown = (drive.get('terminal') == 'touchdown'
+                              and drive.get('touchdown_scored_by') == side)
+        if offensive_touchdown:
             item['red_zone_touchdowns'] += 1
         if drive.get('field_goal_made') is not None:
+            item['red_zone_field_goal_attempts'] += 1
             item['red_zone_field_goals'] += 1
+            if drive['field_goal_made']:
+                item['red_zone_field_goals_made'] += 1
+        if offensive_touchdown or drive.get('field_goal_made') is True:
+            item['red_zone_scoring_drives'] += 1
     return by_side
 
 
@@ -89,7 +102,10 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         values = {field: _int_or_zero(source.get(key)) for field, key in TEAM_FIELDS.items()}
         values['points'] = (record or {}).get('points', {}).get(side)
         values['red_zone'] = red_zone.get(side, {'red_zone_trips': 0, 'red_zone_plays': 0,
-                                                  'red_zone_touchdowns': 0, 'red_zone_field_goals': 0})
+                                                  'red_zone_touchdowns': 0, 'red_zone_field_goals': 0,
+                                                  'red_zone_field_goal_attempts': 0,
+                                                  'red_zone_field_goals_made': 0,
+                                                  'red_zone_scoring_drives': 0})
         teams.append({'side': side, 'home_away': home_away, 'team': team_code, 'stats': values})
 
     roster = _roster_index(snapshot)
@@ -102,6 +118,24 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         meta = roster.get(key)
         if strict_roster and meta is None:
             raise ValueError(f'seed {seed}: SLC participant {key} is not present on the frozen roster')
+        has_opportunity = any(
+            int((player.get(category) or {}).get(field, 0) or 0) > 0
+            for category, fields in PLAYER_FIELDS.items() for field in fields
+            if field not in ('yds', 'sack_yds')
+        )
+        if meta is not None and not meta['roster_eligible'] and has_opportunity:
+            context = {
+                'game_id': schedule.get('game_id', 'unknown'), 'seed': int(seed), 'play_index': None,
+                'state_before': 'game_start',
+                'decision': {'participant_id': key, 'roster_eligible': False},
+                'outcome': {'player_stats': player}, 'state_after': 'game_end',
+                'source_artifact_hashes': {
+                    'snapshot.snapshot_sha256': snapshot.get('snapshot_sha256', 'unavailable')},
+            }
+            raise football_assertions.FootballAssertionError(
+                'ILLEGAL_STATE',
+                f'seed {seed}: SLC participant {key} has a stat opportunity but is not roster-eligible',
+                context=context)
         line = {
             **(meta or {}),
             'stable_player_id': str(meta['stable_player_id']) if meta else key,
@@ -219,9 +253,13 @@ def reconcile_boxscore(boxscore, *, strict):
         if sums['receptions'] != team_stats['completions']:
             mismatches['receptions'] = {'players': sums['receptions'], 'team': team_stats['completions']}
         player_offensive_tds = (sum(p['passing']['td'] + p['rushing']['td'] for p in players))
-        if player_offensive_tds != team_stats['offensive_touchdowns']:
+        unassigned_offensive_tds = team_stats['observed_overtime_touchdowns']
+        reconciled_team_offensive_tds = team_stats['offensive_touchdowns'] - unassigned_offensive_tds
+        if player_offensive_tds != reconciled_team_offensive_tds:
             mismatches['offensive_touchdowns'] = {
-                'players': player_offensive_tds, 'team': team_stats['offensive_touchdowns']}
+                'players': player_offensive_tds, 'team': team_stats['offensive_touchdowns'],
+                'unassigned_observed_overtime': unassigned_offensive_tds,
+                'reconciled_team_total': reconciled_team_offensive_tds}
         results.append({'team': team['team'], 'side': side, 'player_sums': sums,
                         'team_values': {key: team_stats[key] for key in checks.values()},
                         'matches': not mismatches, 'mismatches': mismatches})
@@ -277,7 +315,8 @@ def aggregate_boxscores(boxscores, requested_games=None):
                          if isinstance(value, (int, float)) and not isinstance(value, bool)})
         team_stats[team] = {field: _distribution([line['stats'][field] for line in lines]) for field in fields}
         team_stats[team]['scoring_frequency'] = sum(line['stats']['points'] > 0 for line in lines) / len(lines)
-        red_fields = ('red_zone_trips', 'red_zone_plays', 'red_zone_touchdowns', 'red_zone_field_goals')
+        red_fields = ('red_zone_trips', 'red_zone_plays', 'red_zone_touchdowns', 'red_zone_field_goals',
+                      'red_zone_field_goal_attempts', 'red_zone_field_goals_made', 'red_zone_scoring_drives')
         team_stats[team]['red_zone'] = {
             field: _distribution([line['stats']['red_zone'].get(field, 0) for line in lines]) for field in red_fields}
     player_metadata = {}

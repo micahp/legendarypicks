@@ -277,6 +277,37 @@ class Sampler(unittest.TestCase):
         self.assertTrue(0.28 < len(kicks) / 600 < 0.39)  # one punt in three cell rows
         self.assertTrue(all(d['fallback'] for d in kicks))
 
+    def test_infeasible_field_goal_is_removed_without_forcing_a_punt(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('field_goal_attempt', 'field_goal'), ('punt', 'punt'), ('run', 'run'),
+                     ('pass_complete', 'pass')])
+        state = dict(STATE, down=4, yl=54)
+        rng = random.Random(103)
+        events = set()
+        for _ in range(400):
+            event, _row, _runoff, _spot = sampler.sample(rng, pool, 'A', 'B', state=state)
+            events.add(event)
+
+        self.assertNotIn('field_goal_attempt', events)
+        self.assertIn('punt', events)
+        self.assertIn('run', events, 'go-for-it by run remains available after the field goal is filtered')
+        self.assertIn('pass_complete', events, 'go-for-it by pass remains available after the field goal is filtered')
+        self.assertTrue(all(not decision['field_goal_feasibility']['eligible'] for decision in sampler.decisions))
+
+    def test_batch_decision_summary_preserves_all_situational_dimensions(self):
+        decision = {
+            'intent': 'kick', 'outcome_intent': 'kick', 'event': 'field_goal_attempt',
+            'state': {'team': 'AAA', 'quarter': 4, 'clock': 90, 'down': 4, 'togo': 2,
+                      'yardline_100': 15, 'score_diff': -7},
+        }
+        rows = se.summary([decision])['situational_decision_counts']
+
+        self.assertEqual(rows, [{
+            'team': 'AAA', 'quarter': 4, 'down': 4, 'distance_bucket': 'd1_2',
+            'field_bucket': 'red_zone', 'score_bucket': 'dn7', 'clock_bucket': 'q4_2min',
+            'action': 'field_goal', 'count': 1,
+        }])
+
 
 class Sensitivity(unittest.TestCase):
     def _layer(self):

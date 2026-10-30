@@ -14,6 +14,7 @@ import game_state as gs  # noqa: E402
 import e2_reference as er  # noqa: E402
 import game_stats  # noqa: E402
 import rules_matrix as rm  # noqa: E402
+import football_assertions  # noqa: E402
 
 
 class StaticPool:
@@ -35,17 +36,39 @@ def kickoff_pool(spot=25, runoff=10):
 def certain_kicks(fg_made=True, ep_made=True):
     """A kick table in which every attempt in a cell has the same result. The two-point cell is empty."""
     fg = {b: (60, 0) if fg_made else (0, 60) for b in gs.FG_BUCKETS}
+    fg_outcomes = {b: (60, 0, 0) if fg_made else (0, 60, 0) for b in gs.FG_BUCKETS}
     ep = (60, 0) if ep_made else (0, 60)
-    return {'field_goal': fg, 'extra_point': ep, 'two_point': (0, 0), 'source': 'test fixture'}
+    return {'field_goal': fg, 'field_goal_outcomes': fg_outcomes,
+            'extra_point': ep, 'two_point': (0, 0), 'source': 'test fixture'}
 
 
 def ref(pool, kpool, kicks=None, blocked_kicks=None, safety_kick_pool=None, overtime_pool=None,
         overtime_try_p_two=None, overtime_p_kick=None, overtime_choice=None):
     """An observed Reference with no participant lookups, so every play's participants are null."""
+    if blocked_kicks is None:
+        blocked_kicks = {'records': {'field_goal': [], 'punt': []},
+                         'rates': {'punt_blocked': {'attempts': 60, 'blocked': 0}}, 'sha256': 'test-fixture'}
     return gs.Reference(pool, kpool, kicks or certain_kicks(), {}, blocked_kicks=blocked_kicks,
                         safety_kick_pool=safety_kick_pool, overtime_pool=overtime_pool,
                         overtime_try_p_two=overtime_try_p_two, overtime_p_kick=overtime_p_kick,
                         overtime_choice=overtime_choice)
+
+
+class FieldGoalThenRunPool:
+    """End the first drive with a field goal, then provide legal scrimmage outcomes after its restart."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def get(self, key, default=None):
+        self.calls += 1
+        if self.calls == 1:
+            event, yards, runoff, play_type = 'field_goal_attempt', 0, 20, 'field_goal'
+        else:
+            event, yards, runoff, play_type = 'run', 0, 20, 'run'
+        row = {'game_id': 'G1', 'play_id': self.calls, 'game_date': '2025-01-01', 'yards_gained': yards,
+               'touchdown': 0, 'play_type': play_type}
+        return [(event, row, runoff, None)] * 60
 
 
 # An observed overtime drive that runs the period out with no score: a 0-0 regulation game ends as a tie.
@@ -77,6 +100,40 @@ def spy_simulate(run):
 
 
 class Ledger(unittest.TestCase):
+    def test_paired_stream_mode_is_snapshot_pinned_and_emits_draw_keys(self):
+        snapshot = {
+            'snapshot_sha256': 'd' * 64, 'as_of': '2026-10-30T12:00:00Z', 'roster_snapshot_id': 'roster-1',
+            'evaluation': {'verified': False},
+            'rosters': {
+                side: {'team': team, 'players': [{'gsis_id': f'{team}-RB', 'player_name': f'{team} Runner',
+                                                  'pos_abb': 'RB', 'pos_rank': 1}]}
+                for side, team in (('home', 'AAA'), ('away', 'BBB'))
+            },
+            'model_reference': {'observed_reference': {'runner_position_usage': {'shares': {'RB': 1.0}}}},
+            'schedule': {'game_id': '2025_01_AAA_BBB', 'home_team': 'AAA', 'away_team': 'BBB',
+                         'gameday': '2025-09-01', 'gametime': '12:00', 'gametime_timezone': 'America/Chicago',
+                         'scheduled_kickoff_utc': '2025-09-01T17:00:00Z'},
+        }
+        reference = ref(StaticPool('run', 80, 20), kickoff_pool())
+        first = gs.play_game(9, reference, winner_choice='receive', max_drives=1,
+                             pregame_snapshot=snapshot, paired_randomness=True)
+        replay = gs.play_game(9, reference, winner_choice='receive', max_drives=1,
+                              pregame_snapshot=snapshot, paired_randomness=True)
+        self.assertEqual(first['paired_random_streams'], replay['paired_random_streams'])
+        first_plays = [play for drive in first['drives'] for play in drive['plays']]
+        replay_plays = [play for drive in replay['drives'] for play in drive['plays']]
+        self.assertEqual([p['sampling']['paired_random_streams'] for p in first_plays],
+                         [p['sampling']['paired_random_streams'] for p in replay_plays])
+        self.assertTrue(first_plays)
+        self.assertEqual(first['paired_random_streams']['snapshot_sha256'], snapshot['snapshot_sha256'])
+
+    def test_paired_stream_mode_requires_a_frozen_snapshot_and_default_emits_no_new_metadata(self):
+        reference = ref(StaticPool('run', 1, 20), kickoff_pool())
+        with self.assertRaisesRegex(ValueError, 'frozen pregame snapshot'):
+            gs.play_game(9, reference, winner_choice='receive', max_drives=1, paired_randomness=True)
+        ordinary = gs.play_game(9, reference, winner_choice='receive', max_drives=1)
+        self.assertNotIn('paired_random_streams', ordinary)
+
     def test_normal_mode_refuses_kick_and_defend_goal(self):
         for choice in ('kick', 'defend_goal'):
             with self.assertRaises(ValueError, msg=choice):
@@ -103,6 +160,29 @@ class Ledger(unittest.TestCase):
     def test_second_half_first_choice_follows_the_deferral(self):
         self.assertEqual(gs.CoinTossLedger('A', 'B', 'defer').second_chooser, 'A')
         self.assertEqual(gs.CoinTossLedger('A', 'B', 'receive').second_chooser, 'B')
+
+
+class FieldGoalFeasibility(unittest.TestCase):
+    def test_a_55_yard_attempt_uses_its_distance_mapped_historical_bucket(self):
+        reference = ref(StaticPool('run', 0, 1), kickoff_pool())
+        game = gs._Game(9, reference, gs.CoinTossLedger('A', 'B', 'receive'), random.Random(1))
+        resolution = game._resolve_special_teams(
+            'field_goal_attempt', {'yl': 38, 'quarter': 2, 'clock': 500}, {}, 1, None, random.Random(4))
+
+        self.assertNotIn('blocker', resolution)
+        feasibility = resolution['metadata']['field_goal_feasibility']
+        source = resolution['metadata']['field_goal_result_source']
+        self.assertEqual(feasibility['kick_distance_yards'], 55)
+        self.assertEqual(source['yardline_bucket'], '30-39')
+        self.assertEqual(source['bucket_kick_distance_range_yards'], '47-56')
+        self.assertEqual(source['outcome_probability_basis'], 'pinned_2022_2025_historical_snap_yardline_bucket')
+
+    def test_a_kick_beyond_the_historical_ceiling_is_refused_before_sampling(self):
+        reference = ref(StaticPool('run', 0, 1), kickoff_pool())
+        game = gs._Game(10, reference, gs.CoinTossLedger('A', 'B', 'receive'), random.Random(1))
+        resolution = game._resolve_special_teams(
+            'field_goal_attempt', {'yl': 54, 'quarter': 2, 'clock': 500}, {}, 1, None, random.Random(4))
+        self.assertEqual(resolution['blocker'], 'field_goal_attempt_exceeds_historical_feasibility_ceiling')
 
 
 class Validators(unittest.TestCase):
@@ -207,6 +287,125 @@ class PregamePlayerUsage(unittest.TestCase):
 
 
 class GameStatsReconciliation(unittest.TestCase):
+    def test_player_yardage_is_clamped_at_the_goal_line_for_scores_and_safeties(self):
+        def run(yards, yardline, *, touchdown=False, safety=False):
+            return {
+                'event_type': 'run', 'state_before': {'yardline_100': yardline},
+                'participants': {
+                    'attribution': 'pre_event_selection', 'rusher_id': 'RB1',
+                    'rusher_name': 'Runner', 'rusher_position': 'RB', 'rusher_team': 'A', 'rusher_side': 'A',
+                    'sampled_play_context': {'rushing_yards': yards},
+                },
+                'outcome': {'yards_gained': yards, 'touchdown': touchdown, 'safety': safety,
+                            'turnover': False, 'punt': False},
+            }
+
+        touchdown_drive = {
+            'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+            'end_quarter': 1, 'end_clock': 890, 'terminal': 'touchdown',
+            'touchdown_scored_by': 'A', 'field_goal_made': None,
+            'plays': [run(80, 75, touchdown=True)],
+        }
+        safety_drive = {
+            'offense_team': 'A', 'quarter_start': 1, 'clock_start': 880,
+            'end_quarter': 1, 'end_clock': 870, 'terminal': 'safety', 'field_goal_made': None,
+            'plays': [run(-8, 95, safety=True)],
+        }
+        stats = game_stats.compute([touchdown_drive, safety_drive], {'A': 6, 'B': 2})
+        team = stats['team']['A']
+        player = stats['player'][0]
+        self.assertEqual(team['rush_yds'], 70)
+        self.assertEqual(player['rushing']['yds'], 70)
+
+    def test_defensive_return_touchdown_is_not_an_offensive_touchdown(self):
+        play = {
+            'event_type': 'fumble_lost',
+            'state_before': {'yardline_100': 35},
+            'participants': {
+                'attribution': 'pre_event_selection', 'rusher_id': 'RB1',
+                'rusher_name': 'Runner', 'rusher_position': 'RB', 'rusher_team': 'A', 'rusher_side': 'A',
+            },
+            'outcome': {'yards_gained': 0, 'touchdown': True, 'turnover': True, 'punt': False},
+        }
+        drive = {
+            'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+            'end_quarter': 1, 'end_clock': 700, 'terminal': 'touchdown',
+            'touchdown_scored_by': 'B', 'field_goal_made': None, 'plays': [play],
+        }
+
+        stats = game_stats.compute([drive], {'A': 0, 'B': 6})
+
+        self.assertEqual(stats['team']['B']['touchdowns'], 1)
+        self.assertEqual(stats['team']['B'].get('offensive_touchdowns', 0), 0)
+        self.assertEqual(stats['team']['A'].get('offensive_touchdowns', 0), 0)
+
+    def test_return_touchdown_is_not_offensive_even_when_the_scoring_side_is_the_drive_side(self):
+        play = {
+            'event_type': 'punt_return',
+            'state_before': {'yardline_100': 35},
+            'participants': {'attribution': 'sampled_observed_play'},
+            'outcome': {'yards_gained': 65, 'touchdown': True, 'turnover': False, 'punt': False},
+        }
+        drive = {
+            'offense_team': 'B', 'quarter_start': 1, 'clock_start': 900,
+            'end_quarter': 1, 'end_clock': 890, 'terminal': 'touchdown',
+            'touchdown_scored_by': 'B', 'field_goal_made': None, 'plays': [play],
+        }
+
+        stats = game_stats.compute([drive], {'A': 0, 'B': 6})
+
+        self.assertEqual(stats['team']['B']['touchdowns'], 1)
+        self.assertEqual(stats['team']['B'].get('offensive_touchdowns', 0), 0)
+
+    def test_unassigned_overtime_offensive_touchdown_is_excluded_from_player_reconciliation(self):
+        drive = {
+            'offense_team': 'A', 'quarter_start': 5, 'clock_start': 600,
+            'end_quarter': 5, 'end_clock': 580, 'terminal': 'touchdown',
+            'touchdown_scored_by': 'A', 'observed_overtime_drive': True,
+            'field_goal_made': None, 'plays': [],
+        }
+
+        stats = game_stats.compute([drive], {'A': 6, 'B': 0})
+
+        self.assertEqual(stats['team']['A']['touchdowns'], 1)
+        self.assertEqual(stats['team']['A']['offensive_touchdowns'], 1)
+        self.assertEqual(stats['team']['A']['observed_overtime_touchdowns'], 1)
+
+    def test_unassigned_overtime_return_touchdown_does_not_become_an_offensive_touchdown(self):
+        drive = {
+            'offense_team': 'A', 'quarter_start': 5, 'clock_start': 600,
+            'end_quarter': 5, 'end_clock': 580, 'terminal': 'touchdown',
+            'touchdown_scored_by': 'B', 'observed_overtime_drive': True,
+            'field_goal_made': None, 'plays': [],
+        }
+
+        stats = game_stats.compute([drive], {'A': 0, 'B': 6})
+
+        self.assertEqual(stats['team']['B']['touchdowns'], 1)
+        self.assertEqual(stats['team']['B'].get('offensive_touchdowns', 0), 0)
+        self.assertEqual(stats['team']['B'].get('observed_overtime_touchdowns', 0), 0)
+
+    def test_offensive_run_touchdown_is_counted_in_both_player_and_team_lines(self):
+        play = {
+            'event_type': 'run',
+            'state_before': {'yardline_100': 5},
+            'participants': {
+                'attribution': 'pre_event_selection', 'rusher_id': 'RB1',
+                'rusher_name': 'Runner', 'rusher_position': 'RB', 'rusher_team': 'A', 'rusher_side': 'A',
+            },
+            'outcome': {'yards_gained': 5, 'touchdown': True, 'turnover': False, 'punt': False},
+        }
+        drive = {
+            'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+            'end_quarter': 1, 'end_clock': 890, 'terminal': 'touchdown',
+            'touchdown_scored_by': 'A', 'field_goal_made': None, 'plays': [play],
+        }
+
+        stats = game_stats.compute([drive], {'A': 6, 'B': 0})
+
+        self.assertEqual(stats['team']['A']['offensive_touchdowns'], 1)
+        self.assertEqual(stats['player'][0]['rushing']['td'], 1)
+
     def test_a_team_whose_only_touchdown_was_a_blocked_kick_return_reconciles_to_zero_offensive_touchdowns(self):
         # The receiving team's blocked-punt return is a touchdown but not an offensive one: its team line has no
         # offensive_touchdowns key, and the reconciliation must read that as zero, not as the total touchdown count.
@@ -507,6 +706,7 @@ class TryPublisherField(unittest.TestCase):
     def test_a_thin_published_cell_blocks_the_game_and_is_not_filled(self):
         kicks = certain_kicks()
         kicks['field_goal']['20-29'] = (5, 5)  # 10 attempts, below the floor
+        kicks['field_goal_outcomes']['20-29'] = (5, 5, 0)
         record = gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25), kicks),
                               winner_choice='receive')
         self.assertEqual(record['status'], 'blocked')
@@ -974,6 +1174,7 @@ class ScopedOut(unittest.TestCase):
     def test_a_thin_cell_is_scoped_out_as_a_rare_kick_outcome(self):
         kicks = certain_kicks()
         kicks['field_goal']['20-29'] = (5, 5)
+        kicks['field_goal_outcomes']['20-29'] = (5, 5, 0)
         record = gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25), kicks),
                               winner_choice='receive')
         self.assertFalse(record['complete_game'])
@@ -1029,7 +1230,7 @@ class MissedFieldGoalSpot(unittest.TestCase):
         # A snap at the 13 is kicked from the 20: the receiver's own 20 (80). A snap at the 14 is kicked from the 21: the 79.
         for snap, expected in ((13, 80), (14, 79)):
             _, calls = spy_simulate(lambda: gs.play_game(
-                1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=snap), certain_kicks(fg_made=False)),
+                1, ref(FieldGoalThenRunPool(), kickoff_pool(spot=snap), certain_kicks(fg_made=False)),
                 winner_choice='receive', max_drives=2))
             self.assertEqual(calls[1]['start']['yl'], expected, f'a missed kick from a snap at the {snap}')
 
@@ -1037,7 +1238,7 @@ class MissedFieldGoalSpot(unittest.TestCase):
         # Negative fixture: a snap at the 14 is kicked from the 21, so the receiver must start at the 79. The 80, which the
         # snap-based rule would give, must fail.
         record, _ = spy_simulate(lambda: gs.play_game(
-            1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=14), certain_kicks(fg_made=False)),
+            1, ref(FieldGoalThenRunPool(), kickoff_pool(spot=14), certain_kicks(fg_made=False)),
             winner_choice='receive', max_drives=2))
         self.assertEqual(record['drives'][1]['plays'][0]['state_before']['yardline_100'], 79)
         record['drives'][1]['plays'][0]['state_before']['yardline_100'] = 80
@@ -1047,7 +1248,7 @@ class MissedFieldGoalSpot(unittest.TestCase):
     def test_the_engine_snap_and_kick_spot_differ_and_the_receiver_starts_at_the_kick_spot_rule(self):
         # The snap is the 15 and the kick is from the 22: the receiver's spot is 78. The snap is not the kick spot.
         record, calls = spy_simulate(lambda: gs.play_game(
-            1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=15), certain_kicks(fg_made=False)),
+            1, ref(FieldGoalThenRunPool(), kickoff_pool(spot=15), certain_kicks(fg_made=False)),
             winner_choice='receive', max_drives=2))
         drive = record['drives'][0]
         self.assertEqual((drive['snap_yardline_100'], drive['kick_spot_yardline_100']), (15, 22))
@@ -1058,7 +1259,7 @@ class MissedFieldGoalSpot(unittest.TestCase):
         # Negative fixture: a snap at the 15 is kicked from the 22, so the receiver must start at the 78. Starting at 85 must
         # fail.
         record, _ = spy_simulate(lambda: gs.play_game(
-            1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=15), certain_kicks(fg_made=False)),
+            1, ref(FieldGoalThenRunPool(), kickoff_pool(spot=15), certain_kicks(fg_made=False)),
             winner_choice='receive', max_drives=2))
         record['drives'][1]['plays'][0]['state_before']['yardline_100'] = 85
         row = next(r for r in rm.check(record) if r['case'].startswith('Missed field goal'))
@@ -1470,6 +1671,7 @@ class ScopeRefusals(unittest.TestCase):
     def test_a_rare_kick_outcome_described_as_complete_is_refused(self):
         kicks = certain_kicks()
         kicks['field_goal']['20-29'] = (5, 5)  # 10 attempts, below the floor
+        kicks['field_goal_outcomes']['20-29'] = (5, 5, 0)
         record = gs.play_game(1, ref(StaticPool('field_goal_attempt', 0, 20), kickoff_pool(spot=25), kicks),
                               winner_choice='receive')
         self.assertEqual(record['blocker'], 'thin_kick_cell:field_goal:20-29')
@@ -1552,8 +1754,15 @@ class KickoffClock(unittest.TestCase):
         record = gs.play_game(1, ref(StaticPool('run', 80, 870), kickoff_pool(runoff=5)), winner_choice='receive', max_drives=2)
         tampered = copy.deepcopy(record)
         tampered['drives'][0]['plays'][0]['state_after']['clock_seconds'] = -3
-        with self.assertRaisesRegex(AssertionError, 'negative game clock'):
+        with self.assertRaisesRegex(football_assertions.FootballAssertionError, 'negative game clock') as caught:
             gs.validate_game(tampered)
+        failure = caught.exception
+        self.assertEqual(failure.failure_class, 'ILLEGAL_STATE')
+        self.assertEqual(failure.context['seed'], 1)
+        self.assertEqual(failure.context['play_index'], 1)
+        self.assertEqual(failure.context['state_before'], tampered['drives'][0]['plays'][0]['state_before'])
+        self.assertEqual(failure.context['state_after'], tampered['drives'][0]['plays'][0]['state_after'])
+        self.assertIn('source_artifact_hashes', failure.context)
 
 
 class TwoMinuteWarning(unittest.TestCase):

@@ -61,7 +61,13 @@ class Game(unittest.TestCase):
             own = [p for p in self.plays if p['state_before']['offense_team'] == side]
             team = self.record['stats']['team'][side]
             self.assertEqual(team['pass_att'], sum(p['event_type'] in PASS_EVENTS for p in own), side)
-            self.assertEqual(team['rush_att'], sum(p['event_type'] in RUSH_EVENTS for p in own), side)
+            # A lost fumble by an attributed ball carrier remains a rushing attempt.
+            expected_rush_att = sum(
+                p['event_type'] == 'run'
+                or (p['event_type'] == 'fumble_lost' and bool(p['participants'].get('rusher_id')))
+                for p in own
+            )
+            self.assertEqual(team['rush_att'], expected_rush_att, side)
 
     def test_the_points_reconcile_with_the_drives(self):
         """Each side's points are the sum of its scoring drives, extra points included, and match the team statistics."""

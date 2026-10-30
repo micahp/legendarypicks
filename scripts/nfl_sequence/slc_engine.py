@@ -18,8 +18,10 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import e2_reference as er  # noqa: E402
 import game_state as gs  # noqa: E402
+import playcall_model as pm  # noqa: E402
 import pre_event  # noqa: E402
 import slc_playcall as slc  # noqa: E402
+import football_assertions  # noqa: E402
 
 MODEL_ID = 'slc_v1_incomplete'
 QB_DECISION_MODEL_ID = 'slc_v1_qb_decisions_research'
@@ -186,7 +188,7 @@ def is_slc(ref):
     return isinstance(getattr(ref, 'contextual_sampler', None), slc.PlayCallSampler)
 
 
-def play(seed, ref, snapshot):
+def play(seed, ref, snapshot, *, paired_randomness=False):
     """One SLC game. Returns (record, decisions): the engine record and this game's play-call decisions, in order."""
     if not is_slc(ref):
         raise ValueError('the reference was not loaded with the SLC play-call layer')
@@ -200,7 +202,8 @@ def play(seed, ref, snapshot):
                                                     share_table=sampler.share_table, playbook_table=sampler.playbook_table,
                                                     qb_decision_table=sampler.qb_decision_table)
     try:
-        record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
+        record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
+                              paired_randomness=paired_randomness)
     finally:
         sampler.participant_chooser = None
     decisions = list(sampler.decisions)
@@ -231,7 +234,7 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
     snapshot = snapshot or record.get('pregame_snapshot') or {}
     game_id = (snapshot.get('schedule') or {}).get('game_id') or record.get('game_id') or 'unknown'
 
-    def fail(index, decision, play, reason):
+    def fail(index, decision, play, reason, *, failure_class='ILLEGAL_STATE'):
         play = play or {}
         hashes = {
             'snapshot_sha256': snapshot.get('snapshot_sha256', 'unavailable'),
@@ -248,7 +251,8 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
             'state_after': play.get('state_after', 'unavailable'),
             'source_artifact_hashes': hashes,
         }
-        raise AssertionError(f"ILLEGAL_STATE: {reason}; context={detail}")
+        raise football_assertions.FootballAssertionError(
+            failure_class, reason, context=detail)
 
     if len(decisions) != len(plays):
         index = min(len(decisions), len(plays))
@@ -260,11 +264,143 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
         event = play.get('event_type')
         participants = play.get('participants') or {}
         selected = decision.get('participants') or {}
+        outcome = play.get('outcome') or {}
+        sampled = participants.get('sampled_play_context') or {}
+        if record.get('pregame_snapshot'):
+            decision_state = decision.get('state')
+            allowed_state_fields = {
+                'quarter', 'clock', 'down', 'togo', 'yardline_100', 'score_diff',
+                'offense', 'defense', 'team',
+            }
+            if decision.get('decision_timing') != 'pre_outcome_sample' or not isinstance(decision_state, dict):
+                fail(index, decision, play,
+                     'SLC decision evidence must retain its pre-outcome state snapshot and timing boundary',
+                     failure_class='NONCAUSAL_INFORMATION')
+            if set(decision_state) != allowed_state_fields:
+                fail(index, decision, play,
+                     'SLC decision state contains missing or outcome-time fields',
+                     failure_class='NONCAUSAL_INFORMATION')
+            before = play.get('state_before') or {}
+            offense_side = before.get('offense_team')
+            if offense_side not in ('A', 'B'):
+                fail(index, decision, play,
+                     'SLC pre-outcome decision has no identifiable offense side',
+                     failure_class='NONCAUSAL_INFORMATION')
+            home_score, away_score = before.get('home_score'), before.get('away_score')
+            if not isinstance(home_score, int) or not isinstance(away_score, int):
+                fail(index, decision, play,
+                     'SLC pre-outcome decision lacks the score available at the snap',
+                     failure_class='NONCAUSAL_INFORMATION')
+            expected_score_diff = home_score - away_score if offense_side == 'A' else away_score - home_score
+            expected_state = {
+                'quarter': before.get('quarter'), 'clock': before.get('clock_seconds'),
+                'down': before.get('down'), 'togo': before.get('yards_to_go'),
+                'yardline_100': before.get('yardline_100'), 'score_diff': expected_score_diff,
+                'offense': before.get('offense_team'), 'defense': before.get('defense_team'),
+            }
+            mismatches = {key: (decision_state.get(key), value) for key, value in expected_state.items()
+                          if decision_state.get(key) != value}
+            if mismatches:
+                fail(index, decision, play,
+                     f'SLC decision used state that disagrees with the pre-snap game state: {mismatches}',
+                     failure_class='NONCAUSAL_INFORMATION')
         called = decision.get('intent')
         outcome_intent = decision.get('outcome_intent', called)
         qb_action = decision.get('qb_action')
+        if event not in gs.reducer.EVENT_VOCABULARY:
+            fail(index, decision, play, f'play event {event!r} is outside the supported SLC rules vocabulary',
+                 failure_class='UNSUPPORTED_RULE')
         if decision.get('event') != event:
             fail(index, decision, play, f'decision event {decision.get("event")} disagrees with play event {event}')
+
+        realized_roles = {
+            'pass_complete': ('passer', 'receiver'),
+            'pass_incomplete': ('passer', 'receiver'),
+            'interception': ('passer', 'receiver'),
+            'sack': ('passer',),
+            'run': ('rusher',),
+        }.get(event)
+        if qb_action == 'scramble' and event in PASS_RESULT_EVENTS:
+            realized_roles = ()  # report the illegal play-type transition as ILLEGAL_STATE below
+        if event == 'fumble_lost':
+            realized_roles = tuple(
+                role for role in ('passer', 'rusher', 'receiver')
+                if participants.get(f'{role}_id') is not None
+            )
+        for role in realized_roles or ():
+            chosen_id = selected.get(role)
+            realized_id = participants.get(f'{role}_id')
+            if chosen_id != realized_id:
+                fail(index, decision, play,
+                     f'pre-outcome {role} selection {chosen_id!r} disagrees with credited participant {realized_id!r}',
+                     failure_class='STAT_ACCOUNTING')
+
+        yards = outcome.get('yards_gained')
+        if event == 'pass_incomplete':
+            sampled_yards = [sampled.get(field) for field in ('passing_yards', 'receiving_yards')]
+            if (yards != 0 or outcome.get('touchdown') or outcome.get('turnover')
+                    or any(value not in (None, 0, 0.0) for value in sampled_yards)):
+                fail(index, decision, play,
+                     'an incomplete pass must have zero gain, no score or turnover, and no credited pass or receiving yards')
+        elif event == 'pass_complete':
+            if outcome.get('turnover'):
+                fail(index, decision, play, 'a completed pass with a lost fumble must use the explicit fumble_lost event')
+            passing_yards, receiving_yards = sampled.get('passing_yards'), sampled.get('receiving_yards')
+            if (passing_yards is not None and receiving_yards is not None
+                    and passing_yards != receiving_yards):
+                fail(index, decision, play,
+                     'credited passing yards must equal the corresponding receiver yards on a completion')
+            if outcome.get('touchdown'):
+                before = play.get('state_before') or {}
+                if (not isinstance(before.get('yardline_100'), int) or not isinstance(yards, int)
+                        or yards < before['yardline_100'] or yards > before['yardline_100']):
+                    fail(index, decision, play,
+                         'a completed-pass touchdown must end at the goal line without exceeding credited yards')
+                if outcome.get('scoring_team') not in (None, before.get('offense_team')):
+                    fail(index, decision, play, 'a normal completed-pass touchdown must credit the offense')
+        elif event == 'interception':
+            if not outcome.get('turnover'):
+                fail(index, decision, play, 'an interception must establish a change of possession')
+            before = play.get('state_before') or {}
+            after = play.get('state_after') or {}
+            if (after.get('offense_team') != before.get('defense_team')
+                    or after.get('defense_team') != before.get('offense_team')):
+                fail(index, decision, play,
+                     'an interception must transfer possession to the former defense')
+            if outcome.get('touchdown'):
+                fail(index, decision, play,
+                     'interception-return touchdowns are outside the supported transition model',
+                     failure_class='UNSUPPORTED_RULE')
+            if any(sampled.get(field) not in (None, 0, 0.0)
+                   for field in ('passing_yards', 'receiving_yards')):
+                fail(index, decision, play,
+                     'an interception cannot credit passing or receiving yards to the intended target')
+        elif event == 'fumble_lost':
+            if not outcome.get('turnover'):
+                fail(index, decision, play, 'a fumble_lost event must establish a recovered change of possession')
+            before = play.get('state_before') or {}
+            after = play.get('state_after') or {}
+            if (after.get('offense_team') != before.get('defense_team')
+                    or after.get('defense_team') != before.get('offense_team')):
+                fail(index, decision, play,
+                     'a lost fumble must transfer possession to the classified recovery team')
+            if outcome.get('touchdown'):
+                fail(index, decision, play,
+                     'fumble-return touchdowns are outside the supported transition model',
+                     failure_class='UNSUPPORTED_RULE')
+        elif event == 'sack':
+            if isinstance(yards, (int, float)) and yards > 0:
+                fail(index, decision, play, 'a sack cannot produce positive rushing or passing gain')
+            if outcome.get('turnover'):
+                fail(index, decision, play, 'a sack fumble must use the explicit fumble_lost event')
+        elif event == 'run' and outcome.get('touchdown'):
+            before = play.get('state_before') or {}
+            if (not isinstance(before.get('yardline_100'), int) or not isinstance(yards, int)
+                    or yards < before['yardline_100'] or yards > before['yardline_100']):
+                fail(index, decision, play,
+                     'a rushing touchdown must end at the goal line without exceeding credited yards')
+            if outcome.get('scoring_team') not in (None, before.get('offense_team')):
+                fail(index, decision, play, 'a normal rushing touchdown must credit the offense')
 
         if qb_action == 'scramble':
             passer = selected.get('passer')
@@ -281,7 +417,8 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                 fail(index, decision, play, 'a sack needs a passer, no target, and no pass-attempt credit')
         elif event in PASS_RESULT_EVENTS:
             if (called != 'dropback' or qb_action == 'scramble' or not participants.get('passer_id')
-                    or not participants.get('receiver_id')):
+                    or not participants.get('receiver_id')
+                    or participants.get('passer_id') == participants.get('receiver_id')):
                 fail(index, decision, play, 'a pass result needs a dropback, passer and attributed target')
         elif event == 'run':
             if not participants.get('rusher_id'):
@@ -289,13 +426,96 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
             if called == 'dropback' and qb_action != 'scramble':
                 fail(index, decision, play, 'a dropback cannot be relabeled as a designed run')
 
+    for drive in record.get('drives', []):
+        terminal = drive.get('terminal')
+        if terminal not in ('touchdown', 'safety'):
+            continue
+        drive_plays = drive.get('plays') or []
+        if not drive_plays and drive.get('observed_overtime_drive'):
+            continue  # an observed overtime score has no play-level scorer to inspect
+        if not drive_plays:
+            fail(None, None, None, f'{terminal} drive has no scoring play')
+        scoring_play = drive_plays[-1]
+        index = next((position for position, row in enumerate(plays, 1) if row is scoring_play), None)
+        decision = decisions[index - 1] if index is not None and index <= len(decisions) else None
+        outcome = scoring_play.get('outcome') or {}
+        event = scoring_play.get('event_type')
+        before = scoring_play.get('state_before') or {}
+        score_team = (drive.get('points_scored_on_drive') or {}).get('team')
+
+        if terminal == 'touchdown':
+            if not outcome.get('touchdown'):
+                fail(index, decision, scoring_play, 'a touchdown terminal must be established by its final play')
+            if event in ('run', 'pass_complete'):
+                expected_scorer = drive.get('offense_team')
+                if (drive.get('touchdown_scored_by') != expected_scorer
+                        or (score_team is not None and score_team != expected_scorer)):
+                    fail(index, decision, scoring_play,
+                         'a normal rushing or receiving touchdown must credit the scoring offense')
+            elif event in ('blocked_punt', 'blocked_field_goal'):
+                expected_scorer = outcome.get('scoring_team')
+                if (expected_scorer not in (before.get('offense_team'), before.get('defense_team'))
+                        or drive.get('touchdown_scored_by') != expected_scorer
+                        or (score_team is not None and score_team != expected_scorer)):
+                    fail(index, decision, scoring_play,
+                         'a blocked-kick touchdown scorer must match its classified recovery outcome')
+            else:
+                fail(index, decision, scoring_play,
+                     f'touchdown event {event!r} has no supported scorer attribution',
+                     failure_class='UNSUPPORTED_RULE')
+        else:
+            if event in ('run', 'pass_complete', 'sack'):
+                yards = outcome.get('yards_gained')
+                yardline = before.get('yardline_100')
+                if (not outcome.get('safety') or not isinstance(yards, (int, float))
+                        or not isinstance(yardline, int) or yardline - yards < 100):
+                    fail(index, decision, scoring_play,
+                         'a scrimmage safety requires the ball to become dead in the offense\'s own end zone')
+                expected_scorer = before.get('defense_team')
+                scoring_points = (drive.get('points_scored_on_drive') or {}).get('points')
+                if score_team != expected_scorer or (scoring_points is not None and scoring_points != 2):
+                    fail(index, decision, scoring_play, 'a scrimmage safety must credit the defense')
+            elif event in ('blocked_punt', 'blocked_field_goal'):
+                expected_scorer = outcome.get('scoring_team')
+                if (not outcome.get('safety') or expected_scorer != before.get('defense_team')
+                        or (score_team is not None and score_team != expected_scorer)):
+                    fail(index, decision, scoring_play,
+                         'a blocked-kick safety scorer must match its classified recovery outcome')
+            else:
+                fail(index, decision, scoring_play,
+                     f'safety event {event!r} has no supported scoring transition',
+                     failure_class='UNSUPPORTED_RULE')
+
     return {'status': 'passed', 'plays_checked': len(plays)}
 
 
 def summary(decisions):
     target_decisions = [d for d in decisions if d.get('qb_target_role') is not None]
     fallbacks = Counter()
+    situational_counts = Counter()
     for decision in decisions:
+        state = decision.get('state') or {}
+        if all(state.get(key) is not None for key in
+               ('team', 'down', 'togo', 'yardline_100', 'score_diff', 'quarter', 'clock')):
+            event = decision.get('event')
+            if event in ('pass_complete', 'pass_incomplete', 'interception', 'sack', 'spike'):
+                action = 'pass'
+            elif event == 'run' or (event == 'fumble_lost' and decision.get('outcome_intent') == 'run'):
+                action = 'run'
+            elif event == 'fumble_lost':
+                action = 'pass'
+            elif event == 'punt' or event == 'blocked_punt':
+                action = 'punt'
+            elif event in ('field_goal_attempt', 'blocked_field_goal'):
+                action = 'field_goal'
+            else:
+                action = 'other'
+            distance = pm.DISTANCE_BUCKETS[pm.distance_bucket(int(state['togo']))][2]
+            field = pm.FIELD_BUCKETS[pm.field_bucket(int(state['yardline_100']))]
+            score = pm.SCORE_BUCKETS[pm.score_bucket(int(state['score_diff']))]
+            clock = pm.CLOCK_BUCKETS[pm.clock_bucket(int(state['quarter']), int(state['clock']))]
+            situational_counts[(str(state['team']), int(state['quarter']), int(state['down']), distance,
+                                field, score, clock, action)] += 1
         if decision.get('fallback'):
             fallbacks[str(decision['fallback'])] += 1
         for key in ('qb_scramble_fallback', 'qb_target_role_fallback', 'qb_target_role_draw_fallback',
@@ -325,6 +545,12 @@ def summary(decisions):
             'player_outcome_zero_support_roles': sum(
                 not support for d in decisions for support in (d.get('player_outcome_support') or {}).values()),
             'kick_fallback': sum(d['intent'] == 'kick' for d in decisions),
+            'situational_decision_counts': [
+                {'team': team, 'quarter': quarter, 'down': down, 'distance_bucket': distance,
+                 'field_bucket': field, 'score_bucket': score, 'clock_bucket': clock,
+                 'action': action, 'count': count}
+                for (team, quarter, down, distance, field, score, clock, action), count
+                in sorted(situational_counts.items())],
             'layer_execution': {
                 'score_clock_playcalling': len(decisions),
                 'team_offense_defense_outcomes': sum(bool(d.get('team_outcome_split')) for d in decisions),
@@ -431,12 +657,13 @@ def describe(ref):
     outcome_manifest = getattr(sampler, 'player_outcome_manifest', None)
     if outcome_manifest is not None:
         description['player_outcome_model'] = outcome_manifest
-    integration_files = ('e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
+    integration_files = ('clock_d.py', 'e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
                          'playcall_model.py',
                          'team_tendency.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
                          'streak_splits.py', 'target_roles.py', 'decision_layer.py', 'player_shares.py',
                          'share_distributions.py', 'qb_decisions.py', 'player_outcomes.py', 'playbook_prior.py',
-                         'run_slc_game.py', 'simulate_pregame_batch.py', 'slc_engine.py', 'slc_playcall.py')
+                         'paired_random_streams.py', 'run_slc_game.py', 'simulate_pregame_batch.py',
+                         'slc_engine.py', 'slc_playcall.py')
     description['integration_code_sha256'] = {
         name: _file_sha256(HERE / name) for name in integration_files if (HERE / name).exists()
     }
