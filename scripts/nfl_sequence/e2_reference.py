@@ -255,7 +255,8 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS, eligible_before=None
         cut_sql, cut_args = _cutoff_sql(eligible_before)
         player_yardage = ', passing_yards, rushing_yards' if include_player_yardage else ''
         rows = con.execute(f"""SELECT game_id, play_id, passer_player_id, rusher_player_id, receiver_player_id,
-        posteam, defteam, air_yards, receiving_yards, play_type{player_yardage} FROM nfl_pbp WHERE {mk.WINDOW}{cut_sql}""",
+        posteam, defteam, air_yards, receiving_yards, play_type, lateral_receiver_player_id, lateral_receiving_yards,
+        lateral_rusher_player_id, lateral_rushing_yards{player_yardage} FROM nfl_pbp WHERE {mk.WINDOW}{cut_sql}""",
                            cut_args).fetchall()
     finally:
         con.close()
@@ -268,14 +269,17 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS, eligible_before=None
                                                                 int(r['out_of_bounds']))
     out = {}
     for values in rows:
-        g, p, pa, ru, re_, posteam, defteam, air, rec_yds, play_type = values[:10]
+        (g, p, pa, ru, re_, posteam, defteam, air, rec_yds, play_type,
+         lateral_receiver, lateral_receiving, lateral_rusher, lateral_rushing) = values[:14]
         t, t_team, oob = flags.get((g, int(p)), (0, '', 0))
         yac = (rec_yds - air) if (rec_yds is not None and air is not None and re_) else None
         facts = {'passer_id': pa, 'rusher_id': ru, 'receiver_id': re_, 'posteam': posteam,
                  'defteam': defteam, 'air_yards': air, 'yards_after_catch': yac, 'play_type': play_type,
+                 'lateral_receiver_player_id': lateral_receiver, 'lateral_receiving_yards': lateral_receiving,
+                 'lateral_rusher_player_id': lateral_rusher, 'lateral_rushing_yards': lateral_rushing,
                  'timeout': t, 'timeout_team': t_team, 'out_of_bounds': oob}
         if include_player_yardage:
-            facts.update(receiving_yards=rec_yds, passing_yards=values[10], rushing_yards=values[11])
+            facts.update(receiving_yards=rec_yds, passing_yards=values[14], rushing_yards=values[15])
         out[(g, int(p))] = facts
     return out
 

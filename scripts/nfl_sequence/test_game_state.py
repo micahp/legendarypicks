@@ -299,15 +299,24 @@ class PregamePlayerUsage(unittest.TestCase):
         source = {'game_id': 'G1', 'play_id': 1}
         facts = {'passer_id': 'OLD_QB', 'receiver_id': 'OLD_WR', 'rusher_id': None,
                  'posteam': 'OLD', 'play_type': 'pass', 'timeout': 0, 'timeout_team': '',
-                 'out_of_bounds': 0, 'air_yards': 8, 'yards_after_catch': 3}
+                 'out_of_bounds': 0, 'air_yards': 8, 'yards_after_catch': 3,
+                 'lateral_receiver_player_id': 'OLD_LATERAL', 'lateral_receiving_yards': -4,
+                 'lateral_rusher_player_id': None, 'lateral_rushing_yards': None}
         reference = gs.Reference({}, [], {}, {('G1', 1): facts})
-        play = {'sequence': 1, 'event_type': 'pass_complete', 'outcome': {'sampled_from': source}}
+        play = {'sequence': 1, 'event_type': 'pass_complete', 'outcome': {
+            'sampled_from': source,
+            'pre_event': {'team': 'HOM',
+                          'passer': {'gsis_id': 'QB1', 'player_name': 'Quarterback', 'pos_abb': 'QB'},
+                          'receiver': {'gsis_id': 'RB1', 'player_name': 'Back', 'pos_abb': 'RB'}},
+        }}
         participants = reference.participants_for(play, 'A', self.snapshot(), seed=1)
         self.assertEqual(participants['passer_id'], 'QB1')
         self.assertEqual(participants['receiver_id'], 'RB1')
         self.assertEqual(participants['passer_side'], 'A')
         self.assertIsNone(participants['posteam'])
         self.assertEqual(participants['sampled_play_context']['posteam'], 'OLD')
+        self.assertEqual(participants['sampled_play_context']['lateral_receiver_player_id'], 'OLD_LATERAL')
+        self.assertEqual(participants['sampled_play_context']['lateral_receiving_yards'], -4)
 
     def test_non_scrimmage_play_drops_historical_participant_ids(self):
         source = {'game_id': 'G1', 'play_id': 1}

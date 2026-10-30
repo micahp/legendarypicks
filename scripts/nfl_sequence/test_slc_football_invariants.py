@@ -362,6 +362,23 @@ class QBPlayTypeInvariants(unittest.TestCase):
             slc_engine.validate_decision_outcomes(record, [fumble_call], seed=52)
         self.assert_full_evidence(raised.exception, record, fumble, fumble_call, 52, 'UNSUPPORTED_RULE')
 
+    def test_lateral_completion_is_explicitly_unsupported_until_attribution_is_modeled(self):
+        part = participants(passer='QB1', receiver='WR1', play_type='pass')
+        part['sampled_play_context'].update({
+            'passing_yards': -20, 'receiving_yards': -13,
+            'lateral_receiver_player_id': 'LATERAL1', 'lateral_receiving_yards': -4,
+        })
+        row = play('pass_complete', -20, part)
+        call = decision('pass_complete', intent='dropback', outcome_intent='dropback',
+                        selected={'passer': 'QB1', 'receiver': 'WR1'})
+        record = one_play_record(row)
+
+        with self.assertRaises(football_assertions.FootballAssertionError) as raised:
+            slc_engine.validate_decision_outcomes(record, [call], seed=56)
+
+        self.assert_full_evidence(raised.exception, record, row, call, 56, 'UNSUPPORTED_RULE')
+        self.assertIn('lateral source outcomes are unsupported', str(raised.exception))
+
     def test_touchdown_scorer_must_match_legal_carrier_and_safety_must_reach_own_end_zone(self):
         td = play('run', 50, participants(rusher='RB1', play_type='run'))
         td['state_before']['yardline_100'] = 50

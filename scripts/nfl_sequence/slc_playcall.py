@@ -38,6 +38,8 @@ ARTIFACT_ID = 'slc_playcall_v1'
 UNKNOWN = formation_layer.UNKNOWN
 SCRIMMAGE_INTENTS = ('run', 'dropback')
 KICK_INTENT = 'kick'
+LATERAL_ROW_FIELDS = ('lateral_receiver_player_id', 'lateral_receiving_yards',
+                      'lateral_rusher_player_id', 'lateral_rushing_yards')
 BLOCK_GROUPS = ('down_dist', 'field', 'score', 'clock', 'score_clock', 'down_field', 'team_down')
 OUTCOME_BACKOFF_MIN_SUPPORT = {
     'exact_cell': 10,
@@ -151,6 +153,8 @@ class PlayCallSampler:
         self._cells = {}
         self.source_pool = None  # cutoff-filtered pool, supplied by e2_reference only for opted-in backoff
         self._backoff_index = None
+        self._backoff_index_uses_lateral_filter = None
+        self._backoff_lateral_rows_excluded = 0
         self.outcome_backoff_enabled = False
         self.allow_sparse_cells = False
         self.scramble_backoff_enabled = False
@@ -199,13 +203,38 @@ class PlayCallSampler:
             return None
         return self.side_teams.get(label)
 
+    @staticmethod
+    def _has_lateral(row):
+        for field in LATERAL_ROW_FIELDS:
+            value = row.get(field)
+            if value is None or value == '':
+                continue
+            try:
+                if np.isnan(value):
+                    continue
+            except (TypeError, ValueError):
+                pass
+            if value != 0:
+                return True
+        return False
+
+    def _participant_source_rows(self, samples):
+        """Keep only source outcomes whose player attribution this SLC path represents."""
+        if self.participant_chooser is None:
+            return list(samples), 0
+        kept = [sample for sample in samples if not self._has_lateral(sample[1])]
+        return kept, len(samples) - len(kept)
+
     def _entry(self, cell):
-        cached = self._cells.get(id(cell))
+        use_lateral_filter = self.participant_chooser is not None
+        cache_key = (id(cell), use_lateral_filter)
+        cached = self._cells.get(cache_key)
         if cached is not None:
             return cached[1]
+        samples, lateral_rows_excluded = self._participant_source_rows(cell)
         key = None
         by_key = defaultdict(list)
-        for sample in cell:
+        for sample in samples:
             situation = (int(sample[1]['down']), e0.ydstogo_bucket(sample[1]['ydstogo']),
                          e0.yardline_bucket(sample[1]['yardline_100']))
             if key is None:
@@ -219,7 +248,7 @@ class PlayCallSampler:
         by_streak = defaultdict(Counter)  # and by the offense's streak going into the game
         by_label = defaultdict(Counter)  # and by each decision label ('A=WR'), when the rows carry labels (decision_layer)
         base_labelled = Counter()  # the outcome mix of the labelled rows alone: the charted seasons are a subset of the cell
-        for sample in cell:
+        for sample in samples:
             outcome = (intent_of(sample[0], sample[1]), sample[0])
             by_formation[sample[1].get('formation', UNKNOWN)][outcome] += 1
             by_coverage[sample[1].get('coverage', UNKNOWN)][outcome] += 1
@@ -231,13 +260,15 @@ class PlayCallSampler:
                 by_label[decision_layer.label_key(cat, value)][outcome] += 1
         entry = {'key': key, 'base': base, 'by_formation': dict(by_formation), 'by_coverage': dict(by_coverage),
                  'by_streak': dict(by_streak), 'by_label': dict(by_label), 'base_labelled': base_labelled,
-                 'by_key': {k: sorted(v, key=lambda s: (s[1]['game_id'], s[1]['play_id'])) for k, v in by_key.items()}}
-        self._cells[id(cell)] = (cell, entry)
+                 'by_key': {k: sorted(v, key=lambda s: (s[1]['game_id'], s[1]['play_id'])) for k, v in by_key.items()},
+                 'lateral_source_rows_excluded': lateral_rows_excluded}
+        self._cells[cache_key] = (cell, entry)
         return entry
 
     def _outcome_rows(self, cell, called_intent, scramble, state=None):
         outcome_intent = 'run' if scramble else called_intent
-        rows = [sample for sample in cell if intent_of(sample[0], sample[1]) == outcome_intent]
+        samples, _lateral_rows_excluded = self._participant_source_rows(cell)
+        rows = [sample for sample in samples if intent_of(sample[0], sample[1]) == outcome_intent]
         if scramble:
             rows = [sample for sample in rows if sample[1].get('qb_scramble') == 1]
             if state is not None:
@@ -273,10 +304,15 @@ class PlayCallSampler:
             return None, None
         target = (int(state['down']), e0.ydstogo_bucket(state['togo']), e0.yardline_bucket(state['yl']))
         down, distance, field = target
-        if self._backoff_index is None:
+        use_lateral_filter = self.participant_chooser is not None
+        if (self._backoff_index is None
+                or self._backoff_index_uses_lateral_filter != use_lateral_filter):
             index = {level: defaultdict(lambda: defaultdict(list)) for level in OUTCOME_BACKOFF_MIN_SUPPORT}
+            lateral_rows_excluded = 0
             for source_cell in self.source_pool.values():
-                for sample in source_cell:
+                samples, excluded = self._participant_source_rows(source_cell)
+                lateral_rows_excluded += excluded
+                for sample in samples:
                     event, row = sample[0], sample[1]
                     outcome_class = 'qb_scramble' if row.get('qb_scramble') == 1 else intent_of(event, row)
                     exact = (int(row['down']), e0.ydstogo_bucket(row['ydstogo']),
@@ -288,6 +324,8 @@ class PlayCallSampler:
                     for level, key in keys.items():
                         index[level][outcome_class][key].append(sample)
             self._backoff_index = index
+            self._backoff_index_uses_lateral_filter = use_lateral_filter
+            self._backoff_lateral_rows_excluded = lateral_rows_excluded
         outcome_class = 'qb_scramble' if scramble else called_intent
         levels = (('exact_cell', target), ('down_field', (down, field)),
                   ('down_distance', (down, distance)), ('field_zone', field), ('league_intent', None))
@@ -556,6 +594,11 @@ class PlayCallSampler:
             'kick_share': round(kick_share, 6),
             'intent': called_intent, 'outcome_intent': outcome_intent, 'event': event,
             'fallback': fallback, 'source': {'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season']},
+            'source_row_filter_policy': ('exclude_unmodeled_lateral_transfers'
+                                         if self.participant_chooser is not None else 'none'),
+            'lateral_source_rows_excluded_from_situation_cell': entry['lateral_source_rows_excluded'],
+            'lateral_source_rows_excluded_from_backoff_pool': (
+                self._backoff_lateral_rows_excluded if backoff_candidates is not None else None),
         }
         if self.blocker_fixes:
             decision_record['blocker_fixes'] = sorted(self.blocker_fixes)
