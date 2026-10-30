@@ -10,6 +10,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import game_state as gs  # noqa: E402
 import pre_event as pe  # noqa: E402
+import decision_layer  # noqa: E402
 import qb_decisions as qbd  # noqa: E402
 import slc_playcall as slc  # noqa: E402
 from test_slc_playcall import STATE, blank_artifact, cell  # noqa: E402
@@ -58,6 +59,11 @@ class Choice(unittest.TestCase):
                              trick_passer_rate=0, qb_receiver_rate=1)
         self.assertEqual(ordinary['passer']['gsis_id'], 'AQB1')
         self.assertNotEqual(ordinary['receiver']['gsis_id'], 'AQB2')
+
+        packaged = pe.choose(SNAPSHOT, 'home', 'dropback', seed=7, index=0,
+                             trick_passer_rate=0, qb_receiver_rate=1, qb_receiver_package=True)
+        self.assertEqual(packaged['passer']['gsis_id'], 'AQB1')
+        self.assertEqual(packaged['receiver']['gsis_id'], 'AQB2')
 
         trick = pe.choose(SNAPSHOT, 'home', 'dropback', seed=7, index=0,
                           trick_passer_rate=1, qb_receiver_rate=1)
@@ -164,6 +170,71 @@ class Choice(unittest.TestCase):
         self.assertEqual(chosen['passer']['gsis_id'], 'AQB2')
         self.assertEqual(chosen['rusher']['gsis_id'], 'AQB2')
         self.assertEqual(chosen['qb_decision']['action'], 'scramble')
+
+    def test_designed_run_role_uses_the_active_qbs_historical_style(self):
+        decision_cell = decision_layer.cell_of(STATE['down'], STATE['togo'], STATE['yl'])
+        qb_cell = qbd.cell_of(STATE['down'], STATE['togo'], STATE['yl'])
+        decision_table = {
+            'league': {category: {} for category in decision_layer.CATS},
+            'team': {category: {} for category in decision_layer.CATS},
+            'k': decision_layer.K,
+        }
+        decision_table['league']['B'][decision_cell] = Counter({'QB': 50, 'RB': 50})
+        decision_table['team']['B'][('AAA', decision_cell)] = Counter({'QB': 80, 'RB': 20})
+        qb_table = {
+            'qb_run_player_cell': {('AAA', 'AQB1', qb_cell): Counter({'qb': 0, 'other': 100})},
+            'qb_run_team_cell': {('AAA', qb_cell): Counter({'qb': 40, 'other': 60})},
+            'qb_run_league_cell': {qb_cell: Counter({'qb': 30, 'other': 70})},
+            'qb_run_player_all': {('AAA', 'AQB1'): Counter({'qb': 0, 'other': 100})},
+            'qb_run_team_all': {'AAA': Counter({'qb': 40, 'other': 60})},
+            'qb_run_league_all': Counter({'qb': 30, 'other': 70}),
+        }
+        shares = {'receive': {}, 'carry': {('AAA', 'AQB1'): 1.0, ('AAA', 'ARB1'): 100.0}}
+        outputs = [pe.choose(SNAPSHOT, 'home', 'run', seed=i, index=0, state=STATE,
+                             player_shares=shares, decision_table=decision_table,
+                             qb_decision_table=qb_table, qb_run_role_style_enabled=True)
+                   for i in range(1200)]
+
+        styles = [out['qb_run_role_style'] for out in outputs]
+        self.assertTrue(all(style['adjusted'] for style in styles))
+        self.assertTrue(all(style['adjusted_qb_probability'] < style['base_qb_probability'] for style in styles))
+        qb_rate = sum(out['labels']['B'] == 'QB' for out in outputs) / len(outputs)
+        self.assertAlmostEqual(qb_rate, styles[0]['adjusted_qb_probability'], delta=0.04)
+        for out in outputs:
+            if out['labels']['B'] == 'QB':
+                self.assertEqual(out['rusher']['gsis_id'], 'AQB1')
+            else:
+                self.assertNotEqual(out['rusher']['gsis_id'], 'AQB1')
+
+        control = pe.choose(SNAPSHOT, 'home', 'run', seed=0, index=0, state=STATE,
+                            player_shares=shares, decision_table=decision_table,
+                            qb_decision_table=qb_table, qb_run_role_style_enabled=False)
+        self.assertNotIn('qb_run_role_style', control)
+
+    def test_unavailable_backup_qb_cannot_receive_a_qb_style_run_adjustment(self):
+        decision_cell = decision_layer.cell_of(STATE['down'], STATE['togo'], STATE['yl'])
+        qb_cell = qbd.cell_of(STATE['down'], STATE['togo'], STATE['yl'])
+        decision_table = {
+            'league': {category: {} for category in decision_layer.CATS},
+            'team': {category: {} for category in decision_layer.CATS},
+            'k': decision_layer.K,
+        }
+        decision_table['league']['B'][decision_cell] = Counter({'QB': 50, 'RB': 50})
+        decision_table['team']['B'][('AAA', decision_cell)] = Counter({'QB': 80, 'RB': 20})
+        qb_table = {
+            'qb_run_player_cell': {('AAA', 'AQB2', qb_cell): Counter({'qb': 0, 'other': 100})},
+            'qb_run_team_cell': {('AAA', qb_cell): Counter({'qb': 40, 'other': 60})},
+            'qb_run_league_cell': {qb_cell: Counter({'qb': 30, 'other': 70})},
+            'qb_run_player_all': {('AAA', 'AQB2'): Counter({'qb': 0, 'other': 100})},
+            'qb_run_team_all': {'AAA': Counter({'qb': 40, 'other': 60})},
+            'qb_run_league_all': Counter({'qb': 30, 'other': 70}),
+        }
+        shares = {'receive': {}, 'carry': {('AAA', 'AQB2'): 100.0, ('AAA', 'ARB1'): 1.0}}
+        for seed in range(100):
+            chosen = pe.choose(SNAPSHOT, 'home', 'run', seed=seed, index=0, state=STATE,
+                               player_shares=shares, decision_table=decision_table,
+                               qb_decision_table=qb_table, qb_run_role_style_enabled=True)
+            self.assertNotEqual(chosen['rusher']['gsis_id'], 'AQB2')
 
     def test_rostered_out_and_doubtful_players_are_excluded_without_the_qb_model(self):
         snapshot = {**SNAPSHOT, 'rosters': {**SNAPSHOT['rosters'], 'home': {

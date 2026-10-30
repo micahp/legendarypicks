@@ -150,6 +150,7 @@ def _reproduction_command(args, seed):
         ('--playcall-decision-unfiltered', args.playcall_decision_unfiltered),
         ('--playcall-playbook', args.playcall_playbook),
         ('--playcall-qb-decisions', args.playcall_qb_decisions),
+        ('--playcall-qb-run-role-style', args.playcall_qb_run_role_style),
         ('--playcall-player-outcomes', args.playcall_player_outcomes),
         ('--playcall-player-outcomes-receiver-only', args.playcall_player_outcomes_receiver_only),
         ('--playcall-streak-league', args.playcall_streak_league),
@@ -634,7 +635,8 @@ def _execution_verification(outcomes, profile_manifest):
         'defensive_coverage_outcomes': 'defensive_coverage_outcomes',
         'fixed_player_target_carry_shares': 'fixed_player_target_carry_shares',
         'dirichlet_player_target_carry_shares': 'dirichlet_player_target_carry_shares',
-        'qb_decisions': 'qb_decisions', 'player_conditioned_outcomes': 'player_conditioned_outcomes',
+        'qb_decisions': 'qb_decisions', 'qb_run_role_style': 'qb_run_role_style',
+        'player_conditioned_outcomes': 'player_conditioned_outcomes',
         'target_role_priors': 'target_role_priors', 'decision_labels': 'decision_labels',
         'decision_row_filter': 'decision_row_filter', 'playbook_priors': 'playbook_priors',
         'point_splits': 'point_splits_evaluated', 'team_streak_splits': 'team_streak_splits_evaluated',
@@ -835,7 +837,9 @@ def run_batch(args):
                                                            streak_league=(str(args.playcall_streak_cache) if (args.playcall_streak_cache and args.playcall_streak_league)
                                                                           else args.playcall_streak_league),
                                                            blocker_fixes=args.slc_blocker_fix,
-                                                           fg_ordinary_cutoff=args.slc_fg_ordinary_cutoff)
+                                                           fg_ordinary_cutoff=args.slc_fg_ordinary_cutoff,
+                                                           qb_run_role_style=resolved_profile['enabled_layers'].get(
+                                                               'qb_run_role_style', False))
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
@@ -905,6 +909,7 @@ def run_batch(args):
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
         'playcall_decision': bool(args.playcall_decision), 'playcall_dirichlet_shares': bool(args.playcall_dirichlet_shares),
         'playcall_qb_decisions': bool(args.playcall_qb_decisions),
+        'playcall_qb_run_role_style': bool(args.playcall_qb_run_role_style),
         'playcall_player_outcomes': bool(args.playcall_player_outcomes),
         'playcall_player_outcomes_receiver_only': bool(args.playcall_player_outcomes_receiver_only),
         'playcall_playbook': bool(args.playcall_playbook),
@@ -1017,6 +1022,7 @@ def run_batch(args):
             'safety_kick_table': ('observed_2022_2025' if safety_kick_table else 'disabled_control'),
             'try_policy': 'K=1 research policy' if args.try_policy == 'k1' else 'unconditional control',
             'qb_decisions': bool(args.playcall_qb_decisions),
+            'qb_run_role_style': bool(args.playcall_qb_run_role_style),
             'player_conditioned_outcomes': bool(args.playcall_player_outcomes),
             'player_outcomes_receiver_only': bool(args.playcall_player_outcomes_receiver_only),
             'playcall_enabled_layers': (playcall_description or {}).get('enabled_layers'),
@@ -1147,6 +1153,8 @@ def main(argv=None):
                          'rusher are drawn from each game\'s shares; implies --playcall-player-shares')
     ap.add_argument('--playcall-qb-decisions', action='store_true',
                     help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
+    ap.add_argument('--playcall-qb-run-role-style', action='store_true',
+                    help='SLC research ablation: adjust QB run-role selection using the named QB\'s prior non-scramble run tendency; requires QB decisions')
     ap.add_argument('--playcall-player-outcomes', action='store_true',
                     help='SLC research: player-conditioned QB, receiver and rusher event/yards/touchdown outcome distributions')
     ap.add_argument('--playcall-player-outcomes-receiver-only', action='store_true',

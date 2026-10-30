@@ -17,12 +17,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-SCHEMA = 'lp.nfl.player-workload-reference.v2'
+SCHEMA = 'lp.nfl.player-workload-reference.v3'
 SEASONS = (2022, 2023, 2024, 2025)
 TARGET_WEEK = 7
 METRICS = (
     'pass_attempts', 'pass_completions', 'passing_yards', 'rush_attempts', 'rushing_yards',
-    'targets', 'receptions', 'receiving_yards', 'qb_scrambles', 'designed_qb_runs',
+    'targets', 'receptions', 'receiving_yards', 'qb_scrambles', 'qb_non_scramble_runs',
     'qb_sneaks', 'qb_kneels', 'qb_spikes', 'throwaways',
 )
 PUBLISHED_METRICS = {
@@ -47,7 +47,7 @@ NAME_CASES = {
 }
 PLAYER_METRICS_BY_POSITION = {
     'QB': ('pass_attempts', 'pass_completions', 'passing_yards', 'rush_attempts', 'rushing_yards',
-           'qb_scrambles', 'designed_qb_runs', 'qb_sneaks', 'qb_kneels', 'qb_spikes', 'throwaways'),
+           'qb_scrambles', 'qb_non_scramble_runs', 'qb_kneels', 'qb_spikes', 'throwaways'),
     'RB': ('rush_attempts', 'rushing_yards', 'targets', 'receptions', 'receiving_yards'),
     'FB': ('rush_attempts', 'rushing_yards', 'targets', 'receptions', 'receiving_yards'),
     'WR': ('targets', 'receptions', 'receiving_yards', 'rush_attempts', 'rushing_yards'),
@@ -56,6 +56,10 @@ PLAYER_METRICS_BY_POSITION = {
 RECEIVER_POSITIONS = {'RB', 'FB', 'WR', 'TE'}
 THROWAWAY = re.compile(r'\bthrown away\b|\bpass(?:es)? the ball away\b', re.IGNORECASE)
 QB_SNEAK = re.compile(r'\b(?:qb|quarterback) sneak\b|\bsneaks? (?:up the middle|left|right)\b', re.IGNORECASE)
+QB_SNEAK_UNAVAILABLE_DEFINITION = (
+    'unavailable: nflverse has no structured QB-sneak field; pinned PBP descriptions yield no sneak-label '
+    'matches among QB non-scramble runs. Null values are not zero workload.'
+)
 
 
 def sha256(path):
@@ -186,6 +190,14 @@ def distribution(values, *, denominator_basis, prior_mean=None, prior_n=None, pr
             'position_prior_game_sample_n': prior_n,
             'shrunken_mean': (n * mean + prior_games * prior) / (n + prior_games),
             'shrinkage_prior_games': prior_games}
+
+
+def metric_status(metric):
+    if metric == 'qb_sneaks':
+        return 'unavailable_source_classification'
+    if metric == 'qb_non_scramble_runs':
+        return 'residual_may_include_unlabeled_sneaks'
+    return 'observed_or_derived'
 
 
 def _input_files(data_dir):
@@ -413,9 +425,16 @@ def _ingest_pbp(path, season, *, players, roster_2026, eligible, positions, play
                     if _int(row.get('qb_scramble')) == 1:
                         pg['stats']['qb_scrambles'] += 1
                     elif _int(row.get('qb_kneel')) != 1 and _int(row.get('qb_dropback')) != 1:
-                        pg['stats']['designed_qb_runs'] += 1
+                        pg['stats']['qb_non_scramble_runs'] += 1
+                        source_counts['qb_non_scramble_run_rows'] += 1
+                        source_counts[f'qb_non_scramble_run_rows_{season}'] += 1
                         if QB_SNEAK.search(row.get('desc') or ''):
                             pg['stats']['qb_sneaks'] += 1
+                            source_counts['qb_sneak_description_matches'] += 1
+                            source_counts[f'qb_sneak_description_matches_{season}'] += 1
+                        togo = _float(row.get('ydstogo'))
+                        if togo is not None and togo <= 1 and row.get('run_location') == 'middle':
+                            source_counts[f'qb_short_yardage_middle_run_proxy_rows_{season}'] += 1
                 if team:
                     team_games[(game_id, team)]['qb_rush_attempts'] += int(pos == 'QB')
                     team_games[(game_id, team)]['nonqb_rush_attempts'] += int(pos != 'QB')
@@ -475,25 +494,42 @@ def _summary_tables(player_games, players, eligible, positions):
         for pid, name, pos, row in period:
             eligible_basis = ('participation_offensive_snap_player_games' if row['season'] <= 2025
                               else 'lower_bound_pbp_event_observed_player_games')
+            player_key = (pid, name, pos)
             for metric in PLAYER_METRICS_BY_POSITION.get(pos, ()):
                 value = int(row['stats'][metric])
                 values_by_position[pos][metric].append(value)
-                values_by_player[(pid, name, pos)][metric].append(value)
-                info_by_player[(pid, name, pos)] = eligible_basis
+                values_by_player[player_key][metric].append(value)
+                info_by_player[player_key] = eligible_basis
+            if pos == 'QB':
+                # The source has no QB-sneak flag and its descriptions do not
+                # consistently identify sneaks. Keep the metric visible as unavailable.
+                values_by_player[player_key]['qb_sneaks']
+                values_by_position[pos]['qb_sneaks']
+                info_by_player[player_key] = eligible_basis
         for (pid, name, pos), metrics in sorted(values_by_player.items(), key=lambda x: (x[0][2], x[0][1], x[0][0])):
             for metric, values in sorted(metrics.items()):
                 prior_values = values_by_position[pos][metric]
-                stats = distribution(values, denominator_basis=info_by_player[(pid, name, pos)],
-                                     prior_mean=sum(prior_values) / len(prior_values) if prior_values else None,
-                                     prior_n=len(prior_values))
+                unavailable = metric == 'qb_sneaks'
+                stats = distribution(
+                    [] if unavailable else values,
+                    denominator_basis=('source_classification_unavailable' if unavailable
+                                        else info_by_player[(pid, name, pos)]),
+                    prior_mean=(sum(prior_values) / len(prior_values)
+                                if prior_values and not unavailable else None),
+                    prior_n=len(prior_values) if not unavailable else 0)
                 output['player'].append({'window': window, 'player_id': pid, 'player_name': name,
-                                         'position': pos, 'metric': metric, **stats})
+                                         'position': pos, 'metric': metric,
+                                         'metric_status': metric_status(metric), **stats})
         for (pos, metric), values in sorted(((pos, metric), vals) for pos, rows in values_by_position.items()
                                             for metric, vals in rows.items()):
             basis = ('participation_offensive_snap_player_games' if window != 'target_2026_w1_7'
                      else 'lower_bound_pbp_event_observed_player_games')
+            unavailable = metric == 'qb_sneaks'
             output['position'].append({'window': window, 'position': pos, 'metric': metric,
-                                       **distribution(values, denominator_basis=basis)})
+                                       'metric_status': metric_status(metric),
+                                       **distribution([] if unavailable else values,
+                                                      denominator_basis=('source_classification_unavailable'
+                                                                         if unavailable else basis))})
     return output
 
 
@@ -534,7 +570,7 @@ def _named_examples(player_games, players, positions, game_context):
                          'metric': metric, 'value': value, 'rush_attempts': int(row['stats']['rush_attempts']),
                          'rushing_yards': int(row['stats']['rushing_yards']), 'targets': int(row['stats']['targets']),
                          'receptions': int(row['stats']['receptions']), 'pass_attempts': int(row['stats']['pass_attempts']),
-                         'qb_scrambles': int(row['stats']['qb_scrambles']), 'designed_qb_runs': int(row['stats']['designed_qb_runs']),
+                         'qb_scrambles': int(row['stats']['qb_scrambles']), 'qb_non_scramble_runs': int(row['stats']['qb_non_scramble_runs']),
                          'qb_kneels': int(row['stats']['qb_kneels']), 'qb_spikes': int(row['stats']['qb_spikes']),
                          })
         rows.sort(key=lambda item: (-item['value'], item['game_date'] or '', item['game_id']))
@@ -679,19 +715,19 @@ def build(data_dir, out_dir):
                                  'player_id': pid, 'player_name': players_master.get(pid, {}).get('name') or pid,
                                  'player_opportunities': count, 'player_share': count / denom if denom else None})
     _export_csv(out_dir / 'player_workload_distributions.csv', tables['player'],
-                ('window', 'player_id', 'player_name', 'position', 'metric', 'game_sample_n',
+                ('window', 'player_id', 'player_name', 'position', 'metric', 'metric_status', 'game_sample_n',
                  'eligible_player_games', 'denominator_basis', 'mean', 'median', 'standard_deviation',
                  'p75', 'p90', 'p95', 'p99', 'observed_maximum', 'zero_count', 'zero_rate',
                  'position_prior_mean', 'position_prior_game_sample_n', 'shrunken_mean', 'shrinkage_prior_games'))
     _export_csv(out_dir / 'position_workload_distributions.csv', tables['position'],
-                ('window', 'position', 'metric', 'game_sample_n', 'eligible_player_games', 'denominator_basis',
+                ('window', 'position', 'metric', 'metric_status', 'game_sample_n', 'eligible_player_games', 'denominator_basis',
                  'mean', 'median', 'standard_deviation', 'p75', 'p90', 'p95', 'p99', 'observed_maximum',
                  'zero_count', 'zero_rate'))
     _export_csv(out_dir / 'named_player_game_examples.csv', examples,
                 ('case', 'player_id', 'player_name', 'position', 'season', 'week', 'game_date', 'game_id',
                  'team', 'opponent', 'home_score', 'away_score', 'metric', 'value', 'rank_by_named_metric', 'pass_attempts',
                  'rush_attempts', 'rushing_yards', 'targets', 'receptions', 'qb_scrambles',
-                 'designed_qb_runs', 'qb_kneels', 'qb_spikes'))
+                 'qb_non_scramble_runs', 'qb_kneels', 'qb_spikes'))
     _export_csv(out_dir / 'team_game_usage.csv', team_rows,
                 ('season', 'week', 'game_date', 'game_id', 'team', 'home_team', 'away_team', 'plays',
                  'pass_attempts', 'sacks', 'rush_attempts', 'qb_rush_attempts', 'nonqb_rush_attempts',
@@ -734,14 +770,31 @@ def build(data_dir, out_dir):
             'targets': 'pass_attempt with receiver_player_id, excluding two-point tries; missing target IDs remain in team pass-attempt denominators.',
             'receptions': 'complete_pass with receiver_player_id, excluding two-point tries.',
             'receiving_yards': 'receiving_yards to receiver_player_id plus lateral_receiving_yards to lateral_receiver_player_id; source differences are retained in reconciliation output.',
-            'designed_qb_runs': 'QB rusher with rush_attempt, qb_scramble=0, qb_kneel=0 and qb_dropback!=1; includes detected QB sneaks.',
-            'qb_sneaks': 'subset of designed QB runs identified by the PBP description regex in the source code; heuristic, not an NFL accounting field.',
+            'qb_non_scramble_runs': 'QB rusher with rush_attempt, qb_scramble=0, qb_kneel=0 and qb_dropback!=1; includes QB sneaks that the source does not separately identify.',
+            'qb_sneaks': QB_SNEAK_UNAVAILABLE_DEFINITION,
             'throwaways': 'passer attempts with an explicit "thrown away" or equivalent string in the play description; lower bound on all throwaways.',
             'position': 'per-game nflverse participation offense_positions mode; canonical players.csv fallback. 2026 uses weekly roster position first.',
             'shrinkage': 'mean only: (player_game_n * player mean + 8 * position-window mean)/(player_game_n + 8); raw quantiles and max are never altered.',
             'quantiles': 'linear interpolation over per-player-game counts; standard deviation is population SD.',
             'conditional_usage': 'PBP play decisions grouped by pre-play score differential, quarter, remaining-time bucket, down, distance, and field zone. Player shares divide by same-team actions of the same type and context.',
             'historical_record_boundaries': 'record alerts are empirical warnings, never legal or physical limits.'},
+        'qb_run_classification': {
+            'residual_rows': counts['qb_non_scramble_run_rows'],
+            'description_matches': counts['qb_sneak_description_matches'],
+            'by_season': {
+                str(season): {
+                    'residual_rows': counts[f'qb_non_scramble_run_rows_{season}'],
+                    'description_matches': counts[f'qb_sneak_description_matches_{season}'],
+                    'short_yardage_middle_run_proxy_rows': counts[
+                        f'qb_short_yardage_middle_run_proxy_rows_{season}'],
+                }
+                for season in (*SEASONS, 2026)
+            },
+            'qb_sneak_distribution_status': 'unavailable_source_classification',
+            'interpretation': ('qb_non_scramble_runs is a residual category and can include unlabeled sneaks; '
+                               'short-yardage middle runs are only a situational proxy, not confirmed sneaks; '
+                               'zero description matches do not mean no sneaks occurred.'),
+        },
         'coverage': {'counts': dict(sorted(counts.items())), **participation_counts},
         'source_reconciliation_status': 'mismatch_disclosed' if any(r['status'] != 'matched' for r in reconciliation) else 'matched',
         'output_sha256': {},

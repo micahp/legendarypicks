@@ -153,5 +153,36 @@ class NamedExampleIdentityTests(unittest.TestCase):
             workload._resolve_named_cases({}, {'Missing Player': ('WR', 'targets')})
 
 
+class QbRunClassificationTests(unittest.TestCase):
+    def test_unlabeled_sneaks_are_unavailable_not_zero(self):
+        game = {
+            'season': 2024, 'week': 3, 'position_counts': Counter({'QB': 1}),
+            'stats': Counter({'qb_non_scramble_runs': 2, 'qb_sneaks': 0}),
+        }
+        tables = workload._summary_tables(
+            {('2024_03_TST_OPP', 'QB1'): game},
+            {'QB1': {'name': 'Example QB', 'position': 'QB'}},
+            {}, {('2024_03_TST_OPP', 'QB1'): 'QB'},
+        )
+
+        sneaks = [row for row in tables['player']
+                  if row['window'] == 'multi_2022_2025' and row['metric'] == 'qb_sneaks']
+        runs = [row for row in tables['player']
+                if row['window'] == 'multi_2022_2025' and row['metric'] == 'qb_non_scramble_runs']
+        self.assertEqual(len(sneaks), 1)
+        self.assertEqual(sneaks[0]['metric_status'], 'unavailable_source_classification')
+        self.assertEqual(sneaks[0]['denominator_basis'], 'source_classification_unavailable')
+        self.assertEqual(sneaks[0]['game_sample_n'], 0)
+        self.assertIsNone(sneaks[0]['mean'])
+        self.assertEqual(runs[0]['metric_status'], 'residual_may_include_unlabeled_sneaks')
+        self.assertEqual(runs[0]['mean'], 2.0)
+
+    def test_sneak_label_gap_is_preserved_in_manifest_definitions(self):
+        self.assertIn('unavailable', workload.QB_SNEAK_UNAVAILABLE_DEFINITION)
+        self.assertIn('Null values are not zero workload.', workload.QB_SNEAK_UNAVAILABLE_DEFINITION)
+        self.assertNotIn('qb_sneaks', workload.PLAYER_METRICS_BY_POSITION['QB'])
+        self.assertIn('qb_non_scramble_runs', workload.PLAYER_METRICS_BY_POSITION['QB'])
+
+
 if __name__ == '__main__':
     unittest.main()
