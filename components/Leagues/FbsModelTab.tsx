@@ -338,14 +338,17 @@ function FinalScore({ row }: { row: HistoryRow }) {
   return (
     <div className="min-w-0">
       <div className="text-xs text-zinc-500">Final</div>
-      <div role="group" aria-label="Final score" className="mt-1 space-y-1">
-        {teams.map(({ side, name, score }) => {
+      <div role="group" aria-label="Final score" className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm">
+        {teams.map(({ side, name, score }, index) => {
           const scoredMore = side === higherScoringSide
           return (
-            <div key={side} role="group" aria-label={`${name} ${score}`} className={`flex min-w-0 items-baseline gap-2 text-sm ${scoredMore ? 'font-semibold text-zinc-100' : 'text-zinc-400'}`}>
-              <span className="min-w-0 break-words">{name}</span>
-              <span className="shrink-0 tabular-nums">{score}</span>
-            </div>
+            <span key={side} className="inline-flex items-baseline gap-1 whitespace-nowrap">
+              {index > 0 && <span aria-hidden="true" className="text-zinc-500">@</span>}
+              <span role="group" aria-label={`${name} ${score}`} className={`inline-flex items-baseline gap-1 ${scoredMore ? 'font-semibold text-zinc-100' : 'text-zinc-400'}`}>
+                <span>{name}</span>
+                <span className="tabular-nums">{score}</span>
+              </span>
+            </span>
           )
         })}
         {higherScoringSide === null && <p className="text-xs text-zinc-500">Tie</p>}
