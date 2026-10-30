@@ -197,7 +197,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                     chosen['qb_decision']['target_role'] = 'Other'
                     chosen['target_role'] = 'Other'
                     chosen['labels']['A'] = 'Other'
-            elif player_shares is None:
+            elif player_shares is None and share_table is None:
                 role = (chosen.get('qb_decision') or {}).get('target_role')
                 if role in ('RB', 'WR', 'TE'):
                     eligible = sorted((p for p in receivers if p['pos_abb'] == role),
@@ -228,10 +228,20 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                         positions = (role,)
                 if share_table is not None:  # the game's Dirichlet target shares over the eligible players, then this play's draw
                     import share_distributions
+                    # A trick passer can also be an eligible receiver: keep the game population fixed and exclude
+                    # the current passer only from this play's candidate list.
                     population = share_distributions.eligible_players(
-                        [p for p in receivers if p['pos_abb'] in player_shares_positions('receive')],
+                        [p for p in available_players if p['pos_abb'] in player_shares_positions('receive')],
                         roster.get('injury_report'))
-                    eligible = [p for p in population if p['pos_abb'] in positions]
+                    expected_population_ids = tuple(sorted(
+                        p['gsis_id'] for p in available_players
+                        if p['pos_abb'] in player_shares_positions('receive')))
+                    population_ids = tuple(sorted(p['gsis_id'] for p in population))
+                    if population_ids != expected_population_ids:
+                        raise AssertionError(f'receive share population for {team} differs from the full eligible roster')
+                    receiver_ids = {p['gsis_id'] for p in receivers}
+                    eligible = [p for p in population
+                                if p['gsis_id'] in receiver_ids and p['pos_abb'] in positions]
                     if not eligible:  # fail loudly: the adapter below does not know about injuries
                         raise ValueError(f'no eligible receivers for {team} after the injury report')
                     chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), snapshot['snapshot_sha256'],
@@ -240,7 +250,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                     chosen['receiver'] = _by_player_share(receivers, player_shares, team, 'receive', positions,
                                                           _draw(f'{base}:receiver:player'))
     else:
-        if player_shares is None:
+        if player_shares is None and share_table is None:
             chosen['rusher'] = _by_usage(available_players, observed['runner_position_usage'], team, 'rusher',
                                          _draw(f'{base}:rusher:position'))
         else:
