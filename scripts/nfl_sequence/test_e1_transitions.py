@@ -271,6 +271,57 @@ class QuarterTransitions(unittest.TestCase):
         self.assertEqual(partial[0]['state_after']['quarter'], 2)
         self.assertEqual(partial[0]['state_after']['clock_seconds'], e1.QUARTER_LENGTH)
 
+    def test_blocked_field_goal_with_resolved_possession_continues_across_q1_q3(self):
+        def block(event, st, row, runoff, spot, rng):
+            return {'event': 'blocked_field_goal', 'clock_runoff_seconds': 1,
+                    'kick_outcome': {'kick_type': 'field_goal', 'classification_status': 'classified_next_snap',
+                                     'possession_after_role': 'receiving_team', 'next_snap_yardline_100': 40,
+                                     'next_snap_down': 1, 'next_snap_ydstogo': 10}}
+
+        for quarter in (1, 3):
+            with self.subTest(quarter=quarter):
+                plays, terminal = e1.simulate(
+                    start(quarter, 1, yl=50, down=4, togo=5), 1,
+                    FakePool(('field_goal_attempt', 0, 1, None)), f'blocked-fg-q{quarter}-expiry',
+                    special_teams=block)
+
+                self.assertEqual(terminal, 'turnover')
+                last = plays[-1]
+                self.assertEqual(last['state_after']['quarter'], quarter + 1)
+                self.assertEqual(last['state_after']['clock_seconds'], e1.QUARTER_LENGTH)
+                self.assertEqual(last['state_after']['offense_team'], 'DEF')
+                self.assertEqual(last['state_after']['yardline_100'], 40)
+                self.assertEqual(last['state_after']['down'], 1)
+                self.assertTrue(last['outcome']['quarter_change'])
+                e1.check_drive(plays, terminal)
+
+    def test_period_expired_blocked_field_goal_forces_exact_q2_q4_clock_end(self):
+        class Clock:
+            def __init__(self):
+                self.forced = []
+
+            def draw(self, row, event, terminal, quarter, qsr, **kwargs):
+                self.forced.append((quarter, qsr, kwargs.get('force_period_end')))
+                return (qsr, True, None) if kwargs.get('force_period_end') else (1, False, None)
+
+        def block(event, st, row, runoff, spot, rng):
+            return {'event': 'blocked_field_goal', 'clock_runoff_seconds': 1,
+                    'kick_outcome': {'kick_type': 'field_goal', 'classification_status': 'period_expired'}}
+
+        for quarter, expected_terminal in ((2, 'halftime'), (4, 'end_of_regulation')):
+            with self.subTest(quarter=quarter):
+                clock = Clock()
+                plays, terminal = e1.simulate(
+                    start(quarter, 7, yl=50, down=4, togo=5), 1,
+                    FakePool(('field_goal_attempt', 0, 1, None)), f'blocked-fg-q{quarter}-expiry',
+                    special_teams=block, clock=clock)
+
+                self.assertEqual(terminal, expected_terminal)
+                self.assertEqual(clock.forced, [(quarter, 7, True)])
+                self.assertEqual(plays[-1]['outcome']['clock_runoff_seconds'], 7)
+                self.assertEqual(plays[-1]['state_after']['clock_seconds'], 0)
+                e1.check_drive(plays, terminal)
+
     def test_a_fourth_down_turnover_keeps_turnover_on_downs_in_the_outcome(self):
         plays, terminal = e1.simulate(start(1, 600, yl=50, down=4, togo=10), 1,
                                       FakePool(('run', 0, 10, None)), 'e1-turnover-on-downs')
