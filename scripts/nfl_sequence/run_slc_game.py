@@ -64,6 +64,8 @@ def parse_args(argv=None):
     ap.add_argument('--playbook', action='store_true', help='SLC v1 research: use playbook priors for decision categories C, D and E')
     ap.add_argument('--qb-decisions', action='store_true',
                     help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
+    ap.add_argument('--qb-run-role-style', action='store_true',
+                    help='SLC research ablation: adjust QB run-role selection using prior non-scramble run tendency; requires --qb-decisions')
     ap.add_argument('--player-outcomes', action='store_true',
                     help='SLC research: QB, receiver and rusher event, yardage and touchdown distributions; outcomes can change team scoring')
     ap.add_argument('--player-outcomes-receiver-only', action='store_true',
@@ -135,6 +137,7 @@ def main():
         'playcall_team_outcomes': bool(args.team_outcomes), 'playcall_formation': bool(args.formation),
         'playcall_coverage': bool(args.coverage), 'playcall_player_shares': bool(args.player_shares),
         'playcall_dirichlet_shares': bool(args.dirichlet_shares), 'playcall_qb_decisions': bool(args.qb_decisions),
+        'playcall_qb_run_role_style': bool(args.qb_run_role_style),
         'playcall_player_outcomes': bool(args.player_outcomes), 'playcall_target_roles': bool(args.target_roles),
         'playcall_decision': bool(args.decision), 'playcall_playbook': bool(args.playbook),
         'playcall_point_splits': bool(args.point_splits), 'playcall_streak_splits': bool(args.streak_splits),
@@ -168,6 +171,7 @@ def main():
                                                 decision=args.decision, decision_filter=not args.decision_unfiltered,
                                                 dirichlet_shares=args.dirichlet_shares,
                                                 qb_decisions=args.qb_decisions, player_outcomes=args.player_outcomes,
+                                                qb_run_role_style=args.qb_run_role_style,
                                                 player_outcomes_receiver_only=args.player_outcomes_receiver_only,
                                                 playbook=args.playbook,
                                                 source_commit=source_provenance['base_commit'],

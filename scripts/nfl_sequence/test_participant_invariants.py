@@ -67,9 +67,21 @@ class TrickPlays(unittest.TestCase):
 
     def test_a_drawn_qb_catch_is_a_rostered_backup_quarterback_throwing_to_the_starter(self):
         for seed in range(1, 51):
-            chosen = pe.choose(SNAPSHOT, 'home', 'dropback', seed=seed, index=0, trick_passer_rate=0.0, qb_receiver_rate=1.0)
+            chosen = pe.choose(SNAPSHOT, 'home', 'dropback', seed=seed, index=0, trick_passer_rate=0.0,
+                               qb_receiver_rate=1.0, qb_receiver_package=True)
             self.assertEqual(chosen['passer']['gsis_id'], 'AQB1', seed)
             self.assertEqual(chosen['receiver']['gsis_id'], 'AQB2', seed)
+
+    def test_an_inactive_backup_qb_cannot_be_the_receiver_on_a_trick_pass(self):
+        snapshot = {**SNAPSHOT, 'rosters': {**SNAPSHOT['rosters'], 'home': {
+            **SNAPSHOT['rosters']['home'],
+            'injury_report': {'players': [{'gsis_id': 'AQB2', 'report_status': 'Out'}]}}}}
+        for seed in range(1, 51):
+            chosen = pe.choose(snapshot, 'home', 'dropback', seed=seed, index=0,
+                               trick_passer_rate=0.0, qb_receiver_rate=1.0, qb_receiver_package=True)
+            self.assertEqual(chosen['passer']['gsis_id'], 'AQB1', seed)
+            self.assertNotEqual(chosen['receiver']['gsis_id'], 'AQB2', seed)
+            self.assertNotEqual(chosen['receiver']['gsis_id'], chosen['passer']['gsis_id'], seed)
 
     def test_the_default_trick_rates_are_the_measured_rates(self):
         self.assertAlmostEqual(pe.TRICK_PASSER_RATE, 63 / 35293, places=6)
