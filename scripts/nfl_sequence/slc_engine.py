@@ -111,6 +111,9 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playcall_qb_decisions=(qb_decisions or run_scramble_backoff),
                    playcall_player_outcomes=player_outcomes, blocker_fixes=fixes,
                    fg_ordinary_cutoff=fg_ordinary_cutoff)
+    ref.pool, lateral_source_filter = exclude_unmodeled_lateral_rows(ref.pool, ref.participants)
+    ref.pool_scope = dict(ref.pool_scope or {})
+    ref.pool_scope['unmodeled_lateral_source_filter'] = lateral_source_filter
     sampler = ref.contextual_sampler
     sampler.source_cutoff = {'eligible_before': [season, 1]}
     sampler.optional_input_sha256 = {}
@@ -349,10 +352,38 @@ def _has_lateral_source(sampled):
     return False
 
 
+def exclude_unmodeled_lateral_rows(pool, participant_facts):
+    """Remove aggregate-yardage outcomes with lateral transfers before SLC sampling.
+
+    E1 source rows carry game and play IDs but omit lateral columns. Resolve those IDs through the participant facts, loaded
+    from the same cutoff-safe ``nfl_pbp`` window, so a lateral cannot leak through an apparently clean E1 row.
+    """
+    kept_pool = {}
+    excluded = Counter()
+    for cell_key, samples in pool.items():
+        kept = []
+        for event, row, runoff, spot in samples:
+            try:
+                source_key = (row.get('game_id'), int(float(row.get('play_id'))))
+            except (TypeError, ValueError):
+                source_key = None
+            if source_key is not None and _has_lateral_source(participant_facts.get(source_key, {})):
+                excluded[event] += 1
+            else:
+                kept.append((event, row, runoff, spot))
+        if kept:
+            kept_pool[cell_key] = kept
+    return kept_pool, {'policy': 'exclude_unmodeled_lateral_transfers',
+                       'rows_excluded': sum(excluded.values()),
+                       'rows_excluded_by_event': dict(sorted(excluded.items()))}
+
+
 def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
     """Refuse mismatches between a pre-outcome QB choice and the play/stat event it produced."""
     plays = [play for drive in record.get('drives', []) for play in drive.get('plays', [])]
-    partial_plays = ((record.get('blocked_attempt') or {}).get('plays_before_block') or [])
+    blocked_attempt = record.get('blocked_attempt') or {}
+    partial_plays = blocked_attempt.get('plays_before_block') or []
+    unrepresented_decisions = blocked_attempt.get('unrepresented_decisions') or []
     snapshot = snapshot or record.get('pregame_snapshot') or {}
     game_id = (snapshot.get('schedule') or {}).get('game_id') or record.get('game_id') or 'unknown'
 
@@ -376,14 +407,26 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
         raise football_assertions.FootballAssertionError(
             failure_class, reason, context=detail)
 
-    expected_decisions = len(plays) + len(partial_plays)
+    expected_decisions = len(plays) + len(partial_plays) + len(unrepresented_decisions)
     if len(decisions) != expected_decisions:
         index = min(len(decisions), expected_decisions)
         evidence_play = (plays[index] if index < len(plays) else
                          partial_plays[index - len(plays)] if index - len(plays) < len(partial_plays) else None)
         fail(index, decisions[index] if index < len(decisions) else None, evidence_play,
              f'play-call decision count {len(decisions)} does not match {len(plays)} emitted and '
-             f'{len(partial_plays)} blocked-attempt plays')
+             f'{len(partial_plays)} blocked-attempt plays and {len(unrepresented_decisions)} unresolved decisions')
+    if len(unrepresented_decisions) > 1:
+        fail(len(plays) + len(partial_plays), unrepresented_decisions[0], None,
+             f'blocked attempt contains {len(unrepresented_decisions)} unresolved play-call decisions; expected at most one')
+    if unrepresented_decisions:
+        unresolved = unrepresented_decisions[0]
+        if not isinstance(unresolved, dict) or decisions[-1] != unresolved:
+            fail(len(plays) + len(partial_plays), unresolved if isinstance(unresolved, dict) else None, None,
+                 'unresolved blocked-attempt decision evidence does not match the final play-call decision')
+        if (unresolved.get('decision_timing') != 'pre_outcome_sample'
+                or unresolved.get('event') not in gs.reducer.EVENT_VOCABULARY):
+            fail(len(plays) + len(partial_plays), unresolved, None,
+                 'unresolved blocked-attempt decision has invalid timing or an unsupported event')
 
     for offset, (decision, play) in enumerate(zip(decisions[len(plays):], partial_plays), len(plays) + 1):
         event = play.get('event_type')

@@ -35,6 +35,7 @@ defensive personnel or substitutions.
 Kickoff convention in the published nfl_pbp (measured 2026-10-24): on a kickoff row `posteam` is the RECEIVING team and
 `defteam` is the KICKING team. The receiving team's next run or pass in the same quarter gives the starting spot.
 """
+import copy
 import random
 import hashlib
 from collections import Counter, defaultdict
@@ -594,7 +595,7 @@ class _Game:
         self.yl = self.down = self.togo = None
         self.events, self.drives, self.boundaries = [], [], []
         self.overtime = None  # set when a regulation tie goes to overtime (Rule 16)
-        self.blocked_attempt = None  # the drive a block stopped, with the plays made before the block
+        self.blocked_attempt = None  # the drive a block stopped, with evidence for plays and the unresolved attempt
         self.timeouts = {'A': 3, 'B': 3}  # per half; A is the home side, B the away side (authored labels)
         self.warned_quarters = set()  # the late quarters whose two-minute warning has stopped the clock this half
         self.points = Counter()
@@ -1298,6 +1299,9 @@ class _Game:
                          or self.ref.kicks.get('field_goal_outcomes') else None)
         research = {'clock': self.clock_draws} if self.clock_draws is not None else {}  # the E2 call is unchanged
         attempt = []  # the plays made before a block are evidence, kept apart from drives and stats
+        sampler = self.ref.contextual_sampler
+        decision_log = getattr(sampler, 'decisions', None)
+        decision_start = len(decision_log) if isinstance(decision_log, list) else None
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
                                       self.simulation_id, special_teams=special_teams, partial=attempt,
                                       sampling_policy=self.ref.contextual_sampler,
@@ -1312,6 +1316,11 @@ class _Game:
                                         'quarter', 'clock', 'offense', 'defense', 'yl', 'down', 'togo')},
                                     'blocker': terminal, 'plays_before_block': attempt,
                                     'note': 'raw E1 plays before the block; not part of drives or stats'}
+            if decision_start is not None:
+                new_decisions = decision_log[decision_start:]
+                unrepresented = new_decisions[len(attempt):]
+                if unrepresented:
+                    self.blocked_attempt['unrepresented_decisions'] = copy.deepcopy(unrepresented)
             self.block(terminal)
             return
         if any(p['outcome'].get('penalty') for p in plays):

@@ -277,6 +277,32 @@ class QBPlayTypeInvariants(unittest.TestCase):
             slc_engine.validate_decision_outcomes(record, calls, seed=51)
         self.assertIn('blocked-attempt decision event', str(raised.exception))
 
+    def test_unresolved_blocked_attempt_keeps_its_unrepresented_decision(self):
+        committed = play('run', 3, participants(rusher='RB1', play_type='run'))
+        partial = play('pass_complete', 4, participants(passer='QB1', receiver='WR1', play_type='pass'))
+        partial['sequence'] = 2
+        blocked_decision = decision('punt', intent='kick', outcome_intent='kick')
+        record = one_play_record(committed)
+        record['blocked_attempt'] = {
+            'blocker': 'blocked_kick_outcome_unresolved:punt:unclassified',
+            'plays_before_block': [partial],
+            'unrepresented_decisions': [blocked_decision],
+        }
+        calls = [
+            decision('run', intent='run', outcome_intent='run', selected={'rusher': 'RB1'}),
+            decision('pass_complete', intent='dropback', outcome_intent='dropback',
+                     selected={'passer': 'QB1', 'receiver': 'WR1'}),
+            blocked_decision,
+        ]
+
+        self.assertEqual(slc_engine.validate_decision_outcomes(record, calls, seed=52),
+                         {'status': 'passed', 'plays_checked': 1})
+
+        del record['blocked_attempt']['unrepresented_decisions']
+        with self.assertRaises(football_assertions.FootballAssertionError) as raised:
+            slc_engine.validate_decision_outcomes(record, calls, seed=53)
+        self.assertIn('unresolved decisions', str(raised.exception))
+
     def test_interception_flag_without_possession_transfer_is_rejected(self):
         row = play('interception', 0, participants(passer='QB1', receiver='WR1', play_type='pass'),
                    turnover=True)
