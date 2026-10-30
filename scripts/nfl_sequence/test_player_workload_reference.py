@@ -122,5 +122,36 @@ class HistoricalParticipationTests(unittest.TestCase):
             self.assertEqual(sum(situational['team'].values()), 1)
 
 
+class NamedExampleIdentityTests(unittest.TestCase):
+    def test_named_examples_resolve_from_canonical_player_names(self):
+        players = {
+            '00-0035659': {'name': 'Terry McLaurin', 'position': 'WR'},
+            '00-0035640': {'name': 'DK Metcalf', 'position': 'WR'},
+            '00-0039075': {'name': 'Puka Nacua', 'position': 'WR'},
+            '00-0036900': {'name': "Ja'Marr Chase", 'position': 'WR'},
+            '00-0034796': {'name': 'Lamar Jackson', 'position': 'QB'},
+            '00-0036152': {'name': 'Lamar Jackson', 'position': 'CB'},
+        }
+        cases = {'DK Metcalf': ('WR', 'targets'), "Ja'Marr Chase": ('WR', 'targets'),
+                 'Lamar Jackson': ('QB', 'rush_attempts')}
+
+        resolved = workload._resolve_named_cases(players, cases)
+
+        self.assertEqual(resolved, {
+            'DK Metcalf': ('00-0035640', 'targets'),
+            "Ja'Marr Chase": ('00-0036900', 'targets'),
+            'Lamar Jackson': ('00-0034796', 'rush_attempts'),
+        })
+
+    def test_ambiguous_or_missing_named_example_fails_loudly(self):
+        with self.assertRaisesRegex(ValueError, 'resolves to 2 player IDs'):
+            workload._resolve_named_cases({
+                'id-a': {'name': 'Example Player', 'position': 'RB'},
+                'id-b': {'name': 'Example Player', 'position': 'RB'},
+            }, {'Example Player': ('RB', 'rush_attempts')})
+        with self.assertRaisesRegex(ValueError, 'resolves to 0 player IDs'):
+            workload._resolve_named_cases({}, {'Missing Player': ('WR', 'targets')})
+
+
 if __name__ == '__main__':
     unittest.main()
