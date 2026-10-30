@@ -4,6 +4,7 @@ import types
 import unittest
 from collections import Counter
 from pathlib import Path
+from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -141,6 +142,37 @@ class Choice(unittest.TestCase):
             self.assertEqual(dropback['passer']['gsis_id'], 'AQB2')
             self.assertNotIn(dropback['receiver']['gsis_id'], {'AWR1', 'AWR2'})
             self.assertNotEqual(rush['rusher']['gsis_id'], 'ARB1')
+
+
+class DirichletPopulationInvariants(unittest.TestCase):
+    def test_a_trick_passer_does_not_shrink_the_game_level_receiver_population(self):
+        import share_distributions as sd_mod
+        calls = []
+        real = sd_mod.game_shares
+
+        def counting(table, team, game_id, eligible, role, seed_text):
+            if role == 'receive':
+                calls.append(tuple(eligible))
+            return real(table, team, game_id, eligible, role, seed_text)
+
+        players = SNAPSHOT['rosters']['home']['players']
+        receivers = [p for p in players if p['pos_abb'] in pe.player_shares_positions('receive')]
+        share_table = {
+            'phi': {'receive': 10.0},
+            'base': {'receive': {('AAA', p['gsis_id']): 1 / len(receivers) for p in receivers}},
+        }
+        cache = {}
+        passers = set()
+        with patch.object(sd_mod, 'game_shares', side_effect=counting):
+            for index in range(40):
+                chosen = pe.choose(SNAPSHOT, 'home', 'dropback', seed=5, index=index,
+                                   player_shares={'receive': {}, 'carry': {}}, share_table=share_table,
+                                   share_cache=cache, trick_passer_rate=1.0, qb_receiver_rate=0.0)
+                passers.add(chosen['passer']['gsis_id'])
+
+        expected_population = tuple(sorted(p['gsis_id'] for p in receivers))
+        self.assertGreater(len(passers), 1)
+        self.assertEqual(calls, [expected_population])
 
 
 class DrawOrder(unittest.TestCase):
