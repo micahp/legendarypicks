@@ -148,12 +148,23 @@ class DirichletPopulationInvariants(unittest.TestCase):
     def test_a_trick_passer_does_not_shrink_the_game_level_receiver_population(self):
         import share_distributions as sd_mod
         calls = []
+        play_populations = []
+        receiver_candidates = []
         real = sd_mod.game_shares
+        real_choose = pe._by_game_share
 
         def counting(table, team, game_id, eligible, role, seed_text):
             if role == 'receive':
                 calls.append(tuple(eligible))
             return real(table, team, game_id, eligible, role, seed_text)
+
+        def recording_candidates(candidates, table, team, role, game_id, seed_text, draw,
+                                 cache=None, population=None):
+            if role == 'receive':
+                receiver_candidates.append(tuple(sorted(p['gsis_id'] for p in candidates)))
+                play_populations.append(tuple(sorted(p['gsis_id'] for p in population)))
+            return real_choose(candidates, table, team, role, game_id, seed_text, draw,
+                               cache=cache, population=population)
 
         players = SNAPSHOT['rosters']['home']['players']
         receivers = [p for p in players if p['pos_abb'] in pe.player_shares_positions('receive')]
@@ -163,16 +174,26 @@ class DirichletPopulationInvariants(unittest.TestCase):
         }
         cache = {}
         passers = set()
-        with patch.object(sd_mod, 'game_shares', side_effect=counting):
+        play_passers = []
+        with patch.object(sd_mod, 'game_shares', side_effect=counting), \
+             patch.object(pe, '_by_game_share', side_effect=recording_candidates):
             for index in range(40):
                 chosen = pe.choose(SNAPSHOT, 'home', 'dropback', seed=5, index=index,
                                    player_shares={'receive': {}, 'carry': {}}, share_table=share_table,
                                    share_cache=cache, trick_passer_rate=1.0, qb_receiver_rate=0.0)
-                passers.add(chosen['passer']['gsis_id'])
+                passer_id = chosen['passer']['gsis_id']
+                passers.add(passer_id)
+                play_passers.append(passer_id)
+                self.assertNotEqual(chosen['receiver']['gsis_id'], passer_id)
 
         expected_population = tuple(sorted(p['gsis_id'] for p in receivers))
         self.assertGreater(len(passers), 1)
+        self.assertTrue(passers <= set(expected_population))
         self.assertEqual(calls, [expected_population])
+        self.assertEqual(play_populations, [expected_population] * 40)
+        self.assertEqual(len(receiver_candidates), 40)
+        self.assertTrue(all(passer not in candidates for passer, candidates in
+                            zip(play_passers, receiver_candidates)))
 
 
 class DrawOrder(unittest.TestCase):
