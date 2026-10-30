@@ -305,7 +305,10 @@ class PlayCallSampler:
     def sample(self, rng, cell, offense, defense, state=None):
         if state is None or any(state.get(k) is None for k in ('quarter', 'clock', 'down', 'togo', 'yl', 'score_diff')):
             raise e1.SamplingUnavailable('playcall_state_incomplete')
-        field_goal = state.get('field_goal_feasibility') or fg_feasibility.evaluate(int(state['yl']))
+        field_goal = state.get('field_goal_feasibility')
+        if (not isinstance(field_goal, dict)
+                or field_goal.get('snap_yardline_100') != int(state['yl'])):
+            field_goal = fg_feasibility.evaluate(int(state['yl']))
         entry = self._entry(cell)
         self._current_team_outcome_fallbacks = []
         total = sum(entry['base'].values())
@@ -357,7 +360,8 @@ class PlayCallSampler:
         outcome_intent = 'run' if scramble else called_intent
         keys = sorted(k for k in entry['base'] if k[0] == outcome_intent
                       and (k[1] != 'field_goal_attempt' or field_goal['eligible'])
-                      and (fg_allowed_events is None or k[1] in fg_allowed_events))
+                      and (outcome_intent != KICK_INTENT or fg_allowed_events is None
+                           or k[1] in fg_allowed_events))
         if not keys:
             raise e1.SamplingUnavailable(f'playcall_no_{outcome_intent}_outcomes_in_cell:{entry["key"]}')
         formation = pre_event.get('formation') if pre_event else None  # chosen before the outcome, from the situation alone
