@@ -14,9 +14,11 @@ With no --week it scans only for games inside the window that some model has not
 there are none. A game is due for a model when that model has no locked row for it, so a model that failed is
 retried on the next tick while the window is open.
 
-Dev DB only (a path ending in picks.db is refused). Dry run unless --apply.
+Dev DB by default (a path ending in picks.db is refused unless --allow-prod is explicit).
+Dry run unless --apply.
 
   cd backend && LP_DB_PATH=/abs/path/picks.dev.db venv/bin/python lock_nfl_models.py [--apply] [--now ISO]
+  cd backend && LP_DB_PATH=/abs/path/picks.db venv/bin/python lock_nfl_models.py --allow-prod --apply
 """
 from __future__ import annotations
 
@@ -126,6 +128,15 @@ def _finish(con, run_id, do, label):
 RUNNERS = {"v1": lock_v1, "v2": lock_v2, "elo": lock_elo}
 
 
+def validate_db_target(db, allow_prod=False):
+    """Require a deliberate flag for prod, and reject a prod flag pointed at dev."""
+    is_prod = os.path.basename(os.path.normpath(db)) == "picks.db"
+    if is_prod and not allow_prod:
+        raise SystemExit("refusing the production database %s without --allow-prod" % db)
+    if allow_prod and not is_prod:
+        raise SystemExit("--allow-prod requires LP_DB_PATH to end in picks.db (got %s)" % db)
+
+
 def run(con, now, apply, due=None):
     """Lock every model that has a due game. Returns the list of models that failed."""
     due = due if due is not None else due_by_model(con, now)
@@ -146,9 +157,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--now", help="ISO time to act as (tests and dry runs)")
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--allow-prod", action="store_true",
+                    help="allow picks.db; required by the production lock service")
     a = ap.parse_args(argv)
-    if os.path.basename(DB) == "picks.db":
-        raise SystemExit("refusing the production database %s" % DB)
+    validate_db_target(DB, allow_prod=a.allow_prod)
     now = dt.datetime.fromisoformat(a.now) if a.now else dt.datetime.now(dt.timezone.utc)
     if now.tzinfo is None:
         now = now.replace(tzinfo=dt.timezone.utc)

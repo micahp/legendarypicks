@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily grading of finished NFL locks in production
+
+[Timer]
+OnCalendar=*-*-* 06:30:00 America/Chicago
+Persistent=true
+Unit=legendarypicks-nfl-grade-prod.service
+
+[Install]
+WantedBy=timers.target

@@ -86,6 +86,15 @@ class Isolation(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 lm.main([])
 
+    def test_production_database_requires_the_explicit_allow_flag(self):
+        with self.assertRaisesRegex(SystemExit, "without --allow-prod"):
+            lm.validate_db_target("/x/backend/data/picks.db")
+        lm.validate_db_target("/x/backend/data/picks.db", allow_prod=True)
+
+    def test_allow_prod_cannot_accidentally_target_the_dev_database(self):
+        with self.assertRaisesRegex(SystemExit, "requires LP_DB_PATH to end in picks.db"):
+            lm.validate_db_target("/x/backend/data/picks.dev.db", allow_prod=True)
+
 
 if __name__ == "__main__":
     unittest.main()
