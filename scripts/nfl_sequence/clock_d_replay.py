@@ -57,10 +57,9 @@ def quarter_plays(rows, flags, counts):
             qsr = cd.quarter_clock(row)
             oob = flags.get((gid, int(row['play_id'])), (0, 0))[0]
             terminal = 'touchdown' if row['touchdown'] == 1 else None
-            late = row['qtr'] in cd.LATE_QUARTERS and qsr <= cd.LATE_CLOCK
             quarters[(gid, row['qtr'])].append({
                 'row': row, 'event': event, 'runoff': runoff, 'ended': ended, 'qsr': qsr, 'qtr': row['qtr'],
-                'terminal': terminal, 'stop': cd.stop_class(event, oob, late, terminal)})
+                'terminal': terminal, 'stop': cd.stop_class(event, oob, row['qtr'], qsr, terminal)})
     return quarters
 
 
