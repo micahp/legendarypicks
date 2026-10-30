@@ -69,6 +69,17 @@ The player-history samples for 2026 are small and event-derived participation de
 
 The largest supported mechanisms are: (1) unrestricted backup-QB eligibility, (2) high simulated team run volume and game-state run decisions for carry tails, and (3) game-level share draws that sometimes concentrate nearly all position opportunities on one player. Wilson’s target tail is principally a share-concentration problem: the observed 2026 target mean is below 10, while the pre-Week-8 simulated mean is 13.57 despite lower team pass volume than observed. Brissett’s extreme yardage combines excessive QB rushing opportunities with a player-conditioned yardage tail. These findings support mechanism changes; they do not justify hard-capping a player at his mean, P95, or historical maximum.
 
+## QB run-role holdout evidence
+
+The opt-in QB style layer was evaluated against pinned play-by-play data in [`qb-run-role-style-holdout-2026-10-30/RESULTS.md`](../qb-run-role-style-holdout-2026-10-30/RESULTS.md). The 2025 evaluation fits 2022–2024; the forecast-target evaluation fits 2022–2025 and scores only 2026 Weeks 1–7. Both aggregate Brier point estimates improve, but the game-clustered 95% intervals include zero:
+
+| Evaluation window | Eligible run decisions | QB runs | Control Brier | Style Brier | Difference, style − control | Clustered 95% interval |
+|---|---:|---:|---:|---:|---:|---:|
+| 2025 holdout | 12,815 | 639 | 0.043723 | 0.043493 | −0.000229 | [−0.000508, 0.000054] |
+| 2026 Weeks 1–7 | 5,056 | 235 | 0.039945 | 0.039621 | −0.000324 | [−0.000823, 0.000162] |
+
+For Brissett in Arizona during 2026 Weeks 1–7, 16 of 168 eligible team-run decisions were QB runs (9.52%). The mean control probability was 8.70%; the style adjustment lowered it to 6.65%. Across those observed team-run opportunities, that corresponds to 14.6 expected QB credits under control and 11.2 under style, versus 16 observed. This is a conditional role-rate test, not a full-game SLC ablation; it does not establish that the layer fixes Brissett's simulated rushing-yard tail. Keep the layer opt-in pending the paired full-game evaluation.
+
 ## Fix order
 
 1. Enforce QB participation from frozen active status plus an explicit entry/substitution mechanism; add a negative test for an unused backup QB receiving a carry or target.
