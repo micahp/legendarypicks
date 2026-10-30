@@ -344,6 +344,8 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         'input_provenance': resolved_input_provenance,
         'snapshot_sha256': snapshot.get('snapshot_sha256'),
     }
+    if desc.get('blocker_resolution'):
+        core['blocker_resolution'] = desc['blocker_resolution']
     core['configuration_hash'] = hashlib.sha256(
         json.dumps(core, sort_keys=True, separators=(',', ':'), default=str).encode()
     ).hexdigest()

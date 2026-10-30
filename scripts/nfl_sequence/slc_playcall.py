@@ -39,6 +39,13 @@ UNKNOWN = formation_layer.UNKNOWN
 SCRIMMAGE_INTENTS = ('run', 'dropback')
 KICK_INTENT = 'kick'
 BLOCK_GROUPS = ('down_dist', 'field', 'score', 'clock', 'score_clock', 'down_field', 'team_down')
+OUTCOME_BACKOFF_MIN_SUPPORT = {
+    'exact_cell': 10,
+    'down_field': 25,
+    'down_distance': 25,
+    'field_zone': 50,
+    'league_intent': 50,
+}
 
 
 def _sha(value):
@@ -142,6 +149,14 @@ class PlayCallSampler:
         self.side_teams = dict(side_teams) if side_teams is not None else None
         self.decisions = []
         self._cells = {}
+        self.source_pool = None  # cutoff-filtered pool, supplied by e2_reference only for opted-in backoff
+        self._backoff_index = None
+        self.outcome_backoff_enabled = False
+        self.allow_sparse_cells = False
+        self.scramble_backoff_enabled = False
+        self.scramble_bounds = None
+        self.blocker_fixes = frozenset()
+        self.fg_ordinary_cutoff = 60.0
         self.participant_chooser = None  # set per game by slc_engine: chooses the rusher or target before the outcome is drawn
         # a team_tendency.TeamTendencies from prior seasons: reweights the outcome drawn within the intent (None: no split)
         self.team_outcomes = None
@@ -220,6 +235,73 @@ class PlayCallSampler:
         self._cells[id(cell)] = (cell, entry)
         return entry
 
+    def _outcome_rows(self, cell, called_intent, scramble, state=None):
+        outcome_intent = 'run' if scramble else called_intent
+        rows = [sample for sample in cell if intent_of(sample[0], sample[1]) == outcome_intent]
+        if scramble:
+            rows = [sample for sample in rows if sample[1].get('qb_scramble') == 1]
+            if state is not None:
+                rows, rejected = self._legal_scramble_rows(rows, state)
+                self._last_scramble_rejected_bounds = rejected
+        elif called_intent == 'run':
+            rows = [sample for sample in rows if sample[1].get('qb_scramble') != 1]
+            self._last_scramble_rejected_bounds = 0
+        return rows
+
+    def _legal_scramble_rows(self, rows, state):
+        bounds = self.scramble_bounds or {}
+        max_gain, max_loss = bounds.get('max_gain_yards'), bounds.get('max_loss_yards')
+        legal, rejected = [], 0
+        for sample in rows:
+            yards = sample[1].get('yards_gained')
+            if yards is None:
+                rejected += 1
+                continue
+            yards = int(yards)
+            resulting_yardline = int(state['yl']) - yards
+            if ((max_gain is not None and yards > max_gain)
+                    or (max_loss is not None and yards < -max_loss)
+                    or resulting_yardline < 0 or resulting_yardline > 100):
+                rejected += 1
+            else:
+                legal.append(sample)
+        return legal, rejected
+
+    def _backoff_candidates(self, state, called_intent, scramble):
+        """Find cutoff-safe outcomes without changing the selected play intent or scramble class."""
+        if self.source_pool is None:
+            return None, None
+        target = (int(state['down']), e0.ydstogo_bucket(state['togo']), e0.yardline_bucket(state['yl']))
+        down, distance, field = target
+        if self._backoff_index is None:
+            index = {level: defaultdict(lambda: defaultdict(list)) for level in OUTCOME_BACKOFF_MIN_SUPPORT}
+            for source_cell in self.source_pool.values():
+                for sample in source_cell:
+                    event, row = sample[0], sample[1]
+                    outcome_class = 'qb_scramble' if row.get('qb_scramble') == 1 else intent_of(event, row)
+                    exact = (int(row['down']), e0.ydstogo_bucket(row['ydstogo']),
+                             e0.yardline_bucket(row['yardline_100']))
+                    row_down, row_distance, row_field = exact
+                    keys = {'exact_cell': exact, 'down_field': (row_down, row_field),
+                            'down_distance': (row_down, row_distance), 'field_zone': row_field,
+                            'league_intent': None}
+                    for level, key in keys.items():
+                        index[level][outcome_class][key].append(sample)
+            self._backoff_index = index
+        outcome_class = 'qb_scramble' if scramble else called_intent
+        levels = (('exact_cell', target), ('down_field', (down, field)),
+                  ('down_distance', (down, distance)), ('field_zone', field), ('league_intent', None))
+        for level, key in levels:
+            candidates = list(self._backoff_index[level][outcome_class].get(key, ()))
+            if scramble:
+                candidates, rejected = self._legal_scramble_rows(candidates, state)
+                self._last_scramble_rejected_bounds = rejected
+            else:
+                self._last_scramble_rejected_bounds = 0
+            if len(candidates) >= OUTCOME_BACKOFF_MIN_SUPPORT[level]:
+                return candidates, level
+        return None, None
+
     def sample(self, rng, cell, offense, defense, state=None):
         if state is None or any(state.get(k) is None for k in ('quarter', 'clock', 'down', 'togo', 'yl', 'score_diff')):
             raise e1.SamplingUnavailable('playcall_state_incomplete')
@@ -227,9 +309,26 @@ class PlayCallSampler:
         entry = self._entry(cell)
         self._current_team_outcome_fallbacks = []
         total = sum(entry['base'].values())
-        kick_keys = [k for k in entry['base'] if k[0] == KICK_INTENT
-                     and (k[1] != 'field_goal_attempt' or field_goal['eligible'])]
-        kick_share = sum(entry['base'][k] for k in kick_keys) / total
+        fg_rejected_distance = False
+        fg_long_range_exception = False
+        fg_allowed_events = None
+        if 'long_field_goal_feasibility' in self.blocker_fixes:
+            fg_allowed_events, fg_rejected_distance, fg_long_range_exception = self._field_goal_actions(entry, state)
+            if not field_goal['eligible'] and 'field_goal_attempt' in fg_allowed_events:
+                fg_allowed_events.discard('field_goal_attempt')
+                fg_rejected_distance = True
+                fg_long_range_exception = False
+            kick_keys = [k for k in entry['base'] if k[0] == KICK_INTENT]
+            rejected_keys = [key for key in kick_keys if key[1] not in fg_allowed_events]
+            eligible_kick_keys = [key for key in kick_keys if key[1] in fg_allowed_events]
+            feasible_total = total - sum(entry['base'][key] for key in rejected_keys)
+            kick_share = (sum(entry['base'][key] for key in eligible_kick_keys) / feasible_total
+                          if feasible_total else 0.0)
+            kick_keys = eligible_kick_keys
+        else:
+            kick_keys = [k for k in entry['base'] if k[0] == KICK_INTENT
+                         and (k[1] != 'field_goal_attempt' or field_goal['eligible'])]
+            kick_share = sum(entry['base'][k] for k in kick_keys) / total if total else 0.0
         team = self._team(offense)
         p = self.layer.p_dropback(state['down'], state['togo'], state['yl'], state['score_diff'], state['quarter'],
                                   state['clock'], team)
@@ -257,7 +356,8 @@ class PlayCallSampler:
         scramble = bool(qb_decision and qb_decision.get('action') == 'scramble')
         outcome_intent = 'run' if scramble else called_intent
         keys = sorted(k for k in entry['base'] if k[0] == outcome_intent
-                      and (k[1] != 'field_goal_attempt' or field_goal['eligible']))
+                      and (k[1] != 'field_goal_attempt' or field_goal['eligible'])
+                      and (fg_allowed_events is None or k[1] in fg_allowed_events))
         if not keys:
             raise e1.SamplingUnavailable(f'playcall_no_{outcome_intent}_outcomes_in_cell:{entry["key"]}')
         formation = pre_event.get('formation') if pre_event else None  # chosen before the outcome, from the situation alone
@@ -268,45 +368,89 @@ class PlayCallSampler:
         use_coverage = coverage is not None and self.coverage_outcomes
         streak_bucket = self.current_streak.get(team) if self.streak_outcomes else None
         use_streak = streak_bucket is not None
-        labels = pre_event.get('labels') if pre_event else None  # decision categories A to N, drawn before the outcome
+        labels = pre_event.get('labels') if pre_event else None
         use_labels = bool(labels) and self.decision_outcomes
         use_player_outcomes = self.player_outcome_table is not None
+        target = (int(state['down']), e0.ydstogo_bucket(state['togo']), e0.yardline_bucket(state['yl']))
+        exact_outcome_rows = None
+        backoff_candidates, outcome_fallback = (None, None)
+        backoff_ess = None
+        if self.outcome_backoff_enabled and called_intent in SCRIMMAGE_INTENTS:
+            exact_outcome_rows = self._outcome_rows(cell, called_intent, scramble, state)
+            if len(exact_outcome_rows) < OUTCOME_BACKOFF_MIN_SUPPORT['exact_cell']:
+                backoff_candidates, outcome_fallback = self._backoff_candidates(state, called_intent, scramble)
+        if backoff_candidates is not None:
+            counts = Counter(sample[0] for sample in backoff_candidates)
+            keys = sorted((outcome_intent, event) for event in counts)
+            weights = [counts[key[1]] for key in keys]
+            if self.team_outcomes is not None:
+                weights = [weight * self._outcome_weight(key[1], offense, defense, entry['key'] or target)
+                           for weight, key in zip(weights, keys)]
+            if use_player_outcomes:
+                import player_outcomes
+                weights = [weight * player_outcomes.event_weight(self.player_outcome_table, key[1], pre_event,
+                                                                  enabled_roles=self.player_outcome_roles)
+                           for weight, key in zip(weights, keys)]
+            weight_total = sum(weights)
+            if weight_total > 0:
+                backoff_ess = 1.0 / sum(
+                    count * ((weight / weight_total) / count) ** 2
+                    for weight, key in zip(weights, keys)
+                    for count in (counts[key[1]],) if count)
+            key = rng.choices(keys, weights=weights)[0]
+            fallback_by_key = defaultdict(list)
+            for sample in backoff_candidates:
+                if sample[0] == key[1]:
+                    fallback_by_key[key].append(sample)
+        else:
+            keys = sorted(k for k in entry['base'] if k[0] == outcome_intent and
+                          (outcome_intent != KICK_INTENT or fg_allowed_events is None or k[1] in fg_allowed_events))
+            if exact_outcome_rows is not None:
+                exact_counts = Counter(sample[0] for sample in exact_outcome_rows)
+                keys = [key for key in keys if exact_counts[key[1]]]
+            if not keys and self.outcome_backoff_enabled and called_intent in SCRIMMAGE_INTENTS:
+                raise e1.SamplingUnavailable(f'no_supported_outcome_for_intent:{outcome_intent}:{entry["key"]}')
+            if not keys:
+                raise e1.SamplingUnavailable(f'playcall_no_{outcome_intent}_outcomes_in_cell:{entry["key"]}')
+            fallback_by_key = None
         labels_matched = []
         labels_unmatched = []
         formation_fallback = None
         coverage_fallback = None
         streak_fallback = None
         weights = []
-        for k in keys:
-            weight = entry['base'][k]
-            if use_formation:  # lifts multiply: formation and coverage are treated as independent given the outcome
-                weight *= self._lift(entry, k, formation, 'by_formation')
-            if use_coverage:
-                weight *= self._lift(entry, k, coverage, 'by_coverage')
-            if use_streak:  # the league's outcome mix for this streak state, relative to the cell
-                weight *= self._lift(entry, k, streak_bucket, 'by_streak')
-            if use_labels:  # the drawn labels' lifts, averaged in log space: the categories overlap, so they do not compound
-                weight *= decision_layer.geometric_mean([self._label_lift(entry, k, decision_layer.label_key(c, v))
-                                                         for c, v in labels.items() if v is not None])
-            if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
-                weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
-            if use_player_outcomes:
-                import player_outcomes
-                weight *= player_outcomes.event_weight(self.player_outcome_table, k[1], pre_event,
-                                                       enabled_roles=self.player_outcome_roles)
-            weights.append(weight)
+        if fallback_by_key is None:
+            for k in keys:
+                weight = (exact_counts[k[1]] if exact_outcome_rows is not None else entry['base'][k])
+                if use_formation:  # lifts multiply: formation and coverage are treated as independent given the outcome
+                    weight *= self._lift(entry, k, formation, 'by_formation')
+                if use_coverage:
+                    weight *= self._lift(entry, k, coverage, 'by_coverage')
+                if use_streak:  # the league's outcome mix for this streak state, relative to the cell
+                    weight *= self._lift(entry, k, streak_bucket, 'by_streak')
+                if use_labels:  # the drawn labels' lifts, averaged in log space: the categories overlap, so they do not compound
+                    weight *= decision_layer.geometric_mean([self._label_lift(entry, k, decision_layer.label_key(c, v))
+                                                             for c, v in labels.items() if v is not None])
+                if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
+                    weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
+                if use_player_outcomes:
+                    import player_outcomes
+                    weight *= player_outcomes.event_weight(self.player_outcome_table, k[1], pre_event,
+                                                           enabled_roles=self.player_outcome_roles)
+                weights.append(weight)
         if (self.team_outcomes is None and not use_formation and not use_coverage and not use_streak and not use_labels
                 and not use_player_outcomes):
-            key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]  # the unchanged baseline draw
-        else:
+            if fallback_by_key is None:
+                key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]  # the unchanged baseline draw
+        elif fallback_by_key is None:
             key = rng.choices(keys, weights=weights)[0]
-        candidates = entry['by_key'][key]
+        candidates = fallback_by_key[key] if fallback_by_key is not None else entry['by_key'][key]
         if self.qb_decision_table is not None:
-            if scramble:
+            if scramble and fallback_by_key is None:
                 candidates = [c for c in candidates if c[1].get('qb_scramble') == 1]
                 if not candidates:
                     raise e1.SamplingUnavailable(f'qb_scramble_source_rows_missing:{entry["key"]}')
-            elif called_intent == 'run':
+            elif called_intent == 'run' and fallback_by_key is None:
                 candidates = [c for c in candidates if c[1].get('qb_scramble') != 1]
                 if not candidates:
                     raise e1.SamplingUnavailable(f'non_scramble_run_source_rows_missing:{entry["key"]}')
@@ -371,7 +515,7 @@ class PlayCallSampler:
             event, row, runoff, spot = rng.choice(candidates)
         if pre_event is not None:
             row = dict(row, pre_event=pre_event)  # the chosen participants travel with the outcome; the row itself is not changed
-        self.decisions.append({
+        decision_record = {
             'participants': pe.ids(pre_event),
             'formation': formation, 'personnel': pre_event.get('personnel') if pre_event else None,
             'formation_conditioned': bool(use_formation), 'coverage': coverage, 'coverage_conditioned': bool(use_coverage),
@@ -412,7 +556,34 @@ class PlayCallSampler:
             'kick_share': round(kick_share, 6),
             'intent': called_intent, 'outcome_intent': outcome_intent, 'event': event,
             'fallback': fallback, 'source': {'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season']},
-        })
+        }
+        if self.blocker_fixes:
+            decision_record['blocker_fixes'] = sorted(self.blocker_fixes)
+        if self.outcome_backoff_enabled:
+            decision_record.update(
+                outcome_class='qb_scramble' if scramble else called_intent,
+                outcome_fallback=outcome_fallback,
+                outcome_fallback_support_n=(len(backoff_candidates) if backoff_candidates is not None else
+                                            len(exact_outcome_rows) if exact_outcome_rows is not None else None),
+                outcome_fallback_ess=backoff_ess,
+                scramble_fallback_level=qb_decision.get('scramble_fallback') if qb_decision else None,
+                scramble_support_level=qb_decision.get('scramble_support_level') if qb_decision else None,
+                scramble_fallback_support_n=qb_decision.get('scramble_fallback_support_n') if qb_decision else None,
+                scramble_rejected_bounds=self._last_scramble_rejected_bounds if scramble else 0,
+                scramble_eligible_candidates=(len(backoff_candidates) if backoff_candidates is not None else
+                                              len(exact_outcome_rows) if scramble and exact_outcome_rows is not None else 0),
+            )
+        if 'long_field_goal_feasibility' in self.blocker_fixes:
+            decision_record.update(
+                fg_rejected_distance=fg_rejected_distance,
+                fg_long_range_exception=bool(fg_long_range_exception and event == 'field_goal_attempt'),
+                fg_rejection_reason=('beyond_observed_maximum' if fg_rejected_distance and
+                                     min(99, int(state['yl']) + 7) + 10 > float(
+                                         self.field_goal_distance_model['max_observed_attempt_yards'])
+                                     else 'beyond_ordinary_cutoff' if fg_rejected_distance else None),
+                fg_fallback_level=None,
+            )
+        self.decisions.append(decision_record)
         return event, row, runoff, spot
 
     def _player_support(self, pre_event):
@@ -422,6 +593,29 @@ class PlayCallSampler:
                 for role, model_role in (('passer', 'qb'), ('receiver', 'receiver'), ('rusher', 'rusher'))
                 if (pre_event and pre_event.get(role)
                     and model_role in player_outcomes.normalize_roles(self.player_outcome_roles))}
+
+    def _field_goal_actions(self, entry, state):
+        kick_events = {key[1] for key in entry['base'] if key[0] == KICK_INTENT}
+        if 'field_goal_attempt' not in kick_events:
+            return kick_events, False, False
+        distance = min(99, int(state['yl']) + 7) + 10
+        model = getattr(self, 'field_goal_distance_model', None)
+        maximum = float(model['max_observed_attempt_yards']) if model else 0.0
+        ordinary = float(self.fg_ordinary_cutoff)
+        end_window = int(state['quarter']) in (2, 4) and int(state['clock']) <= 60
+        desperation = int(state['quarter']) == 4 and int(state['clock']) <= 300 and int(state['score_diff']) <= -8
+        exception = end_window or desperation
+        allowed = distance <= maximum and (distance <= ordinary or exception)
+        eligible = {event for event in kick_events if event != 'field_goal_attempt' or allowed}
+        return eligible, not allowed, bool(allowed and distance > ordinary)
+
+    def _field_goal_probability_result(self, distance, rng):
+        import measure_kick_outcomes as mk
+        distribution = mk.field_goal_distribution(self.field_goal_distance_model, distance)
+        draw = rng.random()
+        result = ('made' if draw < distribution['made'] else
+                  'blocked' if draw < distribution['made'] + distribution['blocked'] else 'missed')
+        return result, distribution
 
     def _label_lift(self, entry, key, value):
         """P(outcome type | label) over the labelled rows, divided by those rows' own share of the outcome, shrunk to that share.
@@ -464,6 +658,18 @@ class PlayCallSampler:
         out = {'component': ARTIFACT_ID, 'artifact_sha256': self.layer.artifact['sha256'],
                'frame_sha256': self.layer.artifact['frame_sha256'], 'side_teams': self.side_teams,
                'reference_season': self.layer.artifact['reference_season']}
+        if self.blocker_fixes:
+            out['blocker_resolution'] = {
+                'enabled_fixes': sorted(self.blocker_fixes),
+                'outcome_backoff_min_support': OUTCOME_BACKOFF_MIN_SUPPORT if self.outcome_backoff_enabled else None,
+                'fg_ordinary_cutoff_yards': self.fg_ordinary_cutoff,
+                'fg_distance_model': getattr(self, 'field_goal_distance_model', None),
+                'scramble_bounds': self.scramble_bounds,
+            }
+            extra_files = ('measure_kick_outcomes.py', 'build_blocked_kick_outcomes.py', 'reducer.py')
+            out['blocker_resolution']['integration_code_sha256'] = {
+                name: hashlib.sha256((HERE / name).read_bytes()).hexdigest() for name in extra_files
+            }
         if getattr(self, 'qb_decision_manifest', None) is not None:
             out['qb_decision_model'] = self.qb_decision_manifest
         if getattr(self, 'player_outcome_manifest', None) is not None:
