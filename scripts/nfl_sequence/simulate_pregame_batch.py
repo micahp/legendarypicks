@@ -839,7 +839,9 @@ def run_batch(args):
                                                            blocker_fixes=args.slc_blocker_fix,
                                                            fg_ordinary_cutoff=args.slc_fg_ordinary_cutoff,
                                                            qb_run_role_style=resolved_profile['enabled_layers'].get(
-                                                               'qb_run_role_style', False))
+                                                               'qb_run_role_style', False),
+                                                           score_clock_playcalling=resolved_profile['enabled_layers'].get(
+                                                               'score_clock_playcalling', True))
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)

@@ -3,12 +3,13 @@ import sys
 import tempfile
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import slc_engine as se  # noqa: E402
+import e1_drive as e1  # noqa: E402
 
 SNAPSHOT = {'schedule': {'game_id': '2026_05_AAA_BBB', 'season': 2026, 'week': 5, 'home_team': 'AAA', 'away_team': 'BBB'},
             'rosters': {'home': {}, 'away': {}}}
@@ -84,6 +85,45 @@ class Summary(unittest.TestCase):
         self.assertEqual(result['fallback_events'], {})
         self.assertEqual(result['layer_execution']['score_clock_playcalling'], 4)
 
+    def test_score_clock_execution_count_excludes_historical_cell_baseline_draws(self):
+        decisions = [
+            {'intent': 'run', 'score_clock_playcalling_applied': True},
+            {'intent': 'dropback', 'score_clock_playcalling_applied': False},
+            {'intent': 'kick', 'score_clock_playcalling_applied': False},
+        ]
+        execution = se.summary(decisions)['layer_execution']
+        self.assertEqual(execution['score_clock_playcalling'], 1)
+        self.assertEqual(execution['score_clock_cell_baseline_draws'], 2)
+
+
+class ScoreClockAblation(unittest.TestCase):
+    def setUp(self):
+        self.layer = SimpleNamespace(artifact={'sha256': 'artifact-hash'},
+                                     p_dropback=Mock(return_value=0.27))
+        self.sampler = se.slc.PlayCallSampler(self.layer)
+        self.entry = {'base': {('run', 'run'): 6, ('dropback', 'pass'): 4,
+                               ('kick', 'field_goal_attempt'): 3}}
+        self.state = {'down': 2, 'togo': 7, 'yl': 64, 'score_diff': -3,
+                      'quarter': 4, 'clock': 240}
+
+    def test_disabled_score_clock_uses_only_the_historical_cell_run_pass_rate(self):
+        self.sampler.score_clock_playcalling_enabled = False
+        probability, source = self.sampler._dropback_probability(self.entry, self.state, 'AAA')
+        self.assertEqual(probability, 0.4)
+        self.assertEqual(source, 'historical_down_distance_field_cell_rate')
+        self.layer.p_dropback.assert_not_called()
+
+    def test_enabled_score_clock_uses_the_frozen_model(self):
+        probability, source = self.sampler._dropback_probability(self.entry, self.state, 'AAA')
+        self.assertEqual(probability, 0.27)
+        self.assertEqual(source, 'score_clock_logistic_artifact')
+        self.layer.p_dropback.assert_called_once_with(2, 7, 64, -3, 4, 240, 'AAA')
+
+    def test_disabled_score_clock_fails_closed_when_cell_has_no_scrimmage_rows(self):
+        self.sampler.score_clock_playcalling_enabled = False
+        with self.assertRaisesRegex(e1.SamplingUnavailable, 'no_supported_scrimmage_intent_in_cell'):
+            self.sampler._dropback_probability({'base': {('kick', 'punt'): 3}}, self.state, 'AAA')
+
     def test_fixed_and_dirichlet_share_applications_have_separate_runtime_counts(self):
         decisions = [
             {'intent': 'dropback', 'participants': {'participant_share_model': 'fixed_player_share'}},
@@ -115,10 +155,11 @@ class PlayerShareManifest(unittest.TestCase):
                  patch.object(sd, 'load', return_value=table), \
                  patch.object(se.er, '_reference_fingerprint', return_value={'sha256': 'reference-hash'}):
                 loaded, _excluded = se.load_reference('/read-only.db', SNAPSHOT, artifact_path, dirichlet_shares=True,
-                                                       source_commit='abc123')
+                                                       source_commit='abc123', score_clock_playcalling=False)
         self.assertFalse(load_ref.call_args.kwargs['playcall_player_shares'])
         self.assertIsNone(loaded.contextual_sampler.player_shares)
         self.assertEqual(loaded.contextual_sampler.share_table, table)
+        self.assertFalse(loaded.contextual_sampler.score_clock_playcalling_enabled)
         manifest = loaded.contextual_sampler.share_model_manifest
         self.assertEqual(manifest['model_version'], 'dirichlet-multinomial-mle-v2')
         self.assertEqual(manifest['source_season'], 2025)
@@ -126,7 +167,9 @@ class PlayerShareManifest(unittest.TestCase):
         self.assertEqual(manifest['git_commit'], 'abc123')
         self.assertEqual(manifest['concentration']['receive']['team_games'], 544)
         with patch.object(se, 'is_slc', return_value=True):
-            self.assertEqual(se.describe(loaded)['player_share_distribution'], manifest)
+            description = se.describe(loaded)
+        self.assertEqual(description['player_share_distribution'], manifest)
+        self.assertFalse(description['enabled_layers']['score_clock_playcalling'])
 
 
 class PlayerOutcomeRoleManifest(unittest.TestCase):

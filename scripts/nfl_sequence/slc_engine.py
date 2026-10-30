@@ -93,7 +93,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
                    player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
-                   qb_run_role_style=None):
+                   qb_run_role_style=None, score_clock_playcalling=True):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -112,6 +112,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playcall_qb_decisions=(qb_decisions or run_scramble_backoff),
                    playcall_player_outcomes=player_outcomes, blocker_fixes=fixes,
                    fg_ordinary_cutoff=fg_ordinary_cutoff)
+    ref.contextual_sampler.score_clock_playcalling_enabled = bool(score_clock_playcalling)
     ref.pool, lateral_source_filter = exclude_unmodeled_lateral_rows(ref.pool, ref.participants)
     ref.pool_scope = dict(ref.pool_scope or {})
     ref.pool_scope['unmodeled_lateral_source_filter'] = lateral_source_filter
@@ -750,7 +751,10 @@ def summary(decisions, record=None):
                 for (team, quarter, down, distance, field, score, clock, action), count
                 in sorted(situational_counts.items())],
             'layer_execution': {
-                'score_clock_playcalling': len(decisions),
+                'score_clock_playcalling': sum(
+                    d.get('score_clock_playcalling_applied', True) for d in decisions),
+                'score_clock_cell_baseline_draws': sum(
+                    not d.get('score_clock_playcalling_applied', True) for d in decisions),
                 'team_offense_defense_outcomes': sum(bool(d.get('team_outcome_split')) for d in decisions),
                 'formation_personnel_outcomes': sum(bool(d.get('formation_conditioned')) for d in decisions),
                 'defensive_coverage_outcomes': sum(bool(d.get('coverage_conditioned')) for d in decisions),
@@ -867,9 +871,10 @@ def describe(ref):
         return None
     sampler = ref.contextual_sampler
     artifact = sampler.layer.artifact
+    score_clock_enabled = bool(getattr(sampler, 'score_clock_playcalling_enabled', True))
     decision_enabled = bool(sampler.decision_outcomes)
     enabled_layers = {
-        'score_clock_playcalling': True,
+        'score_clock_playcalling': score_clock_enabled,
         'team_offense_defense_outcomes': sampler.team_outcomes is not None,
         'formation_personnel_outcomes': bool(sampler.formation_outcomes),
         'defensive_coverage_outcomes': bool(sampler.coverage_outcomes),
@@ -891,7 +896,8 @@ def describe(ref):
     }
     reference_sha = (getattr(ref, 'model_inputs', None) or {}).get('sha256')
     component_values = {
-        'score_clock_playcalling': {'artifact_sha256': artifact['sha256']},
+        'score_clock_playcalling': ({'artifact_sha256': artifact['sha256']}
+                                    if score_clock_enabled else None),
         'team_offense_defense_outcomes': sampler.team_outcomes,
         'formation_personnel_outcomes': {'priors': sampler.formation_priors,
                                         'outcomes_enabled': sampler.formation_outcomes},
@@ -924,12 +930,15 @@ def describe(ref):
         key: (_model_hash(value) if value is not None else None)
         for key, value in component_values.items()
     }
-    layer_artifact_sha256['score_clock_playcalling'] = artifact['sha256']
+    layer_artifact_sha256['score_clock_playcalling'] = (
+        artifact['sha256'] if score_clock_enabled else None)
     description = {'model_id': model_id(ref), 'artifact_id': artifact['artifact_id'], 'artifact_sha256': artifact['sha256'],
                    'fit_seasons': sorted(int(s) for s in artifact['fit_seasons']),
                    'reference_season': int(artifact['reference_season']), 'side_teams': sampler.describe().get('side_teams'),
                    'source_cutoff': getattr(sampler, 'source_cutoff', None), 'reference_sha256': reference_sha,
                    'layer_artifact_sha256': layer_artifact_sha256, 'enabled_layers': enabled_layers,
+                   'score_clock_fallback_policy': ('historical_down_distance_field_cell_rate; independent point and streak '
+                                                   'layers remain separately switchable'),
                    'optional_input_sha256': dict(sorted(getattr(sampler, 'optional_input_sha256', {}).items()))}
     if sampler.blocker_fixes:
         description['blocker_resolution'] = {
