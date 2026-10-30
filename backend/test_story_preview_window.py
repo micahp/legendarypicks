@@ -183,7 +183,7 @@ def test_preview_cached_too_early_is_not_served_while_still_too_early(harness):
     assert out["story"] is None and seen["grounding"] == []
 
 
-def test_kick_skips_games_beyond_the_horizon(monkeypatch, harness):
+def test_kick_skips_games_beyond_the_horizon(monkeypatch, harness, exercise_story_warming):
     started = []
     monkeypatch.setattr(cs._threading, "Thread", lambda target, daemon: started.append(target) or type(
         "T", (), {"start": lambda self: None})())
@@ -192,6 +192,38 @@ def test_kick_skips_games_beyond_the_horizon(monkeypatch, harness):
         {"game_id": "soon", "home": {"abbrev": "MIA"}, "away": {"abbrev": "TOR"}, "state": "pre", "date": _soon()},
     ])
     assert len(started) == 1
+
+
+def test_large_slate_never_creates_more_story_threads_than_the_limit(
+    monkeypatch, harness, exercise_story_warming
+):
+    import threading
+
+    scheduled = []
+    ran = []
+
+    class DeferredThread:
+        def __init__(self, target, daemon=True):
+            scheduled.append((target, daemon))
+
+        def start(self):
+            pass
+
+    monkeypatch.setattr(cs._threading, "Thread", DeferredThread)
+    monkeypatch.setattr(cs, "_story_inflight", set())
+    monkeypatch.setattr(cs, "_story_lock", threading.Lock())
+    monkeypatch.setattr(cs, "generate_game_story", lambda *a, **k: ran.append((a, k)))
+
+    games = [
+        {"game_id": f"game-{i}", "home": {"abbrev": "H"}, "away": {"abbrev": "A"}, "state": "post"}
+        for i in range(1220)
+    ]
+    cs.kick_game_stories("nba", games)
+
+    assert cs._MAX_STORY_WORKERS == 3
+    assert len(scheduled) <= 3
+    assert len(cs._story_inflight) <= 3
+    assert ran == []
 
 
 def test_unreadable_standings_cite_no_record(harness, monkeypatch):

@@ -812,7 +812,8 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
 import threading as _threading
 _story_inflight: set = set()
 _story_lock = _threading.Lock()
-_story_sema = _threading.Semaphore(3)  # cap concurrent DeepSeek generations
+_MAX_STORY_WORKERS = 3
+_story_sema = _threading.Semaphore(_MAX_STORY_WORKERS)
 
 def kick_game_stories(lg: str, games: list):
     """Fire-and-forget: when a league scoreboard is fetched, warm the preview cache
@@ -840,6 +841,7 @@ def kick_game_stories(lg: str, games: list):
                 [lg] + gid_list)}
     except Exception:
         cached = {}
+    deferred = 0
     for gid, home, away, state, start_time in ids:
         # A cached story is enough UNLESS it is a preview of a game that has since ended —
         # then this scoreboard load is exactly when we find out the recap is owed, the same
@@ -853,6 +855,13 @@ def kick_game_stories(lg: str, games: list):
         with _story_lock:
             if gid in _story_inflight:
                 continue
+            # The semaphore limits active generations, but alone it still lets
+            # a historical slate create one waiting thread per game. Bound the
+            # threads and pending work together; a later scoreboard pass retries
+            # anything deferred here.
+            if len(_story_inflight) >= _MAX_STORY_WORKERS:
+                deferred += 1
+                continue
             _story_inflight.add(gid)
         def _run(gid=gid, home=home, away=away, state=state, start_time=start_time):
             try:
@@ -865,6 +874,8 @@ def kick_game_stories(lg: str, games: list):
                 with _story_lock:
                     _story_inflight.discard(gid)
         _threading.Thread(target=_run, daemon=True).start()
+    if deferred:
+        print(f"[story] deferred {deferred} games; {_MAX_STORY_WORKERS} stories already in flight")
 
 
 # Export the underscore-prefixed helpers; `from _core import *` must keep
