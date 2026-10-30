@@ -471,7 +471,7 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
     return outcome, contribution
 
 
-def _open_seed_ledger(path, header, resume):
+def _open_seed_ledger(path, header, resume, *, seed_end=None):
     """Return (finished seeds by number, handle for appending). Line one pins the inputs a resume must match."""
     if not resume and path.exists():
         raise FileExistsError(f'{path} exists; pass --resume to continue it or remove it to start over')
@@ -494,9 +494,24 @@ def _open_seed_ledger(path, header, resume):
             print(f'{path}: dropping a partial last line left by an interrupted run', file=sys.stderr)
             lines = lines[:-1]
             break
-        if row['seed'] in finished:
+        if not isinstance(row, dict):
+            raise ValueError(f'{path}: invalid seed ledger row on line {index}: expected an object')
+        seed = row.get('seed')
+        minimum_seed = header.get('seed_start', 0)
+        if type(seed) is not int or seed < minimum_seed:
+            raise ValueError(f'{path}: invalid seed on ledger line {index}: expected an integer >= '
+                             f'{minimum_seed}, got {seed!r}')
+        if seed_end is not None and seed >= seed_end:
+            raise ValueError(f'{path}: seed {seed} on ledger line {index} is outside requested range '
+                             f'[{minimum_seed}, {seed_end})')
+        outcome = row.get('outcome')
+        outcome_seed = outcome.get('seed') if isinstance(outcome, dict) else None
+        if type(outcome_seed) is not int or outcome_seed != seed:
+            raise ValueError(f'{path}: seed mismatch on ledger line {index}: row seed={seed!r}, '
+                             f'outcome seed={outcome_seed!r}')
+        if seed in finished:
             finished.duplicate_rows += 1
-        finished[row['seed']] = row
+        finished[seed] = row
     path.write_text(''.join(line + '\n' for line in lines))
     return finished, path.open('a')
 
@@ -546,6 +561,7 @@ def _execution_verification(outcomes, profile_manifest):
         'team_offense_defense_outcomes': 'team_offense_defense_outcomes',
         'formation_personnel_outcomes': 'formation_personnel_outcomes',
         'defensive_coverage_outcomes': 'defensive_coverage_outcomes',
+        'fixed_player_target_carry_shares': 'fixed_player_target_carry_shares',
         'dirichlet_player_target_carry_shares': 'dirichlet_player_target_carry_shares',
         'qb_decisions': 'qb_decisions', 'player_conditioned_outcomes': 'player_conditioned_outcomes',
         'target_role_priors': 'target_role_priors', 'decision_labels': 'decision_labels',
@@ -555,6 +571,11 @@ def _execution_verification(outcomes, profile_manifest):
         'exact_yardline_outcomes': 'exact_yardline_outcomes', 'current_streak_context': 'current_streak_context',
     }
     counts = {layer: 0 for layer in fields}
+    enabled_layers = profile_manifest.get('enabled_layers') or {}
+    missing_counters = sorted(layer for layer, enabled in enabled_layers.items()
+                              if enabled and layer not in fields)
+    if missing_counters:
+        raise RuntimeError(f'SLC layers have no runtime counter: {missing_counters}')
     fallback_events = defaultdict(int)
     games_with_trace = 0
     for outcome in outcomes:
@@ -566,6 +587,10 @@ def _execution_verification(outcomes, profile_manifest):
             counts[layer] += int(execution.get(field, 0) or 0)
         for name, count in (playcall.get('fallback_events') or {}).items():
             fallback_events[name] += int(count)
+    disabled_applications = {layer: counts.get(layer, 0) for layer, enabled in enabled_layers.items()
+                             if not enabled and counts.get(layer, 0)}
+    if disabled_applications:
+        raise RuntimeError(f'disabled SLC layers reported runtime applications: {disabled_applications}')
     missing_layer_inputs = []
     for layer, record in (profile_manifest.get('layers') or {}).items():
         if not record.get('enabled'):
@@ -578,7 +603,7 @@ def _execution_verification(outcomes, profile_manifest):
         if not (record.get('input_provenance') or {}).get('reference_sha256'):
             missing_layer_inputs.append({'layer': layer, 'input': 'reference_sha256'})
     layers = {}
-    for layer, enabled in profile_manifest['enabled_layers'].items():
+    for layer, enabled in enabled_layers.items():
         hits = counts.get(layer, 0)
         layers[layer] = {'enabled': bool(enabled), 'runtime_applications': hits,
                          'status': ('not_enabled' if not enabled else 'executed' if hits else 'enabled_no_observed_application')}
@@ -775,7 +800,8 @@ def run_batch(args):
         'playcall_decision_filter_enabled': (not args.playcall_decision_unfiltered if args.playcall_decision else None),
     }
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
-    finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume)
+    finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume,
+                                         seed_end=args.seed_start + args.games)
     boxscore_handle = None
     exported_seed_ids = set()
     boxscore_path = Path(args.out).with_suffix('.boxscores.jsonl')

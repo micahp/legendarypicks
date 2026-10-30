@@ -154,6 +154,36 @@ class BatchAggregation(unittest.TestCase):
             self.assertEqual(aligned['status'], 'available')
             self.assertTrue(aligned['comparable_at_snapshot_cutoff'])
 
+    def test_enabled_layers_without_runtime_counters_fail_closed(self):
+        manifest = {'enabled_layers': {'new_layer': True}, 'layers': {}}
+
+        with self.assertRaisesRegex(RuntimeError, 'no runtime counter'):
+            batch._execution_verification([], manifest)
+
+    def test_disabled_layer_without_runtime_counter_does_not_block_report(self):
+        manifest = {'enabled_layers': {'future_layer': False}, 'layers': {}}
+
+        report = batch._execution_verification([], manifest)
+
+        self.assertEqual(report['layers']['future_layer'], {
+            'enabled': False, 'runtime_applications': 0, 'status': 'not_enabled'})
+
+    def test_disabled_layer_with_runtime_applications_fails_closed(self):
+        manifest = {'enabled_layers': {'fixed_player_target_carry_shares': False}, 'layers': {}}
+        outcomes = [{'playcall': {'layer_execution': {'fixed_player_target_carry_shares': 1}}}]
+
+        with self.assertRaisesRegex(RuntimeError, 'disabled SLC layers reported runtime applications'):
+            batch._execution_verification(outcomes, manifest)
+
+    def test_fixed_share_application_is_reported_as_executed_when_enabled(self):
+        manifest = {'enabled_layers': {'fixed_player_target_carry_shares': True}, 'layers': {}}
+        outcomes = [{'playcall': {'layer_execution': {'fixed_player_target_carry_shares': 1}}}]
+
+        report = batch._execution_verification(outcomes, manifest)
+
+        self.assertEqual(report['layers']['fixed_player_target_carry_shares'], {
+            'enabled': True, 'runtime_applications': 1, 'status': 'executed'})
+
     def test_uses_latest_v1_lock_at_or_before_cutoff_when_a_later_lock_exists(self):
         with tempfile.TemporaryDirectory() as tmp:
             db = Path(tmp) / 'locks.db'
