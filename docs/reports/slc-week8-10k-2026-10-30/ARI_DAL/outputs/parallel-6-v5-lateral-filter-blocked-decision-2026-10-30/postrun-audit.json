@@ -1,0 +1,152 @@
+{
+  "boxscores": {
+    "missing_seed_rows": 0,
+    "orphan_seed_rows": 0,
+    "reconciliation_status_counts": {
+      "passed": 10000
+    },
+    "reconciliation_strict": false,
+    "rows": 10000,
+    "score_mismatches_against_seed_ledger": 0,
+    "status_counts": {
+      "blocked": 6,
+      "valid_complete": 9994
+    },
+    "status_mismatches_against_seed_ledger": 0,
+    "unique_seeds": 10000,
+    "valid_complete_reconciliation_failures": 0
+  },
+  "correction": {
+    "applied_in_postrun_audit": true,
+    "logic_commit": "fff76c08",
+    "note": "The producer set tied_at_regulation_end for some completed overtime games that finished tied. Those 11 outcomes are counted as completed final ties here; regulation ties requiring unsupported overtime are counted only when status=blocked and blocker=overtime_not_modelled. Raw run files are unchanged."
+  },
+  "matchup": "2026_08_ARI_DAL",
+  "outcomes": {
+    "blocked_before_regulation_end": 6,
+    "blocker_counts": {
+      "blocked_kick_no_legal_geometry:field_goal:next_snap:kicking_team:next-snap blocked kick needs a legal observed start spot, down and distance": 1,
+      "blocked_kick_no_legal_geometry:punt:next_snap:receiving_team:blocked_kick_next_snap_outside_field:receiving_team": 4,
+      "blocked_kick_no_legal_geometry:punt:recovery:receiving_team:0:blocked_kick_receiving_return_outside_field": 1
+    },
+    "completed_games": 9994,
+    "completed_overtime": 515,
+    "completed_regulation": 9479,
+    "corrected_final_ties": 11,
+    "corrected_unresolved_regulation_ties": 0,
+    "field_goal_period_transition_blockers": 0,
+    "legacy_regulation_tie_flags_on_overtime_games": 11,
+    "simulation_or_validation_errors": 0,
+    "status_counts": {
+      "blocked": 6,
+      "complete_overtime": 515,
+      "complete_regulation": 9479
+    }
+  },
+  "provenance": {
+    "configuration_hash": "52d3aff82223f8c877729f53cae6e5e6044831ce459b2205ea3ae2fd394de20c",
+    "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+    "producer_branch": "research/slc-decision-layer-2026-10-29",
+    "producer_commit": "52c59c10",
+    "reference_sha256": "c13724b908475053e4aec2b7c9b6931c8e37b531d75beb6a104f4f7f730e943b",
+    "snapshot_sha256": "664c242e563bb9414a962e6a87fe539128f325e8e9b52d8d593d7d08cc198bc1",
+    "source_cutoff": "before 2026 Week 1",
+    "source_database_nfl_pbp_rows": 188282,
+    "source_database_seasons": [
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "source_database_sha256": "feb5179f1c6c2f8cd2265a25ff68f3552d6e68bbba00354e0688f22505aa028f"
+  },
+  "requested_games": 10000,
+  "schema": "slc-10k-postrun-audit-v1",
+  "seed_coverage": {
+    "duplicate_rows": 0,
+    "maximum": 10000,
+    "minimum": 1,
+    "missing": 0,
+    "out_of_range": 0,
+    "rows": 10000,
+    "unique": 10000
+  },
+  "workers": [
+    {
+      "header_game_id": "2026_08_ARI_DAL",
+      "ledger_rows": 1667,
+      "requested": 1667,
+      "seed_end": 1667,
+      "seed_start": 1,
+      "status_counts": {
+        "complete_overtime": 91,
+        "complete_regulation": 1576
+      },
+      "worker": "01"
+    },
+    {
+      "header_game_id": "2026_08_ARI_DAL",
+      "ledger_rows": 1667,
+      "requested": 1667,
+      "seed_end": 3334,
+      "seed_start": 1668,
+      "status_counts": {
+        "blocked": 1,
+        "complete_overtime": 71,
+        "complete_regulation": 1595
+      },
+      "worker": "02"
+    },
+    {
+      "header_game_id": "2026_08_ARI_DAL",
+      "ledger_rows": 1667,
+      "requested": 1667,
+      "seed_end": 5001,
+      "seed_start": 3335,
+      "status_counts": {
+        "complete_overtime": 83,
+        "complete_regulation": 1584
+      },
+      "worker": "03"
+    },
+    {
+      "header_game_id": "2026_08_ARI_DAL",
+      "ledger_rows": 1667,
+      "requested": 1667,
+      "seed_end": 6668,
+      "seed_start": 5002,
+      "status_counts": {
+        "blocked": 2,
+        "complete_overtime": 100,
+        "complete_regulation": 1565
+      },
+      "worker": "04"
+    },
+    {
+      "header_game_id": "2026_08_ARI_DAL",
+      "ledger_rows": 1666,
+      "requested": 1666,
+      "seed_end": 8334,
+      "seed_start": 6669,
+      "status_counts": {
+        "blocked": 2,
+        "complete_overtime": 90,
+        "complete_regulation": 1574
+      },
+      "worker": "05"
+    },
+    {
+      "header_game_id": "2026_08_ARI_DAL",
+      "ledger_rows": 1666,
+      "requested": 1666,
+      "seed_end": 10000,
+      "seed_start": 8335,
+      "status_counts": {
+        "blocked": 1,
+        "complete_overtime": 80,
+        "complete_regulation": 1585
+      },
+      "worker": "06"
+    }
+  ]
+}
