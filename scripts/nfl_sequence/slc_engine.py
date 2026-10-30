@@ -98,7 +98,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
     ref, excluded = er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
-                   playcall_formation=formation, playcall_player_shares=(player_shares or dirichlet_shares),
+                   playcall_formation=formation, playcall_player_shares=player_shares,
                    playcall_target_roles=target_roles, playcall_decision=decision,
                    playcall_exact_yardline=exact_yardline, playcall_coverage=coverage,
                    playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league,
