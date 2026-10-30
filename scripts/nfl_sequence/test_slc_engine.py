@@ -84,6 +84,17 @@ class Summary(unittest.TestCase):
         self.assertEqual(result['fallback_events'], {})
         self.assertEqual(result['layer_execution']['score_clock_playcalling'], 4)
 
+    def test_fixed_and_dirichlet_share_applications_have_separate_runtime_counts(self):
+        decisions = [
+            {'intent': 'dropback', 'participants': {'participant_share_model': 'fixed_player_share'}},
+            {'intent': 'run', 'participants': {'participant_share_model': 'dirichlet_multinomial'}},
+        ]
+
+        execution = se.summary(decisions)['layer_execution']
+
+        self.assertEqual(execution['fixed_player_target_carry_shares'], 1)
+        self.assertEqual(execution['dirichlet_player_target_carry_shares'], 1)
+
 
 class PlayerShareManifest(unittest.TestCase):
     def test_loading_dirichlet_shares_attaches_the_model_version_cutoff_and_fit(self):

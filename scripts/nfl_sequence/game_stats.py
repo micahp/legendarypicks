@@ -117,9 +117,14 @@ def player_lines(drives):
     lines = {}
 
     def line(pid, part, role):
+        attribution = part.get('attribution', ATTRIBUTION)
+        existing = lines.get(pid)
+        if existing is not None and existing['attribution'] != attribution:
+            raise ValueError(f'player {pid} has mixed attribution sources: '
+                             f'{existing["attribution"]!r} and {attribution!r}')
         entry = lines.setdefault(pid, {'passing': defaultdict(int), 'rushing': defaultdict(int),
                                        'receiving': defaultdict(int), 'miscellaneous': defaultdict(int),
-                                       'attribution': part.get('attribution', ATTRIBUTION)})
+                                       'attribution': attribution})
         for field in ('name', 'position', 'team', 'side'):
             value = part.get(f'{role}_{field}')
             if value is not None:
@@ -178,7 +183,9 @@ def compute(drives, points):
     """The game's stat block: team lines, player lines, and the label that says what the player lines are."""
     players = player_lines(drives)
     attributions = {row['attribution'] for row in players}
-    attribution = next(iter(attributions)) if len(attributions) == 1 else ATTRIBUTION
+    if len(attributions) > 1:
+        raise ValueError(f'game mixes player attribution sources: {sorted(attributions)}')
+    attribution = next(iter(attributions)) if attributions else ATTRIBUTION
     if attribution in ('pregame_depth_chart_role_sample', 'pre_event_selection'):
         _verify_pregame_reconciliation(team_stats(drives, points), players)
     note = ('Team play outcomes come from historical E1 samples. Participants were selected before the outcome from the '
