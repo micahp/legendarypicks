@@ -11,7 +11,9 @@ import unittest
 import migrate_all
 import migrate_schema
 import migration_manifest
+import nba_sportsdataverse
 from ingest_nfl_logs import ensure_table
+from scripts_split_provider_logs import DDL_TABLE as FOTMOB_LOGS_DDL
 
 
 LEGACY_TEAM_STATS_DDL = """
@@ -99,6 +101,8 @@ def _bootstrap(path: str, old_registry: bool = False) -> None:
     """Create a current-schema database with the registry and two migrations."""
     with sqlite3.connect(path) as con:
         ensure_table(con)
+        con.executescript(FOTMOB_LOGS_DDL)
+        nba_sportsdataverse.ensure_schema(con)
         con.execute(LEGACY_TEAM_STATS_DDL)
         con.execute("ALTER TABLE team_game_stats ADD COLUMN source TEXT")
         con.execute(NEWS_ITEMS_DDL)

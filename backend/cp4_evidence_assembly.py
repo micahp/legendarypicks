@@ -39,10 +39,17 @@ def assemble(evaluation_path: str, research_path: str) -> dict:
     con.commit()
     report = {"outcome_rows_copied": copied, "per_tour": {}}
     for tour in ("atp", "wta"):
-        frozen = {r[0] for r in con.execute(
-            "SELECT DISTINCT d.game_id FROM tennis_model_lock_distributions d JOIN tennis_model_locks l "
-            "ON l.league=d.league AND l.game_id=d.game_id WHERE d.league=? AND d.model_version=?",
-            (tour, "tennis-counts/2026-10-20"))}
+        distribution_table = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' "
+            "AND name='tennis_model_lock_distributions'"
+        ).fetchone()
+        if distribution_table:
+            frozen = {r[0] for r in con.execute(
+                "SELECT DISTINCT d.game_id FROM tennis_model_lock_distributions d JOIN tennis_model_locks l "
+                "ON l.league=d.league AND l.game_id=d.game_id WHERE d.league=? AND d.model_version=?",
+                (tour, "tennis-counts/2026-10-20"))}
+        else:
+            frozen = set()
         verified = {r[0] for r in con.execute(
             "SELECT DISTINCT espn_game_id FROM main.research_player_match_outcomes WHERE tour=? AND eligible_cp4=1", (tour,))}
         report["per_tour"][tour] = {"frozen_distribution_games": len(frozen), "verified_outcome_games": len(verified),
