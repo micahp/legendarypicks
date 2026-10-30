@@ -95,10 +95,10 @@ def team_stats(drives, points):
             unassigned_overtime_offensive_td = (d.get('observed_overtime_drive') and not d['plays']
                                                 and scorer == d['offense_team'])
             if scorer == d['offense_team'] and (offensive_scoring_play or unassigned_overtime_offensive_td):
-                # Only a credited scrimmage scoring play creates an offensive TD; returns remain team touchdowns.
+                # Scrimmage touchdowns and observed no-play OT touchdowns are offensive; returns are not.
                 scored['offensive_touchdowns'] += 1
             if unassigned_overtime_offensive_td:
-                # The observed OT score has no play/player row, so exclude only this offensive TD from player reconciliation.
+                # No player row exists for this observed OT score, so exclude it from player reconciliation.
                 scored['observed_overtime_touchdowns'] += 1
     for name, pts in points.items():
         team(name)['points'] = pts
