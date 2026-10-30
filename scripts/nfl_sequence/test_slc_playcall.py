@@ -130,6 +130,26 @@ class Sampler(unittest.TestCase):
         self.assertEqual(sampler.decisions[-1]['source_row_filter_policy'], 'exclude_unmodeled_lateral_transfers')
         self.assertEqual(sampler.decisions[-1]['lateral_source_rows_excluded_from_situation_cell'], 1)
 
+    def test_reference_pool_filter_joins_lateral_facts_by_source_play_id(self):
+        pool = {('cell',): cell([('pass_complete', 'pass'), ('run', 'run'), ('pass_complete', 'pass')])}
+        participants = {
+            ('2025_01_AAA_BBB', 0): {
+                'lateral_receiver_player_id': 'LATERAL1', 'lateral_receiving_yards': 0,
+            },
+            ('2025_01_AAA_BBB', 1): {
+                'lateral_rusher_player_id': 'LATERAL2', 'lateral_rushing_yards': -3,
+            },
+        }
+
+        filtered, evidence = se.exclude_unmodeled_lateral_rows(pool, participants)
+
+        self.assertEqual([sample[1]['play_id'] for sample in filtered[('cell',)]], [2])
+        self.assertEqual(evidence, {
+            'policy': 'exclude_unmodeled_lateral_transfers',
+            'rows_excluded': 2,
+            'rows_excluded_by_event': {'pass_complete': 1, 'run': 1},
+        })
+
     def test_player_outcome_backoff_excludes_unmodeled_lateral_rows(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)),
                                       side_teams={'A': 'AAA', 'B': 'BBB'})
