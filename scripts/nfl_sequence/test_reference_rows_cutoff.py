@@ -95,7 +95,8 @@ class OvertimeDriveRows(unittest.TestCase):
 
 EXTRAS_HEADER = ['game_id', 'play_id', 'season', 'week', 'posteam', 'defteam', 'timeout', 'timeout_team', 'out_of_bounds']
 PBP_COLUMNS = ('game_id', 'play_id', 'passer_player_id', 'rusher_player_id', 'receiver_player_id', 'posteam', 'defteam',
-               'air_yards', 'receiving_yards', 'play_type', 'season', 'week')
+               'air_yards', 'receiving_yards', 'play_type', 'lateral_receiver_player_id', 'lateral_receiving_yards',
+               'lateral_rusher_player_id', 'lateral_rushing_yards', 'passing_yards', 'rushing_yards', 'season', 'week')
 
 
 class ParticipantRows(unittest.TestCase):
@@ -104,8 +105,8 @@ class ParticipantRows(unittest.TestCase):
             db = Path(tmp) / 'pbp.sqlite3'
             con = sqlite3.connect(db)
             con.execute(f"CREATE TABLE nfl_pbp ({', '.join(PBP_COLUMNS)})")
-            con.execute("INSERT INTO nfl_pbp VALUES ('2024_05_AAA_BBB', 1, 'P1', 'R1', 'W1', 'AAA', 'BBB', 7, 5, 'pass', 2024, 5)")
-            con.execute("INSERT INTO nfl_pbp VALUES ('2025_01_AAA_BBB', 2, 'P2', 'R2', 'W2', 'AAA', 'BBB', 7, 5, 'pass', 2025, 1)")
+            con.execute("INSERT INTO nfl_pbp VALUES ('2024_05_AAA_BBB', 1, 'P1', 'R1', 'W1', 'AAA', 'BBB', 7, 5, 'pass', 'L1', -4, NULL, NULL, 5, 0, 2024, 5)")
+            con.execute("INSERT INTO nfl_pbp VALUES ('2025_01_AAA_BBB', 2, 'P2', 'R2', 'W2', 'AAA', 'BBB', 7, 5, 'pass', NULL, NULL, NULL, NULL, 5, 5, 2025, 1)")
             con.commit()
             con.close()
             extras = Path(tmp) / 'extras.csv'
@@ -117,6 +118,12 @@ class ParticipantRows(unittest.TestCase):
             cut = er.load_participants(str(db), extras=str(extras), eligible_before=CUTOFF)
             self.assertEqual(set(cut), {('2024_05_AAA_BBB', 1)})
             self.assertEqual(cut[('2024_05_AAA_BBB', 1)]['timeout'], 1)
+            self.assertEqual(cut[('2024_05_AAA_BBB', 1)]['lateral_receiver_player_id'], 'L1')
+            self.assertEqual(cut[('2024_05_AAA_BBB', 1)]['lateral_receiving_yards'], -4)
+            with_player_yardage = er.load_participants(
+                str(db), extras=str(extras), eligible_before=CUTOFF, include_player_yardage=True)
+            self.assertEqual(with_player_yardage[('2024_05_AAA_BBB', 1)]['passing_yards'], 5)
+            self.assertEqual(with_player_yardage[('2024_05_AAA_BBB', 1)]['rushing_yards'], 0)
             self.assertEqual(set(er.load_participants(str(db), extras=str(extras))),
                              {('2024_05_AAA_BBB', 1), ('2025_01_AAA_BBB', 2)})
 

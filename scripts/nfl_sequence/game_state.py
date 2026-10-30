@@ -307,6 +307,10 @@ class Reference:
         for field in ('passing_yards', 'receiving_yards', 'rushing_yards'):
             if field in facts:
                 out['sampled_play_context'][field] = facts[field]
+        for field in ('lateral_receiver_player_id', 'lateral_receiving_yards',
+                      'lateral_rusher_player_id', 'lateral_rushing_yards'):
+            if field in facts:
+                out['sampled_play_context'][field] = facts[field]
         for key in ('posteam', 'defteam', 'air_yards', 'yards_after_catch', 'timeout_team', 'out_of_bounds'):
             out[key] = None
         for role, player in assigned.items():

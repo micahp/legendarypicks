@@ -9,6 +9,7 @@ different model under the SLC name.
 import copy
 import hashlib
 import json
+import math
 import sys
 from collections.abc import Mapping
 from collections import Counter, defaultdict
@@ -329,6 +330,23 @@ def play(seed, ref, snapshot, *, paired_randomness=False):
 
 
 PASS_RESULT_EVENTS = {'pass_complete', 'pass_incomplete', 'interception'}
+LATERAL_SOURCE_FIELDS = ('lateral_receiver_player_id', 'lateral_receiving_yards',
+                         'lateral_rusher_player_id', 'lateral_rushing_yards')
+
+
+def _has_lateral_source(sampled):
+    for field in LATERAL_SOURCE_FIELDS:
+        value = sampled.get(field)
+        if value is None or value == '':
+            continue
+        try:
+            if math.isnan(float(value)):
+                continue
+        except (TypeError, ValueError):
+            pass
+        if value != 0:
+            return True
+    return False
 
 
 def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
@@ -428,6 +446,12 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                  failure_class='UNSUPPORTED_RULE')
         if not _decision_resolves_to_event(decision, event):
             fail(index, decision, play, f'decision event {decision.get("event")} disagrees with play event {event}')
+
+        if event in ('pass_complete', 'pass_incomplete', 'interception', 'run', 'fumble_lost') \
+                and _has_lateral_source(sampled):
+            fail(index, decision, play,
+                 'lateral source outcomes are unsupported until every lateral player and yard is modeled',
+                 failure_class='UNSUPPORTED_RULE')
 
         if (event in ('run', 'pass_complete', 'pass_incomplete', 'sack')
                 and (outcome.get('turnover') or outcome.get('turnover_on_downs'))

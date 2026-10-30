@@ -114,6 +114,40 @@ class Sampler(unittest.TestCase):
         self.assertEqual(decision['state']['team'], 'AAA')
         self.assertAlmostEqual(decision['p_dropback'], 0.5, places=6)
 
+    def test_pregame_player_sampling_excludes_unmodeled_lateral_rows(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('pass_complete', 'pass'), ('pass_complete', 'pass')])
+        pool[1][1].update(lateral_receiver_player_id='LATERAL1', lateral_receiving_yards=-4)
+        sampler.participant_chooser = lambda *_: {
+            'passer': {'gsis_id': 'AQB1'}, 'receiver': {'gsis_id': 'AWR1'},
+        }
+
+        event, row, _runoff, _spot = sampler.sample(random.Random(3), pool, 'A', 'B', state=STATE)
+
+        self.assertEqual(event, 'pass_complete')
+        self.assertEqual(row['play_id'], 0)
+        self.assertEqual(sampler.decisions[-1]['source_row_filter_policy'], 'exclude_unmodeled_lateral_transfers')
+        self.assertEqual(sampler.decisions[-1]['lateral_source_rows_excluded_from_situation_cell'], 1)
+
+    def test_player_outcome_backoff_excludes_unmodeled_lateral_rows(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('pass_complete', 'pass') for _ in range(12)])
+        pool[0][1]['lateral_receiver_player_id'] = 'LATERAL1'
+        pool[0][1]['lateral_receiving_yards'] = -4
+        sampler.participant_chooser = lambda *_: {
+            'passer': {'gsis_id': 'AQB1'}, 'receiver': {'gsis_id': 'AWR1'},
+        }
+        sampler.source_pool = {'cell': pool}
+
+        candidates, fallback = sampler._backoff_candidates(STATE, 'dropback', False)
+
+        self.assertEqual(fallback, 'exact_cell')
+        self.assertEqual(len(candidates), 11)
+        self.assertTrue(all(not sampler._has_lateral(sample[1]) for sample in candidates))
+        self.assertEqual(sampler._backoff_lateral_rows_excluded, 1)
+
     def test_changing_only_the_selected_receiver_preserves_the_outcome_and_rng_stream(self):
         """Share-driven participant draws use an independent stream; outcomes ignore the selected identity."""
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
