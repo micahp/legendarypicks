@@ -108,7 +108,7 @@ def _by_player_share(players, table, team, role, positions, draw):
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
            share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None,
-           scramble_backoff_enabled=False):
+           scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -167,6 +167,23 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
             chosen['playbook_used'] = used
             if fallback:
                 chosen['playbook_fallback'] = fallback
+        if (intent == 'run' and labels is not None and labels.get('B') is not None
+                and qb_decision_table is not None and qb_run_role_style_enabled and state is not None):
+            import decision_layer
+            import qb_decisions
+            active_qbs = [p for p in _run_eligible_players(available_players) if p['pos_abb'] == 'QB']
+            if len(active_qbs) == 1:
+                role_probabilities = decision_layer.distribution(
+                    decision_table, team,
+                    decision_layer.cell_of(state['down'], state['togo'], state['yl']), 'B')
+                role, style = qb_decisions.adjust_qb_run_role(
+                    qb_decision_table, team, active_qbs[0]['gsis_id'], state['down'], state['togo'], state['yl'],
+                    role_probabilities, f'{base}:qb-run-role-style')
+                if style is not None:
+                    chosen['qb_run_role_style'] = style
+                if role is not None:
+                    labels = dict(labels)
+                    labels['B'] = role
         chosen['labels'] = labels
     if intent == 'dropback':
         qbd_players = available_players
@@ -207,7 +224,12 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
         else:
             eligible_qbs = sorted((p for p in qbd_players if p['pos_abb'] == 'QB'),
                                   key=lambda p: (p['pos_rank'], p['gsis_id']))
-            qb_trick_targets = ([eligible_qbs[0]] if chosen['passer']['pos_abb'] != 'QB' and eligible_qbs else [])
+            if chosen['passer']['pos_abb'] == 'QB':
+                # A backup QB may line up as a receiver only when the snapshot declares that package.
+                qb_trick_targets = ([p for p in eligible_qbs if p['gsis_id'] != chosen['passer']['gsis_id']]
+                                    if qb_receiver_package else [])
+            else:
+                qb_trick_targets = eligible_qbs[:1]
             if qb_trick_targets and _draw(f'{base}:receiver:qb').random() < qb_receiver_rate:
                 chosen['receiver'] = qb_trick_targets[0]  # QB receiving is limited to active QB1 on a modeled trick pass
                 if chosen.get('qb_decision') is not None:
@@ -332,7 +354,8 @@ def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw
 
 
 def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None,
-            share_table=None, playbook_table=None, qb_decision_table=None, scramble_backoff_enabled=False):
+            share_table=None, playbook_table=None, qb_decision_table=None, scramble_backoff_enabled=False,
+            qb_receiver_package=False, qb_run_role_style_enabled=False):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
@@ -346,7 +369,9 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
                       player_shares=player_shares, defense_priors=defense_priors, role_table=role_table,
                       decision_table=decision_table, share_table=share_table, playbook_table=playbook_table,
                       share_cache=share_cache, qb_decision_table=qb_decision_table,
-                      scramble_backoff_enabled=scramble_backoff_enabled)
+                      scramble_backoff_enabled=scramble_backoff_enabled,
+                      qb_receiver_package=qb_receiver_package,
+                      qb_run_role_style_enabled=qb_run_role_style_enabled)
     return pick
 
 
@@ -358,7 +383,7 @@ def ids(pre):
     if pre.get('target_role') is not None:  # the decision model's category, not a player: kept so the record shows it
         out['target_role'] = pre['target_role']
     for key in ('participant_share_model', 'target_role_prior_used', 'target_role_prior_combined',
-                'playbook_used', 'playbook_fallback'):
+                'playbook_used', 'playbook_fallback', 'qb_run_role_style'):
         if pre.get(key) is not None:
             out[key] = pre[key]
     if pre.get('labels') is not None:  # the drawn decision labels, for the record

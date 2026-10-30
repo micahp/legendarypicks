@@ -13,6 +13,7 @@ V1_OPTIONS = {
     'playcall_player_shares': False,
     'playcall_dirichlet_shares': True,
     'playcall_qb_decisions': True,
+    'playcall_qb_run_role_style': False,
     'playcall_player_outcomes': True,
     'playcall_target_roles': True,
     'playcall_decision': True,
@@ -30,6 +31,7 @@ OPTION_TO_LAYER = {
     'playcall_player_shares': 'fixed_player_target_carry_shares',
     'playcall_dirichlet_shares': 'dirichlet_player_target_carry_shares',
     'playcall_qb_decisions': 'qb_decisions',
+    'playcall_qb_run_role_style': 'qb_run_role_style',
     'playcall_player_outcomes': 'player_conditioned_outcomes',
     'playcall_target_roles': 'target_role_priors',
     'playcall_decision': 'decision_labels',
@@ -48,6 +50,7 @@ LAYER_CODE_FILES = {
     'fixed_player_target_carry_shares': ('player_shares.py',),
     'dirichlet_player_target_carry_shares': ('share_distributions.py', 'pre_event.py'),
     'qb_decisions': ('qb_decisions.py', 'pre_event.py'),
+    'qb_run_role_style': ('qb_decisions.py', 'pre_event.py', 'slc_playcall.py'),
     'player_conditioned_outcomes': ('player_outcomes.py', 'pre_event.py'),
     'target_role_priors': ('target_roles.py', 'pre_event.py'),
     'decision_labels': ('decision_layer.py',),
@@ -68,6 +71,7 @@ ENGINE_LAYER_KEYS = (
     'fixed_player_target_carry_shares',
     'dirichlet_player_target_carry_shares',
     'qb_decisions',
+    'qb_run_role_style',
     'player_conditioned_outcomes',
     'target_role_priors',
     'decision_labels',
@@ -108,6 +112,7 @@ def options_from_args(args):
         'playcall_player_shares': bool(args.playcall_player_shares),
         'playcall_dirichlet_shares': bool(args.playcall_dirichlet_shares),
         'playcall_qb_decisions': bool(args.playcall_qb_decisions),
+        'playcall_qb_run_role_style': bool(args.playcall_qb_run_role_style),
         'playcall_player_outcomes': bool(args.playcall_player_outcomes),
         'playcall_target_roles': bool(args.playcall_target_roles),
         'playcall_decision': bool(args.playcall_decision),
@@ -173,6 +178,7 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
         if supplied.get('playcall_decision_unfiltered'):
             raise ValueError('v1_full_stack requires the decision row filter; disable it with --slc-disable-layer')
         resolved_options = dict(V1_OPTIONS)
+        resolved_options['playcall_qb_run_role_style'] = supplied.get('playcall_qb_run_role_style', False)
         resolved_filter = True
         resolved_streak_file = streak_file
         for layer in disabled:
@@ -193,30 +199,66 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
             raise ValueError('fixed and Dirichlet player share models are incompatible')
         if resolved_options['playcall_playbook'] and not resolved_options['playcall_decision']:
             raise ValueError('playbook priors depend on decision labels; disable both layers for that ablation')
+        if resolved_options['playcall_qb_run_role_style'] and not resolved_options['playcall_qb_decisions']:
+            raise ValueError('QB run-role style requires the QB decision model')
+        if resolved_options['playcall_qb_run_role_style'] and not resolved_options['playcall_decision']:
+            raise ValueError('QB run-role style requires decision labels')
         needs_streak = (resolved_options['playcall_streak_splits'] or
                         resolved_options['playcall_streak_league'] or 'current_streak_context' not in disabled)
         if needs_streak and not resolved_streak_file:
             raise ValueError('v1_full_stack requires a frozen pregame streak file')
         layers = _expected_layers(resolved_options, profile=profile, streak_file=resolved_streak_file,
                                   decision_filter=resolved_filter, artifact_enabled=True)
+        if 'qb_run_role_style' in disabled:
+            layers['qb_run_role_style'] = False
         disabled_names = sorted(disabled)
+        if disabled_names:
+            model_id = 'SLC_v1_ablation_' + '_'.join(disabled_names)
+            if resolved_options['playcall_qb_run_role_style']:
+                model_id += '_with_qb_run_role_style'
+        else:
+            model_id = ('SLC_v1_full_stack_qb_run_role_style'
+                        if resolved_options['playcall_qb_run_role_style'] else 'SLC_v1_full_stack')
         return {
             'profile': profile,
-            'model_id': 'SLC_v1_full_stack' if not disabled_names else 'SLC_v1_ablation_' + '_'.join(disabled_names),
+            'model_id': model_id,
             'options': resolved_options,
             'enabled_layers': layers,
             'decision_filter': resolved_filter,
             'disabled_layers': disabled_names,
         }
 
-    # The legacy default remains a manual/custom configuration.
-    layers = _expected_layers(supplied, profile='custom', streak_file=streak_file,
-                              decision_filter=decision_filter, artifact_enabled=bool(artifact_path))
+    # The legacy default remains a manual/custom configuration, with explicit one-layer ablations.
+    resolved_filter = bool(decision_filter)
+    resolved_streak_file = streak_file
+    for layer in disabled:
+        if layer == 'decision_row_filter':
+            resolved_filter = False
+        elif layer == 'current_streak_context':
+            resolved_streak_file = None
+        elif layer != 'qb_run_role_style':
+            option = next((name for name, key in OPTION_TO_LAYER.items() if key == layer), None)
+            if option:
+                supplied[option] = False
+    layers = _expected_layers(supplied, profile='custom', streak_file=resolved_streak_file,
+                              decision_filter=resolved_filter, artifact_enabled=bool(artifact_path))
+    if 'qb_run_role_style' in disabled:
+        layers['qb_run_role_style'] = False
     if layers['fixed_player_target_carry_shares'] and layers['dirichlet_player_target_carry_shares']:
         raise ValueError('fixed and Dirichlet player share models are incompatible')
-    return {'profile': profile, 'model_id': 'SLC_custom' if any(layers.values()) else 'S0',
-            'options': supplied, 'enabled_layers': layers, 'decision_filter': bool(decision_filter),
-            'disabled_layers': []}
+    if layers['playbook_priors'] and not layers['decision_labels']:
+        raise ValueError('playbook priors depend on decision labels; disable both layers for that ablation')
+    if layers['qb_run_role_style'] and not layers['qb_decisions']:
+        raise ValueError('QB run-role style requires the QB decision model')
+    if layers['qb_run_role_style'] and not layers['decision_labels']:
+        raise ValueError('QB run-role style requires decision labels')
+    disabled_names = sorted(disabled)
+    model_id = 'SLC_custom' if any(layers.values()) else 'S0'
+    if disabled_names:
+        model_id += '_ablation_' + '_'.join(disabled_names)
+    return {'profile': profile, 'model_id': model_id,
+            'options': supplied, 'enabled_layers': layers, 'decision_filter': resolved_filter,
+            'disabled_layers': disabled_names}
 
 
 def validate_engine_layers(resolved, description):
@@ -260,6 +302,7 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         'fixed_player_target_carry_shares': None,
         'dirichlet_player_target_carry_shares': layer_hashes.get('dirichlet_player_target_carry_shares'),
         'qb_decisions': layer_hashes.get('qb_decisions'),
+        'qb_run_role_style': layer_hashes.get('qb_run_role_style'),
         'player_conditioned_outcomes': layer_hashes.get('player_conditioned_outcomes'),
         'target_role_priors': layer_hashes.get('target_role_priors'),
         'decision_labels': layer_hashes.get('decision_labels'),
@@ -279,6 +322,7 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         'fixed_player_target_carry_shares': {'adapter': 'fixed share adapter'},
         'dirichlet_player_target_carry_shares': desc.get('player_share_distribution'),
         'qb_decisions': desc.get('qb_decision_model'),
+        'qb_run_role_style': desc.get('qb_run_role_style'),
         'player_conditioned_outcomes': desc.get('player_outcome_model'),
         'target_role_priors': {'source': 'team-by-situation target_roles table',
                                'overlap_rule': 'category A is sampled from the normalized geometric mean of team target-role and decision priors, renormalized to frozen eligible roles',

@@ -92,7 +92,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    exact_yardline=False, coverage=False, point_splits=False, streak=False, streak_file=None,
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
-                   player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60):
+                   player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
+                   qb_run_role_style=None):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -115,6 +116,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     ref.pool_scope = dict(ref.pool_scope or {})
     ref.pool_scope['unmodeled_lateral_source_filter'] = lateral_source_filter
     sampler = ref.contextual_sampler
+    sampler.qb_run_role_style_enabled = bool(qb_run_role_style)
     sampler.source_cutoff = {'eligible_before': [season, 1]}
     sampler.optional_input_sha256 = {}
     if decision:
@@ -307,7 +309,9 @@ def play(seed, ref, snapshot, *, paired_randomness=False):
                                                     role_table=sampler.role_table, decision_table=sampler.decision_table,
                                                     share_table=sampler.share_table, playbook_table=sampler.playbook_table,
                                                     qb_decision_table=sampler.qb_decision_table,
-                                                    scramble_backoff_enabled=sampler.scramble_backoff_enabled)
+                                                    scramble_backoff_enabled=sampler.scramble_backoff_enabled,
+                                                    qb_run_role_style_enabled=getattr(
+                                                        sampler, 'qb_run_role_style_enabled', False))
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
                               paired_randomness=paired_randomness)
@@ -679,6 +683,7 @@ def summary(decisions, record=None):
     target_decisions = [d for d in decisions if d.get('qb_target_role') is not None]
     fallbacks = Counter()
     situational_counts = Counter()
+    qb_run_style_support = Counter()
     for decision in decisions:
         state = decision.get('state') or {}
         if all(state.get(key) is not None for key in
@@ -704,6 +709,9 @@ def summary(decisions, record=None):
                                 field, score, clock, action)] += 1
         if decision.get('fallback'):
             fallbacks[str(decision['fallback'])] += 1
+        run_style = decision.get('qb_run_role_style')
+        if run_style:
+            qb_run_style_support[run_style.get('support_level', 'unknown')] += 1
         for key in ('qb_scramble_fallback', 'qb_target_role_fallback', 'qb_target_role_draw_fallback',
                     'exact_yardline_fallback', 'formation_fallback', 'coverage_fallback', 'streak_fallback'):
             if decision.get(key):
@@ -722,6 +730,10 @@ def summary(decisions, record=None):
             'dropback': sum(d['intent'] == 'dropback' for d in decisions),
             'run': sum(d['intent'] == 'run' for d in decisions),
             'qb_scramble': sum(d.get('qb_action') == 'scramble' for d in decisions),
+            'qb_run_role_style_decisions': sum(bool(d.get('qb_run_role_style')) for d in decisions),
+            'qb_run_role_style_adjustments': sum(
+                bool((d.get('qb_run_role_style') or {}).get('adjusted')) for d in decisions),
+            'qb_run_role_style_support_levels': dict(sorted(qb_run_style_support.items())),
             'qb_target_role_decisions': len(target_decisions),
             'qb_target_role_conditioned': sum(bool(d.get('qb_target_role_conditioned')) for d in target_decisions),
             'qb_target_role_fallbacks': sum(d.get('qb_target_role_fallback') is not None for d in target_decisions),
@@ -749,6 +761,9 @@ def summary(decisions, record=None):
                     (d.get('participants') or {}).get('participant_share_model') == 'dirichlet_multinomial'
                     for d in decisions),
                 'qb_decisions': sum(d.get('qb_action') is not None for d in decisions),
+                'qb_run_role_style': sum(bool(d.get('qb_run_role_style')) for d in decisions),
+                'qb_run_role_style_adjustments': sum(
+                    bool((d.get('qb_run_role_style') or {}).get('adjusted')) for d in decisions),
                 'player_conditioned_outcomes': sum(bool(d.get('player_outcomes_conditioned')) for d in decisions),
                 'target_role_priors': sum(bool((d.get('participants') or {}).get('target_role_prior_used'))
                                           for d in decisions),
@@ -861,6 +876,8 @@ def describe(ref):
         'fixed_player_target_carry_shares': sampler.player_shares is not None,
         'dirichlet_player_target_carry_shares': sampler.share_table is not None,
         'qb_decisions': sampler.qb_decision_table is not None,
+        'qb_run_role_style': (sampler.qb_decision_table is not None
+                                  and bool(getattr(sampler, 'qb_run_role_style_enabled', False))),
         'player_conditioned_outcomes': sampler.player_outcome_table is not None,
         'target_role_priors': sampler.role_table is not None,
         'decision_labels': decision_enabled,
@@ -883,6 +900,8 @@ def describe(ref):
         'fixed_player_target_carry_shares': sampler.player_shares,
         'dirichlet_player_target_carry_shares': sampler.share_table,
         'qb_decisions': sampler.qb_decision_table,
+        'qb_run_role_style': {'model': sampler.qb_decision_table,
+                                  'enabled': bool(getattr(sampler, 'qb_run_role_style_enabled', False))},
         'player_conditioned_outcomes': {'table': sampler.player_outcome_table,
                                         'roles': sampler.player_outcome_roles},
         'target_role_priors': sampler.role_table,
@@ -927,6 +946,16 @@ def describe(ref):
     qb_manifest = getattr(sampler, 'qb_decision_manifest', None)
     if qb_manifest is not None:
         description['qb_decision_model'] = qb_manifest
+    description['qb_run_role_style'] = {
+        'enabled': bool(sampler.qb_decision_table is not None
+                        and getattr(sampler, 'qb_run_role_style_enabled', False)),
+        'model_version': (getattr(sampler, 'qb_decision_manifest', None) or {}).get('model_version'),
+        'rule': 'player-versus-team historical log-odds adjustment to the QB run-role share',
+        'shrinkage_strength': (getattr(sampler, 'qb_decision_manifest', None) or {}).get(
+            'qb_run_role_style_shrinkage'),
+        'minimum_player_opportunities': (getattr(sampler, 'qb_decision_manifest', None) or {}).get(
+            'qb_run_role_minimum_player_support'),
+    }
     outcome_manifest = getattr(sampler, 'player_outcome_manifest', None)
     if outcome_manifest is not None:
         description['player_outcome_model'] = outcome_manifest

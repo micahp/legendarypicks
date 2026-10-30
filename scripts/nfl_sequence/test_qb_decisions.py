@@ -24,7 +24,8 @@ class QbDecisionModel(unittest.TestCase):
         con.execute('''CREATE TABLE nfl_pbp (
             season INT, game_id TEXT, play_id INT, posteam TEXT, passer_player_id TEXT, rusher_player_id TEXT,
             qb_dropback INT, qb_scramble INT, pass_attempt INT, receiver_player_id TEXT,
-            down INT, ydstogo INT, yardline_100 INT, week INT, penalty INT, two_point_attempt INT)''')
+            down INT, ydstogo INT, yardline_100 INT, week INT, penalty INT, two_point_attempt INT,
+            play_type TEXT, rush_attempt INT, qb_kneel INT)''')
         rows = []
         for i in range(20):
             scramble = int(i < 10)
@@ -40,7 +41,28 @@ class QbDecisionModel(unittest.TestCase):
             (2024, 'two-point', 1, 'AAA', 'QA', 'QA', 1, 1, 0, None, 1, 10, 75, 3, 0, 1),
         ])
         rows = [row + (0, 0) if len(row) == 14 else row for row in rows]
-        con.executemany('INSERT INTO nfl_pbp VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', rows)
+        con.executemany('''INSERT INTO nfl_pbp
+            (season,game_id,play_id,posteam,passer_player_id,rusher_player_id,qb_dropback,qb_scramble,
+             pass_attempt,receiver_player_id,down,ydstogo,yardline_100,week,penalty,two_point_attempt)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', rows)
+        run_rows = []
+        for i in range(10):
+            run_rows.append((2024, 'g24', 100 + i, 'AAA', 'QA' if i < 2 else 'RRB', 1, 10, 75,
+                             3, 'run', 1, 0, 0, 0, 0, 0))
+        for i in range(5):
+            run_rows.append((2024, 'g24b', 100 + i, 'AAA', 'QB' if i < 3 else 'RRB', 1, 10, 75,
+                             3, 'run', 1, 0, 0, 0, 0, 0))
+        run_rows.extend([
+            (2025, 'g25', 100, 'AAA', 'QA', 1, 10, 75, 3, 'run', 1, 0, 0, 0, 0, 0),
+            (2024, 'g24', 110, 'AAA', 'QA', 1, 10, 75, 3, 'run', 1, 1, 0, 0, 0, 0),
+            (2024, 'g24', 111, 'AAA', 'QA', 1, 10, 75, 3, 'qb_kneel', 1, 0, 1, 0, 0, 0),
+            (2024, 'g24', 112, 'AAA', 'QA', 1, 10, 75, 3, 'run', 1, 0, 0, 0, 0, 1),
+            (2024, 'g24', 113, 'AAA', 'QA', 1, 10, 75, 3, 'run', 1, 0, 0, 0, 1, 0),
+        ])
+        con.executemany('''INSERT INTO nfl_pbp
+            (season,game_id,play_id,posteam,rusher_player_id,down,ydstogo,yardline_100,week,play_type,
+             rush_attempt,qb_scramble,qb_kneel,qb_dropback,two_point_attempt,penalty)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', run_rows)
         con.commit()
         con.close()
 
@@ -55,6 +77,13 @@ class QbDecisionModel(unittest.TestCase):
         result = qbd.draw(table, 'AAA', 'QA', 1, 10, 75, {'WR', 'RB'}, 'seed-a')
         self.assertEqual(result['target_role_history_n'], 10)
         self.assertEqual(result['scramble_history_n'], 20)
+        self.assertEqual(table['source_counts']['primary_qb_run_opportunities'], 15)
+        self.assertEqual(table['source_counts']['primary_qb_non_scramble_run_rows'], 5)
+        style = qbd.qb_run_role_style(table, 'AAA', 'QA', cell)
+        self.assertLess(style['style_odds_ratio'], 1.0)
+        manifest = qbd.manifest(table, 'fixture-commit')
+        self.assertEqual(manifest['qb_sneak_classification']['status'], 'unavailable')
+        self.assertTrue(manifest['qb_sneak_classification']['included_in_qb_run_role_residual'])
         moved = qbd.draw(table, 'BBB', 'QA', 1, 10, 75, {'TE', 'WR'}, 'seed-a')
         self.assertEqual(moved['target_role_history_n'], 1)
         self.assertEqual(table['target_qb_cell'][('AAA', 'QA', cell)]['WR'], 10)
@@ -65,6 +94,9 @@ class QbDecisionModel(unittest.TestCase):
         self.assertEqual(table['source_seasons'], [2022, 2023, 2024, 2025])
         self.assertNotIn(('g26', 1), table['row_target_roles'])
         self.assertEqual(table['league_cell'][cell]['scramble'], 10)
+        self.assertEqual(table['source_counts']['primary_qb_run_opportunities'], 16)
+        self.assertEqual(table['qb_run_player_all'][('AAA', 'QA')]['qb'], 3)
+        self.assertEqual(table['qb_run_player_all'][('AAA', 'QA')]['other'], 8)
 
     def test_target_role_draw_uses_qb_history_and_restricts_to_available_roles(self):
         table = qbd.load(self.db, 2025)
@@ -133,6 +165,32 @@ class QbDecisionModel(unittest.TestCase):
         nxt = {'game_id': 'g', 'qtr': 1, 'game_seconds_remaining': 790, 'play_type': 'run', 'posteam': 'AAA'}
         self.assertIsNone(e1.classify(row, nxt, Counter()))
         self.assertEqual(e1.classify(row, nxt, Counter(), include_qb_scrambles=True), ('run', 10, None))
+
+    def test_player_specific_qb_run_role_style_adjusts_only_the_qb_role(self):
+        table = qbd.load(self.db, 2026)
+        cell = qbd.cell_of(1, 10, 75)
+        role, style = qbd.adjust_qb_run_role(
+            table, 'AAA', 'QA', 1, 10, 75,
+            {'RB': 0.45, 'QB': 0.40, 'WR_TE': 0.10, 'Other': 0.05}, 'pocket-qb-run-style')
+        self.assertTrue(style['adjusted'])
+        self.assertLess(style['adjusted_qb_probability'], style['base_qb_probability'])
+        self.assertIn(role, {'RB', 'QB', 'WR_TE', 'Other'})
+        self.assertEqual(qbd.cell_of(1, 10, 75), cell)
+
+        role, style = qbd.adjust_qb_run_role(
+            table, 'AAA', 'QA', 1, 10, 75,
+            {'RB': 1.0, 'QB': 0.0, 'WR_TE': 0.0, 'Other': 0.0}, 'sparse-team-run-role')
+        self.assertEqual(style['base_probability_fallback'], 'historical_team_run_rate')
+        self.assertGreater(style['adjusted_qb_probability'], 0.0)
+        self.assertIn(role, {'RB', 'QB', 'WR_TE', 'Other'})
+
+    def test_new_qb_without_primary_run_history_keeps_the_team_prior(self):
+        table = qbd.load(self.db, 2026)
+        role, style = qbd.adjust_qb_run_role(
+            table, 'AAA', 'QNEW', 1, 10, 75,
+            {'RB': 0.45, 'QB': 0.40, 'WR_TE': 0.10, 'Other': 0.05}, 'new-qb-run-style')
+        self.assertIsNone(role)
+        self.assertIsNone(style)
 
 
 if __name__ == '__main__':

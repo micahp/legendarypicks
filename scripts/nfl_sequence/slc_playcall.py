@@ -193,6 +193,7 @@ class PlayCallSampler:
         self.playbook_table = None
         # QB-specific pre-event target-role and scramble choices, off unless explicitly loaded.
         self.qb_decision_table = None
+        self.qb_run_role_style_enabled = False
         # Per-player event and joint yards/touchdown outcome profiles, off unless explicitly loaded.
         self.player_outcome_table = None
         self.player_outcome_roles = None
@@ -573,6 +574,7 @@ class PlayCallSampler:
             'qb_action': qb_decision.get('action') if qb_decision else None,
             'qb_scramble_probability': qb_decision.get('scramble_probability') if qb_decision else None,
             'qb_scramble_fallback': qb_decision.get('scramble_fallback') if qb_decision else None,
+            'qb_run_role_style': (pre_event or {}).get('qb_run_role_style'),
             'qb_target_role': qb_decision.get('target_role') if qb_decision else None,
             'qb_target_role_probabilities': qb_decision.get('target_role_probabilities') if qb_decision else None,
             'qb_target_role_draw_fallback': qb_decision.get('target_role_fallback') if qb_decision else None,

@@ -17,7 +17,8 @@ class FullStackProfile(unittest.TestCase):
     def test_profile_enumerates_every_intended_layer_and_excludes_fixed_share_adapter(self):
         self.assertEqual(set(self.resolved['enabled_layers']), set(config.ENGINE_LAYER_KEYS))
         for layer in config.ENGINE_LAYER_KEYS:
-            self.assertEqual(self.resolved['enabled_layers'][layer], layer != 'fixed_player_target_carry_shares', layer)
+            expected = layer not in ('fixed_player_target_carry_shares', 'qb_run_role_style')
+            self.assertEqual(self.resolved['enabled_layers'][layer], expected, layer)
         self.assertTrue(self.resolved['enabled_layers']['decision_row_filter'])
         self.assertTrue(self.resolved['enabled_layers']['current_streak_context'])
 
@@ -42,6 +43,39 @@ class FullStackProfile(unittest.TestCase):
         self.assertTrue(ablated['enabled_layers']['decision_labels'])
         self.assertNotEqual(ablated['model_id'], self.resolved['model_id'])
 
+    def test_qb_run_role_style_is_opt_in_and_can_be_ablated_independently(self):
+        self.assertFalse(self.resolved['enabled_layers']['qb_run_role_style'])
+        enabled = config.resolve_profile('v1_full_stack', artifact_path='a', streak_file='s',
+                                         options={'playcall_qb_run_role_style': True})
+        self.assertTrue(enabled['enabled_layers']['qb_run_role_style'])
+        self.assertEqual(enabled['model_id'], 'SLC_v1_full_stack_qb_run_role_style')
+        ablated = config.resolve_profile('v1_full_stack', artifact_path='a', streak_file='s',
+                                         options={'playcall_qb_run_role_style': True},
+                                         disable_layers=('qb_run_role_style',))
+        self.assertFalse(ablated['enabled_layers']['qb_run_role_style'])
+        self.assertTrue(ablated['enabled_layers']['qb_decisions'])
+        self.assertTrue(ablated['enabled_layers']['decision_labels'])
+        self.assertNotEqual(ablated['model_id'], self.resolved['model_id'])
+
+    def test_qb_run_role_style_requires_qb_decisions(self):
+        with self.assertRaisesRegex(ValueError, 'requires the QB decision model'):
+            config.resolve_profile('custom', artifact_path='a',
+                                   options={'playcall_qb_run_role_style': True})
+
+    def test_qb_run_role_style_requires_decision_labels(self):
+        with self.assertRaisesRegex(ValueError, 'requires decision labels'):
+            config.resolve_profile('custom', artifact_path='a', options={
+                'playcall_qb_decisions': True,
+                'playcall_qb_run_role_style': True,
+            })
+
+    def test_custom_profile_can_disable_the_style_while_retaining_qb_decisions(self):
+        ablated = config.resolve_profile('custom', artifact_path='a',
+                                         options={'playcall_qb_decisions': True},
+                                         disable_layers=('qb_run_role_style',))
+        self.assertTrue(ablated['enabled_layers']['qb_decisions'])
+        self.assertFalse(ablated['enabled_layers']['qb_run_role_style'])
+
     def test_disabling_decision_labels_requires_disabling_dependent_playbook_layer(self):
         with self.assertRaisesRegex(ValueError, 'playbook priors depend on decision labels'):
             config.resolve_profile('v1_full_stack', artifact_path='a', streak_file='s',
@@ -58,7 +92,7 @@ class FullStackProfile(unittest.TestCase):
             'slc_profile': 'v1_full_stack', 'slc_disable_layer': [], 'playcall_artifact': 'artifact.json',
             'playcall_streak_file': 'streak.json', 'playcall_decision_unfiltered': False,
             'playcall_player_outcomes_receiver_only': False, 'playcall_point_splits_cache': None,
-            'playcall_streak_cache': None,
+            'playcall_streak_cache': None, 'playcall_qb_run_role_style': False,
         }
         values.update({option: False for option in config.V1_OPTIONS})
         args = SimpleNamespace(**values)

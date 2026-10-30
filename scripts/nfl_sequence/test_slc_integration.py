@@ -31,10 +31,25 @@ class Game(unittest.TestCase):
         snapshot['model_reference']['observed_reference'] = ref.model_inputs
         cls.record, cls.decisions = se.play(1, ref, snapshot)
         cls.plays = [p for d in cls.record['drives'] for p in d['plays']]
+        cls.engine = se
         cls.json = json
 
     def test_the_decisions_and_the_plays_are_the_same_sequence(self):
-        self.assertEqual([d['event'] for d in self.decisions], [p['event_type'] for p in self.plays])
+        # Official drives are only the committed prefix. A blocked game can also
+        # retain raw plays from the unresolved drive and its unresolved decision.
+        blocked = self.record.get('blocked_attempt') or {}
+        partial_plays = blocked.get('plays_before_block') or []
+        unresolved = blocked.get('unrepresented_decisions') or []
+        self.assertEqual(
+            len(self.decisions), len(self.plays) + len(partial_plays) + len(unresolved))
+        self.assertEqual([d['event'] for d in self.decisions[:len(self.plays)]],
+                         [p['event_type'] for p in self.plays])
+        for decision, play in zip(self.decisions[len(self.plays):], partial_plays):
+            self.assertTrue(
+                self.engine._decision_resolves_to_event(decision, play['event_type']),
+                f"blocked-attempt decision {decision.get('event')} does not resolve to {play['event_type']}",
+            )
+        self.assertEqual(self.decisions[len(self.plays) + len(partial_plays):], unresolved)
 
     def test_every_scrimmage_decision_names_a_formation_before_its_outcome(self):
         scrimmage = [d for d in self.decisions if d['intent'] != 'kick']
