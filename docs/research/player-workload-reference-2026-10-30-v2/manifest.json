@@ -1,0 +1,126 @@
+{
+  "coverage": {
+    "counts": {
+      "event_player_games_missing_participation": 68,
+      "non_regular_or_out_of_window_participation_rows": 8605,
+      "participation_empty_rows_without_pbp_match_2022": 687,
+      "participation_non_scrimmage_rows_excluded_2022": 12902,
+      "participation_non_scrimmage_rows_excluded_2023": 9603,
+      "participation_non_scrimmage_rows_excluded_2024": 9915,
+      "participation_non_scrimmage_rows_excluded_2025": 9591,
+      "participation_rows_2022": 50150,
+      "participation_rows_2023": 46168,
+      "participation_rows_2024": 45919,
+      "participation_rows_2025": 45184,
+      "participation_scrimmage_rows_joined_2022": 34255,
+      "participation_scrimmage_rows_joined_2023": 34454,
+      "participation_scrimmage_rows_joined_2024": 33951,
+      "participation_scrimmage_rows_joined_2025": 33458,
+      "pbp_games_2022": 271,
+      "pbp_games_2023": 272,
+      "pbp_games_2024": 272,
+      "pbp_games_2025": 272,
+      "pbp_games_2026": 107,
+      "pbp_regular_play_keys_2022": 47157,
+      "pbp_regular_play_keys_2023": 47399,
+      "pbp_regular_play_keys_2024": 47274,
+      "pbp_regular_play_keys_2025": 46452,
+      "pbp_rows_2022": 47157,
+      "pbp_rows_2023": 47399,
+      "pbp_rows_2024": 47274,
+      "pbp_rows_2025": 46452,
+      "pbp_rows_2026": 18738,
+      "pbp_scrimmage_play_keys_2022": 34255,
+      "pbp_scrimmage_play_keys_2023": 34454,
+      "pbp_scrimmage_play_keys_2024": 33951,
+      "pbp_scrimmage_play_keys_2025": 33458,
+      "postseason_rows_excluded_2022": 2277,
+      "postseason_rows_excluded_2023": 2266,
+      "postseason_rows_excluded_2024": 2218,
+      "postseason_rows_excluded_2025": 2319
+    },
+    "event_player_games_missing_participation": 68,
+    "historical_games": 1087,
+    "historical_participant_game_pairs": 40899,
+    "historical_position_conflict_player_games": 0,
+    "participation_position_alignment_mismatch_rows": 0
+  },
+  "definitions": {
+    "2026_player_game_denominator": "player appears in an offensive PBP participant ID field during Weeks 1-7; this is a lower bound, not a complete participation denominator.",
+    "conditional_usage": "PBP play decisions grouped by pre-play score differential, quarter, remaining-time bucket, down, distance, and field zone. Player shares divide by same-team actions of the same type and context.",
+    "designed_qb_runs": "QB rusher with rush_attempt, qb_scramble=0, qb_kneel=0 and qb_dropback!=1; includes detected QB sneaks.",
+    "historical_player_game_denominator": "unique player-game IDs in participation offense_players; a player counts as eligible after at least one recorded offensive snap.",
+    "historical_record_boundaries": "record alerts are empirical warnings, never legal or physical limits.",
+    "identity": "GSIS player ID; display name is resolved from nflverse players.csv; no name-based joins.",
+    "pass_attempts": "PBP pass_attempt minus sacks and all two_point_attempt rows; pass yards are attributed by passer_player_id.",
+    "position": "per-game nflverse participation offense_positions mode; canonical players.csv fallback. 2026 uses weekly roster position first.",
+    "qb_sneaks": "subset of designed QB runs identified by the PBP description regex in the source code; heuristic, not an NFL accounting field.",
+    "quantiles": "linear interpolation over per-player-game counts; standard deviation is population SD.",
+    "receiving_yards": "receiving_yards to receiver_player_id plus lateral_receiving_yards to lateral_receiver_player_id; source differences are retained in reconciliation output.",
+    "receptions": "complete_pass with receiver_player_id, excluding two-point tries.",
+    "rush_attempts": "PBP rush_attempt excluding two_point_attempt; includes kneels and sneaks in total carry count.",
+    "shrinkage": "mean only: (player_game_n * player mean + 8 * position-window mean)/(player_game_n + 8); raw quantiles and max are never altered.",
+    "targets": "pass_attempt with receiver_player_id, excluding two-point tries; missing target IDs remain in team pass-attempt denominators.",
+    "throwaways": "passer attempts with an explicit \"thrown away\" or equivalent string in the play description; lower bound on all throwaways."
+  },
+  "generated_at_utc": "2026-10-30T22:40:56Z",
+  "output_sha256": {
+    "named_player_game_examples.csv": "29de1175d8b81d9014ec6e8abeecea96d209099be48f1536d0990df3b9781a6e",
+    "player_workload_distributions.csv": "571e796194149185f30cce5cdab40f306d54abf15999190257585f09ec6d4563",
+    "position_workload_distributions.csv": "c3f337eeb46a180de0b91de9e09b84e7c8fbe807e5eead0bef8a148c0d7c6911",
+    "published_source_reconciliation.csv": "6f635386d8756f545c9c2b9bd57ccd9819952474bab699ce727b94381d1d629f",
+    "situational_player_usage.csv": "903fd5019f2e8493c72798c85ae759d7827634a3087bc0f5c19a86891c9f8004",
+    "team_game_usage.csv": "23ff9beaf39590d3a57f2d62bf473c4443d8b55ab08424ec6bf3543ce85281f0"
+  },
+  "schema": "lp.nfl.player-workload-reference.v2",
+  "source_reconciliation_status": "mismatch_disclosed",
+  "sources": {
+    "field_dictionary": [
+      "https://nflreadr.nflverse.com/articles/dictionary_pbp.html",
+      "https://nflreadr.nflverse.com/articles/dictionary_participation.html"
+    ],
+    "local_source_files": {
+      "pbp_2022.csv.gz": "0c69a71eb39498956c7b1d5c1ca52ce7fe679934a95d1af249facb5ea9829ea4",
+      "pbp_2023.csv.gz": "4649804ee0f0a40b41e51ec75a1ce921949d7fab5459213488656b92f78560e8",
+      "pbp_2024.csv.gz": "23370d5d10f8104d80d46a1fc5e61f4f6f5a3263fe96fe2dd629913cfcb08c06",
+      "pbp_2025.csv.gz": "2f135887790a013fd004e609e37096bb4816d5cc80b9f19122e1bad478961978",
+      "pbp_2026_week7.csv.gz": "30f31f1faf184be5a3014395c6830ed81ac5f60a03790e3e4a849dc020a70396",
+      "pbp_participation_2022.csv": "37eae0a8c388d0974c6df9a1f9a1d01f09f63a21440d3b03d7f208c1438c51e4",
+      "pbp_participation_2023.csv": "ad01aeb4045ee19a4f086ff38b52b14c8f427d3401e529c3078a4545921650a9",
+      "pbp_participation_2024.csv": "b1f436a98b2a7759eb4ed1181e072a35c2666f9aeb356a49c943d28d6be6b0b9",
+      "pbp_participation_2025.csv": "59069adfee7b0f464befba8a5e8be331e523633cc6a7ab403d37bcbcdfbe66ac",
+      "players.csv": "c5239e1480b397732d004f81c87dbb07565ff6ea4b2a0e6382cbb7ed35f6481e",
+      "roster_weekly_2026.csv.gz": "f76451b58ef60bc2baed5b45e4ccde60feae15568149532a8b2bcaad32d350c0",
+      "stats_player_reg_2025.csv": "aaa8559478dd8d58569c93e278239e70e9411e79ee649c99d8d506030cd42b12",
+      "stats_player_week_2026.csv": "642a39fc10523818320ad583574fbc408c0caf530f7f2dfb88f2d2f545dd136d"
+    },
+    "publisher": "nflverse",
+    "release_pages": [
+      "https://github.com/nflverse/nflverse-data/releases/tag/pbp",
+      "https://github.com/nflverse/nflverse-data/releases/tag/pbp_participation"
+    ]
+  },
+  "window": {
+    "historical_holdout": {
+      "season_max": 2025,
+      "season_min": 2025,
+      "season_type": "REG"
+    },
+    "historical_train": {
+      "season_max": 2024,
+      "season_min": 2022,
+      "season_type": "REG"
+    },
+    "multi_season": {
+      "season_max": 2025,
+      "season_min": 2022,
+      "season_type": "REG"
+    },
+    "target_cutoff": {
+      "last_game_date_observed": "2026-10-26",
+      "season": 2026,
+      "week_max": 7,
+      "week_min": 1
+    }
+  }
+}
