@@ -394,13 +394,16 @@ def _record_outcome(seed, record=None, error=None, validation_error=False):
     regulation_end = bool(record.get('regulation_end_reached') or (
         blocker == 'overtime_not_modelled' and record.get('final_quarter') == 4
         and record.get('final_clock_seconds') == 0))
-    tied_at_end = bool(record.get('tied') and regulation_end)
+    tied_at_regulation_end = bool(
+        blocker == 'overtime_not_modelled' and record.get('final_quarter') == 4
+        and record.get('final_clock_seconds') == 0 and record.get('tied'))
     valid = bool(record.get('valid_full_game') and record.get('complete_game') and not validation_error)
     status = 'validation_error' if validation_error else record.get('status', 'unknown')
     return {
         'seed': seed, 'status': status, 'blocker': blocker,
         'valid_full_game': valid, 'complete_game': bool(record.get('complete_game') and not validation_error),
-        'regulation_end_reached': regulation_end, 'tied_at_regulation_end': tied_at_end,
+        'regulation_end_reached': regulation_end, 'tied_at_regulation_end': tied_at_regulation_end,
+        'final_tie': bool(record.get('tied')) if record.get('complete_game') else None,
         'home_points': record.get('points', {}).get('A'), 'away_points': record.get('points', {}).get('B'),
         'score_scope': 'valid_final' if valid else 'regulation_end_only' if regulation_end else 'partial',
         'unsupported_rules': record.get('unsupported_rules', []),
