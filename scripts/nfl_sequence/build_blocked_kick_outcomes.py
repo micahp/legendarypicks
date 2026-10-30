@@ -21,16 +21,18 @@ REPO = Path(__file__).resolve().parents[2]
 SEASONS = (2022, 2023, 2024, 2025)
 DEFAULT_SOURCE = Path('/root/nflverse-raw')
 DEFAULT_OUT = REPO / 'docs/fixtures/e2/blocked_kick_outcomes_2022_2025.csv'
+DEFAULT_AUDITED_OUT = REPO / 'docs/fixtures/e2/blocked_kick_outcomes_2022_2025_audited_v1.csv'
 COLUMNS = (
     'kick_type', 'game_id', 'play_id', 'season', 'week', 'posteam', 'defteam', 'down', 'ydstogo', 'yardline_100',
     'quarter', 'clock_seconds_remaining', 'clock_runoff_seconds', 'blocked', 'crossed_line', 'recovery_team',
     'recovery_role', 'recovery_spot_yardline_100', 'return_endpoint_yardline_100', 'return_yards',
     'recovery_yards_from_los', 'return_endpoint_yards_from_los', 'dead_ball_yards_from_los',
     'return_endpoint_source', 'dead_ball_spot_source',
-    'possession_after_role', 'next_snap_yardline_100', 'next_snap_down', 'next_snap_ydstogo',
+    'possession_after_role', 'next_snap_play_id', 'next_snap_yardline_100', 'next_snap_down', 'next_snap_ydstogo',
+    'next_snap_yards_from_los',
     'touchdown', 'scoring_team', 'safety', 'classification_status', 'classification_note', 'return_team_field',
     'return_yards_field', 'return_touchdown_field', 'receiving_team_touched_beyond_line', 'series_result', 'desc',
-    'source_file', 'source_sha256',
+    'source_file', 'source_sha256', 'source_audit_ref', 'source_audit_evidence',
 )
 READ_COLUMNS = (
     'season', 'week', 'season_type', 'game_id', 'play_id', 'play_type', 'posteam', 'defteam', 'yardline_100',
@@ -42,6 +44,102 @@ READ_COLUMNS = (
 # Yards between the receivers' first snap and the Rule 11-4-2 spot. Observed starts sat 0 to 2 yards from it in every
 # untouched blocked field goal in 2022-2025 with a receiving-team snap, so a start further off is refused, not used.
 RULE_11_4_2_TOLERANCE = 2
+
+# The five review decisions are limited to source descriptions plus the recorded next scrimmage snap.
+# They preserve each event as a blocked kick and classify only its observed post-play possession and state.
+SOURCE_AUDIT = {
+    ('2022_05_SF_CAR', 1745): 'recovery_then_fumble_recovered_by_receiving_team; next CAR snap at CAR 22, 1st-and-10',
+    ('2023_15_PIT_IND', 902): 'PIT recovery at IND 1; replay review upheld runner-down ruling; next PIT snap at IND 1, 1st-and-1',
+    ('2024_05_MIA_NE', 1249): 'MIA recovery then fumble recovered by NE; next NE snap at MIA 23, 1st-and-10',
+    ('2025_03_LA_PHI', 3600): 'LA recovery; PHI taunting penalty enforced between downs; next PHI snap at PHI 9, 1st-and-10',
+    ('2025_10_NO_CAR', 2504): 'review reversed kick-touched ruling; muffed catch recovered by CAR; next CAR snap at NO 30, 1st-and-10',
+}
+SOURCE_AUDIT_NEXT_SNAP_IDS = {
+    ('2022_05_SF_CAR', 1745): 1797,
+    ('2023_15_PIT_IND', 902): 941,
+    ('2024_05_MIA_NE', 1249): 1277,
+    ('2025_03_LA_PHI', 3600): 3632,
+    ('2025_10_NO_CAR', 2504): 2534,
+}
+
+
+def apply_source_audit_overlay(source_path=DEFAULT_OUT, out_path=DEFAULT_AUDITED_OUT):
+    """Write a separate, source-linked fixture resolving only the five reviewed next-snap outcomes."""
+    source_path, out_path = Path(source_path), Path(out_path)
+
+    def display_path(path):
+        try:
+            return str(path.relative_to(REPO))
+        except ValueError:
+            return str(path)
+
+    base_sha = sha256(source_path)
+    with source_path.open(newline='') as handle:
+        records = list(csv.DictReader(handle))
+    found = set()
+    for row in records:
+        key = (row['game_id'], int(float(row['play_id'])))
+        if key not in SOURCE_AUDIT:
+            row.setdefault('next_snap_yards_from_los', '')
+            row.setdefault('source_audit_ref', '')
+            row.setdefault('source_audit_evidence', '')
+            continue
+        found.add(key)
+        if row['classification_status'] != 'guarded_penalty_fumble_or_review':
+            raise ValueError(f'audit overlay expected guarded source classification for {key}')
+        if not all(row.get(field) for field in ('yardline_100', 'possession_after_role', 'next_snap_play_id',
+                                                'next_snap_yardline_100',
+                                                'next_snap_down', 'next_snap_ydstogo')):
+            if all(row.get(field) for field in ('yardline_100', 'possession_after_role', 'next_snap_yardline_100',
+                                                'next_snap_down', 'next_snap_ydstogo')):
+                row['next_snap_play_id'] = str(SOURCE_AUDIT_NEXT_SNAP_IDS[key])
+            else:
+                raise ValueError(f'audit overlay lacks a complete observed next snap for {key}')
+        if int(float(row['next_snap_play_id'])) != SOURCE_AUDIT_NEXT_SNAP_IDS[key]:
+            raise ValueError(f'audit overlay next-snap identity mismatch for {key}')
+        los = int(float(row['yardline_100']))
+        next_yardline = int(float(row['next_snap_yardline_100']))
+        role = row['possession_after_role']
+        if role == 'receiving_team':
+            delta = next_yardline - (100 - los)
+        elif role == 'kicking_team':
+            delta = los - next_yardline
+        else:
+            raise ValueError(f'audit overlay has unknown post-kick possession for {key}: {role}')
+        row['next_snap_yards_from_los'] = str(delta)
+        row['classification_status'] = 'classified_next_snap'
+        row['classification_note'] = ';'.join(filter(None, (row['classification_note'], 'reviewed_next_snap_source_audit_v1')))
+        row['source_audit_ref'] = 'blocked-kick-source-audit-v1'
+        row['source_audit_evidence'] = SOURCE_AUDIT[key]
+    if found != set(SOURCE_AUDIT):
+        raise ValueError(f'audit overlay source keys missing from fixture: {sorted(set(SOURCE_AUDIT) - found)}')
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with out_path.open('w', newline='') as handle:
+        writer = csv.DictWriter(handle, fieldnames=COLUMNS, lineterminator='\n')
+        writer.writeheader()
+        writer.writerows(records)
+    statuses = Counter((row['kick_type'], row['classification_status']) for row in records)
+    base_manifest_path = source_path.with_suffix(source_path.suffix + '.manifest.json')
+    base_manifest = json.loads(base_manifest_path.read_text())
+    manifest = dict(base_manifest)
+    manifest.update({
+        'generator': str(Path(__file__).relative_to(REPO)), 'generator_sha256': sha256(__file__),
+        'record_count': len(records), 'columns': list(COLUMNS),
+        'status_counts': {f'{kick}|{status}': count for (kick, status), count in sorted(statuses.items())},
+        'base_fixture': {'path': display_path(source_path),
+                         'sha256': base_sha, 'manifest_sha256': sha256(base_manifest_path)},
+        'audit_overlay': {'version': 'blocked-kick-source-audit-v1',
+                          'reviewed_record_count': len(SOURCE_AUDIT),
+                          'records': [{'game_id': row['game_id'], 'blocked_play_id': int(float(row['play_id'])),
+                                       'next_snap_play_id': int(float(row['next_snap_play_id'])),
+                                       'possession_after_role': row['possession_after_role'], 'resolution': SOURCE_AUDIT[(row['game_id'], int(float(row['play_id'])))]}
+                                      for row in records if (row['game_id'], int(float(row['play_id']))) in SOURCE_AUDIT],
+                          'rule': 'use the observed possession, next snap, down and distance; project only the source-line displacement when geometry mode is enabled; retain every other unresolved row'},
+        'output': {'path': display_path(out_path),
+                   'sha256': sha256(out_path)},
+    })
+    out_path.with_suffix(out_path.suffix + '.manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
+    return manifest
 
 
 def sha256(path):
@@ -186,13 +284,18 @@ def build_record(row, rows, index, source_file, source_hash):
         endpoint_source = ''
     nxt = _next_snap(rows, index, row['qtr'])
     possession_role = None
-    next_yardline = next_down = next_togo = None
+    next_snap_play_id = next_yardline = next_down = next_togo = next_snap_delta = None
     if nxt is not None:
         possession_role = ('kicking_team' if nxt['posteam'] == kicking else
                            'receiving_team' if nxt['posteam'] == receiving else None)
+        next_snap_play_id = int(nxt['play_id']) if nxt['play_id'] is not None else None
         next_yardline = int(round(nxt['yardline_100'])) if nxt['yardline_100'] is not None else None
         next_down = int(nxt['down']) if nxt['down'] is not None else None
         next_togo = int(round(nxt['ydstogo'])) if nxt['ydstogo'] is not None else None
+        if row['yardline_100'] is not None and next_yardline is not None:
+            source_los = int(round(row['yardline_100']))
+            next_snap_delta = (next_yardline - (100 - source_los) if possession_role == 'receiving_team' else
+                               source_los - next_yardline if possession_role == 'kicking_team' else None)
     los_progress = 100 - int(round(row['yardline_100'])) if row['yardline_100'] is not None else None
     if recovery_role and recovery_progress is not None:
         recovery_yards_from_los = recovery_progress - los_progress if los_progress is not None else None
@@ -291,8 +394,10 @@ def build_record(row, rows, index, source_file, source_hash):
         'return_endpoint_yards_from_los': return_endpoint_yards_from_los,
         'dead_ball_yards_from_los': dead_ball_yards_from_los, 'return_endpoint_source': endpoint_source,
         'dead_ball_spot_source': dead_ball_source,
-        'possession_after_role': possession_role or '', 'next_snap_yardline_100': next_yardline,
+        'possession_after_role': possession_role or '', 'next_snap_play_id': next_snap_play_id or '',
+        'next_snap_yardline_100': next_yardline,
         'next_snap_down': next_down, 'next_snap_ydstogo': next_togo, 'touchdown': int(touchdown),
+        'next_snap_yards_from_los': next_snap_delta if next_snap_delta is not None else '',
         'scoring_team': scoring_team or '', 'safety': int(safety), 'classification_status': status,
         'classification_note': ';'.join(note), 'return_team_field': row['return_team'] or '',
         'return_yards_field': row['return_yards'], 'return_touchdown_field': row['return_touchdown'],
@@ -303,12 +408,22 @@ def build_record(row, rows, index, source_file, source_hash):
 
 
 def main():
-    import pyarrow.parquet as pq
-
     ap = argparse.ArgumentParser()
     ap.add_argument('--source-dir', type=Path, default=DEFAULT_SOURCE)
     ap.add_argument('--out', type=Path, default=DEFAULT_OUT)
+    ap.add_argument('--audit-overlay', action='store_true',
+                    help='write the reviewed v1 overlay to a separate file; the original fixture is never overwritten')
+    ap.add_argument('--audit-source', type=Path, default=DEFAULT_OUT,
+                    help='base fixture consumed by --audit-overlay')
+    ap.add_argument('--audit-overlay-out', type=Path, default=DEFAULT_AUDITED_OUT,
+                    help='separate output path for --audit-overlay')
     args = ap.parse_args()
+    if args.audit_overlay:
+        manifest = apply_source_audit_overlay(args.audit_source, args.audit_overlay_out)
+        print(json.dumps({'records': manifest['record_count'], 'audit': manifest['audit_overlay'],
+                          'sha256': manifest['output']['sha256']}, indent=2))
+        return
+    import pyarrow.parquet as pq
     records = []
     source_hashes = {}
     fg_attempts = Counter()

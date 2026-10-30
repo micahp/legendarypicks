@@ -107,6 +107,10 @@ def _reproduction_command(args, seed):
         command.append('--no-safety-table')
     if args.playcall_artifact:
         command.extend(['--playcall-artifact', str(args.playcall_artifact)])
+    for fix in args.slc_blocker_fix:
+        command.extend(['--slc-blocker-fix', fix])
+    if args.slc_blocker_fix:
+        command.extend(['--slc-fg-ordinary-cutoff', str(args.slc_fg_ordinary_cutoff)])
     if args.slc_profile != 'custom':
         command.extend(['--slc-profile', args.slc_profile])
     for layer in args.slc_disable_layer:
@@ -444,7 +448,7 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
         validation_error = record is not None
     outcome = _record_outcome(seed, record, error, validation_error)
     if decisions is not None:
-        outcome['playcall'] = slc_engine.summary(decisions)
+        outcome['playcall'] = slc_engine.summary(decisions, record)
     if export_boxscores:
         try:
             boxscore = slc_outputs.build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_validation)
@@ -456,7 +460,7 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
             if outcome['status'] not in ERROR_STATUSES:
                 outcome = _record_outcome(seed, record, boxscore_error, validation_error=True)
                 if decisions is not None:
-                    outcome['playcall'] = slc_engine.summary(decisions)
+                    outcome['playcall'] = slc_engine.summary(decisions, record)
             # Preserve an auditable error line even when strict roster identity or reconciliation fails.
             minimal = slc_outputs.build_boxscore(seed, outcome, None, snapshot, profile_manifest, archive_validation)
             outcome['boxscore_error'] = boxscore_error
@@ -607,7 +611,7 @@ def _execution_verification(outcomes, profile_manifest):
         hits = counts.get(layer, 0)
         layers[layer] = {'enabled': bool(enabled), 'runtime_applications': hits,
                          'status': ('not_enabled' if not enabled else 'executed' if hits else 'enabled_no_observed_application')}
-    return {
+    result = {
         'simulation_seeds_with_playcall_trace': games_with_trace,
         'layers': layers,
         'fallback_events': dict(sorted(fallback_events.items())),
@@ -615,6 +619,51 @@ def _execution_verification(outcomes, profile_manifest):
         'note': ('A layer is only reported executed when its instrumented decision path ran. State-conditional layers can have '
                  'zero applications in a small sample; that remains visible and does not count as a silent fallback.'),
     }
+    if profile_manifest.get('blocker_resolution'):
+        level_counts = defaultdict(int)
+        metric_counts = defaultdict(int)
+        usage = defaultdict(lambda: {'count': 0, 'support_weighted_sum': 0.0,
+                                     'support_min': None, 'support_max': None})
+        for outcome in outcomes:
+            blocker = (outcome.get('playcall') or {}).get('blocker_resolution') or {}
+            for name in ('outcome_fallback_level', 'scramble_outcome_fallback_level',
+                         'scramble_decision_fallback_level',
+                         'scramble_support_level', 'fg_fallback_level',
+                         'fg_rejection_reason', 'blocked_kick_geometry_categories'):
+                for level, count in (blocker.get(name) or {}).items():
+                    level_counts[f'{name}:{level}'] += int(count)
+            for name in ('scramble_rejected_bounds', 'scramble_eligible_candidates', 'fg_rejected_distance',
+                         'fg_long_range_exception', 'blocked_kick_geometry_rejected',
+                         'blocked_kick_source_audit_transitions', 'safety_free_kicks'):
+                metric_counts[name] += int(blocker.get(name, 0) or 0)
+            for item in blocker.get('fallback_usage') or []:
+                key = (item.get('kind'), item.get('level'), item.get('team'), item.get('down'),
+                       item.get('distance_bucket'), item.get('field_zone_bucket'))
+                target = usage[key]
+                count = int(item.get('count', 0))
+                target['count'] += count
+                support = item.get('support_n') or {}
+                if support:
+                    target['support_weighted_sum'] += float(support['mean']) * count
+                    target['support_min'] = (support['min'] if target['support_min'] is None else
+                                             min(target['support_min'], support['min']))
+                    target['support_max'] = (support['max'] if target['support_max'] is None else
+                                             max(target['support_max'], support['max']))
+        usage_rows = []
+        for key, value in sorted(usage.items(), key=lambda item: tuple('' if x is None else str(x) for x in item[0])):
+            kind, level, team, down, distance, field = key
+            count = value['count']
+            usage_rows.append({'kind': kind, 'level': level, 'team': team, 'down': down,
+                               'distance_bucket': distance, 'field_zone_bucket': field, 'count': count,
+                               'support_n': ({'min': value['support_min'],
+                                              'mean': round(value['support_weighted_sum'] / count, 2),
+                                              'max': value['support_max']}
+                                             if value['support_min'] is not None and count else None)})
+        result['blocker_resolution'] = {'enabled_fixes': profile_manifest['blocker_resolution'].get('enabled_fixes', []),
+                                        'runtime_metrics': dict(sorted(metric_counts.items())),
+                                        'counts_by_level': dict(sorted(level_counts.items())),
+                                        'fallback_usage_by_team_situation': usage_rows}
+    return result
 
 
 def run_batch(args):
@@ -717,7 +766,9 @@ def run_batch(args):
                                                            playbook=args.playcall_playbook,
                                                            source_commit=source_provenance['base_commit'],
                                                            streak_league=(str(args.playcall_streak_cache) if (args.playcall_streak_cache and args.playcall_streak_league)
-                                                                          else args.playcall_streak_league))
+                                                                          else args.playcall_streak_league),
+                                                           blocker_fixes=args.slc_blocker_fix,
+                                                           fg_ordinary_cutoff=args.slc_fg_ordinary_cutoff)
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
@@ -1055,6 +1106,10 @@ def main(argv=None):
     ap.add_argument('--playcall-artifact',
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')
+    ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
+                    help='opt-in SLC research blocker fix; repeat to enable multiple fixes')
+    ap.add_argument('--slc-fg-ordinary-cutoff', type=float, default=60.0,
+                    help='ordinary field-goal decision maximum in yards when long_field_goal_feasibility is enabled')
     ap.add_argument('--progress-every', type=int, default=1000,
                     help='print a progress line every N games; use 0 to disable')
     ap.add_argument('--resume', action='store_true',
@@ -1074,6 +1129,8 @@ def main(argv=None):
                                                   'context: venue capacity, kickoff, forecast, referee status and '
                                                   'broadcast. The model does not read it.'))
     args = ap.parse_args(argv)
+    if args.slc_blocker_fix and not args.playcall_artifact:
+        ap.error('--slc-blocker-fix requires --playcall-artifact')
     if args.playcall_player_outcomes_receiver_only and not args.playcall_player_outcomes:
         ap.error('--playcall-player-outcomes-receiver-only requires --playcall-player-outcomes')
     if args.availability_snapshot and not args.roster_snapshot:

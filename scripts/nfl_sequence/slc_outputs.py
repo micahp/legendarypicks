@@ -7,6 +7,7 @@ import math
 BOX_SCHEMA = 'lp-nfl-slc-boxscore-1'
 TEAM_FIELDS = {
     'points': 'points', 'touchdowns': 'touchdowns', 'offensive_touchdowns': 'offensive_touchdowns',
+    'observed_overtime_touchdowns': 'observed_overtime_touchdowns',
     'drives': 'drives', 'possession_seconds': 'possession_seconds', 'plays': 'plays',
     'rush_attempts': 'rush_att', 'rushing_yards': 'rush_yds', 'pass_attempts': 'pass_att',
     'completions': 'pass_comp', 'passing_yards': 'pass_yds', 'interceptions': 'interceptions',
@@ -190,9 +191,13 @@ def reconcile_boxscore(boxscore, *, strict):
         if sums['receptions'] != team_stats['completions']:
             mismatches['receptions'] = {'players': sums['receptions'], 'team': team_stats['completions']}
         player_offensive_tds = (sum(p['passing']['td'] + p['rushing']['td'] for p in players))
-        if player_offensive_tds != team_stats['offensive_touchdowns']:
+        unassigned_offensive_tds = team_stats['observed_overtime_touchdowns']
+        reconciled_team_offensive_tds = team_stats['offensive_touchdowns'] - unassigned_offensive_tds
+        if player_offensive_tds != reconciled_team_offensive_tds:
             mismatches['offensive_touchdowns'] = {
-                'players': player_offensive_tds, 'team': team_stats['offensive_touchdowns']}
+                'players': player_offensive_tds, 'team': team_stats['offensive_touchdowns'],
+                'unassigned_observed_overtime': unassigned_offensive_tds,
+                'reconciled_team_total': reconciled_team_offensive_tds}
         results.append({'team': team['team'], 'side': side, 'player_sums': sums,
                         'team_values': {key: team_stats[key] for key in checks.values()},
                         'matches': not mismatches, 'mismatches': mismatches})

@@ -93,7 +93,8 @@ def _by_player_share(players, table, team, role, positions, draw):
 
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
-           share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None):
+           share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None,
+           scramble_backoff_enabled=False):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
@@ -176,7 +177,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                if p['pos_abb'] in player_shares_positions('receive')}
             qb_decision = qb_decisions.draw(
                 qb_decision_table, team, chosen['passer']['gsis_id'], state['down'], state['togo'], state['yl'],
-                available_roles, f'{base}:qb-decision')
+                available_roles, f'{base}:qb-decision', allow_scramble_backoff=scramble_backoff_enabled)
             chosen['qb_decision'] = qb_decision
             if qb_decision['action'] == 'scramble':
                 chosen['rusher'] = chosen['passer']
@@ -308,7 +309,7 @@ def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw
 
 
 def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None,
-            share_table=None, playbook_table=None, qb_decision_table=None):
+            share_table=None, playbook_table=None, qb_decision_table=None, scramble_backoff_enabled=False):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
     The decision index counts those calls, so it is the same on every replay of the same game."""
     counter = {'index': 0}
@@ -321,7 +322,8 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
         return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state,
                       player_shares=player_shares, defense_priors=defense_priors, role_table=role_table,
                       decision_table=decision_table, share_table=share_table, playbook_table=playbook_table,
-                      share_cache=share_cache, qb_decision_table=qb_decision_table)
+                      share_cache=share_cache, qb_decision_table=qb_decision_table,
+                      scramble_backoff_enabled=scramble_backoff_enabled)
     return pick
 
 
