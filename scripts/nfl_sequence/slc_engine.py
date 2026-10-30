@@ -205,6 +205,7 @@ def play(seed, ref, snapshot):
         sampler.participant_chooser = None
     decisions = list(sampler.decisions)
     sampler.decisions.clear()
+    validate_decision_outcomes(record, decisions, seed=seed, snapshot=snapshot)
     if sampler.player_outcome_table is not None:
         roles = (sampler.player_outcome_manifest or {}).get('enabled_roles', ['qb', 'receiver', 'rusher'])
         role_text = ', '.join(roles)
@@ -219,6 +220,76 @@ def play(seed, ref, snapshot):
             'yards_gained. This is a research projection layer; historical source outcomes and the current model do not '
             'establish calibrated forecasts.')
     return record, decisions
+
+
+PASS_RESULT_EVENTS = {'pass_complete', 'pass_incomplete', 'interception'}
+
+
+def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
+    """Refuse mismatches between a pre-outcome QB choice and the play/stat event it produced."""
+    plays = [play for drive in record.get('drives', []) for play in drive.get('plays', [])]
+    snapshot = snapshot or record.get('pregame_snapshot') or {}
+    game_id = (snapshot.get('schedule') or {}).get('game_id') or record.get('game_id') or 'unknown'
+
+    def fail(index, decision, play, reason):
+        play = play or {}
+        hashes = {
+            'snapshot_sha256': snapshot.get('snapshot_sha256', 'unavailable'),
+            'playcall_artifact_sha256': (decision or {}).get('artifact_sha256', 'unavailable'),
+            'source': (decision or {}).get('source', 'unavailable'),
+        }
+        outcome = play.get('outcome') or {}
+        detail = {
+            'game_id': game_id, 'seed': seed, 'play_index': index,
+            'state_before': play.get('state_before', 'unavailable'),
+            'decision': decision or 'unavailable',
+            'outcome': {'event_type': play.get('event_type'), 'yards_gained': outcome.get('yards_gained'),
+                        'turnover': outcome.get('turnover'), 'touchdown': outcome.get('touchdown')},
+            'state_after': play.get('state_after', 'unavailable'),
+            'source_artifact_hashes': hashes,
+        }
+        raise AssertionError(f"ILLEGAL_STATE: {reason}; context={detail}")
+
+    if len(decisions) != len(plays):
+        index = min(len(decisions), len(plays))
+        fail(index, decisions[index] if index < len(decisions) else None,
+             plays[index] if index < len(plays) else None,
+             f'play-call decision count {len(decisions)} does not match emitted play count {len(plays)}')
+
+    for index, (decision, play) in enumerate(zip(decisions, plays), 1):
+        event = play.get('event_type')
+        participants = play.get('participants') or {}
+        selected = decision.get('participants') or {}
+        called = decision.get('intent')
+        outcome_intent = decision.get('outcome_intent', called)
+        qb_action = decision.get('qb_action')
+        if decision.get('event') != event:
+            fail(index, decision, play, f'decision event {decision.get("event")} disagrees with play event {event}')
+
+        if qb_action == 'scramble':
+            passer = selected.get('passer')
+            if (called != 'dropback' or outcome_intent != 'run' or event not in ('run', 'fumble_lost')
+                    or not passer or selected.get('rusher') != passer or participants.get('rusher_id') != passer
+                    or participants.get('receiver_id') is not None):
+                fail(index, decision, play, 'a QB scramble must resolve as a QB rushing play without a pass target')
+        elif called == 'dropback' and outcome_intent == 'run':
+            fail(index, decision, play, 'a dropback cannot become a run without an explicit scramble decision')
+
+        if event == 'sack':
+            if (called != 'dropback' or qb_action == 'scramble' or not participants.get('passer_id')
+                    or participants.get('receiver_id') is not None):
+                fail(index, decision, play, 'a sack needs a passer, no target, and no pass-attempt credit')
+        elif event in PASS_RESULT_EVENTS:
+            if (called != 'dropback' or qb_action == 'scramble' or not participants.get('passer_id')
+                    or not participants.get('receiver_id')):
+                fail(index, decision, play, 'a pass result needs a dropback, passer and attributed target')
+        elif event == 'run':
+            if not participants.get('rusher_id'):
+                fail(index, decision, play, 'a rushing outcome needs an attributed ball carrier')
+            if called == 'dropback' and qb_action != 'scramble':
+                fail(index, decision, play, 'a dropback cannot be relabeled as a designed run')
+
+    return {'status': 'passed', 'plays_checked': len(plays)}
 
 
 def summary(decisions):
