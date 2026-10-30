@@ -358,12 +358,6 @@ class PlayCallSampler:
         qb_decision = pre_event.get('qb_decision') if pre_event else None
         scramble = bool(qb_decision and qb_decision.get('action') == 'scramble')
         outcome_intent = 'run' if scramble else called_intent
-        keys = sorted(k for k in entry['base'] if k[0] == outcome_intent
-                      and (k[1] != 'field_goal_attempt' or field_goal['eligible'])
-                      and (outcome_intent != KICK_INTENT or fg_allowed_events is None
-                           or k[1] in fg_allowed_events))
-        if not keys:
-            raise e1.SamplingUnavailable(f'playcall_no_{outcome_intent}_outcomes_in_cell:{entry["key"]}')
         formation = pre_event.get('formation') if pre_event else None  # chosen before the outcome, from the situation alone
         coverage = pre_event.get('coverage') if pre_event else None  # a dropback decision: the defense's coverage
         if called_intent != 'dropback' or scramble:
@@ -407,8 +401,10 @@ class PlayCallSampler:
                 if sample[0] == key[1]:
                     fallback_by_key[key].append(sample)
         else:
-            keys = sorted(k for k in entry['base'] if k[0] == outcome_intent and
-                          (outcome_intent != KICK_INTENT or fg_allowed_events is None or k[1] in fg_allowed_events))
+            keys = sorted(k for k in entry['base'] if k[0] == outcome_intent
+                          and (k[1] != 'field_goal_attempt' or field_goal['eligible'])
+                          and (outcome_intent != KICK_INTENT or fg_allowed_events is None
+                               or k[1] in fg_allowed_events))
             if exact_outcome_rows is not None:
                 exact_counts = Counter(sample[0] for sample in exact_outcome_rows)
                 keys = [key for key in keys if exact_counts[key[1]]]
