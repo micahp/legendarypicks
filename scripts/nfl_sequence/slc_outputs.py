@@ -147,6 +147,21 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         'players': [actual[key] for key in sorted(actual)],
     }
     boxscore['reconciliation'] = reconcile_boxscore(boxscore, strict=False)
+    # The serialized score comes from the game's points ledger; keep the
+    # independently computed team line in agreement before this becomes a
+    # per-seed box score.
+    for team in boxscore['teams']:
+        side = team['side']
+        stats_points = _int_or_zero(team_stats.get(side, {}).get('points'))
+        game_points = _int_or_zero((record or {}).get('points', {}).get(side))
+        if stats_points != game_points:
+            item = next(row for row in boxscore['reconciliation']['teams'] if row['side'] == side)
+            item['matches'] = False
+            item['mismatches']['team_points_vs_game_points'] = {
+                'team_stats': stats_points, 'game_points': game_points,
+            }
+            boxscore['reconciliation']['status'] = 'failed'
+            boxscore['reconciliation']['failure_class'] = 'STAT_ACCOUNTING'
     return boxscore
 
 
@@ -180,13 +195,27 @@ def reconcile_boxscore(boxscore, *, strict):
             'receptions': sum(p['receiving']['rec'] for p in players),
             'fumbles_lost': sum(p['miscellaneous']['fumbles_lost'] for p in players),
         }
+        sums['turnovers'] = sums['interceptions'] + sums['fumbles_lost']
         checks = {'rush_attempts': 'rush_attempts', 'rushing_yards': 'rushing_yards',
                   'pass_attempts': 'pass_attempts', 'completions': 'completions',
                   'passing_yards': 'passing_yards', 'interceptions': 'interceptions',
                   'sacks_taken': 'sacks_taken', 'sack_yards': 'sack_yards', 'targets': 'targets',
-                  'fumbles_lost': 'fumbles_lost'}
+                  'fumbles_lost': 'fumbles_lost', 'turnovers': 'turnovers'}
         mismatches = {key: {'players': sums[key], 'team': team_stats[stat]}
                       for key, stat in checks.items() if sums[key] != team_stats[stat]}
+        if team_stats['completions'] > team_stats['pass_attempts']:
+            mismatches['completions_exceed_attempts'] = {
+                'completions': team_stats['completions'], 'attempts': team_stats['pass_attempts']}
+        if team_stats['completions'] + team_stats['interceptions'] > team_stats['pass_attempts']:
+            mismatches['pass_components_exceed_attempts'] = {
+                'completions_plus_interceptions': team_stats['completions'] + team_stats['interceptions'],
+                'attempts': team_stats['pass_attempts']}
+        if team_stats['targets'] > team_stats['pass_attempts']:
+            mismatches['targets_exceed_attempts'] = {
+                'targets': team_stats['targets'], 'attempts': team_stats['pass_attempts']}
+        if sums['receptions'] > sums['targets']:
+            mismatches['receptions_exceed_targets'] = {
+                'receptions': sums['receptions'], 'targets': sums['targets']}
         if sums['receptions'] != team_stats['completions']:
             mismatches['receptions'] = {'players': sums['receptions'], 'team': team_stats['completions']}
         player_offensive_tds = (sum(p['passing']['td'] + p['rushing']['td'] for p in players))
@@ -197,7 +226,10 @@ def reconcile_boxscore(boxscore, *, strict):
                         'team_values': {key: team_stats[key] for key in checks.values()},
                         'matches': not mismatches, 'mismatches': mismatches})
     all_match = all(item['matches'] for item in results)
-    return {'status': 'passed' if all_match else 'failed', 'strict': strict, 'teams': results}
+    result = {'status': 'passed' if all_match else 'failed', 'strict': strict, 'teams': results}
+    if not all_match:
+        result['failure_class'] = 'STAT_ACCOUNTING'
+    return result
 
 
 def _quantiles(values):

@@ -420,6 +420,21 @@ def _replay_examples(outcomes):
 ERROR_STATUSES = ('simulation_error', 'validation_error')
 
 
+def _artifact_hashes(value, path='profile'):
+    hashes = {}
+    if isinstance(value, dict):
+        for key, item in value.items():
+            item_path = f'{path}.{key}'
+            if isinstance(item, str) and ('sha256' in key.lower() or 'hash' in key.lower()):
+                hashes[item_path] = item
+            else:
+                hashes.update(_artifact_hashes(item, item_path))
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            hashes.update(_artifact_hashes(item, f'{path}[{index}]'))
+    return hashes
+
+
 class FinishedSeeds(dict):
     """Latest row per seed plus an audit count of retry/duplicate rows in the append-only ledger."""
     def __init__(self):
@@ -444,23 +459,35 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
     outcome = _record_outcome(seed, record, error, validation_error)
     if decisions is not None:
         outcome['playcall'] = slc_engine.summary(decisions)
-    if export_boxscores:
+    require_slc_boxscore_check = (profile_manifest is not None
+                                  and profile_manifest.get('profile') != 's0'
+                                  and outcome['valid_full_game'])
+    if export_boxscores or require_slc_boxscore_check:
         try:
             boxscore = slc_outputs.build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_validation)
             if profile_manifest['profile'] != 's0' and boxscore['reconciliation']['status'] != 'passed':
-                raise ValueError(f"player/team accounting mismatch: {boxscore['reconciliation']}")
-            outcome['boxscore'] = boxscore
+                game_id = (snapshot.get('schedule') or {}).get('game_id', 'unknown')
+                raise ValueError(f"STAT_ACCOUNTING: game_id={game_id} seed={seed}: {boxscore['reconciliation']}")
+            if export_boxscores:
+                outcome['boxscore'] = boxscore
         except Exception as exc:
-            boxscore_error = f'{type(exc).__name__}: {exc}'
+            game_id = (snapshot.get('schedule') or {}).get('game_id', 'unknown')
+            hashes = _artifact_hashes(profile_manifest or {})
+            hashes['snapshot.snapshot_sha256'] = snapshot.get('snapshot_sha256', 'unavailable')
+            boxscore_error = (f'STAT_ACCOUNTING: game_id={game_id} seed={seed} play_index=game '
+                              f'state_before=game_start decision=boxscore_reconciliation '
+                              f'outcome={type(exc).__name__}: {exc} state_after=game_end '
+                              f'source_artifact_hashes={hashes}')
             if outcome['status'] not in ERROR_STATUSES:
                 outcome = _record_outcome(seed, record, boxscore_error, validation_error=True)
                 if decisions is not None:
                     outcome['playcall'] = slc_engine.summary(decisions)
-            # Preserve an auditable error line even when strict roster identity or reconciliation fails.
-            minimal = slc_outputs.build_boxscore(seed, outcome, None, snapshot, profile_manifest, archive_validation)
             outcome['boxscore_error'] = boxscore_error
-            minimal['boxscore_error'] = boxscore_error
-            outcome['boxscore'] = minimal
+            if export_boxscores:
+                # Preserve an auditable error line even when strict roster identity or reconciliation fails.
+                minimal = slc_outputs.build_boxscore(seed, outcome, None, snapshot, profile_manifest, archive_validation)
+                minimal['boxscore_error'] = boxscore_error
+                outcome['boxscore'] = minimal
     contribution = None
     if outcome['valid_full_game'] and record:
         contribution = {
