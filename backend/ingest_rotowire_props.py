@@ -208,6 +208,7 @@ CFB_GAME_MARKETS = {
     108: ("Passing Yards", "passing_yards"),
     109: ("Passing + Rushing Yards", "passing_rushing_yards"),
     110: ("Total Touchdowns", "total_touchdowns"),
+    113: ("Receiving Touchdowns", "receiving_touchdowns"),
     114: ("Receiving Yards", "receiving_yards"),
     115: ("Receptions", "receptions"),
     116: ("Rush Attempts", "rush_attempts"),

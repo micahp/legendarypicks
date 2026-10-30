@@ -18,6 +18,7 @@ from settlement.mlb_api import _fetch_mlb_gamepk, _fetch_mlb_final
 from settlement.mlb_settle import _settle_mlb_props
 from settlement.ufc_settle import (
     _settle_ufc_props,
+    _ufcstats_game_is_final,
 )
 from settlement.mls_settle import _settle_mls_props
 from settlement.tennis_settle import _settle_tennis_props, _tennis_snapshot
@@ -249,8 +250,16 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         game["final_home"] = nba_source_game["home_score"]
         game["final_away"] = nba_source_game["away_score"]
 
+    # UFCStats publishes completed bouts only. When every fighter with a numeric
+    # prop has one unambiguous, result-bearing row, that source is sufficient
+    # finality evidence and settlement does not need a scoreboard snapshot.
+    ufcstats_final = (
+        league == "ufc"
+        and _ufcstats_game_is_final(con, game_id, game["date"])
+    )
+
     # ── Is the game actually over? ──────────────────────────────────────────────
-    if game["final_home"] is None:
+    if game["final_home"] is None and not ufcstats_final:
         snapshot = _latest_scoreboard_snapshot(con, league, espn_event_id)
         if not snapshot:
             return _pending_result(

@@ -18,6 +18,7 @@ _IMPORT_DB.close()
 os.environ["LP_DB_PATH"] = _IMPORT_DB.name
 
 import migrate_nfl_model_tables as migration  # noqa: E402
+import nba_sportsdataverse  # noqa: E402
 import nfl_lock as nl  # noqa: E402
 import scripts_split_provider_logs as split  # noqa: E402
 from routers import home, nfl_model, props  # noqa: E402
@@ -47,6 +48,7 @@ def build(path, with_odds=True):
             gameday TEXT, gametime TEXT, ingested_at TEXT);
     """)
     split.ensure_espn_columns(con)
+    nba_sportsdataverse.ensure_schema(con)
     con.executescript(split.DDL_TABLE)
     con.executescript(split.DDL_VIEW)
     for i in range(32):

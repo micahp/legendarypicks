@@ -136,11 +136,11 @@ def _ufcstats_game_is_final(
 ) -> bool:
     """Prove finality from completed UFCStats profile rows when available.
 
-    UFCStats fighter profiles contain completed bouts only.  Requiring one
-    unambiguous, result-bearing row on the exact game date for every fighter
+    UFCStats fighter profiles contain completed bouts only. Requiring one
+    unambiguous, result-bearing row on the event date for every fighter
     carrying a numeric prop lets settlement stay source-complete when ESPN's
-    scoreboard is unavailable.  Method-only cards still use the legacy
-    scoreboard finality path until their fighters enter this ingest scope.
+    scoreboard is unavailable. Method-only cards use the scoreboard snapshot
+    path until their fighters enter this ingest scope.
     """
     has_table = con.execute(
         "SELECT 1 FROM sqlite_master WHERE type='table' "

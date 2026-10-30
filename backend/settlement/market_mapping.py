@@ -82,6 +82,7 @@ MARKET_STAT: Dict[Tuple[str, str], Tuple[str, str]] = {
     ("ncaaf", "rushing_touchdowns"):  ("rushing", "TD"),
     ("ncaaf", "rush_attempts"):       ("rushing", "CAR"),
     ("ncaaf", "receiving_yards"):     ("receiving", "YDS"),
+    ("ncaaf", "receiving_touchdowns"): ("receiving", "TD"),
     ("ncaaf", "receptions"):          ("receiving", "REC"),
     ("ncaaf", "field_goals_made"):    ("kicking", "FG"),
     ("ncaaf", "extra_points_made"):   ("kicking", "XP"),

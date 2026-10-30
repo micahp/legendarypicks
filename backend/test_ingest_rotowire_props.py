@@ -1000,15 +1000,16 @@ class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
     # downstream could settle them, so they are refused on purpose.
     DELIBERATELY_ABSENT = {
         "Soccer": {160},
-        # 129 and 479 first shipped 2026-10-05: Fantasy Score again, no published formula.
-        "NFL": {130, 129, 479},
+        # 129, 131 and 479 shipped in the relay: Fantasy Score, with no published formula.
+        "NFL": {130, 129, 131, 479},
         "CFB": {138, 139},
         "MLB": {236, 237, 300, 480},  # 480 first shipped 2026-10-05: Fantasy Score
         "NHL": {95},
         # Other NBA markets are outside this milestone's Core 7 + PRA + FGM +
         # FTM scope. FGM and FTM are not present in the archived relay payloads
         # under a verified Game market id, so no id is inferred for them.
-        "NBA": {38, 39, 40, 42, 44, 45, 49, 53, 54, 55, 56, 133, 302},
+        # 134 is an unsupported Fantasy Score; 303 is the out-of-scope Triple Double.
+        "NBA": {38, 39, 40, 42, 44, 45, 49, 53, 54, 55, 56, 133, 134, 302, 303},
     }
     # NOT deliberate -- markets the relay publishes that we do not yet take. This
     # gate found them on 2026-08-26 the moment it stopped being Soccer-only. They
@@ -1030,22 +1031,35 @@ class EveryIngestedSportsCatalogueIsChecked(unittest.TestCase):
         "NHL": "NHL_GAME_MARKETS",
         "NBA": "NBA_GAME_MARKETS",
     }
+    _published_cache = None
 
-    def _published(self, sport):
+    @classmethod
+    def _published_by_sport(cls):
+        if cls._published_cache is not None:
+            return cls._published_cache
+
         import glob
         import gzip
+
         pattern = os.path.join(rw.archive.ARCHIVE_DIR, "rotowire-*.json*")
         payloads = sorted(glob.glob(pattern))
-        self.assertTrue(payloads, "no archived payloads under {}".format(pattern))
-        published = {}
+        if not payloads:
+            raise AssertionError("no archived payloads under {}".format(pattern))
+        published = {sport: {} for sport in cls.CATALOGUES}
         for path in payloads:
             opener = gzip.open if path.endswith(".gz") else open
             with opener(path, "rt") as handle:
                 payload = json.load(handle)
             for market in payload.get("markets", []):
-                if market.get("sport") == sport and market.get("category") == "Game":
-                    published[market["marketID"]] = market.get("marketName")
+                sport = market.get("sport")
+                if (sport in published
+                        and market.get("category") == "Game"):
+                    published[sport][market["marketID"]] = market.get("marketName")
+        cls._published_cache = published
         return published
+
+    def _published(self, sport):
+        return dict(self._published_by_sport().get(sport, {}))
 
     def test_no_sport_discards_a_published_game_market_unnamed(self):
         for sport, attr in self.CATALOGUES.items():

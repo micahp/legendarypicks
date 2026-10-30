@@ -76,6 +76,8 @@ def create_database(path, migrate=True):
             UNIQUE(league,source_player_key,season,game_no)
         );
     """)
+    import nba_sportsdataverse
+    nba_sportsdataverse.ensure_schema(con)
     if migrate:
         schema.apply_schema(con)
     con.row_factory = sqlite3.Row

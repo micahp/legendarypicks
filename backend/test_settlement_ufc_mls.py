@@ -25,14 +25,25 @@ def _schema(con):
         );
         CREATE TABLE player_game_logs(
             id INTEGER PRIMARY KEY, player_id INTEGER, league TEXT, game_id TEXT,
-            source_player_key TEXT, stats TEXT
+            source_player_key TEXT, stats TEXT, source TEXT
         );
         CREATE TABLE player_game_logs_all(
             player_id INTEGER, league TEXT, game_id TEXT, game_date TEXT,
             espn_stats TEXT, fotmob_stats TEXT, rotowire_stats TEXT
         );
+        CREATE TABLE scoreboard_snapshots(
+            league TEXT, game_id TEXT, state TEXT, payload TEXT, fetched_at TEXT
+        );
     """)
     con.row_factory = sqlite3.Row
+
+
+def _save_snapshot(con, league, game_id, state, payload):
+    con.execute(
+        "INSERT INTO scoreboard_snapshots VALUES(?,?,?,?,?)",
+        (league, str(game_id), state, json.dumps(payload), "now"),
+    )
+    con.commit()
 
 
 def _soccer_log(con, player_id, league, game_id, game_date, *, espn=None,
@@ -72,7 +83,8 @@ def _ufc_connection():
     loser = {"result": "L", "method": "KO/TKO", "sigStrikesLanded": 11,
              "fight_time": 4.35}
     con.executemany(
-        "INSERT INTO player_game_logs VALUES(?,?,?,?,?,?)",
+        "INSERT INTO player_game_logs "
+        "(id,player_id,league,game_id,source_player_key,stats) VALUES(?,?,?,?,?,?)",
         [(1, 10, "ufc", "401874315", "4895691", json.dumps(winner)),
          (2, 11, "ufc", "401874315", "4997217", json.dumps(loser))])
     return con
@@ -92,21 +104,16 @@ def _ufc_scoreboard(completed=True, fight_id="401874315"):
 
 def test_ufc_uses_fight_finality_and_durable_logs(monkeypatch):
     con = _ufc_connection()
-    seen = []
-
-    def fake_get(url, ttl=0):
-        seen.append(url)
-        return _ufc_scoreboard()
-
-    monkeypatch.setattr(espn_client, "_get", fake_get)
+    _save_snapshot(con, "ufc", "401874315", "post", {"completed": True})
+    monkeypatch.setattr(
+        espn_client, "_get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("settlement must use the stored scoreboard snapshot")),
+    )
     result = settlement.settle_game(con, 1)
 
     assert result == {"settled": 6, "void": 0, "unmappable": 0,
                       "pending": 1, "errors": 0}
-    assert seen == [
-        "https://site.web.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard"
-        "?dates=20260725"
-    ]
     rows = {row["prop_id"]: (row["actual_value"], row["hit"])
             for row in con.execute("SELECT * FROM prop_results")}
     assert rows == {
@@ -128,8 +135,6 @@ def test_ufc_uses_fight_finality_and_durable_logs(monkeypatch):
 def test_dwcs_scoreboard_snapshot_settles_method_markets_and_fight_time(monkeypatch):
     con = _ufc_connection()
     con.execute("DELETE FROM player_game_logs")
-    con.execute("""CREATE TABLE scoreboard_snapshots(
-        league TEXT, game_id TEXT, payload TEXT, state TEXT, fetched_at TEXT)""")
     snapshot = {
         "event": "Dana White's Contender Series: Season 10, Week 3",
         "completed": True,
@@ -139,11 +144,12 @@ def test_dwcs_scoreboard_snapshot_settles_method_markets_and_fight_time(monkeypa
         "outcome_round": 2,
         "outcome_clock": "1:30",
     }
-    con.execute(
-        "INSERT INTO scoreboard_snapshots VALUES('ufc','401874315',?,'post','now')",
-        (json.dumps(snapshot),),
+    _save_snapshot(con, "ufc", "401874315", "post", snapshot)
+    monkeypatch.setattr(
+        espn_client, "_get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("settlement must use the stored scoreboard snapshot")),
     )
-    monkeypatch.setattr(espn_client, "_get", lambda *args, **kwargs: _ufc_scoreboard())
 
     result = settlement.settle_game(con, 1)
 
@@ -156,6 +162,7 @@ def test_dwcs_scoreboard_snapshot_settles_method_markets_and_fight_time(monkeypa
 
 def test_ufc_settlement_reads_provider_separated_ufcstats_logs(monkeypatch):
     con = _ufc_connection()
+    _save_snapshot(con, "ufc", "401874315", "post", {"completed": True})
     con.execute("DELETE FROM player_game_logs")
     con.execute("""CREATE TABLE player_game_logs_ufcstats(
         player_id INTEGER, league TEXT, game_date TEXT,
@@ -169,7 +176,11 @@ def test_ufc_settlement_reads_provider_separated_ufcstats_logs(monkeypatch):
         [(10, "ufc", "2026-07-25", "ufcstats-a", json.dumps(winner)),
          (11, "ufc", "2026-07-25", "ufcstats-b", json.dumps(loser))],
     )
-    monkeypatch.setattr(espn_client, "_get", lambda *args, **kwargs: _ufc_scoreboard())
+    monkeypatch.setattr(
+        espn_client, "_get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("settlement must use the stored scoreboard snapshot")),
+    )
 
     result = settlement.settle_game(con, 1)
 
@@ -245,13 +256,18 @@ def test_ufcstats_settlement_accepts_the_adjacent_source_date(monkeypatch):
 
 def test_ufc_does_not_settle_a_nonfinal_fight(monkeypatch):
     con = _ufc_connection()
-    monkeypatch.setattr(espn_client, "_get", lambda *args, **kwargs: _ufc_scoreboard(False))
+    _save_snapshot(con, "ufc", "401874315", "pre", {"completed": False})
+    monkeypatch.setattr(
+        espn_client, "_get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("settlement must use the stored scoreboard snapshot")),
+    )
 
     result = settlement.settle_game(con, 1)
 
     assert result["settled"] == 0
     assert result["errors"] == 0
-    assert "completed=False" in result["msg"]
+    assert "scoreboard snapshot is pre" in result["msg"]
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
 
 
@@ -268,21 +284,17 @@ def test_ufc_finds_a_next_utc_day_fight_on_the_previous_card_date(monkeypatch):
         (fight_id,),
     )
     con.execute("UPDATE player_game_logs SET game_id=?", (fight_id,))
-    seen = []
-
-    def fake_get(url, ttl=0):
-        seen.append(url)
-        if "dates=20260815" in url:
-            return _ufc_scoreboard(fight_id=fight_id)
-        return {"events": []}
-
-    monkeypatch.setattr(espn_client, "_get", fake_get)
+    _save_snapshot(con, "ufc", fight_id, "post", {"completed": True})
+    monkeypatch.setattr(
+        espn_client, "_get",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("settlement must use the stored scoreboard snapshot")),
+    )
 
     result = settlement.settle_game(con, 1)
 
     assert result == {"settled": 6, "void": 0, "unmappable": 0,
                       "pending": 1, "errors": 0}
-    assert [url.rsplit("=", 1)[-1] for url in seen] == ["20260816", "20260815"]
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 6
 
 
@@ -617,13 +629,29 @@ def test_mls_settles_cards_goal_or_assist_and_the_first_goal(monkeypatch):
     """
     con = _mls_new_market_connection()
     summary = _mls_summary_with_cards_and_events()
-    calls = []
-
-    def load_summary(league, event_id):
-        calls.append((league, event_id))
-        return summary
-
-    monkeypatch.setattr(espn_client, "summary", load_summary)
+    row = con.execute(
+        "SELECT espn_stats FROM player_game_logs_all WHERE player_id=21"
+    ).fetchone()
+    stats = json.loads(row[0])
+    stats.pop("first_goal")
+    con.execute(
+        "UPDATE player_game_logs_all SET espn_stats=? WHERE player_id=21",
+        (json.dumps(stats),),
+    )
+    from settlement import stored_summary
+    stored_summary.ensure_table(con)
+    con.execute(
+        "INSERT INTO game_summaries "
+        "(league,espn_event_id,payload,state,completed,fetched_at,source) "
+        "VALUES('mls','761469',?,'post',1,'now','test')",
+        (json.dumps(summary),),
+    )
+    con.commit()
+    monkeypatch.setattr(
+        espn_client, "summary",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("summary fallback must read the stored summary")),
+    )
 
     result = settlement.settle_game(con, 2)
 
@@ -640,9 +668,8 @@ def test_mls_settles_cards_goal_or_assist_and_the_first_goal(monkeypatch):
     # second identity path, so it stays retryable rather than guessing.
     assert 305 not in rows
     assert result["pending"] >= 1
-    # Stored first_goal values answer the identified players. The one missing
-    # appearance triggers a single lazy fallback, not one request per prop.
-    assert calls == [("mls", "761469")]
+    # The missing first_goal value is recovered from the stored summary without
+    # making a live request.
 
 
 def test_mls_stored_first_goal_does_not_load_a_summary(monkeypatch):
@@ -693,13 +720,17 @@ def test_mls_does_not_settle_before_full_time(monkeypatch):
     con = _mls_connection()
     con.execute(
         "UPDATE prop_games SET final_home=NULL, final_away=NULL WHERE id=2")
+    _save_snapshot(con, "mls", "761469", "pre", {"completed": False})
     monkeypatch.setattr(
-        espn_client, "summary", lambda league, event_id: _mls_summary(False))
+        espn_client, "summary",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("an unfinished snapshot must stop settlement")),
+    )
 
     result = settlement.settle_game(con, 2)
 
     assert result["settled"] == 0
-    assert "completed=False" in result["msg"]
+    assert "scoreboard snapshot is pre" in result["msg"]
     assert con.execute("SELECT COUNT(*) FROM prop_results").fetchone()[0] == 0
 
 

@@ -61,6 +61,7 @@ _CFBD_MARKETS = {
     "rushing_yards": ("rush_yds",),
     "rushing_touchdowns": ("rush_td",),
     "receiving_yards": ("rec_yds",),
+    "receiving_touchdowns": ("rec_td",),
     "receptions": ("rec",),
     "passing_rushing_yards": ("pass_yds", "rush_yds"),
     "rushing_receiving_yards": ("rush_yds", "rec_yds"),
