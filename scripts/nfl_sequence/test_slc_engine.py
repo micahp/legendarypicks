@@ -116,7 +116,9 @@ class PlayerShareManifest(unittest.TestCase):
                  patch.object(se.er, '_reference_fingerprint', return_value={'sha256': 'reference-hash'}):
                 loaded, _excluded = se.load_reference('/read-only.db', SNAPSHOT, artifact_path, dirichlet_shares=True,
                                                        source_commit='abc123')
-        self.assertTrue(load_ref.call_args.kwargs['playcall_player_shares'])
+        self.assertFalse(load_ref.call_args.kwargs['playcall_player_shares'])
+        self.assertIsNone(loaded.contextual_sampler.player_shares)
+        self.assertEqual(loaded.contextual_sampler.share_table, table)
         manifest = loaded.contextual_sampler.share_model_manifest
         self.assertEqual(manifest['model_version'], 'dirichlet-multinomial-mle-v2')
         self.assertEqual(manifest['source_season'], 2025)
