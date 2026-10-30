@@ -197,7 +197,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                     chosen['qb_decision']['target_role'] = 'Other'
                     chosen['target_role'] = 'Other'
                     chosen['labels']['A'] = 'Other'
-            elif player_shares is None:
+            elif player_shares is None and share_table is None:
                 role = (chosen.get('qb_decision') or {}).get('target_role')
                 if role in ('RB', 'WR', 'TE'):
                     eligible = sorted((p for p in receivers if p['pos_abb'] == role),
@@ -240,7 +240,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                     chosen['receiver'] = _by_player_share(receivers, player_shares, team, 'receive', positions,
                                                           _draw(f'{base}:receiver:player'))
     else:
-        if player_shares is None:
+        if player_shares is None and share_table is None:
             chosen['rusher'] = _by_usage(available_players, observed['runner_position_usage'], team, 'rusher',
                                          _draw(f'{base}:rusher:position'))
         else:
