@@ -48,7 +48,7 @@ The opportunity model allowed every injury-eligible QB into the ordinary carry s
 
 All 360,000 exported player rows had `starter=false`. The old exporter defaulted missing starter metadata to false. The research-branch serializer now derives QB1 from frozen depth rank and availability and emits `null` for other roles when starter status is unknown. The frozen output remains unchanged.
 
-Cutoff-safe reference values in `player-workload-reference-2026-10-30/` show:
+Cutoff-safe reference values in `player-workload-reference-2026-10-30-v2/` show:
 
 | Player/metric | 2025 holdout | 2026 Weeks 1–7 | SLC pre-Week-8 reference supplied with the audit |
 |---|---:|---:|---:|
@@ -79,6 +79,6 @@ The largest supported mechanisms are: (1) unrestricted backup-QB eligibility, (2
 
 ## Verification status
 
-The benchmark builder produces train 2022–2024, holdout 2025, multi-season 2022–2025, and target 2026 Weeks 1–7 files, with cutoff, coverage, source hashes, and published-source reconciliation. A five-unit receiving-yard reconciliation difference remains documented in `published_source_reconciliation.csv`; other checked player totals reconcile. The audit preserves source hashes and all 10,000 seed records.
+The benchmark builder produces train 2022–2024, holdout 2025, multi-season 2022–2025, and target 2026 Weeks 1–7 files, with cutoff, coverage, source hashes, and published-source reconciliation. V2 corrects two hard-coded named-example IDs and leaves the distribution tables unchanged. A five-yard receiving reconciliation difference remains documented in `player-workload-reference-2026-10-30-v2/published_source_reconciliation.csv`; other checked player totals reconcile. The audit preserves source hashes and all 10,000 seed records.
 
 The research branch has deterministic assertions for participation/accounting and the updated serializer; its recorded verification was 126 tests across the NFL-sequence modules, plus 31 Model D tests and `git diff --check`. The full same-seed ablation matrix and calibrated player-style model are **not yet complete**. These remain open research items; this audit does not certify the entire player-realism task as closed.

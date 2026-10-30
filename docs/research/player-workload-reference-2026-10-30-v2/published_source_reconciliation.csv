@@ -1,0 +1,17 @@
+source,season,week_max,metric,published_player_total,pbp_player_total,player_ids_compared,mismatched_player_ids,status,mismatch_examples
+stats_player_reg_2025.csv,2025,18,pass_attempts,17439,17439,2111,0,matched,[]
+stats_player_reg_2025.csv,2025,18,pass_completions,11217,11217,2111,0,matched,[]
+stats_player_reg_2025.csv,2025,18,passing_yards,122413,122413,2111,0,matched,[]
+stats_player_reg_2025.csv,2025,18,rush_attempts,14601,14601,2111,0,matched,[]
+stats_player_reg_2025.csv,2025,18,rushing_yards,63618,63618,2111,0,matched,[]
+stats_player_reg_2025.csv,2025,18,targets,16609,16609,2111,0,matched,[]
+stats_player_reg_2025.csv,2025,18,receptions,11217,11217,2111,0,matched,[]
+stats_player_reg_2025.csv,2025,18,receiving_yards,122413,122418,2111,2,mismatch_disclosed,"[{""player_id"":""00-0034827"",""published"":682,""pbp"":678},{""player_id"":""00-0036252"",""published"":784,""pbp"":793}]"
+stats_player_week_2026.csv,2026,6,pass_attempts,6262,6262,1650,0,matched,[]
+stats_player_week_2026.csv,2026,6,pass_completions,4001,4001,1650,0,matched,[]
+stats_player_week_2026.csv,2026,6,passing_yards,43777,43777,1650,0,matched,[]
+stats_player_week_2026.csv,2026,6,rush_attempts,4929,4929,1650,0,matched,[]
+stats_player_week_2026.csv,2026,6,rushing_yards,20465,20465,1650,0,matched,[]
+stats_player_week_2026.csv,2026,6,targets,5958,5958,1650,0,matched,[]
+stats_player_week_2026.csv,2026,6,receptions,4001,4001,1650,0,matched,[]
+stats_player_week_2026.csv,2026,6,receiving_yards,43777,43777,1650,0,matched,[]

@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-SCHEMA = 'lp.nfl.player-workload-reference.v1'
+SCHEMA = 'lp.nfl.player-workload-reference.v2'
 SEASONS = (2022, 2023, 2024, 2025)
 TARGET_WEEK = 7
 METRICS = (
@@ -31,18 +31,19 @@ PUBLISHED_METRICS = {
     'receptions': 'receptions', 'receiving_yards': 'receiving_yards',
 }
 NAME_CASES = {
-    'Jaylen Warren': ('00-0037228', 'rush_attempts'),
-    'Christian McCaffrey': ('00-0033280', 'rush_attempts'),
-    'Derrick Henry': ('00-0032764', 'rush_attempts'),
-    'DK Metcalf': ('00-0035659', 'targets'),
-    'Ja\'Marr Chase': ('00-0039075', 'targets'),
-    'Kirk Cousins': ('00-0029604', 'qb_scrambles'),
-    'Matthew Stafford': ('00-0029701', 'qb_scrambles'),
-    'Jared Goff': ('00-0033106', 'qb_scrambles'),
-    'Lamar Jackson': ('00-0034796', 'rush_attempts'),
-    'Jayden Daniels': ('00-0039910', 'rush_attempts'),
-    'Jalen Hurts': ('00-0036389', 'rush_attempts'),
-    'Josh Allen': ('00-0034857', 'rush_attempts'),
+    'Jaylen Warren': ('RB', 'rush_attempts'),
+    'Christian McCaffrey': ('RB', 'rush_attempts'),
+    'Derrick Henry': ('RB', 'rush_attempts'),
+    'Tyler Allgeier': ('RB', 'rush_attempts'),
+    'DK Metcalf': ('WR', 'targets'),
+    'Ja\'Marr Chase': ('WR', 'targets'),
+    'Kirk Cousins': ('QB', 'qb_scrambles'),
+    'Matthew Stafford': ('QB', 'qb_scrambles'),
+    'Jared Goff': ('QB', 'qb_scrambles'),
+    'Lamar Jackson': ('QB', 'rush_attempts'),
+    'Jayden Daniels': ('QB', 'rush_attempts'),
+    'Jalen Hurts': ('QB', 'rush_attempts'),
+    'Josh Allen': ('QB', 'rush_attempts'),
 }
 PLAYER_METRICS_BY_POSITION = {
     'QB': ('pass_attempts', 'pass_completions', 'passing_yards', 'rush_attempts', 'rushing_yards',
@@ -496,9 +497,26 @@ def _summary_tables(player_games, players, eligible, positions):
     return output
 
 
+def _resolve_named_cases(players, cases=NAME_CASES):
+    """Resolve by canonical name and position, never a hand-entered player ID."""
+    ids_by_name_and_position = defaultdict(list)
+    for player_id, player in players.items():
+        name = player.get('name')
+        position = player.get('position')
+        if name and position:
+            ids_by_name_and_position[(name, position)].append(player_id)
+    resolved = {}
+    for name, (position, metric) in cases.items():
+        matches = sorted(ids_by_name_and_position.get((name, position), []))
+        if len(matches) != 1:
+            raise ValueError(f'named example {name!r} at {position} resolves to {len(matches)} player IDs: {matches}')
+        resolved[name] = (matches[0], metric)
+    return resolved
+
+
 def _named_examples(player_games, players, positions, game_context):
     examples = []
-    for case, (pid, metric) in NAME_CASES.items():
+    for case, (pid, metric) in _resolve_named_cases(players).items():
         rows = []
         for (game_id, player_id), row in player_games.items():
             if player_id != pid:
