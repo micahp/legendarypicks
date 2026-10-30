@@ -1,0 +1,487 @@
+{
+ "counts": {
+  "D: hazard key from clock only": 10320,
+  "D: hazard key from stop and clock": 656939,
+  "D: runoff key from event, stop and late": 653273,
+  "D: runoff key from late only": 6668,
+  "D: runoff key from stop and late": 5237,
+  "D: runoff pool has nothing below the remaining time: quarter ends": 4,
+  "D: two-minute stop: runoff cut at 2:00": 9037,
+  "missing down, distance or field": 5989,
+  "negative derived clock runoff": 5,
+  "no same-quarter next snap for clock runoff": 1,
+  "penalty (not modelled)": 3445,
+  "punt without a clean receiving-team snap": 219,
+  "qb_scramble (not in E1 vocabulary)": 1033,
+  "turnover that is a touchdown (not modelled)": 43,
+  "turnover without a clean new-offense snap": 91,
+  "two_point_attempt (not modelled)": 120,
+  "unclassified play": 511,
+  "yards_gained null": 59
+ },
+ "eval": {
+  "games": 272,
+  "quarters": 1088,
+  "quarters_excluded_from_boundary_test": 303,
+  "quarters_with_boundary_test": 785,
+  "seasons": [
+   2025,
+   2025
+  ],
+  "weeks": [
+   1,
+   18
+  ]
+ },
+ "hazard_calibration": {
+  "clock_runs|120": {
+   "expected_quarter_ends": 3.4,
+   "observed_quarter_ends": 7,
+   "plays": 1697
+  },
+  "clock_runs|15": {
+   "expected_quarter_ends": 159.8,
+   "observed_quarter_ends": 156,
+   "plays": 213
+  },
+  "clock_runs|30": {
+   "expected_quarter_ends": 196.6,
+   "observed_quarter_ends": 180,
+   "plays": 382
+  },
+  "clock_runs|60": {
+   "expected_quarter_ends": 206.5,
+   "observed_quarter_ends": 156,
+   "plays": 730
+  },
+  "clock_runs|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 16522
+  },
+  "incomplete|120": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 571
+  },
+  "incomplete|15": {
+   "expected_quarter_ends": 74.1,
+   "observed_quarter_ends": 28,
+   "plays": 145
+  },
+  "incomplete|30": {
+   "expected_quarter_ends": 8.1,
+   "observed_quarter_ends": 10,
+   "plays": 208
+  },
+  "incomplete|60": {
+   "expected_quarter_ends": 7.2,
+   "observed_quarter_ends": 4,
+   "plays": 345
+  },
+  "incomplete|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 4390
+  },
+  "kick|120": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 217
+  },
+  "kick|15": {
+   "expected_quarter_ends": 89.5,
+   "observed_quarter_ends": 131,
+   "plays": 175
+  },
+  "kick|30": {
+   "expected_quarter_ends": 14.4,
+   "observed_quarter_ends": 1,
+   "plays": 53
+  },
+  "kick|60": {
+   "expected_quarter_ends": 12.9,
+   "observed_quarter_ends": 0,
+   "plays": 82
+  },
+  "kick|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 2075
+  },
+  "oob_ready|120": {
+   "expected_quarter_ends": 0.1,
+   "observed_quarter_ends": 0,
+   "plays": 85
+  },
+  "oob_ready|15": {
+   "expected_quarter_ends": 8.2,
+   "observed_quarter_ends": 16,
+   "plays": 16
+  },
+  "oob_ready|30": {
+   "expected_quarter_ends": 6.0,
+   "observed_quarter_ends": 22,
+   "plays": 22
+  },
+  "oob_ready|60": {
+   "expected_quarter_ends": 6.0,
+   "observed_quarter_ends": 16,
+   "plays": 38
+  },
+  "oob_ready|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 2200
+  },
+  "oob_snap|120": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 182
+  },
+  "oob_snap|15": {
+   "expected_quarter_ends": 15.3,
+   "observed_quarter_ends": 4,
+   "plays": 30
+  },
+  "oob_snap|30": {
+   "expected_quarter_ends": 17.6,
+   "observed_quarter_ends": 0,
+   "plays": 65
+  },
+  "oob_snap|60": {
+   "expected_quarter_ends": 20.2,
+   "observed_quarter_ends": 1,
+   "plays": 128
+  },
+  "oob_snap|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 137
+  },
+  "sack|120": {
+   "expected_quarter_ends": 0.1,
+   "observed_quarter_ends": 0,
+   "plays": 107
+  },
+  "sack|15": {
+   "expected_quarter_ends": 12.3,
+   "observed_quarter_ends": 20,
+   "plays": 24
+  },
+  "sack|30": {
+   "expected_quarter_ends": 8.9,
+   "observed_quarter_ends": 16,
+   "plays": 33
+  },
+  "sack|60": {
+   "expected_quarter_ends": 10.3,
+   "observed_quarter_ends": 12,
+   "plays": 65
+  },
+  "sack|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 934
+  },
+  "score|120": {
+   "expected_quarter_ends": 0.1,
+   "observed_quarter_ends": 0,
+   "plays": 117
+  },
+  "score|15": {
+   "expected_quarter_ends": 17.9,
+   "observed_quarter_ends": 5,
+   "plays": 35
+  },
+  "score|30": {
+   "expected_quarter_ends": 9.5,
+   "observed_quarter_ends": 0,
+   "plays": 35
+  },
+  "score|60": {
+   "expected_quarter_ends": 11.2,
+   "observed_quarter_ends": 0,
+   "plays": 71
+  },
+  "score|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 995
+  },
+  "turnover|120": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 38
+  },
+  "turnover|15": {
+   "expected_quarter_ends": 1.0,
+   "observed_quarter_ends": 0,
+   "plays": 2
+  },
+  "turnover|30": {
+   "expected_quarter_ends": 0.5,
+   "observed_quarter_ends": 0,
+   "plays": 2
+  },
+  "turnover|60": {
+   "expected_quarter_ends": 2.8,
+   "observed_quarter_ends": 0,
+   "plays": 18
+  },
+  "turnover|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 369
+  }
+ },
+ "quarter_end": {
+  "A_deployed": {
+   "accurate": 356,
+   "median_leftover_when_missed_s": 141.0,
+   "missed": 13939,
+   "missed_share": 0.8878,
+   "plays_lost_per_premature_quarter": 3.39,
+   "premature": 1405,
+   "premature_share": 0.0895,
+   "quarter_replicates": 15700,
+   "refused": 0
+  },
+  "A_train": {
+   "accurate": 348,
+   "median_leftover_when_missed_s": 146.0,
+   "missed": 11611,
+   "missed_share": 0.7396,
+   "plays_lost_per_premature_quarter": 3.5,
+   "premature": 1313,
+   "premature_share": 0.0836,
+   "quarter_replicates": 15700,
+   "refused": 2428
+  },
+  "D": {
+   "accurate": 570,
+   "median_leftover_when_missed_s": 102.0,
+   "missed": 14146,
+   "missed_share": 0.901,
+   "plays_lost_per_premature_quarter": 2.77,
+   "premature": 984,
+   "premature_share": 0.0627,
+   "quarter_replicates": 15700,
+   "refused": 0
+  },
+  "_tally": {
+   "accurate": 1274,
+   "missed": 39696,
+   "no A cell for this play": 2428,
+   "premature": 3702
+  }
+ },
+ "replicates": 20,
+ "runoff_w1_seconds_by_event": {
+  "A_deployed": {
+   "field_goal_attempt": {
+    "n_draws": 20371,
+    "n_observed": 943,
+    "w1": 0.17
+   },
+   "fumble_lost": {
+    "n_draws": 3031,
+    "n_observed": 153,
+    "w1": 0.12
+   },
+   "interception": {
+    "n_draws": 5517,
+    "n_observed": 276,
+    "w1": 0.23
+   },
+   "pass_complete": {
+    "n_draws": 214883,
+    "n_observed": 10710,
+    "w1": 0.67
+   },
+   "pass_incomplete": {
+    "n_draws": 111135,
+    "n_observed": 5617,
+    "w1": 0.03
+   },
+   "punt": {
+    "n_draws": 30533,
+    "n_observed": 1532,
+    "w1": 0.08
+   },
+   "run": {
+    "n_draws": 252618,
+    "n_observed": 12388,
+    "w1": 0.71
+   },
+   "sack": {
+    "n_draws": 23464,
+    "n_observed": 1149,
+    "w1": 1.02
+   }
+  },
+  "A_train": {
+   "field_goal_attempt": {
+    "n_draws": 16996,
+    "n_observed": 943,
+    "w1": 0.05
+   },
+   "fumble_lost": {
+    "n_draws": 1920,
+    "n_observed": 153,
+    "w1": 0.45
+   },
+   "interception": {
+    "n_draws": 3971,
+    "n_observed": 276,
+    "w1": 0.49
+   },
+   "pass_complete": {
+    "n_draws": 178200,
+    "n_observed": 10710,
+    "w1": 0.95
+   },
+   "pass_incomplete": {
+    "n_draws": 90736,
+    "n_observed": 5617,
+    "w1": 0.11
+   },
+   "punt": {
+    "n_draws": 25627,
+    "n_observed": 1532,
+    "w1": 0.21
+   },
+   "run": {
+    "n_draws": 210238,
+    "n_observed": 12388,
+    "w1": 1.01
+   },
+   "sack": {
+    "n_draws": 18644,
+    "n_observed": 1149,
+    "w1": 1.45
+   }
+  },
+  "D": {
+   "field_goal_attempt": {
+    "n_draws": 20710,
+    "n_observed": 943,
+    "w1": 0.43
+   },
+   "fumble_lost": {
+    "n_draws": 3049,
+    "n_observed": 153,
+    "w1": 0.35
+   },
+   "interception": {
+    "n_draws": 5516,
+    "n_observed": 276,
+    "w1": 0.27
+   },
+   "pass_complete": {
+    "n_draws": 216493,
+    "n_observed": 10710,
+    "w1": 1.39
+   },
+   "pass_incomplete": {
+    "n_draws": 112002,
+    "n_observed": 5617,
+    "w1": 0.14
+   },
+   "punt": {
+    "n_draws": 30544,
+    "n_observed": 1532,
+    "w1": 0.14
+   },
+   "run": {
+    "n_draws": 253170,
+    "n_observed": 12388,
+    "w1": 0.97
+   },
+   "sack": {
+    "n_draws": 23690,
+    "n_observed": 1149,
+    "w1": 1.52
+   }
+  }
+ },
+ "short_seconds": 15,
+ "short_share_by_stop_class": {
+  "clock_runs": {
+   "A_deployed": 0.142,
+   "A_train": 0.134,
+   "D": 0.073,
+   "n_observed": 19045,
+   "observed": 0.097
+  },
+  "incomplete": {
+   "A_deployed": 1.0,
+   "A_train": 0.999,
+   "D": 0.999,
+   "n_observed": 5617,
+   "observed": 1.0
+  },
+  "kick": {
+   "A_deployed": 0.995,
+   "A_train": 0.999,
+   "D": 0.999,
+   "n_observed": 2470,
+   "observed": 0.993
+  },
+  "oob_ready": {
+   "A_deployed": 0.151,
+   "A_train": 0.138,
+   "D": 0.025,
+   "n_observed": 2307,
+   "observed": 0.026
+  },
+  "oob_snap": {
+   "A_deployed": 0.183,
+   "A_train": 0.16,
+   "D": 0.519,
+   "n_observed": 537,
+   "observed": 0.981
+  },
+  "sack": {
+   "A_deployed": 0.186,
+   "A_train": 0.129,
+   "D": 0.126,
+   "n_observed": 1115,
+   "observed": 0.174
+  },
+  "score": {
+   "A_deployed": 0.464,
+   "A_train": 0.45,
+   "D": 0.981,
+   "n_observed": 1248,
+   "observed": 0.998
+  },
+  "turnover": {
+   "A_deployed": 0.977,
+   "A_train": 0.975,
+   "D": 0.973,
+   "n_observed": 429,
+   "observed": 0.977
+  }
+ },
+ "train": {
+  "excludes": [
+   "2022_05_CIN_BAL",
+   "2022_09_GB_DET",
+   "2022_05_MIA_NYJ",
+   "2022_06_SF_ATL",
+   "2022_07_TB_CAR",
+   "2022_06_DAL_PHI"
+  ],
+  "plays_fitted": 9978,
+  "seasons": [
+   2022,
+   2022
+  ],
+  "weeks": [
+   1,
+   5
+  ]
+ },
+ "window": "holdout"
+}
