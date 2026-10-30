@@ -2001,13 +2001,29 @@ class FirstDriveBlock(unittest.TestCase):
         kicks['field_goal_outcomes'] = {bucket: (0, 0, 60) for bucket in gs.FG_BUCKETS}
         blocked = {'records': {'field_goal': [unclassified], 'punt': []},
                    'rates': {'punt_blocked': {'attempts': 1, 'blocked': 0}}, 'sha256': 'b' * 64}
-        record = gs.play_game(7, ref(StaticPool('field_goal_attempt', 0, 5), kickoff_pool(), kicks,
-                                     blocked_kicks=blocked), winner_choice='receive', max_drives=1)
+        class DecisionSampler:
+            def __init__(self):
+                self.decisions = []
+
+            def sample(self, _rng, cell, **_kwargs):
+                event, row, runoff, spot = cell[0]
+                self.decisions.append({
+                    'event': event, 'intent': 'kick', 'outcome_intent': 'kick',
+                    'decision_timing': 'pre_outcome_sample',
+                    'source': {'game_id': row['game_id'], 'play_id': row['play_id']},
+                })
+                return event, row, runoff, spot
+
+        reference = ref(StaticPool('field_goal_attempt', 0, 5), kickoff_pool(), kicks,
+                        blocked_kicks=blocked)
+        reference.contextual_sampler = DecisionSampler()
+        record = gs.play_game(7, reference, winner_choice='receive', max_drives=1)
         self.assertEqual(record['status'], 'blocked')
         self.assertEqual(record['drives'], [])
         self.assertEqual(record['blocked_attempt']['drive_index'], 1)
         self.assertEqual(record['blocked_attempt']['blocker'], 'blocked_kick_outcome_unresolved:field_goal:unclassified')
         self.assertEqual(record['blocked_attempt']['plays_before_block'], [])
+        self.assertEqual(record['blocked_attempt']['unrepresented_decisions'], reference.contextual_sampler.decisions)
         self.assertFalse(record['tied'])
         self.assertNotIn('overtime', record['unsupported_rules'])
         self.assertEqual(next(r['status'] for r in rm.check(record) if r['case'].startswith('Continuity')), rm.BLOCKED)
