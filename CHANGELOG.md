@@ -1,3 +1,16 @@
+## v10.0.10
+
+### Models and league pages
+
+- Enable NFL forecast locking and grading for production, and show NCAAF team names with adjacent final scores and winner highlighting.
+- Preserve each league's selected tab when navigating between leagues; add NBA standings, stakes, and player box scores.
+
+### Data reliability
+
+- Add an opt-in MLS membership-based identity cutover with historical membership resolution and holds for ambiguous identities.
+- Bound story warming, restore shared ESPN pacing after batch jobs, and keep backend integration checks offline.
+- Align NHL team codes to native tricodes and use completed NFL seasons for draft reference stats.
+
 ## v10.0.9
 
 ### NCAAF schedule
