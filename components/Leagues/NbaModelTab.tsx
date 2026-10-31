@@ -310,11 +310,13 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                   const forecast = game.models[model.id]
                   const grade = forecast.grade
                   const result = game.result ?? (grade ? { home_score: grade.home_score, away_score: grade.away_score } : null)
-                  const outcome = result == null
+                  const finalWinner = result == null || result.home_score === result.away_score
                     ? null
-                    : result.home_score === result.away_score
-                      ? 'Tie'
-                      : (result.home_score > result.away_score ? game.home_team : game.away_team) + ' won'
+                    : result.home_score > result.away_score ? 'home' : 'away'
+                  const awayFinalClass = result == null ? 'text-zinc-200'
+                    : finalWinner === 'away' ? 'font-semibold text-zinc-100' : 'text-zinc-400'
+                  const homeFinalClass = result == null ? 'text-zinc-200'
+                    : finalWinner === 'home' ? 'font-semibold text-zinc-100' : 'text-zinc-400'
                   const projectedScore = forecast.score_forecast_available &&
                     forecast.projected_away_points != null && forecast.projected_home_points != null
                     ? { away: forecast.projected_away_points.toFixed(1), home: forecast.projected_home_points.toFixed(1) }
@@ -354,13 +356,13 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                       </section>
                       <section role="group" aria-label="Final" className="w-full sm:w-52 sm:flex-none">
                         <h4 className="mb-1 text-xs font-medium text-zinc-500">
-                          Final{result ? ` · ${outcome}` : ' · Pending'}
+                          Final{!result ? ' · Pending' : finalWinner == null ? ' · Tie' : ''}
                         </h4>
                         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 text-sm tabular-nums">
-                          <span className="truncate text-zinc-200">{game.away_team}</span>
-                          <span className="text-right font-semibold text-zinc-100">{result?.away_score ?? '—'}</span>
-                          <span className="truncate text-zinc-200">{game.home_team}</span>
-                          <span className="text-right font-semibold text-zinc-100">{result?.home_score ?? '—'}</span>
+                          <span className={`truncate ${awayFinalClass}`}>{game.away_team}</span>
+                          <span className={`text-right ${awayFinalClass}`}>{result?.away_score ?? '—'}</span>
+                          <span className={`truncate ${homeFinalClass}`}>{game.home_team}</span>
+                          <span className={`text-right ${homeFinalClass}`}>{result?.home_score ?? '—'}</span>
                         </div>
                       </section>
                       <div className="flex w-full items-center justify-between gap-3 text-xs sm:ml-auto sm:w-auto sm:flex-col sm:items-end">
