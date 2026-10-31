@@ -30,9 +30,9 @@ function formatDay(date: string) {
 
 // Days we have not read yet are unknown, not empty. Name them when there are a
 // few; a whole unread week is named by its label instead of a long date list.
-function unreadNote(label: string | undefined, unreadDays: string[]) {
-  if (unreadDays.length > 7) return `Games for ${label} aren't posted yet.`
-  return `Games for ${unreadDays.map(formatDay).join(', ')} aren't posted yet.`
+export function unreadNote(label: string | undefined, unreadDays: string[]) {
+  if (unreadDays.length > 7) return `Schedule for ${label} isn't loaded yet.`
+  return `Games for ${unreadDays.map(formatDay).join(', ')} aren't loaded yet.`
 }
 
 export default function NflScheduleTab({
