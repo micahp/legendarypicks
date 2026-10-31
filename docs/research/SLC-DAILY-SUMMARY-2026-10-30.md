@@ -1,7 +1,7 @@
 # SLC work summary — 2026-10-30
 
 **Branch:** `research/slc-player-workload-calibration-2026-10-30`
-**Code pushed through:** `14108ed5` (`Add resumable paired-seed ablation matrix runner`)
+**Code pushed through:** `9099ee5b` (`Fallback when SLC outcome modifiers zero all weights`)
 **Scope:** SLC football-realism assertions, workload calibration evidence, the separate Model D clock replay, and the remaining Week 8 matchup runs.
 
 ## Completed and published
@@ -15,6 +15,7 @@
 - Added an opt-in QB run-role style layer and evaluated it on 2025 holdout and 2026 Weeks 1–7. Brier point estimates improved, but clustered intervals include zero; the layer remains experimental pending paired full-game evaluation.
 - Kept Model D event-clock replay separate from the SLC game batch. The 2022–2024 training review records 485 `oob_snap` and 2,132 `oob_ready` examples before censoring; 2025 holdout short-runoff rates are close to observed. Quarter-end hazards remain poorly calibrated (4.71% premature and 91.99% missed in the reported evaluation), so this is not a claim that clock calibration is complete.
 - Added the score-clock-only paired ablation switch and a resumable paired-seed ablation-matrix runner. The runner uses matched seeds, box-score exports, immutable manifests, per-worker logs, and paired player/team summaries. It has not yet been run because the fast host is assigned to the Week 8 matchup batch.
+- Full-suite verification exposed an archival smoke-gate count that assumed only one disabled layer, plus a sampler crash when every conditioned outcome weight was zero. The smoke gate now compares against the profile's enabled layer set. When outcome modifiers zero every event, the sampler falls back to the base distribution within the already-selected intent and records that fallback in the decision trace.
 
 The ARI–DAL report explicitly notes that archived artifacts do not retain every play-level participant-selection trace. Its reconstructed game-level shares are not presented as a replay of the original individual selections. A five-yard receiving-source reconciliation discrepancy is also documented in the benchmark artifact.
 
@@ -26,7 +27,7 @@ The ARI–DAL report explicitly notes that archived artifacts do not retain ever
 
 ## Verification
 
-Using `/root/.venvs/lp-slc-a-g/bin/python`, two focused runs passed: **90 tests across nine modules** for QB participation, football and box-score assertions, QB decisions/style evaluation, workload references, and paired ablation comparison/runner behavior; plus **401 tests across 17 modules** for football invariants, game state, E1 transitions, clock replay, SLC engine/output, share and player outcomes, kicks, overtime, seed ledgers, and batch handling. Total: **491 passing tests across 26 modules**. `git diff --check` passed. The branch was at `14108ed5` before the summary commit.
+Using `/root/.venvs/lp-slc-a-g/bin/python`, two focused runs passed: **90 tests across nine modules** for QB participation, football and box-score assertions, QB decisions/style evaluation, workload references, and paired ablation comparison/runner behavior; plus **401 tests across 17 modules** for football invariants, game state, E1 transitions, clock replay, SLC engine/output, share and player outcomes, kicks, overtime, seed ledgers, and batch handling. Total: **491 passing tests across 26 modules**. After fixing the two failures found by full discovery, `/root/legendarypicks/backend/venv/bin/python -m unittest discover -s scripts/nfl_sequence -p 'test_*.py'` passed **934 tests with 3 skipped**. `git diff --check` and the focused regressions passed.
 
 ## Still open
 
