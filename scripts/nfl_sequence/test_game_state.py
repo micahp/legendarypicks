@@ -618,6 +618,29 @@ class BlockedKickFitsTheState(unittest.TestCase):
         game.ref = SimpleNamespace(blocked_kicks={'records': {'punt': records}, 'sha256': 'c' * 64})
         return game
 
+    def test_missing_state_returns_explicit_blocker_and_records_a_defined_category(self):
+        from types import SimpleNamespace
+        row = {
+            'kick_type': 'punt',
+            'classification_status': 'classified_next_snap',
+            'possession_after_role': 'receiving_team',
+            'clock_runoff_seconds': 4,
+        }
+        sampler = SimpleNamespace(decisions=[{}])
+        game = object.__new__(gs._Game)
+        game.ref = SimpleNamespace(
+            blocked_kicks={'records': {'punt': [row]}, 'sha256': 'a' * 64},
+            contextual_sampler=sampler,
+        )
+
+        reason, outcome = game._sample_blocked_kick_by_category(
+            'punt', [row], random.Random(1), 300, 1, None)
+
+        self.assertEqual(reason, 'blocked_kick_geometry_state_missing:punt')
+        self.assertIsNone(outcome)
+        self.assertEqual(sampler.decisions[-1]['blocked_kick_geometry_category'], 'state_missing')
+        self.assertEqual(sampler.decisions[-1]['blocked_kick_geometry_candidates'], 0)
+
     def test_a_period_end_record_is_not_drawn_for_a_state_with_time_left(self):
         import random
         period_end = {'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
