@@ -103,6 +103,7 @@ describe('NBA model tab', () => {
     expect(screen.queryByText('Research only')).toBeNull()
     expect(screen.queryByText('NBA game model · 2026–27')).toBeNull()
     expect(screen.queryByText(/Brier/)).toBeNull()
+    expect(screen.queryByText(/SportsDataverse/)).toBeNull()
   })
 
   it('keeps every Brier score inside the Model accuracy tooltip', async () => {

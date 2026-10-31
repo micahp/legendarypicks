@@ -405,10 +405,6 @@ export default function NbaModelTab() {
       )}
 
       {view === 'record' && <RecordView payload={payload} model={selectedModel} />}
-
-      <p className="text-xs text-zinc-500">
-        The 2017–18 through 2025–26 SportsDataverse releases supply historical training and evaluation data. No historical NBA pregame odds feed was available for a valid timestamped market benchmark. Current-season forecasts use completed games and official schedule rows only; no lineups or post-tipoff inputs are used.
-      </p>
     </div>
   )
 }
