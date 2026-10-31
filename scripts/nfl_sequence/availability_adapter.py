@@ -16,16 +16,19 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import nfl_team_codes  # noqa: E402
 import pregame_snapshot
 
 SCHEMA = 'lp-nfl-weekly-availability-snapshot-1'
 RULE_VERSION = 'avail-rules-v1'
 STARTER_ROLES = 28
-# Depth-chart codes differ from the nflverse codes the availability snapshot is keyed on.
-DB_TO_NFLVERSE = {'LAR': 'LA', 'WSH': 'WAS'}
+# Kept as an import-compatible alias; the directional mapping is defined centrally.
+DB_TO_NFLVERSE = nfl_team_codes.NFLVERSE_TEAM_CODE_ALIASES
 
 
 def _canonical_sha(body: dict) -> str:
@@ -92,7 +95,7 @@ def apply(snapshot: dict, availability_path: str) -> dict:
     unmatched = []
     for side in ('home', 'away'):
         team = snapshot['rosters'][side]['team']
-        avail_team = DB_TO_NFLVERSE.get(team, team)
+        avail_team = nfl_team_codes.to_nflverse_team_code(team)
         for player in snapshot['rosters'][side]['players']:
             if (avail_team, player['gsis_id']) not in rows:
                 unmatched.append(f"{team} {player.get('player_name')} ({player['gsis_id']})")
@@ -106,7 +109,7 @@ def apply(snapshot: dict, availability_path: str) -> dict:
     for side in ('home', 'away'):
         roster = snapshot['rosters'][side]
         team = roster['team']
-        avail_team = DB_TO_NFLVERSE.get(team, team)
+        avail_team = nfl_team_codes.to_nflverse_team_code(team)
         kept = []
         for player in roster['players']:
             row = rows[(avail_team, player['gsis_id'])]

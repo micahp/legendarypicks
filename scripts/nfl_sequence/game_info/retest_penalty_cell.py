@@ -14,6 +14,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,6 +22,8 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[2]))
+import nfl_team_codes  # noqa: E402
 REPO_BT = HERE / 'backtest_splits.py'
 spec = importlib.util.spec_from_file_location('bt', REPO_BT)
 bt = importlib.util.module_from_spec(spec)
@@ -28,7 +31,7 @@ spec.loader.exec_module(bt)
 
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
 OUT = Path('/root/lp-snapshots/nfl-game-info/experiments/penalty-cell-retest')
-PENALTY_TEAM_TO_SCHEDULE = {'LA': 'LAR', 'WAS': 'WSH'}
+PENALTY_TEAM_TO_SCHEDULE = nfl_team_codes.PBP_TEAM_CODE_ALIASES
 CELL = '50-69F | 10-14 mph'
 SEASONS = [2022, 2023, 2024, 2025]
 
@@ -39,7 +42,7 @@ def penalties_by_team_game() -> pd.DataFrame:
         "select game_id, penalty_team as team, count(*) as n, sum(penalty_yards) as yards from nfl_pbp_penalty "
         "where season between 2022 and 2025 and season_type='REG' and penalty=1 group by game_id, penalty_team", con)
     con.close()
-    rows['team'] = rows.team.replace(PENALTY_TEAM_TO_SCHEDULE)
+    rows['team'] = rows.team.map(nfl_team_codes.to_pbp_team_code)
     return rows
 
 

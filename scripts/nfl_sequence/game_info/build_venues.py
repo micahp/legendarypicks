@@ -5,6 +5,7 @@ Name, roof type and listed capacity come from the Wikipedia list of NFL stadiums
 OpenStreetMap Nominatim (one request per second, one query per venue). Output: venues.json next to this script.
 """
 import json
+import sys
 import time
 import urllib.parse
 import urllib.request
@@ -12,6 +13,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[2]))
+import nfl_team_codes  # noqa: E402
+
 UA = 'LegendaryPicksResearch/1.0 (venue lookup for backtests)'
 WIKI = 'https://en.wikipedia.org/wiki/List_of_National_Football_League_stadiums'
 
@@ -49,7 +53,7 @@ VENUES = {
     'WAS': ('Northwest Stadium', 'Landover', 'Maryland', 'Open', 64000),
 }
 # The NY Jets and Giants share MetLife; the Chargers and Rams share SoFi. Both teams point at the same venue row.
-SHARED = {'NYJ': 'NYG', 'LAC': 'LA', 'LAR': 'LA'}
+SHARED = {'NYJ': 'NYG', 'LAC': 'LA', 'LAR': nfl_team_codes.to_nflverse_team_code('LAR')}
 
 
 def geocode(name, city, state):

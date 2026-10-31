@@ -9,16 +9,20 @@ which source is used, and it is for review.
 """
 import glob
 import json
+import sys
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import decision_layer as dl
-from playbook_crosscheck import PLAYBOOKS, TEAM_CODE
+import nfl_team_codes
+from playbook_crosscheck import PLAYBOOKS
 
 BOOK_CATS = ('D', 'E', 'C')
 
 
 def rows_of(playbook, season):
     """Labelled rows from one team-season playbook: pass depth and location on passes, run gap on runs."""
-    team = TEAM_CODE.get(playbook['team_id'], playbook['team_id'])
+    team = nfl_team_codes.to_pbp_team_code(playbook['team_id'])
     out = []
     for play in playbook['offense']['observed_plays']:
         a = play['attributes']

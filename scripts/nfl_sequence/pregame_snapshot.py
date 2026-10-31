@@ -15,7 +15,9 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import holdout  # noqa: E402
+import nfl_team_codes  # noqa: E402
 
 
 SCHEMA = 'lp-nfl-pregame-snapshot-1'
@@ -27,8 +29,8 @@ REVIEWED_FULL_BUILDER_SHA256 = {
     # same builder, dropping depth players who are not on the jersey-week roster and promoting rostered backups
     '3e1721a644a987e0e9d75522b990a44bceecc7eb2416e7236dda8af30ad5eb97',
 }
-# The depth-chart and roster files use nflverse team codes; the schedule uses the database codes.
-NFLVERSE_TEAM = {'LAR': 'LA', 'WSH': 'WAS'}
+# Kept as an import-compatible alias; the directional mapping is defined centrally.
+NFLVERSE_TEAM = nfl_team_codes.NFLVERSE_TEAM_CODE_ALIASES
 
 
 def parse_as_of(value: str) -> datetime:
@@ -160,7 +162,7 @@ def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenanc
     min_rows = {'away': 22, 'home': 21}
     frozen_rosters = {}
     for side, team in sides.items():
-        source = NFLVERSE_TEAM.get(team, team)
+        source = nfl_team_codes.to_nflverse_team_code(team)
         entry = full_depth.get('rosters', {}).get(side)
         if not entry or entry.get('team') != source:
             raise ValueError(f'{side} full depth roster team does not match the frozen schedule')

@@ -26,6 +26,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent))
+import nfl_team_codes  # noqa: E402
 import holdout  # noqa: E402
 
 DEFAULT_RAW = '/root/gridiron-playbooks-research/data/raw'
@@ -35,11 +37,11 @@ RAW_FIELDS = ('game_id', 'play_id', 'season', 'week', 'season_type', 'qtr', 'gam
               'score_differential', 'total_home_score', 'total_away_score', 'posteam_score_post', 'defteam_score_post')
 SHARED = ('posteam', 'qtr', 'down', 'ydstogo', 'yardline_100', 'game_seconds_remaining', 'play_type')
 # nflverse spells two clubs LA and WAS; the play-by-play table spells them LAR and WSH. Both sides are normalised to the table.
-TEAM_CODES = {'LA': 'LAR', 'WAS': 'WSH'}
+TEAM_CODES = nfl_team_codes.PBP_TEAM_CODE_ALIASES
 
 
 def norm(code):
-    return TEAM_CODES.get(code, code) if code else code
+    return nfl_team_codes.to_pbp_team_code(code) if code else code
 
 
 def sha256(path):

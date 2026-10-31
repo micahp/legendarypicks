@@ -11,10 +11,12 @@ import math
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import e1_drive as e1  # noqa: E402
 import game_state as gs  # noqa: E402
 import measure_kick_outcomes as mk  # noqa: E402
 import rule_regimes as rr  # noqa: E402
+import nfl_team_codes  # noqa: E402
 
 
 PLAY_EXTRAS = Path(__file__).resolve().parents[2] / 'docs' / 'fixtures' / 'e2' / 'play_extras_2022_2025.csv'
@@ -233,11 +235,11 @@ def load_blocked_kicks(path=BLOCKED_KICKS, eligible_before=None):
 
 # The play extras file spells two clubs as nflverse does (LA, WAS); the play-by-play table spells them LAR and WSH. A timeout
 # caller must match the play's own team codes, so the extras are mapped to the table's codes.
-EXTRAS_TEAM_CODES = {'LA': 'LAR', 'WAS': 'WSH'}
+EXTRAS_TEAM_CODES = nfl_team_codes.PBP_TEAM_CODE_ALIASES
 
 
 def extras_team(code):
-    return EXTRAS_TEAM_CODES.get(code, code)
+    return nfl_team_codes.to_pbp_team_code(code)
 
 
 def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS, eligible_before=None, include_player_yardage=False):
