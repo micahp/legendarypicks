@@ -164,6 +164,7 @@ describe('NBA model tab', () => {
     expect(screen.getByText('BOS at DET')).toBeTruthy()
     expect(screen.getByText('Projected score: BOS 108.9 – DET 112.1')).toBeTruthy()
     expect(screen.getByText('Final BOS 102 – DET 109 · DET won')).toBeTruthy()
+    expect(screen.queryByText(/· Locked \d/)).toBeNull()
     expect(screen.getAllByText('Graded').length).toBeGreaterThanOrEqual(2)
     expect(screen.queryByText('PHI at NYK')).toBeNull()
     expect(screen.queryByText(/Brier/)).toBeNull()

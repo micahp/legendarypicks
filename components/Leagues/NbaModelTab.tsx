@@ -221,7 +221,7 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                 <div>
                   <h3 className="font-medium text-zinc-100">{game.away_team} at {game.home_team}</h3>
                   <p className="mt-1 text-xs text-zinc-500">
-                    {new Date(game.scheduled_start_utc).toLocaleString()} · Locked {new Date(forecast.locked_at_utc as string).toLocaleString()}
+                    {new Date(game.scheduled_start_utc).toLocaleString()}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-300">
                     <span>{game.home_team} win probability {percent(forecast.home_win_probability)}</span>
