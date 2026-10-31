@@ -1,7 +1,7 @@
 # SLC work summary — 2026-10-30
 
 **Branch:** `research/slc-player-workload-calibration-2026-10-30`
-**Code pushed through:** `3265c5fa` (`Test zero-weight backoff fallback`)
+**Code already pushed before this publication:** `c10ca203` (`Update realism TODO for Week 8 run status`)
 **Scope:** SLC football-realism assertions, workload calibration evidence, the separate Model D clock replay, and the remaining Week 8 matchup runs.
 
 ## Completed and published
@@ -26,6 +26,11 @@ The ARI–DAL report explicitly notes that archived artifacts do not retain ever
 - The replacement launcher targets the eight remaining matchups, in sequence: `IND_JAX`, `KC_DEN`, `LAC_LA`, `LV_NYJ`, `MIN_DET`, `NE_MIA`, `PHI_WAS`, and `TEN_CIN`. Each matchup is split across six shards totaling 10,000 seeds. Box-score export is enabled, and outputs are directed to the persistent run directory `/root/slc-week8-player-workload-10k-2026-10-30`.
 - The fast-host shell reported IND–JAX workers 01–06 started (PIDs 874711–874716). At the latest check the SSH session remained alive, but no completion line was visible. The foreground shell was left open and untouched. The remaining seven games and the batch artifacts are therefore **not yet verified complete**.
 
+## Review outputs published in this update
+
+- Added the three previously untracked ARI–DAL player-tail review iterations: the original audit, v2, and v4. The first two include per-seed findings plus summary and manifest JSON; v4 contains the per-seed findings CSV. Together they preserve the review outputs requested for publication, without changing the frozen 10K run artifacts.
+- The latest pane check still showed the original IND–JAX worker startup and no completion evidence. A separate SSH monitor remained at its password prompt, so no new fast-host status was available; the original run shell was left open and untouched.
+
 ## Verification
 
 Using `/root/.venvs/lp-slc-a-g/bin/python`, two focused runs passed: **90 tests across nine modules** for QB participation, football and box-score assertions, QB decisions/style evaluation, workload references, and paired ablation comparison/runner behavior; plus **401 tests across 17 modules** for football invariants, game state, E1 transitions, clock replay, SLC engine/output, share and player outcomes, kicks, overtime, seed ledgers, and batch handling. Total: **491 passing tests across 26 modules**. After fixing the two failures found by full discovery, `/root/legendarypicks/backend/venv/bin/python -m unittest discover -s scripts/nfl_sequence -p 'test_*.py'` passed **934 tests with 3 skipped**. After adding the dedicated backoff regression, the affected team-outcome, blocker-resolution, and archival-comparison suites passed **24 tests**. The full 934-test discovery was not rerun after that test-only addition. `git diff --check` and focused regressions passed.
@@ -35,4 +40,4 @@ Using `/root/.venvs/lp-slc-a-g/bin/python`, two focused runs passed: **90 tests 
 - Verify all eight remaining 10K matchups finish, reconcile every seed and exported box score, preserve blocked/error outcomes, then publish the artifacts and matchup review.
 - Run the matched-seed full-game ablation matrix after the fast host is free. This is required to quantify player-share, QB-decision, team-outcome, player-conditioned-outcome, playbook, and score-clock effects.
 - Keep the QB style layer opt-in until full-game paired results support a change. Improve workload-dependent shares/substitutions and Model D quarter-end hazards using the pinned holdout data; do not clip rare legal outcomes.
-- Preserve three pre-existing untracked ARI–DAL audit-output directories; they were not included in the code commits.
+- The eight-matchup run and paired ablation matrix still need fast-host completion and artifact review; do not infer completion from worker startup alone.
