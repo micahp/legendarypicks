@@ -187,7 +187,7 @@ def _blocked_kicks(record):
     fixture_hash = observed.get('blocked_kick_source_sha256')
     input_hashes = observed.get('blocked_kick_input_source_sha256') or {}
     found = 0
-    supported = {'classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety'}
+    supported = {'classified_recovery', 'classified_dead_ball_spot', 'classified_next_snap', 'touchdown', 'safety'}
     for drive in record['drives']:
         for play in drive['plays']:
             event, out = play['event_type'], play['outcome']
@@ -225,6 +225,24 @@ def _blocked_kicks(record):
                     return FAIL, f'drive {drive["index"]} play {play["sequence"]}: score belongs to the wrong team'
                 continue
             if after.get('end_of_drive') in ('halftime', 'end_of_regulation'):
+                continue
+            if blocked.get('classification_status') == 'classified_next_snap':
+                role = blocked.get('possession_after_role')
+                spot, down, togo = (blocked.get('next_snap_yardline_100'), blocked.get('next_snap_down'),
+                                    blocked.get('next_snap_ydstogo'))
+                if (role not in ('receiving_team', 'kicking_team')
+                        or not all(type(value) is int for value in (spot, down, togo))
+                        or not 1 <= spot <= 99 or not 1 <= down <= 4 or not 1 <= togo <= spot):
+                    return FAIL, f'drive {drive["index"]} play {play["sequence"]}: blocked next snap has illegal spot, down or distance'
+                expected_offense = before['defense_team'] if role == 'receiving_team' else before['offense_team']
+                expected_defense = before['offense_team'] if role == 'receiving_team' else before['defense_team']
+                if (after.get('offense_team') != expected_offense or after.get('defense_team') != expected_defense
+                        or after.get('yardline_100') != spot or after.get('down') != down
+                        or after.get('yards_to_go') != togo):
+                    return FAIL, f'drive {drive["index"]} play {play["sequence"]}: blocked next snap disagrees with the projected state'
+                if (bool(out.get('turnover')) != (role == 'receiving_team')
+                        or bool(out.get('turnover_on_downs'))):
+                    return FAIL, f'drive {drive["index"]} play {play["sequence"]}: blocked next-snap possession is misclassified'
                 continue
             role = blocked.get('recovery_role')
             if role == 'receiving_team' or blocked['classification_status'] == 'classified_dead_ball_spot':
