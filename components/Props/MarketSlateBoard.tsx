@@ -520,13 +520,13 @@ export default function MarketSlateBoard({ league, date, filterLabel, onViewAll 
   // alternate does not: histories for already-viewed offers stay cached.
   useEffect(() => {
     const requestId = ++historyRequest.current
-    for (const controller of historyControllers.current.values()) controller.abort()
+    historyControllers.current.forEach((controller) => controller.abort())
     historyControllers.current.clear()
     requestedHistory.current.clear()
     setHistoryByRow({})
     return () => {
       if (historyRequest.current !== requestId) return
-      for (const controller of historyControllers.current.values()) controller.abort()
+      historyControllers.current.forEach((controller) => controller.abort())
       historyControllers.current.clear()
     }
   }, [activeMarket, date, league])

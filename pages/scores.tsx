@@ -424,10 +424,10 @@ export default function ScoresPage() {
                   {subKeys.map((sub, subIndex) => {
                     const sg = subGroups[sub]
                     // Compute shared time if all games in this group have the same start time
-                    const times = [...new Set(sg.map((g: Game) => {
+                    const times = Array.from(new Set(sg.map((g: Game) => {
                       const d = new Date(g.startTime)
                       return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    }))]
+                    })))
                     const timeLabel = times.length === 1 ? ' · ' + times[0] : ''
                     return (
                     <div key={sub || league} className={`space-y-3 ${sub && subIndex > 0 ? 'pt-5' : ''}`}>
