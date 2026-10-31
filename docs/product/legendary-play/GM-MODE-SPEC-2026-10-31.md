@@ -5,7 +5,7 @@
 **Owner:** Legendary Picks  
 **Companion:** [Live-Context Mini-Games](LIVE-CONTEXT-MINIGAMES-SPEC-2026-10-31.md)  
 **Design explorations:** [16-bit homepage and NFL HQ mockups (PR #27)](https://github.com/micahp/legendarypicks/pull/27)  
-**Existing product decisions:** [Forecast-first / market-first architecture](../DECISION-forecast-first-leagues-market-first-props-2026-10-20.md), [accounts and device identity](../SPEC-accounts-and-mock-draft.md), [NFL product direction](../SPEC-nfl-product-direction.md).
+**Existing product decisions:** [Forecast-first / market-first architecture](../../DECISION-forecast-first-leagues-market-first-props-2026-10-20.md), [accounts and device identity](../../SPEC-accounts-and-mock-draft.md), [NFL product direction](../../SPEC-nfl-product-direction.md).
 
 ## 0. Product decision
 
@@ -165,7 +165,7 @@ Never store a name-only external athlete join. Avoid optimistic payouts: changes
 
 ### Account/anonymous boundary
 
-The repo's [accounts spec](../SPEC-accounts-and-mock-draft.md) documents `lp_device_id` / `X-Device-Id` and a claim-on-sign-in design. **Verify what has actually shipped**; do not assume email accounts or migrations already exist. Anonymous attempts must be server-persisted and bound to a secure claim token; device ID alone must not authorize claiming another person's data. On sign-in, ownership moves atomically and cannot be reclaimed by a different account.
+The repo's [accounts spec](../../SPEC-accounts-and-mock-draft.md) documents `lp_device_id` / `X-Device-Id` and a claim-on-sign-in design. **Verify what has actually shipped**; do not assume email accounts or migrations already exist. Anonymous attempts must be server-persisted and bound to a secure claim token; device ID alone must not authorize claiming another person's data. On sign-in, ownership moves atomically and cannot be reclaimed by a different account.
 
 ## 6. Release slices with hard gates
 
@@ -210,11 +210,11 @@ Before shipping to public beta: a recorded end-to-end test with a real pregame l
 
 ## 9. Related repo context
 
-- [Forecast-first / market-first product decision](../DECISION-forecast-first-leagues-market-first-props-2026-10-20.md)
-- [Historical identity/account migration design](../SPEC-accounts-and-mock-draft.md)
-- [Prop settlement original design](../SPEC-settlement-pipeline.md); audit current implementation before coding
-- [NFL product direction](../SPEC-nfl-product-direction.md)
-- [Gridiron contract](../GRIDIRON-CONTRACT-v1.md): experimental synthetic full-game replays **not** GM scrimmages or observed play footage
+- [Forecast-first / market-first product decision](../../DECISION-forecast-first-leagues-market-first-props-2026-10-20.md)
+- [Historical identity/account migration design](../../SPEC-accounts-and-mock-draft.md)
+- [Prop settlement original design](../../SPEC-settlement-pipeline.md); audit current implementation before coding
+- [NFL product direction](../../SPEC-nfl-product-direction.md)
+- [Gridiron contract](../../GRIDIRON-CONTRACT-v1.md): experimental synthetic full-game replays **not** GM scrimmages or observed play footage
 - [Pixel-art design PR #27](https://github.com/micahp/legendarypicks/pull/27)
 
 **This document is a design decision proposal, not authorization to change gameplay, live forecast grading, production data, services, or the deployed website.**
