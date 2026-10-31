@@ -1,12 +1,12 @@
 # SLC work summary — 2026-10-30
 
 **Branch:** `research/slc-player-workload-calibration-2026-10-30`
-**Latest code commit before this publication:** `30ed3c76` (`research: enable paired QB role style ablation`)
+**Latest code commit before this publication:** `dfd20800` (`research: audit Week 8 batch artifacts`)
 **Scope:** SLC football-realism assertions, workload calibration evidence, the separate Model D clock replay, and the remaining Week 8 matchup runs.
 
-## Status update — 20:45 CDT
+## Status update — 20:52 CDT
 
-The latest source commit, `30ed3c76` (`research: enable paired QB role style ablation`), extends the matched-seed runner without changing SLC defaults. Earlier code and review artifacts are on the same research branch; the prior daily-summary publication is `fd0c4943`. This update records the event-clock diagnostic, focused verifications, and current run-monitoring limit.
+The latest source commit, `dfd20800` (`research: audit Week 8 batch artifacts`), adds a read-only integrity and workload-tail audit for the eight matchup outputs. The earlier paired QB-style ablation runner is in `30ed3c76`; SLC defaults remain unchanged. The prior daily-summary publication is `d0eb19c3`. This update records the final event-clock diagnostic, focused verifications, and current run-monitoring limit.
 
 ## Completed and published
 
@@ -57,6 +57,12 @@ The ARI–DAL report explicitly notes that archived artifacts do not retain ever
 - Added `--enable-qb-run-role-style`. It enables that layer for all control/ablation arms and adds its isolated comparison when the default layer list is used. Explicitly requesting `--layer qb_run_role_style` also enables it in the control automatically. The run manifest records the enabled optional layer. SLC's default profile and the runner's default six-layer matrix are unchanged.
 - The fast host remains occupied by the Week 8 matchup batch, and the local host lacks the pinned simulation DB and matchup inputs, so no paired full-game ablation has been launched yet.
 
+## Week 8 artifact audit readiness — 20:52 CDT
+
+- Added `scripts/nfl_sequence/audit_week8_matchup_batch.py`. It checks the six expected worker shards per matchup, exact contiguous seed coverage, report/ledger agreement, `boxscore_export=true`, sidecar parity, consistent snapshot/config/source hashes, and passing reconciliation for every valid full game.
+- The auditor preserves blocked/error seed details and reports player means, standard deviations, zero rates, P95/P99, maxima, and historical-record exceedance seeds from reconciled valid games. It writes only to a separate report path and refuses output paths inside the run root.
+- Synthetic fixtures and the paired-ablation regression suite passed **13 tests**; compilation, CLI help, and `git diff --check` passed. The auditor has not run against the fast-host batch because its artifacts are not yet accessible locally.
+
 ## Verification
 
 Using `/root/.venvs/lp-slc-a-g/bin/python`, two focused runs passed: **90 tests across nine modules** for QB participation, football and box-score assertions, QB decisions/style evaluation, workload references, and paired ablation comparison/runner behavior; plus **401 tests across 17 modules** for football invariants, game state, E1 transitions, clock replay, SLC engine/output, share and player outcomes, kicks, overtime, seed ledgers, and batch handling. Total: **491 passing tests across 26 modules**. After fixing the two failures found by full discovery, `/root/legendarypicks/backend/venv/bin/python -m unittest discover -s scripts/nfl_sequence -p 'test_*.py'` passed **934 tests with 3 skipped**. After adding the dedicated backoff regression, the affected team-outcome, blocker-resolution, and archival-comparison suites passed **24 tests**. The full 934-test discovery was not rerun after that test-only addition. In this update, the focused clock replay suite passed **11 tests**; a 20-replicate full-window Model D holdout replay completed, and an independent raw nflverse reconstruction matched all 42 support cells, 141,830 PBP keys, and 12,246 OOB-flag keys. `git diff --check` and focused regressions passed.
@@ -64,6 +70,8 @@ Using `/root/.venvs/lp-slc-a-g/bin/python`, two focused runs passed: **90 tests 
 The continuation check also passed **61 tests** across `test_pre_event`, `test_participant_invariants`, `test_slc_outputs`, `test_paired_seed_ablation`, and `test_run_paired_seed_ablation_matrix`, covering backup-QB eligibility, box-score metadata, paired ledgers, and resumable ablation shard validation.
 
 The runner change passed **25 tests** across `test_run_paired_seed_ablation_matrix` and `test_slc_config`; Python compilation, CLI help, and `git diff --check` also passed.
+
+The batch auditor's four tests passed with `test_audit_week8_matchup_batch`; combined with the paired-runner module, the latest focused run passed **13 tests**.
 
 ## Still open
 
