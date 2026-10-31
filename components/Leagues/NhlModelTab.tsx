@@ -570,7 +570,7 @@ export default function NhlModelTab() {
       </div>
 
       {view === 'projections' && <>
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-lg font-semibold text-zinc-100" title="Models lock 90 mins before kickoff">2026–27 projections · {MODEL_LABELS[model]}</h2></div>{model === 'B7_elo_xg_poisson' && <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">Experimental</span>}</div>
+        <h2 className="text-lg font-semibold text-zinc-100" title="Models lock 90 mins before kickoff">2026–27 projections · {MODEL_LABELS[model]}</h2>
         {items.length === 0 ? <p className="text-sm text-zinc-400">{payload.state === 'missed_locks' ? 'No forecasts were locked for games that missed the T−90 window. Check the Record tab for details.' : 'No NHL projections have reached their T−90 lock time yet.'}</p> : Object.entries(groups).map(([day, entries]) => <section key={day} className="space-y-2"><h3 className="text-sm font-medium text-zinc-400">{day}</h3><div className="grid gap-3 sm:grid-cols-2">{entries.map(item => item.node)}</div></section>)}
       </>}
       {view === 'record' && <RecordView games={games} model={model} missedLocks={payload.missed_locks || []} />}

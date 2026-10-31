@@ -1,5 +1,5 @@
 import React from 'react'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import NbaModelTab from './NbaModelTab'
 
 const models = [
@@ -7,26 +7,68 @@ const models = [
   { id: 'G2', label: 'G2 Efficiency', version: 'g2-version', projects_scores: true, note: 'Efficiency model' },
   { id: 'G3', label: 'G3 Joint scores', version: 'g3-version', projects_scores: true, note: 'Joint score model' },
 ]
+
+function dateInDays(days: number, hour = 19) {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  date.setHours(hour, 0, 0, 0)
+  return date.toISOString()
+}
+
+function dayLabel(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
+}
+
+function previewGame(gameId: string, scheduled: string, away: string, home: string) {
+  return {
+    game_id: gameId,
+    scheduled_start_utc: scheduled,
+    home_team: home,
+    away_team: away,
+    status: 'preview' as const,
+    locked_at_utc: null,
+    result: null,
+    models: {
+      G1: {
+        model_version: 'g1-version', home_win_probability: 0.55,
+        projected_home_points: null, projected_away_points: null, score_forecast_available: false,
+      },
+      G2: {
+        model_version: 'g2-version', home_win_probability: 0.57,
+        projected_home_points: 111.2, projected_away_points: 108.4, score_forecast_available: true,
+      },
+      G3: {
+        model_version: 'g3-version', home_win_probability: 0.58,
+        projected_home_points: 112.1, projected_away_points: 108.9, score_forecast_available: true,
+      },
+    },
+  }
+}
+
+const firstGameDay = dateInDays(1, 18)
+const secondGameDay = dateInDays(1, 21)
+const nextGameDay = dateInDays(2, 19)
+
 const payload = {
-  state: 'available', default_model: 'G3', models,
+  state: 'available',
+  default_model: 'G3',
+  models,
   records: {
     G1: { locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
     G2: { locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
     G3: { locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
   },
-  games: [{
-    game_id: '0022600001', scheduled_start_utc: new Date(Date.now() + 86_400_000).toISOString(),
-    home_team: 'DET', away_team: 'BOS', status: 'preview', locked_at_utc: null, result: null,
-    models: {
-      G1: { model_version: 'g1-version', home_win_probability: 0.55, projected_home_points: null, projected_away_points: null, score_forecast_available: false },
-      G2: { model_version: 'g2-version', home_win_probability: 0.57, projected_home_points: 111.2, projected_away_points: 108.4, score_forecast_available: true },
-      G3: { model_version: 'g3-version', home_win_probability: 0.58, projected_home_points: 112.1, projected_away_points: 108.9, score_forecast_available: true },
-    },
-  }],
+  games: [
+    previewGame('game-1', firstGameDay, 'BOS', 'DET'),
+    previewGame('game-2', secondGameDay, 'NYK', 'PHI'),
+    previewGame('game-3', nextGameDay, 'LAL', 'CHI'),
+  ],
   benchmark: {
     eligible_games: { train: 5800, validation: 2460, test: 2460 },
     metrics: {
-      validation: { G1: { games: 2460, winner_brier: 0.22, winner_log_loss: 0.64, winner_accuracy: 0.64, calibration: { ece_10_bin: 0.03 } } },
+      validation: {
+        G1: { games: 2460, winner_brier: 0.22, winner_log_loss: 0.64, winner_accuracy: 0.64, calibration: { ece_10_bin: 0.03 } },
+      },
       test: {
         G1: { games: 2460, winner_brier: 0.21, winner_log_loss: 0.61, winner_accuracy: 0.65, calibration: { ece_10_bin: 0.04 } },
         G2: { games: 2460, winner_brier: 0.21, winner_log_loss: 0.62, winner_accuracy: 0.65, calibration: { ece_10_bin: 0.05 }, team_points_mae: 9.7, spread_mae: 11.2, total_mae: 15.8 },
@@ -43,64 +85,91 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('NBA model tab', () => {
-  it('compares candidates and explicitly says G1 has no score projection', async () => {
+  it('shows projections grouped under day headings and removes the research header', async () => {
     render(<NbaModelTab />)
-    await waitFor(() => expect(screen.getAllByText('G1 Elo').length).toBeGreaterThan(0))
-    expect(screen.getByText(/No score projection/)).toBeTruthy()
-    expect(screen.getByText('Home win 58.0%')).toBeTruthy()
-    expect(screen.getByText(/untouched test 2,460 games/)).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('heading', { name: '2026–27 projections · G3 Joint scores' })).toBeTruthy())
+
+    expect(screen.getAllByText('Home win 58.0%')).toHaveLength(3)
+    expect(screen.getAllByText('Away–home score: 108.9–112.1')).toHaveLength(3)
+    expect(screen.getAllByRole('heading', { name: dayLabel(firstGameDay) })).toHaveLength(1)
+    expect(screen.getAllByRole('heading', { name: dayLabel(nextGameDay) })).toHaveLength(1)
+    expect(screen.queryByText('Upcoming forecasts')).toBeNull()
+    expect(screen.queryByText('Research candidates')).toBeNull()
+    expect(screen.queryByText('Research only')).toBeNull()
+    expect(screen.queryByText('NBA game model · 2026–27')).toBeNull()
+    expect(screen.queryByText(/Brier/)).toBeNull()
   })
 
-  it('labels preview forecasts as not locked', async () => {
+  it('keeps every Brier score inside the Model accuracy tooltip', async () => {
     render(<NbaModelTab />)
-    await waitFor(() => expect(screen.getByText(/Preview, not locked/)).toBeTruthy())
-    expect(screen.getByText(/Only forecasts captured in the T−90 lock window/)).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Model accuracy' })).toBeTruthy())
+    expect(screen.queryByText('Brier ↓')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Model accuracy' }))
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    expect(screen.getByText('Brier ↓')).toBeTruthy()
+    expect(screen.getByText(/G3 Joint scores · Test/)).toBeTruthy()
+    expect(screen.getAllByText('0.2100').length).toBeGreaterThan(0)
+    expect(screen.getByText(/Unlocked preview grades are excluded/)).toBeTruthy()
   })
 
-  it('shows only locked prospective games in the grading history', async () => {
-    const graded = {
-      ...payload.games[0],
-      game_id: 'graded-game',
-      scheduled_start_utc: '2026-10-20T23:00:00Z',
+  it('lists model-specific locked forecasts in Record and excludes unlocked preview grades', async () => {
+    const lockedGame = {
+      ...previewGame('locked-game', '2026-10-20T23:00:00Z', 'BOS', 'DET'),
       status: 'graded' as const,
       result: { home_score: 109, away_score: 102 },
-      models: Object.fromEntries(models.map((model) => [model.id, {
-        model_version: model.version, home_win_probability: 0.6,
-        projected_home_points: 110, projected_away_points: 104,
-        score_forecast_available: model.projects_scores,
-        grade: { home_score: 109, away_score: 102, winner_brier: 0.16 },
-      }])),
+      models: {
+        ...previewGame('locked-game', '2026-10-20T23:00:00Z', 'BOS', 'DET').models,
+        G3: {
+          ...previewGame('locked-game', '2026-10-20T23:00:00Z', 'BOS', 'DET').models.G3,
+          locked_at_utc: '2026-10-20T21:30:00Z',
+          grade: { home_score: 109, away_score: 102, home_win: true, winner_brier: 0.16 },
+        },
+      },
     }
-    ;(global as any).fetch = jest.fn(() => Promise.resolve({
-      ok: true, json: () => Promise.resolve({ ...payload, games: [graded] }),
-    }))
-    render(<NbaModelTab />)
-    await waitFor(() => expect(screen.getByText('Prospective grading')).toBeTruthy())
-    expect(screen.getByText('Final 102–109')).toBeTruthy()
-    expect(screen.getAllByText(/Brier 0.160/).length).toBe(3)
-  })
-
-  it('lists graded unlocked previews apart from the prospective record', async () => {
-    const unlocked = {
-      ...payload.games[0],
-      game_id: 'unlocked-game',
-      scheduled_start_utc: '2026-10-20T02:00:00Z',
+    const unlockedGame = {
+      ...previewGame('unlocked-game', '2026-10-19T23:00:00Z', 'PHI', 'NYK'),
       status: 'unlocked' as const,
       result: { home_score: 118, away_score: 111 },
-      models: Object.fromEntries(models.map((model) => [model.id, {
-        model_version: model.version, home_win_probability: 0.7, locked: false,
-        projected_home_points: 112, projected_away_points: 106,
-        score_forecast_available: model.projects_scores,
-        grade: { home_score: 118, away_score: 111, winner_brier: 0.09 },
-      }])),
+      models: {
+        ...previewGame('unlocked-game', '2026-10-19T23:00:00Z', 'PHI', 'NYK').models,
+        G3: {
+          ...previewGame('unlocked-game', '2026-10-19T23:00:00Z', 'PHI', 'NYK').models.G3,
+          grade: { home_score: 118, away_score: 111, home_win: true, winner_brier: 0.09 },
+        },
+      },
+    }
+    const recordPayload = {
+      ...payload,
+      records: {
+        ...payload.records,
+        G3: { locked: 1, graded: 1, awaiting: 0, missed: 1, winner_brier: 0.16, winner_log_loss: 0.5 },
+      },
+      games: [lockedGame, unlockedGame],
     }
     ;(global as any).fetch = jest.fn(() => Promise.resolve({
-      ok: true, json: () => Promise.resolve({ ...payload, games: [unlocked] }),
+      ok: true, json: () => Promise.resolve(recordPayload),
     }))
+
     render(<NbaModelTab />)
-    await waitFor(() => expect(screen.getByText('Graded previews, not locked')).toBeTruthy())
-    expect(screen.getByText(/Final 111–118 · Not locked/)).toBeTruthy()
-    expect(screen.getAllByText(/Brier 0.090/).length).toBe(3)
-    expect(screen.getByText('No prospective forecasts have been graded yet.')).toBeTruthy()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Record' })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+
+    expect(screen.getByRole('heading', { name: '2026–27 record · G3 Joint scores' })).toBeTruthy()
+    expect(screen.getByText('BOS at DET')).toBeTruthy()
+    expect(screen.getByText('Final 102–109 · DET won')).toBeTruthy()
+    expect(screen.getByText('Projected away–home score 108.9–112.1')).toBeTruthy()
+    expect(screen.getAllByText('Graded').length).toBeGreaterThanOrEqual(2)
+    expect(screen.queryByText('PHI at NYK')).toBeNull()
+    expect(screen.queryByText(/Brier/)).toBeNull()
+    expect(within(screen.getByText('Missed locks').parentElement as HTMLElement).getByText('1')).toBeTruthy()
+  })
+
+  it('updates projections and record content when a different model is selected', async () => {
+    render(<NbaModelTab />)
+    await waitFor(() => expect(screen.getByLabelText('Model')).toBeTruthy())
+    fireEvent.change(screen.getByLabelText('Model'), { target: { value: 'G1' } })
+    expect(screen.getByRole('heading', { name: '2026–27 projections · G1 Elo' })).toBeTruthy()
+    expect(screen.getAllByText(/No score projection/)).toHaveLength(3)
   })
 })
