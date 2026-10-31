@@ -1,0 +1,966 @@
+{
+ "fit_season": 2024,
+ "roles": {
+  "carry": {
+   "beta_binomial_phi_fit": 7.413102,
+   "calibration": {
+    "dirichlet_predicted_mean_count": 4.1512,
+    "dirichlet_predicted_variance": 10.6041,
+    "dirichlet_predicted_zero_rate": 0.48,
+    "fixed_share_predicted_mean_count": 4.1512,
+    "fixed_share_predicted_variance": 6.0743,
+    "fixed_share_predicted_zero_rate": 0.3942,
+    "mean_count_quantiles_over_player_team_units": {
+     "dirichlet_multinomial": {
+      "10": 1.5389,
+      "50": 3.544,
+      "90": 7.3627
+     },
+     "fixed_share": {
+      "10": 2.0207,
+      "50": 3.8187,
+      "90": 6.5751
+     },
+     "observed": {
+      "10": 1.6891,
+      "50": 3.2694,
+      "90": 6.0259
+     }
+    },
+    "observed_mean_count": 4.1512,
+    "observed_variance_mean_over_player_team_units": 7.2878,
+    "observed_zero_rate": 0.4308,
+    "variance_player_team_units": 188
+   },
+   "dirichlet_minus_fixed_per_team_game": {
+    "interval_95": [
+     0.6409,
+     1.1715
+    ],
+    "mean": 0.8947
+   },
+   "fit_game_clusters": 272,
+   "fit_team_games": 544,
+   "fit_teams": 32,
+   "loglik_per_team_game": {
+    "dirichlet_multinomial": -4.4722,
+    "fixed_share": -5.3668
+   },
+   "phi_fit": 7.542,
+   "phi_interval_fit": [
+    6.918,
+    8.082
+   ],
+   "player_team_units_scored": 193,
+   "pooled_concentration_candidate": {
+    "QB": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 3.603,
+      "dirichlet_predicted_variance": 3.4094,
+      "dirichlet_predicted_zero_rate": 0.0595,
+      "fixed_share_predicted_mean_count": 3.603,
+      "fixed_share_predicted_variance": 3.1841,
+      "fixed_share_predicted_zero_rate": 0.0487,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 1.5714,
+        "50": 2.9143,
+        "90": 5.2
+       },
+       "fixed_share": {
+        "10": 1.5714,
+        "50": 2.8857,
+        "90": 5.2
+       },
+       "observed": {
+        "10": 1.4,
+        "50": 2.7143,
+        "90": 5.1429
+       }
+      },
+      "observed_mean_count": 3.603,
+      "observed_variance_mean_over_player_team_units": 3.3057,
+      "observed_zero_rate": 0.0364,
+      "variance_player_team_units": 33
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       -0.0466,
+       0.0025
+      ],
+      "mean": -0.0205
+     },
+     "fit_seasons": [
+      2022,
+      2023,
+      2024
+     ],
+     "fit_team_games": 1433,
+     "fit_team_seasons": 96,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -0.1213,
+      "fixed_share": -0.1008
+     },
+     "phi_fit": 1.0,
+     "phi_interval_fit": [
+      1.0,
+      1.0
+     ],
+     "player_team_units_scored": 35,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 229,
+     "test_team_games_scored": 307,
+     "unique_players_scored": 35
+    },
+    "RB": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 9.3255,
+      "dirichlet_predicted_variance": 29.3053,
+      "dirichlet_predicted_zero_rate": 0.166,
+      "fixed_share_predicted_mean_count": 9.3255,
+      "fixed_share_predicted_variance": 15.0104,
+      "fixed_share_predicted_zero_rate": 0.0567,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 2.987,
+        "50": 7.4156,
+        "90": 14.7143
+       },
+       "fixed_share": {
+        "10": 4.4286,
+        "50": 7.9091,
+        "90": 12.6234
+       },
+       "observed": {
+        "10": 3.8961,
+        "50": 7.0909,
+        "90": 12.1169
+       }
+      },
+      "observed_mean_count": 9.3255,
+      "observed_variance_mean_over_player_team_units": 16.5647,
+      "observed_zero_rate": 0.082,
+      "variance_player_team_units": 73
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       0.3039,
+       0.7722
+      ],
+      "mean": 0.5271
+     },
+     "fit_seasons": [
+      2022,
+      2023,
+      2024
+     ],
+     "fit_team_games": 1630,
+     "fit_team_seasons": 96,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -2.0734,
+      "fixed_share": -2.6005
+     },
+     "phi_fit": 2.540973,
+     "phi_interval_fit": [
+      2.412682,
+      2.676086
+     ],
+     "player_team_units_scored": 77,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 266,
+     "test_team_games_scored": 473,
+     "unique_players_scored": 77
+    },
+    "WR_TE": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 0.6909,
+      "dirichlet_predicted_variance": 0.5461,
+      "dirichlet_predicted_zero_rate": 0.5228,
+      "fixed_share_predicted_mean_count": 0.6909,
+      "fixed_share_predicted_variance": 0.5251,
+      "fixed_share_predicted_zero_rate": 0.515,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 0.1719,
+        "50": 0.4844,
+        "90": 1.4062
+       },
+       "fixed_share": {
+        "10": 0.1719,
+        "50": 0.4844,
+        "90": 1.3906
+       },
+       "observed": {
+        "10": 0.25,
+        "50": 0.4219,
+        "90": 1.1406
+       }
+      },
+      "observed_mean_count": 0.6909,
+      "observed_variance_mean_over_player_team_units": 0.5096,
+      "observed_zero_rate": 0.5377,
+      "variance_player_team_units": 59
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       0.0118,
+       0.06
+      ],
+      "mean": 0.0328
+     },
+     "fit_seasons": [
+      2022,
+      2023,
+      2024
+     ],
+     "fit_team_games": 863,
+     "fit_team_seasons": 96,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -0.7711,
+      "fixed_share": -0.8039
+     },
+     "phi_fit": 8.659643,
+     "phi_interval_fit": [
+      5.432503,
+      16.405898
+     ],
+     "player_team_units_scored": 64,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 137,
+     "test_team_games_scored": 161,
+     "unique_players_scored": 64
+    },
+    "all": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 4.1512,
+      "dirichlet_predicted_variance": 10.8877,
+      "dirichlet_predicted_zero_rate": 0.4836,
+      "fixed_share_predicted_mean_count": 4.1512,
+      "fixed_share_predicted_variance": 6.0743,
+      "fixed_share_predicted_zero_rate": 0.3942,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 1.5181,
+        "50": 3.5337,
+        "90": 7.3938
+       },
+       "fixed_share": {
+        "10": 2.0207,
+        "50": 3.8187,
+        "90": 6.5751
+       },
+       "observed": {
+        "10": 1.6891,
+        "50": 3.2694,
+        "90": 6.0259
+       }
+      },
+      "observed_mean_count": 4.1512,
+      "observed_variance_mean_over_player_team_units": 7.2878,
+      "observed_zero_rate": 0.4308,
+      "variance_player_team_units": 188
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       0.6284,
+       1.1645
+      ],
+      "mean": 0.8836
+     },
+     "fit_seasons": [
+      2022,
+      2023,
+      2024
+     ],
+     "fit_team_games": 1630,
+     "fit_team_seasons": 96,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -4.4833,
+      "fixed_share": -5.3668
+     },
+     "phi_fit": 7.038822,
+     "phi_interval_fit": [
+      6.79986,
+      7.413102
+     ],
+     "player_team_units_scored": 193,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 271,
+     "test_team_games_scored": 526,
+     "unique_players_scored": 193
+    }
+   },
+   "position_groups": {
+    "QB": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 3.603,
+      "dirichlet_predicted_variance": 3.4094,
+      "dirichlet_predicted_zero_rate": 0.0595,
+      "fixed_share_predicted_mean_count": 3.603,
+      "fixed_share_predicted_variance": 3.1841,
+      "fixed_share_predicted_zero_rate": 0.0487,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 1.5714,
+        "50": 2.9143,
+        "90": 5.2
+       },
+       "fixed_share": {
+        "10": 1.5714,
+        "50": 2.8857,
+        "90": 5.2
+       },
+       "observed": {
+        "10": 1.4,
+        "50": 2.7143,
+        "90": 5.1429
+       }
+      },
+      "observed_mean_count": 3.603,
+      "observed_variance_mean_over_player_team_units": 3.3057,
+      "observed_zero_rate": 0.0364,
+      "variance_player_team_units": 33
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       -0.0466,
+       0.0025
+      ],
+      "mean": -0.0205
+     },
+     "fit_team_games": 485,
+     "fit_teams": 32,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -0.1213,
+      "fixed_share": -0.1008
+     },
+     "phi_fit": 1.0,
+     "phi_interval_fit": [
+      1.0,
+      1.035
+     ],
+     "player_team_units_scored": 35,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 229,
+     "test_team_games_scored": 307,
+     "unique_players_scored": 35
+    },
+    "RB": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 9.3255,
+      "dirichlet_predicted_variance": 28.7799,
+      "dirichlet_predicted_zero_rate": 0.1624,
+      "fixed_share_predicted_mean_count": 9.3255,
+      "fixed_share_predicted_variance": 15.0104,
+      "fixed_share_predicted_zero_rate": 0.0567,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 3.039,
+        "50": 7.4026,
+        "90": 14.6753
+       },
+       "fixed_share": {
+        "10": 4.4286,
+        "50": 7.9091,
+        "90": 12.6234
+       },
+       "observed": {
+        "10": 3.8961,
+        "50": 7.0909,
+        "90": 12.1169
+       }
+      },
+      "observed_mean_count": 9.3255,
+      "observed_variance_mean_over_player_team_units": 16.5647,
+      "observed_zero_rate": 0.082,
+      "variance_player_team_units": 73
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       0.3148,
+       0.7815
+      ],
+      "mean": 0.5378
+     },
+     "fit_team_games": 544,
+     "fit_teams": 32,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -2.0627,
+      "fixed_share": -2.6005
+     },
+     "phi_fit": 2.676,
+     "phi_interval_fit": [
+      2.413,
+      2.917
+     ],
+     "player_team_units_scored": 77,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 266,
+     "test_team_games_scored": 473,
+     "unique_players_scored": 77
+    },
+    "WR_TE": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 0.6909,
+      "dirichlet_predicted_variance": 0.5478,
+      "dirichlet_predicted_zero_rate": 0.5234,
+      "fixed_share_predicted_mean_count": 0.6909,
+      "fixed_share_predicted_variance": 0.5251,
+      "fixed_share_predicted_zero_rate": 0.515,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 0.1719,
+        "50": 0.4844,
+        "90": 1.4062
+       },
+       "fixed_share": {
+        "10": 0.1719,
+        "50": 0.4844,
+        "90": 1.3906
+       },
+       "observed": {
+        "10": 0.25,
+        "50": 0.4219,
+        "90": 1.1406
+       }
+      },
+      "observed_mean_count": 0.6909,
+      "observed_variance_mean_over_player_team_units": 0.5096,
+      "observed_zero_rate": 0.5377,
+      "variance_player_team_units": 59
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       0.0124,
+       0.0631
+      ],
+      "mean": 0.0345
+     },
+     "fit_team_games": 282,
+     "fit_teams": 32,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -0.7695,
+      "fixed_share": -0.8039
+     },
+     "phi_fit": 7.943,
+     "phi_interval_fit": [
+      3.652,
+      36.94
+     ],
+     "player_team_units_scored": 64,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 137,
+     "test_team_games_scored": 161,
+     "unique_players_scored": 64
+    }
+   },
+   "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+   "test_game_clusters_scored": 271,
+   "test_team_games_scored": 526,
+   "unique_players_scored": 193
+  },
+  "receive": {
+   "beta_binomial_phi_fit": 24.831331,
+   "calibration": {
+    "dirichlet_predicted_mean_count": 3.1456,
+    "dirichlet_predicted_variance": 5.5013,
+    "dirichlet_predicted_zero_rate": 0.3093,
+    "fixed_share_predicted_mean_count": 3.1456,
+    "fixed_share_predicted_variance": 3.5028,
+    "fixed_share_predicted_zero_rate": 0.2552,
+    "mean_count_quantiles_over_player_team_units": {
+     "dirichlet_multinomial": {
+      "10": 1.0,
+      "50": 2.8763,
+      "90": 6.1505
+     },
+     "fixed_share": {
+      "10": 1.311,
+      "50": 3.0468,
+      "90": 5.6355
+     },
+     "observed": {
+      "10": 0.9632,
+      "50": 2.4582,
+      "90": 5.0301
+     }
+    },
+    "observed_mean_count": 3.1456,
+    "observed_variance_mean_over_player_team_units": 3.957,
+    "observed_zero_rate": 0.2498,
+    "variance_player_team_units": 293
+   },
+   "dirichlet_minus_fixed_per_team_game": {
+    "interval_95": [
+     0.7297,
+     1.1193
+    ],
+    "mean": 0.9234
+   },
+   "fit_game_clusters": 272,
+   "fit_team_games": 544,
+   "fit_teams": 32,
+   "loglik_per_team_game": {
+    "dirichlet_multinomial": -9.9647,
+    "fixed_share": -10.8881
+   },
+   "phi_fit": 24.406,
+   "phi_interval_fit": [
+    22.777,
+    26.152
+   ],
+   "player_team_units_scored": 299,
+   "pooled_concentration_candidate": {
+    "RB": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 2.409,
+      "dirichlet_predicted_variance": 2.908,
+      "dirichlet_predicted_zero_rate": 0.2525,
+      "fixed_share_predicted_mean_count": 2.409,
+      "fixed_share_predicted_variance": 2.3306,
+      "fixed_share_predicted_zero_rate": 0.2043,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 0.6533,
+        "50": 1.8267,
+        "90": 4.16
+       },
+       "fixed_share": {
+        "10": 0.7867,
+        "50": 1.88,
+        "90": 3.92
+       },
+       "observed": {
+        "10": 0.6267,
+        "50": 1.7067,
+        "90": 3.76
+       }
+      },
+      "observed_mean_count": 2.409,
+      "observed_variance_mean_over_player_team_units": 2.516,
+      "observed_zero_rate": 0.2015,
+      "variance_player_team_units": 70
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       0.0341,
+       0.1698
+      ],
+      "mean": 0.0998
+     },
+     "fit_seasons": [
+      2022,
+      2023,
+      2024
+     ],
+     "fit_team_games": 1609,
+     "fit_team_seasons": 96,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -1.105,
+      "fixed_share": -1.2049
+     },
+     "phi_fit": 4.120975,
+     "phi_interval_fit": [
+      3.715352,
+      4.570882
+     ],
+     "player_team_units_scored": 75,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 261,
+     "test_team_games_scored": 462,
+     "unique_players_scored": 75
+    },
+    "TE": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 2.9623,
+      "dirichlet_predicted_variance": 4.2698,
+      "dirichlet_predicted_zero_rate": 0.24,
+      "fixed_share_predicted_mean_count": 2.9623,
+      "fixed_share_predicted_variance": 3.3786,
+      "fixed_share_predicted_zero_rate": 0.1868,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 1.2308,
+        "50": 2.8205,
+        "90": 5.8718
+       },
+       "fixed_share": {
+        "10": 1.3205,
+        "50": 2.9359,
+        "90": 5.6282
+       },
+       "observed": {
+        "10": 0.9231,
+        "50": 2.3974,
+        "90": 4.7179
+       }
+      },
+      "observed_mean_count": 2.9623,
+      "observed_variance_mean_over_player_team_units": 3.4022,
+      "observed_zero_rate": 0.2016,
+      "variance_player_team_units": 75
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       -0.0189,
+       0.0772
+      ],
+      "mean": 0.0285
+     },
+     "fit_seasons": [
+      2022,
+      2023,
+      2024
+     ],
+     "fit_team_games": 1621,
+     "fit_team_seasons": 96,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -1.3713,
+      "fixed_share": -1.3997
+     },
+     "phi_fit": 5.623413,
+     "phi_interval_fit": [
+      5.069907,
+      6.237348
+     ],
+     "player_team_units_scored": 78,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 269,
+     "test_team_games_scored": 501,
+     "unique_players_scored": 78
+    },
+    "WR": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 4.4375,
+      "dirichlet_predicted_variance": 8.2398,
+      "dirichlet_predicted_zero_rate": 0.2118,
+      "fixed_share_predicted_mean_count": 4.4375,
+      "fixed_share_predicted_variance": 5.3342,
+      "fixed_share_predicted_zero_rate": 0.1638,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 1.5714,
+        "50": 4.3492,
+        "90": 8.4683
+       },
+       "fixed_share": {
+        "10": 1.9603,
+        "50": 4.5476,
+        "90": 7.7778
+       },
+       "observed": {
+        "10": 1.5,
+        "50": 3.4444,
+        "90": 6.7222
+       }
+      },
+      "observed_mean_count": 4.4375,
+      "observed_variance_mean_over_player_team_units": 5.8658,
+      "observed_zero_rate": 0.1527,
+      "variance_player_team_units": 123
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       0.3234,
+       0.6532
+      ],
+      "mean": 0.4808
+     },
+     "fit_seasons": [
+      2022,
+      2023,
+      2024
+     ],
+     "fit_team_games": 1630,
+     "fit_team_seasons": 96,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -3.5081,
+      "fixed_share": -3.9889
+     },
+     "phi_fit": 9.942601,
+     "phi_interval_fit": [
+      9.440609,
+      10.471285
+     ],
+     "player_team_units_scored": 126,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 272,
+     "test_team_games_scored": 524,
+     "unique_players_scored": 126
+    },
+    "all": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 3.1456,
+      "dirichlet_predicted_variance": 5.3728,
+      "dirichlet_predicted_zero_rate": 0.3062,
+      "fixed_share_predicted_mean_count": 3.1456,
+      "fixed_share_predicted_variance": 3.5028,
+      "fixed_share_predicted_zero_rate": 0.2552,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 1.0401,
+        "50": 2.8896,
+        "90": 6.1171
+       },
+       "fixed_share": {
+        "10": 1.311,
+        "50": 3.0468,
+        "90": 5.6355
+       },
+       "observed": {
+        "10": 0.9632,
+        "50": 2.4582,
+        "90": 5.0301
+       }
+      },
+      "observed_mean_count": 3.1456,
+      "observed_variance_mean_over_player_team_units": 3.957,
+      "observed_zero_rate": 0.2498,
+      "variance_player_team_units": 293
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       0.7342,
+       1.116
+      ],
+      "mean": 0.9244
+     },
+     "fit_seasons": [
+      2022,
+      2023,
+      2024
+     ],
+     "fit_team_games": 1630,
+     "fit_team_seasons": 96,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -9.9637,
+      "fixed_share": -10.8881
+     },
+     "phi_fit": 26.151704,
+     "phi_interval_fit": [
+      24.831331,
+      27.070732
+     ],
+     "player_team_units_scored": 299,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 272,
+     "test_team_games_scored": 543,
+     "unique_players_scored": 299
+    }
+   },
+   "position_groups": {
+    "RB": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 2.409,
+      "dirichlet_predicted_variance": 2.9324,
+      "dirichlet_predicted_zero_rate": 0.2544,
+      "fixed_share_predicted_mean_count": 2.409,
+      "fixed_share_predicted_variance": 2.3306,
+      "fixed_share_predicted_zero_rate": 0.2043,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 0.6533,
+        "50": 1.8133,
+        "90": 4.1733
+       },
+       "fixed_share": {
+        "10": 0.7867,
+        "50": 1.88,
+        "90": 3.92
+       },
+       "observed": {
+        "10": 0.6267,
+        "50": 1.7067,
+        "90": 3.76
+       }
+      },
+      "observed_mean_count": 2.409,
+      "observed_variance_mean_over_player_team_units": 2.516,
+      "observed_zero_rate": 0.2015,
+      "variance_player_team_units": 70
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       0.0313,
+       0.1694
+      ],
+      "mean": 0.0984
+     },
+     "fit_team_games": 534,
+     "fit_teams": 32,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -1.1065,
+      "fixed_share": -1.2049
+     },
+     "phi_fit": 3.913,
+     "phi_interval_fit": [
+      3.292,
+      4.732
+     ],
+     "player_team_units_scored": 75,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 261,
+     "test_team_games_scored": 462,
+     "unique_players_scored": 75
+    },
+    "TE": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 2.9623,
+      "dirichlet_predicted_variance": 4.1942,
+      "dirichlet_predicted_zero_rate": 0.2359,
+      "fixed_share_predicted_mean_count": 2.9623,
+      "fixed_share_predicted_variance": 3.3786,
+      "fixed_share_predicted_zero_rate": 0.1868,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 1.2308,
+        "50": 2.8333,
+        "90": 5.859
+       },
+       "fixed_share": {
+        "10": 1.3205,
+        "50": 2.9359,
+        "90": 5.6282
+       },
+       "observed": {
+        "10": 0.9231,
+        "50": 2.3974,
+        "90": 4.7179
+       }
+      },
+      "observed_mean_count": 2.9623,
+      "observed_variance_mean_over_player_team_units": 3.4022,
+      "observed_zero_rate": 0.2016,
+      "variance_player_team_units": 75
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       -0.0114,
+       0.0804
+      ],
+      "mean": 0.034
+     },
+     "fit_team_games": 542,
+     "fit_teams": 32,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -1.3658,
+      "fixed_share": -1.3997
+     },
+     "phi_fit": 6.237,
+     "phi_interval_fit": [
+      5.158,
+      7.674
+     ],
+     "player_team_units_scored": 78,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 269,
+     "test_team_games_scored": 501,
+     "unique_players_scored": 78
+    },
+    "WR": {
+     "calibration": {
+      "dirichlet_predicted_mean_count": 4.4375,
+      "dirichlet_predicted_variance": 8.5751,
+      "dirichlet_predicted_zero_rate": 0.2169,
+      "fixed_share_predicted_mean_count": 4.4375,
+      "fixed_share_predicted_variance": 5.3342,
+      "fixed_share_predicted_zero_rate": 0.1638,
+      "mean_count_quantiles_over_player_team_units": {
+       "dirichlet_multinomial": {
+        "10": 1.5397,
+        "50": 4.3413,
+        "90": 8.5397
+       },
+       "fixed_share": {
+        "10": 1.9603,
+        "50": 4.5476,
+        "90": 7.7778
+       },
+       "observed": {
+        "10": 1.5,
+        "50": 3.4444,
+        "90": 6.7222
+       }
+      },
+      "observed_mean_count": 4.4375,
+      "observed_variance_mean_over_player_team_units": 5.8658,
+      "observed_zero_rate": 0.1527,
+      "variance_player_team_units": 123
+     },
+     "dirichlet_minus_fixed_per_team_game": {
+      "interval_95": [
+       0.3098,
+       0.6501
+      ],
+      "mean": 0.4722
+     },
+     "fit_team_games": 544,
+     "fit_teams": 32,
+     "loglik_per_team_game": {
+      "dirichlet_multinomial": -3.5167,
+      "fixed_share": -3.9889
+     },
+     "phi_fit": 8.81,
+     "phi_interval_fit": [
+      8.082,
+      9.605
+     ],
+     "player_team_units_scored": 126,
+     "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+     "status": "scored",
+     "test_game_clusters_scored": 272,
+     "test_team_games_scored": 524,
+     "unique_players_scored": 126
+    }
+   },
+   "restriction": "team-games scored only on players with fit-period history on the same team; zero-total cohort team-games skipped; game-cluster bootstrap resamples both teams together",
+   "test_game_clusters_scored": 272,
+   "test_team_games_scored": 543,
+   "unique_players_scored": 299
+  }
+ },
+ "source": {
+  "code_sha256": {
+   "build_player_workload_reference.py": "c8a1c44509e95288dd696d46bd9b6527330283059756c3834c3af3d0110146c7",
+   "share_distributions.py": "62e91436bd8165d1f0e274c19b649214defb3dd8eb1c6bd72c3a6d826373de92",
+   "share_validation.py": "00005f7e04fd1c0da092cee34b3f0de5e677d16761130334cfcf64c3616f5b15",
+   "validate_share_distributions.py": "b9897404164940f3e594f59de6412da39ff42909ed6412fff9f64cb03eb4cf33"
+  },
+  "eligibility": {
+   "eligible_player_team_games": 10183,
+   "eligible_team_games": 544,
+   "non_scrimmage_rows_excluded": 9591,
+   "participation_rows": 45184,
+   "scrimmage_rows_joined": 33458
+  },
+  "eligibility_source": "pinned pbp_participation_2025.csv joined to regular-season scrimmage plays",
+  "input_sha256": {
+   "pbp_2022.csv.gz": "0c69a71eb39498956c7b1d5c1ca52ce7fe679934a95d1af249facb5ea9829ea4",
+   "pbp_2023.csv.gz": "4649804ee0f0a40b41e51ec75a1ce921949d7fab5459213488656b92f78560e8",
+   "pbp_2024.csv.gz": "23370d5d10f8104d80d46a1fc5e61f4f6f5a3263fe96fe2dd629913cfcb08c06",
+   "pbp_2025.csv.gz": "2f135887790a013fd004e609e37096bb4816d5cc80b9f19122e1bad478961978",
+   "pbp_participation_2025.csv": "59069adfee7b0f464befba8a5e8be331e523633cc6a7ab403d37bcbcdfbe66ac"
+  },
+  "position_source": {
+   "file": "/root/lp-slc-player-workload-2026-10-30/docs/research/share-distribution-holdout-2026-10-31/position-map.csv",
+   "query": "SELECT nfl_gsis_id, MIN(position) FROM players WHERE lower(league)='nfl' AND nfl_gsis_id IS NOT NULL AND position IS NOT NULL GROUP BY nfl_gsis_id",
+   "sha256": "0e8f27fb02680a4ef4ccf738525fbdf0aa5b9698f25b90793722182782f35eca"
+  },
+  "reference_manifest": "/root/lp-slc-player-workload-2026-10-30/docs/research/player-workload-reference-2026-10-30-v3/manifest.json",
+  "reference_manifest_sha256": "312591afedbeba27443c0246c7ce8ea5aecb15f2eeb3703b65af817c769e6aea"
+ },
+ "test_season": 2025
+}
