@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e1_drive as e1  # noqa: E402
-from clock_d_games import holdout_volume  # noqa: E402
+from clock_d_games import comparison_to_holdout, holdout_volume, summarise  # noqa: E402
 
 
 class HoldoutVolume(unittest.TestCase):
@@ -46,6 +46,44 @@ class HoldoutVolume(unittest.TestCase):
         self.assertEqual(result['regulation_drives_per_game']['mean'], 1)
         self.assertEqual(result['plays_by_quarter_per_game']['q1']['mean'], 2)
         self.assertEqual(result['plays_per_drive_game_mean'], 2)
+        self.assertEqual(result['event_counts_total'], {'pass_complete': 1, 'run': 1})
+        self.assertEqual(len(result['source_rows_sha256']), 64)
+
+
+class RegulationVolumeDenominator(unittest.TestCase):
+    def test_guarded_regulation_end_games_remain_in_volume_metrics_but_not_complete_games(self):
+        rows = []
+        for status, complete, reached, plays in (
+                ('complete_regulation', True, True, 100),
+                ('regulation_end_guarded', False, True, 120),
+                ('blocked', False, False, 10)):
+            rows.append({
+                'status': status, 'complete_regulation': complete, 'regulation_end_reached': reached,
+                'plays': plays, 'drives': 20, 'regulation_plays': plays, 'regulation_drives': 20,
+                'points': 40, 'plays_q1': 25, 'plays_q2': 25, 'plays_q3': 25, 'plays_q4': 25,
+                'clamped_plays': 0, 'late_plays': 5, 'plays_per_regulation_drive': plays / 20,
+                'quarter_end_events': {}, 'boundaries': {},
+            })
+
+        summary = summarise(rows)
+
+        self.assertEqual(summary['games'], 3)
+        self.assertEqual(summary['complete_regulation'], 1)
+        self.assertEqual(summary['regulation_end_reached'], 2)
+        self.assertEqual(summary['plays']['mean'], 110)
+        self.assertEqual(summary['blocked'], 1)
+
+        observed = {
+            'plays_per_game': {'mean': 100}, 'plays_per_team_game_mean': 50,
+            'regulation_drives_per_game': {'mean': 20}, 'regulation_drives_per_team_game_mean': 10,
+            'plays_per_drive_game_mean': 5.5,
+            'plays_by_quarter_per_game': {f'q{q}': {'mean': 25} for q in range(1, 5)},
+            'event_counts_total': {}, 'event_counts_per_game_mean': {}, 'event_share': {}, 'event_runoff_mean_s': {},
+        }
+        comparison = comparison_to_holdout(rows, observed)
+        self.assertEqual(comparison['regulation_end_reached_games'], 2)
+        self.assertEqual(comparison['complete_regulation_games'], 1)
+        self.assertEqual(comparison['simulated']['plays_per_game'], 110)
 
 
 if __name__ == '__main__':
