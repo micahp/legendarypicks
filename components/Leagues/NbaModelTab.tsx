@@ -317,7 +317,7 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                       : (result.home_score > result.away_score ? game.home_team : game.away_team) + ' won'
                   const projectedScore = forecast.score_forecast_available &&
                     forecast.projected_away_points != null && forecast.projected_home_points != null
-                    ? game.away_team + ' ' + forecast.projected_away_points.toFixed(1) + ' – ' + game.home_team + ' ' + forecast.projected_home_points.toFixed(1)
+                    ? { away: forecast.projected_away_points.toFixed(1), home: forecast.projected_home_points.toFixed(1) }
                     : null
                   const status = grade
                     ? forecast.home_win_probability != null && result && result.home_score !== result.away_score
@@ -333,19 +333,39 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                       : 'shrink-0 text-xs text-zinc-400'
 
                   return (
-                    <article key={game.game_id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
+                    <article key={game.game_id} className="flex flex-wrap items-start gap-x-6 gap-y-3 py-4">
+                      <div className="w-full min-w-48 sm:w-52 sm:flex-none">
                         <h3 className="font-medium text-zinc-100">{game.away_team} at {game.home_team}</h3>
                         <p className="mt-1 text-xs text-zinc-500">
                           {new Date(game.scheduled_start_utc).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
                         </p>
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-300">
-                          <span>{game.home_team} win probability {percent(forecast.home_win_probability)}</span>
-                          {projectedScore && <span>Projected score: {projectedScore}</span>}
-                          {result && <span>Final {game.away_team} {result.away_score} – {game.home_team} {result.home_score} · {outcome}</span>}
-                        </div>
+                        <p className="mt-2 text-xs text-zinc-400">
+                          {game.home_team} win probability {percent(forecast.home_win_probability)}
+                        </p>
                       </div>
-                      <span className={statusClass}>{status}</span>
+                      <section role="group" aria-label="Projected" className="w-full sm:w-52 sm:flex-none">
+                        <h4 className="mb-1 text-xs font-medium text-zinc-500">Projected</h4>
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 text-sm tabular-nums">
+                          <span className="truncate text-zinc-200">{game.away_team}</span>
+                          <span className="text-right font-semibold text-zinc-100">{projectedScore?.away ?? '—'}</span>
+                          <span className="truncate text-zinc-200">{game.home_team}</span>
+                          <span className="text-right font-semibold text-zinc-100">{projectedScore?.home ?? '—'}</span>
+                        </div>
+                      </section>
+                      <section role="group" aria-label="Final" className="w-full sm:w-52 sm:flex-none">
+                        <h4 className="mb-1 text-xs font-medium text-zinc-500">
+                          Final{result ? ` · ${outcome}` : ' · Pending'}
+                        </h4>
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 text-sm tabular-nums">
+                          <span className="truncate text-zinc-200">{game.away_team}</span>
+                          <span className="text-right font-semibold text-zinc-100">{result?.away_score ?? '—'}</span>
+                          <span className="truncate text-zinc-200">{game.home_team}</span>
+                          <span className="text-right font-semibold text-zinc-100">{result?.home_score ?? '—'}</span>
+                        </div>
+                      </section>
+                      <div className="flex w-full items-center justify-between gap-3 text-xs sm:ml-auto sm:w-auto sm:flex-col sm:items-end">
+                        <span className={statusClass}>{status}</span>
+                      </div>
                     </article>
                   )
                   })}
