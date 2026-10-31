@@ -719,6 +719,73 @@ class BlockedKickFitsTheState(unittest.TestCase):
                         'period_expired_requires_half_or_game_end': 1
                     } if quarter in (1, 3) else {'period_expired_source_clock_too_short': 1})
 
+    def test_field_goal_period_expiry_does_not_block_q1_or_q3_when_live_transition_is_supported(self):
+        from types import SimpleNamespace
+        import random
+
+        period_end = {'kick_type': 'field_goal', 'classification_status': 'period_expired',
+                      'clock_runoff_seconds': 100}
+        next_snap = {'kick_type': 'field_goal', 'classification_status': 'classified_next_snap',
+                     'clock_runoff_seconds': 4, 'yardline_100': 50,
+                     'possession_after_role': 'receiving_team', 'next_snap_yardline_100': 40,
+                     'next_snap_down': 1, 'next_snap_ydstogo': 10}
+        game = object.__new__(gs._Game)
+        game.ref = SimpleNamespace(
+            blocked_kicks={'records': {'field_goal': [period_end, next_snap]}, 'sha256': 'e' * 64},
+            blocker_fixes=('blocked_kick_geometry',))
+        state = {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 10, 'yl': 50}
+
+        for quarter in (1, 3):
+            with self.subTest(quarter=quarter):
+                blocker, outcome = game._sample_blocked_kick(
+                    'field_goal', random.Random(0), 100, quarter, state)
+                self.assertIsNone(blocker)
+                self.assertEqual(outcome['classification_status'], 'classified_next_snap')
+                self.assertEqual(outcome['period_expired_category_exclusions'], {
+                    'period_expired_requires_half_or_game_end': 1
+                })
+
+    def test_blocked_kick_filters_bad_geometry_before_drawing_the_outcome_category(self):
+        from types import SimpleNamespace
+
+        invalid_dead_ball = {
+            'kick_type': 'punt', 'classification_status': 'classified_dead_ball_spot',
+            'clock_runoff_seconds': 5, 'possession_after_role': 'receiving_team',
+            'dead_ball_yards_from_los': 1000, 'posteam': 'A', 'defteam': 'B',
+        }
+        valid_next_snap = {
+            'kick_type': 'punt', 'classification_status': 'classified_next_snap',
+            'clock_runoff_seconds': 4, 'yardline_100': 50,
+            'possession_after_role': 'receiving_team', 'next_snap_yardline_100': 40,
+            'next_snap_down': 1, 'next_snap_ydstogo': 10,
+        }
+
+        class PreferInvalidCategory:
+            def __init__(self):
+                self.categories = None
+
+            def choices(self, categories, weights, k):
+                self.categories = list(categories)
+                return ['dead_ball:receiving_team'] if 'dead_ball:receiving_team' in categories else [categories[0]]
+
+            @staticmethod
+            def choice(rows):
+                return rows[0]
+
+        game = object.__new__(gs._Game)
+        game.ref = SimpleNamespace(
+            blocked_kicks={'records': {'punt': [invalid_dead_ball, valid_next_snap]}, 'sha256': 'f' * 64},
+            blocker_fixes=('blocked_kick_geometry',))
+        rng = PreferInvalidCategory()
+        blocker, outcome = game._sample_blocked_kick_by_category(
+            'punt', [invalid_dead_ball, valid_next_snap], rng, 300, 1,
+            {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': 5, 'yl': 50})
+
+        self.assertIsNone(blocker)
+        self.assertEqual(rng.categories, ['next_snap:receiving_team'])
+        self.assertEqual(outcome['classification_status'], 'classified_next_snap')
+        self.assertEqual(outcome['geometry_candidate_count'], 1)
+
     def test_period_expired_only_pool_with_no_legal_transition_stays_explicitly_blocked(self):
         import random
         period_end = {'classification_status': 'period_expired', 'clock_runoff_seconds': 9}
@@ -1466,6 +1533,28 @@ class TimeoutCharges(unittest.TestCase):
         game._half_start()
         self.assertEqual(game.quarter, 3)
         self.assertEqual(game.timeouts, {'A': 3, 'B': 3})
+
+    def test_sampling_guard_removes_only_timeout_rows_for_a_team_with_no_timeouts_left(self):
+        participants = {
+            ('G1', 1): {'timeout': 1, 'timeout_team': 'HOME', 'posteam': 'HOME', 'defteam': 'AWAY'},
+            ('G1', 2): {'timeout': 1, 'timeout_team': 'AWAY', 'posteam': 'HOME', 'defteam': 'AWAY'},
+            ('G1', 3): {'timeout': 0, 'timeout_team': '', 'posteam': 'HOME', 'defteam': 'AWAY'},
+        }
+        guard = gs._TimeoutSamplingGuard(participants, {'A': 3, 'B': 3})
+        offense_timeout = ('run', {'game_id': 'G1', 'play_id': 1.0}, 5, None)
+        defense_timeout = ('run', {'game_id': 'G1', 'play_id': 2.0}, 5, None)
+        ordinary = ('run', {'game_id': 'G1', 'play_id': 3.0}, 5, None)
+        state = {'offense': 'A', 'defense': 'B'}
+
+        for _ in range(3):
+            self.assertIn(offense_timeout, guard.filter_cell([offense_timeout, defense_timeout, ordinary], state))
+            guard.observe(offense_timeout, state)
+
+        eligible = guard.filter_cell([offense_timeout, defense_timeout, ordinary], state)
+        self.assertNotIn(offense_timeout, eligible)
+        self.assertIn(defense_timeout, eligible)
+        self.assertIn(ordinary, eligible)
+        self.assertEqual(guard.remaining, {'A': 0, 'B': 3})
 
 
 class UnmodelledTransitions(unittest.TestCase):

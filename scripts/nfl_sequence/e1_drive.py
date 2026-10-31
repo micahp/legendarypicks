@@ -203,10 +203,11 @@ def _credit_field_boundary_yards(event, sampled_yards, yardline):
 
 
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
-             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None):
+             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
-    `sampling_policy`, when given, samples events and source plays using the current simulated teams' context."""
+    `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
+    `sampling_guard` may remove source rows that are illegal in the live simulation state."""
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -247,7 +248,10 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                     'clock_quarter_end_hazard', drive_index, play_index)
                 stream_keys['clock_runoff'] = paired_random_streams.key('clock_runoff', drive_index, play_index)
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
-        cell = pool.get(key, [])
+        source_cell = pool.get(key, [])
+        cell = sampling_guard.filter_cell(source_cell, st) if sampling_guard is not None else source_cell
+        if not cell and source_cell:
+            return halt(sampling_guard.unavailable_reason())
         if len(cell) < MIN_POOL and not getattr(sampling_policy, 'allow_sparse_cells', False):
             return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
         field_goal_distance = fg_feasibility.evaluate(st['yl'])
@@ -261,15 +265,25 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                            key=lambda x: (x[1]['game_id'], x[1]['play_id']))
             _, row, runoff, spot = row_rng.choice(cands)
         else:
+            sampling_state = {'quarter': st['quarter'], 'clock': st['clock'], 'offense': st['offense'],
+                              'defense': st['defense'], 'down': st['down'], 'togo': st['togo'],
+                              'yl': st['yl'], 'score_diff': score_diff,
+                              'field_goal_feasibility': field_goal_distance,
+                              '_source_cell_filtered': cell is not source_cell}
+            if sampling_guard is not None and sampling_guard.requires_source_filter:
+                sampling_state['_source_row_filter'] = sampling_guard.permits
             try:
                 selected_event, row, runoff, spot = sampling_policy.sample(
-                    playcall_rng, cell, offense=st['offense'], defense=st['defense'],
-                    state={'quarter': st['quarter'], 'clock': st['clock'], 'down': st['down'], 'togo': st['togo'],
-                           'yl': st['yl'], 'score_diff': score_diff,
-                           'field_goal_feasibility': field_goal_distance})
+                    playcall_rng, cell, offense=st['offense'], defense=st['defense'], state=sampling_state)
             except SamplingUnavailable as unavailable:
                 return halt(str(unavailable))
         event = selected_event
+        if sampling_guard is not None:
+            selected_sample = (selected_event, row, runoff, spot)
+            rejection = sampling_guard.rejection_reason(selected_sample, st)
+            if rejection:
+                return halt(f'timeout_sampling_guard_rejected_source_row:{rejection}')
+            sampling_guard.observe(selected_sample, st)
         if event == 'field_goal_attempt' and not field_goal_distance['eligible']:
             return halt('field_goal_attempt_exceeds_historical_feasibility_ceiling')
         kick_outcome = None
@@ -375,6 +389,9 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         sequence = len(plays) + 1
         sampling = {'cell': list(key), 'cell_size': len(cell), 'cell_event_counts': dict(shares),
                     'field_goal_feasibility': field_goal_distance}
+        if (sampling_guard is not None and sampling_guard.last_filter['excluded_rows']
+                and not sampling_guard.last_filter_reused):
+            sampling['timeout_source_filter'] = dict(sampling_guard.last_filter)
         if stream_keys is not None:
             sampling['paired_random_streams'] = stream_keys
         play = {

@@ -168,6 +168,20 @@ class Sampler(unittest.TestCase):
         self.assertTrue(all(not sampler._has_lateral(sample[1]) for sample in candidates))
         self.assertEqual(sampler._backoff_lateral_rows_excluded, 1)
 
+    def test_outcome_backoff_respects_dynamic_source_row_eligibility(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('pass_complete', 'pass') for _ in range(12)])
+        sampler.source_pool = {'cell': pool}
+        source_filter = lambda sample, _state: sample[1]['play_id'] != 0
+
+        candidates, fallback = sampler._backoff_candidates(
+            STATE, 'dropback', False, source_row_filter=source_filter)
+
+        self.assertEqual(fallback, 'exact_cell')
+        self.assertEqual(len(candidates), 11)
+        self.assertTrue(all(source_filter(sample, STATE) for sample in candidates))
+
     def test_changing_only_the_selected_receiver_preserves_the_outcome_and_rng_stream(self):
         """Share-driven participant draws use an independent stream; outcomes ignore the selected identity."""
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
