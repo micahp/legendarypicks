@@ -6,7 +6,6 @@ import PropChart, { nbaSeasonEndYear, PropHistory } from '../components/Props/Pr
 import SportIcon from '../components/SportIcon'
 import SlatePlayerOffers from '../components/Props/SlatePlayerOffers'
 import HorizontalScrollRail from '../components/HorizontalScrollRail'
-import NflLabNavigation from '../components/Leagues/NflLabNavigation'
 import {
   leagueNavigationLabel,
   SportGroup,
@@ -1085,7 +1084,6 @@ export default function PropsPage() {
       </Head>
 
       <div className="space-y-4">
-        {league.toLowerCase() === 'nfl' && <NflLabNavigation active={tab === 'matchups' ? 'matchups' : 'props'} />}
         {/* Page header row: title + league pills */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h1 className="text-3xl font-extrabold tracking-tight">Props</h1>

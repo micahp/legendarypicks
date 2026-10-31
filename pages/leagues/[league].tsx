@@ -8,7 +8,6 @@ import UfcRankingsTab from '../../components/Leagues/UfcRankingsTab'
 import PredictTab from '../../components/Leagues/PredictTab'
 import UfcOptimizerTab from '../../components/Leagues/UfcOptimizerTab'
 import NflPixelHQ from '../../components/Leagues/NflPixelHQ'
-import NflLabNavigation, { type NflLabRoom } from '../../components/Leagues/NflLabNavigation'
 import NflOffseasonMovers from '../../components/Leagues/NflOffseasonMovers'
 import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
 import NflDraftBoardSurface from '../../components/Leagues/NflDraftBoardSurface'
@@ -159,6 +158,7 @@ export default function LeagueHubPage() {
   if (!route.league) return <LeagueHubSkeleton />
 
   const leagueName = LEAGUE_NAMES[route.league] || route.league.toUpperCase()
+  const isNflHQ = isNFL && route.activeTab === 'camp'
 
   return (
     <>
@@ -171,38 +171,44 @@ export default function LeagueHubPage() {
       </Head>
 
       <div className="space-y-4">
-        <LeagueSwitcher activeLeague={route.league} />
-        <div className="flex items-center gap-3">
-          <SportIcon league={route.league} className="h-6 w-6 shrink-0 text-zinc-100" />
-          <h1 className="text-3xl font-extrabold tracking-tight">{leagueName}</h1>
-        </div>
+        {!isNflHQ && <LeagueSwitcher activeLeague={route.league} />}
+        {!isNflHQ && (
+          <div className="flex items-center gap-3">
+            <SportIcon league={route.league} className="h-6 w-6 shrink-0 text-zinc-100" />
+            <h1 className="text-3xl font-extrabold tracking-tight">{leagueName}</h1>
+          </div>
+        )}
         {!route.offerable && !route.coverageLoading ? (
           <LeagueUnavailable league={route.league} />
         ) : (
         <>
-        {isNFL && <NflLabNavigation active={nflRoomForTab(route.activeTab)} />}
-        <HubTabs
+        {!isNflHQ && <HubTabs
           tabs={route.validTabs}
           activeTab={route.activeTab}
           onSelect={route.selectTab}
           labels={TAB_LABELS}
-        />
+        />}
 
         {/* ── NFL Camp-mode default ── */}
         {route.activeTab === 'camp' && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <NflPixelHQ
               data={seasonContext.data}
               loading={seasonContext.loading}
               error={seasonContext.error}
             />
-            <NflMockDraftCard />
-            <NflOffseasonMovers
-              data={transactions.data}
-              loading={transactions.loading}
-              error={transactions.error}
-            />
-            <NflDraftBoardSurface />
+            <details className="lp-hq-more-research">
+              <summary>More NFL research</summary>
+              <div className="mt-4 space-y-4">
+                <NflMockDraftCard />
+                <NflOffseasonMovers
+                  data={transactions.data}
+                  loading={transactions.loading}
+                  error={transactions.error}
+                />
+                <NflDraftBoardSurface />
+              </div>
+            </details>
           </div>
         )}
 
@@ -376,13 +382,6 @@ function LeagueUnavailable({ league }: { league: string }) {
       </p>
     </div>
   )
-}
-
-function nflRoomForTab(tab: HubTab): NflLabRoom {
-  if (tab === 'schedule') return 'slate'
-  if (tab === 'model') return 'forecasts'
-  if (tab === 'stats') return 'stats'
-  return 'hq'
 }
 
 function HubTabs({

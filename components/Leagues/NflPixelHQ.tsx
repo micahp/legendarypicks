@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import SportIcon from '../SportIcon'
+import { useRef, useState } from 'react'
 import type { NflSeasonContext } from './types'
 
 type Props = {
@@ -8,97 +8,136 @@ type Props = {
   error: string | null
 }
 
-function FootballField() {
-  return (
-    <svg viewBox="0 0 320 120" className="lp-hq-field" role="img" aria-label="Decorative pixel football field">
-      <rect width="320" height="120" fill="#28633c" />
-      <path d="M12 0v120M52 0v120M92 0v120M132 0v120M172 0v120M212 0v120M252 0v120M292 0v120" stroke="#a7d48b" strokeWidth="2" opacity=".8" />
-      <path d="M0 10h320M0 110h320" stroke="#e4ebcf" strokeWidth="3" />
-      <circle cx="160" cy="60" r="20" fill="none" stroke="#e4ebcf" strokeWidth="2" opacity=".75" />
-      <path d="M156 57h8v6h-8z" fill="#f3c875" />
-    </svg>
-  )
-}
+type RoomPanel = 'career' | 'arcade' | null
 
-export default function NflPixelHQ({ data, loading, error }: Props) {
+function SeasonContext({ data, loading, error }: Props) {
   const nextEvent = data?.next_event
   const eventDate = nextEvent?.date
     ? new Date(`${nextEvent.date}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     : null
-  const seasonSource = data?.sources?.[0]
-  const sourceVerified = seasonSource?.verified_at
-    ? new Date(seasonSource.verified_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  const source = data?.sources?.[0]
+  const verified = source?.verified_at
+    ? new Date(source.verified_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
     : null
 
+  if (loading) return <p className="lp-hq-context" role="status">Loading NFL season context…</p>
+  if (error || !data) return <p className="lp-hq-context" role="status">NFL season context is unavailable right now.</p>
+
   return (
-    <div className="space-y-4">
-      <section className="lp-hq" aria-labelledby="nfl-hq-title">
-        <div className="lp-hq-copy">
+    <p className="lp-hq-context" aria-live="polite">
+      <span>{data.phase_label}</span>
+      {nextEvent && <span>{nextEvent.label}{eventDate ? ` · ${eventDate}` : ''}</span>}
+      {source && <small>{source.name}{verified ? ` · verified ${verified}` : ''}</small>}
+    </p>
+  )
+}
+
+export default function NflPixelHQ(props: Props) {
+  const [panel, setPanel] = useState<RoomPanel>(null)
+  const lastHotspot = useRef<HTMLButtonElement | null>(null)
+  const panelCopy = panel === 'career'
+    ? {
+      title: 'Career receipts',
+      body: 'Career tracking is not available yet. No records or rewards are being generated here.',
+    }
+    : {
+      title: 'Arcade console',
+      body: 'Mini-games are not available yet. This console has no game or rewards attached.',
+    }
+
+  function closePanel() {
+    setPanel(null)
+    requestAnimationFrame(() => lastHotspot.current?.focus())
+  }
+
+  return (
+    <section className="lp-hq-shell" aria-labelledby="nfl-hq-title">
+      <header className="lp-hq-header">
+        <div>
           <p className="lp-hq-kicker">LEGENDARY PICKS / NFL HQ</p>
-          <h2 id="nfl-hq-title">The War Room</h2>
-          <p className="lp-hq-description">Your home base for the NFL slate, player props, forecasts, and player projections.</p>
-          <div className="lp-hq-calendar" aria-live="polite">
-            {loading ? (
-              <span>Loading season context…</span>
-            ) : error || !data ? (
-              <span>Season context is unavailable right now.</span>
-            ) : (
-              <>
-                <span className="lp-hq-phase">{data.phase_label}</span>
-                {nextEvent && <span>{nextEvent.label}{eventDate ? ` · ${eventDate}` : ''}</span>}
-                {seasonSource && <span className="lp-hq-source">{seasonSource.name}{sourceVerified ? ` · verified ${sourceVerified}` : ''}</span>}
-              </>
-            )}
-          </div>
-          <Link href="/leagues/nfl?tab=schedule" className="lp-hq-cta">Open NFL slate <span aria-hidden="true">→</span></Link>
+          <h1 id="nfl-hq-title">The War Room</h1>
+          <SeasonContext {...props} />
         </div>
+        <details className="lp-hq-menu">
+          <summary>Research menu</summary>
+          <nav aria-label="NFL research destinations">
+            <Link href="/scores?league=nfl">Scores</Link>
+            <Link href="/leagues/nfl?tab=schedule">NFL slate</Link>
+            <Link href="/leagues/nfl?tab=model">Forecasts</Link>
+            <Link href="/props?league=nfl">Player props</Link>
+            <Link href="/nfl/projections">Player projections</Link>
+            <Link href="/leagues/nfl?tab=stats">Season stats</Link>
+            <Link href="/predict?sport=football&league=nfl">Predictions</Link>
+            <Link href="/">Exit to home</Link>
+          </nav>
+        </details>
+      </header>
 
-        <div className="lp-hq-room" role="img" aria-label="Pixel art football analysis room">
-          <div className="lp-hq-window"><div className="lp-hq-skyline" /></div>
-          <div className="lp-hq-wall-shelf"><span /><span /><span /></div>
-          <div className="lp-hq-monitor"><FootballField /><div className="lp-hq-monitor-base" /></div>
-          <div className="lp-hq-desk" />
-          <div className="lp-hq-lamp"><i /><b /></div>
-          <div className="lp-hq-plant"><i /><b /><span /></div>
-          <div className="lp-hq-chair"><i /><b /><span /></div>
-          <div className="lp-hq-floor-mark" aria-hidden="true">LP</div>
-          <div className="lp-hq-room-label"><SportIcon league="nfl" className="h-4 w-4" /> NFL analysis room</div>
-        </div>
-      </section>
+      <div className="lp-hq-stage" role="group" aria-label="Interactive NFL analysis room">
+        <div className="lp-hq-window" aria-hidden="true"><span /><i /><b /></div>
+        <div className="lp-hq-wall-lights" aria-hidden="true" />
 
-      <section className="lp-hq-rooms" aria-labelledby="nfl-rooms-title">
-        <div className="lp-hq-rooms-heading">
-          <p className="lp-hq-kicker">PICK A ROOM</p>
-          <h3 id="nfl-rooms-title">Explore the NFL lab</h3>
-        </div>
-        <div className="lp-hq-room-links">
-          <Link href="/leagues/nfl?tab=model" className="lp-hq-room-link">
-            <span className="lp-hq-room-icon">↗</span>
-            <span><b>Game forecasts</b><small>Model picks and outcomes</small></span>
-            <span className="lp-hq-arrow">→</span>
-          </Link>
-          <Link href="/props?league=nfl" className="lp-hq-room-link">
-            <span className="lp-hq-room-icon">▥</span>
-            <span><b>Player props</b><small>Lines, trends, and hit history</small></span>
-            <span className="lp-hq-arrow">→</span>
-          </Link>
-          <Link href="/nfl/projections" className="lp-hq-room-link">
-            <span className="lp-hq-room-icon">⌁</span>
-            <span><b>Player projections</b><small>Simulation ranges and availability</small></span>
-            <span className="lp-hq-arrow">→</span>
-          </Link>
-          <Link href="/props?league=nfl&tab=matchups" className="lp-hq-room-link">
-            <span className="lp-hq-room-icon">▦</span>
-            <span><b>Matchup splits</b><small>Player results by opponent</small></span>
-            <span className="lp-hq-arrow">→</span>
-          </Link>
-          <Link href="/leagues/nfl?tab=stats" className="lp-hq-room-link">
-            <span className="lp-hq-room-icon">▤</span>
-            <span><b>Player &amp; team stats</b><small>Season leaders and team totals</small></span>
-            <span className="lp-hq-arrow">→</span>
-          </Link>
-        </div>
-      </section>
-    </div>
+        <Link className="lp-hq-hotspot lp-hq-hotspot-tv" href="/scores?league=nfl" aria-label="Open NFL scores from the television">
+          <span className="lp-hq-tv-screen"><b>GAME CENTER</b><span>Scores &amp; play-by-play</span></span>
+          <span className="lp-hq-hotspot-label">TV · SCORES</span>
+        </Link>
+
+        <Link className="lp-hq-hotspot lp-hq-hotspot-board" href="/leagues/nfl?tab=model" aria-label="Open NFL forecasts from the scouting board">
+          <span className="lp-hq-board-paper">
+            <b>SCOUTING BOARD</b>
+            <span className="lp-hq-board-lines" aria-hidden="true"><i /><i /><i /></span>
+            <small>Open forecasts →</small>
+          </span>
+          <span className="lp-hq-hotspot-label">SCOUTING · FORECASTS</span>
+        </Link>
+
+        <Link className="lp-hq-hotspot lp-hq-hotspot-cards" href="/nfl/projections" aria-label="Open NFL player projections from the player card wall">
+          <span className="lp-hq-card-wall" aria-hidden="true"><i /><i /><i /><i /></span>
+          <span className="lp-hq-hotspot-label">PLAYER CARDS · PROJECTIONS</span>
+        </Link>
+
+        <button
+          ref={lastHotspot}
+          type="button"
+          className="lp-hq-hotspot lp-hq-hotspot-trophy"
+          aria-controls="nfl-hq-info-panel"
+          aria-expanded={panel === 'career'}
+          onClick={() => setPanel('career')}
+        >
+          <span className="lp-hq-trophy-shelf" aria-hidden="true"><i /><i /><i /></span>
+          <span className="lp-hq-hotspot-label">TROPHY SHELF · CAREER</span>
+        </button>
+
+        <span className="lp-hq-athlete" role="img" aria-label="Fictional NFL analyst wearing an unbranded football helmet" />
+        <div className="lp-hq-rug" aria-hidden="true" />
+        <div className="lp-hq-desk" aria-hidden="true"><span /><i /></div>
+        <Link className="lp-hq-hotspot lp-hq-hotspot-computer" href="/props?league=nfl" aria-label="Open NFL player props from the desk computer">
+          <span className="lp-hq-computer-screen"><b>PLAYER PROPS</b><small>Research board</small></span>
+          <span className="lp-hq-hotspot-label">COMPUTER · PLAYER PROPS</span>
+        </Link>
+        <button
+          type="button"
+          className="lp-hq-hotspot lp-hq-hotspot-console"
+          aria-controls="nfl-hq-info-panel"
+          aria-expanded={panel === 'arcade'}
+          onClick={event => { lastHotspot.current = event.currentTarget; setPanel('arcade') }}
+        >
+          <span className="lp-hq-console-screen" aria-hidden="true"><b>LP</b><i>ARCADE</i></span>
+          <span className="lp-hq-hotspot-label">CONSOLE · MINI-GAMES</span>
+        </button>
+
+        <aside className="lp-hq-panel" id="nfl-hq-info-panel" aria-live="polite" aria-atomic="true" hidden={!panel}>
+          {panel && (
+            <>
+              <div><b>{panelCopy.title}</b><p>{panelCopy.body}</p></div>
+              <button type="button" onClick={closePanel} aria-label="Close information panel">Close</button>
+            </>
+          )}
+        </aside>
+
+        <p className="lp-hq-scene-label" aria-hidden="true">NFL · RESEARCH HQ</p>
+      </div>
+      <p className="lp-hq-audio-note">Room audio is off. No sound plays automatically.</p>
+    </section>
   )
 }

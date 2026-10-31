@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
 import ProjectionRecord from '../../components/Props/ProjectionRecord'
-import NflLabNavigation from '../../components/Leagues/NflLabNavigation'
 
 interface Line { mean: number; median: number | null; p10: number | null; p90: number | null }
 interface SlatePlayer {
@@ -35,7 +34,6 @@ export default function NflProjections() {
   return (
     <div className="space-y-4">
       <Head><title>NFL player projections</title></Head>
-      <NflLabNavigation active="projections" />
       <div>
         <h1 className="text-lg font-semibold text-zinc-100">NFL player projections</h1>
         <p className="text-xs text-zinc-500">
