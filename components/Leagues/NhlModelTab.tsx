@@ -317,8 +317,8 @@ function RecordProjection({ game, model }: { game: NhlRecordGame; model: ModelNa
     ? grade.official_winner === 'home' ? 'font-semibold text-zinc-100' : 'text-zinc-400'
     : 'text-zinc-200'
   return (
-    <article className="flex flex-wrap items-start gap-x-6 gap-y-3 py-4">
-      <div className="w-full min-w-48 sm:w-fit sm:min-w-0 sm:max-w-56 sm:flex-none">
+    <article className="flex flex-wrap items-start gap-x-6 gap-y-6 py-4">
+      <div className="w-full min-w-48 sm:w-56 sm:flex-none">
         <h4 className="font-semibold text-zinc-100">{game.away_team} @ {game.home_team}</h4>
         <div className="mt-2 text-xs text-zinc-500">Model Pick</div>
         <div className="mt-0.5 text-sm text-zinc-200">
@@ -327,18 +327,18 @@ function RecordProjection({ game, model }: { game: NhlRecordGame; model: ModelNa
       </div>
       <section role="group" aria-label="Projected" className="w-full sm:w-52 sm:flex-none">
         <h5 className="mb-1 text-xs font-medium text-zinc-500">Projected</h5>
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 text-sm tabular-nums">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-y-1 pr-2 text-sm tabular-nums">
           <span className="truncate text-zinc-200">{game.away_team}</span>
           <span className="text-right font-semibold text-zinc-100">{one(forecast.away_expected_goals)}</span>
           <span className="truncate text-zinc-200">{game.home_team}</span>
           <span className="text-right font-semibold text-zinc-100">{one(forecast.home_expected_goals)}</span>
         </div>
       </section>
-      <section role="group" aria-label="Final" className="w-full sm:w-52 sm:flex-none">
+      <section role="group" aria-label="Final" className="w-full sm:ml-[9.5rem] sm:w-52 sm:flex-none">
         <h5 className="mb-1 text-xs font-medium text-zinc-500">
           Final{!grade ? ' · Pending' : grade.shootout_decided ? ' · SO' : ''}
         </h5>
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 text-sm tabular-nums">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-y-1 pr-2 text-sm tabular-nums">
           <span className={`truncate ${awayFinalClass}`}>{game.away_team}</span>
           <span className={`text-right ${awayFinalClass}`}>{grade?.official_away_goals ?? '—'}</span>
           <span className={`truncate ${homeFinalClass}`}>{game.home_team}</span>

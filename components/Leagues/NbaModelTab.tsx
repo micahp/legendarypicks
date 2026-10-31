@@ -312,8 +312,8 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                       : 'shrink-0 text-xs text-zinc-400'
 
                   return (
-                    <article key={game.game_id} className="flex flex-wrap items-start gap-x-6 gap-y-3 py-4">
-                      <div className="w-full min-w-48 sm:w-fit sm:min-w-0 sm:max-w-52 sm:flex-none">
+                    <article key={game.game_id} className="flex flex-wrap items-start gap-x-6 gap-y-6 py-4">
+                      <div className="w-full min-w-48 sm:w-52 sm:flex-none">
                         <h3 className="font-medium text-zinc-100">{game.away_team} at {game.home_team}</h3>
                         <p className="mt-2 text-xs text-zinc-400">
                           {game.home_team} win probability {percent(forecast.home_win_probability)}
@@ -321,18 +321,18 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                       </div>
                       <section role="group" aria-label="Projected" className="w-full sm:w-52 sm:flex-none">
                         <h4 className="mb-1 text-xs font-medium text-zinc-500">Projected</h4>
-                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 text-sm tabular-nums">
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-y-1 pr-2 text-sm tabular-nums">
                           <span className="truncate text-zinc-200">{game.away_team}</span>
                           <span className="text-right font-semibold text-zinc-100">{projectedScore?.away ?? '—'}</span>
                           <span className="truncate text-zinc-200">{game.home_team}</span>
                           <span className="text-right font-semibold text-zinc-100">{projectedScore?.home ?? '—'}</span>
                         </div>
                       </section>
-                      <section role="group" aria-label="Final" className="w-full sm:w-52 sm:flex-none">
+                      <section role="group" aria-label="Final" className="w-full sm:ml-[9.5rem] sm:w-52 sm:flex-none">
                         <h4 className="mb-1 text-xs font-medium text-zinc-500">
                           Final{!result ? ' · Pending' : finalWinner == null ? ' · Tie' : ''}
                         </h4>
-                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 text-sm tabular-nums">
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-y-1 pr-2 text-sm tabular-nums">
                           <span className={`truncate ${awayFinalClass}`}>{game.away_team}</span>
                           <span className={`text-right ${awayFinalClass}`}>{result?.away_score ?? '—'}</span>
                           <span className={`truncate ${homeFinalClass}`}>{game.home_team}</span>
