@@ -1,0 +1,1901 @@
+{
+ "counts": {
+  "D: hazard key from clock only": 5,
+  "D: hazard key from stop and clock": 668487,
+  "D: runoff key from event, stop and late": 666530,
+  "D: runoff key from stop and late": 397,
+  "D: runoff pool has nothing below the remaining time: quarter ends": 3,
+  "D: two-minute stop: runoff cut at 2:00": 8938,
+  "missing down, distance or field": 5989,
+  "negative derived clock runoff": 5,
+  "no same-quarter next snap for clock runoff": 1,
+  "penalty (not modelled)": 3445,
+  "punt without a clean receiving-team snap": 219,
+  "qb_scramble (not in E1 vocabulary)": 1033,
+  "turnover that is a touchdown (not modelled)": 43,
+  "turnover without a clean new-offense snap": 91,
+  "two_point_attempt (not modelled)": 120,
+  "unclassified play": 511,
+  "yards_gained null": 59
+ },
+ "eval": {
+  "games": 272,
+  "quarters": 1088,
+  "quarters_excluded_from_boundary_test": 303,
+  "quarters_with_boundary_test": 785,
+  "seasons": [
+   2025,
+   2025
+  ],
+  "weeks": [
+   1,
+   18
+  ]
+ },
+ "hazard_calibration": {
+  "clock_runs|120": {
+   "expected_quarter_ends": 9.8,
+   "observed_quarter_ends": 7,
+   "plays": 1697
+  },
+  "clock_runs|15": {
+   "expected_quarter_ends": 160.6,
+   "observed_quarter_ends": 156,
+   "plays": 213
+  },
+  "clock_runs|30": {
+   "expected_quarter_ends": 189.7,
+   "observed_quarter_ends": 180,
+   "plays": 382
+  },
+  "clock_runs|60": {
+   "expected_quarter_ends": 164.8,
+   "observed_quarter_ends": 156,
+   "plays": 730
+  },
+  "clock_runs|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 16522
+  },
+  "incomplete|120": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 571
+  },
+  "incomplete|15": {
+   "expected_quarter_ends": 34.2,
+   "observed_quarter_ends": 28,
+   "plays": 145
+  },
+  "incomplete|30": {
+   "expected_quarter_ends": 5.2,
+   "observed_quarter_ends": 10,
+   "plays": 208
+  },
+  "incomplete|60": {
+   "expected_quarter_ends": 4.4,
+   "observed_quarter_ends": 4,
+   "plays": 345
+  },
+  "incomplete|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 4390
+  },
+  "kick|120": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 217
+  },
+  "kick|15": {
+   "expected_quarter_ends": 111.9,
+   "observed_quarter_ends": 131,
+   "plays": 175
+  },
+  "kick|30": {
+   "expected_quarter_ends": 2.0,
+   "observed_quarter_ends": 1,
+   "plays": 53
+  },
+  "kick|60": {
+   "expected_quarter_ends": 0.3,
+   "observed_quarter_ends": 0,
+   "plays": 82
+  },
+  "kick|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 2075
+  },
+  "oob_ready|120": {
+   "expected_quarter_ends": 0.6,
+   "observed_quarter_ends": 0,
+   "plays": 85
+  },
+  "oob_ready|15": {
+   "expected_quarter_ends": 16.0,
+   "observed_quarter_ends": 16,
+   "plays": 16
+  },
+  "oob_ready|30": {
+   "expected_quarter_ends": 21.6,
+   "observed_quarter_ends": 22,
+   "plays": 22
+  },
+  "oob_ready|60": {
+   "expected_quarter_ends": 13.4,
+   "observed_quarter_ends": 16,
+   "plays": 38
+  },
+  "oob_ready|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 2200
+  },
+  "oob_snap|120": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 182
+  },
+  "oob_snap|15": {
+   "expected_quarter_ends": 3.6,
+   "observed_quarter_ends": 4,
+   "plays": 30
+  },
+  "oob_snap|30": {
+   "expected_quarter_ends": 0.3,
+   "observed_quarter_ends": 0,
+   "plays": 65
+  },
+  "oob_snap|60": {
+   "expected_quarter_ends": 0.7,
+   "observed_quarter_ends": 1,
+   "plays": 128
+  },
+  "oob_snap|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 137
+  },
+  "sack|120": {
+   "expected_quarter_ends": 0.3,
+   "observed_quarter_ends": 0,
+   "plays": 107
+  },
+  "sack|15": {
+   "expected_quarter_ends": 21.9,
+   "observed_quarter_ends": 20,
+   "plays": 24
+  },
+  "sack|30": {
+   "expected_quarter_ends": 17.7,
+   "observed_quarter_ends": 16,
+   "plays": 33
+  },
+  "sack|60": {
+   "expected_quarter_ends": 11.0,
+   "observed_quarter_ends": 12,
+   "plays": 65
+  },
+  "sack|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 934
+  },
+  "score|120": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 117
+  },
+  "score|15": {
+   "expected_quarter_ends": 6.5,
+   "observed_quarter_ends": 5,
+   "plays": 35
+  },
+  "score|30": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 35
+  },
+  "score|60": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 71
+  },
+  "score|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 995
+  },
+  "turnover|120": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 38
+  },
+  "turnover|15": {
+   "expected_quarter_ends": 1.1,
+   "observed_quarter_ends": 0,
+   "plays": 2
+  },
+  "turnover|30": {
+   "expected_quarter_ends": 0.5,
+   "observed_quarter_ends": 0,
+   "plays": 2
+  },
+  "turnover|60": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 18
+  },
+  "turnover|900": {
+   "expected_quarter_ends": 0.0,
+   "observed_quarter_ends": 0,
+   "plays": 369
+  }
+ },
+ "out_of_bounds_training_support": {
+  "effective_training_examples": [
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {
+     "pass_complete": 27,
+     "run": 5
+    },
+    "examples": 32,
+    "maximum_observed_qsr_s": 14.0,
+    "minimum_observed_qsr_s": 1.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 32,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {
+     "pass_complete": 26,
+     "run": 4,
+     "sack": 1
+    },
+    "examples": 31,
+    "maximum_observed_qsr_s": 30.0,
+    "minimum_observed_qsr_s": 16.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 30,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 1
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {
+     "pass_complete": 43,
+     "run": 20,
+     "sack": 2
+    },
+    "examples": 65,
+    "maximum_observed_qsr_s": 60.0,
+    "minimum_observed_qsr_s": 31.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 24,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 41
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {
+     "pass_complete": 91,
+     "run": 30,
+     "sack": 3
+    },
+    "examples": 124,
+    "maximum_observed_qsr_s": 120.0,
+    "minimum_observed_qsr_s": 61.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 1,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 123
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {
+     "pass_complete": 1433,
+     "run": 461,
+     "sack": 19
+    },
+    "examples": 1913,
+    "maximum_observed_qsr_s": 900.0,
+    "minimum_observed_qsr_s": 121.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 1913
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {
+     "pass_complete": 69,
+     "run": 5,
+     "sack": 3
+    },
+    "examples": 77,
+    "maximum_observed_qsr_s": 15.0,
+    "minimum_observed_qsr_s": 2.0,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 7,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 70
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {
+     "pass_complete": 142,
+     "run": 4,
+     "sack": 2
+    },
+    "examples": 148,
+    "maximum_observed_qsr_s": 30.0,
+    "minimum_observed_qsr_s": 16.0,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 1,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 147
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {
+     "pass_complete": 257,
+     "run": 19,
+     "sack": 3
+    },
+    "examples": 279,
+    "maximum_observed_qsr_s": 60.0,
+    "minimum_observed_qsr_s": 31.0,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 279
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {
+     "pass_complete": 366,
+     "run": 38,
+     "sack": 5
+    },
+    "examples": 409,
+    "maximum_observed_qsr_s": 120.0,
+    "minimum_observed_qsr_s": 61.0,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 409
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "outside_two_minute_window",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {
+     "pass_complete": 1337,
+     "run": 479,
+     "sack": 12
+    },
+    "examples": 1828,
+    "maximum_observed_qsr_s": 900.0,
+    "minimum_observed_qsr_s": 121.0,
+    "policy_window": "outside_two_minute_window",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 1828
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {
+     "pass_complete": 21,
+     "run": 8
+    },
+    "examples": 29,
+    "maximum_observed_qsr_s": 15.0,
+    "minimum_observed_qsr_s": 1.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 29,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {
+     "pass_complete": 20,
+     "run": 5
+    },
+    "examples": 25,
+    "maximum_observed_qsr_s": 29.0,
+    "minimum_observed_qsr_s": 16.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 25,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {
+     "pass_complete": 50,
+     "run": 21
+    },
+    "examples": 71,
+    "maximum_observed_qsr_s": 59.0,
+    "minimum_observed_qsr_s": 31.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 24,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 47
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {
+     "pass_complete": 109,
+     "run": 33,
+     "sack": 3
+    },
+    "examples": 145,
+    "maximum_observed_qsr_s": 120.0,
+    "minimum_observed_qsr_s": 61.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 1,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 144
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {
+     "pass_complete": 1292,
+     "run": 490,
+     "sack": 20
+    },
+    "examples": 1802,
+    "maximum_observed_qsr_s": 900.0,
+    "minimum_observed_qsr_s": 121.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 1802
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {
+     "pass_complete": 27,
+     "run": 4,
+     "sack": 1
+    },
+    "examples": 32,
+    "maximum_observed_qsr_s": 15.0,
+    "minimum_observed_qsr_s": 1.0,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 6,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 26
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {
+     "pass_complete": 43,
+     "run": 2,
+     "sack": 1
+    },
+    "examples": 46,
+    "maximum_observed_qsr_s": 30.0,
+    "minimum_observed_qsr_s": 16.0,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 46
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {
+     "pass_complete": 97,
+     "run": 4,
+     "sack": 1
+    },
+    "examples": 102,
+    "maximum_observed_qsr_s": 60.0,
+    "minimum_observed_qsr_s": 31.0,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 2,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 100
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {
+     "pass_complete": 208,
+     "run": 22,
+     "sack": 2
+    },
+    "examples": 232,
+    "maximum_observed_qsr_s": 120.0,
+    "minimum_observed_qsr_s": 61.0,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 232
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "120<clock<300s",
+    "events": {
+     "pass_complete": 375,
+     "run": 71,
+     "sack": 3
+    },
+    "examples": 449,
+    "maximum_observed_qsr_s": 299.0,
+    "minimum_observed_qsr_s": 121.0,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 449
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "120<clock<300s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "300-900s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "outside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "300-900s",
+    "events": {
+     "pass_complete": 1033,
+     "run": 343,
+     "sack": 11
+    },
+    "examples": 1387,
+    "maximum_observed_qsr_s": 900.0,
+    "minimum_observed_qsr_s": 300.0,
+    "policy_window": "outside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 1387
+   }
+  ],
+  "example_scope": "classifiable plays used by clock_d.fit for hazard support; quarter-ending plays are also listed separately because they are excluded from runoff pools",
+  "excluded_dev_game_examples": [
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {
+     "pass_complete": 1
+    },
+    "examples": 1,
+    "maximum_observed_qsr_s": 37.0,
+    "minimum_observed_qsr_s": 37.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 1
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {
+     "pass_complete": 1
+    },
+    "examples": 1,
+    "maximum_observed_qsr_s": 102.0,
+    "minimum_observed_qsr_s": 102.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 1
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {
+     "pass_complete": 12,
+     "run": 4
+    },
+    "examples": 16,
+    "maximum_observed_qsr_s": 895.0,
+    "minimum_observed_qsr_s": 155.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 1,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 16
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {
+     "pass_complete": 1
+    },
+    "examples": 1,
+    "maximum_observed_qsr_s": 5.0,
+    "minimum_observed_qsr_s": 5.0,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 1,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {
+     "pass_complete": 3
+    },
+    "examples": 3,
+    "maximum_observed_qsr_s": 24.0,
+    "minimum_observed_qsr_s": 18.0,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 3
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {
+     "run": 1
+    },
+    "examples": 1,
+    "maximum_observed_qsr_s": 34.0,
+    "minimum_observed_qsr_s": 34.0,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 1
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "at_or_inside_two_minutes",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "outside_two_minute_window",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {
+     "pass_complete": 9,
+     "run": 4
+    },
+    "examples": 13,
+    "maximum_observed_qsr_s": 765.0,
+    "minimum_observed_qsr_s": 127.0,
+    "policy_window": "outside_two_minute_window",
+    "quarter": 2,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 13
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {
+     "pass_complete": 1
+    },
+    "examples": 1,
+    "maximum_observed_qsr_s": 54.0,
+    "minimum_observed_qsr_s": 54.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 1
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {
+     "pass_complete": 2
+    },
+    "examples": 2,
+    "maximum_observed_qsr_s": 89.0,
+    "minimum_observed_qsr_s": 81.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 2
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "121-900s",
+    "events": {
+     "pass_complete": 7,
+     "run": 2
+    },
+    "examples": 9,
+    "maximum_observed_qsr_s": 832.0,
+    "minimum_observed_qsr_s": 185.0,
+    "policy_window": "no_automatic_oob_snap_window",
+    "quarter": 3,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 9
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 1,
+    "clock_bucket_upper_s": 15,
+    "clock_window": "1-15s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 16,
+    "clock_bucket_upper_s": 30,
+    "clock_window": "16-30s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 31,
+    "clock_bucket_upper_s": 60,
+    "clock_window": "31-60s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {
+     "pass_complete": 1
+    },
+    "examples": 1,
+    "maximum_observed_qsr_s": 120.0,
+    "minimum_observed_qsr_s": 120.0,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 1
+   },
+   {
+    "clock_bucket_lower_s": 61,
+    "clock_bucket_upper_s": 120,
+    "clock_window": "61-120s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "120<clock<300s",
+    "events": {
+     "pass_complete": 2
+    },
+    "examples": 2,
+    "maximum_observed_qsr_s": 260.0,
+    "minimum_observed_qsr_s": 125.0,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 2
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "120<clock<300s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "inside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "300-900s",
+    "events": {},
+    "examples": 0,
+    "maximum_observed_qsr_s": null,
+    "minimum_observed_qsr_s": null,
+    "policy_window": "outside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_snap",
+    "uncensored_runoff_examples": 0
+   },
+   {
+    "clock_bucket_lower_s": 121,
+    "clock_bucket_upper_s": 900,
+    "clock_window": "300-900s",
+    "events": {
+     "pass_complete": 7,
+     "run": 2
+    },
+    "examples": 9,
+    "maximum_observed_qsr_s": 900.0,
+    "minimum_observed_qsr_s": 352.0,
+    "policy_window": "outside_final_five_minutes",
+    "quarter": 4,
+    "quarter_ending_examples": 0,
+    "stop_class": "oob_ready",
+    "uncensored_runoff_examples": 9
+   }
+  ]
+ },
+ "quarter_elapsed_clock_accuracy_by_quarter": {
+  "1": {
+   "matched_play_states": 152109,
+   "mean_absolute_clock_error_s": 59.03,
+   "mean_clock_bias_s_simulated_minus_observed": 53.79,
+   "root_mean_square_clock_error_s": 80.1
+  },
+  "2": {
+   "matched_play_states": 182789,
+   "mean_absolute_clock_error_s": 68.57,
+   "mean_clock_bias_s_simulated_minus_observed": 65.53,
+   "root_mean_square_clock_error_s": 88.01
+  },
+  "3": {
+   "matched_play_states": 152889,
+   "mean_absolute_clock_error_s": 64.39,
+   "mean_clock_bias_s_simulated_minus_observed": 59.8,
+   "root_mean_square_clock_error_s": 85.3
+  },
+  "4": {
+   "matched_play_states": 180705,
+   "mean_absolute_clock_error_s": 52.44,
+   "mean_clock_bias_s_simulated_minus_observed": 42.17,
+   "root_mean_square_clock_error_s": 70.64
+  }
+ },
+ "quarter_end": {
+  "A_deployed": {
+   "accurate": 356,
+   "median_leftover_when_missed_s": 141.0,
+   "missed": 13939,
+   "missed_share": 0.8878,
+   "plays_lost_per_premature_quarter": 3.39,
+   "premature": 1405,
+   "premature_share": 0.0895,
+   "quarter_replicates": 15700,
+   "refused": 0
+  },
+  "A_train": {
+   "accurate": 347,
+   "median_leftover_when_missed_s": 146.0,
+   "missed": 13760,
+   "missed_share": 0.8764,
+   "plays_lost_per_premature_quarter": 3.46,
+   "premature": 1420,
+   "premature_share": 0.0904,
+   "quarter_replicates": 15700,
+   "refused": 173
+  },
+  "D": {
+   "accurate": 547,
+   "median_leftover_when_missed_s": 101.0,
+   "missed": 14477,
+   "missed_share": 0.9221,
+   "plays_lost_per_premature_quarter": 2.68,
+   "premature": 676,
+   "premature_share": 0.0431,
+   "quarter_replicates": 15700,
+   "refused": 0
+  },
+  "_tally": {
+   "accurate": 1250,
+   "missed": 42176,
+   "no A cell for this play": 173,
+   "premature": 3501
+  }
+ },
+ "replicates": 20,
+ "runoff_w1_seconds_by_event": {
+  "A_deployed": {
+   "field_goal_attempt": {
+    "mean_bias_s_simulated_minus_observed": -0.17,
+    "n_draws": 20371,
+    "n_observed": 943,
+    "observed_mean_s": 3.72,
+    "simulated_mean_s": 3.55,
+    "w1": 0.17
+   },
+   "fumble_lost": {
+    "mean_bias_s_simulated_minus_observed": 0.05,
+    "n_draws": 3031,
+    "n_observed": 153,
+    "observed_mean_s": 8.27,
+    "simulated_mean_s": 8.32,
+    "w1": 0.12
+   },
+   "interception": {
+    "mean_bias_s_simulated_minus_observed": 0.11,
+    "n_draws": 5517,
+    "n_observed": 276,
+    "observed_mean_s": 8.28,
+    "simulated_mean_s": 8.38,
+    "w1": 0.23
+   },
+   "pass_complete": {
+    "mean_bias_s_simulated_minus_observed": -0.63,
+    "n_draws": 214883,
+    "n_observed": 10710,
+    "observed_mean_s": 30.76,
+    "simulated_mean_s": 30.13,
+    "w1": 0.67
+   },
+   "pass_incomplete": {
+    "mean_bias_s_simulated_minus_observed": -0.01,
+    "n_draws": 111135,
+    "n_observed": 5617,
+    "observed_mean_s": 4.72,
+    "simulated_mean_s": 4.71,
+    "w1": 0.03
+   },
+   "punt": {
+    "mean_bias_s_simulated_minus_observed": -0.06,
+    "n_draws": 30533,
+    "n_observed": 1532,
+    "observed_mean_s": 9.38,
+    "simulated_mean_s": 9.32,
+    "w1": 0.08
+   },
+   "run": {
+    "mean_bias_s_simulated_minus_observed": -0.69,
+    "n_draws": 252618,
+    "n_observed": 12388,
+    "observed_mean_s": 34.27,
+    "simulated_mean_s": 33.58,
+    "w1": 0.71
+   },
+   "sack": {
+    "mean_bias_s_simulated_minus_observed": -0.96,
+    "n_draws": 23464,
+    "n_observed": 1149,
+    "observed_mean_s": 33.99,
+    "simulated_mean_s": 33.03,
+    "w1": 1.02
+   }
+  },
+  "A_train": {
+   "field_goal_attempt": {
+    "mean_bias_s_simulated_minus_observed": -0.14,
+    "n_draws": 20259,
+    "n_observed": 943,
+    "observed_mean_s": 3.72,
+    "simulated_mean_s": 3.58,
+    "w1": 0.16
+   },
+   "fumble_lost": {
+    "mean_bias_s_simulated_minus_observed": -0.1,
+    "n_draws": 2967,
+    "n_observed": 153,
+    "observed_mean_s": 8.27,
+    "simulated_mean_s": 8.17,
+    "w1": 0.07
+   },
+   "interception": {
+    "mean_bias_s_simulated_minus_observed": 0.22,
+    "n_draws": 5497,
+    "n_observed": 276,
+    "observed_mean_s": 8.28,
+    "simulated_mean_s": 8.49,
+    "w1": 0.33
+   },
+   "pass_complete": {
+    "mean_bias_s_simulated_minus_observed": -0.69,
+    "n_draws": 212511,
+    "n_observed": 10710,
+    "observed_mean_s": 30.76,
+    "simulated_mean_s": 30.07,
+    "w1": 0.84
+   },
+   "pass_incomplete": {
+    "mean_bias_s_simulated_minus_observed": -0.02,
+    "n_draws": 110180,
+    "n_observed": 5617,
+    "observed_mean_s": 4.72,
+    "simulated_mean_s": 4.7,
+    "w1": 0.04
+   },
+   "punt": {
+    "mean_bias_s_simulated_minus_observed": -0.12,
+    "n_draws": 30332,
+    "n_observed": 1532,
+    "observed_mean_s": 9.38,
+    "simulated_mean_s": 9.26,
+    "w1": 0.11
+   },
+   "run": {
+    "mean_bias_s_simulated_minus_observed": -0.84,
+    "n_draws": 249929,
+    "n_observed": 12388,
+    "observed_mean_s": 34.27,
+    "simulated_mean_s": 33.43,
+    "w1": 0.9
+   },
+   "sack": {
+    "mean_bias_s_simulated_minus_observed": -1.27,
+    "n_draws": 23321,
+    "n_observed": 1149,
+    "observed_mean_s": 33.99,
+    "simulated_mean_s": 32.72,
+    "w1": 1.28
+   }
+  },
+  "D": {
+   "field_goal_attempt": {
+    "mean_bias_s_simulated_minus_observed": -0.08,
+    "n_draws": 20992,
+    "n_observed": 943,
+    "observed_mean_s": 3.72,
+    "simulated_mean_s": 3.63,
+    "w1": 0.07
+   },
+   "fumble_lost": {
+    "mean_bias_s_simulated_minus_observed": -0.14,
+    "n_draws": 3059,
+    "n_observed": 153,
+    "observed_mean_s": 8.27,
+    "simulated_mean_s": 8.13,
+    "w1": 0.22
+   },
+   "interception": {
+    "mean_bias_s_simulated_minus_observed": 0.18,
+    "n_draws": 5518,
+    "n_observed": 276,
+    "observed_mean_s": 8.28,
+    "simulated_mean_s": 8.45,
+    "w1": 0.31
+   },
+   "pass_complete": {
+    "mean_bias_s_simulated_minus_observed": 0.64,
+    "n_draws": 217141,
+    "n_observed": 10710,
+    "observed_mean_s": 30.76,
+    "simulated_mean_s": 31.4,
+    "w1": 1.19
+   },
+   "pass_incomplete": {
+    "mean_bias_s_simulated_minus_observed": 0.06,
+    "n_draws": 112382,
+    "n_observed": 5617,
+    "observed_mean_s": 4.72,
+    "simulated_mean_s": 4.78,
+    "w1": 0.1
+   },
+   "punt": {
+    "mean_bias_s_simulated_minus_observed": -0.06,
+    "n_draws": 30583,
+    "n_observed": 1532,
+    "observed_mean_s": 9.38,
+    "simulated_mean_s": 9.32,
+    "w1": 0.05
+   },
+   "run": {
+    "mean_bias_s_simulated_minus_observed": -0.19,
+    "n_draws": 253536,
+    "n_observed": 12388,
+    "observed_mean_s": 34.27,
+    "simulated_mean_s": 34.08,
+    "w1": 0.85
+   },
+   "sack": {
+    "mean_bias_s_simulated_minus_observed": 0.59,
+    "n_draws": 23713,
+    "n_observed": 1149,
+    "observed_mean_s": 33.99,
+    "simulated_mean_s": 34.58,
+    "w1": 1.16
+   }
+  }
+ },
+ "short_seconds": 15,
+ "short_share_by_stop_class": {
+  "clock_runs": {
+   "A_deployed": 0.142,
+   "A_train": 0.141,
+   "D": 0.076,
+   "n_observed": 19045,
+   "observed": 0.097
+  },
+  "incomplete": {
+   "A_deployed": 1.0,
+   "A_train": 1.0,
+   "D": 1.0,
+   "n_observed": 5617,
+   "observed": 1.0
+  },
+  "kick": {
+   "A_deployed": 0.995,
+   "A_train": 0.996,
+   "D": 0.995,
+   "n_observed": 2470,
+   "observed": 0.993
+  },
+  "oob_ready": {
+   "A_deployed": 0.151,
+   "A_train": 0.146,
+   "D": 0.037,
+   "n_observed": 2307,
+   "observed": 0.026
+  },
+  "oob_snap": {
+   "A_deployed": 0.183,
+   "A_train": 0.176,
+   "D": 0.986,
+   "n_observed": 537,
+   "observed": 0.981
+  },
+  "sack": {
+   "A_deployed": 0.186,
+   "A_train": 0.191,
+   "D": 0.138,
+   "n_observed": 1115,
+   "observed": 0.174
+  },
+  "score": {
+   "A_deployed": 0.464,
+   "A_train": 0.466,
+   "D": 0.999,
+   "n_observed": 1248,
+   "observed": 0.998
+  },
+  "turnover": {
+   "A_deployed": 0.977,
+   "A_train": 0.98,
+   "D": 0.976,
+   "n_observed": 429,
+   "observed": 0.977
+  }
+ },
+ "source_artifacts": {
+  "clock_d_py": {
+   "path": "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/clock_d.py",
+   "sha256": "093d410cd199c77d6d791a72271c4fc9c4e27383e15eeb344acf5726ecbbb5c6"
+  },
+  "clock_d_replay_py": {
+   "path": "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/clock_d_replay.py",
+   "sha256": "050cecb0352ce0d4c393c38d48eb2b91f073729c0af3507c6b01138d6b6bf104"
+  },
+  "e1_drive_py": {
+   "path": "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/e1_drive.py",
+   "sha256": "bcd55e7d3daab2bb929f4aecd6d2d74a70847ce8f114e2cf645d4df9fd25b02a"
+  },
+  "play_extras": {
+   "path": "/root/lp-slc-player-workload-2026-10-30/docs/fixtures/e2/play_extras_2022_2025.csv",
+   "sha256": "3ae148f954e1a3ea2d9c88e1c82f91e745f8767bfaa62c275b1b4e988490dd5b"
+  },
+  "sqlite_database": {
+   "path": "/root/legendarypicks/backend/data/picks.dev.db",
+   "sha256": "31fe12a5edd2754bec0e184806944698a45e97e6600516bf178b501a267e6059"
+  }
+ },
+ "train": {
+  "excludes": [
+   "2022_05_CIN_BAL",
+   "2022_05_MIA_NYJ",
+   "2022_06_DAL_PHI",
+   "2022_06_SF_ATL",
+   "2022_07_TB_CAR",
+   "2022_09_GB_DET"
+  ],
+  "games_fitted": 809,
+  "plays_fitted": 103072,
+  "seasons": [
+   2022,
+   2024
+  ],
+  "source_games_before_dev_exclusion": 815,
+  "weeks": [
+   1,
+   18
+  ]
+ },
+ "window": "holdout"
+}
