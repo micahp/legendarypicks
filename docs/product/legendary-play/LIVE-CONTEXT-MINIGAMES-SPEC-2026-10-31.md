@@ -207,9 +207,9 @@ Prototype players must understand and complete their first kick without a tutori
 ## 9. Related references
 
 - [GM Mode spec](GM-MODE-SPEC-2026-10-31.md)
-- [NFL 2026 game-state rules](../rules/NFL-2026-GAME-STATE-RULES.md) — canonical interpretation of football field state, not an arcade physics implementation
-- [Gridiron contract](../GRIDIRON-CONTRACT-v1.md) — separate fictional statistical/3D research mode; avoid false claims of game recreation
+- [NFL 2026 game-state rules](../../rules/NFL-2026-GAME-STATE-RULES.md) — canonical interpretation of football field state, not an arcade physics implementation
+- [Gridiron contract](../../GRIDIRON-CONTRACT-v1.md) — separate fictional statistical/3D research mode; avoid false claims of game recreation
 - [Pixel-art references in PR #27](https://github.com/micahp/legendarypicks/pull/27)
-- [Forecast-first / market-first architecture](../DECISION-forecast-first-leagues-market-first-props-2026-10-20.md)
+- [Forecast-first / market-first architecture](../../DECISION-forecast-first-leagues-market-first-props-2026-10-20.md)
 
 **This is design research only. No real-game feed, server, database, release, model or deployed UI should be changed as part of this docs commit.**
