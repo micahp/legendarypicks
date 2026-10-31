@@ -66,6 +66,24 @@ interface NhlGame {
   }
 }
 
+interface NhlRecordGame {
+  game_id: number
+  game_date: string
+  scheduled_start_utc: string
+  home_team: string
+  away_team: string
+  result: Forecast['grade']
+  models: Partial<Record<ModelName, Forecast>>
+}
+
+interface NhlRecordPage {
+  season: number
+  model: ModelName
+  games: NhlRecordGame[]
+  has_more: boolean
+  next_before: string | null
+}
+
 interface Payload {
   model_version: string
   model_versions?: Partial<Record<ModelName, string>>
@@ -142,8 +160,22 @@ function dateLabel(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
+function localDateKey(iso: string) {
+  const date = new Date(iso)
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
+}
+
 function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+}
+
+async function fetchRecordPage(season: number, model: ModelName, timezone: string,
+                               before?: string | null, signal?: AbortSignal) {
+  const query = new URLSearchParams({ season: String(season), model, days: '7', timezone })
+  if (before) query.set('before', before)
+  const response = await fetch('/api/nhl/model/record?' + query.toString(), { cache: 'no-store', signal })
+  if (!response.ok) throw new Error(`NHL record feed returned ${response.status}.`)
+  return response.json() as Promise<NhlRecordPage>
 }
 
 function recordLine(standings: Payload['standings'], team: string) {
@@ -270,32 +302,52 @@ function Metric({ label, value }: { label: string; value: string }) {
   return <div className="min-w-0"><div className="text-xs text-zinc-500">{label}</div><div className="mt-0.5 truncate tabular-nums text-sm text-zinc-100">{value}</div></div>
 }
 
-function RecordProjection({ game, model }: { game: NhlGame; model: ModelName }) {
+function RecordProjection({ game, model }: { game: NhlRecordGame; model: ModelName }) {
   const forecast = game.models[model]
+  if (!forecast) return null
   const grade = forecast.grade
   const pick = forecast.pick ?? null
   const result = pickResultLabel(pick, grade != null)
   const resultClass = result === 'Win' ? 'text-emerald-400'
     : result === 'Loss' ? 'text-red-400' : 'text-zinc-400'
+  const awayFinalClass = grade
+    ? grade.official_winner === 'away' ? 'font-semibold text-zinc-100' : 'text-zinc-400'
+    : 'text-zinc-200'
+  const homeFinalClass = grade
+    ? grade.official_winner === 'home' ? 'font-semibold text-zinc-100' : 'text-zinc-400'
+    : 'text-zinc-200'
   return (
-    <article className="py-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 className="font-semibold text-zinc-100">{game.away_team} @ {game.home_team}</h3>
-        <span className="text-sm tabular-nums text-zinc-400">{dateLabel(game.scheduled_start_utc)}</span>
-      </div>
-      <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-5">
-        <Metric label="Model Pick" value={pick ? `${pickLabel(pick, game.home_team, game.away_team)}${pick.model_probability == null ? '' : ` ${pct(pick.model_probability)}`}` : 'Missing'} />
-        <Metric label="Projected" value={`${one(forecast.away_expected_goals)}–${one(forecast.home_expected_goals)}`} />
-        <Metric label="Final" value={grade ? `${grade.official_away_goals}–${grade.official_home_goals}` : 'Pending'} />
-        <Metric label="Winner" value={grade ? `${grade.official_winner === 'home' ? game.home_team : game.away_team}${grade.shootout_decided ? ' · SO' : ''}` : 'Awaiting final'} />
-        <div className="min-w-0">
-          <div className="text-xs text-zinc-500">Result</div>
-          <div className={`mt-0.5 truncate text-sm tabular-nums ${resultClass}`}>{result}</div>
+    <article className="flex flex-wrap items-start gap-x-6 gap-y-3 py-4">
+      <div className="w-full min-w-48 sm:w-56 sm:flex-none">
+        <h4 className="font-semibold text-zinc-100">{game.away_team} @ {game.home_team}</h4>
+        <div className="mt-2 text-xs text-zinc-500">Model Pick</div>
+        <div className="mt-0.5 text-sm text-zinc-200">
+          {pick ? `${pickLabel(pick, game.home_team, game.away_team)}${pick.model_probability == null ? '' : ` ${pct(pick.model_probability)}`}` : 'Missing'}
         </div>
       </div>
-      <div className="mt-3 text-xs text-zinc-500">
-        Locked {new Date(forecast.locked_at_utc || game.locked_at_utc).toLocaleString()}
-        {pick?.line_captured_at_utc ? ` · line captured ${new Date(pick.line_captured_at_utc).toLocaleString()}` : ''}
+      <section role="group" aria-label="Projected" className="w-full sm:w-52 sm:flex-none">
+        <h5 className="mb-1 text-xs font-medium text-zinc-500">Projected</h5>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 text-sm tabular-nums">
+          <span className="truncate text-zinc-200">{game.away_team}</span>
+          <span className="text-right font-semibold text-zinc-100">{one(forecast.away_expected_goals)}</span>
+          <span className="truncate text-zinc-200">{game.home_team}</span>
+          <span className="text-right font-semibold text-zinc-100">{one(forecast.home_expected_goals)}</span>
+        </div>
+      </section>
+      <section role="group" aria-label="Final" className="w-full sm:w-52 sm:flex-none">
+        <h5 className="mb-1 text-xs font-medium text-zinc-500">
+          Final{!grade ? ' · Pending' : grade.shootout_decided ? ' · SO' : ''}
+        </h5>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 text-sm tabular-nums">
+          <span className={`truncate ${awayFinalClass}`}>{game.away_team}</span>
+          <span className={`text-right ${awayFinalClass}`}>{grade?.official_away_goals ?? '—'}</span>
+          <span className={`truncate ${homeFinalClass}`}>{game.home_team}</span>
+          <span className={`text-right ${homeFinalClass}`}>{grade?.official_home_goals ?? '—'}</span>
+        </div>
+      </section>
+      <div className="flex w-full items-center justify-between gap-3 text-xs sm:ml-auto sm:w-auto sm:flex-col sm:items-end">
+        <span className="text-zinc-500">Result</span>
+        <span className={`shrink-0 text-sm ${resultClass}`}>{result}</span>
       </div>
     </article>
   )
@@ -442,17 +494,98 @@ function ModelPerformanceSummary({ games, selectedModel }: { games: NhlGame[]; s
   )
 }
 
-function RecordView({ games, model, missedLocks }: { games: NhlGame[]; model: ModelName; missedLocks: NonNullable<Payload['missed_locks']> }) {
-  const ordered = games.filter(game => game.models[model] != null).sort((a, b) => b.scheduled_start_utc.localeCompare(a.scheduled_start_utc))
+function RecordView({ season, model, missedLocks }: { season: number; model: ModelName; missedLocks: NonNullable<Payload['missed_locks']> }) {
+  const [page, setPage] = useState<NhlRecordPage | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [reload, setReload] = useState(0)
+  const timezone = typeof Intl === 'undefined' ? 'UTC' : Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
   const missed = missedLocks.filter(row => row.model_key === model)
-  if (!ordered.length && !missed.length) return <p className="text-sm text-zinc-400">No locked NHL model picks yet.</p>
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setPage(null)
+    setLoading(true)
+    setError(null)
+    const refreshFirstPage = (initial: boolean) => {
+      fetchRecordPage(season, model, timezone, null, controller.signal)
+        .then(fresh => {
+          if (controller.signal.aborted) return
+          setPage(current => {
+            if (initial || !current || !fresh.next_before) return fresh
+            const retainedOlder = current.games.filter(
+              game => localDateKey(game.scheduled_start_utc) < (fresh.next_before as string),
+            )
+            if (!retainedOlder.length) return fresh
+            const freshIds = new Set(fresh.games.map(game => game.game_id))
+            return {
+              ...fresh,
+              games: [...fresh.games, ...retainedOlder.filter(game => !freshIds.has(game.game_id))],
+              has_more: current.has_more,
+              next_before: current.next_before,
+            }
+          })
+          setError(null)
+        })
+        .catch((reason: Error) => { if (!controller.signal.aborted) setError(reason.message) })
+        .finally(() => { if (initial && !controller.signal.aborted) setLoading(false) })
+    }
+    refreshFirstPage(true)
+    const timer = window.setInterval(() => refreshFirstPage(false), 60_000)
+    return () => { controller.abort(); window.clearInterval(timer) }
+  }, [season, model, timezone, reload])
+
+  const loadMore = async () => {
+    if (!page?.next_before || loadingMore) return
+    setLoadingMore(true)
+    setError(null)
+    try {
+      const older = await fetchRecordPage(season, model, timezone, page.next_before)
+      setPage(current => current
+        ? {
+            ...older,
+            games: [...current.games, ...older.games.filter(
+              game => !current.games.some(currentGame => currentGame.game_id === game.game_id),
+            )],
+          }
+        : older)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'NHL record feed did not load.')
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
+  const gamesByDay = [...(page?.games ?? [])]
+    .sort((a, b) => b.scheduled_start_utc.localeCompare(a.scheduled_start_utc))
+    .reduce<Record<string, NhlRecordGame[]>>((groups, game) => {
+      const day = dateLabel(game.scheduled_start_utc)
+      groups[day] = [...(groups[day] ?? []), game]
+      return groups
+    }, {})
+
   return (
     <section className="space-y-3">
       <div><h2 className="text-lg font-semibold text-zinc-100">2026–27 record · {MODEL_LABELS[model]}</h2><p className="text-sm text-zinc-400">Frozen picks grade from official NHL results. Unfinished games remain pending.</p></div>
-      {ordered.length > 0 && <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
-        {ordered.map(game => <RecordProjection key={game.game_id} game={game} model={model} />)}
-      </div>}
-      {missed.length > 0 && <section className="space-y-2"><h3 className="text-sm font-medium text-zinc-400">Missed lock window</h3><div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">{missed.map(row => <article key={`${row.game_id}-${row.model_version}`} className="flex flex-wrap justify-between gap-2 py-3 text-sm"><span className="font-medium text-zinc-200">{row.away_team} @ {row.home_team}</span><span className="text-zinc-500">No forecast locked · {new Date(row.scheduled_start_utc).toLocaleString()}</span></article>)}</div></section>}
+      {error && <p role="status" className="text-sm text-amber-300">{error}</p>}
+      {loading && <p role="status" className="text-sm text-zinc-400">Loading record…</p>}
+      {!loading && !page && error && <button type="button" onClick={() => setReload(value => value + 1)}
+        className="text-sm text-emerald-300 hover:text-emerald-200">Retry loading record</button>}
+      {!loading && page?.games.length === 0 && <p className="text-sm text-zinc-400">No locked NHL model picks yet.</p>}
+      {Object.entries(gamesByDay).map(([day, dayGames]) => (
+        <section key={day} className="space-y-2">
+          <h3 className="text-sm font-medium text-zinc-400">{day}</h3>
+          <div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">
+            {dayGames.map(game => <RecordProjection key={game.game_id} game={game} model={model} />)}
+          </div>
+        </section>
+      ))}
+      {page?.has_more && <button type="button" onClick={loadMore} disabled={loadingMore}
+        className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-50">
+        {loadingMore ? 'Loading older dates…' : 'Load older dates'}
+      </button>}
+      {missed.length > 0 && <section className="space-y-2"><h3 className="text-sm font-medium text-zinc-400">Missed lock window</h3><div className="divide-y divide-zinc-800 rounded-2xl bg-zinc-900 px-4">{missed.map(row => <article key={`${row.game_id}-${row.model_version}`} className="flex flex-wrap justify-between gap-2 py-3 text-sm"><span className="font-medium text-zinc-200">{row.away_team} @ {row.home_team}</span><span className="text-zinc-500">No forecast locked · {dateLabel(row.scheduled_start_utc)}</span></article>)}</div></section>}
     </section>
   )
 }
@@ -573,7 +706,7 @@ export default function NhlModelTab() {
         <h2 className="text-lg font-semibold text-zinc-100" title="Models lock 90 mins before kickoff">2026–27 projections · {MODEL_LABELS[model]}</h2>
         {items.length === 0 ? <p className="text-sm text-zinc-400">{payload.state === 'missed_locks' ? 'No forecasts were locked for games that missed the T−90 window. Check the Record tab for details.' : 'No NHL projections have reached their T−90 lock time yet.'}</p> : Object.entries(groups).map(([day, entries]) => <section key={day} className="space-y-2"><h3 className="text-sm font-medium text-zinc-400">{day}</h3><div className="grid gap-3 sm:grid-cols-2">{entries.map(item => item.node)}</div></section>)}
       </>}
-      {view === 'record' && <RecordView games={games} model={model} missedLocks={payload.missed_locks || []} />}
+      {view === 'record' && <RecordView season={2026} model={model} missedLocks={payload.missed_locks || []} />}
       {view === 'ratings' && <TeamRatings games={games} />}
       <p className="text-xs text-zinc-500">Win probability includes overtime and shootouts. Goal projections exclude the shootout-deciding goal. Regulation win probability is not available in this model version.</p>
     </div>

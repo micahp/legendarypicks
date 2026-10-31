@@ -3,11 +3,16 @@
 ### NBA model
 
 - Add NBA Almanac team ratings and simplify accuracy to one held-out benchmark row per model.
-- Make NBA record scores easier to scan with stacked teams and final-winner highlighting.
+- Make NBA record scores easier to scan with stacked teams, final-winner highlighting, and no per-game times.
 
 ### League navigation
 
 - Put Model first on league pages and open leagues with an active model on that model by default, while preserving saved tab choices.
+
+### NHL model
+
+- Paginate Record by complete local game-date groups from the single-model API, show stacked projected and final team scores, and remove per-game times plus lock and line-capture timestamps from list items.
+- Add prospective forecasts for WPG @ CAR on Nov 1 to the NHL research feed.
 
 ## v10.1.1
 

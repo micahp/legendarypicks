@@ -15,6 +15,8 @@ import os
 import sqlite3
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
+import pytz
+from pytz.exceptions import UnknownTimeZoneError
 
 UTC = dt.timezone.utc
 LOCK_LEAD = dt.timedelta(minutes=90)
@@ -625,6 +627,8 @@ def ensure_schema(con: sqlite3.Connection) -> None:
     );
     CREATE INDEX IF NOT EXISTS idx_nhl_projection_start
         ON nhl_game_projections(scheduled_start_utc);
+    CREATE INDEX IF NOT EXISTS idx_nhl_projection_record_page
+        ON nhl_game_projections(season,model_key,scheduled_start_utc DESC,game_id DESC);
     CREATE TABLE IF NOT EXISTS nhl_projection_grades (
         game_id TEXT NOT NULL,
         model_key TEXT NOT NULL,
@@ -1480,6 +1484,136 @@ def export_locked(con: sqlite3.Connection, season: int) -> dict:
                 (g["locked_at_utc"] for g in games.values()), default=None),
             "source": "NHL model lock database", "games": list(games.values()),
             "missed_locks": missed}
+
+
+def export_record_page(con: sqlite3.Connection, season: int, model: str, days: int = 7,
+                       before: str | None = None, timezone_name: str = "UTC") -> dict[str, Any]:
+    """Return one model's locked forecasts for the latest complete local-date groups."""
+    if model not in MODEL_KEYS:
+        raise ValueError("unknown NHL model %r" % model)
+    if not 1 <= days <= 31:
+        raise ValueError("days must be between 1 and 31")
+    try:
+        timezone = pytz.timezone(timezone_name)
+    except UnknownTimeZoneError as exc:
+        raise ValueError("unknown timezone %r" % timezone_name) from exc
+
+    def local_midnight_utc(day: dt.date) -> dt.datetime:
+        return timezone.localize(dt.datetime.combine(day, dt.time.min)).astimezone(UTC)
+
+    if before is None:
+        latest = con.execute(
+            "SELECT MAX(scheduled_start_utc) FROM nhl_game_projections WHERE season=? AND model_key=?",
+            (int(season), model),
+        ).fetchone()[0]
+        if latest is None:
+            return {"season": int(season), "model": model, "games": [],
+                    "has_more": False, "next_before": None}
+        page_end_day = parse_time(latest).astimezone(timezone).date() + dt.timedelta(days=1)
+    else:
+        try:
+            page_end_day = dt.date.fromisoformat(before)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("before must be an ISO local date") from exc
+        if page_end_day.isoformat() != before:
+            raise ValueError("before must be an ISO local date")
+
+    page_end_utc = local_midnight_utc(page_end_day)
+    candidates = con.execute(
+        "SELECT scheduled_start_utc,game_id FROM nhl_game_projections "
+        "WHERE season=? AND model_key=? AND scheduled_start_utc<? "
+        "ORDER BY scheduled_start_utc DESC,game_id DESC",
+        (int(season), model, iso_utc(page_end_utc)),
+    )
+    selected_days: list[dt.date] = []
+    seen_days: set[dt.date] = set()
+    for row in candidates:
+        game_day = parse_time(row["scheduled_start_utc"]).astimezone(timezone).date()
+        if game_day not in seen_days:
+            seen_days.add(game_day)
+            selected_days.append(game_day)
+            if len(selected_days) == days:
+                break
+    if not selected_days:
+        return {"season": int(season), "model": model, "games": [],
+                "has_more": False, "next_before": None}
+
+    oldest_day = selected_days[-1]
+    page_start_utc = local_midnight_utc(oldest_day)
+    start_utc, end_utc = iso_utc(page_start_utc), iso_utc(page_end_utc)
+    rows = con.execute("""
+      SELECT p.game_id,p.season,p.game_date,p.scheduled_start_utc,p.home_team,p.away_team,
+        p.model_key,p.model_version,p.forecast_id,p.locked_at_utc,p.home_expected_goals,
+        p.away_expected_goals,p.projected_total_goals,p.projected_goal_differential_home,
+        p.home_win_probability,p.p_over_5_5,p.p_over_6_5,p.forecast_output_json,
+        g.official_home_goals,g.official_away_goals,g.statistical_home_goals,
+        g.statistical_away_goals,g.official_winner,g.shootout_decided,g.home_win_brier,
+        g.home_win_logloss,g.home_goal_error,g.away_goal_error,g.graded_at_utc
+      FROM nhl_game_projections p LEFT JOIN nhl_projection_grades g
+        USING (game_id,model_key,model_version)
+      WHERE p.season=? AND p.model_key=? AND p.scheduled_start_utc>=? AND p.scheduled_start_utc<?
+      ORDER BY p.scheduled_start_utc DESC,p.game_id DESC
+    """, (int(season), model, start_utc, end_utc)).fetchall()
+
+    has_picks = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='nhl_model_picks'"
+    ).fetchone() is not None
+    picks = {}
+    if has_picks:
+        picks = {(row["game_id"], row["model_key"], row["model_version"]): row
+                 for row in con.execute(
+                     "SELECT * FROM nhl_model_picks WHERE season=? AND model_key=? "
+                     "AND scheduled_start_utc>=? AND scheduled_start_utc<?",
+                     (int(season), model, start_utc, end_utc),
+                 )}
+
+    games = []
+    for row in rows:
+        grade = None
+        if row["graded_at_utc"]:
+            grade = {
+                "official_home_goals": row["official_home_goals"],
+                "official_away_goals": row["official_away_goals"],
+                "statistical_home_goals": row["statistical_home_goals"],
+                "statistical_away_goals": row["statistical_away_goals"],
+                "official_winner": row["official_winner"],
+                "shootout_decided": bool(row["shootout_decided"]),
+                "home_win_brier": row["home_win_brier"],
+                "home_win_logloss": row["home_win_logloss"],
+                "home_goal_error": row["home_goal_error"],
+                "away_goal_error": row["away_goal_error"],
+                "graded_at_utc": row["graded_at_utc"],
+            }
+        forecast = json.loads(row["forecast_output_json"])
+        forecast.update({
+            "forecast_id": row["forecast_id"], "model_version": row["model_version"],
+            "locked_at_utc": row["locked_at_utc"],
+            "home_expected_goals": row["home_expected_goals"],
+            "away_expected_goals": row["away_expected_goals"],
+            "projected_total_goals": row["projected_total_goals"],
+            "projected_goal_differential_home": row["projected_goal_differential_home"],
+            "home_win_probability": row["home_win_probability"],
+            "p_over_5.5": row["p_over_5_5"], "p_over_6.5": row["p_over_6_5"],
+            "grade": grade,
+            "pick": export_pick(picks.get((row["game_id"], model, row["model_version"])), grade),
+        })
+        games.append({
+            "game_id": int(row["game_id"]), "season": row["season"],
+            "game_date": row["game_date"], "scheduled_start_utc": row["scheduled_start_utc"],
+            "home_team": row["home_team"], "away_team": row["away_team"],
+            "status": "graded" if grade else "locked", "result": grade,
+            "models": {model: forecast},
+        })
+
+    has_more = con.execute(
+        "SELECT 1 FROM nhl_game_projections WHERE season=? AND model_key=? "
+        "AND scheduled_start_utc<? LIMIT 1",
+        (int(season), model, start_utc),
+    ).fetchone() is not None
+    return {
+        "season": int(season), "model": model, "games": games,
+        "has_more": has_more, "next_before": oldest_day.isoformat() if has_more else None,
+    }
 
 
 def export_previews(con: sqlite3.Connection, season: int, now: dt.datetime,

@@ -5,13 +5,15 @@ import datetime as dt
 import os
 import sqlite3
 import threading
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Response
 from fastapi.responses import JSONResponse
 
 from capture_nhl_game_lines import fetch_events, refresh_lines
-from nhl_model_store import (DEFAULT_DB, DEFAULT_FEED, export_locked, export_previews,
-                             latest_game_lines, latest_standings, open_db)
+from nhl_model_store import (DEFAULT_DB, DEFAULT_FEED, MODEL_KEYS, export_locked,
+                             export_previews, export_record_page, latest_game_lines,
+                             latest_standings, open_db)
 
 router = APIRouter()
 MODEL_DB = os.environ.get("NHL_MODEL_DB_PATH", DEFAULT_DB)
@@ -47,6 +49,34 @@ def nhl_model_locks(response: Response, season: int = Query(2026, ge=2020, le=21
     response.headers["Cache-Control"] = "no-store"
     return JSONResponse(payload, headers={"X-LP-Data-Source": "standalone NHL model database",
                                         "Cache-Control": "no-store"})
+
+
+@router.get("/api/nhl/model/record")
+def nhl_model_record(response: Response,
+                     season: int = Query(2026, ge=2020, le=2100),
+                     model: str = Query("B7_elo_xg_poisson", max_length=64),
+                     days: int = Query(7, ge=1, le=31),
+                     before: Optional[str] = Query(None, max_length=10),
+                     timezone_name: str = Query("UTC", alias="timezone", max_length=64)):
+    if model not in MODEL_KEYS:
+        raise HTTPException(status_code=422, detail="model must be a supported NHL model key")
+    if not os.path.exists(MODEL_DB):
+        payload = {"season": season, "model": model, "games": [],
+                   "has_more": False, "next_before": None}
+    else:
+        try:
+            con = open_db(MODEL_DB, readonly=True)
+            try:
+                payload = export_record_page(con, season, model, days, before, timezone_name)
+            finally:
+                con.close()
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except sqlite3.Error as exc:
+            raise HTTPException(status_code=503, detail="NHL model lock database is unavailable") from exc
+    headers = {"X-LP-Data-Source": "standalone NHL model database", "Cache-Control": "no-store"}
+    response.headers.update(headers)
+    return JSONResponse(payload, headers=headers)
 
 
 _REFRESH_LOCK = threading.Lock()

@@ -228,6 +228,8 @@ describe('NBA model tab', () => {
     const recordArticles = within(recordDay.parentElement as HTMLElement).getAllByRole('article')
     expect(within(recordArticles[0]).getByRole('group', { name: 'Projected' })).toBeTruthy()
     expect(within(recordArticles[1]).getByRole('group', { name: 'Projected' })).toBeTruthy()
+    const lockedGameTime = new Date(lockedGame.scheduled_start_utc).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+    expect(within(recordArticles[0]).queryByText(lockedGameTime)).toBeNull()
     const wins = screen.getAllByText('Won')
     expect(wins).toHaveLength(1)
     expect(wins[0].className).toContain('text-emerald-300')

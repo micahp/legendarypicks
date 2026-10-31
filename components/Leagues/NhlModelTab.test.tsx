@@ -1,5 +1,5 @@
 import React from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import NhlModelTab from './NhlModelTab'
 
 const forecast = (pHome: number) => ({
@@ -33,8 +33,15 @@ const payload = {
   previews: [preview],
 }
 
+const emptyRecordPage = {
+  season: 2026, model: 'B7_elo_xg_poisson', games: [], has_more: false, next_before: null,
+}
+
 beforeEach(() => {
-  ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(payload) }))
+  ;(global as any).fetch = jest.fn((input: RequestInfo) => Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve(String(input).startsWith('/api/nhl/model/record?') ? emptyRecordPage : payload),
+  }))
 })
 
 describe('NHL model tab previews', () => {
@@ -45,7 +52,7 @@ describe('NHL model tab previews', () => {
     expect(screen.getByText('Model Pick')).toBeTruthy()
     expect(screen.getByTitle('Models lock 90 mins before kickoff')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
-    expect(screen.getByText('No locked NHL model picks yet.')).toBeTruthy()
+    expect(await screen.findByText('No locked NHL model picks yet.')).toBeTruthy()
   })
 
   it('keeps archived lines visible after the live market moves', async () => {
@@ -289,8 +296,116 @@ describe('NHL model tab previews', () => {
     expect(screen.queryByText('Pending')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
-    expect(screen.getByText('MTL +1.5 74%')).toBeTruthy()
-    expect(screen.getAllByText('Pending')).toHaveLength(2)
+    expect(await screen.findByText('MTL +1.5 74%')).toBeTruthy()
+    expect(screen.getByText('Final · Pending')).toBeTruthy()
+    expect(screen.getByText('Pending')).toBeTruthy()
+  })
+
+  it('groups Record by date and aligns stacked projected and final scores beside each team', async () => {
+    const grade = {
+      official_home_goals: 4, official_away_goals: 2,
+      statistical_home_goals: 4, statistical_away_goals: 2,
+      official_winner: 'home' as const, shootout_decided: true,
+      home_win_brier: .2, home_win_logloss: .5, home_goal_error: 0, away_goal_error: 0,
+      graded_at_utc: '2026-10-15T14:35:05Z',
+    }
+    const pick = {
+      market: 'ml' as const, side: 'home' as const, line: null,
+      model_probability: .72, line_captured_at_utc: '2026-10-14T17:20:00Z',
+      settlement_basis: 'official_final_score', result: { won: true },
+    }
+    const graded = {
+      game_id: 2026020120, game_date: '2026-10-14', scheduled_start_utc: '2026-10-14T23:00:00Z',
+      forecasted_at_utc: '2026-10-14T08:06:15Z', locked_at_utc: '2026-10-14T17:30:00Z',
+      home_team: 'WSH', away_team: 'MTL',
+      feature_snapshot: { elo_pre_game: { home: 1500, away: 1500 }, xg_features: {} },
+      models: {
+        B3_elo: { ...forecast(.6), grade, pick },
+        B5_xg_poisson: { ...forecast(.5), grade, pick },
+        B7_elo_xg_poisson: { ...forecast(.72), grade, pick },
+      },
+      result: grade, markets: { source: 'Bovada', usable: false, sides: [] },
+    }
+    const pending = {
+      ...graded,
+      game_id: 2026020121, scheduled_start_utc: '2026-10-14T19:00:00Z',
+      home_team: 'DAL', away_team: 'COL', result: null,
+      models: {
+        B3_elo: { ...forecast(.6), grade: null, pick: null },
+        B5_xg_poisson: { ...forecast(.5), grade: null, pick: null },
+        B7_elo_xg_poisson: { ...forecast(.45), grade: null, pick: null },
+      },
+    }
+    ;(global as any).fetch = jest.fn(() => Promise.resolve({
+      ok: true, json: () => Promise.resolve({ ...payload, games: [pending, graded], previews: [] }),
+    }))
+
+    render(<NhlModelTab />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
+
+    const dayLabel = new Date(graded.scheduled_start_utc).toLocaleDateString(undefined, {
+      weekday: 'long', month: 'short', day: 'numeric',
+    })
+    const dayHeading = await screen.findByRole('heading', { name: dayLabel })
+    expect(screen.getAllByRole('heading', { name: dayLabel })).toHaveLength(1)
+    const articles = within(dayHeading.parentElement as HTMLElement).getAllByRole('article')
+    expect(articles).toHaveLength(2)
+    expect(within(articles[0]).queryByText(dayLabel)).toBeNull()
+    const gameTime = new Date(graded.scheduled_start_utc).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+    expect(within(articles[0]).queryByText(gameTime)).toBeNull()
+
+    const projected = within(articles[0]).getByRole('group', { name: 'Projected' })
+    expect(within(projected).getByText('MTL')).toBeTruthy()
+    expect(within(projected).getByText('2.7').className).toContain('text-right')
+    expect(within(projected).getByText('WSH')).toBeTruthy()
+    expect(within(projected).getByText('3.1').className).toContain('text-right')
+
+    const final = within(articles[0]).getByRole('group', { name: 'Final' })
+    expect(within(final).getByText('Final · SO')).toBeTruthy()
+    expect(within(final).getByText('MTL').className).toContain('text-zinc-400')
+    expect(within(final).getByText('2').className).toContain('text-zinc-400')
+    expect(within(final).getByText('WSH').className).toContain('font-semibold')
+    expect(within(final).getByText('4').className).toContain('font-semibold')
+    expect(within(articles[0]).getByText('Win').className).toContain('text-emerald-400')
+    expect(screen.queryByText(/Locked \d/)).toBeNull()
+    expect(screen.queryByText(/line captured/i)).toBeNull()
+    expect(within(articles[1]).getByText('Final · Pending')).toBeTruthy()
+  })
+
+  it('loads older NHL record dates from the next backend page', async () => {
+    const recordGame = (game_id: number, game_date: string, away_team: string, home_team: string) => ({
+      game_id, game_date, scheduled_start_utc: `${game_date}T19:00:00Z`, away_team, home_team,
+      result: null,
+      models: { B7_elo_xg_poisson: { ...forecast(.62), grade: null, pick: null } },
+    })
+    const firstPage = {
+      ...emptyRecordPage,
+      games: [recordGame(2026020122, '2026-10-14', 'BUF', 'TOR')],
+      has_more: true, next_before: '2026-10-13',
+    }
+    const olderPage = {
+      ...emptyRecordPage,
+      games: [recordGame(2026020119, '2026-10-12', 'NYR', 'BOS')],
+    }
+    ;(global as any).fetch = jest.fn((input: RequestInfo) => {
+      const url = String(input)
+      const value = url.startsWith('/api/nhl/model/record?')
+        ? url.includes('before=2026-10-13') ? olderPage : firstPage
+        : { ...payload, games: [], previews: [] }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(value) })
+    })
+
+    render(<NhlModelTab />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
+    expect(await screen.findByText('BUF @ TOR')).toBeTruthy()
+    fireEvent.click(await screen.findByRole('button', { name: 'Load older dates' }))
+    expect(await screen.findByText('NYR @ BOS')).toBeTruthy()
+
+    const urls = (global.fetch as jest.Mock).mock.calls.map(([input]) => String(input))
+    expect(urls.some(url => url.includes('/api/nhl/model/record?') && url.includes('before=2026-10-13'))).toBe(true)
+    expect(screen.getByRole('heading', { name: new Date('2026-10-14T19:00:00Z').toLocaleDateString(undefined, {
+      weekday: 'long', month: 'short', day: 'numeric',
+    }) })).toBeTruthy()
   })
 
   it('shows an explicit missing pick when the frozen forecast supports none', async () => {
@@ -350,8 +465,8 @@ describe('NHL model tab previews', () => {
     render(<NhlModelTab />)
     // The Record shows the frozen total and server-computed settlement.
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
-    expect(screen.getByText('Over 5.5 53%')).toBeTruthy()
-    expect(screen.getByText('Loss')).toBeTruthy()
+    expect(await screen.findByText('Over 5.5 53%')).toBeTruthy()
+    expect(await screen.findByText('Loss')).toBeTruthy()
   })
   it('reports a frozen integer-total push as a push rather than a loss', async () => {
     const grade = {
@@ -389,7 +504,7 @@ describe('NHL model tab previews', () => {
     }))
     render(<NhlModelTab />)
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
-    expect(screen.getByText('Push')).toBeTruthy()
+    expect(await screen.findByText('Push')).toBeTruthy()
     expect(screen.queryByText('Loss')).toBeNull()
   })
 
@@ -429,11 +544,11 @@ describe('NHL model tab previews', () => {
     }))
     render(<NhlModelTab />)
     fireEvent.click(await screen.findByRole('button', { name: 'Record' }))
-    expect(screen.getByText('Win')).toBeTruthy()
+    expect(await screen.findByText('Win')).toBeTruthy()
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B3_elo' } })
-    expect(screen.getByText('Loss')).toBeTruthy()
+    expect(await screen.findByText('Loss')).toBeTruthy()
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B5_xg_poisson' } })
-    expect(screen.getAllByText('Missing')).toHaveLength(2)
+    await waitFor(() => expect(screen.getAllByText('Missing')).toHaveLength(2))
     expect(screen.queryByText(/lean|qualifying wager|no pick recorded/i)).toBeNull()
   })
 
@@ -482,7 +597,7 @@ describe('NHL model tab previews', () => {
     expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
     expect(screen.getByText('0.1000')).toBeTruthy()
-    expect(screen.getAllByText('Missing')).toHaveLength(4)
+    await waitFor(() => expect(screen.getAllByText('Missing')).toHaveLength(4))
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'B3_elo' } })
     expect(screen.getAllByText('0.2000').length).toBeGreaterThan(0)
     expect(screen.getByText('· Selected')).toBeTruthy()

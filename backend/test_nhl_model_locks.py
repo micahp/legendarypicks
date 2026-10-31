@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from unittest import mock
+from fastapi import HTTPException, Response
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -17,9 +18,10 @@ from nhl_model_store import (NHLModelError, LOCK_LEAD, ensure_schema, grade_resu
                              export_previews, preview_feed, latest_game_lines, latest_standings,
                              write_standings, parse_time, model_pick, american_to_decimal,
                              no_vig_pair, backfill_picks, expected_value, freeze_pick,
-                             grade_pick, grade_game_lines, RULE_VERSION)
+                             grade_pick, grade_game_lines, RULE_VERSION, export_record_page)
 from grade_nhl_models import grade_due, main as grade_main
 from capture_nhl_game_lines import TEAM_CODES, game_lines, refresh_lines
+from routers import nhl_model
 from routers.nhl_model import locks_payload
 
 UTC = dt.timezone.utc
@@ -112,6 +114,18 @@ class NHLModelLocks(unittest.TestCase):
              away_puck_price, total_line, over_price, under_price, home_moneyline, away_moneyline))
         self.con.commit()
 
+    def _lock_record_game(self, game_id, start_utc):
+        document = feed()
+        game = document["games"][0]
+        start = dt.datetime.fromisoformat(start_utc.replace("Z", "+00:00")).astimezone(UTC)
+        game["game_id"] = int(game_id)
+        game["game_date"] = start.date().isoformat()
+        game["scheduled_start_utc"] = start_utc
+        game["forecasted_at_utc"] = (start - dt.timedelta(hours=2)).isoformat().replace("+00:00", "Z")
+        game["feature_snapshot"]["as_of_utc"] = (start - dt.timedelta(hours=2, minutes=1)).isoformat().replace("+00:00", "Z")
+        game["markets"]["captured_at_utc"] = (start - dt.timedelta(hours=2)).isoformat().replace("+00:00", "Z")
+        lock_feed(self.con, document, start - LOCK_LEAD)
+
     def test_lock_stores_one_immutable_row_per_model_at_t90(self):
         report = lock_feed(self.con, feed(), LOCK_AT)
         self.assertEqual((report["due_games"], report["locked_rows"]), (1, 3))
@@ -122,6 +136,62 @@ class NHLModelLocks(unittest.TestCase):
         self.assertFalse(json.loads(market)["comparison_usable_at_lock"])
         with self.assertRaises(sqlite3.IntegrityError):
             self.con.execute("UPDATE nhl_game_projections SET home_win_probability=.99")
+
+    def test_record_api_pages_complete_local_dates_and_only_the_selected_model(self):
+        for game_id, start in (
+            (2026020101, "2026-10-01T04:00:00Z"),
+            (2026020102, "2026-10-02T00:00:00Z"),
+            (2026020103, "2026-10-02T04:00:00Z"),
+            (2026020104, "2026-10-03T00:00:00Z"),
+            (2026020105, "2026-10-04T00:00:00Z"),
+        ):
+            self._lock_record_game(game_id, start)
+        result = {"official_home_goals": 3, "official_away_goals": 2,
+                  "statistical_home_goals": 3, "statistical_away_goals": 2,
+                  "home_team": "WSH", "away_team": "MTL",
+                  "official_winner": "home", "shootout_decided": 0}
+        grade_result(self.con, "2026020105", result, dt.datetime(2026, 10, 5, tzinfo=UTC),
+                     "a" * 64, "fixture")
+        self.con.commit()
+
+        first = export_record_page(self.con, 2026, "B3_elo", 2, None, "America/Chicago")
+        self.assertEqual([game["game_id"] for game in first["games"]], [2026020105, 2026020104])
+        self.assertEqual(first["next_before"], "2026-10-02")
+        self.assertTrue(first["has_more"])
+        self.assertTrue(all(list(game["models"]) == ["B3_elo"] for game in first["games"]))
+        self.assertEqual(first["games"][0]["result"]["official_home_goals"], 3)
+        self.assertEqual(first["games"][0]["models"]["B3_elo"]["grade"]["official_winner"], "home")
+
+        second = export_record_page(self.con, 2026, "B3_elo", 2, first["next_before"], "America/Chicago")
+        self.assertEqual([game["game_id"] for game in second["games"]],
+                         [2026020103, 2026020102, 2026020101])
+        self.assertFalse(second["has_more"])
+        self.assertIsNone(second["next_before"])
+
+        with mock.patch.object(nhl_model, "MODEL_DB", self.con.execute("PRAGMA database_list").fetchone()[2]):
+            response = nhl_model.nhl_model_record(Response(), 2026, "B5_xg_poisson", 2,
+                                                  None, "America/Chicago")
+        payload = json.loads(response.body)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(payload["model"], "B5_xg_poisson")
+        self.assertEqual(len(payload["games"]), 2)
+
+    def test_record_page_rejects_invalid_model_date_count_and_timezone(self):
+        for kwargs, message in (
+            ({"model": "unknown"}, "unknown NHL model"),
+            ({"days": 0}, "days must be between"),
+            ({"before": "yesterday"}, "before must be an ISO local date"),
+            ({"timezone_name": "Mars/Olympus"}, "unknown timezone"),
+        ):
+            args = {"season": 2026, "model": "B7_elo_xg_poisson", "days": 7,
+                    "before": None, "timezone_name": "UTC"}
+            args.update(kwargs)
+            with self.assertRaisesRegex(ValueError, message):
+                export_record_page(self.con, **args)
+
+        with self.assertRaises(HTTPException) as error:
+            nhl_model.nhl_model_record(Response(), 2026, "unknown", 7, None, "UTC")
+        self.assertEqual(error.exception.status_code, 422)
 
     def test_committed_forecast_ledger_has_a_complete_three_model_set(self):
         ledger = read_feed(DEFAULT_FEED)
