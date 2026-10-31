@@ -90,9 +90,11 @@ describe('NBA model tab', () => {
     render(<NbaModelTab />)
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Projections · G3 Joint scores' })).toBeTruthy())
 
-    expect(screen.getByText('DET win probability 58.0%')).toBeTruthy()
+    expect(screen.getByText('DET win probability 58.0%').className).toContain('text-emerald-300')
     expect(screen.getByText('PHI win probability 58.0%')).toBeTruthy()
     expect(screen.getByText('CHI win probability 58.0%')).toBeTruthy()
+    expect(screen.queryByText('Preview, not locked')).toBeNull()
+    expect(screen.queryByText('Locked before tipoff')).toBeNull()
     const projectedScoreGroups = screen.getAllByRole('group', { name: 'Projected score' })
     expect(projectedScoreGroups).toHaveLength(3)
     expect(within(projectedScoreGroups[0]).getByText('BOS')).toBeTruthy()

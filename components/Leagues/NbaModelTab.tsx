@@ -111,10 +111,10 @@ function lockLabel(game: Game, forecast: Forecast | undefined) {
   if (forecast?.locked_at_utc) {
     return forecast.lock_protocol === 'late-preview-v1'
       ? 'Late lock from the pregame preview'
-      : 'Locked before tipoff'
+      : null
   }
   if (game.status === 'missed') return 'Lock window missed'
-  return forecast ? 'Preview, not locked' : 'Forecast unavailable'
+  return forecast ? null : 'Forecast unavailable'
 }
 
 async function fetchRecordPage(season: number, model: string, timezone: string,
@@ -573,17 +573,18 @@ export default function NbaModelTab() {
                   const projectedScore = hasScore && forecast
                     ? { away: forecast.projected_away_points!.toFixed(1), home: forecast.projected_home_points!.toFixed(1) }
                     : null
+                  const statusLabel = lockLabel(game, forecast)
                   return (
                     <article key={game.game_id} className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950/50">
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
                         <h4 className="font-medium text-white">{game.away_team} at {game.home_team}</h4>
-                        <div className="text-xs text-zinc-400">{timeLabel(game.scheduled_start_utc)} · {lockLabel(game, forecast)}</div>
+                        <div className="text-xs text-zinc-400">{timeLabel(game.scheduled_start_utc)}{statusLabel ? ` · ${statusLabel}` : ''}</div>
                       </div>
                       {forecast ? (
                         <div className="p-4">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="text-sm font-semibold text-white">{selectedModel.label}</span>
-                            <span className="text-xs text-cyan-300">{game.home_team} win probability {percent(forecast.home_win_probability)}</span>
+                            <span className="text-xs text-emerald-300">{game.home_team} win probability {percent(forecast.home_win_probability)}</span>
                           </div>
                           {projectedScore ? (
                             <div role="group" aria-label="Projected score" className="mt-3">

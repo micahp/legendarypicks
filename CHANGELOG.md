@@ -1,3 +1,9 @@
+## v10.1.3
+
+### NBA model
+
+- Remove routine lock-status labels from Projections and use the brand green for win probability.
+
 ## v10.1.2
 
 ### NBA model
