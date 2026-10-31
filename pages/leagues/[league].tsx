@@ -387,12 +387,16 @@ function HubTabs({
   onSelect: (tab: HubTab) => void
   labels: Record<HubTab, string>
 }) {
+  const orderedTabs: HubTab[] = tabs.includes('model')
+    ? ['model', ...tabs.filter(tab => tab !== 'model')]
+    : tabs
+
   return (
     // `overflow-x-auto` alone makes the box scrollable on BOTH axes, and the buttons'
     // `-mb-px` against a `border-b-2` leaves it about a pixel of vertical overflow —
     // enough that the strip drags up and down under a thumb. Pin the y axis.
     <div className="flex gap-0 overflow-x-auto overflow-y-hidden border-b border-zinc-800 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {tabs.map(tab => (
+      {orderedTabs.map(tab => (
         <button
           key={tab}
           type="button"

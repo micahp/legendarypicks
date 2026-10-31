@@ -8,6 +8,15 @@ import {
 } from './leagueTabPreferences'
 import type { HubTab } from './types'
 
+const ACTIVE_MODEL_LEAGUES = new Set(['nba', 'ncaaf', 'nfl', 'nhl', 'tennis'])
+
+function defaultLeagueTab(league: string) {
+  if (ACTIVE_MODEL_LEAGUES.has(league)) return 'model'
+  if (league === 'soccer') return 'scores'
+  if (league === 'esports') return 'live'
+  return 'schedule'
+}
+
 export default function LeagueSwitcher({ activeLeague }: { activeLeague: string }) {
   const [tabPreferences, setTabPreferences] = useState<Partial<Record<string, HubTab>>>({})
 
@@ -46,18 +55,19 @@ export default function LeagueSwitcher({ activeLeague }: { activeLeague: string 
       aria-label="Leagues"
       className="-mx-4 flex items-center gap-3 overflow-x-auto overflow-y-hidden px-4 text-sm sm:gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      {leagues.map(league => (
-        <Link
-          key={league}
-          href={tabPreferences[league]
-            ? `/leagues/${league}?tab=${encodeURIComponent(tabPreferences[league])}`
-            : `/leagues/${league}`}
-          aria-current={activeLeague === league ? 'page' : undefined}
-          className="whitespace-nowrap text-zinc-500 transition-colors hover:text-emerald-400"
-        >
-          {leagueNavigationLabel(league)}
-        </Link>
-      ))}
+      {leagues.map(league => {
+        const tab = tabPreferences[league] ?? defaultLeagueTab(league)
+        return (
+          <Link
+            key={league}
+            href={`/leagues/${league}?tab=${encodeURIComponent(tab)}`}
+            aria-current={activeLeague === league ? 'page' : undefined}
+            className="whitespace-nowrap text-zinc-500 transition-colors hover:text-emerald-400"
+          >
+            {leagueNavigationLabel(league)}
+          </Link>
+        )
+      })}
     </nav>
   )
 }

@@ -19,9 +19,15 @@ jest.mock('../components/Leagues/hooks/useNewsData', () => ({
 const getGames = SportsService.getGamesByLocalDate as jest.Mock
 const leagueNavigation = {
   leagues: [
+    { league: 'nba', sport: 'basketball' },
+    { league: 'nfl', sport: 'football' },
+    { league: 'ncaaf', sport: 'football' },
+    { league: 'nhl', sport: 'hockey' },
+    { league: 'mlb', sport: 'baseball' },
     { league: 'ufc', sport: 'mma' },
     { league: 'soccer', sport: 'soccer' },
     { league: 'tennis', sport: 'tennis' },
+    { league: 'esports', sport: 'esports' },
   ],
 }
 
@@ -42,6 +48,7 @@ describe('Tennis league hub', () => {
   beforeEach(() => {
     mockRouter.query = {}
     mockRouter.push.mockReset()
+    window.localStorage.clear()
     getGames.mockReset()
     getGames.mockResolvedValue([])
     mockFetchResponses([])
@@ -52,6 +59,10 @@ describe('Tennis league hub', () => {
 
     expect(screen.queryByText('Major tournament coverage')).toBeNull()
     expect(screen.queryByText(/ATP and WTA scores/)).toBeNull()
+    const sections = screen.getByRole('navigation', { name: 'Tennis sections' })
+    expect(within(sections).getAllByRole('link').map(link => link.textContent)).toEqual([
+      'Model', 'Scores', 'Draws', 'Rankings', 'News',
+    ])
     const tour = screen.getByRole('combobox', { name: 'Tour' }) as HTMLSelectElement
     expect(tour.value).toBe('all')
     expect(screen.getByRole('option', { name: 'All' })).toBeTruthy()
@@ -71,6 +82,15 @@ describe('Tennis league hub', () => {
     const leagueNav = screen.getByRole('navigation', { name: 'Leagues' })
     const tennisLink = await within(leagueNav).findByRole('link', { name: 'Tennis' })
     expect(tennisLink.getAttribute('aria-current')).toBe('page')
+    expect(tennisLink.getAttribute('href')).toBe('/leagues/tennis?tab=model')
+    expect(within(leagueNav).getByRole('link', { name: 'NBA' }).getAttribute('href')).toBe('/leagues/nba?tab=model')
+    expect(within(leagueNav).getByRole('link', { name: 'NFL' }).getAttribute('href')).toBe('/leagues/nfl?tab=model')
+    expect(within(leagueNav).getByRole('link', { name: 'NCAAF' }).getAttribute('href')).toBe('/leagues/ncaaf?tab=model')
+    expect(within(leagueNav).getByRole('link', { name: 'NHL' }).getAttribute('href')).toBe('/leagues/nhl?tab=model')
+    expect(within(leagueNav).getByRole('link', { name: 'MLB' }).getAttribute('href')).toBe('/leagues/mlb?tab=schedule')
+    expect(within(leagueNav).getByRole('link', { name: 'UFC' }).getAttribute('href')).toBe('/leagues/ufc?tab=schedule')
+    expect(within(leagueNav).getByRole('link', { name: 'Soccer' }).getAttribute('href')).toBe('/leagues/soccer?tab=scores')
+    expect(within(leagueNav).getByRole('link', { name: 'Esports' }).getAttribute('href')).toBe('/leagues/esports?tab=live')
     expect(within(leagueNav).getByRole('link', { name: 'Soccer' })).toBeTruthy()
     expect(within(leagueNav).getByRole('link', { name: 'UFC' })).toBeTruthy()
     expect(await screen.findByText('No covered ATP or WTA matches were published for this date.')).toBeTruthy()
@@ -82,6 +102,15 @@ describe('Tennis league hub', () => {
       undefined,
       { shallow: true },
     )
+  })
+
+  it('keeps the remembered league tab ahead of its default tab', async () => {
+    window.localStorage.setItem('lp.league-tab-preferences.v1', JSON.stringify({ nba: 'stats' }))
+    await act(async () => { render(<TennisLeaguePage />) })
+    await screen.findByText('No covered ATP or WTA matches were published for this date.')
+
+    const leagueNav = screen.getByRole('navigation', { name: 'Leagues' })
+    expect(within(leagueNav).getByRole('link', { name: 'NBA' }).getAttribute('href')).toBe('/leagues/nba?tab=stats')
   })
 
   it('shows the persisted unavailable reason instead of an empty bracket', async () => {

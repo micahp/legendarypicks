@@ -91,6 +91,10 @@ describe('Soccer league hub', () => {
     expect(screen.getByRole('heading', { name: 'Soccer' })).toBeTruthy()
     const competitionsNav = screen.getByRole('navigation', { name: 'Soccer competitions' })
     expect(within(competitionsNav).getByRole('link', { name: 'MLS' }).getAttribute('aria-current')).toBe('page')
+    const mlsSections = screen.getByRole('navigation', { name: 'MLS sections' })
+    expect(within(mlsSections).getAllByRole('link').map(link => link.textContent)).toEqual([
+      'Model', 'Scores', 'Standings', 'Stats', 'News',
+    ])
     const leagueNav = screen.getByRole('navigation', { name: 'Leagues' })
     const soccerLink = await within(leagueNav).findByRole('link', { name: 'Soccer' })
     expect(soccerLink.getAttribute('aria-current')).toBe('page')

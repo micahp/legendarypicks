@@ -80,10 +80,10 @@ const COMPETITIONS: { key: Competition; label: string }[] = [
 
 const SECTIONS: Record<Competition, { key: Section; label: string }[]> = {
   mls: [
+    { key: 'model', label: 'Model' },
     { key: 'scores', label: 'Scores' },
     { key: 'standings', label: 'Standings' },
     { key: 'stats', label: 'Stats' },
-    { key: 'model', label: 'Model' },
     { key: 'news', label: 'News' },
   ],
   lcup: [

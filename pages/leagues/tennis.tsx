@@ -64,10 +64,10 @@ type RankingResponse = {
 }
 
 const TABS: { key: HubTab; label: string }[] = [
+  { key: 'model', label: 'Model' },
   { key: 'scores', label: 'Scores' },
   { key: 'draws', label: 'Draws' },
   { key: 'rankings', label: 'Rankings' },
-  { key: 'model', label: 'Model' },
   { key: 'news', label: 'News' },
 ]
 
