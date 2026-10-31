@@ -107,17 +107,21 @@ describe('NBA model tab', () => {
     expect(screen.queryByText(/SportsDataverse/)).toBeNull()
   })
 
-  it('keeps every Brier score inside the Model accuracy tooltip', async () => {
+  it('shows one held-out accuracy row per model without split labels or sample counts', async () => {
     render(<NbaModelTab />)
     await waitFor(() => expect(screen.getByRole('button', { name: 'Model accuracy' })).toBeTruthy())
     expect(screen.queryByText('Brier ↓')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: 'Model accuracy' }))
     expect(screen.getByRole('tooltip')).toBeTruthy()
-    expect(screen.getByText('Brier ↓')).toBeTruthy()
-    expect(screen.getByText(/G3 Joint scores · Test/)).toBeTruthy()
-    expect(screen.getAllByText('0.2100').length).toBeGreaterThan(0)
-    expect(screen.getByText(/Unlocked preview grades are excluded/)).toBeTruthy()
+    const accuracy = screen.getByRole('region', { name: 'Model accuracy details' })
+    expect(within(accuracy).getByText('Brier ↓')).toBeTruthy()
+    expect(within(accuracy).getAllByRole('row')).toHaveLength(models.length + 1)
+    expect(within(accuracy).getByText('G3 Joint scores')).toBeTruthy()
+    expect(within(accuracy).getAllByText('0.2100')).toHaveLength(models.length)
+    expect(within(accuracy).queryByText(/n=/)).toBeNull()
+    expect(within(accuracy).queryByText(/Validation|Test|Prospective/)).toBeNull()
+    expect(within(accuracy).getByText(/Current-season locked forecasts are shown in Record/)).toBeTruthy()
   })
 
   it('lists model-specific locked forecasts in Record and excludes unlocked preview grades', async () => {

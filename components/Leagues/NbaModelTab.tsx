@@ -126,7 +126,6 @@ async function fetchRecordPage(season: number, model: string, timezone: string,
 }
 
 function ModelAccuracy({ payload, selectedModel }: { payload: Payload; selectedModel: string }) {
-  const validation = payload.benchmark?.metrics?.validation ?? {}
   const test = payload.benchmark?.metrics?.test ?? {}
 
   return (
@@ -134,14 +133,14 @@ function ModelAccuracy({ payload, selectedModel }: { payload: Payload; selectedM
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-zinc-100">Model accuracy</h3>
         <p className="mt-1 text-xs text-zinc-400">
-          Historical validation/test results and this season’s locked forecasts. Unlocked preview grades are excluded.
+          Historical benchmark scores from held-out games. Current-season locked forecasts are shown in Record.
         </p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[850px] text-xs tabular-nums">
           <thead className="border-b border-zinc-700 text-zinc-500">
             <tr>
-              <th className="px-2 py-2 text-left font-medium">Model · sample</th>
+              <th className="px-2 py-2 text-left font-medium">Model</th>
               <th className="px-2 py-2 text-right font-medium">Brier ↓</th>
               <th className="px-2 py-2 text-right font-medium">Log loss ↓</th>
               <th className="px-2 py-2 text-right font-medium">ECE10 ↓</th>
@@ -151,47 +150,25 @@ function ModelAccuracy({ payload, selectedModel }: { payload: Payload; selectedM
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-800">
-            {payload.models.flatMap((model) => {
-              const historical = [
-                { label: 'Validation', score: validation[model.id], count: payload.benchmark.eligible_games.validation },
-                { label: 'Test', score: test[model.id], count: payload.benchmark.eligible_games.test },
-              ]
-              const liveRecord = payload.records[model.id]
-              const rows = [
-                ...historical.map((item) => ({
-                  label: item.label,
-                  score: item.score,
-                  count: item.score?.games ?? item.count,
-                })),
-                {
-                  label: 'Prospective locked',
-                  score: {
-                    winner_brier: liveRecord?.winner_brier,
-                    winner_log_loss: liveRecord?.winner_log_loss,
-                  } as Metrics,
-                  count: liveRecord?.graded ?? 0,
-                },
-              ]
-              return rows.map((row) => (
-                <tr key={model.id + '-' + row.label} className={model.id === selectedModel ? 'bg-zinc-800/70' : ''}>
-                  <th scope="row" className="px-2 py-2 text-left font-medium text-zinc-200">
-                    {model.label} · {row.label} <span className="text-zinc-500">(n={row.count})</span>
-                  </th>
-                  <td className="px-2 py-2 text-right">{metric(row.score?.winner_brier, 4)}</td>
-                  <td className="px-2 py-2 text-right">{metric(row.score?.winner_log_loss, 4)}</td>
-                  <td className="px-2 py-2 text-right">{metric(row.score?.calibration?.ece_10_bin, 4)}</td>
-                  <td className="px-2 py-2 text-right">{metric(row.score?.team_points_mae, 3)}</td>
-                  <td className="px-2 py-2 text-right">{metric(row.score?.spread_mae, 3)}</td>
-                  <td className="px-2 py-2 text-right">{metric(row.score?.total_mae, 3)}</td>
+            {payload.models.map((model) => {
+              const score = test[model.id]
+              return (
+                <tr key={model.id} className={model.id === selectedModel ? 'bg-zinc-800/70' : ''}>
+                  <th scope="row" className="px-2 py-2 text-left font-medium text-zinc-200">{model.label}</th>
+                  <td className="px-2 py-2 text-right">{metric(score?.winner_brier, 4)}</td>
+                  <td className="px-2 py-2 text-right">{metric(score?.winner_log_loss, 4)}</td>
+                  <td className="px-2 py-2 text-right">{metric(score?.calibration?.ece_10_bin, 4)}</td>
+                  <td className="px-2 py-2 text-right">{metric(score?.team_points_mae, 3)}</td>
+                  <td className="px-2 py-2 text-right">{metric(score?.spread_mae, 3)}</td>
+                  <td className="px-2 py-2 text-right">{metric(score?.total_mae, 3)}</td>
                 </tr>
-              ))
+              )
             })}
           </tbody>
         </table>
       </div>
       <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-        Lower Brier and log loss are better. Historical sample sizes use the untouched chronological validation and test sets.
-        The prospective row includes only locked forecasts that have been graded.
+        Lower Brier and log loss are better. Score and error metrics use the held-out benchmark games.
       </p>
     </section>
   )

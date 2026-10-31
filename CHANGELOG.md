@@ -1,3 +1,14 @@
+## v10.1.2
+
+### NBA model
+
+- Add NBA Almanac team ratings and simplify accuracy to one held-out benchmark row per model.
+- Make NBA record scores easier to scan with stacked teams and final-winner highlighting.
+
+### League navigation
+
+- Put Model first on league pages and open leagues with an active model on that model by default, while preserving saved tab choices.
+
 ## v10.1.1
 
 ### NBA model
