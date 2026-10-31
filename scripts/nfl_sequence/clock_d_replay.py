@@ -131,9 +131,15 @@ def oob_stop_class_counts(quarters):
                     stats = grouped[(quarter, bucket, stop, policy_window)]
                     lower = 1 if bucket == 15 else BUCKET_LOWER[bucket] + 1
                     upper = bucket
+                    clock_window = f'{lower}-{upper}s'
+                    if quarter == 4 and bucket == 900:
+                        # The model bucket spans both sides of the five-minute policy boundary.
+                        # Keep the exported clock window exact instead of repeating 121-900s twice.
+                        clock_window = ('120<clock<300s' if policy_window == 'inside_final_five_minutes'
+                                        else '300-900s')
                     rows.append({
                         'quarter': quarter, 'clock_bucket_lower_s': lower, 'clock_bucket_upper_s': upper,
-                        'clock_window': f'{lower}-{upper}s', 'policy_window': policy_window,
+                        'clock_window': clock_window, 'policy_window': policy_window,
                         'stop_class': stop, 'examples': stats['examples'],
                         'quarter_ending_examples': stats['quarter_ending_examples'],
                         'uncensored_runoff_examples': stats['uncensored_runoff_examples'],
