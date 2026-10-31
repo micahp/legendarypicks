@@ -73,7 +73,20 @@ type RecordPage = {
   next_before: string | null
 }
 
-type View = 'projections' | 'record'
+type AlmanacValue = { value: string; rank: number | null; qualifier: string | null }
+type AlmanacColumn = { key: string; label: string }
+type AlmanacTeam = { team: string; conference: 'East' | 'West'; stats: Record<string, AlmanacValue> }
+type AlmanacSectionSummary = { id: string; label: string; source_page: number | string }
+type AlmanacSection = AlmanacSectionSummary & { columns: AlmanacColumn[]; teams: AlmanacTeam[] }
+type AlmanacPayload = {
+  edition: string
+  season: string
+  source: { title: string; compiled_by: string; pages: string; pdf_sha256: string; coverage: string; data_note: string }
+  sections: AlmanacSectionSummary[]
+  section: AlmanacSection
+}
+
+type View = 'projections' | 'record' | 'ratings'
 
 const metric = (value: number | null | undefined, places = 3) =>
   value == null || !Number.isFinite(value) ? '—' : value.toFixed(places)
@@ -258,8 +271,7 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
       <div>
         <h2 className="text-lg font-semibold text-zinc-100">2026–27 record · {model.label}</h2>
         <p className="mt-1 text-xs text-zinc-500">
-          Only this model’s forecasts with a recorded lock time appear here. Probabilities are forecasts; no win/loss pick is inferred.
-          Unlocked preview grades are excluded.
+          Only this model’s forecasts with a recorded lock time appear here. The pick is the side above 50% win probability; Won/Lost compares it with the final score. Unlocked preview grades are excluded.
         </p>
       </div>
 
@@ -308,10 +320,17 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                     ? game.away_team + ' ' + forecast.projected_away_points.toFixed(1) + ' – ' + game.home_team + ' ' + forecast.projected_home_points.toFixed(1)
                     : null
                   const status = grade
-                    ? 'Graded'
+                    ? forecast.home_win_probability != null && result && result.home_score !== result.away_score
+                      ? ((forecast.home_win_probability >= 0.5) === (result.home_score > result.away_score) ? 'Won' : 'Lost')
+                      : 'Graded'
                     : result
                       ? 'Final · grading pending'
                       : 'Pending'
+                  const statusClass = status === 'Won'
+                    ? 'shrink-0 text-xs text-emerald-300'
+                    : status === 'Lost'
+                      ? 'shrink-0 text-xs text-red-300'
+                      : 'shrink-0 text-xs text-zinc-400'
 
                   return (
                     <article key={game.game_id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between">
@@ -326,7 +345,7 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                           {result && <span>Final {game.away_team} {result.away_score} – {game.home_team} {result.home_score} · {outcome}</span>}
                         </div>
                       </div>
-                      <span className={grade ? 'shrink-0 text-xs text-emerald-300' : 'shrink-0 text-xs text-zinc-400'}>{status}</span>
+                      <span className={statusClass}>{status}</span>
                     </article>
                   )
                   })}
@@ -340,6 +359,109 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
           </button>}
         </>
       )}
+    </section>
+  )
+}
+
+function TeamRatingsView() {
+  const [sectionId, setSectionId] = useState('efficiency')
+  const [sectionOptions, setSectionOptions] = useState<AlmanacSectionSummary[]>([])
+  const [payload, setPayload] = useState<AlmanacPayload | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setPayload(null)
+    setLoading(true)
+    setError(null)
+    fetch('/api/nba/model/team-ratings?section=' + encodeURIComponent(sectionId), {
+      cache: 'no-store', signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}))
+          throw new Error(body.detail || 'NBA Almanac team stats returned ' + response.status)
+        }
+        return response.json() as Promise<AlmanacPayload>
+      })
+      .then((data) => {
+        if (controller.signal.aborted) return
+        setPayload(data)
+        setSectionOptions(data.sections)
+      })
+      .catch((reason: Error) => {
+        if (!controller.signal.aborted) setError(reason.message)
+      })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    return () => controller.abort()
+  }, [sectionId])
+
+  const currentSection = payload?.section.id === sectionId ? payload.section : null
+
+  return (
+    <section aria-label="NBA Almanac team ratings" className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-100">2025–26 team stats · NBA Almanac</h2>
+          <p className="mt-1 text-xs text-zinc-500">
+            Published team values from the 2026–27 Almanac. Parenthesized ranks are shown as printed.
+          </p>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-zinc-500">
+          Stat group
+          <select aria-label="Almanac stat group" value={sectionId} onChange={(event) => setSectionId(event.target.value)}
+            className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400">
+            {sectionOptions.map((section) => <option key={section.id} value={section.id}>{section.label}</option>)}
+          </select>
+        </label>
+      </div>
+
+      {currentSection && <p className="text-xs text-zinc-500">
+        {currentSection.label} · 30 teams · Almanac p. {currentSection.source_page}
+      </p>}
+      {loading && <p role="status" className="text-sm text-zinc-400">Loading Almanac team stats…</p>}
+      {error && <p role="alert" className="text-sm text-red-300">Almanac team stats unavailable: {error}</p>}
+      {currentSection && <div className="overflow-x-auto rounded-lg border border-zinc-800">
+        <table className="w-full min-w-[900px] text-left text-xs tabular-nums">
+          <thead className="bg-zinc-900 text-zinc-400">
+            <tr>
+              <th scope="col" className="sticky left-0 bg-zinc-900 px-3 py-2">Team</th>
+              {currentSection.columns.map((column) => (
+                <th key={column.key} scope="col" className="whitespace-nowrap px-3 py-2 text-right font-medium">{column.label}</th>
+              ))}
+            </tr>
+          </thead>
+          {(['East', 'West'] as const).map((conference) => (
+            <tbody key={conference} className="divide-y divide-zinc-800">
+              <tr className="bg-zinc-900/60">
+                <th scope="rowgroup" colSpan={currentSection.columns.length + 1}
+                  className="px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                  {conference === 'East' ? 'Eastern' : 'Western'} Conference
+                </th>
+              </tr>
+              {currentSection.teams.filter((team) => team.conference === conference).map((team) => (
+                <tr key={team.team}>
+                  <th scope="row" className="sticky left-0 whitespace-nowrap bg-ink-900 px-3 py-2 text-left font-medium text-zinc-100">{team.team}</th>
+                  {currentSection.columns.map((column) => {
+                    const value = team.stats[column.key]
+                    const shown = value?.value == null ? '—' : value.value + (value.qualifier ? ' (' + value.qualifier + ')' : '')
+                    return (
+                      <td key={column.key} className="whitespace-nowrap px-3 py-2 text-right text-zinc-200">
+                        {shown}{value?.rank != null && <span className="text-zinc-500"> ({value.rank})</span>}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          ))}
+        </table>
+      </div>}
+      {currentSection && <p className="text-[11px] leading-relaxed text-zinc-600">
+        Source: {payload?.source.title}, compiled by {payload?.source.compiled_by}. Season: {payload?.season}. Values retain the Almanac&apos;s published precision and ranks.
+      </p>}
+      {payload?.source.data_note && <p className="text-[11px] leading-relaxed text-zinc-600">{payload.source.data_note}</p>}
     </section>
   )
 }
@@ -394,7 +516,7 @@ export default function NbaModelTab() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <nav className="flex gap-1 rounded-full bg-zinc-900 p-1" aria-label="NBA model views">
-          {([['projections', 'Projections'], ['record', 'Record']] as [View, string][]).map(([key, label]) => (
+          {([['projections', 'Projections'], ['record', 'Record'], ['ratings', 'Team Ratings']] as [View, string][]).map(([key, label]) => (
             <button key={key} type="button" onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined}
               className={view === key ? 'rounded-full bg-zinc-100 px-3 py-1.5 text-sm text-zinc-900' : 'rounded-full px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-100'}>
               {label}
@@ -498,6 +620,7 @@ export default function NbaModelTab() {
       )}
 
       {view === 'record' && <RecordView key={selectedModel.id} payload={payload} model={selectedModel} />}
+      {view === 'ratings' && <TeamRatingsView />}
     </div>
   )
 }

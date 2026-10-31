@@ -143,6 +143,7 @@ describe('NBA model tab', () => {
         ...secondLockedBase.models,
         G3: {
           ...secondLockedBase.models.G3,
+          home_win_probability: 0.4,
           locked_at_utc: '2026-10-20T18:30:00Z',
           grade: { home_score: 105, away_score: 98, home_win: true, winner_brier: 0.18 },
         },
@@ -212,13 +213,52 @@ describe('NBA model tab', () => {
     expect(screen.getAllByRole('heading', { name: dayLabel(lockedGame.scheduled_start_utc) })).toHaveLength(1)
     expect(within(recordDay.parentElement as HTMLElement).getByText('BOS at DET')).toBeTruthy()
     expect(within(recordDay.parentElement as HTMLElement).getByText('NYK at PHI')).toBeTruthy()
-    expect(screen.getAllByText('Graded').length).toBeGreaterThanOrEqual(3)
+    const wins = screen.getAllByText('Won')
+    expect(wins).toHaveLength(1)
+    expect(wins[0].className).toContain('text-emerald-300')
+    const loss = screen.getByText('Lost')
+    expect(loss.className).toContain('text-red-300')
+    expect(screen.getAllByText('Graded')).toHaveLength(1) // the summary count label only
     expect(screen.queryByText('PHI at NYK')).toBeNull()
     expect(screen.queryByText(/Brier/)).toBeNull()
     expect(within(screen.getByText('Missed locks').parentElement as HTMLElement).getByText('1')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Load older dates' }))
     await waitFor(() => expect(screen.getByText('LAL at CHI')).toBeTruthy())
     expect(screen.getByRole('heading', { name: dayLabel(olderGame.scheduled_start_utc) })).toBeTruthy()
+    expect(screen.getAllByText('Won')).toHaveLength(2)
+  })
+
+  it('loads published Almanac team stats in Team Ratings', async () => {
+    const almanac = {
+      edition: '2026–27',
+      season: '2025–26',
+      source: {
+        title: '2026–2027 NBA Almanac', compiled_by: 'Niku Mistry (@MistryNBA)',
+        pages: '51–60, 64–65', pdf_sha256: 'source-hash', coverage: '30 NBA teams',
+        data_note: 'Radar charts without printed team values are not converted into estimates.',
+      },
+      sections: [{ id: 'efficiency', label: 'Efficiency', source_page: 51 }],
+      section: {
+        id: 'efficiency', label: 'Efficiency', source_page: 51,
+        columns: [{ key: 'ortg', label: 'ORtg' }],
+        teams: [{ team: 'Atlanta', conference: 'East', stats: { ortg: { value: '115.0', rank: 14, qualifier: null } } }],
+      },
+    }
+    ;(global as any).fetch = jest.fn((url: string) => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(String(url).includes('/api/nba/model/team-ratings') ? almanac : payload),
+    }))
+
+    render(<NbaModelTab />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Team Ratings' })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Team Ratings' }))
+    await waitFor(() => expect(screen.getByText('Atlanta')).toBeTruthy())
+
+    expect(screen.getByText('2025–26 team stats · NBA Almanac')).toBeTruthy()
+    expect(screen.getByText('ORtg')).toBeTruthy()
+    expect(screen.getByRole('row', { name: /Atlanta/ }).textContent).toContain('115.0 (14)')
+    expect(screen.getByText('Eastern Conference')).toBeTruthy()
+    expect(screen.getByText('Radar charts without printed team values are not converted into estimates.')).toBeTruthy()
   })
 
   it('updates projections and record content when a different model is selected', async () => {
