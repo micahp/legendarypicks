@@ -4,6 +4,10 @@
 **Code already pushed before this publication:** `c10ca203` (`Update realism TODO for Week 8 run status`)
 **Scope:** SLC football-realism assertions, workload calibration evidence, the separate Model D clock replay, and the remaining Week 8 matchup runs.
 
+## Final closeout
+
+At closeout, the SLC working tree had no uncommitted code, and local commit `0076eeb7` matched the remote research branch. The workload benchmark builder, realism assertions and fixes, audit/report builders, and Model D replay changes were already committed and pushed. This closeout summary is the only additional change in this publication. The Week 8 replacement batch is still unverified: IND–JAX worker startup was observed, but no completed matchup artifacts or batch completion were confirmed.
+
 ## Completed and published
 
 - Resolved the 101 recurring CLE–PIT field-goal period-transition blockers. The fixes preserve series state across quarter boundaries, use audited runoff for period expiration, correct false fourth-down turnovers, and retain blocked-kick evidence. The follow-up also excludes unsupported lateral outcomes while preserving their participant and yardage evidence.
