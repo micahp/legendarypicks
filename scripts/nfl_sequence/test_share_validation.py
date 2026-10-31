@@ -65,6 +65,49 @@ class Uncertainty(unittest.TestCase):
         self.assertEqual(high, 10.0)
 
 
+class HeldoutModelEvaluation(unittest.TestCase):
+    def test_evaluation_scores_only_fit_players_and_keeps_player_zeros_in_scored_games(self):
+        games = {
+            'AAA': {
+                'G1': {'A': 2, 'B': 1, 'OUT_OF_GROUP': 7},
+                'G2': {'A': 0, 'B': 3, 'OUT_OF_GROUP': 4},
+                'G3': {'A': 0, 'B': 0, 'OUT_OF_GROUP': 5},
+                'G4': {'A': 4, 'B': 0, 'OUT_OF_GROUP': 2},
+            },
+            'BBB': {'G1': {'A': 99}},
+        }
+        out = sv.evaluate_share_holdout(
+            games,
+            {('AAA', 'A'): 0.5, ('AAA', 'B'): 0.5},
+            phi=4.0,
+            eligible_players_by_game={
+                ('AAA', 'G1'): {'A', 'B'},
+                ('AAA', 'G2'): {'A', 'B'},
+                ('AAA', 'G3'): {'A'},
+                ('AAA', 'G4'): {'A'},
+            },
+            reps=50,
+            seed=3,
+        )
+        self.assertEqual(out['test_team_games_scored'], 3)
+        self.assertEqual(out['test_game_clusters_scored'], 3)
+        self.assertEqual(out['unique_players_scored'], 2)
+        self.assertEqual(out['player_team_units_scored'], 2)
+        self.assertAlmostEqual(out['calibration']['observed_mean_count'], 2.0)
+        self.assertAlmostEqual(out['calibration']['observed_zero_rate'], 0.2)
+
+    def test_evaluation_rejects_nonpositive_concentration(self):
+        with self.assertRaisesRegex(ValueError, 'concentration'):
+            sv.evaluate_share_holdout({'AAA': {'G1': {'A': 1}}}, {('AAA', 'A'): 1.0}, phi=0.0)
+
+    def test_single_player_position_group_has_deterministic_zero_probability(self):
+        out = sv.evaluate_share_holdout(
+            {'AAA': {'G1': {'A': 5}}}, {('AAA', 'A'): 1.0}, phi=2.0, reps=20)
+        self.assertEqual(out['calibration']['dirichlet_predicted_zero_rate'], 0.0)
+        self.assertIsNone(out['calibration']['dirichlet_predicted_variance'])
+        self.assertIsNone(out['calibration']['observed_variance_mean_over_player_team_units'])
+
+
 if __name__ == '__main__':
     unittest.main()
 

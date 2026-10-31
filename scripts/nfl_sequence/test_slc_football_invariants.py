@@ -165,6 +165,21 @@ class QBPlayTypeInvariants(unittest.TestCase):
         self.assertEqual(qb['passing']['sacked'], 1)
         self.assertEqual(qb['passing']['sack_yds'], -5)
 
+    def test_mismatched_completion_yardage_failure_reports_both_source_credits(self):
+        row = play('pass_complete', 13, participants(passer='QB1', receiver='WR1', play_type='pass'),
+                   passing_yards=13, receiving_yards=12)
+        call = decision('pass_complete', intent='dropback', outcome_intent='dropback',
+                        selected={'passer': 'QB1', 'receiver': 'WR1'})
+        record = one_play_record(row)
+
+        with self.assertRaises(football_assertions.FootballAssertionError) as raised:
+            slc_engine.validate_decision_outcomes(record, [call], seed=196)
+
+        self.assertEqual(raised.exception.failure_class, 'ILLEGAL_STATE')
+        self.assertEqual(raised.exception.context['outcome']['sampled_play_context'], {
+            'passing_yards': 13, 'receiving_yards': 12, 'rushing_yards': None,
+        })
+
     def test_incomplete_pass_and_interception_mutations_fail_with_rule_context(self):
         cases = (
             (play('pass_incomplete', 5, participants(passer='QB1', receiver='WR1', play_type='pass')),
