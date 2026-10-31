@@ -19,15 +19,19 @@ import argparse
 import hashlib
 import json
 import sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import nfl_team_codes  # noqa: E402
+
 SCHEMA = 'lp-nfl-game-info-snapshot-1'
 DEFAULT_STORE = '/root/lp-snapshots/nfl-game-info'
 DEFAULT_DB = '/root/legendarypicks/backend/data/picks.dev.db'
-DB_TO_VENUE = {'WSH': 'WAS', 'LAR': 'LA'}
+DB_TO_VENUE = nfl_team_codes.NFLVERSE_TEAM_CODE_ALIASES
 # National windows, from published schedules. Other Sunday games are CBS or FOX, and the split is not confirmed.
 BROADCAST_2026_W08 = {
     '2026_08_CAR_GB': {'network': 'Prime Video', 'window': 'Thursday Night Football', 'status': 'confirmed',
@@ -65,7 +69,7 @@ def build(venues_path: str, forecasts_path: str, db_path: str, store: str, seaso
     frozen = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
     games = {}
     for game_id, away, home, gameday, gametime, db_stadium, db_roof, referee, location in rows:
-        key = shared.get(home, DB_TO_VENUE.get(home, home))
+        key = shared.get(home, nfl_team_codes.to_nflverse_team_code(home))
         venue = venues[key]
         kickoff = _kickoff(gameday, gametime)
         forecast_entry = forecasts_doc['games'].get(game_id, {})

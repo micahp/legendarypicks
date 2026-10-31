@@ -16,14 +16,19 @@ import hashlib
 import json
 import os
 import sqlite3
+import sys
 import urllib.request
+from pathlib import Path
 
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import nfl_team_codes  # noqa: E402
+
 ROSTER_URL = 'https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_{year}.parquet'
 DEFAULT_DB = '/root/legendarypicks/backend/data/picks.db'
-# Roster and injury codes that differ from the snap table's team codes. Unmapped codes are reported, not guessed.
-TEAM_MAP = {'LA': 'LAR', 'WAS': 'WSH', 'OAK': 'LV'}
+# Kept as an import-compatible alias; identity aliases live in scripts/nfl_team_codes.py.
+TEAM_MAP = nfl_team_codes.FRANCHISE_TEAM_CODE_ALIASES
 SNAP_COLS = ['offense_snaps', 'defense_snaps', 'st_snaps']
 INJURY_STATUSES = ('Out', 'Doubtful', 'Questionable')
 

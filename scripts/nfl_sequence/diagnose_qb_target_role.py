@@ -18,9 +18,11 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent))
 import e0_single_play as e0  # noqa: E402
 import qb_decisions as qbd  # noqa: E402
 import validate_qb_player_outcomes as validator  # noqa: E402
+import nfl_team_codes  # noqa: E402
 
 TARGET_ROLES = qbd.TARGET_ROLES
 STRENGTHS = (0, 5, 10, 20, 40, 80, 160)
@@ -90,7 +92,7 @@ def _position_role(position):
 
 
 def _team_alias(team):
-    return {'LAR': 'LA', 'JAC': 'JAX', 'WSH': 'WAS'}.get(team, team)
+    return nfl_team_codes.to_nflverse_team_code(team)
 
 
 def _game_metadata(db, season):

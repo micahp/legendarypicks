@@ -68,6 +68,13 @@ class Mapping(unittest.TestCase):
     def test_offense_side_a_is_the_home_team_as_in_the_engine_record(self):
         self.assertEqual(se.side_teams(SNAPSHOT), {'A': 'AAA', 'B': 'BBB'})
 
+    def test_playcall_team_keys_are_normalized_to_the_pbp_codes(self):
+        snapshot = {
+            'schedule': {**SNAPSHOT['schedule'], 'home_team': 'LA', 'away_team': 'WAS'},
+            'rosters': SNAPSHOT['rosters'],
+        }
+        self.assertEqual(se.side_teams(snapshot), {'A': 'LAR', 'B': 'WSH'})
+
     def test_the_artifact_path_is_checked_before_the_reference_loads(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'artifact.json'

@@ -32,16 +32,21 @@ import json
 import os
 import re
 import sqlite3
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import nfl_team_codes  # noqa: E402
 
 RULE_VERSION = 'avail-rules-v1'
 SCHEMA = 'lp-nfl-weekly-availability-snapshot-1'
 MAX_GAP_HOURS = 6
 DEFAULT_STORE = '/root/lp-snapshots/nfl'
 ELIGIBLE_ROSTER_STATUS = ('ACT', 'INA')
-DB_TO_NFLVERSE = {'LAR': 'LA', 'WSH': 'WAS'}
+DB_TO_NFLVERSE = nfl_team_codes.NFLVERSE_TEAM_CODE_ALIASES
 
 
 def canonical(obj):

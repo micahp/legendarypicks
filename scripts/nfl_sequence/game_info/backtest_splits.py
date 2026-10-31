@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -24,6 +25,8 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[2]))
+import nfl_team_codes  # noqa: E402
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
 VENUES = Path('/root/lp-snapshots/nfl-game-info/2026/week08/2026-10-27T1900Z/venues.json')
 SEASONS = [2022, 2023, 2024, 2025]
@@ -34,7 +37,7 @@ N_PERM = 2000
 MIN_N = {'referee': 30, 'venue': 30}
 DEFAULT_MIN_N = 40
 SEED = 20261027
-DB_TO_VENUE = {'WSH': 'WAS', 'LAR': 'LA', 'LAC': 'LAC'}
+DB_TO_VENUE = nfl_team_codes.NFLVERSE_TEAM_CODE_ALIASES
 OUTCOMES = {'total_resid': 'total points minus leave-one-out team-season expectation',
             'margin_resid': 'home margin minus leave-one-out team-season expectation',
             'penalties': 'flagged penalties (penalty == 1)', 'penalty_yards': 'yards on flagged penalties'}
@@ -116,7 +119,7 @@ def factors(df: pd.DataFrame) -> pd.DataFrame:
     shared = venue_doc['shared_venue_teams']
 
     def venue_key(team: str) -> str:
-        return shared.get(team, DB_TO_VENUE.get(team, team))
+        return shared.get(team, nfl_team_codes.to_nflverse_team_code(team))
 
     cap = df.home_team.map(lambda t: venues[venue_key(t)]['listed_capacity'])
     pct = df.attendance / cap

@@ -8,6 +8,7 @@ Output: forecasts.json next to this script. Two requests per venue, one second a
 """
 import json
 import sqlite3
+import sys
 import time
 import urllib.request
 from datetime import datetime, timezone
@@ -16,10 +17,11 @@ from pathlib import Path
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[2]))
+import nfl_team_codes  # noqa: E402
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
 UA = 'LegendaryPicksResearch/1.0 (weather forecast for backtests and pregame inputs)'
-# The database uses WSH and LAR; the venue table is keyed on the nflverse codes WAS and LA.
-DB_TO_VENUE = {'WSH': 'WAS', 'LAR': 'LA'}
+DB_TO_VENUE = nfl_team_codes.NFLVERSE_TEAM_CODE_ALIASES
 
 
 def get(url):
@@ -44,7 +46,7 @@ def main():
     out = {'fetched_at_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
            'source': 'api.weather.gov forecastHourly', 'games': {}}
     for game_id, away, home, gameday, gametime in games:
-        venue_team = shared.get(home, DB_TO_VENUE.get(home, home))
+        venue_team = shared.get(home, nfl_team_codes.to_nflverse_team_code(home))
         venue = venues['venues'][venue_team]
         kickoff = kickoff_utc(gameday, gametime)
         entry = {'home': home, 'away': away, 'venue': venue['stadium'], 'roof': venue['roof'],

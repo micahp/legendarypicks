@@ -24,12 +24,14 @@ import pandas as pd
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent))
 import e3_observed_distributions as e3  # noqa: E402
 import playcall_model as pm  # noqa: E402
+import nfl_team_codes  # noqa: E402
 
 SCHEMA = 'lp.nfl.e3-football-realism-joint-reference.v1'
 SEASONS = tuple(range(2022, 2026))
-TEAM_ALIASES = {'LA': 'LAR', 'WAS': 'WSH'}
+TEAM_ALIASES = nfl_team_codes.PBP_TEAM_CODE_ALIASES
 PBP_COLUMNS = (
     'season', 'season_type', 'week', 'game_id', 'play_id', 'posteam', 'play_type', 'down', 'ydstogo',
     'yardline_100', 'qtr', 'game_seconds_remaining', 'posteam_score', 'defteam_score', 'score_differential',
@@ -91,7 +93,7 @@ def _string_or_none(value):
 
 def _canonical_team_code(value):
     team = _string_or_none(value)
-    return TEAM_ALIASES.get(team, team)
+    return nfl_team_codes.to_pbp_team_code(team)
 
 
 def _source_frames(pbp_source_dir):

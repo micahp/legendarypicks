@@ -13,6 +13,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -20,6 +21,8 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[2]))
+import nfl_team_codes  # noqa: E402
 REPO = Path(__file__).resolve().parent
 OUT = Path('/root/lp-snapshots/nfl-game-info/experiments/team-adjusted-v2')
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
@@ -62,7 +65,7 @@ def travel(df: pd.DataFrame) -> pd.DataFrame:
     shared = VENUES['shared_venue_teams']
     state = {}
     for team in set(df.home_team) | set(df.away_team):
-        key = shared.get(team, {'WSH': 'WAS', 'LAR': 'LA'}.get(team, team))
+        key = shared.get(team, nfl_team_codes.to_nflverse_team_code(team))
         state[team] = venues[key]['state']
     con = sqlite3.connect(DB, uri=True)
     rest = pd.read_sql("select game_id, home_rest, away_rest from nfl_schedule "
