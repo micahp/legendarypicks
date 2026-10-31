@@ -43,6 +43,7 @@ Scope: hard football invariants and separate historical distribution warnings fo
 - [x] Add paired-seed ablations that preserve the pregame snapshot and unrelated random draws.
 - [x] Extend the resumable paired-ablation runner so the opt-in QB run-style layer can be enabled in every control arm and isolated as its own matched-seed ablation; SLC defaults remain unchanged.
 - [x] Add a read-only Week 8 batch auditor for all eight matchup outputs, seed ledgers, exported box scores, per-seed reconciliation, artifact hashes, and player workload tails.
+- [x] Require every seed outcome row to carry a nonempty final status; shard headers remain metadata and are not treated as game outcomes. Regression test covers a ledger/report row missing status.
 
 ## Current verification
 

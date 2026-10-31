@@ -93,6 +93,30 @@ class Week8BatchAudit(unittest.TestCase):
         self.assertEqual(game['accounted_seed_count'], 1)
         self.assertTrue(any(row['code'] == 'SEED_COVERAGE_MISMATCH' for row in game['failures']))
 
+    def test_seed_without_final_status_fails_but_header_needs_no_status(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _write_worker(tmp, [_outcome(1, _boxscore(1))], requested=1)
+            directory = Path(tmp) / 'artifacts' / 'TEST' / 'parallel-6'
+
+            report_path = directory / 'worker-01.json'
+            report_payload = json.loads(report_path.read_text(encoding='utf-8'))
+            report_payload['summary']['outcomes'][0].pop('status')
+            report_path.write_text(json.dumps(report_payload), encoding='utf-8')
+
+            ledger_path = directory / 'worker-01.seeds.jsonl'
+            ledger_rows = ledger_path.read_text(encoding='utf-8').splitlines()
+            ledger_row = json.loads(ledger_rows[1])
+            ledger_row['outcome'].pop('status')
+            ledger_rows[1] = json.dumps(ledger_row)
+            ledger_path.write_text('\n'.join(ledger_rows) + '\n', encoding='utf-8')
+
+            result = audit.audit_batch(Path(tmp), matchups=('TEST',), seed_count=1, workers=1)
+
+        game = result['matchups'][0]
+        self.assertEqual(result['status'], 'incomplete_or_invalid')
+        self.assertTrue(any(row['code'] == 'MISSING_OUTCOME_STATUS'
+                            for row in game['failures']))
+
     def test_valid_game_with_failed_reconciliation_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             bad_box = _boxscore(1, reconciliation='failed')

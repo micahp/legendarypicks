@@ -110,6 +110,10 @@ def _index_ledger_rows(rows, path: Path, failures: list[dict]) -> tuple[dict, di
         if type(seed) is not int or not isinstance(outcome, dict) or outcome.get('seed') != seed:
             _failure(failures, 'INVALID_LEDGER_ROW', path, f'line {line_number} has mismatched seed/outcome')
             continue
+        status = outcome.get('status')
+        if not isinstance(status, str) or not status.strip():
+            _failure(failures, 'MISSING_OUTCOME_STATUS', path,
+                     f'line {line_number} seed {seed} has no nonempty final outcome status')
         if seed in indexed:
             _failure(failures, 'DUPLICATE_SEED', path, f'ledger contains seed {seed} more than once')
         indexed[seed] = row
