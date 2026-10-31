@@ -6,7 +6,8 @@ import math
 import football_assertions
 
 
-BOX_SCHEMA = 'lp-nfl-slc-boxscore-2'
+BOX_SCHEMA = 'lp-nfl-slc-boxscore-3'
+PERIODS = ('Q1', 'Q2', 'Q3', 'Q4', 'OT')
 TEAM_FIELDS = {
     'points': 'points', 'touchdowns': 'touchdowns', 'offensive_touchdowns': 'offensive_touchdowns',
     'observed_overtime_touchdowns': 'observed_overtime_touchdowns',
@@ -118,6 +119,249 @@ def _red_zone_diagnostics(record):
     return by_side
 
 
+def _points_by_period(record):
+    """Attribute points to the scoring play's period, preserving unexplained points."""
+    points = {side: {period: 0 for period in PERIODS} for side in ('A', 'B')}
+    complete = True
+    for drive in record.get('drives', []):
+        scoring = drive.get('points_scored_on_drive')
+        if not isinstance(scoring, dict):
+            continue
+        try:
+            amount = int(scoring.get('points') or 0)
+        except (TypeError, ValueError):
+            complete = False
+            continue
+        if amount == 0:
+            continue
+        side = scoring.get('team')
+        if side not in points:
+            complete = False
+            continue
+        plays = drive.get('plays') or []
+        quarter = ((plays[-1].get('state_before') or {}).get('quarter') if plays
+                   else drive.get('quarter_start'))
+        label = _period_label(quarter)
+        if label is None:
+            complete = False
+            continue
+        points[side][label] += amount
+
+    for side in ('A', 'B'):
+        final_points = int((record.get('points') or {}).get(side) or 0)
+        unclassified = final_points - sum(points[side].values())
+        points[side]['unclassified'] = unclassified
+        if unclassified != 0:
+            complete = False
+    return points, complete
+
+
+def _period_label(value):
+    try:
+        quarter = int(value)
+    except (TypeError, ValueError):
+        return None
+    if quarter == 5:
+        return 'OT'
+    return f'Q{quarter}' if quarter in (1, 2, 3, 4) else None
+
+
+def _period_time(quarter, clock):
+    """Return elapsed game seconds for a quarter/clock pair when both are known."""
+    try:
+        return (int(quarter) - 1) * 900 + (900 - int(clock))
+    except (TypeError, ValueError):
+        return None
+
+
+def _play_period_seconds(play, period):
+    before = play.get('state_before') or {}
+    after = play.get('state_after') or {}
+    start = _period_time(before.get('quarter'), before.get('clock_seconds'))
+    end = _period_time(after.get('quarter'), after.get('clock_seconds'))
+    try:
+        quarter_number = 5 if period == 'OT' else int(period[1:])
+    except (TypeError, ValueError):
+        return 0
+    if start is None or end is None or end < start:
+        return 0
+    period_start = (quarter_number - 1) * 900
+    period_end = quarter_number * 900
+    return max(0, min(end, period_end) - max(start, period_start))
+
+
+def _quarter_by_quarter(record, snapshot):
+    """Build period-level boxscore lines and drive summaries from the recorded plays."""
+    import game_stats
+
+    schedule = snapshot['schedule']
+    team_by_side = {'A': schedule['home_team'], 'B': schedule['away_team']}
+    roster = _roster_index(snapshot)
+    points_by_side, scoring_complete = _points_by_period(record)
+    points_by_team = {
+        team_by_side[side]: dict(points_by_side[side]) for side in ('A', 'B')
+    }
+    team_stats = {team: {period: {} for period in PERIODS} for team in team_by_side.values()}
+    drive_summary = {team: {period: {
+        'drives_started': 0, 'drives_ended': 0, 'scoring_drives': 0,
+        'points_scored': 0, 'points_allowed': 0, 'plays': 0, 'net_yards': 0,
+        'turnovers': 0,
+    } for period in PERIODS} for team in team_by_side.values()}
+    player_stats = {period: {} for period in PERIODS}
+    drive_summaries = []
+    complete = scoring_complete
+
+    for drive_index, drive in enumerate(record.get('drives', []), 1):
+        side = drive.get('offense_team')
+        offense_team = team_by_side.get(side)
+        if offense_team is None:
+            complete = False
+            continue
+        plays = drive.get('plays') or []
+        grouped = {}
+        for play in plays:
+            state = play.get('state_before') or {}
+            label = _period_label(state.get('quarter'))
+            if label is None:
+                complete = False
+                continue
+            grouped.setdefault(label, []).append(play)
+
+        start_period = _period_label(drive.get('quarter_start'))
+        last_state = ((plays[-1].get('state_after') or {}) if plays else {})
+        end_period = _period_label(drive.get('end_quarter', last_state.get('quarter')))
+        scoring = drive.get('points_scored_on_drive')
+        scoring_team = team_by_side.get(scoring.get('team')) if isinstance(scoring, dict) else None
+        try:
+            drive_points = int(scoring.get('points') or 0) if isinstance(scoring, dict) else 0
+        except (TypeError, ValueError):
+            drive_points = 0
+            complete = False
+        scoring_period = None
+        if drive_points:
+            scoring_period = _period_label((plays[-1].get('state_before') or {}).get('quarter')) if plays else start_period
+            if scoring_period is None:
+                complete = False
+
+        first_state = (plays[0].get('state_before') or {}) if plays else {}
+        first_spot = first_state.get('yardline_100')
+        end_spot = last_state.get('yardline_100')
+        try:
+            net_yards = sum(int((play.get('outcome') or {}).get('yards_gained') or 0) for play in plays)
+        except (TypeError, ValueError):
+            net_yards = 0
+            complete = False
+        turnovers = sum(bool((play.get('outcome') or {}).get('turnover')) for play in plays)
+        summary = {
+            'drive_index': drive.get('index', drive_index), 'offense_team': offense_team,
+            'start_period': start_period, 'end_period': end_period, 'scoring_period': scoring_period,
+            'clock_start': drive.get('clock_start'), 'end_clock': drive.get('end_clock', last_state.get('clock_seconds')),
+            'start_yardline_100': first_spot, 'end_yardline_100': end_spot,
+            'terminal': drive.get('terminal'), 'play_count': len(plays), 'net_yards': net_yards,
+            'turnovers': turnovers, 'scoring_team': scoring_team, 'points': drive_points,
+        }
+        drive_summaries.append(summary)
+
+        if start_period:
+            drive_summary[offense_team][start_period]['drives_started'] += 1
+        if end_period:
+            drive_summary[offense_team][end_period]['drives_ended'] += 1
+        if scoring_period:
+            entry = drive_summary[offense_team][scoring_period]
+            entry['scoring_drives'] += 1
+            entry['points_scored' if scoring_team == offense_team else 'points_allowed'] += drive_points
+
+        if not plays and end_period:
+            line = team_stats[offense_team][end_period]
+            if drive.get('field_goal_made') is not None:
+                line['field_goal_attempts'] = line.get('field_goal_attempts', 0) + 1
+                line['field_goals_made'] = line.get('field_goals_made', 0) + int(bool(drive['field_goal_made']))
+            if drive.get('terminal') == 'touchdown' and scoring_team:
+                scoring_line = team_stats[scoring_team][end_period]
+                scoring_line['touchdowns'] = scoring_line.get('touchdowns', 0) + 1
+                if scoring_team == offense_team:
+                    scoring_line['offensive_touchdowns'] = scoring_line.get('offensive_touchdowns', 0) + 1
+                    if drive.get('observed_overtime_drive'):
+                        scoring_line['observed_overtime_touchdowns'] = (
+                            scoring_line.get('observed_overtime_touchdowns', 0) + 1)
+
+        for label, period_plays in grouped.items():
+            # game_stats already defines the event-to-stat accounting. A period fragment retains only
+            # plays from that period so drives spanning a boundary contribute to both periods.
+            first = period_plays[0]
+            last = period_plays[-1]
+            first_before = first.get('state_before') or {}
+            last_after = last.get('state_after') or {}
+            last_is_drive_end = (last is plays[-1] and label == end_period)
+            fragment = {
+                'offense_team': side,
+                'quarter_start': first_before.get('quarter'),
+                'clock_start': first_before.get('clock_seconds'),
+                'end_quarter': last_after.get('quarter', first_before.get('quarter')),
+                'end_clock': last_after.get('clock_seconds', first_before.get('clock_seconds')),
+                'plays': period_plays,
+                'terminal': drive.get('terminal') if last_is_drive_end else 'period_segment',
+                'field_goal_made': None,
+            }
+            calculated = game_stats.team_stats([fragment], {})
+            calculated_side = calculated.get(side, {})
+            line = team_stats[offense_team][label]
+            line['plays'] = line.get('plays', 0) + int(calculated_side.get('plays', 0))
+            for output_name, source_name in TEAM_FIELDS.items():
+                if output_name in ('points', 'drives', 'possession_seconds'):
+                    continue
+                line[output_name] = line.get(output_name, 0) + int(calculated_side.get(source_name, 0) or 0)
+            line['possession_seconds'] = line.get('possession_seconds', 0) + sum(
+                _play_period_seconds(play, label) for play in period_plays)
+            drive_summary[offense_team][label]['plays'] += len(period_plays)
+            drive_summary[offense_team][label]['net_yards'] += sum(
+                int((play.get('outcome') or {}).get('yards_gained') or 0) for play in period_plays)
+            drive_summary[offense_team][label]['turnovers'] += sum(
+                bool((play.get('outcome') or {}).get('turnover')) for play in period_plays)
+
+            for player in game_stats.player_lines([fragment]):
+                player_id = str(player['player_id'])
+                meta = roster.get(player_id, {})
+                entry = player_stats[label].setdefault(player_id, {
+                    **meta,
+                    'stable_player_id': player_id,
+                    'name': player.get('player_name', meta.get('name')),
+                    'team': player.get('player_team', meta.get('team')),
+                    'position': player.get('player_position', meta.get('position')),
+                    'side': player.get('player_side'),
+                    'attribution': player.get('attribution'),
+                    'passing': {field: 0 for field in PLAYER_FIELDS['passing']},
+                    'rushing': {field: 0 for field in PLAYER_FIELDS['rushing']},
+                    'receiving': {field: 0 for field in PLAYER_FIELDS['receiving']},
+                    'miscellaneous': {field: 0 for field in PLAYER_FIELDS['miscellaneous']},
+                })
+                for category, fields in PLAYER_FIELDS.items():
+                    for field in fields:
+                        entry[category][field] += int((player.get(category) or {}).get(field, 0) or 0)
+
+    for team in team_by_side.values():
+        for period in PERIODS:
+            line = team_stats[team][period]
+            for field in TEAM_FIELDS:
+                line.setdefault(field, 0)
+            line['drives'] = drive_summary[team][period]['drives_started']
+            line.setdefault('plays', 0)
+            line.setdefault('possession_seconds', 0)
+            # Period scoring belongs to the team that scored; drive offense and scoring team can differ on returns/safeties.
+            line['points'] = points_by_team[team][period]
+
+    return {
+        'schema': 'lp-nfl-slc-quarter-boxscore-1',
+        'periods': list(PERIODS), 'complete': complete, 'scoring_complete': scoring_complete,
+        'player_stats_scope': 'players_with_period_activity; omitted roster players have zero period stats',
+        'points_by_team': points_by_team,
+        'team_stats': team_stats,
+        'player_stats': {period: [rows[key] for key in sorted(rows)] for period, rows in player_stats.items()},
+        'drive_summaries': drive_summaries,
+        'drive_summary_by_team_and_period': drive_summary,
+    }
+
+
 def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_validation=None):
     """Create one self-contained game record. SLC participant IDs must belong to the frozen roster."""
     schedule = snapshot['schedule']
@@ -196,6 +440,7 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
                 line[category] = {field: 0 for field in fields}
             actual[player_id] = line
 
+    quarterly = _quarter_by_quarter(record or {}, snapshot)
     boxscore = {
         'schema': BOX_SCHEMA,
         'game_id': schedule['game_id'],
@@ -211,6 +456,9 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         'exact_layer_configuration': profile_manifest['enabled_layers'],
         'player_attribution_mode': attribution or 'unavailable',
         'reconciliation': None,
+        'points_by_period': quarterly['points_by_team'],
+        'quarter_scoring_complete': quarterly['scoring_complete'],
+        'quarter_by_quarter': quarterly,
         'teams': teams,
         'players': [actual[key] for key in sorted(actual)],
     }
