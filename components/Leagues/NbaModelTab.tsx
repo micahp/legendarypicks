@@ -53,6 +53,7 @@ type RecordSummary = {
   unlocked?: { previewed: number; graded: number; winner_brier: number | null }
 }
 type Payload = {
+  season: number
   state: string
   default_model: string
   models: Model[]
@@ -62,6 +63,14 @@ type Payload = {
     eligible_games: { train: number; validation: number; test: number }
     metrics: { validation: Record<string, Metrics>; test: Record<string, Metrics> }
   }
+}
+type RecordPage = {
+  season: number
+  model: string
+  games: Game[]
+  record: RecordSummary | null
+  has_more: boolean
+  next_before: string | null
 }
 
 type View = 'projections' | 'record'
@@ -73,6 +82,11 @@ const percent = (value: number | null | undefined) =>
 
 function dateLabel(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
+}
+
+function localDateKey(iso: string) {
+  const date = new Date(iso)
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
 }
 
 function timeLabel(iso: string) {
@@ -87,6 +101,15 @@ function lockLabel(game: Game, forecast: Forecast | undefined) {
   }
   if (game.status === 'missed') return 'Lock window missed'
   return forecast ? 'Preview, not locked' : 'Forecast unavailable'
+}
+
+async function fetchRecordPage(season: number, model: string, timezone: string,
+                               before?: string | null, signal?: AbortSignal) {
+  const query = new URLSearchParams({ season: String(season), model, days: '7', timezone })
+  if (before) query.set('before', before)
+  const response = await fetch('/api/nba/model/record?' + query.toString(), { cache: 'no-store', signal })
+  if (!response.ok) throw new Error('NBA record feed returned ' + response.status)
+  return response.json() as Promise<RecordPage>
 }
 
 function ModelAccuracy({ payload, selectedModel }: { payload: Payload; selectedModel: string }) {
@@ -162,11 +185,69 @@ function ModelAccuracy({ payload, selectedModel }: { payload: Payload; selectedM
 }
 
 function RecordView({ payload, model }: { payload: Payload; model: Model }) {
-  const summary = payload.records[model.id]
-  const lockedGames = payload.games
-    .filter((game) => Boolean(game.models[model.id]?.locked_at_utc))
-    .sort((a, b) => b.scheduled_start_utc.localeCompare(a.scheduled_start_utc))
-  const gamesByDay = lockedGames.reduce<Record<string, Game[]>>((groups, game) => {
+  const [page, setPage] = useState<RecordPage | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [reload, setReload] = useState(0)
+  const timezone = typeof Intl === 'undefined' ? 'UTC' : Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+  const summary = page?.record ?? payload.records[model.id]
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setPage(null)
+    setLoading(true)
+    setError(null)
+    const refreshFirstPage = (initial: boolean) => {
+      fetchRecordPage(payload.season, model.id, timezone, null, controller.signal)
+        .then((fresh) => {
+          if (controller.signal.aborted) return
+          setPage((current) => {
+            if (initial || !current || !fresh.next_before) return fresh
+            const retainedOlder = current.games.filter(
+              (game) => localDateKey(game.scheduled_start_utc) < (fresh.next_before as string),
+            )
+            if (!retainedOlder.length) return fresh
+            const freshIds = new Set(fresh.games.map((game) => game.game_id))
+            return {
+              ...fresh,
+              games: [...fresh.games, ...retainedOlder.filter((game) => !freshIds.has(game.game_id))],
+              has_more: current.has_more,
+              next_before: current.next_before,
+            }
+          })
+          setError(null)
+        })
+        .catch((reason: Error) => { if (!controller.signal.aborted) setError(reason.message) })
+        .finally(() => { if (initial && !controller.signal.aborted) setLoading(false) })
+    }
+    refreshFirstPage(true)
+    const timer = window.setInterval(() => refreshFirstPage(false), 60_000)
+    return () => { controller.abort(); window.clearInterval(timer) }
+  }, [payload.season, model.id, timezone, reload])
+
+  const loadMore = async () => {
+    if (!page?.next_before || loadingMore) return
+    setLoadingMore(true)
+    setError(null)
+    try {
+      const older = await fetchRecordPage(payload.season, model.id, timezone, page.next_before)
+      setPage((current) => current
+        ? {
+            ...older,
+            games: [...current.games, ...older.games.filter(
+              (game) => !current.games.some((currentGame) => currentGame.game_id === game.game_id),
+            )],
+          }
+        : older)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'NBA record feed did not load.')
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
+  const gamesByDay = (page?.games ?? []).reduce<Record<string, Game[]>>((groups, game) => {
     const day = dateLabel(game.scheduled_start_utc)
     groups[day] = [...(groups[day] ?? []), game]
     return groups
@@ -196,17 +277,24 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
         ))}
       </div>
 
-      {lockedGames.length === 0 ? (
+      {error && <p role="status" className="text-sm text-amber-300">{error}</p>}
+      {loading && <p role="status" className="text-sm text-zinc-400">Loading record…</p>}
+      {!loading && !page && error && (
+        <button type="button" onClick={() => setReload((value) => value + 1)}
+          className="text-sm text-cyan-300 hover:text-cyan-200">Retry loading record</button>
+      )}
+      {!loading && page && page.games.length === 0 ? (
         <p className="rounded-xl border border-white/10 bg-zinc-950/50 p-4 text-sm text-zinc-400">
           No model-specific locked forecasts are available yet.
         </p>
       ) : (
-        <div className="space-y-4">
-          {Object.entries(gamesByDay).map(([day, games]) => (
-            <section key={day} className="space-y-2">
-              <h3 className="text-sm font-medium text-zinc-400">{day}</h3>
-              <div className="divide-y divide-zinc-800 rounded-xl border border-white/10 bg-zinc-950/50 px-4">
-                {games.map((game) => {
+        <>
+          {page && <div className="space-y-4">
+            {Object.entries(gamesByDay).map(([day, games]) => (
+              <section key={day} className="space-y-2">
+                <h3 className="text-sm font-medium text-zinc-400">{day}</h3>
+                <div className="divide-y divide-zinc-800 rounded-xl border border-white/10 bg-zinc-950/50 px-4">
+                  {games.map((game) => {
                   const forecast = game.models[model.id]
                   const grade = forecast.grade
                   const result = game.result ?? (grade ? { home_score: grade.home_score, away_score: grade.away_score } : null)
@@ -241,11 +329,16 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                       <span className={grade ? 'shrink-0 text-xs text-emerald-300' : 'shrink-0 text-xs text-zinc-400'}>{status}</span>
                     </article>
                   )
-                })}
-              </div>
-            </section>
-          ))}
-        </div>
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>}
+          {page?.has_more && <button type="button" onClick={loadMore} disabled={loadingMore}
+            className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:bg-zinc-900 disabled:opacity-50">
+            {loadingMore ? 'Loading older dates…' : 'Load older dates'}
+          </button>}
+        </>
       )}
     </section>
   )
@@ -262,7 +355,7 @@ export default function NbaModelTab() {
 
   useEffect(() => {
     let cancelled = false
-    const load = () => fetch('/api/nba/model/locks?season=2027')
+    const load = () => fetch('/api/nba/model/locks?season=2027&view=projections')
       .then((response) => {
         if (!response.ok) throw new Error('model feed returned ' + response.status)
         return response.json()
@@ -404,7 +497,7 @@ export default function NbaModelTab() {
         </section>
       )}
 
-      {view === 'record' && <RecordView payload={payload} model={selectedModel} />}
+      {view === 'record' && <RecordView key={selectedModel.id} payload={payload} model={selectedModel} />}
     </div>
   )
 }

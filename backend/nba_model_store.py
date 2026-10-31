@@ -10,6 +10,9 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+import pytz
+from pytz.exceptions import UnknownTimeZoneError
+
 from nba_game_model import MODEL_INFO
 
 UTC = dt.timezone.utc
@@ -685,6 +688,274 @@ def _record(rows: list[sqlite3.Row], missed: int) -> dict[str, Any]:
         values = [row[column] for row in graded if row[column] is not None]
         out[key] = sum(values) / len(values) if values else None
     return out
+
+
+def _all_record_summaries(con: sqlite3.Connection, season: int, now_text: str) -> dict[str, dict[str, Any]]:
+    locked_rows = {
+        row["model"]: row for row in con.execute(
+            "SELECT l.model,COUNT(*) AS locked,"
+            "SUM(CASE WHEN g.winner_brier IS NOT NULL THEN 1 ELSE 0 END) AS graded,"
+            "AVG(g.winner_brier) AS winner_brier,AVG(g.winner_log_loss) AS winner_log_loss,"
+            "AVG(g.home_points_abs_error) AS home_points_mae,"
+            "AVG(g.away_points_abs_error) AS away_points_mae,"
+            "AVG(g.spread_abs_error) AS spread_mae,AVG(g.total_abs_error) AS total_mae "
+            "FROM nba_model_locks l LEFT JOIN nba_model_grades g USING(game_id,model) "
+            "WHERE l.season=? GROUP BY l.model", (season,)
+        )
+    }
+    missed_rows = {
+        row["model"]: row["missed"] for row in con.execute(
+            "SELECT model,COUNT(*) AS missed FROM nba_model_lock_events "
+            "WHERE season=? AND event_type='missed_t90_window' GROUP BY model", (season,)
+        )
+    }
+    unlocked_rows = {
+        row["model"]: row for row in con.execute(
+            "SELECT p.model,COUNT(*) AS previewed,COUNT(g.winner_brier) AS graded,"
+            "AVG(g.winner_brier) AS winner_brier,AVG(g.winner_log_loss) AS winner_log_loss,"
+            "AVG(g.home_points_abs_error) AS home_points_mae,"
+            "AVG(g.away_points_abs_error) AS away_points_mae,"
+            "AVG(g.spread_abs_error) AS spread_mae,AVG(g.total_abs_error) AS total_mae "
+            "FROM nba_model_previews p "
+            "LEFT JOIN nba_model_locks l USING(game_id,model) "
+            "LEFT JOIN nba_model_preview_grades g USING(game_id,model) "
+            "WHERE p.season=? AND p.scheduled_start_utc<=? AND l.game_id IS NULL "
+            "GROUP BY p.model", (season, now_text)
+        )
+    } if _table_exists(con, "nba_model_previews") else {}
+
+    labels = {item["id"]: item for item in MODEL_INFO}
+    summaries = {}
+    for model in MODEL_IDS:
+        row = locked_rows.get(model)
+        locked = int(row["locked"]) if row else 0
+        graded = int(row["graded"] or 0) if row else 0
+        unlocked = unlocked_rows.get(model)
+        summaries[model] = {
+            "label": labels[model]["label"],
+            "model_version": labels[model]["version"],
+            "projects_scores": labels[model]["projects_scores"],
+            "locked": locked,
+            "graded": graded,
+            "awaiting": locked - graded,
+            "missed": int(missed_rows.get(model, 0)),
+            "winner_brier": row["winner_brier"] if row else None,
+            "winner_log_loss": row["winner_log_loss"] if row else None,
+            "home_points_mae": row["home_points_mae"] if row else None,
+            "away_points_mae": row["away_points_mae"] if row else None,
+            "spread_mae": row["spread_mae"] if row else None,
+            "total_mae": row["total_mae"] if row else None,
+            "unlocked": {
+                "previewed": int(unlocked["previewed"]) if unlocked else 0,
+                "graded": int(unlocked["graded"]) if unlocked else 0,
+                "awaiting": (int(unlocked["previewed"]) - int(unlocked["graded"])) if unlocked else 0,
+                "winner_brier": unlocked["winner_brier"] if unlocked else None,
+                "winner_log_loss": unlocked["winner_log_loss"] if unlocked else None,
+                "home_points_mae": unlocked["home_points_mae"] if unlocked else None,
+                "away_points_mae": unlocked["away_points_mae"] if unlocked else None,
+                "spread_mae": unlocked["spread_mae"] if unlocked else None,
+                "total_mae": unlocked["total_mae"] if unlocked else None,
+            },
+        }
+    return summaries
+
+
+def _store_state(con: sqlite3.Connection, season: int) -> str:
+    if not _table_exists(con, "nba_model_history"):
+        return "awaiting_history_import"
+    has_locks = con.execute("SELECT 1 FROM nba_model_locks WHERE season=? LIMIT 1", (season,)).fetchone()
+    has_previews = _table_exists(con, "nba_model_previews") and con.execute(
+        "SELECT 1 FROM nba_model_previews WHERE season=? LIMIT 1", (season,)
+    ).fetchone()
+    return "available" if has_locks or has_previews else "awaiting_first_forecast"
+
+
+def export_projection_payload(con: sqlite3.Connection, season: int,
+                              benchmark: dict[str, Any] | None = None,
+                              now: dt.datetime | None = None) -> dict[str, Any]:
+    """Return upcoming NBA cards and season-wide summaries without historical game rows."""
+    now = now or dt.datetime.now(UTC)
+    now_text = iso_utc(now)
+    locks = con.execute(
+        "SELECT l.*,g.result_source,g.final_home_score,g.final_away_score,g.home_win,"
+        "g.winner_brier,g.winner_log_loss,g.home_points_abs_error,g.away_points_abs_error,"
+        "g.spread_abs_error,g.total_abs_error,g.graded_at_utc "
+        "FROM nba_model_locks l LEFT JOIN nba_model_grades g USING(game_id,model) "
+        "WHERE l.season=? AND l.scheduled_start_utc>? "
+        "ORDER BY l.scheduled_start_utc,l.game_id,l.model", (season, now_text)
+    ).fetchall()
+    previews = []
+    if _table_exists(con, "nba_model_previews"):
+        previews = con.execute(
+            "SELECT * FROM nba_model_previews WHERE season=? AND scheduled_start_utc>? "
+            "ORDER BY scheduled_start_utc,game_id,model", (season, now_text)
+        ).fetchall()
+    missed_pairs = set()
+    if _table_exists(con, "nba_model_lock_events") and _table_exists(con, "nba_model_previews"):
+        missed_pairs = {(row["game_id"], row["model"]) for row in con.execute(
+            "SELECT DISTINCT p.game_id,p.model FROM nba_model_previews p "
+            "JOIN nba_model_lock_events e USING(game_id,model,season) "
+            "WHERE p.season=? AND p.scheduled_start_utc>? AND e.event_type='missed_t90_window'",
+            (season, now_text),
+        )}
+    missed_game_ids = {game_id for game_id, _model in missed_pairs}
+
+    games: dict[str, dict[str, Any]] = {}
+    for row in locks:
+        game = games.setdefault(row["game_id"], {
+            "game_id": row["game_id"], "season": row["season"],
+            "scheduled_start_utc": row["scheduled_start_utc"],
+            "home_team": row["home_team"], "away_team": row["away_team"],
+            "status": "locked", "locked_at_utc": row["locked_at_utc"], "models": {},
+            "result": None,
+        })
+        forecast = json.loads(row["forecast_json"])
+        forecast.update({"model_version": row["model_version"],
+                         "locked_at_utc": row["locked_at_utc"],
+                         "lock_protocol": row["lock_protocol"]})
+        if row["graded_at_utc"]:
+            forecast["grade"] = {
+                "home_score": row["final_home_score"], "away_score": row["final_away_score"],
+                "home_win": bool(row["home_win"]), "winner_brier": row["winner_brier"],
+                "winner_log_loss": row["winner_log_loss"],
+            }
+            game["status"] = "graded"
+            game["result"] = {"home_score": row["final_home_score"],
+                              "away_score": row["final_away_score"],
+                              "home_win": bool(row["home_win"])}
+        else:
+            forecast["grade"] = None
+        game["models"][row["model"]] = forecast
+
+    locked_game_ids = set(games)
+    for row in previews:
+        if row["game_id"] in locked_game_ids:
+            continue
+        game = games.setdefault(row["game_id"], {
+            "game_id": row["game_id"], "season": row["season"],
+            "scheduled_start_utc": row["scheduled_start_utc"],
+            "home_team": row["home_team"], "away_team": row["away_team"],
+            "status": "missed" if row["game_id"] in missed_game_ids else "preview",
+            "locked_at_utc": None, "models": {}, "result": None,
+        })
+        if (row["game_id"], row["model"]) in missed_pairs:
+            continue
+        forecast = json.loads(row["forecast_json"])
+        forecast.update({"model_version": row["model_version"],
+                         "previewed_at_utc": row["previewed_at_utc"]})
+        game["models"][row["model"]] = forecast
+
+    return {
+        "league": "nba", "season": season, "state": _store_state(con, season),
+        "source": "standalone NBA research model database",
+        "default_model": "G3", "models": MODEL_INFO,
+        "records": _all_record_summaries(con, season, now_text),
+        "games": sorted(games.values(), key=lambda row: (row["scheduled_start_utc"], row["game_id"])),
+        "benchmark": benchmark or {}, "lock_protocol": LOCK_PROTOCOL,
+    }
+
+
+def _local_midnight_utc(day: dt.date, timezone: Any) -> dt.datetime:
+    local_midnight = timezone.localize(dt.datetime.combine(day, dt.time.min), is_dst=None)
+    return local_midnight.astimezone(UTC)
+
+
+def export_record_page(con: sqlite3.Connection, season: int, model: str, days: int = 7,
+                       before: str | None = None, timezone_name: str = "UTC") -> dict[str, Any]:
+    """Return one model's locks for the latest `days` local dates with records."""
+    if model not in MODEL_IDS:
+        raise ValueError(f"unknown NBA model {model!r}")
+    if not 1 <= days <= 31:
+        raise ValueError("days must be between 1 and 31")
+    try:
+        timezone = pytz.timezone(timezone_name)
+    except UnknownTimeZoneError as exc:
+        raise ValueError(f"unknown timezone {timezone_name!r}") from exc
+
+    summaries = _all_record_summaries(con, season, iso_utc(dt.datetime.now(UTC)))
+    if before is None:
+        latest = con.execute(
+            "SELECT MAX(scheduled_start_utc) FROM nba_model_locks WHERE season=? AND model=?",
+            (season, model),
+        ).fetchone()[0]
+        if latest is None:
+            return {"season": season, "model": model, "games": [], "record": summaries[model],
+                    "has_more": False, "next_before": None}
+        latest_day = parse_time(latest).astimezone(timezone).date()
+        page_end_day = latest_day + dt.timedelta(days=1)
+    else:
+        try:
+            page_end_day = dt.date.fromisoformat(before)
+        except ValueError as exc:
+            raise ValueError("before must be an ISO local date") from exc
+        if page_end_day.isoformat() != before:
+            raise ValueError("before must be an ISO local date")
+
+    page_end_utc = _local_midnight_utc(page_end_day, timezone)
+    candidates = con.execute(
+        "SELECT scheduled_start_utc,game_id FROM nba_model_locks "
+        "WHERE season=? AND model=? AND scheduled_start_utc<? "
+        "ORDER BY scheduled_start_utc DESC,game_id DESC", (season, model, iso_utc(page_end_utc))
+    )
+    selected_days: list[dt.date] = []
+    seen_days: set[dt.date] = set()
+    for row in candidates:
+        game_day = parse_time(row["scheduled_start_utc"]).astimezone(timezone).date()
+        if game_day not in seen_days:
+            seen_days.add(game_day)
+            selected_days.append(game_day)
+            if len(selected_days) == days:
+                break
+    if not selected_days:
+        return {"season": season, "model": model, "games": [], "record": summaries[model],
+                "has_more": False, "next_before": None}
+
+    oldest_day = selected_days[-1]
+    page_start_utc = _local_midnight_utc(oldest_day, timezone)
+    rows = con.execute(
+        "SELECT l.game_id,l.season,l.scheduled_start_utc,l.home_team,l.away_team,l.model_version,"
+        "l.lock_protocol,l.locked_at_utc,l.forecast_json,g.final_home_score,g.final_away_score,"
+        "g.home_win,g.graded_at_utc "
+        "FROM nba_model_locks l LEFT JOIN nba_model_grades g USING(game_id,model) "
+        "WHERE l.season=? AND l.model=? AND l.scheduled_start_utc>=? AND l.scheduled_start_utc<? "
+        "ORDER BY l.scheduled_start_utc DESC,l.game_id DESC",
+        (season, model, iso_utc(page_start_utc), iso_utc(page_end_utc)),
+    ).fetchall()
+    games = []
+    for row in rows:
+        forecast = json.loads(row["forecast_json"])
+        forecast.update({"model_version": row["model_version"],
+                         "locked_at_utc": row["locked_at_utc"],
+                         "lock_protocol": row["lock_protocol"]})
+        if row["graded_at_utc"]:
+            forecast["grade"] = {
+                "home_score": row["final_home_score"], "away_score": row["final_away_score"],
+                "home_win": bool(row["home_win"]),
+            }
+            result = {"home_score": row["final_home_score"],
+                      "away_score": row["final_away_score"], "home_win": bool(row["home_win"])}
+            status = "graded"
+        else:
+            forecast["grade"] = None
+            result = None
+            status = "locked"
+        games.append({
+            "game_id": row["game_id"], "season": row["season"],
+            "scheduled_start_utc": row["scheduled_start_utc"],
+            "home_team": row["home_team"], "away_team": row["away_team"],
+            "status": status, "locked_at_utc": row["locked_at_utc"],
+            "result": result, "models": {model: forecast},
+        })
+
+    has_more = con.execute(
+        "SELECT 1 FROM nba_model_locks WHERE season=? AND model=? AND scheduled_start_utc<? LIMIT 1",
+        (season, model, iso_utc(page_start_utc)),
+    ).fetchone() is not None
+    return {
+        "season": season, "model": model, "games": games,
+        "record": summaries[model], "has_more": has_more,
+        "next_before": oldest_day.isoformat() if has_more else None,
+    }
 
 
 def export_payload(con: sqlite3.Connection, season: int,

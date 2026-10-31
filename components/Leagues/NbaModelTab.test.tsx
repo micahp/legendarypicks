@@ -50,6 +50,7 @@ const secondGameDay = dateInDays(1, 21)
 const nextGameDay = dateInDays(2, 19)
 
 const payload = {
+  season: 2027,
   state: 'available',
   default_model: 'G3',
   models,
@@ -159,6 +160,20 @@ describe('NBA model tab', () => {
         },
       },
     }
+    const olderBase = previewGame('older-game', '2026-10-19T23:00:00Z', 'LAL', 'CHI')
+    const olderGame = {
+      ...olderBase,
+      status: 'graded' as const,
+      result: { home_score: 112, away_score: 106 },
+      models: {
+        ...olderBase.models,
+        G3: {
+          ...olderBase.models.G3,
+          locked_at_utc: '2026-10-19T21:30:00Z',
+          grade: { home_score: 112, away_score: 106, home_win: true, winner_brier: 0.14 },
+        },
+      },
+    }
     const recordPayload = {
       ...payload,
       records: {
@@ -167,13 +182,26 @@ describe('NBA model tab', () => {
       },
       games: [lockedGame, secondLockedGame, unlockedGame],
     }
-    ;(global as any).fetch = jest.fn(() => Promise.resolve({
-      ok: true, json: () => Promise.resolve(recordPayload),
-    }))
+    const firstPage = {
+      season: 2027, model: 'G3', games: [lockedGame, secondLockedGame],
+      record: recordPayload.records.G3, has_more: true, next_before: '2026-10-20',
+    }
+    const olderPage = {
+      season: 2027, model: 'G3', games: [olderGame],
+      record: recordPayload.records.G3, has_more: false, next_before: null,
+    }
+    ;(global as any).fetch = jest.fn((url: string) => {
+      const isRecordRequest = String(url).includes('/api/nba/model/record?')
+      const responsePayload = !isRecordRequest
+        ? payload
+        : String(url).includes('before=') ? olderPage : firstPage
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(responsePayload) })
+    })
 
     render(<NbaModelTab />)
     await waitFor(() => expect(screen.getByRole('button', { name: 'Record' })).toBeTruthy())
     fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    await waitFor(() => expect(screen.getByText('BOS at DET')).toBeTruthy())
 
     expect(screen.getByRole('heading', { name: '2026–27 record · G3 Joint scores' })).toBeTruthy()
     expect(screen.getByText('BOS at DET')).toBeTruthy()
@@ -188,6 +216,9 @@ describe('NBA model tab', () => {
     expect(screen.queryByText('PHI at NYK')).toBeNull()
     expect(screen.queryByText(/Brier/)).toBeNull()
     expect(within(screen.getByText('Missed locks').parentElement as HTMLElement).getByText('1')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Load older dates' }))
+    await waitFor(() => expect(screen.getByText('LAL at CHI')).toBeTruthy())
+    expect(screen.getByRole('heading', { name: dayLabel(olderGame.scheduled_start_utc) })).toBeTruthy()
   })
 
   it('updates projections and record content when a different model is selected', async () => {
