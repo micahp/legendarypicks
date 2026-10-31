@@ -6,10 +6,12 @@ export const unitWord = (m: string) => marketLabel(m).split(' ').pop() || ''
 
 export const pct = (p: number, digits = 0) => `${(p * 100).toFixed(digits)}%`
 
-export function monthYear(iso: string): string {
-  const [y, m] = iso.split('-')
-  const i = Number(m) - 1
-  return MONTHS[i] ? `${MONTHS[i]} ${y}` : iso
+export function gameDate(iso: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (!match) return iso
+  const [, year, month, day] = match
+  const name = MONTHS[Number(month) - 1]
+  return name ? `${name} ${Number(day)}, ${year}` : iso
 }
 
 /** One side of a spread: positive spread means the home team is favoured (nflverse). */

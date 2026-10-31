@@ -1064,6 +1064,8 @@ class TheNflMapNamesKeysTheNflLogsActuallyHold(unittest.TestCase):
               league TEXT, season INTEGER, stats TEXT, game_date TEXT,
               opponent TEXT, home_away TEXT, game_no INTEGER, game_type TEXT,
               source TEXT);
+            CREATE TABLE nfl_schedule(
+              game_id TEXT PRIMARY KEY, season INTEGER, gameday TEXT);
         """)
         _provider_tables(con)
         con.execute("INSERT INTO players VALUES(1,'Receiver','KC','nfl','WR')")

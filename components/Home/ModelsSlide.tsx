@@ -8,7 +8,7 @@ export const MODELS: { name: string; detail: string; status: 'Live' | 'Coming so
   { name: 'NCAAF', detail: 'Spreads, totals and player props', status: 'Live', icon: 'sports_football' },
   { name: 'NHL', detail: 'Spreads, totals and player props', status: 'Live', icon: 'sports_hockey' },
   { name: 'ATP / WTA', detail: 'Match odds and player props', status: 'Live', icon: 'sports_tennis' },
-  { name: 'NBA', detail: 'Spreads, totals and player props', status: 'Coming soon', icon: 'sports_basketball' },
+  { name: 'NBA', detail: 'Game forecasts and research candidates', status: 'Live', icon: 'sports_basketball' },
   { name: 'MLS', detail: 'Spreads, totals and player props', status: 'Coming soon', icon: 'sports_soccer' },
   { name: 'UFC', detail: 'Match odds and player props', status: 'Coming soon', icon: 'sports_mma' },
 ]
@@ -39,7 +39,7 @@ export default function ModelsSlide() {
             Prediction models across multiple sports.
           </h2>
           <p className="mt-4 max-w-xl text-zinc-300">
-            Track the models powering Legendary Picks. NFL, NCAAF, NHL, and ATP/WTA are live now, with NBA, MLS, and UFC coming soon.
+            Track the models powering Legendary Picks. NFL, NCAAF, NHL, ATP/WTA, and NBA are live now. MLS and UFC are coming soon.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/leagues" className="rounded-lg border border-emerald-600 bg-emerald-600 px-5 py-2.5 font-bold text-white transition-colors hover:bg-emerald-500">

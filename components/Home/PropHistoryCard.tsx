@@ -1,6 +1,6 @@
 import React from 'react'
 import type { FeaturedProp } from './types'
-import { asOfText, marketLabel, monthYear, pct, unitWord } from './format'
+import { asOfText, gameDate, marketLabel, pct, unitWord } from './format'
 import { cardBase, QuietCard, SourceLine } from './CardShell'
 
 const W = 360
@@ -34,7 +34,7 @@ export default function PropHistoryCard({ prop }: { prop: FeaturedProp | null | 
     ['Last 5', 'l5'],
     ['Last 10', 'l10'],
     ['Last 20', 'l20'],
-    ['Season', 'season'],
+    ['History', 'season'],
   ]
   const unit = unitWord(prop.market)
   const first = prop.games[0]
@@ -67,7 +67,7 @@ export default function PropHistoryCard({ prop }: { prop: FeaturedProp | null | 
       <svg
         viewBox={`0 0 ${W} 190`}
         role="img"
-        aria-label={`${marketLabel(prop.market)} in the last ${prop.games.length} games against the line of ${prop.line}`}
+        aria-label={`${marketLabel(prop.market)} game by game over the last ${prop.games.length} games against the line of ${prop.line}`}
         className="block h-auto w-full"
       >
         {ticks.map((v) => (
@@ -98,15 +98,16 @@ export default function PropHistoryCard({ prop }: { prop: FeaturedProp | null | 
         <line x1={X0} x2={X1} y1={lineY} y2={lineY} strokeWidth={1.6} strokeDasharray="5 4" className="stroke-amber-400" />
         {first && (
           <text x={X0} y={184} fontSize={12} className="fill-zinc-500">
-            {monthYear(first.date)}
+            {gameDate(first.date)}
           </text>
         )}
         {last && (
           <text x={X1} y={184} fontSize={12} textAnchor="end" className="fill-zinc-500">
-            {monthYear(last.date)}
+            {gameDate(last.date)}
           </text>
         )}
       </svg>
+      <p className="mt-1 text-[11px] text-zinc-500">Each bar is one game.</p>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-400">
         <span><s className="mr-1.5 inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500 align-[-1px] no-underline" />Cleared the line</span>
         <span><s className="mr-1.5 inline-block h-2.5 w-2.5 rounded-sm bg-[#e0867a] align-[-1px] no-underline" />Missed it</span>

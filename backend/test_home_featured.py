@@ -234,6 +234,61 @@ class PropRule(Base):
         self.assertEqual(out["games"][-1]["value"], h["games"][0]["value"])   # oldest first
         self.assertEqual(out["source"]["as_of"], RECENT)
 
+    def test_home_chart_uses_the_latest_twenty_individual_games(self):
+        self.con.execute("INSERT INTO players VALUES (1,'Jaxon Smith-Njigba','SEA','nfl','WR')")
+        seasons = {
+            2025: [
+                (1, "2025-09-07", "REG"), (2, "2025-09-14", "REG"),
+                (3, "2025-09-21", "REG"), (4, "2025-09-28", "REG"),
+                (5, "2025-10-05", "REG"), (6, "2025-10-12", "REG"),
+                (7, "2025-10-20", "REG"), (9, "2025-11-02", "REG"),
+                (10, "2025-11-09", "REG"), (11, "2025-11-16", "REG"),
+                (12, "2025-11-23", "REG"), (13, "2025-11-30", "REG"),
+                (14, "2025-12-07", "REG"), (15, "2025-12-14", "REG"),
+                (16, "2025-12-18", "REG"), (17, "2025-12-28", "REG"),
+                (18, "2026-01-04", "REG"), (20, "2026-01-17", "DIV"),
+                (21, "2026-01-25", "CON"), (22, "2026-02-08", "SB"),
+            ],
+            2026: [
+                (1, "2026-09-09", "REG"), (2, "2026-09-20", "REG"),
+                (3, "2026-09-27", "REG"), (4, "2026-10-04", "REG"),
+                (5, "2026-10-11", "REG"),
+            ],
+        }
+        for season, games in seasons.items():
+            for week, gameday, game_type in games:
+                game_id = f"{season}_{week:02d}_SEA_OPP"
+                self.con.execute(
+                    "INSERT INTO player_game_logs(player_id,league,season,game_no,game_id,"
+                    "game_date,team,opponent,home_away,stats,source,game_type) "
+                    "VALUES(1,'nfl',?,?,?,NULL,'SEA','OPP','home',?,'espn',?)",
+                    (season, str(week), game_id, json.dumps({"rec_yds": 50 + week}), game_type),
+                )
+                self.con.execute(
+                    "INSERT INTO nfl_schedule(game_id,season,game_type,week,home_team,away_team,gameday) "
+                    "VALUES(?,?,?,?,?,?,?)",
+                    (game_id, season, game_type, week, "SEA", "OPP", gameday),
+                )
+        # This dated 2023 row previously sorted ahead of newer NFL rows that had
+        # a null game_date, making the homepage chart look three seasons old.
+        self.con.execute(
+            "INSERT INTO player_game_logs(player_id,league,season,game_no,game_id,game_date,"
+            "team,opponent,home_away,stats,source,game_type) "
+            "VALUES(1,'nfl',2023,'6','2023_06_SEA_OPP','2023-10-15','SEA','OPP','home',?,'espn','REG')",
+            (json.dumps({"rec_yds": 56}),),
+        )
+        offer(self.con, 1, 110.5, 9)
+        self.con.commit()
+
+        prop = self.payload()["prop"]
+        expected = [(2025, week, day) for week, day, _ in seasons[2025] if week >= 6]
+        expected += [(2026, week, day) for week, day, _ in seasons[2026]]
+        self.assertEqual(len(prop["games"]), 20)
+        self.assertEqual([game["date"] for game in prop["games"]],
+                         [day for _, _, day in expected])
+        self.assertEqual([game["value"] for game in prop["games"]],
+                         [50 + week for _, week, _ in expected])
+
     def test_null_when_nobody_qualifies_and_chain_player_follows(self):
         player(self.con, 1, "FewSources", 25)
         player(self.con, 2, "ShortHistory", 5)

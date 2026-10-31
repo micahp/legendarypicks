@@ -635,8 +635,6 @@ def prop_history(player_id: int = Query(...),
         else:
             # Get game logs with this stat, most recent first. One row per
             # appearance comes from the view, so there is nothing to dedupe here.
-            # Undated rows (prod's 2024 and 2025 NFL logs) sort after dated ones; season and
-            # game number then keep them newest first instead of in storage order.
             if is_nba:
                 if isinstance(stat_key, list):
                     val_expr = "(" + " + ".join(
@@ -663,6 +661,25 @@ def prop_history(player_id: int = Query(...),
                           ORDER BY game_date DESC, season DESC,
                                    CAST(game_no AS INTEGER) DESC LIMIT 100""",
                     (player_id,),
+                ).fetchall()
+            elif league == "nfl":
+                # Some published NFL log releases carry season/week and a stable
+                # game_id but no game_date. Resolve the date from nflverse's
+                # published schedule, then sort by season/week so undated rows
+                # cannot fall behind older dated seasons.
+                rows = con.execute(
+                    f"""SELECT p.game_id,
+                                COALESCE(NULLIF(p.game_date, ''), s.gameday) AS game_date,
+                                p.opponent, p.home_away, {val_expr} AS val
+                           FROM player_game_logs_all p
+                           LEFT JOIN nfl_schedule s
+                             ON s.game_id = p.game_id AND s.season = p.season
+                          WHERE p.player_id=? AND p.league IN ({league_placeholders})
+                            AND {where_clause}{_PLAYED}
+                          ORDER BY p.season DESC, CAST(p.game_no AS INTEGER) DESC,
+                                   COALESCE(NULLIF(p.game_date, ''), s.gameday) DESC
+                          {'' if filtering else 'LIMIT 100'}""",
+                    (player_id, *log_leagues)
                 ).fetchall()
             else:
                 rows = con.execute(

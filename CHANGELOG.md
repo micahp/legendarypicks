@@ -1,3 +1,15 @@
+## v10.1.0
+
+### NBA model
+
+- Make the NBA research model page available from the production leagues hub, with its benchmark and model-store status.
+- Mark NBA as live in the homepage Models hero.
+
+### Homepage prop history
+
+- Show the latest 20 NFL receiving-yard games in season and week order, filling missing game dates from the published NFL schedule.
+- Label the chart's date range and clarify that each bar represents one game.
+
 ## v10.0.11
 
 ### Product highlights
