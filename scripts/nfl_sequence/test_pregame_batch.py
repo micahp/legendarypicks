@@ -12,6 +12,22 @@ import simulate_pregame_batch as batch  # noqa: E402
 
 
 class BatchAggregation(unittest.TestCase):
+    def test_batch_cli_accepts_an_explicit_noncontiguous_seed_list(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            snapshot = Path(tmp) / 'snapshot.json'
+            seeds = Path(tmp) / 'seeds.json'
+            snapshot.write_text('{}')
+            seeds.write_text('{"seeds": [344, 196, 9]}')
+            with patch.object(batch, 'run_batch') as run_batch:
+                batch.main(['--snapshot-file', str(snapshot), '--seed-list-file', str(seeds),
+                            '--out', str(Path(tmp) / 'out.json')])
+
+        args = run_batch.call_args.args[0]
+        self.assertEqual(args.seed_ids, (9, 196, 344))
+        self.assertEqual(args.seed_start, 9)
+        self.assertEqual(args.games, 3)
+        self.assertEqual(args.seed_selection_manifest['kind'], 'explicit_seed_list')
+
     def test_batch_receiver_only_flag_is_opt_in_and_requires_player_outcomes(self):
         with tempfile.TemporaryDirectory() as tmp:
             snapshot = Path(tmp) / 'snapshot.json'

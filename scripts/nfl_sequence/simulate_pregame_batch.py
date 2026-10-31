@@ -53,6 +53,7 @@ import slc_outputs  # noqa: E402
 import historical_archive  # noqa: E402
 import source_preflight  # noqa: E402
 import football_assertions  # noqa: E402
+import seed_selection  # noqa: E402
 
 SCHEMA = 'lp-statistical-game-batch-1'
 PLAYER_CATEGORIES = {
@@ -542,7 +543,7 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
     return outcome, contribution
 
 
-def _open_seed_ledger(path, header, resume, *, seed_end=None):
+def _open_seed_ledger(path, header, resume, *, seed_end=None, allowed_seeds=None):
     """Return (finished seeds by number, handle for appending). Line one pins the inputs a resume must match."""
     if not resume and path.exists():
         raise FileExistsError(f'{path} exists; pass --resume to continue it or remove it to start over')
@@ -575,6 +576,8 @@ def _open_seed_ledger(path, header, resume, *, seed_end=None):
         if seed_end is not None and seed >= seed_end:
             raise ValueError(f'{path}: seed {seed} on ledger line {index} is outside requested range '
                              f'[{minimum_seed}, {seed_end})')
+        if allowed_seeds is not None and seed not in allowed_seeds:
+            raise ValueError(f'{path}: seed {seed} on ledger line {index} is not in the explicit seed selection')
         outcome = row.get('outcome')
         outcome_seed = outcome.get('seed') if isinstance(outcome, dict) else None
         if type(outcome_seed) is not int or outcome_seed != seed:
@@ -737,6 +740,19 @@ def _execution_verification(outcomes, profile_manifest):
 
 def run_batch(args):
     batch_started = time.monotonic()
+    seed_ids = getattr(args, 'seed_ids', None)
+    if seed_ids is None:
+        seed_values = tuple(range(args.seed_start, args.seed_start + args.games))
+        seed_selection_manifest = None
+    else:
+        selection = seed_selection.selection_from_seeds(seed_ids)
+        seed_values = selection.seeds
+        seed_selection_manifest = selection.manifest()
+        args.seed_start = selection.seed_start
+        args.games = len(seed_values)
+    if len(seed_values) != args.games:
+        raise ValueError(f'seed selection has {len(seed_values)} values but --games is {args.games}')
+    seed_end_exclusive = seed_values[-1] + 1
     source_provenance = game_cli.producer_source()
     snapshot_started = batch_started
     if args.snapshot_file:
@@ -925,9 +941,12 @@ def run_batch(args):
         'playcall_target_roles': bool(args.playcall_target_roles),
         'playcall_decision_filter_enabled': (not args.playcall_decision_unfiltered if args.playcall_decision else None),
     }
+    if seed_selection_manifest is not None:
+        ledger_header['seed_selection'] = seed_selection_manifest
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume,
-                                         seed_end=args.seed_start + args.games)
+                                         seed_end=seed_end_exclusive,
+                                         allowed_seeds=set(seed_values) if seed_selection_manifest else None)
     boxscore_handle = None
     exported_seed_ids = set()
     boxscore_path = Path(args.out).with_suffix('.boxscores.jsonl')
@@ -938,7 +957,7 @@ def run_batch(args):
     for player_id in _player_template(snapshot):
         player_totals[player_id]
     try:
-        for seed in range(args.seed_start, args.seed_start + args.games):
+        for seed in seed_values:
             outcome, contribution = _seed_outcome(
                 seed, finished, ledger, ref, snapshot, profile_manifest=profile_manifest,
                 archive_validation=archive_validation, export_boxscores=args.export_boxscores,
@@ -1007,8 +1026,10 @@ def run_batch(args):
             'configuration_hash': profile_manifest['configuration_hash'],
             'evaluation_class': profile_manifest['evaluation_class'],
             'prospective': profile_manifest['prospective'],
-            'seed_start': args.seed_start, 'seed_end_inclusive': args.seed_start + args.games - 1,
-            'seed_rule': 'one deterministic game per consecutive non-negative integer seed',
+            'seed_start': args.seed_start, 'seed_end_inclusive': seed_values[-1],
+            'seed_rule': ('one deterministic game per seed in the sorted explicit list'
+                          if seed_selection_manifest else
+                          'one deterministic game per consecutive non-negative integer seed'),
             'paired_randomness': bool(args.paired_randomness),
             'paired_random_stream_schema': ('lp.nfl.paired-random-streams.v1' if args.paired_randomness else None),
             'regulation_score_policy': ('all runs whose simulation reached the regulation end, including ties and '
@@ -1078,6 +1099,8 @@ def run_batch(args):
         'replay_examples': replay_examples,
         'game_info': game_info,
     }
+    if seed_selection_manifest is not None:
+        payload['simulation']['seed_selection'] = seed_selection_manifest
     if args.out:
         out = Path(args.out)
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -1119,6 +1142,8 @@ def main(argv=None):
                     help='optional explicit path for the pinned archive-reconstructed pregame streak file')
     ap.add_argument('--games', type=int, default=10000)
     ap.add_argument('--seed-start', type=int, default=1)
+    ap.add_argument('--seed-list-file', type=Path,
+                    help='JSON object with a "seeds" array; runs exactly these unique non-negative seed IDs')
     ap.add_argument('--db', default=e1.DEFAULT_DB, help='SQLite database opened read-only')
     ap.add_argument('--roster-snapshot', help='optional pinned full-depth roster JSON with starter flags and jersey numbers')
     ap.add_argument('--roster-provenance', help='source and checksum manifest for --roster-snapshot')
@@ -1213,6 +1238,15 @@ def main(argv=None):
                                                   'context: venue capacity, kickoff, forecast, referee status and '
                                                   'broadcast. The model does not read it.'))
     args = ap.parse_args(argv)
+    if args.seed_list_file:
+        try:
+            selection = seed_selection.load_seed_selection(args.seed_list_file)
+        except ValueError as exc:
+            ap.error(str(exc))
+        args.seed_ids = selection.seeds
+        args.seed_selection_manifest = selection.manifest()
+        args.games = len(selection.seeds)
+        args.seed_start = selection.seed_start
     if args.slc_blocker_fix and not args.playcall_artifact:
         ap.error('--slc-blocker-fix requires --playcall-artifact')
     if args.playcall_player_outcomes_receiver_only and not args.playcall_player_outcomes:
