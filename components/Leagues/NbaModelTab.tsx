@@ -386,10 +386,7 @@ function TeamRatingsView() {
     <section aria-label="NBA Almanac team ratings" className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-100">2025–26 team stats · NBA Almanac</h2>
-          <p className="mt-1 text-xs text-zinc-500">
-            Published team values from the 2026–27 Almanac. Parenthesized ranks are shown as printed.
-          </p>
+          <h2 className="text-lg font-semibold text-zinc-100">2025–26 team stats</h2>
         </div>
         <label className="flex items-center gap-2 text-sm text-zinc-500">
           Stat group

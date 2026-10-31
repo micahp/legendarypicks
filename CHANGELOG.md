@@ -5,7 +5,7 @@
 - Add NBA Almanac team ratings and simplify accuracy to one held-out benchmark row per model.
 - Show the NBA model's W-L-P record instead of lock-status counts, and stack team scores in Record and Projections for easier scanning.
 - Make NBA record scores easier to scan with final-winner highlighting, no per-game times, and matching section spacing when rows wrap.
-- Remove the Almanac page number from the Team Ratings view.
+- Simplify the Team Ratings heading and remove Almanac source-page text.
 
 ### League navigation
 

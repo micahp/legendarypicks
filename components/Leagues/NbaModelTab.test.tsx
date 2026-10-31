@@ -278,7 +278,8 @@ describe('NBA model tab', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Team Ratings' }))
     await waitFor(() => expect(screen.getByText('Atlanta')).toBeTruthy())
 
-    expect(screen.getByText('2025–26 team stats · NBA Almanac')).toBeTruthy()
+    expect(screen.getByText('2025–26 team stats')).toBeTruthy()
+    expect(screen.queryByText('Published team values from the 2026–27 Almanac. Parenthesized ranks are shown as printed.')).toBeNull()
     expect(screen.queryByText(/Almanac p\./)).toBeNull()
     expect(screen.getByText('ORtg')).toBeTruthy()
     expect(screen.getByRole('row', { name: /Atlanta/ }).textContent).toContain('115.0 (14)')
