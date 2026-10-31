@@ -29,7 +29,11 @@
         "valid_full_game": true,
         "boxscore_status": "valid_complete",
         "reconciliation": "passed",
-        "score": {"LA": 35, "LAC": 30}
+        "score": {
+          "LA": 35,
+          "LAC": 30
+        },
+        "original_status": "simulation_error"
       },
       {
         "seed": 344,
@@ -37,7 +41,11 @@
         "valid_full_game": true,
         "boxscore_status": "valid_complete",
         "reconciliation": "passed",
-        "score": {"LA": 17, "LAC": 23}
+        "score": {
+          "LA": 17,
+          "LAC": 23
+        },
+        "original_status": "simulation_error"
       }
     ]
   },
@@ -53,6 +61,8 @@
       "complete_overtime": 145,
       "simulation_error": 2,
       "final_batch_count": false
-    }
+    },
+    "audit_disposition": "not_a_seed_outcome",
+    "header_game_status": null
   }
 }
