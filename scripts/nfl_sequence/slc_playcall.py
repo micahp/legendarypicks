@@ -430,6 +430,7 @@ class PlayCallSampler:
         exact_outcome_rows = None
         backoff_candidates, outcome_fallback = (None, None)
         backoff_ess = None
+        outcome_weight_fallback = None
         if self.outcome_backoff_enabled and called_intent in SCRIMMAGE_INTENTS:
             exact_outcome_rows = self._outcome_rows(cell, called_intent, scramble, state)
             if len(exact_outcome_rows) < OUTCOME_BACKOFF_MIN_SUPPORT['exact_cell']:
@@ -446,6 +447,11 @@ class PlayCallSampler:
                 weights = [weight * player_outcomes.event_weight(self.player_outcome_table, key[1], pre_event,
                                                                   enabled_roles=self.player_outcome_roles)
                            for weight, key in zip(weights, keys)]
+            if not any(weight > 0 for weight in weights):
+                # These are modifiers within an already-selected play intent. If every modifier rejects
+                # its outcomes, retain that intent and fall back to the supported backoff distribution.
+                weights = [counts[key[1]] for key in keys]
+                outcome_weight_fallback = 'all_conditioned_weights_zero_within_selected_intent'
             weight_total = sum(weights)
             if weight_total > 0:
                 backoff_ess = 1.0 / sum(
@@ -476,9 +482,12 @@ class PlayCallSampler:
         coverage_fallback = None
         streak_fallback = None
         weights = []
+        baseline_weights = []
         if fallback_by_key is None:
             for k in keys:
-                weight = (exact_counts[k[1]] if exact_outcome_rows is not None else entry['base'][k])
+                base_weight = (exact_counts[k[1]] if exact_outcome_rows is not None else entry['base'][k])
+                baseline_weights.append(base_weight)
+                weight = base_weight
                 if use_formation:  # lifts multiply: formation and coverage are treated as independent given the outcome
                     weight *= self._lift(entry, k, formation, 'by_formation')
                 if use_coverage:
@@ -495,6 +504,11 @@ class PlayCallSampler:
                     weight *= player_outcomes.event_weight(self.player_outcome_table, k[1], pre_event,
                                                            enabled_roles=self.player_outcome_roles)
                 weights.append(weight)
+            if weights and not any(weight > 0 for weight in weights):
+                # Team/label/player outcome evidence may be sparse or conflicting. It may adjust
+                # outcomes, but it must not make a legal, already-chosen intent impossible to sample.
+                weights = baseline_weights
+                outcome_weight_fallback = 'all_conditioned_weights_zero_within_selected_intent'
         if (self.team_outcomes is None and not use_formation and not use_coverage and not use_streak and not use_labels
                 and not use_player_outcomes):
             if fallback_by_key is None:
@@ -586,6 +600,7 @@ class PlayCallSampler:
             'decision_row_filter_applied': bool(use_labels and self.decision_filter),
             'team_outcome_split': self.team_outcomes is not None,
             'team_outcome_fallbacks': list(self._current_team_outcome_fallbacks),
+            'outcome_weight_fallback': outcome_weight_fallback,
             'point_split_applied': self.point_shifts is not None and team in self.layer.team_index,
             'team_streak_split_applied': self.streak_shifts is not None and team in self.current_streak,
             'league_streak_split_applied': self.streak_league is not None and team in self.current_streak,

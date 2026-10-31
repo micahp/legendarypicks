@@ -28,7 +28,9 @@ class ArchivalComparisonContract(unittest.TestCase):
     def test_smoke_gate_compares_every_profile_layer_including_disabled_fixed_shares(self):
         expected = comparison._required_full_stack_layers()
         self.assertEqual(set(expected), set(slc_config.ENGINE_LAYER_KEYS))
-        self.assertEqual(len(comparison.RUNTIME_FIELDS), len(slc_config.ENGINE_LAYER_KEYS) - 1)
+        enabled_layers = {name for name, enabled in expected.items() if enabled}
+        self.assertEqual(set(comparison.RUNTIME_FIELDS), enabled_layers)
+        self.assertEqual(len(comparison.RUNTIME_FIELDS), sum(expected.values()))
         self.assertFalse(expected['fixed_player_target_carry_shares'])
         self.assertTrue(all(expected[name] for name in comparison.RUNTIME_FIELDS))
 
