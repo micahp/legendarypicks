@@ -312,8 +312,8 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                       : 'shrink-0 text-xs text-zinc-400'
 
                   return (
-                    <article key={game.game_id} className="flex flex-wrap items-start gap-x-6 gap-y-6 py-4">
-                      <div className="w-full min-w-48 sm:w-52 sm:flex-none">
+                    <article key={game.game_id} className="flex flex-wrap items-start gap-x-6 gap-y-3 py-4">
+                      <div className="w-full min-w-48 sm:w-fit sm:min-w-0 sm:max-w-52 sm:flex-none">
                         <h3 className="font-medium text-zinc-100">{game.away_team} at {game.home_team}</h3>
                         <p className="mt-2 text-xs text-zinc-400">
                           {game.home_team} win probability {percent(forecast.home_win_probability)}
