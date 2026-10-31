@@ -52,6 +52,7 @@ Scope: hard football invariants and separate historical distribution warnings fo
 - [x] SLC reducer and failure-context regression suites: 64 tests passed after incomplete-pass and blocked-kick next-snap mutations.
 - [x] Paired-stream, ablation-ledger, transition, full-game, seed-ledger, box-score, and version suites: 242 tests passed; batch and paired-evaluator CLI help and Python compilation passed.
 - [x] Paired clock hazard/runoff isolation plus transition/full-game/version regressions: 241 tests passed; Python compilation and `git diff --check` passed.
+- [x] Rebuilt the Model D OOB support using full 2022–2024 Weeks 1–18 training and the 2025 holdout. The 815-game source window excludes six development games and fits 103,072 plays; support is 1,774 `oob_snap` and 7,452 `oob_ready`. The earlier v2 counts (485/2,132) were Weeks 1–5 only and are superseded by the full-season v3 review. The report splits Q4's model bucket at the exact 300-second policy boundary; the clock replay suite passes 11 tests.
 - [x] Frozen Week 8 SLC integration rush-attempt assertion now includes attributed lost-fumble carries; the focused reconciliation test passed.
 - [x] Local SLC hard-invariant, state, box-score, integration, historical-evaluation, and paired-ablation suites: 307 tests passed.
 - [x] GridIron Physics `npm run test:autonomous` passed, including perception, kneel, spike, rule mutations, acceptance fixtures, and the batch legality gate.
@@ -61,6 +62,7 @@ Scope: hard football invariants and separate historical distribution warnings fo
 - [x] Current research-branch regression verification: full NFL-sequence discovery passed 934 tests with 3 skipped; the later zero-weight backoff regression passed in the affected 24-test suites.
 
 - [ ] CLE–PIT failed-seed replay after the no-play overtime fix is deferred per user instruction: do not rerun CLE–PIT. Preserve its existing outputs and the separate 5,639-row partial attempt.
+- [ ] Improve Model D quarter-end hazards: the refreshed 2025 holdout still has 4.31% premature and 92.21% missed quarter endings across 15,700 eligible quarter-replicates.
 - [ ] Complete the eight remaining Week 8 10K matchups with box-score export: `IND_JAX`, `KC_DEN`, `LAC_LA`, `LV_NYJ`, `MIN_DET`, `NE_MIA`, `PHI_WAS`, and `TEN_CIN`. The replacement launcher reported IND–JAX workers 01–06 started; completion and artifact reconciliation remain unverified.
 
 Never drop a failed seed, silently repair its result, or count it as a valid complete game.
