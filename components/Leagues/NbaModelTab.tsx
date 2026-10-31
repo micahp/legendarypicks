@@ -208,7 +208,7 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                 : (result.home_score > result.away_score ? game.home_team : game.away_team) + ' won'
             const projectedScore = forecast.score_forecast_available &&
               forecast.projected_away_points != null && forecast.projected_home_points != null
-              ? forecast.projected_away_points.toFixed(1) + '–' + forecast.projected_home_points.toFixed(1)
+              ? game.away_team + ' ' + forecast.projected_away_points.toFixed(1) + ' – ' + game.home_team + ' ' + forecast.projected_home_points.toFixed(1)
               : null
             const status = grade
               ? 'Graded'
@@ -224,9 +224,9 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
                     {new Date(game.scheduled_start_utc).toLocaleString()} · Locked {new Date(forecast.locked_at_utc as string).toLocaleString()}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-300">
-                    <span>Home win probability {percent(forecast.home_win_probability)}</span>
-                    {projectedScore && <span>Projected away–home score {projectedScore}</span>}
-                    {result && <span>Final {result.away_score}–{result.home_score} · {outcome}</span>}
+                    <span>{game.home_team} win probability {percent(forecast.home_win_probability)}</span>
+                    {projectedScore && <span>Projected score: {projectedScore}</span>}
+                    {result && <span>Final {game.away_team} {result.away_score} – {game.home_team} {result.home_score} · {outcome}</span>}
                   </div>
                 </div>
                 <span className={grade ? 'shrink-0 text-xs text-emerald-300' : 'shrink-0 text-xs text-zinc-400'}>{status}</span>
@@ -349,7 +349,7 @@ export default function NbaModelTab() {
       {view === 'projections' && (
         <section aria-labelledby="nba-projections-heading" className="space-y-3">
           <h2 id="nba-projections-heading" className="text-lg font-semibold text-zinc-100">
-            2026–27 projections · {selectedModel.label}
+            Projections · {selectedModel.label}
           </h2>
           {upcoming.length === 0 ? (
             <p className="rounded-xl border border-white/10 bg-zinc-950/50 p-4 text-sm text-zinc-400">
@@ -364,7 +364,7 @@ export default function NbaModelTab() {
                   const hasScore = forecast?.score_forecast_available &&
                     forecast.projected_away_points != null && forecast.projected_home_points != null
                   const score = hasScore
-                    ? forecast.projected_away_points.toFixed(1) + '–' + forecast.projected_home_points.toFixed(1)
+                    ? game.away_team + ' ' + forecast.projected_away_points.toFixed(1) + ' – ' + game.home_team + ' ' + forecast.projected_home_points.toFixed(1)
                     : forecast ? 'No score projection' : 'Forecast unavailable'
                   return (
                     <article key={game.game_id} className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950/50">
@@ -376,10 +376,9 @@ export default function NbaModelTab() {
                         <div className="p-4">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="text-sm font-semibold text-white">{selectedModel.label}</span>
-                            <span className="text-xs text-cyan-300">Home win {percent(forecast.home_win_probability)}</span>
+                            <span className="text-xs text-cyan-300">{game.home_team} win probability {percent(forecast.home_win_probability)}</span>
                           </div>
-                          <div className="mt-2 text-sm tabular-nums text-zinc-200">Away–home score: {score}</div>
-                          <div className="mt-1 break-all font-mono text-[10px] text-zinc-500">{forecast.model_version}</div>
+                          <div className="mt-2 text-sm tabular-nums text-zinc-200">{hasScore ? 'Projected score: ' : ''}{score}</div>
                         </div>
                       ) : (
                         <p className="p-4 text-sm text-zinc-500">{score}</p>

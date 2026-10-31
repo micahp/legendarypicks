@@ -34,7 +34,7 @@ function previewGame(gameId: string, scheduled: string, away: string, home: stri
         projected_home_points: null, projected_away_points: null, score_forecast_available: false,
       },
       G2: {
-        model_version: 'g2-version', home_win_probability: 0.57,
+        model_version: 'nba-g2-efficiency-v1-ewma08-reg50-hca2', home_win_probability: 0.57,
         projected_home_points: 111.2, projected_away_points: 108.4, score_forecast_available: true,
       },
       G3: {
@@ -87,10 +87,15 @@ afterEach(cleanup)
 describe('NBA model tab', () => {
   it('shows projections grouped under day headings and removes the research header', async () => {
     render(<NbaModelTab />)
-    await waitFor(() => expect(screen.getByRole('heading', { name: '2026–27 projections · G3 Joint scores' })).toBeTruthy())
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Projections · G3 Joint scores' })).toBeTruthy())
 
-    expect(screen.getAllByText('Home win 58.0%')).toHaveLength(3)
-    expect(screen.getAllByText('Away–home score: 108.9–112.1')).toHaveLength(3)
+    expect(screen.getByText('DET win probability 58.0%')).toBeTruthy()
+    expect(screen.getByText('PHI win probability 58.0%')).toBeTruthy()
+    expect(screen.getByText('CHI win probability 58.0%')).toBeTruthy()
+    expect(screen.getByText('Projected score: BOS 108.9 – DET 112.1')).toBeTruthy()
+    expect(screen.getByText('Projected score: NYK 108.9 – PHI 112.1')).toBeTruthy()
+    expect(screen.getByText('Projected score: LAL 108.9 – CHI 112.1')).toBeTruthy()
+    expect(screen.queryByText(/2026–27 projections/)).toBeNull()
     expect(screen.getAllByRole('heading', { name: dayLabel(firstGameDay) })).toHaveLength(1)
     expect(screen.getAllByRole('heading', { name: dayLabel(nextGameDay) })).toHaveLength(1)
     expect(screen.queryByText('Upcoming forecasts')).toBeNull()
@@ -157,8 +162,8 @@ describe('NBA model tab', () => {
 
     expect(screen.getByRole('heading', { name: '2026–27 record · G3 Joint scores' })).toBeTruthy()
     expect(screen.getByText('BOS at DET')).toBeTruthy()
-    expect(screen.getByText('Final 102–109 · DET won')).toBeTruthy()
-    expect(screen.getByText('Projected away–home score 108.9–112.1')).toBeTruthy()
+    expect(screen.getByText('Projected score: BOS 108.9 – DET 112.1')).toBeTruthy()
+    expect(screen.getByText('Final BOS 102 – DET 109 · DET won')).toBeTruthy()
     expect(screen.getAllByText('Graded').length).toBeGreaterThanOrEqual(2)
     expect(screen.queryByText('PHI at NYK')).toBeNull()
     expect(screen.queryByText(/Brier/)).toBeNull()
@@ -169,7 +174,10 @@ describe('NBA model tab', () => {
     render(<NbaModelTab />)
     await waitFor(() => expect(screen.getByLabelText('Model')).toBeTruthy())
     fireEvent.change(screen.getByLabelText('Model'), { target: { value: 'G1' } })
-    expect(screen.getByRole('heading', { name: '2026–27 projections · G1 Elo' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Projections · G1 Elo' })).toBeTruthy()
     expect(screen.getAllByText(/No score projection/)).toHaveLength(3)
+    fireEvent.change(screen.getByLabelText('Model'), { target: { value: 'G2' } })
+    expect(screen.getByRole('heading', { name: 'Projections · G2 Efficiency' })).toBeTruthy()
+    expect(screen.queryByText('nba-g2-efficiency-v1-ewma08-reg50-hca2')).toBeNull()
   })
 })
