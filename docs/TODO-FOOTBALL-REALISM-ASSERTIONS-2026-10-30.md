@@ -60,6 +60,7 @@ Scope: hard football invariants and separate historical distribution warnings fo
 - [x] Full-game SLC integration: 7 tests passed on the frozen Week 8 test fixture.
 - [x] Football Realism Assertion Suite v1 sections A through G are implemented and covered by the listed deterministic and historical-evaluation tests.
 - [x] Current research-branch regression verification: full NFL-sequence discovery passed 934 tests with 3 skipped; the later zero-weight backoff regression passed in the affected 24-test suites.
+- [x] Completed the corrected 300-seed full-game E2/Model D comparison against 2025: 296/298 seeds reached regulation, with 140/136 legally complete games and 4/2 blocked games; the regulation-reached play-volume gaps remain +20.1%/+19.3%. The review preserves the separate denominators and event/runoff breakdown in `docs/research/e3/clock-d-games-2025-holdout-train-2022-2024-v2/REVIEW.md`.
 
 - [ ] CLE–PIT failed-seed replay after the no-play overtime fix is deferred per user instruction: do not rerun CLE–PIT. Preserve its existing outputs and the separate 5,639-row partial attempt.
 - [ ] Improve Model D quarter-end hazards: the refreshed 2025 holdout still has 4.31% premature and 92.21% missed quarter endings across 15,700 eligible quarter-replicates.

@@ -1,0 +1,720 @@
+{
+ "D": {
+  "blocked": 2,
+  "boundaries": {
+   "change_of_ends": 24,
+   "change_of_ends_during_return": 11,
+   "change_of_ends_mid_drive": 561,
+   "halftime": 298,
+   "overtime": 13,
+   "skipped_post_score_kick": 6
+  },
+  "clamped_plays": {
+   "mean": 0.0,
+   "median": 0.0,
+   "p10": 0,
+   "p90": 0
+  },
+  "complete_regulation": 136,
+  "drives": {
+   "mean": 23.09,
+   "median": 23.0,
+   "p10": 19,
+   "p90": 27
+  },
+  "event_counts_per_game_mean": {
+   "field_goal_attempt": 4.6,
+   "fumble_lost": 0.74,
+   "interception": 1.29,
+   "pass_complete": 47.21,
+   "pass_incomplete": 25.06,
+   "punt": 8.44,
+   "run": 54.69,
+   "sack": 5.08
+  },
+  "event_counts_total": {
+   "field_goal_attempt": 1370,
+   "fumble_lost": 222,
+   "interception": 383,
+   "pass_complete": 14070,
+   "pass_incomplete": 7469,
+   "punt": 2516,
+   "run": 16299,
+   "sack": 1513
+  },
+  "event_runoff_mean_s": {
+   "field_goal_attempt": 3.81,
+   "fumble_lost": 8.03,
+   "interception": 8.25,
+   "pass_complete": 30.5,
+   "pass_incomplete": 4.78,
+   "punt": 9.18,
+   "run": 31.88,
+   "sack": 32.98
+  },
+  "event_share": {
+   "field_goal_attempt": 0.0312,
+   "fumble_lost": 0.0051,
+   "interception": 0.0087,
+   "pass_complete": 0.3209,
+   "pass_incomplete": 0.1704,
+   "punt": 0.0574,
+   "run": 0.3718,
+   "sack": 0.0345
+  },
+  "games": 300,
+  "late_plays": {
+   "mean": 19.05,
+   "median": 19.0,
+   "p10": 13,
+   "p90": 25
+  },
+  "plays": {
+   "mean": 147.12,
+   "median": 146.0,
+   "p10": 137,
+   "p90": 158
+  },
+  "plays_per_regulation_drive": {
+   "mean": 6.49,
+   "median": 6.4226190476190474,
+   "n": 298,
+   "p10": 5.703703703703703,
+   "p90": 7.315789473684211
+  },
+  "plays_q1": {
+   "mean": 34.27,
+   "median": 34.0,
+   "p10": 30,
+   "p90": 39
+  },
+  "plays_q2": {
+   "mean": 38.92,
+   "median": 39.0,
+   "p10": 33,
+   "p90": 45
+  },
+  "plays_q3": {
+   "mean": 33.81,
+   "median": 33.0,
+   "p10": 30,
+   "p90": 38
+  },
+  "plays_q4": {
+   "mean": 40.12,
+   "median": 39.0,
+   "p10": 34,
+   "p90": 47
+  },
+  "points": {
+   "mean": 40.36,
+   "median": 40.0,
+   "p10": 26,
+   "p90": 55
+  },
+  "quarter_end_events": {
+   "fumble_lost": 2,
+   "interception": 4,
+   "pass_complete": 1,
+   "punt": 16,
+   "run": 4
+  },
+  "regulation_drives": {
+   "mean": 22.95,
+   "median": 23.0,
+   "p10": 19,
+   "p90": 27
+  },
+  "regulation_end_reached": 298,
+  "regulation_plays": {
+   "mean": 147.12,
+   "median": 146.0,
+   "p10": 137,
+   "p90": 158
+  },
+  "status_counts": {
+   "blocked": 2,
+   "complete_overtime": 6,
+   "complete_regulation": 130,
+   "regulation_end_guarded": 162
+  }
+ },
+ "E2": {
+  "blocked": 4,
+  "boundaries": {
+   "change_of_ends": 14,
+   "change_of_ends_during_return": 1,
+   "change_of_ends_mid_drive": 577,
+   "halftime": 296,
+   "overtime": 12,
+   "skipped_post_score_kick": 7
+  },
+  "clamped_plays": {
+   "mean": 3.84,
+   "median": 4.0,
+   "p10": 3,
+   "p90": 4
+  },
+  "complete_regulation": 140,
+  "drives": {
+   "mean": 23.17,
+   "median": 23.0,
+   "p10": 19,
+   "p90": 27
+  },
+  "event_counts_per_game_mean": {
+   "field_goal_attempt": 4.61,
+   "fumble_lost": 0.74,
+   "interception": 1.32,
+   "pass_complete": 47.54,
+   "pass_incomplete": 25.11,
+   "punt": 8.45,
+   "run": 55.3,
+   "sack": 5.12
+  },
+  "event_counts_total": {
+   "field_goal_attempt": 1366,
+   "fumble_lost": 219,
+   "interception": 392,
+   "pass_complete": 14073,
+   "pass_incomplete": 7434,
+   "punt": 2500,
+   "run": 16370,
+   "sack": 1517
+  },
+  "event_runoff_mean_s": {
+   "field_goal_attempt": 3.54,
+   "fumble_lost": 8.22,
+   "interception": 8.28,
+   "pass_complete": 29.78,
+   "pass_incomplete": 4.65,
+   "punt": 9.36,
+   "run": 33.26,
+   "sack": 32.97
+  },
+  "event_share": {
+   "field_goal_attempt": 0.0311,
+   "fumble_lost": 0.005,
+   "interception": 0.0089,
+   "pass_complete": 0.3208,
+   "pass_incomplete": 0.1695,
+   "punt": 0.057,
+   "run": 0.3731,
+   "sack": 0.0346
+  },
+  "games": 300,
+  "late_plays": {
+   "mean": 9.46,
+   "median": 9.0,
+   "p10": 7,
+   "p90": 12
+  },
+  "plays": {
+   "mean": 148.21,
+   "median": 148.0,
+   "p10": 139,
+   "p90": 158
+  },
+  "plays_per_regulation_drive": {
+   "mean": 6.5,
+   "median": 6.5,
+   "n": 296,
+   "p10": 5.689655172413793,
+   "p90": 7.315789473684211
+  },
+  "plays_q1": {
+   "mean": 37.09,
+   "median": 37.0,
+   "p10": 32,
+   "p90": 43
+  },
+  "plays_q2": {
+   "mean": 37.29,
+   "median": 37.0,
+   "p10": 33,
+   "p90": 42
+  },
+  "plays_q3": {
+   "mean": 36.77,
+   "median": 37.0,
+   "p10": 32,
+   "p90": 42
+  },
+  "plays_q4": {
+   "mean": 37.06,
+   "median": 37.0,
+   "p10": 32,
+   "p90": 42
+  },
+  "points": {
+   "mean": 40.74,
+   "median": 40.0,
+   "p10": 26,
+   "p90": 55
+  },
+  "quarter_end_events": {
+   "field_goal_attempt": 3,
+   "fumble_lost": 2,
+   "pass_complete": 205,
+   "pass_incomplete": 17,
+   "punt": 32,
+   "run": 299,
+   "sack": 35
+  },
+  "regulation_drives": {
+   "mean": 23.08,
+   "median": 23.0,
+   "p10": 19,
+   "p90": 27
+  },
+  "regulation_end_reached": 296,
+  "regulation_plays": {
+   "mean": 148.21,
+   "median": 148.0,
+   "p10": 139,
+   "p90": 158
+  },
+  "status_counts": {
+   "blocked": 4,
+   "complete_overtime": 9,
+   "complete_regulation": 131,
+   "regulation_end_guarded": 156
+  }
+ },
+ "model": {
+  "fit_counts": {
+   "missing down, distance or field": 18043,
+   "negative derived clock runoff": 47,
+   "no next row": 10,
+   "no same-quarter next snap for clock runoff": 1,
+   "penalty (not modelled)": 9514,
+   "punt without a clean receiving-team snap": 740,
+   "qb_scramble (not in E1 vocabulary)": 2831,
+   "quarter change without a marker row (excluded)": 42,
+   "turnover that is a touchdown (not modelled)": 158,
+   "turnover without a clean new-offense snap": 272,
+   "two_point_attempt (not modelled)": 371,
+   "unclassified play": 1433,
+   "yards_gained null": 146
+  },
+  "holdout": {
+   "season": 2025,
+   "weeks": [
+    1,
+    18
+   ]
+  },
+  "reference_scope": {
+   "eligible_before": [
+    2025,
+    1
+   ],
+   "eligible_play_seasons": [
+    2022,
+    2023,
+    2024
+   ],
+   "kick_table": "not filtered: the published kick rates include overtime kicks",
+   "overtime_rows_excluded_from_pool": 930,
+   "overtime_rows_removed_before_kickoff_pool": 930,
+   "regulation_only": true,
+   "safety_kick_table": "observed 2022-2025 regular-season safety free kicks, usable rows only",
+   "special_teams_artifact_window": "2022-2025"
+  },
+  "reference_sha256": "1fc86a336edd03930ac86d299fef84f8e149520f3cba4026d7ae6affc1a936d8",
+  "source_sha256": {
+   "/root/legendarypicks/backend/data/picks.dev.db": "030843a336b0361c81e10f908b3313b35ac66cd1260c17418dea35096d06fe15",
+   "/root/lp-slc-player-workload-2026-10-30/docs/fixtures/e2/play_extras_2022_2025.csv": "3ae148f954e1a3ea2d9c88e1c82f91e745f8767bfaa62c275b1b4e988490dd5b",
+   "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/clock_d.py": "093d410cd199c77d6d791a72271c4fc9c4e27383e15eeb344acf5726ecbbb5c6",
+   "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/clock_d_games.py": "67831b91d05e6b29bbff13587666d1c7556572a1a5885783b802d020460f5a4c",
+   "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/e1_drive.py": "bcd55e7d3daab2bb929f4aecd6d2d74a70847ce8f114e2cf645d4df9fd25b02a",
+   "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/e2_reference.py": "3e7ba69a4504e2e4b68b30fc40b52b51b8b31d9489506ee29827918fe69464a3"
+  },
+  "train": {
+   "games_fitted": 809,
+   "plays_fitted": 103072,
+   "seasons": [
+    2022,
+    2024
+   ],
+   "source_games_before_dev_exclusion": 815,
+   "weeks": [
+    1,
+    18
+   ]
+  }
+ },
+ "observed_2025_volume": {
+  "classifier": "e1.classify on regulation PBP plays with the observed next row",
+  "event_counts_per_game_mean": {
+   "field_goal_attempt": 3.95,
+   "fumble_lost": 0.56,
+   "interception": 1.01,
+   "pass_complete": 40.19,
+   "pass_incomplete": 20.81,
+   "punt": 5.63,
+   "run": 46.8,
+   "sack": 4.4
+  },
+  "event_counts_total": {
+   "field_goal_attempt": 1075,
+   "fumble_lost": 153,
+   "interception": 276,
+   "pass_complete": 10932,
+   "pass_incomplete": 5659,
+   "punt": 1532,
+   "run": 12729,
+   "sack": 1197
+  },
+  "event_runoff_mean_s": {
+   "field_goal_attempt": 3.48,
+   "fumble_lost": 8.27,
+   "interception": 8.28,
+   "pass_complete": 30.56,
+   "pass_incomplete": 4.71,
+   "punt": 9.38,
+   "run": 33.96,
+   "sack": 33.3
+  },
+  "event_share": {
+   "field_goal_attempt": 0.032,
+   "fumble_lost": 0.0046,
+   "interception": 0.0082,
+   "pass_complete": 0.3258,
+   "pass_incomplete": 0.1687,
+   "punt": 0.0457,
+   "run": 0.3794,
+   "sack": 0.0357
+  },
+  "excluded_rows": {
+   "missing down, distance or field": 5996,
+   "negative derived clock runoff": 5,
+   "no same-quarter next snap for clock runoff": 4,
+   "penalty (not modelled)": 3446,
+   "punt without a clean receiving-team snap": 219,
+   "qb_scramble (not in E1 vocabulary)": 1033,
+   "turnover that is a touchdown (not modelled)": 43,
+   "turnover without a clean new-offense snap": 91,
+   "two_point_attempt (not modelled)": 120,
+   "unclassified play": 511,
+   "yards_gained null": 59
+  },
+  "games": 272,
+  "plays_by_quarter_per_game": {
+   "q1": {
+    "mean": 27.99,
+    "median": 28.0,
+    "n": 272,
+    "p10": 24,
+    "p90": 32
+   },
+   "q2": {
+    "mean": 33.74,
+    "median": 34.0,
+    "n": 272,
+    "p10": 29,
+    "p90": 38
+   },
+   "q3": {
+    "mean": 28.13,
+    "median": 28.0,
+    "n": 272,
+    "p10": 24,
+    "p90": 32
+   },
+   "q4": {
+    "mean": 33.5,
+    "median": 33.0,
+    "n": 272,
+    "p10": 27,
+    "p90": 40
+   }
+  },
+  "plays_per_drive_game_mean": 6.22,
+  "plays_per_drive_pooled": 6.13,
+  "plays_per_game": {
+   "mean": 123.36,
+   "median": 123.0,
+   "n": 272,
+   "p10": 112,
+   "p90": 134
+  },
+  "plays_per_team_game_mean": 61.68,
+  "regulation_drives_per_game": {
+   "mean": 20.11,
+   "median": 20.0,
+   "n": 272,
+   "p10": 17,
+   "p90": 24
+  },
+  "regulation_drives_per_team_game_mean": 10.06,
+  "season": 2025,
+  "source_rows": 46452,
+  "source_rows_sha256": "efd84722c3e6d1369f7f2076571f828727bd8312e914bb40e27a977a63f2eec9",
+  "team_games": 544,
+  "weeks": [
+   1,
+   18
+  ]
+ },
+ "simulation_vs_2025": {
+  "D": {
+   "complete_regulation_games": 136,
+   "difference_simulated_minus_observed": {
+    "plays_per_drive_game_mean": 0.27,
+    "plays_per_game": 23.76,
+    "plays_per_team_game": 11.88,
+    "plays_q1_per_game": 6.28,
+    "plays_q2_per_game": 5.18,
+    "plays_q3_per_game": 5.68,
+    "plays_q4_per_game": 6.62,
+    "regulation_drives_per_game": 2.84,
+    "regulation_drives_per_team_game": 1.41
+   },
+   "event_composition": {
+    "field_goal_attempt": {
+     "observed_per_game_mean": 3.95,
+     "observed_share": 0.032,
+     "simulated_per_game_mean": 4.6,
+     "simulated_share": 0.0312
+    },
+    "fumble_lost": {
+     "observed_per_game_mean": 0.56,
+     "observed_share": 0.0046,
+     "simulated_per_game_mean": 0.74,
+     "simulated_share": 0.0051
+    },
+    "interception": {
+     "observed_per_game_mean": 1.01,
+     "observed_share": 0.0082,
+     "simulated_per_game_mean": 1.29,
+     "simulated_share": 0.0087
+    },
+    "pass_complete": {
+     "observed_per_game_mean": 40.19,
+     "observed_share": 0.3258,
+     "simulated_per_game_mean": 47.21,
+     "simulated_share": 0.3209
+    },
+    "pass_incomplete": {
+     "observed_per_game_mean": 20.81,
+     "observed_share": 0.1687,
+     "simulated_per_game_mean": 25.06,
+     "simulated_share": 0.1704
+    },
+    "punt": {
+     "observed_per_game_mean": 5.63,
+     "observed_share": 0.0457,
+     "simulated_per_game_mean": 8.44,
+     "simulated_share": 0.0574
+    },
+    "run": {
+     "observed_per_game_mean": 46.8,
+     "observed_share": 0.3794,
+     "simulated_per_game_mean": 54.69,
+     "simulated_share": 0.3718
+    },
+    "sack": {
+     "observed_per_game_mean": 4.4,
+     "observed_share": 0.0357,
+     "simulated_per_game_mean": 5.08,
+     "simulated_share": 0.0345
+    }
+   },
+   "event_runoff_mean_s": {
+    "field_goal_attempt": {
+     "observed_mean_s": 3.48,
+     "simulated_mean_s": 3.81,
+     "simulated_minus_observed_s": 0.33
+    },
+    "fumble_lost": {
+     "observed_mean_s": 8.27,
+     "simulated_mean_s": 8.03,
+     "simulated_minus_observed_s": -0.24
+    },
+    "interception": {
+     "observed_mean_s": 8.28,
+     "simulated_mean_s": 8.25,
+     "simulated_minus_observed_s": -0.03
+    },
+    "pass_complete": {
+     "observed_mean_s": 30.56,
+     "simulated_mean_s": 30.5,
+     "simulated_minus_observed_s": -0.06
+    },
+    "pass_incomplete": {
+     "observed_mean_s": 4.71,
+     "simulated_mean_s": 4.78,
+     "simulated_minus_observed_s": 0.07
+    },
+    "punt": {
+     "observed_mean_s": 9.38,
+     "simulated_mean_s": 9.18,
+     "simulated_minus_observed_s": -0.2
+    },
+    "run": {
+     "observed_mean_s": 33.96,
+     "simulated_mean_s": 31.88,
+     "simulated_minus_observed_s": -2.08
+    },
+    "sack": {
+     "observed_mean_s": 33.3,
+     "simulated_mean_s": 32.98,
+     "simulated_minus_observed_s": -0.32
+    }
+   },
+   "observed_2025": {
+    "plays_per_drive_game_mean": 6.22,
+    "plays_per_game": 123.36,
+    "plays_per_team_game": 61.68,
+    "plays_q1_per_game": 27.99,
+    "plays_q2_per_game": 33.74,
+    "plays_q3_per_game": 28.13,
+    "plays_q4_per_game": 33.5,
+    "regulation_drives_per_game": 20.11,
+    "regulation_drives_per_team_game": 10.06
+   },
+   "regulation_end_reached_games": 298,
+   "simulated": {
+    "plays_per_drive_game_mean": 6.49,
+    "plays_per_game": 147.12,
+    "plays_per_team_game": 73.56,
+    "plays_q1_per_game": 34.27,
+    "plays_q2_per_game": 38.92,
+    "plays_q3_per_game": 33.81,
+    "plays_q4_per_game": 40.12,
+    "regulation_drives_per_game": 22.95,
+    "regulation_drives_per_team_game": 11.47
+   }
+  },
+  "E2": {
+   "complete_regulation_games": 140,
+   "difference_simulated_minus_observed": {
+    "plays_per_drive_game_mean": 0.28,
+    "plays_per_game": 24.85,
+    "plays_per_team_game": 12.43,
+    "plays_q1_per_game": 9.1,
+    "plays_q2_per_game": 3.55,
+    "plays_q3_per_game": 8.64,
+    "plays_q4_per_game": 3.56,
+    "regulation_drives_per_game": 2.97,
+    "regulation_drives_per_team_game": 1.48
+   },
+   "event_composition": {
+    "field_goal_attempt": {
+     "observed_per_game_mean": 3.95,
+     "observed_share": 0.032,
+     "simulated_per_game_mean": 4.61,
+     "simulated_share": 0.0311
+    },
+    "fumble_lost": {
+     "observed_per_game_mean": 0.56,
+     "observed_share": 0.0046,
+     "simulated_per_game_mean": 0.74,
+     "simulated_share": 0.005
+    },
+    "interception": {
+     "observed_per_game_mean": 1.01,
+     "observed_share": 0.0082,
+     "simulated_per_game_mean": 1.32,
+     "simulated_share": 0.0089
+    },
+    "pass_complete": {
+     "observed_per_game_mean": 40.19,
+     "observed_share": 0.3258,
+     "simulated_per_game_mean": 47.54,
+     "simulated_share": 0.3208
+    },
+    "pass_incomplete": {
+     "observed_per_game_mean": 20.81,
+     "observed_share": 0.1687,
+     "simulated_per_game_mean": 25.11,
+     "simulated_share": 0.1695
+    },
+    "punt": {
+     "observed_per_game_mean": 5.63,
+     "observed_share": 0.0457,
+     "simulated_per_game_mean": 8.45,
+     "simulated_share": 0.057
+    },
+    "run": {
+     "observed_per_game_mean": 46.8,
+     "observed_share": 0.3794,
+     "simulated_per_game_mean": 55.3,
+     "simulated_share": 0.3731
+    },
+    "sack": {
+     "observed_per_game_mean": 4.4,
+     "observed_share": 0.0357,
+     "simulated_per_game_mean": 5.12,
+     "simulated_share": 0.0346
+    }
+   },
+   "event_runoff_mean_s": {
+    "field_goal_attempt": {
+     "observed_mean_s": 3.48,
+     "simulated_mean_s": 3.54,
+     "simulated_minus_observed_s": 0.06
+    },
+    "fumble_lost": {
+     "observed_mean_s": 8.27,
+     "simulated_mean_s": 8.22,
+     "simulated_minus_observed_s": -0.05
+    },
+    "interception": {
+     "observed_mean_s": 8.28,
+     "simulated_mean_s": 8.28,
+     "simulated_minus_observed_s": -0.0
+    },
+    "pass_complete": {
+     "observed_mean_s": 30.56,
+     "simulated_mean_s": 29.78,
+     "simulated_minus_observed_s": -0.78
+    },
+    "pass_incomplete": {
+     "observed_mean_s": 4.71,
+     "simulated_mean_s": 4.65,
+     "simulated_minus_observed_s": -0.06
+    },
+    "punt": {
+     "observed_mean_s": 9.38,
+     "simulated_mean_s": 9.36,
+     "simulated_minus_observed_s": -0.02
+    },
+    "run": {
+     "observed_mean_s": 33.96,
+     "simulated_mean_s": 33.26,
+     "simulated_minus_observed_s": -0.7
+    },
+    "sack": {
+     "observed_mean_s": 33.3,
+     "simulated_mean_s": 32.97,
+     "simulated_minus_observed_s": -0.33
+    }
+   },
+   "observed_2025": {
+    "plays_per_drive_game_mean": 6.22,
+    "plays_per_game": 123.36,
+    "plays_per_team_game": 61.68,
+    "plays_q1_per_game": 27.99,
+    "plays_q2_per_game": 33.74,
+    "plays_q3_per_game": 28.13,
+    "plays_q4_per_game": 33.5,
+    "regulation_drives_per_game": 20.11,
+    "regulation_drives_per_team_game": 10.06
+   },
+   "regulation_end_reached_games": 296,
+   "simulated": {
+    "plays_per_drive_game_mean": 6.5,
+    "plays_per_game": 148.21,
+    "plays_per_team_game": 74.11,
+    "plays_q1_per_game": 37.09,
+    "plays_q2_per_game": 37.29,
+    "plays_q3_per_game": 36.77,
+    "plays_q4_per_game": 37.06,
+    "regulation_drives_per_game": 23.08,
+    "regulation_drives_per_team_game": 11.54
+   }
+  }
+ }
+}
