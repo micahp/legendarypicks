@@ -80,6 +80,19 @@ class TrainingWindow(unittest.TestCase):
         self.assertEqual(counts[(4, 900, 'inside_final_five_minutes', 'oob_snap')], 1)
         self.assertEqual(counts[(4, 900, 'outside_final_five_minutes', 'oob_ready')], 1)
 
+    def test_q4_long_bucket_reports_exact_clock_windows_on_both_sides_of_300_seconds(self):
+        quarters = {('G1', 4): [
+            {'stop': 'oob_snap', 'qsr': 299, 'ended': False, 'event': 'pass_complete'},
+            {'stop': 'oob_ready', 'qsr': 300, 'ended': False, 'event': 'pass_complete'},
+        ]}
+
+        rows = oob_stop_class_counts(quarters)
+        by_cell = {(row['policy_window'], row['stop_class']): row for row in rows
+                   if row['quarter'] == 4 and row['clock_bucket_upper_s'] == 900 and row['examples']}
+
+        self.assertEqual(by_cell[('inside_final_five_minutes', 'oob_snap')]['clock_window'], '120<clock<300s')
+        self.assertEqual(by_cell[('outside_final_five_minutes', 'oob_ready')]['clock_window'], '300-900s')
+
     def test_oob_runoff_never_uses_generic_clock_pool_when_class_support_is_thin(self):
         model = cd.Model(pool={}, pool_stop={}, pool_all={False: [25] * 50},
                          hazard={}, hazard_bucket={}, flags={}, counts={})
