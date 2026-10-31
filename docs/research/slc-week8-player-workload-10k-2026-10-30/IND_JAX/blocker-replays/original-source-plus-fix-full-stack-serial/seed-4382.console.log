@@ -1,0 +1,5 @@
+input preflight passed: database opened read-only; 3 input files and 0 input directories present
+input preflight passed: season 2026; database tables available; 5 decision Parquets; 32 manifest-pinned playbooks; 16 play-call frame score sources
+progress 1/1; errors 0; elapsed 7s; ETA 0s
+wrote /root/slc-week8-player-workload-10k-2026-10-30/blocker-replays/IND_JAX/original-source-plus-fix-full-stack-serial/seed-4382.json: 1/1 valid games, 0 regulation ties, 0 blocked before regulation
+baseline_v1=unavailable reference_sha256=f4bfbc0cc713d4016e47ba777ea7ecc8c80231384d73bc5f97ef8d3491a2dc5d
