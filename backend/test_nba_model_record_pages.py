@@ -128,6 +128,41 @@ def test_record_api_pages_complete_local_date_groups_and_only_the_selected_model
     assert {game["models"]["G2"]["grade"] is not None for game in second["games"]} == {False}
 
 
+def test_record_api_uses_append_only_grade_corrections(tmp_path, monkeypatch):
+    path = tmp_path / "nba-model.sqlite3"
+    con = open_db(str(path))
+    try:
+        _lock_game(con, "corrected-game", "2026-10-01T23:00:00Z")
+        initial = _verified_result("corrected-game")["corrected-game"]
+        initial["observed_at_utc"] = "2026-10-02T00:00:00Z"
+        assert grade_forecasts(con, {"corrected-game": initial},
+                               dt.datetime(2026, 10, 2, 1, tzinfo=UTC))["graded"] == 3
+
+        corrected = {
+            **initial, "away_score": 106, "source_hash": "corrected-final-hash",
+            "observed_at_utc": "2026-10-02T01:30:00Z",
+        }
+        assert grade_forecasts(con, {"corrected-game": corrected},
+                               dt.datetime(2026, 10, 2, 2, tzinfo=UTC))["corrected"] == 3
+        assert con.execute(
+            "SELECT final_away_score FROM nba_model_grades WHERE game_id='corrected-game' AND model='G3'"
+        ).fetchone()[0] == 105
+    finally:
+        con.close()
+
+    monkeypatch.setattr(nba_model, "MODEL_DB", str(path))
+    response = nba_model.nba_model_record(Response(), 2027, "G3", 7, None, "America/Chicago")
+    payload = json.loads(response.body)
+    game = payload["games"][0]
+
+    assert response.status_code == 200
+    assert game["game_id"] == "corrected-game"
+    assert game["result"]["away_score"] == 106
+    assert game["models"]["G3"]["grade"]["away_score"] == 106
+    assert payload["record"]["graded"] == 1
+    assert payload["record"]["away_points_mae"] == 1.0
+
+
 def test_record_page_rejects_invalid_cursor_timezone_model_and_date_count(tmp_path):
     path = tmp_path / "nba-model.sqlite3"
     con = open_db(str(path))

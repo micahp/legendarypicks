@@ -15,7 +15,7 @@ def main() -> int:
     require_dev_picks_db()
     result = grade_due_forecasts(model_db_path=NBA_MODEL_DB)
     print(json.dumps(result, sort_keys=True))
-    return 0
+    return 1 if result.get("correction_conflicts") else 0
 
 
 if __name__ == "__main__":

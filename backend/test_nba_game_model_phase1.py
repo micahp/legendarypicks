@@ -244,12 +244,33 @@ def test_locks_are_t90_only_atomic_immutable_and_grade_only_verified_finals(tmp_
             "completed": True, "summary_validated": True, "source_event_id": "ESPN001",
             "source_hash": "final-hash", "source": "ESPN scoreboard+summary",
             "home_team": "BOS", "away_team": "NYK", "home_score": 112, "away_score": 107,
+            "observed_at_utc": "2026-10-21T23:01:00Z",
         }}
         assert grade_forecasts(model, result, dt.datetime(2026, 10, 21, 23, 2, tzinfo=UTC))["graded"] == 3
         assert len(latest_verified_results(model)) == 0  # locks are not final observations
-        with pytest.raises(NBAModelStoreError, match="conflicts"):
-            grade_forecasts(model, {"NBA001": {**result["NBA001"], "home_score": 113}},
-                            dt.datetime(2026, 10, 21, 23, 3, tzinfo=UTC))
+        corrected = {"NBA001": {
+            **result["NBA001"], "home_score": 113, "source_hash": "corrected-final-hash",
+            "observed_at_utc": "2026-10-21T23:04:00Z",
+        }}
+        correction_report = grade_forecasts(
+            model, corrected, dt.datetime(2026, 10, 21, 23, 5, tzinfo=UTC))
+        assert correction_report["corrected"] == 3
+        assert correction_report["correction_conflicts"] == []
+        assert model.execute("select count(*) from nba_model_grades where final_home_score=112").fetchone()[0] == 3
+        assert model.execute("select count(*) from nba_model_grade_corrections where final_home_score=113").fetchone()[0] == 3
+        assert model.execute(
+            "select count(*) from nba_model_effective_grades where final_home_score=113"
+        ).fetchone()[0] == 3
+        corrected_payload = export_payload(
+            model, 2027, {}, dt.datetime(2026, 10, 22, 1, 0, tzinfo=UTC))
+        assert corrected_payload["games"][0]["result"]["home_score"] == 113
+        retry_report = grade_forecasts(
+            model, corrected, dt.datetime(2026, 10, 21, 23, 6, tzinfo=UTC))
+        assert retry_report["corrected"] == 0
+        assert retry_report["already_graded"] == 3
+        with pytest.raises(sqlite3.IntegrityError, match="immutable"):
+            model.execute("update nba_model_grade_corrections set final_home_score=114")
+        model.rollback()
     finally:
         model.close()
 
@@ -264,6 +285,64 @@ def test_lock_window_does_not_create_retrospective_forecast(tmp_path: Path):
         assert upsert_previews(model, rows, dt.datetime(2026, 10, 21, 23, 1, tzinfo=UTC)) == 0
     finally:
         model.close()
+
+
+def test_stale_final_conflict_does_not_rollback_other_games(tmp_path: Path):
+    model = open_db(str(tmp_path / "model.sqlite3"))
+    kickoff = "2026-10-21T23:00:00Z"
+    previewed = "2026-10-21T21:28:00Z"
+    locked_at = dt.datetime(2026, 10, 21, 21, 30, tzinfo=UTC)
+    graded_at = dt.datetime(2026, 10, 21, 23, 2, tzinfo=UTC)
+    try:
+        for game_id in ("NBA001", "NBA002"):
+            rows = _forecast_rows(kickoff, previewed, game_id)
+            assert upsert_previews(model, rows, locked_at) == 3
+            assert lock_forecasts(model, rows, locked_at)["inserted_games"] == 1
+
+        initial = {
+            "completed": True, "summary_validated": True, "source_event_id": "ESPN001",
+            "source_hash": "initial-hash", "source": "ESPN scoreboard+summary",
+            "home_team": "BOS", "away_team": "NYK", "home_score": 112, "away_score": 107,
+            "observed_at_utc": "2026-10-21T23:01:00Z",
+        }
+        assert grade_forecasts(model, {"NBA001": initial}, graded_at)["graded"] == 3
+
+        stale_change = {
+            **initial, "home_score": 113, "source_hash": "stale-change-hash",
+            "observed_at_utc": "2026-10-21T23:01:30Z",
+        }
+        next_game = {
+            **initial, "source_event_id": "ESPN002", "source_hash": "next-game-hash",
+            "observed_at_utc": "2026-10-21T23:03:00Z",
+        }
+        report = grade_forecasts(
+            model, {"NBA001": stale_change, "NBA002": next_game},
+            dt.datetime(2026, 10, 21, 23, 4, tzinfo=UTC),
+        )
+
+        assert report["graded"] == 3
+        assert report["corrected"] == 0
+        assert len(report["correction_conflicts"]) == 3
+        assert model.execute("select count(*) from nba_model_grades").fetchone()[0] == 6
+        assert model.execute(
+            "select count(*) from nba_model_grades where game_id='NBA002'"
+        ).fetchone()[0] == 3
+        assert model.execute("select count(*) from nba_model_grade_corrections").fetchone()[0] == 0
+    finally:
+        model.close()
+
+
+def test_grade_runner_exits_nonzero_when_it_reports_correction_conflicts(monkeypatch, capsys):
+    import grade_nba_model_forecasts as grade_runner
+
+    monkeypatch.setattr(grade_runner, "require_dev_picks_db", lambda: "picks.dev.db")
+    monkeypatch.setattr(grade_runner, "grade_due_forecasts", lambda **_kwargs: {
+        "graded": 3, "corrected": 0,
+        "correction_conflicts": [{"game_id": "NBA001", "model": "G3", "reason": "stale"}],
+    })
+
+    assert grade_runner.main() == 1
+    assert json.loads(capsys.readouterr().out)["correction_conflicts"][0]["game_id"] == "NBA001"
 
 
 def test_unlocked_previews_are_graded_apart_from_the_locked_record(tmp_path: Path):

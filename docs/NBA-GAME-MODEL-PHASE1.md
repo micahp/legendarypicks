@@ -197,10 +197,10 @@ The full per-pair, per-split measurements, variance definitions, power assumptio
 
 ## Prospective forecasts and grading
 
-- The standalone file `nba-model.dev.sqlite3` keeps model history, replaceable previews, immutable lock rows, immutable grade rows, and missed-window events separate from the picks DB.
+- The standalone file `nba-model.dev.sqlite3` keeps model history, replaceable previews, immutable lock rows, immutable grade rows with append-only corrections, and missed-window events separate from the picks DB.
 - Live history accepts a game only after the ESPN scoreboard, ESPN summary competitors/scores, team codes, paired box-score inputs, and any final already in `nba_schedule` agree. It records a source hash and never writes to `picks.dev.db`.
 - Previews use games strictly earlier than the target NBA local game date, and live observations must also have been captured by the forecast's UTC cutoff. Later box-score corrections and same-day completed games are held out. The lock runner accepts exactly G1/G2/G3 as one atomic set during the two-minute window beginning T−90 minutes. A passed window is recorded as missed; no retrospective lock is created.
-- Grades require a previously locked forecast and a post-tipoff ESPN final that passed the same schedule/scoreboard/summary checks. SQLite triggers reject update or delete of locked forecasts and grades.
+- Grades require a previously locked forecast and a post-tipoff ESPN final that passed the same schedule/scoreboard/summary checks. SQLite triggers reject update or delete of locked forecasts, original grades, and append-only grade corrections.
 - Dev-only systemd service/timer files are provided under `ops/systemd`. They are not installed or enabled by this branch. The shared API process has not been restarted, and the tab will appear on shared dev after the branch is reviewed, merged, and the dev API is reloaded under Micah's authorization.
 - Isolated runtime smoke on 2026-10-21 verified all 20 source assets, imported 11,976 historical games, copied 1,273 current schedule rows from the dev DB opened read-only, and generated/persisted 75 display previews across 25 games in the three-day horizon. The run used a temporary model DB and created no locks.
 

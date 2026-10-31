@@ -117,6 +117,55 @@ CREATE TABLE IF NOT EXISTS nba_model_grades (
     graded_at_utc TEXT NOT NULL,
     PRIMARY KEY(game_id, model)
 );
+CREATE TABLE IF NOT EXISTS nba_model_grade_corrections (
+    correction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_id TEXT NOT NULL,
+    model TEXT NOT NULL,
+    season INTEGER NOT NULL,
+    supersedes_source_hash TEXT NOT NULL,
+    supersedes_home_score INTEGER NOT NULL,
+    supersedes_away_score INTEGER NOT NULL,
+    result_source TEXT NOT NULL,
+    source_event_id TEXT NOT NULL,
+    final_home_score INTEGER NOT NULL,
+    final_away_score INTEGER NOT NULL,
+    home_win INTEGER NOT NULL CHECK(home_win IN (0,1)),
+    winner_brier REAL NOT NULL,
+    winner_log_loss REAL NOT NULL,
+    home_points_abs_error REAL,
+    away_points_abs_error REAL,
+    spread_abs_error REAL,
+    total_abs_error REAL,
+    source_hash TEXT NOT NULL,
+    observed_at_utc TEXT NOT NULL,
+    corrected_at_utc TEXT NOT NULL,
+    UNIQUE(game_id, model, source_hash)
+);
+CREATE INDEX IF NOT EXISTS nba_model_grade_corrections_latest
+    ON nba_model_grade_corrections(game_id, model, correction_id);
+CREATE VIEW IF NOT EXISTS nba_model_effective_grades AS
+SELECT g.game_id,g.model,g.season,g.result_source,g.source_event_id,
+       g.final_home_score,g.final_away_score,g.home_win,g.winner_brier,g.winner_log_loss,
+       g.home_points_abs_error,g.away_points_abs_error,g.spread_abs_error,g.total_abs_error,
+       g.source_hash,g.graded_at_utc,0 AS correction_count
+FROM nba_model_grades g
+WHERE NOT EXISTS (
+    SELECT 1 FROM nba_model_grade_corrections c
+    WHERE c.game_id=g.game_id AND c.model=g.model
+)
+UNION ALL
+SELECT c.game_id,c.model,c.season,c.result_source,c.source_event_id,
+       c.final_home_score,c.final_away_score,c.home_win,c.winner_brier,c.winner_log_loss,
+       c.home_points_abs_error,c.away_points_abs_error,c.spread_abs_error,c.total_abs_error,
+       c.source_hash,c.corrected_at_utc AS graded_at_utc,
+       (SELECT COUNT(*) FROM nba_model_grade_corrections all_corrections
+        WHERE all_corrections.game_id=c.game_id AND all_corrections.model=c.model) AS correction_count
+FROM nba_model_grade_corrections c
+WHERE NOT EXISTS (
+    SELECT 1 FROM nba_model_grade_corrections newer
+    WHERE newer.game_id=c.game_id AND newer.model=c.model
+      AND newer.correction_id>c.correction_id
+);
 CREATE TABLE IF NOT EXISTS nba_model_preview_grades (
     game_id TEXT NOT NULL,
     model TEXT NOT NULL,
@@ -164,6 +213,12 @@ BEGIN SELECT RAISE(ABORT, 'NBA forecast grades are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS nba_model_grade_immutable_delete
 BEFORE DELETE ON nba_model_grades
 BEGIN SELECT RAISE(ABORT, 'NBA forecast grades are immutable'); END;
+CREATE TRIGGER IF NOT EXISTS nba_model_grade_correction_immutable_update
+BEFORE UPDATE ON nba_model_grade_corrections
+BEGIN SELECT RAISE(ABORT, 'NBA forecast grade corrections are immutable'); END;
+CREATE TRIGGER IF NOT EXISTS nba_model_grade_correction_immutable_delete
+BEFORE DELETE ON nba_model_grade_corrections
+BEGIN SELECT RAISE(ABORT, 'NBA forecast grade corrections are immutable'); END;
 CREATE TRIGGER IF NOT EXISTS nba_model_preview_grade_immutable_update
 BEFORE UPDATE ON nba_model_preview_grades
 BEGIN SELECT RAISE(ABORT, 'NBA preview grades are immutable'); END;
@@ -340,7 +395,7 @@ def latest_verified_results(con: sqlite3.Connection) -> dict[str, dict[str, Any]
         "source_event_id": row["source_event_id"], "source_hash": row["source_hash"],
         "source": row["source"], "home_team": row["home_team"],
         "away_team": row["away_team"], "home_score": row["home_score"],
-        "away_score": row["away_score"],
+        "away_score": row["away_score"], "observed_at_utc": row["observed_at_utc"],
     } for row in rows}
 
 
@@ -560,40 +615,113 @@ def _score_forecast(forecast: dict[str, Any], home_score: int, away_score: int) 
     return outcome, brier, logloss, home_abs, away_abs, spread_abs, total_abs
 
 
+def _final_score(value: Any) -> int | None:
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(score) or not score.is_integer() or score < 0:
+        return None
+    return int(score)
+
+
 def grade_forecasts(con: sqlite3.Connection, results: dict[str, dict[str, Any]],
-                    now: dt.datetime | None = None) -> dict[str, int]:
-    """Append grades only for locked forecasts with a verified, completed source result."""
+                    now: dt.datetime | None = None) -> dict[str, Any]:
+    """Settle locks; append corrections for newer, verified changes to published finals."""
     now = now or dt.datetime.now(UTC)
-    report = {"graded": 0, "already_graded": 0, "awaiting_verified_final": 0}
+    report: dict[str, Any] = {
+        "graded": 0, "corrected": 0, "already_graded": 0,
+        "awaiting_verified_final": 0, "correction_conflicts": [],
+    }
     con.execute("BEGIN")
     try:
         locks = con.execute("SELECT * FROM nba_model_locks ORDER BY game_id,model").fetchall()
         for lock in locks:
             existing = con.execute(
-                "SELECT final_home_score,final_away_score FROM nba_model_grades "
+                "SELECT * FROM nba_model_effective_grades "
                 "WHERE game_id=? AND model=?", (lock["game_id"], lock["model"])
             ).fetchone()
             result = results.get(lock["game_id"])
-            if existing:
-                if result and (existing["final_home_score"] != result.get("home_score")
-                               or existing["final_away_score"] != result.get("away_score")):
-                    raise NBAModelStoreError(f"{lock['game_id']}: verified final conflicts with immutable grade")
-                report["already_graded"] += 1
+            if not result or result.get("completed") is not True \
+                    or result.get("summary_validated") is not True \
+                    or not result.get("source_event_id") or not result.get("source_hash") \
+                    or not result.get("source"):
+                if existing:
+                    report["already_graded"] += 1
+                else:
+                    report["awaiting_verified_final"] += 1
                 continue
-            if (not result or result.get("completed") is not True
-                    or result.get("summary_validated") is not True
-                    or not result.get("source_event_id")
-                    or not result.get("source_hash")):
-                report["awaiting_verified_final"] += 1
-                continue
+
             kickoff = parse_time(lock["scheduled_start_utc"])
             if now <= kickoff:
                 report["awaiting_verified_final"] += 1
                 continue
             if (str(result.get("home_team")) != lock["home_team"]
                     or str(result.get("away_team")) != lock["away_team"]):
-                raise NBAModelStoreError(f"{lock['game_id']}: result team identity differs from lock")
-            home_score, away_score = int(result["home_score"]), int(result["away_score"])
+                report["correction_conflicts"].append({
+                    "game_id": lock["game_id"], "model": lock["model"],
+                    "reason": "verified result team identity differs from the locked forecast",
+                })
+                continue
+            home_score = _final_score(result.get("home_score"))
+            away_score = _final_score(result.get("away_score"))
+            if home_score is None or away_score is None:
+                report["correction_conflicts"].append({
+                    "game_id": lock["game_id"], "model": lock["model"],
+                    "reason": "verified result is missing non-negative integer final scores",
+                })
+                continue
+
+            if existing:
+                if (existing["final_home_score"] == home_score
+                        and existing["final_away_score"] == away_score):
+                    report["already_graded"] += 1
+                    continue
+
+                source_hash = str(result["source_hash"])
+                observed_at = result.get("observed_at_utc")
+                if source_hash == existing["source_hash"]:
+                    reason = "final score changed without a new verified source hash"
+                elif not observed_at:
+                    reason = "corrected final has no source observation timestamp"
+                else:
+                    previous_observation = con.execute(
+                        "SELECT MAX(observed_at_utc) FROM nba_model_live_game_observations "
+                        "WHERE nba_game_id=? AND source_hash=?",
+                        (lock["game_id"], existing["source_hash"]),
+                    ).fetchone()[0]
+                    previous_at = previous_observation or existing["graded_at_utc"]
+                    try:
+                        observed_at_utc = parse_time(observed_at)
+                        is_newer = (parse_time(previous_at) < observed_at_utc <= parse_time(now))
+                    except (TypeError, ValueError):
+                        is_newer = False
+                    reason = (None if is_newer else
+                              "corrected final observation is not newer than the settled source")
+                if reason:
+                    report["correction_conflicts"].append({
+                        "game_id": lock["game_id"], "model": lock["model"], "reason": reason,
+                    })
+                    continue
+
+                outcome, brier, logloss, home_abs, away_abs, spread_abs, total_abs = _score_forecast(
+                    json.loads(lock["forecast_json"]), home_score, away_score)
+                cursor = con.execute(
+                    "INSERT INTO nba_model_grade_corrections(game_id,model,season,"
+                    "supersedes_source_hash,supersedes_home_score,supersedes_away_score,"
+                    "result_source,source_event_id,final_home_score,final_away_score,home_win,"
+                    "winner_brier,winner_log_loss,home_points_abs_error,away_points_abs_error,"
+                    "spread_abs_error,total_abs_error,source_hash,observed_at_utc,corrected_at_utc) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (lock["game_id"], lock["model"], lock["season"], existing["source_hash"],
+                     existing["final_home_score"], existing["final_away_score"], result["source"],
+                     str(result["source_event_id"]), home_score, away_score, outcome, brier, logloss,
+                     home_abs, away_abs, spread_abs, total_abs, source_hash,
+                     iso_utc(observed_at_utc), iso_utc(now)),
+                )
+                report["corrected"] += cursor.rowcount
+                continue
+
             outcome, brier, logloss, home_abs, away_abs, spread_abs, total_abs = _score_forecast(
                 json.loads(lock["forecast_json"]), home_score, away_score)
             con.execute(
@@ -699,7 +827,7 @@ def _all_record_summaries(con: sqlite3.Connection, season: int, now_text: str) -
             "AVG(g.home_points_abs_error) AS home_points_mae,"
             "AVG(g.away_points_abs_error) AS away_points_mae,"
             "AVG(g.spread_abs_error) AS spread_mae,AVG(g.total_abs_error) AS total_mae "
-            "FROM nba_model_locks l LEFT JOIN nba_model_grades g USING(game_id,model) "
+            "FROM nba_model_locks l LEFT JOIN nba_model_effective_grades g USING(game_id,model) "
             "WHERE l.season=? GROUP BY l.model", (season,)
         )
     }
@@ -780,7 +908,7 @@ def export_projection_payload(con: sqlite3.Connection, season: int,
         "SELECT l.*,g.result_source,g.final_home_score,g.final_away_score,g.home_win,"
         "g.winner_brier,g.winner_log_loss,g.home_points_abs_error,g.away_points_abs_error,"
         "g.spread_abs_error,g.total_abs_error,g.graded_at_utc "
-        "FROM nba_model_locks l LEFT JOIN nba_model_grades g USING(game_id,model) "
+        "FROM nba_model_locks l LEFT JOIN nba_model_effective_grades g USING(game_id,model) "
         "WHERE l.season=? AND l.scheduled_start_utc>? "
         "ORDER BY l.scheduled_start_utc,l.game_id,l.model", (season, now_text)
     ).fetchall()
@@ -916,7 +1044,7 @@ def export_record_page(con: sqlite3.Connection, season: int, model: str, days: i
         "SELECT l.game_id,l.season,l.scheduled_start_utc,l.home_team,l.away_team,l.model_version,"
         "l.lock_protocol,l.locked_at_utc,l.forecast_json,g.final_home_score,g.final_away_score,"
         "g.home_win,g.graded_at_utc "
-        "FROM nba_model_locks l LEFT JOIN nba_model_grades g USING(game_id,model) "
+        "FROM nba_model_locks l LEFT JOIN nba_model_effective_grades g USING(game_id,model) "
         "WHERE l.season=? AND l.model=? AND l.scheduled_start_utc>=? AND l.scheduled_start_utc<? "
         "ORDER BY l.scheduled_start_utc DESC,l.game_id DESC",
         (season, model, iso_utc(page_start_utc), iso_utc(page_end_utc)),
@@ -967,7 +1095,7 @@ def export_payload(con: sqlite3.Connection, season: int,
         "SELECT l.*,g.result_source,g.source_event_id AS grade_event_id,g.final_home_score,"
         "g.final_away_score,g.home_win,g.winner_brier,g.winner_log_loss,g.home_points_abs_error,"
         "g.away_points_abs_error,g.spread_abs_error,g.total_abs_error,g.graded_at_utc "
-        "FROM nba_model_locks l LEFT JOIN nba_model_grades g USING(game_id,model) "
+        "FROM nba_model_locks l LEFT JOIN nba_model_effective_grades g USING(game_id,model) "
         "WHERE l.season=? ORDER BY l.scheduled_start_utc,l.game_id,l.model", (season,)
     ).fetchall()
     previews = []
