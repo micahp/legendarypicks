@@ -62,6 +62,23 @@ class TrainingWindow(unittest.TestCase):
 
         self.assertEqual(result['draws'], [(0, 25, 'clock_runs'), (1, 5, 'oob_snap')])
 
+    def test_model_d_returns_clock_states_for_holdout_elapsed_time_diagnostics(self):
+        row = {'game_id': 'G1', 'play_id': 1}
+        model = cd.Model(
+            pool={('run', 'clock_runs', False): [5] * 50}, pool_stop={}, pool_all={},
+            hazard={('clock_runs', 900): (0, 50)}, hazard_bucket={}, flags={}, counts={})
+        plays = [
+            {'row': row, 'event': 'run', 'terminal': None, 'qtr': 1, 'qsr': 320},
+            {'row': {'game_id': 'G1', 'play_id': 2}, 'event': 'run', 'terminal': None, 'qtr': 1, 'qsr': 310},
+        ]
+
+        result = run_d(plays, model, seed=7)
+
+        self.assertEqual(result['clock_path'], [
+            {'play_index': 0, 'simulated_qsr': 320, 'observed_qsr': 320},
+            {'play_index': 1, 'simulated_qsr': 315, 'observed_qsr': 310},
+        ])
+
     def test_oob_class_counts_keep_the_q2_two_minute_and_q4_five_minute_edges(self):
         quarters = {('G1', 2): [
             {'stop': 'oob_snap', 'qsr': 120, 'ended': False, 'event': 'run'},
