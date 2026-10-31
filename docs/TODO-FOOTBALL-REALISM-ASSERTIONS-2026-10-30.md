@@ -42,6 +42,7 @@ Scope: hard football invariants and separate historical distribution warnings fo
 - [x] Add a cutoff-pinned joint reference from nflverse PBP and score-ledger-verified E3 data; verify source keys, score differentials, and output hashes.
 - [x] Add paired-seed ablations that preserve the pregame snapshot and unrelated random draws.
 - [x] Extend the resumable paired-ablation runner so the opt-in QB run-style layer can be enabled in every control arm and isolated as its own matched-seed ablation; SLC defaults remain unchanged.
+- [x] Add a read-only Week 8 batch auditor for all eight matchup outputs, seed ledgers, exported box scores, per-seed reconciliation, artifact hashes, and player workload tails.
 
 ## Current verification
 
@@ -63,10 +64,12 @@ Scope: hard football invariants and separate historical distribution warnings fo
 - [x] Current research-branch regression verification: full NFL-sequence discovery passed 934 tests with 3 skipped; the later zero-weight backoff regression passed in the affected 24-test suites.
 - [x] Completed the corrected 300-seed full-game E2/Model D comparison against 2025: 296/298 seeds reached regulation, with 140/136 legally complete games and 4/2 blocked games; the regulation-reached play-volume gaps remain +20.1%/+19.3%. The review preserves the separate denominators and event/runoff breakdown in `docs/research/e3/clock-d-games-2025-holdout-train-2022-2024-v2/REVIEW.md`.
 - [x] The paired-ablation matrix's QB-style control/ablation configuration passed its focused 25-test suite; runner and test modules compile, CLI exposes the opt-in switch, and `git diff --check` passes.
+- [x] Week 8 batch-audit fixtures cover complete and blocked seeds, missing seed detection, failed reconciliation, shard allocation, and historical record-exceedance reporting; 4 focused tests passed.
 
 - [ ] CLE–PIT failed-seed replay after the no-play overtime fix is deferred per user instruction: do not rerun CLE–PIT. Preserve its existing outputs and the separate 5,639-row partial attempt.
 - [ ] Run the full same-seed player-workload ablation matrix on the pinned ARI–DAL inputs, including `qb_run_role_style`; report per-player and team mean, spread, zero rates, quantiles, and record-exceedance changes before selecting calibration updates.
 - [ ] Refit player opportunity and workload-dependent substitution behavior from the cutoff-safe historical benchmark; validate team volume, player share, QB run role, and player-conditioned yards separately without hard caps.
+- [ ] Run the Week 8 batch auditor against the fast-host outputs after transfer; require all 80,000 requested seeds and their box-score sidecars to be accounted for before publishing aggregates.
 - [ ] Improve Model D quarter-end hazards: the refreshed 2025 holdout still has 4.31% premature and 92.21% missed quarter endings across 15,700 eligible quarter-replicates.
 - [ ] Complete the eight remaining Week 8 10K matchups with box-score export: `IND_JAX`, `KC_DEN`, `LAC_LA`, `LV_NYJ`, `MIN_DET`, `NE_MIA`, `PHI_WAS`, and `TEN_CIN`. The replacement launcher reported IND–JAX workers 01–06 started; completion and artifact reconciliation remain unverified.
 
