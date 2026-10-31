@@ -52,13 +52,20 @@ class TeamOutcomeSplits(unittest.TestCase):
     def test_the_intent_is_not_changed_by_the_outcome_split(self):
         off = sampler_with({})
         on = sampler_with({('offense', 'AAA', 'pass_complete'): 0.0, ('offense', 'AAA', 'pass_incomplete'): 0.0})
-        on.team_outcomes.table = {('offense', 'AAA', 'pass_complete'): 0.0, ('offense', 'AAA', 'pass_incomplete'): 0.0}
         off.decisions.clear()
         on.decisions.clear()
         for seed in range(50):
             off.sample(random.Random(seed), POOL, 'A', 'B', state=STATE)
             on.sample(random.Random(seed), POOL, 'A', 'B', state=STATE)
         self.assertEqual([d['intent'] for d in off.decisions], [d['intent'] for d in on.decisions])
+        dropbacks = [d for d in on.decisions if d['intent'] == 'dropback']
+        self.assertTrue(dropbacks)
+        self.assertTrue(all(
+            d['outcome_weight_fallback'] == 'all_conditioned_weights_zero_within_selected_intent'
+            for d in dropbacks
+        ))
+        self.assertTrue(all(d['outcome_weight_fallback'] is None
+                            for d in on.decisions if d['intent'] != 'dropback'))
 
     def test_each_decision_records_whether_the_split_was_on(self):
         off, on = sampler_with({}), sampler_with({})
