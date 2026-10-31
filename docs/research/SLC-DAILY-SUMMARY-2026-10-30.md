@@ -4,9 +4,9 @@
 **Latest code commit before this publication:** `dfd20800` (`research: audit Week 8 batch artifacts`)
 **Scope:** SLC football-realism assertions, workload calibration evidence, the separate Model D clock replay, and the remaining Week 8 matchup runs.
 
-## Status update — 20:52 CDT
+## Status update — 20:59 CDT
 
-The latest source commit, `dfd20800` (`research: audit Week 8 batch artifacts`), adds a read-only integrity and workload-tail audit for the eight matchup outputs. The earlier paired QB-style ablation runner is in `30ed3c76`; SLC defaults remain unchanged. The prior daily-summary publication is `d0eb19c3`. This update records the final event-clock diagnostic, focused verifications, and current run-monitoring limit.
+The latest source commit, `dfd20800` (`research: audit Week 8 batch artifacts`), adds a read-only integrity and workload-tail audit for the eight matchup outputs. The earlier paired QB-style ablation runner is in `30ed3c76`; SLC defaults remain unchanged. The prior daily-summary publication is `d0eb19c3`. This update records the final event-clock diagnostic, focused and full-suite verifications, and current run-monitoring limit.
 
 ## Completed and published
 
@@ -72,6 +72,8 @@ The continuation check also passed **61 tests** across `test_pre_event`, `test_p
 The runner change passed **25 tests** across `test_run_paired_seed_ablation_matrix` and `test_slc_config`; Python compilation, CLI help, and `git diff --check` also passed.
 
 The batch auditor's four tests passed with `test_audit_week8_matchup_batch`; combined with the paired-runner module, the latest focused run passed **13 tests**.
+
+After those changes, the full NFL-sequence discovery passed **945 tests with 3 skipped** in 135.6 seconds using `/root/legendarypicks/backend/venv/bin/python`. The lighter research virtualenv lacks `pyarrow` and `pytz`, so it cannot run three unrelated data-import test modules.
 
 ## Still open
 
