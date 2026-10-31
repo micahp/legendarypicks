@@ -1,0 +1,260 @@
+{
+  "schema": "lp.nfl.week8-slc-run-index.v1",
+  "season": 2026,
+  "week": 8,
+  "audited_at": "2026-10-31",
+  "canonical_published_root": "docs/research/slc-week8-2026/runs/<GAME_ID>/<RUN_ID>/",
+  "earlier_run_evidence": "docs/research/nfl-availability/2026/week08-simulator-runs-2026-10-27.md",
+  "matchups": [
+    {
+      "game_id": "2026_08_ARI_DAL",
+      "away_team": "ARI",
+      "home_team": "DAL",
+      "status": "completed_10k_latest_player_workload",
+      "completed_10k_runs": [
+        {
+          "run_id": "parallel-6-v5-lateral-filter-blocked-decision-2026-10-30",
+          "requested_games": 10000,
+          "completed_games": 9994,
+          "blocked_games": 6,
+          "errors": 0,
+          "final_overtime_ties_included": 11,
+          "artifact_location": "/root/slc-week8-missing-10k-2026-10-29/artifacts/ARI_DAL/parallel-6-v5-lateral-filter-blocked-decision-2026-10-30",
+          "evidence": "postrun-audit.json"
+        },
+        {
+          "run_id": "earlier-original-2026-10-27",
+          "requested_games": 10000,
+          "valid_games": 9832,
+          "regulation_end_ties": 9,
+          "blocked_games": 158,
+          "errors": 1,
+          "source_commit": "1aedc435",
+          "artifact_location": "/tmp/nfl-week08-runs-20261027-1aedc435/out/2026_08_ARI_DAL.json"
+        }
+      ],
+      "notes": "The later player-workload run supersedes the earlier source for current run coverage."
+    },
+    {
+      "game_id": "2026_08_ATL_TB",
+      "away_team": "ATL",
+      "home_team": "TB",
+      "status": "completed_10k_earlier_source",
+      "completed_10k_runs": [
+        {
+          "run_id": "earlier-original-2026-10-27",
+          "requested_games": 10000,
+          "valid_games": 9822,
+          "regulation_end_ties": 9,
+          "blocked_games": 169,
+          "errors": 0,
+          "source_commit": "1aedc435",
+          "artifact_location": "/tmp/nfl-week08-runs-20261027-1aedc435/out/2026_08_ATL_TB.json"
+        }
+      ],
+      "notes": "No completed 10K run on the newer player-workload branch was found."
+    },
+    {
+      "game_id": "2026_08_BAL_BUF",
+      "away_team": "BAL",
+      "home_team": "BUF",
+      "status": "completed_10k_earlier_source",
+      "completed_10k_runs": [
+        {
+          "run_id": "earlier-original-2026-10-27",
+          "requested_games": 10000,
+          "valid_games": 9806,
+          "regulation_end_ties": 10,
+          "blocked_games": 182,
+          "errors": 2,
+          "source_commit": "1aedc435",
+          "artifact_location": "/tmp/nfl-week08-runs-20261027-1aedc435/out/2026_08_BAL_BUF.json"
+        }
+      ],
+      "notes": "No completed 10K run on the newer player-workload branch was found."
+    },
+    {
+      "game_id": "2026_08_CAR_GB",
+      "away_team": "CAR",
+      "home_team": "GB",
+      "status": "completed_10k_earlier_source",
+      "completed_10k_runs": [
+        {
+          "run_id": "earlier-original-2026-10-27",
+          "requested_games": 10000,
+          "valid_games": 9802,
+          "regulation_end_ties": 8,
+          "blocked_games": 190,
+          "errors": 0,
+          "source_commit": "1aedc435",
+          "artifact_location": "/tmp/nfl-week08-runs-20261027-1aedc435/out/2026_08_CAR_GB.json"
+        }
+      ],
+      "other_attempts": [
+        "One all-layer engine smoke completed; this was a single game, not a 10K batch.",
+        "A later 10K attempt stopped at seed 581 and is recorded in docs/research/slc-week8-2026/10k-run-try3-partial-errors.md."
+      ],
+      "notes": "No completed 10K run on the newer player-workload branch was found."
+    },
+    {
+      "game_id": "2026_08_CHI_SEA",
+      "away_team": "CHI",
+      "home_team": "SEA",
+      "status": "completed_10k_earlier_source",
+      "completed_10k_runs": [
+        {
+          "run_id": "earlier-original-2026-10-27",
+          "requested_games": 10000,
+          "valid_games": 9823,
+          "regulation_end_ties": 9,
+          "blocked_games": 166,
+          "errors": 2,
+          "source_commit": "1aedc435",
+          "artifact_location": "/tmp/nfl-week08-runs-20261027-1aedc435/out/2026_08_CHI_SEA.json"
+        }
+      ],
+      "notes": "No completed 10K run on the newer player-workload branch was found."
+    },
+    {
+      "game_id": "2026_08_CLE_PIT",
+      "away_team": "CLE",
+      "home_team": "PIT",
+      "status": "completed_10k_latest_player_workload",
+      "completed_10k_runs": [
+        {
+          "run_id": "parallel-6-offensive-td-classified-fixed-2026-10-30",
+          "requested_games": 10000,
+          "completed_games": 9894,
+          "untied_completed_games": 9887,
+          "final_overtime_ties_included": 7,
+          "blocked_games": 106,
+          "errors": 0,
+          "artifact_location": "/root/slc-week8-missing-10k-2026-10-29/artifacts/CLE_PIT/parallel-6-offensive-td-classified-fixed-2026-10-30",
+          "evidence": "six worker JSON, seed, and boxscore ledgers; run audit not yet published"
+        }
+      ],
+      "partial_attempts": [
+        {
+          "run_id": "parallel-6-post-stat-fix",
+          "status": "interrupted",
+          "notes": "Worker logs show errors and KeyboardInterrupt; do not count as a completed 10K run."
+        }
+      ],
+      "notes": "No rerun is needed for basic Week 8 matchup coverage."
+    },
+    {
+      "game_id": "2026_08_IND_JAX",
+      "away_team": "IND",
+      "home_team": "JAX",
+      "status": "completed_10k_latest_player_workload",
+      "completed_10k_runs": [
+        {
+          "run_id": "parallel-6-2026-10-30",
+          "requested_games": 10000,
+          "completed_games": 9998,
+          "blocked_games": 2,
+          "errors": 0,
+          "artifact_location": "docs/research/slc-week8-player-workload-10k-2026-10-30/IND_JAX",
+          "report": "docs/reports/slc-run-reviews-2026-10-31/IND_JAX/report.md"
+        }
+      ]
+    },
+    {
+      "game_id": "2026_08_KC_DEN",
+      "away_team": "KC",
+      "home_team": "DEN",
+      "status": "completed_10k_latest_player_workload",
+      "completed_10k_runs": [
+        {
+          "run_id": "parallel-6-2026-10-30",
+          "requested_games": 10000,
+          "completed_games": 9998,
+          "blocked_games": 2,
+          "errors": 0,
+          "artifact_location": "/root/slc-week8-player-workload-10k-2026-10-30/artifacts/KC_DEN/parallel-6",
+          "evidence": "six worker JSON files, each covering 1,666 or 1,667 requested seeds"
+        }
+      ]
+    },
+    {
+      "game_id": "2026_08_LAC_LA",
+      "away_team": "LAC",
+      "home_team": "LA",
+      "status": "no_completed_10k",
+      "completed_10k_runs": [],
+      "observed_attempts": [
+        {
+          "run_id": "parallel-6",
+          "artifact_location": "/root/slc-week8-player-workload-10k-2026-10-30/artifacts/LAC_LA/parallel-6",
+          "status": "empty_directory"
+        }
+      ],
+      "notes": "No seed ledger or worker output was present in the matchup directory."
+    },
+    {
+      "game_id": "2026_08_LV_NYJ",
+      "away_team": "LV",
+      "home_team": "NYJ",
+      "status": "no_completed_10k",
+      "completed_10k_runs": [],
+      "notes": "A retry was stopped; no completed 10K artifact was found."
+    },
+    {
+      "game_id": "2026_08_MIN_DET",
+      "away_team": "MIN",
+      "home_team": "DET",
+      "status": "no_completed_10k",
+      "completed_10k_runs": [],
+      "notes": "A retry was stopped; no completed 10K artifact was found."
+    },
+    {
+      "game_id": "2026_08_NE_MIA",
+      "away_team": "NE",
+      "home_team": "MIA",
+      "status": "no_completed_10k",
+      "completed_10k_runs": [],
+      "notes": "No Week 8 10K run artifact was found in the audited run roots."
+    },
+    {
+      "game_id": "2026_08_PHI_WAS",
+      "away_team": "PHI",
+      "home_team": "WAS",
+      "status": "no_completed_10k",
+      "completed_10k_runs": [],
+      "notes": "No Week 8 10K run artifact was found in the audited run roots."
+    },
+    {
+      "game_id": "2026_08_TEN_CIN",
+      "away_team": "TEN",
+      "home_team": "CIN",
+      "status": "no_completed_10k",
+      "completed_10k_runs": [],
+      "notes": "No Week 8 10K run artifact was found in the audited run roots."
+    }
+  ],
+  "active_runs_at_audit": 0,
+  "no_completed_10k_matchups": [
+    "2026_08_LAC_LA",
+    "2026_08_LV_NYJ",
+    "2026_08_MIN_DET",
+    "2026_08_NE_MIA",
+    "2026_08_PHI_WAS",
+    "2026_08_TEN_CIN"
+  ],
+  "no_latest_player_workload_10k_matchups": [
+    "2026_08_ATL_TB",
+    "2026_08_BAL_BUF",
+    "2026_08_CAR_GB",
+    "2026_08_CHI_SEA",
+    "2026_08_LAC_LA",
+    "2026_08_LV_NYJ",
+    "2026_08_MIN_DET",
+    "2026_08_NE_MIA",
+    "2026_08_PHI_WAS",
+    "2026_08_TEN_CIN"
+  ],
+  "organization": {
+    "raw_artifacts_moved": false,
+    "reason": "Preserve frozen source artifacts and avoid copying large worker files; keep the new catalog as the single lookup point."
+  }
+}
