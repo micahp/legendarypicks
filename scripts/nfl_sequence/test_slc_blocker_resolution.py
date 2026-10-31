@@ -303,6 +303,45 @@ class BlockedKickResolution(unittest.TestCase):
         self.assertEqual((after['offense'], after['yl'], after['down'], terminal), ('K', 12, 1, None))
         self.assertTrue(flags['first_down'])
 
+    def test_reprojected_goal_line_snaps_reduce_distance_to_go_for_both_blocker_cases(self):
+        cases = (
+            ('punt', '2024_05_MIA_NE', 1249, 'receiving_team', 86, 6, 'blocked_punt', 11),
+            ('field_goal', '2025_10_NO_CAR', 2504, 'kicking_team', 1, 1, 'blocked_field_goal', 1),
+        )
+        fixture = REPO / 'docs/fixtures/e2/blocked_kick_outcomes_2022_2025_audited_v1.csv'
+        with fixture.open(newline='') as handle:
+            source_rows = list(csv.DictReader(handle))
+        int_fields = ('play_id', 'yardline_100', 'clock_runoff_seconds', 'next_snap_yardline_100',
+                      'next_snap_down', 'next_snap_ydstogo', 'next_snap_yards_from_los')
+        for kick_type, game_id, play_id, role, kick_yline, expected_yline, event, state_togo in cases:
+            with self.subTest(game_id=game_id, play_id=play_id):
+                source = next(row for row in source_rows
+                              if row['game_id'] == game_id and int(row['play_id']) == play_id)
+                for field in int_fields:
+                    if source.get(field):
+                        source[field] = int(source[field])
+                self.assertEqual((source['kick_type'], source['classification_status'],
+                                  source['possession_after_role']),
+                                 (kick_type, 'classified_next_snap', role))
+                state = {'offense': 'K', 'defense': 'R', 'down': 4,
+                         'togo': state_togo, 'yl': kick_yline}
+                game = object.__new__(gs._Game)
+                game.ref = SimpleNamespace(
+                    blocked_kicks={'records': {kick_type: [source]}, 'sha256': 'a' * 64},
+                    blocker_fixes=('blocked_kick_geometry',),
+                    contextual_sampler=SimpleNamespace(decisions=[{}]),
+                )
+
+                reason, outcome = game._sample_blocked_kick_by_category(
+                    kick_type, [source], random.Random(1), 600, 2, state)
+                self.assertIsNone(reason)
+                self.assertEqual(outcome['next_snap_yardline_100'], expected_yline)
+                self.assertEqual(outcome['next_snap_ydstogo'], expected_yline)
+
+                after, _terminal, _flags = reducer.apply_blocked_kick(state, event, outcome)
+                self.assertEqual(after['down'], 1)
+                self.assertEqual((after['yl'], after['togo']), (expected_yline, expected_yline))
+
     def test_impossible_projection_is_rejected_without_clamping_and_unknown_records_stay_blocked(self):
         source = {
             'kick_type': 'field_goal', 'classification_status': 'classified_next_snap',

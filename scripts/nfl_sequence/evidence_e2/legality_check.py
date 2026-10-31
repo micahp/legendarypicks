@@ -256,7 +256,7 @@ def check_blocked_kicks(record):
     observed = (((record.get('pregame_snapshot') or {}).get('model_reference') or {}).get('observed_reference') or {})
     fixture_hash = observed.get('blocked_kick_source_sha256')
     input_hashes = observed.get('blocked_kick_input_source_sha256') or {}
-    supported = {'classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety'}
+    supported = {'classified_recovery', 'classified_dead_ball_spot', 'classified_next_snap', 'touchdown', 'safety'}
     for drive, play in plays_of(record):
         event = play['event_type']
         outcome = play['outcome']
@@ -297,6 +297,25 @@ def check_blocked_kicks(record):
             continue
         if after.get('end_of_drive') in ('halftime', 'end_of_regulation'):
             continue  # the half/game ends on the kick; there is no next scrimmage state to compare
+        if blocked.get('classification_status') == 'classified_next_snap':
+            possession_role = blocked.get('possession_after_role')
+            spot, down, togo = (blocked.get('next_snap_yardline_100'), blocked.get('next_snap_down'),
+                                blocked.get('next_snap_ydstogo'))
+            if (possession_role not in ('receiving_team', 'kicking_team')
+                    or not all(type(value) is int for value in (spot, down, togo))
+                    or not 1 <= spot <= 99 or not 1 <= down <= 4 or not 1 <= togo <= spot):
+                findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked next snap has illegal spot, down or distance')
+                continue
+            expected_offense = before['defense_team'] if possession_role == 'receiving_team' else before['offense_team']
+            expected_defense = before['offense_team'] if possession_role == 'receiving_team' else before['defense_team']
+            if (after.get('offense_team') != expected_offense or after.get('defense_team') != expected_defense
+                    or after.get('yardline_100') != spot or after.get('down') != down
+                    or after.get('yards_to_go') != togo):
+                findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked next snap disagrees with the projected state')
+            if (bool(outcome.get('turnover')) != (possession_role == 'receiving_team')
+                    or bool(outcome.get('turnover_on_downs'))):
+                findings.append(f'drive {drive["index"]} play {play["sequence"]}: blocked next-snap possession is misclassified')
+            continue
         if role == 'receiving_team' or blocked.get('classification_status') == 'classified_dead_ball_spot':
             delta = (blocked.get('return_endpoint_yards_from_los') if role == 'receiving_team'
                      else blocked.get('dead_ball_yards_from_los'))

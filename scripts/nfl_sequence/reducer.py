@@ -260,6 +260,11 @@ def project_blocked_kick_next_snap(outcome, st):
     if not 1 <= yardline <= 99:
         raise UnmodelledOutcome(f'blocked_kick_next_snap_outside_field:{role}')
     projected = dict(outcome)
+    source_togo = outcome.get('next_snap_ydstogo')
+    if type(source_togo) is int:
+        # The line to gain cannot extend beyond the goal line. A source 1st-and-10
+        # projected inside ten yards becomes goal-to-go at the projected spot.
+        projected['next_snap_ydstogo'] = min(source_togo, yardline)
     projected.update(next_snap_yardline_100=yardline, geometry_projected=True,
                      projected_from_source_yardline_100=outcome.get('yardline_100'),
                      projected_kick_yardline_100=int(st['yl']))

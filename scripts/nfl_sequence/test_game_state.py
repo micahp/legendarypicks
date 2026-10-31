@@ -553,6 +553,49 @@ class BlockedKickIntegration(unittest.TestCase):
         self.assertEqual(rm._blocked_kicks(record)[0], rm.PASS)
         gs.validate_game(record)
 
+    def test_projected_next_snap_goal_to_go_passes_matrix_and_bad_distance_fails(self):
+        source_hash, fixture_hash = 'a' * 64, 'b' * 64
+        cases = (
+            ('punt', 'receiving_team', 86, 11, 6, 'blocked_punt'),
+            ('field_goal', 'kicking_team', 1, 1, 1, 'blocked_field_goal'),
+        )
+        for kick_type, role, kick_spot, kick_togo, next_spot, event in cases:
+            with self.subTest(kick_type=kick_type, role=role):
+                receiving = role == 'receiving_team'
+                source_file = 'play_by_play_2025.parquet'
+                offense_before, defense_before = 'K', 'R'
+                record = {
+                    'pregame_snapshot': {'model_reference': {'observed_reference': {
+                        'blocked_kick_source_sha256': fixture_hash,
+                        'blocked_kick_input_source_sha256': {source_file: source_hash}}}},
+                    'drives': [{'index': 1, 'points_scored_on_drive': None, 'plays': [{
+                        'sequence': 1, 'event_type': event,
+                        'state_before': {'offense_team': offense_before, 'defense_team': defense_before,
+                                         'down': 4, 'yards_to_go': kick_togo, 'yardline_100': kick_spot},
+                        'state_after': {'offense_team': defense_before if receiving else offense_before,
+                                        'defense_team': offense_before if receiving else defense_before,
+                                        'down': 1, 'yards_to_go': next_spot, 'yardline_100': next_spot},
+                        'outcome': {
+                            'punt_attempt': kick_type == 'punt',
+                            'field_goal_attempt': kick_type == 'field_goal',
+                            'field_goal_result': 'blocked' if kick_type == 'field_goal' else None,
+                            'turnover': receiving, 'turnover_on_downs': False,
+                            'blocked_kick': {
+                                'kick_type': kick_type, 'classification_status': 'classified_next_snap',
+                                'possession_after_role': role, 'next_snap_yardline_100': next_spot,
+                                'next_snap_down': 1, 'next_snap_ydstogo': next_spot,
+                                'source_file': source_file, 'source_sha256': source_hash,
+                                'reference_fixture_sha256': fixture_hash,
+                                'game_id': '2025_01_TEST', 'play_id': 50,
+                            },
+                        },
+                    }]}],
+                }
+                self.assertEqual(rm._blocked_kicks(record)[0], rm.PASS)
+                invalid = copy.deepcopy(record)
+                invalid['drives'][0]['plays'][0]['state_after']['yards_to_go'] = 10
+                self.assertEqual(rm._blocked_kicks(invalid)[0], rm.FAIL)
+
     def test_blocked_kick_at_period_expiry_is_sampled_as_the_period_end(self):
         from types import SimpleNamespace
         import random

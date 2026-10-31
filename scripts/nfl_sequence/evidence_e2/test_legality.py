@@ -134,6 +134,21 @@ class BlockedKickChecks(unittest.TestCase):
         record['drives'][0]['plays'][0]['outcome']['blocked_kick']['source_sha256'] = 'b' * 64
         self.assertTrue(lc.check_blocked_kicks(record))
 
+    def test_projected_next_snap_goal_to_go_is_accepted_and_bad_distance_fails(self):
+        record = self.record()
+        play = record['drives'][0]['plays'][0]
+        play['state_before'].update({'yards_to_go': 11, 'yardline_100': 86})
+        play['state_after'].update({'offense_team': 'B', 'defense_team': 'A', 'down': 1,
+                                    'yards_to_go': 6, 'yardline_100': 6})
+        play['outcome']['blocked_kick'].update({
+            'classification_status': 'classified_next_snap', 'possession_after_role': 'receiving_team',
+            'next_snap_yardline_100': 6, 'next_snap_down': 1, 'next_snap_ydstogo': 6,
+        })
+        self.assertEqual(lc.check_blocked_kicks(record), [])
+        play['state_after']['yards_to_go'] = 10
+        self.assertTrue(any('blocked next snap disagrees with the projected state' in finding
+                            for finding in lc.check_blocked_kicks(record)))
+
 
 class Fails(unittest.TestCase):
     def assertFails(self, record, check):
