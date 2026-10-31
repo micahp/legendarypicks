@@ -56,8 +56,11 @@ Scope: hard football invariants and separate historical distribution warnings fo
 - [x] Local SLC hard-invariant, state, box-score, integration, historical-evaluation, and paired-ablation suites: 307 tests passed.
 - [x] GridIron Physics `npm run test:autonomous` passed, including perception, kneel, spike, rule mutations, acceptance fixtures, and the batch legality gate.
 - [x] `git diff --check` passed in both repositories.
-- [ ] Replay the 10K run's six failed CLE–PIT seeds after the no-play overtime accounting fix, then continue the 10,000-seed Week 8 run with box-score export enabled.
 - [x] Full-game SLC integration: 7 tests passed on the frozen Week 8 test fixture.
 - [x] Football Realism Assertion Suite v1 sections A through G are implemented and covered by the listed deterministic and historical-evaluation tests.
+- [x] Current research-branch regression verification: full NFL-sequence discovery passed 934 tests with 3 skipped; the later zero-weight backoff regression passed in the affected 24-test suites.
+
+- [ ] CLE–PIT failed-seed replay after the no-play overtime fix is deferred per user instruction: do not rerun CLE–PIT. Preserve its existing outputs and the separate 5,639-row partial attempt.
+- [ ] Complete the eight remaining Week 8 10K matchups with box-score export: `IND_JAX`, `KC_DEN`, `LAC_LA`, `LV_NYJ`, `MIN_DET`, `NE_MIA`, `PHI_WAS`, and `TEN_CIN`. The replacement launcher reported IND–JAX workers 01–06 started; completion and artifact reconciliation remain unverified.
 
 Never drop a failed seed, silently repair its result, or count it as a valid complete game.
