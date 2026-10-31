@@ -4,9 +4,9 @@
 **Latest code commit before this publication:** `5ae7653f` (`research: separate regulation reached from game validity`)
 **Scope:** SLC football-realism assertions, workload calibration evidence, the separate Model D clock replay, and the remaining Week 8 matchup runs.
 
-## Status update — 20:27 CDT
+## Status update — 20:39 CDT
 
-The latest source commit, `5ae7653f` (`research: separate regulation reached from game validity`), is already on the remote SLC research branch. There are no uncommitted source-code changes. This update adds the finished Model D evidence and the current state of the separate full-game replay. The Week 8 replacement batch is still unverified: IND–JAX worker startup was observed, but no completed matchup artifacts or batch completion were confirmed.
+The latest source commit, `5ae7653f` (`research: separate regulation reached from game validity`), and all subsequent documentation/artifact commits are on the remote SLC research branch. The branch was clean at `3c3edf83` before this summary update. Today's code and review artifacts are committed and pushed; this update records the final event-clock diagnostic and current run-monitoring limit.
 
 ## Completed and published
 
@@ -43,6 +43,12 @@ The ARI–DAL report explicitly notes that archived artifacts do not retain ever
 - In v6, Model D classified 547/15,700 quarter ends accurately (3.48%), ended early in 676 (4.31%), and missed 14,477 (92.21%); the median clock left at a missed observed boundary was 101 seconds. Matched-play clock bias was positive in every quarter (simulated clock remaining too high): Q1 +53.79 sec, Q2 +65.53, Q3 +59.80, Q4 +42.17. Broad stop-class mean runoffs were close to 2025 observations, so those averages do not explain the clock-state bias by themselves. Full results and per-file hashes are in the [v6 review](e3/oob-policy-replay-2026-10-30/train-2022-2024-full-season-v6/REVIEW.md). V4 and v5 raw iterations are retained; v6 is authoritative.
 - A first paired 300-seed full-game comparison completed for E2 and Model D. Its raw per-seed statuses show E2 reached regulation in 296 games (4 blocked) and D in 298 (2 blocked); 140 E2 and 136 D games are complete including overtime ties. Among regulation-reached games, E2 averaged 148.21 plays and 23.08 regulation drives; D averaged 147.12 plays and 22.95 drives. The 2025 observed baseline is 123.36 plays and 20.11 drives per game, so Model D still overproduces about 23.76 plays/game (+19.3%) and 2.84 drives/game (+14.1%). The first run's JSON volume summary used only legally complete games for some measures; the archived per-seed CSV is the source for these corrected regulation-reached denominators.
 - The corrected paired 300-seed E2/Model D rerun completed. It has 296 E2 and 298 D runs reaching regulation; 140 E2 and 136 D games are legally complete including overtime, with four and two blocked respectively. On the regulation-reached denominator, E2 averages 148.21 plays and 23.08 drives; D averages 147.12 plays and 22.95 drives, versus 2025 observed 123.36 plays and 20.11 drives. Model D cuts only 1.09 of E2's 24.85 excess plays/game and shifts plays from Q1/Q3 into Q2/Q4. The full event and paired-seed comparison is in the [corrected v2 review](e3/clock-d-games-2025-holdout-train-2022-2024-v2/REVIEW.md); Model D remains diagnostic and opt-in.
+
+## Final event-clock diagnostic — 20:39 CDT
+
+- Compared Model D's broad 0–120-second late-game runoff pool with finer remaining-clock buckets using the pinned 2025 holdout outcomes. The broad pool is too long for 30–60-second completed-pass and run states (observed means 11.04/9.62 seconds; Model D expected 14.64/14.04) and too short for 61–120-second states (observed 19.10/18.85; expected 15.44/16.73).
+- An unsaved, diagnostic-only finer-bucket prototype reduced quarter-level clock-path bias by roughly 7–8 seconds in each quarter, and reduced missed boundary classifications from 14,477 to 14,347 of 15,700. It also increased premature endings from 676 to 815 and slightly reduced total boundary accuracy (547 to 538 correct). This is evidence of clock-bucket mixing, not a validated fix; no Model D defaults or SLC outputs were changed.
+- A read-only attempt to inspect the fast-host workers from a separate SSH session was denied by the host's current authentication setup. The original launcher pane shows the six IND–JAX worker starts followed by inspection commands queued behind the foreground launcher; those commands have not produced results. No additional matchup completion or artifact status is verified, and the launcher shell remains untouched.
 
 ## Verification
 
