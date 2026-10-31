@@ -61,7 +61,7 @@ Scope: hard football invariants and separate historical distribution warnings fo
 - [x] `git diff --check` passed in both repositories.
 - [x] Full-game SLC integration: 7 tests passed on the frozen Week 8 test fixture.
 - [x] Football Realism Assertion Suite v1 sections A through G are implemented and covered by the listed deterministic and historical-evaluation tests.
-- [x] Current research-branch regression verification: full NFL-sequence discovery passed 934 tests with 3 skipped; the later zero-weight backoff regression passed in the affected 24-test suites.
+- [x] Current research-branch regression verification: full NFL-sequence discovery passed 945 tests with 3 skipped using `/root/legendarypicks/backend/venv/bin/python`, which includes the required `pyarrow` and `pytz` dependencies.
 - [x] Completed the corrected 300-seed full-game E2/Model D comparison against 2025: 296/298 seeds reached regulation, with 140/136 legally complete games and 4/2 blocked games; the regulation-reached play-volume gaps remain +20.1%/+19.3%. The review preserves the separate denominators and event/runoff breakdown in `docs/research/e3/clock-d-games-2025-holdout-train-2022-2024-v2/REVIEW.md`.
 - [x] The paired-ablation matrix's QB-style control/ablation configuration passed its focused 25-test suite; runner and test modules compile, CLI exposes the opt-in switch, and `git diff --check` passes.
 - [x] Week 8 batch-audit fixtures cover complete and blocked seeds, missing seed detection, failed reconciliation, shard allocation, and historical record-exceedance reporting; 4 focused tests passed.
