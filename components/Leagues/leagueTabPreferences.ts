@@ -11,6 +11,7 @@ const knownTabs = new Set<HubTab>([
   'model',
   'playoff-odds',
   'playoff-tracker',
+  'cfb-playoff',
   'news',
   'rankings',
   'predict',

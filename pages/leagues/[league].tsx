@@ -14,10 +14,12 @@ import NflDraftBoardSurface from '../../components/Leagues/NflDraftBoardSurface'
 import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
 import NflModelTab from '../../components/Leagues/NflModelTab'
 import NflPlayoffOddsTab from '../../components/Leagues/NflPlayoffOddsTab'
-import NhlModelTab from '../../components/Leagues/NhlModelTab'
-import ComingSoonModelTab from '../../components/Leagues/ComingSoonModelTab'
-import FbsModelTab from '../../components/Leagues/FbsModelTab'
-import NbaModelTab from '../../components/Leagues/NbaModelTab'
+import ComingSoonModelTab from '../../components/Leagues/ComingSoonModelTab';
+import FbsModelTab from '../../components/Leagues/FbsModelTab';
+import NbaModelTab from '../../components/Leagues/NbaModelTab';
+import PlayoffTrackerTab from '../../components/Leagues/PlayoffTrackerTab';
+import CfbPlayoffTrackerTab from '../../components/Leagues/CfbPlayoffTrackerTab';
+import NhlModelTab from '../../components/Leagues/NhlModelTab';
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
 import { useScheduleAutoDate } from '../../components/Leagues/hooks/useScheduleAutoDate'
@@ -49,6 +51,8 @@ const TAB_LABELS: Record<HubTab, string> = {
   schedule: 'Schedule',
   model: 'Model',
   'playoff-odds': 'Playoff Odds',
+  'playoff-tracker': 'Playoff Tracker',
+  'cfb-playoff': 'CFB Playoff',
   news: 'News',
   rankings: 'Rankings',
   predict: 'Predict',
@@ -287,6 +291,8 @@ export default function LeagueHubPage() {
 
         {route.activeTab === 'model' && isNFL && <NflModelTab />}
         {route.activeTab === 'playoff-odds' && isNFL && <NflPlayoffOddsTab showIntro={false} />}
+        {route.activeTab === 'playoff-tracker' && route.league === 'ncaaf' && <PlayoffTrackerTab />}
+        {route.activeTab === 'cfb-playoff' && route.league === 'ncaaf' && <CfbPlayoffTrackerTab week={9} />}
         {route.activeTab === 'model' && route.league === 'nhl' && <NhlModelTab />}
         {route.activeTab === 'model' && route.league === 'ncaaf' && <FbsModelTab />}
         {route.activeTab === 'model' && route.league === 'nba' && <NbaModelTab />}

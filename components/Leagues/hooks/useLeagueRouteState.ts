@@ -46,7 +46,9 @@ export function useLeagueRouteState() {
         ? ['camp', 'standings', 'stats', 'schedule', 'model', 'playoff-odds', 'news']
         : league === 'nhl'
           ? ['standings', 'stats', 'schedule', 'model', 'news']
-        : league === 'mlb' || league === 'nba' || league === 'ncaaf'
+        : league === 'ncaaf'
+          ? ['standings', 'stats', 'schedule', 'model', 'playoff-tracker', 'cfb-playoff', 'news']
+        : league === 'mlb' || league === 'nba'
           ? ['standings', 'stats', 'schedule', 'model', 'news']
           : ['standings', 'stats', 'schedule', 'news']
 
