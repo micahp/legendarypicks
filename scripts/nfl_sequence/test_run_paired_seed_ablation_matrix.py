@@ -37,11 +37,32 @@ class RunSpecification(unittest.TestCase):
                        if full['enabled_layers'][key] != ablated['enabled_layers'][key]}
             self.assertEqual(changed, {layer})
 
+    def test_opt_in_qb_style_is_enabled_in_the_control_and_disabled_only_in_its_arm(self):
+        layers, enable_style = matrix._select_layers(None, True)
+        self.assertTrue(enable_style)
+        self.assertEqual(layers, matrix.DEFAULT_LAYERS + ('qb_run_role_style',))
+        options = {'playcall_qb_run_role_style': enable_style}
+        full = slc_config.resolve_profile('v1_full_stack', artifact_path='artifact', streak_file='streak',
+                                          options=options)
+        ablated = slc_config.resolve_profile('v1_full_stack', artifact_path='artifact', streak_file='streak',
+                                             options=options, disable_layers=('qb_run_role_style',))
+        self.assertTrue(full['enabled_layers']['qb_run_role_style'])
+        self.assertFalse(ablated['enabled_layers']['qb_run_role_style'])
+        changed = {key for key in full['enabled_layers']
+                   if full['enabled_layers'][key] != ablated['enabled_layers'][key]}
+        self.assertEqual(changed, {'qb_run_role_style'})
+
+    def test_explicit_qb_style_ablation_auto_enables_its_control(self):
+        layers, enable_style = matrix._select_layers(['qb_run_role_style'], False)
+        self.assertEqual(layers, ('qb_run_role_style',))
+        self.assertTrue(enable_style)
+
     def test_worker_command_pins_paired_streams_boxscores_resume_and_single_layer(self):
         args = Namespace(
             snapshot_file=Path('/data/snapshot.json'), playcall_artifact=Path('/data/playcall.json'),
             playcall_streak_file=Path('/data/streak.json'), db=Path('/data/reference.sqlite'),
             blocker_fixes=['run_scramble_backoff'], progress_every=250, max_simulation_errors=0,
+            enable_qb_run_role_style=True,
         )
         command = matrix._worker_command(args, Path('/runs/worker.json'), 101, 20, 'qb_decisions')
         self.assertIn('--paired-randomness', command)
@@ -51,6 +72,7 @@ class RunSpecification(unittest.TestCase):
         self.assertEqual(command[command.index('--games') + 1], '20')
         self.assertEqual(command[command.index('--slc-disable-layer') + 1], 'qb_decisions')
         self.assertIn('run_scramble_backoff', command)
+        self.assertIn('--playcall-qb-run-role-style', command)
 
     def test_matrix_manifest_is_immutable_and_rejects_a_different_run_spec(self):
         with tempfile.TemporaryDirectory() as directory:

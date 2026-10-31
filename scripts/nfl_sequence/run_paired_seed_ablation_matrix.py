@@ -138,11 +138,25 @@ def _worker_command(args, out: Path, seed_start: int, games: int, disabled_layer
         '--max-simulation-errors', str(args.max_simulation_errors),
         '--out', str(out),
     ]
+    if getattr(args, 'enable_qb_run_role_style', False):
+        command.append('--playcall-qb-run-role-style')
     for fix in args.blocker_fixes:
         command.extend(('--slc-blocker-fix', fix))
     if disabled_layer is not None:
         command.extend(('--slc-disable-layer', disabled_layer))
     return command
+
+
+def _select_layers(requested_layers: list[str] | None, enable_qb_run_role_style: bool) -> tuple[tuple[str, ...], bool]:
+    """Select comparison arms and ensure an opt-in layer is present in every control arm."""
+    if requested_layers is None:
+        layers = DEFAULT_LAYERS + (('qb_run_role_style',) if enable_qb_run_role_style else ())
+    else:
+        layers = tuple(requested_layers)
+    enable_style = enable_qb_run_role_style or 'qb_run_role_style' in layers
+    if len(layers) != len(set(layers)):
+        raise ValueError('each ablation layer may be selected only once')
+    return tuple(layers), enable_style
 
 
 def _run_arm(args, arm_name: str, partitions: list[tuple[int, int]], disabled_layer: str | None) -> list[dict]:
@@ -431,6 +445,8 @@ def main(argv=None):
     parser.add_argument('--workers', type=int, default=6)
     parser.add_argument('--layer', dest='layers', action='append', choices=sorted(slc_config.ABLATION_LAYERS),
                         help='enabled full-stack layer to disable; defaults to the primary workload ablations')
+    parser.add_argument('--enable-qb-run-role-style', action='store_true',
+                        help='enable the opt-in QB run-style layer in every arm; with no --layer, include its ablation')
     parser.add_argument('--slc-blocker-fix', dest='blocker_fixes', action='append', default=[])
     parser.add_argument('--progress-every', type=int, default=250)
     parser.add_argument('--max-simulation-errors', type=int, default=0)
@@ -447,16 +463,18 @@ def main(argv=None):
         parser.error('--progress-every must be non-negative')
     if args.max_simulation_errors < 0:
         parser.error('--max-simulation-errors must be non-negative')
-    layers = tuple(args.layers or DEFAULT_LAYERS)
-    if len(layers) != len(set(layers)):
-        parser.error('each --layer may be supplied only once')
+    try:
+        layers, args.enable_qb_run_role_style = _select_layers(args.layers, args.enable_qb_run_role_style)
+    except ValueError as exc:
+        parser.error(str(exc))
+    options = {'playcall_qb_run_role_style': args.enable_qb_run_role_style}
     try:
         full = slc_config.resolve_profile('v1_full_stack', artifact_path=str(args.playcall_artifact),
-                                           streak_file=str(args.playcall_streak_file))
+                                           streak_file=str(args.playcall_streak_file), options=options)
         for layer in layers:
             ablated = slc_config.resolve_profile(
                 'v1_full_stack', artifact_path=str(args.playcall_artifact),
-                streak_file=str(args.playcall_streak_file), disable_layers=(layer,))
+                streak_file=str(args.playcall_streak_file), options=options, disable_layers=(layer,))
             if not full['enabled_layers'].get(layer):
                 raise ValueError(f'{layer} is not enabled in the full-stack control')
             changed = {key for key in full['enabled_layers']
@@ -484,6 +502,7 @@ def main(argv=None):
         'database_path': str(args.db),
         'seed_start': args.seed_start, 'games': args.games, 'workers': len(partitions),
         'layers': list(layers), 'blocker_fixes': list(args.blocker_fixes),
+        'enabled_optional_layers': ['qb_run_role_style'] if args.enable_qb_run_role_style else [],
         'paired_randomness': True, 'boxscore_export': True,
         'progress_every': args.progress_every, 'max_simulation_errors': args.max_simulation_errors,
     }
