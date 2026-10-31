@@ -26,7 +26,7 @@ The ARI–DAL report explicitly notes that archived artifacts do not retain ever
 
 ## Verification
 
-Using `/root/.venvs/lp-slc-a-g/bin/python`, the focused suite passed: **90 tests across nine modules**, covering QB participation, football and box-score assertions, QB decisions/style evaluation, workload references, and paired ablation comparison/runner behavior. `git diff --check` passed. The pushed branch is current at `14108ed5` before this summary commit.
+Using `/root/.venvs/lp-slc-a-g/bin/python`, two focused runs passed: **90 tests across nine modules** for QB participation, football and box-score assertions, QB decisions/style evaluation, workload references, and paired ablation comparison/runner behavior; plus **401 tests across 17 modules** for football invariants, game state, E1 transitions, clock replay, SLC engine/output, share and player outcomes, kicks, overtime, seed ledgers, and batch handling. Total: **491 passing tests across 26 modules**. `git diff --check` passed. The branch was at `14108ed5` before the summary commit.
 
 ## Still open
 
