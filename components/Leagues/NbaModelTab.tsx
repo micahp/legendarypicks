@@ -44,6 +44,7 @@ type Game = {
   models: Record<string, Forecast>
 }
 type RecordSummary = {
+  pick: { win: number; loss: number; push: number }
   locked: number
   graded: number
   awaiting: number
@@ -247,23 +248,9 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
     <section className="space-y-3">
       <div>
         <h2 className="text-lg font-semibold text-zinc-100">2026–27 record · {model.label}</h2>
-        <p className="mt-1 text-xs text-zinc-500">
-          Only this model’s forecasts with a recorded lock time appear here. The pick is the side above 50% win probability; Won/Lost compares it with the final score. Unlocked preview grades are excluded.
+        <p className="mt-1 text-sm text-zinc-400">
+          <span className="font-semibold text-zinc-100">{summary?.pick.win ?? 0}-{summary?.pick.loss ?? 0}-{summary?.pick.push ?? 0}</span>
         </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {[
-          ['Locked', summary?.locked ?? 0],
-          ['Graded', summary?.graded ?? 0],
-          ['Awaiting result', summary?.awaiting ?? 0],
-          ['Missed locks', summary?.missed ?? 0],
-        ].map(([label, value]) => (
-          <div key={label} className="rounded-xl border border-white/10 bg-zinc-950/50 px-3 py-2">
-            <div className="text-xs text-zinc-500">{label}</div>
-            <div className="mt-1 text-lg font-semibold tabular-nums text-zinc-100">{value}</div>
-          </div>
-        ))}
       </div>
 
       {error && <p role="status" className="text-sm text-amber-300">{error}</p>}
@@ -414,7 +401,7 @@ function TeamRatingsView() {
       </div>
 
       {currentSection && <p className="text-xs text-zinc-500">
-        {currentSection.label} · 30 teams · Almanac p. {currentSection.source_page}
+        {currentSection.label} · 30 teams
       </p>}
       {loading && <p role="status" className="text-sm text-zinc-400">Loading Almanac team stats…</p>}
       {error && <p role="alert" className="text-sm text-red-300">Almanac team stats unavailable: {error}</p>}
@@ -586,9 +573,9 @@ export default function NbaModelTab() {
                   const forecast = game.models[selectedModel.id]
                   const hasScore = forecast?.score_forecast_available &&
                     forecast.projected_away_points != null && forecast.projected_home_points != null
-                  const score = hasScore
-                    ? game.away_team + ' ' + forecast.projected_away_points.toFixed(1) + ' – ' + game.home_team + ' ' + forecast.projected_home_points.toFixed(1)
-                    : forecast ? 'No score projection' : 'Forecast unavailable'
+                  const projectedScore = hasScore && forecast
+                    ? { away: forecast.projected_away_points!.toFixed(1), home: forecast.projected_home_points!.toFixed(1) }
+                    : null
                   return (
                     <article key={game.game_id} className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950/50">
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
@@ -601,10 +588,22 @@ export default function NbaModelTab() {
                             <span className="text-sm font-semibold text-white">{selectedModel.label}</span>
                             <span className="text-xs text-cyan-300">{game.home_team} win probability {percent(forecast.home_win_probability)}</span>
                           </div>
-                          <div className="mt-2 text-sm tabular-nums text-zinc-200">{hasScore ? 'Projected score: ' : ''}{score}</div>
+                          {projectedScore ? (
+                            <div role="group" aria-label="Projected score" className="mt-3">
+                              <h5 className="mb-1 text-xs font-medium text-zinc-500">Projected</h5>
+                              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-y-1 pr-2 text-base tabular-nums text-zinc-200">
+                                <span className="truncate">{game.away_team}</span>
+                                <span className="text-right font-semibold text-zinc-100">{projectedScore.away}</span>
+                                <span className="truncate">{game.home_team}</span>
+                                <span className="text-right font-semibold text-zinc-100">{projectedScore.home}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-2 text-sm text-zinc-400">{forecast ? 'No score projection' : 'Forecast unavailable'}</div>
+                          )}
                         </div>
                       ) : (
-                        <p className="p-4 text-sm text-zinc-500">{score}</p>
+                        <p className="p-4 text-sm text-zinc-500">Forecast unavailable</p>
                       )}
                     </article>
                   )

@@ -117,6 +117,7 @@ def test_record_api_pages_complete_local_date_groups_and_only_the_selected_model
     assert first["next_before"] == "2026-10-02"
     assert first["record"]["locked"] == 5
     assert first["record"]["graded"] == 1
+    assert first["record"]["pick"] == {"win": 1, "loss": 0, "push": 0}
 
     second_response = nba_model.nba_model_record(
         Response(), 2027, "G2", 2, first["next_before"], "America/Chicago",

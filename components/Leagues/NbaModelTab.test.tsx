@@ -55,9 +55,9 @@ const payload = {
   default_model: 'G3',
   models,
   records: {
-    G1: { locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
-    G2: { locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
-    G3: { locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
+    G1: { pick: { win: 0, loss: 0, push: 0 }, locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
+    G2: { pick: { win: 0, loss: 0, push: 0 }, locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
+    G3: { pick: { win: 0, loss: 0, push: 0 }, locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
   },
   games: [
     previewGame('game-1', firstGameDay, 'BOS', 'DET'),
@@ -93,9 +93,12 @@ describe('NBA model tab', () => {
     expect(screen.getByText('DET win probability 58.0%')).toBeTruthy()
     expect(screen.getByText('PHI win probability 58.0%')).toBeTruthy()
     expect(screen.getByText('CHI win probability 58.0%')).toBeTruthy()
-    expect(screen.getByText('Projected score: BOS 108.9 – DET 112.1')).toBeTruthy()
-    expect(screen.getByText('Projected score: NYK 108.9 – PHI 112.1')).toBeTruthy()
-    expect(screen.getByText('Projected score: LAL 108.9 – CHI 112.1')).toBeTruthy()
+    const projectedScoreGroups = screen.getAllByRole('group', { name: 'Projected score' })
+    expect(projectedScoreGroups).toHaveLength(3)
+    expect(within(projectedScoreGroups[0]).getByText('BOS')).toBeTruthy()
+    expect(within(projectedScoreGroups[0]).getByText('108.9')).toBeTruthy()
+    expect(within(projectedScoreGroups[0]).getByText('DET')).toBeTruthy()
+    expect(within(projectedScoreGroups[0]).getByText('112.1')).toBeTruthy()
     expect(screen.queryByText(/2026–27 projections/)).toBeNull()
     expect(screen.getAllByRole('heading', { name: dayLabel(firstGameDay) })).toHaveLength(1)
     expect(screen.getAllByRole('heading', { name: dayLabel(nextGameDay) })).toHaveLength(1)
@@ -183,7 +186,7 @@ describe('NBA model tab', () => {
       ...payload,
       records: {
         ...payload.records,
-        G3: { locked: 2, graded: 2, awaiting: 0, missed: 1, winner_brier: 0.17, winner_log_loss: 0.5 },
+        G3: { pick: { win: 1, loss: 1, push: 0 }, locked: 2, graded: 2, awaiting: 0, missed: 1, winner_brier: 0.17, winner_log_loss: 0.5 },
       },
       games: [lockedGame, secondLockedGame, unlockedGame],
     }
@@ -209,6 +212,9 @@ describe('NBA model tab', () => {
     await waitFor(() => expect(screen.getAllByRole('group', { name: 'Projected' }).length).toBeGreaterThan(0))
 
     expect(screen.getByRole('heading', { name: '2026–27 record · G3 Joint scores' })).toBeTruthy()
+    expect(screen.getByText('1-1-0')).toBeTruthy()
+    expect(screen.queryByText('Model Pick')).toBeNull()
+    expect(screen.queryByText(/Only this model’s forecasts/)).toBeNull()
     expect(screen.getByText('BOS at DET')).toBeTruthy()
     expect(screen.getByText('DET win probability 58.0%')).toBeTruthy()
     const projectedGroup = screen.getAllByRole('group', { name: 'Projected' })[0]
@@ -236,11 +242,10 @@ describe('NBA model tab', () => {
     expect(wins[0].className).toContain('text-emerald-300')
     const loss = screen.getByText('Lost')
     expect(loss.className).toContain('text-red-300')
-    expect(screen.getAllByText('Graded')).toHaveLength(1) // the summary count label only
+    expect(screen.queryByText('Graded')).toBeNull()
     expect(within(screen.getAllByRole('group', { name: 'Final' })[1]).getByText('PHI').className).toContain('font-semibold')
     expect(screen.queryByText('PHI won')).toBeNull()
     expect(screen.queryByText(/Brier/)).toBeNull()
-    expect(within(screen.getByText('Missed locks').parentElement as HTMLElement).getByText('1')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Load older dates' }))
     await waitFor(() => expect(screen.getByRole('heading', { name: dayLabel(olderGame.scheduled_start_utc) })).toBeTruthy())
     expect(screen.getByRole('heading', { name: dayLabel(olderGame.scheduled_start_utc) })).toBeTruthy()
@@ -274,6 +279,7 @@ describe('NBA model tab', () => {
     await waitFor(() => expect(screen.getByText('Atlanta')).toBeTruthy())
 
     expect(screen.getByText('2025–26 team stats · NBA Almanac')).toBeTruthy()
+    expect(screen.queryByText(/Almanac p\./)).toBeNull()
     expect(screen.getByText('ORtg')).toBeTruthy()
     expect(screen.getByRole('row', { name: /Atlanta/ }).textContent).toContain('115.0 (14)')
     expect(screen.getByText('Eastern Conference')).toBeTruthy()

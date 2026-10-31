@@ -818,6 +818,27 @@ def _record(rows: list[sqlite3.Row], missed: int) -> dict[str, Any]:
     return out
 
 
+def _pick_record_summaries(con: sqlite3.Connection, season: int) -> dict[str, dict[str, int]]:
+    records = {model: {"win": 0, "loss": 0, "push": 0} for model in MODEL_IDS}
+    for row in con.execute(
+        "SELECT l.model,l.forecast_json,g.final_home_score,g.final_away_score "
+        "FROM nba_model_locks l JOIN nba_model_effective_grades g USING(game_id,model) "
+        "WHERE l.season=? AND g.winner_brier IS NOT NULL", (season,)
+    ):
+        probability = json.loads(row["forecast_json"]).get("home_win_probability")
+        if probability is None:
+            continue
+        home_score, away_score = int(row["final_home_score"]), int(row["final_away_score"])
+        if home_score == away_score:
+            records[row["model"]]["push"] += 1
+            continue
+        picked_home = float(probability) >= 0.5
+        actual_home = home_score > away_score
+        outcome = "win" if picked_home == actual_home else "loss"
+        records[row["model"]][outcome] += 1
+    return records
+
+
 def _all_record_summaries(con: sqlite3.Connection, season: int, now_text: str) -> dict[str, dict[str, Any]]:
     locked_rows = {
         row["model"]: row for row in con.execute(
@@ -852,6 +873,7 @@ def _all_record_summaries(con: sqlite3.Connection, season: int, now_text: str) -
         )
     } if _table_exists(con, "nba_model_previews") else {}
 
+    pick_records = _pick_record_summaries(con, season)
     labels = {item["id"]: item for item in MODEL_INFO}
     summaries = {}
     for model in MODEL_IDS:
@@ -863,6 +885,7 @@ def _all_record_summaries(con: sqlite3.Connection, season: int, now_text: str) -
             "label": labels[model]["label"],
             "model_version": labels[model]["version"],
             "projects_scores": labels[model]["projects_scores"],
+            "pick": pick_records[model],
             "locked": locked,
             "graded": graded,
             "awaiting": locked - graded,
@@ -1205,6 +1228,7 @@ def export_payload(con: sqlite3.Connection, season: int,
             if row["model"] in unlocked_rows:
                 unlocked_rows[row["model"]].append(row)
     records = {}
+    pick_records = _pick_record_summaries(con, season)
     for model in MODEL_IDS:
         missed = sum(1 for _game, m in missed_pairs if m == model)
         unlocked = _record(unlocked_rows[model], 0)
@@ -1213,6 +1237,7 @@ def export_payload(con: sqlite3.Connection, season: int,
         records[model] = {"label": model_labels[model]["label"],
                           "model_version": model_labels[model]["version"],
                           "projects_scores": model_labels[model]["projects_scores"],
+                          "pick": pick_records[model],
                           **_record(per_model_rows[model], missed),
                           "unlocked": unlocked}
     if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='nba_model_history'").fetchone():
