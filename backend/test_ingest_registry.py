@@ -79,7 +79,7 @@ class TheShippedRegistryIsValid(unittest.TestCase):
 
     def test_nba_recent_player_logs_run_on_the_ingest_timer(self):
         job = next(j for j in ingest_registry.JOBS if j["id"] == "nba_player_logs")
-        self.assertEqual(job["databases"], ["dev"])
+        self.assertEqual(job["databases"], ["dev", "prod"])
         self.assertEqual(job["cadence_min"], 360)
         self.assertEqual(job["host_lock"], "espn")
         self.assertEqual(job["steps"], [["ingest_nba_logs.py", "--recent-days", "14"]])
@@ -189,7 +189,7 @@ class DatabaseScopedJobs(unittest.TestCase):
                 )
                 selected_ids = {job["id"] for job in selected}
                 excluded_ids = {job["id"] for job in excluded}
-                nba_ids = {"nba_schedule", "nba_player_logs", "nba_sportsdataverse_logs"}
+                nba_ids = {"nba_schedule", "nba_sportsdataverse_logs"}
                 self.assertTrue(nba_ids.isdisjoint(selected_ids))
                 self.assertTrue(nba_ids.issubset(excluded_ids))
 
@@ -199,7 +199,7 @@ class DatabaseScopedJobs(unittest.TestCase):
                 listing = output.getvalue()
                 self.assertNotIn("nba_player_logs", listing)
                 self.assertNotIn("nba_sportsdataverse_logs", listing)
-                self.assertIn("skipped_scope=3 (database=prod)", listing)
+                self.assertIn("skipped_scope=2 (database=prod)", listing)
 
                 for job_id in sorted(nba_ids):
                     output = io.StringIO()
