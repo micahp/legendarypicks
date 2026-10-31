@@ -972,7 +972,7 @@ def props_slate(league: Optional[str] = Query(None),
                 })
         return result
 
-    sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.odds,
+    sql = """SELECT p.id, p.market, p.line, p.side, p.source, p.captured_at, p.odds,
                     pl.id AS player_id, pl.name AS player_name, pl.team AS player_team, pl.league,
                     pg.id AS game_id, pg.espn_event_id, pg.home, pg.away,
                     pg.date AS game_date, pg.start_time,
@@ -1075,6 +1075,7 @@ def props_slate(league: Optional[str] = Query(None),
             "line": r["line"],
             "side": r["side"],
             "source": r["source"],
+            "captured_at": r["captured_at"],
             "odds": r["odds"],
         }
         seen = games[gkey]["players"][pkey]["_seen"]

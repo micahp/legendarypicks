@@ -1,8 +1,27 @@
 # PR #29 review evidence
 
-This evidence is from `feat/pixel-nfl-hq-design`. The feature branch was rebased on the latest `dev`; nothing was merged or deployed.
+## Iteration 2 · room and in-room data previews
 
-The character sprite uses the design posted in the PR comment as its reference. It keeps the jacket, shirt, chain, locs, and beard across the unhelmeted and fictional, unbranded helmet states.
+The latest iteration replaces the CSS furniture with a cohesive 16-bit apartment scene and keeps the GM in street clothes. Room objects show data from the existing NFL APIs and open focused previews before offering the full research page. When a feed has no published data, the room says so instead of inventing a score or projection. Career and arcade objects remain visible as future destinations.
+
+- [Desktop room · 1440px](iteration-2/hq-desktop.png)
+- [Mobile room · 390px](iteration-2/hq-mobile.png)
+- [Interaction recording · 4 seconds](iteration-2/interaction-flow.webm) shows the loaded room, a real prop line and recent game history, then the return to HQ.
+
+### Iteration 2 verification
+
+- Focused Jest: 2 suites and 5 tests passed (`LeagueLocker` and `NflPixelHQ`).
+- TypeScript: `tsc --noEmit --pretty false --incremental false` completed with 0 diagnostics.
+- Chromium checks at 390×844 and 1440×1000 found no horizontal overflow or hotspot overlap; the smallest mobile hotspot is 44px. Reduced-motion disables the idle animation.
+- The in-room previews displayed the API-backed next matchup, published projection values, and a prop line with its source timestamp and six recent results. Existing research routes returned HTTP 200, and the browser reported no page errors.
+- The backend props unit test could not run in this environment because its Python interpreter does not have FastAPI installed. The additive `captured_at` field is covered by that test assertion, but still needs execution in the project backend environment.
+- PR #29 remains unmerged and undeployed.
+
+The earlier screenshots and interaction recording below document the initial PR revision; they are retained as historical review evidence.
+
+The initial review evidence below is from `feat/pixel-nfl-hq-design`, based on `dev`; nothing was merged or deployed. Its character transition included a helmet, which the iteration above removes.
+
+The initial character sprite used the design posted in the PR comment as its reference and kept the jacket, shirt, chain, locs, and beard across its original outfit states.
 
 ## Before and after
 

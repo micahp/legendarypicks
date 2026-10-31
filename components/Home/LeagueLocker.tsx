@@ -14,7 +14,7 @@ const LEAGUES = [
 export default function LeagueLocker() {
   const [selected, setSelected] = useState<(typeof LEAGUES)[number] | null>(null)
   const featured = selected ?? LEAGUES[0]
-  const isNflEquipped = selected?.id === 'nfl'
+  const isNflSelected = selected?.id === 'nfl'
 
   return (
     <section className="lp-locker" aria-labelledby="locker-title">
@@ -29,18 +29,16 @@ export default function LeagueLocker() {
       <div className="lp-locker-intro">
         <p className="lp-locker-kicker">YOUR NEXT MOVE STARTS HERE</p>
         <h1 id="locker-title">Choose your league.</h1>
-        <p>Select a league to gear up, enter its HQ, or go straight to research.</p>
+        <p>Pick a league to set your focus, then open its game world or research.</p>
       </div>
 
-      <div className={`lp-locker-stage${isNflEquipped ? ' is-nfl-equipped' : ''}`}>
+      <div className={`lp-locker-stage${isNflSelected ? ' is-nfl-selected' : ''}`} data-league={selected?.id ?? 'none'}>
         <div
           className="lp-locker-avatar-wrap"
           role="img"
-          aria-label={`Original fictional athlete ${isNflEquipped ? 'wearing a fictional football helmet' : 'without a helmet'}`}
+          aria-label="Original fictional general manager in street clothes"
         >
-          <span className="lp-locker-avatar lp-locker-avatar-unhelmeted" aria-hidden="true" />
-          <span className="lp-locker-avatar lp-locker-avatar-helmeted" aria-hidden="true" />
-          {isNflEquipped && <span className="lp-locker-equip-flash" aria-hidden="true" />}
+          <span className="lp-locker-avatar" aria-hidden="true" />
         </div>
         {LEAGUES.map((league, index) => (
           <button
@@ -60,12 +58,12 @@ export default function LeagueLocker() {
       <div className="lp-locker-footer">
         <p className="lp-locker-prompt" aria-live="polite">
           {selected
-            ? `${selected.label} selected${isNflEquipped ? ' · fictional helmet equipped' : ` · ${selected.detail}`}`
+            ? `${selected.label} selected${isNflSelected ? ' · game focus set' : ` · ${selected.detail}`}`
             : 'Choose a league, or start with NFL'}
         </p>
         <div className="lp-locker-actions">
           <Link className="lp-locker-cta lp-locker-cta-primary" href={featured.href}>
-            Enter {featured.label} HQ <span aria-hidden="true">↗</span>
+            {isNflSelected || !selected ? 'Enter NFL HQ' : `Explore ${featured.label}`} <span aria-hidden="true">↗</span>
           </Link>
           <Link className="lp-locker-cta lp-locker-cta-research" href={featured.research}>
             Research {featured.label} <span aria-hidden="true">→</span>
