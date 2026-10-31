@@ -1,3 +1,10 @@
+## v10.1.1
+
+### NBA model
+
+- Group the record by game date and load older results in date-based pages.
+- Settle NBA projections from stored game results and allow corrected grades to update cleanly.
+
 ## v10.1.0
 
 ### NBA model
