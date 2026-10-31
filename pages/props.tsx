@@ -6,6 +6,7 @@ import PropChart, { nbaSeasonEndYear, PropHistory } from '../components/Props/Pr
 import SportIcon from '../components/SportIcon'
 import SlatePlayerOffers from '../components/Props/SlatePlayerOffers'
 import HorizontalScrollRail from '../components/HorizontalScrollRail'
+import NflLabNavigation from '../components/Leagues/NflLabNavigation'
 import {
   leagueNavigationLabel,
   SportGroup,
@@ -1038,6 +1039,15 @@ export default function PropsPage() {
     if (t && TABS.some(x => x.key === t)) setTab(t as Tab)
   }, [])
 
+  useEffect(() => {
+    const requestedLeague = new URLSearchParams(window.location.search).get('league')?.toLowerCase()
+    if (!requestedLeague || navigationLoading) return
+    const group = sportGroups.find(item => item.competitions.some(entry => entry.league === requestedLeague))
+    if (!group) return
+    setSportKey(group.key)
+    setCompetition(requestedLeague)
+  }, [navigationLoading, sportGroups])
+
   // Land each league on today when it has props, otherwise its nearest upcoming slate. Re-run when
   // the league pill changes so a future WC/UFC slate is not hidden behind another league's date.
   // Explicit ?date= deep links always win.
@@ -1075,6 +1085,7 @@ export default function PropsPage() {
       </Head>
 
       <div className="space-y-4">
+        {league.toLowerCase() === 'nfl' && <NflLabNavigation active={tab === 'matchups' ? 'matchups' : 'props'} />}
         {/* Page header row: title + league pills */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h1 className="text-3xl font-extrabold tracking-tight">Props</h1>

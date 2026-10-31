@@ -7,7 +7,8 @@ import StatsTab from '../../components/Leagues/StatsTab'
 import UfcRankingsTab from '../../components/Leagues/UfcRankingsTab'
 import PredictTab from '../../components/Leagues/PredictTab'
 import UfcOptimizerTab from '../../components/Leagues/UfcOptimizerTab'
-import NflCampHero from '../../components/Leagues/NflCampHero'
+import NflPixelHQ from '../../components/Leagues/NflPixelHQ'
+import NflLabNavigation, { type NflLabRoom } from '../../components/Leagues/NflLabNavigation'
 import NflOffseasonMovers from '../../components/Leagues/NflOffseasonMovers'
 import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
 import NflDraftBoardSurface from '../../components/Leagues/NflDraftBoardSurface'
@@ -179,6 +180,7 @@ export default function LeagueHubPage() {
           <LeagueUnavailable league={route.league} />
         ) : (
         <>
+        {isNFL && <NflLabNavigation active={nflRoomForTab(route.activeTab)} />}
         <HubTabs
           tabs={route.validTabs}
           activeTab={route.activeTab}
@@ -189,7 +191,7 @@ export default function LeagueHubPage() {
         {/* ── NFL Camp-mode default ── */}
         {route.activeTab === 'camp' && (
           <div className="space-y-6">
-            <NflCampHero
+            <NflPixelHQ
               data={seasonContext.data}
               loading={seasonContext.loading}
               error={seasonContext.error}
@@ -374,6 +376,13 @@ function LeagueUnavailable({ league }: { league: string }) {
       </p>
     </div>
   )
+}
+
+function nflRoomForTab(tab: HubTab): NflLabRoom {
+  if (tab === 'schedule') return 'slate'
+  if (tab === 'model') return 'forecasts'
+  if (tab === 'stats') return 'stats'
+  return 'hq'
 }
 
 function HubTabs({

@@ -13,6 +13,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <nav className="flex items-center gap-3 sm:gap-4 text-sm overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <Link href="/scores" className="hover:text-emerald-400 whitespace-nowrap">Scores</Link>
               <Link href="/props" className="hover:text-emerald-400 whitespace-nowrap">Props</Link>
+              <Link href="/leagues/nfl?tab=camp" className="hover:text-emerald-400 whitespace-nowrap">NFL HQ</Link>
               <Link href="/leagues" className="hover:text-emerald-400 whitespace-nowrap">Leagues</Link>
               <Link href="/news" className="hover:text-emerald-400 whitespace-nowrap">News</Link>
               <Link href="/esports" className="hover:text-emerald-400 whitespace-nowrap">Esports</Link>
