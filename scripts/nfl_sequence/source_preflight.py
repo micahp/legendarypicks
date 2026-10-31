@@ -120,6 +120,7 @@ def _decision_errors(season):
 def _playbook_errors(season, target_teams):
     import playbook_crosscheck as crosscheck
     root = Path(crosscheck.PLAYBOOKS)
+    target_teams = {crosscheck.TEAM_CODE.get(team, team) for team in target_teams}
     manifest_path = root / 'build_manifest.json'
     errors = []
     if not manifest_path.is_file():
