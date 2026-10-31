@@ -150,6 +150,26 @@ class Sampler(unittest.TestCase):
             'rows_excluded_by_event': {'pass_complete': 1, 'run': 1},
         })
 
+    def test_reference_pool_excludes_completion_with_inconsistent_source_yardage(self):
+        pool = {('cell',): cell([('pass_complete', 'pass'), ('pass_complete', 'pass')])}
+        pool[('cell',)][0][1].update(game_id='2022_16_LAC_IND', play_id=3371.0)
+        pool[('cell',)][1][1].update(game_id='2022_16_LAC_IND', play_id=3372.0)
+        participants = {
+            ('2022_16_LAC_IND', 3371): {'passing_yards': 13, 'receiving_yards': 12},
+            ('2022_16_LAC_IND', 3372): {'passing_yards': 8, 'receiving_yards': 8},
+        }
+
+        filtered, evidence = se.exclude_inconsistent_pass_yardage_rows(pool, participants)
+
+        self.assertEqual([sample[1]['play_id'] for sample in filtered[('cell',)]], [3372.0])
+        self.assertEqual(evidence, {
+            'policy': 'exclude_inconsistent_completion_yardage',
+            'rows_excluded': 1,
+            'rows_excluded_by_event': {'pass_complete': 1},
+            'source_rows': [{'game_id': '2022_16_LAC_IND', 'play_id': 3371,
+                             'passing_yards': 13, 'receiving_yards': 12}],
+        })
+
     def test_player_outcome_backoff_excludes_unmodeled_lateral_rows(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)),
                                       side_teams={'A': 'AAA', 'B': 'BBB'})
