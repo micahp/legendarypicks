@@ -20,6 +20,14 @@ PLAYER_METRICS = {
     'pass_attempts': ('passing', 'att', 70),
     'passing_yards': ('passing', 'yds', None),
 }
+TEAM_METRICS = (
+    'points', 'plays', 'drives', 'rush_attempts', 'rushing_yards', 'targets',
+    'pass_attempts', 'completions', 'passing_yards', 'sacks_taken', 'sack_yards',
+    'turnovers', 'field_goal_attempts', 'field_goals_made', 'punts',
+)
+PERIODS = ('Q1', 'Q2', 'Q3', 'Q4', 'OT', 'unclassified')
+DRIVE_METRICS = ('drives_started', 'drives_ended', 'plays', 'net_yards', 'points_scored',
+                 'points_allowed', 'scoring_drives', 'turnovers')
 
 
 def sha256_file(path: Path) -> str:
@@ -98,12 +106,13 @@ def _index_report_outcomes(rows, path: Path, failures: list[dict]) -> dict[int, 
     return indexed
 
 
-def _index_ledger_rows(rows, path: Path, failures: list[dict]) -> tuple[dict, dict[int, dict]]:
+def _index_ledger_rows(rows, path: Path, failures: list[dict]) -> tuple[dict, dict[int, dict], int]:
     if not rows or not isinstance(rows[0].get('header'), dict):
         _failure(failures, 'INVALID_LEDGER', path, 'first JSONL row must contain a header object')
-        return {}, {}
+        return {}, {}, 0
     header = rows[0]['header']
     indexed = {}
+    duplicate_attempts = 0
     for line_number, row in enumerate(rows[1:], start=2):
         seed = row.get('seed')
         outcome = row.get('outcome')
@@ -115,9 +124,9 @@ def _index_ledger_rows(rows, path: Path, failures: list[dict]) -> tuple[dict, di
             _failure(failures, 'MISSING_OUTCOME_STATUS', path,
                      f'line {line_number} seed {seed} has no nonempty final outcome status')
         if seed in indexed:
-            _failure(failures, 'DUPLICATE_SEED', path, f'ledger contains seed {seed} more than once')
+            duplicate_attempts += 1
         indexed[seed] = row
-    return header, indexed
+    return header, indexed, duplicate_attempts
 
 
 def _index_boxscores(rows, path: Path, game_id: str, failures: list[dict]) -> tuple[dict, dict[int, dict]]:
@@ -164,6 +173,7 @@ def _player_distributions(values: dict, exceedance_seeds: dict, maxima: dict) ->
         output.append({
             'player_id': player_id, 'player_name': name, 'team': team, 'position': position,
             'metric': metric, 'valid_game_sample_n': len(observations), 'mean': mean,
+            'median': _quantile(observations, .5), 'p75': _quantile(observations, .75),
             'standard_deviation': math.sqrt(variance),
             'zero_rate': sum(value == 0 for value in observations) / len(observations),
             'p95': _quantile(observations, .95), 'p99': _quantile(observations, .99),
@@ -176,33 +186,58 @@ def _player_distributions(values: dict, exceedance_seeds: dict, maxima: dict) ->
     return output
 
 
+def _distribution(values: list[float | int]) -> dict:
+    if not values:
+        return {'sample_n': 0, 'mean': None, 'median': None, 'p95': None, 'maximum': None}
+    return {'sample_n': len(values), 'mean': sum(values) / len(values),
+            'median': _quantile(values, .5), 'p95': _quantile(values, .95), 'maximum': max(values)}
+
+
+def _summarize_team_values(values: dict) -> dict:
+    return {team: {metric: _distribution(rows) for metric, rows in sorted(metrics.items())}
+            for team, metrics in sorted(values.items())}
+
+
 def audit_batch(run_root: Path, *, matchups=MATCHUPS, seed_count: int = 10000,
-                workers: int = 6, season_week: str = '2026_08') -> dict:
+                workers: int = 6, seed_start: int = 1, season_week: str = '2026_08',
+                artifact_directory: str = 'parallel-6') -> dict:
     run_root = Path(run_root)
     matchups = tuple(matchups)
     if not matchups:
         raise ValueError('at least one matchup is required')
-    partitions = seed_partitions(1, seed_count, workers)
-    result = {'schema': SCHEMA, 'run_root': str(run_root), 'seed_start': 1,
+    if not artifact_directory or Path(artifact_directory).name != artifact_directory:
+        raise ValueError('artifact_directory must be one directory name')
+    partitions = seed_partitions(seed_start, seed_count, workers)
+    result = {'schema': SCHEMA, 'run_root': str(run_root), 'seed_start': seed_start,
               'requested_games_per_matchup': seed_count, 'expected_workers_per_matchup': len(partitions),
+              'status_scope': ('complete means all requested seeds and required artifacts were audited; '
+                               'blocked/error outcomes remain separately counted and reported'),
               'matchups': [], 'status': 'incomplete'}
     total_failures = []
     for matchup in matchups:
         game_id = f'{season_week}_{matchup}'
-        game_dir = run_root / 'artifacts' / matchup / 'parallel-6'
+        game_dir = run_root / 'artifacts' / matchup / artifact_directory
         game = {'matchup': matchup, 'game_id': game_id, 'requested_seed_count': seed_count,
                 'accounted_seed_count': 0, 'status': 'incomplete', 'shards': [], 'failures': [],
+                'home_team': None, 'away_team': None,
+                'duplicate_ledger_attempts': 0,
                 'seed_status_counts': {}, 'blocker_counts': {}, 'valid_full_games': 0,
                 'reconciled_valid_full_games': 0,
                 'regulation_end_reached': 0, 'tied_at_regulation_end': 0, 'final_ties': 0,
                 'blocked_before_regulation_end': 0, 'simulation_or_validation_errors': 0,
                 'reconciliation_failures': 0, 'unresolved_seed_outcomes': [],
-                'player_distributions': []}
+                'player_distributions': [], 'valid_game_scores': []}
         seen_seeds = set()
         status_counts, blocker_counts = Counter(), Counter()
         values = defaultdict(list)
         exceedance_seeds = defaultdict(list)
         maxima = {}
+        team_values = defaultdict(lambda: defaultdict(list))
+        score_values = defaultdict(list)
+        quarter_values = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        drive_period_values = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        drive_values = defaultdict(lambda: defaultdict(list))
+        drive_terminal_counts = defaultdict(Counter)
         provenance = None
 
         for index, (seed_start, count) in enumerate(partitions, start=1):
@@ -256,7 +291,10 @@ def audit_batch(run_root: Path, *, matchups=MATCHUPS, seed_count: int = 10000,
                 summary = {}
             report_outcomes = _index_report_outcomes(
                 summary.get('outcomes'), report_path, game['failures'])
-            ledger_header, ledger = _index_ledger_rows(ledger_rows, ledger_path, game['failures'])
+            ledger_header, ledger, duplicate_attempts = _index_ledger_rows(
+                ledger_rows, ledger_path, game['failures'])
+            shard['duplicate_ledger_attempts'] = duplicate_attempts
+            game['duplicate_ledger_attempts'] += duplicate_attempts
             box_manifest, boxes = _index_boxscores(box_rows, boxes_path, game_id, game['failures'])
             if ledger_header:
                 if ledger_header.get('game_id') != game_id:
@@ -348,6 +386,20 @@ def audit_batch(run_root: Path, *, matchups=MATCHUPS, seed_count: int = 10000,
                     else:
                         game['reconciled_valid_full_games'] += 1
                         _accumulate_player_usage(expected_box, seed, values, exceedance_seeds, maxima)
+                        box_teams = (expected_box.get('home_team'), expected_box.get('away_team'))
+                        if None in box_teams or box_teams[0] == box_teams[1]:
+                            _failure(game['failures'], 'INVALID_BOXSCORE', boxes_path,
+                                     f'seed {seed} does not identify distinct home and away teams')
+                        elif game['home_team'] is None:
+                            game['home_team'], game['away_team'] = box_teams
+                        elif box_teams != (game['home_team'], game['away_team']):
+                            _failure(game['failures'], 'GAME_IDENTITY_MISMATCH', boxes_path,
+                                     f'seed {seed} team pair {box_teams!r} differs from '
+                                     f'{(game["home_team"], game["away_team"])!r}')
+                        _accumulate_team_usage(expected_box, game['failures'], boxes_path,
+                                               team_values, score_values, quarter_values,
+                                               drive_period_values, drive_values, drive_terminal_counts,
+                                               game['valid_game_scores'], seed)
                 if (not ledger_outcome.get('valid_full_game') or status in ('simulation_error', 'validation_error')
                         or blocker or ledger_outcome.get('boxscore_error')):
                     game['unresolved_seed_outcomes'].append({
@@ -359,13 +411,35 @@ def audit_batch(run_root: Path, *, matchups=MATCHUPS, seed_count: int = 10000,
             game['shards'].append(shard)
 
         game['accounted_seed_count'] = len(seen_seeds)
-        if seen_seeds != set(range(1, seed_count + 1)):
+        expected_batch_seeds = set(range(seed_start, seed_start + seed_count))
+        if seen_seeds != expected_batch_seeds:
             _failure(game['failures'], 'SEED_COVERAGE_MISMATCH', game_dir,
-                     f'batch has {len(seen_seeds)} unique accounted seeds; expected {seed_count}')
+                     f'batch has {len(seen_seeds)} unique accounted seeds; expected {seed_count} '
+                     f'from seed {seed_start}')
         game['seed_status_counts'] = dict(sorted(status_counts.items()))
         game['blocker_counts'] = dict(sorted(blocker_counts.items()))
         game['source_provenance'] = provenance
         game['player_distributions'] = _player_distributions(values, exceedance_seeds, maxima)
+        game['team_distributions'] = _summarize_team_values(team_values)
+        game['score_summary'] = {
+            'valid_game_count': len(score_values.get('total_points', [])),
+            'decisive_game_count': sum(margin != 0 for margin in score_values.get('home_minus_away', [])),
+            'tie_count': sum(margin == 0 for margin in score_values.get('home_minus_away', [])),
+            **{metric: _distribution(rows) for metric, rows in sorted(score_values.items())},
+        }
+        game['quarter_by_quarter_summary'] = {
+            team: {period: {metric: _distribution(rows) for metric, rows in sorted(metrics.items())}
+                   for period, metrics in sorted(period_rows.items())}
+            for team, period_rows in sorted(quarter_values.items())}
+        game['drive_summary'] = {
+            team: {metric: _distribution(rows) for metric, rows in sorted(metrics.items())}
+            for team, metrics in sorted(drive_values.items())}
+        game['drive_summary_by_team_and_period'] = {
+            team: {period: {metric: _distribution(rows) for metric, rows in sorted(metrics.items())}
+                   for period, metrics in sorted(period_rows.items())}
+            for team, period_rows in sorted(drive_period_values.items())}
+        game['drive_terminal_counts'] = {
+            team: dict(sorted(counts.items())) for team, counts in sorted(drive_terminal_counts.items())}
         game['status'] = 'complete' if not game['failures'] else 'incomplete_or_invalid'
         total_failures.extend({'matchup': matchup, **finding} for finding in game['failures'])
         result['matchups'].append(game)
@@ -394,6 +468,120 @@ def _accumulate_player_usage(boxscore: dict, seed: int, values: dict,
                 maxima[key] = (value, seed)
 
 
+def _accumulate_team_usage(boxscore: dict, failures: list[dict], path: Path,
+                           team_values: dict, score_values: dict, quarter_values: dict,
+                           drive_period_values: dict, drive_values: dict,
+                           drive_terminal_counts: dict, score_rows: list, seed: int) -> None:
+    teams = boxscore.get('teams')
+    if not isinstance(teams, list):
+        _failure(failures, 'INVALID_BOXSCORE', path, f'seed {seed} has no team box-score list')
+        return
+    indexed = {row.get('team'): row for row in teams if isinstance(row, dict) and row.get('team')}
+    home_team, away_team = boxscore.get('home_team'), boxscore.get('away_team')
+    if not home_team or not away_team or home_team == away_team or not {home_team, away_team} <= set(indexed):
+        _failure(failures, 'INVALID_BOXSCORE', path,
+                 f'seed {seed} team identities do not match the home/away fields')
+        return
+    scores = {}
+    for team in (home_team, away_team):
+        stats = indexed[team].get('stats') or {}
+        points = stats.get('points')
+        if type(points) is not int:
+            _failure(failures, 'INVALID_BOXSCORE', path, f'seed {seed} {team} has no integer final points')
+            return
+        scores[team] = points
+        for metric in TEAM_METRICS:
+            value = stats.get(metric)
+            if type(value) is int:
+                team_values[team][metric].append(value)
+    margin = scores[home_team] - scores[away_team]
+    total = scores[home_team] + scores[away_team]
+    score_values['home_points'].append(scores[home_team])
+    score_values['away_points'].append(scores[away_team])
+    score_values['total_points'].append(total)
+    score_values['home_minus_away'].append(margin)
+    score_rows.append({'seed': seed, 'home_team': home_team, 'home_points': scores[home_team],
+                       'away_team': away_team, 'away_points': scores[away_team],
+                       'total_points': total, 'home_minus_away': margin})
+
+    quarter = boxscore.get('quarter_by_quarter')
+    if not isinstance(quarter, dict) or quarter.get('scoring_complete') is not True \
+            or boxscore.get('quarter_scoring_complete') is not True:
+        _failure(failures, 'MISSING_QUARTER_BOXSCORE', path,
+                 f'seed {seed} does not declare complete quarter scoring')
+        return
+    quarter_points = quarter.get('points_by_team')
+    outer_points = boxscore.get('points_by_period')
+    if not isinstance(quarter_points, dict) or not isinstance(outer_points, dict):
+        _failure(failures, 'MISSING_QUARTER_BOXSCORE', path,
+                 f'seed {seed} quarter scoring maps are missing')
+        return
+    for team in (home_team, away_team):
+        period_points = quarter_points.get(team)
+        if not isinstance(period_points, dict):
+            _failure(failures, 'MISSING_QUARTER_BOXSCORE', path,
+                     f'seed {seed} has no period scoring for {team}')
+            continue
+        outer_team_points = outer_points.get(team)
+        if outer_team_points != period_points:
+            _failure(failures, 'QUARTER_BOX_SCORE_MISMATCH', path,
+                     f'seed {seed} outer and quarter scoring differ for {team}')
+        values_by_period = {}
+        for period in PERIODS:
+            value = period_points.get(period, 0)
+            if type(value) is not int:
+                _failure(failures, 'INVALID_QUARTER_SCORE', path,
+                         f'seed {seed} {team} {period} points are not an integer')
+                value = 0
+            values_by_period[period] = value
+            quarter_values[team][period]['points_scored'].append(value)
+        if sum(values_by_period.values()) != scores[team]:
+            _failure(failures, 'QUARTER_SCORE_MISMATCH', path,
+                     f'seed {seed} {team} periods total {sum(values_by_period.values())}, '
+                     f'final points are {scores[team]}')
+    score_rows[-1]['points_by_period'] = quarter_points
+
+    by_team_period = quarter.get('drive_summary_by_team_and_period')
+    if not isinstance(by_team_period, dict):
+        _failure(failures, 'MISSING_DRIVE_SUMMARY', path,
+                 f'seed {seed} quarter box score has no drive_summary_by_team_and_period')
+    else:
+        for team in (home_team, away_team):
+            period_rows = by_team_period.get(team)
+            if not isinstance(period_rows, dict):
+                _failure(failures, 'MISSING_DRIVE_SUMMARY', path,
+                         f'seed {seed} has no quarter drive summaries for {team}')
+                continue
+            for period, stats in period_rows.items():
+                if not isinstance(stats, dict):
+                    _failure(failures, 'INVALID_DRIVE_SUMMARY', path,
+                             f'seed {seed} {team}/{period} drive summary is not an object')
+                    continue
+                for metric in DRIVE_METRICS:
+                    value = stats.get(metric)
+                    if type(value) is int:
+                        drive_period_values[team][period][metric].append(value)
+
+    drives = quarter.get('drive_summaries')
+    if not isinstance(drives, list):
+        _failure(failures, 'MISSING_DRIVE_SUMMARY', path,
+                 f'seed {seed} quarter box score has no drive_summaries list')
+        return
+    for team in (home_team, away_team):
+        team_drives = [drive for drive in drives if isinstance(drive, dict)
+                       and drive.get('offense_team') == team]
+        drive_values[team]['drive_count'].append(len(team_drives))
+        for drive in team_drives:
+            for source, target in (('play_count', 'plays'), ('net_yards', 'net_yards'),
+                                   ('points', 'points'), ('turnovers', 'turnovers')):
+                value = drive.get(source)
+                if type(value) is int:
+                    drive_values[team][target].append(value)
+            terminal = drive.get('terminal')
+            if isinstance(terminal, str) and terminal:
+                drive_terminal_counts[team][terminal] += 1
+
+
 def _write_report(path: Path, report: dict) -> None:
     rendered = json.dumps(report, sort_keys=True, indent=2) + '\n'
     if path.exists():
@@ -412,10 +600,14 @@ def main(argv=None) -> int:
     parser.add_argument('--matchup', dest='matchups', action='append', choices=MATCHUPS)
     parser.add_argument('--games', type=int, default=10000, help='requested seeds per matchup')
     parser.add_argument('--workers', type=int, default=6)
+    parser.add_argument('--seed-start', type=int, default=1)
+    parser.add_argument('--artifact-directory', default='parallel-6',
+                        help='run directory under artifacts/<MATCHUP>; default: parallel-6')
     args = parser.parse_args(argv)
     try:
         report = audit_batch(args.run_root, matchups=tuple(args.matchups or MATCHUPS),
-                             seed_count=args.games, workers=args.workers)
+                             seed_count=args.games, workers=args.workers, seed_start=args.seed_start,
+                             artifact_directory=args.artifact_directory)
     except ValueError as exc:
         parser.error(str(exc))
     rendered = json.dumps(report, sort_keys=True, indent=2) + '\n'
