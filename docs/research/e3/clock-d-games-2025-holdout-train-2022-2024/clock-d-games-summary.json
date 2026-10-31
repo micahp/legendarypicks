@@ -1,0 +1,398 @@
+{
+ "D": {
+  "blocked": 2,
+  "boundaries": {
+   "change_of_ends": 9,
+   "change_of_ends_during_return": 6,
+   "change_of_ends_mid_drive": 257,
+   "halftime": 136,
+   "overtime": 6,
+   "skipped_post_score_kick": 4
+  },
+  "clamped_plays": {
+   "mean": 0.0,
+   "median": 0.0,
+   "p10": 0,
+   "p90": 0
+  },
+  "complete_regulation": 136,
+  "drives": {
+   "mean": 22.91,
+   "median": 23.0,
+   "p10": 19,
+   "p90": 27
+  },
+  "games": 300,
+  "late_plays": {
+   "mean": 18.57,
+   "median": 19.0,
+   "p10": 12,
+   "p90": 24
+  },
+  "plays": {
+   "mean": 146.25,
+   "median": 146.0,
+   "p10": 137,
+   "p90": 157
+  },
+  "plays_per_regulation_drive": {
+   "mean": 6.49,
+   "median": 6.369318181818182,
+   "n": 136,
+   "p10": 5.7407407407407405,
+   "p90": 7.3
+  },
+  "plays_q1": {
+   "mean": 34.29,
+   "median": 34.0,
+   "p10": 31,
+   "p90": 39
+  },
+  "plays_q2": {
+   "mean": 38.32,
+   "median": 38.0,
+   "p10": 33,
+   "p90": 44
+  },
+  "plays_q3": {
+   "mean": 33.6,
+   "median": 33.0,
+   "p10": 30,
+   "p90": 38
+  },
+  "plays_q4": {
+   "mean": 40.04,
+   "median": 39.0,
+   "p10": 34,
+   "p90": 47
+  },
+  "points": {
+   "mean": 40.18,
+   "median": 39.5,
+   "p10": 26,
+   "p90": 55
+  },
+  "quarter_end_events": {
+   "fumble_lost": 2,
+   "interception": 1,
+   "pass_complete": 1,
+   "punt": 7,
+   "run": 2
+  },
+  "regulation_drives": {
+   "mean": 22.8,
+   "median": 23.0,
+   "p10": 19,
+   "p90": 27
+  },
+  "regulation_plays": {
+   "mean": 146.25,
+   "median": 146.0,
+   "p10": 137,
+   "p90": 157
+  }
+ },
+ "E2": {
+  "blocked": 4,
+  "boundaries": {
+   "change_of_ends": 8,
+   "change_of_ends_during_return": 1,
+   "change_of_ends_mid_drive": 271,
+   "halftime": 140,
+   "overtime": 9,
+   "skipped_post_score_kick": 1
+  },
+  "clamped_plays": {
+   "mean": 3.86,
+   "median": 4.0,
+   "p10": 3,
+   "p90": 4
+  },
+  "complete_regulation": 140,
+  "drives": {
+   "mean": 23.22,
+   "median": 23.0,
+   "p10": 19,
+   "p90": 27
+  },
+  "games": 300,
+  "late_plays": {
+   "mean": 9.29,
+   "median": 9.0,
+   "p10": 7,
+   "p90": 12
+  },
+  "plays": {
+   "mean": 147.58,
+   "median": 147.5,
+   "p10": 138,
+   "p90": 156
+  },
+  "plays_per_regulation_drive": {
+   "mean": 6.47,
+   "median": 6.434782608695652,
+   "n": 140,
+   "p10": 5.678571428571429,
+   "p90": 7.4
+  },
+  "plays_q1": {
+   "mean": 37.09,
+   "median": 37.0,
+   "p10": 32,
+   "p90": 43
+  },
+  "plays_q2": {
+   "mean": 36.77,
+   "median": 37.0,
+   "p10": 33,
+   "p90": 41
+  },
+  "plays_q3": {
+   "mean": 36.96,
+   "median": 37.0,
+   "p10": 32,
+   "p90": 43
+  },
+  "plays_q4": {
+   "mean": 36.75,
+   "median": 37.0,
+   "p10": 32,
+   "p90": 42
+  },
+  "points": {
+   "mean": 40.56,
+   "median": 40.0,
+   "p10": 29,
+   "p90": 55
+  },
+  "quarter_end_events": {
+   "field_goal_attempt": 1,
+   "fumble_lost": 1,
+   "pass_complete": 90,
+   "pass_incomplete": 9,
+   "punt": 16,
+   "run": 150,
+   "sack": 21
+  },
+  "regulation_drives": {
+   "mean": 23.07,
+   "median": 23.0,
+   "p10": 19,
+   "p90": 27
+  },
+  "regulation_plays": {
+   "mean": 147.58,
+   "median": 147.5,
+   "p10": 138,
+   "p90": 156
+  }
+ },
+ "model": {
+  "fit_counts": {
+   "missing down, distance or field": 18043,
+   "negative derived clock runoff": 47,
+   "no next row": 10,
+   "no same-quarter next snap for clock runoff": 1,
+   "penalty (not modelled)": 9514,
+   "punt without a clean receiving-team snap": 740,
+   "qb_scramble (not in E1 vocabulary)": 2831,
+   "quarter change without a marker row (excluded)": 42,
+   "turnover that is a touchdown (not modelled)": 158,
+   "turnover without a clean new-offense snap": 272,
+   "two_point_attempt (not modelled)": 371,
+   "unclassified play": 1433,
+   "yards_gained null": 146
+  },
+  "holdout": {
+   "season": 2025,
+   "weeks": [
+    1,
+    18
+   ]
+  },
+  "reference_scope": {
+   "eligible_before": [
+    2025,
+    1
+   ],
+   "eligible_play_seasons": [
+    2022,
+    2023,
+    2024
+   ],
+   "kick_table": "not filtered: the published kick rates include overtime kicks",
+   "overtime_rows_excluded_from_pool": 930,
+   "overtime_rows_removed_before_kickoff_pool": 930,
+   "regulation_only": true,
+   "safety_kick_table": "observed 2022-2025 regular-season safety free kicks, usable rows only",
+   "special_teams_artifact_window": "2022-2025"
+  },
+  "reference_sha256": "1fc86a336edd03930ac86d299fef84f8e149520f3cba4026d7ae6affc1a936d8",
+  "source_sha256": {
+   "/root/legendarypicks/backend/data/picks.dev.db": "f4f62554bc565da98f8d33d8d867e1739162da1eba0282a2745a7c713c292147",
+   "/root/lp-slc-player-workload-2026-10-30/docs/fixtures/e2/play_extras_2022_2025.csv": "3ae148f954e1a3ea2d9c88e1c82f91e745f8767bfaa62c275b1b4e988490dd5b",
+   "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/clock_d.py": "093d410cd199c77d6d791a72271c4fc9c4e27383e15eeb344acf5726ecbbb5c6",
+   "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/clock_d_games.py": "9bb14582e48c375d5c9c0d282503ef3b40cc4750192444a4f10b9512fc162699",
+   "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/e1_drive.py": "bcd55e7d3daab2bb929f4aecd6d2d74a70847ce8f114e2cf645d4df9fd25b02a",
+   "/root/lp-slc-player-workload-2026-10-30/scripts/nfl_sequence/e2_reference.py": "3e7ba69a4504e2e4b68b30fc40b52b51b8b31d9489506ee29827918fe69464a3"
+  },
+  "train": {
+   "games_fitted": 809,
+   "plays_fitted": 103072,
+   "seasons": [
+    2022,
+    2024
+   ],
+   "source_games_before_dev_exclusion": 815,
+   "weeks": [
+    1,
+    18
+   ]
+  }
+ },
+ "observed_2025_volume": {
+  "classifier": "e1.classify on regulation PBP plays with the observed next row",
+  "excluded_rows": {
+   "missing down, distance or field": 5996,
+   "negative derived clock runoff": 5,
+   "no same-quarter next snap for clock runoff": 4,
+   "penalty (not modelled)": 3446,
+   "punt without a clean receiving-team snap": 219,
+   "qb_scramble (not in E1 vocabulary)": 1033,
+   "turnover that is a touchdown (not modelled)": 43,
+   "turnover without a clean new-offense snap": 91,
+   "two_point_attempt (not modelled)": 120,
+   "unclassified play": 511,
+   "yards_gained null": 59
+  },
+  "games": 272,
+  "plays_by_quarter_per_game": {
+   "q1": {
+    "mean": 27.99,
+    "median": 28.0,
+    "n": 272,
+    "p10": 24,
+    "p90": 32
+   },
+   "q2": {
+    "mean": 33.74,
+    "median": 34.0,
+    "n": 272,
+    "p10": 29,
+    "p90": 38
+   },
+   "q3": {
+    "mean": 28.13,
+    "median": 28.0,
+    "n": 272,
+    "p10": 24,
+    "p90": 32
+   },
+   "q4": {
+    "mean": 33.5,
+    "median": 33.0,
+    "n": 272,
+    "p10": 27,
+    "p90": 40
+   }
+  },
+  "plays_per_drive_game_mean": 6.22,
+  "plays_per_drive_pooled": 6.13,
+  "plays_per_game": {
+   "mean": 123.36,
+   "median": 123.0,
+   "n": 272,
+   "p10": 112,
+   "p90": 134
+  },
+  "plays_per_team_game_mean": 61.68,
+  "regulation_drives_per_game": {
+   "mean": 20.11,
+   "median": 20.0,
+   "n": 272,
+   "p10": 17,
+   "p90": 24
+  },
+  "regulation_drives_per_team_game_mean": 10.06,
+  "season": 2025,
+  "team_games": 544,
+  "weeks": [
+   1,
+   18
+  ]
+ },
+ "simulation_vs_2025": {
+  "D": {
+   "complete_games": 136,
+   "difference_simulated_minus_observed": {
+    "plays_per_drive_game_mean": 0.27,
+    "plays_per_game": 22.89,
+    "plays_per_team_game": 11.45,
+    "plays_q1_per_game": 6.3,
+    "plays_q2_per_game": 4.58,
+    "plays_q3_per_game": 5.47,
+    "plays_q4_per_game": 6.54,
+    "regulation_drives_per_game": 2.69,
+    "regulation_drives_per_team_game": 1.34
+   },
+   "observed_2025": {
+    "plays_per_drive_game_mean": 6.22,
+    "plays_per_game": 123.36,
+    "plays_per_team_game": 61.68,
+    "plays_q1_per_game": 27.99,
+    "plays_q2_per_game": 33.74,
+    "plays_q3_per_game": 28.13,
+    "plays_q4_per_game": 33.5,
+    "regulation_drives_per_game": 20.11,
+    "regulation_drives_per_team_game": 10.06
+   },
+   "simulated": {
+    "plays_per_drive_game_mean": 6.49,
+    "plays_per_game": 146.25,
+    "plays_per_team_game": 73.12,
+    "plays_q1_per_game": 34.29,
+    "plays_q2_per_game": 38.32,
+    "plays_q3_per_game": 33.6,
+    "plays_q4_per_game": 40.04,
+    "regulation_drives_per_game": 22.8,
+    "regulation_drives_per_team_game": 11.4
+   }
+  },
+  "E2": {
+   "complete_games": 140,
+   "difference_simulated_minus_observed": {
+    "plays_per_drive_game_mean": 0.25,
+    "plays_per_game": 24.22,
+    "plays_per_team_game": 12.11,
+    "plays_q1_per_game": 9.1,
+    "plays_q2_per_game": 3.03,
+    "plays_q3_per_game": 8.83,
+    "plays_q4_per_game": 3.25,
+    "regulation_drives_per_game": 2.96,
+    "regulation_drives_per_team_game": 1.48
+   },
+   "observed_2025": {
+    "plays_per_drive_game_mean": 6.22,
+    "plays_per_game": 123.36,
+    "plays_per_team_game": 61.68,
+    "plays_q1_per_game": 27.99,
+    "plays_q2_per_game": 33.74,
+    "plays_q3_per_game": 28.13,
+    "plays_q4_per_game": 33.5,
+    "regulation_drives_per_game": 20.11,
+    "regulation_drives_per_team_game": 10.06
+   },
+   "simulated": {
+    "plays_per_drive_game_mean": 6.47,
+    "plays_per_game": 147.58,
+    "plays_per_team_game": 73.79,
+    "plays_q1_per_game": 37.09,
+    "plays_q2_per_game": 36.77,
+    "plays_q3_per_game": 36.96,
+    "plays_q4_per_game": 36.75,
+    "regulation_drives_per_game": 23.07,
+    "regulation_drives_per_team_game": 11.54
+   }
+  }
+ }
+}

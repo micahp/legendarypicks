@@ -1,12 +1,12 @@
 # SLC work summary — 2026-10-30
 
 **Branch:** `research/slc-player-workload-calibration-2026-10-30`
-**Code already pushed before this publication:** `c10ca203` (`Update realism TODO for Week 8 run status`)
+**Latest code commit before this publication:** `5ae7653f` (`research: separate regulation reached from game validity`)
 **Scope:** SLC football-realism assertions, workload calibration evidence, the separate Model D clock replay, and the remaining Week 8 matchup runs.
 
-## Final closeout
+## Status update — 20:13 CDT
 
-At closeout, the SLC working tree had no uncommitted code, and local commit `0076eeb7` matched the remote research branch. The workload benchmark builder, realism assertions and fixes, audit/report builders, and Model D replay changes were already committed and pushed. This closeout summary is the only additional change in this publication. The Week 8 replacement batch is still unverified: IND–JAX worker startup was observed, but no completed matchup artifacts or batch completion were confirmed.
+The latest source commit, `5ae7653f` (`research: separate regulation reached from game validity`), is already on the remote SLC research branch. There are no uncommitted source-code changes. This update adds the finished Model D evidence and the current state of the separate full-game replay. The Week 8 replacement batch is still unverified: IND–JAX worker startup was observed, but no completed matchup artifacts or batch completion were confirmed.
 
 ## Completed and published
 
@@ -37,6 +37,13 @@ The ARI–DAL report explicitly notes that archived artifacts do not retain ever
 
 - Corrected the Model D OOB support window after tracing the prior 485/2,132 table to 2022–2024 Weeks 1–5. The full-season v3 report now publishes exact quarter/window counts, the Q2 120-second and Q4 300-second boundaries, censoring counts, event composition, and source/code hashes. The reported 375 completed passes are one event type within 449 Q4 `oob_snap` plays in the >120 and <300-second cell, not the total stop-class support.
 
+## Late-day Model D findings
+
+- Published the full-season v6 fixed-outcome replay and review. Its 2022–2024 training and 2025 holdout rows were read in a single SQLite transaction; the exact selected-row SHA-256 is `6775da6a10cf209b83c4cc542f24a875d7d0a88971c1369663ef1ffdb674ba33` (141,830 training rows and 46,452 holdout rows). The 2025 holdout has 272 games; 785 quarters have a classifiable boundary marker, replayed 20 times each for 15,700 quarter-replicates.
+- In v6, Model D classified 547/15,700 quarter ends accurately (3.48%), ended early in 676 (4.31%), and missed 14,477 (92.21%); the median clock left at a missed observed boundary was 101 seconds. Matched-play clock bias was positive in every quarter (simulated clock remaining too high): Q1 +53.79 sec, Q2 +65.53, Q3 +59.80, Q4 +42.17. Broad stop-class mean runoffs were close to 2025 observations, so those averages do not explain the clock-state bias by themselves. Full results and per-file hashes are in the [v6 review](e3/oob-policy-replay-2026-10-30/train-2022-2024-full-season-v6/REVIEW.md). V4 and v5 raw iterations are retained; v6 is authoritative.
+- A first paired 300-seed full-game comparison completed for E2 and Model D. Its raw per-seed statuses show E2 reached regulation in 296 games (4 blocked) and D in 298 (2 blocked); 140 E2 and 136 D games are complete including overtime ties. Among regulation-reached games, E2 averaged 148.21 plays and 23.08 regulation drives; D averaged 147.12 plays and 22.95 drives. The 2025 observed baseline is 123.36 plays and 20.11 drives per game, so Model D still overproduces about 23.76 plays/game (+19.3%) and 2.84 drives/game (+14.1%). The first run's JSON volume summary used only legally complete games for some measures; the archived per-seed CSV is the source for these corrected regulation-reached denominators.
+- A corrected paired 300-seed rerun is active locally at `docs/research/e3/clock-d-games-2025-holdout-train-2022-2024-v2`; at 20:13 CDT its process was still running. Its output will be reviewed after it finishes. Model D remains diagnostic and opt-in.
+
 ## Verification
 
 Using `/root/.venvs/lp-slc-a-g/bin/python`, two focused runs passed: **90 tests across nine modules** for QB participation, football and box-score assertions, QB decisions/style evaluation, workload references, and paired ablation comparison/runner behavior; plus **401 tests across 17 modules** for football invariants, game state, E1 transitions, clock replay, SLC engine/output, share and player outcomes, kicks, overtime, seed ledgers, and batch handling. Total: **491 passing tests across 26 modules**. After fixing the two failures found by full discovery, `/root/legendarypicks/backend/venv/bin/python -m unittest discover -s scripts/nfl_sequence -p 'test_*.py'` passed **934 tests with 3 skipped**. After adding the dedicated backoff regression, the affected team-outcome, blocker-resolution, and archival-comparison suites passed **24 tests**. The full 934-test discovery was not rerun after that test-only addition. In this update, the focused clock replay suite passed **11 tests**; a 20-replicate full-window Model D holdout replay completed, and an independent raw nflverse reconstruction matched all 42 support cells, 141,830 PBP keys, and 12,246 OOB-flag keys. `git diff --check` and focused regressions passed.
@@ -44,6 +51,7 @@ Using `/root/.venvs/lp-slc-a-g/bin/python`, two focused runs passed: **90 tests 
 ## Still open
 
 - Verify all eight remaining 10K matchups finish, reconcile every seed and exported box score, preserve blocked/error outcomes, then publish the artifacts and matchup review.
+- Finish and review the corrected 300-seed E2/Model D full-game replay; diagnose excess play and drive volume after the corrected denominators and event mix are available.
 - Run the matched-seed full-game ablation matrix after the fast host is free. This is required to quantify player-share, QB-decision, team-outcome, player-conditioned-outcome, playbook, and score-clock effects.
 - Keep the QB style layer opt-in until full-game paired results support a change. Improve workload-dependent shares/substitutions and Model D quarter-end hazards using the pinned holdout data; do not clip rare legal outcomes.
 - The eight-matchup run and paired ablation matrix still need fast-host completion and artifact review; do not infer completion from worker startup alone.
