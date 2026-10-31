@@ -18,6 +18,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import tempfile
 
 
@@ -115,11 +116,14 @@ def export_replay(trace_path: Path, out_root: Path, run_id: str, expected_outcom
     if target.exists():
         raise FileExistsError('refusing to overwrite existing replay export: ' + str(target))
     target.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix='.replay-', dir=target.parent) as tmp:
-        tmp_path = Path(tmp)
+    tmp_path = Path(tempfile.mkdtemp(prefix='.replay-', dir=target.parent))
+    try:
         (tmp_path / 'record.json').write_bytes(record_bytes)
         (tmp_path / 'manifest.json').write_bytes(_json_bytes(manifest))
-        os.replace(tmp_path, target)
+        os.rename(tmp_path, target)
+    finally:
+        if tmp_path.exists():
+            shutil.rmtree(tmp_path)
     return {'path': str(target), 'manifest': manifest}
 
 
