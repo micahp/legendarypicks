@@ -116,8 +116,8 @@ export default function NbaModelTab() {
       {error && <p role="status" className="text-xs text-amber-300">Refresh failed; showing the last successful feed. {error}</p>}
       {payload.state === 'awaiting_history_import' && (
         <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-100">
-          Historical source data has not been installed in the dev model store yet. The benchmark below is the
-          reproducible research run; prospective previews will appear after dev initialization.
+          Historical NBA data has not been imported into the model store yet. The benchmark below is the
+          reproducible research run; prospective previews will appear after the model store is initialized.
         </p>
       )}
 

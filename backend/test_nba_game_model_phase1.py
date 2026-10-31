@@ -371,24 +371,23 @@ def test_jobs_require_a_dev_database_path(tmp_path: Path):
         require_dev_picks_db(str(prod))
 
 
-def test_read_api_is_dev_scoped_and_exposes_the_benchmark(tmp_path: Path, monkeypatch):
-    dev = tmp_path / "picks.dev.db"
-    dev.touch()
-    model = tmp_path / "nba-model.dev.sqlite3"
-    monkeypatch.setenv("LP_DB_PATH", str(dev))
-    monkeypatch.setenv("NBA_MODEL_DB_PATH", str(model))
-    monkeypatch.setattr(nba_model_router, "MODEL_DB", str(model))
-    response = nba_model_router.nba_model_locks(Response(), 2027)
-    payload = json.loads(response.body)
-    assert payload["state"] == "awaiting_history_import"
-    assert payload["benchmark"]["metrics"]["test"]["G3"]["winner_brier"] == pytest.approx(0.213386, abs=1e-6)
-
-    prod = tmp_path / "picks.db"
-    prod.touch()
-    monkeypatch.setenv("LP_DB_PATH", str(prod))
-    with pytest.raises(HTTPException) as error:
-        nba_model_router.nba_model_locks(Response(), 2027)
-    assert error.value.status_code == 404
+def test_read_api_is_available_on_dev_and_prod_and_exposes_the_benchmark(tmp_path: Path, monkeypatch):
+    for picks_name, model_name in (
+        ("picks.dev.db", "nba-model.dev.sqlite3"),
+        ("picks.db", "nba-model.sqlite3"),
+    ):
+        picks = tmp_path / picks_name
+        picks.touch()
+        model = tmp_path / model_name
+        monkeypatch.setenv("LP_DB_PATH", str(picks))
+        monkeypatch.setenv("NBA_MODEL_DB_PATH", str(model))
+        monkeypatch.setattr(nba_model_router, "MODEL_DB", str(model))
+        response = nba_model_router.nba_model_locks(Response(), 2027)
+        payload = json.loads(response.body)
+        assert response.status_code == 200
+        assert payload["state"] == "awaiting_history_import"
+        assert payload["source"] == "standalone NBA research model database"
+        assert payload["benchmark"]["metrics"]["test"]["G3"]["winner_brier"] == pytest.approx(0.213386, abs=1e-6)
 
 
 def _fixture_schedule(path: Path) -> None:

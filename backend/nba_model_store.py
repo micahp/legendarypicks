@@ -824,7 +824,7 @@ def export_payload(con: sqlite3.Connection, season: int,
         state = "available"
     return {
         "league": "nba", "season": season, "state": state,
-        "source": "dev-only standalone NBA model database",
+        "source": "standalone NBA research model database",
         "default_model": "G3", "models": MODEL_INFO, "records": records,
         "games": sorted(games.values(), key=lambda row: (row["scheduled_start_utc"], row["game_id"])),
         "benchmark": benchmark or {},

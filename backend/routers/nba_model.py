@@ -1,4 +1,4 @@
-"""Read-only NBA research-model API. It is exposed only by a dev deployment."""
+"""Read-only NBA research-model API for league model tabs."""
 from __future__ import annotations
 
 import json
@@ -16,19 +16,7 @@ router = APIRouter()
 MODEL_DB = os.environ.get("NBA_MODEL_DB_PATH", DEFAULT_DB)
 ROOT = Path(__file__).resolve().parents[2]
 BENCHMARK = ROOT / "research" / "nba-game-model" / "benchmark.json"
-SOURCE = "dev-only standalone NBA research model database"
-
-
-def _dev_scope_enabled() -> bool:
-    picks = os.environ.get("LP_DB_PATH")
-    model = os.environ.get("NBA_MODEL_DB_PATH", DEFAULT_DB)
-    if not picks:
-        return False
-    try:
-        return (Path(picks).expanduser().resolve().name == "picks.dev.db"
-                and Path(model).expanduser().resolve().name == "nba-model.dev.sqlite3")
-    except OSError:
-        return False
+SOURCE = "standalone NBA research model database"
 
 
 def _benchmark() -> dict:
@@ -41,8 +29,6 @@ def _benchmark() -> dict:
 @router.get("/api/nba/model/locks")
 def nba_model_locks(response: Response,
                     season: int = Query(2027, ge=2020, le=2100)):
-    if not _dev_scope_enabled():
-        raise HTTPException(status_code=404, detail="NBA research model is available on dev only")
     benchmark = _benchmark()
     if not os.path.exists(MODEL_DB):
         payload = {
