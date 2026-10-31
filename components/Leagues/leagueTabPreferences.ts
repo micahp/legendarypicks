@@ -1,7 +1,19 @@
+import { useEffect, useState } from 'react'
 import type { HubTab } from './types'
 
 const STORAGE_KEY = 'lp.league-tab-preferences.v1'
 export const LEAGUE_TAB_PREFERENCES_CHANGED = 'lp:league-tab-preferences-changed'
+
+export type LeagueDestinationTab = HubTab | 'scores' | 'live'
+
+const ACTIVE_MODEL_LEAGUES = new Set(['nba', 'ncaaf', 'nfl', 'nhl', 'tennis'])
+
+export function defaultLeagueTab(league: string): LeagueDestinationTab {
+  if (ACTIVE_MODEL_LEAGUES.has(league)) return 'model'
+  if (league === 'soccer') return 'scores'
+  if (league === 'esports') return 'live'
+  return 'schedule'
+}
 
 const knownTabs = new Set<HubTab>([
   'camp',
@@ -36,6 +48,23 @@ export function readLeagueTabPreferences(): Partial<Record<string, HubTab>> {
   } catch {
     return {}
   }
+}
+
+export function useLeagueTabPreferences() {
+  const [tabPreferences, setTabPreferences] = useState<Partial<Record<string, HubTab>>>({})
+
+  useEffect(() => {
+    const syncPreferences = () => setTabPreferences(readLeagueTabPreferences())
+    syncPreferences()
+    window.addEventListener(LEAGUE_TAB_PREFERENCES_CHANGED, syncPreferences)
+    window.addEventListener('storage', syncPreferences)
+    return () => {
+      window.removeEventListener(LEAGUE_TAB_PREFERENCES_CHANGED, syncPreferences)
+      window.removeEventListener('storage', syncPreferences)
+    }
+  }, [])
+
+  return tabPreferences
 }
 
 export function rememberLeagueTab(league: string, tab: HubTab) {

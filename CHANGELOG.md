@@ -1,3 +1,9 @@
+## v10.1.4
+
+### League navigation
+
+- Make the league directory open each league's active model or established default tab, while preserving saved tab choices.
+
 ## v10.1.3
 
 ### NBA model

@@ -1,35 +1,13 @@
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 import { leagueNavigationLabel, useSportNavigation } from '../Navigation/sports'
 import { orderLeagues } from './presentation'
 import {
-  LEAGUE_TAB_PREFERENCES_CHANGED,
-  readLeagueTabPreferences,
+  defaultLeagueTab,
+  useLeagueTabPreferences,
 } from './leagueTabPreferences'
-import type { HubTab } from './types'
-
-const ACTIVE_MODEL_LEAGUES = new Set(['nba', 'ncaaf', 'nfl', 'nhl', 'tennis'])
-
-function defaultLeagueTab(league: string) {
-  if (ACTIVE_MODEL_LEAGUES.has(league)) return 'model'
-  if (league === 'soccer') return 'scores'
-  if (league === 'esports') return 'live'
-  return 'schedule'
-}
 
 export default function LeagueSwitcher({ activeLeague }: { activeLeague: string }) {
-  const [tabPreferences, setTabPreferences] = useState<Partial<Record<string, HubTab>>>({})
-
-  useEffect(() => {
-    const syncPreferences = () => setTabPreferences(readLeagueTabPreferences())
-    syncPreferences()
-    window.addEventListener(LEAGUE_TAB_PREFERENCES_CHANGED, syncPreferences)
-    window.addEventListener('storage', syncPreferences)
-    return () => {
-      window.removeEventListener(LEAGUE_TAB_PREFERENCES_CHANGED, syncPreferences)
-      window.removeEventListener('storage', syncPreferences)
-    }
-  }, [])
+  const tabPreferences = useLeagueTabPreferences()
 
   // The directory registry decides which league hubs are offered. Team-stat season
   // certification is a separate contract and omits rollup hubs like tennis.

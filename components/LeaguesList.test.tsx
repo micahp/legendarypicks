@@ -9,6 +9,8 @@ describe('leagues list', () => {
       json: () => Promise.resolve({
         leagues: [
           { league: 'soccer', sport: 'soccer' },
+          { league: 'mlb', sport: 'baseball' },
+          { league: 'nba', sport: 'basketball' },
           { league: 'nfl', sport: 'football' },
           { league: 'ncaaf', sport: 'football' },
           { league: 'esports', sport: 'esports' },
@@ -18,9 +20,11 @@ describe('leagues list', () => {
   })
 
   it.each([
-    ['Soccer', '/leagues/soccer'],
-    ['NCAAF', '/leagues/ncaaf'],
-    ['Esports', '/leagues/esports'],
+    ['Soccer', '/leagues/soccer?tab=scores'],
+    ['MLB', '/leagues/mlb?tab=schedule'],
+    ['NBA', '/leagues/nba?tab=model'],
+    ['NCAAF', '/leagues/ncaaf?tab=model'],
+    ['Esports', '/leagues/esports?tab=live'],
   ])('lists %s with a card linking to its league destination', async (name, href) => {
     render(<LeaguesPage />)
     const league = await screen.findByRole('heading', { level: 2, name })
