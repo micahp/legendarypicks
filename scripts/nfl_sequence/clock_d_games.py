@@ -45,11 +45,16 @@ def holdout_volume(db=e1.DEFAULT_DB, season=HOLDOUT_SEASON):
     columns = (*e1.COLUMNS, 'drive')
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
-        rows = [dict(zip(columns, r)) for r in con.execute(
+        raw_rows = list(con.execute(
             f"SELECT {', '.join(columns)} FROM nfl_pbp WHERE season=? AND week BETWEEN 1 AND 18 "
-            "ORDER BY game_id, play_id", (season,))]
+            "ORDER BY game_id, play_id", (season,)))
+        rows = [dict(zip(columns, row)) for row in raw_rows]
     finally:
         con.close()
+    source_digest = hashlib.sha256()
+    for row in raw_rows:
+        source_digest.update(json.dumps(row, separators=(',', ':'), ensure_ascii=False, default=str).encode())
+        source_digest.update(b'\n')
     by_game = defaultdict(list)
     for row in rows:
         by_game[row['game_id']].append(row)
@@ -58,15 +63,21 @@ def holdout_volume(db=e1.DEFAULT_DB, season=HOLDOUT_SEASON):
     drive_plays = defaultdict(int)
     excluded = Counter()
     for game_id, sequence in by_game.items():
-        game = {'plays': 0, **{f'plays_q{q}': 0 for q in range(1, 5)}, 'drives': set()}
+        game = {'plays': 0, **{f'plays_q{q}': 0 for q in range(1, 5)}, 'drives': set(),
+                'event_counts': Counter(), 'event_runoff_sums': Counter(), 'event_runoff_counts': Counter()}
         for i, row in enumerate(sequence):
             if row['qtr'] not in (1, 2, 3, 4) or cd.is_marker(row):
                 continue
             nxt = sequence[i + 1] if i + 1 < len(sequence) else None
-            if e1.classify(row, nxt, excluded) is None:
+            hit = e1.classify(row, nxt, excluded)
+            if hit is None:
                 continue
+            event, runoff, _spot = hit
             game['plays'] += 1
             game[f"plays_q{int(row['qtr'])}"] += 1
+            game['event_counts'][event] += 1
+            game['event_runoff_sums'][event] += runoff
+            game['event_runoff_counts'][event] += 1
             if row['drive'] is not None and row['posteam'] is not None:
                 drive_key = (game_id, row['posteam'], int(row['drive']))
                 game['drives'].add(drive_key)
@@ -77,8 +88,17 @@ def holdout_volume(db=e1.DEFAULT_DB, season=HOLDOUT_SEASON):
     play_counts = [g['plays'] for g in games.values()]
     drive_counts = [g['drives'] for g in games.values()]
     plays_per_drive = [g['plays'] / g['drives'] for g in games.values() if g['drives']]
+    all_event_counts = Counter()
+    all_event_runoff_sums = Counter()
+    all_event_runoff_counts = Counter()
+    for game in games.values():
+        all_event_counts.update(game['event_counts'])
+        all_event_runoff_sums.update(game['event_runoff_sums'])
+        all_event_runoff_counts.update(game['event_runoff_counts'])
+    total_events = sum(all_event_counts.values())
     return {
         'season': season, 'weeks': [1, 18], 'games': len(games), 'team_games': 2 * len(games),
+        'source_rows': len(raw_rows), 'source_rows_sha256': source_digest.hexdigest(),
         'classifier': 'e1.classify on regulation PBP plays with the observed next row',
         'excluded_rows': dict(sorted(excluded.items())),
         'plays_per_game': _describe(play_counts),
@@ -87,6 +107,13 @@ def holdout_volume(db=e1.DEFAULT_DB, season=HOLDOUT_SEASON):
         'regulation_drives_per_team_game_mean': round(sum(drive_counts) / (2 * len(games)), 2) if games else None,
         'plays_per_drive_game_mean': round(statistics.fmean(plays_per_drive), 2) if plays_per_drive else None,
         'plays_per_drive_pooled': round(sum(drive_plays.values()) / len(drive_plays), 2) if drive_plays else None,
+        'event_counts_total': dict(sorted(all_event_counts.items())),
+        'event_counts_per_game_mean': {event: round(count / len(games), 2)
+                                       for event, count in sorted(all_event_counts.items())} if games else {},
+        'event_share': {event: round(count / total_events, 4) for event, count in sorted(all_event_counts.items())
+                        if total_events},
+        'event_runoff_mean_s': {event: round(all_event_runoff_sums[event] / all_event_runoff_counts[event], 2)
+                                for event in sorted(all_event_counts) if all_event_runoff_counts[event]},
         'plays_by_quarter_per_game': {
             f'q{q}': _describe([g[f'plays_q{q}'] for g in games.values()]) for q in range(1, 5)},
     }
@@ -94,16 +121,17 @@ def holdout_volume(db=e1.DEFAULT_DB, season=HOLDOUT_SEASON):
 
 def comparison_to_holdout(simulated, observed):
     complete = [row for row in simulated if row['complete_regulation']]
-    if not complete:
-        return {'complete_games': 0}
+    reached = [row for row in simulated if row.get('regulation_end_reached')]
+    if not reached:
+        return {'regulation_end_reached_games': 0, 'complete_regulation_games': len(complete)}
     sim_metrics = {
-        'plays_per_game': statistics.fmean(row['regulation_plays'] for row in complete),
-        'plays_per_team_game': statistics.fmean(row['regulation_plays'] / 2 for row in complete),
-        'regulation_drives_per_game': statistics.fmean(row['regulation_drives'] for row in complete),
-        'regulation_drives_per_team_game': statistics.fmean(row['regulation_drives'] / 2 for row in complete),
-        'plays_per_drive_game_mean': statistics.fmean(row['plays_per_regulation_drive'] for row in complete
+        'plays_per_game': statistics.fmean(row['regulation_plays'] for row in reached),
+        'plays_per_team_game': statistics.fmean(row['regulation_plays'] / 2 for row in reached),
+        'regulation_drives_per_game': statistics.fmean(row['regulation_drives'] for row in reached),
+        'regulation_drives_per_team_game': statistics.fmean(row['regulation_drives'] / 2 for row in reached),
+        'plays_per_drive_game_mean': statistics.fmean(row['plays_per_regulation_drive'] for row in reached
                                                      if row['plays_per_regulation_drive'] is not None),
-        **{f'plays_q{q}_per_game': statistics.fmean(row[f'plays_q{q}'] for row in complete)
+        **{f'plays_q{q}_per_game': statistics.fmean(row[f'plays_q{q}'] for row in reached)
            for q in range(1, 5)},
     }
     observed_metrics = {
@@ -115,11 +143,40 @@ def comparison_to_holdout(simulated, observed):
         **{f'plays_q{q}_per_game': observed['plays_by_quarter_per_game'][f'q{q}']['mean']
            for q in range(1, 5)},
     }
-    return {'complete_games': len(complete), 'simulated': {k: round(v, 2) for k, v in sim_metrics.items()},
+    event_counts, event_runoff_sums, event_runoff_counts = Counter(), Counter(), Counter()
+    for row in reached:
+        event_counts.update(row.get('event_counts', {}))
+        event_runoff_sums.update(row.get('event_runoff_sums', {}))
+        event_runoff_counts.update(row.get('event_runoff_counts', {}))
+    simulated_event_total = sum(event_counts.values())
+    event_types = sorted(set(event_counts) | set(observed['event_counts_total']))
+    event_composition = {
+        event: {
+            'simulated_per_game_mean': round(event_counts[event] / len(reached), 2),
+            'observed_per_game_mean': observed['event_counts_per_game_mean'].get(event, 0),
+            'simulated_share': round(event_counts[event] / simulated_event_total, 4) if simulated_event_total else None,
+            'observed_share': observed['event_share'].get(event, 0),
+        }
+        for event in event_types
+    }
+    runoff_means = {
+        event: {
+            'simulated_mean_s': round(event_runoff_sums[event] / event_runoff_counts[event], 2)
+            if event_runoff_counts[event] else None,
+            'observed_mean_s': observed['event_runoff_mean_s'].get(event),
+            'simulated_minus_observed_s': round(
+                event_runoff_sums[event] / event_runoff_counts[event] - observed['event_runoff_mean_s'][event], 2)
+            if event_runoff_counts[event] and event in observed['event_runoff_mean_s'] else None,
+        }
+        for event in event_types
+    }
+    return {'regulation_end_reached_games': len(reached), 'complete_regulation_games': len(complete),
+            'simulated': {k: round(v, 2) for k, v in sim_metrics.items()},
             'observed_2025': observed_metrics,
             'difference_simulated_minus_observed': {
                 k: round(sim_metrics[k] - observed_metrics[k], 2)
-                for k in sim_metrics if observed_metrics[k] is not None}}
+                for k in sim_metrics if observed_metrics[k] is not None},
+            'event_composition': event_composition, 'event_runoff_mean_s': runoff_means}
 
 
 def play_rows(record):
@@ -143,6 +200,13 @@ def per_seed(seed, record):
     regulation_drives = [d for d in record['drives'] if d.get('quarter_start') in (1, 2, 3, 4)]
     regulation_plays = [r for r in rows if r['quarter'] in (1, 2, 3, 4)]
     drive_seconds = [sum(p['outcome']['clock_runoff_seconds'] for p in d['plays']) for d in regulation_drives]
+    event_aliases = {'blocked_punt': 'punt', 'blocked_field_goal': 'field_goal_attempt'}
+    event_counts, event_runoff_sums, event_runoff_counts = Counter(), Counter(), Counter()
+    for play in regulation_plays:
+        event = event_aliases.get(play['event'], play['event'])
+        event_counts[event] += 1
+        event_runoff_sums[event] += play['runoff']
+        event_runoff_counts[event] += 1
     ends = Counter()
     for d in record['drives']:
         last = d['plays'][-1] if d['plays'] else None
@@ -152,9 +216,12 @@ def per_seed(seed, record):
     kinds = Counter(b['kind'] for b in record['boundaries'])
     return {
         'seed': seed, 'status': record['status'], 'complete_regulation': record['complete_regulation'],
+        'regulation_end_reached': record.get('regulation_end_reached', False),
         'plays': len(rows), 'drives': len(record['drives']),
         'regulation_plays': len(regulation_plays), 'regulation_drives': len(regulation_drives),
         'plays_per_regulation_drive': len(regulation_plays) / len(regulation_drives) if regulation_drives else None,
+        'event_counts': dict(event_counts), 'event_runoff_sums': dict(event_runoff_sums),
+        'event_runoff_counts': dict(event_runoff_counts),
         'points_A': record['points'].get('A', 0), 'points_B': record['points'].get('B', 0),
         'points': sum(record['points'].values()),
         'plays_q1': per_q[1], 'plays_q2': per_q[2], 'plays_q3': per_q[3], 'plays_q4': per_q[4],
@@ -170,20 +237,37 @@ def per_seed(seed, record):
 
 def summarise(rows):
     complete = [r for r in rows if r['complete_regulation']]
+    reached = [r for r in rows if r.get('regulation_end_reached')]
     out = {'games': len(rows), 'complete_regulation': len(complete),
-           'blocked': sum(1 for r in rows if r['status'] == 'blocked')}
+           'regulation_end_reached': len(reached),
+           'blocked': sum(1 for r in rows if r['status'] == 'blocked'),
+           'status_counts': dict(sorted(Counter(r['status'] for r in rows).items()))}
     for k in ('plays', 'drives', 'regulation_plays', 'regulation_drives', 'points', 'plays_q1', 'plays_q2',
               'plays_q3', 'plays_q4', 'clamped_plays', 'late_plays'):
-        vals = [r[k] for r in complete]
+        vals = [r[k] for r in reached]
         out[k] = {'mean': round(statistics.fmean(vals), 2), 'median': statistics.median(vals),
                   'p10': sorted(vals)[len(vals) // 10], 'p90': sorted(vals)[(9 * len(vals)) // 10]} if vals else None
     ends = Counter()
-    for r in complete:
+    for r in reached:
         ends.update(r['quarter_end_events'])
     out['quarter_end_events'] = dict(ends)
-    out['boundaries'] = dict(sum((Counter(r['boundaries']) for r in complete), Counter()))
+    out['boundaries'] = dict(sum((Counter(r['boundaries']) for r in reached), Counter()))
     out['plays_per_regulation_drive'] = _describe(
-        [r['plays_per_regulation_drive'] for r in complete if r['plays_per_regulation_drive'] is not None])
+        [r['plays_per_regulation_drive'] for r in reached if r['plays_per_regulation_drive'] is not None])
+    event_counts, event_runoff_sums, event_runoff_counts = Counter(), Counter(), Counter()
+    for row in reached:
+        event_counts.update(row.get('event_counts', {}))
+        event_runoff_sums.update(row.get('event_runoff_sums', {}))
+        event_runoff_counts.update(row.get('event_runoff_counts', {}))
+    total_events = sum(event_counts.values())
+    out['event_counts_total'] = dict(sorted(event_counts.items()))
+    out['event_counts_per_game_mean'] = {
+        event: round(count / len(reached), 2) for event, count in sorted(event_counts.items())} if reached else {}
+    out['event_share'] = {event: round(count / total_events, 4) for event, count in sorted(event_counts.items())
+                          if total_events}
+    out['event_runoff_mean_s'] = {
+        event: round(event_runoff_sums[event] / event_runoff_counts[event], 2)
+        for event in sorted(event_counts) if event_runoff_counts[event]}
     return out
 
 

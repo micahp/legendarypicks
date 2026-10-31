@@ -22,6 +22,7 @@ import hashlib
 import json
 import math
 import random
+import sqlite3
 import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -223,6 +224,30 @@ def file_sha256(path):
     return digest.hexdigest()
 
 
+def load_windows_snapshot(db, windows):
+    """Load every requested window in one read transaction and hash the exact ordered E1 rows."""
+    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
+    result, digest, counts = {}, hashlib.sha256(), {}
+    try:
+        con.execute('BEGIN')
+        for name, (season_from, season_to, week_from, week_to) in windows.items():
+            rows = [dict(zip(e1.COLUMNS, values)) for values in con.execute(
+                f"SELECT {', '.join(e1.COLUMNS)} FROM nfl_pbp WHERE season BETWEEN ? AND ? "
+                "AND week BETWEEN ? AND ? ORDER BY game_id, play_id",
+                (season_from, season_to, week_from, week_to))]
+            result[name] = rows
+            counts[name] = len(rows)
+            for row in rows:
+                material = json.dumps([name, *(row[column] for column in e1.COLUMNS)],
+                                      separators=(',', ':'), ensure_ascii=False, default=str)
+                digest.update(material.encode('utf-8'))
+                digest.update(b'\n')
+        con.rollback()
+    finally:
+        con.close()
+    return result, {'sha256': digest.hexdigest(), 'rows_by_window': counts}
+
+
 def summarise(name, results, quarters):
     """results: model -> list of per-quarter dicts (one per replicate); quarters: the observed plays of each quarter."""
     out = {}
@@ -263,7 +288,10 @@ def main():
         ap.error('--replicates must be positive')
 
     flags = cd.load_flags()
-    all_train_rows = cd.load_window(e1.DEFAULT_DB, *train_window)
+    eval_window = (season_from, season_to, week_from, week_to)
+    windows, source_row_snapshot = load_windows_snapshot(
+        e1.DEFAULT_DB, {'training': train_window, 'evaluation': eval_window})
+    all_train_rows = windows['training']
     excluded_games = sorted({r['game_id'] for r in all_train_rows if r['game_id'] in DEV_GAMES})
     excluded_rows = [r for r in all_train_rows if r['game_id'] in DEV_GAMES]
     train_rows = [r for r in all_train_rows if r['game_id'] not in DEV_GAMES]
@@ -272,21 +300,23 @@ def main():
     model = cd.fit(train_rows, flags)
     a_train, _ = e1.build_pool(train_rows)
     a_train = index_event_runoffs(a_train)
-    eval_rows = cd.load_window(e1.DEFAULT_DB, season_from, season_to, week_from, week_to)
+    eval_rows = windows['evaluation']
     if only is not None:
         eval_rows = [r for r in eval_rows if r['game_id'] in only]
     counts = Counter()
     quarters = quarter_plays(eval_rows, flags, counts)
     a_deployed = None
     if args.window == 'holdout':
-        a_deployed, _ = e1.build_pool(e1.load(e1.DEFAULT_DB))
+        a_deployed, _ = e1.build_pool(all_train_rows + windows['evaluation'])
         a_deployed = index_event_runoffs(a_deployed)
 
     results = defaultdict(list)
     observed_pairs = defaultdict(list)  # event -> observed runoffs of plays that were not the quarter's end
     draws_by_event = defaultdict(lambda: defaultdict(list))
     stop_obs = defaultdict(lambda: [0, 0])
+    stop_runoff_obs = defaultdict(lambda: [0.0, 0])
     stop_model = defaultdict(lambda: defaultdict(lambda: [0, 0]))
+    stop_runoff_model = defaultdict(lambda: defaultdict(lambda: [0.0, 0]))
     calib = defaultdict(lambda: [0, 0, 0.0])  # (stop, bucket) -> plays, observed quarter ends, expected quarter ends
     clock_error = defaultdict(lambda: [0, 0.0, 0.0, 0.0])  # quarter -> matched states, abs, signed, squared errors
     last_not_ended = 0
@@ -308,6 +338,8 @@ def main():
                 observed_pairs[p['event']].append(p['runoff'])
                 stop_obs[p['stop']][0] += int(p['runoff'] <= SHORT_SECONDS)
                 stop_obs[p['stop']][1] += 1
+                stop_runoff_obs[p['stop']][0] += p['runoff']
+                stop_runoff_obs[p['stop']][1] += 1
         for rep in range(args.replicates):
             seed = rep * 100003 + qi
             d = run_d(plays, model, seed)
@@ -332,6 +364,8 @@ def main():
                         draws_by_event[name][p['event']].append(runoff)
                         stop_model[name][stop][0] += int(runoff <= SHORT_SECONDS)
                         stop_model[name][stop][1] += 1
+                        stop_runoff_model[name][stop][0] += runoff
+                        stop_runoff_model[name][stop][1] += 1
             if 'counts' in d:
                 counts.update({f'D: {k}': v for k, v in d['counts'].items()})
 
@@ -378,6 +412,16 @@ def main():
                    **{name: round(stop_model[name][stop][0] / stop_model[name][stop][1], 3)
                       for name in stop_model if stop_model[name][stop][1]}}
             for stop, v in sorted(stop_obs.items())},
+        'mean_runoff_by_stop_class': {
+            stop: {
+                'observed_mean_s': round(v[0] / v[1], 2) if v[1] else None,
+                'n_observed': v[1],
+                **{name: {'mean_s': round(stop_runoff_model[name][stop][0]
+                                          / stop_runoff_model[name][stop][1], 2),
+                          'n_draws': stop_runoff_model[name][stop][1]}
+                   for name in stop_runoff_model if stop_runoff_model[name][stop][1]},
+            }
+            for stop, v in sorted(stop_runoff_obs.items())},
         'hazard_calibration': {
             f'{stop}|{bucket}': {'plays': v[0], 'observed_quarter_ends': v[1], 'expected_quarter_ends': round(v[2], 1)}
             for (stop, bucket), v in sorted(calib.items())},
@@ -385,6 +429,7 @@ def main():
         'source_artifacts': {
             'sqlite_database': {'path': str(Path(e1.DEFAULT_DB).resolve()),
                                 'sha256': file_sha256(e1.DEFAULT_DB)},
+            'sqlite_query_snapshot': source_row_snapshot,
             'play_extras': {'path': str(cd.EXTRAS.resolve()), 'sha256': file_sha256(cd.EXTRAS)},
             'clock_d_py': {'path': str(Path(cd.__file__).resolve()),
                            'sha256': file_sha256(cd.__file__)},
