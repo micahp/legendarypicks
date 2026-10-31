@@ -67,6 +67,22 @@ class TeamOutcomeSplits(unittest.TestCase):
         self.assertTrue(all(d['outcome_weight_fallback'] is None
                             for d in on.decisions if d['intent'] != 'dropback'))
 
+    def test_backoff_outcome_split_falls_back_if_every_conditioned_weight_is_zero(self):
+        sampler = sampler_with({('offense', 'AAA', 'pass_complete'): 0.0,
+                                ('offense', 'AAA', 'pass_incomplete'): 0.0})
+        sampler.outcome_backoff_enabled = True
+        backoff_rows = [POOL[1]] * 8 + [POOL[2]] * 12
+        sampler._outcome_rows = lambda *_args: []
+        sampler._backoff_candidates = lambda *_args: (backoff_rows, 'league_intent')
+
+        event, _row, _runoff, _spot = sampler.sample(random.Random(11), POOL, 'A', 'B', state=STATE)
+
+        self.assertIn(event, ('pass_complete', 'pass_incomplete'))
+        self.assertEqual(sampler.decisions[-1]['intent'], 'dropback')
+        self.assertEqual(sampler.decisions[-1]['outcome_fallback'], 'league_intent')
+        self.assertEqual(sampler.decisions[-1]['outcome_weight_fallback'],
+                         'all_conditioned_weights_zero_within_selected_intent')
+
     def test_each_decision_records_whether_the_split_was_on(self):
         off, on = sampler_with({}), sampler_with({})
         off.team_outcomes = None
