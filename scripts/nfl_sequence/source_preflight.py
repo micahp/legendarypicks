@@ -41,7 +41,7 @@ def validate_cli_paths(args):
     """Check explicitly supplied inputs and the read-only database before snapshot/model work."""
     errors = _database_errors(getattr(args, 'db', ''))
     file_options = (
-        'snapshot_file', 'readiness_matrix', 'archive_manifest', 'historical_streak_file',
+        'snapshot_file', 'seed_list_file', 'readiness_matrix', 'archive_manifest', 'historical_streak_file',
         'roster_snapshot', 'roster_provenance', 'availability_snapshot', 'game_info_snapshot',
         'playcall_artifact', 'playcall_point_splits_cache', 'playcall_streak_cache',
         'playcall_streak_file',

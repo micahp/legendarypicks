@@ -89,6 +89,19 @@ class SeedLedger(unittest.TestCase):
 
         self.assertEqual(self.path.read_text(), before)
 
+    def test_resume_rejects_seed_inside_range_but_outside_explicit_selection(self):
+        handle = self._fresh()
+        handle.write(json.dumps({'seed': 10, 'outcome': {'seed': 10, 'status': 'complete'},
+                                 'players': {}}) + '\n')
+        handle.close()
+        before = self.path.read_text()
+
+        with self.assertRaisesRegex(ValueError, 'not in the explicit seed selection'):
+            batch._open_seed_ledger(self.path, HEADER, resume=True, seed_end=20,
+                                     allowed_seeds={2, 19})
+
+        self.assertEqual(self.path.read_text(), before)
+
     def test_partial_last_line_from_an_interrupted_run_is_dropped(self):
         handle = self._fresh()
         handle.write(json.dumps({'seed': 1, 'outcome': {'seed': 1, 'status': 'complete'}, 'players': None}) + '\n')
