@@ -17,7 +17,7 @@ from pathlib import Path
 SCHEMA = 'lp.nfl.football-realism-distribution-report.v1'
 REFERENCE_SCHEMA = 'lp.nfl.e3-observed-distributions.v1'
 JOINT_REFERENCE_SCHEMA = 'lp.nfl.e3-football-realism-joint-reference.v1'
-BOX_SCHEMAS = {'lp-nfl-slc-boxscore-1', 'lp-nfl-slc-boxscore-2'}
+BOX_SCHEMAS = {'lp-nfl-slc-boxscore-1', 'lp-nfl-slc-boxscore-2', 'lp-nfl-slc-boxscore-3'}
 DEFAULT_REFERENCE = Path(__file__).resolve().parents[2] / 'docs/research/e3-observed-distributions-2026-10-24'
 DEFAULT_JOINT_REFERENCE = (Path(__file__).resolve().parents[2]
                            / 'docs/research/e3-football-realism-joint-reference-2026-10-30')

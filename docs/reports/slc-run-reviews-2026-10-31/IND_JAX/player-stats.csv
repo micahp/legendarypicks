@@ -1,0 +1,541 @@
+mean,median,metric,name,player_id,position,sample_n,starter,team
+0.002500500100020004,0.0,completions,Keenan Allen,00-0030279,WR,9998,,IND
+0.00010002000400080016,0.0,fumbles_lost,Keenan Allen,00-0030279,WR,9998,,IND
+0.00010002000400080016,0.0,interceptions,Keenan Allen,00-0030279,WR,9998,,IND
+0.004300860172034407,0.0,pass_attempts,Keenan Allen,00-0030279,WR,9998,,IND
+0.00020004000800160032,0.0,passing_touchdowns,Keenan Allen,00-0030279,WR,9998,,IND
+0.02470494098819764,0.0,passing_yards,Keenan Allen,00-0030279,WR,9998,,IND
+0.01280256051210242,0.0,receiving_touchdowns,Keenan Allen,00-0030279,WR,9998,,IND
+3.9781956391278257,0.0,receiving_yards,Keenan Allen,00-0030279,WR,9998,,IND
+0.3755751150230046,0.0,receptions,Keenan Allen,00-0030279,WR,9998,,IND
+0.048509701940388075,0.0,rush_attempts,Keenan Allen,00-0030279,WR,9998,,IND
+0.0015003000600120023,0.0,rushing_touchdowns,Keenan Allen,00-0030279,WR,9998,,IND
+0.16223244648929785,0.0,rushing_yards,Keenan Allen,00-0030279,WR,9998,,IND
+0.0,0.0,sack_yards,Keenan Allen,00-0030279,WR,9998,,IND
+0.0,0.0,sacks,Keenan Allen,00-0030279,WR,9998,,IND
+0.5864172834566913,0.0,targets,Keenan Allen,00-0030279,WR,9998,,IND
+0.001200240048009602,0.0,completions,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.0,0.0,fumbles_lost,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.00020004000800160032,0.0,interceptions,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.0023004600920184036,0.0,pass_attempts,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.0,0.0,passing_touchdowns,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.013902780556111223,0.0,passing_yards,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.012002400480096018,0.0,receiving_touchdowns,Laquon Treadwell,00-0032951,WR,9998,,IND
+3.9400880176035207,0.0,receiving_yards,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.3657731546309262,0.0,receptions,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.053710742148429684,0.0,rush_attempts,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.0011002200440088017,0.0,rushing_touchdowns,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.1820364072814563,0.0,rushing_yards,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.0,0.0,sack_yards,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.0,0.0,sacks,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.5782156431286257,0.0,targets,Laquon Treadwell,00-0032951,WR,9998,,IND
+0.002000400080016003,0.0,completions,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.0003000600120024005,0.0,fumbles_lost,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.0,0.0,interceptions,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.003700740148029606,0.0,pass_attempts,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.00020004000800160032,0.0,passing_touchdowns,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.02570514102820564,0.0,passing_yards,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.02990598119623925,0.0,receiving_touchdowns,Mo Alie-Cox,00-0033217,TE,9998,,IND
+5.41378275655131,0.0,receiving_yards,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.6724344868973795,0.0,receptions,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.05151030206041208,0.0,rush_attempts,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.001300260052010402,0.0,rushing_touchdowns,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.17623524704940988,0.0,rushing_yards,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.0,0.0,sack_yards,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.0,0.0,sacks,Mo Alie-Cox,00-0033217,TE,9998,,IND
+1.093618723744749,1.0,targets,Mo Alie-Cox,00-0033217,TE,9998,,IND
+0.0011002200440088017,0.0,completions,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.00020004000800160032,0.0,fumbles_lost,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.0,0.0,interceptions,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.001900380076015203,0.0,pass_attempts,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.00010002000400080016,0.0,passing_touchdowns,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.009101820364072815,0.0,passing_yards,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.007801560312062412,0.0,receiving_touchdowns,Pharaoh Brown,00-0033439,TE,9998,,IND
+1.48249649929986,0.0,receiving_yards,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.18243648729745948,0.0,receptions,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.049109821964392876,0.0,rush_attempts,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.0016003200640128026,0.0,rushing_touchdowns,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.15623124624924986,0.0,rushing_yards,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.0,0.0,sack_yards,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.0,0.0,sacks,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.27575515103020604,0.0,targets,Pharaoh Brown,00-0033439,TE,9998,,IND
+0.001200240048009602,0.0,completions,Ashton Dulin,00-0035021,WR,9998,,IND
+0.0,0.0,fumbles_lost,Ashton Dulin,00-0035021,WR,9998,,IND
+0.0,0.0,interceptions,Ashton Dulin,00-0035021,WR,9998,,IND
+0.001900380076015203,0.0,pass_attempts,Ashton Dulin,00-0035021,WR,9998,,IND
+0.00010002000400080016,0.0,passing_touchdowns,Ashton Dulin,00-0035021,WR,9998,,IND
+0.01250250050010002,0.0,passing_yards,Ashton Dulin,00-0035021,WR,9998,,IND
+0.02540508101620324,0.0,receiving_touchdowns,Ashton Dulin,00-0035021,WR,9998,,IND
+7.088517703540708,0.0,receiving_yards,Ashton Dulin,00-0035021,WR,9998,,IND
+0.6678335667133427,0.0,receptions,Ashton Dulin,00-0035021,WR,9998,,IND
+0.05141028205641128,0.0,rush_attempts,Ashton Dulin,00-0035021,WR,9998,,IND
+0.0015003000600120023,0.0,rushing_touchdowns,Ashton Dulin,00-0035021,WR,9998,,IND
+0.17803560712142427,0.0,rushing_yards,Ashton Dulin,00-0035021,WR,9998,,IND
+0.0,0.0,sack_yards,Ashton Dulin,00-0035021,WR,9998,,IND
+0.0,0.0,sacks,Ashton Dulin,00-0035021,WR,9998,,IND
+1.0924184836967394,0.0,targets,Ashton Dulin,00-0035021,WR,9998,,IND
+0.0005001000200040008,0.0,completions,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.00010002000400080016,0.0,fumbles_lost,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.0,0.0,interceptions,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.0008001600320064013,0.0,pass_attempts,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.00010002000400080016,0.0,passing_touchdowns,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.003200640128025605,0.0,passing_yards,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.013202640528105622,0.0,receiving_touchdowns,D.J. Montgomery,00-0035045,WR,9998,,IND
+3.698239647929586,0.0,receiving_yards,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.34986997399479897,0.0,receptions,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.05011002200440088,0.0,rush_attempts,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.001900380076015203,0.0,rushing_touchdowns,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.1789357871574315,0.0,rushing_yards,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.0,0.0,sack_yards,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.0,0.0,sacks,D.J. Montgomery,00-0035045,WR,9998,,IND
+0.5774154830966193,0.0,targets,D.J. Montgomery,00-0035045,WR,9998,,IND
+22.72754550910182,23.0,completions,Daniel Jones,00-0035710,QB,9998,True,IND
+0.07251450290058012,0.0,fumbles_lost,Daniel Jones,00-0035710,QB,9998,True,IND
+0.6612322464492899,0.0,interceptions,Daniel Jones,00-0035710,QB,9998,True,IND
+36.34246849369874,36.0,pass_attempts,Daniel Jones,00-0035710,QB,9998,True,IND
+0.8684736947389478,1.0,passing_touchdowns,Daniel Jones,00-0035710,QB,9998,True,IND
+218.28485697139428,216.0,passing_yards,Daniel Jones,00-0035710,QB,9998,True,IND
+0.0,0.0,receiving_touchdowns,Daniel Jones,00-0035710,QB,9998,True,IND
+0.0,0.0,receiving_yards,Daniel Jones,00-0035710,QB,9998,True,IND
+0.0,0.0,receptions,Daniel Jones,00-0035710,QB,9998,True,IND
+2.9510902180436087,3.0,rush_attempts,Daniel Jones,00-0035710,QB,9998,True,IND
+0.1884376875375075,0.0,rushing_touchdowns,Daniel Jones,00-0035710,QB,9998,True,IND
+16.92748549709942,15.0,rushing_yards,Daniel Jones,00-0035710,QB,9998,True,IND
+-5.1219243848769755,-2.0,sack_yards,Daniel Jones,00-0035710,QB,9998,True,IND
+0.8034606921384276,1.0,sacks,Daniel Jones,00-0035710,QB,9998,True,IND
+0.0,0.0,targets,Daniel Jones,00-0035710,QB,9998,True,IND
+0.0058011602320464095,0.0,completions,Jonathan Taylor,00-0036223,RB,9998,,IND
+0.05631126225245049,0.0,fumbles_lost,Jonathan Taylor,00-0036223,RB,9998,,IND
+0.00040008001600320064,0.0,interceptions,Jonathan Taylor,00-0036223,RB,9998,,IND
+0.009301860372074415,0.0,pass_attempts,Jonathan Taylor,00-0036223,RB,9998,,IND
+0.00020004000800160032,0.0,passing_touchdowns,Jonathan Taylor,00-0036223,RB,9998,,IND
+0.0678135627125425,0.0,passing_yards,Jonathan Taylor,00-0036223,RB,9998,,IND
+0.10352070414082816,0.0,receiving_touchdowns,Jonathan Taylor,00-0036223,RB,9998,,IND
+24.302860572114422,20.0,receiving_yards,Jonathan Taylor,00-0036223,RB,9998,,IND
+3.1459291858371676,3.0,receptions,Jonathan Taylor,00-0036223,RB,9998,,IND
+24.64112822564513,24.0,rush_attempts,Jonathan Taylor,00-0036223,RB,9998,,IND
+0.5249049809961992,0.0,rushing_touchdowns,Jonathan Taylor,00-0036223,RB,9998,,IND
+100.54800960192038,95.0,rushing_yards,Jonathan Taylor,00-0036223,RB,9998,,IND
+-0.001300260052010402,0.0,sack_yards,Jonathan Taylor,00-0036223,RB,9998,,IND
+0.00020004000800160032,0.0,sacks,Jonathan Taylor,00-0036223,RB,9998,,IND
+4.649729945989198,4.0,targets,Jonathan Taylor,00-0036223,RB,9998,,IND
+0.001200240048009602,0.0,completions,Drew Ogletree,00-0037292,TE,9998,,IND
+0.00010002000400080016,0.0,fumbles_lost,Drew Ogletree,00-0037292,TE,9998,,IND
+0.00020004000800160032,0.0,interceptions,Drew Ogletree,00-0037292,TE,9998,,IND
+0.0017003400680136026,0.0,pass_attempts,Drew Ogletree,00-0037292,TE,9998,,IND
+0.0,0.0,passing_touchdowns,Drew Ogletree,00-0037292,TE,9998,,IND
+0.014002800560112022,0.0,passing_yards,Drew Ogletree,00-0037292,TE,9998,,IND
+0.009401880376075216,0.0,receiving_touchdowns,Drew Ogletree,00-0037292,TE,9998,,IND
+1.528505701140228,0.0,receiving_yards,Drew Ogletree,00-0037292,TE,9998,,IND
+0.19683936787357473,0.0,receptions,Drew Ogletree,00-0037292,TE,9998,,IND
+0.054410882176435284,0.0,rush_attempts,Drew Ogletree,00-0037292,TE,9998,,IND
+0.001200240048009602,0.0,rushing_touchdowns,Drew Ogletree,00-0037292,TE,9998,,IND
+0.1845369073814763,0.0,rushing_yards,Drew Ogletree,00-0037292,TE,9998,,IND
+0.0,0.0,sack_yards,Drew Ogletree,00-0037292,TE,9998,,IND
+0.0,0.0,sacks,Drew Ogletree,00-0037292,TE,9998,,IND
+0.3267653530706141,0.0,targets,Drew Ogletree,00-0037292,TE,9998,,IND
+0.0008001600320064013,0.0,completions,Alec Pierce,00-0037664,WR,9998,,IND
+0.00040008001600320064,0.0,fumbles_lost,Alec Pierce,00-0037664,WR,9998,,IND
+0.0,0.0,interceptions,Alec Pierce,00-0037664,WR,9998,,IND
+0.001300260052010402,0.0,pass_attempts,Alec Pierce,00-0037664,WR,9998,,IND
+0.0003000600120024005,0.0,passing_touchdowns,Alec Pierce,00-0037664,WR,9998,,IND
+0.007901580316063212,0.0,passing_yards,Alec Pierce,00-0037664,WR,9998,,IND
+0.19583916783356672,0.0,receiving_touchdowns,Alec Pierce,00-0037664,WR,9998,,IND
+56.54260852170434,50.0,receiving_yards,Alec Pierce,00-0037664,WR,9998,,IND
+5.249949989998,5.0,receptions,Alec Pierce,00-0037664,WR,9998,,IND
+0.05141028205641128,0.0,rush_attempts,Alec Pierce,00-0037664,WR,9998,,IND
+0.0018003600720144029,0.0,rushing_touchdowns,Alec Pierce,00-0037664,WR,9998,,IND
+0.18153630726145228,0.0,rushing_yards,Alec Pierce,00-0037664,WR,9998,,IND
+0.0,0.0,sack_yards,Alec Pierce,00-0037664,WR,9998,,IND
+0.0,0.0,sacks,Alec Pierce,00-0037664,WR,9998,,IND
+9.059111822364473,8.0,targets,Alec Pierce,00-0037664,WR,9998,,IND
+0.0027005401080216042,0.0,completions,Will Mallory,00-0038394,TE,9998,,IND
+0.0,0.0,fumbles_lost,Will Mallory,00-0038394,TE,9998,,IND
+0.00020004000800160032,0.0,interceptions,Will Mallory,00-0038394,TE,9998,,IND
+0.004400880176035207,0.0,pass_attempts,Will Mallory,00-0038394,TE,9998,,IND
+0.0,0.0,passing_touchdowns,Will Mallory,00-0038394,TE,9998,,IND
+0.027105421084216843,0.0,passing_yards,Will Mallory,00-0038394,TE,9998,,IND
+0.008201640328065612,0.0,receiving_touchdowns,Will Mallory,00-0038394,TE,9998,,IND
+1.3690738147629526,0.0,receiving_yards,Will Mallory,00-0038394,TE,9998,,IND
+0.17823564712942588,0.0,receptions,Will Mallory,00-0038394,TE,9998,,IND
+0.05211042208441689,0.0,rush_attempts,Will Mallory,00-0038394,TE,9998,,IND
+0.001200240048009602,0.0,rushing_touchdowns,Will Mallory,00-0038394,TE,9998,,IND
+0.1736347269453891,0.0,rushing_yards,Will Mallory,00-0038394,TE,9998,,IND
+-0.001300260052010402,0.0,sack_yards,Will Mallory,00-0038394,TE,9998,,IND
+0.00010002000400080016,0.0,sacks,Will Mallory,00-0038394,TE,9998,,IND
+0.27905581116223244,0.0,targets,Will Mallory,00-0038394,TE,9998,,IND
+0.005901180236047209,0.0,completions,Josh Downs,00-0038997,WR,9998,,IND
+0.00020004000800160032,0.0,fumbles_lost,Josh Downs,00-0038997,WR,9998,,IND
+0.0,0.0,interceptions,Josh Downs,00-0038997,WR,9998,,IND
+0.009401880376075216,0.0,pass_attempts,Josh Downs,00-0038997,WR,9998,,IND
+0.00020004000800160032,0.0,passing_touchdowns,Josh Downs,00-0038997,WR,9998,,IND
+0.0591118223644729,0.0,passing_yards,Josh Downs,00-0038997,WR,9998,,IND
+0.23124624924984996,0.0,receiving_touchdowns,Josh Downs,00-0038997,WR,9998,,IND
+64.11762352470494,58.5,receiving_yards,Josh Downs,00-0038997,WR,9998,,IND
+6.002800560112022,6.0,receptions,Josh Downs,00-0038997,WR,9998,,IND
+0.05131026205241048,0.0,rush_attempts,Josh Downs,00-0038997,WR,9998,,IND
+0.0016003200640128026,0.0,rushing_touchdowns,Josh Downs,00-0038997,WR,9998,,IND
+0.17193438687737547,0.0,rushing_yards,Josh Downs,00-0038997,WR,9998,,IND
+-0.0023004600920184036,0.0,sack_yards,Josh Downs,00-0038997,WR,9998,,IND
+0.00040008001600320064,0.0,sacks,Josh Downs,00-0038997,WR,9998,,IND
+9.38877775555111,9.0,targets,Josh Downs,00-0038997,WR,9998,,IND
+0.0,0.0,completions,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,fumbles_lost,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,interceptions,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,pass_attempts,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,passing_touchdowns,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,passing_yards,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,receiving_touchdowns,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,receiving_yards,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,receptions,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,rush_attempts,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,rushing_touchdowns,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,rushing_yards,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,sack_yards,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,sacks,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0,0.0,targets,Anthony Richardson Sr.,00-0039164,QB,9998,False,IND
+0.0011002200440088017,0.0,completions,Anthony Gould,00-0039816,WR,9998,,IND
+0.00010002000400080016,0.0,fumbles_lost,Anthony Gould,00-0039816,WR,9998,,IND
+0.0,0.0,interceptions,Anthony Gould,00-0039816,WR,9998,,IND
+0.0014002800560112022,0.0,pass_attempts,Anthony Gould,00-0039816,WR,9998,,IND
+0.0,0.0,passing_touchdowns,Anthony Gould,00-0039816,WR,9998,,IND
+0.011402280456091218,0.0,passing_yards,Anthony Gould,00-0039816,WR,9998,,IND
+0.013602720544108821,0.0,receiving_touchdowns,Anthony Gould,00-0039816,WR,9998,,IND
+3.958991798359672,0.0,receiving_yards,Anthony Gould,00-0039816,WR,9998,,IND
+0.3675735147029406,0.0,receptions,Anthony Gould,00-0039816,WR,9998,,IND
+0.05021004200840168,0.0,rush_attempts,Anthony Gould,00-0039816,WR,9998,,IND
+0.001200240048009602,0.0,rushing_touchdowns,Anthony Gould,00-0039816,WR,9998,,IND
+0.17393478695739148,0.0,rushing_yards,Anthony Gould,00-0039816,WR,9998,,IND
+0.0,0.0,sack_yards,Anthony Gould,00-0039816,WR,9998,,IND
+0.0,0.0,sacks,Anthony Gould,00-0039816,WR,9998,,IND
+0.5704140828165634,0.0,targets,Anthony Gould,00-0039816,WR,9998,,IND
+0.00650130026005201,0.0,completions,Tyler Warren,00-0040128,TE,9998,,IND
+0.00040008001600320064,0.0,fumbles_lost,Tyler Warren,00-0040128,TE,9998,,IND
+0.00020004000800160032,0.0,interceptions,Tyler Warren,00-0040128,TE,9998,,IND
+0.009701940388077616,0.0,pass_attempts,Tyler Warren,00-0040128,TE,9998,,IND
+0.00010002000400080016,0.0,passing_touchdowns,Tyler Warren,00-0040128,TE,9998,,IND
+0.05831166233246649,0.0,passing_yards,Tyler Warren,00-0040128,TE,9998,,IND
+0.16723344668933787,0.0,receiving_touchdowns,Tyler Warren,00-0040128,TE,9998,,IND
+31.28845769153831,27.0,receiving_yards,Tyler Warren,00-0040128,TE,9998,,IND
+3.8706741348269653,4.0,receptions,Tyler Warren,00-0040128,TE,9998,,IND
+0.07261452290458091,0.0,rush_attempts,Tyler Warren,00-0040128,TE,9998,,IND
+0.002400480096019204,0.0,rushing_touchdowns,Tyler Warren,00-0040128,TE,9998,,IND
+0.2524504900980196,0.0,rushing_yards,Tyler Warren,00-0040128,TE,9998,,IND
+-0.0008001600320064013,0.0,sack_yards,Tyler Warren,00-0040128,TE,9998,,IND
+0.00020004000800160032,0.0,sacks,Tyler Warren,00-0040128,TE,9998,,IND
+6.150830166033207,6.0,targets,Tyler Warren,00-0040128,TE,9998,,IND
+0.0017003400680136026,0.0,completions,DJ Giddens,00-0040179,RB,9998,,IND
+0.0036007201440288058,0.0,fumbles_lost,DJ Giddens,00-0040179,RB,9998,,IND
+0.0,0.0,interceptions,DJ Giddens,00-0040179,RB,9998,,IND
+0.003100620124024805,0.0,pass_attempts,DJ Giddens,00-0040179,RB,9998,,IND
+0.00010002000400080016,0.0,passing_touchdowns,DJ Giddens,00-0040179,RB,9998,,IND
+0.014902980596119223,0.0,passing_yards,DJ Giddens,00-0040179,RB,9998,,IND
+0.010002000400080016,0.0,receiving_touchdowns,DJ Giddens,00-0040179,RB,9998,,IND
+2.2219443888777755,0.0,receiving_yards,DJ Giddens,00-0040179,RB,9998,,IND
+0.28615723144628924,0.0,receptions,DJ Giddens,00-0040179,RB,9998,,IND
+1.9305861172234446,0.0,rush_attempts,DJ Giddens,00-0040179,RB,9998,,IND
+0.03830766153230646,0.0,rushing_touchdowns,DJ Giddens,00-0040179,RB,9998,,IND
+7.719643928785757,0.0,rushing_yards,DJ Giddens,00-0040179,RB,9998,,IND
+0.0,0.0,sack_yards,DJ Giddens,00-0040179,RB,9998,,IND
+0.0,0.0,sacks,DJ Giddens,00-0040179,RB,9998,,IND
+0.44848969793958793,0.0,targets,DJ Giddens,00-0040179,RB,9998,,IND
+0.0,0.0,completions,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,fumbles_lost,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,interceptions,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,pass_attempts,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,passing_touchdowns,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,passing_yards,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,receiving_touchdowns,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,receiving_yards,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,receptions,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,rush_attempts,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,rushing_touchdowns,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,rushing_yards,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,sack_yards,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,sacks,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0,0.0,targets,Riley Leonard,00-0040206,QB,9998,False,IND
+0.0007001400280056011,0.0,completions,Carson Towt,00-0040853,TE,9998,,IND
+0.0,0.0,fumbles_lost,Carson Towt,00-0040853,TE,9998,,IND
+0.0,0.0,interceptions,Carson Towt,00-0040853,TE,9998,,IND
+0.001300260052010402,0.0,pass_attempts,Carson Towt,00-0040853,TE,9998,,IND
+0.0,0.0,passing_touchdowns,Carson Towt,00-0040853,TE,9998,,IND
+0.00610122024404881,0.0,passing_yards,Carson Towt,00-0040853,TE,9998,,IND
+0.008201640328065612,0.0,receiving_touchdowns,Carson Towt,00-0040853,TE,9998,,IND
+1.47249449889978,0.0,receiving_yards,Carson Towt,00-0040853,TE,9998,,IND
+0.17953590718143628,0.0,receptions,Carson Towt,00-0040853,TE,9998,,IND
+0.05061012202440488,0.0,rush_attempts,Carson Towt,00-0040853,TE,9998,,IND
+0.0016003200640128026,0.0,rushing_touchdowns,Carson Towt,00-0040853,TE,9998,,IND
+0.19733946789357873,0.0,rushing_yards,Carson Towt,00-0040853,TE,9998,,IND
+-0.0010002000400080016,0.0,sack_yards,Carson Towt,00-0040853,TE,9998,,IND
+0.00010002000400080016,0.0,sacks,Carson Towt,00-0040853,TE,9998,,IND
+0.28355671134226845,0.0,targets,Carson Towt,00-0040853,TE,9998,,IND
+0.0027005401080216042,0.0,completions,Seth McGowan,00-0041125,RB,9998,,IND
+0.0007001400280056011,0.0,fumbles_lost,Seth McGowan,00-0041125,RB,9998,,IND
+0.00020004000800160032,0.0,interceptions,Seth McGowan,00-0041125,RB,9998,,IND
+0.005001000200040008,0.0,pass_attempts,Seth McGowan,00-0041125,RB,9998,,IND
+0.0,0.0,passing_touchdowns,Seth McGowan,00-0041125,RB,9998,,IND
+0.028405681136227247,0.0,passing_yards,Seth McGowan,00-0041125,RB,9998,,IND
+0.009001800360072015,0.0,receiving_touchdowns,Seth McGowan,00-0041125,RB,9998,,IND
+2.2826565313062614,0.0,receiving_yards,Seth McGowan,00-0041125,RB,9998,,IND
+0.29545909181836366,0.0,receptions,Seth McGowan,00-0041125,RB,9998,,IND
+0.3105621124224845,0.0,rush_attempts,Seth McGowan,00-0041125,RB,9998,,IND
+0.00610122024404881,0.0,rushing_touchdowns,Seth McGowan,00-0041125,RB,9998,,IND
+1.2571514302860571,0.0,rushing_yards,Seth McGowan,00-0041125,RB,9998,,IND
+0.0,0.0,sack_yards,Seth McGowan,00-0041125,RB,9998,,IND
+0.0,0.0,sacks,Seth McGowan,00-0041125,RB,9998,,IND
+0.4604920984196839,0.0,targets,Seth McGowan,00-0041125,RB,9998,,IND
+0.0017003400680136026,0.0,completions,Deion Burks,00-0041132,WR,9998,,IND
+0.0,0.0,fumbles_lost,Deion Burks,00-0041132,WR,9998,,IND
+0.0,0.0,interceptions,Deion Burks,00-0041132,WR,9998,,IND
+0.002500500100020004,0.0,pass_attempts,Deion Burks,00-0041132,WR,9998,,IND
+0.0,0.0,passing_touchdowns,Deion Burks,00-0041132,WR,9998,,IND
+0.014502900580116024,0.0,passing_yards,Deion Burks,00-0041132,WR,9998,,IND
+0.01270254050810162,0.0,receiving_touchdowns,Deion Burks,00-0041132,WR,9998,,IND
+3.996999399879976,0.0,receiving_yards,Deion Burks,00-0041132,WR,9998,,IND
+0.3797759551910382,0.0,receptions,Deion Burks,00-0041132,WR,9998,,IND
+0.05561112222444489,0.0,rush_attempts,Deion Burks,00-0041132,WR,9998,,IND
+0.002000400080016003,0.0,rushing_touchdowns,Deion Burks,00-0041132,WR,9998,,IND
+0.1872374474894979,0.0,rushing_yards,Deion Burks,00-0041132,WR,9998,,IND
+0.0,0.0,sack_yards,Deion Burks,00-0041132,WR,9998,,IND
+0.0,0.0,sacks,Deion Burks,00-0041132,WR,9998,,IND
+0.5854170834166833,0.0,targets,Deion Burks,00-0041132,WR,9998,,IND
+0.002400480096019204,0.0,completions,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.007001400280056011,0.0,fumbles_lost,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.00020004000800160032,0.0,interceptions,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.0033006601320264054,0.0,pass_attempts,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.0,0.0,passing_touchdowns,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.02460492098419684,0.0,passing_yards,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.026805361072214443,0.0,receiving_touchdowns,Ameer Abdullah,00-0032104,RB,9998,,JAX
+5.35247049409882,0.0,receiving_yards,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.6000200040008001,0.0,receptions,Ameer Abdullah,00-0032104,RB,9998,,JAX
+1.0313062612522506,0.0,rush_attempts,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.04240848169633927,0.0,rushing_touchdowns,Ameer Abdullah,00-0032104,RB,9998,,JAX
+5.029705941188237,0.0,rushing_yards,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.0,0.0,sack_yards,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.0,0.0,sacks,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.8203640728145629,0.0,targets,Ameer Abdullah,00-0032104,RB,9998,,JAX
+0.0030006001200240046,0.0,completions,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.0007001400280056011,0.0,fumbles_lost,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.0003000600120024005,0.0,interceptions,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.004600920184036807,0.0,pass_attempts,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.00010002000400080016,0.0,passing_touchdowns,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.022804560912182435,0.0,passing_yards,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.21784356871374275,0.0,receiving_touchdowns,Jakobi Meyers,00-0034960,WR,9998,,JAX
+35.63902780556111,27.0,receiving_yards,Jakobi Meyers,00-0034960,WR,9998,,JAX
+3.011602320464093,2.0,receptions,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.1215243048609722,0.0,rush_attempts,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.004100820164032806,0.0,rushing_touchdowns,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.41098219643928785,0.0,rushing_yards,Jakobi Meyers,00-0034960,WR,9998,,JAX
+-0.000600120024004801,0.0,sack_yards,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.00010002000400080016,0.0,sacks,Jakobi Meyers,00-0034960,WR,9998,,JAX
+4.569113822764553,4.0,targets,Jakobi Meyers,00-0034960,WR,9998,,JAX
+0.0014002800560112022,0.0,completions,Quintin Morris,00-0036590,TE,9998,,JAX
+0.0009001800360072014,0.0,fumbles_lost,Quintin Morris,00-0036590,TE,9998,,JAX
+0.00010002000400080016,0.0,interceptions,Quintin Morris,00-0036590,TE,9998,,JAX
+0.002000400080016003,0.0,pass_attempts,Quintin Morris,00-0036590,TE,9998,,JAX
+0.0003000600120024005,0.0,passing_touchdowns,Quintin Morris,00-0036590,TE,9998,,JAX
+0.016803360672134428,0.0,passing_yards,Quintin Morris,00-0036590,TE,9998,,JAX
+0.03660732146429286,0.0,receiving_touchdowns,Quintin Morris,00-0036590,TE,9998,,JAX
+6.869673934786958,0.0,receiving_yards,Quintin Morris,00-0036590,TE,9998,,JAX
+0.6414282856571314,0.0,receptions,Quintin Morris,00-0036590,TE,9998,,JAX
+0.11372274454890978,0.0,rush_attempts,Quintin Morris,00-0036590,TE,9998,,JAX
+0.0033006601320264054,0.0,rushing_touchdowns,Quintin Morris,00-0036590,TE,9998,,JAX
+0.373874774954991,0.0,rushing_yards,Quintin Morris,00-0036590,TE,9998,,JAX
+0.0,0.0,sack_yards,Quintin Morris,00-0036590,TE,9998,,JAX
+0.0,0.0,sacks,Quintin Morris,00-0036590,TE,9998,,JAX
+0.9448889777955591,0.0,targets,Quintin Morris,00-0036590,TE,9998,,JAX
+24.05291058211642,24.0,completions,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+0.20184036807361472,0.0,fumbles_lost,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+0.5342068413682737,0.0,interceptions,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+36.52130426085217,36.0,pass_attempts,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+1.5186037207441487,1.0,passing_touchdowns,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+267.08551710342067,265.0,passing_yards,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+0.0,0.0,receiving_touchdowns,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+0.00040008001600320064,0.0,receiving_yards,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+0.00010002000400080016,0.0,receptions,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+3.672634526905381,3.0,rush_attempts,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+0.27095419083816763,0.0,rushing_touchdowns,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+23.0749149829966,20.0,rushing_yards,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+-3.132726545309062,0.0,sack_yards,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+0.5162032406481296,0.0,sacks,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+0.00010002000400080016,0.0,targets,Trevor Lawrence,00-0036971,QB,9998,True,JAX
+0.007801560312062412,0.0,completions,Parker Washington,00-0038606,WR,9998,,JAX
+0.0009001800360072014,0.0,fumbles_lost,Parker Washington,00-0038606,WR,9998,,JAX
+0.00010002000400080016,0.0,interceptions,Parker Washington,00-0038606,WR,9998,,JAX
+0.010702140428085618,0.0,pass_attempts,Parker Washington,00-0038606,WR,9998,,JAX
+0.000600120024004801,0.0,passing_touchdowns,Parker Washington,00-0038606,WR,9998,,JAX
+0.09151830366073214,0.0,passing_yards,Parker Washington,00-0038606,WR,9998,,JAX
+0.31726345269053813,0.0,receiving_touchdowns,Parker Washington,00-0038606,WR,9998,,JAX
+54.005901180236044,46.0,receiving_yards,Parker Washington,00-0038606,WR,9998,,JAX
+4.56751350270054,4.0,receptions,Parker Washington,00-0038606,WR,9998,,JAX
+0.16293258651730347,0.0,rush_attempts,Parker Washington,00-0038606,WR,9998,,JAX
+0.004800960192038408,0.0,rushing_touchdowns,Parker Washington,00-0038606,WR,9998,,JAX
+0.5451090218043608,0.0,rushing_yards,Parker Washington,00-0038606,WR,9998,,JAX
+-0.0009001800360072014,0.0,sack_yards,Parker Washington,00-0038606,WR,9998,,JAX
+0.00020004000800160032,0.0,sacks,Parker Washington,00-0038606,WR,9998,,JAX
+7.209241848369674,7.0,targets,Parker Washington,00-0038606,WR,9998,,JAX
+0.0033006601320264054,0.0,completions,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.004100820164032806,0.0,fumbles_lost,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.0,0.0,interceptions,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.005201040208041608,0.0,pass_attempts,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.00010002000400080016,0.0,passing_touchdowns,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.026105221044208843,0.0,passing_yards,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.02590518103620724,0.0,receiving_touchdowns,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+4.812062412482496,0.0,receiving_yards,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.5492098419683937,0.0,receptions,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.9595919183836767,0.0,rush_attempts,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.036207241448289657,0.0,rushing_touchdowns,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+4.573414682936587,0.0,rushing_yards,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+-0.0003000600120024005,0.0,sack_yards,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.00010002000400080016,0.0,sacks,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.8028605721144229,0.0,targets,Chris Rodriguez Jr.,00-0038611,RB,9998,,JAX
+0.005901180236047209,0.0,completions,Brenton Strange,00-0038935,TE,9998,,JAX
+0.0010002000400080016,0.0,fumbles_lost,Brenton Strange,00-0038935,TE,9998,,JAX
+0.00010002000400080016,0.0,interceptions,Brenton Strange,00-0038935,TE,9998,,JAX
+0.009701940388077616,0.0,pass_attempts,Brenton Strange,00-0038935,TE,9998,,JAX
+0.0007001400280056011,0.0,passing_touchdowns,Brenton Strange,00-0038935,TE,9998,,JAX
+0.0704140828165633,0.0,passing_yards,Brenton Strange,00-0038935,TE,9998,,JAX
+0.2596519303860772,0.0,receiving_touchdowns,Brenton Strange,00-0038935,TE,9998,,JAX
+47.80446089217843,44.0,receiving_yards,Brenton Strange,00-0038935,TE,9998,,JAX
+4.487097419483897,4.0,receptions,Brenton Strange,00-0038935,TE,9998,,JAX
+0.11072214442888578,0.0,rush_attempts,Brenton Strange,00-0038935,TE,9998,,JAX
+0.003200640128025605,0.0,rushing_touchdowns,Brenton Strange,00-0038935,TE,9998,,JAX
+0.41068213642728546,0.0,rushing_yards,Brenton Strange,00-0038935,TE,9998,,JAX
+-0.001200240048009602,0.0,sack_yards,Brenton Strange,00-0038935,TE,9998,,JAX
+0.0003000600120024005,0.0,sacks,Brenton Strange,00-0038935,TE,9998,,JAX
+6.452190438087618,6.0,targets,Brenton Strange,00-0038935,TE,9998,,JAX
+0.0014002800560112022,0.0,completions,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.0008001600320064013,0.0,fumbles_lost,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.00010002000400080016,0.0,interceptions,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.001900380076015203,0.0,pass_attempts,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.0,0.0,passing_touchdowns,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.01790358071614323,0.0,passing_yards,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.2960592118423685,0.0,receiving_touchdowns,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+50.381876375275056,42.0,receiving_yards,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+4.238847769553911,4.0,receptions,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.11952390478095619,0.0,rush_attempts,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.003700740148029606,0.0,rushing_touchdowns,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.4372874574914983,0.0,rushing_yards,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.0,0.0,sack_yards,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.0,0.0,sacks,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+6.760152030406081,6.0,targets,Brian Thomas Jr.,00-0039893,WR,9998,,JAX
+0.0,0.0,completions,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,fumbles_lost,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,interceptions,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,pass_attempts,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,passing_touchdowns,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,passing_yards,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,receiving_touchdowns,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,receiving_yards,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,receptions,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,rush_attempts,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,rushing_touchdowns,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,rushing_yards,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,sack_yards,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,sacks,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0,0.0,targets,Quinn Ewers,00-0040234,QB,9998,False,JAX
+0.0016003200640128026,0.0,completions,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+0.01850370074014803,0.0,fumbles_lost,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+0.00010002000400080016,0.0,interceptions,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+0.002600520104020804,0.0,pass_attempts,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+0.0,0.0,passing_touchdowns,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+0.01960392078415683,0.0,passing_yards,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+0.049109821964392876,0.0,receiving_touchdowns,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+10.09371874374875,4.0,receiving_yards,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+1.1372274454890978,1.0,receptions,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+5.097219443888778,3.0,rush_attempts,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+0.19293858771754352,0.0,rushing_touchdowns,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+23.981796359271854,12.0,rushing_yards,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+-0.0009001800360072014,0.0,sack_yards,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+0.00010002000400080016,0.0,sacks,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+1.6375275055011003,1.0,targets,LeQuint Allen Jr.,00-0040238,RB,9998,,JAX
+0.0017003400680136026,0.0,completions,Travis Hunter,00-0040718,WR,9998,,JAX
+0.0015003000600120023,0.0,fumbles_lost,Travis Hunter,00-0040718,WR,9998,,JAX
+0.0,0.0,interceptions,Travis Hunter,00-0040718,WR,9998,,JAX
+0.002400480096019204,0.0,pass_attempts,Travis Hunter,00-0040718,WR,9998,,JAX
+0.0,0.0,passing_touchdowns,Travis Hunter,00-0040718,WR,9998,,JAX
+0.01860372074414883,0.0,passing_yards,Travis Hunter,00-0040718,WR,9998,,JAX
+0.14872974594918983,0.0,receiving_touchdowns,Travis Hunter,00-0040718,WR,9998,,JAX
+25.682936587317464,16.0,receiving_yards,Travis Hunter,00-0040718,WR,9998,,JAX
+2.166033206641328,2.0,receptions,Travis Hunter,00-0040718,WR,9998,,JAX
+0.11612322464492898,0.0,rush_attempts,Travis Hunter,00-0040718,WR,9998,,JAX
+0.004200840168033607,0.0,rushing_touchdowns,Travis Hunter,00-0040718,WR,9998,,JAX
+0.43248649729945987,0.0,rushing_yards,Travis Hunter,00-0040718,WR,9998,,JAX
+0.0,0.0,sack_yards,Travis Hunter,00-0040718,WR,9998,,JAX
+0.0,0.0,sacks,Travis Hunter,00-0040718,WR,9998,,JAX
+3.3695739147829564,3.0,targets,Travis Hunter,00-0040718,WR,9998,,JAX
+0.007001400280056011,0.0,completions,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+0.14422884576915382,0.0,fumbles_lost,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+0.00010002000400080016,0.0,interceptions,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+0.010102020404080815,0.0,pass_attempts,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+0.0007001400280056011,0.0,passing_touchdowns,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+0.07641528305661133,0.0,passing_yards,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+0.0618123624724945,0.0,receiving_touchdowns,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+12.345369073814762,7.0,receiving_yards,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+1.404380876175235,1.0,receptions,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+18.236847369473896,18.0,rush_attempts,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+0.7016403280656132,0.0,rushing_touchdowns,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+84.17733546709341,78.0,rushing_yards,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+-0.0011002200440088017,0.0,sack_yards,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+0.00020004000800160032,0.0,sacks,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+2.0638127625525104,2.0,targets,Bhayshul Tuten,00-0040719,RB,9998,,JAX
+0.002500500100020004,0.0,completions,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.0010002000400080016,0.0,fumbles_lost,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.0,0.0,interceptions,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.003200640128025605,0.0,pass_attempts,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.00010002000400080016,0.0,passing_touchdowns,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.02350470094018804,0.0,passing_yards,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.021504300860172035,0.0,receiving_touchdowns,Tanner Koziol,00-0041084,TE,9998,,JAX
+4.139727945589118,0.0,receiving_yards,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.3827765553110622,0.0,receptions,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.11122224444888978,0.0,rush_attempts,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.002500500100020004,0.0,rushing_touchdowns,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.3792758551710342,0.0,rushing_yards,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.0,0.0,sack_yards,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.0,0.0,sacks,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.5731146229245849,0.0,targets,Tanner Koziol,00-0041084,TE,9998,,JAX
+0.002400480096019204,0.0,completions,Josh Cameron,00-0041100,WR,9998,,JAX
+0.000600120024004801,0.0,fumbles_lost,Josh Cameron,00-0041100,WR,9998,,JAX
+0.00010002000400080016,0.0,interceptions,Josh Cameron,00-0041100,WR,9998,,JAX
+0.003700740148029606,0.0,pass_attempts,Josh Cameron,00-0041100,WR,9998,,JAX
+0.00020004000800160032,0.0,passing_touchdowns,Josh Cameron,00-0041100,WR,9998,,JAX
+0.022604520904180837,0.0,passing_yards,Josh Cameron,00-0041100,WR,9998,,JAX
+0.021804360872174435,0.0,receiving_touchdowns,Josh Cameron,00-0041100,WR,9998,,JAX
+3.0758151630326065,0.0,receiving_yards,Josh Cameron,00-0041100,WR,9998,,JAX
+0.26455291058211644,0.0,receptions,Josh Cameron,00-0041100,WR,9998,,JAX
+0.11192238447689538,0.0,rush_attempts,Josh Cameron,00-0041100,WR,9998,,JAX
+0.0033006601320264054,0.0,rushing_touchdowns,Josh Cameron,00-0041100,WR,9998,,JAX
+0.3930786157231446,0.0,rushing_yards,Josh Cameron,00-0041100,WR,9998,,JAX
+-0.00040008001600320064,0.0,sack_yards,Josh Cameron,00-0041100,WR,9998,,JAX
+0.00010002000400080016,0.0,sacks,Josh Cameron,00-0041100,WR,9998,,JAX
+0.41068213642728546,0.0,targets,Josh Cameron,00-0041100,WR,9998,,JAX
+0.0009001800360072014,0.0,completions,CJ Williams,00-0041106,WR,9998,,JAX
+0.0008001600320064013,0.0,fumbles_lost,CJ Williams,00-0041106,WR,9998,,JAX
+0.0,0.0,interceptions,CJ Williams,00-0041106,WR,9998,,JAX
+0.0017003400680136026,0.0,pass_attempts,CJ Williams,00-0041106,WR,9998,,JAX
+0.0,0.0,passing_touchdowns,CJ Williams,00-0041106,WR,9998,,JAX
+0.015003000600120024,0.0,passing_yards,CJ Williams,00-0041106,WR,9998,,JAX
+0.016903380676135227,0.0,receiving_touchdowns,CJ Williams,00-0041106,WR,9998,,JAX
+3.1498299659931988,0.0,receiving_yards,CJ Williams,00-0041106,WR,9998,,JAX
+0.26075215043008604,0.0,receptions,CJ Williams,00-0041106,WR,9998,,JAX
+0.10942188437687538,0.0,rush_attempts,CJ Williams,00-0041106,WR,9998,,JAX
+0.0035007001400280055,0.0,rushing_touchdowns,CJ Williams,00-0041106,WR,9998,,JAX
+0.3765753150630126,0.0,rushing_yards,CJ Williams,00-0041106,WR,9998,,JAX
+0.0,0.0,sack_yards,CJ Williams,00-0041106,WR,9998,,JAX
+0.0,0.0,sacks,CJ Williams,00-0041106,WR,9998,,JAX
+0.39657931586317263,0.0,targets,CJ Williams,00-0041106,WR,9998,,JAX
+0.0028005601120224045,0.0,completions,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.0009001800360072014,0.0,fumbles_lost,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.00010002000400080016,0.0,interceptions,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.004200840168033607,0.0,pass_attempts,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.00010002000400080016,0.0,passing_touchdowns,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.027305461092218444,0.0,passing_yards,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.021504300860172035,0.0,receiving_touchdowns,Nate Boerkircher,00-0041503,TE,9998,,JAX
+4.205441088217643,0.0,receiving_yards,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.3854770954190838,0.0,receptions,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.11222244448889777,0.0,rush_attempts,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.004100820164032806,0.0,rushing_touchdowns,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.3842768553710742,0.0,rushing_yards,Nate Boerkircher,00-0041503,TE,9998,,JAX
+-0.000600120024004801,0.0,sack_yards,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.00010002000400080016,0.0,sacks,Nate Boerkircher,00-0041503,TE,9998,,JAX
+0.5764152830566113,0.0,targets,Nate Boerkircher,00-0041503,TE,9998,,JAX
