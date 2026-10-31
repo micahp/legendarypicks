@@ -1228,7 +1228,7 @@ class _Game:
             self._record_blocked_kick_geometry('no_clock_compatible_transition', 0, exclusions)
             return f'blocked_kick_no_clock_compatible_transition:{kick_type}', None
         if state is None:
-            self._record_blocked_kick_geometry(category, 0, exclusions)
+            self._record_blocked_kick_geometry('state_missing', 0, exclusions)
             return f'blocked_kick_geometry_state_missing:{kick_type}', None
         event = 'blocked_punt' if kick_type == 'punt' else 'blocked_field_goal'
         drawable_by_category = {}
