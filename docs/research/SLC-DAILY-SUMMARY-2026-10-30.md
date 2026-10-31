@@ -4,9 +4,9 @@
 **Latest code commit before this publication:** `5ae7653f` (`research: separate regulation reached from game validity`)
 **Scope:** SLC football-realism assertions, workload calibration evidence, the separate Model D clock replay, and the remaining Week 8 matchup runs.
 
-## Status update — 20:39 CDT
+## Status update — 20:42 CDT
 
-The latest source commit, `5ae7653f` (`research: separate regulation reached from game validity`), and all subsequent documentation/artifact commits are on the remote SLC research branch. The branch was clean at `3c3edf83` before this summary update. Today's code and review artifacts are committed and pushed; this update records the final event-clock diagnostic and current run-monitoring limit.
+The latest source commit, `5ae7653f` (`research: separate regulation reached from game validity`), and all subsequent documentation/artifact commits are on the remote SLC research branch; the prior daily-summary publication is `27397843`. Today's code and review artifacts are committed and pushed; this update records the final event-clock diagnostic, a focused 61-test verification, and the current run-monitoring limit.
 
 ## Completed and published
 
@@ -49,10 +49,13 @@ The ARI–DAL report explicitly notes that archived artifacts do not retain ever
 - Compared Model D's broad 0–120-second late-game runoff pool with finer remaining-clock buckets using the pinned 2025 holdout outcomes. The broad pool is too long for 30–60-second completed-pass and run states (observed means 11.04/9.62 seconds; Model D expected 14.64/14.04) and too short for 61–120-second states (observed 19.10/18.85; expected 15.44/16.73).
 - An unsaved, diagnostic-only finer-bucket prototype reduced quarter-level clock-path bias by roughly 7–8 seconds in each quarter, and reduced missed boundary classifications from 14,477 to 14,347 of 15,700. It also increased premature endings from 676 to 815 and slightly reduced total boundary accuracy (547 to 538 correct). This is evidence of clock-bucket mixing, not a validated fix; no Model D defaults or SLC outputs were changed.
 - A read-only attempt to inspect the fast-host workers from a separate SSH session was denied by the host's current authentication setup. The original launcher pane shows the six IND–JAX worker starts followed by inspection commands queued behind the foreground launcher; those commands have not produced results. No additional matchup completion or artifact status is verified, and the launcher shell remains untouched.
+- At 20:42 CDT, the original SSH client process was still live and the pane remained inside the foreground launcher; the queued `ps` and artifact listing still had no results. The local host has neither the batch's simulation database nor frozen input files, so the paired player-workload ablation cannot be run locally while the fast-host batch is active. The run was not restarted or interrupted.
 
 ## Verification
 
 Using `/root/.venvs/lp-slc-a-g/bin/python`, two focused runs passed: **90 tests across nine modules** for QB participation, football and box-score assertions, QB decisions/style evaluation, workload references, and paired ablation comparison/runner behavior; plus **401 tests across 17 modules** for football invariants, game state, E1 transitions, clock replay, SLC engine/output, share and player outcomes, kicks, overtime, seed ledgers, and batch handling. Total: **491 passing tests across 26 modules**. After fixing the two failures found by full discovery, `/root/legendarypicks/backend/venv/bin/python -m unittest discover -s scripts/nfl_sequence -p 'test_*.py'` passed **934 tests with 3 skipped**. After adding the dedicated backoff regression, the affected team-outcome, blocker-resolution, and archival-comparison suites passed **24 tests**. The full 934-test discovery was not rerun after that test-only addition. In this update, the focused clock replay suite passed **11 tests**; a 20-replicate full-window Model D holdout replay completed, and an independent raw nflverse reconstruction matched all 42 support cells, 141,830 PBP keys, and 12,246 OOB-flag keys. `git diff --check` and focused regressions passed.
+
+The continuation check also passed **61 tests** across `test_pre_event`, `test_participant_invariants`, `test_slc_outputs`, `test_paired_seed_ablation`, and `test_run_paired_seed_ablation_matrix`, covering backup-QB eligibility, box-score metadata, paired ledgers, and resumable ablation shard validation.
 
 ## Still open
 
