@@ -27,6 +27,7 @@ import pregame_snapshot  # noqa: E402
 
 REPO = HERE.parents[1]
 PRODUCER_FILES = (
+    'scripts/nfl_team_codes.py',
     'scripts/nfl_sequence/build_blocked_kick_outcomes.py',
     'scripts/nfl_sequence/clock_d.py',
     'scripts/nfl_sequence/contextual_pool.py',
@@ -47,6 +48,7 @@ PRODUCER_FILES = (
     'scripts/nfl_sequence/player_shares.py',
     'scripts/nfl_sequence/simulate_pregame_game.py',
     'scripts/nfl_sequence/simulate_pregame_batch.py',
+    'scripts/nfl_sequence/source_preflight.py',
     'scripts/nfl_sequence/slc_engine.py',
     'scripts/nfl_sequence/playbook_prior.py',
     'scripts/nfl_sequence/try_policy.py',

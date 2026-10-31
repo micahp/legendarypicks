@@ -29,8 +29,10 @@ except ImportError:  # Python 3.8 backend environment
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent))
 
 import historical_archive as archive  # noqa: E402
+import nfl_team_codes  # noqa: E402
 import pregame_snapshot as ps  # noqa: E402
 
 
@@ -40,7 +42,7 @@ RDS_FILES = {
     'roster': ('r', 'roster_weekly_2026.rds'),
     'injury': ('i', 'injuries_2026.rds'),
 }
-DB_TO_ARCHIVE_TEAM = {'LAR': 'LA', 'WSH': 'WAS'}
+DB_TO_ARCHIVE_TEAM = nfl_team_codes.NFLVERSE_TEAM_CODE_ALIASES
 EASTERN = ZoneInfo('America/New_York')
 STARTER_ROLES = {
     '3WR 1TE': {
@@ -291,7 +293,7 @@ def _current_streaks(games, game, cutoff, game_id):
 
 
 def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity, roster_summary, game_id):
-    source_team = DB_TO_ARCHIVE_TEAM.get(team, team)
+    source_team = nfl_team_codes.to_nflverse_team_code(team)
     depth_rows = depth[(depth['team'].astype(str) == source_team)]
     depth_rows = depth_rows[depth_rows['dt'].map(lambda x: archive._utc(x, f'{team} depth timestamp') <= cutoff)]
     if depth_rows.empty:
@@ -476,7 +478,7 @@ def _build_one(*, row, tables, paths, db_path, archive_manifest, archive_manifes
     depth = tables['depth']
     for side, team in teams.items():
         roster_summary = json.loads(row[f'{side}_full_roster'])
-        source_team = DB_TO_ARCHIVE_TEAM.get(team, team)
+        source_team = nfl_team_codes.to_nflverse_team_code(team)
         team_depth = depth[(depth['team'].astype(str) == source_team)
                            & depth['dt'].map(lambda x: archive._utc(x, 'depth source timestamp') <= cutoff)]
         if team_depth.empty:

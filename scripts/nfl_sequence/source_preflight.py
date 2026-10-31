@@ -119,8 +119,8 @@ def _decision_errors(season):
 
 def _playbook_errors(season, target_teams):
     import playbook_crosscheck as crosscheck
+    import nfl_team_codes
     root = Path(crosscheck.PLAYBOOKS)
-    target_teams = {crosscheck.TEAM_CODE.get(team, team) for team in target_teams}
     manifest_path = root / 'build_manifest.json'
     errors = []
     if not manifest_path.is_file():
@@ -141,7 +141,7 @@ def _playbook_errors(season, target_teams):
             continue
         seen_outputs.add(output)
         path = root / output
-        team = crosscheck.TEAM_CODE.get(entry.get('team'), entry.get('team'))
+        team = nfl_team_codes.to_pbp_team_code(entry.get('team'))
         if team in teams:
             errors.append(f'playbook manifest has duplicate team {team} for season {int(season)-1}')
         teams.add(team)
@@ -153,7 +153,7 @@ def _playbook_errors(season, target_teams):
             if actual != entry['output_sha256']:
                 errors.append(f'playbook checksum mismatch: {path}; expected {entry["output_sha256"]}, got {actual}')
             data = json.loads(path.read_text())
-            file_team = crosscheck.TEAM_CODE.get(data.get('team_id'), data.get('team_id'))
+            file_team = nfl_team_codes.to_pbp_team_code(data.get('team_id'))
             if file_team != team:
                 errors.append(f'playbook team identity mismatch: {path}; manifest={team}, file={file_team}')
             plays = data.get('offense', {}).get('observed_plays')
@@ -161,7 +161,7 @@ def _playbook_errors(season, target_teams):
                 errors.append(f'playbook has no offensive observed_plays: {path}')
         except Exception as exc:
             errors.append(f'playbook cannot be verified: {path}: {type(exc).__name__}: {exc}')
-    missing_teams = sorted(set(target_teams) - teams)
+    missing_teams = nfl_team_codes.missing_pbp_team_codes(target_teams, teams)
     if missing_teams:
         errors.append(f'playbook prior is missing target-game teams {missing_teams} for season {int(season)-1}')
     return errors, len(entries)

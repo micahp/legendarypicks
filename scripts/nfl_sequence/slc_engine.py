@@ -17,6 +17,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent))
 import e2_reference as er  # noqa: E402
 import e0_single_play as e0  # noqa: E402
 import game_state as gs  # noqa: E402
@@ -24,6 +25,7 @@ import playcall_model as pm  # noqa: E402
 import pre_event  # noqa: E402
 import slc_playcall as slc  # noqa: E402
 import football_assertions  # noqa: E402
+import nfl_team_codes  # noqa: E402
 
 MODEL_ID = 'slc_v1_incomplete'
 QB_DECISION_MODEL_ID = 'slc_v1_qb_decisions_research'
@@ -73,9 +75,10 @@ def require_snapshot(snapshot):
 
 
 def side_teams(snapshot):
-    """Offense side A is the home team and B the away team, as in the engine's team_identity (game_state.py)."""
+    """Return PBP team keys for play-call tables; frozen schedules may use nflverse aliases."""
     schedule = require_snapshot(snapshot)['schedule']
-    return {'A': schedule['home_team'], 'B': schedule['away_team']}
+    return {'A': nfl_team_codes.to_pbp_team_code(schedule['home_team']),
+            'B': nfl_team_codes.to_pbp_team_code(schedule['away_team'])}
 
 
 def check_artifact_cutoff(artifact, season):
@@ -183,14 +186,13 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         paths = sorted(glob.glob(f'{PLAYBOOKS}/*-{int(schedule["season"]) - 1}.json'))
         if not paths:
             raise ValueError(f'no playbook source files for {int(schedule["season"]) - 1}')
-        from playbook_crosscheck import TEAM_CODE
         available_teams = set()
         for path in paths:
             playbook_source = json.loads(Path(path).read_text())
-            available_teams.add(TEAM_CODE.get(playbook_source.get('team_id'), playbook_source.get('team_id')))
+            available_teams.add(nfl_team_codes.to_pbp_team_code(playbook_source.get('team_id')))
             sampler.optional_input_sha256[f'playbook:{Path(path).name}'] = _file_sha256(path)
         required_teams = set((sampler.describe() or {}).get('side_teams', {}).values())
-        missing_teams = sorted(required_teams - available_teams)
+        missing_teams = nfl_team_codes.missing_pbp_team_codes(required_teams, available_teams)
         if missing_teams:
             raise ValueError(f'playbook prior is missing target-game teams {missing_teams} for season {season - 1}')
     if streak_file is not None:  # each team's current streak as of the cutoff, from the verified records
@@ -969,6 +971,7 @@ def describe(ref):
     if outcome_manifest is not None:
         description['player_outcome_model'] = outcome_manifest
     integration_files = ('clock_d.py', 'e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
+                         'source_preflight.py', '../nfl_team_codes.py',
                          'playcall_model.py',
                          'team_tendency.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
                          'streak_splits.py', 'target_roles.py', 'decision_layer.py', 'player_shares.py',

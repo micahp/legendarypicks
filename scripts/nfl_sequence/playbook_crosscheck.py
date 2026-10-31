@@ -15,20 +15,22 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent))
 import decision_layer as dl  # noqa: E402
 import e1_drive as e1  # noqa: E402
+import nfl_team_codes  # noqa: E402
 
 PLAYBOOKS = '/root/gridiron-playbooks-research/data/playbooks/research-2026-10-27'
 CATS = {'D': 'pass_length', 'E': 'pass_location', 'C': 'run_gap'}
-# the playbook files name two franchises differently from the database and nflverse: a join key, mapped before comparing
-TEAM_CODE = {'LA': 'LAR', 'WAS': 'WSH'}
+# Kept as an import-compatible alias; the canonical mapping lives in scripts/nfl_team_codes.py.
+TEAM_CODE = nfl_team_codes.PBP_TEAM_CODE_ALIASES
 
 
 def playbook_counts(season):
     out = {}
     for path in glob.glob(f'{PLAYBOOKS}/*-{season}.json'):
         data = json.load(open(path))
-        team = TEAM_CODE.get(data['team_id'], data['team_id'])
+        team = nfl_team_codes.to_pbp_team_code(data['team_id'])
         counts = {c: Counter() for c in CATS}
         for play in data['offense']['observed_plays']:
             a = play['attributes']
