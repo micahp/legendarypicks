@@ -17,6 +17,7 @@ sys.path.insert(0, str(HERE))
 import build_blocked_kick_outcomes as blocked_builder  # noqa: E402
 import e0_single_play as e0  # noqa: E402
 import e1_drive as e1  # noqa: E402
+import e2_reference as e2r  # noqa: E402
 import game_state as gs  # noqa: E402
 import measure_kick_outcomes as mk  # noqa: E402
 import qb_decisions as qbd  # noqa: E402
@@ -341,6 +342,47 @@ class BlockedKickResolution(unittest.TestCase):
                 after, _terminal, _flags = reducer.apply_blocked_kick(state, event, outcome)
                 self.assertEqual(after['down'], 1)
                 self.assertEqual((after['yl'], after['togo']), (expected_yline, expected_yline))
+
+    def test_real_punt_fixture_filters_an_out_of_field_category_before_the_draw(self):
+        fixture = e2r.load_blocked_kicks(e2r.AUDITED_BLOCKED_KICKS)
+        self.assertEqual(fixture['sha256'], 'f1a29d215aba97addc429136d7fdaef9b28af7f5e6ce27d7c8f2eae25f4a1d22')
+
+        class PreferOutOfFieldCategory:
+            def __init__(self, wanted):
+                self.wanted = wanted
+                self.categories = None
+
+            def choices(self, categories, weights, k):
+                self.categories = list(categories)
+                return [self.wanted if self.wanted in categories else categories[0]]
+
+            @staticmethod
+            def choice(rows):
+                return rows[0]
+
+        cases = (
+            (92, 8, 'next_snap:receiving_team',
+             'next_snap:receiving_team:blocked_kick_next_snap_outside_field'),
+            (98, 2, 'recovery:receiving_team:0',
+             'recovery:receiving_team:0:blocked_kick_receiving_return_outside_field'),
+        )
+        for yardline, togo, invalid_category, exclusion_prefix in cases:
+            with self.subTest(yardline=yardline, invalid_category=invalid_category):
+                game = object.__new__(gs._Game)
+                game.ref = SimpleNamespace(blocked_kicks=fixture, blocker_fixes=('blocked_kick_geometry',),
+                                           contextual_sampler=SimpleNamespace(decisions=[{}]))
+                state = {'offense': 'A', 'defense': 'B', 'down': 4, 'togo': togo, 'yl': yardline}
+                rng = PreferOutOfFieldCategory(invalid_category)
+
+                reason, outcome = game._sample_blocked_kick_by_category(
+                    'punt', fixture['records']['punt'], rng, 300, 1, state)
+
+                self.assertIsNone(reason)
+                self.assertNotIn(invalid_category, rng.categories)
+                self.assertNotEqual(outcome['geometry_category'], invalid_category)
+                self.assertGreater(outcome['geometry_candidate_count'], 0)
+                self.assertTrue(any(key.startswith(exclusion_prefix)
+                                    for key in outcome['geometry_category_exclusions']))
 
     def test_impossible_projection_is_rejected_without_clamping_and_unknown_records_stay_blocked(self):
         source = {

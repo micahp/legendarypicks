@@ -570,6 +570,107 @@ def _try_after_touchdown(rng, kicks, p_two=None):
     return (TRY_POINTS[kind] if made else 0), try_record(kind, made), None
 
 
+class _TimeoutSamplingGuard:
+    """Keep source-play timeout observations within each simulated team's remaining half allotment."""
+
+    def __init__(self, participants, remaining):
+        self.participants = participants
+        self.initial = dict(remaining)
+        self.remaining = dict(remaining)
+        self.excluded = Counter()
+        self._cell_cache = {}
+
+    def _facts(self, sample):
+        row = sample[1]
+        try:
+            key = (row['game_id'], int(float(row['play_id'])))
+        except (KeyError, TypeError, ValueError):
+            return {}
+        return self.participants.get(key, {})
+
+    def _timeout_side(self, sample, state):
+        facts = self._facts(sample)
+        if not facts.get('timeout'):
+            return None, None
+        caller = facts.get('timeout_team')
+        posteam, defteam = facts.get('posteam'), facts.get('defteam')
+        if caller and caller == posteam:
+            side = state.get('offense')
+        elif caller and caller == defteam:
+            side = state.get('defense')
+        else:
+            return None, 'timeout_source_team_unresolved'
+        if side not in self.remaining:
+            return None, 'timeout_simulated_team_unresolved'
+        return side, None
+
+    def permits(self, sample, state):
+        return self.rejection_reason(sample, state) is None
+
+    def rejection_reason(self, sample, state):
+        side, reason = self._timeout_side(sample, state)
+        if reason:
+            return reason
+        if side is not None and self.remaining[side] <= 0:
+            return f'timeout_limit_exhausted:{side}'
+        return None
+
+    def filter_cell(self, cell, state):
+        if not self.requires_source_filter:
+            self.last_filter = {'excluded_rows': 0, 'reasons': {}}
+            self.last_filter_reused = False
+            return cell
+        exhausted = tuple(sorted(side for side, count in self.remaining.items() if count == 0))
+        cache_key = (id(cell), state.get('offense'), state.get('defense'), exhausted)
+        cached = self._cell_cache.get(cache_key)
+        if cached is not None and cached[0] is cell:
+            self.last_filter = cached[2]
+            self.last_filter_reused = True
+            return cached[1]
+        kept, rejected = [], Counter()
+        for sample in cell:
+            side, reason = self._timeout_side(sample, state)
+            if reason:
+                rejected[reason] += 1
+            elif side is not None and self.remaining[side] <= 0:
+                rejected[f'timeout_limit_exhausted:{side}'] += 1
+            else:
+                kept.append(sample)
+        self.excluded.update(rejected)
+        self.last_filter_reused = False
+        if not rejected:
+            self.last_filter = {'excluded_rows': 0, 'reasons': {}}
+            self._cell_cache[cache_key] = (cell, cell, self.last_filter)
+            return cell
+        self.last_filter = {'excluded_rows': sum(rejected.values()),
+                             'reasons': dict(sorted(rejected.items()))}
+        self._cell_cache[cache_key] = (cell, kept, self.last_filter)
+        return kept
+
+    def observe(self, sample, state):
+        reason = self.rejection_reason(sample, state)
+        if reason:
+            raise ValueError(reason)
+        side, _ = self._timeout_side(sample, state)
+        if side is not None:
+            self.remaining[side] -= 1
+
+    def unavailable_reason(self):
+        reasons_for_cell = self.last_filter.get('reasons', {})
+        if reasons_for_cell:
+            reasons = ','.join(f'{key}={value}' for key, value in sorted(reasons_for_cell.items()))
+            return f'timeout_sampling_no_legal_source_rows:{reasons}'
+        return 'timeout_sampling_no_source_rows'
+
+    @property
+    def requires_source_filter(self):
+        return any(value == 0 for value in self.remaining.values())
+
+    def describe(self):
+        return {'initial_remaining': dict(self.initial), 'final_remaining': dict(self.remaining),
+                'distinct_cell_rows_excluded_by_reason': dict(sorted(self.excluded.items()))}
+
+
 class _Game:
     """One game in progress. Each drive is an E1 drive; this class decides what follows it."""
 
@@ -1121,51 +1222,75 @@ class _Game:
         return categories, exclusions
 
     def _sample_blocked_kick_by_category(self, kick_type, records, rng, clock, quarter, state):
-        """Preserve historical outcome-category weights; require a legal state projection within the drawn category."""
+        """Draw only among observed blocked-kick outcomes that resolve legally at this live state."""
         categories, exclusions = self._eligible_blocked_kick_categories(records, clock, quarter)
         if not categories:
             self._record_blocked_kick_geometry('no_clock_compatible_transition', 0, exclusions)
             return f'blocked_kick_no_clock_compatible_transition:{kick_type}', None
-        category_names = sorted(categories)
-        category = rng.choices(category_names, weights=[len(categories[name]) for name in category_names], k=1)[0]
-        selected_rows = categories[category]
-        resolved = [row for row in selected_rows if row.get('classification_status') in reducer.BLOCKED_KICK_STATUSES]
-        if not resolved:
-            status = selected_rows[0].get('classification_status')
-            self._record_blocked_kick_geometry(category, 0, exclusions)
-            return f'blocked_kick_outcome_unresolved:{kick_type}:{status}', None
         if state is None:
             self._record_blocked_kick_geometry(category, 0, exclusions)
             return f'blocked_kick_geometry_state_missing:{kick_type}', None
         event = 'blocked_punt' if kick_type == 'punt' else 'blocked_field_goal'
-        compatible = []
-        failures = Counter()
+        drawable_by_category = {}
+        geometry_exclusions = Counter()
         projected_by_id = {}
-        for row in resolved:
-            try:
+        unresolved_by_id = {}
+        for category, rows in categories.items():
+            drawable = []
+            for row in rows:
+                status = row.get('classification_status')
+                if status not in reducer.BLOCKED_KICK_STATUSES:
+                    drawable.append(row)
+                    unresolved_by_id[id(row)] = f'blocked_kick_outcome_unresolved:{kick_type}:{status}'
+                    continue
+                runoff = row.get('clock_runoff_seconds')
+                if type(runoff) is not int or runoff < 0:
+                    drawable.append(row)
+                    unresolved_by_id[id(row)] = f'blocked_kick_clock_unresolved:{kick_type}'
+                    continue
                 candidate = dict(row)
-                if candidate.get('classification_status') == 'classified_next_snap':
-                    candidate = reducer.project_blocked_kick_next_snap(candidate, state)
-                reducer.apply_blocked_kick(state, event, candidate)
-                compatible.append(row)
+                scoring_team = candidate.get('scoring_team')
+                if scoring_team and scoring_team not in (candidate.get('posteam'), candidate.get('defteam')):
+                    drawable.append(row)
+                    unresolved_by_id[id(row)] = f'blocked_kick_scoring_team_unresolved:{kick_type}'
+                    continue
+                try:
+                    if status == 'classified_next_snap':
+                        candidate = reducer.project_blocked_kick_next_snap(candidate, state)
+                    reducer.apply_blocked_kick(state, event, candidate)
+                except reducer.UnmodelledOutcome as exc:
+                    geometry_exclusions[f'{category}:{exc}'] += 1
+                    continue
+                except (ValueError, TypeError, KeyError) as exc:
+                    drawable.append(row)
+                    unresolved_by_id[id(row)] = f'blocked_kick_outcome_unresolved:{kick_type}:{status}:{exc}'
+                    continue
+                drawable.append(row)
                 projected_by_id[id(row)] = candidate
-            except (ValueError, TypeError, KeyError) as exc:
-                failures[str(exc)] += 1
-        if not compatible:
-            reason = next(iter(sorted(failures)), 'no compatible source transition')
-            self._record_blocked_kick_geometry(category, 0, exclusions)
+            if drawable:
+                drawable_by_category[category] = drawable
+        if not drawable_by_category:
+            category = sorted(categories)[0]
+            reason = next((key[len(category) + 1:] for key in sorted(geometry_exclusions)
+                           if key.startswith(f'{category}:')), 'no compatible source transition')
+            self._record_blocked_kick_geometry(category, 0, exclusions, geometry_exclusions)
             return f'blocked_kick_no_legal_geometry:{kick_type}:{category}:{reason}', None
-        sample = rng.choice(compatible)
-        status = sample.get('classification_status')
-        runoff = sample.get('clock_runoff_seconds')
-        if not isinstance(runoff, int) or runoff < 0:
-            return f'blocked_kick_clock_unresolved:{kick_type}', None
+        category_names = sorted(drawable_by_category)
+        category = rng.choices(category_names,
+                               weights=[len(drawable_by_category[name]) for name in category_names], k=1)[0]
+        selected_rows = drawable_by_category[category]
+        sample = rng.choice(selected_rows)
+        if id(sample) in unresolved_by_id:
+            self._record_blocked_kick_geometry(category, 0, exclusions, geometry_exclusions)
+            return unresolved_by_id[id(sample)], None
         outcome = dict(projected_by_id[id(sample)])
-        outcome['geometry_candidate_count'] = len(compatible)
+        outcome['geometry_candidate_count'] = sum(id(row) not in unresolved_by_id for row in selected_rows)
         outcome['geometry_category'] = category
         outcome['period_expired_category_exclusions'] = dict(sorted(exclusions.items()))
+        outcome['geometry_category_exclusions'] = dict(sorted(geometry_exclusions.items()))
         outcome['reference_fixture_sha256'] = self.ref.blocked_kicks.get('sha256')
-        self._record_blocked_kick_geometry(category, len(compatible), exclusions)
+        self._record_blocked_kick_geometry(category, outcome['geometry_candidate_count'],
+                                           exclusions, geometry_exclusions)
         scoring_team = outcome.get('scoring_team')
         if scoring_team:
             if scoring_team == outcome.get('posteam'):
@@ -1176,12 +1301,14 @@ class _Game:
                 return f'blocked_kick_scoring_team_unresolved:{kick_type}', None
         return None, outcome
 
-    def _record_blocked_kick_geometry(self, category, candidates, exclusions=None):
+    def _record_blocked_kick_geometry(self, category, candidates, exclusions=None, geometry_exclusions=None):
         sampler = getattr(self.ref, 'contextual_sampler', None)
         if sampler is not None and sampler.decisions:
             sampler.decisions[-1].update(blocked_kick_geometry_category=category,
                                          blocked_kick_geometry_candidates=int(candidates),
-                                         blocked_kick_period_expired_exclusions=dict(sorted((exclusions or {}).items())))
+                                         blocked_kick_period_expired_exclusions=dict(sorted((exclusions or {}).items())),
+                                         blocked_kick_geometry_category_exclusions=dict(
+                                             sorted((geometry_exclusions or {}).items())))
 
     def _try_situation(self, scorer):
         """What a try policy conditions on, read before the try is drawn: the scorer's margin after the six points, the
@@ -1300,6 +1427,7 @@ class _Game:
         research = {'clock': self.clock_draws} if self.clock_draws is not None else {}  # the E2 call is unchanged
         attempt = []  # the plays made before a block are evidence, kept apart from drives and stats
         sampler = self.ref.contextual_sampler
+        timeout_guard = _TimeoutSamplingGuard(getattr(self.ref, 'participants', {}), self.timeouts)
         decision_log = getattr(sampler, 'decisions', None)
         decision_start = len(decision_log) if isinstance(decision_log, list) else None
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
@@ -1308,13 +1436,15 @@ class _Game:
                                       score_diff=self.points[self.offense] - self.points[self.defense],
                                       play_index_start=self.next_play_sequence,
                                       drive_index=len(self.drives) + 1,
-                                      paired_random_streams=self.paired_random_streams, **research)
+                                      paired_random_streams=self.paired_random_streams,
+                                      sampling_guard=timeout_guard, **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
                                     'state_at_drive_start': {key: start[key] for key in (
                                         'quarter', 'clock', 'offense', 'defense', 'yl', 'down', 'togo')},
                                     'blocker': terminal, 'plays_before_block': attempt,
+                                    'timeout_sampling_guard': timeout_guard.describe(),
                                     'note': 'raw E1 plays before the block; not part of drives or stats'}
             if decision_start is not None:
                 new_decisions = decision_log[decision_start:]
@@ -1341,12 +1471,16 @@ class _Game:
             play['state_before']['drive_index'] = drive_index  # E1 writes 1 on every play; the game index is written here
             play['state_after']['drive_index'] = drive_index
         self._apply_timeouts(plays)
+        if timeout_guard.remaining != self.timeouts:
+            self.block('timeout_sampling_guard_mismatch')
         self._record_clock_transitions(plays)
         last = plays[-1]['state_after']
         drive = {'index': len(self.drives) + 1, 'offense_team': self.offense, 'quarter_start': self.quarter,
                  'clock_start': self.clock, 'plays': plays, 'terminal': terminal,
                  'end_quarter': last['quarter'], 'end_clock': last['clock_seconds'],
                  'points_scored_on_drive': None, 'field_goal_made': None}
+        if timeout_guard.excluded or timeout_guard.remaining != self.timeouts:
+            drive['timeout_sampling_guard'] = timeout_guard.describe()
         self.drives.append(drive)
         for play in plays:  # a quarter change inside a drive: the drive goes on (rules file, section 2)
             if play['outcome']['quarter_change']:

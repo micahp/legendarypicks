@@ -237,10 +237,10 @@ class PlayCallSampler:
         kept = [sample for sample in samples if not self._has_lateral(sample[1])]
         return kept, len(samples) - len(kept)
 
-    def _entry(self, cell):
+    def _entry(self, cell, cache=True):
         use_lateral_filter = self.participant_chooser is not None
         cache_key = (id(cell), use_lateral_filter)
-        cached = self._cells.get(cache_key)
+        cached = self._cells.get(cache_key) if cache else None
         if cached is not None:
             return cached[1]
         samples, lateral_rows_excluded = self._participant_source_rows(cell)
@@ -274,7 +274,8 @@ class PlayCallSampler:
                  'by_streak': dict(by_streak), 'by_label': dict(by_label), 'base_labelled': base_labelled,
                  'by_key': {k: sorted(v, key=lambda s: (s[1]['game_id'], s[1]['play_id'])) for k, v in by_key.items()},
                  'lateral_source_rows_excluded': lateral_rows_excluded}
-        self._cells[cache_key] = (cell, entry)
+        if cache:
+            self._cells[cache_key] = (cell, entry)
         return entry
 
     def _outcome_rows(self, cell, called_intent, scramble, state=None):
@@ -310,7 +311,7 @@ class PlayCallSampler:
                 legal.append(sample)
         return legal, rejected
 
-    def _backoff_candidates(self, state, called_intent, scramble):
+    def _backoff_candidates(self, state, called_intent, scramble, source_row_filter=None):
         """Find cutoff-safe outcomes without changing the selected play intent or scramble class."""
         if self.source_pool is None:
             return None, None
@@ -343,6 +344,8 @@ class PlayCallSampler:
                   ('down_distance', (down, distance)), ('field_zone', field), ('league_intent', None))
         for level, key in levels:
             candidates = list(self._backoff_index[level][outcome_class].get(key, ()))
+            if source_row_filter is not None:
+                candidates = [sample for sample in candidates if source_row_filter(sample, state)]
             if scramble:
                 candidates, rejected = self._legal_scramble_rows(candidates, state)
                 self._last_scramble_rejected_bounds = rejected
@@ -367,7 +370,8 @@ class PlayCallSampler:
         if (not isinstance(field_goal, dict)
                 or field_goal.get('snap_yardline_100') != int(state['yl'])):
             field_goal = fg_feasibility.evaluate(int(state['yl']))
-        entry = self._entry(cell)
+        source_row_filter = state.get('_source_row_filter')
+        entry = self._entry(cell, cache=not state.get('_source_cell_filtered', False))
         self._current_team_outcome_fallbacks = []
         total = sum(entry['base'].values())
         fg_rejected_distance = False
@@ -434,7 +438,8 @@ class PlayCallSampler:
         if self.outcome_backoff_enabled and called_intent in SCRIMMAGE_INTENTS:
             exact_outcome_rows = self._outcome_rows(cell, called_intent, scramble, state)
             if len(exact_outcome_rows) < OUTCOME_BACKOFF_MIN_SUPPORT['exact_cell']:
-                backoff_candidates, outcome_fallback = self._backoff_candidates(state, called_intent, scramble)
+                backoff_candidates, outcome_fallback = self._backoff_candidates(
+                    state, called_intent, scramble, source_row_filter=source_row_filter)
         if backoff_candidates is not None:
             counts = Counter(sample[0] for sample in backoff_candidates)
             keys = sorted((outcome_intent, event) for event in counts)

@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e1_drive as e1  # noqa: E402
 import reducer  # noqa: E402
 import football_assertions  # noqa: E402
+import game_state as gs  # noqa: E402
 from paired_random_streams import PairedRandomStreams  # noqa: E402
 
 
@@ -93,6 +94,39 @@ class FieldBoundarySampling(unittest.TestCase):
             'credited_yards_gained': 5, 'next_snap_spot': None, 'kick_outcome': None,
         })
         self.assertEqual(failure.context['state_after'], 'not_applied')
+
+    def test_exhausted_timeout_sources_are_filtered_before_play_sampling(self):
+        participants = {
+            ('G1', 1): {'timeout': 1, 'timeout_team': 'HOME', 'posteam': 'HOME', 'defteam': 'AWAY'},
+            ('G1', 2): {'timeout': 0, 'timeout_team': '', 'posteam': 'HOME', 'defteam': 'AWAY'},
+        }
+        guard = gs._TimeoutSamplingGuard(participants, {'OFF': 0, 'DEF': 3})
+        timeout_row = {'game_id': 'G1', 'play_id': 1.0, 'game_date': '2025-01-01', 'yards_gained': 0,
+                       'touchdown': 0, 'play_type': 'run'}
+        ordinary_row = {'game_id': 'G1', 'play_id': 2.0, 'game_date': '2025-01-01', 'yards_gained': 0,
+                        'touchdown': 0, 'play_type': 'run'}
+        cell = ([('run', timeout_row, 10, None)] * 10
+                + [('run', ordinary_row, 10, None)] * (e1.MIN_POOL + 5))
+
+        class OneCellPool:
+            @staticmethod
+            def get(_key, default=None):
+                return cell
+
+        class FirstPolicy:
+            @staticmethod
+            def sample(_rng, candidate_cell, **_context):
+                return candidate_cell[0]
+
+        plays, terminal = e1.simulate(
+            start(4, 10, yl=50, down=4, togo=5), 1, OneCellPool(), 'timeout-filter',
+            sampling_policy=FirstPolicy(), sampling_guard=guard)
+
+        self.assertEqual(terminal, 'end_of_regulation')
+        self.assertEqual(plays[0]['outcome']['sampled_from']['play_id'], 2.0)
+        self.assertEqual(plays[0]['sampling']['timeout_source_filter'], {
+            'excluded_rows': 10, 'reasons': {'timeout_limit_exhausted:OFF': 10}
+        })
 
     def test_other_illegal_play_and_state_mutations_use_the_same_failure_class_and_context(self):
         mutations = (
