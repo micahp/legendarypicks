@@ -166,6 +166,11 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
   const lockedGames = payload.games
     .filter((game) => Boolean(game.models[model.id]?.locked_at_utc))
     .sort((a, b) => b.scheduled_start_utc.localeCompare(a.scheduled_start_utc))
+  const gamesByDay = lockedGames.reduce<Record<string, Game[]>>((groups, game) => {
+    const day = dateLabel(game.scheduled_start_utc)
+    groups[day] = [...(groups[day] ?? []), game]
+    return groups
+  }, {})
 
   return (
     <section className="space-y-3">
@@ -196,43 +201,50 @@ function RecordView({ payload, model }: { payload: Payload; model: Model }) {
           No model-specific locked forecasts are available yet.
         </p>
       ) : (
-        <div className="divide-y divide-zinc-800 rounded-xl border border-white/10 bg-zinc-950/50 px-4">
-          {lockedGames.map((game) => {
-            const forecast = game.models[model.id]
-            const grade = forecast.grade
-            const result = game.result ?? (grade ? { home_score: grade.home_score, away_score: grade.away_score } : null)
-            const outcome = result == null
-              ? null
-              : result.home_score === result.away_score
-                ? 'Tie'
-                : (result.home_score > result.away_score ? game.home_team : game.away_team) + ' won'
-            const projectedScore = forecast.score_forecast_available &&
-              forecast.projected_away_points != null && forecast.projected_home_points != null
-              ? game.away_team + ' ' + forecast.projected_away_points.toFixed(1) + ' – ' + game.home_team + ' ' + forecast.projected_home_points.toFixed(1)
-              : null
-            const status = grade
-              ? 'Graded'
-              : result
-                ? 'Final · grading pending'
-                : 'Pending'
+        <div className="space-y-4">
+          {Object.entries(gamesByDay).map(([day, games]) => (
+            <section key={day} className="space-y-2">
+              <h3 className="text-sm font-medium text-zinc-400">{day}</h3>
+              <div className="divide-y divide-zinc-800 rounded-xl border border-white/10 bg-zinc-950/50 px-4">
+                {games.map((game) => {
+                  const forecast = game.models[model.id]
+                  const grade = forecast.grade
+                  const result = game.result ?? (grade ? { home_score: grade.home_score, away_score: grade.away_score } : null)
+                  const outcome = result == null
+                    ? null
+                    : result.home_score === result.away_score
+                      ? 'Tie'
+                      : (result.home_score > result.away_score ? game.home_team : game.away_team) + ' won'
+                  const projectedScore = forecast.score_forecast_available &&
+                    forecast.projected_away_points != null && forecast.projected_home_points != null
+                    ? game.away_team + ' ' + forecast.projected_away_points.toFixed(1) + ' – ' + game.home_team + ' ' + forecast.projected_home_points.toFixed(1)
+                    : null
+                  const status = grade
+                    ? 'Graded'
+                    : result
+                      ? 'Final · grading pending'
+                      : 'Pending'
 
-            return (
-              <article key={game.game_id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h3 className="font-medium text-zinc-100">{game.away_team} at {game.home_team}</h3>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    {new Date(game.scheduled_start_utc).toLocaleString()}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-300">
-                    <span>{game.home_team} win probability {percent(forecast.home_win_probability)}</span>
-                    {projectedScore && <span>Projected score: {projectedScore}</span>}
-                    {result && <span>Final {game.away_team} {result.away_score} – {game.home_team} {result.home_score} · {outcome}</span>}
-                  </div>
-                </div>
-                <span className={grade ? 'shrink-0 text-xs text-emerald-300' : 'shrink-0 text-xs text-zinc-400'}>{status}</span>
-              </article>
-            )
-          })}
+                  return (
+                    <article key={game.game_id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <h3 className="font-medium text-zinc-100">{game.away_team} at {game.home_team}</h3>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {new Date(game.scheduled_start_utc).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-300">
+                          <span>{game.home_team} win probability {percent(forecast.home_win_probability)}</span>
+                          {projectedScore && <span>Projected score: {projectedScore}</span>}
+                          {result && <span>Final {game.away_team} {result.away_score} – {game.home_team} {result.home_score} · {outcome}</span>}
+                        </div>
+                      </div>
+                      <span className={grade ? 'shrink-0 text-xs text-emerald-300' : 'shrink-0 text-xs text-zinc-400'}>{status}</span>
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </section>

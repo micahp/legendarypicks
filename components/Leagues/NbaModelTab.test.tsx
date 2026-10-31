@@ -132,6 +132,20 @@ describe('NBA model tab', () => {
         },
       },
     }
+    const secondLockedBase = previewGame('locked-game-2', '2026-10-20T20:00:00Z', 'NYK', 'PHI')
+    const secondLockedGame = {
+      ...secondLockedBase,
+      status: 'graded' as const,
+      result: { home_score: 105, away_score: 98 },
+      models: {
+        ...secondLockedBase.models,
+        G3: {
+          ...secondLockedBase.models.G3,
+          locked_at_utc: '2026-10-20T18:30:00Z',
+          grade: { home_score: 105, away_score: 98, home_win: true, winner_brier: 0.18 },
+        },
+      },
+    }
     const unlockedGame = {
       ...previewGame('unlocked-game', '2026-10-19T23:00:00Z', 'PHI', 'NYK'),
       status: 'unlocked' as const,
@@ -148,9 +162,9 @@ describe('NBA model tab', () => {
       ...payload,
       records: {
         ...payload.records,
-        G3: { locked: 1, graded: 1, awaiting: 0, missed: 1, winner_brier: 0.16, winner_log_loss: 0.5 },
+        G3: { locked: 2, graded: 2, awaiting: 0, missed: 1, winner_brier: 0.17, winner_log_loss: 0.5 },
       },
-      games: [lockedGame, unlockedGame],
+      games: [lockedGame, secondLockedGame, unlockedGame],
     }
     ;(global as any).fetch = jest.fn(() => Promise.resolve({
       ok: true, json: () => Promise.resolve(recordPayload),
@@ -165,7 +179,11 @@ describe('NBA model tab', () => {
     expect(screen.getByText('Projected score: BOS 108.9 – DET 112.1')).toBeTruthy()
     expect(screen.getByText('Final BOS 102 – DET 109 · DET won')).toBeTruthy()
     expect(screen.queryByText(/· Locked \d/)).toBeNull()
-    expect(screen.getAllByText('Graded').length).toBeGreaterThanOrEqual(2)
+    const recordDay = screen.getByRole('heading', { name: dayLabel(lockedGame.scheduled_start_utc) })
+    expect(screen.getAllByRole('heading', { name: dayLabel(lockedGame.scheduled_start_utc) })).toHaveLength(1)
+    expect(within(recordDay.parentElement as HTMLElement).getByText('BOS at DET')).toBeTruthy()
+    expect(within(recordDay.parentElement as HTMLElement).getByText('NYK at PHI')).toBeTruthy()
+    expect(screen.getAllByText('Graded').length).toBeGreaterThanOrEqual(3)
     expect(screen.queryByText('PHI at NYK')).toBeNull()
     expect(screen.queryByText(/Brier/)).toBeNull()
     expect(within(screen.getByText('Missed locks').parentElement as HTMLElement).getByText('1')).toBeTruthy()
