@@ -32,14 +32,17 @@ class NarrativeEventKnowledgeTests(unittest.TestCase):
             _play(5, "20:03:00", 0, 7, 6, team="DET", drive="d5", scoring=True, down=4),
         ]
 
-    def test_extracts_comeback_lead_changes_decisive_score_and_clutch(self):
+    def test_extracts_comeback_lead_changes_final_lead_change_and_clutch(self):
         facts = derive_game_events(
             league="nfl", game_id="g1", home_team="DET", away_team="GB",
-            final_home_score=7, final_away_score=6, plays=self.plays)
+            final_home_score=7, final_away_score=6, plays=self.plays,
+            source_game_date="2026-10-01")
         by_category = {fact["category"]: fact for fact in facts}
         self.assertEqual(3, by_category["comeback"]["calculation"]["largest_deficit_overcome"])
         self.assertEqual(3, by_category["lead_changes"]["calculation"]["count"])
-        self.assertEqual("DET", by_category["decisive_score"]["team"])
+        self.assertEqual("DET", by_category["final_lead_change"]["team"])
+        self.assertEqual(["DET", "GB"], by_category["lead_changes"]["relevant_teams"])
+        self.assertEqual("2026-10-01", by_category["lead_changes"]["source_game_date"])
         self.assertEqual(4, by_category["clutch_events"]["calculation"][
             "fourth_quarter_final_five_minutes_or_overtime"])
         for fact in facts:
@@ -126,9 +129,28 @@ class NarrativeEventKnowledgeTests(unittest.TestCase):
         self.assertNotIn("future", [f["event_id"] for f in context])
         self.assertNotIn("same", [f["event_id"] for f in context])
         self.assertNotIn("other", [f["event_id"] for f in context])
-        self.assertEqual([], retrieve_pregame_context(
-            facts, league="nfl", target_game_id="upcoming", target_start="2026-10-01T20:01:30Z",
-            as_of="2026-11-01T00:00:00Z", teams=["DET", "GB"], limit=10))
+        with self.assertRaisesRegex(NarrativeDataError, "after target kickoff"):
+            retrieve_pregame_context(
+                facts, league="nfl", target_game_id="upcoming",
+                target_start="2026-10-01T20:01:30Z", as_of="2026-11-01T00:00:00Z",
+                teams=["DET", "GB"], limit=10)
+
+    def test_neutral_game_events_are_relevant_only_to_participants(self):
+        facts = derive_game_events(
+            league="nfl", game_id="g1", home_team="DET", away_team="GB",
+            final_home_score=7, final_away_score=6, plays=self.plays)
+        lead_changes = next(f for f in facts if f["category"] == "lead_changes")
+        for team in ("DET", "GB"):
+            selected = retrieve_pregame_context(
+                [lead_changes], league="nfl", target_game_id="future",
+                target_start="2026-11-03T18:00:00Z", as_of="2026-11-03T17:00:00Z",
+                teams=[team])
+            self.assertEqual([lead_changes], selected)
+        unrelated = retrieve_pregame_context(
+            [lead_changes], league="nfl", target_game_id="future",
+            target_start="2026-11-03T18:00:00Z", as_of="2026-11-03T17:00:00Z",
+            teams=["NYG", "DAL"])
+        self.assertEqual([], unrelated)
 
 
 if __name__ == "__main__":

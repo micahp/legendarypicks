@@ -1,0 +1,2666 @@
+{
+  "actual_by_host": {},
+  "all_attempt_spend": {
+    "request_counts_by_host": {},
+    "status_counts_by_host": {}
+  },
+  "checkpoint_rows_by_host": {
+    "site.api.espn.com": 50,
+    "www.nba.com": 100,
+    "www.nfl.com": 4
+  },
+  "external_game_statistics_requests": 0,
+  "pbp_collection_status": "local_database_only",
+  "pbp_rows": [
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 25,
+      "drive_count": 25,
+      "fourth_down_go_attempt_count": 0,
+      "game_id": "2026_04_PIT_CLE",
+      "league": "nfl",
+      "play_count": 186,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 24,
+        "reconstructed_home_score": 27,
+        "scheduled_away_score": 24,
+        "scheduled_home_score": 27,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 3,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 25,
+      "drive_count": 25,
+      "fourth_down_go_attempt_count": 1,
+      "game_id": "2026_04_ARI_NYG",
+      "league": "nfl",
+      "play_count": 177,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 24,
+        "reconstructed_home_score": 36,
+        "scheduled_away_score": 24,
+        "scheduled_home_score": 36,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 5,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 21,
+      "drive_count": 21,
+      "fourth_down_go_attempt_count": 1,
+      "game_id": "2026_04_DAL_HOU",
+      "league": "nfl",
+      "play_count": 184,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 34,
+        "reconstructed_home_score": 30,
+        "scheduled_away_score": 34,
+        "scheduled_home_score": 30,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 20,
+      "drive_count": 20,
+      "fourth_down_go_attempt_count": 5,
+      "game_id": "2026_04_DET_CAR",
+      "league": "nfl",
+      "play_count": 198,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 26,
+        "reconstructed_home_score": 32,
+        "scheduled_away_score": 26,
+        "scheduled_home_score": 32,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 19,
+      "drive_count": 19,
+      "fourth_down_go_attempt_count": 6,
+      "game_id": "2026_04_GB_TB",
+      "league": "nfl",
+      "play_count": 159,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 17,
+        "reconstructed_home_score": 14,
+        "scheduled_away_score": 17,
+        "scheduled_home_score": 14,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 3,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 25,
+      "drive_count": 25,
+      "fourth_down_go_attempt_count": 5,
+      "game_id": "2026_04_IND_WAS",
+      "league": "nfl",
+      "play_count": 171,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 30,
+        "reconstructed_home_score": 13,
+        "scheduled_away_score": 30,
+        "scheduled_home_score": 13,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 24,
+      "drive_count": 24,
+      "fourth_down_go_attempt_count": 5,
+      "game_id": "2026_04_KC_LV",
+      "league": "nfl",
+      "play_count": 191,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 30,
+        "reconstructed_home_score": 27,
+        "scheduled_away_score": 30,
+        "scheduled_home_score": 27,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 27,
+      "drive_count": 27,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_04_LAC_SEA",
+      "league": "nfl",
+      "play_count": 187,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 23,
+        "reconstructed_home_score": 30,
+        "scheduled_away_score": 23,
+        "scheduled_home_score": 30,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 3,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 27,
+      "drive_count": 27,
+      "fourth_down_go_attempt_count": 6,
+      "game_id": "2026_04_LA_PHI",
+      "league": "nfl",
+      "play_count": 187,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 24,
+        "reconstructed_home_score": 20,
+        "scheduled_away_score": 24,
+        "scheduled_home_score": 20,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 19,
+      "drive_count": 19,
+      "fourth_down_go_attempt_count": 1,
+      "game_id": "2026_04_MIA_MIN",
+      "league": "nfl",
+      "play_count": 161,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 10,
+        "reconstructed_home_score": 15,
+        "scheduled_away_score": 10,
+        "scheduled_home_score": 15,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 23,
+      "drive_count": 23,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_04_NE_BUF",
+      "league": "nfl",
+      "play_count": 172,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 29,
+        "reconstructed_home_score": 26,
+        "scheduled_away_score": 29,
+        "scheduled_home_score": 26,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 23,
+      "drive_count": 23,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_04_TEN_BAL",
+      "league": "nfl",
+      "play_count": 175,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 18,
+        "reconstructed_home_score": 24,
+        "scheduled_away_score": 18,
+        "scheduled_home_score": 24,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 21,
+      "drive_count": 21,
+      "fourth_down_go_attempt_count": 4,
+      "game_id": "2026_04_ATL_NO",
+      "league": "nfl",
+      "play_count": 176,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 45,
+        "reconstructed_home_score": 24,
+        "scheduled_away_score": 45,
+        "scheduled_home_score": 24,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 21,
+      "drive_count": 21,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_05_TB_DAL",
+      "league": "nfl",
+      "play_count": 172,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 24,
+        "reconstructed_home_score": 16,
+        "scheduled_away_score": 24,
+        "scheduled_home_score": 16,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 21,
+      "drive_count": 21,
+      "fourth_down_go_attempt_count": 1,
+      "game_id": "2026_05_BAL_ATL",
+      "league": "nfl",
+      "play_count": 194,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 30,
+        "reconstructed_home_score": 23,
+        "scheduled_away_score": 30,
+        "scheduled_home_score": 23,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 25,
+      "drive_count": 25,
+      "fourth_down_go_attempt_count": 6,
+      "game_id": "2026_05_CHI_GB",
+      "league": "nfl",
+      "play_count": 170,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 7,
+        "reconstructed_home_score": 31,
+        "scheduled_away_score": 7,
+        "scheduled_home_score": 31,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 3,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 26,
+      "drive_count": 26,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_05_CLE_NYJ",
+      "league": "nfl",
+      "play_count": 184,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 12,
+        "reconstructed_home_score": 17,
+        "scheduled_away_score": 12,
+        "scheduled_home_score": 17,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 26,
+      "drive_count": 26,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_05_DEN_LAC",
+      "league": "nfl",
+      "play_count": 177,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 23,
+        "reconstructed_home_score": 17,
+        "scheduled_away_score": 23,
+        "scheduled_home_score": 17,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 23,
+      "drive_count": 23,
+      "fourth_down_go_attempt_count": 7,
+      "game_id": "2026_05_DET_ARI",
+      "league": "nfl",
+      "play_count": 182,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 45,
+        "reconstructed_home_score": 21,
+        "scheduled_away_score": 45,
+        "scheduled_home_score": 21,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 19,
+      "drive_count": 19,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_05_HOU_TEN",
+      "league": "nfl",
+      "play_count": 164,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 26,
+        "reconstructed_home_score": 3,
+        "scheduled_away_score": 26,
+        "scheduled_home_score": 3,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 20,
+      "drive_count": 20,
+      "fourth_down_go_attempt_count": 7,
+      "game_id": "2026_05_IND_PIT",
+      "league": "nfl",
+      "play_count": 176,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 22,
+        "reconstructed_home_score": 34,
+        "scheduled_away_score": 22,
+        "scheduled_home_score": 34,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 22,
+      "drive_count": 22,
+      "fourth_down_go_attempt_count": 4,
+      "game_id": "2026_05_LV_NE",
+      "league": "nfl",
+      "play_count": 175,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 17,
+        "reconstructed_home_score": 45,
+        "scheduled_away_score": 17,
+        "scheduled_home_score": 45,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 20,
+      "drive_count": 20,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_05_MIN_NO",
+      "league": "nfl",
+      "play_count": 155,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 23,
+        "reconstructed_home_score": 13,
+        "scheduled_away_score": 23,
+        "scheduled_home_score": 13,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 23,
+      "drive_count": 23,
+      "fourth_down_go_attempt_count": 6,
+      "game_id": "2026_05_PHI_JAX",
+      "league": "nfl",
+      "play_count": 188,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 17,
+        "reconstructed_home_score": 19,
+        "scheduled_away_score": 17,
+        "scheduled_home_score": 19,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 28,
+      "drive_count": 28,
+      "fourth_down_go_attempt_count": 1,
+      "game_id": "2026_05_SF_SEA",
+      "league": "nfl",
+      "play_count": 169,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 32,
+        "reconstructed_home_score": 29,
+        "scheduled_away_score": 32,
+        "scheduled_home_score": 29,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 3,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 21,
+      "drive_count": 21,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_05_BUF_LA",
+      "league": "nfl",
+      "play_count": 199,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 37,
+        "reconstructed_home_score": 34,
+        "scheduled_away_score": 37,
+        "scheduled_home_score": 34,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 25,
+      "drive_count": 25,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_06_SEA_DEN",
+      "league": "nfl",
+      "play_count": 189,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 14,
+        "reconstructed_home_score": 17,
+        "scheduled_away_score": 14,
+        "scheduled_home_score": 17,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 20,
+      "drive_count": 20,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_06_ARI_LA",
+      "league": "nfl",
+      "play_count": 173,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 18,
+        "reconstructed_home_score": 16,
+        "scheduled_away_score": 18,
+        "scheduled_home_score": 16,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 22,
+      "drive_count": 22,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_06_BAL_CLE",
+      "league": "nfl",
+      "play_count": 170,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 10,
+        "reconstructed_home_score": 13,
+        "scheduled_away_score": 10,
+        "scheduled_home_score": 13,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 23,
+      "drive_count": 23,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_06_CAR_PHI",
+      "league": "nfl",
+      "play_count": 187,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 25,
+        "reconstructed_home_score": 14,
+        "scheduled_away_score": 25,
+        "scheduled_home_score": 14,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 26,
+      "drive_count": 26,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_06_CHI_ATL",
+      "league": "nfl",
+      "play_count": 176,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 31,
+        "reconstructed_home_score": 23,
+        "scheduled_away_score": 31,
+        "scheduled_home_score": 23,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 20,
+      "drive_count": 20,
+      "fourth_down_go_attempt_count": 5,
+      "game_id": "2026_06_DAL_GB",
+      "league": "nfl",
+      "play_count": 194,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 13,
+        "reconstructed_home_score": 23,
+        "scheduled_away_score": 13,
+        "scheduled_home_score": 23,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 3,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 20,
+      "drive_count": 20,
+      "fourth_down_go_attempt_count": 1,
+      "game_id": "2026_06_HOU_JAX",
+      "league": "nfl",
+      "play_count": 178,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 34,
+        "reconstructed_home_score": 31,
+        "scheduled_away_score": 34,
+        "scheduled_home_score": 31,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 23,
+      "drive_count": 23,
+      "fourth_down_go_attempt_count": 4,
+      "game_id": "2026_06_LAC_KC",
+      "league": "nfl",
+      "play_count": 166,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 6,
+        "reconstructed_home_score": 22,
+        "scheduled_away_score": 6,
+        "scheduled_home_score": 22,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 32,
+      "drive_count": 32,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_06_NO_NYG",
+      "league": "nfl",
+      "play_count": 204,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 34,
+        "reconstructed_home_score": 27,
+        "scheduled_away_score": 34,
+        "scheduled_home_score": 27,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 3,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 29,
+      "drive_count": 29,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_06_PIT_TB",
+      "league": "nfl",
+      "play_count": 208,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 26,
+        "reconstructed_home_score": 19,
+        "scheduled_away_score": 26,
+        "scheduled_home_score": 19,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 3,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 21,
+      "drive_count": 21,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_06_TEN_IND",
+      "league": "nfl",
+      "play_count": 169,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 26,
+        "reconstructed_home_score": 20,
+        "scheduled_away_score": 26,
+        "scheduled_home_score": 20,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 3,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 19,
+      "drive_count": 19,
+      "fourth_down_go_attempt_count": 5,
+      "game_id": "2026_06_WAS_SF",
+      "league": "nfl",
+      "play_count": 168,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 17,
+        "reconstructed_home_score": 23,
+        "scheduled_away_score": 17,
+        "scheduled_home_score": 23,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 20,
+      "drive_count": 20,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_07_NE_CHI",
+      "league": "nfl",
+      "play_count": 171,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 24,
+        "reconstructed_home_score": 30,
+        "scheduled_away_score": 24,
+        "scheduled_home_score": 30,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 20,
+      "drive_count": 20,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_07_CIN_BAL",
+      "league": "nfl",
+      "play_count": 161,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 35,
+        "reconstructed_home_score": 13,
+        "scheduled_away_score": 35,
+        "scheduled_home_score": 13,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 21,
+      "drive_count": 21,
+      "fourth_down_go_attempt_count": 2,
+      "game_id": "2026_07_CLE_TEN",
+      "league": "nfl",
+      "play_count": 173,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 27,
+        "reconstructed_home_score": 24,
+        "scheduled_away_score": 27,
+        "scheduled_home_score": 24,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 20,
+      "drive_count": 20,
+      "fourth_down_go_attempt_count": 6,
+      "game_id": "2026_07_GB_DET",
+      "league": "nfl",
+      "play_count": 170,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 17,
+        "reconstructed_home_score": 20,
+        "scheduled_away_score": 17,
+        "scheduled_home_score": 20,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 18,
+      "drive_count": 18,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_07_IND_MIN",
+      "league": "nfl",
+      "play_count": 156,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 10,
+        "reconstructed_home_score": 16,
+        "scheduled_away_score": 10,
+        "scheduled_home_score": 16,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 16,
+      "drive_count": 16,
+      "fourth_down_go_attempt_count": 4,
+      "game_id": "2026_07_KC_SEA",
+      "league": "nfl",
+      "play_count": 160,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 3,
+        "reconstructed_home_score": 20,
+        "scheduled_away_score": 3,
+        "scheduled_home_score": 20,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 22,
+      "drive_count": 22,
+      "fourth_down_go_attempt_count": 5,
+      "game_id": "2026_07_LA_LV",
+      "league": "nfl",
+      "play_count": 184,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 35,
+        "reconstructed_home_score": 21,
+        "scheduled_away_score": 35,
+        "scheduled_home_score": 21,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 18,
+      "drive_count": 18,
+      "fourth_down_go_attempt_count": 5,
+      "game_id": "2026_07_MIA_NYJ",
+      "league": "nfl",
+      "play_count": 160,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 28,
+        "reconstructed_home_score": 25,
+        "scheduled_away_score": 28,
+        "scheduled_home_score": 25,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 21,
+      "drive_count": 21,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_07_NYG_HOU",
+      "league": "nfl",
+      "play_count": 172,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 27,
+        "reconstructed_home_score": 21,
+        "scheduled_away_score": 27,
+        "scheduled_home_score": 21,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 0,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 19,
+      "drive_count": 19,
+      "fourth_down_go_attempt_count": 4,
+      "game_id": "2026_07_SF_ATL",
+      "league": "nfl",
+      "play_count": 173,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 20,
+        "reconstructed_home_score": 29,
+        "scheduled_away_score": 20,
+        "scheduled_home_score": 29,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 20,
+      "drive_count": 20,
+      "fourth_down_go_attempt_count": 3,
+      "game_id": "2026_07_TB_CAR",
+      "league": "nfl",
+      "play_count": 156,
+      "scoring_reconciliation": {
+        "facts_emitted": false,
+        "reconstructed_away_score": 41,
+        "reconstructed_home_score": 13,
+        "scheduled_away_score": 43,
+        "scheduled_home_score": 13,
+        "status": "mismatch"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "classified_drive_count": 18,
+      "drive_count": 18,
+      "fourth_down_go_attempt_count": 4,
+      "game_id": "2026_07_DAL_PHI",
+      "league": "nfl",
+      "play_count": 177,
+      "scoring_reconciliation": {
+        "facts_emitted": true,
+        "reconstructed_away_score": 38,
+        "reconstructed_home_score": 21,
+        "scheduled_away_score": 38,
+        "scheduled_home_score": 21,
+        "status": "matched"
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 1,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      }
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401809243",
+      "game_id": "0022500001",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401809952",
+      "game_id": "0022500097",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401809975",
+      "game_id": "0022500120",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401809504",
+      "game_id": "0022500022",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810016",
+      "game_id": "0022500161",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401809773",
+      "game_id": "0022500031",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810055",
+      "game_id": "0022500200",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810080",
+      "game_id": "0022500225",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810096",
+      "game_id": "0022500241",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810120",
+      "game_id": "0022500265",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810136",
+      "game_id": "0022500281",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401809812",
+      "game_id": "0022500070",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810163",
+      "game_id": "0022500308",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810188",
+      "game_id": "0022500333",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810213",
+      "game_id": "0022500358",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401809837",
+      "game_id": "0022501229",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810232",
+      "game_id": "0022500377",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810257",
+      "game_id": "0022500402",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401809242",
+      "game_id": "0022500013",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810302",
+      "game_id": "0022500447",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810327",
+      "game_id": "0022500472",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810351",
+      "game_id": "0022500496",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810376",
+      "game_id": "0022500521",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810402",
+      "game_id": "0022500547",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810427",
+      "game_id": "0022500572",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401809248",
+      "game_id": "0022500015",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810485",
+      "game_id": "0022500630",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810512",
+      "game_id": "0022500657",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810536",
+      "game_id": "0022500681",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810560",
+      "game_id": "0022500705",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810585",
+      "game_id": "0022500730",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810610",
+      "game_id": "0022500755",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810635",
+      "game_id": "0022500780",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810660",
+      "game_id": "0022500805",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810685",
+      "game_id": "0022500830",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810709",
+      "game_id": "0022500854",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810734",
+      "game_id": "0022500879",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810759",
+      "game_id": "0022500904",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810784",
+      "game_id": "0022500929",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810809",
+      "game_id": "0022500954",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810833",
+      "game_id": "0022500978",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810856",
+      "game_id": "0022501001",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810882",
+      "game_id": "0022501027",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810907",
+      "game_id": "0022501052",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810932",
+      "game_id": "0022501077",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810956",
+      "game_id": "0022501101",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401810981",
+      "game_id": "0022501126",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401811005",
+      "game_id": "0022501150",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401811030",
+      "game_id": "0022501175",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    },
+    {
+      "availability_basis": "team_game_stats.captured_at",
+      "available_at_is_ingestion_time": false,
+      "espn_event_id": "401811055",
+      "game_id": "0022501200",
+      "league": "nba",
+      "play_by_play_game_coverage": "none",
+      "play_by_play_rows": 0,
+      "scoring_play_capture_window": [
+        null,
+        null
+      ],
+      "source": "team_game_stats",
+      "status": "local_team_box_only",
+      "team_box_fields_present": [
+        "assists",
+        "blocks",
+        "rebounds",
+        "steals",
+        "turnovers"
+      ],
+      "team_box_rows": 2
+    }
+  ]
+}

@@ -1,18 +1,26 @@
 import json
+import sqlite3
+import tempfile
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
 from research_narrative_event_knowledge import (
     ResearchAuditError,
+    _THEME_EVENT_CATEGORIES,
     _assert_metadata_only,
     _attach_nba_event_ids,
     _scoreboard_games,
     _article_detector_comparison,
     _duplicate_audit,
+    _nba_play_by_play_tables,
     espn_summary_metadata,
     nba_com_game_metadata,
     normalize_summary_timeline,
     _render_deterministic_preview,
     _unsupported_numbers,
+    load_local_narrative_events,
+    open_readonly,
 )
 
 
@@ -126,12 +134,113 @@ class ResearchNarrativeEventKnowledgeTests(unittest.TestCase):
         self.assertNotIn("text", plays[0])
 
     def test_deterministic_preview_removes_attempt_counts_from_play_type(self):
-        context = [{"category": "decisive_score", "team": "SAC",
+        context = [{"category": "final_lead_change", "team": "SAC",
+                    "source_game_date": "2025-12-04", "source_game_opponent": "GS",
                     "calculation": {"play_type": "Free Throw - 2 of 2"}}]
         preview = _render_deterministic_preview(
             {"home_team": "MEM", "away_team": "SAC"}, context, {})
-        self.assertEqual("SAC won its previous game on a free throw.", preview)
+        self.assertEqual("SAC took the lead on a free throw in its Dec 4 game against GS.", preview)
+        self.assertNotIn("won", preview)
         self.assertEqual([], _unsupported_numbers(preview, context))
+
+    def test_player_preview_uses_chronological_game_reference_and_deduplicates_player(self):
+        facts = [{"category": "player_outlier", "team": "DET",
+                  "source_game_date": "2026-03-31", "source_game_opponent": "TOR",
+                  "calculation": {"player_id": "p1", "stat": "AST", "value": 6,
+                                  "prior_mean": 2.526, "prior_games": 57}},
+                 {"category": "player_outlier", "team": "DET",
+                  "source_game_date": "2026-03-31", "source_game_opponent": "TOR",
+                  "calculation": {"player_id": "p1", "stat": "PTS", "value": 22,
+                                  "prior_mean": 10.37, "prior_games": 57}}]
+        preview = _render_deterministic_preview(
+            {"home_team": "DET", "away_team": "TOR"}, facts, {"p1": "Tobias Harris"})
+        self.assertEqual(
+            "Tobias Harris recorded 6 assists in the Mar 31 game against TOR, after averaging 2.5 across 57 earlier games.",
+            preview)
+        self.assertNotIn("in its", preview)
+        self.assertEqual([], _unsupported_numbers(preview, facts))
+
+    def test_nba_play_by_play_audit_does_not_match_player_table_names(self):
+        self.assertEqual(["nba_play_by_play", "nba_pbp"], _nba_play_by_play_tables(
+            ["nba_player_boxes_nbacom", "nba_play_by_play", "nba_pbp"]))
+
+    def test_defense_headline_requires_defensive_evidence_category(self):
+        self.assertEqual({"defensive_stop", "defensive_takeaway"},
+                         _THEME_EVENT_CATEGORIES["defense"])
+
+    def test_local_events_use_read_only_lp_tables_without_external_requests(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            db_path = Path(temp_dir) / "picks.dev.test.db"
+            con = sqlite3.connect(db_path)
+            con.executescript("""
+                CREATE TABLE nfl_schedule(
+                    game_id TEXT,season INTEGER,week INTEGER,gameday TEXT,
+                    away_team TEXT,home_team TEXT,away_score INTEGER,home_score INTEGER,espn TEXT
+                );
+                CREATE TABLE nfl_pbp(
+                    game_id TEXT,play_id REAL,posteam TEXT,defteam TEXT,drive REAL,
+                    series REAL,series_result TEXT,down REAL,pass_attempt REAL,
+                    rush_attempt REAL,success REAL,interception REAL,fumble_lost REAL,
+                    touchdown REAL,two_point_attempt REAL,play_type TEXT
+                );
+                CREATE TABLE team_game_stats(
+                    league TEXT,game_id TEXT,captured_at TEXT,team_abbrev TEXT,
+                    turnovers INTEGER,rebounds INTEGER,assists INTEGER,steals INTEGER,
+                    blocks INTEGER,fouls INTEGER,fg_pct REAL,tp_pct REAL,ft_pct REAL,
+                    largest_lead INTEGER,lead_changes INTEGER
+                );
+                CREATE TABLE scoring_plays(
+                    league TEXT,game_id TEXT,play_id TEXT,captured_at TEXT,period INTEGER,
+                    clock TEXT,away_score INTEGER,home_score INTEGER,team_abbrev TEXT,play_type TEXT
+                );
+                CREATE TABLE nfl_snap_counts(
+                    id INTEGER,player_id INTEGER,season INTEGER,week INTEGER,team TEXT,
+                    off_snaps INTEGER,off_pct REAL,def_snaps INTEGER,def_pct REAL,
+                    st_snaps INTEGER,st_pct REAL
+                );
+                CREATE TABLE team_game_results(
+                    league TEXT,game_id TEXT,team TEXT,score_for REAL,score_against REAL
+                );
+            """)
+            con.execute("INSERT INTO nfl_schedule VALUES(?,?,?,?,?,?,?,?,?)",
+                        ("2026_04_GB_DET", 2026, 4, "2026-10-25", "GB", "DET", 0, 7, "401TEST"))
+            con.executemany("INSERT INTO nfl_pbp VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [
+                ("2026_04_GB_DET", 1, "GB", "DET", 1, 1, "Turnover on downs", 4, 1, 0, 0, 0, 0, 0, 0, "pass"),
+                ("2026_04_GB_DET", 2, "GB", "DET", 1, 1, "Turnover", 1, 1, 0, 0, 1, 0, 0, 0, "pass"),
+                ("2026_04_GB_DET", 3, "DET", "GB", 2, 2, "Touchdown", 1, 0, 1, 1, 0, 0, 1, 0, "run"),
+                ("2026_04_GB_DET", 4, "DET", "GB", 2, 2, "Touchdown", None, 0, 0, 1, 0, 0, 0, 0, "extra_point"),
+            ])
+            con.execute("INSERT INTO nfl_snap_counts VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                        (1, 99, 2026, 4, "GB", 62, .95, 0, 0, 3, .15))
+            con.execute("INSERT INTO team_game_stats VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        ("nba", "401NBA", "2026-10-30T23:59:00Z", "GS", 12,
+                         40, 25, 8, 6, 17, .48, .37, .81, None, None))
+            con.commit()
+            con.close()
+
+            games = [
+                {"league": "nfl", "source_game_id": "2026_04_GB_DET", "game_id": "2026_04_GB_DET"},
+                {"league": "nba", "source_game_id": "0022500001", "espn_event_id": "401NBA",
+                 "game_date": "2026-10-30", "home": "GS", "away": "LAL"},
+            ]
+            with open_readonly(db_path) as db:
+                self.assertEqual(1, db.execute("PRAGMA query_only").fetchone()[0])
+                with patch("urllib.request.urlopen") as urlopen:
+                    result = load_local_narrative_events(db, games)
+                urlopen.assert_not_called()
+
+        nfl = next(row for row in result["rows"] if row["league"] == "nfl")
+        self.assertEqual("local_pbp_processed", nfl["status"])
+        self.assertEqual("matched", nfl["scoring_reconciliation"]["status"])
+        self.assertFalse(nfl["available_at_is_ingestion_time"])
+        self.assertTrue(any(f["category"] == "fourth_down_attempts" for f in result["facts"]))
+        self.assertTrue(any(f["category"] == "turnover_events" for f in result["facts"]))
+        self.assertTrue(any(f["category"] == "snap_workload" for f in result["facts"]))
+        nba = next(row for row in result["rows"] if row["league"] == "nba")
+        self.assertEqual("local_team_box_only", nba["status"])
+        nba_fact = next(f for f in result["facts"] if f["league"] == "nba")
+        self.assertEqual("2026-10-30T23:59:00Z", nba_fact["available_at"])
+        self.assertEqual("0022500001", nba_fact["game_id"])
 
 
 if __name__ == "__main__":

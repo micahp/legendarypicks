@@ -200,6 +200,7 @@ def derive_game_events(
     final_home_score: int, final_away_score: int,
     plays: Iterable[dict[str, Any]],
     source: str = "espn_core_pbp",
+    source_game_date: str | None = None,
 ) -> list[dict[str, Any]]:
     """Derive score-trajectory, run, late-play and drive candidate facts.
 
@@ -390,8 +391,8 @@ def derive_game_events(
             evidence = [p["event_id"] for p in (drive_events or [decisive])]
             facts.append(_fact(
                 league=league, game_id=game_id,
-                event_id=f"{game_id}:decisive-score:{decisive['event_id']}",
-                category="decisive_score", team=winner,
+                event_id=f"{game_id}:final-lead-change:{decisive['event_id']}",
+                category="final_lead_change", team=winner,
                 occurred_at=decisive["occurred_at"],
                 available_at=max(p["available_at"] for p in ordered),
                 evidence_ids=evidence,
@@ -430,6 +431,17 @@ def derive_game_events(
                                                                and score_event is scoring_events[-1])}, source=source))
             break
 
+    participants = sorted({home_team, away_team})
+    opponent_by_team = {home_team: away_team, away_team: home_team}
+    for fact in facts:
+        if source_game_date:
+            fact["source_game_date"] = str(source_game_date)[:10]
+        if fact.get("team"):
+            fact["source_game_opponent"] = opponent_by_team.get(str(fact["team"]).upper())
+        else:
+            # Game-level events are relevant to either participant, and to neither
+            # team's unrelated opponents.
+            fact["relevant_teams"] = participants
     return facts
 
 
@@ -499,7 +511,7 @@ def derive_player_outliers(
                 prior_values.append(prior)
                 if row.get("log_id") is not None:
                     prior_ids.append(str(row["log_id"]))
-                    prior_games.append(str(row.get("game_id")))
+                    prior_games.append(str(row.get("canonical_game_id") or row.get("game_id")))
             if len(prior_values) < min_prior_games or len(prior_ids) < min_prior_games:
                 continue
             sigma = pstdev(prior_values)
@@ -513,7 +525,8 @@ def derive_player_outliers(
                 category="player_outlier", team=target.get("team"),
                 occurred_at=iso_utc(game_end), available_at=iso_utc(target_seen),
                 evidence_ids=[str(target_log_id), *prior_ids],
-                supporting_games=[fact_game_id, str(target_game_id), *prior_games],
+                supporting_games=[fact_game_id,
+                                  str(target.get("canonical_game_id") or target_game_id), *prior_games],
                 calculation={"player_id": str(pid), "stat": stat, "value": value,
                              "prior_games": len(prior_values), "prior_mean": round(mean(prior_values), 3),
                              "prior_population_sd": round(sigma, 3), "z_score": round(z_score, 3),
@@ -532,6 +545,8 @@ def retrieve_pregame_context(
     kickoff, cutoff = parse_utc(target_start), parse_utc(as_of)
     if kickoff is None or cutoff is None:
         raise NarrativeDataError("target_start and as_of must be timezone-aware")
+    if cutoff > kickoff:
+        raise NarrativeDataError("as_of must not be after target kickoff")
     team_set = {str(t).upper() for t in teams}
     player_set = {str(p) for p in player_ids}
     eligible = []
@@ -546,16 +561,20 @@ def retrieve_pregame_context(
         if not fact.get("supporting_game_ids") or not fact.get("supporting_event_ids"):
             continue
         calculation = fact.get("calculation", {})
-        relevant = (fact.get("team") in team_set or
-                    bool(team_set.intersection(set(calculation.get("teams_with_events") or []))) or
+        fact_team = str(fact.get("team") or "").upper()
+        relevant_teams = {str(team).upper() for team in fact.get("relevant_teams", [])}
+        relevant = (fact_team in team_set or bool(team_set.intersection(relevant_teams)) or
+                    bool(team_set.intersection({str(team).upper() for team in
+                                               calculation.get("teams_with_events") or []})) or
                     str(calculation.get("player_id", "")) in player_set)
         if not relevant:
             continue
         eligible.append(fact)
-    category_order = {"decisive_score": 0, "comeback": 1, "player_outlier": 2,
-                      "fourth_down_attempts": 3, "turnover_events": 4,
-                      "scoring_run": 5, "late_scoring_drive": 6, "clutch_events": 7,
-                      "standings_record": 8, "lead_changes": 9}
+    category_order = {"final_lead_change": 0, "comeback": 1, "player_outlier": 2,
+                      "snap_workload": 3, "fourth_down_attempts": 4, "turnover_events": 5,
+                      "scoring_summary": 6, "drive_summary": 7, "team_box_summary": 8,
+                      "scoring_run": 9, "late_scoring_drive": 10, "clutch_events": 11,
+                      "standings_record": 12, "lead_changes": 13}
     eligible.sort(key=lambda f: (
         category_order.get(f.get("category"), 99),
         -int((parse_utc(f["occurred_at"]) - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds()),
