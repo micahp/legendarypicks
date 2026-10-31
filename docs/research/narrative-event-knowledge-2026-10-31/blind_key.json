@@ -1,0 +1,317 @@
+[
+  {
+    "blind_id": "blind-0001",
+    "blind_target_id": "target-001",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873024",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0002",
+    "blind_target_id": "target-001",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873024",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0003",
+    "blind_target_id": "target-001",
+    "generator": "configured-deepseek-grounded",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873024",
+    "variant": "llm_grounded"
+  },
+  {
+    "blind_id": "blind-0004",
+    "blind_target_id": "target-002",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873025",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0005",
+    "blind_target_id": "target-002",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873025",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0006",
+    "blind_target_id": "target-002",
+    "generator": "configured-deepseek-grounded",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873025",
+    "variant": "llm_grounded"
+  },
+  {
+    "blind_id": "blind-0007",
+    "blind_target_id": "target-003",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873026",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0008",
+    "blind_target_id": "target-003",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873026",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0009",
+    "blind_target_id": "target-004",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873027",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0010",
+    "blind_target_id": "target-004",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873027",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0011",
+    "blind_target_id": "target-005",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873028",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0012",
+    "blind_target_id": "target-005",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873028",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0013",
+    "blind_target_id": "target-006",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873033",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0014",
+    "blind_target_id": "target-006",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873033",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0015",
+    "blind_target_id": "target-007",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873032",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0016",
+    "blind_target_id": "target-007",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873032",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0017",
+    "blind_target_id": "target-008",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873029",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0018",
+    "blind_target_id": "target-008",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873029",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0019",
+    "blind_target_id": "target-009",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873030",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0020",
+    "blind_target_id": "target-009",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873030",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0021",
+    "blind_target_id": "target-010",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873034",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0022",
+    "blind_target_id": "target-010",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873034",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0023",
+    "blind_target_id": "target-011",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873035",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0024",
+    "blind_target_id": "target-011",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873035",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0025",
+    "blind_target_id": "target-012",
+    "generator": "existing_game_story_cache",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873031",
+    "variant": "existing_preview"
+  },
+  {
+    "blind_id": "blind-0026",
+    "blind_target_id": "target-012",
+    "generator": "deterministic-event-v1",
+    "league": "nfl",
+    "story_kind": "pregame_preview",
+    "target_game_id": "401873031",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0027",
+    "blind_target_id": "target-013",
+    "generator": "deterministic-event-v1",
+    "league": "nba",
+    "story_kind": "pregame_preview",
+    "target_game_id": "0022600148",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0028",
+    "blind_target_id": "target-014",
+    "generator": "deterministic-event-v1",
+    "league": "nba",
+    "story_kind": "pregame_preview",
+    "target_game_id": "0022600150",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0029",
+    "blind_target_id": "target-015",
+    "generator": "deterministic-event-v1",
+    "league": "nba",
+    "story_kind": "pregame_preview",
+    "target_game_id": "0022600151",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0030",
+    "blind_target_id": "target-016",
+    "generator": "deterministic-event-v1",
+    "league": "nba",
+    "story_kind": "pregame_preview",
+    "target_game_id": "0022600153",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0031",
+    "blind_target_id": "target-017",
+    "generator": "deterministic-event-v1",
+    "league": "nba",
+    "story_kind": "pregame_preview",
+    "target_game_id": "0022600154",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0032",
+    "blind_target_id": "target-018",
+    "generator": "deterministic-event-v1",
+    "league": "nba",
+    "story_kind": "pregame_preview",
+    "target_game_id": "0022600155",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0033",
+    "blind_target_id": "target-019",
+    "generator": "deterministic-event-v1",
+    "league": "nba",
+    "story_kind": "pregame_preview",
+    "target_game_id": "0022600157",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0034",
+    "blind_target_id": "target-020",
+    "generator": "deterministic-event-v1",
+    "league": "nba",
+    "story_kind": "pregame_preview",
+    "target_game_id": "0022600158",
+    "variant": "deterministic_event"
+  },
+  {
+    "blind_id": "blind-0035",
+    "blind_target_id": "target-021",
+    "generator": "deterministic-event-v1",
+    "league": "nba",
+    "story_kind": "pregame_preview",
+    "target_game_id": "0022600159",
+    "variant": "deterministic_event"
+  }
+]
