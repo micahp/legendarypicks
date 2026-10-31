@@ -1,3 +1,16 @@
+## v10.0.11
+
+### Product highlights
+
+- Added NHL, tennis, and NCAAF model pages; expanded NFL and NBA forecasts with locked picks, record views, accuracy metrics, and clearer game results.
+- Added the NFL projections surface and teammate-out prop filtering; improved prop history, grading, and settlement across leagues.
+- Expanded league and scores UI with persistent league tabs, NBA standings and box scores, soccer and esports hubs, and richer tennis results.
+
+### Build reliability
+
+- Remove retired Flow/Top Shot contest files that still imported dependencies removed from the app.
+- Fix TypeScript iterator errors in the scores and props screens.
+
 ## v10.0.10
 
 ### Models and league pages
