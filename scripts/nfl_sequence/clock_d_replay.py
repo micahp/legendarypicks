@@ -20,7 +20,9 @@ Usage: python3 clock_d_replay.py --window dev|holdout [--train-season-from YEAR]
 import argparse
 import hashlib
 import json
+import math
 import random
+import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -152,8 +154,9 @@ def oob_stop_class_counts(quarters):
 
 def run_d(plays, model, seed):
     clock = cd.BoundaryClock(model, seed)
-    c, n, draws = plays[0]['qsr'], len(plays), []
+    c, n, draws, clock_path = plays[0]['qsr'], len(plays), [], []
     for i, p in enumerate(plays):
+        clock_path.append({'play_index': i, 'simulated_qsr': c, 'observed_qsr': p['qsr']})
         runoff, ended, refusal = clock.draw(p['row'], p['event'], p['terminal'], p['qtr'], c)
         if refusal:
             return {'refused': refusal}
@@ -162,9 +165,10 @@ def run_d(plays, model, seed):
             return {'outcome': 'accurate' if ended else 'missed', 'lost': 0,
                     'leftover': None if ended else c - runoff,
                     'draws': draws + ([(i, runoff, stop)] if not ended else []),
-                    'counts': clock.counts}
+                    'counts': clock.counts, 'clock_path': clock_path}
         if ended:
-            return {'outcome': 'premature', 'lost': n - 1 - i, 'leftover': None, 'draws': draws, 'counts': clock.counts}
+            return {'outcome': 'premature', 'lost': n - 1 - i, 'leftover': None, 'draws': draws,
+                    'counts': clock.counts, 'clock_path': clock_path}
         draws.append((i, runoff, stop))
         c -= runoff
     raise AssertionError('empty quarter')
@@ -284,6 +288,7 @@ def main():
     stop_obs = defaultdict(lambda: [0, 0])
     stop_model = defaultdict(lambda: defaultdict(lambda: [0, 0]))
     calib = defaultdict(lambda: [0, 0, 0.0])  # (stop, bucket) -> plays, observed quarter ends, expected quarter ends
+    clock_error = defaultdict(lambda: [0, 0.0, 0.0, 0.0])  # quarter -> matched states, abs, signed, squared errors
     last_not_ended = 0
     for qi, (key, plays) in enumerate(sorted(quarters.items())):
         boundary = plays[-1]['ended']  # the boundary test needs the observed last play to be a quarter end
@@ -309,6 +314,14 @@ def main():
             a = run_a(plays, a_train, seed)
             for name, res in (('D', d), ('A_train', a)) + ((('A_deployed', run_a(plays, a_deployed, seed)),)
                                                         if a_deployed is not None else ()):
+                if name == 'D':
+                    for point in res.pop('clock_path', ()):
+                        error = point['simulated_qsr'] - point['observed_qsr']
+                        state = clock_error[int(plays[0]['qtr'])]
+                        state[0] += 1
+                        state[1] += abs(error)
+                        state[2] += error
+                        state[3] += error * error
                 if boundary:
                     results[name].append(res if 'refused' not in res else {'refused': res['refused']})
                 if 'draws' in res:
@@ -342,9 +355,22 @@ def main():
                  'quarters_excluded_from_boundary_test': last_not_ended},
         'replicates': args.replicates, 'short_seconds': SHORT_SECONDS,
         'quarter_end': summarise(args.window, results, quarters),
+        'quarter_elapsed_clock_accuracy_by_quarter': {
+            str(quarter): {
+                'matched_play_states': values[0],
+                'mean_absolute_clock_error_s': round(values[1] / values[0], 2) if values[0] else None,
+                'mean_clock_bias_s_simulated_minus_observed': round(values[2] / values[0], 2) if values[0] else None,
+                'root_mean_square_clock_error_s': round(math.sqrt(values[3] / values[0]), 2) if values[0] else None,
+            }
+            for quarter, values in sorted(clock_error.items())
+        },
         'runoff_w1_seconds_by_event': {
             name: {e: {'n_observed': len(observed_pairs[e]), 'n_draws': len(draws_by_event[name][e]),
-                       'w1': round(w1(draws_by_event[name][e], observed_pairs[e]), 2)}
+                       'w1': round(w1(draws_by_event[name][e], observed_pairs[e]), 2),
+                       'observed_mean_s': round(statistics.fmean(observed_pairs[e]), 2),
+                       'simulated_mean_s': round(statistics.fmean(draws_by_event[name][e]), 2),
+                       'mean_bias_s_simulated_minus_observed': round(
+                           statistics.fmean(draws_by_event[name][e]) - statistics.fmean(observed_pairs[e]), 2)}
                    for e in sorted(observed_pairs) if observed_pairs[e] and draws_by_event[name][e]}
             for name in draws_by_event},
         'short_share_by_stop_class': {
