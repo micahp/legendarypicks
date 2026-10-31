@@ -350,6 +350,7 @@ describe('NHL model tab previews', () => {
     expect(screen.getAllByRole('heading', { name: dayLabel })).toHaveLength(1)
     const articles = within(dayHeading.parentElement as HTMLElement).getAllByRole('article')
     expect(articles).toHaveLength(2)
+    expect(articles[0].className).toContain('gap-x-6 gap-y-6')
     expect(within(articles[0]).queryByText(dayLabel)).toBeNull()
     const gameTime = new Date(graded.scheduled_start_utc).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
     expect(within(articles[0]).queryByText(gameTime)).toBeNull()

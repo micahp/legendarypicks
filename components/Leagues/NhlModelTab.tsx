@@ -317,7 +317,7 @@ function RecordProjection({ game, model }: { game: NhlRecordGame; model: ModelNa
     ? grade.official_winner === 'home' ? 'font-semibold text-zinc-100' : 'text-zinc-400'
     : 'text-zinc-200'
   return (
-    <article className="flex flex-wrap items-start gap-x-6 gap-y-3 py-4">
+    <article className="flex flex-wrap items-start gap-x-6 gap-y-6 py-4">
       <div className="w-full min-w-48 sm:w-56 sm:flex-none">
         <h4 className="font-semibold text-zinc-100">{game.away_team} @ {game.home_team}</h4>
         <div className="mt-2 text-xs text-zinc-500">Model Pick</div>
