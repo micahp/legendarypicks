@@ -108,6 +108,78 @@ class BoxscoreSerialization(unittest.TestCase):
         self.assertEqual(zero['rushing'], {'att': 0, 'yds': 0, 'td': 0})
         self.assertEqual(zero['receiving']['tgt'], 0)
         self.assertEqual(len(box['players']), 5)
+        self.assertIn('quarter_by_quarter', box)
+
+    def test_quarter_boxscore_attributes_cross_period_drive_stats_and_points(self):
+        def play(event, quarter, yards, *, touchdown=False, rusher=None, passer=None, receiver=None):
+            participants = {
+                'rusher_id': rusher, 'rusher_name': 'Home RB' if rusher else None,
+                'rusher_position': 'RB' if rusher else None, 'rusher_team': 'AAA' if rusher else None,
+                'rusher_side': 'A' if rusher else None,
+                'passer_id': passer, 'passer_name': 'Home QB' if passer else None,
+                'passer_position': 'QB' if passer else None, 'passer_team': 'AAA' if passer else None,
+                'passer_side': 'A' if passer else None,
+                'receiver_id': receiver, 'receiver_name': 'Home WR' if receiver else None,
+                'receiver_position': 'WR' if receiver else None, 'receiver_team': 'AAA' if receiver else None,
+                'receiver_side': 'A' if receiver else None,
+                'attribution': 'pre_event_selection', 'sampled_play_context': {},
+            }
+            return {
+                'event_type': event,
+                'state_before': {'quarter': quarter, 'clock_seconds': 30, 'yardline_100': 10},
+                'state_after': {'quarter': quarter, 'clock_seconds': 25, 'yardline_100': 10 - yards},
+                'outcome': {'yards_gained': yards, 'touchdown': touchdown, 'safety': False,
+                            'turnover': False, 'punt': False},
+                'participants': participants,
+            }
+
+        record = {
+            'points': {'A': 7, 'B': 0},
+            'drives': [{
+                'index': 1, 'offense_team': 'A', 'quarter_start': 1, 'clock_start': 40,
+                'end_quarter': 2, 'end_clock': 20, 'terminal': 'touchdown',
+                'touchdown_scored_by': 'A', 'field_goal_made': None,
+                'points_scored_on_drive': {'team': 'A', 'points': 7, 'try': {'kind': 'kick', 'made': True}},
+                'plays': [play('run', 1, 5, rusher='GA3'),
+                          play('pass_complete', 2, 5, touchdown=True, passer='GA1', receiver='GA2')],
+            }],
+        }
+
+        quarterly = outputs._quarter_by_quarter(record, SNAPSHOT)
+
+        self.assertEqual(quarterly['schema'], 'lp-nfl-slc-quarter-boxscore-1')
+        self.assertTrue(quarterly['complete'])
+        self.assertEqual(quarterly['points_by_team']['AAA']['Q2'], 7)
+        self.assertEqual(quarterly['points_by_team']['AAA']['Q1'], 0)
+        self.assertEqual(quarterly['team_stats']['AAA']['Q1']['rush_attempts'], 1)
+        self.assertEqual(quarterly['team_stats']['AAA']['Q1']['rushing_yards'], 5)
+        self.assertEqual(quarterly['team_stats']['AAA']['Q1']['possession_seconds'], 5)
+        self.assertEqual(quarterly['team_stats']['AAA']['Q2']['completions'], 1)
+        self.assertEqual(quarterly['player_stats']['Q1'][0]['stable_player_id'], 'GA3')
+        self.assertEqual(quarterly['player_stats']['Q2'][0]['stable_player_id'], 'GA1')
+        drive = quarterly['drive_summaries'][0]
+        self.assertEqual((drive['start_period'], drive['end_period'], drive['scoring_period']), ('Q1', 'Q2', 'Q2'))
+        self.assertEqual(quarterly['drive_summary_by_team_and_period']['AAA']['Q1']['drives_started'], 1)
+        self.assertEqual(quarterly['drive_summary_by_team_and_period']['AAA']['Q2']['drives_ended'], 1)
+
+    def test_no_play_overtime_score_is_assigned_to_ot_team_boxscore(self):
+        record = {
+            'points': {'A': 6, 'B': 0},
+            'drives': [{
+                'index': 1, 'offense_team': 'A', 'quarter_start': 5, 'clock_start': 600,
+                'end_quarter': 5, 'end_clock': 600, 'plays': [], 'terminal': 'touchdown',
+                'touchdown_scored_by': 'A', 'observed_overtime_drive': {'outcome': 'touchdown'},
+                'points_scored_on_drive': {'team': 'A', 'points': 6, 'try': None},
+            }],
+        }
+
+        quarterly = outputs._quarter_by_quarter(record, SNAPSHOT)
+
+        self.assertTrue(quarterly['complete'])
+        self.assertEqual(quarterly['points_by_team']['AAA']['OT'], 6)
+        self.assertEqual(quarterly['team_stats']['AAA']['OT']['touchdowns'], 1)
+        self.assertEqual(quarterly['team_stats']['AAA']['OT']['offensive_touchdowns'], 1)
+        self.assertEqual(quarterly['team_stats']['AAA']['OT']['observed_overtime_touchdowns'], 1)
 
     def test_s0_comparison_boxscores_also_zero_fill_and_enforce_frozen_roster_identity(self):
         s0_profile = dict(PROFILE, profile='s0', model_id='S0', enabled_layers={})
