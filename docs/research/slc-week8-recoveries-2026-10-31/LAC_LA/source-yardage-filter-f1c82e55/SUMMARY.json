@@ -1,0 +1,58 @@
+{
+  "schema": "slc_seed_recovery_summary_v1",
+  "matchup": "LAC_LA",
+  "original_run": {
+    "run_id": "research-8b7d5a2e-2026-10-31",
+    "source_commit": "8b7d5a2e",
+    "records_modified": false
+  },
+  "recovery": {
+    "source_commit": "f1c82e553698830590b75d9402d57eeb21bb306d",
+    "artifact_directory": "recovery-source-yardage-filter-f1c82e55-2026-10-31",
+    "snapshot": "2026_08_LAC_LA.json",
+    "as_of": "2026-10-29T00:02:21Z",
+    "boxscores_enabled": true,
+    "source_filter": {
+      "policy": "exclude_inconsistent_completion_yardage",
+      "rows_excluded": 1,
+      "source_row": {
+        "game_id": "2022_16_LAC_IND",
+        "play_id": 3371,
+        "passing_yards": 13.0,
+        "receiving_yards": 12.0
+      }
+    },
+    "seeds": [
+      {
+        "seed": 196,
+        "status": "complete_regulation",
+        "valid_full_game": true,
+        "boxscore_status": "valid_complete",
+        "reconciliation": "passed",
+        "score": {"LA": 35, "LAC": 30}
+      },
+      {
+        "seed": 344,
+        "status": "complete_regulation",
+        "valid_full_game": true,
+        "boxscore_status": "valid_complete",
+        "reconciliation": "passed",
+        "score": {"LA": 17, "LAC": 23}
+      }
+    ]
+  },
+  "ledger_header_audit": {
+    "header_objects": 6,
+    "header_objects_are_seed_outcomes": false,
+    "game_status_path": "outcome.status",
+    "headers_changed": false,
+    "seed_rows_rewritten": false,
+    "prior_in_progress_tally": {
+      "game_rows": 3527,
+      "complete_regulation": 3380,
+      "complete_overtime": 145,
+      "simulation_error": 2,
+      "final_batch_count": false
+    }
+  }
+}
