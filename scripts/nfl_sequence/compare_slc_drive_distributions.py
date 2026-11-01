@@ -380,7 +380,7 @@ def render_markdown(manifest, metrics):
         ('turnover_on_downs_drives_per_game', 'Turnovers on downs per team-game', 'team_game', 'ALL'),
         ('turnover_drives_per_game', 'Turnover drives per team-game', 'team_game', 'ALL'),
         ('period_end_drives_per_game', 'Period-end drives per team-game', 'team_game', 'ALL'),
-        ('recorded_events_per_game', 'Recorded run/pass/kick events per team-game', 'team_game', 'ALL'),
+        ('recorded_events_per_game', 'Recorded run/pass/kneel/spike/kick events per team-game', 'team_game', 'ALL'),
         ('scrimmage_plays_per_game', 'Scrimmage plays per team-game (team-stat definition)', 'team_game', 'ALL'),
         ('recorded_events_per_drive', 'Recorded events per modeled drive', 'modeled_drive', 'ALL'),
         ('net_yards_per_drive', 'Net yards per modeled drive', 'modeled_drive', 'ALL'),
@@ -460,7 +460,7 @@ def render_markdown(manifest, metrics):
          f"The frozen summary averages {sim['jahmyr_gibbs_rush_attempts_per_game']:.2f} Gibbs carries out of "
          f"{sim['det_team_rush_attempts_per_game']:.2f} Detroit team carries ({sim['jahmyr_gibbs_carry_share']:.1%}). "
          'This is an allocation-layer finding, separate from team drive frequency. |'),
-        ('| Engine fidelity limit | Some overtime outcomes have scores but no modeled play sequence. | '
+        ('| Engine behavior / fidelity limit | Some overtime outcomes have scores but no modeled play sequence. | '
          f"The frozen run has {sim['unmodeled_drive_sequences']['DET']:,} DET and "
          f"{sim['unmodeled_drive_sequences']['MIN']:,} MIN such drive rows. They remain in terminal/scoring totals and "
          'are excluded from event and yardage averages. |'),
