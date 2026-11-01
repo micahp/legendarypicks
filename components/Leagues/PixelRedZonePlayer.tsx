@@ -95,6 +95,27 @@ export function chooseScoreboardDirectorGame(games: Game[]): Game | null {
       || left.gameId.localeCompare(right.gameId))[0] || null
 }
 
+export function latestCanonicalEvent(events: PixelEvent[]): PixelEvent | null {
+  const sequenced = events.filter(event => Number.isInteger(event.sequence))
+  if (sequenced.length) {
+    return sequenced.reduce((latest, event) => (event.sequence as number) >= (latest.sequence as number) ? event : latest)
+  }
+  return events[events.length - 1] || null
+}
+
+export function shouldAdvanceCanonicalEvent(previous: PixelEvent | null, next: PixelEvent | null): boolean {
+  if (!next) return false
+  if (!previous) return true
+  if (previous.source.event_id === next.source.event_id) {
+    if (previous.source.revision === next.source.revision) return true
+    const previousObserved = Date.parse(previous.source.observed_at_utc || '')
+    const nextObserved = Date.parse(next.source.observed_at_utc || '')
+    return Number.isFinite(previousObserved) && Number.isFinite(nextObserved) && nextObserved > previousObserved
+  }
+  if (previous.sequence === null || next.sequence === null) return false
+  return next.sequence > previous.sequence
+}
+
 export function diagrammaticFieldX(yardline100: number | null) {
   if (yardline100 === null || !Number.isInteger(yardline100) || yardline100 < 0 || yardline100 > 100) return null
   return 10 + (100 - yardline100) * 0.8
@@ -203,7 +224,28 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
     .filter(play => play.playId !== null && play.playId !== undefined)
   const lastPlay = recentPlays[recentPlays.length - 1] || null
   const canonicalEvents = playByPlay?.pixel_red_zone?.events || []
-  const canonicalEvent = canonicalEvents[canonicalEvents.length - 1] || null
+  const candidateEvent = latestCanonicalEvent(canonicalEvents)
+  const [canonicalEvent, setCanonicalEvent] = useState<PixelEvent | null>(null)
+  const displayedEventRef = useRef<{ gameId: string; event: PixelEvent | null } | null>(null)
+
+  useEffect(() => {
+    if (!selectedGame) {
+      displayedEventRef.current = null
+      setCanonicalEvent(null)
+      return
+    }
+    const next = playByPlay?.eventId === selectedGame.gameId ? candidateEvent : null
+    const previous = displayedEventRef.current
+    if (!previous || previous.gameId !== selectedGame.gameId) {
+      displayedEventRef.current = { gameId: selectedGame.gameId, event: next }
+      setCanonicalEvent(next)
+      return
+    }
+    if (shouldAdvanceCanonicalEvent(previous.event, next)) {
+      displayedEventRef.current = { gameId: selectedGame.gameId, event: next }
+      setCanonicalEvent(next)
+    }
+  }, [candidateEvent, playByPlay?.eventId, selectedGame?.gameId])
 
   useEffect(() => {
     if (!selectedGame) {

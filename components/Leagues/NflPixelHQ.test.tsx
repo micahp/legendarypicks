@@ -1,6 +1,11 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import NflPixelHQ, { getRoomTimeOfDay } from './NflPixelHQ'
-import { chooseScoreboardDirectorGame, diagrammaticFieldX } from './PixelRedZonePlayer'
+import {
+  chooseScoreboardDirectorGame,
+  diagrammaticFieldX,
+  latestCanonicalEvent,
+  shouldAdvanceCanonicalEvent,
+} from './PixelRedZonePlayer'
 import type { Game } from '../../services/sports'
 
 const originalFetch = global.fetch
@@ -48,6 +53,28 @@ describe('chooseScoreboardDirectorGame', () => {
       candidate('scheduled', 'SCHEDULED', true),
     ])?.gameId).toBe('a-redzone')
     expect(chooseScoreboardDirectorGame([candidate('scheduled', 'SCHEDULED', true)])).toBeNull()
+  })
+})
+
+describe('canonical live event ordering', () => {
+  const event = (eventId: string, sequence: number | null, revision = 'r1', observedAt = '2026-11-01T07:00:00Z') => ({
+    source: { event_id: eventId, revision, observed_at_utc: observedAt }, sequence,
+  }) as Parameters<typeof shouldAdvanceCanonicalEvent>[1]
+
+  it('keeps the highest publisher sequence when events arrive out of order', () => {
+    const older = event('game:play-4', 4)
+    const newer = event('game:play-5', 5)
+    expect(latestCanonicalEvent([newer, older])).toBe(newer)
+    expect(shouldAdvanceCanonicalEvent(newer, older)).toBe(false)
+    expect(shouldAdvanceCanonicalEvent(older, newer)).toBe(true)
+  })
+
+  it('accepts a source revision of the same play but rejects ambiguous sequence-less advances', () => {
+    const original = event('game:play-5', 5)
+    const correction = event('game:play-5', 5, 'r2', '2026-11-01T07:01:00Z')
+    expect(shouldAdvanceCanonicalEvent(original, correction)).toBe(true)
+    expect(shouldAdvanceCanonicalEvent(correction, original)).toBe(false)
+    expect(shouldAdvanceCanonicalEvent(original, event('game:unknown', null))).toBe(false)
   })
 })
 
