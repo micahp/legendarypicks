@@ -380,7 +380,7 @@ a {
 .lp-arcade-source-caption { margin: .3rem 0 0; color: #a9a69e; font-size: .68rem; line-height: 1.45; }
 .lp-arcade-source-correction { margin: 0; border-left: 3px solid #d0ad68; background: #29251e; padding: .55rem .7rem; color: #e5d4ac; font-size: .73rem; line-height: 1.5; }
 .lp-arcade-source-correction a { color: #fff0ca; font-weight: 800; text-decoration: underline; text-underline-offset: .15em; }
-.lp-arcade-audio-toggle,.lp-arcade-share-button,.lp-arcade-next-button { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; border: 1px solid #71654c; border-radius: .35rem; background: #242329; padding: .55rem .8rem; color: #f0e1bd; font-size: .76rem; font-weight: 850; }
+.lp-arcade-audio-toggle,.lp-arcade-share-button,.lp-arcade-next-button,.lp-arcade-training-button { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; border: 1px solid #71654c; border-radius: .35rem; background: #242329; padding: .55rem .8rem; color: #f0e1bd; font-size: .76rem; font-weight: 850; }
 .lp-arcade-audio-toggle[aria-pressed="true"] { border-color: #a88e5b; background: #332d21; }
 .lp-arcade-audio-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .5rem; }
 .lp-arcade-volume-control { display: flex; min-height: 2.75rem; align-items: center; gap: .35rem; color: #cbc5b8; font-size: .64rem; }
@@ -448,8 +448,10 @@ a {
 .lp-arcade-medal { color: #e2c17a !important; font: 900 1rem/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .lp-arcade-best { color: #aaa8a1 !important; font-size: .69rem !important; }
 .lp-arcade-result-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
-.lp-arcade-result-actions > button { flex: 1 1 10rem; }
+.lp-arcade-result-actions > button,.lp-arcade-result-actions > a { flex: 1 1 10rem; }
 .lp-arcade-next-button { background: #57452b; color: #fff2d2; }
+.lp-arcade-training-button { background: #25352b; color: #dcebd0; text-decoration: none; }
+.lp-arcade-training-button:focus-visible { outline: 3px solid #e2c17a; outline-offset: 2px; }
 .lp-arcade-share-message { margin: .6rem 0 .2rem; color: #d5c49b !important; }
 .lp-arcade-share-url { overflow-wrap: anywhere; font-size: .68rem !important; }
 .lp-arcade-share-url a { color: #e8cd92; text-decoration: underline; text-underline-offset: .18em; }

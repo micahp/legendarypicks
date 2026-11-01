@@ -274,6 +274,8 @@ describe('FieldGoalArcade', () => {
     expect(submitted[0].challenge_id).toBe('practice-fg-35-v1')
     expect(await screen.findByText(/arcade score/i)).toBeTruthy()
     expect(screen.getByText(/personal best/i)).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Open Aim Lab training camp' }).getAttribute('href'))
+      .toBe('/arcade/nfl/training/kicking?drill=aim-lab-v1')
     expect(screen.getByText(/1 attempt · average 1000/)).toBeTruthy()
     expect(screen.getByText(/0 misses · 0 scores from 600–799 · 1 scores from 800–1000/)).toBeTruthy()
     expect(gtag).toHaveBeenCalledWith('event', 'arcade_challenge_viewed', expect.objectContaining({

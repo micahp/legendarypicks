@@ -1176,6 +1176,10 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
           <div className="lp-arcade-result-actions">
             <button className="lp-arcade-next-button" type="button" onClick={retry}>KICK AGAIN</button>
             <button className="lp-arcade-share-button" type="button" onClick={challengeFriend}>CHALLENGE A FRIEND</button>
+            <Link className="lp-arcade-training-button" href="/arcade/nfl/training/kicking?drill=aim-lab-v1"
+              aria-label="Open Aim Lab training camp">
+              TRAIN
+            </Link>
           </div>
         </>}
         {shareMessage && <p className="lp-arcade-share-message" role="status">{shareMessage}</p>}
