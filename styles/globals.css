@@ -213,9 +213,12 @@ a {
 .lp-rz-game-list li > span { display: grid; gap: .15rem; }
 .lp-rz-game-list li small { color: #c7bfb1; font-size: .68rem; }
 .lp-rz-game-list li > b { flex: 0 0 auto; color: #e4ff9d; font-size: .95rem; }
-.lp-rz-game-list li > button { display: flex; width: 100%; min-height: 3rem; align-items: center; justify-content: space-between; gap: .75rem; border: 0; background: transparent; padding: .1rem; color: inherit; text-align: left; cursor: pointer; }
-.lp-rz-game-list li > button[aria-pressed="true"] { outline: 2px solid #9fc95b; outline-offset: 2px; }
-.lp-rz-game-list li > button:focus-visible { outline: 3px solid #e4ff9d; outline-offset: 2px; }
+.lp-rz-game-list li { min-width: 0; }
+.lp-rz-game-list li.is-selected { border-color: #9fc95b; }
+.lp-rz-game-list li > span { min-width: 0; flex: 1 1 auto; }
+.lp-rz-pin-button { display: inline-flex; min-width: 4.5rem; min-height: 2.75rem; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid #72764d; background: #263321; padding: .35rem .45rem; color: #f5f0d8; font: 800 .62rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; cursor: pointer; }
+.lp-rz-pin-button[aria-pressed="true"] { border-color: #9fc95b; background: #35472e; color: #e4ff9d; }
+.lp-rz-pin-button:focus-visible { outline: 3px solid #e4ff9d; outline-offset: 2px; }
 .lp-rz-channel-play { margin-top: .75rem; }
 .lp-rz-channel-play > .lp-rz-button { margin-top: .55rem; }
 .lp-rz-archive-choice { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .7rem; border-top: 1px solid #4a5038; padding-top: .65rem; color: #b8b39d; font-size: .75rem; }

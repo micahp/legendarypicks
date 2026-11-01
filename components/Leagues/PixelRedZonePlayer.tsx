@@ -83,6 +83,13 @@ async function loadBundledReplay(): Promise<ReplayPayload> {
   return (imported.default || imported) as unknown as ReplayPayload
 }
 
+export function chooseScoreboardDirectorGame(games: Game[]): Game | null {
+  return [...games]
+    .filter(game => game.status === 'LIVE')
+    .sort((left, right) => Number(right.situation?.redZone === true) - Number(left.situation?.redZone === true)
+      || left.gameId.localeCompare(right.gameId))[0] || null
+}
+
 export function diagrammaticFieldX(yardline100: number | null) {
   if (yardline100 === null || !Number.isInteger(yardline100) || yardline100 < 0 || yardline100 > 100) return null
   return 10 + (100 - yardline100) * 0.8
@@ -172,12 +179,14 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
   onBack?: () => void
 }) {
   const liveGames = scoreboard?.games.filter(game => game.status === 'LIVE') || []
-  const [selectedGameId, setSelectedGameId] = useState<string | null>(null)
+  const [pinnedGameId, setPinnedGameId] = useState<string | null>(null)
   const [refreshVersion, setRefreshVersion] = useState(0)
   const [playByPlay, setPlayByPlay] = useState<PlayByPlaySnapshot | null>(null)
   const [playByPlayLoading, setPlayByPlayLoading] = useState(false)
   const [playByPlayUnavailable, setPlayByPlayUnavailable] = useState(false)
-  const selectedGame = liveGames.find(game => game.gameId === selectedGameId) || liveGames[0] || null
+  const autoGame = chooseScoreboardDirectorGame(liveGames)
+  const selectedGame = liveGames.find(game => game.gameId === pinnedGameId) || autoGame
+  const isPinned = Boolean(selectedGame && pinnedGameId === selectedGame.gameId)
   const scheduledGames = (scoreboard?.games || [])
     .filter(game => game.status === 'SCHEDULED')
     .sort((left, right) => (left.startTime || '').localeCompare(right.startTime || ''))
@@ -216,6 +225,31 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
     return () => controller.abort()
   }, [refreshVersion, selectedGame?.gameId])
 
+  useEffect(() => {
+    if (!selectedGame) return
+    let timer: number | null = null
+    const stop = () => {
+      if (timer !== null) window.clearInterval(timer)
+      timer = null
+    }
+    const start = () => {
+      stop()
+      if (document.visibilityState === 'visible') {
+        timer = window.setInterval(() => setRefreshVersion(version => version + 1), 60_000)
+      }
+    }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') setRefreshVersion(version => version + 1)
+      start()
+    }
+    start()
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      stop()
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [selectedGame?.gameId])
+
   return (
     <section className="lp-rz-player lp-rz-player-room" aria-label="Pixel Red Zone channel preview">
       <header className="lp-rz-topbar">
@@ -224,7 +258,8 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
           <h2 id="pixel-red-zone-title" tabIndex={-1}>Pixel Red Zone</h2>
         </div>
         <div className="lp-rz-top-actions">
-          <span className="lp-rz-replay-badge">SCOREBOARD</span>
+          <span className="lp-rz-replay-badge">{liveGames.length ? (isPinned ? 'PINNED GAME' : 'AUTO SELECT') : 'SCOREBOARD'}</span>
+          {isPinned && <button type="button" className="lp-rz-button" onClick={() => setPinnedGameId(null)}>Auto select</button>}
           <button type="button" className="lp-rz-button" onClick={onBack}>Back to room</button>
         </div>
       </header>
@@ -234,16 +269,18 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
             : liveGames.length ? <>
               <p className="lp-rz-channel-heading">NFL games in progress</p>
               <ul className="lp-rz-game-list">{liveGames.map(game => (
-                <li key={game.gameId}>
-                    <button type="button" aria-pressed={selectedGame?.gameId === game.gameId}
-                      onClick={() => setSelectedGameId(game.gameId)}>
-                      <span><strong>{game.awayTeam.teamId || game.awayTeam.name}</strong> at <strong>{game.homeTeam.teamId || game.homeTeam.name}</strong>
-                        <small>{gameStatus(game)}</small></span>
-                      <b>{game.awayTeam.score ?? '—'} – {game.homeTeam.score ?? '—'}</b>
+                  <li key={game.gameId} className={selectedGame?.gameId === game.gameId ? 'is-selected' : undefined}>
+                    <span><strong>{game.awayTeam.teamId || game.awayTeam.name}</strong> at <strong>{game.homeTeam.teamId || game.homeTeam.name}</strong>
+                      <small>{gameStatus(game)}{game.situation?.redZone === true ? ' · ESPN RED ZONE' : ''}</small></span>
+                    <b>{game.awayTeam.score ?? '—'} – {game.homeTeam.score ?? '—'}</b>
+                    <button type="button" className="lp-rz-pin-button"
+                      aria-pressed={pinnedGameId === game.gameId}
+                      onClick={() => setPinnedGameId(current => current === game.gameId ? null : game.gameId)}>
+                      {pinnedGameId === game.gameId ? 'Unpin game' : 'Pin game'}
                     </button>
                 </li>
               ))}</ul>
-              <p className="lp-rz-source-caption">{freshness} · ESPN play-by-play is loaded for the selected game.</p>
+              <p className="lp-rz-source-caption">{freshness} · Auto selection follows ESPN’s positive red-zone flag, then stable game ID. A pin overrides auto selection. Play-by-play refreshes once a minute while visible.</p>
                 {selectedGame && <div className="lp-rz-event-panel lp-rz-channel-play">
                   <div className="lp-rz-event-meta">
                     <span>{playByPlay?.publisher || 'ESPN'} play-by-play · {selectedGame.awayTeam.teamId || selectedGame.awayTeam.name} at {selectedGame.homeTeam.teamId || selectedGame.homeTeam.name}</span>

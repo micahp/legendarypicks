@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import NflPixelHQ, { getRoomTimeOfDay } from './NflPixelHQ'
-import { diagrammaticFieldX } from './PixelRedZonePlayer'
+import { chooseScoreboardDirectorGame, diagrammaticFieldX } from './PixelRedZonePlayer'
+import type { Game } from '../../services/sports'
 
 const originalFetch = global.fetch
 
@@ -31,6 +32,22 @@ describe('diagrammaticFieldX', () => {
     expect(diagrammaticFieldX(0)).toBe(90)
     expect(diagrammaticFieldX(100)).toBe(10)
     expect(diagrammaticFieldX(null)).toBeNull()
+  })
+})
+
+describe('chooseScoreboardDirectorGame', () => {
+  const candidate = (gameId: string, status: Game['status'], redZone: boolean) => ({
+    gameId, status, situation: { redZone },
+  } as Game)
+
+  it('chooses only live games, preferring the ESPN red-zone flag then a stable ID', () => {
+    expect(chooseScoreboardDirectorGame([
+      candidate('z-live', 'LIVE', false),
+      candidate('b-redzone', 'LIVE', true),
+      candidate('a-redzone', 'LIVE', true),
+      candidate('scheduled', 'SCHEDULED', true),
+    ])?.gameId).toBe('a-redzone')
+    expect(chooseScoreboardDirectorGame([candidate('scheduled', 'SCHEDULED', true)])).toBeNull()
   })
 })
 
@@ -128,6 +145,11 @@ describe('NflPixelHQ', () => {
     fireEvent.click(tvCard)
     expect(await screen.findByRole('dialog', { name: 'Pixel Red Zone' })).toBeTruthy()
     expect(screen.getByText('NFL games in progress')).toBeTruthy()
+    expect(screen.getByText('AUTO SELECT')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Pin game' }))
+    expect(screen.getByText('PINNED GAME')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Auto select' }))
+    expect(screen.getByText('AUTO SELECT')).toBeTruthy()
     expect(screen.getByText(/LIVE · Q2/)).toBeTruthy()
     expect(await screen.findByText(/Run up the middle for 6 yards/)).toBeTruthy()
     expect(screen.getByText(/Source play espn-play-42/)).toBeTruthy()
