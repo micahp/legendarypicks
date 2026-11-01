@@ -1,0 +1,71 @@
+{
+  "as_of": "2026-10-29T00:02:21Z",
+  "blocker_fixes": [
+    "run_scramble_backoff",
+    "long_field_goal_feasibility",
+    "blocked_kick_source_audit",
+    "blocked_kick_geometry",
+    "safety_free_kick_boundaries"
+  ],
+  "boxscore_export": true,
+  "database_path": "/root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite",
+  "database_sha256": "feb5179f1c6c2f8cd2265a25ff68f3552d6e68bbba00354e0688f22505aa028f",
+  "field_goal_ordinary_cutoff_yards": 60.0,
+  "game_id": "2026_08_MIN_DET",
+  "matchup": "MIN_DET",
+  "playcall_artifact_path": "/root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+  "playcall_artifact_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+  "profile": "v1_full_stack",
+  "requested_games": 10000,
+  "run_id": "research-8b7d5a2e-2026-10-31",
+  "schema": "lp.nfl.week8-slc-run-header.v1",
+  "seed_start": 1,
+  "snapshot_path": "/root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json",
+  "snapshot_sha256": "476715b5a0f94cac919638b9666b571945cb847b3a6f4e6977b79ae0a36531b1",
+  "source_commit": "8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f",
+  "source_worktree": "/root/legendarypicks-slc-research-24d8b301",
+  "started_at_utc": "2026-10-31T20:42:48.060596+00:00",
+  "status": "running",
+  "streak_file_path": "/root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json",
+  "streak_file_sha256": "4d3e0d712134396ea91d1d9d8bca11ce9d6089674d9d6e2360696f44e311af5c",
+  "team_code_normalizer": "nfl_team_codes.py; PBP canonical codes supplied to team-conditioned priors",
+  "worker_partitions": [
+    {
+      "games": 1667,
+      "seed_end_inclusive": 1667,
+      "seed_start": 1,
+      "worker": 1
+    },
+    {
+      "games": 1667,
+      "seed_end_inclusive": 3334,
+      "seed_start": 1668,
+      "worker": 2
+    },
+    {
+      "games": 1667,
+      "seed_end_inclusive": 5001,
+      "seed_start": 3335,
+      "worker": 3
+    },
+    {
+      "games": 1667,
+      "seed_end_inclusive": 6668,
+      "seed_start": 5002,
+      "worker": 4
+    },
+    {
+      "games": 1666,
+      "seed_end_inclusive": 8334,
+      "seed_start": 6669,
+      "worker": 5
+    },
+    {
+      "games": 1666,
+      "seed_end_inclusive": 10000,
+      "seed_start": 8335,
+      "worker": 6
+    }
+  ],
+  "workers": 6
+}

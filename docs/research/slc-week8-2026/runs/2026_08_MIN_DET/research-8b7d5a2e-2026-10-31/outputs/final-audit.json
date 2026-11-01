@@ -1,0 +1,21 @@
+{
+  "blockers": [],
+  "boxscore_games": 10000,
+  "errors": [],
+  "final_status": "completed",
+  "final_tie_count": 7,
+  "note": "run-header.json is the preserved launch-time header; its status field reflects the status at header capture.",
+  "processed_seed_count": 10000,
+  "quarter_scoring_complete_games": 10000,
+  "requested_seed_count": 10000,
+  "run_id": "research-8b7d5a2e-2026-10-31",
+  "schema": "lp.nfl.slc-run-final-audit.v1",
+  "scored_games": 10000,
+  "status_counts": {
+    "blocked": 0,
+    "error": 0,
+    "incomplete": 0,
+    "success": 10000
+  },
+  "unreported_seed_count": 0
+}
