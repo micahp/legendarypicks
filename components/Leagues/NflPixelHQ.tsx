@@ -407,10 +407,12 @@ export default function NflPixelHQ(props: Props) {
           <span className="lp-hq-object-label">ARCADE · FIELD GOAL FRENZY</span>
         </button>
 
-        <section className="lp-hq-panel" id={preview === 'redzone' ? undefined : 'nfl-hq-preview'} role="region" aria-labelledby="nfl-hq-preview-title" hidden={!preview || preview === 'redzone'}>
+        <section className="lp-hq-panel" id={preview === 'redzone' ? undefined : 'nfl-hq-preview'} role="region" aria-labelledby="nfl-hq-preview-title" aria-describedby={preview === 'arcade' ? 'nfl-hq-arcade-scroll-hint' : undefined} tabIndex={0} hidden={!preview || preview === 'redzone'}>
             {preview && preview !== 'redzone' && <>
               <header className="lp-hq-panel-header">
-              <div><small>IN-ROOM PREVIEW</small><h2 id="nfl-hq-preview-title">{previewTitle}</h2></div>
+              <div><small>IN-ROOM PREVIEW</small><h2 id="nfl-hq-preview-title">{previewTitle}</h2>
+                {preview === 'arcade' && <span className="lp-hq-panel-scroll-hint" id="nfl-hq-arcade-scroll-hint">Scroll here for Training Camp and Friends’ Challenges ↓</span>}
+              </div>
               <button ref={closeButton} type="button" onClick={closePreview}>Return to HQ</button>
               </header>
 

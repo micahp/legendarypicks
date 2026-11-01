@@ -7,6 +7,8 @@ Captured from the feature branch preview at 1440×1000 desktop and 390×844 mobi
 - [NFL HQ Arcade panel · desktop](nfl-hq-arcade-desktop.png)
 - [NFL HQ Arcade panel · mobile](nfl-hq-arcade-mobile.png)
 - [Historical kick row · mobile panel scrolled to the archive](nfl-hq-arcade-mobile-moments.png)
+- [Arcade panel · mobile at the top with scroll guidance](nfl-hq-arcade-mobile-panel-top.png)
+- [Arcade panel · mobile scrolled to friend challenges](nfl-hq-arcade-mobile-panel-bottom.png)
 - [42-yard kick result · desktop](field-goal-result-desktop.png)
 - [42-yard kick result · mobile](field-goal-result-mobile.png)
 - [Interaction recording](arcade-interaction.webm)
@@ -23,6 +25,7 @@ For the browser capture, Arcade HTTP responses were intercepted and served from 
 - At 390px, document scroll width stayed 390px on the HQ and game pages.
 - The mobile one-thumb control measured 334×112px; the result and share buttons measured 163×44px.
 - The kick started muted and showed the real attempt outcome separately from the arcade score.
+- At 390×844, the in-room Arcade panel kept its title and “Return to HQ” control sticky while scrolling to the friend challenge. The scroll hint remained available in the header, all links were reachable, document width stayed 390px, and no browser errors occurred.
 
 ## Isolated API-backed browser smoke
 

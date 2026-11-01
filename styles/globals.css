@@ -173,11 +173,13 @@ a {
 .lp-hq-arcade-art b { margin-top: .2rem; color: #f8e5a8; font: 900 clamp(.5rem,1vw,.85rem)/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .lp-hq-arcade-art span { margin-top: .2rem; color: #f5d2b3; font: 800 clamp(.3rem,.48vw,.48rem)/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
 .lp-hq-arcade .lp-hq-object-label { bottom: -.15rem; }
-.lp-hq-panel { position: absolute; z-index: 8; inset: 3.5% 4%; overflow: auto; border: 2px solid #d0aa70; background: rgba(27,22,28,.97); padding: clamp(.8rem,2vw,1.5rem); box-shadow: 0 14px 42px rgba(0,0,0,.66), inset 0 0 0 4px rgba(240,211,161,.08); }
+.lp-hq-panel { --lp-hq-panel-padding: clamp(.8rem,2vw,1.5rem); position: absolute; z-index: 8; inset: 3.5% 4%; overflow: auto; scroll-padding-top: 4.5rem; border: 2px solid #d0aa70; background: rgba(27,22,28,.97); padding: var(--lp-hq-panel-padding); box-shadow: 0 14px 42px rgba(0,0,0,.66), inset 0 0 0 4px rgba(240,211,161,.08); }
 .lp-hq-panel[hidden] { display: none; }
-.lp-hq-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid rgba(221,198,158,.25); padding-bottom: .65rem; }
+.lp-hq-panel:focus-visible { outline: 2px solid #d9ff75; outline-offset: -4px; }
+.lp-hq-panel-header { position: sticky; z-index: 2; top: calc(-1 * var(--lp-hq-panel-padding)); display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: calc(-1 * var(--lp-hq-panel-padding)) calc(-1 * var(--lp-hq-panel-padding)) 0; border-bottom: 1px solid rgba(221,198,158,.25); background: #1b161c; padding: var(--lp-hq-panel-padding); padding-bottom: .65rem; }
 .lp-hq-panel-header small { color: #d9ff75; font: 800 .62rem/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .15em; }
 .lp-hq-panel-header h2 { margin: .15rem 0 0; color: #fff4df; font: 900 clamp(1rem,2vw,1.35rem)/1.15 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.lp-hq-panel-scroll-hint { display: block; padding-top: .2rem; color: #c9c1b5; font-size: .62rem; line-height: 1.3; }
 .lp-hq-panel-header button { min-height: 2.75rem; flex: 0 0 auto; border: 1px solid #967c5d; background: #38303a; padding: .55rem .75rem; color: #fff4df; font-size: .75rem; font-weight: 850; cursor: pointer; }
 .lp-hq-preview-content { max-width: 52rem; padding-top: .65rem; color: #e8e1d6; font-size: .82rem; line-height: 1.5; }
 .lp-hq-preview-content p { margin: .35rem 0 .75rem; }
@@ -318,7 +320,7 @@ a {
   .lp-hq-arcade .lp-hq-object-label { top: 0; bottom: auto; left: 0; transform: translateY(-100%); max-width: 28vw; }
   .lp-hq-athlete { bottom: 1%; left: 50%; height: 53%; }
   .lp-hq-scene-label { bottom: .55rem; right: .5rem; font-size: .48rem; }
-  .lp-hq-panel { inset: .4rem; padding: .7rem; }
+  .lp-hq-panel { --lp-hq-panel-padding: .7rem; inset: .4rem; }
   .lp-hq-preview-content { font-size: .76rem; }
   .lp-hq-data-list li { align-items: flex-start; }
   .lp-hq-data-list li strong { max-width: 38%; }
