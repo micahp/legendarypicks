@@ -30,6 +30,7 @@ The feature branch was also served from a separate Next dev process, proxied to 
 
 - [API-backed desktop kick result](real-api-desktop.png) and [API-backed mobile HQ archive](real-api-mobile.png).
 - The HQ cabinet listed 34 archived ESPN challenges and no live moments. Opening a 42-yard kick and submitting an attempt returned the server-calculated 961 score; the historical “Real attempt: made” outcome appeared separately after the arcade result.
+- From the mobile NFL HQ room, the cabinet opened its in-room panel, the Aim Lab link opened the training page, and browser Back returned to HQ. The kick returned a 961 server score and the page stayed within 390px. This isolated preview returns 404 for the unmounted NFL research feeds; those feed endpoints were intentionally omitted from its temporary API server.
 - The API round-trip created an anonymous claim, persisted a leaderboard result, and created and resolved a score-bound friend share in the temporary database.
 - The mobile document width remained 390px. There were no Arcade API errors or browser page errors. Other NFL research endpoints returned 404 because they were intentionally omitted from this isolated server.
 - Simulated touch-pointer and keyboard kick paths sent the identical normalized input (`aim=0.2`, `power=0.58`, `release_timing=0.52`) and both received 707. The touch gesture is quantized to the sliders’ 0.01 step. Reduced motion computed to `0s`; mobile result buttons measured 163×44px.
