@@ -3,6 +3,7 @@ import NflPixelHQ, { getRoomTimeOfDay } from './NflPixelHQ'
 import {
   chooseScoreboardDirectorGame,
   diagrammaticFieldX,
+  fieldBallPosition,
   latestCanonicalEvent,
   shouldAdvanceCanonicalEvent,
 } from './PixelRedZonePlayer'
@@ -33,10 +34,17 @@ describe('diagrammaticFieldX', () => {
       { period: 3, offense: 'home', spot: 65 },
       { period: 4, offense: 'away', spot: 65 },
     ]
-    expect(samePublisherSpotAcrossEnds.map(row => diagrammaticFieldX(row.spot))).toEqual([38, 38, 38, 38])
-    expect(diagrammaticFieldX(0)).toBe(90)
-    expect(diagrammaticFieldX(100)).toBe(10)
+    expect(samePublisherSpotAcrossEnds.map(row => diagrammaticFieldX(row.spot))).toEqual([35, 35, 35, 35])
+    expect(diagrammaticFieldX(0)).toBe(100)
+    expect(diagrammaticFieldX(100)).toBe(0)
     expect(diagrammaticFieldX(null)).toBeNull()
+  })
+
+  it('keeps the football on-field and marks unknown coordinates as illustrative', () => {
+    expect(fieldBallPosition(0)).toEqual({ xPercent: 100, sourceVerified: true })
+    expect(fieldBallPosition(100)).toEqual({ xPercent: 0, sourceVerified: true })
+    expect(fieldBallPosition(null)).toEqual({ xPercent: 50, sourceVerified: false })
+    expect(fieldBallPosition(101)).toEqual({ xPercent: 50, sourceVerified: false })
   })
 })
 
@@ -200,6 +208,13 @@ describe('NflPixelHQ', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Watch archived ESPN replay' }))
     expect(await screen.findByText(/Cincinnati Bengals at Cleveland Browns/)).toBeTruthy()
     expect(screen.getByText('REPLAY')).toBeTruthy()
+    const replayField = document.querySelector('.lp-rz-field')
+    expect(replayField?.querySelector('.lp-rz-football path')).toBeTruthy()
+    expect(replayField?.querySelectorAll('line').length).toBeGreaterThan(20)
+    const rotatedEndzones = Array.from(replayField?.querySelectorAll('.lp-rz-field-art text[transform]') || [])
+    expect(rotatedEndzones.map(label => label.textContent)).toEqual(['CLEVELAND BROWNS', 'CINCINNATI BENGALS'])
+    expect(rotatedEndzones.map(label => label.getAttribute('transform'))).toEqual(['rotate(-90 50 120)', 'rotate(90 950 120)'])
+    expect(screen.getByText(/Centered football is illustrative only/)).toBeTruthy()
     const redZoneDialog = screen.getByRole('dialog', { name: 'Historical game replay' })
     expect(redZoneDialog.getAttribute('aria-modal')).toBe('true')
     expect(document.body.style.overflow).toBe('hidden')
@@ -248,6 +263,20 @@ describe('NflPixelHQ', () => {
     }
   })
 
+  it('keeps a visible illustrative football when live play-by-play is unavailable', async () => {
+    const fallbackFetch = (global.fetch as jest.Mock).getMockImplementation()!
+    ;(global.fetch as jest.Mock).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes('/playbyplay')) return Promise.resolve({ ok: false, json: async () => ({}) } as Response)
+      return fallbackFetch(input, init)
+    })
+    await renderRoom()
+    fireEvent.click(screen.getByRole('button', { name: /watch pixel red zone from the television/i }))
+
+    expect(await screen.findByText(/Play-by-play is unavailable for this snapshot/)).toBeTruthy()
+    expect(document.querySelector('.lp-rz-football path')).toBeTruthy()
+    expect(screen.getByText(/Centered football is illustrative only/)).toBeTruthy()
+  })
+
   it('opens the desk computer prop preview with source time and actual player history', async () => {
     await renderRoom()
 
@@ -264,6 +293,19 @@ describe('NflPixelHQ', () => {
     expect(within(propPreview).getByText(/source time/)).toBeTruthy()
     expect(await within(propPreview).findByText('64')).toBeTruthy()
     expect(screen.getByRole('link', { name: /open full nfl prop board/i }).getAttribute('href')).toBe('/props?league=nfl')
+  })
+
+  it('offers source-audited archives and loads the game the viewer selects', async () => {
+    await renderRoom()
+    fireEvent.click(screen.getByRole('button', { name: /watch pixel red zone from the television/i }))
+
+    const archiveSelect = screen.getByLabelText(/archived game · 8 source-checked games/i)
+    expect(archiveSelect.querySelectorAll('option')).toHaveLength(8)
+    fireEvent.change(archiveSelect, { target: { value: '401772718' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Watch archived ESPN replay' }))
+
+    expect(await screen.findByText(/Arizona Cardinals at New Orleans Saints/)).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Game details' }).getAttribute('href')).toBe('/game/nfl/401772718')
   })
 
   it('labels career and arcade as future features without implying they work', async () => {

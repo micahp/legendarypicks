@@ -223,6 +223,9 @@ a {
 .lp-rz-channel-play > .lp-rz-button { margin-top: .55rem; }
 .lp-rz-archive-choice { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .7rem; border-top: 1px solid #4a5038; padding-top: .65rem; color: #b8b39d; font-size: .75rem; }
 .lp-rz-archive-choice p { margin: 0; }
+.lp-rz-archive-select { display: grid; flex: 1 1 auto; gap: .25rem; color: #d5cead; font-size: .68rem; }
+.lp-rz-archive-select select { width: 100%; min-height: 2.75rem; border: 1px solid #72764d; background: #1a2118; padding: .45rem .55rem; color: #f5f0d8; font: 700 .72rem/1.25 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.lp-rz-archive-select select:focus-visible { outline: 3px solid #e4ff9d; outline-offset: 2px; }
 .lp-rz-player { width: 100%; max-width: 72rem; margin: 0 auto; border: 1px solid #625e45; background: #101912; padding: clamp(.65rem,2vw,1.25rem); color: #f5f0d8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .lp-rz-player-room { max-width: none; margin-top: .5rem; padding: .75rem; }
 .lp-rz-topbar,.lp-rz-top-actions,.lp-rz-gamebar,.lp-rz-gamebar > div,.lp-rz-event-meta,.lp-rz-controls,.lp-rz-audio-controls,.lp-rz-footer-links { display: flex; align-items: center; }
@@ -243,15 +246,14 @@ a {
 .lp-rz-gamebar > span { color: #d5cead; font-size: .75rem; font-weight: 850; }
 .lp-rz-replay-meta { margin: .15rem 0 .65rem; color: #b8b39d; font-size: .67rem; text-align: center; }
 .lp-rz-field-wrap { margin: .65rem auto; }
-.lp-rz-field { display: grid; min-height: 8rem; grid-template-columns: 10% 80% 10%; overflow: hidden; border: 2px solid #c6a36c; background: #18512f; box-shadow: inset 0 0 0 3px rgba(255,255,255,.09); }
-.lp-rz-endzone { display: grid; place-items: center; background: repeating-linear-gradient(135deg,#493952 0 8px,#55445e 8px 16px); color: #f8e8bc; font-size: clamp(.43rem,1vw,.62rem); font-weight: 900; line-height: 1.35; text-align: center; }
-.lp-rz-playfield { position: relative; overflow: hidden; background: repeating-linear-gradient(90deg,rgba(211,246,186,.10) 0 10%,rgba(8,62,35,.12) 10% 20%),linear-gradient(180deg,#287847,#1e673b); }
-.lp-rz-playfield > i { position: absolute; top: 0; bottom: 0; border-left: 1px dashed rgba(238,255,215,.38); }
-.lp-rz-first-down { position: absolute; top: 0; bottom: 0; width: 2px; background: #f1c34a; box-shadow: 0 0 4px rgba(255,220,115,.7); }
-.lp-rz-ball { position: absolute; top: 50%; z-index: 2; width: .72rem; height: .48rem; border: 2px solid #17130c; border-radius: 45%; background: #b87536; box-shadow: 0 0 0 2px #fff4c4; transform: translate(-50%,-50%); }
-.lp-rz-yard-label { position: absolute; top: 14%; color: rgba(244,255,221,.65); font-size: .56rem; font-weight: 900; transform: translateX(-50%); }
-.lp-rz-yard-20 { left: 20%; }.lp-rz-yard-50 { left: 50%; }.lp-rz-yard-80 { left: 80%; }
-.lp-rz-direction { position: absolute; right: .4rem; bottom: .35rem; color: rgba(249,255,224,.86); font-size: clamp(.4rem,.78vw,.58rem); font-weight: 900; letter-spacing: .05em; text-shadow: 0 1px 2px #12351f; }
+.lp-rz-field { position: relative; width: 100%; min-height: 8rem; aspect-ratio: 25 / 6; overflow: visible; border: 2px solid #c6a36c; background: #286d3d; box-shadow: 0 3px 0 #181c16; isolation: isolate; }
+.lp-rz-field-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
+.lp-rz-line-label { position: absolute; top: .28rem; z-index: 2; transform: translateX(-50%); border: 1px solid rgba(14,24,23,.85); background: rgba(14,24,23,.9); padding: .16rem .25rem; color: #fff6db; font-size: clamp(.42rem,.7vw,.56rem); font-weight: 900; letter-spacing: .035em; line-height: 1; white-space: nowrap; pointer-events: none; }
+.lp-rz-los-label { border-color: #42cbd5; color: #c8fbff; }
+.lp-rz-first-down-label { top: auto; bottom: .28rem; border-color: #e4bc35; color: #fff0a7; }
+.lp-rz-football { position: absolute; top: 50%; z-index: 4; display: block; width: 3rem; height: 1.85rem; overflow: visible; transform: translate(-50%,-50%); background: transparent; pointer-events: none; }
+.lp-rz-football.is-placeholder { opacity: .84; }
+.lp-rz-ball-unknown { position: absolute; top: 27%; z-index: 5; display: grid; width: 1rem; height: 1rem; transform: translateX(-50%); place-items: center; border: 1px solid #fff0a7; border-radius: 50%; background: #211d17; color: #fff0a7; font-size: .68rem; font-weight: 900; line-height: 1; pointer-events: none; }
 .lp-rz-spot-status { min-height: 1.25rem; margin: .4rem 0 0; color: #dcebbd; font-size: .7rem; text-align: center; }
 .lp-rz-event-panel { border: 1px solid #48503b; background: rgba(255,255,255,.035); padding: .65rem .75rem; }
 .lp-rz-event-meta { flex-wrap: wrap; justify-content: space-between; gap: .35rem .7rem; color: #c9d89b; font-size: .65rem; font-weight: 850; }
@@ -324,11 +326,12 @@ a {
   .lp-rz-topbar { align-items: flex-start; flex-direction: column; }
   .lp-rz-room-overlay { padding: .45rem; }
   .lp-rz-player-room { margin-top: .25rem; padding: .5rem; }
-  .lp-rz-archive-choice { align-items: flex-start; flex-direction: column; }
+  .lp-rz-archive-choice { align-items: stretch; flex-direction: column; }
+  .lp-rz-archive-select { width: 100%; }
   .lp-rz-player-room .lp-rz-topbar { align-items: flex-start; flex-direction: column; }
   .lp-rz-player-room .lp-rz-topbar h2 { font-size: 1rem; }
   .lp-rz-top-actions { justify-content: flex-start; }
-  .lp-rz-field { min-height: 6.2rem; }
+  .lp-rz-field { min-height: 8rem; }
   .lp-rz-gamebar { gap: .65rem; }
   .lp-rz-gamebar > div { min-width: 4rem; gap: .35rem; }
   .lp-rz-controls > .lp-rz-button { flex: 1 1 7rem; }
