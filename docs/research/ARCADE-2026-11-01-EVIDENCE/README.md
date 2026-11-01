@@ -34,6 +34,7 @@ The feature branch was also served from a separate Next dev process, proxied to 
 - The mobile document width remained 390px. There were no Arcade API errors or browser page errors. Other NFL research endpoints returned 404 because they were intentionally omitted from this isolated server.
 - Simulated touch-pointer and keyboard kick paths sent the identical normalized input (`aim=0.2`, `power=0.58`, `release_timing=0.52`) and both received 707. The touch gesture is quantized to the sliders’ 0.01 step. Reduced motion computed to `0s`; mobile result buttons measured 163×44px.
 - A fictional Aim Lab kick was also exercised in headless Chromium at 390×844, device scale factor 1, with CPU throttling set to 4×. The football animation began 65.9 ms after the KICK input; the API returned a 961 score, document width stayed 390px, and there were no browser errors. This is a throttled browser measurement, not a physical low-end phone result.
+- The complete Precision Set was then played at the same mobile viewport and 4× CPU throttle using the keyboard-accessible aim slider and KICK button. Center, left-hash, and right-hash attempts scored 962/961/961; the server-backed set total was 2,884/3,000 with a Gold medal. The document remained 390px wide and there were no browser errors. This remains browser emulation, not physical-device validation.
 
 Mobile results are browser emulation. Physical-phone input parity, performance on a real low-end device, first-time player feedback, and a live source-correction pilot still need field validation.
 
