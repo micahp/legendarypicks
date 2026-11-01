@@ -1,7 +1,7 @@
 # Legendary Picks — NFL Arcade & Training Mini-Games
 
 **Date:** 2026-11-01  
-**Status:** Proposed implementation specification; not implemented.  
+**Status:** Implemented on feature branch `feat/pixel-nfl-hq-design` in [PR #29](https://github.com/micahp/legendarypicks/pull/29) (open, unmerged, and undeployed); live-source, first-time-player, and physical-device validation remain pending.
 **Products:** Free, standalone NFL mini-games, optionally connected to future fictional GM career progression.  
 **Companion channel:** [Pixel Red Zone](PIXEL-RED-ZONE-CHANNEL-SPEC-2026-11-01.md).  
 **Earlier concepts:** [Live-Context Mini-Games spec in draft PR #28](https://github.com/micahp/legendarypicks/pull/28), [GM Mode in draft PR #28](https://github.com/micahp/legendarypicks/pull/28), [16-bit NFL HQ draft PR #29](https://github.com/micahp/legendarypicks/pull/29).
