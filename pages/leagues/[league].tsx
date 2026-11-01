@@ -45,7 +45,7 @@ import { useLeagueReadiness } from '../../components/Leagues/hooks/useLeagueRead
 import type { HubTab } from '../../components/Leagues/types'
 
 const TAB_LABELS: Record<HubTab, string> = {
-  camp: 'Home',
+  camp: 'NFL HQ',
   standings: 'Standings',
   stats: 'Stats',
   schedule: 'Schedule',
@@ -158,7 +158,6 @@ export default function LeagueHubPage() {
   if (!route.league) return <LeagueHubSkeleton />
 
   const leagueName = LEAGUE_NAMES[route.league] || route.league.toUpperCase()
-  const isNflHQ = isNFL && route.activeTab === 'camp'
 
   return (
     <>
@@ -171,25 +170,23 @@ export default function LeagueHubPage() {
       </Head>
 
       <div className="space-y-4">
-        {!isNflHQ && <LeagueSwitcher activeLeague={route.league} />}
-        {!isNflHQ && (
-          <div className="flex items-center gap-3">
-            <SportIcon league={route.league} className="h-6 w-6 shrink-0 text-zinc-100" />
-            <h1 className="text-3xl font-extrabold tracking-tight">{leagueName}</h1>
-          </div>
-        )}
+        <LeagueSwitcher activeLeague={route.league} />
+        <div className="flex items-center gap-3">
+          <SportIcon league={route.league} className="h-6 w-6 shrink-0 text-zinc-100" />
+          <h1 className="text-3xl font-extrabold tracking-tight">{leagueName}</h1>
+        </div>
         {!route.offerable && !route.coverageLoading ? (
           <LeagueUnavailable league={route.league} />
         ) : (
         <>
-        {!isNflHQ && <HubTabs
+        <HubTabs
           tabs={route.validTabs}
           activeTab={route.activeTab}
           onSelect={route.selectTab}
           labels={TAB_LABELS}
-        />}
+        />
 
-        {/* ── NFL Camp-mode default ── */}
+        {/* ── NFL HQ tab ── */}
         {route.activeTab === 'camp' && (
           <div className="space-y-4">
             <NflPixelHQ
@@ -395,9 +392,11 @@ function HubTabs({
   onSelect: (tab: HubTab) => void
   labels: Record<HubTab, string>
 }) {
-  const orderedTabs: HubTab[] = tabs.includes('model')
-    ? ['model', ...tabs.filter(tab => tab !== 'model')]
-    : tabs
+  const orderedTabs: HubTab[] = tabs.includes('camp')
+    ? ['camp', ...tabs.filter(tab => tab !== 'camp')]
+    : tabs.includes('model')
+      ? ['model', ...tabs.filter(tab => tab !== 'model')]
+      : tabs
 
   return (
     // `overflow-x-auto` alone makes the box scrollable on BOTH axes, and the buttons'
