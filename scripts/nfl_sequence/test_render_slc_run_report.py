@@ -168,6 +168,7 @@ class RunReport(unittest.TestCase):
                            and row['period'] == 'Q2' and row['metric'] == 'rush_attempts')
             self.assertEqual((q1_back['mean'], q1_back['sample_n']), (5, 2))
             self.assertEqual((q2_back['mean'], q2_back['sample_n']), (0, 2))
+            self.assertEqual(result['period_play_stats_complete_games']['OT'], 2)
             self.assertEqual(len(result['drive_summaries']), 2)
             q2_drive = next(row for row in result['quarter_drive_summary']
                             if row['team'] == 'AAA' and row['period'] == 'Q2')
@@ -178,6 +179,7 @@ class RunReport(unittest.TestCase):
             self.assertIn('Quarter-by-quarter team boxscore', rendered)
             self.assertIn('Quarter-by-quarter player boxscore', rendered)
             self.assertIn('Quarter drive summaries', rendered)
+            self.assertIn('Drive events (including kicks)', rendered)
             self.assertIn('Lead Back', rendered)
 
             output = Path(temp) / 'report'
@@ -185,6 +187,49 @@ class RunReport(unittest.TestCase):
             with (output / 'drive-summaries.csv').open(encoding='utf-8', newline='') as handle:
                 self.assertEqual(len(list(csv.DictReader(handle))), 2)
             self.assertTrue((output / 'quarter-player-stats.csv').is_file())
+
+    def test_legacy_overtime_score_only_period_is_not_zero_filled_as_play_stats(self):
+        with tempfile.TemporaryDirectory() as temp:
+            run_dir = Path(temp) / 'run'
+            run_dir.mkdir()
+            make_run(run_dir)
+            sidecar = run_dir / 'worker-01.boxscores.jsonl'
+            rows = [json.loads(line) for line in sidecar.read_text(encoding='utf-8').splitlines()]
+            box = rows[1]
+            quarterly = box['quarter_by_quarter']
+            quarterly['drive_summaries'].append({
+                'drive_index': 2, 'offense_team': 'AAA', 'start_period': 'OT',
+                'end_period': 'OT', 'terminal': 'touchdown', 'play_count': 0,
+                'net_yards': 0, 'turnovers': 0, 'points': 6, 'scoring_team': 'AAA',
+            })
+            quarterly['team_stats']['AAA']['OT'] = {
+                'plays': 0, 'rush_attempts': 0, 'rushing_yards': 0,
+                'pass_attempts': 0, 'completions': 0, 'passing_yards': 0,
+            }
+            quarterly['player_stats']['OT'] = []
+            quarterly['drive_summary_by_team_and_period']['AAA']['OT'] = {
+                'drives_started': 1, 'drives_ended': 1, 'scoring_drives': 1,
+                'points_scored': 6, 'points_allowed': 0, 'plays': 0,
+                'net_yards': 0, 'turnovers': 0,
+            }
+            rows[1] = box
+            sidecar.write_text(''.join(json.dumps(row) + '\n' for row in rows), encoding='utf-8')
+
+            result = report.analyze_run(run_dir)
+
+            self.assertEqual(result['period_play_stats_complete_games']['OT'], 1)
+            ot_plays = next(row for row in result['quarter_team_stats']
+                            if row['team'] == 'AAA' and row['period'] == 'OT'
+                            and row['metric'] == 'plays')
+            self.assertEqual(ot_plays['sample_n'], 1)
+            self.assertEqual(ot_plays['mean'], 0)
+            ot_player = next(row for row in result['quarter_player_stats']
+                             if row['team'] == 'AAA' and row['period'] == 'OT'
+                             and row['metric'] == 'rush_attempts')
+            self.assertEqual(ot_player['sample_n'], 1)
+            ot_drive = next(row for row in result['drive_summaries']
+                            if row['start_period'] == 'OT')
+            self.assertEqual(ot_drive['play_sequence_status'], 'not_modeled')
 
     def test_legacy_boxscores_report_quarter_data_as_unavailable(self):
         with tempfile.TemporaryDirectory() as temp:

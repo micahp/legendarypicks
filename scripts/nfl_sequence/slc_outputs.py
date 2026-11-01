@@ -210,6 +210,8 @@ def _quarter_by_quarter(record, snapshot):
     player_stats = {period: {} for period in PERIODS}
     drive_summaries = []
     complete = scoring_complete
+    play_stats_complete_by_period = {period: True for period in PERIODS}
+    play_stats_incomplete_reasons = {period: [] for period in PERIODS}
 
     for drive_index, drive in enumerate(record.get('drives', []), 1):
         side = drive.get('offense_team')
@@ -228,6 +230,15 @@ def _quarter_by_quarter(record, snapshot):
             grouped.setdefault(label, []).append(play)
 
         start_period = _period_label(drive.get('quarter_start'))
+        synthetic_overtime_without_plays = (
+            start_period == 'OT' and not plays and bool(drive.get('observed_overtime_drive'))
+        )
+        if synthetic_overtime_without_plays:
+            play_stats_complete_by_period['OT'] = False
+            reason = 'observed_overtime_drive_has_no_play_sequence'
+            if reason not in play_stats_incomplete_reasons['OT']:
+                play_stats_incomplete_reasons['OT'].append(reason)
+            complete = False
         last_state = ((plays[-1].get('state_after') or {}) if plays else {})
         end_period = _period_label(drive.get('end_quarter', last_state.get('quarter')))
         scoring = drive.get('points_scored_on_drive')
@@ -259,6 +270,8 @@ def _quarter_by_quarter(record, snapshot):
             'start_yardline_100': first_spot, 'end_yardline_100': end_spot,
             'terminal': drive.get('terminal'), 'play_count': len(plays), 'net_yards': net_yards,
             'turnovers': turnovers, 'scoring_team': scoring_team, 'points': drive_points,
+            'play_sequence_status': ('not_modeled' if synthetic_overtime_without_plays
+                                     else 'recorded' if plays else 'no_recorded_plays'),
         }
         drive_summaries.append(summary)
 
@@ -306,7 +319,8 @@ def _quarter_by_quarter(record, snapshot):
             calculated = game_stats.team_stats([fragment], {})
             calculated_side = calculated.get(side, {})
             line = team_stats[offense_team][label]
-            line['plays'] = line.get('plays', 0) + int(calculated_side.get('plays', 0))
+            # TEAM_FIELDS includes `plays`; the drive summary separately counts
+            # all recorded events, including kicks, under its `plays` field.
             for output_name, source_name in TEAM_FIELDS.items():
                 if output_name in ('points', 'drives', 'possession_seconds'):
                     continue
@@ -351,8 +365,14 @@ def _quarter_by_quarter(record, snapshot):
             line['points'] = points_by_team[team][period]
 
     return {
-        'schema': 'lp-nfl-slc-quarter-boxscore-1',
+        'schema': 'lp-nfl-slc-quarter-boxscore-2',
         'periods': list(PERIODS), 'complete': complete, 'scoring_complete': scoring_complete,
+        'play_stats_complete_by_period': play_stats_complete_by_period,
+        'play_stats_incomplete_reasons': play_stats_incomplete_reasons,
+        'drive_summary_count_semantics': {
+            'plays': 'recorded_play_events_including_punts_and_field_goal_attempts',
+            'team_stats.plays': 'scrimmage_snaps_excluding_special_teams',
+        },
         'player_stats_scope': 'players_with_period_activity; omitted roster players have zero period stats',
         'points_by_team': points_by_team,
         'team_stats': team_stats,

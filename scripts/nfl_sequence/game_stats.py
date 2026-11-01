@@ -60,7 +60,10 @@ def team_stats(drives, points):
                 t['interceptions'] += 1
             if ev == 'fumble_lost':
                 t['fumbles_lost'] += 1
-            if out.get('punt_attempt', out['punt']):
+            # Regular punts set `punt`; `punt_attempt` is only present on some
+            # special-team outcomes (notably blocked kicks). Count either flag
+            # once so ordinary punts are not omitted from the team boxscore.
+            if out.get('punt') or out.get('punt_attempt'):
                 t['punts'] += 1
             if out.get('field_goal_attempt'):
                 t['fg_att'] += 1
