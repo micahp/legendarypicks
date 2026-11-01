@@ -117,8 +117,10 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    fg_ordinary_cutoff=fg_ordinary_cutoff)
     ref.contextual_sampler.score_clock_playcalling_enabled = bool(score_clock_playcalling)
     ref.pool, lateral_source_filter = exclude_unmodeled_lateral_rows(ref.pool, ref.participants)
+    ref.pool, pass_yardage_source_filter = exclude_inconsistent_pass_yardage_rows(ref.pool, ref.participants)
     ref.pool_scope = dict(ref.pool_scope or {})
     ref.pool_scope['unmodeled_lateral_source_filter'] = lateral_source_filter
+    ref.pool_scope['inconsistent_completion_yardage_filter'] = pass_yardage_source_filter
     sampler = ref.contextual_sampler
     sampler.qb_run_role_style_enabled = bool(qb_run_role_style)
     sampler.source_cutoff = {'eligible_before': [season, 1]}
@@ -385,6 +387,46 @@ def exclude_unmodeled_lateral_rows(pool, participant_facts):
                        'rows_excluded_by_event': dict(sorted(excluded.items()))}
 
 
+def exclude_inconsistent_pass_yardage_rows(pool, participant_facts):
+    """Exclude completions whose source passer and receiver yardage cannot reconcile.
+
+    These rows remain in the source data and workload references. They are unsuitable as a single-recipient simulated
+    completion because SLC cannot represent the discrepancy without a modeled lateral or another explicit credit event.
+    """
+    kept_pool = {}
+    excluded = Counter()
+    source_rows = []
+    for cell_key, samples in pool.items():
+        kept = []
+        for event, row, runoff, spot in samples:
+            try:
+                source_key = (row.get('game_id'), int(float(row.get('play_id'))))
+            except (TypeError, ValueError):
+                source_key = None
+            facts = participant_facts.get(source_key, {}) if source_key is not None else {}
+            passing_yards, receiving_yards = facts.get('passing_yards'), facts.get('receiving_yards')
+            try:
+                mismatch = (event == 'pass_complete'
+                            and passing_yards is not None and receiving_yards is not None
+                            and math.isfinite(float(passing_yards)) and math.isfinite(float(receiving_yards))
+                            and float(passing_yards) != float(receiving_yards))
+            except (TypeError, ValueError):
+                mismatch = False
+            if mismatch:
+                excluded[event] += 1
+                source_rows.append({'game_id': source_key[0], 'play_id': source_key[1],
+                                    'passing_yards': passing_yards, 'receiving_yards': receiving_yards})
+            else:
+                kept.append((event, row, runoff, spot))
+        if kept:
+            kept_pool[cell_key] = kept
+    source_rows.sort(key=lambda item: (str(item['game_id']), item['play_id']))
+    return kept_pool, {'policy': 'exclude_inconsistent_completion_yardage',
+                       'rows_excluded': sum(excluded.values()),
+                       'rows_excluded_by_event': dict(sorted(excluded.items())),
+                       'source_rows': source_rows}
+
+
 def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
     """Refuse mismatches between a pre-outcome QB choice and the play/stat event it produced."""
     plays = [play for drive in record.get('drives', []) for play in drive.get('plays', [])]
@@ -402,12 +444,15 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
             'source': (decision or {}).get('source', 'unavailable'),
         }
         outcome = play.get('outcome') or {}
+        sampled = ((play.get('participants') or {}).get('sampled_play_context') or {})
         detail = {
             'game_id': game_id, 'seed': seed, 'play_index': index,
             'state_before': play.get('state_before', 'unavailable'),
             'decision': decision or 'unavailable',
             'outcome': {'event_type': play.get('event_type'), 'yards_gained': outcome.get('yards_gained'),
-                        'turnover': outcome.get('turnover'), 'touchdown': outcome.get('touchdown')},
+                        'turnover': outcome.get('turnover'), 'touchdown': outcome.get('touchdown'),
+                        'sampled_play_context': {field: sampled.get(field) for field in
+                                                 ('passing_yards', 'receiving_yards', 'rushing_yards')}},
             'state_after': play.get('state_after', 'unavailable'),
             'source_artifact_hashes': hashes,
         }
@@ -938,6 +983,7 @@ def describe(ref):
                    'fit_seasons': sorted(int(s) for s in artifact['fit_seasons']),
                    'reference_season': int(artifact['reference_season']), 'side_teams': sampler.describe().get('side_teams'),
                    'source_cutoff': getattr(sampler, 'source_cutoff', None), 'reference_sha256': reference_sha,
+                   'source_row_filters': getattr(ref, 'pool_scope', {}),
                    'layer_artifact_sha256': layer_artifact_sha256, 'enabled_layers': enabled_layers,
                    'score_clock_fallback_policy': ('historical_down_distance_field_cell_rate; independent point and streak '
                                                    'layers remain separately switchable'),

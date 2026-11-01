@@ -150,7 +150,12 @@ class PlayerShareManifest(unittest.TestCase):
                           'frame_sha256': 'frame-hash'}
         sampler = se.slc.PlayCallSampler(SimpleNamespace(artifact=layer_artifact),
                                          side_teams={'A': 'AAA', 'B': 'BBB'})
-        ref = SimpleNamespace(contextual_sampler=sampler, pool={}, participants={}, pool_scope={})
+        ref = SimpleNamespace(contextual_sampler=sampler,
+                              pool={('cell',): [('pass_complete',
+                                                 {'game_id': '2022_16_LAC_IND', 'play_id': 3371.0}, 0, 0)]},
+                              participants={('2022_16_LAC_IND', 3371):
+                                            {'passing_yards': 13, 'receiving_yards': 12}},
+                              pool_scope={})
         table = {'phi': {'receive': 24.4, 'carry': 7.5}, 'base': {'receive': {}, 'carry': {}},
                  'fit': {'receive': {'phi': 24.4, 'team_games': 544},
                          'carry': {'phi': 7.5, 'team_games': 544}}, 'season': 2025,
@@ -173,9 +178,14 @@ class PlayerShareManifest(unittest.TestCase):
         self.assertEqual(manifest['cutoff_season'], 2026)
         self.assertEqual(manifest['git_commit'], 'abc123')
         self.assertEqual(manifest['concentration']['receive']['team_games'], 544)
+        self.assertEqual(loaded.pool, {})
+        self.assertEqual(loaded.pool_scope['inconsistent_completion_yardage_filter']['source_rows'], [
+            {'game_id': '2022_16_LAC_IND', 'play_id': 3371, 'passing_yards': 13, 'receiving_yards': 12},
+        ])
         with patch.object(se, 'is_slc', return_value=True):
             description = se.describe(loaded)
         self.assertEqual(description['player_share_distribution'], manifest)
+        self.assertEqual(description['source_row_filters'], loaded.pool_scope)
         self.assertFalse(description['enabled_layers']['score_clock_playcalling'])
 
 
