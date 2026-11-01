@@ -24,6 +24,12 @@ def test_nfl_summary_drives_are_returned_with_source_fields():
     assert result["publisher"] == "ESPN"
     assert result["eventId"] == "401772830"
     assert result["publisherUpdatedAt"] == "2025-09-07T20:27:04Z"
+    canonical = result["pixel_red_zone"]
+    assert canonical["mode"] == "live"
+    assert canonical["game"]["game_id"] == "401772830"
+    assert canonical["events"][0]["source"]["event_id"] == "401772830:ESPN:40177283040"
+    assert "raw_play" not in canonical["events"][0]
+    assert any(event["confidence"]["field"] == "verified" for event in canonical["events"])
     plays = [play for period in result["periods"] for play in period["plays"]]
     assert len(plays) == 187
     assert len({play["playId"] for play in plays}) == len(plays)
@@ -65,5 +71,6 @@ def test_flat_summary_play_shape_remains_supported():
 
     assert result["available"] is True
     assert result["eventId"] == "game-flat"
+    assert "pixel_red_zone" not in result
     assert result["periods"][0]["label"] == "1st"
     assert result["periods"][0]["plays"][0]["playId"] == "play-1"

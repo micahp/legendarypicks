@@ -69,6 +69,11 @@ type PlayByPlaySnapshot = {
   eventId?: string
   publisherUpdatedAt?: string | null
   periods?: { label: string; plays: PlayByPlayPlay[] }[]
+  pixel_red_zone?: {
+    available?: boolean
+    source?: { publisher_updated_at?: string | null; observed_at_utc?: string | null }
+    events?: PixelEvent[]
+  }
 }
 
 type Props = {
@@ -197,6 +202,8 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
   const recentPlays = (playByPlay?.periods || []).flatMap(period => period.plays || [])
     .filter(play => play.playId !== null && play.playId !== undefined)
   const lastPlay = recentPlays[recentPlays.length - 1] || null
+  const canonicalEvents = playByPlay?.pixel_red_zone?.events || []
+  const canonicalEvent = canonicalEvents[canonicalEvents.length - 1] || null
 
   useEffect(() => {
     if (!selectedGame) {
@@ -288,7 +295,20 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
                   </div>
                   {playByPlayLoading ? <p role="status">Loading the selected game’s ESPN play-by-play snapshot…</p>
                     : playByPlayUnavailable || !playByPlay?.available ? <p className="lp-rz-unavailable-note">Play-by-play is unavailable for this snapshot. The scoreboard remains available.</p>
-                      : lastPlay ? <>
+                      : canonicalEvent ? <>
+                        <div className="lp-rz-gamebar">
+                          <div><strong>{selectedGame.awayTeam.teamId || selectedGame.awayTeam.name}</strong><b>{canonicalEvent.after.score?.away ?? selectedGame.awayTeam.score ?? '—'}</b></div>
+                          <span>{canonicalEvent.period ? `Q${canonicalEvent.period}` : 'LIVE'}{canonicalEvent.clock ? ` · ${canonicalEvent.clock}` : ''}</span>
+                          <div><strong>{selectedGame.homeTeam.teamId || selectedGame.homeTeam.name}</strong><b>{canonicalEvent.after.score?.home ?? selectedGame.homeTeam.score ?? '—'}</b></div>
+                        </div>
+                        <Field event={canonicalEvent} />
+                        <p className="lp-rz-caption">{canonicalEvent.source_event_type || 'ESPN play'} · {canonicalEvent.display_text || 'Publisher play text unavailable.'}</p>
+                        <p className="lp-rz-source-caption">Source event {canonicalEvent.source.event_id} · sequence {canonicalEvent.sequence ?? 'unavailable'} · {canonicalEvent.source.occurred_at_utc || 'publisher event time unavailable'}</p>
+                        {canonicalEvent.review_state === 'pending' && <p className="lp-rz-review">Source review pending.</p>}
+                        {canonicalEvent.review_state === 'overturned' && <p className="lp-rz-review">Source correction: the prior ruling was overturned.</p>}
+                        {playByPlay?.pixel_red_zone?.source?.publisher_updated_at && <p className="lp-rz-source-caption">ESPN summary updated: {playByPlay.pixel_red_zone.source.publisher_updated_at}</p>}
+                        {playByPlay?.pixel_red_zone?.source?.observed_at_utc && <p className="lp-rz-source-caption">Observed by this service: {playByPlay.pixel_red_zone.source.observed_at_utc}</p>}
+                      </> : lastPlay ? <>
                         <p className="lp-rz-caption">{lastPlay.type || 'Play'} · {lastPlay.text || 'Publisher play text unavailable.'}</p>
                         <p className="lp-rz-source-caption">Source play {lastPlay.playId}{lastPlay.sequenceNumber != null ? ` · sequence ${lastPlay.sequenceNumber}` : ''}{lastPlay.period ? ` · Q${lastPlay.period}` : ''}{lastPlay.clock ? ` · ${lastPlay.clock}` : ''}{lastPlay.wallclock ? ` · ${lastPlay.wallclock}` : ''}</p>
                         {playByPlay?.publisherUpdatedAt && <p className="lp-rz-source-caption">ESPN summary updated: {playByPlay.publisherUpdatedAt}</p>}
@@ -296,6 +316,9 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
                   <button type="button" className="lp-rz-button" onClick={() => setRefreshVersion(version => version + 1)} disabled={playByPlayLoading}>
                     Refresh play-by-play
                   </button>
+                  <div className="lp-rz-footer-links">
+                    <Link href={`/game/nfl/${selectedGame.gameId}`}>Game details</Link>
+                  </div>
                 </div>}
             </> : <>
               <p className="lp-rz-channel-heading">No NFL games are live right now.</p>

@@ -3,6 +3,7 @@ from fastapi import HTTPException, Query
 from typing import Optional
 from _core import *
 from team_stats_contract import build_team_aggregates
+from pixel_red_zone import normalize_summary
 from . import router
 
 
@@ -561,13 +562,32 @@ def get_game_playbyplay(league: str, game_id: str):
     if current_period is not None:
         periods.append({"label": current_label, "plays": current_plays})
 
-    return {
+    result = {
         "available": True,
         "publisher": "ESPN",
         "eventId": (sm.get("header") or {}).get("id") or game_id,
         "publisherUpdatedAt": (sm.get("meta") or {}).get("lastUpdatedAt"),
         "periods": periods,
     }
+    if lg == "nfl":
+        observed_at = dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+        try:
+            normalized = normalize_summary(sm, game_id=game_id,
+                                           observed_at_utc=observed_at, mode="live")
+            # Keep the response compact; the existing period list remains the
+            # compatibility surface, while this block carries canonical fields.
+            for event in normalized["events"]:
+                event.pop("raw_play", None)
+                event.pop("raw_start", None)
+                event.pop("raw_end", None)
+            result["pixel_red_zone"] = normalized
+        except (TypeError, ValueError):
+            result["pixel_red_zone"] = {
+                "available": False,
+                "observed_at_utc": observed_at,
+                "reason": "publisher_summary_shape_unavailable",
+            }
+    return result
 
 
 @router.get("/api/{league}/game/{game_id}/gameinfo")

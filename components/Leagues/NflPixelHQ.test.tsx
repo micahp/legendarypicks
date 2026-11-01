@@ -94,6 +94,18 @@ describe('NflPixelHQ', () => {
         available: true, publisher: 'ESPN', eventId: 'nfl-1', publisherUpdatedAt: '2026-11-01T07:00:00Z',
         periods: [{ label: 'Q2', plays: [{ playId: 'espn-play-42', sequenceNumber: 42, period: 2,
           clock: '08:21', type: 'Rush', text: 'Run up the middle for 6 yards.', wallclock: '2026-11-01T07:00:00Z' }] }],
+        pixel_red_zone: {
+          mode: 'live',
+          source: { publisher_updated_at: '2026-11-01T07:00:00Z', observed_at_utc: '2026-11-01T07:00:02Z' },
+          events: [{ schema_version: 'lp-observed-nfl-event-v1', mode: 'live', game_id: 'nfl-1',
+            source: { publisher: 'ESPN', event_id: 'nfl-1:ESPN:espn-play-42', play_id: 'espn-play-42',
+              revision: 'a'.repeat(64), occurred_at_utc: '2026-11-01T07:00:00Z', observed_at_utc: '2026-11-01T07:00:02Z' },
+            sequence: 42, period: 2, clock: '08:21', status: 'in', offense_team_id: '1',
+            before: { down: 2, yards_to_go: 4, yardline_100: 45, score: { away: 17, home: 21 } },
+            after: { score: { away: 17, home: 21 } }, event_type: 'rush', source_event_type: 'Rush',
+            scoring_play: false, is_turnover: false, review_state: 'none', display_text: 'Run up the middle for 6 yards.',
+            confidence: { field: 'verified', score: 'verified' } }],
+        },
       }))
       if (url === '/api/nfl/model/locks') return Promise.resolve(jsonResponse({ week: null, models: [], games: [] }))
       if (url === '/api/nfl/projections') return Promise.resolve(jsonResponse({ week: null, players: [] }))
@@ -152,7 +164,9 @@ describe('NflPixelHQ', () => {
     expect(screen.getByText('AUTO SELECT')).toBeTruthy()
     expect(screen.getByText(/LIVE · Q2/)).toBeTruthy()
     expect(await screen.findByText(/Run up the middle for 6 yards/)).toBeTruthy()
-    expect(screen.getByText(/Source play espn-play-42/)).toBeTruthy()
+    expect(screen.getByText(/Source event nfl-1:ESPN:espn-play-42/)).toBeTruthy()
+    expect(screen.getByText(/45 yards to opponent end zone/)).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Game details' }).getAttribute('href')).toBe('/game/nfl/nfl-1')
     expect((global.fetch as jest.Mock).mock.calls.filter(([url]) => String(url).includes('/pixel-red-zone/replay/'))).toHaveLength(0)
     fireEvent.click(screen.getByRole('button', { name: 'Watch archived ESPN replay' }))
     expect(await screen.findByText(/Cincinnati Bengals at Cleveland Browns/)).toBeTruthy()
