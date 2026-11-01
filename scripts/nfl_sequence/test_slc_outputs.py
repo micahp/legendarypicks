@@ -6,6 +6,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import slc_outputs as outputs  # noqa: E402
+import game_stats  # noqa: E402
 
 
 def roster_player(gsis_id, name, team, position):
@@ -71,6 +72,23 @@ def game_record(home_points=24, away_points=17):
 
 
 class BoxscoreSerialization(unittest.TestCase):
+    def test_regular_punt_is_counted_even_when_punt_attempt_flag_is_false(self):
+        drive = {
+            'offense_team': 'A', 'quarter_start': 1, 'clock_start': 600,
+            'end_quarter': 1, 'end_clock': 570, 'terminal': 'punt',
+            'field_goal_made': None,
+            'plays': [{
+                'event_type': 'punt',
+                'outcome': {'yards_gained': None, 'turnover': False, 'punt': True,
+                            'punt_attempt': False, 'field_goal_attempt': False},
+                'participants': {},
+            }],
+        }
+
+        stats = game_stats.team_stats([drive], {'A': 0, 'B': 0})
+
+        self.assertEqual(stats['A'].get('punts', 0), 1)
+
     def test_starter_metadata_uses_available_qb_depth_rank_and_preserves_unknown_roles(self):
         snapshot = copy.deepcopy(SNAPSHOT)
         for side in ('home', 'away'):
@@ -147,7 +165,7 @@ class BoxscoreSerialization(unittest.TestCase):
 
         quarterly = outputs._quarter_by_quarter(record, SNAPSHOT)
 
-        self.assertEqual(quarterly['schema'], 'lp-nfl-slc-quarter-boxscore-1')
+        self.assertEqual(quarterly['schema'], 'lp-nfl-slc-quarter-boxscore-2')
         self.assertTrue(quarterly['complete'])
         self.assertEqual(quarterly['points_by_team']['AAA']['Q2'], 7)
         self.assertEqual(quarterly['points_by_team']['AAA']['Q1'], 0)
@@ -155,6 +173,10 @@ class BoxscoreSerialization(unittest.TestCase):
         self.assertEqual(quarterly['team_stats']['AAA']['Q1']['rushing_yards'], 5)
         self.assertEqual(quarterly['team_stats']['AAA']['Q1']['possession_seconds'], 5)
         self.assertEqual(quarterly['team_stats']['AAA']['Q2']['completions'], 1)
+        self.assertEqual(quarterly['drive_summary_count_semantics']['plays'],
+                         'recorded_play_events_including_punts_and_field_goal_attempts')
+        self.assertEqual(quarterly['drive_summary_count_semantics']['team_stats.plays'],
+                         'scrimmage_snaps_excluding_special_teams')
         self.assertEqual(quarterly['player_stats']['Q1'][0]['stable_player_id'], 'GA3')
         self.assertEqual(quarterly['player_stats']['Q2'][0]['stable_player_id'], 'GA1')
         drive = quarterly['drive_summaries'][0]
@@ -175,11 +197,50 @@ class BoxscoreSerialization(unittest.TestCase):
 
         quarterly = outputs._quarter_by_quarter(record, SNAPSHOT)
 
-        self.assertTrue(quarterly['complete'])
+        self.assertFalse(quarterly['complete'])
+        self.assertTrue(quarterly['scoring_complete'])
+        self.assertTrue(quarterly['play_stats_complete_by_period']['Q4'])
+        self.assertFalse(quarterly['play_stats_complete_by_period']['OT'])
+        self.assertEqual(quarterly['play_stats_incomplete_reasons']['OT'],
+                         ['observed_overtime_drive_has_no_play_sequence'])
         self.assertEqual(quarterly['points_by_team']['AAA']['OT'], 6)
         self.assertEqual(quarterly['team_stats']['AAA']['OT']['touchdowns'], 1)
         self.assertEqual(quarterly['team_stats']['AAA']['OT']['offensive_touchdowns'], 1)
         self.assertEqual(quarterly['team_stats']['AAA']['OT']['observed_overtime_touchdowns'], 1)
+        self.assertEqual(quarterly['drive_summaries'][0]['play_sequence_status'], 'not_modeled')
+
+    def test_cross_period_drive_event_counts_include_kicks_without_double_counting(self):
+        def play(event, quarter, yards, *, punt=False):
+            return {
+                'event_type': event,
+                'state_before': {'quarter': quarter, 'clock_seconds': 100, 'yardline_100': 40},
+                'state_after': {'quarter': quarter, 'clock_seconds': 95, 'yardline_100': 40 - yards},
+                'outcome': {'yards_gained': yards, 'touchdown': False, 'safety': False,
+                            'turnover': False, 'punt': punt, 'punt_attempt': False,
+                            'field_goal_attempt': False},
+                'participants': {'rusher_id': None},
+            }
+
+        record = {
+            'points': {'A': 0, 'B': 0},
+            'drives': [{
+                'index': 1, 'offense_team': 'A', 'quarter_start': 1, 'clock_start': 100,
+                'end_quarter': 2, 'end_clock': 95, 'terminal': 'punt', 'field_goal_made': None,
+                'plays': [play('run', 1, 4), play('punt', 2, 0, punt=True)],
+            }],
+        }
+
+        quarterly = outputs._quarter_by_quarter(record, SNAPSHOT)
+        period_drive_plays = quarterly['drive_summary_by_team_and_period']['AAA']
+        scrimmage_plays = quarterly['team_stats']['AAA']
+
+        self.assertEqual(len(quarterly['drive_summaries']), 1)
+        self.assertEqual(quarterly['drive_summaries'][0]['start_period'], 'Q1')
+        self.assertEqual(quarterly['drive_summaries'][0]['end_period'], 'Q2')
+        self.assertEqual(period_drive_plays['Q1']['plays'] + period_drive_plays['Q2']['plays'], 2)
+        self.assertEqual(scrimmage_plays['Q1']['plays'], 1)
+        self.assertEqual(scrimmage_plays['Q2']['plays'], 0)
+        self.assertEqual(scrimmage_plays['Q2']['punts'], 1)
 
     def test_s0_comparison_boxscores_also_zero_fill_and_enforce_frozen_roster_identity(self):
         s0_profile = dict(PROFILE, profile='s0', model_id='S0', enabled_layers={})
