@@ -132,6 +132,12 @@ a {
 .lp-hq-menu nav a:hover,.lp-hq-menu nav a:focus-visible { background: #332c43; color: #d9ff75; outline: none; }
 .lp-hq-stage { position: relative; isolation: isolate; width: 100%; height: min(72svh, 46rem); min-height: 34rem; overflow: hidden; border: 1px solid #6c5875; background: #211b27 url('/images/nfl-hq-apartment-v2.png') center / 100% 100% no-repeat; box-shadow: 0 18px 44px rgba(0,0,0,.38), inset 0 0 0 4px rgba(15,12,20,.55); image-rendering: pixelated; }
 .lp-hq-atmosphere { position: absolute; z-index: 0; inset: 0; pointer-events: none; background: linear-gradient(180deg,rgba(18,14,25,.08),transparent 48%,rgba(15,10,16,.18)); }
+.lp-hq-atmosphere::before,.lp-hq-atmosphere::after { position: absolute; top: 0; left: 2%; width: 16%; pointer-events: none; content: ''; clip-path: polygon(9% 0,100% 0,100% 91%,91% 94%,0 100%); }
+.lp-hq-atmosphere::before { height: 51%; opacity: 0; transition: opacity 1.2s ease; }
+.lp-hq-atmosphere::after { height: 18%; opacity: 0; transition: opacity 1.2s ease; }
+.lp-hq-stage[data-time-of-day="day"] .lp-hq-atmosphere::before { background: linear-gradient(180deg,#6db6ed 0%,#8cc5e8 58%,#efc995 100%); opacity: .48; mix-blend-mode: screen; }
+.lp-hq-stage[data-time-of-day="night"] .lp-hq-atmosphere::before { background: linear-gradient(180deg,#071631 0%,#101e3a 62%,#171b31 100%); opacity: .78; mix-blend-mode: multiply; }
+.lp-hq-stage[data-time-of-day="night"] .lp-hq-atmosphere::after { background: radial-gradient(circle at 68% 24%,#f2e7bd 0 1.2%,transparent 1.8%),radial-gradient(circle at 24% 27%,#e5efff 0 1px,transparent 1.7px),radial-gradient(circle at 43% 15%,#e5efff 0 1px,transparent 1.7px),radial-gradient(circle at 86% 55%,#e5efff 0 1px,transparent 1.7px); opacity: .9; }
 .lp-hq-hotspot { position: absolute; z-index: 3; display: flex; min-width: 2.75rem; min-height: 2.75rem; align-items: stretch; justify-content: center; border: 0; background: transparent; padding: 0; color: #fff; text-align: left; cursor: pointer; }
 .lp-hq-hotspot:focus-visible { outline: 3px solid #d9ff75; outline-offset: 3px; }
 .lp-hq-object-label { position: absolute; left: 50%; bottom: -.2rem; width: max-content; max-width: 140%; transform: translate(-50%,100%); border: 1px solid rgba(230,210,166,.45); background: rgba(28,20,27,.91); padding: .25rem .4rem; color: #fbf0d5; font: 800 clamp(.48rem,.65vw,.62rem)/1.25 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .045em; text-align: center; text-shadow: 0 1px 2px #161019; white-space: nowrap; }
@@ -239,6 +245,7 @@ a {
   .lp-locker-avatar { transition: none; }
   .lp-locker-gear { transition: none; }
   .lp-locker-gear:hover { transform: none; }
+  .lp-hq-atmosphere::before,.lp-hq-atmosphere::after { transition: none; }
   .lp-hq-athlete { animation: none; }
   .lp-hq-tv-data,.lp-hq-computer-data { animation: none; }
 }

@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import NflPixelHQ from './NflPixelHQ'
+import NflPixelHQ, { getRoomTimeOfDay } from './NflPixelHQ'
 
 const originalFetch = global.fetch
 
@@ -8,6 +8,15 @@ const jsonResponse = (body: unknown, headers: Record<string, string> = {}) => ({
   json: async () => body,
   headers: { get: (name: string) => headers[name.toLowerCase()] ?? null },
 }) as Response
+
+describe('getRoomTimeOfDay', () => {
+  it.each([
+    [4, 'night'], [5, 'dawn'], [7, 'dawn'], [8, 'day'],
+    [16, 'day'], [17, 'dusk'], [19, 'dusk'], [20, 'night'],
+  ] as const)('maps local hour %i to %s', (hour, expected) => {
+    expect(getRoomTimeOfDay(new Date(2026, 0, 1, hour))).toBe(expected)
+  })
+})
 
 async function renderRoom() {
   let result!: ReturnType<typeof render>

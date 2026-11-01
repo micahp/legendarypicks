@@ -11,6 +11,15 @@ type Props = {
 }
 
 type Preview = 'scores' | 'forecast' | 'props' | 'players' | 'career' | 'arcade' | null
+type RoomTimeOfDay = 'dawn' | 'day' | 'dusk' | 'night'
+
+export function getRoomTimeOfDay(date: Date): RoomTimeOfDay {
+  const hour = date.getHours()
+  if (hour >= 5 && hour < 8) return 'dawn'
+  if (hour >= 8 && hour < 17) return 'day'
+  if (hour >= 17 && hour < 20) return 'dusk'
+  return 'night'
+}
 
 type ModelLock = {
   proj_home: number | null
@@ -119,6 +128,7 @@ function scoreStatus(game: Game) {
 
 export default function NflPixelHQ(props: Props) {
   const [preview, setPreview] = useState<Preview>(null)
+  const [timeOfDay, setTimeOfDay] = useState<RoomTimeOfDay>('dusk')
   const [scores, setScores] = useState<{ games: Game[]; source: string | null; age: number | null; loading: boolean; unavailable: boolean }>(
     { games: [], source: null, age: null, loading: true, unavailable: false },
   )
@@ -136,6 +146,13 @@ export default function NflPixelHQ(props: Props) {
   })
   const lastHotspot = useRef<HTMLButtonElement | null>(null)
   const closeButton = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    const updateTimeOfDay = () => setTimeOfDay(getRoomTimeOfDay(new Date()))
+    updateTimeOfDay()
+    const interval = window.setInterval(updateTimeOfDay, 60_000)
+    return () => window.clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -311,7 +328,7 @@ export default function NflPixelHQ(props: Props) {
         </details>
       </header>
 
-      <div className="lp-hq-stage" role="group" aria-label="Interactive NFL analysis room">
+      <div className="lp-hq-stage" role="group" aria-label="Interactive NFL analysis room" data-time-of-day={timeOfDay}>
         <div className="lp-hq-atmosphere" aria-hidden="true" />
 
         <button type="button" className="lp-hq-hotspot lp-hq-tv" aria-label="Open NFL scores from the television"
