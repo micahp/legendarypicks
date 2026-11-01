@@ -25,7 +25,7 @@
     ],
     "variance": "population variance over the observed team-game or modeled-drive reference distribution"
   },
-  "generated_at_utc": "2026-11-01T03:46:00+00:00",
+  "generated_at_utc": "2026-11-01T03:50:52+00:00",
   "historical": {
     "actual_drives": 23599,
     "completed_games": 1087,
@@ -5325,9 +5325,12 @@
   ],
   "schema": "lp.nfl.slc-drive-distribution-comparison.v1",
   "simulation": {
+    "det_team_rush_attempts_per_game": 36.83,
     "drive_csv_path": "docs/research/slc-week8-2026/runs/2026_08_MIN_DET/research-8b7d5a2e-2026-10-31/outputs/drive-summaries.csv",
     "drive_csv_sha256": "59ce438065003aef2b8f5b0c3a944a216f1cd692bd7098a7370d52287f8776bc",
     "games": 10000,
+    "jahmyr_gibbs_carry_share": 0.8685853923431984,
+    "jahmyr_gibbs_rush_attempts_per_game": 31.99,
     "run_id": "research-8b7d5a2e-2026-10-31",
     "summary_path": "docs/research/slc-week8-2026/runs/2026_08_MIN_DET/research-8b7d5a2e-2026-10-31/summary.json",
     "summary_sha256": "558afbb75f7e546a60b2a3eea058d34b5c2ebe4c536f8a3e0af9a964b2b88c82",
