@@ -203,9 +203,27 @@
       "game_id": "2026_08_MIN_DET",
       "away_team": "MIN",
       "home_team": "DET",
-      "status": "no_completed_10k",
-      "completed_10k_runs": [],
-      "notes": "A retry was stopped; no completed 10K artifact was found."
+      "status": "completed_10k_latest_player_workload",
+      "completed_10k_runs": [
+        {
+          "run_id": "research-8b7d5a2e-2026-10-31",
+          "requested_games": 10000,
+          "completed_games": 10000,
+          "blocked_games": 0,
+          "errors": 0,
+          "unreported_seeds": 0,
+          "final_overtime_ties_included": 7,
+          "quarter_scoring_complete_games": 10000,
+          "source_commit": "8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f",
+          "artifact_location": "/root/slc-week8-player-workload-10k-2026-10-30/artifacts/MIN_DET/research-8b7d5a2e-2026-10-31/raw",
+          "run_header": "docs/research/slc-week8-2026/runs/2026_08_MIN_DET/research-8b7d5a2e-2026-10-31/run-header.json",
+          "report": "docs/research/slc-week8-2026/runs/2026_08_MIN_DET/research-8b7d5a2e-2026-10-31/report.md",
+          "summary": "docs/research/slc-week8-2026/runs/2026_08_MIN_DET/research-8b7d5a2e-2026-10-31/summary.json",
+          "input_hash_manifest": "docs/research/slc-week8-2026/runs/2026_08_MIN_DET/research-8b7d5a2e-2026-10-31/outputs/input-sha256.json",
+          "run_header_sha256": "4da63b1404efc28ec257f0811a8b81587088fe39218e90d4726af3823f4d9299"
+        }
+      ],
+      "notes": "Recovered six worker shards completed; the final renderer reconciles all seed ledgers and boxscores. Raw worker artifacts remain immutable on the fast host."
     },
     {
       "game_id": "2026_08_NE_MIA",
@@ -236,7 +254,6 @@
   "no_completed_10k_matchups": [
     "2026_08_LAC_LA",
     "2026_08_LV_NYJ",
-    "2026_08_MIN_DET",
     "2026_08_NE_MIA",
     "2026_08_PHI_WAS",
     "2026_08_TEN_CIN"
@@ -248,7 +265,6 @@
     "2026_08_CHI_SEA",
     "2026_08_LAC_LA",
     "2026_08_LV_NYJ",
-    "2026_08_MIN_DET",
     "2026_08_NE_MIA",
     "2026_08_PHI_WAS",
     "2026_08_TEN_CIN"
