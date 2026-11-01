@@ -129,6 +129,57 @@ def make_run(root, *, include_periods=True):
 
 
 class RunReport(unittest.TestCase):
+    def test_aggregated_drives_zero_fill_games_and_exclude_unmodeled_ot_sequences(self):
+        drives = [
+            {'seed': 1, 'offense_team': 'AAA', 'terminal': 'punt', 'play_count': 4,
+             'net_yards': 25, 'turnovers': 0, 'scoring_team': None, 'points': 0},
+            {'seed': 1, 'offense_team': 'AAA', 'terminal': 'touchdown', 'play_count': 2,
+             'net_yards': 15, 'turnovers': 0, 'scoring_team': 'AAA', 'points': 7},
+            {'seed': 2, 'offense_team': 'AAA', 'start_period': 'OT', 'terminal': 'touchdown',
+             'play_sequence_status': 'not_modeled', 'play_count': 0, 'net_yards': 0,
+             'turnovers': 0, 'scoring_team': 'AAA', 'points': 6},
+            {'seed': 1, 'offense_team': 'BBB', 'terminal': 'turnover', 'play_count': 3,
+             'net_yards': -8, 'turnovers': 1, 'scoring_team': None, 'points': 0},
+        ]
+        game_seeds = {'AAA': {1, 2, 3}, 'BBB': {1, 2, 3}}
+
+        rows = report._aggregate_drive_summaries(drives, game_seeds)
+
+        aaa = next(row for row in rows if row['team'] == 'AAA' and row['terminal'] == 'ALL')
+        self.assertEqual((aaa['game_sample_n'], aaa['drive_count']), (3, 3))
+        self.assertEqual((aaa['per_game_mean'], aaa['per_game_median'], aaa['per_game_p95']), (1, 1, 2))
+        self.assertAlmostEqual(aaa['per_game_zero_rate'], 1 / 3)
+        self.assertEqual((aaa['modeled_drive_n'], aaa['unmodeled_drive_n']), (2, 1))
+        self.assertEqual((aaa['mean_recorded_events_per_drive'], aaa['mean_net_yards_per_modeled_drive']), (3, 20))
+        self.assertEqual((aaa['offensive_scoring_drives'], aaa['offense_points']), (2, 13))
+        punt = next(row for row in rows if row['team'] == 'AAA' and row['terminal'] == 'punt')
+        self.assertEqual((punt['drive_count'], punt['per_game_mean'], punt['per_game_zero_rate']),
+                         (1, 1 / 3, 2 / 3))
+
+    def test_saved_report_summary_can_render_aggregate_without_worker_artifacts(self):
+        summary = {
+            'schema': 'lp.nfl.slc-run-report.v1', 'scored_games': 2,
+            'game_ids': ['2026_08_AAA_BBB'],
+            'team_stats': [{'team': 'AAA'}, {'team': 'BBB'}],
+            'drive_summaries': [
+                {'seed': 1, 'offense_team': 'AAA', 'terminal': 'punt', 'play_count': 3,
+                 'net_yards': 9, 'turnovers': 0, 'points': 0},
+                {'seed': 2, 'offense_team': 'AAA', 'terminal': 'touchdown', 'play_count': 4,
+                 'net_yards': 75, 'turnovers': 0, 'scoring_team': 'AAA', 'points': 7},
+                {'seed': 1, 'offense_team': 'BBB', 'terminal': 'turnover', 'play_count': 2,
+                 'net_yards': -5, 'turnovers': 1, 'points': 0},
+                {'seed': 2, 'offense_team': 'BBB', 'terminal': 'punt', 'play_count': 4,
+                 'net_yards': 18, 'turnovers': 0, 'points': 0},
+            ],
+        }
+
+        markdown, rows = report.render_saved_drive_summary(summary)
+
+        aaa = next(row for row in rows if row['team'] == 'AAA' and row['terminal'] == 'ALL')
+        self.assertEqual((aaa['game_sample_n'], aaa['drive_count'], aaa['per_game_mean']), (2, 2, 1))
+        self.assertIn('Aggregated SLC drive summary', markdown)
+        self.assertIn('AAA | ALL | 2', markdown)
+
     def test_status_reasons_score_medians_player_usage_and_quarter_scores(self):
         with tempfile.TemporaryDirectory() as temp:
             run_dir = Path(temp) / 'run'
@@ -173,12 +224,16 @@ class RunReport(unittest.TestCase):
             q2_drive = next(row for row in result['quarter_drive_summary']
                             if row['team'] == 'AAA' and row['period'] == 'Q2')
             self.assertEqual((q2_drive['drives_ended_mean'], q2_drive['drives_ended_total']), (1, 2))
+            aaa_drive_total = next(row for row in result['drive_aggregate_summary']
+                                   if row['team'] == 'AAA' and row['terminal'] == 'ALL')
+            self.assertEqual((aaa_drive_total['game_sample_n'], aaa_drive_total['drive_count']), (2, 2))
             rendered = report.render_markdown([result])
             self.assertIn('blocked_kick_no_legal_geometry:field_goal:next_snap:kicking_team', rendered)
             self.assertIn('Quarter-by-quarter points', rendered)
             self.assertIn('Quarter-by-quarter team boxscore', rendered)
             self.assertIn('Quarter-by-quarter player boxscore', rendered)
             self.assertIn('Quarter drive summaries', rendered)
+            self.assertIn('Aggregated drive summary', rendered)
             self.assertIn('Drive events (including kicks)', rendered)
             self.assertIn('Lead Back', rendered)
 
@@ -186,6 +241,7 @@ class RunReport(unittest.TestCase):
             report.write_report(result, output)
             with (output / 'drive-summaries.csv').open(encoding='utf-8', newline='') as handle:
                 self.assertEqual(len(list(csv.DictReader(handle))), 2)
+            self.assertTrue((output / 'drive-aggregate-summary.csv').is_file())
             self.assertTrue((output / 'quarter-player-stats.csv').is_file())
 
     def test_legacy_overtime_score_only_period_is_not_zero_filled_as_play_stats(self):
