@@ -32,7 +32,7 @@ CSV_DEFAULT_COLUMNS = {
     'quarter-team-stats.csv': ('team', 'period', 'metric', 'mean', 'median', 'sample_n'),
     'quarter-player-stats.csv': ('team', 'player_id', 'name', 'position', 'period', 'metric', 'mean', 'median', 'sample_n'),
     'drive-summaries.csv': ('seed', 'game_id', 'drive_index', 'offense_team', 'start_period', 'end_period',
-                            'scoring_period', 'terminal', 'play_count', 'net_yards', 'turnovers',
+                            'scoring_period', 'terminal', 'play_sequence_status', 'play_count', 'net_yards', 'turnovers',
                             'scoring_team', 'points'),
     'quarter-drive-summary.csv': ('team', 'period', 'drives_started_mean', 'drives_started_median',
                                  'drives_ended_mean', 'drives_ended_median', 'scoring_drives_mean',
@@ -164,6 +164,8 @@ def _compact_boxscore(boxscore):
     quarterly = boxscore.get('quarter_by_quarter')
     if isinstance(quarterly, dict):
         qkeep = ('schema', 'periods', 'complete', 'scoring_complete', 'player_stats_scope',
+                 'play_stats_complete_by_period', 'play_stats_incomplete_reasons',
+                 'drive_summary_count_semantics',
                  'points_by_team', 'team_stats', 'drive_summaries', 'drive_summary_by_team_and_period')
         qcompact = {key: quarterly[key] for key in qkeep if key in quarterly}
         qcompact['player_stats'] = {
@@ -172,6 +174,22 @@ def _compact_boxscore(boxscore):
         }
         compact['quarter_by_quarter'] = qcompact
     return compact
+
+
+def _period_play_stats_complete(quarterly, period):
+    """Return whether play-level stats are known for a period, including legacy OT rows."""
+    explicit = quarterly.get('play_stats_complete_by_period')
+    if isinstance(explicit, dict) and isinstance(explicit.get(period), bool):
+        return explicit[period]
+    if period == 'OT':
+        for drive in quarterly.get('drive_summaries') or []:
+            try:
+                no_plays = int(drive.get('play_count') or 0) == 0
+            except (TypeError, ValueError):
+                no_plays = False
+            if drive.get('start_period') == 'OT' and no_plays:
+                return False
+    return bool(quarterly.get('complete'))
 
 
 def _set_outcome(records, outcome, priority):
@@ -313,6 +331,7 @@ def _analyze(path: Path):
     quarter_drive_values = defaultdict(lambda: defaultdict(list))
     quarter_data_games = 0
     quarter_complete_games = 0
+    period_play_stats_complete_games = Counter()
 
     for seed, box in successful:
         teams = box.get('teams') or []
@@ -359,18 +378,27 @@ def _analyze(path: Path):
                         quarter_score_values[(str(team), period)].append(periods[period] or 0)
 
         if isinstance(quarterly, dict):
+            complete_periods = {
+                period: _period_play_stats_complete(quarterly, period) for period in PERIODS
+            }
+            period_play_stats_complete_games.update(
+                period for period, is_complete in complete_periods.items() if is_complete)
             for team, periods in (quarterly.get('team_stats') or {}).items():
                 for period, stats in (periods or {}).items():
                     if period not in PERIODS:
                         continue
                     for metric, value in _numeric_leaves(stats or {}):
+                        # Scores and scoring completeness are retained separately.
+                        # An OT outcome sampled without plays cannot establish OT play stats.
+                        if not complete_periods[period] and metric != 'points':
+                            continue
                         quarter_team_values[(str(team), period, metric)].append(value)
             quarter_players = quarterly.get('player_stats') or {}
-            if quarterly.get('complete'):
-                # New boxscores omit zero lines from each period. The game roster supplies the
-                # denominator, so a complete period record can safely count absent players as zero.
-                roster_players = list(box.get('players') or [])
-                for period in PERIODS:
+            # New boxscores omit zero lines. For each fully observed period, the game
+            # roster supplies the denominator; incomplete periods remain unknown.
+            roster_players = list(box.get('players') or [])
+            for period in PERIODS:
+                if complete_periods[period]:
                     active = {str(player.get('stable_player_id') or player.get('player_id') or 'unknown'): player
                               for player in quarter_players.get(period, []) or []}
                     for player in roster_players:
@@ -399,27 +427,23 @@ def _analyze(path: Path):
                         })
                         for metric, value in _player_metric_values(player).items():
                             quarter_player_values[(key, period, metric)].append(value)
-            else:
-                for period, players in quarter_players.items():
-                    if period not in PERIODS:
-                        continue
-                    for player in players or []:
-                        team = str(player.get('team') or 'unknown')
-                        player_id = str(player.get('stable_player_id') or player.get('player_id') or 'unknown')
-                        key = (team, player_id)
-                        quarter_player_meta.setdefault(key, {
-                            'player_id': player_id, 'name': player.get('name') or '', 'team': team,
-                            'position': player.get('position') or '',
-                        })
-                        for metric, value in _player_metric_values(player).items():
-                            quarter_player_values[(key, period, metric)].append(value)
             for drive in quarterly.get('drive_summaries') or []:
-                drive_rows.append({'seed': seed, 'game_id': box.get('game_id'), **drive})
+                row = {'seed': seed, 'game_id': box.get('game_id'), **drive}
+                if not row.get('play_sequence_status') and row.get('start_period') == 'OT':
+                    try:
+                        no_plays = int(row.get('play_count') or 0) == 0
+                    except (TypeError, ValueError):
+                        no_plays = False
+                    if no_plays:
+                        row['play_sequence_status'] = 'not_modeled'
+                drive_rows.append(row)
             for team, periods in (quarterly.get('drive_summary_by_team_and_period') or {}).items():
                 for period, summary in (periods or {}).items():
                     if period not in PERIODS:
                         continue
                     for metric, value in _numeric_leaves(summary or {}):
+                        if not complete_periods[period] and metric in ('plays', 'net_yards', 'turnovers'):
+                            continue
                         quarter_drive_values[(str(team), period)][metric].append(value)
 
     team_rows = []
@@ -472,6 +496,9 @@ def _analyze(path: Path):
         'player_stats': player_rows, 'team_stats': team_rows,
         'period_scores': period_score_rows, 'period_score_games': quarter_data_games,
         'quarter_scoring_complete_games': quarter_complete_games,
+        'period_play_stats_complete_games': {
+            period: period_play_stats_complete_games[period] for period in PERIODS
+        },
         'quarter_team_stats': quarter_team_rows, 'quarter_player_stats': quarter_player_rows,
         'drive_summaries': drive_rows, 'quarter_drive_summary': drive_period_rows,
     }
@@ -569,7 +596,7 @@ def render_markdown(results):
                           'Quarterly player statistics are not present in these legacy boxscores.'])
         if result['quarter_drive_summary']:
             lines.extend(['', '### Quarter drive summaries', '',
-                          '| Team | Period | Started avg/med | Ended avg/med | Scoring drives avg/med | Points for avg/med | Plays avg/med | Net yards avg/med |',
+                          '| Team | Period | Started avg/med | Ended avg/med | Scoring drives avg/med | Points for avg/med | Drive events (including kicks) avg/med | Net yards avg/med |',
                           '|---|---|---:|---:|---:|---:|---:|---:|'])
             for row in result['quarter_drive_summary']:
                 lines.append(f"| {row['team']} | {row['period']} | "
@@ -595,7 +622,10 @@ def render_markdown(results):
                          + ' | '.join(cells) + ' |')
         lines.extend(['', f"Quarter scoring recorded for {result['period_score_games']} of "
                       f"{result['scored_games']} scored games; scoring reconciles for "
-                      f"{result['quarter_scoring_complete_games']}.", ''])
+                      f"{result['quarter_scoring_complete_games']}.",
+                      'Period play-stat coverage: ' + ', '.join(
+                          f"{period} {result['period_play_stats_complete_games'][period]}/"
+                          f"{result['scored_games']}" for period in PERIODS) + '.', ''])
     return '\n'.join(lines)
 
 
