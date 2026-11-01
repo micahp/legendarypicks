@@ -2,6 +2,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 
@@ -32,10 +33,16 @@ from research_narrative_event_knowledge import (
 
 
 class ResearchNarrativeEventKnowledgeTests(unittest.TestCase):
-    def test_player_log_availability_does_not_mistake_recent_ingestion_for_capture_time(self):
+    def test_player_log_availability_uses_near_game_snapshot_capture_time(self):
         captured, basis = _player_log_available_at(
             "2026-10-31", "2026-11-01 06:15:00")
-        self.assertEqual("2026-11-01T12:00:00Z", captured)
+        self.assertEqual("2026-11-01T06:15:00Z", captured)
+        self.assertEqual("player_game_logs.ingested_at_near_game_date", basis)
+
+    def test_player_log_availability_uses_chronology_for_late_bulk_import(self):
+        captured, basis = _player_log_available_at(
+            "2025-03-01", "2026-10-31 06:15:00")
+        self.assertEqual("2025-03-02T12:00:00Z", captured)
         self.assertEqual("player_game_logs_game_date_plus_one_day_12_utc_conservative", basis)
 
     def test_player_log_availability_uses_chronological_boundary_for_backfills(self):
@@ -71,7 +78,7 @@ class ResearchNarrativeEventKnowledgeTests(unittest.TestCase):
             ])
             con.commit()
             con.close()
-            with open_readonly(db_path) as db:
+            with closing(open_readonly(db_path)) as db:
                 target = {"league": "nba", "season": 2027, "home_team": "ATL",
                           "away_team": "BOS", "start_utc": "2026-10-28T23:00:00Z"}
                 facts = _recent_team_streak_facts(db, target, "2026-10-27T00:00:00Z")
@@ -457,7 +464,7 @@ class ResearchNarrativeEventKnowledgeTests(unittest.TestCase):
                 {"league": "nba", "source_game_id": "0022500001", "espn_event_id": "401NBA",
                  "game_date": "2026-10-30", "home": "GS", "away": "LAL"},
             ]
-            with open_readonly(db_path) as db:
+            with closing(open_readonly(db_path)) as db:
                 self.assertEqual(1, db.execute("PRAGMA query_only").fetchone()[0])
                 with patch("urllib.request.urlopen") as urlopen:
                     result = load_local_narrative_events(db, games)

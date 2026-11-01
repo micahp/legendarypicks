@@ -151,8 +151,23 @@ def _backfilled_postgame_cutoff(game_date: str) -> str:
 
 
 def _player_log_available_at(game_date: Any, ingested_at: Any) -> tuple[str, str]:
-    """Ignore ingestion time; player_game_logs has no trustworthy capture timestamp."""
-    del ingested_at
+    """Use near-game snapshots; use chronology for later bulk backfills.
+
+    A player-log capture within two days of its game is a useful observed
+    availability timestamp. A later bulk import says when the row was copied,
+    not when the game information first became knowable, so replay uses the
+    conservative postgame boundary instead.
+    """
+    try:
+        day = datetime.strptime(str(game_date)[:10], "%Y-%m-%d").date()
+    except (TypeError, ValueError) as exc:
+        raise ResearchAuditError(f"invalid player-log game date: {game_date!r}") from exc
+    captured = _utc_db(ingested_at)
+    if captured:
+        captured_at = nek.parse_utc(captured)
+        game_day_start = datetime.combine(day, datetime.min.time(), timezone.utc)
+        if captured_at and game_day_start <= captured_at <= game_day_start + timedelta(days=2):
+            return captured, "player_game_logs.ingested_at_near_game_date"
     return (_backfilled_postgame_cutoff(game_date),
             "player_game_logs_game_date_plus_one_day_12_utc_conservative")
 
