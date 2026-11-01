@@ -261,37 +261,6 @@ export default function NflPixelHQ(props: Props) {
   const gameToday = scores.games.find(game => game.status === 'LIVE')
     || scores.games.find(game => game.status === 'SCHEDULED')
     || scores.games[0]
-  const mobileScoreSummary = scores.loading ? 'Loading today’s scoreboard…'
-    : scores.unavailable ? 'Today’s scoreboard is unavailable.'
-      : gameToday?.status === 'SCHEDULED'
-        ? `${gameToday.awayTeam.teamId || gameToday.awayTeam.name} at ${gameToday.homeTeam.teamId || gameToday.homeTeam.name} · ${formatDate(gameToday.startTime, true) || 'kickoff time pending'}`
-        : gameToday
-          ? `${gameToday.awayTeam.teamId || gameToday.awayTeam.name} ${gameToday.awayTeam.score ?? '—'} · ${gameToday.homeTeam.teamId || gameToday.homeTeam.name} ${gameToday.homeTeam.score ?? '—'} · ${scoreStatus(gameToday)}`
-          : nextGame ? `${matchup(nextGame.home, nextGame.away)} · ${formatDate(nextGame.kickoff_utc, true) || 'time pending'}`
-            : 'No NFL game or kickoff is published today.'
-  const mobileForecastSummary = model.loading ? 'Loading published forecast…'
-    : model.unavailable ? 'Forecast data is unavailable.'
-      : nextGame
-        ? `${matchup(nextGame.home, nextGame.away)} · ${nextLock?.proj_away != null && nextLock.proj_home != null ? `${Math.round(nextLock.proj_away)}–${Math.round(nextLock.proj_home)} projected` : 'forecast not published'}`
-        : 'No upcoming matchup is published.'
-  const mobileProjectionSummary = projections.loading ? 'Loading player projections…'
-    : projections.unavailable ? 'Projection data is unavailable.'
-      : projectionRows.length
-        ? projectionRows.slice(0, 2).map(player => `${player.name.split(' ').slice(-1)[0]} ${player.v2.rec_yds.mean.toFixed(1)} yd`).join(' · ')
-        : 'No player projections are published.'
-  const mobilePropSummary = propsBoard.loading ? 'Loading sourced prop lines…'
-    : propsBoard.unavailable ? 'Prop data is unavailable.'
-      : propSample
-        ? `${propSample.player.name} · ${propSample.prop.market.replaceAll('_', ' ')} ${propSample.prop.side.toUpperCase()} ${propSample.prop.line} · ${formatDate(propSample.prop.captured_at, true) || 'source time unavailable'}`
-        : 'No upcoming prop lines are published.'
-  const mobileRoomCards: { preview: Exclude<Preview, null>; title: string; summary: string }[] = [
-    { preview: 'scores', title: 'TV · Game center', summary: mobileScoreSummary },
-    { preview: 'forecast', title: 'Scouting board', summary: mobileForecastSummary },
-    { preview: 'players', title: 'Player card wall', summary: mobileProjectionSummary },
-    { preview: 'props', title: 'Computer · Player props', summary: mobilePropSummary },
-    { preview: 'career', title: 'Career · Future feature', summary: 'Career tracking is not available yet.' },
-    { preview: 'arcade', title: 'Arcade · Future destination', summary: 'Mini-games are not available yet.' },
-  ]
 
   useEffect(() => {
     if (!preview) return
@@ -365,8 +334,11 @@ export default function NflPixelHQ(props: Props) {
         <button type="button" className="lp-hq-hotspot lp-hq-tv" aria-label="Open NFL scores from the television"
           aria-controls="nfl-hq-preview" aria-expanded={preview === 'scores'} onClick={event => openPreview('scores', event)}>
           <span className="lp-hq-tv-data">
-            <b>{scores.loading ? 'GAME CENTER' : gameToday ? scoreStatus(gameToday) : 'NFL TODAY'}</b>
-            {scores.loading ? <small>Loading official scoreboard…</small> : gameToday ? (
+            <b>{scores.loading ? 'GAME CENTER' : gameToday?.status === 'LIVE' ? 'LIVE NOW' : gameToday?.status === 'SCHEDULED' ? 'NEXT NFL SLATE' : gameToday ? scoreStatus(gameToday) : 'NFL TODAY'}</b>
+            {scores.loading ? <small>Loading official scoreboard…</small> : gameToday?.status === 'SCHEDULED' ? <>
+              <span className="lp-hq-tv-next">{gameToday.awayTeam.teamId || gameToday.awayTeam.name} at {gameToday.homeTeam.teamId || gameToday.homeTeam.name}</span>
+              <small>{formatDate(gameToday.startTime, true) || 'Kickoff time pending'}</small>
+            </> : gameToday ? (
               <span className="lp-hq-tv-matchup">
                 <span>{gameToday.awayTeam.teamId || gameToday.awayTeam.name} <strong>{gameToday.awayTeam.score ?? '—'}</strong></span>
                 <span>{gameToday.homeTeam.teamId || gameToday.homeTeam.name} <strong>{gameToday.homeTeam.score ?? '—'}</strong></span>
@@ -423,7 +395,7 @@ export default function NflPixelHQ(props: Props) {
             {propsBoard.loading ? <small>Loading sourced lines…</small> : propSample ? (
               <><span>{propSample.player.name} · {propSample.prop.market.replaceAll('_', ' ')}</span>
                 <strong>{propSample.prop.side.toUpperCase()} {propSample.prop.line}</strong>
-                <small>{propSample.prop.source} · {formatDate(propSample.prop.captured_at, true) || 'time unavailable'}</small></>
+                <small>{formatDate(propSample.prop.captured_at, true) || 'source time unavailable'}</small></>
             ) : <small>{propsBoard.unavailable ? 'Prop feed unavailable' : 'No upcoming prop lines'}</small>}
           </span>
           <span className="lp-hq-object-label">COMPUTER · PLAYER PROPS</span>
@@ -507,17 +479,6 @@ export default function NflPixelHQ(props: Props) {
 
         <p className="lp-hq-scene-label" aria-hidden="true">NFL · RESEARCH HQ</p>
       </div>
-      <section className="lp-hq-mobile-briefs" aria-label="Room data and destinations">
-        {mobileRoomCards.map(card => (
-          <button key={card.preview} type="button" aria-label={`Open ${card.title} preview`}
-            aria-controls="nfl-hq-preview" aria-expanded={preview === card.preview}
-            onClick={event => openPreview(card.preview, event)}>
-            <strong>{card.title}</strong>
-            <span>{card.summary}</span>
-            <small>{card.preview === 'career' || card.preview === 'arcade' ? 'Future feature' : 'Open in-room preview →'}</small>
-          </button>
-        ))}
-      </section>
       <p className="lp-hq-audio-note">Room audio is off. No sound plays automatically.</p>
     </section>
   )
