@@ -70,6 +70,7 @@ describe('NflPixelHQ', () => {
     expect(screen.getByRole('link', { name: 'Player props' }).getAttribute('href')).toBe('/props?league=nfl')
     expect(screen.getByRole('link', { name: 'Player projections' }).getAttribute('href')).toBe('/nfl/projections')
     expect(screen.getByText('NFL season context is unavailable right now.')).toBeTruthy()
+    expect(result.container.querySelectorAll('.lp-hq-stage .lp-hq-object-label')).toHaveLength(6)
     const mobilePropCard = await screen.findByRole('button', { name: 'Open Computer · Player props preview' })
     expect(mobilePropCard.textContent).toContain('Test Receiver · rec yds OVER 50.5')
     expect(mobilePropCard.textContent).toMatch(/Oct 31,/)
