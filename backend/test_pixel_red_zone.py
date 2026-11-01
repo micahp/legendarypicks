@@ -65,6 +65,46 @@ def test_redzone_missing_spot_remains_unknown():
     assert events_by_type["Penalty"][0]["before"]["yardline_100"] is None
 
 
+def test_redzone_copies_only_explicit_espn_field_goal_attempt_distance():
+    channel = normalize_summary(load_real_summary(), game_id="401772829", mode="replay")
+    attempts = [event for event in channel["events"]
+                if event["source_event_type"] in {
+                    "Field Goal Good", "Field Goal Missed", "Blocked Field Goal",
+                }]
+    assert [event["field_goal_attempt_distance_yards"] for event in attempts] == [45, 35, 36]
+    assert all(event["field_goal_distance_provenance"]["confidence"] == "verified"
+               for event in attempts)
+    assert all(event["field_goal_distance_provenance"]["source_field"] == "play.text"
+               for event in attempts)
+    assert all(event["source"]["event_id"] and event["source"]["revision"] for event in attempts)
+
+
+def test_redzone_does_not_infer_field_goal_distance_from_field_position():
+    summary = {
+        "header": {
+            "id": "distance-guard",
+            "competitions": [{
+                "competitors": [
+                    {"id": "H", "homeAway": "home", "score": "0", "team": {"abbreviation": "H"}},
+                    {"id": "A", "homeAway": "away", "score": "0", "team": {"abbreviation": "A"}},
+                ],
+                "status": {"type": {"state": "in"}},
+            }],
+        },
+        "plays": [{
+            "id": "fg-without-distance", "sequenceNumber": 1,
+            "period": {"number": 1}, "clock": {"displayValue": "10:00"},
+            "type": {"text": "Field Goal Good"}, "text": "Field goal is GOOD.",
+            "start": {"down": 4, "distance": 8, "yardsToEndzone": 17, "team": {"id": "H"}},
+            "awayScore": 0, "homeScore": 3,
+        }],
+    }
+    event = normalize_summary(summary, mode="live")["events"][0]
+    assert event["field_goal_attempt_distance_yards"] is None
+    assert event["field_goal_distance_provenance"]["confidence"] == "unavailable"
+    assert event["field_goal_distance_provenance"]["reason"] == "no_unique_published_attempt_distance"
+
+
 def test_redzone_td_requires_confirmed_result_and_keeps_try_attached():
     channel = normalize_summary(load_real_summary(), game_id="401772829", mode="replay")
     touchdown_events = [event for event in channel["events"]

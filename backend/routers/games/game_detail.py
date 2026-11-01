@@ -2,6 +2,7 @@
 from fastapi import HTTPException, Query
 from typing import Optional
 from _core import *
+import arcade_store
 from team_stats_contract import build_team_aggregates
 from pixel_red_zone import normalize_summary
 from . import router
@@ -574,6 +575,12 @@ def get_game_playbyplay(league: str, game_id: str):
         try:
             normalized = normalize_summary(sm, game_id=game_id,
                                            observed_at_utc=observed_at, mode="live")
+            # Arcade challenge capture is optional: a missing Arcade migration or
+            # storage outage must never make the established play-by-play fail.
+            try:
+                arcade_store.cache_live_events(normalized)
+            except Exception:
+                pass
             # Keep the response compact; the existing period list remains the
             # compatibility surface, while this block carries canonical fields.
             for event in normalized["events"]:

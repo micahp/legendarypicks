@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime, timezone
 from typing import Any
 
 
 SCHEMA_VERSION = "lp-observed-nfl-event-v1"
+_FIELD_GOAL_ATTEMPT_TYPES = {"Field Goal Good", "Field Goal Missed", "Blocked Field Goal"}
+_FIELD_GOAL_DISTANCE_RE = re.compile(r"(?<!\d)(\d{1,2})\s+yards?\s+field goal\b", re.IGNORECASE)
 
 # These are the event classes that had no non-punt spot disagreement in the
 # bounded 988-play ESPN-vs-nflfastR comparison. Pass Reception, Penalty, Punt,
@@ -122,6 +125,45 @@ def _source_score(play: dict[str, Any]) -> dict[str, int] | None:
     return {"away": away, "home": home}
 
 
+def published_field_goal_attempt_distance(
+    publisher_text: Any,
+    source_event_type: str | None,
+) -> tuple[int | None, dict[str, str]]:
+    """Copy only an explicit distance phrase from ESPN's published FG event text.
+
+    A missing or ambiguous phrase remains unavailable. Field position and the
+    familiar snap/hold allowance are never used as a fallback.
+    """
+    if source_event_type not in _FIELD_GOAL_ATTEMPT_TYPES:
+        return None, {"confidence": "not_applicable", "source_field": "play.text"}
+    matches = list(_FIELD_GOAL_DISTANCE_RE.finditer(publisher_text)) if isinstance(publisher_text, str) else []
+    if len(matches) != 1:
+        return None, {
+            "confidence": "unavailable",
+            "source_field": "play.text",
+            "reason": "no_unique_published_attempt_distance",
+        }
+    distance = int(matches[0].group(1))
+    if not 1 <= distance <= 70:
+        return None, {
+            "confidence": "unavailable",
+            "source_field": "play.text",
+            "reason": "published_distance_out_of_range",
+        }
+    return distance, {
+        "confidence": "verified",
+        "publisher": "ESPN",
+        "source_field": "play.text",
+        "basis": "explicit_field_goal_yard_phrase",
+    }
+
+
+def published_field_goal_challenge_id(event_id: str, revision: str) -> str:
+    """Return the immutable Arcade ID for one canonical publisher event revision."""
+    digest = hashlib.sha256(f"{event_id}:{revision}".encode("utf-8")).hexdigest()[:24]
+    return f"espn-fg-{digest}"
+
+
 def plays_from_summary(summary: dict[str, Any]) -> list[dict[str, Any]]:
     """Return ESPN plays in publisher order for flat and NFL drive envelopes."""
     flat = summary.get("plays")
@@ -212,6 +254,9 @@ def normalize_summary(
         known.add(revision)
 
         kind, source_type = _event_type(play.get("type"))
+        field_goal_distance, field_goal_distance_provenance = published_field_goal_attempt_distance(
+            play.get("text"), source_type,
+        )
         start = play.get("start") if isinstance(play.get("start"), dict) else None
         end = play.get("end") if isinstance(play.get("end"), dict) else None
         offense_team_id = _team_id(start)
@@ -271,6 +316,10 @@ def normalize_summary(
             },
             "event_type": kind,
             "source_event_type": source_type,
+            "field_goal_attempt_distance_yards": field_goal_distance,
+            "field_goal_distance_provenance": field_goal_distance_provenance,
+            "arcade_challenge_id": (published_field_goal_challenge_id(event_id, revision)
+                                    if field_goal_distance is not None else None),
             "score_kind": source_type_name or ("touchdown" if kind == "touchdown" else None),
             "scoring_play": scoring_play,
             "is_turnover": play.get("isTurnover") if isinstance(play.get("isTurnover"), bool) else None,

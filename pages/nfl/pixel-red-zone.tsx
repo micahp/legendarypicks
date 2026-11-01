@@ -8,6 +8,7 @@ export default function PixelRedZonePage() {
   const liveMode = router.isReady && router.query.mode === 'live'
   const scoreboard = useNflScoreboard(liveMode)
   const gameId = typeof router.query.game === 'string' ? router.query.game : null
+  const playId = typeof router.query.play === 'string' ? router.query.play : null
   const fromRoom = router.query.from === 'room'
 
   function backToRoom() {
@@ -30,6 +31,7 @@ export default function PixelRedZonePage() {
         {router.isReady && <PixelRedZonePlayer
           viewMode={liveMode ? 'live' : 'replay'}
           initialPinnedGameId={gameId}
+          initialPlayId={playId}
           scoreboard={liveMode ? scoreboard : undefined}
           onBack={backToRoom}
         />}

@@ -341,15 +341,54 @@ describe('NflPixelHQ', () => {
     expect(screen.getByRole('link', { name: 'Game details' }).getAttribute('href')).toBe('/game/nfl/401772718')
   })
 
-  it('labels career and arcade as future features without implying they work', async () => {
+  it('keeps career honest and opens the playable NFL arcade options from the cabinet', async () => {
     await renderRoom()
 
     fireEvent.click(screen.getByRole('button', { name: /trophy shelf career status/i }))
     const careerPreview = screen.getByRole('region', { name: 'Career receipts' })
     expect(within(careerPreview).getByText(/career tracking is not available yet/i)).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: /arcade console future feature status/i }))
-    const arcadePreview = screen.getByRole('region', { name: 'Arcade console' })
-    expect(within(arcadePreview).getByText(/future destination.*no mini-game or rewards/i)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /open the nfl arcade/i }))
+    const arcadePreview = screen.getByRole('region', { name: 'Play Arcade' })
+    expect(await within(arcadePreview).findByRole('heading', { name: 'Archived ESPN kicks' })).toBeTruthy()
+    expect(await within(arcadePreview).findByText(/no archived field-goal attempts/i)).toBeTruthy()
+    expect(within(arcadePreview).getByText('Live Moments')).toBeTruthy()
+    expect(within(arcadePreview).getByText(/fresh espn field-goal attempts with a verified published distance appear in the list below/i)).toBeTruthy()
+    expect(within(arcadePreview).getByRole('link', { name: 'Open Aim Lab →' }).getAttribute('href'))
+      .toBe('/arcade/nfl/training/kicking?drill=aim-lab-v1')
+    expect(within(arcadePreview).getByRole('link', { name: 'Open Precision Set →' }).getAttribute('href'))
+      .toBe('/arcade/nfl/training/kicking?drill=precision-set-v1')
+    expect(within(arcadePreview).getByRole('link', { name: 'Try a 35-yard kick →' }).getAttribute('href'))
+      .toBe('/arcade/nfl/field-goal/practice-fg-35-v1')
+  })
+
+  it('shows a verified current ESPN kick and its exact challenge link inside the Arcade cabinet', async () => {
+    const fallbackFetch = (global.fetch as jest.Mock).getMockImplementation()!
+    ;(global.fetch as jest.Mock).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === '/api/arcade/moments') return Promise.resolve(jsonResponse({
+        moments: [],
+        live_moments: [{
+          challenge_id: 'espn-fg-0123456789abcdef01234567',
+          origin: 'observed_nfl_play',
+          state: 'live_observed',
+          source_ref: { publisher: 'ESPN', game_id: '401999001', play_id: 'p123',
+            event_id: '401999001:ESPN:p123', source_revision: 'a'.repeat(64) },
+          source_verified_at_utc: '2026-11-01T19:59:00Z',
+          last_observed_at_utc: '2026-11-01T20:00:00Z',
+          publisher_updated_at: '2026-11-01T19:59:45Z',
+          observed_context: { away_team: 'Seattle Seahawks', home_team: 'Chicago Bears',
+            period: 4, clock: '00:18', game_date: '2026-11-01T17:00:00Z', attempt_distance_yards: 52 },
+        }],
+        live_available: true,
+      }))
+      return fallbackFetch(input, init)
+    })
+    await renderRoom()
+
+    fireEvent.click(screen.getByRole('button', { name: /open the nfl arcade/i }))
+    const arcadePreview = screen.getByRole('region', { name: 'Play Arcade' })
+    expect(await within(arcadePreview).findByText(/52 yd · Seattle Seahawks at Chicago Bears/)).toBeTruthy()
+    expect(within(arcadePreview).getByRole('link', { name: 'Play kick' }).getAttribute('href'))
+      .toBe('/arcade/nfl/field-goal/espn-fg-0123456789abcdef01234567')
   })
 })

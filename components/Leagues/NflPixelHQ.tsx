@@ -6,6 +6,7 @@ import type { Game } from '../../services/sports'
 import type { NflSeasonContext } from './types'
 import PixelRedZonePlayer from './PixelRedZonePlayer'
 import { useNflScoreboard } from './hooks/useNflScoreboard'
+import ArchivedKickMoments from '../Arcade/ArchivedKickMoments'
 
 type Props = {
   data: NflSeasonContext | null
@@ -301,7 +302,7 @@ export default function NflPixelHQ(props: Props) {
         : preview === 'props' ? 'Player prop board'
           : preview === 'players' ? 'Player projections'
             : preview === 'career' ? 'Career receipts'
-              : 'Arcade console'
+              : 'Play Arcade'
 
   return (
     <section className="lp-hq-shell" aria-labelledby="nfl-hq-title">
@@ -400,10 +401,10 @@ export default function NflPixelHQ(props: Props) {
           <span className="lp-hq-object-label">COMPUTER · PLAYER PROPS</span>
         </button>
 
-        <button type="button" className="lp-hq-hotspot lp-hq-arcade" aria-label="Open arcade console future feature status"
+        <button type="button" className="lp-hq-hotspot lp-hq-arcade" aria-label="Open the NFL arcade"
           aria-controls="nfl-hq-preview" aria-expanded={preview === 'arcade'} onClick={event => openPreview('arcade', event)}>
           <span className="lp-hq-arcade-art" aria-hidden="true"><i /><b>LP</b><span>ARCADE</span></span>
-          <span className="lp-hq-object-label">ARCADE · FUTURE DESTINATION</span>
+          <span className="lp-hq-object-label">ARCADE · FIELD GOAL FRENZY</span>
         </button>
 
         <section className="lp-hq-panel" id={preview === 'redzone' ? undefined : 'nfl-hq-preview'} role="region" aria-labelledby="nfl-hq-preview-title" hidden={!preview || preview === 'redzone'}>
@@ -472,7 +473,25 @@ export default function NflPixelHQ(props: Props) {
             </div>}
 
             {preview === 'career' && <div className="lp-hq-preview-content"><p>Career tracking is not available yet. No records, progression, or rewards are being generated here.</p></div>}
-            {preview === 'arcade' && <div className="lp-hq-preview-content"><p>The arcade is a future destination. No mini-game or rewards are available yet.</p></div>}
+            {preview === 'arcade' && <div className="lp-hq-preview-content lp-hq-arcade-menu">
+              <p className="lp-hq-preview-matchup">Play Arcade</p>
+              <section aria-labelledby="nfl-hq-arcade-moments">
+                <h3 id="nfl-hq-arcade-moments">Live Moments</h3>
+                <p>Fresh ESPN field-goal attempts with a verified published distance appear in the list below while the source game is still live.</p>
+              </section>
+              <ArchivedKickMoments compact />
+              <section aria-labelledby="nfl-hq-arcade-training">
+                <h3 id="nfl-hq-arcade-training">Training Camp</h3>
+                <p>Practice aim and timing with free, fictional field-goal drills.</p>
+                <Link className="lp-hq-full-link" href="/arcade/nfl/training/kicking?drill=aim-lab-v1">Open Aim Lab →</Link>
+                <Link className="lp-hq-full-link" href="/arcade/nfl/training/kicking?drill=precision-set-v1">Open Precision Set →</Link>
+              </section>
+              <section aria-labelledby="nfl-hq-arcade-friends">
+                <h3 id="nfl-hq-arcade-friends">Friends’ Challenges</h3>
+                <p>Play first, then share a link bound to your verified kick score. Friends can play anonymously and compare on the same challenge board.</p>
+                <Link className="lp-hq-full-link" href="/arcade/nfl/field-goal/practice-fg-35-v1">Try a 35-yard kick →</Link>
+              </section>
+            </div>}
           </>}
         </section>
 

@@ -29,6 +29,9 @@ type PixelEvent = {
   after: { score: { away: number; home: number } | null }
   event_type: string
   source_event_type: string | null
+  field_goal_attempt_distance_yards?: number | null
+  field_goal_distance_provenance?: { confidence?: string; publisher?: string; basis?: string } | null
+  arcade_challenge_id?: string | null
   score_kind?: string | null
   scoring_play: boolean | null
   is_turnover: boolean | null
@@ -72,7 +75,8 @@ type PlayByPlaySnapshot = {
   periods?: { label: string; plays: PlayByPlayPlay[] }[]
   pixel_red_zone?: {
     available?: boolean
-    game?: { teams: FieldTeams }
+    mode?: 'replay' | 'live'
+    game?: { status?: string; teams: FieldTeams }
     source?: { publisher_updated_at?: string | null; observed_at_utc?: string | null }
     events?: PixelEvent[]
   }
@@ -82,6 +86,7 @@ type Props = {
   roomMode?: boolean
   viewMode?: 'live' | 'replay'
   initialPinnedGameId?: string | null
+  initialPlayId?: string | null
   onBack?: () => void
   scoreboard?: { games: Game[]; age: number | null; loading: boolean; unavailable: boolean; source: string | null }
   loadReplay?: (gameId?: string) => Promise<ReplayPayload>
@@ -117,6 +122,22 @@ export function latestCanonicalEvent(events: PixelEvent[]): PixelEvent | null {
     return sequenced.reduce((latest, event) => (event.sequence as number) >= (latest.sequence as number) ? event : latest)
   }
   return events[events.length - 1] || null
+}
+
+export function arcadeChallengeForEvent(event: PixelEvent | null, gameStatus: string | undefined): string | null {
+  if (!event || event.mode !== 'live' || gameStatus !== 'in'
+      || !['Field Goal Good', 'Field Goal Missed', 'Blocked Field Goal'].includes(event.source_event_type || '')
+      || event.source.publisher !== 'ESPN'
+      || !/^\d+:ESPN:[^:]+$/.test(event.source.event_id)
+      || !/^[0-9a-f]{64}$/.test(event.source.revision)
+      || !/^espn-fg-[0-9a-f]{24}$/.test(event.arcade_challenge_id || '')
+      || !Number.isInteger(event.field_goal_attempt_distance_yards)
+      || (event.field_goal_attempt_distance_yards || 0) < 1
+      || (event.field_goal_attempt_distance_yards || 0) > 70
+      || event.field_goal_distance_provenance?.confidence !== 'verified'
+      || event.field_goal_distance_provenance.publisher !== 'ESPN'
+      || event.field_goal_distance_provenance.basis !== 'explicit_field_goal_yard_phrase') return null
+  return event.arcade_challenge_id || null
 }
 
 export function shouldAdvanceCanonicalEvent(previous: PixelEvent | null, next: PixelEvent | null): boolean {
@@ -345,6 +366,10 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack, expanded, initialP
   const candidateEvent = latestCanonicalEvent(canonicalEvents)
   const [canonicalEvent, setCanonicalEvent] = useState<PixelEvent | null>(null)
   const displayedEventRef = useRef<{ gameId: string; event: PixelEvent | null } | null>(null)
+  const arcadeChallengeId = arcadeChallengeForEvent(
+    canonicalEvent,
+    playByPlay?.pixel_red_zone?.game?.status,
+  )
 
   useEffect(() => {
     if (!selectedGame) {
@@ -476,6 +501,10 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack, expanded, initialP
                         <Field event={canonicalEvent} teams={fieldTeams} />
                         <p className="lp-rz-caption">{canonicalEvent.source_event_type || 'ESPN play'} · {canonicalEvent.display_text || 'Publisher play text unavailable.'}</p>
                         <p className="lp-rz-source-caption">Source event {canonicalEvent.source.event_id} · sequence {canonicalEvent.sequence ?? 'unavailable'} · {canonicalEvent.source.occurred_at_utc || 'publisher event time unavailable'}</p>
+                        {arcadeChallengeId && <Link className="lp-rz-arcade-cta"
+                          href={`/arcade/nfl/field-goal/${encodeURIComponent(arcadeChallengeId)}`}>
+                          YOUR TURN · {canonicalEvent.field_goal_attempt_distance_yards} YD — Play this kick in Arcade
+                        </Link>}
                         {canonicalEvent.review_state === 'pending' && <p className="lp-rz-review">Source review pending.</p>}
                         {canonicalEvent.review_state === 'overturned' && <p className="lp-rz-review">Source correction: the prior ruling was overturned.</p>}
                         {playByPlay?.pixel_red_zone?.source?.publisher_updated_at && <p className="lp-rz-source-caption">ESPN summary updated: {playByPlay.pixel_red_zone.source.publisher_updated_at}</p>}
@@ -520,9 +549,9 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack, expanded, initialP
   )
 }
 
-export default function PixelRedZonePlayer({ roomMode = false, viewMode, initialPinnedGameId, onBack, scoreboard, loadReplay = loadBundledReplay }: Props) {
+export default function PixelRedZonePlayer({ roomMode = false, viewMode, initialPinnedGameId, initialPlayId, onBack, scoreboard, loadReplay = loadBundledReplay }: Props) {
   const [payload, setPayload] = useState<ReplayPayload | null>(null)
-  const [selectedReplayId, setSelectedReplayId] = useState('401772829')
+  const [selectedReplayId, setSelectedReplayId] = useState(initialPinnedGameId || '401772829')
   const [archiveSelected, setArchiveSelected] = useState(!roomMode && viewMode !== 'live')
   const [loading, setLoading] = useState(!roomMode && viewMode !== 'live')
   const [unavailable, setUnavailable] = useState(false)
@@ -546,6 +575,11 @@ export default function PixelRedZonePlayer({ roomMode = false, viewMode, initial
         if (data.mode !== 'replay' || !Array.isArray(data.events) || data.events.length === 0) throw new Error('invalid replay')
         if (!active) return
         setPayload(data)
+        const requestedIndex = initialPlayId && data.game.game_id === selectedReplayId
+          ? data.events.findIndex(item => item.source.play_id === initialPlayId)
+          : -1
+        setIndex(requestedIndex >= 0 ? requestedIndex : 0)
+        lastIndexRef.current = null
         setLoading(false)
       })
       .catch(() => {
@@ -555,7 +589,7 @@ export default function PixelRedZonePlayer({ roomMode = false, viewMode, initial
         }
       })
     return () => { active = false }
-  }, [archiveSelected, loadReplay, selectedReplayId])
+  }, [archiveSelected, initialPlayId, loadReplay, selectedReplayId])
 
   useEffect(() => {
     if (!roomMode || !archiveSelected) return

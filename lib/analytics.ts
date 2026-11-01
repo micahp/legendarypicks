@@ -28,9 +28,13 @@ export function trackEvent(name: string, params: GtagParams = {}): void {
 /** Fired manually on route change: config sets send_page_view false. */
 export function trackPageView(url: string): void {
   if (!analyticsReady()) return
+  const safeUrl = new URL(url, window.location.origin)
+  // Share IDs are bearer tokens: keep them out of GA page paths and locations.
+  safeUrl.searchParams.delete('share')
+  const pagePath = `${safeUrl.pathname}${safeUrl.search}${safeUrl.hash}`
   window.gtag!('event', 'page_view', {
-    page_path: url,
-    page_location: window.location.href,
+    page_path: pagePath,
+    page_location: safeUrl.href,
     page_title: document.title,
   })
 }

@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import PixelRedZonePlayer, { type ReplayPayload } from './PixelRedZonePlayer'
+import PixelRedZonePlayer, { arcadeChallengeForEvent, type ReplayPayload } from './PixelRedZonePlayer'
 
 const originalFetch = global.fetch
 const originalAudioContext = window.AudioContext
@@ -154,6 +154,36 @@ describe('PixelRedZonePlayer', () => {
     await screen.findByText(/Cincinnati Bengals at Cleveland Browns/)
     fireEvent.click(screen.getByRole('button', { name: 'Next play' }))
     fireEvent.click(screen.getByRole('button', { name: 'Next play' }))
-    expect(screen.getByText('Ball spot unavailable for this event class.')).toBeTruthy()
+    expect(screen.getByText('Ball spot unavailable. Centered football is illustrative only.')).toBeTruthy()
+  })
+
+  it('opens a replay at the exact source play from a challenge link', async () => {
+    const loadReplay = jest.fn(async () => response())
+    await act(async () => {
+      render(<PixelRedZonePlayer viewMode="replay" initialPinnedGameId="401772829"
+        initialPlayId="p200" loadReplay={loadReplay} />)
+      await new Promise(resolve => setTimeout(resolve, 0))
+    })
+
+    expect(await screen.findByText(/Pass for a touchdown\./)).toBeTruthy()
+    expect((screen.getByRole('slider', { name: 'Replay play position' }) as HTMLInputElement).value).toBe('1')
+  })
+
+  it('offers Arcade only for a verified live field goal with published distance', () => {
+    const verifiedKick = event(100, {
+      mode: 'live',
+      source_event_type: 'Field Goal Good',
+      source: { publisher: 'ESPN', event_id: '401772829:ESPN:p100', play_id: 'p100',
+        revision: 'a'.repeat(64), occurred_at_utc: null, observed_at_utc: '2026-10-01T00:00:00Z' },
+      field_goal_attempt_distance_yards: 45,
+      field_goal_distance_provenance: {
+        confidence: 'verified', publisher: 'ESPN', basis: 'explicit_field_goal_yard_phrase',
+      },
+      arcade_challenge_id: `espn-fg-${'b'.repeat(24)}`,
+    })
+
+    expect(arcadeChallengeForEvent(verifiedKick, 'in')).toBe(`espn-fg-${'b'.repeat(24)}`)
+    expect(arcadeChallengeForEvent(verifiedKick, 'post')).toBeNull()
+    expect(arcadeChallengeForEvent(event(100), 'in')).toBeNull()
   })
 })
