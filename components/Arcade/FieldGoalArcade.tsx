@@ -168,10 +168,15 @@ export function normalizeKickGesture({
   width: number
   height: number
 }) {
+  const quantizeControl = (value: number, min: number, max: number) =>
+    clamp(Math.round(clamp(value, min, max) * 100) / 100, min, max)
+
   return {
-    aim: clamp(startAim + deltaX / Math.max(1, width / 2), -1, 1),
-    power: clamp(startPower - deltaY / Math.max(1, height * 0.7), 0, 1),
-    release_timing: clamp(elapsedMs / 1200, 0, 1),
+    // Match the accessible range controls' 0.01 step so touch, mouse and
+    // keyboard produce the same normalized resolution before server scoring.
+    aim: quantizeControl(startAim + deltaX / Math.max(1, width / 2), -1, 1),
+    power: quantizeControl(startPower - deltaY / Math.max(1, height * 0.7), 0, 1),
+    release_timing: quantizeControl(elapsedMs / 1200, 0, 1),
   }
 }
 

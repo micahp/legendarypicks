@@ -32,5 +32,6 @@ The feature branch was also served from a separate Next dev process, proxied to 
 - The HQ cabinet listed 34 archived ESPN challenges and no live moments. Opening a 42-yard kick and submitting an attempt returned the server-calculated 961 score; the historical “Real attempt: made” outcome appeared separately after the arcade result.
 - The API round-trip created an anonymous claim, persisted a leaderboard result, and created and resolved a score-bound friend share in the temporary database.
 - The mobile document width remained 390px. There were no Arcade API errors or browser page errors. Other NFL research endpoints returned 404 because they were intentionally omitted from this isolated server.
+- Simulated touch-pointer and keyboard kick paths sent the identical normalized input (`aim=0.2`, `power=0.58`, `release_timing=0.52`) and both received 707. The touch gesture is quantized to the sliders’ 0.01 step. Reduced motion computed to `0s`; mobile result buttons measured 163×44px.
 
 Mobile results are browser emulation. Physical-phone input parity, low-end performance, first-time player feedback, and a live source-correction pilot still need field validation.

@@ -165,6 +165,18 @@ describe('FieldGoalArcade', () => {
     expect(wideSurface).toEqual(compactSurface)
   })
 
+  it('quantizes one-thumb input to the accessible sliders’ 0.01 step', () => {
+    expect(normalizeKickGesture({
+      startAim: 0,
+      startPower: 0.5790909090909091,
+      deltaX: 10,
+      deltaY: 0,
+      elapsedMs: 626.3,
+      width: 100,
+      height: 100,
+    })).toEqual({ aim: 0.2, power: 0.58, release_timing: 0.52 })
+  })
+
   it('submits one normalized attempt from a one-thumb pointer release', async () => {
     await renderGame({ challengeId: 'practice-fg-35-v1' })
     const pad = screen.getByRole('button', { name: 'One-thumb kick gesture' })
