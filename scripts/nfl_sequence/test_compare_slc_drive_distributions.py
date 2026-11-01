@@ -127,6 +127,18 @@ class ActualDriveExtraction(unittest.TestCase):
                       and row['metric'] == 'net_yards_per_drive')
         self.assertEqual(metric['sample_n'], 0)
 
+    def test_team_boxscore_scrimmage_plays_are_reported_separately(self):
+        metrics = comparison._append_boxscore_play_metrics([], {
+            'team_stats': [
+                {'team': 'DET', 'metric': 'plays', 'sample_n': 2, 'mean': 68.5, 'median': 68},
+                {'team': 'MIN', 'metric': 'plays', 'sample_n': 2, 'mean': 61.0, 'median': 61},
+            ]
+        }, expected_games=2)
+        by_team = {row['cohort']: row for row in metrics}
+        self.assertEqual(by_team['DET']['mean'], 68.5)
+        self.assertEqual(by_team['MIN']['metric'], 'scrimmage_plays_per_game')
+        self.assertIsNone(by_team['DET']['p95'])
+
 
 if __name__ == '__main__':
     unittest.main()
