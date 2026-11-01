@@ -1,8 +1,10 @@
 import Link from 'next/link'
+import { createPortal } from 'react-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
 import { normalizeGame, type Game } from '../../services/sports'
 import type { NflSeasonContext } from './types'
+import PixelRedZonePlayer from './PixelRedZonePlayer'
 
 type Props = {
   data: NflSeasonContext | null
@@ -10,7 +12,7 @@ type Props = {
   error: string | null
 }
 
-type Preview = 'scores' | 'forecast' | 'props' | 'players' | 'career' | 'arcade' | null
+type Preview = 'redzone' | 'scores' | 'forecast' | 'props' | 'players' | 'career' | 'arcade' | null
 type RoomTimeOfDay = 'dawn' | 'day' | 'dusk' | 'night'
 
 export function getRoomTimeOfDay(date: Date): RoomTimeOfDay {
@@ -146,6 +148,7 @@ export default function NflPixelHQ(props: Props) {
   })
   const lastHotspot = useRef<HTMLButtonElement | null>(null)
   const closeButton = useRef<HTMLButtonElement | null>(null)
+  const redZoneDialog = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     const updateTimeOfDay = () => setTimeOfDay(getRoomTimeOfDay(new Date()))
@@ -264,7 +267,26 @@ export default function NflPixelHQ(props: Props) {
 
   useEffect(() => {
     if (!preview) return
-    requestAnimationFrame(() => closeButton.current?.focus())
+    requestAnimationFrame(() => {
+      if (preview === 'redzone') document.getElementById('pixel-red-zone-title')?.focus()
+      else closeButton.current?.focus()
+    })
+  }, [preview])
+
+  useEffect(() => {
+    if (preview !== 'redzone') return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [preview])
+
+  useEffect(() => {
+    if (!preview) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closePreview()
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
   }, [preview])
 
   useEffect(() => {
@@ -298,12 +320,13 @@ export default function NflPixelHQ(props: Props) {
     requestAnimationFrame(() => lastHotspot.current?.focus())
   }
 
-  const previewTitle = preview === 'scores' ? 'Game center'
-    : preview === 'forecast' ? 'Scouting report'
-      : preview === 'props' ? 'Player prop board'
-        : preview === 'players' ? 'Player projections'
-          : preview === 'career' ? 'Career receipts'
-            : 'Arcade console'
+  const previewTitle = preview === 'redzone' ? 'Pixel Red Zone'
+    : preview === 'scores' ? 'Game center'
+      : preview === 'forecast' ? 'Scouting report'
+        : preview === 'props' ? 'Player prop board'
+          : preview === 'players' ? 'Player projections'
+            : preview === 'career' ? 'Career receipts'
+              : 'Arcade console'
 
   return (
     <section className="lp-hq-shell" aria-labelledby="nfl-hq-title">
@@ -331,8 +354,8 @@ export default function NflPixelHQ(props: Props) {
       <div className="lp-hq-stage" role="group" aria-label="Interactive NFL analysis room" data-time-of-day={timeOfDay}>
         <div className="lp-hq-atmosphere" aria-hidden="true" />
 
-        <button type="button" className="lp-hq-hotspot lp-hq-tv" aria-label="Open NFL scores from the television"
-          aria-controls="nfl-hq-preview" aria-expanded={preview === 'scores'} onClick={event => openPreview('scores', event)}>
+        <button type="button" className="lp-hq-hotspot lp-hq-tv" aria-label="Watch Pixel Red Zone from the television"
+          aria-controls="nfl-hq-preview" aria-expanded={preview === 'redzone'} onClick={event => openPreview('redzone', event)}>
           <span className="lp-hq-tv-data">
             <b>{scores.loading ? 'GAME CENTER' : gameToday?.status === 'LIVE' ? 'LIVE NOW' : gameToday?.status === 'SCHEDULED' ? 'NEXT NFL SLATE' : gameToday ? scoreStatus(gameToday) : 'NFL TODAY'}</b>
             {scores.loading ? <small>Loading official scoreboard…</small> : gameToday?.status === 'SCHEDULED' ? <>
@@ -342,13 +365,14 @@ export default function NflPixelHQ(props: Props) {
               <span className="lp-hq-tv-matchup">
                 <span>{gameToday.awayTeam.teamId || gameToday.awayTeam.name} <strong>{gameToday.awayTeam.score ?? '—'}</strong></span>
                 <span>{gameToday.homeTeam.teamId || gameToday.homeTeam.name} <strong>{gameToday.homeTeam.score ?? '—'}</strong></span>
+                {gameToday.status === 'LIVE' && <small>{scores.age === null ? 'Scoreboard age unavailable' : `Scoreboard snapshot · ${Math.max(1, Math.round(scores.age / 60))} min ago`}</small>}
               </span>
             ) : nextGame ? <>
               <small>{scores.unavailable ? 'Score feed unavailable · next up' : 'No game today · next up'}</small>
               <span className="lp-hq-tv-next">{matchup(nextGame.home, nextGame.away)} · {formatDate(nextGame.kickoff_utc, true) || 'time pending'}</span>
             </> : <small>{scores.unavailable ? 'Score feed unavailable' : 'No NFL games scheduled today'}</small>}
           </span>
-          <span className="lp-hq-object-label">TV · GAME CENTER</span>
+          <span className="lp-hq-object-label">TV · PIXEL RED ZONE</span>
         </button>
 
         <button type="button" className="lp-hq-hotspot lp-hq-board" aria-label="Open NFL forecasts from the scouting board"
@@ -407,12 +431,12 @@ export default function NflPixelHQ(props: Props) {
           <span className="lp-hq-object-label">ARCADE · FUTURE DESTINATION</span>
         </button>
 
-        <section className="lp-hq-panel" id="nfl-hq-preview" role="region" aria-labelledby="nfl-hq-preview-title" hidden={!preview}>
-          {preview && <>
-            <header className="lp-hq-panel-header">
+        <section className="lp-hq-panel" id={preview === 'redzone' ? undefined : 'nfl-hq-preview'} role="region" aria-labelledby="nfl-hq-preview-title" hidden={!preview || preview === 'redzone'}>
+            {preview && preview !== 'redzone' && <>
+              <header className="lp-hq-panel-header">
               <div><small>IN-ROOM PREVIEW</small><h2 id="nfl-hq-preview-title">{previewTitle}</h2></div>
               <button ref={closeButton} type="button" onClick={closePreview}>Return to HQ</button>
-            </header>
+              </header>
 
             {preview === 'scores' && <div className="lp-hq-preview-content">
               {scores.loading ? <p role="status">Loading today’s NFL scoreboard…</p>
@@ -480,6 +504,31 @@ export default function NflPixelHQ(props: Props) {
         <p className="lp-hq-scene-label" aria-hidden="true">NFL · RESEARCH HQ</p>
       </div>
       <p className="lp-hq-audio-note">Room audio is off. No sound plays automatically.</p>
+      {preview === 'redzone' && typeof document !== 'undefined' && createPortal(
+        <section ref={redZoneDialog} className="lp-rz-room-overlay" id="nfl-hq-preview"
+          role="dialog" aria-modal="true" aria-labelledby="pixel-red-zone-title"
+          onKeyDown={event => {
+            if (event.key !== 'Tab') return
+            const controls = redZoneDialog.current?.querySelectorAll<HTMLElement>(
+              'a[href], button:not(:disabled), input:not(:disabled), [tabindex]:not([tabindex="-1"])',
+            )
+            if (!controls?.length) return
+            const first = controls[0]
+            const last = controls[controls.length - 1]
+            if (event.shiftKey && document.activeElement === first) {
+              event.preventDefault()
+              last.focus()
+            } else if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault()
+              first.focus()
+            }
+          }}>
+          <div className="lp-rz-room-dialog">
+            <PixelRedZonePlayer roomMode onBack={closePreview} scoreboard={scores} />
+          </div>
+        </section>,
+        document.body,
+      )}
     </section>
   )
 }

@@ -57,3 +57,6 @@ from .game_detail import (  # noqa: E402
 )
 from .predictions import submit_prediction, list_predictions  # noqa: E402
 from .misc import root, health, coverage, stream_league_audio  # noqa: E402
+from .pixel_red_zone import router as pixel_red_zone_router  # noqa: E402
+
+router.include_router(pixel_red_zone_router)

@@ -1,0 +1,1380 @@
+{
+  "capture_date_utc": "2026-11-01T06:57:14.846733+00:00",
+  "source": "ESPN site API /football/nfl/summary?event={event_id}",
+  "method": "espn_client.summary via existing paced_http client; sequential batch_pacing",
+  "fixtures": [
+    {
+      "event_id": "401772830",
+      "captured_at_utc": "2026-11-01T06:57:15.069658+00:00",
+      "started_at_utc": "2026-11-01T06:57:14.846820+00:00",
+      "file": "401772830.json",
+      "sha256": "9b64fd8607e1bbe12c2fdc120a46da46532f7e883874bcc099bf825483224930",
+      "bytes": 839110,
+      "header_id": "401772830",
+      "date": "2025-09-07T17:00Z",
+      "status": "post",
+      "teams": [
+        "ATL",
+        "TB"
+      ],
+      "drives": 20,
+      "plays": 187,
+      "unique_play_ids": 187,
+      "all_play_ids_present": true,
+      "coverage": {
+        "period": 187,
+        "clock": 187,
+        "awayScore": 187,
+        "homeScore": 187,
+        "scoringPlay": 187,
+        "type": 187,
+        "text": 187,
+        "modified": 187,
+        "wallclock": 187,
+        "start": 187,
+        "end": 187,
+        "isTurnover": 187
+      },
+      "start_end_fields": {
+        "start": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ],
+        "end": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ]
+      },
+      "types": {
+        "Kickoff": 10,
+        "Pass Reception": 40,
+        "Rush": 49,
+        "Passing Touchdown": 4,
+        "Official Timeout": 11,
+        "Pass Incompletion": 32,
+        "Punt": 7,
+        "Penalty": 8,
+        "Fumble Recovery (Own)": 1,
+        "End Period": 2,
+        "Field Goal Good": 3,
+        "Timeout": 11,
+        "Two-minute warning": 2,
+        "Sack": 2,
+        "End of Half": 1,
+        "Field Goal Missed": 2,
+        "Rushing Touchdown": 1,
+        "End of Game": 1
+      },
+      "turnovers": 0,
+      "review_text_matches": 1,
+      "review_examples": [
+        "(Shotgun) M.Penix pass incomplete short left to D.London (J.Dean).Atlanta challenged the incomplete pass ruling, and the play was Upheld. The ruling on the field stands. (Timeout #1.)"
+      ],
+      "scoring_plays": 8,
+      "meta": {
+        "firstPlayWallClock": "2025-09-07T17:02:59Z",
+        "lastPlayWallClock": "2025-09-07T20:27:04Z",
+        "lastUpdatedAt": "2025-09-07T20:27:04Z",
+        "gameState": "post"
+      },
+      "detailed_coverage": {
+        "play_id": 187,
+        "sequence_number": 187,
+        "period_number": 187,
+        "clock_display": 187,
+        "away_score": 187,
+        "home_score": 187,
+        "play_type_text": 187,
+        "is_turnover": 187,
+        "wallclock": 187,
+        "modified": 187,
+        "start": {
+          "down": 187,
+          "distance": 187,
+          "yardLine": 187,
+          "yardsToEndzone": 187,
+          "possessionText": 173,
+          "downDistanceText": 173
+        },
+        "end": {
+          "down": 187,
+          "distance": 187,
+          "yardLine": 187,
+          "yardsToEndzone": 187,
+          "possessionText": 173,
+          "downDistanceText": 173
+        }
+      },
+      "ids_unique_within_game": true,
+      "turnover_true_count": 0,
+      "point_after_attempts": {
+        "count": 5,
+        "results": {
+          "Extra Point Good": 4,
+          "Extra Point Missed": 1
+        }
+      },
+      "two_point_attempt_text_count": 0,
+      "review": {
+        "count": 4,
+        "type_and_outcome": {
+          "CHALLENGE:False": 2,
+          "OFFICIAL:False": 1,
+          "CHALLENGE:True": 1
+        }
+      },
+      "scoring_type_counts": {
+        "touchdown": 5,
+        "field-goal": 3
+      },
+      "score_reconciliation": {
+        "summary_header": {
+          "home": 20,
+          "away": 23
+        },
+        "last_play": {
+          "home": 20,
+          "away": 23
+        },
+        "independent_scoreboard": {
+          "home": 20,
+          "away": 23
+        },
+        "matches": true
+      }
+    },
+    {
+      "event_id": "401772829",
+      "captured_at_utc": "2026-11-01T06:57:16.588630+00:00",
+      "started_at_utc": "2026-11-01T06:57:15.126591+00:00",
+      "file": "401772829.json",
+      "sha256": "349693297cd6f8abdabe0f4e35bc3917d20bc542f2f10ca50a5066d417390161",
+      "bytes": 822081,
+      "header_id": "401772829",
+      "date": "2025-09-07T17:00Z",
+      "status": "post",
+      "teams": [
+        "CLE",
+        "CIN"
+      ],
+      "drives": 20,
+      "plays": 180,
+      "unique_play_ids": 180,
+      "all_play_ids_present": true,
+      "coverage": {
+        "period": 180,
+        "clock": 180,
+        "awayScore": 180,
+        "homeScore": 180,
+        "scoringPlay": 180,
+        "type": 180,
+        "text": 180,
+        "modified": 180,
+        "wallclock": 180,
+        "start": 180,
+        "end": 180,
+        "isTurnover": 180
+      },
+      "start_end_fields": {
+        "start": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ],
+        "end": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ]
+      },
+      "types": {
+        "Kickoff": 8,
+        "Pass Reception": 43,
+        "Rush": 45,
+        "Penalty": 13,
+        "Pass Incompletion": 21,
+        "Rushing Touchdown": 2,
+        "Official Timeout": 13,
+        "End Period": 2,
+        "Timeout": 9,
+        "Punt": 8,
+        "Passing Touchdown": 2,
+        "Two-minute warning": 2,
+        "Field Goal Good": 2,
+        "End of Half": 1,
+        "Sack": 5,
+        "Pass Interception Return": 2,
+        "Field Goal Missed": 1,
+        "End of Game": 1
+      },
+      "turnovers": 2,
+      "review_text_matches": 0,
+      "review_examples": [],
+      "scoring_plays": 6,
+      "meta": {
+        "firstPlayWallClock": "2025-09-07T17:02:27Z",
+        "lastPlayWallClock": "2025-09-07T20:01:19Z",
+        "lastUpdatedAt": "2025-09-07T20:01:19Z",
+        "gameState": "post"
+      },
+      "detailed_coverage": {
+        "play_id": 180,
+        "sequence_number": 180,
+        "period_number": 180,
+        "clock_display": 180,
+        "away_score": 180,
+        "home_score": 180,
+        "play_type_text": 180,
+        "is_turnover": 180,
+        "wallclock": 180,
+        "modified": 180,
+        "start": {
+          "down": 180,
+          "distance": 180,
+          "yardLine": 180,
+          "yardsToEndzone": 180,
+          "possessionText": 168,
+          "downDistanceText": 168
+        },
+        "end": {
+          "down": 180,
+          "distance": 180,
+          "yardLine": 180,
+          "yardsToEndzone": 180,
+          "possessionText": 167,
+          "downDistanceText": 167
+        }
+      },
+      "ids_unique_within_game": true,
+      "turnover_true_count": 2,
+      "point_after_attempts": {
+        "count": 4,
+        "results": {
+          "Extra Point Good": 3,
+          "Extra Point Missed": 1
+        }
+      },
+      "two_point_attempt_text_count": 0,
+      "review": {
+        "count": 1,
+        "type_and_outcome": {
+          "OFFICIAL:False": 1
+        }
+      },
+      "scoring_type_counts": {
+        "touchdown": 4,
+        "field-goal": 2
+      },
+      "score_reconciliation": {
+        "summary_header": {
+          "home": 16,
+          "away": 17
+        },
+        "last_play": {
+          "home": 16,
+          "away": 17
+        },
+        "independent_scoreboard": {
+          "home": 16,
+          "away": 17
+        },
+        "matches": true
+      }
+    },
+    {
+      "event_id": "401772719",
+      "captured_at_utc": "2026-11-01T06:57:18.106338+00:00",
+      "started_at_utc": "2026-11-01T06:57:16.642245+00:00",
+      "file": "401772719.json",
+      "sha256": "674fe440c5958a748b2e76f251d51d9d49c5cbc5b583bcdfe21fffe7bfdf4fe0",
+      "bytes": 763688,
+      "header_id": "401772719",
+      "date": "2025-09-07T17:00Z",
+      "status": "post",
+      "teams": [
+        "IND",
+        "MIA"
+      ],
+      "drives": 14,
+      "plays": 163,
+      "unique_play_ids": 163,
+      "all_play_ids_present": true,
+      "coverage": {
+        "period": 163,
+        "clock": 163,
+        "awayScore": 163,
+        "homeScore": 163,
+        "scoringPlay": 163,
+        "type": 163,
+        "text": 163,
+        "modified": 163,
+        "wallclock": 161,
+        "start": 163,
+        "end": 163,
+        "isTurnover": 163
+      },
+      "start_end_fields": {
+        "start": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ],
+        "end": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ]
+      },
+      "types": {
+        "Kickoff": 9,
+        "Pass Reception": 39,
+        "Pass Incompletion": 17,
+        "Rush": 50,
+        "Field Goal Good": 4,
+        "Official Timeout": 14,
+        "Pass Interception Return": 2,
+        "Sack": 3,
+        "End Period": 2,
+        "Passing Touchdown": 2,
+        "Sack Opp Fumble Recovery": 1,
+        "Rushing Touchdown": 2,
+        "Timeout": 8,
+        "Punt": 1,
+        "Penalty": 5,
+        "Two-minute warning": 2,
+        "End of Half": 1,
+        "End of Game": 1
+      },
+      "turnovers": 3,
+      "review_text_matches": 0,
+      "review_examples": [],
+      "scoring_plays": 8,
+      "meta": {
+        "firstPlayWallClock": "2025-09-07T17:03:32Z",
+        "lastPlayWallClock": "2025-09-07T19:47:30Z",
+        "lastUpdatedAt": "2025-09-07T19:47:30Z",
+        "gameState": "post"
+      },
+      "detailed_coverage": {
+        "play_id": 163,
+        "sequence_number": 163,
+        "period_number": 163,
+        "clock_display": 163,
+        "away_score": 163,
+        "home_score": 163,
+        "play_type_text": 163,
+        "is_turnover": 163,
+        "wallclock": 161,
+        "modified": 163,
+        "start": {
+          "down": 163,
+          "distance": 163,
+          "yardLine": 163,
+          "yardsToEndzone": 163,
+          "possessionText": 150,
+          "downDistanceText": 150
+        },
+        "end": {
+          "down": 163,
+          "distance": 163,
+          "yardLine": 163,
+          "yardsToEndzone": 163,
+          "possessionText": 145,
+          "downDistanceText": 145
+        }
+      },
+      "ids_unique_within_game": true,
+      "turnover_true_count": 3,
+      "point_after_attempts": {
+        "count": 4,
+        "results": {
+          "Extra Point Good": 3,
+          "Two Point Pass": 1
+        }
+      },
+      "two_point_attempt_text_count": 1,
+      "review": {
+        "count": 0,
+        "type_and_outcome": {}
+      },
+      "scoring_type_counts": {
+        "field-goal": 4,
+        "touchdown": 4
+      },
+      "score_reconciliation": {
+        "summary_header": {
+          "home": 33,
+          "away": 8
+        },
+        "last_play": {
+          "home": 33,
+          "away": 8
+        },
+        "independent_scoreboard": {
+          "home": 33,
+          "away": 8
+        },
+        "matches": true
+      }
+    },
+    {
+      "event_id": "401772720",
+      "captured_at_utc": "2026-11-01T06:57:19.581791+00:00",
+      "started_at_utc": "2026-11-01T06:57:18.153522+00:00",
+      "file": "401772720.json",
+      "sha256": "e6bdf60ef6ce0718dc8878cca418af2357de5cb5a1bd86135c6a1f03be39d643",
+      "bytes": 917838,
+      "header_id": "401772720",
+      "date": "2025-09-07T17:00Z",
+      "status": "post",
+      "teams": [
+        "NE",
+        "LV"
+      ],
+      "drives": 23,
+      "plays": 197,
+      "unique_play_ids": 197,
+      "all_play_ids_present": true,
+      "coverage": {
+        "period": 197,
+        "clock": 197,
+        "awayScore": 197,
+        "homeScore": 197,
+        "scoringPlay": 197,
+        "type": 197,
+        "text": 197,
+        "modified": 197,
+        "wallclock": 196,
+        "start": 197,
+        "end": 197,
+        "isTurnover": 197
+      },
+      "start_end_fields": {
+        "start": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ],
+        "end": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ]
+      },
+      "types": {
+        "Kickoff": 9,
+        "Pass Reception": 52,
+        "Rush": 41,
+        "Pass Incompletion": 24,
+        "Penalty": 10,
+        "Passing Touchdown": 2,
+        "Official Timeout": 15,
+        "Punt": 11,
+        "Sack": 7,
+        "Pass Interception Return": 2,
+        "End Period": 2,
+        "Field Goal Missed": 2,
+        "Timeout": 10,
+        "Two-minute warning": 2,
+        "Field Goal Good": 4,
+        "End of Half": 1,
+        "Rushing Touchdown": 1,
+        "Fumble Recovery (Own)": 1,
+        "End of Game": 1
+      },
+      "turnovers": 2,
+      "review_text_matches": 0,
+      "review_examples": [],
+      "scoring_plays": 7,
+      "meta": {
+        "firstPlayWallClock": "2025-09-07T17:02:54Z",
+        "lastPlayWallClock": "2025-09-07T20:05:53Z",
+        "lastUpdatedAt": "2025-09-07T20:05:53Z",
+        "gameState": "post"
+      },
+      "detailed_coverage": {
+        "play_id": 197,
+        "sequence_number": 197,
+        "period_number": 197,
+        "clock_display": 197,
+        "away_score": 197,
+        "home_score": 197,
+        "play_type_text": 197,
+        "is_turnover": 197,
+        "wallclock": 196,
+        "modified": 197,
+        "start": {
+          "down": 197,
+          "distance": 197,
+          "yardLine": 197,
+          "yardsToEndzone": 197,
+          "possessionText": 184,
+          "downDistanceText": 184
+        },
+        "end": {
+          "down": 197,
+          "distance": 197,
+          "yardLine": 197,
+          "yardsToEndzone": 197,
+          "possessionText": 181,
+          "downDistanceText": 181
+        }
+      },
+      "ids_unique_within_game": true,
+      "turnover_true_count": 2,
+      "point_after_attempts": {
+        "count": 3,
+        "results": {
+          "Extra Point Good": 3
+        }
+      },
+      "two_point_attempt_text_count": 0,
+      "review": {
+        "count": 0,
+        "type_and_outcome": {}
+      },
+      "scoring_type_counts": {
+        "touchdown": 3,
+        "field-goal": 4
+      },
+      "score_reconciliation": {
+        "summary_header": {
+          "home": 13,
+          "away": 20
+        },
+        "last_play": {
+          "home": 13,
+          "away": 20
+        },
+        "independent_scoreboard": {
+          "home": 13,
+          "away": 20
+        },
+        "matches": true
+      }
+    },
+    {
+      "event_id": "401772718",
+      "captured_at_utc": "2026-11-01T06:57:21.080443+00:00",
+      "started_at_utc": "2026-11-01T06:57:19.657164+00:00",
+      "file": "401772718.json",
+      "sha256": "0eff08d4759ecbedc7d36f0c875f51911f7828627b9fb76890fb917fc989e7c2",
+      "bytes": 867116,
+      "header_id": "401772718",
+      "date": "2025-09-07T17:00Z",
+      "status": "post",
+      "teams": [
+        "NO",
+        "ARI"
+      ],
+      "drives": 19,
+      "plays": 195,
+      "unique_play_ids": 195,
+      "all_play_ids_present": true,
+      "coverage": {
+        "period": 195,
+        "clock": 195,
+        "awayScore": 195,
+        "homeScore": 195,
+        "scoringPlay": 195,
+        "type": 195,
+        "text": 195,
+        "modified": 195,
+        "wallclock": 195,
+        "start": 195,
+        "end": 195,
+        "isTurnover": 195
+      },
+      "start_end_fields": {
+        "start": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ],
+        "end": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ]
+      },
+      "types": {
+        "Kickoff": 9,
+        "Rush": 48,
+        "Pass Reception": 46,
+        "Sack": 6,
+        "Punt": 8,
+        "Official Timeout": 15,
+        "Pass Incompletion": 27,
+        "Penalty": 18,
+        "Field Goal Good": 4,
+        "End Period": 2,
+        "Rushing Touchdown": 1,
+        "Passing Touchdown": 2,
+        "Two-minute warning": 2,
+        "End of Half": 1,
+        "Field Goal Missed": 1,
+        "Timeout": 3,
+        "Blocked Field Goal": 1,
+        "End of Game": 1
+      },
+      "turnovers": 1,
+      "review_text_matches": 0,
+      "review_examples": [],
+      "scoring_plays": 7,
+      "meta": {
+        "firstPlayWallClock": "2025-09-07T17:02:38Z",
+        "lastPlayWallClock": "2025-09-07T20:01:40Z",
+        "lastUpdatedAt": "2025-09-07T20:01:40Z",
+        "gameState": "post"
+      },
+      "detailed_coverage": {
+        "play_id": 195,
+        "sequence_number": 195,
+        "period_number": 195,
+        "clock_display": 195,
+        "away_score": 195,
+        "home_score": 195,
+        "play_type_text": 195,
+        "is_turnover": 195,
+        "wallclock": 195,
+        "modified": 195,
+        "start": {
+          "down": 195,
+          "distance": 195,
+          "yardLine": 195,
+          "yardsToEndzone": 195,
+          "possessionText": 182,
+          "downDistanceText": 182
+        },
+        "end": {
+          "down": 195,
+          "distance": 195,
+          "yardLine": 195,
+          "yardsToEndzone": 195,
+          "possessionText": 180,
+          "downDistanceText": 180
+        }
+      },
+      "ids_unique_within_game": true,
+      "turnover_true_count": 1,
+      "point_after_attempts": {
+        "count": 3,
+        "results": {
+          "Extra Point Good": 3
+        }
+      },
+      "two_point_attempt_text_count": 0,
+      "review": {
+        "count": 1,
+        "type_and_outcome": {
+          "OFFICIAL:False": 1
+        }
+      },
+      "scoring_type_counts": {
+        "field-goal": 4,
+        "touchdown": 3
+      },
+      "score_reconciliation": {
+        "summary_header": {
+          "home": 13,
+          "away": 20
+        },
+        "last_play": {
+          "home": 13,
+          "away": 20
+        },
+        "independent_scoreboard": {
+          "home": 13,
+          "away": 20
+        },
+        "matches": true
+      }
+    },
+    {
+      "event_id": "401772721",
+      "captured_at_utc": "2026-11-01T06:57:22.603362+00:00",
+      "started_at_utc": "2026-11-01T06:57:21.135285+00:00",
+      "file": "401772721.json",
+      "sha256": "76dc385eb3741ff96585b011af4e33d6e9b615946653c049273643ae6542181d",
+      "bytes": 859793,
+      "header_id": "401772721",
+      "date": "2025-09-07T17:00Z",
+      "status": "post",
+      "teams": [
+        "NYJ",
+        "PIT"
+      ],
+      "drives": 22,
+      "plays": 175,
+      "unique_play_ids": 175,
+      "all_play_ids_present": true,
+      "coverage": {
+        "period": 175,
+        "clock": 175,
+        "awayScore": 175,
+        "homeScore": 175,
+        "scoringPlay": 175,
+        "type": 175,
+        "text": 175,
+        "modified": 175,
+        "wallclock": 173,
+        "start": 175,
+        "end": 175,
+        "isTurnover": 175
+      },
+      "start_end_fields": {
+        "start": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ],
+        "end": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ]
+      },
+      "types": {
+        "Kickoff": 14,
+        "Rush": 55,
+        "Pass Reception": 33,
+        "Field Goal Good": 4,
+        "Official Timeout": 15,
+        "Sack": 5,
+        "Pass Incompletion": 14,
+        "Passing Touchdown": 5,
+        "Penalty": 6,
+        "End Period": 2,
+        "Rushing Touchdown": 3,
+        "Punt": 6,
+        "Timeout": 8,
+        "Two-minute warning": 2,
+        "Fumble Recovery (Own)": 1,
+        "End of Half": 1,
+        "End of Game": 1
+      },
+      "turnovers": 0,
+      "review_text_matches": 0,
+      "review_examples": [],
+      "scoring_plays": 12,
+      "meta": {
+        "firstPlayWallClock": "2025-09-07T17:02:43Z",
+        "lastPlayWallClock": "2025-09-07T20:07:43Z",
+        "lastUpdatedAt": "2025-09-07T20:07:43Z",
+        "gameState": "post"
+      },
+      "detailed_coverage": {
+        "play_id": 175,
+        "sequence_number": 175,
+        "period_number": 175,
+        "clock_display": 175,
+        "away_score": 175,
+        "home_score": 175,
+        "play_type_text": 175,
+        "is_turnover": 175,
+        "wallclock": 173,
+        "modified": 175,
+        "start": {
+          "down": 175,
+          "distance": 175,
+          "yardLine": 175,
+          "yardsToEndzone": 175,
+          "possessionText": 157,
+          "downDistanceText": 157
+        },
+        "end": {
+          "down": 175,
+          "distance": 175,
+          "yardLine": 175,
+          "yardsToEndzone": 175,
+          "possessionText": 151,
+          "downDistanceText": 151
+        }
+      },
+      "ids_unique_within_game": true,
+      "turnover_true_count": 0,
+      "point_after_attempts": {
+        "count": 8,
+        "results": {
+          "Extra Point Good": 6,
+          "Two Point Rush": 1,
+          "Two Point Pass": 1
+        }
+      },
+      "two_point_attempt_text_count": 2,
+      "review": {
+        "count": 0,
+        "type_and_outcome": {}
+      },
+      "scoring_type_counts": {
+        "field-goal": 4,
+        "touchdown": 8
+      },
+      "score_reconciliation": {
+        "summary_header": {
+          "home": 32,
+          "away": 34
+        },
+        "last_play": {
+          "home": 32,
+          "away": 34
+        },
+        "independent_scoreboard": {
+          "home": 32,
+          "away": 34
+        },
+        "matches": true
+      }
+    },
+    {
+      "event_id": "401772827",
+      "captured_at_utc": "2026-11-01T06:57:24.070096+00:00",
+      "started_at_utc": "2026-11-01T06:57:22.656045+00:00",
+      "file": "401772827.json",
+      "sha256": "31fedb6e91c75cf8ffac1eca6500f4caeb3b6de76d95c6afc3acdab5d06a5e86",
+      "bytes": 837266,
+      "header_id": "401772827",
+      "date": "2025-09-07T17:00Z",
+      "status": "post",
+      "teams": [
+        "WSH",
+        "NYG"
+      ],
+      "drives": 19,
+      "plays": 190,
+      "unique_play_ids": 190,
+      "all_play_ids_present": true,
+      "coverage": {
+        "period": 190,
+        "clock": 190,
+        "awayScore": 190,
+        "homeScore": 190,
+        "scoringPlay": 190,
+        "type": 190,
+        "text": 190,
+        "modified": 190,
+        "wallclock": 190,
+        "start": 190,
+        "end": 190,
+        "isTurnover": 190
+      },
+      "start_end_fields": {
+        "start": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ],
+        "end": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ]
+      },
+      "types": {
+        "Kickoff": 7,
+        "Pass Reception": 35,
+        "Rush": 52,
+        "Pass Incompletion": 31,
+        "Penalty": 14,
+        "Punt": 11,
+        "Official Timeout": 13,
+        "Passing Touchdown": 1,
+        "Timeout": 10,
+        "Fumble Recovery (Own)": 1,
+        "End Period": 2,
+        "Field Goal Good": 2,
+        "Sack": 5,
+        "Rushing Touchdown": 2,
+        "Two-minute warning": 2,
+        "End of Half": 1,
+        "End of Game": 1
+      },
+      "turnovers": 0,
+      "review_text_matches": 1,
+      "review_examples": [
+        "(No Huddle, Shotgun) J.Daniels pass incomplete short right to T.McLaurin (P.Adebo).Washington challenged the incomplete pass ruling, and the play was Upheld. The ruling on the field stands. (Timeout #2.)"
+      ],
+      "scoring_plays": 5,
+      "meta": {
+        "firstPlayWallClock": "2025-09-07T17:03:52Z",
+        "lastPlayWallClock": "2025-09-07T20:13:40Z",
+        "lastUpdatedAt": "2025-09-07T20:13:40Z",
+        "gameState": "post"
+      },
+      "detailed_coverage": {
+        "play_id": 190,
+        "sequence_number": 190,
+        "period_number": 190,
+        "clock_display": 190,
+        "away_score": 190,
+        "home_score": 190,
+        "play_type_text": 190,
+        "is_turnover": 190,
+        "wallclock": 190,
+        "modified": 190,
+        "start": {
+          "down": 190,
+          "distance": 190,
+          "yardLine": 190,
+          "yardsToEndzone": 190,
+          "possessionText": 179,
+          "downDistanceText": 179
+        },
+        "end": {
+          "down": 190,
+          "distance": 190,
+          "yardLine": 190,
+          "yardsToEndzone": 190,
+          "possessionText": 179,
+          "downDistanceText": 179
+        }
+      },
+      "ids_unique_within_game": true,
+      "turnover_true_count": 0,
+      "point_after_attempts": {
+        "count": 3,
+        "results": {
+          "Extra Point Good": 3
+        }
+      },
+      "two_point_attempt_text_count": 0,
+      "review": {
+        "count": 2,
+        "type_and_outcome": {
+          "CHALLENGE:False": 1,
+          "CHALLENGE:True": 1
+        }
+      },
+      "scoring_type_counts": {
+        "touchdown": 3,
+        "field-goal": 2
+      },
+      "score_reconciliation": {
+        "summary_header": {
+          "home": 21,
+          "away": 6
+        },
+        "last_play": {
+          "home": 21,
+          "away": 6
+        },
+        "independent_scoreboard": {
+          "home": 21,
+          "away": 6
+        },
+        "matches": true
+      }
+    },
+    {
+      "event_id": "401772828",
+      "captured_at_utc": "2026-11-01T06:57:25.571781+00:00",
+      "started_at_utc": "2026-11-01T06:57:24.120226+00:00",
+      "file": "401772828.json",
+      "sha256": "a85423981449736e6dbec4c85bbd97a701a5334870d3ffb247ffce98df3c1a4e",
+      "bytes": 845220,
+      "header_id": "401772828",
+      "date": "2025-09-07T17:00Z",
+      "status": "post",
+      "teams": [
+        "JAX",
+        "CAR"
+      ],
+      "drives": 20,
+      "plays": 177,
+      "unique_play_ids": 177,
+      "all_play_ids_present": true,
+      "coverage": {
+        "period": 177,
+        "clock": 177,
+        "awayScore": 177,
+        "homeScore": 177,
+        "scoringPlay": 177,
+        "type": 177,
+        "text": 177,
+        "modified": 177,
+        "wallclock": 177,
+        "start": 177,
+        "end": 177,
+        "isTurnover": 177
+      },
+      "start_end_fields": {
+        "start": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ],
+        "end": [
+          "distance",
+          "down",
+          "downDistanceText",
+          "possessionText",
+          "shortDownDistanceText",
+          "team",
+          "yardLine",
+          "yardsToEndzone"
+        ]
+      },
+      "types": {
+        "Kickoff": 10,
+        "Pass Incompletion": 26,
+        "Pass Reception": 35,
+        "Rush": 55,
+        "Penalty": 9,
+        "Official Timeout": 10,
+        "Field Goal Good": 5,
+        "End Period": 2,
+        "Punt": 4,
+        "Pass Interception Return": 3,
+        "Passing Touchdown": 2,
+        "Timeout": 9,
+        "Two-minute warning": 2,
+        "Rushing Touchdown": 1,
+        "Fumble Recovery (Opponent)": 1,
+        "End of Half": 1,
+        "Sack": 1,
+        "End of Game": 1
+      },
+      "turnovers": 4,
+      "review_text_matches": 1,
+      "review_examples": [
+        "B.Young pass short right intended for X.Legette INTERCEPTED by F.Oluokun (E.Murray) at CAR 35. F.Oluokun to CAR 35 for no gain (J.Sanders).The Replay Official reviewed the interception ruling, and the play was Upheld. The ruling on the field stands."
+      ],
+      "scoring_plays": 8,
+      "meta": {
+        "firstPlayWallClock": "2025-09-07T17:02:33Z",
+        "lastPlayWallClock": "2025-09-07T21:12:49Z",
+        "lastUpdatedAt": "2025-09-07T21:12:49Z",
+        "gameState": "post"
+      },
+      "detailed_coverage": {
+        "play_id": 177,
+        "sequence_number": 177,
+        "period_number": 177,
+        "clock_display": 177,
+        "away_score": 177,
+        "home_score": 177,
+        "play_type_text": 177,
+        "is_turnover": 177,
+        "wallclock": 177,
+        "modified": 177,
+        "start": {
+          "down": 177,
+          "distance": 177,
+          "yardLine": 177,
+          "yardsToEndzone": 177,
+          "possessionText": 163,
+          "downDistanceText": 163
+        },
+        "end": {
+          "down": 177,
+          "distance": 177,
+          "yardLine": 177,
+          "yardsToEndzone": 177,
+          "possessionText": 161,
+          "downDistanceText": 161
+        }
+      },
+      "ids_unique_within_game": true,
+      "turnover_true_count": 4,
+      "point_after_attempts": {
+        "count": 3,
+        "results": {
+          "Extra Point Good": 3
+        }
+      },
+      "two_point_attempt_text_count": 0,
+      "review": {
+        "count": 2,
+        "type_and_outcome": {
+          "OFFICIAL:True": 1,
+          "CHALLENGE:False": 1
+        }
+      },
+      "scoring_type_counts": {
+        "field-goal": 5,
+        "touchdown": 3
+      },
+      "score_reconciliation": {
+        "summary_header": {
+          "home": 26,
+          "away": 10
+        },
+        "last_play": {
+          "home": 26,
+          "away": 10
+        },
+        "independent_scoreboard": {
+          "home": 26,
+          "away": 10
+        },
+        "matches": true
+      }
+    }
+  ],
+  "sample_totals": {
+    "games": 8,
+    "drives": 157,
+    "plays": 1464,
+    "turnover_flags_true": 12,
+    "point_after_attempts": 33,
+    "two_point_attempts_in_play_text": 3,
+    "reviews": 10,
+    "score_reconciliations_passed": 8,
+    "score_reconciliations_total": 8
+  },
+  "current_slate": {
+    "source": "ESPN site API /football/nfl/scoreboard?dates=20261101",
+    "captured_at_utc": "2026-11-01T07:01:19.913897+00:00",
+    "event_count": 12,
+    "states": {
+      "pre": 12
+    },
+    "events": [
+      {
+        "event_id": "401873026",
+        "date": "2026-11-01T18:00Z",
+        "state": "pre",
+        "home": "BUF",
+        "away": "BAL"
+      },
+      {
+        "event_id": "401873031",
+        "date": "2026-11-01T18:00Z",
+        "state": "pre",
+        "home": "CIN",
+        "away": "TEN"
+      },
+      {
+        "event_id": "401873024",
+        "date": "2026-11-01T18:00Z",
+        "state": "pre",
+        "home": "DAL",
+        "away": "ARI"
+      },
+      {
+        "event_id": "401873030",
+        "date": "2026-11-01T18:00Z",
+        "state": "pre",
+        "home": "DET",
+        "away": "MIN"
+      },
+      {
+        "event_id": "401873029",
+        "date": "2026-11-01T18:00Z",
+        "state": "pre",
+        "home": "NYJ",
+        "away": "LV"
+      },
+      {
+        "event_id": "401873027",
+        "date": "2026-11-01T18:00Z",
+        "state": "pre",
+        "home": "PIT",
+        "away": "CLE"
+      },
+      {
+        "event_id": "401873025",
+        "date": "2026-11-01T18:00Z",
+        "state": "pre",
+        "home": "TB",
+        "away": "ATL"
+      },
+      {
+        "event_id": "401873028",
+        "date": "2026-11-01T18:00Z",
+        "state": "pre",
+        "home": "JAX",
+        "away": "IND"
+      },
+      {
+        "event_id": "401873032",
+        "date": "2026-11-01T21:05Z",
+        "state": "pre",
+        "home": "LAR",
+        "away": "LAC"
+      },
+      {
+        "event_id": "401873033",
+        "date": "2026-11-01T21:25Z",
+        "state": "pre",
+        "home": "DEN",
+        "away": "KC"
+      },
+      {
+        "event_id": "401873034",
+        "date": "2026-11-01T21:25Z",
+        "state": "pre",
+        "home": "MIA",
+        "away": "NE"
+      },
+      {
+        "event_id": "401873035",
+        "date": "2026-11-02T01:20Z",
+        "state": "pre",
+        "home": "WSH",
+        "away": "PHI"
+      }
+    ]
+  },
+  "independent_field_spot_crosscheck": {
+    "source": "Read-only dev nfl_pbp table (nflverse) joined through nfl_schedule.espn to the ESPN event ID.",
+    "field_definition": "nflfastR defines yardline_100 as yards from the opponent end zone for posteam.",
+    "definition_url": "https://nflfastr.com/articles/field_descriptions",
+    "join_key": "Event ID -> nfl_schedule.game_id; then quarter, game_seconds_remaining (derived from period and ESPN clock), offense team ID mapped via ESPN header, down, and yards-to-go. Yard spot was not used in the join.",
+    "ambiguity_rule": "Only keys with exactly one ESPN and one nflverse row were compared.",
+    "unique_pairs": 988,
+    "exact_yardsToEndzone_equals_yardline_100": 956,
+    "exact_percent": 96.76,
+    "complement_yardsToEndzone_plus_yardline_100_equals_100": 22,
+    "other_disagreements": 10,
+    "disagreement_type_counts": {
+      "Punt_or_punt-associated_Penalty_complement": 22,
+      "Timeout_or_two_minute_warning_other": 9,
+      "Pass_Reception_other": 1
+    },
+    "per_event": [
+      {
+        "event_id": "401772718",
+        "game_id": "2025_01_ARI_NO",
+        "unique_pairs": 140,
+        "exact": 136,
+        "complement": 4,
+        "other": 0
+      },
+      {
+        "event_id": "401772719",
+        "game_id": "2025_01_MIA_IND",
+        "unique_pairs": 107,
+        "exact": 104,
+        "complement": 3,
+        "other": 0
+      },
+      {
+        "event_id": "401772720",
+        "game_id": "2025_01_LV_NE",
+        "unique_pairs": 132,
+        "exact": 126,
+        "complement": 6,
+        "other": 0
+      },
+      {
+        "event_id": "401772721",
+        "game_id": "2025_01_PIT_NYJ",
+        "unique_pairs": 112,
+        "exact": 107,
+        "complement": 5,
+        "other": 0
+      },
+      {
+        "event_id": "401772827",
+        "game_id": "2025_01_NYG_WAS",
+        "unique_pairs": 131,
+        "exact": 126,
+        "complement": 5,
+        "other": 0
+      },
+      {
+        "event_id": "401772828",
+        "game_id": "2025_01_CAR_JAX",
+        "unique_pairs": 125,
+        "exact": 121,
+        "complement": 4,
+        "other": 0
+      },
+      {
+        "event_id": "401772829",
+        "game_id": "2025_01_CIN_CLE",
+        "unique_pairs": 121,
+        "exact": 119,
+        "complement": 2,
+        "other": 0
+      },
+      {
+        "event_id": "401772830",
+        "game_id": "2025_01_TB_ATL",
+        "unique_pairs": 120,
+        "exact": 117,
+        "complement": 3,
+        "other": 0
+      }
+    ],
+    "decision": "Do not map every raw start.yardsToEndzone directly to an offense-relative field coordinate. Preserve the raw source value and mark unsupported spot transitions unavailable until an event-class rule is independently validated."
+  }
+}
