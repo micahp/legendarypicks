@@ -79,42 +79,78 @@ def _simulation_terminal_bucket(terminal: str | None) -> str:
 
 
 def load_actual_data(connection: sqlite3.Connection, season_min: int = 2022,
-                     season_max: int = 2025):
-    """Return completed regular-season team-games, drive rows, and hashes of selected source rows."""
-    schedule_query = '''
-        SELECT game_id, season, week, home_team, away_team, home_score, away_score
-        FROM nfl_schedule
-        WHERE season BETWEEN ? AND ? AND game_type = 'REG' AND week BETWEEN 1 AND 18
-          AND home_score IS NOT NULL AND away_score IS NOT NULL
-        ORDER BY season, week, game_id
-    '''
-    schedule_rows = list(connection.execute(schedule_query, (season_min, season_max)))
-    schedule_hash = hashlib.sha256()
+                     season_max: int = 2025, source_filter: str | None = None):
+    """Return regular-season team-games, drive rows, and hashes of selected source rows."""
+    tables = {row[0] for row in connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'")}
+    has_schedule = 'nfl_schedule' in tables
+    if has_schedule:
+        game_query = '''
+            SELECT game_id, season, week, home_team, away_team, home_score, away_score
+            FROM nfl_schedule
+            WHERE season BETWEEN ? AND ? AND game_type = 'REG' AND week BETWEEN 1 AND 18
+              AND home_score IS NOT NULL AND away_score IS NOT NULL
+            ORDER BY season, week, game_id
+        '''
+        game_rows = list(connection.execute(game_query, (season_min, season_max)))
+        game_index_source = 'nfl_schedule with game_type=REG and completed scores'
+    else:
+        if not source_filter or 'regular-season' not in source_filter.lower():
+            raise DriveComparisonError(
+                'PBP-only historical source needs a hash-matched manifest declaring regular-season filtering')
+        columns = {row[1] for row in connection.execute('PRAGMA table_info(nfl_pbp)')}
+        required = {'game_id', 'season', 'week', 'home_team', 'away_team'}
+        if not required.issubset(columns):
+            raise DriveComparisonError(
+                'historical source has no nfl_schedule and lacks fields needed to index PBP games')
+        game_query = '''
+            SELECT game_id, season, MIN(week), MIN(home_team), MIN(away_team),
+                   MAX(home_team), MAX(away_team)
+            FROM nfl_pbp
+            WHERE season BETWEEN ? AND ? AND week BETWEEN 1 AND 18
+            GROUP BY game_id, season
+            ORDER BY season, MIN(week), game_id
+        '''
+        game_rows = list(connection.execute(game_query, (season_min, season_max)))
+        game_index_source = f'pinned regular-season PBP snapshot; unique game IDs, weeks 1-18 ({source_filter})'
+    game_index_hash = hashlib.sha256()
     included_games = {}
     team_games = []
-    for game_id, season, week, home, away, home_score, away_score in schedule_rows:
+    for game_row in game_rows:
+        game_id, season, week, home, away = game_row[:5]
+        if not has_schedule and (game_row[5] != home or game_row[6] != away):
+            raise DriveComparisonError(f'inconsistent home/away teams within PBP game {game_id!r}')
         if not game_id or not home or not away or game_id in included_games:
             raise DriveComparisonError(f'invalid or duplicate regular-season schedule row: {game_id!r}')
         included_games[game_id] = (int(season), int(week), home, away)
-        schedule_hash.update((json.dumps((game_id, season, week, home, away, home_score, away_score),
-                                         separators=(',', ':')) + '\n').encode())
+        game_index_hash.update((json.dumps(tuple(game_row), separators=(',', ':')) + '\n').encode())
         team_games.extend((
             {'game_key': game_id, 'game_id': game_id, 'season': int(season), 'team': home},
             {'game_key': game_id, 'game_id': game_id, 'season': int(season), 'team': away},
         ))
-    if not schedule_rows:
-        raise DriveComparisonError('no completed regular-season games in the requested historical window')
+    if not game_rows:
+        raise DriveComparisonError('no regular-season games in the requested historical window')
 
-    play_query = '''
-        SELECT p.game_id, p.drive, p.posteam, p.play_id, p.play_type, p.series_result,
-               p.yardline_100, p.yards_gained, p.interception, p.fumble_lost
-        FROM nfl_pbp AS p
-        JOIN nfl_schedule AS s ON s.game_id = p.game_id
-        WHERE s.season BETWEEN ? AND ? AND s.game_type = 'REG' AND s.week BETWEEN 1 AND 18
-          AND s.home_score IS NOT NULL AND s.away_score IS NOT NULL
-          AND p.posteam IS NOT NULL AND p.drive IS NOT NULL
-        ORDER BY p.game_id, p.play_id
-    '''
+    if has_schedule:
+        play_query = '''
+            SELECT p.game_id, p.drive, p.posteam, p.play_id, p.play_type, p.series_result,
+                   p.yardline_100, p.yards_gained, p.interception, p.fumble_lost
+            FROM nfl_pbp AS p
+            JOIN nfl_schedule AS s ON s.game_id = p.game_id
+            WHERE s.season BETWEEN ? AND ? AND s.game_type = 'REG' AND s.week BETWEEN 1 AND 18
+              AND s.home_score IS NOT NULL AND s.away_score IS NOT NULL
+              AND p.posteam IS NOT NULL AND p.drive IS NOT NULL
+            ORDER BY p.game_id, p.play_id
+        '''
+    else:
+        play_query = '''
+            SELECT p.game_id, p.drive, p.posteam, p.play_id, p.play_type, p.series_result,
+                   p.yardline_100, p.yards_gained, p.interception, p.fumble_lost
+            FROM nfl_pbp AS p
+            WHERE p.season BETWEEN ? AND ? AND p.week BETWEEN 1 AND 18
+              AND p.posteam IS NOT NULL AND p.drive IS NOT NULL
+            ORDER BY p.game_id, p.play_id
+        '''
     play_hash = hashlib.sha256()
     grouped = defaultdict(list)
     play_row_count = 0
@@ -158,10 +194,12 @@ def load_actual_data(connection: sqlite3.Connection, season_min: int = 2022,
             'modeled': bool(action_rows),
         })
     meta = {
-        'season_min': season_min, 'season_max': season_max, 'season_type': 'REG',
-        'week_min': 1, 'week_max': 18, 'completed_games': len(schedule_rows),
+        'season_min': season_min, 'season_max': season_max,
+        'season_type': 'REG' if has_schedule else 'regular-season source snapshot; no game_type column',
+        'week_min': 1, 'week_max': 18, 'completed_games': len(game_rows),
         'team_games': len(team_games), 'pbp_rows': play_row_count,
-        'actual_drives': len(drives), 'schedule_rows_sha256': schedule_hash.hexdigest(),
+        'actual_drives': len(drives), 'game_index_source': game_index_source,
+        'game_index_rows_sha256': game_index_hash.hexdigest(),
         'pbp_rows_sha256': play_hash.hexdigest(),
     }
     return team_games, drives, meta
@@ -343,7 +381,8 @@ def render_markdown(manifest, metrics):
     lines = [
         '# MIN–DET SLC drive distributions vs. 2022–2025 NFL regular season', '',
         f"Historical sample: {manifest['historical']['completed_games']:,} complete regular-season games, "
-        f"{manifest['historical']['team_games']:,} team-games, seasons 2022–2025. "
+        f"{manifest['historical']['team_games']:,} team-games, seasons "
+        f"{manifest['historical']['season_min']}–{manifest['historical']['season_max']}. "
         f"SLC sample: {manifest['simulation']['games']:,} frozen MIN–DET games per team. No simulation was rerun.", '',
         '## Mean comparison', '',
         '| Measure | NFL avg | DET actual | MIN actual | DET SLC | MIN SLC |',
@@ -376,7 +415,10 @@ def render_markdown(manifest, metrics):
                   'The CSV provides sample size, mean, median, population variance, standard deviation, P95, P99, maximum, and zero rate '
                   'for every team-game metric and modeled-drive metric.', '',
                   '## Definitions and limits', '',
-                  '- Historical rows come from `nfl_schedule`/`nfl_pbp` in the read-only simulation input database, joined by game ID; only completed `REG` games in weeks 1–18 of 2022–2025 are included. This excludes preseason, postseason, and all 2026 outcomes.',
+                  f"- Historical source: {manifest['historical']['game_index_source']}. "
+                  f"The pinned source filter is `{manifest['historical'].get('source_filter', manifest['historical']['game_index_source'])}`; "
+                  'only weeks 1–18 in the requested seasons are included. The PBP-only snapshot has no game_type column, so regular-season classification comes from its pinned manifest filter.',
+                  '- The selected PBP source is read-only. Per-season game counts and source hashes are recorded in the manifest; no 2026 outcomes enter this comparison.',
                   '- An actual drive is keyed by game, `drive`, and offense team. Its terminal is the last nonempty `series_result`; intermediate `First down` labels do not terminate a drive. `Opp touchdown` is a defensive touchdown.',
                   '- Terminal counts include period-end drives on both sides. Historical QB-kneel terminals remain separate because the available series-result field does not establish that every kneel occurred at a period boundary. SLC score-only overtime drive rows remain in terminal and scoring counts; rows with zero recorded events are excluded from event-count, yardage, and starting-position drive averages.',
                   '- Recorded-event counts include run, pass, QB kneel, QB spike, punt, and field-goal rows; `no_play`, kickoff, and try rows are excluded. SLC drive `play_count` follows its saved event count, including kicks.',
@@ -385,7 +427,9 @@ def render_markdown(manifest, metrics):
                   f"Frozen simulation summary SHA-256: `{manifest['simulation']['summary_sha256']}`.",
                   f"Frozen simulation drive CSV SHA-256: `{manifest['simulation']['drive_csv_sha256']}`.",
                   f"Historical selected PBP rows SHA-256: `{manifest['historical']['pbp_rows_sha256']}`.",
-                  f"Historical selected schedule rows SHA-256: `{manifest['historical']['schedule_rows_sha256']}`.",
+                  f"Historical selected game-index rows SHA-256: `{manifest['historical']['game_index_rows_sha256']}`.",
+                  f"Historical database SHA-256: `{manifest['historical']['database_sha256']}`.",
+                  f"Historical reference manifest SHA-256: `{manifest['historical'].get('source_manifest_sha256', 'not present')}`.",
                   ''])
     return '\n'.join(lines)
 
@@ -402,10 +446,21 @@ def run_comparison(database: Path, drive_csv: Path, sim_summary: Path, output_di
     output_dir = Path(output_dir)
     if output_dir.exists():
         raise FileExistsError(f'refusing to overwrite comparison output: {output_dir}')
-    connection = sqlite3.connect(f'file:{Path(database).resolve()}?mode=ro', uri=True)
+    database = Path(database).resolve()
+    database_hash = _sha256_file(database)
+    source_manifest_path = database.parent / 'slc-week8-reference.manifest.json'
+    source_manifest = None
+    source_filter = None
+    if source_manifest_path.exists():
+        candidate = json.loads(source_manifest_path.read_text(encoding='utf-8'))
+        if candidate.get('generated_database_sha256') == database_hash:
+            source_manifest = candidate
+            source_filter = candidate.get('filter')
+    connection = sqlite3.connect(f'file:{database}?mode=ro', uri=True)
     try:
         connection.execute('PRAGMA query_only=ON')
-        actual_team_games, actual_drives, actual_meta = load_actual_data(connection)
+        actual_team_games, actual_drives, actual_meta = load_actual_data(
+            connection, source_filter=source_filter)
     finally:
         connection.close()
     sim_team_games, sim_drives = load_simulated_data(drive_csv, expected_games=expected_games)
@@ -413,14 +468,24 @@ def run_comparison(database: Path, drive_csv: Path, sim_summary: Path, output_di
     sim_game_rows, sim_metrics = summarize_team_games('SLC 10K', sim_team_games, sim_drives)
     metrics = actual_metrics + sim_metrics
     hist_counts = Counter(row['season'] for row in actual_team_games)
+    if source_manifest is not None:
+        actual_meta['source_manifest_sha256'] = _sha256_file(source_manifest_path)
+        actual_meta['source_filter'] = source_manifest.get('filter')
+        actual_meta['source_pbp_sha256_by_season'] = source_manifest.get('source_pbp_sha256', {})
+    elif source_manifest_path.exists():
+        actual_meta['source_manifest_hash_mismatch'] = {
+            'path': str(source_manifest_path),
+            'declared_database_sha256': json.loads(source_manifest_path.read_text(encoding='utf-8')).get(
+                'generated_database_sha256'),
+        }
     summary_hash = _sha256_file(sim_summary)
     drive_hash = _sha256_file(drive_csv)
     manifest = {
         'schema': 'lp.nfl.slc-drive-distribution-comparison.v1',
         'generated_at_utc': datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         'historical': {**actual_meta, 'team_games_by_season': dict(sorted(hist_counts.items())),
-                       'database_path': str(Path(database).resolve()),
-                       'database_size_bytes': Path(database).stat().st_size},
+                       'database_path': str(database), 'database_sha256': database_hash,
+                       'database_size_bytes': database.stat().st_size},
         'simulation': {'run_id': 'research-8b7d5a2e-2026-10-31', 'games': expected_games,
                        'teams': ['DET', 'MIN'], 'team_games': len(sim_team_games),
                        'unmodeled_drive_sequences': {
@@ -431,7 +496,7 @@ def run_comparison(database: Path, drive_csv: Path, sim_summary: Path, output_di
         'definitions': {
             'historical_drive_key': ['game_id', 'drive', 'posteam'],
             'historical_terminal': 'last nonempty series_result for each drive; intermediate First down results are ignored',
-            'regular_season_filter': "nfl_schedule.game_type='REG', completed games, weeks 1-18, seasons 2022-2025",
+            'regular_season_filter': actual_meta.get('source_filter', actual_meta['game_index_source']),
             'simulated_period_end': ['halftime', 'end_of_regulation', 'end_of_overtime'],
             'score_only_overtime': 'included in terminal and scoring counts; excluded from modeled-drive event, yardage, and starting-position distributions when play_count is zero',
             'recorded_event_types': sorted(ACTION_TYPES),

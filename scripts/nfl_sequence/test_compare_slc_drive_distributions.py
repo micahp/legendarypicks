@@ -22,7 +22,8 @@ class ActualDriveExtraction(unittest.TestCase):
                 game_id TEXT, season INTEGER, week INTEGER, play_id INTEGER,
                 drive REAL, posteam TEXT, qtr INTEGER, play_type TEXT,
                 series_result TEXT, yardline_100 REAL, yards_gained REAL,
-                interception INTEGER, fumble_lost INTEGER, touchdown INTEGER
+                interception INTEGER, fumble_lost INTEGER, touchdown INTEGER,
+                home_team TEXT, away_team TEXT
             );
         ''')
         connection.executemany('INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,?,?)', [
@@ -30,17 +31,17 @@ class ActualDriveExtraction(unittest.TestCase):
             ('preseason', 2022, 1, 'PRE', 'DET', 'MIN', 20, 10),
         ])
         plays = [
-            ('regular', 2022, 1, 1, 1, 'DET', 1, 'run', 'First down', 70, 5, 0, 0, 0),
-            ('regular', 2022, 1, 2, 1, 'DET', 1, 'pass', 'First down', 75, 7, 0, 0, 0),
-            ('regular', 2022, 1, 3, 1, 'DET', 1, 'punt', 'Punt', 68, 0, 0, 0, 0),
-            ('regular', 2022, 1, 4, 2, 'DET', 1, 'pass', 'Touchdown', 30, 30, 0, 0, 1),
-            ('regular', 2022, 1, 5, 3, 'DET', 2, 'pass', 'Opp touchdown', 20, 0, 1, 0, 1),
-            ('regular', 2022, 1, 6, 4, 'DET', 2, 'field_goal', 'Missed field goal', 35, 0, 0, 0, 0),
-            ('regular', 2022, 1, 7, 5, 'DET', 2, 'run', 'Turnover on downs', 45, 2, 0, 0, 0),
-            ('regular', 2022, 1, 8, 6, 'DET', 2, 'run', 'End of half', 50, -1, 0, 0, 0),
-            ('preseason', 2022, 1, 1, 1, 'DET', 1, 'run', 'Touchdown', 20, 20, 0, 0, 1),
+            ('regular', 2022, 1, 1, 1, 'DET', 1, 'run', 'First down', 70, 5, 0, 0, 0, 'MIN', 'DET'),
+            ('regular', 2022, 1, 2, 1, 'DET', 1, 'pass', 'First down', 75, 7, 0, 0, 0, 'MIN', 'DET'),
+            ('regular', 2022, 1, 3, 1, 'DET', 1, 'punt', 'Punt', 68, 0, 0, 0, 0, 'MIN', 'DET'),
+            ('regular', 2022, 1, 4, 2, 'DET', 1, 'pass', 'Touchdown', 30, 30, 0, 0, 1, 'MIN', 'DET'),
+            ('regular', 2022, 1, 5, 3, 'DET', 2, 'pass', 'Opp touchdown', 20, 0, 1, 0, 1, 'MIN', 'DET'),
+            ('regular', 2022, 1, 6, 4, 'DET', 2, 'field_goal', 'Missed field goal', 35, 0, 0, 0, 0, 'MIN', 'DET'),
+            ('regular', 2022, 1, 7, 5, 'DET', 2, 'run', 'Turnover on downs', 45, 2, 0, 0, 0, 'MIN', 'DET'),
+            ('regular', 2022, 1, 8, 6, 'DET', 2, 'run', 'End of half', 50, -1, 0, 0, 0, 'MIN', 'DET'),
+            ('preseason', 2022, 1, 1, 1, 'DET', 1, 'run', 'Touchdown', 20, 20, 0, 0, 1, 'MIN', 'DET'),
         ]
-        connection.executemany('INSERT INTO nfl_pbp VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', plays)
+        connection.executemany('INSERT INTO nfl_pbp VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', plays)
         return connection
 
     def test_uses_regular_season_and_last_series_result_with_defensive_td_credit(self):
@@ -82,6 +83,23 @@ class ActualDriveExtraction(unittest.TestCase):
         self.assertEqual(indexed[('DET', 'recorded_events_per_game')]['mean'], 8)
         self.assertEqual(indexed[('DET', 'scrimmage_plays_per_game')]['mean'], 6)
         self.assertEqual(indexed[('DET', 'offensive_scoring_drives_per_game')]['mean'], 1)
+
+    def test_pbp_only_source_requires_and_uses_regular_season_provenance(self):
+        connection = self.make_database()
+        connection.execute("DELETE FROM nfl_pbp WHERE game_id='preseason'")
+        connection.execute('DROP TABLE nfl_schedule')
+        try:
+            with self.assertRaisesRegex(comparison.DriveComparisonError, 'hash-matched manifest'):
+                comparison.load_actual_data(connection, 2022, 2025)
+            team_games, drives, meta = comparison.load_actual_data(
+                connection, 2022, 2025,
+                source_filter='nfl_pbp season 2022-2025 and regular-season week 1-18')
+        finally:
+            connection.close()
+        self.assertEqual({row['game_id'] for row in team_games}, {'regular'})
+        self.assertEqual(meta['completed_games'], 1)
+        self.assertIn('regular-season', meta['game_index_source'])
+        self.assertEqual(len(drives), 6)
 
     def test_score_only_overtime_counts_as_outcome_but_not_modeled_drive(self):
         with tempfile.TemporaryDirectory() as temp_dir:
