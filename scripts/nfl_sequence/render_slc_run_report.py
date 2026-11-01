@@ -6,6 +6,7 @@ import argparse
 import csv
 import hashlib
 import json
+import math
 import statistics
 import tarfile
 from collections import Counter, defaultdict
@@ -24,7 +25,7 @@ PLAYER_METRICS = {
 }
 OUTPUT_FILES = ('summary.json', 'report.md', 'team-stats.csv', 'player-stats.csv',
                 'quarter-scores.csv', 'quarter-team-stats.csv', 'quarter-player-stats.csv',
-                'drive-summaries.csv', 'quarter-drive-summary.csv')
+                'drive-summaries.csv', 'drive-aggregate-summary.csv', 'quarter-drive-summary.csv')
 CSV_DEFAULT_COLUMNS = {
     'team-stats.csv': ('team', 'metric', 'mean', 'median', 'sample_n'),
     'player-stats.csv': ('team', 'player_id', 'name', 'position', 'starter', 'metric', 'mean', 'median', 'sample_n'),
@@ -34,6 +35,15 @@ CSV_DEFAULT_COLUMNS = {
     'drive-summaries.csv': ('seed', 'game_id', 'drive_index', 'offense_team', 'start_period', 'end_period',
                             'scoring_period', 'terminal', 'play_sequence_status', 'play_count', 'net_yards', 'turnovers',
                             'scoring_team', 'points'),
+    'drive-aggregate-summary.csv': (
+        'team', 'terminal', 'game_sample_n', 'drive_count', 'drive_share',
+        'per_game_mean', 'per_game_median', 'per_game_p95', 'per_game_p99', 'per_game_max',
+        'per_game_zero_rate', 'modeled_drive_n', 'unmodeled_drive_n',
+        'mean_recorded_events_per_drive', 'median_recorded_events_per_drive',
+        'p95_recorded_events_per_drive', 'mean_net_yards_per_modeled_drive',
+        'median_net_yards_per_modeled_drive', 'offensive_scoring_drives',
+        'offensive_scoring_rate', 'defensive_scoring_drives', 'offense_points',
+        'defense_points', 'offense_points_per_drive', 'turnover_drives', 'turnover_rate'),
     'quarter-drive-summary.csv': ('team', 'period', 'drives_started_mean', 'drives_started_median',
                                  'drives_ended_mean', 'drives_ended_median', 'scoring_drives_mean',
                                  'scoring_drives_median', 'points_scored_mean', 'points_scored_median'),
@@ -274,6 +284,146 @@ def _mean_median(values):
     return {'mean': sum(values) / len(values), 'median': statistics.median(values), 'sample_n': len(values)}
 
 
+def _nearest_rank(values, percentile):
+    if not values:
+        return None
+    ordered = sorted(values)
+    return ordered[max(0, math.ceil(percentile * len(ordered)) - 1)]
+
+
+def _modeled_drive_sequence(drive):
+    if drive.get('play_sequence_status') in ('not_modeled', 'no_recorded_plays', 'unavailable'):
+        return False
+    try:
+        play_count = int(drive.get('play_count') or 0)
+    except (TypeError, ValueError):
+        return False
+    return play_count > 0 or drive.get('play_sequence_status') == 'recorded'
+
+
+def _aggregate_drive_summaries(drive_rows, game_seeds_by_team):
+    """Aggregate drive outcomes per team, zero-filling covered games and excluding absent OT play sequences."""
+    by_team_terminal = defaultdict(list)
+    counts_by_game = defaultdict(Counter)
+    teams = {str(team) for team in game_seeds_by_team}
+    for drive in drive_rows:
+        team = str(drive.get('offense_team') or 'unknown')
+        seed = _seed_key(drive.get('seed'))
+        if seed is None:
+            continue
+        teams.add(team)
+        game_seeds_by_team.setdefault(team, set()).add(seed)
+        terminal = str(drive.get('terminal') or 'unclassified')
+        by_team_terminal[(team, terminal)].append(drive)
+        counts_by_game[(team, seed)][terminal] += 1
+
+    terminals = sorted({terminal for _team, terminal in by_team_terminal})
+    rows = []
+    for team in sorted(teams):
+        seeds = sorted(game_seeds_by_team.get(team, set()))
+        all_team_drives = [drive for terminal in terminals
+                           for drive in by_team_terminal.get((team, terminal), [])]
+        total_drive_count = len(all_team_drives)
+        for terminal in ('ALL', *terminals):
+            group = all_team_drives if terminal == 'ALL' else by_team_terminal.get((team, terminal), [])
+            per_game = [
+                (sum(counts_by_game[(team, seed)].values()) if terminal == 'ALL'
+                 else counts_by_game[(team, seed)].get(terminal, 0))
+                for seed in seeds
+            ]
+            modeled = [drive for drive in group if _modeled_drive_sequence(drive)]
+            event_counts = []
+            net_yards = []
+            for drive in modeled:
+                try:
+                    event_counts.append(int(drive.get('play_count') or 0))
+                except (TypeError, ValueError):
+                    pass
+                try:
+                    value = drive.get('net_yards')
+                    if value is not None:
+                        net_yards.append(float(value))
+                except (TypeError, ValueError):
+                    pass
+
+            offensive_scoring_drives = 0
+            defensive_scoring_drives = 0
+            offense_points = 0.0
+            defense_points = 0.0
+            turnover_drives = 0
+            for drive in group:
+                try:
+                    points = float(drive.get('points') or 0)
+                except (TypeError, ValueError):
+                    points = 0.0
+                scoring_team = str(drive.get('scoring_team')) if drive.get('scoring_team') else None
+                if points > 0 and scoring_team == team:
+                    offensive_scoring_drives += 1
+                    offense_points += points
+                elif points > 0 and scoring_team is not None:
+                    defensive_scoring_drives += 1
+                    defense_points += points
+                try:
+                    turnover_drives += int(float(drive.get('turnovers') or 0) > 0)
+                except (TypeError, ValueError):
+                    pass
+
+            game_n = len(seeds)
+            drive_n = len(group)
+            game_distribution = _mean_median(per_game)
+            event_distribution = _mean_median(event_counts)
+            net_distribution = _mean_median(net_yards)
+            rows.append({
+                'team': team, 'terminal': terminal, 'game_sample_n': game_n,
+                'drive_count': drive_n,
+                'drive_share': drive_n / total_drive_count if total_drive_count else 0.0,
+                'per_game_mean': game_distribution['mean'],
+                'per_game_median': game_distribution['median'],
+                'per_game_p95': _nearest_rank(per_game, 0.95),
+                'per_game_p99': _nearest_rank(per_game, 0.99),
+                'per_game_max': max(per_game) if per_game else None,
+                'per_game_zero_rate': (sum(value == 0 for value in per_game) / game_n) if game_n else None,
+                'modeled_drive_n': len(modeled),
+                'unmodeled_drive_n': drive_n - len(modeled),
+                'mean_recorded_events_per_drive': event_distribution['mean'],
+                'median_recorded_events_per_drive': event_distribution['median'],
+                'p95_recorded_events_per_drive': _nearest_rank(event_counts, 0.95),
+                'mean_net_yards_per_modeled_drive': net_distribution['mean'],
+                'median_net_yards_per_modeled_drive': net_distribution['median'],
+                'offensive_scoring_drives': offensive_scoring_drives,
+                'offensive_scoring_rate': offensive_scoring_drives / drive_n if drive_n else None,
+                'defensive_scoring_drives': defensive_scoring_drives,
+                'offense_points': offense_points, 'defense_points': defense_points,
+                'offense_points_per_drive': offense_points / drive_n if drive_n else None,
+                'turnover_drives': turnover_drives,
+                'turnover_rate': turnover_drives / drive_n if drive_n else None,
+            })
+    return rows
+
+
+def aggregate_saved_report_summary(summary):
+    """Build drive aggregates from a previously generated report without touching its source artifacts."""
+    if summary.get('schema') != 'lp.nfl.slc-run-report.v1':
+        raise ValueError('input is not an SLC run-report summary')
+    game_n = int(summary.get('scored_games') or 0)
+    game_seeds_by_team = defaultdict(set)
+    for row in summary.get('team_stats') or []:
+        team = str(row.get('team') or 'unknown')
+        game_seeds_by_team[team]
+    for drive in summary.get('drive_summaries') or []:
+        team = str(drive.get('offense_team') or 'unknown')
+        seed = _seed_key(drive.get('seed'))
+        if seed is not None:
+            game_seeds_by_team[team].add(seed)
+    for team, seeds in game_seeds_by_team.items():
+        if len(seeds) != game_n:
+            raise ValueError(
+                f'cannot zero-fill saved drive summary for {team}: '
+                f'{len(seeds)} drive-covered seeds for {game_n} scored games'
+            )
+    return _aggregate_drive_summaries(summary.get('drive_summaries') or [], game_seeds_by_team)
+
+
 def _numeric_leaves(value, prefix=''):
     if isinstance(value, dict):
         for key, child in value.items():
@@ -328,6 +478,7 @@ def _analyze(path: Path):
     quarter_player_values = defaultdict(list)
     quarter_player_meta = {}
     drive_rows = []
+    drive_game_seeds_by_team = defaultdict(set)
     quarter_drive_values = defaultdict(lambda: defaultdict(list))
     quarter_data_games = 0
     quarter_complete_games = 0
@@ -378,6 +529,10 @@ def _analyze(path: Path):
                         quarter_score_values[(str(team), period)].append(periods[period] or 0)
 
         if isinstance(quarterly, dict):
+            if isinstance(quarterly.get('drive_summaries'), list):
+                for team_line in teams:
+                    team = str(team_line.get('team') or team_line.get('team_code') or 'unknown')
+                    drive_game_seeds_by_team[team].add(seed)
             complete_periods = {
                 period: _period_play_stats_complete(quarterly, period) for period in PERIODS
             }
@@ -476,6 +631,8 @@ def _analyze(path: Path):
                         f'{metric}_median': distribution['median'], f'{metric}_sample_n': len(values)})
         drive_period_rows.append(row)
 
+    drive_aggregate_rows = _aggregate_drive_summaries(drive_rows, drive_game_seeds_by_team)
+
     score_summary = {}
     for (team, metric), values in scores_by_team.items():
         if metric == 'points':
@@ -500,7 +657,8 @@ def _analyze(path: Path):
             period: period_play_stats_complete_games[period] for period in PERIODS
         },
         'quarter_team_stats': quarter_team_rows, 'quarter_player_stats': quarter_player_rows,
-        'drive_summaries': drive_rows, 'quarter_drive_summary': drive_period_rows,
+        'drive_summaries': drive_rows, 'drive_aggregate_summary': drive_aggregate_rows,
+        'quarter_drive_summary': drive_period_rows,
     }
 
 
@@ -517,6 +675,53 @@ def _format_distribution(row):
     if not row:
         return '—'
     return f"{_format(row.get('mean'))} / {_format(row.get('median'))}"
+
+
+def _format_percent(value):
+    return '—' if value is None else f'{value:.1%}'
+
+
+def _drive_aggregate_markdown(rows, heading='### Aggregated drive summary'):
+    lines = ['', heading, '']
+    if not rows:
+        lines.append('Drive-level summaries are not present in these artifacts.')
+        return lines
+    lines.extend([
+        'Per-game terminal counts include zero-drive games. Event and yardage means use only '
+        'drive sequences that were modeled; score-only overtime outcomes remain in drive and scoring counts.',
+        '',
+        '| Team | End state | Drives | Team share | Drives/game mean / med / P95 | Zero-game rate | Modeled / unmodeled sequences | Events/sequence mean / med | Net yards/sequence mean / med | Offense points/drive | Scoring rate | Turnover rate |',
+        '|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|',
+    ])
+    for row in rows:
+        drives_per_game = ' / '.join(_format(row.get(key)) for key in
+                                     ('per_game_mean', 'per_game_median', 'per_game_p95'))
+        events_per_drive = ' / '.join(_format(row.get(key)) for key in
+                                      ('mean_recorded_events_per_drive',
+                                       'median_recorded_events_per_drive'))
+        yards_per_drive = ' / '.join(_format(row.get(key)) for key in
+                                     ('mean_net_yards_per_modeled_drive',
+                                      'median_net_yards_per_modeled_drive'))
+        lines.append(
+            f"| {row['team']} | {row['terminal']} | {row['drive_count']} | "
+            f"{_format_percent(row['drive_share'])} | {drives_per_game} | "
+            f"{_format_percent(row['per_game_zero_rate'])} | "
+            f"{row['modeled_drive_n']} / {row['unmodeled_drive_n']} | {events_per_drive} | "
+            f"{yards_per_drive} | {_format(row['offense_points_per_drive'])} | "
+            f"{_format_percent(row['offensive_scoring_rate'])} | "
+            f"{_format_percent(row['turnover_rate'])} |"
+        )
+    return lines
+
+
+def render_saved_drive_summary(summary):
+    """Render an aggregate-only review from a saved run summary."""
+    rows = aggregate_saved_report_summary(summary)
+    lines = ['# Aggregated SLC drive summary', '',
+             f"Games: {summary.get('scored_games', 0)} · Matchup: {', '.join(summary.get('game_ids') or ['unknown'])}",
+             '']
+    lines.extend(_drive_aggregate_markdown(rows, heading='## Drive outcomes'))
+    return '\n'.join(lines) + '\n', rows
 
 
 def render_markdown(results):
@@ -606,6 +811,7 @@ def render_markdown(results):
                              f"{_format_distribution({'mean': row.get('points_scored_mean'), 'median': row.get('points_scored_median')})} | "
                              f"{_format_distribution({'mean': row.get('plays_mean'), 'median': row.get('plays_median')})} | "
                              f"{_format_distribution({'mean': row.get('net_yards_mean'), 'median': row.get('net_yards_median')})} |")
+        lines.extend(_drive_aggregate_markdown(result.get('drive_aggregate_summary') or []))
         lines.extend(['', '### Player workload averages and medians', '',
                       '| Team | Player | Pos | Rush att avg/med | Rush yds avg/med | Targets avg/med | Receptions avg/med | Rec yds avg/med | Pass att avg/med | Pass yds avg/med |',
                       '|---|---|---|---:|---:|---:|---:|---:|---:|---:|'])
@@ -655,6 +861,7 @@ def write_report(result: dict, output_dir: Path, *, force=False):
         ('team-stats.csv', 'team_stats'), ('player-stats.csv', 'player_stats'),
         ('quarter-scores.csv', 'period_scores'), ('quarter-team-stats.csv', 'quarter_team_stats'),
         ('quarter-player-stats.csv', 'quarter_player_stats'), ('drive-summaries.csv', 'drive_summaries'),
+        ('drive-aggregate-summary.csv', 'drive_aggregate_summary'),
         ('quarter-drive-summary.csv', 'quarter_drive_summary'),
     ):
         _write_csv(output_dir / name, result[key])
