@@ -17,21 +17,24 @@ const challenge = (id: string, yards: number, targetAim = 0) => ({
     attempt_distance_yards: yards,
     target_aim: targetAim,
     aim_tolerance: 0.24,
+    goal_half_width: 0.36,
     timing_window: 0.26,
-    range_min_margin_yards: 1.5,
-    range_max_margin_yards: 8,
+    timing_lateral_coupling: 0.2,
+    base_crossbar_clearance_yards: 3,
+    timing_clearance_penalty_yards: 4,
+    range_clearance_gain: 0.06,
     weather_mode: 'neutral_arcade',
   },
-  physics_version: 'fg-physics-v1',
-  scoring_version: 'fg-score-v1',
+  physics_version: 'fg-physics-v2',
+  scoring_version: 'fg-score-v2',
   config_hash: `hash-${id}`,
   state: 'available',
 })
 
 const catalog = {
   schema_version: 'lp-arcade-training-v1',
-  physics_version: 'fg-physics-v1',
-  scoring_version: 'fg-score-v1',
+  physics_version: 'fg-physics-v2',
+  scoring_version: 'fg-score-v2',
   origin: 'fictional_practice',
   drills: [{
     id: 'aim-lab-v1',
@@ -75,8 +78,8 @@ const result = (id: string, score = 1000) => ({
   challenge_id: id,
   origin: 'fictional_practice',
   config_hash: `hash-${id}`,
-  physics_version: 'fg-physics-v1',
-  scoring_version: 'fg-score-v1',
+  physics_version: 'fg-physics-v2',
+  scoring_version: 'fg-score-v2',
   attempt_distance_yards: 35,
   made: score > 0,
   feedback: score > 0 ? 'GOOD' : 'LEFT',
@@ -84,6 +87,15 @@ const result = (id: string, score = 1000) => ({
   score_breakdown: { base: score > 0 ? 600 : 0, precision: score > 0 ? 300 : 0, distance_execution: score > 0 ? 100 : 0 },
   coaching: 'Clean kick.',
   estimated_arcade_range_yards: 35,
+  trajectory: {
+    range_yards: 35,
+    range_fraction: 1,
+    lateral_position: score > 0 ? 0 : -0.8,
+    height_above_crossbar_yards: 3,
+    reaches_goal_line: true,
+    between_uprights: score > 0,
+    clears_crossbar: score > 0,
+  },
   real_game_outcome: null,
 })
 
@@ -107,6 +119,12 @@ async function clickAndFlush(button: HTMLElement) {
     fireEvent.click(button)
     await new Promise(resolve => setTimeout(resolve, 0))
   })
+}
+
+async function kickWithAccessibleSettings() {
+  const summary = screen.getByText('Keyboard & accessible controls')
+  if (summary.closest('details')?.open !== true) fireEvent.click(summary)
+  await clickAndFlush(screen.getByRole('button', { name: /kick with these settings/i }))
 }
 
 describe('FieldGoalArcade', () => {
@@ -144,15 +162,15 @@ describe('FieldGoalArcade', () => {
     else Reflect.deleteProperty(window, 'gtag')
   })
 
-  it('normalizes one-thumb aim, power and release timing into the server input ranges', () => {
+  it('normalizes a field drag into aim, pull power and release timing', () => {
     expect(normalizeKickGesture({
-      startAim: 0, startPower: 0.5, deltaX: 25, deltaY: -35,
+      startAim: 0, startPower: 0.5, deltaX: 25, deltaY: 35,
       elapsedMs: 600, width: 100, height: 100,
     })).toEqual({ aim: 0.5, power: 1, release_timing: 0.5 })
     expect(normalizeKickGesture({
       startAim: 0.9, startPower: 0.1, deltaX: 200, deltaY: 200,
       elapsedMs: 1800, width: 100, height: 100,
-    })).toEqual({ aim: 1, power: 0, release_timing: 1 })
+    })).toEqual({ aim: 1, power: 1, release_timing: 1 })
 
     const compactSurface = normalizeKickGesture({
       startAim: 0, startPower: 0.5, deltaX: 10, deltaY: -10,
@@ -165,7 +183,7 @@ describe('FieldGoalArcade', () => {
     expect(wideSurface).toEqual(compactSurface)
   })
 
-  it('quantizes one-thumb input to the accessible sliders’ 0.01 step', () => {
+  it('quantizes field input to the accessible sliders’ 0.01 step', () => {
     expect(normalizeKickGesture({
       startAim: 0,
       startPower: 0.5790909090909091,
@@ -177,9 +195,11 @@ describe('FieldGoalArcade', () => {
     })).toEqual({ aim: 0.2, power: 0.58, release_timing: 0.52 })
   })
 
-  it('submits one normalized attempt from a one-thumb pointer release', async () => {
-    await renderGame({ challengeId: 'practice-fg-35-v1' })
-    const pad = screen.getByRole('button', { name: 'One-thumb kick gesture' })
+  it('submits one normalized attempt when the ball is dragged and released on the field', async () => {
+    const view = await renderGame({ challengeId: 'practice-fg-35-v1' })
+    const field = screen.getByRole('application')
+    const ball = view.container.querySelector('[data-arcade-ball-hit-target]') as SVGCircleElement
+    expect(ball).toBeTruthy()
     const pointerEventDescriptor = Object.getOwnPropertyDescriptor(window, 'PointerEvent')
     class TestPointerEvent extends MouseEvent {
       pointerId: number
@@ -192,27 +212,25 @@ describe('FieldGoalArcade', () => {
       }
     }
     Object.defineProperty(window, 'PointerEvent', { configurable: true, value: TestPointerEvent })
-    jest.spyOn(pad, 'getBoundingClientRect').mockReturnValue({
+    jest.spyOn(field, 'getBoundingClientRect').mockReturnValue({
       x: 0, y: 0, left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100,
       toJSON: () => ({}),
     } as DOMRect)
     jest.useFakeTimers()
     try {
       await act(async () => {
-        fireEvent.pointerDown(pad, { pointerId: 7, isPrimary: true, clientX: 50, clientY: 50 })
+        fireEvent.pointerDown(ball, { pointerId: 7, isPrimary: true, clientX: 50, clientY: 50 })
         await jest.advanceTimersByTimeAsync(600)
-        fireEvent.pointerMove(pad, { pointerId: 7, clientX: 60, clientY: 40 })
-        fireEvent.pointerUp(pad, { pointerId: 7, clientX: 60, clientY: 40 })
-        fireEvent.click(pad)
+        fireEvent.pointerMove(field, { pointerId: 7, clientX: 60, clientY: 60.5 })
+        fireEvent.pointerUp(field, { pointerId: 7, clientX: 60, clientY: 60.5 })
         for (let index = 0; index < 6; index += 1) await Promise.resolve()
       })
       expect(submitted).toHaveLength(1)
       expect(submitted[0].input).toEqual({
         aim: 0.2,
-        power: expect.any(Number),
+        power: 0.36,
         release_timing: 0.5,
       })
-      expect((submitted[0].input as { power: number }).power).toBeGreaterThan(0.45)
     } finally {
       jest.useRealTimers()
       if (pointerEventDescriptor) Object.defineProperty(window, 'PointerEvent', pointerEventDescriptor)
@@ -220,21 +238,25 @@ describe('FieldGoalArcade', () => {
     }
   })
 
-  it('supports a keyboard path through the labeled aim, power and timing controls', async () => {
+  it('supports keyboard aim, power and held-release timing on the field', async () => {
     await renderGame({ challengeId: 'practice-fg-35-v1' })
-    const pointerEquivalent = normalizeKickGesture({
-      startAim: 0, startPower: (35 - 14) / 55 + 0.07,
-      deltaX: 10, deltaY: -10, elapsedMs: 600, width: 100, height: 100,
-    })
-    fireEvent.change(screen.getByRole('slider', { name: 'Aim' }), { target: { value: String(pointerEquivalent.aim) } })
-    fireEvent.change(screen.getByRole('slider', { name: 'Power' }), { target: { value: String(pointerEquivalent.power) } })
-    fireEvent.change(screen.getByRole('slider', { name: 'Release timing' }), { target: { value: String(pointerEquivalent.release_timing) } })
-
-    await clickAndFlush(screen.getByRole('button', { name: 'One-thumb kick gesture' }))
+    const field = screen.getByRole('application')
+    jest.useFakeTimers()
+    try {
+      field.focus()
+      for (let index = 0; index < 4; index += 1) await act(async () => { fireEvent.keyDown(field, { key: 'ArrowRight' }) })
+      for (let index = 0; index < 3; index += 1) await act(async () => { fireEvent.keyDown(field, { key: 'ArrowUp' }) })
+      await act(async () => {
+        fireEvent.keyDown(field, { key: ' ' })
+        await jest.advanceTimersByTimeAsync(600)
+        fireEvent.keyUp(field, { key: ' ' })
+        for (let index = 0; index < 8; index += 1) await Promise.resolve()
+      })
+    } finally { jest.useRealTimers() }
 
     expect(await screen.findByRole('region', { name: 'Kick result' })).toBeTruthy()
     expect(submitted).toHaveLength(1)
-    expect(submitted[0].input).toEqual(pointerEquivalent)
+    expect(submitted[0].input).toEqual({ aim: 0.2, power: 0.37, release_timing: 0.5 })
   })
 
   it('exposes and persists the sound volume preference', async () => {
@@ -262,11 +284,16 @@ describe('FieldGoalArcade', () => {
     window.gtag = gtag
     await renderGame({ challengeId: 'practice-fg-35-v1' })
     expect(await screen.findByText(/FICTIONAL PRACTICE · 35 YD/)).toBeTruthy()
-    expect(screen.getByRole('slider', { name: /Aim/ })).toBeTruthy()
-    expect(screen.getByRole('slider', { name: /Power/ })).toBeTruthy()
-    expect(screen.getByRole('slider', { name: /Release timing/ })).toBeTruthy()
-
-    await clickAndFlush(screen.getByRole('button', { name: /^kick$/i }))
+    expect(screen.getByRole('application').getAttribute('aria-label')).toMatch(/touch or click the football/i)
+    expect(screen.getAllByText('22%').length).toBeGreaterThan(0)
+    expect(screen.getByText('EARLY')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /^kick$/i })).toBeNull()
+    expect(submitted).toHaveLength(0)
+    fireEvent.click(screen.getByText('Keyboard & accessible controls'))
+    fireEvent.change(screen.getByRole('slider', { name: 'Aim' }), { target: { value: '0.2' } })
+    fireEvent.change(screen.getByRole('slider', { name: 'Power' }), { target: { value: '0.39' } })
+    fireEvent.change(screen.getByRole('slider', { name: 'Release timing' }), { target: { value: '0.5' } })
+    await clickAndFlush(screen.getByRole('button', { name: /kick with these settings/i }))
     const kickResult = await screen.findByRole('region', { name: 'Kick result' })
     expect(kickResult.textContent).toContain('1000')
     expect(submitted).toHaveLength(1)
@@ -282,7 +309,7 @@ describe('FieldGoalArcade', () => {
       mode: 'practice_kick', origin: 'fictional_practice', entry: 'practice', distance_band: 'medium',
     }))
     expect(gtag).toHaveBeenCalledWith('event', 'arcade_kick_completed', expect.objectContaining({
-      mode: 'practice_kick', input_method: 'keyboard', made: true, score_band: '800_1000',
+      mode: 'practice_kick', input_method: 'controls', made: true, score_band: '800_1000',
       attempt_duration_seconds: expect.any(Number),
     }))
     expect(gtag).toHaveBeenCalledWith('event', 'arcade_first_kick_completed', expect.objectContaining({
@@ -292,7 +319,7 @@ describe('FieldGoalArcade', () => {
     expect(analyticsPayloads).not.toContain('practice-fg-35-v1')
     expect(analyticsPayloads).not.toContain('test-attempt-')
 
-    await clickAndFlush(screen.getByRole('button', { name: /challenge a friend/i }))
+    await clickAndFlush(screen.getAllByRole('button', { name: /challenge a friend/i })[0])
     expect(await screen.findByText(/beat my 1000/i)).toBeTruthy()
     expect(gtag).toHaveBeenCalledWith('event', 'arcade_share_created', expect.objectContaining({
       mode: 'practice_kick', origin: 'fictional_practice',
@@ -320,7 +347,7 @@ describe('FieldGoalArcade', () => {
     })
 
     await renderGame({ challengeId: 'practice-fg-35-v1' })
-    await clickAndFlush(screen.getByRole('button', { name: /^kick$/i }))
+    await kickWithAccessibleSettings()
 
     expect(await screen.findByText(/couldn’t verify the kick/i)).toBeTruthy()
     expect(gtag).toHaveBeenCalledWith('event', 'arcade_attempt_verification_failed', expect.objectContaining({
@@ -360,7 +387,7 @@ describe('FieldGoalArcade', () => {
     expect(await screen.findByText('Aim Lab')).toBeTruthy()
 
     for (let kick = 0; kick < 3; kick += 1) {
-      await clickAndFlush(await screen.findByRole('button', { name: /^kick$/i }))
+      await kickWithAccessibleSettings()
       expect(submitted).toHaveLength(kick + 1)
       await screen.findByRole('region', { name: 'Kick result' })
       if (kick < 2) await clickAndFlush(screen.getByRole('button', { name: /next kick/i }))
@@ -387,7 +414,7 @@ describe('FieldGoalArcade', () => {
 
     await renderGame({ challengeId: 'practice-fg-35-v1' })
     await screen.findByText(/FICTIONAL PRACTICE · 35 YD/)
-    await clickAndFlush(screen.getByRole('button', { name: /^kick$/i }))
+    await kickWithAccessibleSettings()
     expect(await screen.findByText(/couldn’t verify the kick/i)).toBeTruthy()
     expect(screen.queryByText(/arcade score/i)).toBeNull()
   })
@@ -418,7 +445,7 @@ describe('FieldGoalArcade', () => {
     expect(screen.getByRole('link', { name: /watch this source play in pixel red zone/i }).getAttribute('href'))
       .toContain('game=401772829&play=4017728291916')
 
-    await clickAndFlush(screen.getByRole('button', { name: /^kick$/i }))
+    await kickWithAccessibleSettings()
     expect(await screen.findByText(/Real attempt: missed/)).toBeTruthy()
   })
 
@@ -442,7 +469,7 @@ describe('FieldGoalArcade', () => {
     expect(await screen.findByText(/ESPN LIVE EVENT · 45 YD/)).toBeTruthy()
     expect(screen.getByText(/LP last observed Nov 1, 8:01 PM UTC/)).toBeTruthy()
     expect(screen.getByText(/ESPN summary updated Nov 1, 8:00 PM UTC/)).toBeTruthy()
-    expect(screen.getByRole('img', { name: /ESPN live event challenge, 45 yards/ })).toBeTruthy()
+    expect(screen.getByRole('application').getAttribute('aria-label')).toMatch(/ESPN live event challenge, 45 yards/)
   })
 
   it('keeps a corrected source challenge frozen and links to its replacement', async () => {
@@ -491,7 +518,7 @@ describe('FieldGoalArcade', () => {
     expect(gtag).toHaveBeenCalledWith('event', 'arcade_shared_challenge_opened', expect.objectContaining({
       mode: 'practice_kick', origin: 'fictional_practice',
     }))
-    await clickAndFlush(screen.getByRole('button', { name: /^kick$/i }))
+    await kickWithAccessibleSettings()
     expect(submitted[0].share_id).toBe('share-fixture')
     expect(gtag).toHaveBeenCalledWith('event', 'arcade_qualified_referral_activation', expect.objectContaining({
       mode: 'practice_kick', origin: 'fictional_practice',

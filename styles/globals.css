@@ -477,6 +477,84 @@ a {
 .lp-arcade-error { color: #edbca3; font-size: .8rem; }
 .lp-arcade-research-links { display: flex; flex-wrap: wrap; gap: .25rem .7rem; border-top: 1px solid #343238; padding-top: .45rem; }
 .lp-arcade-research-links a { display: inline-flex; min-height: 2.75rem; align-items: center; color: #c9b98e; font-size: .7rem; font-weight: 750; }
+
+/* Field Goal Frenzy: the field is the control surface and the flight stays in scene. */
+.lp-arcade-play-area { position: relative; display: flex; min-height: 0; flex: 1 1 auto; overflow: hidden; background: #152235; }
+.lp-arcade-pixel-field { flex: 1 1 auto; min-height: 0; touch-action: none; user-select: none; cursor: crosshair; }
+.lp-arcade-pixel-field svg { outline: none; }
+.lp-arcade-pixel-field svg:focus-visible { outline: 3px solid #e4ff9d; outline-offset: -4px; }
+.lp-arcade-pixel-field [data-arcade-ball-hit-target] { cursor: grab; }
+.lp-arcade-ball-sprite { transform-box: fill-box; transform-origin: center; }
+.lp-arcade-ball-sprite.is-flying { animation: lp-arcade-ball-perspective .95s linear forwards; }
+@keyframes lp-arcade-ball-perspective { to { transform: scale(.42); } }
+.lp-arcade-field-guidance { position: absolute; z-index: 2; top: 4.1rem; left: .65rem; display: grid; width: min(40%,24rem); gap: .28rem; justify-items: center; border: 1px solid rgba(230,207,151,.38); background: rgba(18,22,30,.86); padding: .5rem .7rem; text-align: center; pointer-events: none; }
+.lp-arcade-field-guidance strong { color: #fff0c8; font: 900 .72rem/1.25 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .06em; }
+.lp-arcade-field-guidance span:not(.lp-arcade-timing-meter) { color: #d3cfbf; font-size: .68rem; line-height: 1.3; }
+.lp-arcade-timing-meter { position: relative; display: block; width: min(100%,14rem); height: .4rem; overflow: hidden; border: 1px solid #8a8068; background: linear-gradient(90deg,#27252b 0 29%,#536a46 29% 71%,#27252b 71%); }
+.lp-arcade-timing-meter i { display: block; height: 100%; background: #efca70; }
+.lp-arcade-field-outcome { display: none; }
+.lp-arcade-accessibility-controls { border-top: 1px solid #343238; padding-top: .35rem; }
+.lp-arcade-accessibility-controls summary { display: flex; min-height: 2.75rem; align-items: center; cursor: pointer; color: #e6d3a7; font-size: .75rem; font-weight: 800; }
+.lp-arcade-accessibility-controls > p { color: #aaa8a1; font-size: .7rem; line-height: 1.45; }
+.lp-arcade-settings-kick { min-height: 2.75rem; margin-top: .5rem; border: 1px solid #71654c; padding: .45rem .7rem; color: #f0e1bd; font-size: .75rem; font-weight: 800; }
+.lp-arcade-settings-kick:disabled { opacity: .55; }
+.lp-arcade-mobile-back { display: none; }
+.lp-arcade-field-error button { border-color: #bc8163 !important; }
+
+@media (max-width: 640px) {
+  html.lp-arcade-fullscreen,body.lp-arcade-fullscreen { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
+  .lp-arcade-game-page { position: fixed; z-index: 90; inset: 0; display: flex; width: 100vw; max-width: none; height: 100vh; height: 100dvh; flex-direction: column; margin: 0; overflow: hidden; background: #111216; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  .lp-arcade-game-page > .lp-arcade-page-heading { display: none; }
+  .lp-arcade-game-page > .lp-arcade-unit { min-height: 0; flex: 1 1 auto; gap: .35rem; border: 0; border-radius: 0; padding: .45rem .55rem; }
+  .lp-arcade-game-page .lp-arcade-game-heading { min-height: 2.65rem; flex: 0 0 auto; align-items: center; gap: .4rem; }
+  .lp-arcade-mobile-back { display: inline-flex; width: 2.5rem; min-width: 2.5rem; min-height: 2.5rem; align-items: center; justify-content: center; border: 1px solid #62583f; color: #f0e1bd; font-size: 1rem; font-weight: 900; }
+  .lp-arcade-game-heading > div:first-of-type { min-width: 0; flex: 1 1 auto; }
+  .lp-arcade-game-heading .lp-arcade-kicker { display: none; }
+  .lp-arcade-game-heading h2 { overflow: hidden; font-size: 1rem; text-overflow: ellipsis; white-space: nowrap; }
+  .lp-arcade-provenance { margin-top: .15rem; font-size: .55rem; }
+  .lp-arcade-source-caption { display: none; }
+  .lp-arcade-audio-controls { flex: 0 0 auto; }
+  .lp-arcade-audio-toggle { min-height: 2.5rem; padding: .35rem .5rem; font-size: .65rem; }
+  .lp-arcade-volume-control { display: none; }
+  .lp-arcade-play-area { min-height: 0; flex: 1 1 auto; }
+  .lp-arcade-pixel-field { width: 100%; height: 100%; aspect-ratio: auto; }
+  .lp-arcade-pixel-field svg { width: 100%; height: 100%; }
+  .lp-arcade-pixel-field [data-arcade-brand] { display: none; }
+  .lp-arcade-pixel-field [data-arcade-state-label] { display: none; }
+  .lp-arcade-field-guidance { top: .35rem; left: 50%; width: calc(100% - 1rem); gap: .12rem; transform: translateX(-50%); padding: .22rem .4rem; }
+  .lp-arcade-field-guidance strong { font-size: .59rem; }
+  .lp-arcade-field-guidance span:not(.lp-arcade-timing-meter) { display: none; }
+  .lp-arcade-field-guidance.is-active span:not(.lp-arcade-timing-meter) { display: block; font-size: .57rem; }
+  .lp-arcade-field-guidance.is-active strong { font-size: .64rem; }
+  .lp-arcade-timing-meter { height: .32rem; }
+  .lp-arcade-field-outcome { position: absolute; z-index: 4; right: .55rem; bottom: .55rem; left: .55rem; display: grid; max-height: 48%; gap: .35rem; overflow: auto; border: 1px solid #d4b76e; background: rgba(20,20,24,.96); padding: .7rem; box-shadow: 0 8px 28px rgba(0,0,0,.55); }
+  .lp-arcade-field-outcome strong { color: #fff0c8; font: 900 1rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .lp-arcade-field-outcome span { color: #d3cfbf; font-size: .7rem; line-height: 1.4; }
+  .lp-arcade-field-outcome button { min-height: 2.75rem; border: 1px solid #8a774d; background: #433820; color: #fff0ca; font-size: .7rem; font-weight: 900; }
+  .lp-arcade-under-field { min-height: 1.35rem; flex: 0 0 auto; overflow: hidden; font-size: .62rem; white-space: nowrap; }
+  .lp-arcade-under-field > span { overflow: hidden; text-overflow: ellipsis; }
+  .lp-arcade-readouts { flex: 0 0 auto; gap: .3rem; padding: .35rem 0; }
+  .lp-arcade-readouts small { font-size: .5rem; }
+  .lp-arcade-readouts b { font-size: .62rem; }
+  .lp-arcade-accessibility-controls { position: relative; z-index: 3; flex: 0 0 auto; border: 0; padding: 0; }
+  .lp-arcade-accessibility-controls summary { min-height: 2.65rem; justify-content: center; border: 1px solid #4c4638; font-size: .67rem; }
+  .lp-arcade-accessibility-controls[open] { position: absolute; z-index: 8; right: .65rem; bottom: .55rem; left: .65rem; max-height: 74dvh; overflow: auto; border: 1px solid #756344; background: #19191d; padding: .55rem; box-shadow: 0 8px 28px #000a; }
+  .lp-arcade-accessibility-controls[open] summary { min-height: 2.75rem; }
+  .lp-arcade-accessibility-controls > p { font-size: .66rem; }
+  .lp-arcade-controls { grid-template-columns: 1fr; gap: .25rem; }
+  .lp-arcade-control { display: grid; grid-template-columns: 1fr auto; column-gap: .6rem; }
+  .lp-arcade-control > span,.lp-arcade-control input[type="range"] { grid-column: 1 / -1; }
+  .lp-arcade-control > span { min-height: 1.4rem; font-size: .68rem; }
+  .lp-arcade-control input[type="range"] { min-height: 2.25rem; }
+  .lp-arcade-accessibility-controls[open] .lp-arcade-settings-kick { width: 100%; }
+  .lp-arcade-score-history,.lp-arcade-drill-history,.lp-arcade-leaderboard,.lp-arcade-status-note,.lp-arcade-research-links,.lp-arcade-game-page .lp-arcade-result { display: none !important; }
+  .lp-arcade-game-page .lp-arcade-result-actions { display: none; }
+  .lp-arcade-game-page .lp-arcade-source-correction { flex: 0 0 auto; max-height: 3rem; overflow: auto; font-size: .62rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-arcade-ball-sprite.is-flying { animation-duration: .01ms; }
+}
 .lp-arcade-lobby-group { margin-top: 1.3rem; padding-top: .75rem; border-top: 1px solid #343238; }
 .lp-arcade-lobby-group h2 { margin: 0 0 .4rem; color: #f0e1bd; font-size: 1rem; font-weight: 850; }
 .lp-arcade-lobby-group p { max-width: 54rem; margin: .35rem 0 .7rem; color: #bcbab3; font-size: .82rem; line-height: 1.55; }

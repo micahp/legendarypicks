@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import type { PointerEvent as ReactPointerEvent } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ArcadeLeaderboard from './ArcadeLeaderboard'
 import { getArcadeClaim } from './arcadeSession'
@@ -34,9 +34,12 @@ type Challenge = {
     attempt_distance_yards: number
     target_aim: number
     aim_tolerance: number
+    goal_half_width: number
     timing_window: number
-    range_min_margin_yards: number
-    range_max_margin_yards: number
+    timing_lateral_coupling: number
+    base_crossbar_clearance_yards: number
+    timing_clearance_penalty_yards: number
+    range_clearance_gain: number
     weather_mode: 'neutral_arcade'
   }
   physics_version: string
@@ -78,15 +81,28 @@ type AttemptResult = {
   scoring_version: string
   attempt_distance_yards: number
   made: boolean
-  feedback: 'GOOD' | 'LEFT' | 'RIGHT' | 'SHORT' | 'LONG' | 'EARLY' | 'LATE'
+  feedback: 'GOOD' | 'LEFT' | 'RIGHT' | 'SHORT' | 'EARLY' | 'LATE'
   score: number
   score_breakdown: { base: number; precision: number; distance_execution: number }
   coaching: string
   estimated_arcade_range_yards: number
+  trajectory: KickTrajectory
   real_game_outcome: null | { status: 'made' | 'missed' | 'blocked'; label: string }
   personal_best_score?: number | null
   training_set?: null | { drill_id: string; score: number; personal_best_score: number; medal: string | null }
   qualified_referral_activation?: boolean
+}
+
+type KickInput = { aim: number; power: number; release_timing: number }
+
+type KickTrajectory = {
+  range_yards: number
+  range_fraction: number
+  lateral_position: number
+  height_above_crossbar_yards: number
+  reaches_goal_line: boolean
+  between_uprights: boolean
+  clears_crossbar: boolean
 }
 
 type ChallengeProgress = {
@@ -175,23 +191,39 @@ export function normalizeKickGesture({
     // Match the accessible range controls' 0.01 step so touch, mouse and
     // keyboard produce the same normalized resolution before server scoring.
     aim: quantizeControl(startAim + deltaX / Math.max(1, width / 2), -1, 1),
-    power: quantizeControl(startPower - deltaY / Math.max(1, height * 0.7), 0, 1),
+    power: quantizeControl(startPower + deltaY / Math.max(1, height * 0.7), 0, 1),
     release_timing: quantizeControl(elapsedMs / 1200, 0, 1),
   }
 }
 
-function previewFeedback(challenge: Challenge, input: { aim: number; power: number; release_timing: number }) {
+function calculateKickTrajectory(challenge: Challenge, input: KickInput): KickTrajectory {
   const config = challenge.challenge_config
   const range = 14 + input.power * 55
-  const aimError = input.aim - config.target_aim
   const rangeError = range - config.attempt_distance_yards
   const timingError = input.release_timing - 0.5
-  if (aimError < -config.aim_tolerance) return 'LEFT' as const
-  if (aimError > config.aim_tolerance) return 'RIGHT' as const
-  if (range < config.attempt_distance_yards - config.range_min_margin_yards) return 'SHORT' as const
-  if (range > config.attempt_distance_yards + config.range_max_margin_yards) return 'LONG' as const
-  if (timingError < -config.timing_window) return 'EARLY' as const
-  if (timingError > config.timing_window) return 'LATE' as const
+  const lateralPosition = input.aim + timingError * config.timing_lateral_coupling
+  const heightAboveCrossbar = config.base_crossbar_clearance_yards
+    + Math.max(0, rangeError) * config.range_clearance_gain
+    - Math.abs(timingError) / config.timing_window * config.timing_clearance_penalty_yards
+  return {
+    range_yards: range,
+    range_fraction: range / config.attempt_distance_yards,
+    lateral_position: lateralPosition,
+    height_above_crossbar_yards: heightAboveCrossbar,
+    reaches_goal_line: range >= config.attempt_distance_yards,
+    between_uprights: Math.abs(lateralPosition) <= config.goal_half_width,
+    clears_crossbar: heightAboveCrossbar >= 0,
+  }
+}
+
+function previewFeedback(challenge: Challenge, input: KickInput) {
+  const trajectory = calculateKickTrajectory(challenge, input)
+  const timingError = input.release_timing - 0.5
+  if (!trajectory.between_uprights && trajectory.lateral_position < 0) return 'LEFT' as const
+  if (!trajectory.between_uprights) return 'RIGHT' as const
+  if (!trajectory.reaches_goal_line) return 'SHORT' as const
+  if (!trajectory.clears_crossbar && timingError < 0) return 'EARLY' as const
+  if (!trajectory.clears_crossbar) return 'LATE' as const
   return 'GOOD' as const
 }
 
@@ -373,27 +405,92 @@ function useArcadeSound(enabled: boolean, volume: number) {
   return { prepare, kick, play }
 }
 
+function trajectoryPath(
+  trajectory: KickTrajectory,
+  start: { x: number; y: number },
+) {
+  const startX = 480 + start.x
+  const startY = 454 + start.y
+  const goalX = 480 + trajectory.lateral_position * 90
+  const goalY = 176 - (trajectory.height_above_crossbar_yards + 1.25) * 8
+  const progress = trajectory.reaches_goal_line ? 1 : clamp(trajectory.range_fraction, 0, 1)
+  const endX = 480 + (goalX - 480) * progress
+  const endY = 454 + (goalY - 454) * progress
+  const x = endX - startX
+  const y = endY - startY
+  const controlY = Math.min(-28, y * 0.48 - 42)
+  return `M 0 0 Q ${Math.round(x * 0.38)} ${Math.round(controlY)} ${Math.round(x)} ${Math.round(y)}`
+}
+
 function PixelField({
   challenge,
   aim,
+  power,
+  timing,
   result,
   preview,
+  flightTrajectory,
+  flightInput,
+  flightStart,
+  flightSequence,
+  gestureActive,
+  gestureOffset,
+  pending,
+  attemptError,
+  onRetry,
+  onShare,
+  onErrorRetry,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  onPointerCancel,
+  onKeyDown,
+  onKeyUp,
 }: {
   challenge: Challenge
   aim: number
+  power: number
+  timing: number
   result: AttemptResult | null
   preview: AttemptResult['feedback'] | null
+  flightTrajectory: KickTrajectory | null
+  flightInput: KickInput | null
+  flightStart: { x: number; y: number }
+  flightSequence: number
+  gestureActive: boolean
+  gestureOffset: { x: number; y: number }
+  pending: boolean
+  attemptError: string | null
+  onRetry: () => void
+  onShare: () => void
+  onErrorRetry: () => void
+  onPointerDown: (event: ReactPointerEvent<SVGSVGElement>) => void
+  onPointerMove: (event: ReactPointerEvent<SVGSVGElement>) => void
+  onPointerUp: (event: ReactPointerEvent<SVGSVGElement>) => void
+  onPointerCancel: (event: ReactPointerEvent<SVGSVGElement>) => void
+  onKeyDown: (event: ReactKeyboardEvent<SVGSVGElement>) => void
+  onKeyUp: (event: ReactKeyboardEvent<SVGSVGElement>) => void
 }) {
   const targetAim = challenge.challenge_config.target_aim
-  const targetX = 480 + targetAim * 210
-  const aimX = 480 + aim * 210
+  const targetX = 480 + targetAim * 90
+  const aimX = 480 + aim * 90
   const flightFeedback = result?.feedback || preview
-  const flight = flightFeedback ? `lp-arcade-ball-flight-${flightFeedback.toLowerCase()}` : ''
+  const flightTrajectoryKey = flightTrajectory
+    ? `${flightTrajectory.range_yards}:${flightTrajectory.lateral_position}:${flightTrajectory.height_above_crossbar_yards}`
+    : 'predicted'
+  const flightKey = `${flightSequence}:${flightFeedback || 'idle'}:${flightTrajectoryKey}`
+  const provenance = challenge.origin === 'fictional_practice' ? 'Fictional practice'
+    : challenge.state === 'observed_live' ? 'ESPN live event challenge'
+      : challenge.state === 'source_corrected' ? 'ESPN corrected-source challenge' : 'Archived ESPN play challenge'
 
   return (
-    <div className="lp-arcade-pixel-field" role="img"
-      aria-label={`${challenge.origin === 'fictional_practice' ? 'Fictional practice' : challenge.state === 'observed_live' ? 'ESPN live event challenge' : challenge.state === 'source_corrected' ? 'ESPN corrected-source challenge' : 'Archived ESPN play challenge'}, ${challenge.challenge_config.attempt_distance_yards} yards, target ${targetAim < -0.05 ? 'left hash' : targetAim > 0.05 ? 'right hash' : 'center'}`}>
-      <svg viewBox="0 0 960 520" preserveAspectRatio="xMidYMid meet" shapeRendering="crispEdges" aria-hidden="true">
+    <div className="lp-arcade-play-area">
+      <div className="lp-arcade-pixel-field">
+      <svg viewBox="0 0 960 520" preserveAspectRatio="xMidYMid slice" shapeRendering="crispEdges"
+        role="application" tabIndex={0}
+        aria-label={`${provenance}, ${challenge.challenge_config.attempt_distance_yards} yards, target ${targetAim < -0.05 ? 'left hash' : targetAim > 0.05 ? 'right hash' : 'center'}. Interactive field goal: touch or click the football, pull down for power, drag left or right to aim, then release. Keyboard: focus the field, use arrow keys to aim and set power, hold Space to set timing, then release.`}
+        onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel} onKeyDown={onKeyDown} onKeyUp={onKeyUp}>
         <defs>
           <pattern id="lp-arcade-crowd-pixels" width="32" height="24" patternUnits="userSpaceOnUse">
             <rect width="32" height="24" fill="#282b3d" />
@@ -421,20 +518,45 @@ function PixelField({
         <path d={`M${Math.round(targetX - 14)} 206h28v12h-28z`} fill="#f4d56e" />
         <path d={`M${Math.round(aimX - 11)} 190h22v8h-22zM${Math.round(aimX - 5)} 184h10v20h-10z`} fill="#fff4cf" />
         <path d="M450 466h60v10h-60zM462 478h36v8h-36z" fill="#e9e1c7" />
-        <g key={flightFeedback || 'idle'} className={`lp-arcade-football ${flightFeedback ? `lp-arcade-ball-flight ${flight}` : ''}`}>
-          <ellipse cx="480" cy="454" rx="17" ry="10" fill="#7e432e" stroke="#231d25" strokeWidth="4" />
-          <path d="M469 453h22M475 450v7M480 450v7M485 450v7" fill="none" stroke="#f5e8cc" strokeWidth="2" />
-          <path d="M464 454h3M493 454h3" stroke="#f5e8cc" strokeWidth="2" />
+        <g key={flightKey} className="lp-arcade-football" data-arcade-ball>
+          {flightFeedback && flightSequence > 0 && <animateMotion key={flightKey}
+            path={trajectoryPath(flightTrajectory || calculateKickTrajectory(challenge, flightInput || { aim, power, release_timing: timing }),
+              flightStart)} dur=".95s" fill="freeze" />}
+          <g transform={flightFeedback ? `translate(${flightStart.x} ${flightStart.y})` : gestureActive ? `translate(${gestureOffset.x} ${gestureOffset.y})` : undefined}>
+            <g className={`lp-arcade-ball-sprite${flightFeedback ? ' is-flying' : ''}`}>
+              <ellipse cx="480" cy="454" rx="17" ry="10" fill="#7e432e" stroke="#231d25" strokeWidth="4" />
+              <path d="M469 453h22M475 450v7M480 450v7M485 450v7" fill="none" stroke="#f5e8cc" strokeWidth="2" />
+              <path d="M464 454h3M493 454h3" stroke="#f5e8cc" strokeWidth="2" />
+            </g>
+          </g>
         </g>
+        <circle cx="480" cy="454" r="38" fill="transparent" pointerEvents="all" data-arcade-ball-hit-target />
         {result?.made && <g className="lp-arcade-impact" transform={`translate(${Math.round(targetX)} 158)`}>
           <path d="M-39 0h8v-12h6v12h8v6h-8v8h-6V6h-8zM19 -16h6v10h10v6H25v10h-6V0H9v-6h10zM-4 -29h5v9h8v5H1v9h-5v-9h-8v-5h8z" fill="#fff0a8" />
           <path d="M-25 23h5v5h-5zM31 16h6v6h-6zM4 -35h4v4H4z" fill="#e2a863" />
         </g>}
-        <path d="M12 12h236v48H12z" fill="#201f2d" />
-        <path d="M20 20h220v5H20zM20 47h120v5H20z" fill="#4b8a66" />
-        <text x="28" y="41" fill="#fff4cf" fontSize="18" fontFamily="monospace" fontWeight="700">LP ARCADE</text>
-        <text x="760" y="40" fill="#fff4cf" fontSize="16" fontFamily="monospace" textAnchor="end">{challenge.origin === 'fictional_practice' ? 'PRACTICE FIELD' : challenge.state === 'observed_live' ? 'LIVE EVENT KICK' : challenge.state === 'source_corrected' ? 'CORRECTED SOURCE' : 'ARCHIVE KICK'}</text>
+        <g data-arcade-brand>
+          <path d="M12 12h236v48H12z" fill="#201f2d" />
+          <path d="M20 20h220v5H20zM20 47h120v5H20z" fill="#4b8a66" />
+          <text x="28" y="41" fill="#fff4cf" fontSize="18" fontFamily="monospace" fontWeight="700">LP ARCADE</text>
+        </g>
+        <text data-arcade-state-label x="760" y="40" fill="#fff4cf" fontSize="16" fontFamily="monospace" textAnchor="end">{challenge.origin === 'fictional_practice' ? 'PRACTICE FIELD' : challenge.state === 'observed_live' ? 'LIVE EVENT KICK' : challenge.state === 'source_corrected' ? 'CORRECTED SOURCE' : 'ARCHIVE KICK'}</text>
       </svg>
+      </div>
+      {!result && <div className={`lp-arcade-field-guidance${gestureActive ? ' is-active' : ''}`} aria-live="polite">
+        <strong>{pending ? 'BALL AWAY · SCORING' : gestureActive ? 'RELEASE TO KICK' : 'TOUCH THE BALL · PULL BACK · RELEASE'}</strong>
+        <span>{gestureActive ? 'Release in the green timing window' : 'Drag left or right to aim · pull down to add power'}</span>
+        <span className="lp-arcade-timing-meter" aria-hidden="true"><i style={{ width: `${timing * 100}%` }} /></span>
+      </div>}
+      {result && <div className="lp-arcade-field-outcome" aria-live="polite">
+        <strong>{result.feedback === 'LEFT' ? 'WIDE LEFT' : result.feedback === 'RIGHT' ? 'WIDE RIGHT' : result.feedback === 'EARLY' ? 'TOO EARLY' : result.feedback === 'LATE' ? 'TOO LATE' : result.feedback}{result.made ? ' · MADE' : ' · MISSED'}</strong>
+        <span>{result.score} / 1000 · {result.coaching}</span>
+        <button type="button" onClick={onRetry}>TAP TO RETRY</button>
+        <button type="button" onClick={onShare}>CHALLENGE A FRIEND</button>
+      </div>}
+      {attemptError && <div className="lp-arcade-field-outcome lp-arcade-field-error" role="alert">
+        <strong>KICK NOT SCORED</strong><span>{attemptError}</span><button type="button" onClick={onErrorRetry}>RETRY SAME KICK</button>
+      </div>}
     </div>
   )
 }
@@ -448,11 +570,16 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
   const [challenge, setChallenge] = useState<Challenge | null>(null)
   const [challengeLoading, setChallengeLoading] = useState(false)
   const [aim, setAim] = useState(0)
-  const [power, setPower] = useState(0.5)
-  const [timing, setTiming] = useState(0.5)
+  const [power, setPower] = useState(0.22)
+  const [timing, setTiming] = useState(0)
   const [result, setResult] = useState<AttemptResult | null>(null)
   const [flightPreview, setFlightPreview] = useState<AttemptResult['feedback'] | null>(null)
+  const [flightTrajectory, setFlightTrajectory] = useState<KickTrajectory | null>(null)
+  const [flightInput, setFlightInput] = useState<KickInput | null>(null)
+  const [flightStart, setFlightStart] = useState({ x: 0, y: 0 })
+  const [flightSequence, setFlightSequence] = useState(0)
   const [gestureActive, setGestureActive] = useState(false)
+  const [gestureOffset, setGestureOffset] = useState({ x: 0, y: 0 })
   const [sessionResults, setSessionResults] = useState<AttemptResult[]>([])
   const [pending, setPending] = useState(false)
   const [attemptError, setAttemptError] = useState<string | null>(null)
@@ -481,9 +608,10 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
     startPower: number
     width: number
     height: number
+    renderScale: number
   } | null>(null)
   const gestureTimerRef = useRef<number | null>(null)
-  const suppressGestureClickRef = useRef(false)
+  const keyboardGestureStartedAtRef = useRef<number | null>(null)
   const kickInProgressRef = useRef(false)
   const attemptDraft = useRef<{
     attempt_id: string
@@ -558,6 +686,9 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
     setChallengeLoading(true)
     setResult(null)
     setFlightPreview(null)
+    setFlightTrajectory(null)
+    setFlightInput(null)
+    setFlightStart({ x: 0, y: 0 })
     setAttemptError(null)
     setShareMessage('')
     fetch(`/api/arcade/challenges/${encodeURIComponent(activeChallengeId)}`, { signal: controller.signal })
@@ -568,8 +699,8 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
       .then(payload => {
         setChallenge(payload)
         setAim(0)
-        setPower(clamp((payload.challenge_config.attempt_distance_yards - 14) / 55 + 0.07, 0, 1))
-        setTiming(0.5)
+        setPower(0.22)
+        setTiming(0)
       })
       .catch(() => {
         if (!controller.signal.aborted) setAttemptError('This versioned practice challenge is unavailable.')
@@ -670,25 +801,40 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
     return () => controller.abort()
   }, [challenge, drill, shareId])
 
-  function updateGesture(event: ReactPointerEvent<HTMLButtonElement>, gesture = gestureRef.current) {
-    if (!gesture || event.pointerId !== gesture.pointerId) return null
-    const input = normalizeKickGesture({
+  function gestureInput(event: { clientX: number; clientY: number }, gesture = gestureRef.current, elapsedMs = 0) {
+    if (!gesture) return null
+    return normalizeKickGesture({
       startAim: gesture.startAim,
       startPower: gesture.startPower,
       deltaX: event.clientX - gesture.startX,
       deltaY: event.clientY - gesture.startY,
-      elapsedMs: performance.now() - gesture.startedAt,
+      elapsedMs,
       width: gesture.width,
       height: gesture.height,
     })
+  }
+
+  function gestureScreenOffset(event: { clientX: number; clientY: number }, gesture: NonNullable<typeof gestureRef.current>) {
+    return {
+      x: (event.clientX - gesture.startX) / gesture.renderScale,
+      y: (event.clientY - gesture.startY) / gesture.renderScale,
+    }
+  }
+
+  function updateGesture(event: ReactPointerEvent<SVGSVGElement>, gesture = gestureRef.current) {
+    if (!gesture || event.pointerId !== gesture.pointerId) return null
+    const input = gestureInput(event, gesture, performance.now() - gesture.startedAt)
+    if (!input) return null
+    setGestureOffset(gestureScreenOffset(event, gesture))
     setAim(input.aim)
     setPower(input.power)
     setTiming(input.release_timing)
     return input
   }
 
-  function beginGesture(event: ReactPointerEvent<HTMLButtonElement>) {
+  function beginGesture(event: ReactPointerEvent<SVGSVGElement>) {
     if (!challenge || pending || result || attemptError || event.isPrimary === false) return
+    if (!(event.target instanceof Element) || !event.target.closest('[data-arcade-ball-hit-target]')) return
     event.preventDefault()
     const bounds = event.currentTarget.getBoundingClientRect()
     const gesture = {
@@ -700,9 +846,11 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
       startPower: power,
       width: Math.max(1, bounds.width),
       height: Math.max(1, bounds.height),
+      renderScale: Math.max(bounds.width / 960, bounds.height / 520),
     }
     gestureRef.current = gesture
     setGestureActive(true)
+    setGestureOffset({ x: 0, y: 0 })
     try {
       if (typeof event.currentTarget.setPointerCapture === 'function') {
         event.currentTarget.setPointerCapture(event.pointerId)
@@ -716,27 +864,74 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
     }, 40)
   }
 
-  function finishGesture(event: ReactPointerEvent<HTMLButtonElement>, cancelled = false) {
+  function finishGesture(event: ReactPointerEvent<SVGSVGElement>, cancelled = false) {
     const gesture = gestureRef.current
     const input = updateGesture(event, gesture)
     if (!gesture || !input) return
+    const origin = gestureScreenOffset(event, gesture)
     gestureRef.current = null
     setGestureActive(false)
     if (gestureTimerRef.current !== null) {
       window.clearInterval(gestureTimerRef.current)
       gestureTimerRef.current = null
     }
-    if (cancelled) return
-    suppressGestureClickRef.current = true
-    window.setTimeout(() => { suppressGestureClickRef.current = false }, 0)
+    if (cancelled) { setGestureOffset({ x: 0, y: 0 }); return }
     const inputMethod = event.pointerType === 'touch' ? 'touch_gesture'
       : event.pointerType === 'pen' ? 'pen_gesture' : 'mouse_gesture'
-    void kick(input, inputMethod)
+    void kick(input, inputMethod, origin)
+  }
+
+  function handleFieldKeyDown(event: ReactKeyboardEvent<SVGSVGElement>) {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      event.preventDefault()
+      if (event.key === 'ArrowLeft') setAim(value => clamp(Math.round((value - 0.05) * 100) / 100, -1, 1))
+      if (event.key === 'ArrowRight') setAim(value => clamp(Math.round((value + 0.05) * 100) / 100, -1, 1))
+      if (event.key === 'ArrowUp') setPower(value => clamp(Math.round((value + 0.05) * 100) / 100, 0, 1))
+      if (event.key === 'ArrowDown') setPower(value => clamp(Math.round((value - 0.05) * 100) / 100, 0, 1))
+      return
+    }
+    if ((event.key !== ' ' && event.key !== 'Enter') || event.repeat || !challenge || pending || result || attemptError) return
+    event.preventDefault()
+    if (gestureRef.current) return
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const startedAt = performance.now()
+    keyboardGestureStartedAtRef.current = startedAt
+    gestureRef.current = {
+      pointerId: -1, startedAt, startX: 0, startY: 0, startAim: aim, startPower: power,
+      width: Math.max(1, bounds.width), height: Math.max(1, bounds.height),
+      renderScale: Math.max(bounds.width / 960, bounds.height / 520),
+    }
+    setGestureActive(true)
+    if (gestureTimerRef.current !== null) window.clearInterval(gestureTimerRef.current)
+    gestureTimerRef.current = window.setInterval(() => {
+      const duration = performance.now() - startedAt
+      setTiming(clamp(duration / 1200, 0, 1))
+    }, 40)
+  }
+
+  function handleFieldKeyUp(event: ReactKeyboardEvent<SVGSVGElement>) {
+    if ((event.key !== ' ' && event.key !== 'Enter') || keyboardGestureStartedAtRef.current === null) return
+    event.preventDefault()
+    const startedAt = keyboardGestureStartedAtRef.current
+    keyboardGestureStartedAtRef.current = null
+    gestureRef.current = null
+    setGestureActive(false)
+    if (gestureTimerRef.current !== null) {
+      window.clearInterval(gestureTimerRef.current)
+      gestureTimerRef.current = null
+    }
+    const input = normalizeKickGesture({
+      startAim: aim, startPower: power, deltaX: 0, deltaY: 0,
+      elapsedMs: performance.now() - startedAt, width: 1, height: 1,
+    })
+    setTiming(input.release_timing)
+    void kick(input, 'keyboard')
   }
 
   async function kick(
-    inputOverride?: { aim: number; power: number; release_timing: number },
+    inputOverride?: KickInput,
     inputMethod: 'touch_gesture' | 'mouse_gesture' | 'pen_gesture' | 'controls' | 'keyboard' = 'controls',
+    origin = { x: 0, y: 0 },
   ) {
     if (!challenge || pending || result || kickInProgressRef.current) return
     kickInProgressRef.current = true
@@ -769,6 +964,10 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
       setPower(payload.input.power)
       setTiming(payload.input.release_timing)
       setFlightPreview(previewFeedback(challenge, payload.input))
+      setFlightTrajectory(calculateKickTrajectory(challenge, payload.input))
+      setFlightInput(payload.input)
+      setFlightStart(origin)
+      setFlightSequence(sequence => sequence + 1)
       const claim = await getArcadeClaim()
       failureReason = 'network_error'
       const response = await fetch('/api/arcade/attempts', {
@@ -790,6 +989,7 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
       }
       setResult(scored)
       setFlightPreview(scored.feedback)
+      setFlightTrajectory(scored.trajectory)
       attemptDraft.current = null
       playSound.play(scored.made)
       if (!trackedAttemptIdsRef.current.has(scored.attempt_id)) {
@@ -921,6 +1121,7 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
         reason: failureReason,
       })
       setFlightPreview(null)
+      setFlightTrajectory(null)
       setAttemptError('Couldn’t verify the kick right now. No score was recorded; try again.')
     } finally {
       setPending(false)
@@ -937,6 +1138,7 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
       setSessionResults([])
       setResult(null)
       setFlightPreview(null)
+      setFlightTrajectory(null)
       setAttemptError(null)
       return
     }
@@ -944,6 +1146,7 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
     attemptDraft.current = null
     setResult(null)
     setFlightPreview(null)
+    setFlightTrajectory(null)
     setAttemptError(null)
   }
 
@@ -951,6 +1154,13 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
     attemptDraft.current = null
     setResult(null)
     setFlightPreview(null)
+    setFlightTrajectory(null)
+    setFlightInput(null)
+    setFlightStart({ x: 0, y: 0 })
+    setAim(0)
+    setPower(0.22)
+    setTiming(0)
+    setGestureOffset({ x: 0, y: 0 })
     setSessionResults([])
     setAttemptError(null)
   }
@@ -1032,6 +1242,7 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
   return (
     <section className="lp-arcade-unit" aria-label="Field Goal Frenzy arcade game">
       <header className="lp-arcade-game-heading">
+        <Link href="/arcade/nfl" className="lp-arcade-mobile-back" aria-label="Back to LP Arcade">←</Link>
         <div>
           <p className="lp-arcade-kicker">FIELD GOAL FRENZY</p>
           <h2>{drill?.name || 'Your turn to kick'}</h2>
@@ -1075,7 +1286,19 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
           : ' No replacement field-goal challenge is available.'}
       </p>}
 
-      <PixelField challenge={challenge} aim={aim} result={result} preview={flightPreview} />
+      <PixelField
+        challenge={challenge} aim={aim} power={power} timing={timing} result={result} preview={flightPreview}
+        flightTrajectory={flightTrajectory}
+        flightInput={flightInput} flightStart={flightStart} flightSequence={flightSequence}
+        gestureActive={gestureActive} gestureOffset={gestureOffset} pending={pending} attemptError={attemptError}
+        onRetry={retry} onShare={() => { void challengeFriend() }}
+        onErrorRetry={() => { void kick(attemptDraft.current?.input, 'controls') }}
+        onPointerDown={beginGesture}
+        onPointerMove={event => { if (gestureRef.current?.pointerId === event.pointerId) updateGesture(event) }}
+        onPointerUp={event => finishGesture(event)}
+        onPointerCancel={event => finishGesture(event, true)}
+        onKeyDown={handleFieldKeyDown} onKeyUp={handleFieldKeyUp}
+      />
 
       {shareId && shareState === 'loading' && <p className="lp-arcade-share-target" role="status">Loading the verified score to beat…</p>}
       {shareTarget !== null && <p className="lp-arcade-share-target" role="status">
@@ -1086,7 +1309,7 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
       </p>}
 
       <div className="lp-arcade-under-field" aria-live="polite">
-        {drill ? <span>{drill.description}</span> : <span>One kick. Immediate retry. Your arcade result is separate from any real game.</span>}
+        {drill ? <span>{drill.description}</span> : <span>Flick the ball. Your arcade kick is separate from real-game results.</span>}
         {drill && <strong>KICK {scenarioIndex + 1} / {totalAttempts}</strong>}
       </div>
 
@@ -1097,52 +1320,29 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
         <span><small>TARGET</small><b>{scenario?.target_label || 'UPRIGHTS'}</b></span>
       </div>
 
-      <button className={`lp-arcade-gesture-pad${gestureActive ? ' is-active' : ''}`} type="button"
-        aria-label="One-thumb kick gesture" aria-describedby="lp-arcade-one-thumb-help"
-        onPointerDown={beginGesture}
-        onPointerMove={event => { if (gestureRef.current) updateGesture(event) }}
-        onPointerUp={event => finishGesture(event)}
-        onPointerCancel={event => finishGesture(event, true)}
-        onClick={event => {
-          if (suppressGestureClickRef.current) {
-            suppressGestureClickRef.current = false
-            return
-          }
-          if (event.detail === 0) void kick(undefined, 'keyboard')
-        }}
-        disabled={pending || Boolean(result) || Boolean(attemptError) || !challenge}>
-        <span className="lp-arcade-gesture-timing" aria-hidden="true">
-          <span className="lp-arcade-gesture-target" />
-          <i style={{ left: `${timing * 100}%` }} />
-        </span>
-        <strong>{gestureActive ? 'RELEASE IN THE CENTER' : 'PRESS · AIM · RELEASE'}</strong>
-        <small>{gestureActive ? `Release timing ${Math.round(timing * 100)}%` : 'One-thumb kick'}</small>
-      </button>
-      <p id="lp-arcade-one-thumb-help" className="lp-arcade-gesture-help">
-        Hold about 0.6 seconds for the timing window. Drag left or right to aim and upward for more power. Keyboard and screen-reader players can use the labeled controls below.
-      </p>
-      {pending && flightPreview && <p className="lp-arcade-flight-status" role="status">Predicted {flightPreview}. The server is confirming your arcade result…</p>}
-
-      <div className="lp-arcade-controls" aria-label="Kick controls">
-        <label className="lp-arcade-control">
-          <span><b>Aim</b><output>{aim < -0.08 ? 'Left' : aim > 0.08 ? 'Right' : 'Center'}</output></span>
-          <input aria-label="Aim" type="range" min="-1" max="1" step="0.01" value={aim}
-            onChange={event => setAim(Number(event.currentTarget.value))} disabled={pending || Boolean(result) || Boolean(attemptError)} />
-          <small>Move the kick toward the target mark.</small>
-        </label>
-        <label className="lp-arcade-control">
-          <span><b>Power</b><output>{Math.round(power * 100)}%</output></span>
-          <input aria-label="Power" type="range" min="0" max="1" step="0.01" value={power}
-            onChange={event => setPower(Number(event.currentTarget.value))} disabled={pending || Boolean(result) || Boolean(attemptError)} />
-          <small>{distance} yards · fictional target distance</small>
-        </label>
-        <label className="lp-arcade-control">
-          <span><b>Release timing</b><output>{timing < 0.42 ? 'Early' : timing > 0.58 ? 'Late' : 'On time'}</output></span>
-          <input aria-label="Release timing" type="range" min="0" max="1" step="0.01" value={timing}
-            onChange={event => setTiming(Number(event.currentTarget.value))} disabled={pending || Boolean(result) || Boolean(attemptError)} />
-          <small>Center the marker for the timing window.</small>
-        </label>
-      </div>
+      <details className="lp-arcade-accessibility-controls">
+        <summary>Keyboard &amp; accessible controls</summary>
+        <p>Focus the field. Arrow keys aim and set power; hold Space or Enter, then release for timing. Sliders are available below.</p>
+        <div className="lp-arcade-controls" aria-label="Accessible kick controls">
+          <label className="lp-arcade-control">
+            <span><b>Aim</b><output>{aim < -0.08 ? 'Left' : aim > 0.08 ? 'Right' : 'Center'}</output></span>
+            <input aria-label="Aim" type="range" min="-1" max="1" step="0.01" value={aim}
+              onChange={event => setAim(Number(event.currentTarget.value))} disabled={pending || Boolean(result) || Boolean(attemptError)} />
+          </label>
+          <label className="lp-arcade-control">
+            <span><b>Power</b><output>{Math.round(power * 100)}%</output></span>
+            <input aria-label="Power" type="range" min="0" max="1" step="0.01" value={power}
+              onChange={event => setPower(Number(event.currentTarget.value))} disabled={pending || Boolean(result) || Boolean(attemptError)} />
+          </label>
+          <label className="lp-arcade-control">
+            <span><b>Release timing</b><output>{timing < 0.42 ? 'Early' : timing > 0.58 ? 'Late' : 'On time'}</output></span>
+            <input aria-label="Release timing" type="range" min="0" max="1" step="0.01" value={timing}
+              onChange={event => setTiming(Number(event.currentTarget.value))} disabled={pending || Boolean(result) || Boolean(attemptError)} />
+          </label>
+        </div>
+        <button className="lp-arcade-settings-kick" type="button" onClick={() => { void kick(undefined, 'controls') }}
+          disabled={pending || Boolean(result) || Boolean(attemptError) || !challenge}>Kick with these settings</button>
+      </details>
 
       {!drill && challengeHistory && <section className="lp-arcade-score-history" aria-label="Your kick score history">
         <strong>YOUR KICK HISTORY</strong>
@@ -1154,13 +1354,6 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
         <span>{trainingHistory.completed_sets} completed {trainingHistory.completed_sets === 1 ? 'set' : 'sets'} · average {trainingHistory.average_score} / {setCap}</span>
         <small>{trainingHistory.below_bronze} below bronze · {trainingHistory.bronze} bronze · {trainingHistory.silver} silver · {trainingHistory.gold} gold</small>
       </section>}
-
-      {!result && <button className="lp-arcade-kick-button" type="button"
-        onClick={event => { void kick(undefined, event.detail === 0 ? 'keyboard' : 'controls') }} disabled={pending || !challenge}>
-        {pending ? 'Scoring kick…' : attemptError ? 'RETRY SAME KICK' : 'KICK'}
-      </button>}
-
-      {attemptError && <p className="lp-arcade-error" role="alert">{attemptError}</p>}
 
       {result && <section className="lp-arcade-result" aria-live="polite" aria-label="Kick result">
         <div className="lp-arcade-result-heading">

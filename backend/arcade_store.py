@@ -29,8 +29,8 @@ _WINDOW_SECONDS = 60 * 60
 _SESSION_ISSUES_PER_IP = 120
 _ATTEMPTS_PER_CLAIM = 40
 _SHARES_PER_CLAIM = 30
-PHYSICS_VERSION = "fg-physics-v1"
-SCORING_VERSION = "fg-score-v1"
+PHYSICS_VERSION = "fg-physics-v2"
+SCORING_VERSION = "fg-score-v2"
 
 
 def frozen_config_hash(
@@ -627,9 +627,12 @@ def live_challenge(challenge_id: str) -> dict[str, Any] | None:
             "attempt_distance_yards": row["attempt_distance_yards"],
             "target_aim": 0.0,
             "aim_tolerance": 0.24,
+            "goal_half_width": 0.36,
             "timing_window": 0.26,
-            "range_min_margin_yards": 1.5,
-            "range_max_margin_yards": 8.0,
+            "timing_lateral_coupling": 0.2,
+            "base_crossbar_clearance_yards": 3.0,
+            "timing_clearance_penalty_yards": 4.0,
+            "range_clearance_gain": 0.06,
             "weather_mode": "neutral_arcade",
         }
         config_hash = frozen_config_hash(config, PHYSICS_VERSION, SCORING_VERSION)
@@ -644,8 +647,8 @@ def live_challenge(challenge_id: str) -> dict[str, Any] | None:
             "last_observed_at_utc": row["last_observed_at_utc"],
             "publisher_updated_at": row["publisher_updated_at"],
             "challenge_config": config,
-            "physics_version": "fg-physics-v1",
-            "scoring_version": "fg-score-v1",
+            "physics_version": PHYSICS_VERSION,
+            "scoring_version": SCORING_VERSION,
             "config_hash": config_hash,
             "state": "source_corrected" if row["superseded_by"] else (
                 "observed_live" if row["game_status"] == "in"

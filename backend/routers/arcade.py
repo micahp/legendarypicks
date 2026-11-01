@@ -67,9 +67,12 @@ def _challenge(challenge_id: str, yards: int, target_aim: float = 0.0) -> dict:
         "attempt_distance_yards": yards,
         "target_aim": target_aim,
         "aim_tolerance": 0.24,
+        "goal_half_width": 0.36,
         "timing_window": 0.26,
-        "range_min_margin_yards": 1.5,
-        "range_max_margin_yards": 8.0,
+        "timing_lateral_coupling": 0.2,
+        "base_crossbar_clearance_yards": 3.0,
+        "timing_clearance_penalty_yards": 4.0,
+        "range_clearance_gain": 0.06,
         "weather_mode": "neutral_arcade",
     }
     return {
@@ -245,39 +248,59 @@ def score_attempt(challenge: dict, attempt: ArcadeInput) -> dict:
 
     config = challenge["challenge_config"]
     distance = config["attempt_distance_yards"]
-    aim_error = attempt.aim - config["target_aim"]
     timing_error = attempt.release_timing - 0.5
     range_yards = 14.0 + attempt.power * 55.0
     range_error = range_yards - distance
 
-    if aim_error < -config["aim_tolerance"]:
+    # Model the ball where its path reaches the goal line. Timing changes both
+    # lateral accuracy and launch height; power controls carry distance and
+    # therefore clearance. There is deliberately no upper carry-distance miss.
+    lateral_position = attempt.aim + timing_error * config["timing_lateral_coupling"]
+    effective_aim_error = lateral_position - config["target_aim"]
+    height_above_crossbar_yards = (
+        config["base_crossbar_clearance_yards"]
+        + max(0.0, range_error) * config["range_clearance_gain"]
+        - abs(timing_error) / config["timing_window"]
+        * config["timing_clearance_penalty_yards"]
+    )
+    reaches_goal_line = range_yards >= distance
+    between_uprights = abs(lateral_position) <= config["goal_half_width"]
+    clears_crossbar = height_above_crossbar_yards >= 0.0
+    trajectory = {
+        "range_yards": round(range_yards, 2),
+        "range_fraction": round(range_yards / distance, 4),
+        "lateral_position": round(lateral_position, 4),
+        "height_above_crossbar_yards": round(height_above_crossbar_yards, 3),
+        "reaches_goal_line": reaches_goal_line,
+        "between_uprights": between_uprights,
+        "clears_crossbar": clears_crossbar,
+    }
+
+    if not between_uprights and lateral_position < 0:
         feedback = "LEFT"
-        coaching = "Aim right to bring the kick back toward the target."
-    elif aim_error > config["aim_tolerance"]:
+        coaching = "Aim right to bring the kick back between the uprights."
+    elif not between_uprights:
         feedback = "RIGHT"
-        coaching = "Aim left to bring the kick back toward the target."
-    elif range_yards < distance - config["range_min_margin_yards"]:
+        coaching = "Aim left to bring the kick back between the uprights."
+    elif not reaches_goal_line:
         feedback = "SHORT"
         coaching = "Add power so the kick reaches the uprights."
-    elif range_yards > distance + config["range_max_margin_yards"]:
-        feedback = "LONG"
-        coaching = "Ease off the power to keep the kick inside the uprights."
-    elif timing_error < -config["timing_window"]:
+    elif not clears_crossbar and timing_error < 0:
         feedback = "EARLY"
-        coaching = "Release closer to the center of the timing window."
-    elif timing_error > config["timing_window"]:
+        coaching = "The kick dipped below the crossbar. Release later for more lift."
+    elif not clears_crossbar:
         feedback = "LATE"
-        coaching = "Release closer to the center of the timing window."
+        coaching = "The kick dipped below the crossbar. Release earlier for more lift."
     else:
         feedback = "GOOD"
-        coaching = "Clean kick. Try to bring aim, timing and distance even closer."
+        coaching = "The ball cleared the crossbar between the uprights."
 
     made = feedback == "GOOD"
     precision_bonus = 0
     distance_bonus = 0
     score = 0
     if made:
-        aim_quality = max(0.0, 1.0 - abs(aim_error) / config["aim_tolerance"])
+        aim_quality = max(0.0, 1.0 - abs(effective_aim_error) / config["aim_tolerance"])
         timing_quality = max(0.0, 1.0 - abs(timing_error) / config["timing_window"])
         precision_bonus = round(300 * aim_quality * timing_quality)
         distance_bonus = round(100 * max(0.0, 1.0 - abs(range_error) / 10.0))
@@ -301,6 +324,7 @@ def score_attempt(challenge: dict, attempt: ArcadeInput) -> dict:
         },
         "coaching": coaching,
         "estimated_arcade_range_yards": round(range_yards, 1),
+        "trajectory": trajectory,
         "real_game_outcome": None,
     }
 

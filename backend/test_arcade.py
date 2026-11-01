@@ -97,9 +97,9 @@ def live_snapshot(*, game_status="in", distance=45, event_type="Field Goal Good"
 
 def test_challenge_hash_includes_its_physics_and_scoring_versions():
     config = {"attempt_distance_yards": 45, "weather_mode": "neutral_arcade"}
-    current = arcade_store.frozen_config_hash(config, "fg-physics-v1", "fg-score-v1")
-    assert arcade_store.frozen_config_hash(config, "fg-physics-v2", "fg-score-v1") != current
+    current = arcade_store.frozen_config_hash(config, "fg-physics-v2", "fg-score-v2")
     assert arcade_store.frozen_config_hash(config, "fg-physics-v1", "fg-score-v2") != current
+    assert arcade_store.frozen_config_hash(config, "fg-physics-v2", "fg-score-v1") != current
 
 
 def test_live_kicks_are_frozen_private_until_kicked_and_deduplicated():
@@ -213,8 +213,8 @@ def test_fictional_challenge_is_frozen_and_has_no_nfl_source():
     assert challenge["challenge_config"]["attempt_distance_yards"] == 35
     assert challenge["source_ref"] is None
     assert challenge["config_hash"]
-    assert challenge["physics_version"] == "fg-physics-v1"
-    assert challenge["scoring_version"] == "fg-score-v1"
+    assert challenge["physics_version"] == "fg-physics-v2"
+    assert challenge["scoring_version"] == "fg-score-v2"
 
 
 def test_archived_moments_use_verified_espn_distances_and_hide_the_real_outcome():
@@ -286,6 +286,55 @@ def test_same_challenge_and_normalized_input_have_a_deterministic_score():
     assert first.json()["score"] == 1000
     assert first.json()["feedback"] == "GOOD"
     assert 0 <= first.json()["score"] <= 1000
+
+
+def test_long_centered_35_yard_kick_clears_the_goal_and_is_good():
+    challenge = arcade._CHALLENGES["practice-fg-35-v1"]
+    result = arcade.score_attempt(challenge, arcade.ArcadeInput(
+        aim=0, power=0.77, release_timing=0.5,
+    ))
+
+    assert result["estimated_arcade_range_yards"] == 56.4
+    assert result["made"] is True
+    assert result["feedback"] == "GOOD"
+    assert result["trajectory"] == {
+        "range_yards": 56.35,
+        "range_fraction": 1.61,
+        "lateral_position": 0.0,
+        "height_above_crossbar_yards": 4.281,
+        "reaches_goal_line": True,
+        "between_uprights": True,
+        "clears_crossbar": True,
+    }
+
+
+@pytest.mark.parametrize(("aim", "power", "timing", "feedback"), [
+    (-0.8, 0.77, 0.5, "LEFT"),
+    (0.8, 0.77, 0.5, "RIGHT"),
+    (0, 0.2, 0.5, "SHORT"),
+])
+def test_real_miss_trajectories_remain_misses(aim, power, timing, feedback):
+    challenge = arcade._CHALLENGES["practice-fg-35-v1"]
+    result = arcade.score_attempt(challenge, arcade.ArcadeInput(
+        aim=aim, power=power, release_timing=timing,
+    ))
+
+    assert result["made"] is False
+    assert result["score"] == 0
+    assert result["feedback"] == feedback
+
+
+def test_release_timing_changes_the_calculated_flight_path():
+    challenge = arcade._CHALLENGES["practice-fg-35-v1"]
+    on_time = arcade.score_attempt(challenge, arcade.ArcadeInput(
+        aim=0, power=0.77, release_timing=0.5,
+    ))["trajectory"]
+    late = arcade.score_attempt(challenge, arcade.ArcadeInput(
+        aim=0, power=0.77, release_timing=0.9,
+    ))["trajectory"]
+
+    assert late["lateral_position"] != on_time["lateral_position"]
+    assert late["height_above_crossbar_yards"] < on_time["height_above_crossbar_yards"]
 
 
 def test_client_cannot_submit_or_change_an_outcome():
@@ -417,8 +466,9 @@ def test_personal_bests_and_leaderboards_are_scoped_to_the_frozen_config_version
         "input": {"aim": 0, "power": 21 / 55, "release_timing": 0.5},
     })
     assert second.status_code == 200
-    assert second.json()["score"] == 0
-    assert second.json()["personal_best_score"] == 0
+    assert second.json()["score"] == 700
+    assert second.json()["made"] is True
+    assert second.json()["personal_best_score"] == 700
     replay_old_version = client.post("/api/arcade/attempts", headers=CLAIM_HEADERS, json={
         "attempt_id": "72020318-f88b-4b06-83a9-2c159927f379",
         "challenge_id": challenge_id,
@@ -431,15 +481,15 @@ def test_personal_bests_and_leaderboards_are_scoped_to_the_frozen_config_version
     old_key = arcade_store.challenge_version_key(challenge_id, old_hash)
     personal = client.get("/api/arcade/personal-bests", headers=CLAIM_HEADERS).json()
     assert personal["challenge_bests"][old_key] == 1000
-    assert personal["challenge_bests"][current_key] == 0
+    assert personal["challenge_bests"][current_key] == 700
     assert arcade_store.challenge_leaderboard(challenge_id, old_hash)[0]["score"] == 1000
-    assert arcade_store.challenge_leaderboard(challenge_id, current_hash)[0]["score"] == 0
+    assert arcade_store.challenge_leaderboard(challenge_id, current_hash)[0]["score"] == 700
     assert client.get(
         f"/api/arcade/leaderboard?challenge_id={challenge_id}&config_hash={old_hash}"
     ).status_code == 409
     assert client.get(
         f"/api/arcade/leaderboard?challenge_id={challenge_id}&config_hash={current_hash}"
-    ).json()["entries"][0]["score"] == 0
+    ).json()["entries"][0]["score"] == 700
 
 
 def test_shared_challenge_binds_to_the_server_scored_kick():
