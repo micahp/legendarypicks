@@ -287,7 +287,7 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
                     </button>
                 </li>
               ))}</ul>
-              <p className="lp-rz-source-caption">{freshness} · Auto selection follows ESPN’s positive red-zone flag, then stable game ID. A pin overrides auto selection. Play-by-play refreshes once a minute while visible.</p>
+              <p className="lp-rz-source-caption">{freshness} · Auto selection follows ESPN’s positive red-zone flag, then stable game ID. A pin overrides auto selection. Scoreboard and play-by-play refresh once a minute while visible.</p>
                 {selectedGame && <div className="lp-rz-event-panel lp-rz-channel-play">
                   <div className="lp-rz-event-meta">
                     <span>{playByPlay?.publisher || 'ESPN'} play-by-play · {selectedGame.awayTeam.teamId || selectedGame.awayTeam.name} at {selectedGame.homeTeam.teamId || selectedGame.homeTeam.name}</span>

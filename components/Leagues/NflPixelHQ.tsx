@@ -159,7 +159,10 @@ export default function NflPixelHQ(props: Props) {
 
   useEffect(() => {
     const controller = new AbortController()
+    let refreshing = false
     const load = async () => {
+      if (refreshing || controller.signal.aborted) return
+      refreshing = true
       try {
         const response = await fetch(`/api/nfl/games?date=${todayLocal()}`, { cache: 'no-store', signal: controller.signal })
         if (!response.ok) throw new Error(String(response.status))
@@ -170,10 +173,21 @@ export default function NflPixelHQ(props: Props) {
         setScores({ games, source, age: Number.isFinite(age) && age > 0 ? age : null, loading: false, unavailable: source === 'unavailable' })
       } catch {
         if (!controller.signal.aborted) setScores({ games: [], source: null, age: null, loading: false, unavailable: true })
+      } finally {
+        refreshing = false
       }
     }
-    load()
-    return () => controller.abort()
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void load()
+    }
+    void load()
+    const interval = window.setInterval(refreshWhenVisible, 60_000)
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    return () => {
+      controller.abort()
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+    }
   }, [])
 
   useEffect(() => {

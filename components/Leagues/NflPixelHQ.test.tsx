@@ -181,6 +181,44 @@ describe('NflPixelHQ', () => {
     expect(document.body.style.overflow).toBe('')
   })
 
+  it('refreshes the scoreboard every minute while visible and when returning to the tab', async () => {
+    const originalVisibility = Object.getOwnPropertyDescriptor(document, 'visibilityState')
+    let result!: ReturnType<typeof render>
+    jest.useFakeTimers()
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' })
+    try {
+      await act(async () => {
+        result = render(<NflPixelHQ data={null} loading={false} error={null} />)
+        await Promise.resolve()
+      })
+      const scoreboardRequests = () => (global.fetch as jest.Mock).mock.calls
+        .filter(([url]) => String(url).startsWith('/api/nfl/games'))
+      expect(scoreboardRequests()).toHaveLength(1)
+
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(60_000)
+      })
+      expect(scoreboardRequests()).toHaveLength(2)
+
+      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' })
+      document.dispatchEvent(new Event('visibilitychange'))
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(60_000)
+      })
+      expect(scoreboardRequests()).toHaveLength(2)
+
+      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' })
+      document.dispatchEvent(new Event('visibilitychange'))
+      await act(async () => { await Promise.resolve() })
+      expect(scoreboardRequests()).toHaveLength(3)
+    } finally {
+      result?.unmount()
+      jest.useRealTimers()
+      if (originalVisibility) Object.defineProperty(document, 'visibilityState', originalVisibility)
+      else delete (document as Document & { visibilityState?: DocumentVisibilityState }).visibilityState
+    }
+  })
+
   it('opens the desk computer prop preview with source time and actual player history', async () => {
     await renderRoom()
 
