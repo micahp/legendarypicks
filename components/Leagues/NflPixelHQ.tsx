@@ -2,9 +2,10 @@ import Link from 'next/link'
 import { createPortal } from 'react-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
-import { normalizeGame, type Game } from '../../services/sports'
+import type { Game } from '../../services/sports'
 import type { NflSeasonContext } from './types'
 import PixelRedZonePlayer from './PixelRedZonePlayer'
+import { useNflScoreboard } from './hooks/useNflScoreboard'
 
 type Props = {
   data: NflSeasonContext | null
@@ -79,11 +80,6 @@ const HISTORY_MARKETS = new Set([
   'rushing_touchdowns',
 ])
 
-function todayLocal() {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-}
-
 function formatDate(value?: string | null, withTime = false) {
   if (!value) return null
   const parsed = new Date(value)
@@ -131,9 +127,7 @@ function scoreStatus(game: Game) {
 export default function NflPixelHQ(props: Props) {
   const [preview, setPreview] = useState<Preview>(null)
   const [timeOfDay, setTimeOfDay] = useState<RoomTimeOfDay>('dusk')
-  const [scores, setScores] = useState<{ games: Game[]; source: string | null; age: number | null; loading: boolean; unavailable: boolean }>(
-    { games: [], source: null, age: null, loading: true, unavailable: false },
-  )
+  const scores = useNflScoreboard()
   const [model, setModel] = useState<{ data: ModelPayload | null; loading: boolean; unavailable: boolean }>(
     { data: null, loading: true, unavailable: false },
   )
@@ -155,39 +149,6 @@ export default function NflPixelHQ(props: Props) {
     updateTimeOfDay()
     const interval = window.setInterval(updateTimeOfDay, 60_000)
     return () => window.clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    let refreshing = false
-    const load = async () => {
-      if (refreshing || controller.signal.aborted) return
-      refreshing = true
-      try {
-        const response = await fetch(`/api/nfl/games?date=${todayLocal()}`, { cache: 'no-store', signal: controller.signal })
-        if (!response.ok) throw new Error(String(response.status))
-        const payload = await response.json()
-        const games = Array.isArray(payload) ? payload.map((game: unknown) => normalizeGame(game, 'nfl')) : []
-        const source = response.headers.get('x-lp-data-source')
-        const age = Number(response.headers.get('x-lp-data-age'))
-        setScores({ games, source, age: Number.isFinite(age) && age > 0 ? age : null, loading: false, unavailable: source === 'unavailable' })
-      } catch {
-        if (!controller.signal.aborted) setScores({ games: [], source: null, age: null, loading: false, unavailable: true })
-      } finally {
-        refreshing = false
-      }
-    }
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === 'visible') void load()
-    }
-    void load()
-    const interval = window.setInterval(refreshWhenVisible, 60_000)
-    document.addEventListener('visibilitychange', refreshWhenVisible)
-    return () => {
-      controller.abort()
-      window.clearInterval(interval)
-      document.removeEventListener('visibilitychange', refreshWhenVisible)
-    }
   }, [])
 
   useEffect(() => {

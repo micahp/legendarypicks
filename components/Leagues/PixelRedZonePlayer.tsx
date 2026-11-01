@@ -78,6 +78,8 @@ type PlayByPlaySnapshot = {
 
 type Props = {
   roomMode?: boolean
+  viewMode?: 'live' | 'replay'
+  initialPinnedGameId?: string | null
   onBack?: () => void
   scoreboard?: { games: Game[]; age: number | null; loading: boolean; unavailable: boolean; source: string | null }
   loadReplay?: () => Promise<ReplayPayload>
@@ -199,13 +201,17 @@ function gameStatus(game: Game) {
     : 'Kickoff time unavailable'
 }
 
-function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
+function ChannelLanding({ scoreboard, onWatchArchive, onBack, expanded, initialPinnedGameId, surfaceRef, onFullscreen }: {
   scoreboard?: Props['scoreboard']
   onWatchArchive: () => void
   onBack?: () => void
+  expanded: boolean
+  initialPinnedGameId?: string | null
+  surfaceRef: React.RefObject<HTMLElement>
+  onFullscreen: () => void
 }) {
   const liveGames = scoreboard?.games.filter(game => game.status === 'LIVE') || []
-  const [pinnedGameId, setPinnedGameId] = useState<string | null>(null)
+  const [pinnedGameId, setPinnedGameId] = useState<string | null>(initialPinnedGameId || null)
   const [refreshVersion, setRefreshVersion] = useState(0)
   const [playByPlay, setPlayByPlay] = useState<PlayByPlaySnapshot | null>(null)
   const [playByPlayLoading, setPlayByPlayLoading] = useState(false)
@@ -300,7 +306,7 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
   }, [selectedGame?.gameId])
 
   return (
-    <section className="lp-rz-player lp-rz-player-room" aria-label="Pixel Red Zone channel preview">
+    <section ref={surfaceRef} className={`lp-rz-player${expanded ? ' lp-rz-live-expanded' : ' lp-rz-player-room'}`} aria-label="Pixel Red Zone live channel">
       <header className="lp-rz-topbar">
         <div>
           <p className="lp-rz-brand">LEGENDARY PICKS / PIXEL RED ZONE</p>
@@ -309,6 +315,12 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
         <div className="lp-rz-top-actions">
           <span className="lp-rz-replay-badge">{liveGames.length ? (isPinned ? 'PINNED GAME' : 'AUTO SELECT') : 'SCOREBOARD'}</span>
           {isPinned && <button type="button" className="lp-rz-button" onClick={() => setPinnedGameId(null)}>Auto select</button>}
+          {expanded
+            ? <button type="button" className="lp-rz-button" onClick={onFullscreen}>Fullscreen</button>
+            : <Link className="lp-rz-button" href={{
+                pathname: '/nfl/pixel-red-zone',
+                query: { mode: 'live', from: 'room', ...(pinnedGameId ? { game: pinnedGameId } : {}) },
+              }}>Expand</Link>}
           <button type="button" className="lp-rz-button" onClick={onBack}>Back to room</button>
         </div>
       </header>
@@ -379,10 +391,10 @@ function ChannelLanding({ scoreboard, onWatchArchive, onBack }: {
   )
 }
 
-export default function PixelRedZonePlayer({ roomMode = false, onBack, scoreboard, loadReplay = loadBundledReplay }: Props) {
+export default function PixelRedZonePlayer({ roomMode = false, viewMode, initialPinnedGameId, onBack, scoreboard, loadReplay = loadBundledReplay }: Props) {
   const [payload, setPayload] = useState<ReplayPayload | null>(null)
-  const [archiveSelected, setArchiveSelected] = useState(!roomMode)
-  const [loading, setLoading] = useState(!roomMode)
+  const [archiveSelected, setArchiveSelected] = useState(!roomMode && viewMode !== 'live')
+  const [loading, setLoading] = useState(!roomMode && viewMode !== 'live')
   const [unavailable, setUnavailable] = useState(false)
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -557,8 +569,16 @@ export default function PixelRedZonePlayer({ roomMode = false, onBack, scoreboar
     setPlaying(value => !value)
   }
 
-  if (roomMode && !archiveSelected) {
-    return <ChannelLanding scoreboard={scoreboard} onWatchArchive={() => setArchiveSelected(true)} onBack={onBack} />
+  if (!archiveSelected && (roomMode || viewMode === 'live')) {
+    return <ChannelLanding
+      scoreboard={scoreboard}
+      onWatchArchive={() => setArchiveSelected(true)}
+      onBack={onBack}
+      expanded={!roomMode}
+      initialPinnedGameId={initialPinnedGameId}
+      surfaceRef={surfaceRef}
+      onFullscreen={requestFullScreen}
+    />
   }
 
   return (
