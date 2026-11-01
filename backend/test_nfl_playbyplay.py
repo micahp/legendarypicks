@@ -74,3 +74,34 @@ def test_flat_summary_play_shape_remains_supported():
     assert "pixel_red_zone" not in result
     assert result["periods"][0]["label"] == "1st"
     assert result["periods"][0]["plays"][0]["playId"] == "play-1"
+
+
+def test_nfl_playbyplay_forwards_verified_field_goal_events_to_arcade_capture():
+    fixture = os.path.join(
+        HERE, "..", "docs", "research", "fixtures",
+        "pixel-red-zone-2026-11-01", "401772829.json",
+    )
+    with open(fixture, encoding="utf-8") as source:
+        summary = json.load(source)
+
+    with mock.patch.object(game_detail.espn, "summary", return_value=summary), \
+            mock.patch.object(game_detail.arcade_store, "cache_live_events") as capture:
+        result = game_detail.get_game_playbyplay("nfl", "401772829")
+
+    assert result["pixel_red_zone"]["mode"] == "live"
+    capture.assert_called_once()
+    captured = capture.call_args.args[0]
+    verified_kicks = [event for event in captured["events"]
+                      if event["field_goal_attempt_distance_yards"] is not None]
+    assert verified_kicks
+    result_kicks = [event for event in result["pixel_red_zone"]["events"]
+                    if event["field_goal_attempt_distance_yards"] is not None]
+    assert [
+        (event["arcade_challenge_id"], event["source"]["event_id"],
+         event["source"]["revision"], event["field_goal_attempt_distance_yards"])
+        for event in verified_kicks
+    ] == [
+        (event["arcade_challenge_id"], event["source"]["event_id"],
+         event["source"]["revision"], event["field_goal_attempt_distance_yards"])
+        for event in result_kicks
+    ]
