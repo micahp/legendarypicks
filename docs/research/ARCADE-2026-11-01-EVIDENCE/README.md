@@ -11,6 +11,8 @@ Captured from the feature branch preview at 1440×1000 desktop and 390×844 mobi
 - [Arcade panel · mobile scrolled to friend challenges](nfl-hq-arcade-mobile-panel-bottom.png)
 - [42-yard kick result · desktop](field-goal-result-desktop.png)
 - [42-yard kick result · mobile](field-goal-result-mobile.png)
+- [Result card with TRAIN CTA · desktop](field-goal-result-desktop-training-cta.png)
+- [Result card with TRAIN CTA · mobile](field-goal-result-mobile-training-cta.png)
 - [Interaction recording](arcade-interaction.webm)
 
 The preview uses the checked-in normalized ESPN replay for Cardinals at Saints on September 7, 2025: game `401772718`, play `401772718645`, a published 42-yard field-goal attempt. The displayed 961 score and real-game outcome came from the backend's archived challenge and scoring functions.
@@ -18,6 +20,8 @@ The preview uses the checked-in normalized ESPN replay for Cardinals at Saints o
 The bundled archive currently yields 34 source-verified field-goal challenges across 8 games, ranging from 21 to 60 yards. All 34 have stable ESPN event IDs, play IDs, 64-character source revisions, and observation timestamps.
 
 For the browser capture, Arcade HTTP responses were intercepted and served from those backend functions and the archived fixture. The mock held the resulting anonymous leaderboard row in memory; no attempt was written to a database. The live-moment list was empty in the capture. This is archived-event UI evidence, not a live-game freshness test.
+
+The focused result-card captures use that same verified 42-yard ESPN context and a browser-intercepted 961 result to show the post-kick TRAIN link without adding more synthetic attempts to the temporary preview leaderboard.
 
 ## Browser checks
 
