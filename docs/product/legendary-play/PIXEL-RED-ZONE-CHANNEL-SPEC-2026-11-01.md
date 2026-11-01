@@ -26,7 +26,7 @@
 
 ### A. Enter from the GM apartment TV
 
-1. In [`components/Leagues/NflPixelHQ.tsx`](../../../../components/Leagues/NflPixelHQ.tsx) (prototype lives in PR #29, not necessarily on `dev`), replace the TV's research-only preview with **Watch Pixel Red Zone**.
+1. In [`components/Leagues/NflPixelHQ.tsx`](../../../components/Leagues/NflPixelHQ.tsx) (prototype lives in PR #29, not necessarily on `dev`), replace the TV's research-only preview with **Watch Pixel Red Zone**.
 2. TV remains contextual: when a game is live, display a **verified** matchup, score, and freshness; before kickoff, “Next NFL slate” instead of false “LIVE”.
 3. First click opens an **in-room television viewing panel** with the pixel channel and buttons: **Expand**, **Sound on/off**, **Game detail**, **Back to room**.
 4. Expand opens a dedicated, linkable route (proposed `/nfl/pixel-red-zone`), which may use the browser Fullscreen API after an explicit button gesture. Full-screen failure keeps the route usable in a full-viewport layout.
@@ -71,9 +71,9 @@
 
 ### Existing code / measured limits from repo inspection
 
-- [`backend/routers/games/game_detail.py`](../../../../backend/routers/games/game_detail.py) currently exposes `GET /api/nfl/game/{game_id}/playbyplay`, built from `espn.summary(...).plays`. The response groups `{clock, text, scoreAway, scoreHome, scoringPlay}` by period.
-- [`components/Game/types.ts`](../../../../components/Game/types.ts) `PbPPlay` does **not** expose source play IDs, possession, down/distance, spot, source observed timestamp, replay/correction revisions or outcome classifier. Text is not enough to render reliable live field position.
-- [`backend/routers/games/scoreboard.py`](../../../../backend/routers/games/scoreboard.py) has live scoreboard/snapshot behavior and documented freshness policy; reuse the canonical game's identity and schedule/score if coverage is verified.
+- [`backend/routers/games/game_detail.py`](../../../backend/routers/games/game_detail.py) currently exposes `GET /api/nfl/game/{game_id}/playbyplay`, built from `espn.summary(...).plays`. The response groups `{clock, text, scoreAway, scoreHome, scoringPlay}` by period.
+- [`components/Game/types.ts`](../../../components/Game/types.ts) `PbPPlay` does **not** expose source play IDs, possession, down/distance, spot, source observed timestamp, replay/correction revisions or outcome classifier. Text is not enough to render reliable live field position.
+- [`backend/routers/games/scoreboard.py`](../../../backend/routers/games/scoreboard.py) has live scoreboard/snapshot behavior and documented freshness policy; reuse the canonical game's identity and schedule/score if coverage is verified.
 - Draft PR #29 adds the clickable TV and an in-room score preview; it is an **integration location**, not proof this Red Zone adapter exists.
 - [`docs/rules/NFL-2026-GAME-STATE-RULES.md`](../../rules/NFL-2026-GAME-STATE-RULES.md) governs semantic field orientation, scoring and quarter transitions; **observed game events** are authoritative, not any sampled simulator reducer.
 
@@ -210,7 +210,7 @@ No credible observed PBP spot/possession coverage -> **ship a truthful scoreboar
 
 ## 8. Dependencies, sources, and review decisions
 
-- Repo: [NFL game play-by-play adapter](../../../../backend/routers/games/game_detail.py), [PBP component/types](../../../../components/Game/PlayByPlay.tsx), [scoreboard read path](../../../../backend/routers/games/scoreboard.py), draft [TV/HQ PR #29](https://github.com/micahp/legendarypicks/pull/29).
+- Repo: [NFL game play-by-play adapter](../../../backend/routers/games/game_detail.py), [PBP component/types](../../../components/Game/PlayByPlay.tsx), [scoreboard read path](../../../backend/routers/games/scoreboard.py), draft [TV/HQ PR #29](https://github.com/micahp/legendarypicks/pull/29).
 - Rules: [LP 2026 observed-vs-simulated game-state reference](../../rules/NFL-2026-GAME-STATE-RULES.md); actual published source always controls observed outcome.
 - Audio context: [sports broadcast audio research](../../sports-audio-broadcasts.md), [MDN Autoplay](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay).
 - Art: original, consistent pixel sprites/tiles, avoid real-player likenesses and NFL/RedZone marks without legal clearance.
