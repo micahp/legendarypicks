@@ -40,12 +40,15 @@ ARTIFACT_ROOT = (Path(__file__).resolve().parents[1] / "docs" / "research" /
                  "narrative-event-knowledge-2026-10-31")
 DEFAULT_DEV_DB = Path("/root/legendarypicks/backend/data/picks.dev.db")
 DISALLOWED_ARTIFACT_KEYS = {"body", "story", "text", "description", "content", "articlebody"}
+# This stays closed until the full local fourth-down attempt population reconciles
+# with zero unresolved or contradictory possession/series transitions.
+PUBLISH_NFL_FOURTH_DOWN_FACTS = False
 PLAYER_STAT_LABELS = {
     "PTS": "points", "REB": "rebounds", "AST": "assists", "STL": "steals",
     "BLK": "blocks", "TO": "turnovers", "MIN": "minutes",
     "3PM": "three-pointers", "FGM": "field goals", "FGA": "field goal attempts",
     "FTM": "free throws", "FTA": "free throw attempts",
-    "PRA": "points, rebounds and assists combined",
+    "PRA": "combined points, rebounds, and assists",
     "fpts_ppr": "PPR fantasy points", "targets": "targets", "carries": "carries",
 }
 
@@ -147,6 +150,29 @@ def _backfilled_postgame_cutoff(game_date: str) -> str:
                                        datetime.min.time().replace(hour=12), timezone.utc))
 
 
+def _player_log_available_at(game_date: Any, ingested_at: Any) -> tuple[str, str]:
+    """Ignore ingestion time; player_game_logs has no trustworthy capture timestamp."""
+    del ingested_at
+    return (_backfilled_postgame_cutoff(game_date),
+            "player_game_logs_game_date_plus_one_day_12_utc_conservative")
+
+
+def _schedule_available_at(game_date: Any, ingested_at: Any) -> tuple[str, str]:
+    """Use near-game schedule capture timestamps; treat later bulk loads as backfills."""
+    try:
+        day = datetime.strptime(str(game_date)[:10], "%Y-%m-%d").date()
+    except (TypeError, ValueError) as exc:
+        raise ResearchAuditError(f"invalid schedule game date: {game_date!r}") from exc
+    captured = _utc_db(ingested_at)
+    if captured:
+        captured_at = nek.parse_utc(captured)
+        game_day_start = datetime.combine(day, datetime.min.time(), timezone.utc)
+        if captured_at and game_day_start <= captured_at <= game_day_start + timedelta(days=2):
+            return captured, "schedule.ingested_at_near_game_date"
+    return (_backfilled_postgame_cutoff(game_date),
+            "schedule_game_date_plus_one_day_12_utc_conservative")
+
+
 def _local_fact(*, league: str, game_id: str, event_id: str, category: str,
                 team: str | None, opponent: str | None, game_date: str,
                 occurred_at: str, available_at: str, evidence_ids: list[str],
@@ -176,6 +202,86 @@ def _play_id(value: Any) -> str:
         return str(value)
 
 
+_NFL_NEXT_SCRIMMAGE_TYPES = {"run", "pass", "punt", "field_goal", "qb_kneel", "qb_spike"}
+
+
+def _classify_nfl_fourth_down_attempt(plays: list[dict[str, Any]], index: int) -> dict[str, str]:
+    """Classify a fourth-down scrimmage attempt from football state transitions, never EPA success."""
+    play = plays[index]
+    offense = str(play.get("posteam") or "").upper()
+    defense = str(play.get("defteam") or "").upper()
+    if play.get("down") != 4 or play.get("play_type") not in {"run", "pass"}:
+        return {"outcome": "unresolved", "reason": "not_a_fourth_down_scrimmage_attempt"}
+    if play.get("touchdown") == 1:
+        return {"outcome": "converted", "reason": "touchdown"}
+
+    result = str(play.get("series_result") or "")
+    next_play = next((row for row in plays[index + 1:]
+                      if row.get("play_type") in _NFL_NEXT_SCRIMMAGE_TYPES and
+                      row.get("posteam")), None)
+    next_team = str(next_play.get("posteam") or "").upper() if next_play else ""
+    same_team_next_series = bool(
+        next_play and next_team == offense and next_play.get("down") == 1 and
+        (play.get("series") is None or next_play.get("series") is None or
+         float(next_play["series"]) > float(play["series"]))
+    )
+    opponent_next = bool(next_play and next_team and next_team != offense)
+    gained_line = (play.get("ydstogo") is not None and play.get("yards_gained") is not None and
+                   float(play["yards_gained"]) >= float(play["ydstogo"]))
+    defensive_penalty = (play.get("penalty") == 1 and
+                         str(play.get("penalty_team") or "").upper() == defense)
+
+    if result == "First down":
+        if opponent_next:
+            return {"outcome": "unresolved", "reason": "first_down_conflicts_with_next_possession"}
+        if not same_team_next_series:
+            return {"outcome": "unresolved", "reason": "first_down_conflicts_with_next_series"}
+        if defensive_penalty:
+            return {"outcome": "converted", "reason": "defensive_penalty"}
+        return {"outcome": "converted", "reason": "series_first_down"}
+
+    if result in {"Turnover", "Turnover on downs"}:
+        if next_play and not opponent_next:
+            return {"outcome": "unresolved", "reason": "turnover_result_conflicts_with_next_possession"}
+        return {"outcome": "failed", "reason": "series_turnover" if result == "Turnover"
+                else "turnover_on_downs"}
+
+    if same_team_next_series:
+        if defensive_penalty:
+            return {"outcome": "converted", "reason": "defensive_penalty"}
+        if gained_line:
+            return {"outcome": "converted", "reason": "yards_to_go_and_series_transition"}
+        return {"outcome": "unresolved", "reason": "series_transition_without_gain_or_penalty_evidence"}
+    if opponent_next:
+        return {"outcome": "failed", "reason": "opponent_next_possession"}
+    if play.get("interception") == 1 or play.get("fumble_lost") == 1:
+        return {"outcome": "failed", "reason": "turnover_event"}
+    return {"outcome": "unresolved", "reason": "insufficient_terminal_or_sequence_evidence"}
+
+
+def _audit_nfl_fourth_down(plays: list[dict[str, Any]]) -> dict[str, Any]:
+    attempts = [index for index, play in enumerate(plays)
+                if play.get("down") == 4 and play.get("play_type") in {"run", "pass"}]
+    classifications = [_classify_nfl_fourth_down_attempt(plays, index) for index in attempts]
+    counts = Counter(row["outcome"] for row in classifications)
+    reasons = Counter(row["reason"] for row in classifications)
+    unresolved_reasons = Counter(row["reason"] for row in classifications
+                                 if row["outcome"] == "unresolved")
+    complete = bool(attempts) and counts["unresolved"] == 0
+    return {
+        "attempts": len(attempts), "converted": counts["converted"],
+        "failed": counts["failed"], "unresolved": counts["unresolved"],
+        "classification_complete": complete,
+        "reconciliation_status": "sequence_reconciled" if complete else "incomplete",
+        "reason_counts": dict(sorted(reasons.items())),
+        "unresolved_reason_counts": dict(sorted(unresolved_reasons.items())),
+        "evidence_fields": ["down", "ydstogo", "yards_gained", "series", "series_result",
+                            "posteam", "play_type", "touchdown", "penalty", "penalty_team",
+                            "interception", "fumble_lost"],
+        "success_epa_used": False,
+    }
+
+
 def _derive_local_nfl_game(con: sqlite3.Connection, game: dict[str, Any]
                             ) -> tuple[list[dict[str, Any]], dict[str, Any], str]:
     """Summarize one game from Legendary Picks' own nfl_pbp and nfl_schedule rows."""
@@ -186,9 +292,10 @@ def _derive_local_nfl_game(con: sqlite3.Connection, game: dict[str, Any]
     if not schedule:
         return [], {"league": "nfl", "game_id": game_id, "status": "missing_local_schedule"}, ""
     rows = [dict(row) for row in con.execute(
-        """SELECT play_id,posteam,defteam,drive,series,series_result,down,
-                  pass_attempt,rush_attempt,success,interception,fumble_lost,
-                  touchdown,two_point_attempt,play_type
+        """SELECT play_id,posteam,defteam,drive,series,series_result,down,ydstogo,
+                  yards_gained,pass_attempt,rush_attempt,success,interception,fumble_lost,
+                  touchdown,two_point_attempt,play_type,penalty,penalty_team,qtr,
+                  game_seconds_remaining
            FROM nfl_pbp WHERE game_id=? ORDER BY play_id""", (game_id,))]
     if not rows:
         return [], {"league": "nfl", "game_id": game_id, "status": "missing_local_pbp"}, ""
@@ -204,68 +311,74 @@ def _derive_local_nfl_game(con: sqlite3.Connection, game: dict[str, Any]
     for play in plays:
         if play.get("drive") is not None:
             drives[str(play["drive"])].append(play)
-    terminal_drives: list[dict[str, Any]] = []
-    for drive_id, drive_plays in drives.items():
-        drive_plays.sort(key=lambda row: float(row["play_id"]))
-        owner = next((str(row["posteam"]).upper() for row in drive_plays if row.get("posteam")), None)
-        terminal = next((row.get("series_result") for row in reversed(drive_plays)
-                         if row.get("series_result")), None)
-        terminal_play = next((row for row in reversed(drive_plays)
-                              if row.get("series_result")), drive_plays[-1])
-        if owner in participants:
-            terminal_drives.append({"drive": drive_id, "team": owner, "result": terminal,
-                                    "event_id": terminal_play["_event_id"]})
+    drive_audit_counts: Counter = Counter()
+    drive_sequence_conflicts = 0
+    ordered_drives = sorted(drives.items(), key=lambda item: min(
+        float(row["play_id"]) for row in item[1]))
+    for index, (_, drive_plays) in enumerate(ordered_drives):
+        scrimmage = [row for row in drive_plays
+                     if row.get("play_type") in _NFL_NEXT_SCRIMMAGE_TYPES]
+        terminal = scrimmage[-1] if scrimmage else None
+        owner = next((str(row.get("posteam") or "").upper() for row in scrimmage
+                      if row.get("posteam")), "")
+        next_owner = ""
+        if index + 1 < len(ordered_drives):
+            next_plays = sorted(ordered_drives[index + 1][1], key=lambda row: float(row["play_id"]))
+            next_owner = next((str(row.get("posteam") or "").upper() for row in next_plays
+                               if row.get("play_type") in _NFL_NEXT_SCRIMMAGE_TYPES and row.get("posteam")), "")
+        result = str(terminal.get("series_result") or "") if terminal else ""
+        if terminal and terminal.get("touchdown") == 1 and result == "Opp touchdown":
+            classification = "defensive_touchdown_candidate"
+        elif terminal and terminal.get("touchdown") == 1:
+            classification = "offensive_touchdown_candidate"
+        elif terminal and result == "Punt" and terminal.get("play_type") == "punt" and next_owner and next_owner != owner:
+            classification = "punt_candidate"
+        elif terminal and result == "Turnover on downs" and next_owner and next_owner != owner:
+            classification = "turnover_on_downs_candidate"
+        elif terminal and result == "Turnover" and next_owner and next_owner != owner:
+            classification = "turnover_candidate"
+        elif terminal and result == "Field goal" and terminal.get("play_type") == "field_goal":
+            classification = "field_goal_made_candidate"
+        elif terminal and result == "Missed field goal" and terminal.get("play_type") == "field_goal":
+            classification = "field_goal_missed_candidate"
+        elif terminal and result == "End of half":
+            classification = "period_end_candidate"
+        elif terminal and result == "Safety":
+            classification = "safety_candidate"
+        else:
+            classification = "unknown"
+            if result in {"Punt", "Turnover", "Turnover on downs"}:
+                drive_sequence_conflicts += 1
+        drive_audit_counts[classification] += 1
 
     facts: list[dict[str, Any]] = []
-    for team in participants:
-        team_drives = [drive for drive in terminal_drives if drive["team"] == team]
-        if team_drives:
-            outcomes = Counter(str(drive["result"] or "unclassified") for drive in team_drives)
-            facts.append(_local_fact(
-                league="nfl", game_id=game_id, event_id=f"{game_id}:drives:{team}",
-                category="drive_summary", team=team, opponent=opponent[team],
-                game_date=game_date, occurred_at=postgame_at, available_at=postgame_at,
-                evidence_ids=[drive["event_id"] for drive in team_drives],
-                calculation={"drive_count": len(team_drives), "terminal_results": dict(sorted(outcomes.items())),
-                             "drive_key": "nfl_pbp.drive", "result_key": "last_nonnull_series_result"},
-                source="repository:nfl_pbp", relevant_teams=[team]))
-
     turnover_plays = [play for play in plays if play.get("interception") == 1 or
                       play.get("fumble_lost") == 1]
-    if turnover_plays:
-        by_offense = Counter(str(play["posteam"]).upper() for play in turnover_plays
-                             if play.get("posteam"))
-        facts.append(_local_fact(
-            league="nfl", game_id=game_id, event_id=f"{game_id}:turnovers",
-            category="turnover_events", team=None, opponent=None, game_date=game_date,
-            occurred_at=postgame_at, available_at=postgame_at,
-            evidence_ids=[play["_event_id"] for play in turnover_plays],
-            calculation={"total_giveaways": len(turnover_plays), "giveaways_by_team": dict(sorted(by_offense.items())),
-                         "interceptions": sum(play.get("interception") == 1 for play in turnover_plays),
-                         "lost_fumbles": sum(play.get("fumble_lost") == 1 for play in turnover_plays),
-                         "game_teams": participants,
-                         "source_fields": ["interception", "fumble_lost"]},
-            source="repository:nfl_pbp", relevant_teams=participants))
 
-    fourth_down: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for play in plays:
-        if play.get("down") != 4 or not (play.get("pass_attempt") == 1 or play.get("rush_attempt") == 1):
-            continue
-        team = str(play.get("posteam") or "").upper()
-        if team in participants:
-            fourth_down[team].append(play)
-    for team, attempts in fourth_down.items():
-        converted = sum(play.get("success") == 1 for play in attempts)
-        failed = sum(play.get("success") == 0 for play in attempts)
-        facts.append(_local_fact(
-            league="nfl", game_id=game_id, event_id=f"{game_id}:fourth-down:{team}",
-            category="fourth_down_attempts", team=team, opponent=opponent[team],
-            game_date=game_date, occurred_at=postgame_at, available_at=postgame_at,
-            evidence_ids=[play["_event_id"] for play in attempts],
-            calculation={"attempts": len(attempts), "converted": converted, "failed": failed,
-                         "unresolved": len(attempts) - converted - failed,
-                         "attempt_definition": "fourth_down_pass_or_rush", "conversion_field": "success"},
-            source="repository:nfl_pbp", relevant_teams=[team]))
+    fourth_down_audit = _audit_nfl_fourth_down(plays)
+    if PUBLISH_NFL_FOURTH_DOWN_FACTS and fourth_down_audit["classification_complete"]:
+        fourth_down_teams: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for index, play in enumerate(plays):
+            if play.get("down") == 4 and play.get("play_type") in {"run", "pass"}:
+                team = str(play.get("posteam") or "").upper()
+                if team in participants:
+                    fourth_down_teams[team].append({
+                        **play, "_classification": _classify_nfl_fourth_down_attempt(plays, index)})
+        for team, attempts in fourth_down_teams.items():
+            facts.append(_local_fact(
+                league="nfl", game_id=game_id, event_id=f"{game_id}:fourth-down:{team}",
+                category="fourth_down_attempts", team=team, opponent=opponent[team],
+                game_date=game_date, occurred_at=postgame_at, available_at=postgame_at,
+                evidence_ids=[play["_event_id"] for play in attempts],
+                calculation={"attempts": len(attempts),
+                             "converted": sum(play["_classification"]["outcome"] == "converted"
+                                              for play in attempts),
+                             "failed": sum(play["_classification"]["outcome"] == "failed"
+                                           for play in attempts),
+                             "unresolved": 0,
+                             "attempt_definition": "fourth_down_pass_or_rush",
+                             "conversion_basis": "series_result_and_possession_transition"},
+                source="repository:nfl_pbp", relevant_teams=[team]))
 
     snap_rows = con.execute(
         """SELECT id,player_id,team,off_snaps,off_pct,def_snaps,def_pct,st_snaps,st_pct
@@ -295,67 +408,36 @@ def _derive_local_nfl_game(con: sqlite3.Connection, game: dict[str, Any]
                          "source_table_key": "season_week_team_player_id"},
             source="repository:nfl_snap_counts", relevant_teams=[team]))
 
-    score_by_team: Counter = Counter()
-    scoring_events: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    scoring_counts: dict[str, Counter] = {team: Counter() for team in participants}
+    scoring_trace = []
     for play in plays:
-        team = str(play.get("posteam") or "").upper()
-        if play.get("touchdown") == 1:
-            scorer = str(play.get("defteam") or "").upper() if play.get("series_result") == "Opp touchdown" else team
-            if scorer in participants:
-                score_by_team[scorer] += 6
-                scoring_counts[scorer]["touchdowns"] += 1
-                scoring_events[scorer].append(play)
-        if team in participants and play.get("play_type") == "field_goal" and play.get("success") == 1:
-            score_by_team[team] += 3
-            scoring_counts[team]["field_goals"] += 1
-            scoring_events[team].append(play)
-        if team in participants and play.get("play_type") == "extra_point" and play.get("success") == 1:
-            score_by_team[team] += 1
-            scoring_counts[team]["extra_points"] += 1
-            scoring_events[team].append(play)
-        if team in participants and play.get("two_point_attempt") == 1 and play.get("success") == 1:
-            score_by_team[team] += 2
-            scoring_counts[team]["two_point_conversions"] += 1
-            scoring_events[team].append(play)
-    safety_drives = [drive for drive in terminal_drives if drive["result"] == "Safety"]
-    for drive in safety_drives:
-        terminal_play = next(play for play in plays if play["_event_id"] == drive["event_id"])
-        scorer = str(terminal_play.get("defteam") or "").upper()
-        if scorer in participants:
-            score_by_team[scorer] += 2
-            scoring_counts[scorer]["safeties"] += 1
-            scoring_events[scorer].append(terminal_play)
-    score_match = (schedule["home_score"] is not None and schedule["away_score"] is not None and
-        score_by_team[home] == int(schedule["home_score"] or 0) and
-        score_by_team[away] == int(schedule["away_score"] or 0))
-    if score_match:
-        for team in participants:
-            if not scoring_events[team]:
-                continue
-            facts.append(_local_fact(
-                league="nfl", game_id=game_id, event_id=f"{game_id}:scoring:{team}",
-                category="scoring_summary", team=team, opponent=opponent[team],
-                game_date=game_date, occurred_at=postgame_at, available_at=postgame_at,
-                evidence_ids=[play["_event_id"] for play in scoring_events[team]],
-                calculation={"reconstructed_points": score_by_team[team],
-                             "scheduled_points": int(schedule["home_score"] if team == home else schedule["away_score"]),
-                             "reconciled_to_schedule": True, **dict(scoring_counts[team])},
-                source="repository:nfl_pbp+nfl_schedule", relevant_teams=[team]))
+        result = str(play.get("series_result") or "")
+        if (play.get("touchdown") == 1 or play.get("two_point_attempt") == 1 or
+                play.get("play_type") in {"field_goal", "extra_point"} or result == "Safety"):
+            scoring_trace.append({
+                "play_id": play["_event_id"], "qtr": play.get("qtr"),
+                "game_seconds_remaining": play.get("game_seconds_remaining"),
+                "posteam": play.get("posteam"), "defteam": play.get("defteam"),
+                "play_type": play.get("play_type"), "series_result": result or None,
+                "touchdown": play.get("touchdown"),
+                "two_point_attempt": play.get("two_point_attempt"),
+                "epa_success_flag_not_scoring_result": play.get("success"),
+            })
 
     stats_reconciliation = {}
     espn_id = str(schedule["espn"] or "")
     if espn_id:
         stats_rows = con.execute(
             """SELECT team_abbrev,turnovers,captured_at FROM team_game_stats
-               WHERE league='nfl' AND game_id=?""", (espn_id,)).fetchall()
-        pbp_turnovers = Counter(str(play.get("posteam") or "").upper() for play in turnover_plays
-                                if play.get("posteam"))
+               WHERE league='nfl' AND game_id=?
+               ORDER BY team_abbrev,captured_at""", (espn_id,)).fetchall()
+        pbp_turnovers = Counter(team_codes.normalize("nfl", str(play["posteam"]))
+                                for play in turnover_plays if play.get("posteam"))
         for row in stats_rows:
             team = str(row["team_abbrev"] or "").upper()
             if team:
-                stats_reconciliation[team] = {
-                    "pbp_giveaways": pbp_turnovers[team], "team_game_stats_turnovers": row["turnovers"],
+                canonical_team = team_codes.normalize("nfl", team)
+                stats_reconciliation[canonical_team] = {
+                    "pbp_giveaways": pbp_turnovers[canonical_team], "team_game_stats_turnovers": row["turnovers"],
                     "captured_at": row["captured_at"],
                     "matches": (int(row["turnovers"]) == pbp_turnovers[team]
                                 if row["turnovers"] is not None else None),
@@ -369,21 +451,60 @@ def _derive_local_nfl_game(con: sqlite3.Connection, game: dict[str, Any]
     team_results_match = (len(team_results) == 2 and
                           team_results.get(home) == (schedule["home_score"], schedule["away_score"]) and
                           team_results.get(away) == (schedule["away_score"], schedule["home_score"]))
+    canonical_participants = {team_codes.normalize("nfl", team) for team in participants}
+    turnover_snapshot_matches = (len(stats_reconciliation) == 2 and
+                                 set(stats_reconciliation) == canonical_participants and
+                                 all(item.get("matches") is True
+                                     for item in stats_reconciliation.values()))
+    turnover_available_at = max(
+        [postgame_at, *(value for item in stats_reconciliation.values()
+                        for value in [_utc_db(item.get("captured_at"))] if value)])
+    turnover_facts_emitted = False
+    if turnover_plays and turnover_snapshot_matches:
+        by_offense = Counter(str(play["posteam"]).upper() for play in turnover_plays
+                             if play.get("posteam"))
+        facts.append(_local_fact(
+            league="nfl", game_id=game_id, event_id=f"{game_id}:turnovers",
+            category="turnover_events", team=None, opponent=None, game_date=game_date,
+            occurred_at=postgame_at, available_at=turnover_available_at,
+            evidence_ids=[play["_event_id"] for play in turnover_plays],
+            calculation={"total_giveaways": len(turnover_plays), "giveaways_by_team": dict(sorted(by_offense.items())),
+                         "interceptions": sum(play.get("interception") == 1 for play in turnover_plays),
+                         "lost_fumbles": sum(play.get("fumble_lost") == 1 for play in turnover_plays),
+                         "game_teams": participants,
+                         "independent_team_box_reconciliation": "matched",
+                         "source_fields": ["interception", "fumble_lost"]},
+            source="repository:nfl_pbp+team_game_stats", relevant_teams=participants))
+        turnover_facts_emitted = True
     audit = {
         "league": "nfl", "game_id": game_id, "status": "local_pbp_processed",
         "source": "nfl_pbp", "play_count": len(plays), "drive_count": len(drives),
-        "classified_drive_count": len(terminal_drives),
+        "candidate_drive_terminal_count": sum(drive_audit_counts.values()),
         "turnover_count": len(turnover_plays),
-        "fourth_down_go_attempt_count": sum(len(values) for values in fourth_down.values()),
-        "scoring_reconciliation": {
-            "status": "matched" if score_match else "mismatch",
-            "reconstructed_home_score": score_by_team[home],
-            "scheduled_home_score": schedule["home_score"],
-            "reconstructed_away_score": score_by_team[away],
-            "scheduled_away_score": schedule["away_score"],
-            "facts_emitted": score_match,
-        },
         "turnover_reconciliation": stats_reconciliation or {"status": "no_matching_team_game_stats_snapshot"},
+        "turnover_snapshot_matches": turnover_snapshot_matches,
+        "turnover_narrative_fact_emitted": turnover_facts_emitted,
+        "fourth_down_audit": fourth_down_audit,
+        "scoring_reconciliation": {
+            "status": "incomplete_missing_scoring_result_fields",
+            "scheduled_home_score": schedule["home_score"],
+            "scheduled_away_score": schedule["away_score"],
+            "scoring_trace": scoring_trace,
+            "missing_local_fields": ["field_goal_result", "extra_point_result",
+                                     "two_point_conv_result", "posteam_score_post",
+                                     "defteam_score_post"],
+            "success_field_used_as_scoring_result": False,
+            "narrative_facts_emitted": 0,
+        },
+        "drive_outcome_audit": {
+            "drive_count": sum(drive_audit_counts.values()),
+            "candidate_terminal_counts": dict(sorted(drive_audit_counts.items())),
+            "sequence_transition_conflicts": drive_sequence_conflicts,
+            "independently_reconciled_count": 0,
+            "narrative_facts_emitted": 0,
+            "status": "unverified_quarantined",
+            "reason": "nfl_pbp.series_result is a series label and the database has no general drive reconstruction table or per-play score snapshots",
+        },
         "team_game_results_reconciliation": {
             "status": ("matched" if team_results_match else
                        "unavailable" if len(team_results) != 2 else "mismatch"),
@@ -510,6 +631,10 @@ def local_database_coverage(con: sqlite3.Connection) -> dict[str, Any]:
                 SUM(down=4) AS fourth_down_rows,SUM(touchdown=1) AS touchdown_rows
                 FROM nfl_pbp"""),
             "nfl_pbp_fields": nfl_pbp_fields,
+            "nfl_pbp_missing_event_fields": [field for field in (
+                "field_goal_result", "extra_point_result", "two_point_conv_result",
+                "posteam_score_post", "defteam_score_post", "fixed_drive_result",
+            ) if field not in nfl_pbp_fields],
             "drive_reconstruction_tables": drive_tables,
             "per_play_capture_timestamp": "missing",
             "score_snapshot_fields": "missing",
@@ -576,7 +701,9 @@ def local_database_coverage(con: sqlite3.Connection) -> dict[str, Any]:
                 MIN(captured_at) AS first_capture,MAX(captured_at) AS last_capture,
                 MIN(period) AS first_period,MAX(period) AS last_period
                 FROM scoring_plays WHERE league='nba'"""),
-            "full_play_by_play_tables": nba_play_tables,
+            "play_by_play_named_tables": nba_play_tables,
+            "complete_play_by_play_tables_confirmed": [],
+            "complete_play_by_play_status": "not_stored_locally; scoring_plays contains scoring events only",
             "scoring_plays_missing_fields": ["non_scoring possessions", "defensive events",
                                              "rebounds/turnovers between scores", "complete event sequence"],
         },
@@ -1277,7 +1404,7 @@ def _unsupported_numbers(preview: str | None, facts: list[dict[str, Any]]) -> li
         source_date = str(fact.get("source_game_date") or "")[:10]
         if re.fullmatch(r"\d{4}-\d{2}-\d{2}", source_date):
             allowed.update((str(int(source_date[8:10])), source_date[:4]))
-    found = re.findall(r"(?<![A-Za-z])\d+(?:\.\d+)?", preview)
+    found = re.findall(r"(?<![A-Za-z0-9])\d+(?:\.\d+)?(?![A-Za-z0-9])", preview)
     return sorted(set(token for token in found if token not in allowed))
 
 
@@ -1310,7 +1437,7 @@ def _future_nfl_targets(con: sqlite3.Connection, as_of: str, count: int = 12) ->
 def _future_nba_targets(con: sqlite3.Connection, as_of: str, count: int = 12) -> list[dict[str, Any]]:
     out = []
     for row in con.execute(
-            """SELECT game_id,CAST(espn AS TEXT) AS espn_event_id,
+            """SELECT game_id,season,CAST(espn AS TEXT) AS espn_event_id,
                       game_date,start_utc,away_team,home_team
                FROM nba_schedule WHERE season=? AND season_type='REG' AND status=1
                  AND start_utc>? ORDER BY start_utc,game_id LIMIT ?""",
@@ -1324,6 +1451,126 @@ def _future_nba_targets(con: sqlite3.Connection, as_of: str, count: int = 12) ->
             _nba_code(item["home_team"]), _nba_code(item["away_team"]))
         out.append(item)
     return out
+
+
+def _recent_local_nba_event_games(con: sqlite3.Connection, as_of: str,
+                                 days: int = 28, limit: int = 120) -> list[dict[str, Any]]:
+    """Use recent completed NBA schedule rows and existing player-log game IDs for local facts."""
+    cutoff = nek.parse_utc(as_of)
+    if cutoff is None:
+        raise ResearchAuditError("NBA event sample as_of must be timezone-aware")
+    start_date = (cutoff - timedelta(days=days)).date().isoformat()
+    games = []
+    rows = con.execute(
+        """SELECT game_id,season,game_date,start_utc,home_team,away_team,
+                  home_score,away_score,CAST(espn AS TEXT) AS espn_event_id
+           FROM nba_schedule WHERE season=? AND season_type='REG' AND status=3
+             AND home_score IS NOT NULL AND away_score IS NOT NULL
+             AND game_date>=? AND start_utc<?
+           ORDER BY start_utc DESC,game_id DESC LIMIT ?""",
+        (NBA_SEASON, start_date, nek.iso_utc(cutoff), int(limit)))
+    for row in rows:
+        game = dict(row)
+        event_id = str(game.get("espn_event_id") or "")
+        if not event_id:
+            matches = [str(r[0]) for r in con.execute(
+                """SELECT DISTINCT game_id FROM player_game_logs WHERE league='nba'
+                   AND game_date=? AND ((team=? AND opponent=?) OR (team=? AND opponent=?))""",
+                (game["game_date"], game["home_team"], game["away_team"],
+                 game["away_team"], game["home_team"]))]
+            if len(matches) != 1:
+                continue
+            event_id = matches[0]
+        game.update({"league": "nba", "source_game_id": str(game["game_id"]),
+                     "game_id": str(game["game_id"]), "espn_event_id": event_id,
+                     "game_page_id": str(game["game_id"]),
+                     "home": _nba_code(game["home_team"]),
+                     "away": _nba_code(game["away_team"]),
+                     "home_team": _nba_code(game["home_team"]),
+                     "away_team": _nba_code(game["away_team"]),
+                     "sample_role": "recent_local_event_sample",
+                     "season_phase": "regular", "game_type": "REG"})
+        games.append(game)
+    return games
+
+
+def _recent_team_streak_facts(con: sqlite3.Connection, target: dict[str, Any],
+                              as_of: str) -> list[dict[str, Any]]:
+    """Derive only three-plus game win/loss streaks from completed local schedule rows."""
+    league = str(target.get("league") or "").lower()
+    cutoff = nek.parse_utc(as_of)
+    kickoff = nek.parse_utc(target.get("start_utc"))
+    if league not in {"nfl", "nba"} or cutoff is None or kickoff is None:
+        return []
+    if league == "nfl":
+        sql = """SELECT game_id,gameday AS game_date,home_team,away_team,
+                        home_score,away_score,ingested_at,NULL AS start_utc
+                 FROM nfl_schedule WHERE season=? AND game_type='REG'
+                   AND gameday<? AND away_score IS NOT NULL AND home_score IS NOT NULL
+                   AND (home_team=? OR away_team=?)
+                 ORDER BY gameday DESC,week DESC,game_id DESC LIMIT 4"""
+        params = (int(target.get("season") or 2026), kickoff.date().isoformat(),)
+    else:
+        sql = """SELECT game_id,game_date,home_team,away_team,home_score,away_score,
+                        ingested_at,start_utc
+                 FROM nba_schedule WHERE season=? AND season_type='REG' AND status=3
+                   AND start_utc<? AND away_score IS NOT NULL AND home_score IS NOT NULL
+                   AND (home_team=? OR away_team=?)
+                 ORDER BY start_utc DESC,game_id DESC LIMIT 4"""
+        params = (int(target.get("season") or NBA_SEASON), nek.iso_utc(kickoff))
+
+    facts = []
+    for raw_team in (target.get("home_team"), target.get("away_team")):
+        team = _nba_code(str(raw_team)) if league == "nba" else str(raw_team).upper()
+        rows = [dict(row) for row in con.execute(sql, (*params, team, team))]
+        available_rows = []
+        for row in rows:
+            available_at, basis = _schedule_available_at(row["game_date"], row["ingested_at"])
+            if nek.parse_utc(available_at) and nek.parse_utc(available_at) <= cutoff:
+                row["available_at"], row["availability_basis"] = available_at, basis
+                available_rows.append(row)
+        if len(available_rows) < 3:
+            continue
+        outcomes = []
+        for row in available_rows:
+            own = row["home_score"] if str(row["home_team"]).upper() == team else row["away_score"]
+            other = row["away_score"] if str(row["home_team"]).upper() == team else row["home_score"]
+            outcomes.append("win" if own > other else "loss" if own < other else "tie")
+        outcome = outcomes[0]
+        if outcome == "tie":
+            continue
+        streak = 0
+        for value in outcomes:
+            if value != outcome:
+                break
+            streak += 1
+        if streak < 3:
+            continue
+        supporting_rows = available_rows[:streak]
+        latest = supporting_rows[0]
+        latest_opponent = (latest["away_team"] if str(latest["home_team"]).upper() == team
+                           else latest["home_team"])
+        game_date = str(latest["game_date"])[:10]
+        occurred_at = (str(latest.get("start_utc") or f"{game_date}T00:00:00Z"))
+        occurred_at = nek.iso_utc(nek.parse_utc(occurred_at)) if nek.parse_utc(occurred_at) else (
+            f"{game_date}T00:00:00Z")
+        available_at = max(row["available_at"] for row in supporting_rows)
+        game_ids = [str(row["game_id"]) for row in supporting_rows]
+        event_ids = [f"{gid}:team-result:{team}" for gid in game_ids]
+        fact = _local_fact(
+            league=league, game_id=game_ids[0], event_id=event_ids[0],
+            category="recent_streak", team=team, opponent=str(latest_opponent).upper(),
+            game_date=game_date, occurred_at=occurred_at, available_at=available_at,
+            evidence_ids=event_ids,
+            calculation={"streak_length": streak, "streak_result": outcome,
+                         "supporting_results": outcomes[:streak],
+                         "availability_bases": sorted({row["availability_basis"]
+                                                        for row in supporting_rows})},
+            source=f"repository:{'nfl_schedule' if league == 'nfl' else 'nba_schedule'}",
+            relevant_teams=[team])
+        fact["supporting_game_ids"] = sorted(set(game_ids))
+        facts.append(fact)
+    return facts
 
 
 def _attach_nba_event_ids(targets: list[dict[str, Any]],
@@ -1442,7 +1689,7 @@ def _player_log_rows(con: sqlite3.Connection, games: list[dict[str, Any]],
             db_game_id = str(game["source_game_id"])
         rows = list(con.execute(
             """SELECT id,player_id,league,season,game_type,game_id,game_date,team,
-                      stats,source,source_player_key
+                      stats,source,source_player_key,ingested_at
                FROM player_game_logs WHERE league=? AND game_id=?""",
             (game["league"], db_game_id)))
         for row in rows:
@@ -1450,7 +1697,8 @@ def _player_log_rows(con: sqlite3.Connection, games: list[dict[str, Any]],
                 continue
             item = dict(row)
             item["log_id"] = str(item.pop("id"))
-            item["available_at"] = _backfilled_postgame_cutoff(item.get("game_date"))
+            item["available_at"], item["availability_basis"] = _player_log_available_at(
+                item.get("game_date"), item.get("ingested_at"))
             item["stats"] = json.loads(item["stats"] or "{}")
             item["player_id"] = str(item["player_id"])
             item["game_start"] = first_plays.get(str(game["espn_event_id"])) or (
@@ -1469,22 +1717,26 @@ def _player_log_rows(con: sqlite3.Connection, games: list[dict[str, Any]],
             continue
         for row in con.execute(
                 f"""SELECT l.id,l.player_id,l.league,l.game_type,l.game_id,l.game_date,
-                           l.team,l.stats,l.source,l.source_player_key,
+                           l.team,l.stats,l.source,l.source_player_key,l.ingested_at,
                            COALESCE(s.source_game_id,n.game_id,l.game_id) AS canonical_game_id
                     FROM player_game_logs l
                     LEFT JOIN nba_sportsdataverse_games s
                       ON l.league='nba' AND s.espn_event_id=l.game_id
                     LEFT JOIN nba_schedule n
-                      ON l.league='nba' AND CAST(n.espn AS TEXT)=l.game_id
+                      ON l.league='nba' AND (CAST(n.espn AS TEXT)=l.game_id OR
+                           (n.game_date=l.game_date AND
+                            ((n.home_team=l.team AND n.away_team=l.opponent) OR
+                             (n.away_team=l.team AND n.home_team=l.opponent))))
                     WHERE l.player_id IN ({marks}) AND l.league IN ('nfl','nba')""",
                 batch):
             item = dict(row)
             item["log_id"] = str(item.pop("id"))
-            item["available_at"] = _backfilled_postgame_cutoff(item.get("game_date"))
+            item["available_at"], item["availability_basis"] = _player_log_available_at(
+                item.get("game_date"), item.get("ingested_at"))
             item["stats"] = json.loads(item["stats"] or "{}")
             item["player_id"] = str(item["player_id"])
-            # Backfilled logs have no trustworthy capture timestamp. Order by game date
-            # and use a conservative next-day cutoff; never treat ingested_at as availability.
+            # player_game_logs has no capture timestamp; ignore ingested_at and use the
+            # chronological game-date boundary with existing schedule/game-ID crosswalks.
             date = str(item.get("game_date") or "")[:10]
             item["game_start"] = f"{date}T00:00:00Z" if re.fullmatch(r"\d{4}-\d{2}-\d{2}", date) else None
             item["game_type"] = item.get("game_type") or "REG"
@@ -1514,7 +1766,9 @@ def _add_player_facts(games, first_plays, whistles, con) -> list[dict[str, Any]]
             continue
         first_play = first_plays.get(str(game["espn_event_id"])) or (
             f"{str(game.get('game_date') or game.get('gameday'))[:10]}T00:00:00Z")
-        last_play = whistles.get(str(game["espn_event_id"])) or _backfilled_postgame_cutoff(
+        captured_after_game = max((row["available_at"] for row in target_logs
+                                   if row.get("available_at")), default=None)
+        last_play = whistles.get(str(game["espn_event_id"])) or captured_after_game or _backfilled_postgame_cutoff(
             game.get("game_date") or game.get("gameday"))
         if not first_play or not last_play:
             continue
@@ -1538,19 +1792,142 @@ def _add_player_facts(games, first_plays, whistles, con) -> list[dict[str, Any]]
             fact["source_game_date"] = str(game.get("game_date") or game.get("gameday"))[:10]
             fact["source_game_opponent"] = str(game["away_team"] if fact.get("team") == game["home_team"]
                                                 else game["home_team"])
-            fact["availability_basis"] = "backfilled_game_date_plus_one_day_12_utc_conservative"
+            fact["availability_basis"] = sorted({row.get("availability_basis") for row in target_logs
+                                                  if row.get("availability_basis")})
         facts.extend(event_facts)
     return facts
 
 
+def _select_preview_facts(target: dict[str, Any], context: list[dict[str, Any]],
+                          player_names: dict[str, str]) -> list[dict[str, Any]]:
+    """Keep recent, high-signal evidence; avoid weak outliers and repeated categories."""
+    league = str(target.get("league") or "").lower()
+    team_set = {canonical for key in ("home_team", "away_team")
+                if (canonical := nek._canonical_team(league, target.get(key)))}
+    kickoff = nek.parse_utc(target.get("start_utc"))
+    max_age_days = 28 if league == "nfl" else 21
+    eligible = []
+    for fact in context:
+        if not fact.get("verified"):
+            continue
+        date_text = str(fact.get("source_game_date") or "")[:10]
+        try:
+            source_date = datetime.strptime(date_text, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if kickoff:
+            age = (kickoff.date() - source_date).days
+            if age < 0 or age > max_age_days:
+                continue
+        team = nek._canonical_team(league, fact.get("team"))
+        calculation = fact.get("calculation") or {}
+        category = fact.get("category")
+        if category == "comeback":
+            minimum = 10 if league == "nfl" else 15
+            if team not in team_set or float(calculation.get("largest_deficit_overcome") or 0) < minimum:
+                continue
+        elif category == "turnover_events":
+            by_team = calculation.get("giveaways_by_team") or {}
+            if not any(nek._canonical_team(league, t) in team_set and int(n or 0) >= 3
+                       for t, n in by_team.items()):
+                continue
+        elif category == "team_box_summary":
+            if team not in team_set or int(calculation.get("turnovers") or 0) < 20:
+                continue
+        elif category == "scoring_run":
+            if team not in team_set or int(calculation.get("points") or 0) < 15:
+                continue
+        elif category == "recent_streak":
+            if team not in team_set or int(calculation.get("streak_length") or 0) < 3:
+                continue
+        elif category == "player_outlier":
+            stat = str(calculation.get("stat") or "")
+            player_id = str(calculation.get("player_id") or "")
+            try:
+                value = float(calculation.get("value"))
+                z_score = float(calculation.get("z_score"))
+                prior_games = int(calculation.get("prior_games"))
+            except (TypeError, ValueError):
+                continue
+            if (team not in team_set or not player_names.get(player_id) or
+                    prior_games < 8 or z_score < 2.5 or stat == "fpts_ppr"):
+                continue
+            minimum_values = {
+                "nba": {"PTS": 25, "REB": 12, "AST": 10, "PRA": 40},
+                "nfl": {"targets": 8, "carries": 10},
+            }
+            if value < minimum_values.get(league, {}).get(stat, float("inf")):
+                continue
+        else:
+            # Lead-change events, raw standings, snap shares, and unvalidated
+            # fourth-down/drive/scoring summaries do not explain matchup relevance.
+            continue
+        recency = (kickoff.date() - source_date).days if kickoff else 0
+        score = {"comeback": 5, "recent_streak": 5, "turnover_events": 4, "team_box_summary": 4,
+                 "scoring_run": 3, "player_outlier": 3}.get(category, 0)
+        eligible.append((score, -recency, str(fact.get("event_id") or ""), fact))
+
+    eligible.sort(key=lambda item: (-item[0], -item[1], item[2]))
+    selected = []
+    categories = set()
+    player_added = False
+    team_added = False
+    for _, _, _, fact in eligible:
+        category = fact.get("category")
+        if category in categories:
+            continue
+        is_player = category == "player_outlier"
+        if is_player and player_added:
+            continue
+        if not is_player and team_added:
+            continue
+        selected.append(fact)
+        categories.add(category)
+        player_added |= is_player
+        team_added |= not is_player
+        if len(selected) == 2:
+            break
+    return selected
+
+
+def _team_display_names(con: sqlite3.Connection, targets: list[dict[str, Any]]) -> dict[tuple[str, int], dict[str, str]]:
+    names: dict[tuple[str, int], dict[str, str]] = {}
+    seasons = {(str(target["league"]), int(target.get("season") or
+                (NBA_SEASON if target["league"] == "nba" else 2026))) for target in targets}
+    for league, season in seasons:
+        table = "nfl_teams" if league == "nfl" else "nba_teams"
+        team_season = season if league == "nfl" else season - 1
+        league_names = {}
+        for row in con.execute(
+                f"SELECT team,team_name FROM {table} WHERE season=? AND team_name IS NOT NULL",
+                (team_season,)):
+            code = str(row["team"]).upper()
+            canonical = team_codes.normalize(league, code)
+            league_names[code] = str(row["team_name"])
+            league_names[canonical] = str(row["team_name"])
+            for alias, target in team_codes.ALIASES.get(league, {}).items():
+                if target == canonical:
+                    league_names[alias] = str(row["team_name"])
+        names[(league, season)] = league_names
+    return names
+
+
 def _render_deterministic_preview(target: dict[str, Any], context: list[dict[str, Any]],
-                                  player_names: dict[str, str]) -> str:
-    team_names = {target["home_team"].upper(): target["home_team"],
-                  target["away_team"].upper(): target["away_team"]}
+                                  player_names: dict[str, str],
+                                  team_display_names: dict[str, str] | None = None) -> str:
+    display_names = {str(code).upper(): str(name) for code, name in
+                     (team_display_names or {}).items()}
+    team_names = {}
+    for key in ("home_team", "away_team"):
+        code = str(target[key]).upper()
+        canonical = nek._canonical_team(str(target.get("league") or "").lower(), code)
+        if canonical:
+            team_names[canonical] = display_names.get(code, display_names.get(canonical, code))
+    team_set = set(team_names)
     parts = []
     rendered_player_games = set()
-    for fact in context:
-        team = fact.get("team")
+    for fact in _select_preview_facts(target, context, player_names):
+        team = nek._canonical_team(str(target.get("league") or "").lower(), fact.get("team"))
         date = fact.get("source_game_date")
         opponent = fact.get("source_game_opponent")
         if date:
@@ -1558,16 +1935,34 @@ def _render_deterministic_preview(target: dict[str, Any], context: list[dict[str
                 game_date = datetime.strptime(str(date)[:10], "%Y-%m-%d").strftime("%b %-d")
             except ValueError:
                 game_date = str(date)[:10]
-            game_ref = f"in its {game_date} game" + (f" against {opponent}" if opponent else "")
-            player_game_ref = f"in the {game_date} game" + (f" against {opponent}" if opponent else "")
+            opponent_name = display_names.get(str(opponent).upper(), opponent) if opponent else None
+            opponent_ref = (f" against the {opponent_name}" if opponent_name and
+                            str(opponent).upper() in display_names else
+                            f" against {opponent_name}" if opponent_name else "")
+            game_ref = f"in its {game_date} game" + opponent_ref
+            player_game_ref = f"in the {game_date} game" + opponent_ref
         else:
             # A source game date/opponent is required to make chronological claims.
             game_ref = None
             player_game_ref = None
+            opponent_ref = ""
         if fact["category"] == "comeback":
             amount = fact["calculation"]["largest_deficit_overcome"]
             if game_ref:
-                parts.append(f"{team_names.get(team, team)} erased a {amount}-point deficit {game_ref}.")
+                parts.append(f"The {team_names.get(team, team)} erased a {amount}-point deficit {game_ref}.")
+        elif fact["category"] == "recent_streak" and game_ref:
+            c = fact["calculation"]
+            count = int(c["streak_length"])
+            count_label = {3: "three", 4: "four", 5: "five", 6: "six"}.get(count, str(count))
+            opponent_name = display_names.get(str(opponent).upper(), opponent) if opponent else ""
+            opponent_ref = (f"the {opponent_name}" if opponent_name and
+                            str(opponent).upper() in display_names else opponent_name)
+            if c.get("streak_result") == "win":
+                detail = f", most recently beating {opponent_ref} on {game_date}" if opponent_ref else ""
+                parts.append(f"The {team_names.get(team, team)} have won {count_label} straight games{detail}.")
+            elif c.get("streak_result") == "loss":
+                detail = f", most recently falling to {opponent_ref} on {game_date}" if opponent_ref else ""
+                parts.append(f"The {team_names.get(team, team)} have lost {count_label} straight games{detail}.")
         elif fact["category"] == "final_lead_change" and fact["calculation"].get("play_type"):
             if not game_ref:
                 continue
@@ -1578,7 +1973,7 @@ def _render_deterministic_preview(target: dict[str, Any], context: list[dict[str
             play_type = re.sub(r"\s+good\b", "", play_type, flags=re.I)
             play_type = re.sub(r"\s+", " ", play_type).strip(" -").lower()
             if play_type:
-                parts.append(f"{team_names.get(team, team)} took the lead on a {play_type} {game_ref}.")
+                parts.append(f"The {team_names.get(team, team)} took the lead on a {play_type} {game_ref}.")
         elif fact["category"] == "fourth_down_attempts":
             if not game_ref:
                 continue
@@ -1586,17 +1981,22 @@ def _render_deterministic_preview(target: dict[str, Any], context: list[dict[str
             team_label = team_names.get(team, team or "The team")
             parts.append(f"{team_label} converted {c['converted']} of {c['attempts']} fourth-down attempts {game_ref}.")
         elif fact["category"] == "turnover_events" and game_ref:
-            count = fact["calculation"].get("total_giveaways")
-            participants = fact["calculation"].get("game_teams") or []
-            labels = [team_names.get(str(code).upper(), str(code)) for code in participants]
-            matchup = " and ".join(labels)
-            if count and matchup:
-                parts.append(f"The {game_date} game between {matchup} featured {count} combined turnovers.")
+            by_team = fact["calculation"].get("giveaways_by_team") or {}
+            significant = [
+                (team_names.get(nek._canonical_team(
+                    str(target.get("league") or "").lower(), code), str(code)), int(count))
+                for code, count in by_team.items()
+                if nek._canonical_team(str(target.get("league") or "").lower(), code)
+                in team_set and int(count or 0) >= 3
+            ]
+            if significant:
+                label, count = sorted(significant, key=lambda row: (-row[1], row[0]))[0]
+                parts.append(f"The {label} gave the ball away {count} times in the {game_date} game.")
         elif fact["category"] == "drive_summary" and game_ref:
             outcomes = fact["calculation"].get("terminal_results", {})
             scoring_drives = sum(outcomes.get(key, 0) for key in ("Touchdown", "Field goal"))
             if scoring_drives:
-                parts.append(f"{team_names.get(team, team)} scored on {scoring_drives} of its {fact['calculation']['drive_count']} drives {game_ref}.")
+                parts.append(f"The {team_names.get(team, team)} scored on {scoring_drives} of its {fact['calculation']['drive_count']} drives {game_ref}.")
         elif fact["category"] == "scoring_summary" and game_ref:
             c = fact["calculation"]
             details = []
@@ -1605,11 +2005,11 @@ def _render_deterministic_preview(target: dict[str, Any], context: list[dict[str
             if c.get("field_goals"):
                 details.append(f"{c['field_goals']} field goals")
             if details:
-                parts.append(f"{team_names.get(team, team)} scored {c['scheduled_points']} points ({' and '.join(details)}) {game_ref}.")
+                parts.append(f"The {team_names.get(team, team)} scored {c['scheduled_points']} points ({' and '.join(details)}) {game_ref}.")
         elif fact["category"] == "team_box_summary" and game_ref:
             turnovers = fact["calculation"].get("turnovers")
-            if turnovers is not None:
-                parts.append(f"{team_names.get(team, team)} committed {turnovers} turnovers {game_ref}.")
+            if turnovers is not None and int(turnovers) >= 20:
+                parts.append(f"The {team_names.get(team, team)} committed {turnovers} turnovers {game_ref}.")
         elif fact["category"] == "snap_workload" and game_ref:
             c = fact["calculation"]
             player_game_key = (str(c["player_id"]), str(date))
@@ -1623,7 +2023,7 @@ def _render_deterministic_preview(target: dict[str, Any], context: list[dict[str
                 parts.append(f"{name} played {float(c['def_pct'])*100:.0f}% of the defensive snaps {player_game_ref}.")
         elif fact["category"] == "standings_record" and game_ref:
             record = fact["calculation"].get("record_after", {})
-            parts.append(f"{team_names.get(team, team)} was {record.get('wins', 0)}-{record.get('losses', 0)} after its {game_date} game" +
+            parts.append(f"The {team_names.get(team, team)} were {record.get('wins', 0)}-{record.get('losses', 0)} after its {game_date} game" +
                          (f" against {opponent}" if opponent else "") + ".")
         elif fact["category"] == "player_outlier":
             if not game_ref:
@@ -1633,14 +2033,32 @@ def _render_deterministic_preview(target: dict[str, Any], context: list[dict[str
             if player_game_key in rendered_player_games:
                 continue
             rendered_player_games.add(player_game_key)
-            name = player_names.get(c["player_id"], f"Player {c['player_id']}")
+            name = player_names.get(str(c["player_id"]))
+            if not name:
+                continue
             stat = PLAYER_STAT_LABELS.get(str(c["stat"]), str(c["stat"]))
             value = f"{float(c['value']):.1f}".rstrip("0").rstrip(".")
             average = f"{float(c['prior_mean']):.1f}".rstrip("0").rstrip(".")
-            parts.append(f"{name} recorded {value} {stat} {player_game_ref}, after averaging {average} across {c['prior_games']} earlier games.")
+            if c["stat"] == "targets":
+                performance = f"{name} drew {value} targets"
+            elif c["stat"] == "carries":
+                performance = f"{name} had {value} carries"
+            elif c["stat"] == "PTS":
+                performance = f"{name} scored {value} points"
+            elif c["stat"] == "PRA":
+                performance = f"{name} recorded {value} combined points, rebounds, and assists"
+            else:
+                performance = f"{name} recorded {value} {stat}"
+            historical_team = display_names.get(str(team).upper(), team)
+            historical_team_ref = (f"for the {historical_team}"
+                                   if str(team).upper() in display_names else
+                                   f"for {historical_team}")
+            parts.append(
+                f"{performance} {historical_team_ref}{opponent_ref} on {game_date}; the prior "
+                f"{c['prior_games']}-game average was {average} {stat}.")
         elif fact["category"] == "scoring_run" and fact["calculation"]["meets_highlight_threshold"]:
             if game_ref:
-                parts.append(f"{team_names.get(team, team)} had a {fact['calculation']['points']}-point scoring run {game_ref}.")
+                parts.append(f"The {team_names.get(team, team)} had a {fact['calculation']['points']}-point scoring run {game_ref}.")
     return " ".join(parts[:3])
 
 
@@ -1869,8 +2287,9 @@ def run_audit(db_path: str, outdir: str | Path, *, network: bool = False,
     con = open_readonly(db_path)
     try:
         nfl, (nba_pbp, nba_meta) = build_samples(con)
-        event_games = nfl + nba_pbp
         metadata_start = utc_now()
+        recent_nba = _recent_local_nba_event_games(con, metadata_start)
+        event_games = nfl + nba_pbp + recent_nba
         story_audit = _db_story_audit(con, event_games)
         local_news = _local_news_metadata_audit(con)
         local_coverage = local_database_coverage(con)
@@ -1884,6 +2303,9 @@ def run_audit(db_path: str, outdir: str | Path, *, network: bool = False,
                 "nfl": {"games": len(nfl), "weeks": list(NFL_WEEKS), "quotas": NFL_QUOTAS},
                 "nba_event": {"games": len(nba_pbp), "season_year": NBA_EVENT_SEASON,
                               "phase": "regular", "selection": "evenly spaced subset of the article sample"},
+                "nba_recent_local_events": {"games": len(recent_nba), "season_year": NBA_SEASON,
+                                             "max_age_days": 28,
+                                             "source": "nba_schedule + player_game_logs"},
                 "nba_article": {"games": len(nba_meta), "season_year": NBA_EVENT_SEASON,
                                  "regular": len(nba_meta), "preseason": 0,
                                  "population_finals": 1230,
@@ -1901,12 +2323,14 @@ def run_audit(db_path: str, outdir: str | Path, *, network: bool = False,
             "event_data_source": "local_legendarypicks_database",
             "external_game_statistics_requests": 0,
             "sample_games": event_games,
+            "recent_local_nba_event_games": recent_nba,
             "nba_article_games": nba_meta,
         })
         _json_write(outdir / "local_database_coverage.json",
                     {"database": str(Path(db_path).resolve()), **local_coverage})
         _jsonl_write(outdir / "local_event_source_audit.jsonl", local_event_data["rows"])
-        print(f"Prepared sample: {len(nfl)} NFL games, {len(nba_pbp)} NBA event games, "
+        print(f"Prepared sample: {len(nfl)} NFL games, {len(nba_pbp)} historical NBA games, "
+              f"{len(recent_nba)} recent local NBA games, "
               f"{len(nba_meta)} NBA article pages", flush=True)
         print(f"Database reads: local event, schedule, team/player, story, and news metadata; article body columns excluded.",
               flush=True)
@@ -2008,23 +2432,30 @@ def run_audit(db_path: str, outdir: str | Path, *, network: bool = False,
                     prior_llm_versions[(prior.get("league"), prior.get("target_game_id"))] = prior
         player_names = {str(row[0]): row[1] for row in con.execute(
             "SELECT CAST(id AS TEXT),name FROM players WHERE league IN ('nfl','nba')")}
+        display_teams = _team_display_names(con, targets)
         blind_rows, key_rows, blind_metrics, blind_evidence_rows, llm_attempts = [], [], [], [], Counter()
         pair_number = 0
         for target in targets:
             target_id = str(target.get("espn_event_id") or target.get("game_id") or target.get("game_page_id"))
             target_local_id = str(target.get("source_game_id") or target.get("game_id") or target_id)
             cutoff = target.get("start_utc")
+            target_facts = _recent_team_streak_facts(con, target, as_of)
             ctx = nek.retrieve_pregame_context(
-                event_facts, league=target["league"], target_game_id=target_local_id,
+                [*event_facts, *target_facts], league=target["league"], target_game_id=target_local_id,
                 target_start=cutoff, as_of=as_of,
                 teams=[target["home_team"], target["away_team"]], limit=100)
-            event_categories = {"final_lead_change", "comeback", "turnover_events",
+            event_categories = {"recent_streak", "final_lead_change", "comeback", "turnover_events",
                                 "fourth_down_attempts", "scoring_summary", "drive_summary",
                                 "team_box_summary", "scoring_run", "late_scoring_drive",
                                 "clutch_events", "lead_changes"}
             event_ctx = [fact for fact in ctx if fact.get("category") in event_categories]
-            deterministic_event = _render_deterministic_preview(target, event_ctx, player_names)
-            deterministic_combined = _render_deterministic_preview(target, ctx, player_names)
+            display_key = (str(target["league"]), int(target.get("season") or
+                            (NBA_SEASON if target["league"] == "nba" else 2026)))
+            team_names = display_teams.get(display_key, {})
+            deterministic_event = _render_deterministic_preview(
+                target, event_ctx, player_names, team_names)
+            deterministic_combined = _render_deterministic_preview(
+                target, ctx, player_names, team_names)
             if deterministic_event or deterministic_combined:
                 def evidence_ids(facts):
                     return {

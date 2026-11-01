@@ -13,17 +13,28 @@ import re
 from statistics import mean, pstdev
 from typing import Any, Iterable
 
+import team_codes
+
 
 SCHEMA_VERSION = 1
 _STAT_KEYS = {
     "nba": ("PTS", "REB", "AST", "PRA"),
-    "nfl": ("fpts_ppr", "targets", "carries"),
+    "nfl": ("targets", "carries"),
 }
 _SCORE_THRESHOLD = {"nba": 10, "nfl": 7}
 
 
 class NarrativeDataError(ValueError):
     """Raised when event order, identity, time, or score evidence is not trustworthy."""
+
+
+def _canonical_team(league: str, value: Any) -> str | None:
+    if value is None or not str(value).strip():
+        return None
+    try:
+        return team_codes.normalize(league, str(value))
+    except team_codes.UnknownTeamCode:
+        return None
 
 
 def parse_utc(value: Any) -> datetime | None:
@@ -222,7 +233,6 @@ def derive_game_events(
     scoring_events: list[dict[str, Any]] = []
     late_events: list[dict[str, Any]] = []
     turnover_events: list[dict[str, Any]] = []
-    fourth_down_events: list[dict[str, Any]] = []
     drives: dict[str, list[dict[str, Any]]] = {}
     previous_time: datetime | None = None
 
@@ -261,8 +271,6 @@ def derive_game_events(
             scoring_events.append({**play, "scoring_team": scoring_team, "points": points})
         if play.get("turnover"):
             turnover_events.append(play)
-        if league == "nfl" and play.get("down") == 4:
-            fourth_down_events.append(play)
         if period >= 4 and (period > 4 or clock <= 300) and (
                 delta_h or delta_a or play.get("turnover") or play.get("down") == 4):
             late_events.append(play)
@@ -322,33 +330,6 @@ def derive_game_events(
             calculation={"count": len(turnover_events),
                          "teams_with_events": sorted({str(p.get("team")) for p in turnover_events
                                                        if p.get("team")})}, source=source))
-
-    if fourth_down_events:
-        converted, failed, unknown = [], [], []
-        for index, play in enumerate(ordered):
-            if play.get("down") != 4:
-                continue
-            next_play = ordered[index + 1] if index + 1 < len(ordered) else None
-            if not next_play:
-                unknown.append(play)
-            elif (play.get("drive_id") and next_play.get("drive_id") == play.get("drive_id")) or (
-                    play.get("team") and next_play.get("team") == play.get("team")
-                    and next_play.get("down") in (1, 2, 3)):
-                converted.append(play)
-            elif play.get("team") and next_play.get("team") and next_play.get("team") != play.get("team"):
-                failed.append(play)
-            else:
-                unknown.append(play)
-        facts.append(_fact(
-            league=league, game_id=game_id,
-            event_id=f"{game_id}:fourth-down-attempts", category="fourth_down_attempts",
-            team=None, occurred_at=ordered[-1]["occurred_at"],
-            available_at=max(p["available_at"] for p in ordered),
-            evidence_ids=[p["event_id"] for p in fourth_down_events],
-            calculation={"attempts": len(fourth_down_events), "converted": len(converted),
-                         "failed": len(failed), "unresolved": len(unknown),
-                         "conversion_method": "same_drive_or_same_team_next_down_1_to_3",
-                         "failure_method": "next_play_team_changed"}, source=source))
 
     run_team: str | None = None
     run_points = 0
@@ -449,12 +430,13 @@ def derive_player_outliers(
     *, league: str, target_game_id: str, target_start: str, target_end: str,
     target_available_at: str,
     logs: Iterable[dict[str, Any]], fact_game_id: str | None = None,
-    min_prior_games: int = 5, z_threshold: float = 2.0,
+    min_prior_games: int = 5, z_threshold: float = 2.0, lookback_games: int = 10,
 ) -> list[dict[str, Any]]:
     """Find simple per-player, per-stat outliers using only logs available before play.
 
-    This first prototype is explicitly not role-adjusted. It uses prior rows from
-    the same league/game type and requires a canonical player ID plus log IDs.
+    This first prototype is explicitly not role-adjusted. It compares a player
+    with their latest prior games of the same game type and requires a canonical
+    player ID plus log IDs.
     """
     league = league.lower()
     if league not in _STAT_KEYS:
@@ -494,9 +476,7 @@ def derive_player_outliers(
                 value = float((target.get("stats") or {}).get(stat))
             except (TypeError, ValueError):
                 continue
-            prior_values = []
-            prior_ids = []
-            prior_games = []
+            prior_rows = []
             for row, row_at, row_seen in history_by_player_type.get((str(pid), game_type), []):
                 if row is target:
                     continue
@@ -508,10 +488,14 @@ def derive_player_outliers(
                     prior = float((row.get("stats") or {}).get(stat))
                 except (TypeError, ValueError):
                     continue
-                prior_values.append(prior)
                 if row.get("log_id") is not None:
-                    prior_ids.append(str(row["log_id"]))
-                    prior_games.append(str(row.get("canonical_game_id") or row.get("game_id")))
+                    prior_rows.append((row_at, prior, row))
+            prior_rows.sort(key=lambda item: item[0], reverse=True)
+            prior_rows = prior_rows[:max(0, int(lookback_games))]
+            prior_values = [item[1] for item in prior_rows]
+            prior_ids = [str(item[2]["log_id"]) for item in prior_rows]
+            prior_games = [str(item[2].get("canonical_game_id") or item[2].get("game_id"))
+                           for item in prior_rows]
             if len(prior_values) < min_prior_games or len(prior_ids) < min_prior_games:
                 continue
             sigma = pstdev(prior_values)
@@ -530,7 +514,7 @@ def derive_player_outliers(
                 calculation={"player_id": str(pid), "stat": stat, "value": value,
                              "prior_games": len(prior_values), "prior_mean": round(mean(prior_values), 3),
                              "prior_population_sd": round(sigma, 3), "z_score": round(z_score, 3),
-                             "baseline": "same_player_same_game_type_unadjusted",
+                             "baseline": f"latest_{len(prior_values)}_same_player_same_game_type_games_unadjusted",
                              "source_game_id": str(target_game_id),
                              "min_prior_games": min_prior_games}, source="player_game_logs"))
     return sorted(facts, key=lambda f: (-f["calculation"]["z_score"], f["event_id"]))
@@ -547,7 +531,7 @@ def retrieve_pregame_context(
         raise NarrativeDataError("target_start and as_of must be timezone-aware")
     if cutoff > kickoff:
         raise NarrativeDataError("as_of must not be after target kickoff")
-    team_set = {str(t).upper() for t in teams}
+    team_set = {canonical for t in teams if (canonical := _canonical_team(league, t))}
     player_set = {str(p) for p in player_ids}
     eligible = []
     for fact in facts:
@@ -561,12 +545,17 @@ def retrieve_pregame_context(
         if not fact.get("supporting_game_ids") or not fact.get("supporting_event_ids"):
             continue
         calculation = fact.get("calculation", {})
-        fact_team = str(fact.get("team") or "").upper()
-        relevant_teams = {str(team).upper() for team in fact.get("relevant_teams", [])}
-        relevant = (fact_team in team_set or bool(team_set.intersection(relevant_teams)) or
-                    bool(team_set.intersection({str(team).upper() for team in
-                                               calculation.get("teams_with_events") or []})) or
-                    str(calculation.get("player_id", "")) in player_set)
+        fact_team = _canonical_team(league, fact.get("team"))
+        relevant_teams = {canonical for team in fact.get("relevant_teams", [])
+                          if (canonical := _canonical_team(league, team))}
+        event_teams = {canonical for team in calculation.get("teams_with_events") or []
+                       if (canonical := _canonical_team(league, team))}
+        relevant = (
+            fact_team in team_set
+            or bool(team_set.intersection(relevant_teams))
+            or bool(team_set.intersection(event_teams))
+            or str(calculation.get("player_id", "")) in player_set
+        )
         if not relevant:
             continue
         eligible.append(fact)

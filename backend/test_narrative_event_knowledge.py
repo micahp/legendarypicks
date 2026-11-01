@@ -45,6 +45,7 @@ class NarrativeEventKnowledgeTests(unittest.TestCase):
         self.assertEqual("2026-10-01", by_category["lead_changes"]["source_game_date"])
         self.assertEqual(4, by_category["clutch_events"]["calculation"][
             "fourth_quarter_final_five_minutes_or_overtime"])
+        self.assertNotIn("fourth_down_attempts", by_category)
         for fact in facts:
             self.assertEqual(["g1"], fact["supporting_game_ids"])
             self.assertTrue(fact["supporting_event_ids"])
@@ -148,6 +149,23 @@ class NarrativeEventKnowledgeTests(unittest.TestCase):
             self.assertEqual([lead_changes], selected)
         unrelated = retrieve_pregame_context(
             [lead_changes], league="nfl", target_game_id="future",
+            target_start="2026-11-03T18:00:00Z", as_of="2026-11-03T17:00:00Z",
+            teams=["NYG", "DAL"])
+        self.assertEqual([], unrelated)
+
+    def test_neutral_game_events_match_shared_team_aliases(self):
+        facts = derive_game_events(
+            league="nfl", game_id="g1", home_team="DET", away_team="GB",
+            final_home_score=7, final_away_score=6, plays=self.plays)
+        event = next(f for f in facts if f["category"] == "lead_changes")
+        event = dict(event, relevant_teams=["LA", "WAS"])
+        selected = retrieve_pregame_context(
+            [event], league="nfl", target_game_id="future",
+            target_start="2026-11-03T18:00:00Z", as_of="2026-11-03T17:00:00Z",
+            teams=["LAR", "WSH"])
+        self.assertEqual([event], selected)
+        unrelated = retrieve_pregame_context(
+            [event], league="nfl", target_game_id="future",
             target_start="2026-11-03T18:00:00Z", as_of="2026-11-03T17:00:00Z",
             teams=["NYG", "DAL"])
         self.assertEqual([], unrelated)

@@ -1,0 +1,967 @@
+{
+  "as_of": "2026-11-01T06:15:52Z",
+  "database": {
+    "mode": "SQLite mode=ro",
+    "path": "/root/legendarypicks/backend/data/picks.dev.db",
+    "query_only": true
+  },
+  "fourth_down_full_population": {
+    "attempts": 9763,
+    "by_season": {
+      "2010": {
+        "attempts": 481,
+        "converted": 231,
+        "failed": 237,
+        "unresolved": 13
+      },
+      "2011": {
+        "attempts": 428,
+        "converted": 181,
+        "failed": 239,
+        "unresolved": 8
+      },
+      "2012": {
+        "attempts": 447,
+        "converted": 223,
+        "failed": 215,
+        "unresolved": 9
+      },
+      "2013": {
+        "attempts": 468,
+        "converted": 223,
+        "failed": 237,
+        "unresolved": 8
+      },
+      "2014": {
+        "attempts": 449,
+        "converted": 208,
+        "failed": 239,
+        "unresolved": 2
+      },
+      "2015": {
+        "attempts": 475,
+        "converted": 232,
+        "failed": 238,
+        "unresolved": 5
+      },
+      "2016": {
+        "attempts": 477,
+        "converted": 246,
+        "failed": 224,
+        "unresolved": 7
+      },
+      "2017": {
+        "attempts": 481,
+        "converted": 225,
+        "failed": 248,
+        "unresolved": 8
+      },
+      "2018": {
+        "attempts": 535,
+        "converted": 297,
+        "failed": 232,
+        "unresolved": 6
+      },
+      "2019": {
+        "attempts": 593,
+        "converted": 287,
+        "failed": 299,
+        "unresolved": 7
+      },
+      "2020": {
+        "attempts": 655,
+        "converted": 358,
+        "failed": 288,
+        "unresolved": 9
+      },
+      "2021": {
+        "attempts": 793,
+        "converted": 422,
+        "failed": 360,
+        "unresolved": 11
+      },
+      "2022": {
+        "attempts": 735,
+        "converted": 374,
+        "failed": 353,
+        "unresolved": 8
+      },
+      "2023": {
+        "attempts": 793,
+        "converted": 409,
+        "failed": 376,
+        "unresolved": 8
+      },
+      "2024": {
+        "attempts": 764,
+        "converted": 429,
+        "failed": 319,
+        "unresolved": 16
+      },
+      "2025": {
+        "attempts": 882,
+        "converted": 484,
+        "failed": 386,
+        "unresolved": 12
+      },
+      "2026": {
+        "attempts": 307,
+        "converted": 166,
+        "failed": 139,
+        "unresolved": 2
+      }
+    },
+    "converted": 4995,
+    "failed": 4629,
+    "games": 3794,
+    "publication_enabled": false,
+    "reconciliation_status": "incomplete_unresolved_attempts",
+    "success_epa_used": false,
+    "unresolved": 139,
+    "unresolved_reason_counts": {
+      "first_down_conflicts_with_next_possession": 15,
+      "first_down_conflicts_with_next_series": 57,
+      "insufficient_terminal_or_sequence_evidence": 13,
+      "turnover_result_conflicts_with_next_possession": 54
+    }
+  },
+  "local_coverage": {
+    "database_mode": "read_only_query_only",
+    "nba": {
+      "complete_play_by_play_status": "not_stored_locally; scoring_plays contains scoring events only",
+      "complete_play_by_play_tables_confirmed": [],
+      "nba_schedule": {
+        "first_game_date": "2026-10-03",
+        "games": 1273,
+        "last_game_date": "2027-04-11",
+        "rows": 1273,
+        "scored_games": 88
+      },
+      "nba_sportsdataverse_games": {
+        "completed_games": 1322,
+        "first_game_date": "2025-10-21",
+        "games": 1322,
+        "last_game_date": "2026-06-13",
+        "max_ingested_at": "2026-10-26T03:50:15.161496+00:00",
+        "min_ingested_at": "2026-10-26T03:50:15.161496+00:00",
+        "rows": 1322
+      },
+      "play_by_play_named_tables": [],
+      "player_game_logs": {
+        "first_game_date": "2025-10-21",
+        "games": 1480,
+        "last_game_date": "2026-10-31",
+        "max_ingested_at": "2026-11-01 05:43:27",
+        "min_ingested_at": "2026-06-26 16:03:43",
+        "rows": 34974,
+        "rows_with_player_id": 34974,
+        "rows_with_stats_json": 34974,
+        "rows_with_team": 34974
+      },
+      "scoring_plays": {
+        "first_capture": "2026-06-09T18:10:34.772805+00:00",
+        "first_period": 1,
+        "games": 5,
+        "last_capture": "2026-06-29T19:36:32.666829+00:00",
+        "last_period": 4,
+        "rows": 2490,
+        "rows_with_capture_time": 2490
+      },
+      "scoring_plays_missing_fields": [
+        "non_scoring possessions",
+        "defensive events",
+        "rebounds/turnovers between scores",
+        "complete event sequence"
+      ],
+      "team_game_stats": {
+        "first_capture": "2026-08-02T21:17:22.716458+00:00",
+        "games": 1233,
+        "last_capture": "2026-08-31T02:36:34.830386+00:00",
+        "rows": 2466,
+        "rows_with_assists": 2462,
+        "rows_with_blocks": 2462,
+        "rows_with_capture_time": 2466,
+        "rows_with_fg_pct": 0,
+        "rows_with_fouls": 0,
+        "rows_with_ft_pct": 0,
+        "rows_with_largest_lead": 0,
+        "rows_with_lead_changes": 0,
+        "rows_with_rebounds": 2462,
+        "rows_with_steals": 2462,
+        "rows_with_tp_pct": 0,
+        "rows_with_turnovers": 2462
+      }
+    },
+    "nfl": {
+      "drive_reconstruction_tables": [],
+      "nfl_pbp": {
+        "first_game_date": "2010-09-09",
+        "fourth_down_rows": 65829,
+        "games": 4283,
+        "interceptions": 7144,
+        "last_game_date": "2026-10-29",
+        "lost_fumbles": 4686,
+        "rows": 756043,
+        "rows_with_down": 637041,
+        "rows_with_drive": 747266,
+        "rows_with_series_result": 756005,
+        "rows_with_success": 747399,
+        "touchdown_rows": 21858
+      },
+      "nfl_pbp_fields": [
+        "game_id",
+        "play_id",
+        "season",
+        "week",
+        "posteam",
+        "defteam",
+        "home_team",
+        "away_team",
+        "game_date",
+        "qtr",
+        "down",
+        "ydstogo",
+        "yardline_100",
+        "game_seconds_remaining",
+        "play_type",
+        "epa",
+        "wpa",
+        "qb_epa",
+        "air_yards",
+        "yards_gained",
+        "cpoe",
+        "passer_player_id",
+        "rusher_player_id",
+        "receiver_player_id",
+        "pass_location",
+        "run_location",
+        "run_gap",
+        "complete_pass",
+        "touchdown",
+        "series",
+        "series_result",
+        "drive",
+        "success",
+        "shotgun",
+        "sack",
+        "two_point_attempt",
+        "pass_attempt",
+        "rush_attempt",
+        "passing_yards",
+        "rushing_yards",
+        "receiving_yards",
+        "pass_touchdown",
+        "rush_touchdown",
+        "interception",
+        "lateral_receiver_player_id",
+        "lateral_receiver_player_name",
+        "lateral_receiving_yards",
+        "lateral_rusher_player_id",
+        "lateral_rusher_player_name",
+        "lateral_rushing_yards",
+        "qb_hit",
+        "qb_scramble",
+        "qb_dropback",
+        "no_huddle",
+        "penalty",
+        "penalty_team",
+        "fumble_lost",
+        "fumble",
+        "xpass",
+        "pass_oe"
+      ],
+      "nfl_pbp_missing_event_fields": [
+        "field_goal_result",
+        "extra_point_result",
+        "two_point_conv_result",
+        "posteam_score_post",
+        "defteam_score_post",
+        "fixed_drive_result"
+      ],
+      "nfl_snap_counts": {
+        "first_season": 2024,
+        "last_season": 2026,
+        "players": 2970,
+        "rows": 60647,
+        "rows_with_player_id": 60647,
+        "team_weeks": 1302
+      },
+      "per_play_capture_timestamp": "missing",
+      "player_game_logs": {
+        "first_game_date": "2010-09-09",
+        "games": 4471,
+        "last_game_date": "2026-10-29",
+        "max_ingested_at": "2026-10-30 09:10:11",
+        "min_ingested_at": "2026-06-26 15:47:48",
+        "rows": 294359,
+        "rows_with_player_id": 294264,
+        "rows_with_stats_json": 294359,
+        "rows_with_team": 294359
+      },
+      "schedule": {
+        "completed_games": 4471,
+        "first_game_date": "2010-09-09",
+        "games": 4635,
+        "last_game_date": "2027-01-10",
+        "rows": 4635
+      },
+      "score_snapshot_fields": "missing",
+      "team_game_results": {
+        "first_game_date": "2010-09-09",
+        "games": 4635,
+        "last_game_date": "2027-01-10",
+        "max_ingested_at": "2026-10-11 20:23:29",
+        "min_ingested_at": "2026-07-14 21:21:07",
+        "rows": 9270
+      },
+      "team_game_stats": {
+        "first_capture": "2026-07-14T21:21:07.286888+00:00",
+        "games": 285,
+        "last_capture": "2026-08-04T22:17:39.913718+00:00",
+        "rows": 570,
+        "rows_with_capture_time": 570
+      }
+    }
+  },
+  "nba_excluded_timeline_failures": [
+    {
+      "away": "DET",
+      "away_score": 114,
+      "date": "2025-11-03",
+      "espn_event_id": "401810016",
+      "failure_classification": "unreproducible from retained artifacts: prior audit retained only NarrativeDataError class, without message or normalized timeline; local DB has no complete timeline for this event",
+      "home": "MEM",
+      "home_score": 106,
+      "local_full_pbp_rows": 0,
+      "local_scoring_plays_rows": 0,
+      "local_team_game_stats": {
+        "capture_window": [
+          "2026-08-02T21:17:22.716458+00:00",
+          "2026-08-02T21:17:22.716458+00:00"
+        ],
+        "rows": 2,
+        "teams": 2
+      },
+      "prior_error_class": "NarrativeDataError",
+      "prior_validation_status": "timeline_validation_failed",
+      "season": 2025,
+      "source_game_id": "0022500161",
+      "source_season": 2026,
+      "stored_exception_message": null
+    },
+    {
+      "away": "GS",
+      "away_score": 98,
+      "date": "2025-12-04",
+      "espn_event_id": "401810188",
+      "failure_classification": "unreproducible from retained artifacts: prior audit retained only NarrativeDataError class, without message or normalized timeline; local DB has no complete timeline for this event",
+      "home": "PHI",
+      "home_score": 99,
+      "local_full_pbp_rows": 0,
+      "local_scoring_plays_rows": 0,
+      "local_team_game_stats": {
+        "capture_window": [
+          "2026-08-02T21:17:22.716458+00:00",
+          "2026-08-02T21:17:22.716458+00:00"
+        ],
+        "rows": 2,
+        "teams": 2
+      },
+      "prior_error_class": "NarrativeDataError",
+      "prior_validation_status": "timeline_validation_failed",
+      "season": 2025,
+      "source_game_id": "0022500333",
+      "source_season": 2026,
+      "stored_exception_message": null
+    },
+    {
+      "away": "CHA",
+      "away_score": 132,
+      "date": "2025-12-22",
+      "espn_event_id": "401810257",
+      "failure_classification": "unreproducible from retained artifacts: prior audit retained only NarrativeDataError class, without message or normalized timeline; local DB has no complete timeline for this event",
+      "home": "CLE",
+      "home_score": 139,
+      "local_full_pbp_rows": 0,
+      "local_scoring_plays_rows": 0,
+      "local_team_game_stats": {
+        "capture_window": [
+          "2026-08-02T21:17:22.716458+00:00",
+          "2026-08-02T21:17:22.716458+00:00"
+        ],
+        "rows": 2,
+        "teams": 2
+      },
+      "prior_error_class": "NarrativeDataError",
+      "prior_validation_status": "timeline_validation_failed",
+      "season": 2025,
+      "source_game_id": "0022500402",
+      "source_season": 2026,
+      "stored_exception_message": null
+    },
+    {
+      "away": "MIN",
+      "away_score": 138,
+      "date": "2025-12-25",
+      "espn_event_id": "401809242",
+      "failure_classification": "unreproducible from retained artifacts: prior audit retained only NarrativeDataError class, without message or normalized timeline; local DB has no complete timeline for this event",
+      "home": "DEN",
+      "home_score": 142,
+      "local_full_pbp_rows": 0,
+      "local_scoring_plays_rows": 0,
+      "local_team_game_stats": {
+        "capture_window": [
+          "2026-08-02T21:17:22.716458+00:00",
+          "2026-08-02T21:17:22.716458+00:00"
+        ],
+        "rows": 2,
+        "teams": 2
+      },
+      "prior_error_class": "NarrativeDataError",
+      "prior_validation_status": "timeline_validation_failed",
+      "season": 2025,
+      "source_game_id": "0022500013",
+      "source_season": 2026,
+      "stored_exception_message": null
+    },
+    {
+      "away": "OKC",
+      "away_score": 106,
+      "date": "2026-02-04",
+      "espn_event_id": "401810585",
+      "failure_classification": "unreproducible from retained artifacts: prior audit retained only NarrativeDataError class, without message or normalized timeline; local DB has no complete timeline for this event",
+      "home": "SA",
+      "home_score": 116,
+      "local_full_pbp_rows": 0,
+      "local_scoring_plays_rows": 0,
+      "local_team_game_stats": {
+        "capture_window": [
+          "2026-08-02T21:17:22.716458+00:00",
+          "2026-08-02T21:17:22.716458+00:00"
+        ],
+        "rows": 2,
+        "teams": 2
+      },
+      "prior_error_class": "NarrativeDataError",
+      "prior_validation_status": "timeline_validation_failed",
+      "season": 2025,
+      "source_game_id": "0022500730",
+      "source_season": 2026,
+      "stored_exception_message": null
+    }
+  ],
+  "tb_car_week7": {
+    "audit": {
+      "availability_basis": "backfilled_game_date_plus_one_day_12_utc_conservative",
+      "available_at_is_ingestion_time": false,
+      "candidate_drive_terminal_count": 20,
+      "drive_count": 20,
+      "drive_outcome_audit": {
+        "candidate_terminal_counts": {
+          "defensive_touchdown_candidate": 1,
+          "field_goal_made_candidate": 2,
+          "offensive_touchdown_candidate": 6,
+          "punt_candidate": 3,
+          "turnover_candidate": 2,
+          "turnover_on_downs_candidate": 3,
+          "unknown": 3
+        },
+        "drive_count": 20,
+        "independently_reconciled_count": 0,
+        "narrative_facts_emitted": 0,
+        "reason": "nfl_pbp.series_result is a series label and the database has no general drive reconstruction table or per-play score snapshots",
+        "sequence_transition_conflicts": 1,
+        "status": "unverified_quarantined"
+      },
+      "fourth_down_audit": {
+        "attempts": 3,
+        "classification_complete": true,
+        "converted": 0,
+        "evidence_fields": [
+          "down",
+          "ydstogo",
+          "yards_gained",
+          "series",
+          "series_result",
+          "posteam",
+          "play_type",
+          "touchdown",
+          "penalty",
+          "penalty_team",
+          "interception",
+          "fumble_lost"
+        ],
+        "failed": 3,
+        "reason_counts": {
+          "turnover_on_downs": 3
+        },
+        "reconciliation_status": "sequence_reconciled",
+        "success_epa_used": false,
+        "unresolved": 0,
+        "unresolved_reason_counts": {}
+      },
+      "game_id": "2026_07_TB_CAR",
+      "league": "nfl",
+      "play_count": 156,
+      "scoring_reconciliation": {
+        "missing_local_fields": [
+          "field_goal_result",
+          "extra_point_result",
+          "two_point_conv_result",
+          "posteam_score_post",
+          "defteam_score_post"
+        ],
+        "narrative_facts_emitted": 0,
+        "scheduled_away_score": 43,
+        "scheduled_home_score": 13,
+        "scoring_trace": [
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 3146.0,
+            "play_id": "2026_07_TB_CAR:365",
+            "play_type": "run",
+            "posteam": "TB",
+            "qtr": 1.0,
+            "series_result": "Touchdown",
+            "touchdown": 1.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 3142.0,
+            "play_id": "2026_07_TB_CAR:388",
+            "play_type": "extra_point",
+            "posteam": "TB",
+            "qtr": 1.0,
+            "series_result": "Touchdown",
+            "touchdown": 0.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 2655.0,
+            "play_id": "2026_07_TB_CAR:902",
+            "play_type": "field_goal",
+            "posteam": "TB",
+            "qtr": 2.0,
+            "series_result": "Field goal",
+            "touchdown": 0.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "TB",
+            "epa_success_flag_not_scoring_result": 0.0,
+            "game_seconds_remaining": 2475.0,
+            "play_id": "2026_07_TB_CAR:1087",
+            "play_type": "pass",
+            "posteam": "CAR",
+            "qtr": 2.0,
+            "series_result": "Opp touchdown",
+            "touchdown": 1.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 2465.0,
+            "play_id": "2026_07_TB_CAR:1118",
+            "play_type": "extra_point",
+            "posteam": "TB",
+            "qtr": 2.0,
+            "series_result": "Opp touchdown",
+            "touchdown": 0.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "TB",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 2358.0,
+            "play_id": "2026_07_TB_CAR:1260",
+            "play_type": "pass",
+            "posteam": "CAR",
+            "qtr": 2.0,
+            "series_result": "Touchdown",
+            "touchdown": 1.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "TB",
+            "epa_success_flag_not_scoring_result": 0.0,
+            "game_seconds_remaining": 2349.0,
+            "play_id": "2026_07_TB_CAR:1286",
+            "play_type": "extra_point",
+            "posteam": "CAR",
+            "qtr": 2.0,
+            "series_result": "Touchdown",
+            "touchdown": 0.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 2038.0,
+            "play_id": "2026_07_TB_CAR:1533",
+            "play_type": "run",
+            "posteam": "TB",
+            "qtr": 2.0,
+            "series_result": "Touchdown",
+            "touchdown": 1.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 2033.0,
+            "play_id": "2026_07_TB_CAR:1558",
+            "play_type": "extra_point",
+            "posteam": "TB",
+            "qtr": 2.0,
+            "series_result": "Touchdown",
+            "touchdown": 0.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 1812.0,
+            "play_id": "2026_07_TB_CAR:1929",
+            "play_type": "pass",
+            "posteam": "TB",
+            "qtr": 2.0,
+            "series_result": "Touchdown",
+            "touchdown": 1.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 1804.0,
+            "play_id": "2026_07_TB_CAR:1955",
+            "play_type": "extra_point",
+            "posteam": "TB",
+            "qtr": 2.0,
+            "series_result": "Touchdown",
+            "touchdown": 0.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 1295.0,
+            "play_id": "2026_07_TB_CAR:2522",
+            "play_type": "field_goal",
+            "posteam": "TB",
+            "qtr": 3.0,
+            "series_result": "Field goal",
+            "touchdown": 0.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 631.0,
+            "play_id": "2026_07_TB_CAR:3156",
+            "play_type": "run",
+            "posteam": "TB",
+            "qtr": 4.0,
+            "series_result": "Touchdown",
+            "touchdown": 1.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "CAR",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 621.0,
+            "play_id": "2026_07_TB_CAR:3179",
+            "play_type": "extra_point",
+            "posteam": "TB",
+            "qtr": 4.0,
+            "series_result": "Touchdown",
+            "touchdown": 0.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "TB",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 334.0,
+            "play_id": "2026_07_TB_CAR:3394",
+            "play_type": "run",
+            "posteam": "CAR",
+            "qtr": 4.0,
+            "series_result": "Touchdown",
+            "touchdown": 1.0,
+            "two_point_attempt": 0.0
+          },
+          {
+            "defteam": "TB",
+            "epa_success_flag_not_scoring_result": 1.0,
+            "game_seconds_remaining": 328.0,
+            "play_id": "2026_07_TB_CAR:3417",
+            "play_type": "extra_point",
+            "posteam": "CAR",
+            "qtr": 4.0,
+            "series_result": "Touchdown",
+            "touchdown": 0.0,
+            "two_point_attempt": 0.0
+          }
+        ],
+        "status": "incomplete_missing_scoring_result_fields",
+        "success_field_used_as_scoring_result": false
+      },
+      "source": "nfl_pbp",
+      "status": "local_pbp_processed",
+      "team_game_results_reconciliation": {
+        "matches_schedule": null,
+        "source_ingested_at_used_for_availability": false,
+        "status": "unavailable",
+        "team_rows": 0
+      },
+      "turnover_count": 2,
+      "turnover_narrative_fact_emitted": false,
+      "turnover_reconciliation": {
+        "status": "no_matching_team_game_stats_snapshot"
+      },
+      "turnover_snapshot_matches": false
+    },
+    "schedule": {
+      "away_score": 43,
+      "away_team": "TB",
+      "espn": "401873018",
+      "game_id": "2026_07_TB_CAR",
+      "gameday": "2026-10-25",
+      "home_score": 13,
+      "home_team": "CAR"
+    }
+  },
+  "turnover_reconciliation": {
+    "duplicate_game_team_snapshots": 0,
+    "fact_emission_rule": "emit only if both participants have captured team_game_stats turnovers that exactly match local nfl_pbp giveaways",
+    "games_with_pbp_giveaways": 4026,
+    "matched_games": 232,
+    "mismatch_examples": [
+      {
+        "espn_id": "401772785",
+        "game_id": "2025_13_SF_CLE",
+        "pbp_by_team": {
+          "CLE": 1,
+          "SF": 1
+        },
+        "snapshot_by_team": {
+          "CLE": 2,
+          "SF": 0
+        }
+      },
+      {
+        "espn_id": "401772927",
+        "game_id": "2025_10_PIT_LAC",
+        "pbp_by_team": {
+          "LAC": 1,
+          "PIT": 2
+        },
+        "snapshot_by_team": {
+          "LAC": 0,
+          "PIT": 3
+        }
+      },
+      {
+        "espn_id": "401772777",
+        "game_id": "2025_11_BAL_CLE",
+        "pbp_by_team": {
+          "BAL": 2,
+          "CLE": 2
+        },
+        "snapshot_by_team": {
+          "BAL": 3,
+          "CLE": 1
+        }
+      },
+      {
+        "espn_id": "401772887",
+        "game_id": "2025_12_MIN_GB",
+        "pbp_by_team": {
+          "GB": 1,
+          "MIN": 2
+        },
+        "snapshot_by_team": {
+          "GB": 0,
+          "MIN": 3
+        }
+      },
+      {
+        "espn_id": "401772776",
+        "game_id": "2025_11_TB_BUF",
+        "pbp_by_team": {
+          "BUF": 2,
+          "TB": 3
+        },
+        "snapshot_by_team": {
+          "BUF": 3,
+          "TB": 2
+        }
+      },
+      {
+        "espn_id": "401772896",
+        "game_id": "2025_13_MIN_SEA",
+        "pbp_by_team": {
+          "MIN": 5,
+          "SEA": 1
+        },
+        "snapshot_by_team": {
+          "MIN": 5,
+          "SEA": 2
+        }
+      },
+      {
+        "espn_id": "401772919",
+        "game_id": "2025_02_ATL_MIN",
+        "pbp_by_team": {
+          "ATL": 2,
+          "MIN": 3
+        },
+        "snapshot_by_team": {
+          "ATL": 1,
+          "MIN": 4
+        }
+      },
+      {
+        "espn_id": "401772890",
+        "game_id": "2025_12_PHI_DAL",
+        "pbp_by_team": {
+          "DAL": 3,
+          "PHI": 1
+        },
+        "snapshot_by_team": {
+          "DAL": 2,
+          "PHI": 2
+        }
+      },
+      {
+        "espn_id": "401772838",
+        "game_id": "2025_03_ATL_CAR",
+        "pbp_by_team": {
+          "ATL": 4,
+          "CAR": 0
+        },
+        "snapshot_by_team": {
+          "ATL": 3,
+          "CAR": 1
+        }
+      },
+      {
+        "espn_id": "401772832",
+        "game_id": "2025_01_TEN_DEN",
+        "pbp_by_team": {
+          "DEN": 3,
+          "TEN": 3
+        },
+        "snapshot_by_team": {
+          "DEN": 4,
+          "TEN": 2
+        }
+      },
+      {
+        "espn_id": "401772631",
+        "game_id": "2025_11_WAS_MIA",
+        "pbp_by_team": {
+          "MIA": 1,
+          "WSH": 1
+        },
+        "snapshot_by_team": {
+          "MIA": 0,
+          "WSH": 2
+        }
+      },
+      {
+        "espn_id": "401772822",
+        "game_id": "2025_14_PHI_LAC",
+        "pbp_by_team": {
+          "LAC": 2,
+          "PHI": 4
+        },
+        "snapshot_by_team": {
+          "LAC": 3,
+          "PHI": 5
+        }
+      },
+      {
+        "espn_id": "401772747",
+        "game_id": "2025_05_TEN_ARI",
+        "pbp_by_team": {
+          "ARI": 2,
+          "TEN": 2
+        },
+        "snapshot_by_team": {
+          "ARI": 3,
+          "TEN": 2
+        }
+      },
+      {
+        "espn_id": "401772766",
+        "game_id": "2025_09_IND_PIT",
+        "pbp_by_team": {
+          "IND": 5,
+          "PIT": 2
+        },
+        "snapshot_by_team": {
+          "IND": 6,
+          "PIT": 1
+        }
+      },
+      {
+        "espn_id": "401772893",
+        "game_id": "2025_13_ATL_NYJ",
+        "pbp_by_team": {
+          "ATL": 0,
+          "NYJ": 1
+        },
+        "snapshot_by_team": {
+          "ATL": 1,
+          "NYJ": 0
+        }
+      },
+      {
+        "espn_id": "401772877",
+        "game_id": "2025_10_NO_CAR",
+        "pbp_by_team": {
+          "CAR": 3,
+          "NO": 0
+        },
+        "snapshot_by_team": {
+          "CAR": 2,
+          "NO": 1
+        }
+      },
+      {
+        "espn_id": "401772870",
+        "game_id": "2025_09_DEN_HOU",
+        "pbp_by_team": {
+          "DEN": 1,
+          "HOU": 1
+        },
+        "snapshot_by_team": {
+          "DEN": 2,
+          "HOU": 0
+        }
+      },
+      {
+        "espn_id": "401772938",
+        "game_id": "2025_04_SEA_ARI",
+        "pbp_by_team": {
+          "ARI": 2,
+          "SEA": 0
+        },
+        "snapshot_by_team": {
+          "ARI": 2,
+          "SEA": 1
+        }
+      }
+    ],
+    "mismatched_games": 18,
+    "missing_both_team_snapshots_or_values": 3776,
+    "missing_schedule_crosswalk": 0,
+    "team_game_stats_rows": 570
+  }
+}
