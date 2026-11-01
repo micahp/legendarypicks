@@ -26,7 +26,7 @@
 
 ### A. Enter from the GM apartment TV
 
-1. In [`components/Leagues/NflPixelHQ.tsx`](../../../components/Leagues/NflPixelHQ.tsx) (prototype lives in PR #29, not necessarily on `dev`), replace the TV's research-only preview with **Watch Pixel Red Zone**.
+1. In [`components/Leagues/NflPixelHQ.tsx`](https://github.com/micahp/legendarypicks/blob/feat/pixel-nfl-hq-design/components/Leagues/NflPixelHQ.tsx) (prototype lives in PR #29, not necessarily on `dev`), replace the TV's research-only preview with **Watch Pixel Red Zone**.
 2. TV remains contextual: when a game is live, display a **verified** matchup, score, and freshness; before kickoff, “Next NFL slate” instead of false “LIVE”.
 3. First click opens an **in-room television viewing panel** with the pixel channel and buttons: **Expand**, **Sound on/off**, **Game detail**, **Back to room**.
 4. Expand opens a dedicated, linkable route (proposed `/nfl/pixel-red-zone`), which may use the browser Fullscreen API after an explicit button gesture. Full-screen failure keeps the route usable in a full-viewport layout.
