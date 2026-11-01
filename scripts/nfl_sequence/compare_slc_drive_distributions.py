@@ -327,6 +327,8 @@ def summarize_team_games(source, team_games, drives):
         for metric in TEAM_GAME_METRICS:
             values = [row[metric] for row in selected]
             summary = _distribution(values)
+            if not summary['sample_n']:
+                continue
             metrics.append({'source': source, 'cohort': team, 'unit': 'team_game',
                             'terminal': 'ALL', 'metric': metric, **summary})
         all_drives = [row for drive in drives
@@ -374,6 +376,7 @@ def render_markdown(manifest, metrics):
         ('turnover_drives_per_game', 'Turnover drives per team-game', 'team_game', 'ALL'),
         ('period_end_drives_per_game', 'Period-end drives per team-game', 'team_game', 'ALL'),
         ('recorded_events_per_game', 'Recorded run/pass/kick events per team-game', 'team_game', 'ALL'),
+        ('scrimmage_plays_per_game', 'Scrimmage plays per team-game (team-stat definition)', 'team_game', 'ALL'),
         ('recorded_events_per_drive', 'Recorded events per modeled drive', 'modeled_drive', 'ALL'),
         ('net_yards_per_drive', 'Net yards per modeled drive', 'modeled_drive', 'ALL'),
         ('start_yardline_100', 'Starting yardline_100 per drive', 'modeled_drive', 'ALL'),
@@ -413,7 +416,8 @@ def render_markdown(manifest, metrics):
 
     lines.extend(['', '## Distribution details', '',
                   'The CSV provides sample size, mean, median, population variance, standard deviation, P95, P99, maximum, and zero rate '
-                  'for every team-game metric and modeled-drive metric.', '',
+                  'for metrics derived from the play-by-play and drive rows. The scrimmage-play row for SLC is sourced from the frozen '
+                  'summary and includes its available sample size, mean, and median.', '',
                   '## Definitions and limits', '',
                   f"- Historical source: {manifest['historical']['game_index_source']}. "
                   f"The pinned source filter is `{manifest['historical'].get('source_filter', manifest['historical']['game_index_source'])}`; "
@@ -422,6 +426,7 @@ def render_markdown(manifest, metrics):
                   '- An actual drive is keyed by game, `drive`, and offense team. Its terminal is the last nonempty `series_result`; intermediate `First down` labels do not terminate a drive. `Opp touchdown` is a defensive touchdown.',
                   '- Terminal counts include period-end drives on both sides. Historical QB-kneel terminals remain separate because the available series-result field does not establish that every kneel occurred at a period boundary. SLC score-only overtime drive rows remain in terminal and scoring counts; rows with zero recorded events are excluded from event-count, yardage, and starting-position drive averages.',
                   '- Recorded-event counts include run, pass, QB kneel, QB spike, punt, and field-goal rows; `no_play`, kickoff, and try rows are excluded. SLC drive `play_count` follows its saved event count, including kicks.',
+                  '- SLC team-stat `plays` counts its scrimmage event types only. Drive event counts also include punt and field-goal attempts, so they are expected to exceed team-stat plays. The historical scrimmage-play proxy counts run/pass PBP rows; recorded drive events count the same run/pass rows plus QB kneels, spikes, punts, and field-goal rows.',
                   '- Yardage is the sum of each producer’s `yards_gained` values on the included action events. Starting field position is the first included action’s `yardline_100`. These producer fields are useful matched diagnostics; unusual return and penalty conventions can still differ.',
                   '- This is a descriptive comparison. It does not establish which model layer caused a difference or justify parameter changes.', '',
                   f"Frozen simulation summary SHA-256: `{manifest['simulation']['summary_sha256']}`.",
@@ -439,6 +444,22 @@ def _write_csv(path, rows, columns):
         writer = csv.DictWriter(handle, fieldnames=columns, extrasaction='ignore')
         writer.writeheader()
         writer.writerows(rows)
+
+
+def _append_boxscore_play_metrics(metrics, summary, expected_games):
+    for team in ('DET', 'MIN'):
+        boxscore_play = [row for row in summary.get('team_stats', [])
+                         if row.get('team') == team and row.get('metric') == 'plays']
+        if len(boxscore_play) != 1 or boxscore_play[0].get('sample_n') != expected_games:
+            raise DriveComparisonError(f'no complete frozen team-stat plays summary for {team}')
+        row = boxscore_play[0]
+        metrics.append({
+            'source': 'SLC 10K', 'cohort': team, 'unit': 'team_game', 'terminal': 'ALL',
+            'metric': 'scrimmage_plays_per_game', 'sample_n': row['sample_n'],
+            'mean': row['mean'], 'median': row['median'], 'variance': None, 'stdev': None,
+            'p95': None, 'p99': None, 'maximum': None, 'zero_rate': None,
+        })
+    return metrics
 
 
 def run_comparison(database: Path, drive_csv: Path, sim_summary: Path, output_dir: Path,
@@ -466,6 +487,8 @@ def run_comparison(database: Path, drive_csv: Path, sim_summary: Path, output_di
     sim_team_games, sim_drives = load_simulated_data(drive_csv, expected_games=expected_games)
     actual_game_rows, actual_metrics = summarize_team_games('historical', actual_team_games, actual_drives)
     sim_game_rows, sim_metrics = summarize_team_games('SLC 10K', sim_team_games, sim_drives)
+    sim_summary_data = json.loads(Path(sim_summary).read_text(encoding='utf-8'))
+    _append_boxscore_play_metrics(sim_metrics, sim_summary_data, expected_games)
     metrics = actual_metrics + sim_metrics
     hist_counts = Counter(row['season'] for row in actual_team_games)
     if source_manifest is not None:
