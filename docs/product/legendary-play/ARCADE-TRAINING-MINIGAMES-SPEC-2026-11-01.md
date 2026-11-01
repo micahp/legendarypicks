@@ -193,7 +193,7 @@ Authoritative NFL publisher / LP PBP ledger
 
 Only emit a field-goal challenge for source-verified FG **attempt** distance; no `yardline_100+17` shortcut as an authoritative published distance. A public event with missing/corrupt context has no game-linked challenge; an unrelated **fictional tutorial** may still work.
 
-Do not use the [`GET /api/nfl/game/{game_id}/playbyplay`](../../../../backend/routers/games/game_detail.py) text-only output as if it contained valid play identity and location. It currently exposes clock, text, score, and `scoringPlay`, with key fields stripped; R0 must inspect upstream real PBP before building a live challenge adapter.
+Do not use the [`GET /api/nfl/game/{game_id}/playbyplay`](../../../backend/routers/games/game_detail.py) text-only output as if it contained valid play identity and location. It currently exposes clock, text, score, and `scoringPlay`, with key fields stripped; R0 must inspect upstream real PBP before building a live challenge adapter.
 
 Maintain exact source publisher and observed timestamp, UTC ingestion and version, game status, canonical team/player identifiers when relevant, replay/correction audit. Player-specific mini-game branding is prohibited until likeness/image rights are cleared. No broadcast footage or private source feeds.
 
@@ -262,7 +262,7 @@ Stop and simplify if first-time players don't understand the kick, the controls 
 - [GM Mode spec (PR #28)](https://github.com/micahp/legendarypicks/blob/docs/gm-mode-live-minigames-2026-10-31/docs/product/legendary-play/GM-MODE-SPEC-2026-10-31.md)
 - [Pixel Red Zone normalized observed-event contract](PIXEL-RED-ZONE-CHANNEL-SPEC-2026-11-01.md)
 - [NFL authoritative rules reference](../../rules/NFL-2026-GAME-STATE-RULES.md)
-- [Existing play-by-play service](../../../../backend/routers/games/game_detail.py), [16-bit War Room prototype PR #29](https://github.com/micahp/legendarypicks/pull/29)
+- [Existing play-by-play service](../../../backend/routers/games/game_detail.py), [16-bit War Room prototype PR #29](https://github.com/micahp/legendarypicks/pull/29)
 - Audio browser behavior: [MDN autoplay guide](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay).
 
 Only original/cleared art and audio. An original 16-bit football play is not a broadcast replay. All data-driven sport references must be source-verifiable and labeled correctly.
