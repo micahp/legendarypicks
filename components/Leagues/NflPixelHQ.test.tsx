@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import NflPixelHQ, { getRoomTimeOfDay } from './NflPixelHQ'
 
 const originalFetch = global.fetch
@@ -70,11 +70,19 @@ describe('NflPixelHQ', () => {
     expect(screen.getByRole('link', { name: 'Player props' }).getAttribute('href')).toBe('/props?league=nfl')
     expect(screen.getByRole('link', { name: 'Player projections' }).getAttribute('href')).toBe('/nfl/projections')
     expect(screen.getByText('NFL season context is unavailable right now.')).toBeTruthy()
-    await screen.findByText(/Test Receiver · rec yds/i)
+    const mobilePropCard = await screen.findByRole('button', { name: 'Open Computer · Player props preview' })
+    expect(mobilePropCard.textContent).toContain('Test Receiver · rec yds OVER 50.5')
+    expect(mobilePropCard.textContent).toMatch(/Oct 31,/)
     await screen.findByText(/No player projections published/i)
     await screen.findByText(/No upcoming matchup found/i)
     expect(await screen.findByText('LAC')).toBeTruthy()
     expect(screen.getByText('KC')).toBeTruthy()
+
+    const mobileScoreCard = screen.getByRole('button', { name: 'Open TV · Game center preview' })
+    expect(mobileScoreCard.textContent).toContain('LAC 17 · KC 21 · LIVE · Q2')
+    fireEvent.click(mobileScoreCard)
+    expect(await screen.findByText('LA Chargers at Kansas City Chiefs')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Return to HQ' }))
 
     fireEvent.click(screen.getByRole('button', { name: /scores from the television/i }))
     expect(await screen.findByText('LA Chargers at Kansas City Chiefs')).toBeTruthy()
@@ -87,14 +95,17 @@ describe('NflPixelHQ', () => {
   it('opens an in-room prop preview with source time and actual player history', async () => {
     await renderRoom()
 
-    await screen.findByText(/Test Receiver · rec yds/i)
+    const mobilePropCard = await screen.findByRole('button', { name: 'Open Computer · Player props preview' })
+    expect(mobilePropCard.textContent).toContain('Test Receiver · rec yds OVER 50.5')
+    expect(mobilePropCard.textContent).toMatch(/Oct 31,/)
     await screen.findByText(/No player projections published/i)
     await screen.findByText(/No upcoming matchup found/i)
     fireEvent.click(screen.getByRole('button', { name: /player props from the desk computer/i }))
 
-    expect(await screen.findByText('Test Receiver')).toBeTruthy()
-    expect(screen.getByText(/source time/)).toBeTruthy()
-    expect(await screen.findByText('64')).toBeTruthy()
+    const propPreview = await screen.findByRole('region', { name: 'Player prop board' })
+    expect(within(propPreview).getByText('Test Receiver')).toBeTruthy()
+    expect(within(propPreview).getByText(/source time/)).toBeTruthy()
+    expect(await within(propPreview).findByText('64')).toBeTruthy()
     expect(screen.getByRole('link', { name: /open full nfl prop board/i }).getAttribute('href')).toBe('/props?league=nfl')
   })
 
@@ -102,9 +113,11 @@ describe('NflPixelHQ', () => {
     await renderRoom()
 
     fireEvent.click(screen.getByRole('button', { name: /trophy shelf career status/i }))
-    expect(screen.getByText(/career tracking is not available yet/i)).toBeTruthy()
+    const careerPreview = screen.getByRole('region', { name: 'Career receipts' })
+    expect(within(careerPreview).getByText(/career tracking is not available yet/i)).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: /arcade console future feature status/i }))
-    expect(screen.getByText(/future destination.*no mini-game or rewards/i)).toBeTruthy()
+    const arcadePreview = screen.getByRole('region', { name: 'Arcade console' })
+    expect(within(arcadePreview).getByText(/future destination.*no mini-game or rewards/i)).toBeTruthy()
   })
 })
