@@ -248,14 +248,14 @@ a {
 .lp-rz-field-wrap { margin: .65rem auto; }
 .lp-rz-field { position: relative; width: 100%; min-height: 8rem; aspect-ratio: 25 / 6; overflow: visible; border: 2px solid #c6a36c; background: #286d3d; box-shadow: 0 3px 0 #181c16; isolation: isolate; }
 .lp-rz-field-art { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
-.lp-rz-line-label { position: absolute; top: .28rem; z-index: 2; transform: translateX(-50%); border: 1px solid rgba(14,24,23,.85); background: rgba(14,24,23,.9); padding: .16rem .25rem; color: #fff6db; font-size: clamp(.42rem,.7vw,.56rem); font-weight: 900; letter-spacing: .035em; line-height: 1; white-space: nowrap; pointer-events: none; }
-.lp-rz-los-label { border-color: #42cbd5; color: #c8fbff; }
-.lp-rz-first-down-label { top: auto; bottom: .28rem; border-color: #e4bc35; color: #fff0a7; }
 .lp-rz-line-of-scrimmage { position: absolute; top: 5%; bottom: 5%; z-index: 1; border-left: 3px solid #64e6ef; transform: translateX(-50%); pointer-events: none; }
-.lp-rz-football { position: absolute; top: 50%; z-index: 4; display: block; width: 3rem; height: 1.85rem; overflow: visible; transform: translate(-50%,-50%); background: transparent; pointer-events: none; }
+.lp-rz-football { position: absolute; top: 50%; z-index: 4; display: block; width: .9rem; height: .58rem; overflow: visible; transform: translate(-50%,-50%); background: transparent; box-shadow: none; pointer-events: none; }
 .lp-rz-football.is-animated,.lp-rz-line-of-scrimmage.is-animated { transition: left 420ms steps(7,end); }
 .lp-rz-football.is-placeholder { opacity: .84; }
-.lp-rz-ball-unknown { position: absolute; top: 27%; z-index: 5; display: grid; width: 1rem; height: 1rem; transform: translateX(-50%); place-items: center; border: 1px solid #fff0a7; border-radius: 50%; background: #211d17; color: #fff0a7; font-size: .68rem; font-weight: 900; line-height: 1; pointer-events: none; }
+.lp-rz-field-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem .8rem; min-height: .2rem; margin-top: .3rem; color: #cbd7b1; font-size: .64rem; line-height: 1.2; }
+.lp-rz-field-legend span { display: inline-flex; align-items: center; gap: .3rem; }
+.lp-rz-field-legend i { display: inline-block; width: .62rem; height: .62rem; border-left: 3px solid #64e6ef; }
+.lp-rz-field-legend .lp-rz-legend-first-down { border-color: #ffd447; }
 .lp-rz-spot-status { min-height: 1.25rem; margin: .4rem 0 0; color: #dcebbd; font-size: .7rem; text-align: center; }
 .lp-rz-event-panel { border: 1px solid #48503b; background: rgba(255,255,255,.035); padding: .65rem .75rem; }
 .lp-rz-event-meta { flex-wrap: wrap; justify-content: space-between; gap: .35rem .7rem; color: #c9d89b; font-size: .65rem; font-weight: 850; }

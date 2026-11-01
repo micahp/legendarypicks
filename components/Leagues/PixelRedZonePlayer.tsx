@@ -157,6 +157,12 @@ export function fieldBallPosition(yardline100: number | null) {
   }
 }
 
+export function endZoneTeamLabel(name: string | null | undefined, abbreviation: string | null | undefined, fallback: string) {
+  const displayName = name?.trim()
+  if (displayName) return displayName.split(/\s+/).slice(-1)[0]
+  return abbreviation?.trim() || fallback
+}
+
 function gameDate(value: string | null) {
   if (!value) return 'Date unavailable'
   const date = new Date(value)
@@ -182,11 +188,12 @@ function Field({ event, teams, animateBall = false }: { event: PixelEvent | null
   const offenseTeam = event?.offense_team_id
     ? [teams?.home, teams?.away].find(team => team?.team_id === event.offense_team_id)
     : undefined
-  const ownEndName = offenseTeam?.name || offenseTeam?.abbreviation || teams?.away.name || teams?.away.abbreviation || 'AWAY'
+  const ownEndName = endZoneTeamLabel(offenseTeam?.name, offenseTeam?.abbreviation,
+    endZoneTeamLabel(teams?.away.name, teams?.away.abbreviation, 'AWAY'))
   const opponentTeam = offenseTeam === teams?.home ? teams?.away : teams?.home
   const opponentEndName = offenseTeam
-    ? opponentTeam?.name || opponentTeam?.abbreviation || 'OPPONENT'
-    : teams?.home.name || teams?.home.abbreviation || 'HOME'
+    ? endZoneTeamLabel(opponentTeam?.name, opponentTeam?.abbreviation, 'OPPONENT')
+    : endZoneTeamLabel(teams?.home.name, teams?.home.abbreviation, 'HOME')
   const offenseOrientationKnown = Boolean(offenseTeam)
   const teamTextLength = (name: string) => Math.min(224, Math.max(54, name.length * 13))
   const description = ball.sourceVerified
@@ -246,20 +253,17 @@ function Field({ event, teams, animateBall = false }: { event: PixelEvent | null
             textLength={teamTextLength(opponentEndName)} lengthAdjust="spacingAndGlyphs" fill="#fff0c5" fontFamily="ui-monospace,monospace" fontSize="28" fontWeight="900">
             {opponentEndName.toUpperCase()}
           </text>
-          <text x="500" y="236" textAnchor="middle" fill="#ecf4d6" fontFamily="ui-monospace,monospace" fontSize="12" fontWeight="800" opacity="0.9">
-            {offenseTeam ? 'OFFENSE → OPPONENT GOAL' : 'FIELD DIRECTION UNAVAILABLE'}
-          </text>
         </svg>
         {spot !== null && <span className={`lp-rz-line-of-scrimmage${animateBall ? ' is-animated' : ''}`} style={{ left: `${ballLeft}%` }} />}
-        {spot !== null && <span className="lp-rz-line-label lp-rz-los-label" style={{ left: `${ballLeft}%` }}>LINE OF SCRIMMAGE</span>}
-        {firstDownLeft !== null && <span className="lp-rz-line-label lp-rz-first-down-label" style={{ left: `${10 + firstDownLeft * 0.8}%` }}>FIRST DOWN</span>}
         <svg className={`lp-rz-football${ball.sourceVerified ? '' : ' is-placeholder'}${animateBall ? ' is-animated' : ''}`} viewBox="0 0 56 34" aria-hidden="true"
           style={{ left: `${ballLeft}%` }}>
           <path d="M4 17C9 3 47 3 52 17 47 31 9 31 4 17Z" fill="#995126" stroke="#1b1712" strokeWidth="3" />
-          <path d="M5 17C11 5 45 5 51 17 45 29 11 29 5 17Z" fill="none" stroke="#fff0d3" strokeWidth="1.5" />
           <path d="M14 17H42M25 11V23M29 11V23M21 12V22M33 12V22" fill="none" stroke="#fff4dd" strokeWidth="2.2" strokeLinecap="square" />
         </svg>
-        {!ball.sourceVerified && <span className="lp-rz-ball-unknown" style={{ left: `${ballLeft}%` }} aria-hidden="true">?</span>}
+      </div>
+      <div className="lp-rz-field-legend" aria-label="Field line legend">
+        {spot !== null && <span><i className="lp-rz-legend-los" />Line of scrimmage</span>}
+        {firstDownLeft !== null && <span><i className="lp-rz-legend-first-down" />First down</span>}
       </div>
       <p className="lp-rz-spot-status" aria-live="polite">
         {spot === null

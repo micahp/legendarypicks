@@ -6,6 +6,7 @@ import {
   fieldBallPosition,
   canAnimateReplaySpotTransition,
   latestCanonicalEvent,
+  endZoneTeamLabel,
   shouldAdvanceCanonicalEvent,
 } from './PixelRedZonePlayer'
 import type { Game } from '../../services/sports'
@@ -46,6 +47,14 @@ describe('diagrammaticFieldX', () => {
     expect(fieldBallPosition(100)).toEqual({ xPercent: 0, sourceVerified: true })
     expect(fieldBallPosition(null)).toEqual({ xPercent: 50, sourceVerified: false })
     expect(fieldBallPosition(101)).toEqual({ xPercent: 50, sourceVerified: false })
+  })
+})
+
+describe('end zone team labels', () => {
+  it('uses the team nickname rather than the city and team name', () => {
+    expect(endZoneTeamLabel('Cincinnati Bengals', 'CIN', 'AWAY')).toBe('Bengals')
+    expect(endZoneTeamLabel('Cleveland Browns', 'CLE', 'HOME')).toBe('Browns')
+    expect(endZoneTeamLabel(null, 'BUF', 'AWAY')).toBe('BUF')
   })
 })
 
@@ -221,6 +230,11 @@ describe('NflPixelHQ', () => {
     expect(await screen.findByText(/Run up the middle for 6 yards/)).toBeTruthy()
     expect(await screen.findByText(/Source event nfl-1:ESPN:espn-play-42/)).toBeTruthy()
     expect(screen.getByText(/45 yards to opponent end zone/)).toBeTruthy()
+    const liveField = document.querySelector('.lp-rz-field')
+    expect(liveField?.querySelector('.lp-rz-ball-unknown')).toBeNull()
+    expect(liveField?.querySelector('.lp-rz-line-label')).toBeNull()
+    expect(document.querySelector('.lp-rz-field-legend')?.textContent).toContain('Line of scrimmage')
+    expect(document.querySelector('.lp-rz-field-legend')?.textContent).toContain('First down')
     expect(screen.getByRole('link', { name: 'Game details' }).getAttribute('href')).toBe('/game/nfl/nfl-1')
     expect((global.fetch as jest.Mock).mock.calls.filter(([url]) => String(url).includes('/pixel-red-zone/replay/'))).toHaveLength(0)
     fireEvent.click(screen.getByRole('button', { name: 'Watch archived ESPN replay' }))
@@ -230,7 +244,7 @@ describe('NflPixelHQ', () => {
     expect(replayField?.querySelector('.lp-rz-football path')).toBeTruthy()
     expect(replayField?.querySelectorAll('line').length).toBeGreaterThan(20)
     const rotatedEndzones = Array.from(replayField?.querySelectorAll('.lp-rz-field-art text[transform]') || [])
-    expect(rotatedEndzones.map(label => label.textContent)).toEqual(['CLEVELAND BROWNS', 'CINCINNATI BENGALS'])
+    expect(rotatedEndzones.map(label => label.textContent)).toEqual(['BROWNS', 'BENGALS'])
     expect(rotatedEndzones.map(label => label.getAttribute('transform'))).toEqual(['rotate(-90 50 120)', 'rotate(90 950 120)'])
     expect(screen.getByText(/Centered football is illustrative only/)).toBeTruthy()
     const redZoneDialog = screen.getByRole('dialog', { name: 'Historical game replay' })
@@ -292,6 +306,7 @@ describe('NflPixelHQ', () => {
 
     expect(await screen.findByText(/Play-by-play is unavailable for this snapshot/)).toBeTruthy()
     expect(document.querySelector('.lp-rz-football path')).toBeTruthy()
+    expect(document.querySelector('.lp-rz-ball-unknown')).toBeNull()
     expect(screen.getByText(/Centered football is illustrative only/)).toBeTruthy()
   })
 
