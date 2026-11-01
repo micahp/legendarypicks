@@ -139,6 +139,53 @@ class ActualDriveExtraction(unittest.TestCase):
         self.assertEqual(by_team['MIN']['metric'], 'scrimmage_plays_per_game')
         self.assertIsNone(by_team['DET']['p95'])
 
+    def test_report_classifies_reporting_engine_allocation_and_data_findings(self):
+        metrics = []
+        values = [
+            ('SLC 10K', 'DET', 'team_game', 'punt_drives_per_game', 2.66),
+            ('SLC 10K', 'MIN', 'team_game', 'punt_drives_per_game', 2.78),
+            ('historical', 'DET', 'team_game', 'punt_drives_per_game', 3.09),
+            ('historical', 'MIN', 'team_game', 'punt_drives_per_game', 3.75),
+            ('historical', 'NFL', 'team_game', 'punt_drives_per_game', 3.86),
+            ('SLC 10K', 'DET', 'team_game', 'recorded_events_per_game', 73.75),
+            ('SLC 10K', 'MIN', 'team_game', 'recorded_events_per_game', 65.76),
+            ('SLC 10K', 'DET', 'team_game', 'scrimmage_plays_per_game', 68.99),
+            ('SLC 10K', 'MIN', 'team_game', 'scrimmage_plays_per_game', 61.14),
+            ('SLC 10K', 'DET', 'team_game', 'offensive_scoring_drive_rate', .47),
+            ('SLC 10K', 'MIN', 'team_game', 'offensive_scoring_drive_rate', .427),
+            ('historical', 'DET', 'team_game', 'offensive_scoring_drive_rate', .453),
+            ('historical', 'MIN', 'team_game', 'offensive_scoring_drive_rate', .376),
+            ('SLC 10K', 'DET', 'modeled_drive', 'net_yards_per_drive', 41.06),
+            ('SLC 10K', 'MIN', 'modeled_drive', 'net_yards_per_drive', 38.92),
+            ('historical', 'DET', 'modeled_drive', 'net_yards_per_drive', 36.19),
+            ('historical', 'MIN', 'modeled_drive', 'net_yards_per_drive', 30.11),
+        ]
+        for source, cohort, unit, metric, mean in values:
+            metrics.append({'source': source, 'cohort': cohort, 'unit': unit, 'terminal': 'ALL',
+                            'metric': metric, 'mean': mean})
+        manifest = {
+            'historical': {
+                'completed_games': 1087, 'team_games': 2174, 'season_min': 2022,
+                'season_max': 2025, 'game_index_source': 'pinned regular-season PBP',
+                'source_filter': 'regular-season weeks 1-18', 'pbp_rows_sha256': 'pbp',
+                'game_index_rows_sha256': 'index', 'database_sha256': 'db',
+            },
+            'simulation': {
+                'games': 10000, 'summary_sha256': 'summary', 'drive_csv_sha256': 'drives',
+                'unmodeled_drive_sequences': {'DET': 694, 'MIN': 693},
+                'jahmyr_gibbs_rush_attempts_per_game': 31.99,
+                'det_team_rush_attempts_per_game': 36.83,
+                'jahmyr_gibbs_carry_share': 31.99 / 36.83,
+            },
+        }
+        report = comparison.render_markdown(manifest, metrics)
+        self.assertIn('Reporting semantics', report)
+        self.assertIn('Engine behavior', report)
+        self.assertIn('Player allocation', report)
+        self.assertIn('Historical-data limitation', report)
+        self.assertIn('73.75 DET / 65.76 MIN', report)
+        self.assertIn('31.99 Gibbs carries out of 36.83 Detroit team carries', report)
+
 
 if __name__ == '__main__':
     unittest.main()

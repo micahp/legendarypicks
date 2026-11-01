@@ -364,6 +364,11 @@ def _format(value, digits=2):
 def render_markdown(manifest, metrics):
     by_key = {(row['source'], row['cohort'], row['unit'], row['terminal'], row['metric']): row
               for row in metrics}
+
+    def mean(source, cohort, unit, terminal, metric):
+        row = by_key.get((source, cohort, unit, terminal, metric))
+        return None if row is None else row.get('mean')
+
     columns = [('historical', 'NFL'), ('historical', 'DET'), ('historical', 'MIN'),
                ('SLC 10K', 'DET'), ('SLC 10K', 'MIN')]
     metric_rows = (
@@ -414,6 +419,57 @@ def render_markdown(manifest, metrics):
                 vals.append(row.get('mean') if row else 0.0)
             lines.append(f"| {source} / {cohort} | " + ' | '.join(f'{value:.1%}' for value in vals) + ' |')
 
+    sim = manifest['simulation']
+    det_punt, min_punt = (mean('SLC 10K', team, 'team_game', 'ALL', 'punt_drives_per_game')
+                          for team in ('DET', 'MIN'))
+    det_event, min_event = (mean('SLC 10K', team, 'team_game', 'ALL', 'recorded_events_per_game')
+                            for team in ('DET', 'MIN'))
+    det_scrimmage, min_scrimmage = (
+        mean('SLC 10K', team, 'team_game', 'ALL', 'scrimmage_plays_per_game')
+        for team in ('DET', 'MIN'))
+    lines.extend([
+        '', '## Findings by category', '',
+        '| Category | Finding | Evidence and interpretation |',
+        '|---|---|---|',
+        ('| Reporting semantics | The archived team punt field undercounts ordinary punts. | '
+         f"It reports 0.013 punts/team-game, while the frozen drive terminals show {det_punt:.2f} DET and "
+         f"{min_punt:.2f} MIN. The old producer used `out.get('punt_attempt', out['punt'])`; an explicit `False` "
+         'suppressed the normal `punt=True` value. Current code uses the OR check with regression coverage. |'),
+        ('| Reporting semantics | Drive event counts include special teams; team `plays` does not. | '
+         f"SLC has {det_event:.2f} DET / {min_event:.2f} MIN recorded events per game versus "
+         f"{det_scrimmage:.2f} / {min_scrimmage:.2f} team-stat scrimmage plays. The differences are "
+         f"{det_event - det_scrimmage:.2f} / {min_event - min_scrimmage:.2f}, approximately the punt plus "
+         'field-goal attempt counts. |'),
+        ('| Engine behavior | Punt frequency remains below the historical comparison after correcting the report. | '
+         f"SLC terminal rates are {det_punt:.2f} DET and {min_punt:.2f} MIN per game versus historical team means "
+         f"{mean('historical', 'DET', 'team_game', 'ALL', 'punt_drives_per_game'):.2f} and "
+         f"{mean('historical', 'MIN', 'team_game', 'ALL', 'punt_drives_per_game'):.2f}; league mean is "
+         f"{mean('historical', 'NFL', 'team_game', 'ALL', 'punt_drives_per_game'):.2f}. This is a real distribution "
+         'difference; the aggregate does not isolate fourth-down choice from play outcomes. |'),
+        ('| Engine behavior | Scoring and drive yardage are elevated. | '
+         f"Scoring-drive rates are {mean('SLC 10K', 'DET', 'team_game', 'ALL', 'offensive_scoring_drive_rate'):.1%} DET / "
+         f"{mean('SLC 10K', 'MIN', 'team_game', 'ALL', 'offensive_scoring_drive_rate'):.1%} MIN versus "
+         f"{mean('historical', 'DET', 'team_game', 'ALL', 'offensive_scoring_drive_rate'):.1%} / "
+         f"{mean('historical', 'MIN', 'team_game', 'ALL', 'offensive_scoring_drive_rate'):.1%} team means. Net yards per "
+         f"modeled drive are {mean('SLC 10K', 'DET', 'modeled_drive', 'ALL', 'net_yards_per_drive'):.2f} / "
+         f"{mean('SLC 10K', 'MIN', 'modeled_drive', 'ALL', 'net_yards_per_drive'):.2f} versus "
+         f"{mean('historical', 'DET', 'modeled_drive', 'ALL', 'net_yards_per_drive'):.2f} / "
+         f"{mean('historical', 'MIN', 'modeled_drive', 'ALL', 'net_yards_per_drive'):.2f}. The summary identifies gaps, "
+         'not their causal model layer. |'),
+        ('| Player allocation | Detroit rushing attempts are concentrated in Jahmyr Gibbs. | '
+         f"The frozen summary averages {sim['jahmyr_gibbs_rush_attempts_per_game']:.2f} Gibbs carries out of "
+         f"{sim['det_team_rush_attempts_per_game']:.2f} Detroit team carries ({sim['jahmyr_gibbs_carry_share']:.1%}). "
+         'This is an allocation-layer finding, separate from team drive frequency. |'),
+        ('| Engine fidelity limit | Some overtime outcomes have scores but no modeled play sequence. | '
+         f"The frozen run has {sim['unmodeled_drive_sequences']['DET']:,} DET and "
+         f"{sim['unmodeled_drive_sequences']['MIN']:,} MIN such drive rows. They remain in terminal/scoring totals and "
+         'are excluded from event and yardage averages. |'),
+        ('| Historical-data limitation | Team rates are four-season franchise averages. | '
+         'They cover 2022–2025 and are not a 2026 roster-specific or game-state-matched baseline. The PBP snapshot has no '
+         'game_type column; its pinned manifest explicitly filters regular-season weeks 1–18. |'),
+        '',
+    ])
+
     lines.extend(['', '## Distribution details', '',
                   'The CSV provides sample size, mean, median, population variance, standard deviation, P95, P99, maximum, and zero rate '
                   'for metrics derived from the play-by-play and drive rows. The scrimmage-play row for SLC is sourced from the frozen '
@@ -462,6 +518,14 @@ def _append_boxscore_play_metrics(metrics, summary, expected_games):
     return metrics
 
 
+def _summary_row(rows, *, team, metric, player_name=None):
+    matches = [row for row in rows if row.get('team') == team and row.get('metric') == metric
+               and (player_name is None or row.get('name') == player_name)]
+    if len(matches) != 1:
+        raise DriveComparisonError(f'expected one summary row for {team}/{player_name or "team"}/{metric}')
+    return matches[0]
+
+
 def run_comparison(database: Path, drive_csv: Path, sim_summary: Path, output_dir: Path,
                    expected_games: int = 10000):
     output_dir = Path(output_dir)
@@ -489,6 +553,11 @@ def run_comparison(database: Path, drive_csv: Path, sim_summary: Path, output_di
     sim_game_rows, sim_metrics = summarize_team_games('SLC 10K', sim_team_games, sim_drives)
     sim_summary_data = json.loads(Path(sim_summary).read_text(encoding='utf-8'))
     _append_boxscore_play_metrics(sim_metrics, sim_summary_data, expected_games)
+    det_rushes = _summary_row(sim_summary_data.get('team_stats', []), team='DET', metric='rush_attempts')
+    gibbs_rushes = _summary_row(sim_summary_data.get('player_stats', []), team='DET',
+                                 metric='rush_attempts', player_name='Jahmyr Gibbs')
+    if det_rushes.get('sample_n') != expected_games or gibbs_rushes.get('sample_n') != expected_games:
+        raise DriveComparisonError('frozen summary lacks complete Detroit/Gibbs rushing opportunity coverage')
     metrics = actual_metrics + sim_metrics
     hist_counts = Counter(row['season'] for row in actual_team_games)
     if source_manifest is not None:
@@ -514,6 +583,9 @@ def run_comparison(database: Path, drive_csv: Path, sim_summary: Path, output_di
                        'unmodeled_drive_sequences': {
                            team: sum(row['team'] == team and not row['modeled'] for row in sim_drives)
                            for team in ('DET', 'MIN')},
+                       'det_team_rush_attempts_per_game': det_rushes['mean'],
+                       'jahmyr_gibbs_rush_attempts_per_game': gibbs_rushes['mean'],
+                       'jahmyr_gibbs_carry_share': gibbs_rushes['mean'] / det_rushes['mean'],
                        'summary_path': str(Path(sim_summary)), 'summary_sha256': summary_hash,
                        'drive_csv_path': str(Path(drive_csv)), 'drive_csv_sha256': drive_hash},
         'definitions': {
