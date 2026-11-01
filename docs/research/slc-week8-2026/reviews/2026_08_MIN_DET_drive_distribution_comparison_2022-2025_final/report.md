@@ -14,7 +14,7 @@ Historical sample: 1,087 complete regular-season games, 2,174 team-games, season
 | Turnovers on downs per team-game | 0.62 | 0.81 | 0.49 | 0.91 | 0.81 |
 | Turnover drives per team-game | 1.25 | 1.01 | 1.59 | 1.24 | 1.69 |
 | Period-end drives per team-game | 0.26 | 0.19 | 0.28 | 1.06 | 0.87 |
-| Recorded run/pass/kick events per team-game | 68.47 | 69.81 | 67.75 | 73.75 | 65.76 |
+| Recorded run/pass/kneel/spike/kick events per team-game | 68.47 | 69.81 | 67.75 | 73.75 | 65.76 |
 | Scrimmage plays per team-game (team-stat definition) | 61.69 | 63.94 | 61.00 | 68.99 | 61.14 |
 | Recorded events per modeled drive | 6.34 | 6.48 | 6.13 | 7.58 | 6.83 |
 | Net yards per modeled drive | 30.95 | 36.19 | 30.11 | 41.06 | 38.92 |
@@ -31,6 +31,19 @@ Percent of all drive records by terminal. Period-end combines halftime and game-
 | historical / MIN | 33.7% | 22.7% | 18.5% | 4.4% | 12.5% | 0.3% | 5.0% | 2.5% | 0.4% |
 | SLC 10K / DET | 27.2% | 27.8% | 21.2% | 9.3% | 3.5% | 0.2% | 0.0% | 10.9% | 0.0% |
 | SLC 10K / MIN | 28.7% | 26.0% | 18.7% | 8.4% | 9.1% | 0.2% | 0.0% | 9.0% | 0.0% |
+
+## Findings by category
+
+| Category | Finding | Evidence and interpretation |
+|---|---|---|
+| Reporting semantics | The archived team punt field undercounts ordinary punts. | It reports 0.013 punts/team-game, while the frozen drive terminals show 2.66 DET and 2.78 MIN. The old producer used `out.get('punt_attempt', out['punt'])`; an explicit `False` suppressed the normal `punt=True` value. Current code uses the OR check with regression coverage. |
+| Reporting semantics | Drive event counts include special teams; team `plays` does not. | SLC has 73.75 DET / 65.76 MIN recorded events per game versus 68.99 / 61.14 team-stat scrimmage plays. The differences are 4.76 / 4.61, approximately the punt plus field-goal attempt counts. |
+| Engine behavior | Punt frequency remains below the historical comparison after correcting the report. | SLC terminal rates are 2.66 DET and 2.78 MIN per game versus historical team means 3.09 and 3.75; league mean is 3.86. This is a real distribution difference; the aggregate does not isolate fourth-down choice from play outcomes. |
+| Engine behavior | Scoring and drive yardage are elevated. | Scoring-drive rates are 47.0% DET / 42.7% MIN versus 45.3% / 37.6% team means. Net yards per modeled drive are 41.06 / 38.92 versus 36.19 / 30.11. The summary identifies gaps, not their causal model layer. |
+| Player allocation | Detroit rushing attempts are concentrated in Jahmyr Gibbs. | The frozen summary averages 31.99 Gibbs carries out of 36.83 Detroit team carries (86.9%). This is an allocation-layer finding, separate from team drive frequency. |
+| Engine behavior / fidelity limit | Some overtime outcomes have scores but no modeled play sequence. | The frozen run has 694 DET and 693 MIN such drive rows. They remain in terminal/scoring totals and are excluded from event and yardage averages. |
+| Historical-data limitation | Team rates are four-season franchise averages. | They cover 2022–2025 and are not a 2026 roster-specific or game-state-matched baseline. The PBP snapshot has no game_type column; its pinned manifest explicitly filters regular-season weeks 1–18. |
+
 
 ## Distribution details
 
