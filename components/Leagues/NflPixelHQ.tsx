@@ -476,17 +476,22 @@ export default function NflPixelHQ(props: Props) {
 
             {preview === 'career' && <div className="lp-hq-preview-content"><p>Career tracking is not available yet. No records, progression, or rewards are being generated here.</p></div>}
             {preview === 'arcade' && <div className="lp-hq-preview-content lp-hq-arcade-menu">
-              <section aria-labelledby="nfl-hq-arcade-moments">
-                <h3 id="nfl-hq-arcade-moments">Live Moments</h3>
-                <p>Fresh ESPN field-goal attempts with a verified published distance appear in the list below while the source game is still live.</p>
+              <section className="lp-hq-arcade-practice" aria-labelledby="nfl-hq-arcade-practice">
+                <h3 id="nfl-hq-arcade-practice">Play Field Goal Frenzy</h3>
+                <p>Take an always-available 35-yard practice kick. No live NFL game or ESPN feed needed.</p>
+                <Link className="lp-hq-full-link lp-hq-practice-link" href="/arcade/nfl/field-goal/practice-fg-35-v1">Play now →</Link>
               </section>
-              <ArchivedKickMoments compact />
               <section aria-labelledby="nfl-hq-arcade-training">
                 <h3 id="nfl-hq-arcade-training">Training Camp</h3>
                 <p>Practice aim and timing with free, fictional field-goal drills.</p>
                 <Link className="lp-hq-full-link" href="/arcade/nfl/training/kicking?drill=aim-lab-v1">Open Aim Lab →</Link>
                 <Link className="lp-hq-full-link" href="/arcade/nfl/training/kicking?drill=precision-set-v1">Open Precision Set →</Link>
               </section>
+              <section aria-labelledby="nfl-hq-arcade-moments">
+                <h3 id="nfl-hq-arcade-moments">Live Moments</h3>
+                <p>Optional real-game challenges appear here when ESPN publishes a verified kick during a live game. Practice is available above at any time.</p>
+              </section>
+              <ArchivedKickMoments compact />
               <section aria-labelledby="nfl-hq-arcade-friends">
                 <h3 id="nfl-hq-arcade-friends">Friends’ Challenges</h3>
                 <p>Play first, then share a link bound to your verified kick score. Friends can play anonymously and compare on the same challenge board.</p>

@@ -365,6 +365,10 @@ a {
 .lp-hq-arcade-menu section { margin-top: 1rem; padding-top: .55rem; border-top: 1px solid rgba(221,198,158,.2); }
 .lp-hq-arcade-menu section:first-of-type { border-top: 0; }
 .lp-hq-arcade-menu .lp-hq-full-link { display: flex; width: fit-content; max-width: 100%; }
+.lp-hq-arcade-menu .lp-hq-arcade-practice { margin: 0; padding: 0 0 .8rem; border: 0; }
+.lp-hq-arcade-menu .lp-hq-practice-link { min-height: 3rem; align-items: center; justify-content: center; background: #e4ff9d; color: #1d2413; font-size: .85rem; }
+.lp-hq-arcade-menu .lp-hq-practice-link:hover { background: #f0ffd0; }
+.lp-hq-arcade-menu a:focus-visible,.lp-arcade-page a:focus-visible { outline: 3px solid #e4ff9d; outline-offset: 3px; }
 .lp-hq-arcade-menu .lp-arcade-archive { margin-top: 1rem; padding-top: .55rem; border-top: 1px solid rgba(221,198,158,.2); }
 .lp-hq-arcade-menu .lp-arcade-archive h2 { color: #eee0c0; font-size: .8rem; }
 .lp-arcade-page { width: min(100%, 68rem); margin: 0 auto; color: #e9e3d6; }
@@ -478,7 +482,8 @@ a {
 .lp-arcade-lobby-group p { max-width: 54rem; margin: .35rem 0 .7rem; color: #bcbab3; font-size: .82rem; line-height: 1.55; }
 .lp-arcade-lobby-actions { display: flex; flex-wrap: wrap; gap: .55rem; }
 .lp-arcade-lobby-primary,.lp-arcade-lobby-secondary { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; padding: .55rem .8rem; font-size: .78rem; font-weight: 850; }
-.lp-arcade-lobby-primary { background: #57452b; color: #fff2d2; }
+.lp-arcade-lobby-primary { min-height: 3.25rem; background: #e4ff9d; color: #1d2413; }
+.lp-arcade-lobby-primary:hover { background: #f0ffd0; }
 .lp-arcade-lobby-secondary { border: 1px solid #71654c; color: #e5d4ac; }
 .lp-arcade-status-note { margin: .65rem 0 0; line-height: 1.45; }
 .lp-arcade-archive { margin-top: 1.3rem; padding-top: .75rem; border-top: 1px solid #343238; }

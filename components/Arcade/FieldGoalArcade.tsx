@@ -441,7 +441,7 @@ function PixelField({
 
 export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props) {
   const [catalog, setCatalog] = useState<Catalog | null>(null)
-  const [loadingCatalog, setLoadingCatalog] = useState(true)
+  const [loadingCatalog, setLoadingCatalog] = useState(Boolean(drillId))
   const [catalogError, setCatalogError] = useState<string | null>(null)
   const [scenarioIndex, setScenarioIndex] = useState(0)
   const [drillRunId, setDrillRunId] = useState(newAttemptId)
@@ -509,6 +509,12 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
 
   useEffect(() => {
     const controller = new AbortController()
+    if (!drillId) {
+      setCatalog(null)
+      setCatalogError(null)
+      setLoadingCatalog(false)
+      return () => controller.abort()
+    }
     setLoadingCatalog(true)
     fetch('/api/arcade/training', { signal: controller.signal })
       .then(async response => {
@@ -524,7 +530,7 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
       })
       .finally(() => { if (!controller.signal.aborted) setLoadingCatalog(false) })
     return () => controller.abort()
-  }, [])
+  }, [drillId])
 
   const drill = useMemo(() => catalog?.drills.find(item => item.id === drillId) || null, [catalog, drillId])
   const scenario = drill?.attempts[scenarioIndex] || null
@@ -1002,7 +1008,7 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
   if (loadingCatalog || challengeLoading) {
     return <section className="lp-arcade-unit" role="status"><p>Loading the practice rules…</p></section>
   }
-  if (catalogError || !catalog || (drillId && !drill)) {
+  if (drillId && (catalogError || !catalog || !drill)) {
     return <section className="lp-arcade-unit" role="alert">
       <p>{catalogError || 'This training drill is unavailable.'}</p>
       <Link href="/arcade/nfl">Back to LP Arcade</Link>

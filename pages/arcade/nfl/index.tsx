@@ -21,22 +21,29 @@ export default function NflArcadeLobby() {
           <p>Quick kicks. Clear feedback. Practice is free and separate from real NFL results.</p>
         </header>
 
+        <section className="lp-arcade-lobby-group" aria-labelledby="lp-arcade-training-title">
+          <h2 id="lp-arcade-training-title">Play Field Goal Frenzy</h2>
+          <p>Take an always-available 35-yard practice kick. No live NFL game or ESPN feed needed.</p>
+          <div className="lp-arcade-lobby-actions">
+            <Link className="lp-arcade-lobby-primary" href="/arcade/nfl/field-goal/practice-fg-35-v1">PLAY NOW · 35-YARD KICK</Link>
+          </div>
+        </section>
+
+        <section className="lp-arcade-lobby-group" aria-labelledby="lp-arcade-training-camp-title">
+          <h2 id="lp-arcade-training-camp-title">Training Camp</h2>
+          <p>Build aim and release control with fixed, fictional scenarios. Every kick gets its own server-calculated result.</p>
+          <div className="lp-arcade-lobby-actions">
+            <Link className="lp-arcade-lobby-secondary" href="/arcade/nfl/training/kicking?drill=aim-lab-v1">Play Aim Lab</Link>
+            <Link className="lp-arcade-lobby-secondary" href="/arcade/nfl/training/kicking?drill=precision-set-v1">Play Precision Set</Link>
+          </div>
+        </section>
+
         <section className="lp-arcade-lobby-group" aria-labelledby="lp-arcade-moments-title">
-          <h2 id="lp-arcade-moments-title">Live Moments</h2>
-          <p>Verified field-goal moments from in-progress games appear below when ESPN publishes an explicit attempt distance.</p>
+          <h2 id="lp-arcade-moments-title">Live Moments · Optional</h2>
+          <p>Real-game challenges appear below only when ESPN publishes a verified kick during a live game. Practice is always available above.</p>
         </section>
 
         <ArchivedKickMoments />
-
-        <section className="lp-arcade-lobby-group" aria-labelledby="lp-arcade-training-title">
-          <h2 id="lp-arcade-training-title">Training Camp</h2>
-          <p>Build aim and release control with fixed, fictional scenarios. Every kick gets its own server-calculated result.</p>
-          <div className="lp-arcade-lobby-actions">
-            <Link className="lp-arcade-lobby-primary" href="/arcade/nfl/training/kicking?drill=aim-lab-v1">Play Aim Lab</Link>
-            <Link className="lp-arcade-lobby-secondary" href="/arcade/nfl/training/kicking?drill=precision-set-v1">Play Precision Set</Link>
-            <Link className="lp-arcade-lobby-secondary" href="/arcade/nfl/field-goal/practice-fg-35-v1">Quick 35-yard kick</Link>
-          </div>
-        </section>
 
         <section className="lp-arcade-lobby-group" aria-labelledby="lp-arcade-friends-title">
           <h2 id="lp-arcade-friends-title">Friends’ Challenges</h2>
