@@ -474,7 +474,6 @@ export default function NflPixelHQ(props: Props) {
 
             {preview === 'career' && <div className="lp-hq-preview-content"><p>Career tracking is not available yet. No records, progression, or rewards are being generated here.</p></div>}
             {preview === 'arcade' && <div className="lp-hq-preview-content lp-hq-arcade-menu">
-              <p className="lp-hq-preview-matchup">Play Arcade</p>
               <section aria-labelledby="nfl-hq-arcade-moments">
                 <h3 id="nfl-hq-arcade-moments">Live Moments</h3>
                 <p>Fresh ESPN field-goal attempts with a verified published distance appear in the list below while the source game is still live.</p>

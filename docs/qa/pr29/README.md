@@ -1,5 +1,9 @@
 # PR #29 review evidence
 
+## Iteration 3 · NFL Arcade integration
+
+The Arcade cabinet now opens an in-room list of verified archived/live field-goal moments and links to standalone Field Goal Frenzy challenges. Aim Lab and Precision Set are available as fictional practice drills. [Desktop/mobile captures, a server-scored archived kick, and the HQ round-trip recording](../../research/ARCADE-2026-11-01-EVIDENCE/README.md) document this iteration. The recording uses the checked-in ESPN archive fixture; it does not claim a current live event.
+
 ## Iteration 2 · room and in-room data previews
 
 The latest iteration replaces the CSS furniture with a cohesive 16-bit apartment scene and keeps the GM in street clothes. Room objects show data from the existing NFL APIs and open focused previews before offering the full research page. When a feed has no published data, the room says so instead of inventing a score or projection. Career and arcade objects remain visible as future destinations.
