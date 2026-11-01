@@ -24,4 +24,13 @@ For the browser capture, Arcade HTTP responses were intercepted and served from 
 - The mobile one-thumb control measured 334×112px; the result and share buttons measured 163×44px.
 - The kick started muted and showed the real attempt outcome separately from the arcade score.
 
+## Isolated API-backed browser smoke
+
+The feature branch was also served from a separate Next dev process, proxied to its Arcade FastAPI router and a temporary SQLite database. No Arcade API responses were intercepted. A one-row local coverage fixture exposed the NFL HQ tab; the other NFL research APIs were not mounted in this isolated smoke test.
+
+- [API-backed desktop kick result](real-api-desktop.png) and [API-backed mobile HQ archive](real-api-mobile.png).
+- The HQ cabinet listed 34 archived ESPN challenges and no live moments. Opening a 42-yard kick and submitting an attempt returned the server-calculated 961 score; the historical “Real attempt: made” outcome appeared separately after the arcade result.
+- The API round-trip created an anonymous claim, persisted a leaderboard result, and created and resolved a score-bound friend share in the temporary database.
+- The mobile document width remained 390px. There were no Arcade API errors or browser page errors. Other NFL research endpoints returned 404 because they were intentionally omitted from this isolated server.
+
 Mobile results are browser emulation. Physical-phone input parity, low-end performance, first-time player feedback, and a live source-correction pilot still need field validation.
