@@ -87,8 +87,9 @@ const result = (id: string, score = 1000) => ({
   real_game_outcome: null,
 })
 
-const jsonResponse = (body: unknown, ok = true) => ({
+const jsonResponse = (body: unknown, ok = true, status = ok ? 200 : 500) => ({
   ok,
+  status,
   json: async () => body,
 }) as Response
 
@@ -285,6 +286,35 @@ describe('FieldGoalArcade', () => {
     expect(JSON.stringify(gtag.mock.calls)).not.toContain('share-fixture')
     expect(screen.getByRole('link', { name: /arcade\/nfl\/field-goal\/practice-fg-35-v1/ }).getAttribute('href'))
       .toContain('/arcade/nfl/field-goal/practice-fg-35-v1?share=share-fixture')
+  })
+
+  it('tracks categorized score verification failures without identifiers', async () => {
+    const gtag = jest.fn()
+    window.gtag = gtag
+    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      if (url === '/api/arcade/session') return jsonResponse({ claim_token: 'x'.repeat(43) })
+      if (url === '/api/arcade/personal-bests') return jsonResponse({ challenge_bests: {}, training_bests: {} })
+      if (url.startsWith('/api/arcade/leaderboard?')) return jsonResponse({ entries: [] })
+      if (url === '/api/arcade/training') return jsonResponse(catalog)
+      if (url.startsWith('/api/arcade/challenges/')) return jsonResponse(challenge('practice-fg-35-v1', 35))
+      if (url === '/api/arcade/attempts') {
+        submitted.push(JSON.parse(String(init?.body)) as Record<string, unknown>)
+        return jsonResponse({ error: 'invalid input' }, false, 422)
+      }
+      return jsonResponse({ error: 'not found' }, false)
+    })
+
+    await renderGame({ challengeId: 'practice-fg-35-v1' })
+    await clickAndFlush(screen.getByRole('button', { name: /^kick$/i }))
+
+    expect(await screen.findByText(/couldn’t verify the kick/i)).toBeTruthy()
+    expect(gtag).toHaveBeenCalledWith('event', 'arcade_attempt_verification_failed', expect.objectContaining({
+      mode: 'practice_kick', source_state: 'available', reason: 'invalid_input',
+    }))
+    const analyticsPayloads = JSON.stringify(gtag.mock.calls)
+    expect(analyticsPayloads).not.toContain('practice-fg-35-v1')
+    expect(analyticsPayloads).not.toContain('test-attempt-')
   })
 
   it('runs the three fixed Aim Lab scenarios and awards only the published medal threshold', async () => {

@@ -1,8 +1,12 @@
 import Head from 'next/head'
 import Link from 'next/link'
+import { useEffect } from 'react'
 import ArchivedKickMoments from '../../../components/Arcade/ArchivedKickMoments'
+import { trackArcadeVisit } from '../../../lib/analytics'
 
 export default function NflArcadeLobby() {
+  useEffect(() => { trackArcadeVisit('lobby') }, [])
+
   return (
     <>
       <Head>

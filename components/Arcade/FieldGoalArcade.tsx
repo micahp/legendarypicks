@@ -3,7 +3,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import ArcadeLeaderboard from './ArcadeLeaderboard'
 import { getArcadeClaim } from './arcadeSession'
-import { trackEvent } from '../../lib/analytics'
+import { trackArcadeVisit, trackEvent } from '../../lib/analytics'
 
 type Challenge = {
   schema_version: string
@@ -140,6 +140,15 @@ function analyticsMode(challenge: Challenge, drill: Drill | null) {
   if (drill) return analyticsDrillName(drill.id)
   if (challenge.origin === 'fictional_practice') return 'practice_kick'
   return challenge.state === 'observed_live' ? 'live_challenge' : 'archived_challenge'
+}
+
+function attemptFailureReason(status: number) {
+  if (status === 401) return 'claim_rejected'
+  if (status === 409) return 'attempt_conflict'
+  if (status === 422) return 'invalid_input'
+  if (status === 429) return 'rate_limited'
+  if (status >= 500) return 'service_unavailable'
+  return 'request_rejected'
 }
 
 export function normalizeKickGesture({
@@ -564,6 +573,11 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
 
   useEffect(() => {
     if (!challenge) return
+    trackArcadeVisit(shareId ? 'shared_challenge' : drill ? 'training' : 'challenge')
+  }, [challenge, drill, shareId])
+
+  useEffect(() => {
+    if (!challenge) return
     let active = true
     getArcadeClaim().then(token => fetch('/api/arcade/personal-bests', {
       headers: { 'X-Arcade-Claim': token },
@@ -718,6 +732,7 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
     setPending(true)
     setAttemptError(null)
     setShareMessage('')
+    let failureReason = 'claim_unavailable'
     if (audioEnabled) {
       playSound.prepare()
       playSound.kick()
@@ -744,16 +759,22 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
       setTiming(payload.input.release_timing)
       setFlightPreview(previewFeedback(challenge, payload.input))
       const claim = await getArcadeClaim()
+      failureReason = 'network_error'
       const response = await fetch('/api/arcade/attempts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Arcade-Claim': claim },
         body: JSON.stringify(payload),
       })
-      if (!response.ok) throw new Error('Attempt could not be scored')
+      if (!response.ok) {
+        failureReason = attemptFailureReason(response.status)
+        throw new Error('Attempt could not be scored')
+      }
+      failureReason = 'invalid_server_response'
       const scored = await response.json() as AttemptResult
       if (scored.challenge_id !== challenge.challenge_id || scored.config_hash !== challenge.config_hash
         || scored.origin !== challenge.origin || !Number.isInteger(scored.score)
         || scored.score < 0 || scored.score > 1000) {
+        failureReason = 'response_mismatch'
         throw new Error('Arcade response did not match the frozen challenge')
       }
       setResult(scored)
@@ -883,6 +904,11 @@ export default function FieldGoalArcade({ challengeId, drillId, shareId }: Props
         }
       }
     } catch {
+      trackEvent('arcade_attempt_verification_failed', {
+        mode: analyticsMode(challenge, drill),
+        source_state: challenge.state,
+        reason: failureReason,
+      })
       setFlightPreview(null)
       setAttemptError('Couldn’t verify the kick right now. No score was recorded; try again.')
     } finally {
