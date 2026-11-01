@@ -132,6 +132,18 @@ export function shouldAdvanceCanonicalEvent(previous: PixelEvent | null, next: P
   return next.sequence > previous.sequence
 }
 
+export function canAnimateReplaySpotTransition(previous: PixelEvent | null, next: PixelEvent | null, isNextReplayStep = true): boolean {
+  if (!isNextReplayStep) return false
+  if (!previous || !next || previous.mode !== 'replay' || next.mode !== 'replay') return false
+  if (previous.period === null || next.period === null || previous.period !== next.period) return false
+  if (!previous.offense_team_id || previous.offense_team_id !== next.offense_team_id) return false
+  if (previous.sequence === null || next.sequence === null || next.sequence <= previous.sequence) return false
+  if (previous.confidence.field !== 'verified' || next.confidence.field !== 'verified') return false
+  const previousSpot = diagrammaticFieldX(previous.before.yardline_100)
+  const nextSpot = diagrammaticFieldX(next.before.yardline_100)
+  return previousSpot !== null && nextSpot !== null && previousSpot !== nextSpot
+}
+
 export function diagrammaticFieldX(yardline100: number | null) {
   if (yardline100 === null || !Number.isInteger(yardline100) || yardline100 < 0 || yardline100 > 100) return null
   return 100 - yardline100
@@ -157,13 +169,12 @@ function scoreValue(value: number | null | undefined) {
   return Number.isInteger(value) ? value : '—'
 }
 
-function Field({ event, teams }: { event: PixelEvent | null; teams?: FieldTeams }) {
+function Field({ event, teams, animateBall = false }: { event: PixelEvent | null; teams?: FieldTeams; animateBall?: boolean }) {
   const spot = event?.confidence.field === 'verified' ? event.before.yardline_100 : null
   const down = event?.before.down
   const distance = event?.before.yards_to_go
   const ball = fieldBallPosition(spot)
   const ballLeft = 10 + ball.xPercent * 0.8
-  const ballSvgX = 100 + ball.xPercent * 8
   const firstDownSpot = spot !== null && Number.isInteger(distance) && (distance as number) >= 0
     ? Math.max(0, spot - (distance as number))
     : null
@@ -225,7 +236,6 @@ function Field({ event, teams }: { event: PixelEvent | null; teams?: FieldTeams 
             </g>
           })}
           <line x1="500" y1="12" x2="500" y2="228" stroke="#f1d174" strokeWidth="4" opacity="0.75" />
-          {spot !== null && <line x1={ballSvgX} y1="12" x2={ballSvgX} y2="228" stroke="#64e6ef" strokeWidth="5" opacity="0.95" />}
           {firstDownLeft !== null && <line x1={100 + firstDownLeft * 8} y1="12" x2={100 + firstDownLeft * 8} y2="228"
             stroke="#ffd447" strokeWidth="5" opacity="0.98" />}
           <text x="50" y="120" transform="rotate(-90 50 120)" textAnchor="middle" dominantBaseline="central"
@@ -240,9 +250,10 @@ function Field({ event, teams }: { event: PixelEvent | null; teams?: FieldTeams 
             {offenseTeam ? 'OFFENSE → OPPONENT GOAL' : 'FIELD DIRECTION UNAVAILABLE'}
           </text>
         </svg>
+        {spot !== null && <span className={`lp-rz-line-of-scrimmage${animateBall ? ' is-animated' : ''}`} style={{ left: `${ballLeft}%` }} />}
         {spot !== null && <span className="lp-rz-line-label lp-rz-los-label" style={{ left: `${ballLeft}%` }}>LINE OF SCRIMMAGE</span>}
         {firstDownLeft !== null && <span className="lp-rz-line-label lp-rz-first-down-label" style={{ left: `${10 + firstDownLeft * 0.8}%` }}>FIRST DOWN</span>}
-        <svg className={`lp-rz-football${ball.sourceVerified ? '' : ' is-placeholder'}`} viewBox="0 0 56 34" aria-hidden="true"
+        <svg className={`lp-rz-football${ball.sourceVerified ? '' : ' is-placeholder'}${animateBall ? ' is-animated' : ''}`} viewBox="0 0 56 34" aria-hidden="true"
           style={{ left: `${ballLeft}%` }}>
           <path d="M4 17C9 3 47 3 52 17 47 31 9 31 4 17Z" fill="#995126" stroke="#1b1712" strokeWidth="3" />
           <path d="M5 17C11 5 45 5 51 17 45 29 11 29 5 17Z" fill="none" stroke="#fff0d3" strokeWidth="1.5" />
@@ -549,6 +560,8 @@ export default function PixelRedZonePlayer({ roomMode = false, viewMode, initial
 
   const events = payload?.events || []
   const event = events[index] || null
+  const previousEvent = index > 0 && lastIndexRef.current === index - 1 ? events[index - 1] || null : null
+  const animateReplaySpot = canAnimateReplaySpotTransition(previousEvent, event, lastIndexRef.current === index - 1)
   const beforeScore = event?.after.score || event?.before.score
   const homeScore = beforeScore?.home ?? payload?.game.score.home ?? null
   const awayScore = beforeScore?.away ?? payload?.game.score.away ?? null
@@ -726,7 +739,7 @@ export default function PixelRedZonePlayer({ roomMode = false, viewMode, initial
               <div><strong>{home?.abbreviation || 'HOME'}</strong><b>{scoreValue(homeScore)}</b></div>
             </div>
             <p className="lp-rz-replay-meta">{away?.name} at {home?.name} · {gameDate(payload.game.date)} · Frozen ESPN summary capture</p>
-            <Field event={event} teams={payload.game.teams} />
+            <Field event={event} teams={payload.game.teams} animateBall={animateReplaySpot} />
 
             <div className="lp-rz-event-panel">
               <div className="lp-rz-event-meta">

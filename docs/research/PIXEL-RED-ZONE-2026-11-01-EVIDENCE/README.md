@@ -12,4 +12,6 @@ The old football was a tiny CSS oval with a thick cream box shadow, which read a
 
 `interaction.webm` shows the room, opening the TV scoreboard, choosing the archived replay, stepping to that source play, and returning to the room. Replay mode and source captions remain visible throughout.
 
+`field-transition.webm` shows the historical field marker moving between two consecutive verified replay spots. The transition only runs when both events have verified positions, share a period and possession, and advance in source sequence. Live field positions do not animate. Reduced-motion preference disables the transition.
+
 The replay archive now contains eight compact, frozen ESPN game summaries generated from the checked-in source audit; every final score reconciles to the independent scoreboard snapshot, and all 1,464 play IDs are present and unique. Replay assets load lazily in the frontend, so playback does not depend on the replay API route being present in the separate running backend. The scoreboard view uses the existing NFL scoreboard endpoint. There were no live games during these captures, so they do not claim to verify live channel freshness or the live multi-game director. No app server or tunnel was started or restarted.

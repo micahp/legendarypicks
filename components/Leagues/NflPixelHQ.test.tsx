@@ -4,6 +4,7 @@ import {
   chooseScoreboardDirectorGame,
   diagrammaticFieldX,
   fieldBallPosition,
+  canAnimateReplaySpotTransition,
   latestCanonicalEvent,
   shouldAdvanceCanonicalEvent,
 } from './PixelRedZonePlayer'
@@ -83,6 +84,23 @@ describe('canonical live event ordering', () => {
     expect(shouldAdvanceCanonicalEvent(original, correction)).toBe(true)
     expect(shouldAdvanceCanonicalEvent(correction, original)).toBe(false)
     expect(shouldAdvanceCanonicalEvent(original, event('game:unknown', null))).toBe(false)
+  })
+})
+
+describe('historical field movement', () => {
+  const event = (sequence: number, spot: number | null, period = 1, offense = 'team-a') => ({
+    mode: 'replay', sequence, period, offense_team_id: offense,
+    confidence: { field: spot === null ? 'unavailable' : 'verified', score: 'verified' },
+    before: { yardline_100: spot },
+  }) as Parameters<typeof canAnimateReplaySpotTransition>[0]
+
+  it('animates only between consecutive verified spots in the same period and possession', () => {
+    expect(canAnimateReplaySpotTransition(event(10, 60), event(20, 42))).toBe(true)
+    expect(canAnimateReplaySpotTransition(event(10, 60), event(20, null))).toBe(false)
+    expect(canAnimateReplaySpotTransition(event(10, 60), event(20, 42, 2))).toBe(false)
+    expect(canAnimateReplaySpotTransition(event(10, 60), event(20, 42, 1, 'team-b'))).toBe(false)
+    expect(canAnimateReplaySpotTransition(event(20, 60), event(10, 42))).toBe(false)
+    expect(canAnimateReplaySpotTransition(event(10, 60), event(20, 42), false)).toBe(false)
   })
 })
 
