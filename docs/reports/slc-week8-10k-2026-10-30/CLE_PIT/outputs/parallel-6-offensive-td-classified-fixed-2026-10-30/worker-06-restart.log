@@ -1,0 +1,20 @@
+input preflight passed: database opened read-only; 3 input files and 0 input directories present
+input preflight passed: season 2026; database tables available; 5 decision Parquets; 32 manifest-pinned playbooks; 16 play-call frame score sources
+progress 100/1666; errors 0; elapsed 377s; ETA 5902s
+progress 200/1666; errors 0; elapsed 755s; ETA 5537s
+progress 300/1666; errors 0; elapsed 1128s; ETA 5137s
+progress 400/1666; errors 0; elapsed 1508s; ETA 4773s
+progress 500/1666; errors 0; elapsed 1886s; ETA 4398s
+progress 600/1666; errors 0; elapsed 2262s; ETA 4018s
+progress 700/1666; errors 0; elapsed 2640s; ETA 3644s
+progress 800/1666; errors 0; elapsed 3013s; ETA 3261s
+progress 900/1666; errors 0; elapsed 3400s; ETA 2894s
+progress 1000/1666; errors 0; elapsed 3784s; ETA 2520s
+progress 1100/1666; errors 0; elapsed 4168s; ETA 2145s
+progress 1200/1666; errors 0; elapsed 4566s; ETA 1773s
+progress 1300/1666; errors 0; elapsed 4944s; ETA 1392s
+progress 1400/1666; errors 0; elapsed 5339s; ETA 1014s
+progress 1500/1666; errors 0; elapsed 5711s; ETA 632s
+progress 1600/1666; errors 0; elapsed 6069s; ETA 250s
+wrote /root/slc-week8-missing-10k-2026-10-29/artifacts/CLE_PIT/parallel-6-offensive-td-classified-fixed-2026-10-30/worker-06.json: 1642/1666 valid games, 3 regulation ties, 21 blocked before regulation
+baseline_v1=unavailable reference_sha256=9eb5a02ae7be4b016eb3c1220cffd9ce820336247ad8a2213dfdbc2bbb8cbef4
