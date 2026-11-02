@@ -1,0 +1,9 @@
+claim,value_2026_wk1_7,numerator,denominator,note
+DAL run attempts per game (claimed 22.86),23.0,161,7,"runs per REG game, weeks 1-7"
+"J.Williams carries per game, DAL (claimed 15.71)",15.71,110,7,carries per REG game
+"J.Williams carry share, DAL (claimed 68.7%)",0.6832,110,161,carries / team run plays
+"M.Wilson targets per game, ARI (claimed 9.43 for Michael Wilson)",0.0,0,7,targets per REG game
+"M.Wilson target share, ARI (claimed 23.3%)",0.0,0,272,targets / team targets
+"Mi.Wilson targets per game, ARI (claimed 9.43 for Michael Wilson)",9.43,66,7,targets per REG game
+"Mi.Wilson target share, ARI (claimed 23.3%)",0.2426,66,272,targets / team targets
+"ARI team targets, wks1-7",272.0,,,context
