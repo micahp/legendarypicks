@@ -11,8 +11,10 @@ import unittest
 
 import playbook_prior as pp
 
-BUILD_DIR = os.environ.get("HISTORICAL_PLAYBOOK_DIR", "/root/gridiron-playbook-builds/historical-2022-2024")
-PINNED_SUMS_SHA256 = "0ade84bc70f0984c088a67eb128fc487a1cccb1d473e5e5fa36099649d5ee5bc"
+BUILD_DIR = os.environ.get("HISTORICAL_PLAYBOOK_DIR", "/root/gridiron-playbook-builds/historical-2022-2024-v2")
+PINNED_SUMS_SHA256 = "99513e2feab7ba8dd66573f8a0d4c07c37424eba574f689c4954a70b44ea52d5"
+V1_BUILD_DIR = "/root/gridiron-playbook-builds/historical-2022-2024"
+V1_PINNED_SUMS_SHA256 = "0ade84bc70f0984c088a67eb128fc487a1cccb1d473e5e5fa36099649d5ee5bc"
 CUTOFFS = (2023, 2024, 2025)
 
 
@@ -53,6 +55,12 @@ def recount(season):
 class HistoricalPlaybookPrior(unittest.TestCase):
     def test_build_is_the_pinned_manifest(self):
         self.assertEqual(sha256(os.path.join(BUILD_DIR, "SHA256SUMS.txt")), PINNED_SUMS_SHA256)
+
+    def test_original_v1_build_manifest_is_unchanged(self):
+        path = os.path.join(V1_BUILD_DIR, "SHA256SUMS.txt")
+        if not os.path.isfile(path):
+            self.skipTest(f"original build not found: {path}")
+        self.assertEqual(sha256(path), V1_PINNED_SUMS_SHA256)
 
     def test_loader_is_deterministic_and_season_correct(self):
         for cutoff in CUTOFFS:
