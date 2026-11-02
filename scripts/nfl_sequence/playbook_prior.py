@@ -51,5 +51,6 @@ def load(cutoff, playbook_dir=PLAYBOOKS):
         raise ValueError(f'no playbook files for {season} in {playbook_dir}: the playbook input needs the season before the cutoff')
     rows = []
     for path in paths:
-        rows.extend(rows_of(json.load(open(path)), season))
+        with open(path) as stream:
+            rows.extend(rows_of(json.load(stream), season))
     return dl.fit(rows, prior_season=season)
