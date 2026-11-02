@@ -1,0 +1,216 @@
+{
+ "games": [
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [
+    "nfl-v1 half_life=6 cap=21.0 prior_games=4 prior_shrink=0.3333 sigma=13.4"
+   ],
+   "first_pre_kickoff_capture_utc": "2026-10-11T21:46:48.853288Z",
+   "game_id": "2026_05_BAL_ATL",
+   "kickoff_utc": "2026-10-12T00:20:00Z",
+   "slc_locked_before_capture": false,
+   "week": 5
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [
+    "nfl-v1 half_life=6 cap=21.0 prior_games=4 prior_shrink=0.3333 sigma=13.4"
+   ],
+   "first_pre_kickoff_capture_utc": "2026-10-11T21:46:48.853288Z",
+   "game_id": "2026_05_BUF_LA",
+   "kickoff_utc": "2026-10-13T00:15:00Z",
+   "slc_locked_before_capture": false,
+   "week": 5
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_06_WAS_SF",
+   "kickoff_utc": "2026-10-20T00:15:00Z",
+   "slc_locked_before_capture": false,
+   "week": 6
+  },
+  {
+   "capture_sources": [
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:20.651709Z",
+   "game_id": "2026_07_CIN_BAL",
+   "kickoff_utc": "2026-10-25T17:00:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_07_CLE_TEN",
+   "kickoff_utc": "2026-10-25T17:00:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:20.651709Z",
+   "game_id": "2026_07_DAL_PHI",
+   "kickoff_utc": "2026-10-27T00:15:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_07_DEN_ARI",
+   "kickoff_utc": "2026-10-25T20:05:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:20.651709Z",
+   "game_id": "2026_07_GB_DET",
+   "kickoff_utc": "2026-10-25T20:25:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_07_IND_MIN",
+   "kickoff_utc": "2026-10-25T17:00:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_07_KC_SEA",
+   "kickoff_utc": "2026-10-26T00:20:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_07_LA_LV",
+   "kickoff_utc": "2026-10-25T20:25:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_07_MIA_NYJ",
+   "kickoff_utc": "2026-10-25T17:00:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_07_NE_CHI",
+   "kickoff_utc": "2026-10-23T00:15:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_07_NYG_HOU",
+   "kickoff_utc": "2026-10-25T17:00:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_07_PIT_NO",
+   "kickoff_utc": "2026-10-25T13:30:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:20.651709Z",
+   "game_id": "2026_07_SF_ATL",
+   "kickoff_utc": "2026-10-25T17:00:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  },
+  {
+   "capture_sources": [
+    "bovada",
+    "theoddsapi:draftkings"
+   ],
+   "existing_locked_models_before_capture": [],
+   "first_pre_kickoff_capture_utc": "2026-10-19T23:36:17.315481Z",
+   "game_id": "2026_07_TB_CAR",
+   "kickoff_utc": "2026-10-25T17:00:00Z",
+   "slc_locked_before_capture": false,
+   "week": 7
+  }
+ ],
+ "summary": {
+  "cohort_games": 17,
+  "games_in_schedule_weeks_5_7": 43,
+  "nflverse_rows_before_kickoff_supporting_only": 28,
+  "note": "the cohort uses live captures only (Bovada, The Odds API). nflverse rows carry ingest times, and the values they hold may have changed after the pull, so they support but do not define the cohort",
+  "with_existing_locked_model_before_capture": 2,
+  "with_slc_locked_before_capture": 0
+ }
+}
