@@ -1,0 +1,145 @@
+{
+  "spec": "PBV1-SAMPLER-SPEC-2026-11-02.md section 4, retrospective fold, RB-only target (owner authorization 2026-11-02)",
+  "scored_once": true,
+  "fit_seasons": [
+    2022,
+    2023,
+    2024
+  ],
+  "score_season": 2025,
+  "K": 20,
+  "target": "package_rb",
+  "bootstrap": {
+    "draws": 10000,
+    "seed": 20261102,
+    "unit": "game"
+  },
+  "scrimmage_regular_season_plays": 133262,
+  "excluded": {
+    "not_regular_season": 6536
+  },
+  "fold": {
+    "fold": "retro_2025",
+    "role": "previously exposed retrospective",
+    "K": 20,
+    "target": "package_rb",
+    "test_plays": 32657,
+    "comparable_plays": 32620,
+    "games": 272,
+    "unsupported": {
+      "sampler": {
+        "count": 6,
+        "rate": 0.00018
+      },
+      "b0": {
+        "count": 0,
+        "rate": 0.0
+      },
+      "b1": {
+        "count": 37,
+        "rate": 0.00113
+      }
+    },
+    "mean_log_likelihood": {
+      "sampler": -0.99531,
+      "b0": -1.04414,
+      "b1": -0.99545
+    },
+    "sampler_minus_b0": {
+      "diff": 0.04882,
+      "ci95": [
+        0.04279,
+        0.05453
+      ]
+    },
+    "sampler_minus_b1": {
+      "diff": 0.00014,
+      "ci95": [
+        -8e-05,
+        0.00038
+      ]
+    },
+    "package_total_variation": 0.05842,
+    "zero_training_package_rate": 0.0,
+    "team_game_plays_mean_by_season": {
+      "2022": 61.98,
+      "2023": 62.06,
+      "2024": 61.12,
+      "2025": 60.03
+    },
+    "package_predicted_vs_observed": {
+      "00": [
+        0.00032,
+        6e-05
+      ],
+      "01": [
+        0.00912,
+        0.00919
+      ],
+      "02": [
+        0.00366,
+        0.00303
+      ],
+      "03": [
+        0.00068,
+        0.00083
+      ],
+      "04": [
+        2e-05,
+        0.0
+      ],
+      "10": [
+        0.01124,
+        0.01289
+      ],
+      "11": [
+        0.66045,
+        0.63196
+      ],
+      "12": [
+        0.22219,
+        0.26492
+      ],
+      "13": [
+        0.03773,
+        0.05155
+      ],
+      "14": [
+        0.00042,
+        0.00018
+      ],
+      "20": [
+        0.00255,
+        0.00184
+      ],
+      "21": [
+        0.039,
+        0.01997
+      ],
+      "22": [
+        0.01162,
+        0.0034
+      ],
+      "23": [
+        0.00081,
+        0.00018
+      ],
+      "30": [
+        1e-05,
+        0.0
+      ],
+      "31": [
+        0.00013,
+        0.0
+      ],
+      "32": [
+        3e-05,
+        0.0
+      ],
+      "40": [
+        2e-05,
+        0.0
+      ]
+    }
+  }
+}
