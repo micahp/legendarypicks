@@ -1,0 +1,124 @@
+{
+ "K": 20.0,
+ "bootstrap_draws": 10000,
+ "equivalence_to_production_frame": {
+  "db_frame_sha256": "86e9b92aaa295f8cb25dc6dad8343f4eb37ea06131ad260be161f353ebdeb202",
+  "multiset_equal": true,
+  "rows_db": 67488,
+  "rows_raw": 67488,
+  "symmetric_difference_rows": 0
+ },
+ "fold": "A",
+ "gate_rule": "A2 advances only if A0 log loss minus A2 log loss >= 0.001, the paired 95% CI for A2 minus A0 excludes 0, and A2 Brier minus A0 Brier <= 0.001. A0 penalties were chosen by validating on 2023, so 2023 is not an independent validation for A0.",
+ "penalties": {
+  "clock": 0.3,
+  "down_dist": 0.3,
+  "down_field": 30.0,
+  "field": 3.0,
+  "score": 300.0,
+  "score_clock": 3.0,
+  "season": 3.0,
+  "team_down": 30.0
+ },
+ "primary": {
+  "A2_minus_A0": {
+   "brier": 0.007533693473272945,
+   "brier_ci95": [
+    0.006331156868273324,
+    0.008725073501404232
+   ],
+   "log_loss": 0.016642532981106798,
+   "log_loss_ci95": [
+    0.01369409583427681,
+    0.01960747887030572
+   ]
+  },
+  "fit_iterations": 145,
+  "gate_passed": false,
+  "label": "primary_freeze_labels_pass_is_dropback",
+  "summary": {
+   "A0_control_score_clock_logistic": {
+    "brier": 0.2004134504582371,
+    "calibration_error": 0.013663493887497661,
+    "log_loss": 0.5852041709306858,
+    "plays": 33836
+   },
+   "A2_situation_cell_K20": {
+    "brier": 0.20794714393151006,
+    "calibration_error": 0.01205510958420665,
+    "log_loss": 0.6018467039117926,
+    "plays": 33836
+   },
+   "baseline_cell24": {
+    "brier": 0.2172577616153208,
+    "calibration_error": 0.011063427163613712,
+    "log_loss": 0.621726746473475,
+    "plays": 33836
+   },
+   "baseline_league_rate": {
+    "brier": 0.2434959088106079,
+    "calibration_error": 0.007313083727696457,
+    "log_loss": 0.6800835905613865,
+    "plays": 33836
+   }
+  },
+  "train_plays": 33652,
+  "validate_games": 272,
+  "validate_plays": 33836
+ },
+ "recency_tau": 3.0,
+ "reference_season": 2023,
+ "seed": 20261102,
+ "sensitivity": {
+  "A2_minus_A0": {
+   "brier": 0.008018767859385139,
+   "brier_ci95": [
+    0.0067941058422884976,
+    0.009235075229395692
+   ],
+   "log_loss": 0.01864160281755418,
+   "log_loss_ci95": [
+    0.015525203736209183,
+    0.021818163284155447
+   ]
+  },
+  "fit_iterations": 174,
+  "gate_passed": false,
+  "label": "sensitivity_production_intent_scramble_is_dropback",
+  "summary": {
+   "A0_control_score_clock_logistic": {
+    "brier": 0.18906314266833385,
+    "calibration_error": 0.012877459346859004,
+    "log_loss": 0.5539831359500518,
+    "plays": 33836
+   },
+   "A2_situation_cell_K20": {
+    "brier": 0.19708191052771895,
+    "calibration_error": 0.016057883261767384,
+    "log_loss": 0.572624738767606,
+    "plays": 33836
+   },
+   "baseline_cell24": {
+    "brier": 0.20754695222070965,
+    "calibration_error": 0.01404265828161028,
+    "log_loss": 0.5962240677238801,
+    "plays": 33836
+   },
+   "baseline_league_rate": {
+    "brier": 0.23767387521527256,
+    "calibration_error": 0.011008901959567052,
+    "log_loss": 0.6682951423425466,
+    "plays": 33836
+   }
+  },
+  "train_plays": 33652,
+  "validate_games": 272,
+  "validate_plays": 33836
+ },
+ "train": [
+  2022
+ ],
+ "validate": [
+  2023
+ ]
+}
