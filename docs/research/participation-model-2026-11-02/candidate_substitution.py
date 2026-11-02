@@ -222,14 +222,16 @@ def variant_field(base, table, stint_swap, drive_split, table_name):
     return CandidateField(data, f'{table_name}|stint_swap={stint_swap}|drive_split={drive_split}')
 
 
-def simulate(field, seqs, rosters, cls_of, play_drive, seed, stint_swap, drive_split, joint, mode):
+def simulate(field, seqs, rosters, cls_of, play_drive, seed, stint_swap, drive_split, joint, mode,
+             roster_for_key=None):
     """forced: the observed grouping on each snap, the lineup simulated. free: the grouping is drawn from the field too.
-    The draws follow validate_lineups.simulate, so the B0 variant reproduces the runtime numbers exactly."""
+    The draws follow validate_lineups.simulate, so the B0 variant reproduces the runtime numbers exactly.
+    roster_for_key, when given, replaces each team's full-season bench with the roster for that game."""
     out, dropped = {}, 0
     for key, seq in sorted(seqs.items()):
         _season, _game, team = key
         draw = random.Random(f'{key}|{mode}|{seed}')
-        roster = rosters[team]
+        roster = roster_for_key[key] if roster_for_key is not None else rosters[team]
         lineup, prev, snaps = {}, pf.START, []
         drives = play_drive[key]
         for i, (group_obs, cell, _skill) in enumerate(seq):
