@@ -1,0 +1,48 @@
+{
+  "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+  "pinned_inputs": {
+    "archived_boxscore_sha256": "e3880c6ce3f3b71a1a5322028dc2b62f8d932a65503dfdff7d628ecf6aa3747a",
+    "database_sha256": "feb5179f1c6c2f8cd2265a25ff68f3552d6e68bbba00354e0688f22505aa028f",
+    "playcall_artifact_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+    "snapshot_sha256": "476715b5a0f94cac919638b9666b571945cb847b3a6f4e6977b79ae0a36531b1",
+    "streak_file_sha256": "4d3e0d712134396ea91d1d9d8bca11ce9d6089674d9d6e2360696f44e311af5c"
+  },
+  "replay_boxscore_sha256": "e3880c6ce3f3b71a1a5322028dc2b62f8d932a65503dfdff7d628ecf6aa3747a",
+  "replay_output_sha256": "b49e9bfb9355a3d18b2401799448b3bcfe718a35296d8f05d32cb44018f4d21d",
+  "reproduction_command": "python3 /tmp/min-det-stageb/replay_slc_seed_batch.py --source-root /root/legendarypicks-slc-research-24d8b301 --run-header /tmp/min-det-stageb/run-header.json --seed-list /tmp/slc-replay-traces/reproduction-selections/seed-2823.json --out-dir /tmp/slc-replay-traces/reproduction-2823",
+  "run_id": "research-8b7d5a2e-2026-10-31",
+  "schema": "lp.nfl.slc-seed-replay-manifest.v1",
+  "seed": 2823,
+  "source_commit": "8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f",
+  "source_worktree_dirty": false,
+  "trace": {
+    "complete_regulation": true,
+    "drive_count": 23,
+    "play_count": 143,
+    "unsupported_rules": [],
+    "valid_full_game": true
+  },
+  "validation": {
+    "archived_boxscore_equal": true,
+    "essential_participants_available": true,
+    "findings": [
+      "empty_drive_sequence:21",
+      "empty_drive_sequence:22",
+      "empty_drive_sequence:23",
+      "gridiron_contract_incompatible",
+      "incomplete_play_sequence",
+      "record.final_quarter must be an integer from 1 to 4",
+      "score_only_overtime",
+      "unsupported_sequence"
+    ],
+    "full_game_flag_equal": true,
+    "gridiron_adapter_passed": false,
+    "replay_equivalence_mismatches": [],
+    "score_equal": true,
+    "seed": 2823,
+    "status": "rejected",
+    "status_equal": true,
+    "trace_drive_count": 23,
+    "trace_play_count": 143
+  }
+}

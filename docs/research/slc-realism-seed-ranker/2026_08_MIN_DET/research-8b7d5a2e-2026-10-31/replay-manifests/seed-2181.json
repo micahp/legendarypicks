@@ -1,0 +1,39 @@
+{
+  "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+  "pinned_inputs": {
+    "archived_boxscore_sha256": "2b5079a2fc216faef49dc6db5e26c7955a7c515bcab8c3f093e6ec2d470e6880",
+    "database_sha256": "feb5179f1c6c2f8cd2265a25ff68f3552d6e68bbba00354e0688f22505aa028f",
+    "playcall_artifact_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+    "snapshot_sha256": "476715b5a0f94cac919638b9666b571945cb847b3a6f4e6977b79ae0a36531b1",
+    "streak_file_sha256": "4d3e0d712134396ea91d1d9d8bca11ce9d6089674d9d6e2360696f44e311af5c"
+  },
+  "replay_boxscore_sha256": "2b5079a2fc216faef49dc6db5e26c7955a7c515bcab8c3f093e6ec2d470e6880",
+  "replay_output_sha256": "43fd89ec4e1cbcac4d8b54ae6afd24a9731638a365adc3e350fb04fcdf155188",
+  "reproduction_command": "python3 /tmp/min-det-stageb/replay_slc_seed_batch.py --source-root /root/legendarypicks-slc-research-24d8b301 --run-header /tmp/min-det-stageb/run-header.json --seed-list /tmp/slc-replay-traces/reproduction-selections/seed-2181.json --out-dir /tmp/slc-replay-traces/reproduction-2181",
+  "run_id": "research-8b7d5a2e-2026-10-31",
+  "schema": "lp.nfl.slc-seed-replay-manifest.v1",
+  "seed": 2181,
+  "source_commit": "8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f",
+  "source_worktree_dirty": false,
+  "trace": {
+    "complete_regulation": true,
+    "drive_count": 18,
+    "play_count": 131,
+    "unsupported_rules": [],
+    "valid_full_game": true
+  },
+  "validation": {
+    "archived_boxscore_equal": true,
+    "essential_participants_available": true,
+    "findings": [],
+    "full_game_flag_equal": true,
+    "gridiron_adapter_passed": true,
+    "replay_equivalence_mismatches": [],
+    "score_equal": true,
+    "seed": 2181,
+    "status": "passed",
+    "status_equal": true,
+    "trace_drive_count": 18,
+    "trace_play_count": 131
+  }
+}

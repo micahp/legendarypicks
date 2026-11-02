@@ -1,0 +1,253 @@
+{
+  "analysis_source": {
+    "analysis_files_sha256": {
+      "scripts/nfl_sequence/build_slc_realism_inputs.py": "4e7c6619a997e3b32ee198e3719f091ecb13ff2b6dc57435c9842dbe78623989",
+      "scripts/nfl_sequence/replay_slc_seed_set.py": "be8df4ff23debe74b9c0d6c484278ce792e8442b86fc0660241529a1452f46de",
+      "scripts/nfl_sequence/run_slc_realism_ranking.py": "b7a4dbd5527fca9095d260b55fe46e4397d5444eb4c508e0f5a2d4d26e3cf736",
+      "scripts/nfl_sequence/slc_realism_ranker.py": "3f6ad7e46999df93765aab863bffd4dd6ede5ace1415683a5559344395977c27",
+      "scripts/nfl_sequence/validate_slc_seed_replays.py": "e74d2d9be8e86c9b1e94b0849d0d6ba92460109ebf58dc6403f9c54616804f01"
+    },
+    "base_commit": "f2d40686fe7249d03b668f0d12fd661c2caf5e72",
+    "branch": "research/min-det-realism-seed-ranker-2026-11-01",
+    "worktree_dirty": true
+  },
+  "calibration_workers": 4,
+  "candidate_distance_backend": {
+    "name": "numpy",
+    "version": "2.5.4"
+  },
+  "claim_limit": "Historical typicality score ranks resemblance; it is not a probability forecast or the likelihood of an exact future game.",
+  "component_score_distributions": {
+    "decisions": {
+      "max": 99.816007,
+      "mean": 31.2758049738,
+      "median": 23.367065,
+      "min": 0.0,
+      "n": 10000,
+      "p10": 2.667893,
+      "p90": 73.965041
+    },
+    "drives": {
+      "max": 97.976081,
+      "mean": 31.4536706471,
+      "median": 26.218951,
+      "min": 0.0,
+      "n": 10000,
+      "p10": 3.771849,
+      "p90": 68.905244
+    },
+    "game": {
+      "max": 98.620055,
+      "mean": 40.609944802,
+      "median": 39.282429,
+      "min": 0.0,
+      "n": 10000,
+      "p10": 10.579577,
+      "p90": 73.229071
+    },
+    "workloads": {
+      "max": 91.812328,
+      "mean": 3.321711105,
+      "median": 1.01196,
+      "min": 0.0,
+      "n": 10000,
+      "p10": 0.091996,
+      "p90": 6.99172
+    }
+  },
+  "historical_games": 1087,
+  "historical_heldout_validation": {
+    "decisions": {
+      "heldout_distance_distribution": {
+        "max": 1.7025227479990361,
+        "mean": 1.013408834999331,
+        "median": 0.9948895583047181,
+        "min": 0.7633615711533421,
+        "n": 1087,
+        "p10": 0.881021281216777,
+        "p90": 1.167079021425873
+      },
+      "heldout_distances_by_season": {
+        "2022": {
+          "median_distance": 1.0117200072577865,
+          "n": 271,
+          "p90_distance": 1.1947089874468149
+        },
+        "2023": {
+          "median_distance": 0.9827795483435868,
+          "n": 272,
+          "p90_distance": 1.120016909067427
+        },
+        "2024": {
+          "median_distance": 0.9939251981247894,
+          "n": 272,
+          "p90_distance": 1.1481417128539684
+        },
+        "2025": {
+          "median_distance": 0.995053020337338,
+          "n": 272,
+          "p90_distance": 1.1809199789338336
+        }
+      }
+    },
+    "drives": {
+      "heldout_distance_distribution": {
+        "max": 1.6769040521176357,
+        "mean": 0.8201027036363003,
+        "median": 0.7949155398388364,
+        "min": 0.5623785340911498,
+        "n": 1087,
+        "p10": 0.6763056112441183,
+        "p90": 0.9872837979878574
+      },
+      "heldout_distances_by_season": {
+        "2022": {
+          "median_distance": 0.7772858557999891,
+          "n": 271,
+          "p90_distance": 0.9582872367715533
+        },
+        "2023": {
+          "median_distance": 0.7968292418281075,
+          "n": 272,
+          "p90_distance": 0.9752135049805436
+        },
+        "2024": {
+          "median_distance": 0.781202344989387,
+          "n": 272,
+          "p90_distance": 0.9792141945025137
+        },
+        "2025": {
+          "median_distance": 0.8160429355308763,
+          "n": 272,
+          "p90_distance": 1.0391864553330041
+        }
+      }
+    },
+    "game": {
+      "heldout_distance_distribution": {
+        "max": 2.200837316352296,
+        "mean": 0.9077150935489918,
+        "median": 0.8714885935607284,
+        "min": 0.579011851815383,
+        "n": 1087,
+        "p10": 0.717424290214869,
+        "p90": 1.137431919565004
+      },
+      "heldout_distances_by_season": {
+        "2022": {
+          "median_distance": 0.8522897482896163,
+          "n": 271,
+          "p90_distance": 1.1024988996183127
+        },
+        "2023": {
+          "median_distance": 0.8676746403706819,
+          "n": 272,
+          "p90_distance": 1.0950702401674188
+        },
+        "2024": {
+          "median_distance": 0.8645191293330227,
+          "n": 272,
+          "p90_distance": 1.1622236559372934
+        },
+        "2025": {
+          "median_distance": 0.9028989568730534,
+          "n": 272,
+          "p90_distance": 1.1590816816669465
+        }
+      }
+    },
+    "workloads": {
+      "heldout_distance_distribution": {
+        "max": 2.0849960683527877,
+        "mean": 0.9249274813424094,
+        "median": 0.8928419209222094,
+        "min": 0.640010755165573,
+        "n": 1087,
+        "p10": 0.7490392534252713,
+        "p90": 1.1283600903135886
+      },
+      "heldout_distances_by_season": {
+        "2022": {
+          "median_distance": 0.9193385994163359,
+          "n": 271,
+          "p90_distance": 1.1442300579843128
+        },
+        "2023": {
+          "median_distance": 0.8823805339335686,
+          "n": 272,
+          "p90_distance": 1.1269034049238902
+        },
+        "2024": {
+          "median_distance": 0.8824426814963042,
+          "n": 272,
+          "p90_distance": 1.1196575549921914
+        },
+        "2025": {
+          "median_distance": 0.8856307663662206,
+          "n": 272,
+          "p90_distance": 1.112237238997748
+        }
+      }
+    }
+  },
+  "historical_score_proxy": "Historical PBP snapshot lacks authoritative schedule scores and try results; game score features are a labelled proxy.",
+  "nearest_neighbors": 20,
+  "ranking_workers": 4,
+  "renderable_before_replay": 0,
+  "schema": "lp.nfl.slc-realism-ranking-validation.v1",
+  "scoreable_seeds": 10000,
+  "seeds": 10000,
+  "team_conditioning": "Nearest neighbors are league-wide with same-team and exact-pair cohorts shrunk by cohort size.",
+  "weight_sensitivity": {
+    "decisions_heavier": {
+      "spearman_vs_default": 0.986001,
+      "top_n": 150,
+      "top_n_overlap": 129,
+      "weights": {
+        "decisions": 0.35,
+        "drives": 0.25,
+        "game": 0.2,
+        "workloads": 0.2
+      }
+    },
+    "drives_heavier": {
+      "spearman_vs_default": 0.987561,
+      "top_n": 150,
+      "top_n_overlap": 128,
+      "weights": {
+        "decisions": 0.2,
+        "drives": 0.4,
+        "game": 0.2,
+        "workloads": 0.2
+      }
+    },
+    "game_heavier": {
+      "spearman_vs_default": 0.960704,
+      "top_n": 150,
+      "top_n_overlap": 114,
+      "weights": {
+        "decisions": 0.2,
+        "drives": 0.25,
+        "game": 0.35,
+        "workloads": 0.2
+      }
+    },
+    "workloads_heavier": {
+      "spearman_vs_default": 0.99581,
+      "top_n": 150,
+      "top_n_overlap": 126,
+      "weights": {
+        "decisions": 0.2,
+        "drives": 0.25,
+        "game": 0.2,
+        "workloads": 0.35
+      }
+    }
+  },
+  "weights": {
+    "decisions": 0.25,
+    "drives": 0.3,
+    "game": 0.2,
+    "workloads": 0.25
+  }
+}

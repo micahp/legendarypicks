@@ -1,0 +1,1090 @@
+{
+  "schema": "gridiron.lp.slc-seed-contract-audit.v1",
+  "audited": 150,
+  "passed": 134,
+  "rejected": 16,
+  "seeds": [
+    {
+      "seed": 1014,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 1052,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1081,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1095,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1194,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1209,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1377,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1422,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1558,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1562,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1579,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 16,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1734,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1759,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1784,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1801,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1861,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1865,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 188,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1925,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 1937,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2027,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 2049,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 210,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2181,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2191,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2362,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2403,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2411,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 260,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2679,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2757,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2823,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 2849,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2931,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2944,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 2948,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 3139,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 3145,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 3215,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 3397,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 3477,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 3497,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 360,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 3801,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 3864,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 3924,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 3952,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4019,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4060,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4071,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4248,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4279,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4282,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4348,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4493,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 4558,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4642,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4684,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4690,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4751,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4878,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4947,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 4953,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 5053,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 5155,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 5164,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 5473,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 552,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 5704,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 5714,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 5721,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 5838,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 5844,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 5867,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 5881,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 5922,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 6045,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 6078,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 6256,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 6486,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 6565,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 6644,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 6713,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 6744,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 6745,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 6790,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 6993,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7011,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7103,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7139,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7212,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7243,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7272,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7275,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7404,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7477,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7541,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7571,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7580,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7606,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 765,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7660,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7664,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7695,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7708,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7752,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7784,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7805,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7825,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7865,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 7870,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7873,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 789,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 7982,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8014,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8018,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8104,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8116,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8125,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8211,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8222,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8277,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8327,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 8443,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8478,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8596,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8597,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8739,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8882,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 8971,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9011,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9032,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9037,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9163,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9170,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9379,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9503,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9522,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9572,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9585,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9589,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9622,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9632,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9694,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9711,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9800,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9857,
+      "passed": false,
+      "validation_passed": false,
+      "shared_v1_conforms": false,
+      "findings": [
+        "record.final_quarter must be an integer from 1 to 4"
+      ]
+    },
+    {
+      "seed": 9927,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    },
+    {
+      "seed": 9961,
+      "passed": true,
+      "validation_passed": true,
+      "shared_v1_conforms": false,
+      "findings": []
+    }
+  ]
+}
