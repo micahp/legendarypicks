@@ -1,0 +1,77 @@
+{
+  "boxscore_sidecar_sha256": {
+    "worker-01.boxscores.jsonl": "b835e0dd802348ac5e28da380304c904cef6d532a2809dd4a600492f0d8b957a",
+    "worker-02.boxscores.jsonl": "23252b5dbcbba5e53bc0b7ac370872861e376430ac6ae6a7dd2f5eeeefe1f7ea",
+    "worker-03.boxscores.jsonl": "18d847e0206518e28718e041df9285e2574a648c2a920568a034a65b5d3b689f",
+    "worker-04.boxscores.jsonl": "bc590634e575daa92c8e3c85a6358f2b465d01bcd96cf8cb2fe6746743c1b5e5",
+    "worker-05.boxscores.jsonl": "8a968f4b91cc4e8e3f9aec6250c78d085ab896a6d9410a1389fbcf743797dab0",
+    "worker-06.boxscores.jsonl": "76835c18f3f3f79e6088582575bf8a3600199099965e5bbc10b4191103848c34"
+  },
+  "drive_csv_sha256": "59ce438065003aef2b8f5b0c3a944a216f1cd692bd7098a7370d52287f8776bc",
+  "historical_database_sha256": "896bad9a8dfc9e485aef7fc7e4db3b3988d4d0a1a2cde3e528378d32379d512e",
+  "historical_game_count": 1087,
+  "historical_score_limit": "Historical PBP snapshot lacks authoritative schedule scores and try results; game score features are a labelled proxy.",
+  "historical_seasons": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "historical_source_manifest_pin_sha256": "4a1a5f413cbca4c629f95111127ac066c77b74d70bf19a5a4563eeba7025b222",
+  "historical_source_manifest_sha256": "e76edc7447899b6680822b1025b102f53be9af50f50e8b95be6c78c32d5cdb47",
+  "run": "research-8b7d5a2e-2026-10-31",
+  "run_configuration": {
+    "blocker_fixes": [
+      "run_scramble_backoff",
+      "long_field_goal_feasibility",
+      "blocked_kick_source_audit",
+      "blocked_kick_geometry",
+      "safety_free_kick_boundaries"
+    ],
+    "database_path": "/root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite",
+    "database_sha256": "feb5179f1c6c2f8cd2265a25ff68f3552d6e68bbba00354e0688f22505aa028f",
+    "field_goal_ordinary_cutoff_yards": 60.0,
+    "playcall_artifact_path": "/root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+    "playcall_artifact_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+    "profile": "v1_full_stack",
+    "run_id": "research-8b7d5a2e-2026-10-31",
+    "snapshot_path": "/root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json",
+    "snapshot_sha256": "476715b5a0f94cac919638b9666b571945cb847b3a6f4e6977b79ae0a36531b1",
+    "source_commit": "8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f",
+    "streak_file_path": "/root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json",
+    "streak_file_sha256": "4d3e0d712134396ea91d1d9d8bca11ce9d6089674d9d6e2360696f44e311af5c"
+  },
+  "run_header_sha256": "4da63b1404efc28ec257f0811a8b81587088fe39218e90d4726af3823f4d9299",
+  "run_worker_input_hashes": {
+    "worker-01.boxscores.jsonl": "b835e0dd802348ac5e28da380304c904cef6d532a2809dd4a600492f0d8b957a",
+    "worker-01.json": "85527751b5ef95a6a3286c8341fe0f0b7b5cee04bc6a8b4a59d414b01c38d221",
+    "worker-01.seeds.jsonl": "435b9a223dd7e6d9103bf1c3a7482bd9fbc5433cbb17bcaa66bc90e646c493a3",
+    "worker-02.boxscores.jsonl": "23252b5dbcbba5e53bc0b7ac370872861e376430ac6ae6a7dd2f5eeeefe1f7ea",
+    "worker-02.json": "139a956d0c3ed2be35f2e48153d34499a43b9f1ead36a6ee7266699b237b5463",
+    "worker-02.seeds.jsonl": "d49135f1ac87db4975b5c328b1d0671b09e064b0e87ed1dbebb2a3341748cd9b",
+    "worker-03.boxscores.jsonl": "18d847e0206518e28718e041df9285e2574a648c2a920568a034a65b5d3b689f",
+    "worker-03.json": "12ac26a464816ba8c0e4184d6269db995d634f444761b8ca42f90ec8c0430ef0",
+    "worker-03.seeds.jsonl": "cae4fcbf36cf8d77d1ee7d4904ace9908b50819bc70635fe6a7136290d83d283",
+    "worker-04.boxscores.jsonl": "bc590634e575daa92c8e3c85a6358f2b465d01bcd96cf8cb2fe6746743c1b5e5",
+    "worker-04.json": "c57855ebf2a86e5271c343e17241e2a9e7513dca48544ae2b0765d4975b44701",
+    "worker-04.seeds.jsonl": "bf99e7f280316c0aa57cc1f5de5512a7f54c0eefb6bd4ec2c5a911a0d62566d4",
+    "worker-05.boxscores.jsonl": "8a968f4b91cc4e8e3f9aec6250c78d085ab896a6d9410a1389fbcf743797dab0",
+    "worker-05.json": "bd13a68d26d6955c51bd9962e10217ad3fa64e14d244378dda23bb0ffa21fc5f",
+    "worker-05.seeds.jsonl": "067afc84004a11f69712e18ecaea0cbcfb96cf7ee9d908ea17337b74dbce7123",
+    "worker-06.boxscores.jsonl": "76835c18f3f3f79e6088582575bf8a3600199099965e5bbc10b4191103848c34",
+    "worker-06.json": "20faa0a8f685b2b3f2208f692b8d54b5d807909669a2cd11519da3aad898b526",
+    "worker-06.seeds.jsonl": "f4b4a8134b6dd4a159201fff16fa230f86b5c4c066c87107dfccbe921b8b829f"
+  },
+  "schema": "lp.nfl.slc-realism-inputs.v1",
+  "seed_count": 10000,
+  "seed_ledger_sha256": {
+    "worker-01.seeds.jsonl": "435b9a223dd7e6d9103bf1c3a7482bd9fbc5433cbb17bcaa66bc90e646c493a3",
+    "worker-02.seeds.jsonl": "d49135f1ac87db4975b5c328b1d0671b09e064b0e87ed1dbebb2a3341748cd9b",
+    "worker-03.seeds.jsonl": "cae4fcbf36cf8d77d1ee7d4904ace9908b50819bc70635fe6a7136290d83d283",
+    "worker-04.seeds.jsonl": "bf99e7f280316c0aa57cc1f5de5512a7f54c0eefb6bd4ec2c5a911a0d62566d4",
+    "worker-05.seeds.jsonl": "067afc84004a11f69712e18ecaea0cbcfb96cf7ee9d908ea17337b74dbce7123",
+    "worker-06.seeds.jsonl": "f4b4a8134b6dd4a159201fff16fa230f86b5c4c066c87107dfccbe921b8b829f"
+  },
+  "source_commit": "8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f",
+  "team_conditioning": "Nearest neighbors are league-wide with same-team and exact-pair cohorts shrunk by cohort size."
+}
