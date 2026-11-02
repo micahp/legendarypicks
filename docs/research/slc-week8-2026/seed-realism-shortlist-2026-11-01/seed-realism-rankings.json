@@ -1,0 +1,595 @@
+{
+  "schema": "lp.nfl.slc.seed-realism-shortlist.v1",
+  "run_id": "research-8b7d5a2e-2026-10-31",
+  "source_commit": "8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f",
+  "ranking_scope": "15-seed marketing shortlist from the archived MIN-DET run; not a complete 10,000-row ranking export",
+  "score_weights": {
+    "decisions": 0.25,
+    "drives": 0.3,
+    "game": 0.2,
+    "workloads": 0.25
+  },
+  "source_input_hashes": {
+    "blocker_fixes": [
+      "run_scramble_backoff",
+      "long_field_goal_feasibility",
+      "blocked_kick_source_audit",
+      "blocked_kick_geometry",
+      "safety_free_kick_boundaries"
+    ],
+    "database_path": "/root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite",
+    "database_sha256": "feb5179f1c6c2f8cd2265a25ff68f3552d6e68bbba00354e0688f22505aa028f",
+    "field_goal_ordinary_cutoff_yards": 60,
+    "playcall_artifact_path": "/root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+    "playcall_artifact_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+    "profile": "v1_full_stack",
+    "run_id": "research-8b7d5a2e-2026-10-31",
+    "snapshot_path": "/root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json",
+    "snapshot_sha256": "476715b5a0f94cac919638b9666b571945cb847b3a6f4e6977b79ae0a36531b1",
+    "source_commit": "8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f",
+    "streak_file_path": "/root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json",
+    "streak_file_sha256": "4d3e0d712134396ea91d1d9d8bca11ce9d6089674d9d6e2360696f44e311af5c"
+  },
+  "reproduction_verification": {
+    "archived_stage_b_replay_status": "passed for all 15; score and boxscore equality recorded per seed",
+    "fresh_command_execution": "interrupted before completion in this turn; do not treat the command itself as freshly verified",
+    "cli_argument_validation": "run_slc_game.py --help succeeded at the pinned source checkout"
+  },
+  "seeds": [
+    {
+      "rank_in_marketing_shortlist": 1,
+      "seed": 3397,
+      "selection": "most_representative",
+      "realism_score": 77.401104,
+      "visual_interest_score": 51,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 24,
+        "team": 17
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 143,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.9708652286308992,
+        "drives": 0.6933192221220471,
+        "game": 0.7971316528987169,
+        "workloads": 0.7417869295415159
+      },
+      "score_contributions": {
+        "decisions": 14.926403,
+        "drives": 25.446182,
+        "game": 14.075437,
+        "workloads": 22.953082
+      },
+      "gridiron_game_payload_sha256": "e990b4bb9be1dc22d00111ae74b5c7d7df9944b0b28dd3a053676cf960298893",
+      "archived_replay_trace_sha256": "b1987e1e0d05a53491ad0ae5ca6eb24abca02d3d3a6b7fcf4030848ef4069aaf",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 3397 --out /tmp/slc-seed-replay-out/seed-3397.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 2,
+      "seed": 8597,
+      "selection": "close_finish",
+      "realism_score": 70.317387,
+      "visual_interest_score": 82,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 20,
+        "team": 26
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 142,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.8445604957030215,
+        "drives": 0.6769452359960054,
+        "game": 0.78767333247268,
+        "workloads": 1.0451713400255986
+      },
+      "score_contributions": {
+        "decisions": 23.827047,
+        "drives": 26.964121,
+        "game": 14.627415,
+        "workloads": 4.898804
+      },
+      "gridiron_game_payload_sha256": "47ec7cb919758c64a45c1a0b52c8e3b60229bd485e4c1294470d93de0816e04e",
+      "archived_replay_trace_sha256": "560cb8658c9b38ac697bed1d4886a043bc48ca57b02e9911eaa4bc8d06bcda9d",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 8597 --out /tmp/slc-seed-replay-out/seed-8597.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 3,
+      "seed": 9503,
+      "selection": "comeback",
+      "realism_score": 69.00184,
+      "visual_interest_score": 82,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 28,
+        "team": 17
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 139,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.9043381137832276,
+        "drives": 0.6687878193190263,
+        "game": 0.6902702952689753,
+        "workloads": 1.2005122459813873
+      },
+      "score_contributions": {
+        "decisions": 20.99816,
+        "drives": 27.571297,
+        "game": 19.00644,
+        "workloads": 1.425943
+      },
+      "gridiron_game_payload_sha256": "f9ec73bb6bfa1fd8b5c8f6ebe524cc1201ef44aef5dd08e9553ff148dadcd4a9",
+      "archived_replay_trace_sha256": "646c82cd0b600a7c238795c0843ee385daf376aa297b4c1f98c50583a0c7c0be",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 9503 --out /tmp/slc-seed-replay-out/seed-9503.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 4,
+      "seed": 7752,
+      "selection": "defensive_game",
+      "realism_score": 68.537259,
+      "visual_interest_score": 96,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 17,
+        "team": 20
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 132,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.8789546333049654,
+        "drives": 0.679358407560778,
+        "game": 0.7059268299705187,
+        "workloads": 1.2866081712615078
+      },
+      "score_contributions": {
+        "decisions": 22.585096,
+        "drives": 26.688133,
+        "game": 18.436063,
+        "workloads": 0.827967
+      },
+      "gridiron_game_payload_sha256": "dd294c26dcf987d9e299c285fd23515b4c0a0d51eb12a23162be5b31163e00d6",
+      "archived_replay_trace_sha256": "6996f0fb7efc08119a1a27f474b1d123c2cf63818988db573f86f122bc71f3a9",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 7752 --out /tmp/slc-seed-replay-out/seed-7752.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 5,
+      "seed": 7580,
+      "selection": "star_showcase",
+      "realism_score": 69.558418,
+      "visual_interest_score": 60,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 28,
+        "team": 27
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 132,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.8940244056667032,
+        "drives": 0.648312130265175,
+        "game": 0.8271396300855142,
+        "workloads": 0.9965266657774458
+      },
+      "score_contributions": {
+        "decisions": 21.780129,
+        "drives": 28.537259,
+        "game": 12.364305,
+        "workloads": 6.876725
+      },
+      "gridiron_game_payload_sha256": "7840bf7fe6d6bb7b7a7cada27dde438e054746645a618faacd9edf3c87b3a282",
+      "archived_replay_trace_sha256": "de7fcaada1795be8c5d9c12db85b5cba2078ee1bd041de09b580fdff33704007",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 7580 --out /tmp/slc-seed-replay-out/seed-7580.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 6,
+      "seed": 1759,
+      "selection": "additional_realistic_scenario",
+      "realism_score": 68.946641,
+      "visual_interest_score": 63,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 23,
+        "team": 25
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 146,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.8224720595702196,
+        "drives": 0.6875455718132731,
+        "game": 0.7253276828918562,
+        "workloads": 1.3096990717507662
+      },
+      "score_contributions": {
+        "decisions": 24.448022,
+        "drives": 26.136154,
+        "game": 17.718491,
+        "workloads": 0.643974
+      },
+      "gridiron_game_payload_sha256": "96ff663192b2af5128055c0c77326d91c1b0c1d7a436c4a620ec00a67a483bb7",
+      "archived_replay_trace_sha256": "4f270f793fca534c8f31abdfbfa11a90b1577e03cfd1a0fb3b992c8c7608146c",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 1759 --out /tmp/slc-seed-replay-out/seed-1759.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 7,
+      "seed": 2362,
+      "selection": "additional_realistic_scenario",
+      "realism_score": 67.442502,
+      "visual_interest_score": 47,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 27,
+        "team": 17
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 134,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.9042765564081685,
+        "drives": 0.7341412316654543,
+        "game": 0.9982483193055113,
+        "workloads": 0.7902615135279669
+      },
+      "score_contributions": {
+        "decisions": 20.99816,
+        "drives": 21.554738,
+        "game": 4.765409,
+        "workloads": 20.124195
+      },
+      "gridiron_game_payload_sha256": "b43df1e88abb0177a7e293d120ce25127917d443910d8c77820977ed72cecfdc",
+      "archived_replay_trace_sha256": "c945e4bb40d7c54d810a4422b91ad704e13fbfd3f10a6a6dc80119f84df95858",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 2362 --out /tmp/slc-seed-replay-out/seed-2362.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 8,
+      "seed": 7664,
+      "selection": "additional_realistic_scenario",
+      "realism_score": 66.959521,
+      "visual_interest_score": 94,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 20,
+        "team": 19
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 142,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.8971747410146526,
+        "drives": 0.6521648186020375,
+        "game": 0.7447598952822762,
+        "workloads": 1.8035994841303566
+      },
+      "score_contributions": {
+        "decisions": 21.619135,
+        "drives": 28.399264,
+        "game": 16.872125,
+        "workloads": 0.068997
+      },
+      "gridiron_game_payload_sha256": "ed0afcd82edfe30daaf29afc3e16daf72b75a5bb78740d02499797c8b4bce7a0",
+      "archived_replay_trace_sha256": "b1cf51bfd1d1c45e8cbbf4f6c8c47be4187e93d566e670ca9d2a0fe632cd9141",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 7664 --out /tmp/slc-seed-replay-out/seed-7664.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 9,
+      "seed": 9163,
+      "selection": "additional_realistic_scenario",
+      "realism_score": 66.812327,
+      "visual_interest_score": 98,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 23,
+        "team": 19
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 137,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.9007254873078034,
+        "drives": 0.7262512366405885,
+        "game": 0.6933800928297575,
+        "workloads": 1.0643817942702545
+      },
+      "score_contributions": {
+        "decisions": 21.343146,
+        "drives": 22.299908,
+        "game": 18.914443,
+        "workloads": 4.25483
+      },
+      "gridiron_game_payload_sha256": "a4b8e30287ed5725b2c57a55efdd21fb45216c7a3d552dff66961954f5c72805",
+      "archived_replay_trace_sha256": "f3aab6f7db79d10a02a8e3071969a34a6113123024bc5abdd9a679e54779a739",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 9163 --out /tmp/slc-seed-replay-out/seed-9163.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 10,
+      "seed": 5053,
+      "selection": "additional_realistic_scenario",
+      "realism_score": 66.784729,
+      "visual_interest_score": 78,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 20,
+        "team": 26
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 138,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.868972675125826,
+        "drives": 0.7042195798428702,
+        "game": 0.7246311739662442,
+        "workloads": 1.1970032912741295
+      },
+      "score_contributions": {
+        "decisions": 23.022079,
+        "drives": 24.535419,
+        "game": 17.75529,
+        "workloads": 1.471941
+      },
+      "gridiron_game_payload_sha256": "7ec4907cd11b6ffefa18e2ba5b6af335cbb7a6711b04e1c779d575e8186e54cf",
+      "archived_replay_trace_sha256": "a477f5be996051f90cf6fa9980fa4aa9dc0c07537533dc33b57ed490f80f6083",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 5053 --out /tmp/slc-seed-replay-out/seed-5053.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 11,
+      "seed": 2948,
+      "selection": "additional_realistic_scenario",
+      "realism_score": 66.660533,
+      "visual_interest_score": 78,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 22,
+        "team": 27
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 139,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.8335113466099806,
+        "drives": 0.6273480444752548,
+        "game": 0.8288955822876305,
+        "workloads": 1.2979561944733446
+      },
+      "score_contributions": {
+        "decisions": 24.287029,
+        "drives": 29.392824,
+        "game": 12.290708,
+        "workloads": 0.689972
+      },
+      "gridiron_game_payload_sha256": "53ec169314aa4de19acbfa3d131265404ea9e7342475bec28aaf3e8b41fdb42b",
+      "archived_replay_trace_sha256": "f62f1ea86a568cf7dd89a75f5f44f909a9e1eeb201579fe5373296b489c0106d",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 2948 --out /tmp/slc-seed-replay-out/seed-2948.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 12,
+      "seed": 3952,
+      "selection": "additional_realistic_scenario",
+      "realism_score": 66.218951,
+      "visual_interest_score": 69,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 23,
+        "team": 17
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 138,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.8353546145078417,
+        "drives": 0.7261328986710954,
+        "game": 0.6812601914923755,
+        "workloads": 1.3301286109577006
+      },
+      "score_contributions": {
+        "decisions": 24.24103,
+        "drives": 22.299908,
+        "game": 19.172033,
+        "workloads": 0.50598
+      },
+      "gridiron_game_payload_sha256": "a2597a2307454d0a7a245b9537f5dea1a74b2f2f3554a9789d46f76ce396f337",
+      "archived_replay_trace_sha256": "30728b818215eba61abb938a38afc0d68c291dfda8f40ad0bfec2c3a6c7a3c98",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 3952 --out /tmp/slc-seed-replay-out/seed-3952.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 13,
+      "seed": 1422,
+      "selection": "additional_realistic_scenario",
+      "realism_score": 65.662374,
+      "visual_interest_score": 58,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 31,
+        "team": 20
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 146,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.9252667330643408,
+        "drives": 0.6671401236494889,
+        "game": 0.7451387797704914,
+        "workloads": 1.1613703449560098
+      },
+      "score_contributions": {
+        "decisions": 19.25023,
+        "drives": 27.654094,
+        "game": 16.872125,
+        "workloads": 1.885925
+      },
+      "gridiron_game_payload_sha256": "5fa438531b2be414badad4b06adb72edc206ef1be972e86dfb2ac3fc8a840ce2",
+      "archived_replay_trace_sha256": "cf3ec0e7dc273f0a413c3867d33d78ca9dfa0c2a4331607c63817561ceca6be4",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 1422 --out /tmp/slc-seed-replay-out/seed-1422.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 14,
+      "seed": 4060,
+      "selection": "additional_realistic_scenario",
+      "realism_score": 65.602575,
+      "visual_interest_score": 54,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 27,
+        "team": 17
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 136,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.8610059411612703,
+        "drives": 0.6968992489176346,
+        "game": 0.7450846676466452,
+        "workloads": 1.5583693500252902
+      },
+      "score_contributions": {
+        "decisions": 23.367065,
+        "drives": 25.225391,
+        "game": 16.872125,
+        "workloads": 0.137994
+      },
+      "gridiron_game_payload_sha256": "f020b8a52afb22c5858b14dabfbf8c1bc4afcdd45565f98d4c24b3dbd889a122",
+      "archived_replay_trace_sha256": "d58cddfb7e471b20158017fa5bc647076e0498a25eabd4c4fb8ce7d1b0097dbc",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 4060 --out /tmp/slc-seed-replay-out/seed-4060.json"
+    },
+    {
+      "rank_in_marketing_shortlist": 15,
+      "seed": 2403,
+      "selection": "additional_realistic_scenario",
+      "realism_score": 65.478381,
+      "visual_interest_score": 58,
+      "teams": [
+        "DET",
+        "MIN"
+      ],
+      "final_points": {
+        "opponent": 20,
+        "team": 13
+      },
+      "replay_status_archived": "passed",
+      "score_matches_archived": true,
+      "boxscore_matches_archived": true,
+      "trace_play_count": 137,
+      "replay_mismatches": [],
+      "renderable": true,
+      "group_distances": {
+        "decisions": 0.8640443498295486,
+        "drives": 0.7174845341605317,
+        "game": 0.7672480436098199,
+        "workloads": 1.096688948614551
+      },
+      "score_contributions": {
+        "decisions": 23.275069,
+        "drives": 23.210672,
+        "game": 15.74977,
+        "workloads": 3.24287
+      },
+      "gridiron_game_payload_sha256": "757cb8fda3844063cc168346489863b655fe22cf076902055a617dfd8a3d4e9f",
+      "archived_replay_trace_sha256": "7efbec7cfa975ea6d6fa837afe93f1dd0eacc6dfdd62891820307414f7d19c14",
+      "configuration_hash": "d16248b2a97445f51493847e0d0586fe323ce385274ea91e7e697986b005e374",
+      "reproduction_command": "cd /root/legendarypicks-slc-research-24d8b301 && git checkout --detach 8b7d5a2ec818d4e53751f5c4baf5a2956b317a7f && python3 /root/legendarypicks-slc-research-24d8b301/scripts/nfl_sequence/run_slc_game.py --artifact /root/legendarypicks-slc-research-24d8b301/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --slc-profile v1_full_stack --snapshot-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/snapshots/2026_08_MIN_DET.json --streak-file /root/legendarypicks-slc-research-24d8b301/docs/research/slc-week8-2026/wl-streaks-2026-10-29.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --slc-fg-ordinary-cutoff 60 --db /root/slc-week8-missing-10k-2026-10-29/data/simulation-input.sqlite --seed 2403 --out /tmp/slc-seed-replay-out/seed-2403.json"
+    }
+  ]
+}
