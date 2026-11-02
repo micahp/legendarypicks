@@ -1,0 +1,191 @@
+"""Skill lineups that carry from snap to snap, for SLC play calls (research, opt-in, not adopted).
+
+With `--participation-field <table> --participation-field-sha256 <hash>` (rng protocol v2 only), the skill players on the
+field form a lineup that persists across a team's offensive snaps. Each snap:
+
+    lineup[t] = advance(lineup[t-1], grouping[t], roster, draws)
+
+- grouping[t] is drawn from the team's transition from the previous grouping in the same situation cell. The team's
+  transitions are shrunk to the league's, and the league's to the league's mix for the cell.
+- A skill player on the field leaves with a hazard that depends on his position class and on his stint, the number of
+  consecutive snaps he has already been on. A leave is replaced by a bench player at the same position class.
+- A grouping change fixes the RB, TE and WR counts. The surplus leaves, and the deficit is filled from the bench.
+- Bench players come from the full eligible roster, including players with no historical carries or targets. Their
+  on-field rate has a position prior, so none is excluded by construction.
+
+The table is written by docs/research/participation-model-2026-11-02/export_field.py from the 2022 to 2025 participation
+files. It holds no 2026 data: the 2026 transitions and hazards are priors, as the owner chose (option A). The formulas here
+are the ones in lineup_fit.py and export_field.py; test_participation_field.py checks the table loads and steps.
+"""
+import hashlib
+import json
+from collections import Counter
+from pathlib import Path
+
+SCHEMA = 'lp.nfl.participation-field.v2'
+PLAYER_PRIOR_PLAYS = 20.0  # shrinks a player's on-field rate to the position prior, as in participation_model.py
+LEAGUE_TRANSITION_PRIOR_PLAYS = 20.0  # shrinks a league grouping transition to the league's mix for the cell
+TEAM_TRANSITION_PRIOR_PLAYS = 50.0  # shrinks a team's grouping transition to the league's transition
+HAZARD_PRIOR_PLAYS = 20.0  # shrinks a stint bucket's leave rate to its position class's rate
+STINT_CAP = 6
+SKILL = {'RB': 'RB', 'FB': 'RB', 'TE': 'TE', 'WR': 'WR'}
+SKILL_CLASSES = ('RB', 'TE', 'WR')
+START = 'START'
+FLOOR = 1e-9  # a zero weight still gets a draw, so no bench player is impossible by construction
+
+
+def sha256_file(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def cell_of(down, togo, yl):
+    """Down, distance and field bucket, the same buckets as participation_model.cell_of. Missing values are 'na'."""
+    down = str(down) if down in (1, 2, 3, 4) else 'na'
+    if togo is None:
+        distance = 'na'
+    else:
+        distance = 'short' if togo <= 3 else 'mid' if togo <= 6 else 'long' if togo <= 9 else 'xl'
+    if yl is None:
+        field = 'na'
+    else:
+        field = 'red' if yl <= 20 else 'mid' if yl <= 50 else 'own' if yl <= 80 else 'deep'
+    return f'{down}|{distance}|{field}'
+
+
+def group_counts(group):
+    rb, te = int(group[0]), int(group[1])
+    return {'RB': rb, 'TE': te, 'WR': 5 - rb - te}
+
+
+class Field:
+    """The exported transition table. Every snap's outcome is counted in `status`, so a zero is printed, not hidden."""
+
+    def __init__(self, data, sha256):
+        if data.get('schema') != SCHEMA:
+            raise ValueError(f"participation field schema is {data.get('schema')!r}, expected {SCHEMA}")
+        self.sha256 = sha256
+        self.league_transitions = {(cell, prev): Counter(counts) for cell, prev, counts in data['league_transitions']}
+        self.team_transitions = {(team, cell, prev): Counter(counts)
+                                 for team, cell, prev, counts in data['team_transitions']}
+        self.marginal_by_cell = {}  # cell -> grouping -> weight, summed over the previous grouping
+        for (cell, _prev), counts in self.league_transitions.items():
+            self.marginal_by_cell.setdefault(cell, Counter()).update(counts)
+        self.leave_counts = {(kind, cls, bucket): (leaves, total)
+                             for kind, cls, bucket, leaves, total in data['leave_counts']}
+        self.leave_class = {}  # (kind, class) -> pooled leaves and player-snaps, the prior for each stint bucket
+        for (kind, cls, _bucket), (leaves, total) in self.leave_counts.items():
+            pooled = self.leave_class.get((kind, cls), (0.0, 0.0))
+            self.leave_class[(kind, cls)] = (pooled[0] + leaves, pooled[1] + total)
+        self.appearances = {(pid, team, group): w for pid, team, group, w in data['appearances']}
+        self.team_plays = {(team, group): w for team, group, w in data['team_plays']}
+        self.position_prior = {(pos, group): v for pos, group, v in data['position_prior']}
+        self.status = Counter()
+
+    @classmethod
+    def load(cls, path, expected_sha256):
+        """Refuses a table whose hash differs from the one the run names, so the arm cannot silently change its input."""
+        digest = sha256_file(path)
+        if digest != expected_sha256:
+            raise ValueError(f'participation field {path} has sha256 {digest}, expected {expected_sha256}')
+        return cls(json.loads(Path(path).read_text(encoding='utf-8')), digest)
+
+    def group_probs(self, team, cell, prev):
+        """P(grouping | team, situation cell, previous grouping). Empty when the cell has no league data."""
+        marginal = self.marginal_by_cell.get(cell)
+        if not marginal:
+            return {}
+        total = sum(marginal.values())
+        league_counts = self.league_transitions.get((cell, prev), Counter())
+        n_league = sum(league_counts.values())
+        league = {group: (league_counts[group] + LEAGUE_TRANSITION_PRIOR_PLAYS * marginal[group] / total)
+                  / (n_league + LEAGUE_TRANSITION_PRIOR_PLAYS) for group in marginal}
+        team_counts = self.team_transitions.get((team, cell, prev), Counter())
+        n_team = sum(team_counts.values())
+        return {group: (team_counts[group] + TEAM_TRANSITION_PRIOR_PLAYS * league[group])
+                / (n_team + TEAM_TRANSITION_PRIOR_PLAYS) for group in league}
+
+    def draw_group(self, team, prev, cell, draw):
+        """The grouping for one snap, from the transition out of the previous snap's grouping (START on a game's first)."""
+        probs = self.group_probs(team, cell, prev)
+        if not probs:
+            self.status['no_league_cell'] += 1
+            return None
+        groups = sorted(probs)
+        return draw.choices(groups, weights=[probs[group] for group in groups], k=1)[0]
+
+    def leave_prob(self, kind, cls, stint):
+        """P(a skill player of this class leaves before the next snap) at his current stint. kind is 'held' when the
+        grouping keeps, and 'changed' when it moves and this class's count does not."""
+        bucket = 0 if kind == 'swap' else min(stint, STINT_CAP)  # swap churn is one rate per class, not per stint
+        leaves, total = self.leave_counts.get((kind, cls, bucket), (0.0, 0.0))
+        pooled_leaves, pooled_total = self.leave_class.get((kind, cls), (0.0, 0.0))
+        prior = pooled_leaves / pooled_total if pooled_total else 0.0
+        return max(0.0, leaves + HAZARD_PRIOR_PLAYS * prior) / (total + HAZARD_PRIOR_PLAYS)
+
+    def rate(self, pid, team, group, pos):
+        prior = self.position_prior.get((pos, group), 0.0)
+        appearances = self.appearances.get((pid, team, group), 0.0)
+        plays = self.team_plays.get((team, group), 0.0)
+        return (appearances + PLAYER_PRIOR_PLAYS * prior) / (plays + PLAYER_PRIOR_PLAYS)
+
+    def advance(self, team, lineup, group, roster, draw, prev_group=None):
+        """The skill lineup after one snap. `lineup` maps each skill player on the field to his stint, the number of
+        consecutive snaps ending at the last snap. Returns (next lineup, record). Only this method draws leaves and entrants.
+        Rotation (the stint hazard) applies only when the grouping holds; a grouping change moves players by count."""
+        if group is None or len(group) != 2 or not group.isdigit() or group_counts(group)['WR'] < 0:
+            self.status['unsupported_grouping'] += 1
+            return None, {'status': 'unsupported_grouping', 'group': group}
+        cls_of = {p['gsis_id']: SKILL[p['pos_abb']] for p in roster if p['pos_abb'] in SKILL}
+        target = group_counts(group)
+        leavers = set()
+        kind = 'held' if prev_group == group else 'changed'
+        for pid in sorted(lineup):
+            cls = cls_of.get(pid)
+            if cls is None:  # not a skill player on the roster any more
+                leavers.add(pid)
+            elif prev_group is not None and group_counts(prev_group)[cls] == target[cls] \
+                    and draw.random() < self.leave_prob(kind, cls, lineup[pid]):  # rotation in a class whose count holds
+                leavers.add(pid)
+        for pid in sorted(lineup):  # churn in a class whose count changes, beyond the count change itself
+            cls = cls_of.get(pid)
+            if pid not in leavers and cls is not None and prev_group is not None \
+                    and group_counts(prev_group)[cls] != target[cls] and draw.random() < self.leave_prob('swap', cls, 0):
+                leavers.add(pid)
+        kept = {pid: stint for pid, stint in lineup.items() if pid not in leavers}
+        removed = set(leavers)
+        count_removed, entrants, short = [], [], {}
+        for cls in SKILL_CLASSES:  # the grouping's counts: surplus leaves by hazard, deficit enters from the bench
+            on = sorted(pid for pid in kept if cls_of.get(pid) == cls)
+            while len(on) > target[cls]:
+                weights = [max(self.leave_prob(kind, cls, kept[pid]), FLOOR) for pid in on]
+                pid = draw.choices(on, weights=weights, k=1)[0]
+                on.remove(pid)
+                del kept[pid]
+                removed.add(pid)
+                count_removed.append(pid)
+            need = target[cls] - len(on)
+            if need > 0:
+                bench = [p for p in sorted(roster, key=lambda p: (p['pos_rank'], p['gsis_id']))
+                         if cls_of.get(p['gsis_id']) == cls and p['gsis_id'] not in kept and p['gsis_id'] not in removed]
+                picked = self._weighted(bench, need, team, group, draw)
+                for player in picked:
+                    kept[player['gsis_id']] = 0  # set to its stint below
+                    entrants.append(player['gsis_id'])
+                if len(picked) < need:
+                    short[cls] = need - len(picked)
+        nxt = {pid: (lineup[pid] + 1 if pid in lineup else 1) for pid in kept}
+        status = 'short' if short else 'ok'
+        self.status[status] += 1
+        return nxt, {'status': status, 'group': group, 'leavers': sorted(leavers),
+                     'count_removed': count_removed, 'entrants': sorted(entrants), 'short': short}
+
+    def _weighted(self, pool, k, team, group, draw):
+        """k distinct players, each drawn in proportion to his on-field rate for this team and grouping."""
+        pool = list(pool)
+        out = []
+        for _ in range(min(k, len(pool))):
+            weights = [max(self.rate(p['gsis_id'], team, group, p['pos_abb']), FLOOR) for p in pool]
+            pick = draw.choices(pool, weights=weights, k=1)[0]
+            out.append(pick)
+            pool = [p for p in pool if p is not pick]
+        return out
