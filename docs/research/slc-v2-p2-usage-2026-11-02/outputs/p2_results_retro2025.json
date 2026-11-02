@@ -1,0 +1,35 @@
+{
+  "tag": "retro2025",
+  "availability_lag_hours": 10,
+  "min_prior_games": 4,
+  "k": 4,
+  "bootstrap": {
+    "draws": 10000,
+    "seed": 20261102
+  },
+  "logs_without_kickoff": 3406,
+  "results": [
+    {
+      "metric": "target_share",
+      "season": 2025,
+      "targets": 18522,
+      "games": 272,
+      "targets_with_usable_history": 16503,
+      "null_metric_games_excluded": 0,
+      "mse_component": 0.001286,
+      "mse_baseline": 0.002484,
+      "improvement_component_over_baseline": 0.001199,
+      "improvement_ci95": [
+        0.001119,
+        0.001281
+      ],
+      "mse_prior_only": 0.0017,
+      "improvement_over_prior_only": 0.000414,
+      "improvement_over_prior_only_ci95": [
+        0.000376,
+        0.000453
+      ],
+      "late_violations": 0
+    }
+  ]
+}

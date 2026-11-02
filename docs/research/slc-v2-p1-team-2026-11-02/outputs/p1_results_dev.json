@@ -1,0 +1,210 @@
+{
+  "tag": "dev",
+  "lag_hours": 10,
+  "min_coach_games": 8,
+  "k": 4,
+  "bootstrap": {
+    "draws": 10000,
+    "seed": 20261102
+  },
+  "results": [
+    {
+      "metric": "pass_share",
+      "season": 2023,
+      "targets": 544,
+      "games": 272,
+      "null_target_games_excluded": 0,
+      "null_history_games": 0,
+      "league_prior": 0.57297,
+      "prior_sources": {
+        "coach_era": 464,
+        "team_prior": 80
+      },
+      "mse_component": 0.009534,
+      "mse_league_baseline": 0.009821,
+      "mse_team_prior_only": 0.010403,
+      "mse_coach_era_prior_only": 0.010189,
+      "improvement_over_league_baseline": 0.000287,
+      "improvement_over_league_baseline_ci95": [
+        -0.000485,
+        0.00103
+      ],
+      "improvement_over_team_prior_only": 0.00087,
+      "improvement_over_team_prior_only_ci95": [
+        0.00029,
+        0.001468
+      ],
+      "improvement_over_coach_era_prior_only": 0.000655,
+      "improvement_over_coach_era_prior_only_ci95": [
+        0.000131,
+        0.00118
+      ],
+      "late_violations": 0
+    },
+    {
+      "metric": "pass_share",
+      "season": 2024,
+      "targets": 544,
+      "games": 272,
+      "null_target_games_excluded": 0,
+      "null_history_games": 0,
+      "league_prior": 0.58203,
+      "prior_sources": {
+        "coach_era": 430,
+        "team_prior": 114
+      },
+      "mse_component": 0.010072,
+      "mse_league_baseline": 0.011167,
+      "mse_team_prior_only": 0.010865,
+      "mse_coach_era_prior_only": 0.010951,
+      "improvement_over_league_baseline": 0.001095,
+      "improvement_over_league_baseline_ci95": [
+        0.000399,
+        0.001812
+      ],
+      "improvement_over_team_prior_only": 0.000793,
+      "improvement_over_team_prior_only_ci95": [
+        0.000234,
+        0.001379
+      ],
+      "improvement_over_coach_era_prior_only": 0.000879,
+      "improvement_over_coach_era_prior_only_ci95": [
+        0.000308,
+        0.001473
+      ],
+      "late_violations": 0
+    },
+    {
+      "metric": "plays",
+      "season": 2023,
+      "targets": 544,
+      "games": 272,
+      "null_target_games_excluded": 0,
+      "null_history_games": 0,
+      "league_prior": 62.30627,
+      "prior_sources": {
+        "coach_era": 464,
+        "team_prior": 80
+      },
+      "mse_component": 71.349416,
+      "mse_league_baseline": 68.683375,
+      "mse_team_prior_only": 75.437828,
+      "mse_coach_era_prior_only": 74.138201,
+      "improvement_over_league_baseline": -2.666042,
+      "improvement_over_league_baseline_ci95": [
+        -6.396013,
+        1.114808
+      ],
+      "improvement_over_team_prior_only": 4.088411,
+      "improvement_over_team_prior_only_ci95": [
+        0.4734,
+        7.904619
+      ],
+      "improvement_over_coach_era_prior_only": 2.788785,
+      "improvement_over_coach_era_prior_only_ci95": [
+        -0.586407,
+        6.339924
+      ],
+      "late_violations": 0
+    },
+    {
+      "metric": "plays",
+      "season": 2024,
+      "targets": 544,
+      "games": 272,
+      "null_target_games_excluded": 0,
+      "null_history_games": 0,
+      "league_prior": 62.42096,
+      "prior_sources": {
+        "coach_era": 430,
+        "team_prior": 114
+      },
+      "mse_component": 71.796275,
+      "mse_league_baseline": 68.142669,
+      "mse_team_prior_only": 72.498378,
+      "mse_coach_era_prior_only": 72.258556,
+      "improvement_over_league_baseline": -3.653606,
+      "improvement_over_league_baseline_ci95": [
+        -6.764229,
+        -0.564383
+      ],
+      "improvement_over_team_prior_only": 0.702103,
+      "improvement_over_team_prior_only_ci95": [
+        -2.711988,
+        4.028964
+      ],
+      "improvement_over_coach_era_prior_only": 0.46228,
+      "improvement_over_coach_era_prior_only_ci95": [
+        -2.903985,
+        3.755375
+      ],
+      "late_violations": 0
+    },
+    {
+      "metric": "go_rate",
+      "season": 2023,
+      "targets": 544,
+      "games": 272,
+      "null_target_games_excluded": 0,
+      "null_history_games": 0,
+      "league_prior": 0.17915,
+      "prior_sources": {
+        "coach_era": 464,
+        "team_prior": 80
+      },
+      "mse_component": 0.028514,
+      "mse_league_baseline": 0.028196,
+      "mse_team_prior_only": 0.027722,
+      "mse_coach_era_prior_only": 0.027805,
+      "improvement_over_league_baseline": -0.000318,
+      "improvement_over_league_baseline_ci95": [
+        -0.00195,
+        0.001302
+      ],
+      "improvement_over_team_prior_only": -0.000793,
+      "improvement_over_team_prior_only_ci95": [
+        -0.001722,
+        0.000163
+      ],
+      "improvement_over_coach_era_prior_only": -0.000709,
+      "improvement_over_coach_era_prior_only_ci95": [
+        -0.001644,
+        0.000252
+      ],
+      "late_violations": 0
+    },
+    {
+      "metric": "go_rate",
+      "season": 2024,
+      "targets": 544,
+      "games": 272,
+      "null_target_games_excluded": 0,
+      "null_history_games": 0,
+      "league_prior": 0.19319,
+      "prior_sources": {
+        "coach_era": 430,
+        "team_prior": 114
+      },
+      "mse_component": 0.027829,
+      "mse_league_baseline": 0.02713,
+      "mse_team_prior_only": 0.027277,
+      "mse_coach_era_prior_only": 0.027382,
+      "improvement_over_league_baseline": -0.000698,
+      "improvement_over_league_baseline_ci95": [
+        -0.002141,
+        0.000674
+      ],
+      "improvement_over_team_prior_only": -0.000552,
+      "improvement_over_team_prior_only_ci95": [
+        -0.001663,
+        0.000545
+      ],
+      "improvement_over_coach_era_prior_only": -0.000446,
+      "improvement_over_coach_era_prior_only_ci95": [
+        -0.001562,
+        0.000656
+      ],
+      "late_violations": 0
+    }
+  ]
+}
