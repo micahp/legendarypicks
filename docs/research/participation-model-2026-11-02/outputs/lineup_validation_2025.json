@@ -1,0 +1,93 @@
+{
+ "arms": {
+  "forced": {
+   "metrics": {
+    "counts_match_grouping_share": 0.9977,
+    "entries_per_game_by_class": {
+     "RB": 18.815,
+     "TE": 23.627,
+     "WR": 29.767
+    },
+    "entries_per_snap": 1.214,
+    "grouping_same_as_previous_snap": 0.5575,
+    "mean_stint_per_player_snap": 5.284,
+    "share_player_snaps_stint_four_plus": 0.4681,
+    "skill_lineup_same_as_previous_snap": 0.2269,
+    "skill_lineup_same_given_grouping_same": 0.407,
+    "snap_pairs": 33905.0,
+    "snaps": 34475.0,
+    "team_games": 570.0
+   },
+   "team_games_skipped_no_league_cell": 0
+  },
+  "free": {
+   "metrics": {
+    "counts_match_grouping_share": 0.9982,
+    "entries_per_game_by_class": {
+     "RB": 18.239,
+     "TE": 22.431,
+     "WR": 30.129
+    },
+    "entries_per_snap": 1.1902,
+    "grouping_same_as_previous_snap": 0.5826,
+    "mean_stint_per_player_snap": 5.252,
+    "share_player_snaps_stint_four_plus": 0.4742,
+    "skill_lineup_same_as_previous_snap": 0.2371,
+    "skill_lineup_same_given_grouping_same": 0.4069,
+    "snap_pairs": 33905.0,
+    "snaps": 34475.0,
+    "team_games": 570.0
+   },
+   "team_games_skipped_no_league_cell": 0
+  },
+  "independent": {
+   "metrics": {
+    "counts_match_grouping_share": 0.9999,
+    "entries_per_game_by_class": {
+     "RB": 31.428,
+     "TE": 33.2,
+     "WR": 54.022
+    },
+    "entries_per_snap": 1.9947,
+    "grouping_same_as_previous_snap": 0.5575,
+    "mean_stint_per_player_snap": 4.1597,
+    "share_player_snaps_stint_four_plus": 0.3185,
+    "skill_lineup_same_as_previous_snap": 0.0663,
+    "skill_lineup_same_given_grouping_same": 0.119,
+    "snap_pairs": 33905.0,
+    "snaps": 34475.0,
+    "team_games": 570.0
+   },
+   "team_games_skipped_no_league_cell": 0
+  }
+ },
+ "field": {
+  "file": "field_2022_2024.json",
+  "sha256": "8f555979fe6ba08f37f926c2a9fb93d52998722e1fa55ad706250a5b52d5d0e9"
+ },
+ "holdout": [
+  2025
+ ],
+ "observed": {
+  "counts_match_grouping_share": 0.9193,
+  "entries_per_game_by_class": {
+   "RB": 20.114,
+   "TE": 26.0,
+   "WR": 36.865
+  },
+  "entries_per_snap": 1.395,
+  "grouping_same_as_previous_snap": 0.5575,
+  "mean_stint_per_player_snap": 5.417,
+  "share_player_snaps_stint_four_plus": 0.4202,
+  "skill_lineup_same_as_previous_snap": 0.241,
+  "skill_lineup_same_given_grouping_same": 0.4323,
+  "snap_pairs": 33905,
+  "snaps": 34475,
+  "team_games": 570
+ },
+ "seeds": 3,
+ "status_counts": {
+  "ok": 206423,
+  "short": 427
+ }
+}
