@@ -1,0 +1,45 @@
+{
+  "tag": "retro2025",
+  "lag_hours": 10,
+  "min_coach_games": 8,
+  "k": 4,
+  "bootstrap": {
+    "draws": 10000,
+    "seed": 20261102
+  },
+  "results": [
+    {
+      "metric": "pass_share",
+      "season": 2025,
+      "targets": 544,
+      "games": 272,
+      "null_target_games_excluded": 0,
+      "null_history_games": 0,
+      "league_prior": 0.5717,
+      "prior_sources": {
+        "coach_era": 432,
+        "team_prior": 112
+      },
+      "mse_component": 0.010312,
+      "mse_league_baseline": 0.010399,
+      "mse_team_prior_only": 0.011521,
+      "mse_coach_era_prior_only": 0.011521,
+      "improvement_over_league_baseline": 8.6e-05,
+      "improvement_over_league_baseline_ci95": [
+        -0.000576,
+        0.000733
+      ],
+      "improvement_over_team_prior_only": 0.001209,
+      "improvement_over_team_prior_only_ci95": [
+        0.000604,
+        0.001849
+      ],
+      "improvement_over_coach_era_prior_only": 0.001209,
+      "improvement_over_coach_era_prior_only_ci95": [
+        0.000604,
+        0.001849
+      ],
+      "late_violations": 0
+    }
+  ]
+}

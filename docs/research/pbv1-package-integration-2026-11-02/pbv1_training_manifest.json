@@ -1,0 +1,26 @@
+{
+  "csv_file": "pbv1_training_plays.csv",
+  "csv_sha256": "ab875384a82ea1d6472e12007d0e1f79316508861a1843730253f40253d8a993",
+  "excluded": {
+    "not_regular_season": 6536,
+    "not_scrimmage": 47623
+  },
+  "gridiron_commit": "ad9880d653dbb3de99e58ffac114fc5919f1e952",
+  "gridiron_hpv1_build_sha256": "384c4508ad8627cbfb940d55953282c52b47b0d8827f656b0aab8ed34383b725",
+  "gridiron_hpv1_contract_sha256": "6abbc307314ee64eb6ba4ab844bb9ae447fbfd8cbcbc47dce649b17581bcd7f9",
+  "rows": 133262,
+  "rows_by_season": {
+    "2022": 33592,
+    "2023": 33761,
+    "2024": 33252,
+    "2025": 32657
+  },
+  "schema": "lp-slc-pbv1-training-table-1",
+  "seasons": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "source": "gridiron-playbooks-research pipeline/hpv1_build.py season_frame, as pbv1_eval.py load_plays"
+}

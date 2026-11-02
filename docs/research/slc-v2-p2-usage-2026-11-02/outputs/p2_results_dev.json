@@ -1,0 +1,69 @@
+{
+  "tag": "dev",
+  "availability_lag_hours": 10,
+  "min_prior_games": 4,
+  "k": 4,
+  "bootstrap": {
+    "draws": 10000,
+    "seed": 20261102
+  },
+  "logs_without_kickoff": 3406,
+  "results": [
+    {
+      "metric": "target_share",
+      "season": 2023,
+      "targets": 17788,
+      "games": 272,
+      "targets_with_usable_history": 15846,
+      "null_metric_games_excluded": 0,
+      "mse_component": 0.001285,
+      "mse_baseline": 0.002443,
+      "improvement_component_over_baseline": 0.001159,
+      "improvement_ci95": [
+        0.001074,
+        0.001244
+      ],
+      "mse_prior_only": 0.001678,
+      "improvement_over_prior_only": 0.000394,
+      "improvement_over_prior_only_ci95": [
+        0.000356,
+        0.000433
+      ],
+      "late_violations": 0
+    },
+    {
+      "metric": "target_share",
+      "season": 2024,
+      "targets": 18112,
+      "games": 272,
+      "targets_with_usable_history": 16116,
+      "null_metric_games_excluded": 0,
+      "mse_component": 0.001352,
+      "mse_baseline": 0.002487,
+      "improvement_component_over_baseline": 0.001135,
+      "improvement_ci95": [
+        0.001056,
+        0.001214
+      ],
+      "mse_prior_only": 0.001811,
+      "improvement_over_prior_only": 0.00046,
+      "improvement_over_prior_only_ci95": [
+        0.000413,
+        0.000508
+      ],
+      "late_violations": 0
+    },
+    {
+      "metric": "off_pct",
+      "season": 2023,
+      "skipped": true,
+      "reason": "coverage 0.0000 of regular-season rows below 0.95"
+    },
+    {
+      "metric": "off_pct",
+      "season": 2024,
+      "skipped": true,
+      "reason": "coverage 0.2947 of regular-season rows below 0.95"
+    }
+  ]
+}
