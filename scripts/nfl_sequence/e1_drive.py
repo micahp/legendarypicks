@@ -185,6 +185,52 @@ def build_pool(rows, regulation_only=False, include_qb_scrambles=False):
     return pool, excluded
 
 
+def build_pools(rows, regulation_only=False, include_qb_scrambles=False, team_before_season=None):
+    """build_pool(rows, regulation_only, include_qb_scrambles) and, when `team_before_season` is given, the all-quarter pool
+    of the rows from seasons before it (what team_tendency.build_from_rows builds from those rows), in one classify pass.
+
+    classify() depends only on a row and its next play in the same game, and every game lies in one season, so each pool
+    and its exclusion counts equal what build_pool returns for the same rows. Returns (pool, excluded, team_pool); team_pool
+    is None without `team_before_season`.
+    """
+    excluded = Counter()
+    pool, by_game = {}, {}
+    team_pool = {} if team_before_season is not None else None
+    for r in rows:
+        by_game.setdefault(r['game_id'], []).append(r)
+    for plays in by_game.values():
+        for i, row in enumerate(plays):
+            overtime = row['qtr'] is None or int(row['qtr']) > 4
+            if regulation_only and overtime:
+                excluded['overtime rows (regulation-only pool)'] += 1
+            in_main = not (regulation_only and overtime)
+            in_team = team_pool is not None and int(row['season']) < team_before_season
+            if not (in_main or in_team):
+                continue
+            if row['play_type'] not in PLAY_TYPES or row['down'] is None or not 1 <= row['down'] <= 4:
+                continue
+            nxt = plays[i + 1] if i + 1 < len(plays) else None
+            key = (int(row['down']), e0.ydstogo_bucket(row['ydstogo']), e0.yardline_bucket(row['yardline_100']))
+            if in_main:
+                counted = Counter()
+                hit = classify(row, nxt, counted, include_qb_scrambles=include_qb_scrambles)
+                excluded.update(counted)
+                if hit is not None:
+                    event, runoff, spot = hit
+                    pool.setdefault(key, []).append((event, row, runoff, spot))
+            if in_team:
+                # The team pool is always built without scrambles (build_from_rows calls build_pool with defaults). classify
+                # differs from the main call only on a qb_scramble row, so reuse the main result unless that row is affected.
+                if in_main and not (include_qb_scrambles and row['qb_scramble'] == 1):
+                    team_hit = hit
+                else:
+                    team_hit = classify(row, nxt, Counter(), include_qb_scrambles=False)
+                if team_hit is not None:
+                    event, runoff, spot = team_hit
+                    team_pool.setdefault(key, []).append((event, row, runoff, spot))
+    return pool, excluded, team_pool
+
+
 def flips_between(start_quarter, quarter):
     """Number of change-of-ends boundaries crossed between the start quarter and `quarter` (rules file, section 2)."""
     return sum(1 for b in FLIP_AFTER if start_quarter <= b < quarter)

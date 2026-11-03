@@ -31,9 +31,10 @@ def _sha(value):
 class TeamTendencies:
     """Ratios of each team's event share to the league share, by situation cell. Frozen once built."""
 
-    def __init__(self, ratios, manifest):
+    def __init__(self, ratios, manifest, league_shares=None):
         self.ratios = ratios  # {'offense' | 'defense': {team: {cell_name: {event: ratio}}}}
         self.manifest = manifest
+        self.league_shares = league_shares  # {cell_name: {event: league share}}, the base the ratios are taken against
 
     def ratio(self, side, team, cell, event):
         by_team = self.ratios[side]
@@ -81,13 +82,21 @@ def build_from_pool(pool, target_season, prior_strength=PRIOR_STRENGTH, cutoff=N
         'tables_sha256': _sha(ratios),
     }
     manifest['sha256'] = _sha(manifest)
-    return TeamTendencies(ratios, manifest)
+    league_shares = {cell_name(cell): {event: n / sum(counter.values()) for event, n in counter.items()}
+                     for cell, counter in league.items()}
+    return TeamTendencies(ratios, manifest, league_shares=league_shares)
 
 
 def build_from_rows(rows, target_season, prior_strength=PRIOR_STRENGTH, cutoff=None):
     """Tendencies from raw play rows (E1 columns) from seasons before the target season."""
     holdout.refuse_unless_cutoff(target_season, 'team tendency rows', cutoff)
     pool, _excluded = e1.build_pool(rows)
+    return build_from_pool(pool, target_season, prior_strength, cutoff=cutoff)
+
+
+def build_from_team_pool(pool, target_season, prior_strength=PRIOR_STRENGTH, cutoff=None):
+    """build_from_rows for a pool already built from the same seasons by e1.build_pools (team_before_season=target_season)."""
+    holdout.refuse_unless_cutoff(target_season, 'team tendency rows', cutoff)
     return build_from_pool(pool, target_season, prior_strength, cutoff=cutoff)
 
 

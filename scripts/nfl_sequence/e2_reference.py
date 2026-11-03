@@ -518,8 +518,11 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          playcall_player_shares=False, playcall_exact_yardline=False, playcall_coverage=False,
          playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False, playcall_target_roles=False,
          playcall_decision=False, playcall_qb_decisions=False, playcall_player_outcomes=False,
-         blocker_fixes=(), fg_ordinary_cutoff=60):
+         blocker_fixes=(), fg_ordinary_cutoff=60, playcall_season_adapt=None):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
+
+    `playcall_season_adapt` (SLC V1.5, research): {'game_id', 'kickoff', 'n0'} for one target game. It blends that game's
+    available current-season plays into the team outcome splits (team_season_adapt.py). None leaves V1 unchanged.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
     rows of 2022-2025 are excluded and counted on the reference as `pool_scope`. False reproduces the accepted E2 artifacts,
@@ -558,8 +561,9 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     if team_tendency and not team_tendency_teams:
         raise ValueError('team tendencies need the side map {"A": home, "B": away} from the frozen schedule')
     rows = e1.load(db, eligible_before=eligible_before)
-    pool, pool_excluded = e1.build_pool(rows, regulation_only=regulation_only,
-                                        include_qb_scrambles=playcall_qb_decisions)
+    team_before = int(eligible_before[0]) if playcall_team_outcomes and eligible_before is not None else None
+    pool, pool_excluded, team_pool = e1.build_pools(rows, regulation_only=regulation_only,
+                                                    include_qb_scrambles=playcall_qb_decisions, team_before_season=team_before)
     contextual_sampler = None
     contextual_pool_manifest = {}
     if contextual_mode is not None:
@@ -589,8 +593,13 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                 raise ValueError('team outcome splits need an eligible-before cutoff')
             import team_tendency as tt
             cutoff_season = int(eligible_before[0])
-            prior_rows = [row for row in rows if int(row['season']) < cutoff_season]
-            contextual_sampler.team_outcomes = tt.build_from_rows(prior_rows, cutoff_season, cutoff=(cutoff_season, 1))
+            contextual_sampler.team_outcomes = tt.build_from_team_pool(team_pool, cutoff_season, cutoff=(cutoff_season, 1))
+            if playcall_season_adapt is not None:
+                import team_season_adapt as tsa
+                focus = sorted(set((playcall_teams or {}).values()))
+                contextual_sampler.team_outcomes, contextual_sampler.season_adapt = tsa.build_for_target(
+                    db, cutoff_season, playcall_season_adapt['game_id'], playcall_season_adapt['kickoff'],
+                    contextual_sampler.team_outcomes, n0=playcall_season_adapt['n0'], focus_teams=focus)
         if playcall_formation:  # pre-event formation and personnel from the seasons before the cutoff; outcomes conditioned on it
             if eligible_before is None:
                 raise ValueError('formation priors need an eligible-before cutoff')
