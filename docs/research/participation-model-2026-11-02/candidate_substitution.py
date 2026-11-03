@@ -40,6 +40,7 @@ HOLDOUT = {2025}
 CLASSES = pf.SKILL_CLASSES
 CAP = pf.STINT_CAP
 JOINT_MIN_PAIRS = 30  # a grouping transition seen on fewer pairs than this uses the per-player draws
+LEAVE_R0 = 0.5  # pre-declared reference grouping rate for the leave scaling (see CandidateField._leave_factors)
 FEASIBLE_MAX_DRAWS = 200  # redraws before a feasibility-constrained draw is recorded as unresolved
 
 
@@ -134,8 +135,24 @@ class CandidateField(pf.Field):
         prior = pooled_leaves / pooled_total if pooled_total else 0.0
         return max(0.0, leaves + pf.HAZARD_PRIOR_PLAYS * prior) / (total + pf.HAZARD_PRIOR_PLAYS)
 
-    def _joint_leavers(self, lineup, cls_of, kind, options, draw):
+    leave_beta = 0.0  # 0 is the runtime behaviour. A positive value makes a higher-share player less likely to leave.
+
+    def _leave_factors(self, team, group, lineup, roster):
+        """Per-player leave multiplier (pre-declared form): (LEAVE_R0 / grouping rate) ** leave_beta, clipped to [0.25, 4].
+        A player who plays this grouping often leaves less often. Empty when leave_beta is 0."""
+        if not self.leave_beta:
+            return {}
+        pos_of = {p['gsis_id']: p['pos_abb'] for p in roster}
+        out = {}
+        for pid in lineup:
+            if pid in pos_of:
+                rate = self.rate(pid, team, group, pos_of[pid])
+                out[pid] = min(4.0, max(0.25, (LEAVE_R0 / max(rate, pf.FLOOR)) ** self.leave_beta))
+        return out
+
+    def _joint_leavers(self, lineup, cls_of, kind, options, draw, factor=None):
         """Draw the leaver count of each class together, then which players of that class leave, stint-weighted."""
+        factor = factor or {}
         tuples = sorted(options)
         pick = draw.choices(tuples, weights=[options[t] for t in tuples], k=1)[0]
         leavers = {pid for pid in lineup if cls_of.get(pid) is None}
@@ -144,13 +161,16 @@ class CandidateField(pf.Field):
             if n > len(on):
                 self.status['joint_capped'] += 1
             for _ in range(min(n, len(on))):
-                weights = [max(self.hazard(kind, cls, min(lineup[pid], CAP)), pf.FLOOR) for pid in on]
+                weights = [max(self.hazard(kind, cls, min(lineup[pid], CAP)) * factor.get(pid, 1.0), pf.FLOOR)
+                           for pid in on]
                 chosen = draw.choices(on, weights=weights, k=1)[0]
                 on.remove(chosen)
                 leavers.add(chosen)
         return leavers
 
-    def _per_player_leavers(self, lineup, cls_of, prev_group, target, rotation_kind, suffix, stint_swap, draw):
+    def _per_player_leavers(self, lineup, cls_of, prev_group, target, rotation_kind, suffix, stint_swap, draw,
+                            factor=None):
+        factor = factor or {}
         """The per-player leave draws: rotation in a class whose count holds, then churn in a class whose count changes."""
         leavers = set()
         for pid in sorted(lineup):
@@ -158,7 +178,8 @@ class CandidateField(pf.Field):
             if cls is None:
                 leavers.add(pid)
             elif prev_group is not None and gc(prev_group)[cls] == target[cls] \
-                    and draw.random() < self.hazard(rotation_kind, cls, min(lineup[pid], CAP)):
+                    and draw.random() < min(1.0, self.hazard(rotation_kind, cls, min(lineup[pid], CAP))
+                                            * factor.get(pid, 1.0)):
                 leavers.add(pid)
         for pid in sorted(lineup):
             cls = cls_of.get(pid)
@@ -175,6 +196,7 @@ class CandidateField(pf.Field):
             self.status['unsupported_grouping'] += 1
             return None, {'status': 'unsupported_grouping', 'group': group}
         cls_of = {p['gsis_id']: pf.SKILL[p['pos_abb']] for p in roster if p['pos_abb'] in pf.SKILL}
+        factor = self._leave_factors(team, prev_group or group, lineup, roster)
         target = gc(group)
         suffix = '_drive' if drive_split and new_drive else ''
         rotation_kind = ('held' if prev_group == group else 'changed') + suffix
@@ -192,13 +214,13 @@ class CandidateField(pf.Field):
                 if not options:
                     self.status['joint_no_feasible'] += 1
             if options:
-                leavers = self._joint_leavers(lineup, cls_of, rotation_kind, options, draw)
+                leavers = self._joint_leavers(lineup, cls_of, rotation_kind, options, draw, factor)
             else:
                 self.status['joint_fallback'] += 1
         if leavers is None:
             for _attempt in range(FEASIBLE_MAX_DRAWS):
                 leavers = self._per_player_leavers(lineup, cls_of, prev_group, target, rotation_kind, suffix, stint_swap,
-                                                   draw)
+                                                   draw, factor)
                 leave_counts = Counter(cls_of[pid] for pid in leavers if pid in cls_of)
                 if not feasible or all(leave_counts[cls] <= allowed[cls] for cls in CLASSES):
                     break
