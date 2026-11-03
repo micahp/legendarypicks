@@ -303,7 +303,8 @@ def evaluate(sim_by_seed, seqs, play_drive, cls_of):
                 continue
             groups = [g for g, _c, _s in seq]
             ids = [frozenset(pid for pid, _ in skill) for _g, _c, skill in seq]
-            ok = [dg.consistent(g, i, cls_of) for g, i in zip(groups, ids)]
+            # the observed grouping is checked against the class listed on each snap, not the player's primary class
+            ok = [dg.consistent(g, i, dict(skill)) for g, i, (_g, _c, skill) in zip(groups, ids, seq)]
             sim_groups = [g for g, _s in sims[key]]
             sim_ids = [s for _g, s in sims[key]]
             records.extend(dg.pair_records(sim_groups, sim_ids, ok, play_drive[key], cls_of))

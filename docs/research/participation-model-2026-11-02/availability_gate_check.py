@@ -42,6 +42,39 @@ def weekly_status(path):
     return status
 
 
+def primary(labels):
+    """The most frequent label; ties go to the label that sorts first, so the choice is the same on every run."""
+    return sorted(labels.items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
+
+
+def season_positions(rows, roster_path, positions, seasons):
+    """{season: {gsis_id: position}}: the position each player was used at in that season. The most frequent on-field
+    skill label on his snaps that season wins. A player with no on-field skill snap that season takes the most frequent
+    REG weekly-roster position, if the roster file has that season. players.csv is the fallback: it holds one position
+    per player, from the date the file was written, so it is only used where no season label exists."""
+    on_field = defaultdict(Counter)
+    for row in rows:
+        for pid, label in zip(row['offense_ids'].split(';'), row['offense_positions'].split(';')):
+            if pid and label in lf.SKILL:
+                on_field[(int(row['season']), pid)][label] += 1
+    roster = defaultdict(Counter)
+    with gzip.open(roster_path, 'rt', encoding='utf-8', newline='') as handle:
+        for row in csv.DictReader(handle):
+            if row['game_type'] == 'REG' and row['gsis_id'] and row['position'] in lf.SKILL:
+                roster[(int(row['season']), row['gsis_id'])][row['position']] += 1
+    out = {}
+    for season in seasons:
+        pos = dict(positions)
+        for (s, pid), labels in on_field.items():
+            if s == season:
+                pos[pid] = primary(labels)
+        for (s, pid), labels in roster.items():
+            if s == season and (season, pid) not in on_field:
+                pos[pid] = primary(labels)
+        out[season] = pos
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--tables', type=Path, required=True)
@@ -54,7 +87,6 @@ def main():
     args = ap.parse_args()
 
     positions = pm.load_positions(args.raw_dir)
-    cls_of = vl.classes_of(positions)
     drives = {}
     for season in (2022, 2023, 2024, 2025):
         drives.update(dg.load_drives(args.pbp_dir / f'pbp_{season}.csv.gz'))
@@ -70,11 +102,23 @@ def main():
         return out
 
     fit_rows = pm.load_scrimmage(args.tables, cs.FIT_SEASONS)
-    tables, joint_tables, _checks = cs.fit_tables(lf.sequences(fit_rows, positions), drive_map(fit_rows), cs.FIT_SEASONS)
+    rows = pm.load_scrimmage(args.tables, cs.HOLDOUT)
+    (holdout_season,) = cs.HOLDOUT
+    season_pos = season_positions(fit_rows + rows, args.roster_weekly, positions, sorted(cs.FIT_SEASONS | cs.HOLDOUT))
+    changes = {season: sum(1 for pid in season_pos[season]
+                           if lf.SKILL.get(season_pos[season][pid]) != lf.SKILL.get(positions.get(pid)))
+               for season in sorted(season_pos)}
+    # Fits use each fit season's labels; the holdout uses its own season's labels. No holdout label reaches a fit.
+    seqs_fit = {}
+    for season in sorted(cs.FIT_SEASONS):
+        seqs_fit.update(lf.sequences([row for row in fit_rows if int(row['season']) == season], season_pos[season],
+                                     snap_labels=True))
+    tables, joint_tables, _checks = cs.fit_tables(seqs_fit, drive_map(fit_rows), cs.FIT_SEASONS)
     base = json.loads(args.field.read_text(encoding='utf-8'))
 
-    rows = pm.load_scrimmage(args.tables, cs.HOLDOUT)
-    seqs = lf.sequences(rows, positions)
+    positions = season_pos[holdout_season]
+    cls_of = vl.classes_of(positions)
+    seqs = lf.sequences(rows, positions, snap_labels=True)
     play_drive = drive_map(rows)
     rosters = vl.roster_by_team(rows, cls_of, positions)
     status = weekly_status(args.roster_weekly)
@@ -111,12 +155,13 @@ def main():
         'JD_joint_drive': (cs.variant_field(base, tables['split'], False, True, 'split'), False, True, joint_for('split')),
     }
     result = {'holdout': sorted(cs.HOLDOUT), 'fit_seasons': sorted(cs.FIT_SEASONS), 'seeds': args.seeds,
+              'class_changes_vs_players_csv': changes,
               'bench_players_per_game_mean': {k: round(v / len(seqs), 2) for k, v in bench_size.items()},
               'observed': cs.summarise(
                   [r for key, seq in seqs.items() for r in dg.pair_records(
                       [g for g, _c, _s in seq], [frozenset(p for p, _ in s) for _g, _c, s in seq],
-                      [dg.consistent(g, frozenset(p for p, _ in s), cls_of) for g, _c, s in seq],
-                      play_drive[key], cls_of)]),
+                      [dg.consistent(g, frozenset(p for p, _ in s), dict(s)) for g, _c, s in seq],
+                      play_drive[key], cls_of, seq_cls=[dict(s) for _g, _c, s in seq])]),
               'variants': {}}
     for mode in ('forced', 'free'):
         result['variants'][mode] = {}
