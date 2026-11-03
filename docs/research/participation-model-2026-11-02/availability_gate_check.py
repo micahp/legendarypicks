@@ -24,6 +24,7 @@ sys.path.insert(0, str(HERE))
 import candidate_substitution as cs  # noqa: E402
 import diagnose_substitution_gap as dg  # noqa: E402
 import lineup_fit as lf  # noqa: E402
+import participation_labels as pl  # noqa: E402
 import participation_model as pm  # noqa: E402
 import validate_lineups as vl  # noqa: E402
 import participation_field as pf  # noqa: E402
@@ -70,15 +71,15 @@ def primary(labels):
     return sorted(labels.items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
 
 
-def season_positions(rows, roster_path, positions, seasons):
+def season_positions(rows, roster_path, positions, seasons, recon=None):
     """{season: {gsis_id: position}}: the position each player was used at in that season. The most frequent on-field
     skill label on his snaps that season wins. A player with no on-field skill snap that season takes the most frequent
     REG weekly-roster position, if the roster file has that season. players.csv is the fallback: it holds one position
     per player, from the date the file was written, so it is only used where no season label exists."""
     on_field = defaultdict(Counter)
     for row in rows:
-        for pid, label in zip(row['offense_ids'].split(';'), row['offense_positions'].split(';')):
-            if pid and label in lf.SKILL:
+        for pid, label, _source in pl.aligned_labels(row, recon):
+            if label in lf.SKILL:
                 on_field[(int(row['season']), pid)][label] += 1
     roster = defaultdict(Counter)
     with gzip.open(roster_path, 'rt', encoding='utf-8', newline='') as handle:
@@ -107,6 +108,8 @@ def main():
     ap.add_argument('--roster-weekly', type=Path, required=True)
     ap.add_argument('--out', type=Path, required=True)
     ap.add_argument('--seeds', type=int, default=3)
+    ap.add_argument('--positions', type=Path, default=None,
+                    help='reconstructed 2022 positions (reconstruct_positions.py); needed because 2022 labels are blank')
     args = ap.parse_args()
 
     positions = pm.load_positions(args.raw_dir)
@@ -127,7 +130,9 @@ def main():
     fit_rows = pm.load_scrimmage(args.tables, cs.FIT_SEASONS)
     rows = pm.load_scrimmage(args.tables, cs.HOLDOUT)
     (holdout_season,) = cs.HOLDOUT
-    season_pos = season_positions(fit_rows + rows, args.roster_weekly, positions, sorted(cs.FIT_SEASONS | cs.HOLDOUT))
+    recon = pl.load_reconstruction(args.positions) if args.positions else None
+    season_pos = season_positions(fit_rows + rows, args.roster_weekly, positions, sorted(cs.FIT_SEASONS | cs.HOLDOUT),
+                                  recon)
     changes = {season: sum(1 for pid in season_pos[season]
                            if lf.SKILL.get(season_pos[season][pid]) != lf.SKILL.get(positions.get(pid)))
                for season in sorted(season_pos)}
@@ -135,7 +140,7 @@ def main():
     seqs_fit = {}
     for season in sorted(cs.FIT_SEASONS):
         seqs_fit.update(lf.sequences([row for row in fit_rows if int(row['season']) == season], season_pos[season],
-                                     snap_labels=True))
+                                     snap_labels=True, recon=recon))
     tables, joint_tables, _checks = cs.fit_tables(seqs_fit, drive_map(fit_rows), cs.FIT_SEASONS)
     base = json.loads(args.field.read_text(encoding='utf-8'))
     # The exported field's position prior was fit with one players.csv label per player. Re-derive it from each fit
@@ -150,7 +155,7 @@ def main():
 
     positions = season_pos[holdout_season]
     cls_of = vl.classes_of(positions)
-    seqs = lf.sequences(rows, positions, snap_labels=True)
+    seqs = lf.sequences(rows, positions, snap_labels=True, recon=recon)
     play_drive = drive_map(rows)
     rosters = vl.roster_by_team(rows, cls_of, positions)
     status = weekly_status(args.roster_weekly)

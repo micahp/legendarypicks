@@ -7,7 +7,24 @@
  "holdout": 2025,
  "k": 4,
  "leakage_check": "the estimate for a game uses only that team's earlier games in the same season and a prior from the season before; the position group comes from the prior season only",
- "role_table_dev_descriptive": {
+ "prior_source_counts": {
+  "2023": {
+   "cross_team": 1965,
+   "overall": 1821,
+   "same_team": 6154
+  },
+  "2024": {
+   "cross_team": 1916,
+   "overall": 1782,
+   "same_team": 6181
+  },
+  "2025": {
+   "cross_team": 1937,
+   "overall": 1779,
+   "same_team": 6183
+  }
+ },
+ "role_table_POSTGAME_DESCRIPTIVE_ONLY": {
   "2023": {
    "OL1": {
     "mean_share": 0.995,
@@ -303,125 +320,125 @@
  },
  "scoring": {
   "2023": {
-   "component_mse": 0.0689,
-   "group_mean_mse": 0.104721,
-   "improvement_over_group_mean": 0.035821,
-   "improvement_over_prior_only": 0.043351,
-   "prior_only_mse": 0.112251,
+   "component_mse": 0.06437,
+   "group_mean_mse": 0.098105,
+   "improvement_over_group_mean": 0.033735,
+   "improvement_over_prior_only": 0.026245,
+   "prior_only_mse": 0.090615,
    "targets": 9940
   },
   "2024": {
-   "component_mse": 0.069869,
-   "group_mean_mse": 0.105696,
-   "improvement_over_group_mean": 0.035827,
-   "improvement_over_prior_only": 0.045221,
-   "prior_only_mse": 0.115091,
+   "component_mse": 0.064897,
+   "group_mean_mse": 0.100119,
+   "improvement_over_group_mean": 0.035222,
+   "improvement_over_prior_only": 0.027536,
+   "prior_only_mse": 0.092433,
    "targets": 9879
   },
   "2025": {
-   "component_mse": 0.070152,
-   "group_mean_mse": 0.102984,
-   "improvement_over_group_mean": 0.032832,
-   "improvement_over_prior_only": 0.038364,
-   "prior_only_mse": 0.108516,
+   "component_mse": 0.06583,
+   "group_mean_mse": 0.097304,
+   "improvement_over_group_mean": 0.031475,
+   "improvement_over_prior_only": 0.021638,
+   "prior_only_mse": 0.087467,
    "targets": 9899
   }
  },
  "scoring_by_prior_group": {
   "2023": {
    "OL": {
-    "component_mse": 0.094106,
-    "group_mean_mse": 0.09317,
-    "targets": 2233
+    "component_mse": 0.090709,
+    "group_mean_mse": 0.099476,
+    "targets": 2817
    },
    "QB": {
-    "component_mse": 0.088023,
-    "group_mean_mse": 0.083738,
-    "targets": 420
+    "component_mse": 0.101372,
+    "group_mean_mse": 0.104518,
+    "targets": 559
    },
    "RB": {
-    "component_mse": 0.033539,
-    "group_mean_mse": 0.063194,
-    "targets": 1048
+    "component_mse": 0.030742,
+    "group_mean_mse": 0.059097,
+    "targets": 1352
    },
    "TE": {
-    "component_mse": 0.030009,
-    "group_mean_mse": 0.076873,
-    "targets": 998
+    "component_mse": 0.029433,
+    "group_mean_mse": 0.068491,
+    "targets": 1324
    },
    "UNK": {
-    "component_mse": 0.081001,
-    "group_mean_mse": 0.135384,
-    "targets": 3789
+    "component_mse": 0.086676,
+    "group_mean_mse": 0.14261,
+    "targets": 1824
    },
    "WR": {
-    "component_mse": 0.045278,
-    "group_mean_mse": 0.097654,
-    "targets": 1452
+    "component_mse": 0.043127,
+    "group_mean_mse": 0.099714,
+    "targets": 2064
    }
   },
   "2024": {
    "OL": {
-    "component_mse": 0.100939,
-    "group_mean_mse": 0.093429,
-    "targets": 2241
+    "component_mse": 0.089488,
+    "group_mean_mse": 0.099185,
+    "targets": 2767
    },
    "QB": {
-    "component_mse": 0.08508,
-    "group_mean_mse": 0.082583,
-    "targets": 405
+    "component_mse": 0.10672,
+    "group_mean_mse": 0.104979,
+    "targets": 573
    },
    "RB": {
-    "component_mse": 0.033386,
-    "group_mean_mse": 0.059612,
-    "targets": 942
+    "component_mse": 0.031997,
+    "group_mean_mse": 0.061991,
+    "targets": 1289
    },
    "TE": {
-    "component_mse": 0.033106,
-    "group_mean_mse": 0.071628,
-    "targets": 1034
+    "component_mse": 0.032063,
+    "group_mean_mse": 0.067742,
+    "targets": 1360
    },
    "UNK": {
-    "component_mse": 0.078935,
-    "group_mean_mse": 0.140322,
-    "targets": 3698
+    "component_mse": 0.085452,
+    "group_mean_mse": 0.156167,
+    "targets": 1782
    },
    "WR": {
-    "component_mse": 0.046181,
-    "group_mean_mse": 0.097641,
-    "targets": 1559
+    "component_mse": 0.045176,
+    "group_mean_mse": 0.096845,
+    "targets": 2108
    }
   },
   "2025": {
    "OL": {
-    "component_mse": 0.092224,
-    "group_mean_mse": 0.088366,
-    "targets": 2228
+    "component_mse": 0.088947,
+    "group_mean_mse": 0.102578,
+    "targets": 2847
    },
    "QB": {
-    "component_mse": 0.091373,
-    "group_mean_mse": 0.065578,
-    "targets": 382
+    "component_mse": 0.095332,
+    "group_mean_mse": 0.096777,
+    "targets": 555
    },
    "RB": {
-    "component_mse": 0.025461,
-    "group_mean_mse": 0.062391,
-    "targets": 1002
+    "component_mse": 0.0254,
+    "group_mean_mse": 0.061087,
+    "targets": 1236
    },
    "TE": {
-    "component_mse": 0.034277,
-    "group_mean_mse": 0.075888,
-    "targets": 1083
+    "component_mse": 0.033646,
+    "group_mean_mse": 0.072574,
+    "targets": 1399
    },
    "UNK": {
-    "component_mse": 0.085659,
-    "group_mean_mse": 0.137316,
-    "targets": 3739
+    "component_mse": 0.087855,
+    "group_mean_mse": 0.142038,
+    "targets": 1802
    },
    "WR": {
-    "component_mse": 0.048561,
-    "group_mean_mse": 0.095138,
-    "targets": 1465
+    "component_mse": 0.052781,
+    "group_mean_mse": 0.089553,
+    "targets": 2060
    }
   }
  },

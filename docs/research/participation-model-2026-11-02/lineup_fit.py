@@ -17,6 +17,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import participation_labels as pl  # noqa: E402
 import participation_model as pm  # noqa: E402
 
 SKILL = {'RB': 'RB', 'FB': 'RB', 'TE': 'TE', 'WR': 'WR'}
@@ -31,16 +32,17 @@ def group_counts(group):
     return {'RB': rb, 'TE': te, 'WR': 5 - rb - te}
 
 
-def sequences(rows, positions, snap_labels=False):
+def sequences(rows, positions, snap_labels=False, recon=None):
     """{(season, game_id, team): [(group, cell, skill), ...]} in play order. skill is a frozenset of (gsis_id, class).
     snap_labels=True takes each player's class from the position listed on that snap, so a player with several roles
-    keeps the role he had on each snap. Otherwise every snap uses the player's single position from positions."""
+    keeps the role he had on each snap. Where the listed labels are missing (2022), the reconstructed position is used
+    (participation_labels.aligned_labels). A player with no label from either source is left out of skill and is
+    counted by the caller, never silently mispaired. Otherwise every snap uses the player's position from positions."""
     grouped = defaultdict(list)
     for row in rows:
         if snap_labels:
-            skill = frozenset((pid, SKILL[label]) for pid, label in
-                              zip(row['offense_ids'].split(';'), row['offense_positions'].split(';'))
-                              if pid and label in SKILL)
+            skill = frozenset((pid, SKILL[label]) for pid, label, _source in pl.aligned_labels(row, recon)
+                              if label in SKILL)
         else:
             skill = frozenset((pid, SKILL[positions[pid]]) for pid in row['ids'] if positions.get(pid) in SKILL)
         grouped[(int(row['season']), row['game_id'], row['posteam'])].append(

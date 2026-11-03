@@ -32,6 +32,7 @@ import candidate_substitution as cs  # noqa: E402
 import cutoff_individual_eval as cie  # noqa: E402
 import diagnose_substitution_gap as dg  # noqa: E402
 import lineup_fit as lf  # noqa: E402
+import participation_labels as pl  # noqa: E402
 import participation_field as pf  # noqa: E402
 import participation_model as pm  # noqa: E402
 import availability_gate_check as agc  # noqa: E402
@@ -194,13 +195,13 @@ def main():
     prior_counts = defaultdict(Counter)
     for row in fit_rows:
         if int(row['season']) == max(cs.FIT_SEASONS):
-            for pid, label in zip(row['offense_ids'].split(';'), row['offense_positions'].split(';')):
-                if pid and label in lf.SKILL:
+            for pid, label, _source in pl.aligned_labels(row):
+                if label in lf.SKILL:
                     prior_counts[pid][label] += 1
     snap_evidence = []
     for row in rows:
-        for pid, label in zip(row['offense_ids'].split(';'), row['offense_positions'].split(';')):
-            if pid and label in lf.SKILL:
+        for pid, label, _source in pl.aligned_labels(row):
+            if label in lf.SKILL:
                 snap_evidence.append((int(row['week']), pid, label))
     roster_rows = cie.roster_evidence(args.roster_weekly)
     weeks = sorted({int(r['week']) for r in rows})

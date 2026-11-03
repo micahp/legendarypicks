@@ -17,9 +17,8 @@ Baselines. The prior-season group mean (no player information, with the same fal
 Scoring. Only player-games with at least one snap are scored. An absent player is never a target. This is the same
 conditioning the P2 usage component uses.
 
-Role. A role is the position label plus its rank among that label on the team, by the season's mean share (1 is the
-most-used). The role table is descriptive, from the development seasons only, and uses the season's own labels, so it
-is not a prediction input.
+Role table: POSTGAME DESCRIPTIVE ONLY. It ranks players by their full-season mean share and uses the season's own
+labels and observations. It is never a predictive feature, prior or gate input.
 
 Usage: python3 snap_share.py --tables <scrimmage_participation.csv.gz> --out <json>
 """
@@ -35,6 +34,7 @@ sys.path.insert(0, str(HERE))
 import participation_model as pm  # noqa: E402
 
 K = 4  # pseudo-games, as in the P2 usage component
+K2 = 8  # pseudo-games pulling a player's prior toward his position group
 DEV_SEASONS = (2023, 2024)
 HOLDOUT_SEASON = 2025
 SEASONS = (2022, 2023, 2024, 2025)
@@ -123,12 +123,52 @@ def main():
     group_mean = {key: group_sum[key] / group_n[key] for key in group_sum if group_n[key]}
     overall_mean = {season: overall_sum[season] / overall_n[season] for season in overall_sum if overall_n[season]}
 
+    # Player-level prior-season history across every team he played for. A transfer keeps his history: the same-team
+    # mean is used when it exists, otherwise the game-weighted mean over his other teams that season.
+    pid_games, pid_sum, pid_group_counts = defaultdict(int), defaultdict(float), defaultdict(Counter)
+    for (season, team, pid), mean in team_mean.items():
+        games_n = len(team_games[(season, team)])
+        pid_games[(season, pid)] += games_n
+        pid_sum[(season, pid)] += mean * games_n
+    for (season, game, team, pid), counter in labels.items():
+        if (season, game, team, pid) not in snaps:  # a label without a snap is not history
+            continue
+        for label, n in counter.items():
+            grp = group_of(label)
+            if grp:
+                pid_group_counts[(season, pid)][grp] += n
+    pid_mean = {key: pid_sum[key] / pid_games[key] for key in pid_sum if pid_games[key]}
+
+    def prior_for(season, team, pid):
+        """The prior for a player-game from the season before only, with its source:
+        1 the same team's prior-season mean, 2 the player's prior-season mean over any team (transfers), then shrunk
+        toward his prior-season position group (group mean), or the overall prior-season mean when no group is known.
+        The shrinkage weight K2 = 8 games, so a player with two prior games is pulled mostly toward his group.
+        Returns (prior, group-only value, group, source)."""
+        prev_season = season - 1
+        grp_counts = pid_group_counts.get((prev_season, pid))
+        grp = grp_counts.most_common(1)[0][0] if grp_counts else None
+        group_value = group_mean.get((prev_season, grp)) if grp else None
+        if group_value is None:
+            group_value = overall_mean.get(prev_season, 0.0)
+            group_name = 'UNK'
+        else:
+            group_name = grp
+        if (prev_season, team, pid) in team_mean:
+            n_prior = len(team_games[(prev_season, team)])
+            player_value, source = team_mean[(prev_season, team, pid)], 'same_team'
+        elif (prev_season, pid) in pid_mean:
+            n_prior = pid_games[(prev_season, pid)]
+            player_value, source = pid_mean[(prev_season, pid)], 'cross_team'
+        else:
+            return group_value, group_value, group_name, 'group_only' if group_name != 'UNK' else 'overall'
+        prior = (n_prior * player_value + K2 * group_value) / (n_prior + K2)
+        return prior, group_value, group_name, source
+
     def prior_group_mean(season, team, pid):
-        """The group prior from the season before: the player's group that season, else the overall prior-season mean."""
-        grp = group_of_player.get((season - 1, team, pid))
-        if grp and (season - 1, grp) in group_mean:
-            return group_mean[(season - 1, grp)], grp
-        return overall_mean.get(season - 1, 0.0), 'UNK'
+        """Kept for the group-only baseline: prior-season group mean, else the overall prior-season mean."""
+        _prior, group_value, group_name, _source = prior_for(season, team, pid)
+        return group_value, group_name
 
     targets = []
     target_rows = []
@@ -141,16 +181,14 @@ def main():
                 if (season, game, team, pid) not in snaps:
                     continue
                 hist = [share(season, team, g, pid) for w, g in games if w < week]
-                prev = (season - 1, team, pid)
-                group_pred, prior_grp = prior_group_mean(season, team, pid)
-                prior_player = team_mean[prev] if prev in team_mean else group_pred
+                prior_player, group_pred, prior_grp, prior_source = prior_for(season, team, pid)
                 prior_only = prior_player
                 estimate = (sum(hist) + K * prior_player) / (len(hist) + K)
                 obs = share(season, team, game, pid)
-                targets.append((season, obs, estimate, prior_only, group_pred, prior_grp))
+                targets.append((season, obs, estimate, prior_only, group_pred, prior_grp, prior_source))
                 target_rows.append((season, week, game, team, pid, round(obs, 6), round(estimate, 6),
-                                    round(prior_only, 6), round(group_pred, 6), prior_grp))
-                role = group_of_player.get((season, team, pid)) or 'UNK'
+                                    round(prior_only, 6), round(group_pred, 6), prior_grp, prior_source))
+                role = group_of_player.get((season, team, pid)) or 'UNK'  # POSTGAME DESCRIPTIVE ONLY
                 role_totals[(season, team, role, pid)][0] += obs
                 role_totals[(season, team, role, pid)][1] += 1
 
@@ -192,14 +230,17 @@ def main():
            f'position groups from the reconstructed PFR positions ({args.positions.name}) in every season',
            'leakage_check': "the estimate for a game uses only that team's earlier games in the same season and a prior "
                             'from the season before; the position group comes from the prior season only',
-           'scoring': results, 'scoring_by_prior_group': by_group, 'role_table_dev_descriptive': role_table}
+           'scoring': results, 'scoring_by_prior_group': by_group,
+           'prior_source_counts': {str(season): dict(Counter(t[6] for t in targets if t[0] == season))
+                                   for season in sorted({t[0] for t in targets})},
+           'role_table_POSTGAME_DESCRIPTIVE_ONLY': role_table}
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(out, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     if args.targets_out:
         with open(args.targets_out, 'w', newline='', encoding='utf-8') as handle:
             writer = csv.writer(handle)
             writer.writerow(['season', 'week', 'game_id', 'team', 'gsis_id', 'obs_share', 'estimate', 'prior_only',
-                             'group_pred', 'prior_group'])
+                             'group_pred', 'prior_group', 'prior_source'])
             for row in target_rows:
                 writer.writerow(row)
     print(json.dumps(out['scoring'], sort_keys=True))

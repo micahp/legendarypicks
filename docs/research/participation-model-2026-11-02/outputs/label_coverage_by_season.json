@@ -1,0 +1,56 @@
+{
+ "2022": {
+  "after": {
+   "onfield": 0,
+   "reconstructed": 370755,
+   "unlabelled": 19
+  },
+  "before": {
+   "onfield": 0,
+   "reconstructed": 0,
+   "unlabelled": 370774
+  }
+ },
+ "2023": {
+  "after": {
+   "onfield": 372665,
+   "reconstructed": 0,
+   "unlabelled": 0
+  },
+  "before": {
+   "onfield": 372665,
+   "reconstructed": 0,
+   "unlabelled": 0
+  }
+ },
+ "2024": {
+  "after": {
+   "onfield": 367257,
+   "reconstructed": 0,
+   "unlabelled": 0
+  },
+  "before": {
+   "onfield": 367257,
+   "reconstructed": 0,
+   "unlabelled": 0
+  }
+ },
+ "2025": {
+  "after": {
+   "onfield": 360661,
+   "reconstructed": 0,
+   "unlabelled": 0
+  },
+  "before": {
+   "onfield": 360661,
+   "reconstructed": 0,
+   "unlabelled": 0
+  }
+ },
+ "reconstruction_audit": {
+  "gsis_with_multiple_pfr": 0,
+  "matched": 40138,
+  "no_offense_snaps": 61078,
+  "pfr_unmatched": 75
+ }
+}
