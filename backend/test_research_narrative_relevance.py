@@ -11,12 +11,17 @@ from research_narrative_relevance import (
     CORE_PREVIEW_SYSTEM,
     EVENT_ONLY_SYSTEM,
     QUARANTINED_CATEGORIES,
+    ResearchAuditError,
     build_matchup_relationship,
     claim_cutoff_rejection,
     _claim_rows,
     _candidate_prompt_fact,
     _nfl_kickoff_utc,
+    _payload_sha256,
+    _archive_espn_summary_payload,
     _recompute_relationship_statistics,
+    _espn_scoreboard_event,
+    _validate_context_snapshot,
     _target_rows,
     render_relationship_preview,
     rank_matchup_candidates,
@@ -134,6 +139,66 @@ class ResearchNarrativeRelevanceTests(unittest.TestCase):
             {"selected_evidence_status": "no_eligible_candidate"},
             _candidate_prompt_fact(None),
         )
+
+    def test_cutoff_safe_espn_context_snapshot_is_bound_to_game_and_capture_time(self):
+        payload = {
+            "header": {"id": "event-1", "competitions": [{
+                "date": "2026-11-02T21:00:00Z",
+                "competitors": [
+                    {"homeAway": "away", "team": {"abbreviation": "CHI"}},
+                    {"homeAway": "home", "team": {"abbreviation": "SEA"}},
+                ],
+                "status": {"type": {"state": "pre", "completed": False}},
+            }]},
+            "lastFiveGames": [],
+        }
+        example = {
+            "target_game_id": "target-1", "league": "nfl",
+            "matchup": {"away": "CHI", "home": "SEA"},
+            "kickoff_utc": "2026-11-02T21:00:00Z",
+        }
+        snapshot = {
+            "status": "captured", "espn_event_id": "event-1",
+            "captured_at": "2026-11-02T20:00:00Z",
+            "summary_sha256": _payload_sha256(payload), "summary_payload": payload,
+        }
+        _validate_context_snapshot(example, snapshot, "2026-11-02T20:30:00Z")
+        snapshot["captured_at"] = "2026-11-02T20:45:00Z"
+        with self.assertRaises(ResearchAuditError):
+            _validate_context_snapshot(example, snapshot, "2026-11-02T20:30:00Z")
+
+    def test_nba_scoreboard_event_mapping_requires_exact_teams_and_kickoff(self):
+        target = {
+            "target_game_id": "nba-1", "league": "nba", "away_team": "SAC",
+            "home_team": "DAL", "start_utc": "2026-11-03T01:00:00Z",
+        }
+        payload = {"events": [{
+            "id": "401909913", "competitions": [{
+                "date": "2026-11-03T01:00:00Z", "competitors": [
+                    {"homeAway": "away", "team": {"abbreviation": "SAC"}},
+                    {"homeAway": "home", "team": {"abbreviation": "DAL"}},
+                ],
+            }],
+        }]}
+        self.assertEqual("401909913", _espn_scoreboard_event(target, payload))
+        payload["events"].append(payload["events"][0])
+        with self.assertRaises(ResearchAuditError):
+            _espn_scoreboard_event(target, payload)
+
+    def test_prospective_espn_summary_is_archived_outside_packet_with_hash(self):
+        payload = {"header": {"id": "event-1"}, "leaders": []}
+        snapshot = {
+            "target_game_id": "target-1", "summary_sha256": _payload_sha256(payload),
+            "summary_payload": payload,
+        }
+        with tempfile.TemporaryDirectory() as temp:
+            outdir = Path(temp) / "docs" / "run" / "relevance-ranking"
+            path = _archive_espn_summary_payload(
+                outdir, snapshot, cache_root=Path(temp) / "cache")
+            archived = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(snapshot["summary_sha256"], _payload_sha256(archived))
+            self.assertEqual(0o600, path.stat().st_mode & 0o777)
+            self.assertNotEqual(outdir, path.parent)
 
     def test_relationship_statistics_are_recomputed_from_source_rows(self):
         windows = {

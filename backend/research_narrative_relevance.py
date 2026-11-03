@@ -1,15 +1,15 @@
 """Offline database-only narrative relevance research for Legendary Picks.
 
-The module has no ESPN client, publisher collector, or model-provider imports.
-It reads the shared development database in query-only mode and writes research
-artifacts only.
+The default mode is offline and uses the shared development database in
+query-only mode. An explicit prospective-capture mode can fetch pregame ESPN
+summaries into research artifacts; it never writes to a database.
 """
 from __future__ import annotations
 
 import argparse
 import csv
 from collections import Counter, defaultdict
-from contextlib import closing
+from contextlib import closing, nullcontext
 from datetime import date, datetime, timedelta, timezone
 import hashlib
 import json
@@ -55,16 +55,19 @@ CORE_PREVIEW_SYSTEM = (
     "assume it from a team's usual city. No clichés, no hype, plain confident tone."
 )
 EVENT_ONLY_SYSTEM = (
-    "Use only the compact selected-evidence summary supplied. For a team_relationship, "
-    "describe both supplied measurements and their sample windows. Do not calculate or "
-    "add other facts. For a team_streak, state only that verified streak. If no eligible "
-    "evidence is supplied, return no preview. Do not claim causation, predict an outcome, "
-    "or describe a play as decisive. Write one to three clear sentences."
+    "Use the compact selected-evidence summary and any shared, dated ESPN matchup "
+    "context supplied. The same ESPN context is supplied to every variant. State only "
+    "facts directly present in those inputs. For a team_relationship, describe both "
+    "supplied measurements and their sample windows. Do not calculate additional stats. "
+    "For a team_streak, state only that verified streak. If no eligible evidence is "
+    "supplied, return no preview. Do not claim causation, predict an outcome, or describe "
+    "a play as decisive. Write one to three clear sentences."
 )
 COMBINED_SYSTEM = (
     "Use only the compact selected-evidence summary as evidence for a matchup claim. "
-    "Do not derive additional averages, margins, trends, or player statistics from "
-    "background text. For a team_relationship, combine the offense and opposing-defense "
+    "The shared, dated ESPN matchup context is supplied to every variant; cite its facts "
+    "only as directly stated. Do not derive additional averages, margins, trends, or "
+    "player statistics from background text. For a team_relationship, combine the offense and opposing-defense "
     "facts into one clear insight: state whether the supplied deltas move in the same "
     "or opposite directions, and explain what that means for this metric. Treat points "
     "or EPA allowed as the defense measure; higher means more allowed, lower means less. "
@@ -1519,6 +1522,222 @@ def _prompt_entry(target: dict[str, Any], variant: str, system: str,
     }
 
 
+def _payload_sha256(payload: dict[str, Any]) -> str:
+    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                           separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def _summary_matchup_fields(league: str, payload: dict[str, Any]) -> tuple[dict[str, str], datetime | None, str, bool]:
+    header = payload.get("header") or {}
+    competitions = header.get("competitions") or []
+    competition = competitions[0] if competitions else {}
+    sides = {}
+    for row in competition.get("competitors") or []:
+        side = row.get("homeAway")
+        abbreviation = ((row.get("team") or {}).get("abbreviation") or "").strip()
+        if side in ("home", "away") and abbreviation:
+            sides[side] = team_codes.normalize(league, abbreviation)
+    start = _utc(competition.get("date") or header.get("date"))
+    state = str((((competition.get("status") or {}).get("type") or {}).get("state")) or "").lower()
+    completed = (((competition.get("status") or {}).get("type") or {}).get("completed")) is True
+    return sides, start, state, completed
+
+
+def _validate_context_snapshot(example: dict[str, Any], snapshot: dict[str, Any],
+                               as_of: str) -> None:
+    payload = snapshot.get("summary_payload")
+    if not isinstance(payload, dict):
+        raise ResearchAuditError("ESPN context snapshot has no summary payload")
+    if _payload_sha256(payload) != snapshot.get("summary_sha256"):
+        raise ResearchAuditError("ESPN context snapshot hash does not match its payload")
+    captured_at, cutoff, kickoff = (_utc(snapshot.get("captured_at")), _utc(as_of),
+                                    _utc(example.get("kickoff_utc")))
+    if captured_at is None or cutoff is None or kickoff is None:
+        raise ResearchAuditError("ESPN context snapshot requires captured, cutoff, and kickoff timestamps")
+    if captured_at > cutoff or cutoff >= kickoff or captured_at >= kickoff:
+        raise ResearchAuditError("ESPN context snapshot is not cutoff-safe and pre-kickoff")
+    for field in ("cache_file_mtime", "cache_file_ctime"):
+        if snapshot.get(field):
+            stamp = _utc(snapshot[field])
+            if stamp is None or stamp > cutoff:
+                raise ResearchAuditError(f"ESPN context {field} is after the experiment cutoff")
+    league = str(example["league"])
+    sides, summary_start, state, completed = _summary_matchup_fields(league, payload)
+    expected = {"away": example["matchup"]["away"], "home": example["matchup"]["home"]}
+    if sides != expected:
+        raise ResearchAuditError(f"ESPN context teams do not match target {example['target_game_id']}")
+    if summary_start is None or abs((summary_start - kickoff).total_seconds()) > 300:
+        raise ResearchAuditError(f"ESPN context kickoff does not match target {example['target_game_id']}")
+    header_id = str((payload.get("header") or {}).get("id") or "")
+    if not header_id or header_id != str(snapshot.get("espn_event_id")):
+        raise ResearchAuditError("ESPN context event id does not match its summary payload")
+    if state != "pre" or completed:
+        raise ResearchAuditError(f"ESPN context for {example['target_game_id']} is not a pregame summary")
+
+
+def _context_section(snapshot: dict[str, Any]) -> str:
+    lines = snapshot.get("context_lines") or []
+    body = "\n".join(lines) if lines else "No matchup-context lines were produced."
+    return (
+        "Shared pregame ESPN matchup context "
+        f"(captured {snapshot['captured_at']}; summary SHA-256 {snapshot['summary_sha256']}):\n"
+        + body
+    )
+
+
+def _attach_espn_context_snapshots(outdir: Path,
+                                   snapshots: list[dict[str, Any]]) -> dict[str, Any]:
+    """Inject verified snapshot-derived lines identically into each target's three prompts."""
+    from research_narrative_event_knowledge import _jsonl_write, _json_write
+    import matchup_context
+
+    examples = _read_jsonl(outdir / "examples.jsonl")
+    baseline_queue = _read_jsonl(outdir / "baseline_generation_queue.jsonl")
+    candidate_queue = _read_jsonl(outdir / "candidate_generation_queue.jsonl")
+    manifest_path = outdir / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    as_of = manifest["as_of"]
+    by_target = {str(row["target_game_id"]): row for row in snapshots}
+    target_ids = {str(row["target_game_id"]) for row in examples}
+    if set(by_target) != target_ids:
+        raise ResearchAuditError("ESPN snapshot set must explicitly cover every target, including missing snapshots")
+    queue_by_key = {
+        (str(row["target_game_id"]), row["variant"]): row
+        for row in baseline_queue + candidate_queue
+    }
+    verified, unavailable = 0, []
+    for example in examples:
+        target_id = str(example["target_game_id"])
+        snapshot = by_target[target_id]
+        if snapshot.get("status") != "captured":
+            if snapshot.get("status") != "unavailable":
+                raise ResearchAuditError(f"unknown ESPN snapshot status for {target_id}")
+            unavailable.append(target_id)
+            example["matchup_context_snapshot"] = {
+                "status": "unavailable", "reason": snapshot.get("reason"),
+            }
+            example["baseline_fields"]["matchup_context"] = {
+                "status": "unavailable_pre_cutoff_snapshot",
+                "reason": snapshot.get("reason"),
+            }
+            queue_by_key[(target_id, "core_stories_baseline")]["matchup_context_snapshot_status"] = "unavailable"
+            for variant, system_prompt in (("event_only", EVENT_ONLY_SYSTEM),
+                                           ("combined", COMBINED_SYSTEM)):
+                row = queue_by_key[(target_id, variant)]
+                row["system_prompt"] = system_prompt
+                row["system_prompt_sha256"] = _sha(system_prompt)
+                row["matchup_context_snapshot_status"] = "unavailable"
+                row["model_call_made"] = False
+                for key in ("provider", "model", "model_output_sha256"):
+                    row.pop(key, None)
+            continue
+
+        _validate_context_snapshot(example, snapshot, as_of)
+        records = example.get("baseline_fields", {}).get("record_facts") or []
+        current_season = any(int((record or {}).get("games") or 0) > 0 for record in records)
+        lines = matchup_context.context_lines(
+            example["league"], str(snapshot["espn_event_id"]),
+            summary=snapshot["summary_payload"], state="pre",
+            current_season=current_season,
+        )
+        snapshot["context_lines"] = lines
+        snapshot["context_lines_function"] = "backend/matchup_context.py::context_lines"
+        block = _context_section(snapshot)
+        old_baseline_user = example["baseline_user_prompt"]
+        baseline_user = old_baseline_user + "\n" + block
+        example["baseline_user_prompt_without_espn_context"] = old_baseline_user
+        example["baseline_user_prompt"] = baseline_user
+        example["matchup_context_snapshot"] = {
+            key: snapshot.get(key) for key in (
+                "status", "espn_event_id", "captured_at", "summary_sha256",
+                "capture_timestamp_basis", "cache_file_mtime", "cache_file_ctime",
+                "cache_file_relative_path", "context_lines_function")
+        }
+        example["matchup_context_snapshot"]["context_line_count"] = len(lines)
+        example["baseline_fields"]["matchup_context"] = {
+            "status": "captured_pre_kickoff_snapshot",
+            "espn_event_id": snapshot["espn_event_id"],
+            "captured_at": snapshot["captured_at"],
+            "summary_sha256": snapshot["summary_sha256"],
+            "capture_timestamp_basis": snapshot.get("capture_timestamp_basis"),
+            "context_lines_function": "backend/matchup_context.py::context_lines",
+            "context_lines": lines,
+        }
+        baseline_prompt = queue_by_key[(target_id, "core_stories_baseline")]
+        baseline_prompt["user_prompt"] = baseline_user
+        baseline_prompt["user_prompt_sha256"] = _sha(baseline_user)
+
+        selected = example.get("selected_candidate")
+        summary_json = json.dumps(_candidate_prompt_fact(selected), ensure_ascii=False, sort_keys=True)
+        matchup = example["matchup"]
+        date_label = _date_label({
+            "league": example["league"], "kickoff_date": example["kickoff_date"],
+            "start_utc": example["kickoff_utc"],
+        })
+        event_user = (
+            f"Matchup: {matchup['away']} vs {matchup['home']}. Date: {date_label}.\n"
+            f"{block}\nVerified selected-evidence summary (JSON):\n{summary_json}"
+        )
+        combined_user = (
+            f"{old_baseline_user}\n{block}\n"
+            f"Verified selected-evidence summary (JSON):\n{summary_json}"
+        )
+        for variant, user_prompt, system_prompt in (
+            ("event_only", event_user, EVENT_ONLY_SYSTEM),
+            ("combined", combined_user, COMBINED_SYSTEM),
+        ):
+            row = queue_by_key[(target_id, variant)]
+            row["system_prompt"] = system_prompt
+            row["system_prompt_sha256"] = _sha(system_prompt)
+            row["user_prompt"] = user_prompt
+            row["user_prompt_sha256"] = _sha(user_prompt)
+            row["matchup_context_snapshot_sha256"] = snapshot["summary_sha256"]
+            row["matchup_context_captured_at"] = snapshot["captured_at"]
+            row["matchup_context_snapshot_status"] = "verified_pre_cutoff"
+            row["model_call_made"] = False
+            for key in ("provider", "model", "model_output_sha256"):
+                row.pop(key, None)
+        baseline_prompt["matchup_context_snapshot_sha256"] = snapshot["summary_sha256"]
+        baseline_prompt["matchup_context_captured_at"] = snapshot["captured_at"]
+        baseline_prompt["matchup_context_snapshot_status"] = "verified_pre_cutoff"
+        baseline_prompt["model_call_made"] = False
+        for key in ("provider", "model", "model_output_sha256"):
+            baseline_prompt.pop(key, None)
+        verified += 1
+
+    snapshot_artifact = [
+        {key: value for key, value in row.items() if key != "summary_payload"}
+        for row in snapshots
+    ]
+    _jsonl_write(outdir / "espn_context_snapshots.jsonl", snapshot_artifact)
+    _jsonl_write(outdir / "examples.jsonl", examples)
+    _jsonl_write(outdir / "baseline_generation_queue.jsonl", baseline_queue)
+    _jsonl_write(outdir / "candidate_generation_queue.jsonl", candidate_queue)
+    manifest["espn_context_capture"] = {
+        "targets_with_verified_pre_cutoff_snapshots": verified,
+        "targets_without_verified_snapshots": unavailable,
+        "context_lines_function": "backend/matchup_context.py::context_lines",
+        "snapshot_artifact": "espn_context_snapshots.jsonl",
+        "same_snapshot_supplied_to_all_variants_for_captured_targets": True,
+        "all_targets_have_snapshot": not unavailable,
+    }
+    manifest["limitations"] = [
+        item for item in manifest.get("limitations", [])
+        if "core_stories matchup_context from ESPN summary is marked unavailable" not in item
+        and "No original-generator model output exists in offline mode" not in item
+    ]
+    if unavailable:
+        manifest["limitations"].append(
+            f"Cutoff-safe ESPN summary snapshots were unavailable for {len(unavailable)} of "
+            f"{len(examples)} targets; those targets retain a reduced-context baseline.")
+    manifest["limitations"].append(
+        "The full core_stories generator was not invoked; local records and player-form inputs remain reconstructed.")
+    manifest["limitations"] = list(dict.fromkeys(manifest["limitations"]))
+    _json_write(manifest_path, manifest)
+    return manifest["espn_context_capture"]
+
+
 def _blind_identity_key_path(outdir: Path) -> Path:
     cache_root = Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
     return (cache_root / "legendarypicks" / "research" / outdir.parent.name /
@@ -1886,6 +2105,197 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
+def _timestamp_text(value: datetime) -> str:
+    return value.astimezone(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+def _espn_summary_archive_path(outdir: Path, snapshot: dict[str, Any],
+                               cache_root: str | Path | None = None) -> Path:
+    root = Path(cache_root or os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
+    return (root / "legendarypicks" / "research" / outdir.parent.name / outdir.name /
+            "espn_summary_snapshots" /
+            f"{snapshot['target_game_id']}-{snapshot['summary_sha256']}.json")
+
+
+def _archive_espn_summary_payload(outdir: Path, snapshot: dict[str, Any],
+                                  cache_root: str | Path | None = None) -> Path:
+    """Keep the raw prospective summary in the private external research cache."""
+    payload = snapshot.get("summary_payload")
+    if not isinstance(payload, dict) or _payload_sha256(payload) != snapshot.get("summary_sha256"):
+        raise ResearchAuditError("cannot archive an ESPN summary with an invalid payload hash")
+    path = _espn_summary_archive_path(outdir, snapshot, cache_root)
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    os.chmod(path.parent, 0o700)
+    if path.exists():
+        if _payload_sha256(json.loads(path.read_text(encoding="utf-8"))) != snapshot["summary_sha256"]:
+            raise ResearchAuditError("existing external ESPN summary archive has a hash mismatch")
+        return path
+    temporary = path.with_name(f"{path.name}.{secrets.token_hex(8)}.tmp")
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        raw = json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":")).encode("utf-8")
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(raw)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        os.chmod(path, 0o600)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+    return path
+
+
+def _espn_scoreboard_event(target: dict[str, Any], payload: dict[str, Any]) -> str:
+    matches = []
+    for event in payload.get("events") or []:
+        competitions = event.get("competitions") or []
+        competition = competitions[0] if competitions else {}
+        sides = {}
+        for competitor in competition.get("competitors") or []:
+            side = competitor.get("homeAway")
+            abbreviation = ((competitor.get("team") or {}).get("abbreviation") or "").strip()
+            if side in ("home", "away") and abbreviation:
+                sides[side] = team_codes.normalize(target["league"], abbreviation)
+        start = _utc(competition.get("date") or event.get("date"))
+        kickoff = _utc(target.get("start_utc"))
+        if (sides == {"away": target["away_team"], "home": target["home_team"]}
+                and start is not None and kickoff is not None
+                and abs((start - kickoff).total_seconds()) <= 300):
+            event_id = str(event.get("id") or "")
+            if event_id:
+                matches.append(event_id)
+    if len(matches) != 1:
+        raise ResearchAuditError(
+            f"ESPN scoreboard has {len(matches)} exact event matches for {target['target_game_id']}")
+    return matches[0]
+
+
+def capture_prospective_espn_context(db_path: str, outdir: str | Path,
+                                     nfl_count: int = 10, nba_count: int = 10,
+                                     now_fn=None, scoreboard_fetch=None,
+                                     summary_fetch=None) -> dict[str, Any]:
+    """Capture each summary before kickoff, then build all local inputs at the capture cutoff."""
+    from research_narrative_event_knowledge import _json_write
+
+    outdir = Path(outdir).resolve()
+    if (outdir / "run_manifest.json").exists():
+        raise ResearchAuditError("prospective ESPN capture requires a new, empty research output directory")
+    now_fn = now_fn or (lambda: datetime.now(timezone.utc))
+    started = _utc(now_fn())
+    if started is None:
+        raise ResearchAuditError("prospective capture clock returned an invalid timestamp")
+    initial_as_of = _timestamp_text(started)
+    with closing(open_readonly(db_path)) as con:
+        targets = (_target_rows(con, "nfl", initial_as_of, nfl_count) +
+                   _target_rows(con, "nba", initial_as_of, nba_count))
+    if not targets:
+        raise ResearchAuditError("no scheduled targets fall within the 48-hour capture window")
+    if any(_utc(row["start_utc"]) is None or _utc(row["start_utc"]) <= started for row in targets):
+        raise ResearchAuditError("prospective capture target is not strictly before kickoff")
+
+    import espn_client as espn
+    is_live_capture = scoreboard_fetch is None and summary_fetch is None
+    if is_live_capture:
+        # This standalone research process must perform fresh requests, not silently
+        # stamp an older in-memory or disk-cache response as a new capture.
+        espn.set_disk_cache("", ttl=0)
+        espn._CACHE.clear()
+        espn._FETCHER._memory.clear()
+        scoreboard_fetch = espn.scoreboard_raw
+        summary_fetch = espn.summary
+    elif scoreboard_fetch is None or summary_fetch is None:
+        raise ResearchAuditError("inject both ESPN fetch functions together for a test capture")
+
+    scoreboard_rows: dict[str, dict[str, Any]] = {}
+    snapshots = []
+    pacing = espn.batch_pacing() if is_live_capture else nullcontext()
+    with pacing:
+        for day in sorted({row["kickoff_date"] for row in targets if row["league"] == "nba"}):
+            scoreboard = scoreboard_fetch("nba", day)
+            captured_at = _utc(now_fn())
+            if captured_at is None:
+                raise ResearchAuditError("ESPN scoreboard capture clock returned an invalid timestamp")
+            scoreboard_rows[day] = {
+                "payload": scoreboard, "captured_at": _timestamp_text(captured_at),
+                "sha256": _payload_sha256(scoreboard),
+            }
+        for target in targets:
+            if target["league"] == "nfl":
+                event_id = str(target.get("espn") or "")
+                mapping = {"source": "nfl_schedule.espn"}
+            else:
+                board = scoreboard_rows[target["kickoff_date"]]
+                event_id = _espn_scoreboard_event(target, board["payload"])
+                mapping = {
+                    "source": "captured_espn_scoreboard",
+                    "captured_at": board["captured_at"],
+                    "scoreboard_sha256": board["sha256"],
+                }
+            if not event_id:
+                raise ResearchAuditError(f"no ESPN event id is available for {target['target_game_id']}")
+            summary = summary_fetch(target["league"], event_id)
+            captured_at = _utc(now_fn())
+            if captured_at is None:
+                raise ResearchAuditError("ESPN summary capture clock returned an invalid timestamp")
+            example = {
+                "target_game_id": target["target_game_id"], "league": target["league"],
+                "matchup": {"away": target["away_team"], "home": target["home_team"]},
+                "kickoff_utc": target["start_utc"],
+            }
+            snapshot = {
+                "target_game_id": target["target_game_id"], "league": target["league"],
+                "status": "captured", "espn_event_id": event_id,
+                "kickoff_utc": target["start_utc"], "captured_at": _timestamp_text(captured_at),
+                "capture_timestamp_basis": "UTC clock recorded immediately after fresh ESPN summary response",
+                "summary_sha256": _payload_sha256(summary),
+                "event_id_mapping": mapping, "summary_payload": summary,
+            }
+            _validate_context_snapshot(example, snapshot, _timestamp_text(captured_at))
+            if is_live_capture:
+                snapshot["source_snapshot_archive"] = str(
+                    _archive_espn_summary_payload(outdir, snapshot))
+            snapshots.append(snapshot)
+
+    cutoff = max(_utc(row["captured_at"]) for row in snapshots)
+    if any(_utc(row["kickoff_utc"]) <= cutoff for row in snapshots):
+        raise ResearchAuditError("at least one target kickoff passed before all summaries were captured")
+    final_as_of = _timestamp_text(cutoff)
+    with closing(open_readonly(db_path)) as con:
+        refreshed = (_target_rows(con, "nfl", final_as_of, nfl_count) +
+                     _target_rows(con, "nba", final_as_of, nba_count))
+    if {row["target_game_id"] for row in refreshed} != {row["target_game_id"] for row in targets}:
+        raise ResearchAuditError("target set changed while ESPN summaries were being captured; retry with a fresh packet")
+
+    manifest = build_relevance_packet(db_path, outdir, final_as_of, nfl_count, nba_count)
+    examples = _read_jsonl(outdir / "examples.jsonl")
+    for snapshot in snapshots:
+        example = next(row for row in examples if row["target_game_id"] == snapshot["target_game_id"])
+        _validate_context_snapshot(example, snapshot, final_as_of)
+    _attach_espn_context_snapshots(outdir, snapshots)
+    manifest_path = outdir / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    capture_metadata = {
+        "summary_requests": len(snapshots),
+        "scoreboard_requests": len(scoreboard_rows),
+        "capture_window_start": initial_as_of,
+        "common_cutoff": final_as_of,
+    }
+    if is_live_capture:
+        capture_metadata.update({
+            "capture_mode": "prospective_fresh_espn_requests",
+            "raw_summary_storage": "private external research cache, mode 0600",
+            "summary_archive_directory": str(
+                _espn_summary_archive_path(outdir, snapshots[0]).parent),
+        })
+    else:
+        capture_metadata["capture_mode"] = "prospective_injected_test_fetches"
+    manifest["espn_context_capture"].update(capture_metadata)
+    _json_write(manifest_path, manifest)
+    return manifest
+
+
 def _normalized_draft(text: str) -> str:
     return " ".join(text.casefold().split())
 
@@ -1964,6 +2374,8 @@ def run_three_way_comparison(outdir: str | Path, max_tokens: int = 600,
     cutoff = _utc(as_of)
     if cutoff is None:
         raise ResearchAuditError("three-way targets have an invalid as_of cutoff")
+    targets_with_context_snapshot = 0
+    targets_missing_context_snapshot = []
     for example in examples:
         target_id = str(example["target_game_id"])
         target_prompts = prompts.get(target_id, {})
@@ -1983,6 +2395,29 @@ def run_three_way_comparison(outdir: str | Path, max_tokens: int = 600,
                 target_prompts["event_only"].get("user_prompt_sha256") ==
                 target_prompts["combined"].get("user_prompt_sha256")):
             raise ResearchAuditError(f"target {target_id} event-only and combined inputs are not distinct")
+        snapshot = example.get("matchup_context_snapshot") or {}
+        if snapshot.get("status") == "captured":
+            captured_at = _utc(snapshot.get("captured_at"))
+            snapshot_sha = snapshot.get("summary_sha256")
+            if captured_at is None or captured_at > cutoff or cutoff >= kickoff or not snapshot_sha:
+                raise ResearchAuditError(f"target {target_id} ESPN context snapshot is not cutoff-safe")
+            for variant, prompt in target_prompts.items():
+                if (prompt.get("matchup_context_snapshot_status") != "verified_pre_cutoff" or
+                        prompt.get("matchup_context_snapshot_sha256") != snapshot_sha or
+                        prompt.get("matchup_context_captured_at") != snapshot.get("captured_at") or
+                        snapshot_sha not in prompt.get("user_prompt", "")):
+                    raise ResearchAuditError(
+                        f"target {target_id} does not supply the same ESPN snapshot to {variant}")
+            targets_with_context_snapshot += 1
+        elif snapshot.get("status") == "unavailable":
+            targets_missing_context_snapshot.append(target_id)
+            for variant, prompt in target_prompts.items():
+                if (prompt.get("matchup_context_snapshot_status") != "unavailable" or
+                        prompt.get("matchup_context_snapshot_sha256")):
+                    raise ResearchAuditError(
+                        f"target {target_id} has inconsistent unavailable ESPN context across variants")
+        elif snapshot:
+            raise ResearchAuditError(f"target {target_id} has an unknown ESPN snapshot status")
 
     if chat_fn is None:
         model = model or os.environ.get("LP_LLM_MODEL", "deepseek/deepseek-v4.1-flash")
@@ -2145,16 +2580,42 @@ def run_three_way_comparison(outdir: str | Path, max_tokens: int = 600,
     manifest["limitations"] = [
         item for item in manifest.get("limitations", [])
         if "No original-generator model output exists" not in item
+        and "The generated baseline uses reconstructed local records and player form; production ESPN matchup_context was unavailable." not in item
     ]
     manifest["limitations"].append(
-        "The generated baseline uses reconstructed local records and player form; production ESPN matchup_context was unavailable.")
+        "The full core_stories generator was not invoked; local records and player-form inputs remain reconstructed.")
+    if targets_missing_context_snapshot and not manifest.get("espn_context_capture"):
+        manifest["limitations"].append(
+            "This run has no cutoff-safe ESPN matchup-context snapshots; treat it as a reduced-context comparison.")
+    manifest["limitations"] = list(dict.fromkeys(manifest["limitations"]))
     manifest["limitations"].append(
         "Source-statistic audits validate supplied input rows, not the semantic accuracy of model-generated prose.")
     manifest["limitations"] = list(dict.fromkeys(manifest["limitations"]))
+    context_family_counts = Counter()
+    for example in examples:
+        for line in (example.get("baseline_fields", {}).get("matchup_context", {})
+                     .get("context_lines", [])):
+            if line.startswith("Competition:"):
+                family = "header.season phase"
+            elif "in this tournament:" in line or line.startswith("BACKGROUND,"):
+                family = "standings"
+            elif " leaders:" in line:
+                family = "leaders"
+            elif " — last " in line and "most recent first:" in line:
+                family = "lastFiveGames form"
+            else:
+                family = "other context note"
+            context_family_counts[family] += 1
+
     manifest["model_comparison"] = {
         "status": "completed", "provider": provider, "model": model,
         "targets": len(examples), "variants_per_target": 3,
-        "matched_inputs_and_cutoff": True,
+        "matched_targets_and_cutoff": True,
+        "same_espn_snapshot_across_variants": targets_with_context_snapshot == 0 or
+            targets_with_context_snapshot + len(targets_missing_context_snapshot) == len(examples),
+        "targets_with_cutoff_safe_espn_context": targets_with_context_snapshot,
+        "targets_without_cutoff_safe_espn_context": targets_missing_context_snapshot,
+        "production_baseline_fidelity": "partial_reconstructed_local_inputs",
         "target_horizon_hours": PREVIEW_HORIZON_HOURS,
         "request_count": total_requests,
         "requests_this_invocation": calls_made,
@@ -2163,8 +2624,39 @@ def run_three_way_comparison(outdir: str | Path, max_tokens: int = 600,
         "targets_with_three_unique_outputs": sum(row["unique_text_count"] == 3
                                                   for row in distinctness),
         "baseline_prompt_source": "backend/core_stories.py::generate_game_story",
-        "baseline_context_status": "local record and player-form inputs reconstructed; ESPN matchup_context unavailable",
+        "baseline_context_status": (
+            f"cutoff-safe ESPN context shared across {targets_with_context_snapshot} of {len(examples)} targets; "
+            "local records and player-form inputs reconstructed"),
         "human_ratings_entered": 0,
+        "production_input_comparison": {
+            "production_generator_invoked": False,
+            "system_prompt_sha256_matches_core_stories": True,
+            "research_model_call": {
+                "provider": provider, "model": model,
+                "max_completion_tokens": max_tokens, "temperature": 0.4,
+            },
+            "production_model_call": {
+                "dispatch": "core_stories._deepseek_chat -> _core._llm_chat",
+                "provider_setting": "LP_LLM_PROVIDERS (code default: nous,openrouter)",
+                "max_completion_tokens_default": 8000,
+            },
+            "espn_context": {
+                "helper": "matchup_context.context_lines",
+                "same_snapshot_and_derived_lines_shared_across_variants": True,
+                "targets_with_verified_pre_cutoff_snapshots": targets_with_context_snapshot,
+                "targets_without_verified_pre_cutoff_snapshots": targets_missing_context_snapshot,
+                "historical_replay_external_espn_requests": 0,
+                "context_line_count": sum(context_family_counts.values()),
+                "observed_context_line_families": dict(sorted(context_family_counts.items())),
+            },
+            "input_differences": [
+                "The replay rebuilds matchup, date, host, game state, and team records from cutoff-filtered local schedule rows; production generate_game_story uses its runtime game_result, schedule, and standings paths. Replay state is fixed to pre.",
+                "Production calls stakes.for_matchup; the reconstructed baseline supplies no stakes lines.",
+                "Production prioritizes game-specific prop-board player form, then falls back to player_form.lines. The replay derives player form directly from cutoff-filtered player_game_logs, so its player selection and wording are not guaranteed to match.",
+                "Production derives matchup_context current_season from its runtime records_stale check and passes runtime state. The replay infers current_season from reconstructed record rows and supplies state=pre.",
+                "The baseline uses the same system prompt hash, but this run called OpenRouter directly with a 600-token completion limit. Production uses the configured _llm_chat provider path and defaults to an 8000-token limit.",
+            ],
+        },
     }
     _json_write(manifest_path, manifest)
     rejected = _read_jsonl(outdir / "rejected_facts.jsonl")
@@ -2181,6 +2673,7 @@ def _write_report(outdir: Path, manifest: dict[str, Any],
         "nba_populated_rows_at_cutoff", 0)
     nba_boxes = inventory["coverage"].get("nba_player_boxes_nbacom", {})
     comparison = manifest.get("model_comparison")
+    context_capture = manifest.get("espn_context_capture") or {}
     recomputation = manifest.get("independent_evidence_recomputation", {})
     target_total = sum(manifest.get("targets", {}).values())
     lines = [
@@ -2233,12 +2726,54 @@ def _write_report(outdir: Path, manifest: dict[str, Any],
         "## Three-way generation and review", "",
     ]
     if comparison:
+        context_count = comparison.get("targets_with_cutoff_safe_espn_context", 0)
+        context_total = comparison.get("targets", len(examples))
+        missing_context = comparison.get("targets_without_cutoff_safe_espn_context", [])
+        fidelity = comparison.get("production_input_comparison", {})
+        missing_matchups = [
+            f"{item['matchup']['away']} at {item['matchup']['home']} ({item['target_game_id']})"
+            for item in examples if str(item["target_game_id"]) in missing_context
+        ]
+        if context_count:
+            line_families = fidelity.get("espn_context", {}).get(
+                "observed_context_line_families", {})
+            line_summary = ", ".join(
+                f"{family} ({count})" for family, count in line_families.items()) or "none"
+            absent_fields = [field for field, family in (
+                ("header.season phase", "header.season phase"), ("standings", "standings"))
+                if family not in line_families]
+            absent_summary = (f" The snapshots produced no {', '.join(absent_fields)} lines."
+                              if absent_fields else "")
+            context_note = (
+                f"The existing matchup_context.context_lines() logic derived shared pregame facts "
+                f"from timestamped, hashed ESPN summary snapshots for {context_count} of "
+                f"{context_total} targets. The other {len(missing_context)} target(s) have no "
+                f"cutoff-safe summary and remain reduced-context: {', '.join(missing_matchups)}. "
+                f"For the captured summaries it emitted {line_summary} "
+                f"({fidelity.get('espn_context', {}).get('context_line_count', 0)} lines total)."
+                + absent_summary
+            )
+        else:
+            context_note = (
+                "No cutoff-safe ESPN matchup-context snapshot was supplied. This is a reduced-context "
+                "baseline using reconstructed local records and player form, not a faithful production-input replay."
+            )
         lines.extend([
             f"Generated {comparison['variants_per_target']} drafts for each of "
             f"{comparison['targets']} targets with {comparison['request_count']} "
             f"{comparison['provider']} requests using {comparison['model']}.",
-            "The baseline uses the exact core_stories.py system prompt and reconstructed "
-            "local inputs. The production ESPN matchup_context was unavailable. The event-only "
+            "The baseline uses the exact core_stories.py system prompt. " + context_note,
+            "Production input fidelity: the replay did not invoke core_stories.generate_game_story. "
+            "It rebuilt game state, matchup/date/host, team records, and player form from cutoff-filtered "
+            "local rows; it supplied no stakes lines. Production reads runtime game_result/schedule and "
+            "standings data, calls stakes.for_matchup, and prioritizes prop-board player form before "
+            "player_form.lines. The replay fixes state=pre and infers current_season from reconstructed "
+            "records; production derives both through its runtime game and records_stale checks.",
+            f"Model path also differs: this run called {fidelity.get('research_model_call', {}).get('provider')} "
+            f"directly with a {fidelity.get('research_model_call', {}).get('max_completion_tokens')}-token "
+            "completion limit; production dispatches through _core._llm_chat, whose code default is "
+            "the LP_LLM_PROVIDERS chain and an 8000-token limit.",
+            "The event-only "
             "and combined system and user prompts differ for every target.",
             f"Event-only and combined output text differs for "
             f"{comparison['event_only_combined_textually_distinct_targets']} of "
@@ -2249,6 +2784,14 @@ def _write_report(outdir: Path, manifest: dict[str, Any],
             "No human ratings were entered, so the comparison does not establish a winner.",
         ])
     else:
+        if context_capture:
+            lines.append(
+                f"Cutoff-safe ESPN summaries were captured for "
+                f"{context_capture.get('targets_with_verified_pre_cutoff_snapshots', 0)} of "
+                f"{target_total} targets. Their derived context is in espn_context_snapshots.jsonl "
+                "and is supplied to all three variants. The local records and player-form inputs "
+                "remain reconstructed."
+            )
         lines.extend([
             f"Prepared {manifest['blind_packet']['blind_drafts']} deterministic candidate "
             "drafts. Model outputs have not been generated.",
@@ -2283,7 +2826,7 @@ def _write_report(outdir: Path, manifest: dict[str, Any],
     lines.extend(["", "Row-level artifacts: examples.jsonl, claim_audit.jsonl, statistic_audit.jsonl, "
                   "rejected_facts.jsonl, database_coverage.json, baseline_generation_queue.jsonl, "
                   "candidate_generation_queue.jsonl, model_comparison.jsonl, "
-                  "three_way_distinctness.jsonl, and the blind review files.", ""])
+                  "three_way_distinctness.jsonl, espn_context_snapshots.jsonl, and the blind review files.", ""])
     (outdir / "research_report.md").write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -2295,16 +2838,24 @@ def _report_excerpt(value: Any, limit: int = 180) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", default=str(DEFAULT_DEV_DB))
-    parser.add_argument("--as-of", default=AS_OF)
+    parser.add_argument("--as-of", default=None)
     parser.add_argument("--outdir", required=True)
     parser.add_argument("--nfl-count", type=int, default=10)
     parser.add_argument("--nba-count", type=int, default=10)
+    parser.add_argument("--capture-espn-context", action="store_true",
+                        help="capture fresh pregame ESPN summaries, then build with their common capture cutoff")
     parser.add_argument("--generate-three-way", action="store_true",
                         help="call the configured OpenRouter model for matched baseline/event/combined prompts")
     parser.add_argument("--max-tokens", type=int, default=600)
     args = parser.parse_args()
-    manifest = build_relevance_packet(
-        args.db, args.outdir, args.as_of, args.nfl_count, args.nba_count)
+    if args.capture_espn_context:
+        if args.as_of is not None:
+            parser.error("--capture-espn-context chooses its cutoff from the fresh pregame captures; omit --as-of")
+        manifest = capture_prospective_espn_context(
+            args.db, args.outdir, args.nfl_count, args.nba_count)
+    else:
+        manifest = build_relevance_packet(
+            args.db, args.outdir, args.as_of or AS_OF, args.nfl_count, args.nba_count)
     comparison = (run_three_way_comparison(args.outdir, max_tokens=args.max_tokens)
                   if args.generate_three_way else None)
     if comparison:
