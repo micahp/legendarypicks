@@ -126,7 +126,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league,
                    playcall_qb_decisions=(qb_decisions or run_scramble_backoff),
                    playcall_player_outcomes=player_outcomes, blocker_fixes=fixes,
-                   fg_ordinary_cutoff=fg_ordinary_cutoff, playcall_season_adapt=season_adapt_target)
+                   fg_ordinary_cutoff=fg_ordinary_cutoff, playcall_season_adapt=season_adapt_target,
+                   fingerprint=False)  # fingerprinted below, after the pool exclusions and the adapters
     ref.contextual_sampler.score_clock_playcalling_enabled = bool(score_clock_playcalling)
     ref.pool, lateral_source_filter = exclude_unmodeled_lateral_rows(ref.pool, ref.participants)
     ref.pool, pass_yardage_source_filter = exclude_inconsistent_pass_yardage_rows(ref.pool, ref.participants)
