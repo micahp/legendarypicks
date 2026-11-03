@@ -33,8 +33,13 @@ Frozen snapshot: `docs/research/slc-week8-2026/snapshots/2026_08_BAL_BUF.json`. 
 | 13 | `PYTHONHASHSEED=0` in both trees | Baseline blocked at 58 (17-7). Current complete, 146 (34-13) | Hash randomisation is not the cause. |
 | 14 | Single-file swap, `team_tendency.py` committed, seed forced | Complete regulation, 145 decisions (33-12) | Not `team_tendency.py`. |
 | 15 | Single-file swap, `run_slc_game.py` committed, seed forced | Complete regulation, 146 decisions (34-13) | Not `run_slc_game.py` by itself. |
-| 16 | Single-file swap, `e2_reference.py` committed, `slc_engine.py` kwarg removed | Queued, not yet read | Pending. |
-| 17 | Single-file swap, `slc_engine.py` committed, `run_slc_game.py` kwargs removed | Queued, not yet read | Pending. |
+| 16 | Single-file swap, `e2_reference.py` committed, `slc_engine.py` kwarg removed, seed forced | Complete regulation, 132 decisions (19-34). Not the baseline | Not `e2_reference.py` by itself. |
+| 17 | Single-file swap, `slc_engine.py` committed, `run_slc_game.py` kwargs removed, seed forced | Complete regulation, 149 decisions (16-23). Not the baseline | Not `slc_engine.py` by itself. |
+
+Each single-file swap gives a different complete game (145, 146, 132, 149 decisions), so the current tree's behaviour
+depends on the full set of overlay files together. Removing any one of them does not restore the baseline's blocked game.
+The baseline's runtime files were also checked: `docs/fixtures` is identical to the repro clone's, and `e2_reference.py`
+is the committed file, so the scratch tree is not missing a runtime input.
 
 ## What is established
 
@@ -42,11 +47,13 @@ Frozen snapshot: `docs/research/slc-week8-2026/snapshots/2026_08_BAL_BUF.json`. 
 - The current tree's difference is not in the data the engine samples from (attempts 9 to 11).
 - The seed difference is produced by the code hash of the overlay files, and it also changes every draw (attempts 8 and 10).
 - Forcing the seed does not restore the baseline (attempt 12). Neither does pinning the hash seed (attempt 13).
-- Restoring `team_tendency.py` or `run_slc_game.py` alone does not restore the baseline (attempts 14 and 15).
+- Restoring any one of the four overlay files to its committed version does not restore the baseline (attempts 14 to 17).
+- The baseline's runtime inputs match the repro clone (fixtures identical, `e2_reference.py` committed).
 
 ## What is not established
 
-- Which overlay file changes the game's behaviour. Attempts 16 and 17 are the next step.
+- Which combination of overlay files changes the game's behaviour. Single-file reverts only show that no one file is
+  sufficient to restore the baseline.
 - Whether the change lies in the sampler's weight computation (`slc_playcall.py` around line 500 to 530) or in the
   order of calls. The attribute dump does not show a state difference, so a code path must differ.
 - Whether the baseline's Python 3.8 hash (`7513d942…`) reproduces on Python 3.12. It does not: the fast host gives
@@ -54,8 +61,9 @@ Frozen snapshot: `docs/research/slc-week8-2026/snapshots/2026_08_BAL_BUF.json`. 
 
 ## Next
 
-1. Read attempts 16 and 17. If neither restores the baseline, the difference is in a code path that uses more than one
-   overlay file, or in the `simulate_pregame_batch` batch path, which this single-game probe does not run.
-2. If one of them restores it, diff that file's uncommitted hunks and check each hunk against the baseline's behaviour.
+1. Forward test: start from the committed baseline and add one overlay file at a time (current version, flags off). The
+   first addition that changes the blocked game identifies the file. This tests each file's effect alone, where the
+   reverts above tested each file's absence with all others present.
+2. Read the uncommitted hunks of that file and check each one against the baseline's behaviour.
 3. Decide whether the overlay's identity hash should cover the code files at all. Including them means every
    behaviour-neutral edit changes every seed.
