@@ -1,0 +1,170 @@
+{
+ "entrant_snaps": 47266,
+ "entrants_off_pool_rate": 0.009076291626116024,
+ "fit_seasons": [
+  2022,
+  2023,
+  2024
+ ],
+ "holdout": [
+  2025
+ ],
+ "leakage_check": "roles for week w use only snaps and roster rows from weeks before w; players.csv unused",
+ "models": {
+  "B0_feasible": {
+   "draws": 271240,
+   "entrants_per_draw": 1.284172688394042,
+   "exact_both_nonempty_rate": 0.05174270608968083,
+   "exact_both_rate": 0.13634051024922578,
+   "exact_in_nonempty_rate": 0.11029469355786176,
+   "exact_in_rate": 0.18170255124612888,
+   "exact_out_rate": 0.18190532369856954,
+   "legal_rate": 0.9988792213537826,
+   "nonempty_draws": 204280,
+   "precision_in": 0.4024060101379199,
+   "recall_in": 0.3778097056327953,
+   "signature_match_rate": 0.2683638106473971,
+   "unsupported": 0
+  },
+  "JD_feasible": {
+   "draws": 271240,
+   "entrants_per_draw": 1.41128889544315,
+   "exact_both_nonempty_rate": 0.04243195613863325,
+   "exact_both_rate": 0.14620999852529126,
+   "exact_in_nonempty_rate": 0.08567652242020755,
+   "exact_in_rate": 0.1802389028166937,
+   "exact_out_rate": 0.1905213095413656,
+   "legal_rate": 0.9988792213537826,
+   "nonempty_draws": 204280,
+   "precision_in": 0.3846430772541848,
+   "recall_in": 0.389541479015731,
+   "signature_match_rate": 0.2558988349800914,
+   "unsupported": 0
+  },
+  "persistence": {
+   "draws": 33905,
+   "entrants_per_draw": 0.5957528388143342,
+   "exact_both_nonempty_rate": 0.09868807519091444,
+   "exact_both_rate": 0.3020203509806813,
+   "exact_in_nonempty_rate": 0.15997650283924025,
+   "exact_in_rate": 0.35136410558914616,
+   "exact_out_rate": 0.3462321191564666,
+   "legal_rate": 0.9988792213537826,
+   "nonempty_draws": 25535,
+   "precision_in": 0.6996126401630983,
+   "recall_in": 0.30775993734089935,
+   "signature_match_rate": 0.41483556997492993,
+   "unsupported": 0
+  },
+  "rate_only": {
+   "draws": 271240,
+   "entrants_per_draw": 0.5957528388143342,
+   "exact_both_nonempty_rate": 0.07407479929508518,
+   "exact_both_rate": 0.283483262055744,
+   "exact_in_nonempty_rate": 0.12513217152927356,
+   "exact_in_rate": 0.3251216634714644,
+   "exact_out_rate": 0.3462321191564666,
+   "legal_rate": 0.9988792213537826,
+   "nonempty_draws": 204280,
+   "precision_in": 0.6025439602446496,
+   "recall_in": 0.26015477122906777,
+   "signature_match_rate": 0.41483556997492993,
+   "unsupported": 0
+  }
+ },
+ "role_mismatch": {
+  "entrant_snaps": 46857,
+  "entrant_unseen": 409,
+  "snap_label_differs_from_role": 91
+ },
+ "role_source_by_week": {
+  "1": {
+   "snaps": 308,
+   "unseen": 76
+  },
+  "10": {
+   "snaps": 329
+  },
+  "11": {
+   "roster": 8,
+   "snaps": 345
+  },
+  "12": {
+   "roster": 7,
+   "snaps": 323
+  },
+  "13": {
+   "roster": 7,
+   "snaps": 369
+  },
+  "14": {
+   "roster": 2,
+   "snaps": 327
+  },
+  "15": {
+   "roster": 7,
+   "snaps": 369
+  },
+  "16": {
+   "roster": 6,
+   "snaps": 366
+  },
+  "17": {
+   "roster": 6,
+   "snaps": 368
+  },
+  "18": {
+   "roster": 13,
+   "snaps": 362
+  },
+  "19": {
+   "roster": 5,
+   "snaps": 136
+  },
+  "2": {
+   "roster": 14,
+   "snaps": 364
+  },
+  "20": {
+   "roster": 2,
+   "snaps": 94
+  },
+  "21": {
+   "snaps": 47
+  },
+  "22": {
+   "snaps": 24
+  },
+  "3": {
+   "roster": 18,
+   "snaps": 360
+  },
+  "4": {
+   "roster": 13,
+   "snaps": 365
+  },
+  "5": {
+   "roster": 11,
+   "snaps": 323
+  },
+  "6": {
+   "roster": 9,
+   "snaps": 340
+  },
+  "7": {
+   "roster": 6,
+   "snaps": 346
+  },
+  "8": {
+   "roster": 9,
+   "snaps": 296
+  },
+  "9": {
+   "roster": 6,
+   "snaps": 323
+  }
+ },
+ "roster_status": "ACT is retrospective; the pool is an upper bound on a pregame gate",
+ "samples": 8,
+ "transitions": 33905
+}
