@@ -42,6 +42,29 @@ def weekly_status(path):
     return status
 
 
+def position_prior(rows, season_pos, seasons):
+    """{(position, group): rate}, the same estimator as participation_model.fit_player_rates, except each player-season
+    counts under that season's position. With one position per player this reproduces the exported field's prior."""
+    team_plays = defaultdict(float)
+    by_player = defaultdict(lambda: defaultdict(float))  # (pid, team, group) -> {season: recency-weighted appearances}
+    for row in rows:
+        season = int(row['season'])
+        if season not in seasons:
+            continue
+        w = pm.RECENCY[season]
+        team_plays[(row['posteam'], row['group'])] += w
+        for pid in row['ids']:
+            by_player[(pid, row['posteam'], row['group'])][season] += w
+    num, den = defaultdict(float), defaultdict(float)
+    for (pid, team, group), by_season in by_player.items():
+        total = sum(by_season.values())
+        for season, a in by_season.items():
+            pos = season_pos[season].get(pid, 'UNK')
+            num[(pos, group)] += a
+            den[(pos, group)] += team_plays[(team, group)] * a / total
+    return {key: num[key] / den[key] for key in num if den[key] > 0}
+
+
 def primary(labels):
     """The most frequent label; ties go to the label that sorts first, so the choice is the same on every run."""
     return sorted(labels.items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
@@ -115,6 +138,15 @@ def main():
                                      snap_labels=True))
     tables, joint_tables, _checks = cs.fit_tables(seqs_fit, drive_map(fit_rows), cs.FIT_SEASONS)
     base = json.loads(args.field.read_text(encoding='utf-8'))
+    # The exported field's position prior was fit with one players.csv label per player. Re-derive it from each fit
+    # season's labels, and check that the players.csv version reproduces the exported prior.
+    exported = {(pos, group): value for pos, group, value in base['position_prior']}
+    legacy = position_prior(fit_rows, {season: positions for season in cs.FIT_SEASONS}, cs.FIT_SEASONS)
+    prior_check = {'keys_exported': len(exported), 'keys_legacy': len(legacy),
+                   'max_abs_diff_legacy_vs_exported': max(
+                       (abs(legacy.get(key, 0.0) - value) for key, value in exported.items()), default=0.0)}
+    fit_prior = position_prior(fit_rows, season_pos, cs.FIT_SEASONS)
+    base['position_prior'] = [[pos, group, value] for (pos, group), value in sorted(fit_prior.items())]
 
     positions = season_pos[holdout_season]
     cls_of = vl.classes_of(positions)
@@ -155,6 +187,7 @@ def main():
         'JD_joint_drive': (cs.variant_field(base, tables['split'], False, True, 'split'), False, True, joint_for('split')),
     }
     result = {'holdout': sorted(cs.HOLDOUT), 'fit_seasons': sorted(cs.FIT_SEASONS), 'seeds': args.seeds,
+              'position_prior_check': prior_check,
               'class_changes_vs_players_csv': changes,
               'bench_players_per_game_mean': {k: round(v / len(seqs), 2) for k, v in bench_size.items()},
               'observed': cs.summarise(
