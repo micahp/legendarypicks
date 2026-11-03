@@ -96,7 +96,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
                    player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
-                   qb_run_role_style=None, score_clock_playcalling=True):
+                   qb_run_role_style=None, score_clock_playcalling=True, pbv1_table=None):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -178,6 +178,9 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         ref.contextual_sampler.share_table = table
         ref.contextual_sampler.share_model_manifest = share_distributions.manifest(table, cutoff=season,
                                                                                     git_commit=source_commit)
+    if pbv1_table:  # research flag: PBV1 package codes for the personnel label, refitted on the seasons before the game season
+        import pbv1_package
+        ref.contextual_sampler.pbv1_model = pbv1_package.load(pbv1_table, pbv1_package.TABLE_SHA256, season)
     if playbook:  # the playbook files as the prior for pass depth, pass location and run gap; needs the decision labels on
         if not decision:
             raise ValueError('the playbook input replaces decision labels, so it needs decision=True')
@@ -301,12 +304,19 @@ def _decision_resolves_to_event(decision, event):
     )
 
 
-def play(seed, ref, snapshot, *, paired_randomness=False):
+def play(seed, ref, snapshot, *, paired_randomness=False, rng_plan=None):
     """One SLC game. Returns (record, decisions): the engine record and this game's play-call decisions, in order."""
     if not is_slc(ref):
         raise ValueError('the reference was not loaded with the SLC play-call layer')
     sampler = ref.contextual_sampler
     sampler.decisions.clear()
+    seed_root = rng_plan.seed_root(snapshot) if rng_plan is not None else None
+    if rng_plan is not None and rng_plan.paired:
+        paired_randomness = True
+    pbv1_draws = None
+    if getattr(sampler, 'pbv1_model', None) is not None:
+        import pbv1_package
+        pbv1_draws = pbv1_package.Draws(sampler.pbv1_model)  # per game: its own counters, the shared model
     sampler.participant_chooser = pre_event.chooser(require_snapshot(snapshot), seed,
                                                     formation_priors=sampler.formation_priors,
                                                     player_shares=sampler.player_shares,
@@ -316,10 +326,11 @@ def play(seed, ref, snapshot, *, paired_randomness=False):
                                                     qb_decision_table=sampler.qb_decision_table,
                                                     scramble_backoff_enabled=sampler.scramble_backoff_enabled,
                                                     qb_run_role_style_enabled=getattr(
-                                                        sampler, 'qb_run_role_style_enabled', False))
+                                                        sampler, 'qb_run_role_style_enabled', False),
+                                                    pbv1=pbv1_draws, seed_root=seed_root)
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
-                              paired_randomness=paired_randomness)
+                              paired_randomness=paired_randomness, seed_root=seed_root)
     finally:
         sampler.participant_chooser = None
     decisions = list(sampler.decisions)
@@ -338,6 +349,9 @@ def play(seed, ref, snapshot, *, paired_randomness=False):
             'receiving and rushing yards use their corresponding nflverse fields when present; the state transition uses '
             'yards_gained. This is a research projection layer; historical source outcomes and the current model do not '
             'establish calibrated forecasts.')
+    if pbv1_draws is not None:
+        record['research_integration'] = {'pbv1_package': pbv1_draws.report(),
+                                          'personnel_by_play': [d.get('personnel') for d in decisions]}
     return record, decisions
 
 

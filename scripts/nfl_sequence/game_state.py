@@ -1741,7 +1741,7 @@ def active_unsupported_rules(guarded, blocker):
 
 
 def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None,
-              paired_randomness=False):
+              paired_randomness=False, seed_root=None):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
 
     `ref` is the observed Reference (e2_reference.load). It is required, so a game is never played with a silent
@@ -1749,6 +1749,9 @@ def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame
     unless a caller fixes them for a test.
     """
     snapshot_digest = pregame_snapshot['snapshot_sha256'] if pregame_snapshot else ''
+    if seed_root is not None:
+        # v2: the stream root is keyed on stable inputs, and the named streams are always on
+        paired_randomness, snapshot_digest = True, seed_root
     if paired_randomness and not snapshot_digest:
         raise ValueError('paired random streams require a frozen pregame snapshot')
     material = f'{seed}:{snapshot_digest}'.encode()
