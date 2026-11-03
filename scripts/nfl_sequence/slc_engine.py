@@ -13,7 +13,10 @@ import math
 import sys
 from collections.abc import Mapping
 from collections import Counter, defaultdict
+from datetime import datetime
 from pathlib import Path
+
+import pytz
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -96,9 +99,12 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
                    player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
-                   qb_run_role_style=None, score_clock_playcalling=True):
+                   qb_run_role_style=None, score_clock_playcalling=True, season_adapt=False, season_adapt_n0=4.0):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
-    season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
+    season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it.
+
+    `season_adapt` (SLC V1.5, research, off by default) blends the season's available results into the team outcome splits.
+    Its target is this snapshot's game, and its cutoff is that game's kickoff minus 90 minutes."""
     schedule = require_snapshot(snapshot)['schedule']
     season = int(schedule['season'])
     if player_outcomes_receiver_only and not player_outcomes:
@@ -106,6 +112,12 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
     fixes = er.normalize_blocker_fixes(blocker_fixes)
     run_scramble_backoff = 'run_scramble_backoff' in fixes
+    season_adapt_target = None
+    if season_adapt:
+        if not team_outcomes:
+            raise ValueError('season adaptation blends into the team outcome splits, so it needs team_outcomes=True')
+        kickoff = datetime.strptime(schedule['scheduled_kickoff_utc'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=pytz.utc)
+        season_adapt_target = {'game_id': schedule['game_id'], 'kickoff': kickoff, 'n0': float(season_adapt_n0)}
     ref, excluded = er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
                    playcall_formation=formation, playcall_player_shares=player_shares,
@@ -114,7 +126,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league,
                    playcall_qb_decisions=(qb_decisions or run_scramble_backoff),
                    playcall_player_outcomes=player_outcomes, blocker_fixes=fixes,
-                   fg_ordinary_cutoff=fg_ordinary_cutoff)
+                   fg_ordinary_cutoff=fg_ordinary_cutoff, playcall_season_adapt=season_adapt_target)
     ref.contextual_sampler.score_clock_playcalling_enabled = bool(score_clock_playcalling)
     ref.pool, lateral_source_filter = exclude_unmodeled_lateral_rows(ref.pool, ref.participants)
     ref.pool, pass_yardage_source_filter = exclude_inconsistent_pass_yardage_rows(ref.pool, ref.participants)
