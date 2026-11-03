@@ -41,6 +41,13 @@ depends on the full set of overlay files together. Removing any one of them does
 The baseline's runtime files were also checked: `docs/fixtures` is identical to the repro clone's, and `e2_reference.py`
 is the committed file, so the scratch tree is not missing a runtime input.
 
+| 18 | Diagnostic only: current tree, with the sampler's `integration_code_sha256` replaced by the committed values, seed 1 (no forced seed). The actual hashes are kept in a separate record | Digest at entry `85fcaf81…` (equal to the baseline). Blocked at decision 58, score 17-7. All 58 events identical to the baseline's trace | The divergence is caused by the code-provenance hash feeding the snapshot digest. No football-behaviour difference remains on this game. |
+
+**Correction to attempts 12 to 17.** Those runs forced only `game_state`'s model seed. `pre_event.choose` (line 122) also seeds
+participant selection from `snapshot_sha256`, the game seed and the decision index. So a single-file revert changed the
+snapshot hash and with it the participant draws. Those results do not show which file changes football behaviour. Attempt
+18 is the controlled comparison: it changes only the provenance hash and leaves every seeded input as in the baseline.
+
 ## What is established
 
 - The baseline's blocked game is stable across runs on the fast host and locally.
@@ -50,10 +57,16 @@ is the committed file, so the scratch tree is not missing a runtime input.
 - Restoring any one of the four overlay files to its committed version does not restore the baseline (attempts 14 to 17).
 - The baseline's runtime inputs match the repro clone (fixtures identical, `e2_reference.py` committed).
 
+- The divergence is caused by the code-provenance hash inside the snapshot digest. Normalizing only that hash makes the
+  digest, the seeds and the full 58-event trace identical to the baseline (attempt 18).
+
 ## What is not established
 
-- Which combination of overlay files changes the game's behaviour. Single-file reverts only show that no one file is
-  sufficient to restore the baseline.
+- Whether the current tree matches the baseline on any game other than BAL/BUF seed 1. Attempt 18 covers one game and
+  one seed.
+- Whether the provenance normalization is the right permanent design. The paste proposes separating semantic model
+  identity (used for RNG seeding) from actual code hashes (kept for audit). That is a seeding-contract change and needs
+  its own decision, versioned so archived V1 results are not rewritten.
 - Whether the change lies in the sampler's weight computation (`slc_playcall.py` around line 500 to 530) or in the
   order of calls. The attribute dump does not show a state difference, so a code path must differ.
 - Whether the baseline's Python 3.8 hash (`7513d942…`) reproduces on Python 3.12. It does not: the fast host gives
@@ -61,9 +74,8 @@ is the committed file, so the scratch tree is not missing a runtime input.
 
 ## Next
 
-1. Forward test: start from the committed baseline and add one overlay file at a time (current version, flags off). The
-   first addition that changes the blocked game identifies the file. This tests each file's effect alone, where the
-   reverts above tested each file's absence with all others present.
-2. Read the uncommitted hunks of that file and check each one against the baseline's behaviour.
-3. Decide whether the overlay's identity hash should cover the code files at all. Including them means every
-   behaviour-neutral edit changes every seed.
+1. Extend attempt 18 to more games and seeds, with the same normalization, before calling the tree equivalent to V1.
+2. Decide the permanent seeding contract (separate semantic identity from code provenance, versioned, with a regression
+   test that V1.5 with adaptation off gives the same trace as V1). This needs owner approval because it changes how
+   seeds are derived.
+3. Do not ship the normalized hash as provenance. It is diagnostic only.
