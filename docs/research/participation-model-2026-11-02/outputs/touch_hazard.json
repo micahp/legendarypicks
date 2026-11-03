@@ -1,0 +1,292 @@
+{
+ "cap": 6,
+ "fit_seasons": [
+  2022,
+  2023,
+  2024
+ ],
+ "holdout": [
+  2025
+ ],
+ "holdout_logloss_per_pair": {
+  "class_stint": [
+   0.473419,
+   103436
+  ],
+  "class_stint_touch": [
+   0.472446,
+   103436
+  ],
+  "class_stint_touch_playtype": [
+   0.471411,
+   103436
+  ]
+ },
+ "leakage_check": "the touch is the rusher or receiver of the earlier snap; only earlier-snap information is used",
+ "pairs": 488056,
+ "rates_by_class_stint_touch": {
+  "RB|stint1": {
+   "touched": {
+    "fit_n": 7391,
+    "fit_rate": 0.2534,
+    "holdout_n": 3624,
+    "holdout_rate": 0.2392
+   },
+   "untouched": {
+    "fit_n": 10632,
+    "fit_rate": 0.3477,
+    "holdout_n": 5066,
+    "holdout_rate": 0.3411
+   }
+  },
+  "RB|stint2": {
+   "touched": {
+    "fit_n": 5070,
+    "fit_rate": 0.3237,
+    "holdout_n": 2457,
+    "holdout_rate": 0.3228
+   },
+   "untouched": {
+    "fit_n": 6624,
+    "fit_rate": 0.3176,
+    "holdout_n": 3248,
+    "holdout_rate": 0.3254
+   }
+  },
+  "RB|stint3": {
+   "touched": {
+    "fit_n": 3137,
+    "fit_rate": 0.278,
+    "holdout_n": 1529,
+    "holdout_rate": 0.2865
+   },
+   "untouched": {
+    "fit_n": 4438,
+    "fit_rate": 0.2413,
+    "holdout_n": 2060,
+    "holdout_rate": 0.2612
+   }
+  },
+  "RB|stint4": {
+   "touched": {
+    "fit_n": 2332,
+    "fit_rate": 0.2607,
+    "holdout_n": 1178,
+    "holdout_rate": 0.2394
+   },
+   "untouched": {
+    "fit_n": 3043,
+    "fit_rate": 0.2498,
+    "holdout_n": 1382,
+    "holdout_rate": 0.2446
+   }
+  },
+  "RB|stint5": {
+   "touched": {
+    "fit_n": 1673,
+    "fit_rate": 0.2373,
+    "holdout_n": 812,
+    "holdout_rate": 0.2623
+   },
+   "untouched": {
+    "fit_n": 2148,
+    "fit_rate": 0.2174,
+    "holdout_n": 1079,
+    "holdout_rate": 0.2382
+   }
+  },
+  "RB|stint6": {
+   "touched": {
+    "fit_n": 5681,
+    "fit_rate": 0.1926,
+    "holdout_n": 2714,
+    "holdout_rate": 0.203
+   },
+   "untouched": {
+    "fit_n": 7818,
+    "fit_rate": 0.1613,
+    "holdout_n": 3777,
+    "holdout_rate": 0.1573
+   }
+  },
+  "TE|stint1": {
+   "touched": {
+    "fit_n": 1267,
+    "fit_rate": 0.3149,
+    "holdout_n": 584,
+    "holdout_rate": 0.3151
+   },
+   "untouched": {
+    "fit_n": 13970,
+    "fit_rate": 0.2999,
+    "holdout_n": 7067,
+    "holdout_rate": 0.2957
+   }
+  },
+  "TE|stint2": {
+   "touched": {
+    "fit_n": 788,
+    "fit_rate": 0.3096,
+    "holdout_n": 422,
+    "holdout_rate": 0.3531
+   },
+   "untouched": {
+    "fit_n": 8283,
+    "fit_rate": 0.294,
+    "holdout_n": 4092,
+    "holdout_rate": 0.2803
+   }
+  },
+  "TE|stint3": {
+   "touched": {
+    "fit_n": 562,
+    "fit_rate": 0.2313,
+    "holdout_n": 286,
+    "holdout_rate": 0.3042
+   },
+   "untouched": {
+    "fit_n": 5079,
+    "fit_rate": 0.2404,
+    "holdout_n": 2551,
+    "holdout_rate": 0.2281
+   }
+  },
+  "TE|stint4": {
+   "touched": {
+    "fit_n": 404,
+    "fit_rate": 0.2079,
+    "holdout_n": 191,
+    "holdout_rate": 0.2094
+   },
+   "untouched": {
+    "fit_n": 3573,
+    "fit_rate": 0.2024,
+    "holdout_n": 1748,
+    "holdout_rate": 0.1905
+   }
+  },
+  "TE|stint5": {
+   "touched": {
+    "fit_n": 284,
+    "fit_rate": 0.1831,
+    "holdout_n": 151,
+    "holdout_rate": 0.2119
+   },
+   "untouched": {
+    "fit_n": 2644,
+    "fit_rate": 0.1925,
+    "holdout_n": 1331,
+    "holdout_rate": 0.1608
+   }
+  },
+  "TE|stint6": {
+   "touched": {
+    "fit_n": 1596,
+    "fit_rate": 0.1566,
+    "holdout_n": 784,
+    "holdout_rate": 0.1339
+   },
+   "untouched": {
+    "fit_n": 12608,
+    "fit_rate": 0.1081,
+    "holdout_n": 6024,
+    "holdout_rate": 0.1047
+   }
+  },
+  "WR|stint1": {
+   "touched": {
+    "fit_n": 2725,
+    "fit_rate": 0.2873,
+    "holdout_n": 1335,
+    "holdout_rate": 0.2959
+   },
+   "untouched": {
+    "fit_n": 21437,
+    "fit_rate": 0.2626,
+    "holdout_n": 10711,
+    "holdout_rate": 0.2655
+   }
+  },
+  "WR|stint2": {
+   "touched": {
+    "fit_n": 1805,
+    "fit_rate": 0.2166,
+    "holdout_n": 802,
+    "holdout_rate": 0.207
+   },
+   "untouched": {
+    "fit_n": 13265,
+    "fit_rate": 0.1833,
+    "holdout_n": 6548,
+    "holdout_rate": 0.1952
+   }
+  },
+  "WR|stint3": {
+   "touched": {
+    "fit_n": 1242,
+    "fit_rate": 0.1892,
+    "holdout_n": 636,
+    "holdout_rate": 0.1761
+   },
+   "untouched": {
+    "fit_n": 9454,
+    "fit_rate": 0.1406,
+    "holdout_n": 4469,
+    "holdout_rate": 0.1519
+   }
+  },
+  "WR|stint4": {
+   "touched": {
+    "fit_n": 1000,
+    "fit_rate": 0.151,
+    "holdout_n": 458,
+    "holdout_rate": 0.1659
+   },
+   "untouched": {
+    "fit_n": 7240,
+    "fit_rate": 0.1079,
+    "holdout_n": 3371,
+    "holdout_rate": 0.1056
+   }
+  },
+  "WR|stint5": {
+   "touched": {
+    "fit_n": 829,
+    "fit_rate": 0.1291,
+    "holdout_n": 384,
+    "holdout_rate": 0.1667
+   },
+   "untouched": {
+    "fit_n": 5819,
+    "fit_rate": 0.0909,
+    "holdout_n": 2692,
+    "holdout_rate": 0.1051
+   }
+  },
+  "WR|stint6": {
+   "touched": {
+    "fit_n": 6290,
+    "fit_rate": 0.0893,
+    "holdout_n": 2496,
+    "holdout_rate": 0.0958
+   },
+   "untouched": {
+    "fit_n": 40084,
+    "fit_rate": 0.051,
+    "holdout_n": 15377,
+    "holdout_rate": 0.0598
+   }
+  }
+ },
+ "source": "scrimmage_participation.csv.gz",
+ "untouched_leave_rate_by_earlier_play_type_fit": {
+  "pass": {
+   "leave_rate": 0.1928,
+   "n": 109706
+  },
+  "run": {
+   "leave_rate": 0.1665,
+   "n": 68453
+  }
+ }
+}
