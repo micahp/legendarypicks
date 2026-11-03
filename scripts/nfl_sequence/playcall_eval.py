@@ -150,7 +150,7 @@ def evaluate_fold(season, train_seasons, recs, layer):
     return out, table
 
 
-def acceptance(table, recs, train_seasons):
+def acceptance(table, recs, train_seasons, labels):
     """Two teams with opposite histories, in one pre-snap state, and a legality and determinism check on sampled calls."""
     history = defaultdict(lambda: [0, 0])
     for r in recs:
@@ -160,7 +160,7 @@ def acceptance(table, recs, train_seasons):
     ranked = sorted((rate / n, team) for team, (n, rate) in
                     ((t, (v[0], v[1])) for t, v in history.items()) if n >= 300)
     lo_team, hi_team = ranked[0][1], ranked[-1][1]
-    situation = {'down': '1', 'dist': '10', 'field': '36-50', 'score': '0', 'time': 'q1'}
+    situation = {'down': '1', 'dist': labels['ten'], 'field': '36-50', 'score': labels['tied'], 'time': 'q1'}
     support = pt.Support([r for r in recs if r['season'] in train_seasons])
     result = {'situation': situation, 'pass_rate_history': {
         lo_team: round(ranked[0][0], 4), hi_team: round(ranked[-1][0], 4)}, 'teams': {}}
@@ -185,12 +185,20 @@ def acceptance(table, recs, train_seasons):
     return result
 
 
-def situational_sense(table, support):
+# The bucket names each scheme uses for the states the checks name. 'long' is the 11+ state in both schemes.
+SCHEME_LABELS = {
+    'current': {'ten': '10', 'long': '11+', 'tied': '0', 'repro_dist': '7-9', 'repro_score': '-3..-1'},
+    'simple': {'ten': '10', 'long': '11+', 'tied': 'tied', 'repro_dist': 'long', 'repro_score': 'down1'},
+}
+
+
+def situational_sense(table, support, labels):
     """League-wide predicted pass share on third and eleven or more, and first and ten, drawn from the league table."""
     out = {}
-    for label, sit in (('1st_and_10', {'down': '1', 'dist': '10'}), ('3rd_and_11plus', {'down': '3', 'dist': '11+'})):
+    for label, sit in (('1st_and_10', {'down': '1', 'dist': labels['ten']}),
+                       ('3rd_and_11plus', {'down': '3', 'dist': labels['long']})):
         rng = random.Random(f'sense|{label}')
-        full = {'field': '36-50', 'score': '0', 'time': 'q2', **sit}
+        full = {'field': '36-50', 'score': labels['tied'], 'time': 'q2', **sit}
         passes = 0
         for _ in range(SAMPLE_CALLS):
             c = pt.sample_call(table, pt.NA, full, rng, 'league', support)
@@ -226,23 +234,25 @@ def main():
     ap.add_argument('--raw-dir', type=Path, required=True)
     ap.add_argument('--artifact', type=Path, required=True)
     ap.add_argument('--out-dir', type=Path, required=True)
+    ap.add_argument('--scheme', choices=sorted(pt.SCHEMES), default='current')
     args = ap.parse_args()
+    labels = SCHEME_LABELS[args.scheme]
     import slc_playcall
     layer = slc_playcall.PlayCallLayer.load(args.artifact)
-    recs, excluded = pt.records(args.raw_dir, [2022, 2023, 2024, 2025])
+    recs, excluded = pt.records(args.raw_dir, [2022, 2023, 2024, 2025], scheme=args.scheme)
     folds = []
     for season, train_seasons in FOLDS:
         fold, _table = evaluate_fold(season, train_seasons, recs, layer if season == 2025 else None)
         folds.append(fold)
     train_all = (2022, 2023, 2024)
     table = pt.fit([r for r in recs if r['season'] in train_all])
-    accept = acceptance(table, recs, train_all)
+    accept = acceptance(table, recs, train_all, labels)
     support = pt.Support([r for r in recs if r['season'] in train_all])
-    sense = situational_sense(table, support)
-    first = [pt.sample_call(table, 'DET', {'down': '2', 'dist': '7-9', 'field': '21-35', 'score': '-3..-1', 'time': 'q3'},
-                            random.Random('repro|1'), 'table') for _ in range(50)]
-    second = [pt.sample_call(table, 'DET', {'down': '2', 'dist': '7-9', 'field': '21-35', 'score': '-3..-1', 'time': 'q3'},
-                             random.Random('repro|1'), 'table') for _ in range(50)]
+    sense = situational_sense(table, support, labels)
+    repro_situation = {'down': '2', 'dist': labels['repro_dist'], 'field': '21-35', 'score': labels['repro_score'],
+                       'time': 'q3'}
+    first = [pt.sample_call(table, 'DET', repro_situation, random.Random('repro|1'), 'table') for _ in range(50)]
+    second = [pt.sample_call(table, 'DET', repro_situation, random.Random('repro|1'), 'table') for _ in range(50)]
     verdict = judge(folds, accept, sense, first == second)
     result = {'folds': folds, 'acceptance': accept, 'situational_sense': sense,
               'excluded_by_reason': dict(excluded), 'criteria': CRITERIA, 'thresholds': {

@@ -122,15 +122,58 @@ def bucket_time(qtr, half_seconds):
     return {'1': 'q1', '2': 'q2', '3': 'q3', '4': 'q4'}.get(q, 'UNK')
 
 
+def bucket_dist_simple(togo):
+    """Simplified distance (exploratory): inches is 1 yard or less, short 2-4, long 5-9, '10' is exactly 10, '11+' is 11 or more.
+    The 10 and 11+ split follows the pass share: first and ten is mostly run-or-pass mixed, and 11 and up is long yardage."""
+    try:
+        y = int(float(togo))
+    except ValueError:
+        return 'UNK'
+    if y <= 1:
+        return 'inches'
+    if y <= 4:
+        return 'short'
+    if y <= 9:
+        return 'long'
+    if y == 10:
+        return '10'
+    return '11+'
+
+
+def bucket_score_simple(diff):
+    """Simplified score (exploratory): tied, one score (1-8) ahead or behind, two scores (9+) ahead or behind."""
+    try:
+        d = int(float(diff))
+    except ValueError:
+        return 'UNK'
+    if d == 0:
+        return 'tied'
+    if 1 <= d <= 8:
+        return 'up1'
+    if d >= 9:
+        return 'up2+'
+    if d >= -8:
+        return 'down1'
+    return 'down2+'
+
+
+# The situation scheme: which distance and score buckets the records carry. 'current' is the gate as pre-declared.
+SCHEMES = {
+    'current': (bucket_dist, bucket_score),
+    'simple': (bucket_dist_simple, bucket_score_simple),
+}
+
+
 def concept_of(family, run_gap, pass_length, pass_location):
     if family == 'run':
         return f'run|{run_gap or fp.UNKNOWN}'
     return f'pass|{pass_length or fp.UNKNOWN}|{pass_location or fp.UNKNOWN}'
 
 
-def records(raw_dir, seasons):
+def records(raw_dir, seasons, scheme='current'):
     """(records, excluded). One record per offensive call (run or pass) and one per special-teams play, from the joined
     nflverse release. excluded counts the run and pass plays left out, by reason, so none is dropped silently."""
+    bucket_dist_fn, bucket_score_fn = SCHEMES[scheme]
     out = []
     excluded = Counter()
     for season in seasons:
@@ -152,8 +195,8 @@ def records(raw_dir, seasons):
                 formation = fp.formation_key(row['formation'])
             rec = {
                 'season': season, 'game_id': row['game_id'], 'play_id': row['play_id'], 'team': row['posteam'],
-                'defteam': row['defteam'], 'down': bucket_down(row['down']), 'dist': bucket_dist(row['ydstogo']),
-                'field': bucket_field(row['yardline_100']), 'score': bucket_score(row['score_differential']),
+                'defteam': row['defteam'], 'down': bucket_down(row['down']), 'dist': bucket_dist_fn(row['ydstogo']),
+                'field': bucket_field(row['yardline_100']), 'score': bucket_score_fn(row['score_differential']),
                 'time': bucket_time(row['qtr'], row['half_seconds_remaining']), 'P': p, 'F': formation,
                 'R': family or NA, 'C': NA, 'reconstructed': row['personnel_reconstructed'],
             }
