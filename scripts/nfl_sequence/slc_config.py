@@ -266,9 +266,14 @@ def validate_engine_layers(resolved, description):
     actual = (description or {}).get('enabled_layers', {})
     if description is None and not any(resolved['enabled_layers'].values()):
         actual = {key: False for key in ENGINE_LAYER_KEYS}
+    expected_layers = dict(resolved['enabled_layers'])
+    # Dirichlet shares are drawn over the fixed share adapter's players, so the adapter loads whenever they are on
+    # (run_slc_game.player_shares_for). The resolved map keeps the option value; the loaded adapter is the expected state.
+    if expected_layers.get('dirichlet_player_target_carry_shares'):
+        expected_layers['fixed_player_target_carry_shares'] = True
     mismatches = {
         key: {'expected': expected, 'actual': actual.get(key)}
-        for key, expected in resolved['enabled_layers'].items()
+        for key, expected in expected_layers.items()
         if actual.get(key) is not expected
     }
     if mismatches:
