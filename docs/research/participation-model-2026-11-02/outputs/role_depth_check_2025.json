@@ -13,7 +13,7 @@
   "WR5": -0.0669,
   "WR6": -0.0618
  },
- "role_coverage_wr_te": 0.9769,
+ "role_coverage_wr_te": 0.9768,
  "role_means_2025": {
   "TE1": {
    "mean_estimate": 0.6249,
@@ -97,6 +97,6 @@
  },
  "unmapped_count": 0,
  "unmapped_team_games": [],
- "wr_te_targets": 2557,
- "wr_te_with_role": 2498
+ "wr_te_targets": 2548,
+ "wr_te_with_role": 2489
 }
