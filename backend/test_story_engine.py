@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from story_engine import (
     LEAGUE_TEAM_NAMES,
+    _h2h,
     _lead,
     _nba_player_clause,
     _nfl_player_clause,
@@ -30,6 +31,14 @@ TEAM_NAMES = {
     "BOS": "Boston Celtics", "HOU": "Houston Rockets", "UTAH": "Utah Jazz",
     "SA": "San Antonio Spurs", "POR": "Portland Trail Blazers", "DEN": "Denver Nuggets",
 }
+
+
+def recent_player_evidence(**stats_by_key):
+    count = max((len(values) for values in stats_by_key.values()), default=0)
+    return [{"id": f"log-{index}", "date": f"2026-10-{10-index:02d}",
+             "available_at": f"2026-10-{10-index:02d}T12:00:00Z",
+             "stats": {key: values[index] for key, values in stats_by_key.items()
+                       if index < len(values)}} for index in range(count)]
 NBA_STANDINGS = ROOT / "docs/research/narrative-event-knowledge-2026-11-03/deterministic-engine/nba_standings_2026-11-02.json"
 SWIFT_LOGS = ROOT / "docs/research/narrative-event-knowledge-2026-11-03/deterministic-engine/swift_2026_logs.json"
 
@@ -390,6 +399,15 @@ class StoryEngineTests(unittest.TestCase):
         self.assertIn("protect home court", story)
         self.assertNotIn("home turf", story)
 
+    def test_head_to_head_does_not_call_a_tie_a_win(self):
+        row_away = {"id": "prior", "opponent": "DET", "for": 110, "against": 110}
+        row_home = {"id": "prior", "opponent": "CHI", "for": 110, "against": 110}
+        facts = {"away": "CHI", "home": "DET", "teams": {
+            "CHI": {"code": "CHI", "evidence": [row_away]},
+            "DET": {"code": "DET", "evidence": [row_home]},
+        }}
+        self.assertIsNone(_h2h(facts))
+
     def test_winless_last_place_fallback_names_the_opponent_naturally(self):
         bundle = {
             "league": "nba", "away": "SAC", "home": "PHX", "league_standings": [],
@@ -413,17 +431,25 @@ class StoryEngineTests(unittest.TestCase):
         self.assertEqual(_streak_phrase({"streak_result": None, "streak_length": 0}), None)
 
     def test_receiver_is_only_described_as_coming_off_the_latest_game(self):
+        def logs(values):
+            return [{"id": f"g{index}", "date": f"2026-10-{10-index:02d}",
+                     "available_at": f"2026-10-{10-index:02d}T12:00:00Z",
+                     "stats": {"rec_yds": value}}
+                    for index, value in enumerate(values)]
+
         fact = {
             "player": "Test Receiver",
             "team": "SEA",
             "stats": {"receiving_yards": [42, 121, 75, 68, 55]},
             "season_totals": {},
+            "evidence": logs([42, 121, 75, 68, 55]),
         }
         clause = _nfl_player_clause(fact)
         self.assertIn("one of his last five", clause)
         self.assertNotIn("coming off", clause)
 
         fact["stats"]["receiving_yards"] = [121, 42, 75, 68, 55]
+        fact["evidence"] = logs([121, 42, 75, 68, 55])
         clause = _nfl_player_clause(fact)
         self.assertIn("coming off a 121-yard receiving game", clause)
 
@@ -446,6 +472,7 @@ class StoryEngineTests(unittest.TestCase):
             "player": "Test Star",
             "team": "PHI",
             "stats": {"points": [45, 22, 21, 24, 25], "assists": [6, 6, 6, 6, 6]},
+            "evidence": recent_player_evidence(PTS=[45, 22, 21, 24, 25], AST=[6, 6, 6, 6, 6]),
         }
         clause = _nba_player_clause(fact)
         self.assertIn("76ers star Test Star", clause)
@@ -456,6 +483,7 @@ class StoryEngineTests(unittest.TestCase):
             "player": "Test Star",
             "team": "PHI",
             "stats": {"points": [45, 22, 21, 24, 25], "assists": [6, 6, 6, 6, 6]},
+            "evidence": recent_player_evidence(PTS=[45, 22, 21, 24, 25], AST=[6, 6, 6, 6, 6]),
         }
         clause = _nba_player_clause(fact).lower()
         self.assertIn("is averaging", clause)
@@ -463,21 +491,25 @@ class StoryEngineTests(unittest.TestCase):
 
     def test_nba_scoring_clause_lists_exactly_the_games_it_counts(self):
         fact = {"player": "Test Guard", "team": "BOS",
-                "stats": {"points": [34, 26, 21, 20, 15]}}
+                "stats": {"points": [34, 26, 21, 20, 15]},
+                "evidence": recent_player_evidence(PTS=[34, 26, 21, 20, 15])}
         clause = _nba_player_clause(fact)
         self.assertIn("in each of his last four", clause)
         self.assertIn("including 34, 26, 21, 20", clause)
 
         fact["stats"]["points"] = [40, 20, 35, 36, 10]
+        fact["evidence"] = recent_player_evidence(PTS=[40, 20, 35, 36, 10])
         clause = _nba_player_clause(fact)
         self.assertIn("40, 35 and 36 in three of his last five", clause)
 
     def test_nba_four_or_five_game_scoring_run_uses_the_actual_count(self):
         fact = {"player": "Test Forward", "team": "BOS",
-                "stats": {"points": [24, 25, 23, 24, 26]}}
+                "stats": {"points": [24, 25, 23, 24, 26]},
+                "evidence": recent_player_evidence(PTS=[24, 25, 23, 24, 26])}
         clause = _nba_player_clause(fact)
         self.assertIn("at least 23 in each of his last five", clause)
         fact["stats"]["points"] = [24, 25, 23, 24, 10]
+        fact["evidence"] = recent_player_evidence(PTS=[24, 25, 23, 24, 10])
         clause = _nba_player_clause(fact)
         self.assertIn("at least 23 in four of his last five", clause)
 

@@ -427,47 +427,80 @@ def _nba_player_clause(fact: dict[str, Any]) -> str | None:
     rebounds = stats.get("rebounds", [])
     name, team = fact["player"], fact["team"]
     city = _city({"code": team, "name": _team_name(team, "nba")})
-    if len(pts) >= 2 and min(pts[:2]) >= 30:
+    if len(pts) >= 2 and _recent_logs_complete(fact, ("PTS", "points"), 2) and min(pts[:2]) >= 30:
         return f"{city}'s {name} has scored {_number(pts[0], 0)} and {_number(pts[1], 0)} in his last two"
-    if len(pts) >= 5 and sum(value >= 23 for value in pts[:5]) == 5 and max(pts[:5]) >= 35:
+    if len(pts) >= 5 and _recent_logs_complete(fact, ("PTS", "points"), 5) \
+            and sum(value >= 23 for value in pts[:5]) == 5 and max(pts[:5]) >= 35:
         return (f"{city}'s {name} has scored at least 23 in each of his last five, including a "
                 f"{_number(max(pts[:5]), 0)}-point night")
-    if len(pts) >= 5 and sum(value >= 35 for value in pts[:5]) >= 2 and not (
+    if len(pts) >= 5 and _recent_logs_complete(fact, ("PTS", "points"), 5) \
+            and sum(value >= 35 for value in pts[:5]) >= 2 and not (
             pts[0] >= 30 and pts[1] >= 30):
         standout = [int(value) for value in pts[:5] if value >= 35]
         count = len(standout)
         score_text = ", ".join(map(str, standout[:-1])) + f" and {standout[-1]}"
         return f"{city}'s {name} has put up {score_text} in {_count_word(count)} of his last five"
-    if len(pts) >= 5 and max(pts[:5]) >= 40:
+    if len(pts) >= 5 and _recent_logs_complete(fact, ("PTS", "points"), 5) and max(pts[:5]) >= 40:
         average_pts = sum(pts[:5]) / len(pts[:5])
         average_ast = sum(ast[:5]) / len(ast[:5]) if len(ast) >= 5 else None
-        if average_pts >= 24 and average_ast is not None and average_ast >= 5:
+        if (average_pts >= 24 and average_ast is not None and average_ast >= 5
+                and _recent_logs_complete(fact, ("AST", "assists"), 5)):
             nickname = _nickname({"code": team, "name": _team_name(team, "nba")})
             return (f"{nickname} star {name} is averaging {_number(average_pts)} points and "
                     f"{_number(average_ast)} assists over his last five games, including a "
                     f"{_number(max(pts[:5]), 0)}-point outing")
-    if len(pts) >= 5:
+    if len(pts) >= 5 and _recent_logs_complete(fact, ("PTS", "points"), 5):
         average_pts = sum(pts[:5]) / len(pts[:5])
         average_ast = sum(ast[:5]) / len(ast[:5]) if len(ast) >= 5 else None
-        if average_pts >= 25 and average_ast is not None and average_ast >= 5:
+        if (average_pts >= 25 and average_ast is not None and average_ast >= 5
+                and _recent_logs_complete(fact, ("AST", "assists"), 5)):
             return (f"{name} is averaging {_number(average_pts)} points and {_number(average_ast)} assists "
                     f"over his last five for {city}")
-    if len(pts) >= 5 and sum(value >= 23 for value in pts[:5]) >= 4:
+    if len(pts) >= 5 and _recent_logs_complete(fact, ("PTS", "points"), 5) \
+            and sum(value >= 23 for value in pts[:5]) >= 4:
         count = sum(value >= 23 for value in pts[:5])
         frequency = "each of his last five" if count == 5 else "four of his last five"
         return f"{city}'s {name} has scored at least 23 in {frequency}"
-    if len(pts) >= 4 and sum(value >= 20 for value in pts[:4]) >= 3 and max(pts[:4]) >= 30:
+    if len(pts) >= 4 and _recent_logs_complete(fact, ("PTS", "points"), 4) \
+            and sum(value >= 20 for value in pts[:4]) >= 3 and max(pts[:4]) >= 30:
         count = sum(value >= 20 for value in pts[:4])
         scores = [int(value) for value in pts[:4] if value >= 20]
         frequency = "each of his last four" if count == 4 else f"{_count_word(count)} of his last four"
         return (f"{city}'s {name} has scored 20 or more in {frequency}, including "
                 f"{', '.join(map(str, scores))}")
-    if len(ast) >= 5 and sum(ast[:5]) / len(ast[:5]) >= 8:
+    if len(ast) >= 5 and _recent_logs_complete(fact, ("AST", "assists"), 5) \
+            and sum(ast[:5]) / len(ast[:5]) >= 8:
         return f"{city}'s {name} is averaging {_number(sum(ast[:5]) / len(ast[:5]))} assists over his last five"
-    if len(rebounds) >= 5 and sum(rebounds[:5]) / len(rebounds[:5]) >= 10:
+    if len(rebounds) >= 5 and _recent_logs_complete(fact, ("REB", "rebounds"), 5) \
+            and sum(rebounds[:5]) / len(rebounds[:5]) >= 10:
         return f"{city}'s {name} is averaging {_number(sum(rebounds[:5]) / len(rebounds[:5]))} rebounds over his last five"
-    if len(pts) >= 2 and pts[0] >= 30 and pts[1] >= 20:
+    if len(pts) >= 2 and _recent_logs_complete(fact, ("PTS", "points"), 2) \
+            and pts[0] >= 30 and pts[1] >= 20:
         return f"{city}'s {name} has scored {int(pts[0])} and {int(pts[1])} in his last two"
+    return None
+
+
+def _recent_player_logs(fact: dict[str, Any]) -> list[dict[str, Any]]:
+    by_id = {str(row.get("id")): row for row in fact.get("evidence") or []}
+    return sorted(by_id.values(),
+                  key=lambda row: (str(row.get("date") or ""), str(row.get("available_at") or "")),
+                  reverse=True)
+
+
+def _recent_logs_complete(fact: dict[str, Any], keys: tuple[str, ...], count: int) -> bool:
+    rows = _recent_player_logs(fact)[:count]
+    return len(rows) == count and all(
+        any((row.get("stats") or {}).get(key) is not None for key in keys) for row in rows)
+
+
+def _latest_log_value(fact: dict[str, Any], keys: tuple[str, ...]) -> float | None:
+    rows = _recent_player_logs(fact)
+    if not rows:
+        return None
+    for key in keys:
+        value = (rows[0].get("stats") or {}).get(key)
+        if value is not None:
+            return float(value)
     return None
 
 
@@ -485,32 +518,43 @@ def _nfl_player_clause(fact: dict[str, Any]) -> str | None:
                         for index in range(min(5, td_length))]
     name, team = fact["player"], fact["team"]
     city = _city({"code": team, "name": _team_name(team, "nfl")})
-    if len(rec) >= 5 and sum(value >= 100 for value in rec[:5]) >= 3:
+    if len(rec) >= 5 and _recent_logs_complete(fact, ("rec_yds", "receiving_yards"), 5) \
+            and sum(value >= 100 for value in rec[:5]) >= 3:
         count = sum(value >= 100 for value in rec[:5])
         return (f"{name} has been on a tear for {city}, topping 100 receiving yards in "
                 f"{_count_word(count)} of his last five games")
-    if len(rush) >= 4 and max(rush[:4]) >= 100:
+    if len(rush) >= 4 and _recent_logs_complete(fact, ("rush_yds", "rushing_yards"), 4) \
+            and max(rush[:4]) >= 100:
         return f"{city}'s {name} has topped 100 rushing yards in one of his last four games"
-    if len(passing) >= 5 and sum(value >= 300 for value in passing[:5]) >= 2:
+    if len(passing) >= 5 and _recent_logs_complete(fact, ("pass_yds", "passing_yards"), 5) \
+            and sum(value >= 300 for value in passing[:5]) >= 2:
         count = sum(value >= 300 for value in passing[:5])
         return f"{city}'s {name} has thrown for 300 yards in {_count_word(count)} of his last five games"
     totals = fact.get("season_totals") or {}
     if totals.get("rush_yards", 0) >= 300 and totals.get("rush_touchdowns", 0) >= 3:
         return (f"{city} counters with {name}, who has rushed for {int(totals['rush_yards'])} yards and "
                 f"{_count_word(totals['rush_touchdowns'])} touchdowns")
-    if touchdown_series and sum(value > 0 for value in touchdown_series[:5]) >= 3:
+    if touchdown_series and _recent_logs_complete(
+            fact, ("rec_td", "receiving_touchdowns", "rush_td", "rushing_touchdowns"), 5) \
+            and sum(value > 0 for value in touchdown_series[:5]) >= 3:
         count = sum(value > 0 for value in touchdown_series[:5])
         return f"{city}'s {name} has found the end zone in {_count_word(count)} of his last five games"
-    if len(carries) >= 5 and sum(value >= 20 for value in carries[:5]) >= 3:
+    if len(carries) >= 5 and _recent_logs_complete(fact, ("carries",), 5) \
+            and sum(value >= 20 for value in carries[:5]) >= 3:
         count = sum(value >= 20 for value in carries[:5])
         return f"{city}'s {name} has carried the ball 20 or more times in {_count_word(count)} of his last five games"
-    if len(targets) >= 5 and sum(value >= 8 for value in targets[:5]) >= 3:
+    if len(targets) >= 5 and _recent_logs_complete(fact, ("targets",), 5) \
+            and sum(value >= 8 for value in targets[:5]) >= 3:
         count = sum(value >= 8 for value in targets[:5])
         return f"{city}'s {name} has seen at least eight targets in {_count_word(count)} of his last five games"
-    if rec and rec[0] >= 100:
-        return f"{city}'s {name} is coming off a {int(rec[0])}-yard receiving game"
+    latest_receiving = _latest_log_value(fact, ("rec_yds", "receiving_yards"))
+    if latest_receiving is not None and latest_receiving >= 100:
+        return f"{city}'s {name} is coming off a {int(latest_receiving)}-yard receiving game"
     hundred_yard_games = sum(value >= 100 for value in rec)
-    if hundred_yard_games:
+    recent_logs = _recent_player_logs(fact)[:5]
+    recency_complete = bool(recent_logs) and _recent_logs_complete(
+        fact, ("rec_yds", "receiving_yards"), len(recent_logs))
+    if hundred_yard_games and recency_complete:
         count = _count_word(hundred_yard_games)
         return (f"{city}'s {name} has topped 100 receiving yards in {count} of his last "
                 f"{_count_word(len(rec))} games")
@@ -549,6 +593,8 @@ def _h2h(bundle: dict[str, Any]) -> dict[str, Any] | None:
         game_id = str(row.get("id"))
         other = away_rows.get(game_id)
         if other and int(row.get("for", -1)) == int(other.get("against", -2)) and int(row.get("against", -1)) == int(other.get("for", -2)):
+            if int(row["for"]) == int(row["against"]):
+                continue
             winner = away if int(other["for"]) > int(other["against"]) else home
             return {"game_id": game_id, "date": row.get("date"),
                     "winner": winner["code"], "loser": home["code"] if winner["code"] == away["code"] else away["code"],

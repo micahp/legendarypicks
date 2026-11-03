@@ -201,6 +201,7 @@ def test_upcoming_nba_preview_uses_deterministic_store_without_replacing_llm_cac
     con.close()
 
     monkeypatch.setattr(cs, "_deterministic_pregame_story", DETERMINISTIC_PREGAME)
+    monkeypatch.setenv("LP_DETERMINISTIC_STORY_ENGINE", "1")
     monkeypatch.setattr(cs, "_story_engine_game_context", lambda *args: {
         "league": "nba", "game_id": "401902644", "season": 2027,
         "home": "MIA", "away": "TOR", "state": "pre", "start_utc": _soon(),
@@ -216,6 +217,9 @@ def test_upcoming_nba_preview_uses_deterministic_store_without_replacing_llm_cac
     monkeypatch.setattr(runtime.story_engine, "generate_story", lambda *_: renders.append(1) or {
         "story": "CPU deterministic preview.", "angle": {"kind": "matchup"},
         "manifest": {"selected_facts": [], "omitted_facts": []},
+    })
+    monkeypatch.setattr(runtime, "_quality_record", lambda *_: {
+        "gate": "eligible", "score": 90, "hard_failures": [],
     })
 
     first = _gen(_soon())
@@ -233,6 +237,11 @@ def test_upcoming_nba_preview_uses_deterministic_store_without_replacing_llm_cac
     con.close()
     assert stored[0] == "CPU deterministic preview."
     assert stored[1] and len(stored[2]) == 64 and '"manifest"' in stored[3]
+    con = _open(path)
+    assert con.execute(
+        "SELECT COUNT(*) FROM game_story_deterministic_history WHERE league='nba' AND game_id='401902644'"
+    ).fetchone()[0] == 1
+    con.close()
 
 
 def test_story_engine_context_uses_local_schedule_and_snapshot_only(harness, monkeypatch):
@@ -240,9 +249,9 @@ def test_story_engine_context_uses_local_schedule_and_snapshot_only(harness, mon
     path, _ = harness
     con = _open(path)
     con.execute("CREATE TABLE nba_schedule(game_id TEXT, espn TEXT, season INTEGER, home_team TEXT, "
-                "away_team TEXT, start_utc TEXT, ingested_at TEXT)")
-    con.execute("INSERT INTO nba_schedule VALUES ('NBA1','401902644',2027,'MIA','TOR',?,?)",
-                (_soon(), "2026-10-02 18:00:00"))
+                "away_team TEXT, start_utc TEXT, game_date TEXT, ingested_at TEXT, source TEXT)")
+    con.execute("INSERT INTO nba_schedule VALUES ('NBA1','401902644',2027,'MIA','TOR',?,?,?,?)",
+                (_soon(), "2026-10-02", "2026-10-02 18:00:00", "test"))
     con.commit()
     con.close()
     monkeypatch.setattr(espn, "summary", lambda *a: (_ for _ in ()).throw(
@@ -259,9 +268,9 @@ def test_nfl_engine_context_uses_captured_kickoff_without_network(harness, monke
     path, _ = harness
     con = _open(path)
     con.execute("CREATE TABLE nfl_schedule(game_id TEXT, espn TEXT, season INTEGER, home_team TEXT, "
-                "away_team TEXT, gameday TEXT, ingested_at TEXT)")
-    con.execute("INSERT INTO nfl_schedule VALUES ('2026_09_BUF_KC','401900099',2026,'KC','BUF','2026-11-08',?)",
-                ("2026-10-29 18:00:00",))
+                "away_team TEXT, gameday TEXT, ingested_at TEXT, source TEXT)")
+    con.execute("INSERT INTO nfl_schedule VALUES ('2026_09_BUF_KC','401900099',2026,'KC','BUF','2026-11-08',?,?)",
+                ("2026-10-29 18:00:00", "test"))
     con.execute("ALTER TABLE scoreboard_snapshots ADD COLUMN start_time TEXT")
     con.execute(
         "INSERT INTO scoreboard_snapshots(league,game_id,state,payload,fetched_at,start_time) "
@@ -278,6 +287,13 @@ def test_nfl_engine_context_uses_captured_kickoff_without_network(harness, monke
     assert game["season"] == 2026
     assert (game["home"], game["away"]) == ("KC", "BUF")
     assert game["state"] == "pre" and game["start_utc"] == _soon()
+    newer_start = (dt.datetime.fromisoformat(_soon().replace("Z", "+00:00"))
+                   + dt.timedelta(minutes=15)).isoformat(timespec="seconds").replace("+00:00", "Z")
+    request_game = cs._story_engine_game_context(
+        "nfl", "401900099", None, None, None, newer_start)
+    kickoff_evidence = next(row for row in request_game["matchup_evidence"]
+                            if row["id"].startswith("nfl_kickoff:"))
+    assert kickoff_evidence["available_at"] == "request_observation"
 
 
 def test_kick_skips_games_beyond_the_horizon(monkeypatch, harness, exercise_story_warming):

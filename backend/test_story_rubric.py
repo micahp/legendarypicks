@@ -43,6 +43,7 @@ def sample_row(story=None):
                 "nonempty_story": True,
                 "selected_facts_have_linked_source_rows": True,
                 "team_record_and_streak_claims_recompute": True,
+                "head_to_head_claims_recompute": True,
                 "league_rank_claims_recompute": True,
                 "player_stat_claims_recompute": True,
                 "player_team_attribution_matches_prose": True,

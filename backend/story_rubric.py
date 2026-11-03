@@ -72,6 +72,7 @@ MECHANICAL_CHECKS = (
     "nonempty_story",
     "selected_facts_have_linked_source_rows",
     "team_record_and_streak_claims_recompute",
+    "head_to_head_claims_recompute",
     "league_rank_claims_recompute",
     "player_stat_claims_recompute",
     "player_team_attribution_matches_prose",

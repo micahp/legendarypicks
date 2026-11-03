@@ -1,6 +1,6 @@
 # CPU-only deterministic story engine
 
-**Status:** wired into the upcoming NBA and NFL preview path on PR #30's research branch. This change has not been deployed to production. Deterministic run artifacts are kept in this directory, while LLM comparison artifacts remain in the adjacent `../relevance-ranking/` directory.
+**Status:** integrated behind `LP_DETERMINISTIC_STORY_ENGINE` on PR #30's research branch. The service environment flag defaults off and is checked for each story request. This change has not been deployed to production. Deterministic run artifacts are kept in this directory, while LLM comparison artifacts remain in the adjacent `../relevance-ranking/` directory.
 
 **Historical note:** The six examples and initial measurements below document the first prototype, before the regression fixes and held-out evaluation in the final section. The held-out set is the current renderer evaluation.
 
@@ -147,4 +147,8 @@ The correctness and cutoff checks pass. The CPU engine is now wired into the upc
 
 ## App integration on PR #30
 
-Upcoming NBA and NFL previews now use `backend/story_engine.py` through `core_stories.py`. The app reads the local schedule, team results, and player logs, then renders without a model or network call. Preview prose and its private evidence manifest are stored in the separate `game_story_deterministic` table. Existing `game_story` rows remain intact for the legacy LLM research outputs and postgame recaps. The deterministic multisport run and its grading artifacts are saved under [`multisport-2026-11-03/`](multisport-2026-11-03/). The LLM-based comparison remains under [`../relevance-ranking/`](../relevance-ranking/).
+When enabled, upcoming NBA and NFL previews use `backend/story_engine.py` through `core_stories.py`. The app reads the local schedule, team results, and player logs, then renders and mechanically audits record, streak, ranking, head-to-head, player-stat, attribution, and cutoff claims without a model or network call. It records the six deterministic rubric scores and evidence in `game_story_deterministic_history`, updates the latest-story cache in `game_story_deterministic`, and records operational or factual failures separately in `game_story_deterministic_failures`. History inserts and latest-cache updates share one transaction; database triggers reject history updates and deletes. Audit failures do not replace the last accepted story; operational failures return a saved story when available and never fall through to DeepSeek while the flag is enabled. Existing `game_story` rows remain intact for the legacy path and postgame recaps. The deterministic multisport run and its grading artifacts are saved under [`multisport-2026-11-03/`](multisport-2026-11-03/). The LLM-based comparison remains under [`../relevance-ranking/`](../relevance-ranking/).
+
+### Endpoint verification on 2026-11-03
+
+The focused suite passes **81 tests**. A separate TestClient smoke exercised `/api/game/nba/0022600173/story` using current NBA schedule, standings, and player-log rows from a filtered temporary copy of `picks.dev.db`; the source database was read-only. The route returned HTTP 200 with a nonempty PHI at DET preview, all six rubric scores, an `eligible` gate at 99/100, and no independent audit failures. The model callback was set to raise if called, so the successful response also verifies the deterministic path made no model call. This is a development-database smoke, not a production deployment check or a human editorial rating.
