@@ -1,0 +1,279 @@
+{
+  "identity_policy": "all action/presentation signatures are recorded-field identities only; no exact play or concept labels",
+  "inputs": {
+    "dev_db": "/root/legendarypicks/backend/data/picks.dev.db",
+    "postseason_join_coverage": {
+      "2022": {
+        "ftn_joined": 1652,
+        "games": 13,
+        "participation_joined": 1660,
+        "run_pass_rows": 1660
+      },
+      "2023": {
+        "ftn_joined": 1643,
+        "games": 13,
+        "participation_joined": 1643,
+        "run_pass_rows": 1643
+      },
+      "2024": {
+        "ftn_joined": 1580,
+        "games": 13,
+        "participation_joined": 1580,
+        "run_pass_rows": 1580
+      },
+      "2025": {
+        "ftn_joined": 1691,
+        "games": 13,
+        "participation_joined": 1691,
+        "run_pass_rows": 1691
+      }
+    },
+    "postseason_raw_pbp_dir": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp",
+    "postseason_run_pass_rows": 6574,
+    "regular_run_pass_rows": 149048,
+    "regular_score_differential_exact_joined_rows_2022_25": 134138,
+    "regular_seasons": {
+      "2022": 33770,
+      "2023": 33957,
+      "2024": 33470,
+      "2025": 32941,
+      "2026": 14910
+    }
+  },
+  "inventory_date": "2026-11-03",
+  "phase3_coaching": {
+    "coach_move_rows": 7,
+    "continuity_summary": [
+      {
+        "mean": 1.0,
+        "median": 1.0,
+        "metric": "prev_season_action_signature_unique_reuse",
+        "primary_hc_continuity": false,
+        "team_seasons": 27
+      },
+      {
+        "mean": 1.0,
+        "median": 1.0,
+        "metric": "prev_season_action_signature_row_reuse",
+        "primary_hc_continuity": false,
+        "team_seasons": 27
+      },
+      {
+        "mean": 0.09293197304210868,
+        "median": 0.09329450275772207,
+        "metric": "prev_season_action_distribution_tv",
+        "primary_hc_continuity": false,
+        "team_seasons": 27
+      },
+      {
+        "mean": 0.996001523229246,
+        "median": 1.0,
+        "metric": "prev_season_action_signature_unique_reuse",
+        "primary_hc_continuity": true,
+        "team_seasons": 101
+      },
+      {
+        "mean": 0.9999210797893897,
+        "median": 1.0,
+        "metric": "prev_season_action_signature_row_reuse",
+        "primary_hc_continuity": true,
+        "team_seasons": 101
+      },
+      {
+        "mean": 0.08650050656322339,
+        "median": 0.08296363238032643,
+        "metric": "prev_season_action_distribution_tv",
+        "primary_hc_continuity": true,
+        "team_seasons": 101
+      }
+    ],
+    "head_coach_joined_run_pass_rows": 149048,
+    "head_coach_run_pass_coverage": 1.0,
+    "league_wide_oc_playcaller_coverage": "not available in these sources; not inferred from titles",
+    "observed_team_seasons": 160,
+    "regular_run_pass_rows": 149048,
+    "schedule_games_with_coach_fields": 1359,
+    "schedule_regular_game_rows": 1359,
+    "team_seasons_with_changed_primary_hc": 27,
+    "team_seasons_with_in_season_hc_change": 6,
+    "team_seasons_with_same_primary_hc_as_prior_year": 101,
+    "unmatched_run_pass_rows": 0,
+    "unmatched_team_game_rows": 0
+  },
+  "phase4_postseason": {
+    "context_adjustment": {
+      "context_keys": "same season \u00d7 offense \u00d7 defense opponent \u00d7 down \u00d7 distance bucket \u00d7 score margin bucket",
+      "difference_observed_minus_standardized": -0.01702091472075129,
+      "distance_buckets": "<=3, 4-7, >7 yards to go; unknown retained",
+      "interpretation": "descriptive run/pass contrast, opponent/state matched where support exists; not causal",
+      "matched_play_rows": 1662,
+      "playoff_run_rate_in_context_matched_rows": 0.427797833935018,
+      "regular_run_rate_standardized_to_playoff_contexts": 0.4448187486557693,
+      "score_buckets": "trail 1-7, trail 8+, tied, lead 1-7, lead 8+; unknown retained"
+    },
+    "limits": [
+      "four postseasons; selected teams and small per-team samples",
+      "signature novelty is a four-field PBP action descriptor, not concept novelty",
+      "2025-to-2026 reuse covers only 2026 weeks 1-8"
+    ],
+    "mean_team_season_action_tv": 0.15809903026892866,
+    "mean_team_season_post_novel_row_share": 0.07142857142857142,
+    "postseason_novel_row_share_vs_regular": 0.09050806206267113,
+    "postseason_rows_first_observed_signature_vs_regular": 595,
+    "postseason_run_pass_rows": 6574,
+    "team_season_rows": 56
+  },
+  "phase5_seahawks": {
+    "exact_action_matches_exported": 46,
+    "limits": [
+      "same raw action descriptor does not prove the same designed play",
+      "2026 participation and FTN tags are absent",
+      "aggregate snap counts do not identify player on each PBP snap"
+    ],
+    "player_snap_rows_exported": 318,
+    "player_snap_sources": {
+      "2024-25": "nfl_hist_snap_counts (includes REG and separately labeled POST)",
+      "2026": "nfl_snap_counts, through week 8"
+    },
+    "segments": [
+      {
+        "2plus_te_share_joined": 0.2025565388397247,
+        "3plus_wr_share_joined": 0.7952286282306164,
+        "ftn_joined_rows": 1018,
+        "motion_share_charted": 0.43320235756385067,
+        "no_huddle_rows_pbp": 1018,
+        "no_huddle_share_pbp": 0.21905697445972494,
+        "note": "2026 per-play participation/FTN is unavailable; do not compare blank metrics",
+        "participation_joined_rows": 1018,
+        "personnel_comparable": true,
+        "play_action_pass_rows_charted": 648,
+        "play_action_share_charted": 0.18364197530864199,
+        "run_pass_rows": 1018,
+        "segment": "2024_REG",
+        "shotgun_rows_pbp": 1018,
+        "shotgun_share_pbp": 0.7760314341846758,
+        "unique_action_signatures": 12
+      },
+      {
+        "2plus_te_share_joined": 0.42799597180261834,
+        "3plus_wr_share_joined": 0.4537131230925738,
+        "ftn_joined_rows": 997,
+        "motion_share_charted": 0.571715145436309,
+        "no_huddle_rows_pbp": 997,
+        "no_huddle_share_pbp": 0.07422266800401203,
+        "note": "2026 per-play participation/FTN is unavailable; do not compare blank metrics",
+        "participation_joined_rows": 997,
+        "personnel_comparable": true,
+        "play_action_pass_rows_charted": 506,
+        "play_action_share_charted": 0.2509881422924901,
+        "run_pass_rows": 997,
+        "segment": "2025_REG",
+        "shotgun_rows_pbp": 997,
+        "shotgun_share_pbp": 0.46238716148445336,
+        "unique_action_signatures": 12
+      },
+      {
+        "2plus_te_share_joined": 0.5137844611528822,
+        "3plus_wr_share_joined": 0.41581632653061223,
+        "ftn_joined_rows": 400,
+        "motion_share_charted": 0.5875,
+        "no_huddle_rows_pbp": 400,
+        "no_huddle_share_pbp": 0.06,
+        "note": "2026 per-play participation/FTN is unavailable; do not compare blank metrics",
+        "participation_joined_rows": 400,
+        "personnel_comparable": true,
+        "play_action_pass_rows_charted": 204,
+        "play_action_share_charted": 0.24019607843137256,
+        "run_pass_rows": 400,
+        "segment": "2025_REG_W1_8",
+        "shotgun_rows_pbp": 400,
+        "shotgun_share_pbp": 0.47,
+        "unique_action_signatures": 12
+      },
+      {
+        "2plus_te_share_joined": 0.48128342245989303,
+        "3plus_wr_share_joined": 0.45161290322580644,
+        "ftn_joined_rows": 188,
+        "motion_share_charted": 0.6170212765957447,
+        "no_huddle_rows_pbp": 188,
+        "no_huddle_share_pbp": 0.047872340425531915,
+        "note": "2026 per-play participation/FTN is unavailable; do not compare blank metrics",
+        "participation_joined_rows": 188,
+        "personnel_comparable": true,
+        "play_action_pass_rows_charted": 97,
+        "play_action_share_charted": 0.26804123711340205,
+        "run_pass_rows": 188,
+        "segment": "2025_POST",
+        "shotgun_rows_pbp": 188,
+        "shotgun_share_pbp": 0.4787234042553192,
+        "unique_action_signatures": 12
+      },
+      {
+        "2plus_te_share_joined": null,
+        "3plus_wr_share_joined": null,
+        "ftn_joined_rows": 0,
+        "motion_share_charted": null,
+        "no_huddle_rows_pbp": 501,
+        "no_huddle_share_pbp": 0.033932135728542916,
+        "note": "2026 per-play participation/FTN is unavailable; do not compare blank metrics",
+        "participation_joined_rows": 0,
+        "personnel_comparable": false,
+        "play_action_pass_rows_charted": 0,
+        "play_action_share_charted": null,
+        "run_pass_rows": 501,
+        "segment": "2026_REG_W1_8",
+        "shotgun_rows_pbp": 501,
+        "shotgun_share_pbp": 0.5169660678642715,
+        "unique_action_signatures": 11
+      }
+    ],
+    "target_coverage": [
+      {
+        "pass_rows": 648,
+        "receiver_id_coverage": 0.8827160493827161,
+        "rows_with_receiver_id": 572,
+        "segment": "2024_REG"
+      },
+      {
+        "pass_rows": 506,
+        "receiver_id_coverage": 0.9031620553359684,
+        "rows_with_receiver_id": 457,
+        "segment": "2025_REG"
+      },
+      {
+        "pass_rows": 204,
+        "receiver_id_coverage": 0.8970588235294118,
+        "rows_with_receiver_id": 183,
+        "segment": "2025_REG_W1_8"
+      },
+      {
+        "pass_rows": 97,
+        "receiver_id_coverage": 0.8865979381443299,
+        "rows_with_receiver_id": 86,
+        "segment": "2025_POST"
+      },
+      {
+        "pass_rows": 279,
+        "receiver_id_coverage": 0.899641577060932,
+        "rows_with_receiver_id": 251,
+        "segment": "2026_REG_W1_8"
+      }
+    ]
+  },
+  "phase6": {
+    "adaptive_half_life_team_games": 4.0,
+    "bootstrap_rows": 12,
+    "closed_loop_workload": "not evaluated; no model-code changes, and observed snaps are not a counterfactual simulation",
+    "comparison_rows": 200,
+    "confidence_interval": "2,000 franchise-cluster bootstrap resamples; fixed seed 20261103",
+    "dirichlet_alpha": 0.5,
+    "formation_personnel_evaluation_seasons": "2023-2025 only; 2026 per-play participation unavailable; raw formation cross-season scoring starts in 2024 because 2022 uses a different source vocabulary; personnel is normalized to recorded RB/TE/WR counts",
+    "models": [
+      "previous_season_static",
+      "current_season_expanding",
+      "last_4_team_games",
+      "adaptive_half_life_4_games"
+    ],
+    "walkforward_rows": 25232
+  }
+}

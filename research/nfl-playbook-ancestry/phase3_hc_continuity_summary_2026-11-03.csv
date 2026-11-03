@@ -1,0 +1,7 @@
+primary_hc_continuity,team_seasons,metric,mean,median
+False,27,prev_season_action_signature_unique_reuse,1.0,1.0
+False,27,prev_season_action_signature_row_reuse,1.0,1.0
+False,27,prev_season_action_distribution_tv,0.09293197304210868,0.09329450275772207
+True,101,prev_season_action_signature_unique_reuse,0.996001523229246,1.0
+True,101,prev_season_action_signature_row_reuse,0.9999210797893897,1.0
+True,101,prev_season_action_distribution_tv,0.08650050656322339,0.08296363238032643

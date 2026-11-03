@@ -1,0 +1,8 @@
+head_coach,previous_observed_season,previous_team,current_season,current_team,prior_action_signature_unique_reuse,interpretation
+Frank Reich,2022,IND,2023,CAR,1.0,raw action descriptor overlap only; not imported concepts
+John Harbaugh,2025,BAL,2026,NYG,1.0,raw action descriptor overlap only; not imported concepts
+Mike McCarthy,2024,DAL,2026,PIT,1.0,raw action descriptor overlap only; not imported concepts
+Mike Vrabel,2023,TEN,2025,NE,1.0,raw action descriptor overlap only; not imported concepts
+Mike Vrabel,2023,TEN,2026,NE,1.0,raw action descriptor overlap only; not imported concepts
+Pete Carroll,2023,SEA,2025,LV,1.0,raw action descriptor overlap only; not imported concepts
+Robert Saleh,2024,NYJ,2026,TEN,1.0,raw action descriptor overlap only; not imported concepts

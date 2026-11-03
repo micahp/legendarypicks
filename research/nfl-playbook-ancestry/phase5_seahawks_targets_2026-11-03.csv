@@ -1,0 +1,62 @@
+segment,receiver_gsis_id,receiver_name,position,targets_recorded,share_of_rows_with_receiver_id,share_of_pass_rows,source
+2024_REG,00-0038543,Jaxon Smith-Njigba,WR,138,0.24125874125874125,0.21296296296296297,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0035640,DK Metcalf,WR,109,0.19055944055944055,0.16820987654320987,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0032211,Tyler Lockett,WR,74,0.12937062937062938,0.11419753086419752,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0035644,Noah Fant,TE,64,0.11188811188811189,0.09876543209876543,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0038134,Kenneth Walker III,RB,53,0.09265734265734266,0.08179012345679013,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0039165,Zach Charbonnet,RB,52,0.09090909090909091,0.08024691358024691,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0039793,AJ Barner,TE,38,0.06643356643356643,0.05864197530864197,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0038752,Jake Bobo,WR,18,0.03146853146853147,0.027777777777777776,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0033439,Pharaoh Brown,TE,12,0.02097902097902098,0.018518518518518517,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0036268,Laviska Shenault Jr.,WR,5,0.008741258741258742,0.007716049382716049,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0038636,Kenny McIntosh,RB,4,0.006993006993006993,0.006172839506172839,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0035891,Cody White,WR,3,0.005244755244755245,0.004629629629629629,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0037093,Dareke Young,WR,1,0.0017482517482517483,0.0015432098765432098,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2024_REG,00-0039299,George Holani,RB,1,0.0017482517482517483,0.0015432098765432098,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0038543,Jaxon Smith-Njigba,WR,163,0.35667396061269147,0.3221343873517787,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0033908,Cooper Kupp,WR,71,0.15536105032822758,0.14031620553359683,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0039793,AJ Barner,TE,68,0.1487964989059081,0.13438735177865613,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0038134,Kenneth Walker III,RB,36,0.0787746170678337,0.07114624505928854,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0040739,Elijah Arroyo,TE,26,0.05689277899343545,0.05138339920948617,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0037545,Rashid Shaheed,WR,26,0.05689277899343545,0.05138339920948617,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0039165,Zach Charbonnet,RB,24,0.0525164113785558,0.04743083003952569,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0040648,Tory Horton,WR,22,0.04814004376367615,0.043478260869565216,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0033576,Eric Saubert,TE,8,0.0175054704595186,0.015810276679841896,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0035891,Cody White,WR,4,0.0087527352297593,0.007905138339920948,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0037093,Dareke Young,WR,3,0.006564551422319475,0.005928853754940711,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0039299,George Holani,RB,2,0.00437636761487965,0.003952569169960474,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0038752,Jake Bobo,WR,2,0.00437636761487965,0.003952569169960474,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0040058,Nick Kallerup,TE,1,0.002188183807439825,0.001976284584980237,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG,00-0038488,Brady Russell,FB,1,0.002188183807439825,0.001976284584980237,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0038543,Jaxon Smith-Njigba,WR,70,0.3825136612021858,0.3431372549019608,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0033908,Cooper Kupp,WR,33,0.18032786885245902,0.16176470588235295,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0039793,AJ Barner,TE,22,0.12021857923497267,0.10784313725490197,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0040648,Tory Horton,WR,18,0.09836065573770492,0.08823529411764706,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0040739,Elijah Arroyo,TE,17,0.09289617486338798,0.08333333333333333,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0038134,Kenneth Walker III,RB,9,0.04918032786885246,0.04411764705882353,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0039165,Zach Charbonnet,RB,7,0.03825136612021858,0.03431372549019608,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0037093,Dareke Young,WR,2,0.01092896174863388,0.00980392156862745,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0039299,George Holani,RB,2,0.01092896174863388,0.00980392156862745,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0038752,Jake Bobo,WR,2,0.01092896174863388,0.00980392156862745,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_REG_W1_8,00-0033576,Eric Saubert,TE,1,0.00546448087431694,0.004901960784313725,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_POST,00-0038543,Jaxon Smith-Njigba,WR,26,0.3023255813953488,0.26804123711340205,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_POST,00-0033908,Cooper Kupp,WR,23,0.26744186046511625,0.23711340206185566,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_POST,00-0038134,Kenneth Walker III,RB,11,0.12790697674418605,0.1134020618556701,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_POST,00-0037545,Rashid Shaheed,WR,10,0.11627906976744186,0.10309278350515463,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_POST,00-0039793,AJ Barner,TE,7,0.08139534883720931,0.07216494845360824,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_POST,00-0039299,George Holani,RB,5,0.05813953488372093,0.05154639175257732,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_POST,00-0038752,Jake Bobo,WR,3,0.03488372093023256,0.030927835051546393,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2025_POST,00-0040649,Robbie Ouzts,FB,1,0.011627906976744186,0.010309278350515464,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0038543,Jaxon Smith-Njigba,WR,89,0.3545816733067729,0.31899641577060933,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0039793,AJ Barner,TE,34,0.13545816733067728,0.12186379928315412,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0037545,Rashid Shaheed,WR,31,0.12350597609561753,0.1111111111111111,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0033908,Cooper Kupp,WR,30,0.11952191235059761,0.10752688172043011,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0040648,Tory Horton,WR,17,0.06772908366533864,0.06093189964157706,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0039299,George Holani,RB,15,0.05976095617529881,0.053763440860215055,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0041512,Jadarian Price,RB,11,0.043824701195219126,0.03942652329749104,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0038797,Emanuel Wilson,RB,9,0.035856573705179286,0.03225806451612903,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0033576,Eric Saubert,TE,5,0.0199203187250996,0.017921146953405017,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0039165,Zach Charbonnet,RB,4,0.01593625498007968,0.014336917562724014,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0038488,Brady Russell,FB,3,0.01195219123505976,0.010752688172043012,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0040739,Elijah Arroyo,TE,2,0.00796812749003984,0.007168458781362007,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id
+2026_REG_W1_8,00-0037745,Velus Jones Jr.,WR,1,0.00398406374501992,0.0035842293906810036,nfl_pbp.receiver_player_id joined to LP players.nfl_gsis_id

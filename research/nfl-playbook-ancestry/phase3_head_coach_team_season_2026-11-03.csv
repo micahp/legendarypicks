@@ -1,0 +1,161 @@
+season,team,primary_head_coach,hc_distinct_in_observed_games,head_coach_play_rows,all_hc_play_rows,observed_regular_weeks,weeks_observed,schedule_source,previous_season_primary_hc,same_primary_hc_as_previous_season,prev_season_action_signature_unique_reuse,prev_season_action_signature_row_reuse,prev_season_action_distribution_tv
+2022,ARI,Kliff Kingsbury,1,1142,1142,17,"1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,ATL,Arthur Smith,1,1000,1000,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,BAL,John Harbaugh,1,1030,1030,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,BUF,Sean McDermott,1,1018,1018,16,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,CAR,Steve Wilks,2,691,971,17,"1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,CHI,Matt Eberflus,1,985,985,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,CIN,Zac Taylor,1,1034,1034,16,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,CLE,Kevin Stefanski,1,1099,1099,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,DAL,Mike McCarthy,1,1101,1101,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,DEN,Nathaniel Hackett,2,942,1070,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,DET,Dan Campbell,1,1081,1081,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,GB,Matt LaFleur,1,1036,1036,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,HOU,Lovie Smith,1,1011,1011,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,IND,Frank Reich,2,594,1100,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,JAX,Doug Pederson,1,1066,1066,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,KC,Andy Reid,1,1085,1085,17,"1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,LAC,Brandon Staley,1,1137,1137,17,"1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,LAR,Sean McVay,1,987,987,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,LV,Josh McDaniels,1,1048,1048,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,MIA,Mike McDaniel,1,995,995,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,MIN,Kevin O'Connell,1,1114,1114,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,NE,Bill Belichick,1,986,986,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,NO,Dennis Allen,1,1005,1005,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,NYG,Brian Daboll,1,1077,1077,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,NYJ,Robert Saleh,1,1063,1063,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,PHI,Nick Sirianni,1,1105,1105,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,PIT,Mike Tomlin,1,1101,1101,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,SEA,Pete Carroll,1,1033,1033,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,SF,Kyle Shanahan,1,1030,1030,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,TB,Todd Bowles,1,1146,1146,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,TEN,Mike Vrabel,1,979,979,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2022,WSH,Ron Rivera,1,1135,1135,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,,,0.0,0.0,
+2023,ARI,Jonathan Gannon,1,1071,1071,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Kliff Kingsbury,False,1.0,1.0,0.10452528939188051
+2023,ATL,Arthur Smith,1,1083,1083,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Arthur Smith,True,1.0,1.0,0.08367313019390582
+2023,BAL,John Harbaugh,1,1064,1064,17,"1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,John Harbaugh,True,1.0,1.0,0.06426928972917732
+2023,BUF,Sean McDermott,1,1094,1094,17,"1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean McDermott,True,1.0,1.0,0.06652288065281964
+2023,CAR,Frank Reich,2,719,1094,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Steve Wilks,False,1.0,1.0,0.1036531064489953
+2023,CHI,Matt Eberflus,1,1089,1089,17,"1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Matt Eberflus,True,1.0,1.0,0.09001039467121609
+2023,CIN,Zac Taylor,1,1032,1032,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Zac Taylor,True,1.0,1.0,0.07840028188865397
+2023,CLE,Kevin Stefanski,1,1181,1181,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Kevin Stefanski,True,1.0,1.0,0.09141710692269701
+2023,DAL,Mike McCarthy,1,1104,1104,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike McCarthy,True,1.0,1.0,0.10823658334320578
+2023,DEN,Sean Payton,1,1002,1002,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Nathaniel Hackett,False,1.0,1.0,0.07652172290932155
+2023,DET,Dan Campbell,1,1117,1117,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Dan Campbell,True,1.0,1.0,0.07834517758930397
+2023,GB,Matt LaFleur,1,1041,1041,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Matt LaFleur,True,1.0,1.0,0.08249974964672373
+2023,HOU,DeMeco Ryans,1,1078,1078,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Lovie Smith,False,1.0,1.0,0.08309431136900404
+2023,IND,Shane Steichen,1,1087,1087,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Frank Reich,False,1.0,1.0,0.061101446851216865
+2023,JAX,Doug Pederson,1,1102,1102,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Doug Pederson,True,0.9230769230769231,0.9990925589836661,0.07176275099341807
+2023,KC,Andy Reid,1,1055,1055,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Andy Reid,True,1.0,1.0,0.057946578723218366
+2023,LAC,Brandon Staley,2,889,1096,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Brandon Staley,True,1.0,1.0,0.08609383125012038
+2023,LAR,Sean McVay,1,1091,1091,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean McVay,True,1.0,1.0,0.08432352015244932
+2023,LV,Antonio Pierce,2,541,997,17,"1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Josh McDaniels,False,1.0,1.0,0.07172280199376754
+2023,MIA,Mike McDaniel,1,1036,1036,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike McDaniel,True,1.0,1.0,0.12523233930269106
+2023,MIN,Kevin O'Connell,1,1063,1063,17,"1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Kevin O'Connell,True,1.0,1.0,0.04507246352334355
+2023,NE,Bill Belichick,1,1016,1016,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Bill Belichick,True,1.0,1.0,0.052486783472552756
+2023,NO,Dennis Allen,1,1102,1102,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Dennis Allen,True,1.0,1.0,0.05998681727478761
+2023,NYG,Brian Daboll,1,1049,1049,17,"1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Brian Daboll,True,1.0,1.0,0.0899074415833977
+2023,NYJ,Robert Saleh,1,1049,1049,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Robert Saleh,True,1.0,1.0,0.1000504893340161
+2023,PHI,Nick Sirianni,1,1104,1104,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Nick Sirianni,True,1.0,1.0,0.07757639845235755
+2023,PIT,Mike Tomlin,1,1008,1008,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike Tomlin,True,1.0,1.0,0.05313081181609791
+2023,SEA,Pete Carroll,1,984,984,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Pete Carroll,True,1.0,1.0,0.07674289109783645
+2023,SF,Kyle Shanahan,1,996,996,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Kyle Shanahan,True,1.0,1.0,0.05105860334542053
+2023,TB,Todd Bowles,1,1028,1028,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Todd Bowles,True,1.0,1.0,0.13388303759990766
+2023,TEN,Mike Vrabel,1,984,984,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike Vrabel,True,1.0,1.0,0.06863025984703156
+2023,WSH,Ron Rivera,1,1060,1060,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Ron Rivera,True,1.0,1.0,0.1305544011304131
+2024,ARI,Jonathan Gannon,1,1031,1031,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Jonathan Gannon,True,1.0,1.0,0.08660017514927083
+2024,ATL,Raheem Morris,1,1073,1073,17,"1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Arthur Smith,False,1.0,1.0,0.06835367223178856
+2024,BAL,John Harbaugh,1,1039,1039,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,John Harbaugh,True,1.0,1.0,0.06545387771642773
+2024,BUF,Sean McDermott,1,1005,1005,17,"1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean McDermott,True,1.0,1.0,0.05901570756819194
+2024,CAR,Dave Canales,1,987,987,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Frank Reich,False,1.0,1.0,0.05565866316965155
+2024,CHI,Matt Eberflus,1,1059,1059,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Matt Eberflus,True,1.0,1.0,0.11931054037672631
+2024,CIN,Zac Taylor,1,1069,1069,17,"1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Zac Taylor,True,0.9166666666666666,0.9971936389148737,0.062777826121638
+2024,CLE,Kevin Stefanski,1,1121,1121,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Kevin Stefanski,True,1.0,1.0,0.12435521991448002
+2024,DAL,Mike McCarthy,1,1095,1095,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike McCarthy,True,1.0,1.0,0.08084921580305736
+2024,DEN,Sean Payton,1,1038,1038,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean Payton,True,1.0,1.0,0.07715782308215936
+2024,DET,Dan Campbell,1,1099,1099,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Dan Campbell,True,1.0,1.0,0.07865618862431299
+2024,GB,Matt LaFleur,1,1022,1022,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Matt LaFleur,True,1.0,1.0,0.10926852285266878
+2024,HOU,DeMeco Ryans,1,1045,1045,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,DeMeco Ryans,True,1.0,1.0,0.05424274973147154
+2024,IND,Shane Steichen,1,1034,1034,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Shane Steichen,True,1.0,1.0,0.07021614686669787
+2024,JAX,Doug Pederson,1,991,991,17,"1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Doug Pederson,True,1.0,1.0,0.11171230731758236
+2024,KC,Andy Reid,1,1069,1069,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Andy Reid,True,1.0,1.0,0.1371446051809061
+2024,LAC,Jim Harbaugh,1,998,998,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Brandon Staley,False,1.0,1.0,0.09868642394277606
+2024,LAR,Sean McVay,1,1028,1028,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean McVay,True,1.0,1.0,0.04744692157624997
+2024,LV,Antonio Pierce,1,1054,1054,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Antonio Pierce,True,1.0,1.0,0.057667309328364606
+2024,MIA,Mike McDaniel,1,1076,1076,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike McDaniel,True,1.0,1.0,0.05735887241463449
+2024,MIN,Kevin O'Connell,1,1029,1029,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Kevin O'Connell,True,1.0,1.0,0.07145096985172245
+2024,NE,Jerod Mayo,1,1021,1021,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Bill Belichick,False,1.0,1.0,0.10428058025557777
+2024,NO,Dennis Allen,1,1026,1026,17,"1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Dennis Allen,True,1.0,1.0,0.11453922161726156
+2024,NYG,Brian Daboll,1,1051,1051,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Brian Daboll,True,1.0,1.0,0.12959739646022353
+2024,NYJ,Robert Saleh,1,1014,1014,17,"1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Robert Saleh,True,1.0,1.0,0.06194967311781861
+2024,PHI,Nick Sirianni,1,1093,1093,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Nick Sirianni,True,1.0,1.0,0.12358536536855086
+2024,PIT,Mike Tomlin,1,1066,1066,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike Tomlin,True,1.0,1.0,0.07271099496709253
+2024,SEA,Mike Macdonald,1,1018,1018,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Pete Carroll,False,1.0,1.0,0.09850136566198668
+2024,SF,Kyle Shanahan,1,1014,1014,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Kyle Shanahan,True,1.0,1.0,0.04030322473325251
+2024,TB,Todd Bowles,1,1084,1084,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Todd Bowles,True,1.0,1.0,0.11917957700977787
+2024,TEN,Brian Callahan,1,1030,1030,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike Vrabel,False,1.0,1.0,0.056673770621201366
+2024,WSH,Dan Quinn,1,1091,1091,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Ron Rivera,False,1.0,1.0,0.13535876727253862
+2025,ARI,Jonathan Gannon,1,1074,1074,17,"1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Jonathan Gannon,True,1.0,1.0,0.1266926398950956
+2025,ATL,Raheem Morris,1,1036,1036,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Raheem Morris,True,1.0,1.0,0.10408068166688855
+2025,BAL,John Harbaugh,1,956,956,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,John Harbaugh,True,1.0,1.0,0.07247373359482283
+2025,BUF,Sean McDermott,1,1065,1065,17,"1,2,3,4,5,6,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean McDermott,True,1.0,1.0,0.08125569336416509
+2025,CAR,Dave Canales,1,996,996,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Dave Canales,True,1.0,1.0,0.07280794912171482
+2025,CHI,Ben Johnson,1,1096,1096,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Matt Eberflus,False,1.0,1.0,0.12075070821529746
+2025,CIN,Zac Taylor,1,1049,1049,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Zac Taylor,True,1.0,1.0,0.05835215684945614
+2025,CLE,Kevin Stefanski,1,1028,1028,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Kevin Stefanski,True,1.0,1.0,0.10054426113427074
+2025,DAL,Brian Schottenheimer,1,1104,1104,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike McCarthy,False,1.0,1.0,0.1086857256303355
+2025,DEN,Sean Payton,1,1079,1079,17,"1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean Payton,True,1.0,1.0,0.07561593640011358
+2025,DET,Dan Campbell,1,1051,1051,17,"1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Dan Campbell,True,1.0,1.0,0.09966936467630379
+2025,GB,Matt LaFleur,1,993,993,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Matt LaFleur,True,1.0,1.0,0.0524059808089109
+2025,HOU,DeMeco Ryans,1,1078,1078,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,DeMeco Ryans,True,0.9230769230769231,0.9990723562152134,0.09952153110047847
+2025,IND,Shane Steichen,1,1011,1011,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Shane Steichen,True,1.0,1.0,0.07661755505685046
+2025,JAX,Liam Coen,1,1074,1074,17,"1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Doug Pederson,False,1.0,1.0,0.07740991079867787
+2025,KC,Andy Reid,1,1048,1048,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Andy Reid,True,0.9166666666666666,0.9990458015267175,0.07766050885824663
+2025,LAC,Jim Harbaugh,1,1080,1080,17,"1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Jim Harbaugh,True,1.0,1.0,0.045565204483040155
+2025,LAR,Sean McVay,1,1056,1056,17,"1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean McVay,True,1.0,1.0,0.0630232283928782
+2025,LV,Pete Carroll,1,942,942,17,"1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Antonio Pierce,False,1.0,1.0,0.0703920360007574
+2025,MIA,Mike McDaniel,1,942,942,17,"1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike McDaniel,True,1.0,1.0,0.057236047640470716
+2025,MIN,Kevin O'Connell,1,943,943,17,"1,2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Kevin O'Connell,True,1.0,1.0,0.08937524411370365
+2025,NE,Mike Vrabel,1,1017,1017,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Jerod Mayo,False,1.0,1.0,0.09329450275772207
+2025,NO,Kellen Moore,1,1064,1064,17,"1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Dennis Allen,False,1.0,1.0,0.13481620718462822
+2025,NYG,Brian Daboll,1,1079,1079,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Brian Daboll,True,1.0,1.0,0.08964497380578451
+2025,NYJ,Aaron Glenn,1,1009,1009,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Robert Saleh,False,1.0,1.0,0.12560036593733326
+2025,PHI,Nick Sirianni,1,995,995,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Nick Sirianni,True,1.0,1.0,0.08852128897001016
+2025,PIT,Mike Tomlin,1,975,975,17,"1,2,3,4,6,7,8,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike Tomlin,True,1.0,1.0,0.11582238899312071
+2025,SEA,Mike Macdonald,1,997,997,17,"1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike Macdonald,True,1.0,1.0,0.1373738110204878
+2025,SF,Kyle Shanahan,1,1065,1065,17,"1,2,3,4,5,6,7,8,9,10,11,12,13,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Kyle Shanahan,True,1.0,1.0,0.043475845209323
+2025,TB,Todd Bowles,1,1065,1065,17,"1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Todd Bowles,True,1.0,1.0,0.07573670807130606
+2025,TEN,Brian Callahan,1,995,995,17,"1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Brian Callahan,True,1.0,1.0,0.06695613992291553
+2025,WSH,Dan Quinn,1,979,979,17,"1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18",nfl_schedule.home_coach/away_coach joined by game_id and team,Dan Quinn,True,1.0,1.0,0.09570738019022759
+2026,ARI,Jonathan Gannon,1,549,549,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Jonathan Gannon,True,1.0,1.0,0.08777767601835738
+2026,ATL,Raheem Morris,1,470,470,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Raheem Morris,True,1.0,1.0,0.10042717489526
+2026,BAL,Jesse Minter,1,474,474,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,John Harbaugh,False,1.0,1.0,0.0569311300602016
+2026,BUF,Sean McDermott,1,429,429,7,"1,2,3,4,5,6,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean McDermott,True,1.0,1.0,0.060487868938573164
+2026,CAR,Dave Canales,1,462,462,7,"1,2,3,4,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Dave Canales,True,1.0,1.0,0.0988499452354874
+2026,CHI,Ben Johnson,1,566,566,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Ben Johnson,True,1.0,1.0,0.09414575326919604
+2026,CIN,Zac Taylor,1,430,430,7,"1,2,3,4,5,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Zac Taylor,True,1.0,1.0,0.1028243953266677
+2026,CLE,Todd Monken,1,478,478,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Kevin Stefanski,False,1.0,1.0,0.11353239014701333
+2026,DAL,Brian Schottenheimer,1,515,515,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Brian Schottenheimer,True,1.0,1.0,0.0501442240045026
+2026,DEN,Sean Payton,1,452,452,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean Payton,True,1.0,1.0,0.09261074249345919
+2026,DET,Dan Campbell,1,462,462,7,"1,2,3,4,5,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Dan Campbell,True,1.0,1.0,0.10473636734340827
+2026,GB,Matt LaFleur,1,490,490,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Matt LaFleur,True,1.0,1.0,0.16125531783710464
+2026,HOU,DeMeco Ryans,1,425,425,7,"1,2,3,4,5,6,7",nfl_schedule.home_coach/away_coach joined by game_id and team,DeMeco Ryans,True,1.0,1.0,0.107691803994325
+2026,IND,Shane Steichen,1,514,514,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Shane Steichen,True,1.0,1.0,0.11697398653719589
+2026,JAX,Liam Coen,1,408,408,7,"1,2,3,4,5,6,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Liam Coen,True,1.0,1.0,0.08296363238032643
+2026,KC,Andy Reid,1,421,421,7,"1,2,3,4,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Andy Reid,True,0.9166666666666666,0.997624703087886,0.1441315660640786
+2026,LAC,Jim Harbaugh,1,428,428,7,"1,2,3,4,5,6,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Jim Harbaugh,True,1.0,1.0,0.08945136725510558
+2026,LAR,Sean McVay,1,522,522,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Sean McVay,True,1.0,1.0,0.0814829327760362
+2026,LV,Klint Kubliak,1,502,502,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Pete Carroll,False,1.0,1.0,0.1438069378536808
+2026,MIA,Jeff Hafley,1,397,397,7,"1,2,3,4,5,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike McDaniel,False,1.0,1.0,0.148146662602213
+2026,MIN,Kevin O'Connell,1,402,402,7,"1,2,3,4,5,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Kevin O'Connell,True,1.0,1.0,0.0801823332964024
+2026,NE,Mike Vrabel,1,485,485,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike Vrabel,True,1.0,1.0,0.09167655019310889
+2026,NO,Kellen Moore,1,458,458,7,"1,2,3,4,5,6,7",nfl_schedule.home_coach/away_coach joined by game_id and team,Kellen Moore,True,1.0,1.0,0.1269002199822701
+2026,NYG,John Harbaugh,1,456,456,7,"1,2,3,4,5,6,7",nfl_schedule.home_coach/away_coach joined by game_id and team,Brian Daboll,False,1.0,1.0,0.06532608165455345
+2026,NYJ,Aaron Glenn,1,463,463,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Aaron Glenn,True,1.0,1.0,0.07654436208036955
+2026,PHI,Nick Sirianni,1,478,478,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Nick Sirianni,True,1.0,1.0,0.09085385084417905
+2026,PIT,Mike McCarthy,1,494,494,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike Tomlin,False,1.0,1.0,0.07568151147098517
+2026,SEA,Mike Macdonald,1,501,501,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Mike Macdonald,True,1.0,1.0,0.09464921711241508
+2026,SF,Kyle Shanahan,1,401,401,7,"1,2,3,4,5,6,7",nfl_schedule.home_coach/away_coach joined by game_id and team,Kyle Shanahan,True,1.0,1.0,0.11308817158980485
+2026,TB,Todd Bowles,1,491,491,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Todd Bowles,True,1.0,1.0,0.09989386420355124
+2026,TEN,Robert Saleh,1,452,452,8,"1,2,3,4,5,6,7,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Brian Callahan,False,1.0,1.0,0.056657179703828886
+2026,WSH,Dan Quinn,1,435,435,7,"1,2,3,4,5,6,8",nfl_schedule.home_coach/away_coach joined by game_id and team,Dan Quinn,True,1.0,1.0,0.08030713958648868

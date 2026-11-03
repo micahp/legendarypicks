@@ -1,10 +1,9 @@
 # NFL Playbook Evolution and Play Ancestry (research plan)
 
-Status: Phases 1–2 complete; findings: [Phase 1 data inventory and play identity](../../research/nfl-playbook-ancestry/PHASE1-FINDINGS-2026-11-03.md) and [Phase 2 weekly evolution](../../research/nfl-playbook-ancestry/PHASE2-WEEKLY-EVOLUTION-2026-11-03.md). Phases 3–6 not started. Source: pasted research notes, 2026-11-03.
+Status: Phases 1–6 measurement pass complete, with concept-level ancestry and closed-loop workload impact unresolved. Findings: [Phase 1 data inventory and play identity](../../research/nfl-playbook-ancestry/PHASE1-FINDINGS-2026-11-03.md), [Phase 2 weekly evolution](../../research/nfl-playbook-ancestry/PHASE2-WEEKLY-EVOLUTION-2026-11-03.md), and [Phases 3–6 findings](../../research/nfl-playbook-ancestry/PHASE3-6-FINDINGS-2026-11-03.md). Source: research notes and local dev data, 2026-11-03.
 
-Verification status: the external articles, interviews and statistics below are cited as the notes give them. They have
-not been checked against their sources in this repository. Each one needs its URL, publication date and a confidence level
-before any analysis relies on it (Phase 5).
+Verification status: sources checked for Phases 3–6 are recorded with URLs, publication dates, confidence and scope notes in
+[the external evidence table](../../research/nfl-playbook-ancestry/phase3_6_external_evidence_2026-11-03.csv). Some claims are verified or partially verified; the original unnamed NFL.com game-planning article remains unidentified and unverified. Unverified or partial claims are not used as play-identity labels.
 
 ## Hypothesis
 
@@ -25,37 +24,43 @@ The model should learn both concept identity and how a concept is presented. The
 next play from what a team has done. Model the menu of plays the team has revealed, how it disguises them, which ones it
 favors today, and how that menu changes.
 
-## 1. What coaches and analysts say (cited, unverified)
+## 1. What coaches and analysts say (source status in evidence table)
 
 - Current-season film gains importance as the season progresses. A September 2026 Fox Sports interview with Chargers
   defensive coordinator Chris O'Leary describes coaches studying historical film heavily early in the season, especially
-  with new play-callers, then giving current-season film more weight while keeping older tendencies for context.
-  (Fox Sports)
+  with new play-callers, then giving current-season film more weight while keeping older tendencies for context. **Verified,
+  medium confidence:** this is one coach's account, not a league-wide measurement. (Fox Sports)
 - The play often stays the same; its presentation changes. Coaches interviewed by American Football Quarterly kept core
   run and pass concepts largely intact while changing formations, personnel, motion and tempo for each opponent.
-  (American Football Quarterly)
+  **Partially verified, low confidence:** the cited interviews are with college and high-school coordinators, so NFL-wide
+  generalization is unresolved. (American Football Quarterly)
 - An NFL game-planning analysis makes the same distinction: one concept can appear to be several plays when run from
-  different formations. (nfl.com)
+  different formations. **Unverified:** the specific NFL.com article in the original notes remains unidentified; a
+  separate Ravens transcript corroborates a wide-zone example but does not identify that article. (nfl.com)
 - Week 1 is not automatically a full reveal. Coaches script opening sequences, test defensive reactions and keep calls in
-  reserve. The amount of novelty and the amount of uncertainty are separate things to measure. (pff.com)
+  reserve. **Partially verified:** PFF supports scripted opening calls and information gathering, but not the stronger
+  claim that calls are held in reserve. The amount of novelty and uncertainty are separate things to measure. (PFF)
 
 ## 2. Seahawks case study
 
 Three Seattle offenses to compare: 2024 under Ryan Grubb, 2025 under Klint Kubiak, and 2026 under Brian Fleury.
 
-**2024 to 2025: a real identity change (cited, unverified).** Seattle used three or more WRs on roughly 78% of snaps in
+**2024 to 2025: personnel and play-action shift (source checked).** Seattle used three or more WRs on roughly 78% of snaps in
 2024, falling to 44% in 2025. Two-tight-end usage roughly doubled. Play-action rate rose from about 19% to 28%.
-(sharpfootballanalysis.com)
+(Sharp Football Analysis; verified as the article's claim, medium confidence). Local measurements closely match the
+personnel shares; the local play-action tag has a different source and denominator, so it does not independently verify
+the published play-action rate.
 
-**2025 postseason to 2026: continuity with changes.** Kubiak left after Seattle won Super Bowl LX in February 2026.
-Fleury described keeping much of Kubiak's offense while adding ideas from his time with Kyle Shanahan's 49ers.
-(seahawks.com, plus one more source the notes do not name)
+**2025 postseason to 2026: reported continuity with changes.** The Seahawks' July 2026 account describes Fleury's staff
+continuity and shared Shanahan background. This verifies the reported coaching context, not exact play or concept reuse.
+(seahawks.com; verified, high confidence for the team account)
 
 - In Seattle's 2026 opener, analysts observed carryovers from 2025, including Jaxon Smith-Njigba lining up in the
   backfield and the familiar tight-end sneak package. They also identified different personnel usage and new formations.
-  (amp.nfl.com)
-- An October 22 analysis said Fleury's offense was having more difficulty creating opportunities for secondary receivers,
-  while Smith-Njigba remained highly productive. (Seattle Sports)
+  (NFL.com/The Athletic; verified article, medium confidence; qualitative observations, not charted play identities)
+- A related Seattle Sports article dated October 19 discussed secondary receivers and Smith-Njigba. The cited October 22
+  article instead focused on the rushing attack and its effect on passing; it does not support the specific receiver claim.
+  (October 19 article verified, medium confidence; October 22 claim partially verified)
 
 Question to investigate: did Fleury inherit Kubiak's concepts but change their frequency, sequencing, or the players they
 were designed to feature? This can be studied separately from whether Seattle is winning.
