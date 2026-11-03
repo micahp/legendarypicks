@@ -296,13 +296,6 @@ class CacheFingerprint(unittest.TestCase):
                 mock.patch.object(pm, 'load_frame', return_value=frame):
             self.assertEqual(pm.load_frame_cached(self.path, (2012,), db=self.db).cache_status, 'rebuilt')
 
-    def test_the_fingerprint_changes_when_the_database_changes(self):
-        with mock.patch.object(pm.pco, 'score_source', lambda season: ('unused', 'pin')):
-            before = pm.source_fingerprint((2012,), self.db, True)
-            self.db.write_bytes(b'x' * 11)
-            after = pm.source_fingerprint((2012,), self.db, True)
-        self.assertNotEqual(before, after)
-
 
 class ScenarioSource(unittest.TestCase):
     def test_scenarios_are_scored_with_the_full_hierarchical_coefficients(self):

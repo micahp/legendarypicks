@@ -171,11 +171,12 @@ def load_frame(seasons, db=e1.DEFAULT_DB, include_flagged=True):
 def source_fingerprint(seasons, db, include_flagged):
     """Everything a frame depends on, as one string. A cache is reused only when this string matches exactly.
 
-    The database is identified by its size and modification time, not its content: hashing it would read every row, including
-    the sealed 2026 season. Any write to the database changes its modification time, so a cache built before the write is
-    rebuilt. The raw score files are identified by their pinned SHA-256, which the loader checks on every read.
+    The database is identified by the content of the rows the frame reads, not by its size or modification time: a write to
+    the sealed 2026 season or to a later cutoff leaves the historical digest unchanged, so the cache survives it. A write to
+    the historical seasons changes the digest and rebuilds the frame. The raw score files are identified by their pinned
+    SHA-256, which the loader checks on every read.
     """
-    stat = Path(db).stat()
+    first, last = min(seasons), max(seasons)
     here = Path(__file__).resolve().parent
     return json.dumps({
         'builder': BUILDER_VERSION,
@@ -183,7 +184,8 @@ def source_fingerprint(seasons, db, include_flagged):
         'seasons': [int(s) for s in seasons], 'include_flagged': bool(include_flagged),
         'score_source_pins': {str(s): pco.score_source(s)[1] for s in seasons},
         'score_flags_sha256': pco.sha256(pco.FLAGS_PATH),
-        'database': {'path': str(db), 'bytes': stat.st_size, 'mtime_ns': stat.st_mtime_ns},
+        'historical_rows': {'first_season': int(first), 'last_season': int(last),
+                            'sha256': pco.rows_sha256(db, first, last)},
     }, sort_keys=True)
 
 
