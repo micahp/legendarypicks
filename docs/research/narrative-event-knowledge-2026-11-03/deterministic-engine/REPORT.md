@@ -1,6 +1,6 @@
 # CPU-only deterministic story engine
 
-**Status:** research only. The new engine is not wired into `core_stories.py` or production.
+**Status:** wired into the upcoming NBA and NFL preview path on PR #30's research branch. This change has not been deployed to production. Deterministic run artifacts are kept in this directory, while LLM comparison artifacts remain in the adjacent `../relevance-ranking/` directory.
 
 **Historical note:** The six examples and initial measurements below document the first prototype, before the regression fixes and held-out evaluation in the final section. The held-out set is the current renderer evaluation.
 
@@ -143,4 +143,8 @@ These are from the unseen sample, not the six coached examples above.
 
 The editorial scores are Codex's static review of the 100 outputs, not ratings from fans. Repeated player sentence shapes are the main visible quality gap: the prose remains grammatical, but paired players with the same threshold can make a preview feel templated. Exact normalized lead patterns repeat in 14 rows, including the same Boston and Oklahoma City pairing scheduled in both home-away orders. The sample contained no same-city NFL or NBA matchup, so attribution in those specific pairings remains unevaluated. No template changes were made after the final sample was drawn.
 
-The correctness and cutoff checks pass, and production remains unchanged. The next quality gate is human editorial review of the repeated constructions and broader fan preference before any production integration.
+The correctness and cutoff checks pass. The CPU engine is now wired into the upcoming NBA and NFL preview path on this PR branch. The source change has not been deployed or applied to a live database. Human editorial review of repeated constructions and broader fan preference remains before a production release.
+
+## App integration on PR #30
+
+Upcoming NBA and NFL previews now use `backend/story_engine.py` through `core_stories.py`. The app reads the local schedule, team results, and player logs, then renders without a model or network call. Preview prose and its private evidence manifest are stored in the separate `game_story_deterministic` table. Existing `game_story` rows remain intact for the legacy LLM research outputs and postgame recaps. The deterministic multisport run and its grading artifacts are saved under [`multisport-2026-11-03/`](multisport-2026-11-03/). The LLM-based comparison remains under [`../relevance-ranking/`](../relevance-ranking/).

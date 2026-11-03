@@ -156,10 +156,10 @@ The grader received no independent mechanical claim audit, so its rubric gates s
 
 ## Artifacts
 
-- `full_output.json`: full schedule, facts, evidence manifests, generated stories, and grading summary.
-- `engine_input.jsonl`: exact grader input records.
-- `graded.jsonl`: per-story rubric grades.
-- `grade_summary.json`: rubric CLI summary.
-- `dashboard.html`: offline rubric dashboard.
-- grade_metrics.json: mean and median scores by league and rubric dimension.
-- `run_multisport.py`: reproducible local runner.
+- [`full_output.json`](multisport-2026-11-03/full_output.json): full schedule, input facts, evidence manifests, generated stories, and grading summary.
+- [`graded.jsonl`](multisport-2026-11-03/graded.jsonl): per-story rubric grades.
+- [`grade_summary.json`](multisport-2026-11-03/grade_summary.json): rubric CLI summary.
+- [`grade_metrics.json`](multisport-2026-11-03/grade_metrics.json): mean and median scores by league and rubric dimension.
+- [`dashboard.html`](multisport-2026-11-03/dashboard.html): offline rubric dashboard.
+
+These deterministic outputs are stored under `deterministic-engine/multisport-2026-11-03/`. The LLM-based research comparison outputs are kept under the sibling `relevance-ranking/` directory.

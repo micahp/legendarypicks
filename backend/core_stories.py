@@ -11,10 +11,13 @@ import and make those patches silently ineffective here. A call-time lookup
 resolves through `_core`'s namespace on every call, so patches apply and no
 import cycle forms — `_core` imports this module, not the other way round.
 """
+from __future__ import annotations
+
 import datetime as dt
 import json
 import os
 import re
+import sqlite3
 import threading as _threading
 from contextlib import closing
 
@@ -201,6 +204,98 @@ def _game_season_type(lg: str, game_id: str):
         return None
 
 
+_DETERMINISTIC_PREVIEW_LEAGUES = {"nba", "nfl"}
+
+
+def _story_engine_game_context(lg: str, game_id: str, home: str | None, away: str | None,
+                               state: str | None, start_time: str | None) -> dict:
+    """Build engine inputs from the local schedule and captured scoreboard only."""
+    with closing(_db()) as con:
+        if lg == "nba":
+            row = con.execute(
+                "SELECT season,home_team,away_team,start_utc FROM nba_schedule "
+                "WHERE CAST(game_id AS TEXT)=? OR CAST(espn AS TEXT)=? "
+                "ORDER BY ingested_at DESC LIMIT 1", (str(game_id), str(game_id))).fetchone()
+            start_from_schedule = row["start_utc"] if row else None
+        else:
+            row = con.execute(
+                "SELECT season,home_team,away_team,gameday FROM nfl_schedule "
+                "WHERE CAST(espn AS TEXT)=? OR CAST(game_id AS TEXT)=? "
+                "ORDER BY ingested_at DESC LIMIT 1", (str(game_id), str(game_id))).fetchone()
+            start_from_schedule = None
+
+        snapshot = None
+        local_start = start_time or start_from_schedule
+        parsed_local_start = _parse_instant(local_start) if local_start else None
+        local_home = home or (row["home_team"] if row else None)
+        local_away = away or (row["away_team"] if row else None)
+        need_snapshot = not (local_home and local_away and local_start)
+        if state is None and (parsed_local_start is None
+                              or parsed_local_start <= dt.datetime.now(dt.timezone.utc)):
+            need_snapshot = True
+        if need_snapshot:
+            table_exists = con.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='scoreboard_snapshots'"
+            ).fetchone()
+            if table_exists:
+                snapshot = con.execute(
+                    "SELECT state,start_time,payload FROM scoreboard_snapshots "
+                    "WHERE LOWER(league)=? AND game_id=? ORDER BY fetched_at DESC LIMIT 1",
+                    (lg, str(game_id)),
+                ).fetchone()
+
+    if row is None:
+        raise RuntimeError(f"{lg} schedule has no row for event {game_id}")
+    try:
+        payload = json.loads(snapshot["payload"] or "{}") if snapshot else {}
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(f"invalid captured scoreboard payload for {lg} event {game_id}") from exc
+
+    home = home or row["home_team"] or (payload.get("home") or {}).get("abbrev")
+    away = away or row["away_team"] or (payload.get("away") or {}).get("abbrev")
+    state = state or (snapshot["state"] if snapshot else None)
+    start_time = start_time or start_from_schedule or (snapshot["start_time"] if snapshot else None)
+    season = row["season"]
+    if not home or not away:
+        raise RuntimeError(f"{lg} schedule is missing team codes for event {game_id}")
+    if season is None:
+        raise RuntimeError(f"{lg} schedule is missing season for event {game_id}")
+    if not start_time or "T" not in str(start_time):
+        raise RuntimeError(f"{lg} event {game_id} has no captured kickoff instant")
+    return {"league": lg, "game_id": str(game_id), "season": int(season),
+            "home": str(home), "away": str(away), "state": state,
+            "start_utc": str(start_time)}
+
+
+def _deterministic_pregame_story(lg: str, game_id: str, refresh: bool, home: str | None,
+                                 away: str | None, state: str | None,
+                                 start_time: str | None) -> dict | None:
+    """Use the CPU renderer for upcoming NBA and NFL previews, keeping its cache separate."""
+    if lg not in _DETERMINISTIC_PREVIEW_LEAGUES or (state or "").lower() in {"in", "post"}:
+        return None
+
+    game = _story_engine_game_context(lg, game_id, home, away, state, start_time)
+    if (game.get("state") or "").lower() in {"in", "post"}:
+        return None
+    parsed_start = _parse_instant(game["start_utc"])
+    if parsed_start is None:
+        raise RuntimeError(f"invalid kickoff instant for {lg} event {game_id}: {game['start_utc']}")
+    now = dt.datetime.now(dt.timezone.utc)
+    if parsed_start <= now:
+        if (game.get("state") or "").lower() in {"pre", "scheduled"}:
+            return {"league": lg, "game_id": str(game_id), "story": None, "cached": False,
+                    "generator": "deterministic", "status": "kickoff_elapsed"}
+        return None
+    if _too_early_for_preview(game["start_utc"], now=now):
+        return {"league": lg, "game_id": str(game_id), "story": None, "cached": False,
+                "generator": "deterministic", "status": "outside_preview_window"}
+
+    as_of = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+    from _core import DB
+    from story_engine_runtime import generate_and_store_preview
+    return generate_and_store_preview(DB, game, as_of=as_of, refresh=refresh)
+
+
 # A preview is written for the game a reader is about to watch, from facts that are true
 # then. The first preview hook wrote one the moment a scoreboard showed the game: NBA
 # 401902644 (Heat at Raptors, played in Quebec City, preseason, 2026-10-03) was written on 2026-08-17 from last
@@ -331,9 +426,11 @@ def _result_sentence(scores: dict, winner, names: dict):
 def generate_game_story(lg: str, game_id: str, refresh: bool = False,
                         home: str = None, away: str = None,
                         state: str = None, start_time: str = None) -> dict:
-    """Generate (or fetch cached) the AI blurb for one game, grounded ONLY in our
-    records/streaks/form. Shared by the /story endpoint (lazy, on view) and the
-    pregenerate_game_stories job (eager, when a game is first discovered).
+    """Generate or fetch a cached story for one game.
+
+    Upcoming NBA and NFL games use the local deterministic story engine and its
+    separate evidence-backed cache. Other leagues and postgame recaps keep the
+    existing story path. Shared by the /story endpoint and the pregeneration job.
 
     home/away (team abbrevs) let the pre-game path work: a scheduled game has no
     `scores` yet, so the team abbrevs come from the scoreboard instead.
@@ -342,6 +439,10 @@ def generate_game_story(lg: str, game_id: str, refresh: bool = False,
     what lets a preview be replaced by a recap once the game is final — without them the
     behaviour is exactly as before, so every existing caller keeps working."""
     lg = lg.lower()
+    deterministic = _deterministic_pregame_story(
+        lg, game_id, refresh, home, away, state, start_time)
+    if deterministic is not None:
+        return deterministic
     cached = None
     stale_preview = False
     with closing(_db()) as con:
@@ -830,6 +931,7 @@ def kick_game_stories(lg: str, games: list):
     if not ids:
         return
     gid_list = [i[0] for i in ids]
+    deterministic_cached = {}
     try:
         with closing(_db()) as con:
             con.execute("""CREATE TABLE IF NOT EXISTS game_story(
@@ -839,6 +941,14 @@ def kick_game_stories(lg: str, games: list):
             cached = {r[0]: r[1] for r in con.execute(
                 f"SELECT game_id, generated_at FROM game_story WHERE league=? AND game_id IN ({qs})",
                 [lg] + gid_list)}
+            if lg in _DETERMINISTIC_PREVIEW_LEAGUES:
+                try:
+                    deterministic_cached = {r[0]: r[1] for r in con.execute(
+                        f"SELECT game_id, generated_at FROM game_story_deterministic "
+                        f"WHERE league=? AND game_id IN ({qs})", [lg] + gid_list)}
+                except sqlite3.OperationalError as exc:
+                    if "no such table" not in str(exc).lower():
+                        raise
     except Exception:
         cached = {}
     deferred = 0
@@ -848,9 +958,19 @@ def kick_game_stories(lg: str, games: list):
         # way it is when we first find out the game exists.
         if (state or "pre").lower() == "pre" and _too_early_for_preview(start_time):
             continue
-        if gid in cached and not _story_is_stale_preview(cached[gid], state, start_time) \
-                and not ((state or "").lower() != "post"
-                         and _preview_written_too_early(cached[gid], start_time)):
+        state_key = (state or "pre").lower()
+        if lg in _DETERMINISTIC_PREVIEW_LEAGUES:
+            if state_key in {"post", "in"}:
+                cached_at = cached.get(gid) or deterministic_cached.get(gid)
+            else:
+                # Legacy LLM rows are intentionally ignored for upcoming NBA and NFL
+                # games so the CPU renderer can warm its own separate cache.
+                cached_at = deterministic_cached.get(gid)
+        else:
+            cached_at = cached.get(gid)
+        if cached_at and not _story_is_stale_preview(cached_at, state, start_time) \
+                and not (state_key != "post"
+                         and _preview_written_too_early(cached_at, start_time)):
             continue
         with _story_lock:
             if gid in _story_inflight:

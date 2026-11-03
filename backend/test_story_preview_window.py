@@ -15,6 +15,7 @@ import pytest
 import core_stories as cs
 
 NOW = dt.datetime(2026, 10, 2, 20, 0, tzinfo=dt.timezone.utc)
+DETERMINISTIC_PREGAME = cs._deterministic_pregame_story
 
 
 def test_too_early_beyond_the_horizon():
@@ -65,6 +66,7 @@ def harness(tmp_path, monkeypatch):
     path = _db(tmp_path)
     seen = {"grounding": [], "stakes": 0}
     monkeypatch.setattr(_core, "_db", lambda: _open(path))
+    monkeypatch.setattr(cs, "_deterministic_pregame_story", lambda *args, **kwargs: None)
     monkeypatch.setattr(_core, "_deepseek_chat",
                         lambda system, grounding: seen["grounding"].append(grounding) or "STORY")
     monkeypatch.setattr(espn, "game_result", lambda lg, gid: {"state": "pre", "home": "MIA"})
@@ -181,6 +183,101 @@ def test_preview_cached_too_early_is_not_served_while_still_too_early(harness):
     con.close()
     out = _gen(_far())
     assert out["story"] is None and seen["grounding"] == []
+
+
+def test_upcoming_nba_preview_uses_deterministic_store_without_replacing_llm_cache(
+    harness, monkeypatch
+):
+    import _core
+    import espn_client as espn
+    import story_engine_runtime as runtime
+
+    path, seen = harness
+    con = _open(path)
+    con.execute("CREATE TABLE game_story(league TEXT, game_id TEXT, story TEXT, generated_at TEXT, "
+                "PRIMARY KEY(league,game_id))")
+    con.execute("INSERT INTO game_story VALUES ('nba','401902644','Saved LLM baseline','2026-10-02 19:00:00')")
+    con.commit()
+    con.close()
+
+    monkeypatch.setattr(cs, "_deterministic_pregame_story", DETERMINISTIC_PREGAME)
+    monkeypatch.setattr(cs, "_story_engine_game_context", lambda *args: {
+        "league": "nba", "game_id": "401902644", "season": 2027,
+        "home": "MIA", "away": "TOR", "state": "pre", "start_utc": _soon(),
+    })
+    monkeypatch.setattr(_core, "DB", path)
+    monkeypatch.setattr(espn, "game_result", lambda *args: (_ for _ in ()).throw(
+        AssertionError("deterministic preview must not request ESPN")))
+    bundle = {"league": "nba", "game_id": "401902644", "season": 2027,
+              "away": "TOR", "home": "MIA", "start_utc": _soon(), "as_of": "cutoff",
+              "teams": {}, "league_standings": [], "players": []}
+    monkeypatch.setattr(runtime.story_engine, "collect_story_facts", lambda *a, **k: bundle)
+    renders = []
+    monkeypatch.setattr(runtime.story_engine, "generate_story", lambda *_: renders.append(1) or {
+        "story": "CPU deterministic preview.", "angle": {"kind": "matchup"},
+        "manifest": {"selected_facts": [], "omitted_facts": []},
+    })
+
+    first = _gen(_soon())
+    second = _gen(_soon())
+    assert first["story"] == "CPU deterministic preview."
+    assert first["generator"] == "deterministic" and first["cached"] is False
+    assert second["story"] == first["story"] and second["cached"] is True
+    assert len(renders) == 1 and seen["grounding"] == []
+
+    con = _open(path)
+    assert con.execute("SELECT story FROM game_story WHERE league='nba' AND game_id='401902644'").fetchone()[0] == "Saved LLM baseline"
+    stored = con.execute(
+        "SELECT story,facts_as_of,input_sha256,evidence_json FROM game_story_deterministic "
+        "WHERE league='nba' AND game_id='401902644'").fetchone()
+    con.close()
+    assert stored[0] == "CPU deterministic preview."
+    assert stored[1] and len(stored[2]) == 64 and '"manifest"' in stored[3]
+
+
+def test_story_engine_context_uses_local_schedule_and_snapshot_only(harness, monkeypatch):
+    import espn_client as espn
+    path, _ = harness
+    con = _open(path)
+    con.execute("CREATE TABLE nba_schedule(game_id TEXT, espn TEXT, season INTEGER, home_team TEXT, "
+                "away_team TEXT, start_utc TEXT, ingested_at TEXT)")
+    con.execute("INSERT INTO nba_schedule VALUES ('NBA1','401902644',2027,'MIA','TOR',?,?)",
+                (_soon(), "2026-10-02 18:00:00"))
+    con.commit()
+    con.close()
+    monkeypatch.setattr(espn, "summary", lambda *a: (_ for _ in ()).throw(
+        AssertionError("local context lookup must not request ESPN")))
+    game = cs._story_engine_game_context("nba", "401902644", None, None, None, None)
+    assert game["season"] == 2027
+    assert (game["home"], game["away"]) == ("MIA", "TOR")
+    assert game["start_utc"] == _soon()
+
+
+def test_nfl_engine_context_uses_captured_kickoff_without_network(harness, monkeypatch):
+    import json
+    import espn_client as espn
+    path, _ = harness
+    con = _open(path)
+    con.execute("CREATE TABLE nfl_schedule(game_id TEXT, espn TEXT, season INTEGER, home_team TEXT, "
+                "away_team TEXT, gameday TEXT, ingested_at TEXT)")
+    con.execute("INSERT INTO nfl_schedule VALUES ('2026_09_BUF_KC','401900099',2026,'KC','BUF','2026-11-08',?)",
+                ("2026-10-29 18:00:00",))
+    con.execute("ALTER TABLE scoreboard_snapshots ADD COLUMN start_time TEXT")
+    con.execute(
+        "INSERT INTO scoreboard_snapshots(league,game_id,state,payload,fetched_at,start_time) "
+        "VALUES (?,?,?,?,?,?)",
+        ("nfl", "401900099", "pre", json.dumps({
+            "home": {"abbrev": "KC"}, "away": {"abbrev": "BUF"},
+        }), "2026-11-03T10:00:00Z", _soon()),
+    )
+    con.commit()
+    con.close()
+    monkeypatch.setattr(espn, "summary", lambda *a: (_ for _ in ()).throw(
+        AssertionError("captured NFL context must not request ESPN")))
+    game = cs._story_engine_game_context("nfl", "401900099", None, None, None, None)
+    assert game["season"] == 2026
+    assert (game["home"], game["away"]) == ("KC", "BUF")
+    assert game["state"] == "pre" and game["start_utc"] == _soon()
 
 
 def test_kick_skips_games_beyond_the_horizon(monkeypatch, harness, exercise_story_warming):

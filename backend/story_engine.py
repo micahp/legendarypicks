@@ -887,10 +887,13 @@ def _db_player_facts(connection: sqlite3.Connection, league: str, season: int,
             stats = json.loads(row["stats"] or "{}")
         except (TypeError, json.JSONDecodeError):
             continue
-        by_player[str(row["player_id"])].append({
+        fact = {
             "id": str(row["id"]), "available_at": _iso_utc(row["ingested_at"]),
             "date": str(row["game_date"])[:10], "game_id": str(row["game_id"]), "stats": stats,
-        } | {"_team": str(row["team"]), "_name": str(row["name"])})
+        }
+        fact["_team"] = str(row["team"])
+        fact["_name"] = str(row["name"])
+        by_player[str(row["player_id"])].append(fact)
     players = []
     for player_id, logs in by_player.items():
         team_codes = {row["_team"] for row in logs}

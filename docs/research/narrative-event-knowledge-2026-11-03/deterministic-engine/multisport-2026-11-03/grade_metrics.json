@@ -1,0 +1,78 @@
+{
+  "nba": {
+    "dimension_mean_scores": {
+      "fan_voice": 95,
+      "flow": 97.86,
+      "freshness": 100,
+      "grounding": 60,
+      "headline": 100,
+      "players": 85.15
+    },
+    "gates": {
+      "blocked": 0,
+      "eligible": 0,
+      "needs-audit": 14,
+      "review": 0
+    },
+    "mean_score": 85.93,
+    "median_score": 89.0,
+    "stories": 14
+  },
+  "ncaaf": {
+    "dimension_mean_scores": {
+      "fan_voice": 81,
+      "flow": 85,
+      "freshness": 100,
+      "grounding": 60,
+      "headline": 100,
+      "players": 80
+    },
+    "gates": {
+      "blocked": 0,
+      "eligible": 0,
+      "needs-audit": 2,
+      "review": 0
+    },
+    "mean_score": 82,
+    "median_score": 82.0,
+    "stories": 2
+  },
+  "nhl": {
+    "dimension_mean_scores": {
+      "fan_voice": 95,
+      "flow": 85,
+      "freshness": 100,
+      "grounding": 60,
+      "headline": 100,
+      "players": null
+    },
+    "gates": {
+      "blocked": 0,
+      "eligible": 0,
+      "needs-audit": 11,
+      "review": 0
+    },
+    "mean_score": 85,
+    "median_score": 85,
+    "stories": 11
+  },
+  "overall": {
+    "dimension_mean_scores": {
+      "fan_voice": 93.96,
+      "flow": 91.67,
+      "freshness": 100,
+      "grounding": 60,
+      "headline": 100,
+      "players": 84.47
+    },
+    "gates": {
+      "blocked": 0,
+      "eligible": 0,
+      "needs-audit": 27,
+      "review": 0
+    },
+    "mean_score": 85.26,
+    "median_score": 85,
+    "stories": 27
+  }
+}
