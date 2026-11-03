@@ -40,6 +40,7 @@ HOLDOUT = {2025}
 CLASSES = pf.SKILL_CLASSES
 CAP = pf.STINT_CAP
 JOINT_MIN_PAIRS = 30  # a grouping transition seen on fewer pairs than this uses the per-player draws
+FEASIBLE_MAX_DRAWS = 200  # redraws before a feasibility-constrained draw is recorded as unresolved
 
 
 def gc(group):
@@ -149,8 +150,27 @@ class CandidateField(pf.Field):
                 leavers.add(chosen)
         return leavers
 
+    def _per_player_leavers(self, lineup, cls_of, prev_group, target, rotation_kind, suffix, stint_swap, draw):
+        """The per-player leave draws: rotation in a class whose count holds, then churn in a class whose count changes."""
+        leavers = set()
+        for pid in sorted(lineup):
+            cls = cls_of.get(pid)
+            if cls is None:
+                leavers.add(pid)
+            elif prev_group is not None and gc(prev_group)[cls] == target[cls] \
+                    and draw.random() < self.hazard(rotation_kind, cls, min(lineup[pid], CAP)):
+                leavers.add(pid)
+        for pid in sorted(lineup):
+            cls = cls_of.get(pid)
+            if pid not in leavers and cls is not None and prev_group is not None \
+                    and gc(prev_group)[cls] != target[cls]:
+                bucket = min(lineup[pid], CAP) if stint_swap else 0
+                if draw.random() < self.hazard('swap' + suffix, cls, bucket):
+                    leavers.add(pid)
+        return leavers
+
     def advance(self, team, lineup, group, roster, draw, prev_group=None, new_drive=None, stint_swap=False,
-                drive_split=False, joint=None):
+                drive_split=False, joint=None, feasible=False):
         if group is None or len(group) != 2 or not group.isdigit() or gc(group)['WR'] < 0:
             self.status['unsupported_grouping'] += 1
             return None, {'status': 'unsupported_grouping', 'group': group}
@@ -158,30 +178,33 @@ class CandidateField(pf.Field):
         target = gc(group)
         suffix = '_drive' if drive_split and new_drive else ''
         rotation_kind = ('held' if prev_group == group else 'changed') + suffix
+        # A leave is feasible when no more players of a class leave than are on the field, and the roster players of that
+        # class who are not on the field (they cannot re-enter on the same snap) cover the class's deficit.
+        held = Counter(cls_of[pid] for pid in lineup if pid in cls_of)
+        pool = Counter(cls_of.values())
+        allowed = {cls: max(0, min(held[cls], max(held[cls], pool[cls]) - target[cls])) for cls in CLASSES}
         leavers = None
         if joint is not None and prev_group is not None:
             drive_key = bool(new_drive) if drive_split else None
             options = joint.get((drive_key, prev_group, group))
-            if options is not None:
+            if options is not None and feasible:
+                options = {t: w for t, w in options.items() if all(n <= allowed[cls] for cls, n in zip(CLASSES, t))}
+                if not options:
+                    self.status['joint_no_feasible'] += 1
+            if options:
                 leavers = self._joint_leavers(lineup, cls_of, rotation_kind, options, draw)
             else:
                 self.status['joint_fallback'] += 1
         if leavers is None:
-            leavers = set()
-            for pid in sorted(lineup):
-                cls = cls_of.get(pid)
-                if cls is None:
-                    leavers.add(pid)
-                elif prev_group is not None and gc(prev_group)[cls] == target[cls] \
-                        and draw.random() < self.hazard(rotation_kind, cls, min(lineup[pid], CAP)):
-                    leavers.add(pid)
-            for pid in sorted(lineup):
-                cls = cls_of.get(pid)
-                if pid not in leavers and cls is not None and prev_group is not None \
-                        and gc(prev_group)[cls] != target[cls]:
-                    bucket = min(lineup[pid], CAP) if stint_swap else 0
-                    if draw.random() < self.hazard('swap' + suffix, cls, bucket):
-                        leavers.add(pid)
+            for _attempt in range(FEASIBLE_MAX_DRAWS):
+                leavers = self._per_player_leavers(lineup, cls_of, prev_group, target, rotation_kind, suffix, stint_swap,
+                                                   draw)
+                leave_counts = Counter(cls_of[pid] for pid in leavers if pid in cls_of)
+                if not feasible or all(leave_counts[cls] <= allowed[cls] for cls in CLASSES):
+                    break
+                self.status['feasible_redraw'] += 1
+            else:
+                self.status['infeasible_unresolved'] += 1
         kept = {pid: stint for pid, stint in lineup.items() if pid not in leavers}
         removed = set(leavers)
         count_removed, entrants, short = [], [], {}
@@ -204,6 +227,9 @@ class CandidateField(pf.Field):
                     entrants.append(player['gsis_id'])
                 if len(picked) < need:
                     short[cls] = need - len(picked)
+                    # the cause: the roster cannot staff the grouping, or it can but the bench is exhausted
+                    cause = 'roster_below_target' if pool[cls] < target[cls] else 'roster_covers_target'
+                    self.status[f'short_{cls}_{cause}'] += 1
         nxt = {pid: (lineup[pid] + 1 if pid in lineup else 1) for pid in kept}
         status = 'short' if short else 'ok'
         self.status[status] += 1
@@ -222,27 +248,45 @@ def variant_field(base, table, stint_swap, drive_split, table_name):
     return CandidateField(data, f'{table_name}|stint_swap={stint_swap}|drive_split={drive_split}')
 
 
+def fits_roster(group, pool):
+    """Whether the roster has enough players of each class for the grouping, all on the field at once."""
+    if group is None or len(group) != 2 or not group.isdigit() or gc(group)['WR'] < 0:
+        return False
+    return all(pool[cls] >= gc(group)[cls] for cls in CLASSES)
+
+
 def simulate(field, seqs, rosters, cls_of, play_drive, seed, stint_swap, drive_split, joint, mode,
-             roster_for_key=None):
+             roster_for_key=None, feasible=False):
     """forced: the observed grouping on each snap, the lineup simulated. free: the grouping is drawn from the field too.
     The draws follow validate_lineups.simulate, so the B0 variant reproduces the runtime numbers exactly.
-    roster_for_key, when given, replaces each team's full-season bench with the roster for that game."""
+    roster_for_key, when given, replaces each team's full-season bench with the roster for that game.
+    feasible, when set, only allows leaves the roster can refill, and in free mode redraws a grouping the roster cannot
+    staff; both are counted in field.status, so nothing is dropped silently."""
     out, dropped = {}, 0
     for key, seq in sorted(seqs.items()):
         _season, _game, team = key
         draw = random.Random(f'{key}|{mode}|{seed}')
         roster = roster_for_key[key] if roster_for_key is not None else rosters[team]
+        pool = Counter(cls_of[p['gsis_id']] for p in roster if p['gsis_id'] in cls_of)
         lineup, prev, snaps = {}, pf.START, []
         drives = play_drive[key]
         for i, (group_obs, cell, _skill) in enumerate(seq):
             group = field.draw_group(team, prev, cell, draw) if mode == 'free' else group_obs
+            if feasible and mode == 'free':
+                for _attempt in range(FEASIBLE_MAX_DRAWS):
+                    if group is None or fits_roster(group, pool):
+                        break
+                    field.status['group_redraw'] += 1
+                    group = field.draw_group(team, prev, cell, draw)
+                else:
+                    field.status['group_unresolved'] += 1
             if group is None:
                 dropped += 1
                 break
             new_drive = drive_flags(drives, i) if i else None
             lineup, _record = field.advance(team, lineup, group, roster, draw, prev_group=prev,
                                             new_drive=new_drive, stint_swap=stint_swap, drive_split=drive_split,
-                                            joint=joint)
+                                            joint=joint, feasible=feasible)
             snaps.append((group, frozenset(lineup)))
             prev = group
         else:
