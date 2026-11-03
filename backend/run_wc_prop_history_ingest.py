@@ -570,6 +570,7 @@ def run(
 
     backup_path = common.backup_database(db_path, "wc-history-timer")
     result = apply_plan(db_path, plan)
+    common.discard_backup(backup_path)
     emit(
         "WC applied: {identity_updates} identities, {updated} updates, "
         "{inserted} inserts; backup {backup}".format(

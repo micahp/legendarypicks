@@ -780,6 +780,7 @@ def run(
         db_path, "mlb-history-timer", keep=1
     )
     result = apply_plan(db_path, plan)
+    common.discard_backup(backup_path)
     emit(
         "MLB applied: {updated} updates, {inserted} inserts, "
         "{queued} unresolved identities; backup {backup}".format(

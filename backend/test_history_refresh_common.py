@@ -173,6 +173,17 @@ class HistoryRefreshBackupTests(unittest.TestCase):
                 ):
                     common.backup_database(db_path, "test backup", now=self.NOW)
 
+    def test_discard_backup_removes_copy_and_sidecars(self):
+        with tempfile.TemporaryDirectory(prefix="history-discard-test-") as temp_dir:
+            backup_path = os.path.join(temp_dir, "picks.db.bak-premigrate-test-20260726-123456")
+            for path in (backup_path, backup_path + "-wal", backup_path + "-shm"):
+                with open(path, "w") as handle:
+                    handle.write("x")
+            common.discard_backup(backup_path)
+            self.assertEqual(os.listdir(temp_dir), [])
+            # Nothing left to remove is not an error.
+            common.discard_backup(backup_path)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
