@@ -4,7 +4,8 @@
 The validation bench is each team's full-season 2025 skill players (validate_lineups.roster_by_team). That list keeps players
 who are on the practice squad, reserve or inactive in a given week. This check restricts each game's bench to the players
 the weekly roster lists as ACT in that week, and reruns the B0 and JD variants on both arms with the 2022 to 2024 tables
-unchanged. The 2025 weekly status is a retrospective record. The production availability snapshot is frozen before kickoff,
+unchanged. A third arm, gated_all_act, takes the bench from every ACT skill player on the weekly roster, including players
+with no 2025 appearance, so zero-usage eligible players can enter. The 2025 weekly status is a retrospective record. The production availability snapshot is frozen before kickoff,
 so this is an upper bound on what a pregame gate can know.
 
 Usage: python3 availability_gate_check.py --tables <scrimmage_participation.csv.gz> --raw-dir <pinned nflverse dir> \
@@ -85,6 +86,18 @@ def main():
         bench_size['ungated_players'] += len(rosters[team])
         bench_size['gated_players'] += len(gated[key])
 
+    act_by_team_week = defaultdict(list)
+    for (pid, team, week), state in status.items():
+        if state == 'ACT' and pid in cls_of:
+            act_by_team_week[(team, week)].append(pid)
+    gated_all = {}
+    for key in seqs:
+        _season, _game, team = key
+        pids = sorted(act_by_team_week[(team, week_of[key])])
+        gated_all[key] = [{'gsis_id': pid, 'pos_abb': positions[pid], 'pos_rank': index}
+                          for index, pid in enumerate(pids)]
+        bench_size['gated_all_act_players'] += len(pids)
+
     def joint_for(name):
         return {key: dict(counts) for key, counts in joint_tables[name].items()
                 if sum(counts.values()) >= cs.JOINT_MIN_PAIRS}
@@ -104,7 +117,8 @@ def main():
     for mode in ('forced', 'free'):
         result['variants'][mode] = {}
         for name, (field, stint_swap, drive_split, joint) in variants.items():
-            for label, roster_for_key in (('ungated', None), ('gated_to_active_week', gated)):
+            for label, roster_for_key in (('ungated', None), ('gated_to_active_week', gated),
+                                          ('gated_all_act', gated_all)):
                 field.status.clear()
                 runs = [cs.simulate(field, seqs, rosters, cls_of, play_drive, seed, stint_swap, drive_split, joint,
                                     mode, roster_for_key=roster_for_key) for seed in range(1, args.seeds + 1)]
