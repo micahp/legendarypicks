@@ -14,6 +14,9 @@ from story_engine import LEAGUE_SIZE, LEAGUE_TEAM_NAMES, TEAM_CITIES
 
 COUNT_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
                "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
+HEAD_TO_HEAD_CLAIM = re.compile(
+    r"\balready beat\s+(?P<loser>.+?)\s+(?P<score>(?P<winner_score>\d+)-"
+    r"(?P<loser_score>\d+))\s+on (?P<date>[A-Z][a-z]{2}\.\s+\d{1,2})\b", re.I)
 
 
 def _time(value: Any) -> datetime | None:
@@ -138,13 +141,22 @@ def _nearest_team(story: str, offset: int, facts: dict[str, Any]) -> str | None:
                        else sentence[token_end:match.start()])
                 distance = abs(match.start() - relative_offset)
                 if distance <= 65:
-                    candidates.append((len(re.findall(r"\w+", gap)), 0 if before else 1,
-                                       distance, str(code)))
+                    candidates.append((len(re.findall(r"\w+", gap)), distance,
+                                       0 if before else 1, str(code)))
     if not candidates:
         return None
-    best = min(candidate[:3] for candidate in candidates)
-    codes = {code for words, direction, distance, code in candidates
-             if (words, direction, distance) == best}
+    direct_candidates = [candidate for candidate in candidates if candidate[0] <= 1]
+    preceding_candidates = [candidate for candidate in candidates if candidate[2] == 0]
+    if direct_candidates:
+        best = min(candidate[:2] for candidate in direct_candidates)
+        codes = {code for words, distance, _, code in direct_candidates
+                 if (words, distance) == best}
+    elif preceding_candidates:
+        nearest = min(candidate[1] for candidate in preceding_candidates)
+        codes = {code for _, distance, _, code in preceding_candidates if distance == nearest}
+    else:
+        nearest = min(candidate[1] for candidate in candidates)
+        codes = {code for _, distance, _, code in candidates if distance == nearest}
     return next(iter(codes)) if len(codes) == 1 else None
 
 
@@ -158,7 +170,10 @@ def _record_and_streak_claims_match(story: str, facts: dict[str, Any], selected:
             if outcomes.count("T"):
                 value += f"-{outcomes.count('T')}"
             records[str(fact.get("team"))] = value
+    verified_score_spans = _verified_head_to_head_score_spans(story, facts, selected)
     for match in re.finditer(r"(?<!\d)(\d{1,2}-\d{1,2}(?:-\d{1,2})?)(?!\d)", story):
+        if match.span() in verified_score_spans:
+            continue
         team = _nearest_team(story, match.start(), facts)
         if team is None or records.get(team) != match[1]:
             return False
@@ -190,9 +205,7 @@ def _record_and_streak_claims_match(story: str, facts: dict[str, Any], selected:
 
 def _head_to_head_claims_recompute(story: str, facts: dict[str, Any], selected: list[dict]) -> bool:
     prior_meetings = [fact for fact in selected if fact.get("kind") == "head_to_head"]
-    claims = list(re.finditer(
-        r"\balready beat\s+(?P<loser>.+?)\s+(?P<winner_score>\d+)-(?P<loser_score>\d+)\s+"
-        r"on (?P<date>[A-Z][a-z]{2}\.\s+\d{1,2})\b", story, re.I))
+    claims = list(HEAD_TO_HEAD_CLAIM.finditer(story))
     if len(prior_meetings) != len(claims):
         return False
     for fact, claim in zip(prior_meetings, claims):
@@ -229,6 +242,13 @@ def _head_to_head_claims_recompute(story: str, facts: dict[str, Any], selected: 
                 or claim.group("date").replace(" ", "") != expected_date.replace(" ", "")):
             return False
     return True
+
+
+def _verified_head_to_head_score_spans(story: str, facts: dict[str, Any],
+                                       selected: list[dict]) -> set[tuple[int, int]]:
+    if not _head_to_head_claims_recompute(story, facts, selected):
+        return set()
+    return {match.span("score") for match in HEAD_TO_HEAD_CLAIM.finditer(story)}
 
 
 def _rank_claims_recompute(facts: dict[str, Any], selected: list[dict]) -> bool:

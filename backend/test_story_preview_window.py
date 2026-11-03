@@ -307,6 +307,67 @@ def test_kick_skips_games_beyond_the_horizon(monkeypatch, harness, exercise_stor
     assert len(started) == 1
 
 
+def test_scoreboard_ingest_rechecks_cached_deterministic_previews(
+    monkeypatch, harness, exercise_story_warming
+):
+    path, _ = harness
+    con = _open(path)
+    con.execute("CREATE TABLE game_story_deterministic(league TEXT,game_id TEXT,story TEXT,generated_at TEXT)")
+    con.execute(
+        "INSERT INTO game_story_deterministic VALUES (?,?,?,datetime('now'))",
+        ("nba", "cached", "Saved CPU preview"),
+    )
+    con.commit()
+    con.close()
+    monkeypatch.setenv("LP_DETERMINISTIC_STORY_ENGINE", "1")
+    scheduled = []
+    monkeypatch.setattr(cs._threading, "Thread", lambda target, daemon=True: scheduled.append(target) or type(
+        "T", (), {"start": lambda self: None})())
+
+    cs.kick_game_stories("nba", [
+        {"game_id": "cached", "home": {"abbrev": "MIA"}, "away": {"abbrev": "TOR"},
+         "state": "pre", "date": _soon()},
+    ], refresh_evidence=True)
+
+    assert len(scheduled) == 1
+
+
+def test_scoreboard_refresh_skips_recent_checks_and_prioritizes_unchecked_games(
+    monkeypatch, harness, exercise_story_warming
+):
+    path, _ = harness
+    con = _open(path)
+    con.execute("CREATE TABLE game_story_deterministic(league TEXT,game_id TEXT,story TEXT,"
+                "generated_at TEXT,last_checked_at TEXT)")
+    now = dt.datetime.now(dt.timezone.utc)
+    generated_at = now.strftime("%Y-%m-%d %H:%M:%S")
+    recently_checked = generated_at
+    checked_long_ago = (now - dt.timedelta(minutes=2)).strftime("%Y-%m-%d %H:%M:%S")
+    con.executemany(
+        "INSERT INTO game_story_deterministic VALUES (?,?,?,?,?)",
+        [
+            ("nba", "recent-a", "Saved CPU preview", generated_at, recently_checked),
+            ("nba", "recent-b", "Saved CPU preview", generated_at, recently_checked),
+            ("nba", "recent-c", "Saved CPU preview", generated_at, recently_checked),
+            ("nba", "old-check", "Saved CPU preview", generated_at, checked_long_ago),
+        ],
+    )
+    con.commit()
+    con.close()
+    monkeypatch.setenv("LP_DETERMINISTIC_STORY_ENGINE", "1")
+    scheduled = []
+    monkeypatch.setattr(cs._threading, "Thread", lambda target, daemon=True: scheduled.append(target) or type(
+        "T", (), {"start": lambda self: None})())
+
+    cs.kick_game_stories("nba", [
+        {"game_id": game_id, "home": {"abbrev": "MIA"}, "away": {"abbrev": "TOR"},
+         "state": "pre", "date": _soon()}
+        for game_id in ("recent-a", "recent-b", "recent-c", "old-check")
+    ], refresh_evidence=True)
+
+    assert len(scheduled) == 1
+
+
 def test_large_slate_never_creates_more_story_threads_than_the_limit(
     monkeypatch, harness, exercise_story_warming
 ):

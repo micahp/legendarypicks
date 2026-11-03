@@ -43,6 +43,22 @@ def _deepseek_chat(*args, **kwargs):
 
 
 _TIMESTAMP_PREFIX = re.compile(r"^\d{4}-\d{2}-\d{2}")
+_STORY_EVIDENCE_REFRESH_SECONDS = 45
+
+
+def _story_evidence_refresh_due(last_checked_at, now=None) -> bool:
+    if not last_checked_at:
+        return True
+    try:
+        checked = dt.datetime.fromisoformat(str(last_checked_at).replace("Z", "+00:00"))
+        if checked.tzinfo is None:
+            checked = checked.replace(tzinfo=dt.timezone.utc)
+        current = now or dt.datetime.now(dt.timezone.utc)
+        if current.tzinfo is None:
+            current = current.replace(tzinfo=dt.timezone.utc)
+        return (current - checked).total_seconds() >= _STORY_EVIDENCE_REFRESH_SECONDS
+    except (TypeError, ValueError, OverflowError):
+        return True
 
 
 def _story_is_stale_preview(generated_at, state, start_time) -> bool:
@@ -992,14 +1008,16 @@ _story_lock = _threading.Lock()
 _MAX_STORY_WORKERS = 3
 _story_sema = _threading.Semaphore(_MAX_STORY_WORKERS)
 
-def kick_game_stories(lg: str, games: list):
+def kick_game_stories(lg: str, games: list, *, refresh_evidence: bool = False):
     """Fire-and-forget: when a league scoreboard is fetched, warm the preview cache
     for any games we don't have a story for yet. Each generation runs in a daemon
     thread (bounded by a semaphore) so the /games response returns immediately and the
     preview is ready — or generating — by the time the user opens the game.
 
     This is the 'write the preview whenever we find out about the game' hook: games are
-    lazy-loaded via /api/{league}/games, so that fetch is exactly when we find out."""
+    lazy-loaded via /api/{league}/games, so that fetch is exactly when we find out.
+    Scoreboard ingestion can set `refresh_evidence=True` to recheck cached NBA/NFL
+    previews. The runtime writes a new scored revision only when the evidence hash changes."""
     lg = lg.lower()
     ids = [(str(g.get("game_id")), (g.get("home") or {}).get("abbrev"),
             (g.get("away") or {}).get("abbrev"), g.get("state"), g.get("date"))
@@ -1008,6 +1026,7 @@ def kick_game_stories(lg: str, games: list):
         return
     gid_list = [i[0] for i in ids]
     deterministic_cached = {}
+    deterministic_checked = {}
     try:
         with closing(_db()) as con:
             con.execute("""CREATE TABLE IF NOT EXISTS game_story(
@@ -1019,14 +1038,27 @@ def kick_game_stories(lg: str, games: list):
                 [lg] + gid_list)}
             if lg in _DETERMINISTIC_PREVIEW_LEAGUES:
                 try:
-                    deterministic_cached = {r[0]: r[1] for r in con.execute(
-                        f"SELECT game_id, generated_at FROM game_story_deterministic "
-                        f"WHERE league=? AND game_id IN ({qs})", [lg] + gid_list)}
+                    columns = {r[1] for r in con.execute(
+                        "PRAGMA table_info(game_story_deterministic)")}
+                    checked_column = "last_checked_at" if "last_checked_at" in columns else "''"
+                    rows = con.execute(
+                        f"SELECT game_id, generated_at, {checked_column} "
+                        f"FROM game_story_deterministic WHERE league=? AND game_id IN ({qs})",
+                        [lg] + gid_list,
+                    )
+                    for row in rows:
+                        deterministic_cached[row[0]] = row[1]
+                        deterministic_checked[row[0]] = row[2]
                 except sqlite3.OperationalError as exc:
                     if "no such table" not in str(exc).lower():
                         raise
     except Exception:
         cached = {}
+    if (refresh_evidence and lg in _DETERMINISTIC_PREVIEW_LEAGUES
+            and _deterministic_story_engine_enabled()):
+        # Start with never-checked and oldest-checked games so a large slate can
+        # progress across scoreboard polls despite the bounded worker count.
+        ids.sort(key=lambda item: deterministic_checked.get(item[0]) or "")
     deferred = 0
     for gid, home, away, state, start_time in ids:
         # A cached story is enough UNLESS it is a preview of a game that has since ended —
@@ -1044,9 +1076,17 @@ def kick_game_stories(lg: str, games: list):
                 cached_at = deterministic_cached.get(gid)
         else:
             cached_at = cached.get(gid)
-        if cached_at and not _story_is_stale_preview(cached_at, state, start_time) \
-                and not (state_key != "post"
-                         and _preview_written_too_early(cached_at, start_time)):
+        cache_is_current = (cached_at
+                            and not _story_is_stale_preview(cached_at, state, start_time)
+                            and not (state_key != "post"
+                                     and _preview_written_too_early(cached_at, start_time)))
+        recheck_deterministic_inputs = (
+            refresh_evidence and lg in _DETERMINISTIC_PREVIEW_LEAGUES
+            and _deterministic_story_engine_enabled() and state_key not in {"in", "post"})
+        if (cache_is_current and recheck_deterministic_inputs
+                and not _story_evidence_refresh_due(deterministic_checked.get(gid))):
+            continue
+        if cache_is_current and not recheck_deterministic_inputs:
             continue
         with _story_lock:
             if gid in _story_inflight:

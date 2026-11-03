@@ -302,7 +302,7 @@ def get_games(league: str, date: Optional[str] = Query(None, description="YYYY-M
     # itself. Leaving it on the snapshot path as well would put the generation
     # back into the request that the snapshot exists to keep cheap.
     if data_source == "espn" and lg in ("nba", "nhl", "mlb", "nfl"):
-        kick_game_stories(lg, games)
+        kick_game_stories(lg, games, refresh_evidence=True)
     max_age = 15 if data_source == "unavailable" else 30
     headers = {
         "Cache-Control": f"public, max-age={max_age}",

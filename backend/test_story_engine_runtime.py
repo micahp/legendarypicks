@@ -11,6 +11,7 @@ import _core
 import core_stories
 from routers import game_extras
 from story_engine import LEAGUE_TEAM_NAMES
+import story_engine
 import story_engine_audit
 import story_engine_runtime
 
@@ -75,6 +76,70 @@ def test_head_to_head_audit_recomputes_winner_score_and_date():
         story.replace("115-104", "104-115"), facts, selected)
     assert not story_engine_audit._head_to_head_claims_recompute(
         story.replace("Oct. 30", "Oct. 29"), facts, selected)
+
+
+def test_nfl_rematch_score_is_not_misread_as_a_team_record():
+    cutoff = "2026-11-03T20:00:00Z"
+    kickoff = "2026-11-04T20:00:00Z"
+
+    def row(game_id, date, opponent, scored, allowed):
+        return {
+            "id": game_id, "date": date, "available_at": f"{date}T20:00:00Z",
+            "opponent": opponent, "for": scored, "against": allowed,
+            "result": "W" if scored > allowed else "L",
+        }
+
+    ravens = [
+        row("ravens-win-1", "2026-10-18", "PIT", 24, 17),
+        row("ravens-loss", "2026-10-25", "CLE", 17, 20),
+        row("ravens-bengals", "2026-10-30", "CIN", 24, 20),
+        row("ravens-win-2", "2026-11-01", "PIT", 24, 17),
+        row("ravens-win-3", "2026-11-02", "CLE", 20, 17),
+    ]
+    bengals = [
+        row("bengals-win-1", "2026-10-18", "PIT", 24, 20),
+        row("bengals-win-2", "2026-10-25", "CLE", 21, 10),
+        row("ravens-bengals", "2026-10-30", "BAL", 20, 24),
+        row("bengals-loss-2", "2026-11-01", "PIT", 17, 21),
+        row("bengals-loss-3", "2026-11-02", "CLE", 13, 17),
+    ]
+    facts = {
+        "league": "nfl", "season": 2026, "game_id": "upcoming-rematch",
+        "away": "BAL", "home": "CIN", "as_of": cutoff, "start_utc": kickoff,
+        "teams": {
+            "BAL": {"code": "BAL", "name": "Baltimore Ravens", "games": 5,
+                    "evidence": ravens},
+            "CIN": {"code": "CIN", "name": "Cincinnati Bengals", "games": 5,
+                    "evidence": bengals},
+        },
+        "league_standings": [], "players": [],
+    }
+
+    rendered = story_engine.generate_story(facts)
+    assert "already beat Cincinnati 24-20 on Oct. 30" in rendered["story"]
+    audit = story_engine_audit.audit_story(rendered, facts)
+    assert all(audit.values()), audit
+
+
+def test_repeated_kickoff_observation_time_does_not_change_evidence_hash():
+    first = {
+        "game_id": "event-1", "as_of": "2026-11-03T10:00:00Z",
+        "matchup_evidence": [{
+            "id": "nfl_kickoff:event-1:2026-11-04T20:00:00Z",
+            "available_at": "2026-11-03T10:00:00Z",
+            "start_utc": "2026-11-04T20:00:00Z", "source": "scoreboard_request",
+        }],
+    }
+    second = {
+        **first, "as_of": "2026-11-03T10:01:00Z",
+        "matchup_evidence": [{
+            **first["matchup_evidence"][0], "available_at": "2026-11-03T10:01:00Z",
+        }],
+    }
+
+    assert story_engine_runtime._input_sha256(first) == story_engine_runtime._input_sha256(second)
+    second["matchup_evidence"][0]["start_utc"] = "2026-11-04T21:00:00Z"
+    assert story_engine_runtime._input_sha256(first) != story_engine_runtime._input_sha256(second)
 
 
 def _iso(value):
@@ -177,18 +242,48 @@ def test_story_endpoint_uses_real_collector_audit_grade_and_cache(tmp_path, monk
     con.close()
 
     refreshed = client.get("/api/game/nba/2000000001/story?refresh=true").json()
-    assert refreshed["story"] == result["story"] and refreshed["cached"] is False
+    assert refreshed["story"] == result["story"] and refreshed["cached"] is True
     con = sqlite3.connect(path)
     revisions = con.execute(
         "SELECT generation_id FROM game_story_deterministic_history WHERE game_id='2000000001'"
     ).fetchall()
-    assert len(revisions) == 2 and revisions[0][0] != revisions[1][0]
+    assert len(revisions) == 1
     with pytest.raises(sqlite3.IntegrityError, match="append-only"):
         con.execute(
             "UPDATE game_story_deterministic_history SET story='rewritten' WHERE game_id='2000000001'")
     with pytest.raises(sqlite3.IntegrityError, match="append-only"):
         con.execute("DELETE FROM game_story_deterministic_history WHERE game_id='2000000001'")
     con.rollback()
+    assert con.execute(
+        "SELECT COUNT(*) FROM game_story_deterministic_history WHERE game_id='2000000001'"
+    ).fetchone()[0] == 1
+    con.close()
+
+    now = dt.datetime.now(dt.timezone.utc)
+    con = sqlite3.connect(path)
+    con.execute(
+        "INSERT INTO nba_schedule(game_id,espn,season,season_type,game_code,game_date,start_utc,"
+        "away_team,home_team,away_score,home_score,source,ingested_at) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        ("new-result-atl-bos", "new-result-atl-bos", SEASON, "REG", "REG",
+         now.date().isoformat(), None, "ATL", "BOS", 120, 100, "new-result",
+         _iso(now - dt.timedelta(minutes=1))),
+    )
+    con.commit()
+    con.close()
+
+    refreshed_story = client.get("/api/game/nba/2000000001/story").json()
+    assert refreshed_story["story"] != result["story"]
+    assert "1-1" in refreshed_story["story"]
+    con = sqlite3.connect(path)
+    assert con.execute(
+        "SELECT COUNT(*) FROM game_story_deterministic_history WHERE game_id='2000000001'"
+    ).fetchone()[0] == 2
+    con.close()
+
+    unchanged = client.get("/api/game/nba/2000000001/story").json()
+    assert unchanged["cached"] is True and unchanged["story"] == refreshed_story["story"]
+    con = sqlite3.connect(path)
     assert con.execute(
         "SELECT COUNT(*) FROM game_story_deterministic_history WHERE game_id='2000000001'"
     ).fetchone()[0] == 2
@@ -312,6 +407,15 @@ def test_refresh_write_error_rolls_back_history_and_keeps_previous_story(tmp_pat
     first = client.get("/api/game/nba/2000000001/story").json()
     assert first["story"]
     con = sqlite3.connect(path)
+    now = dt.datetime.now(dt.timezone.utc)
+    con.execute(
+        "INSERT INTO nba_schedule(game_id,espn,season,season_type,game_code,game_date,start_utc,"
+        "away_team,home_team,away_score,home_score,source,ingested_at) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        ("new-result-atl-bos", "new-result-atl-bos", SEASON, "REG", "REG",
+         now.date().isoformat(), None, "ATL", "BOS", 120, 100, "new-result",
+         _iso(now - dt.timedelta(minutes=1))),
+    )
     con.execute("""CREATE TRIGGER block_story_history BEFORE INSERT ON game_story_deterministic_history
         BEGIN SELECT RAISE(ABORT,'test rollback'); END""")
     con.commit()

@@ -37,8 +37,13 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
         input_sha256 TEXT NOT NULL,
         engine_version TEXT NOT NULL,
         evidence_json TEXT NOT NULL,
+        last_checked_at TEXT NOT NULL DEFAULT '',
         PRIMARY KEY (league, game_id)
     )""")
+    latest_columns = {row[1] for row in connection.execute(f"PRAGMA table_info({TABLE})")}
+    if "last_checked_at" not in latest_columns:
+        connection.execute(
+            f"ALTER TABLE {TABLE} ADD COLUMN last_checked_at TEXT NOT NULL DEFAULT ''")
     connection.execute(f"""CREATE TABLE IF NOT EXISTS {HISTORY_TABLE} (
         generation_id TEXT PRIMARY KEY,
         league TEXT NOT NULL,
@@ -72,8 +77,14 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
 
 
 def _input_sha256(bundle: dict[str, Any]) -> str:
-    # as_of moves on every request; the cutoff-filtered evidence itself is the cache key.
+    # Request time is not evidence content. Keep repeated kickoff observations stable too.
     material = {key: value for key, value in bundle.items() if key not in {"as_of", "source"}}
+    if "matchup_evidence" in material:
+        material["matchup_evidence"] = [
+            ({**row, "available_at": "kickoff_observation"}
+             if "_kickoff:" in str(row.get("id") or "") else row)
+            for row in material["matchup_evidence"]
+        ]
     encoded = json.dumps(material, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
@@ -106,6 +117,10 @@ def record_generation_failure(db_path: str | Path, league: str, game_id: str,
     with closing(_connect(db_path)) as connection:
         _ensure_tables(connection)
         _append_failure(connection, league, game_id, type(error).__name__, str(error))
+        connection.execute(
+            f"UPDATE {TABLE} SET last_checked_at=datetime('now') WHERE league=? AND game_id=?",
+            (league, str(game_id)),
+        )
         connection.commit()
 
 
@@ -139,6 +154,21 @@ def _record_unpublishable_generation(db_path: str | Path, game: dict[str, Any], 
         _ensure_tables(connection)
         connection.execute("BEGIN IMMEDIATE")
         gate = quality.get("gate") or "needs-audit"
+        existing = connection.execute(
+            f"SELECT gate_status FROM {HISTORY_TABLE} WHERE league=? AND game_id=? "
+            "AND input_sha256=? AND engine_version=? ORDER BY generated_at DESC LIMIT 1",
+            (league, game_id, input_sha, ENGINE_VERSION),
+        ).fetchone()
+        if existing:
+            connection.execute(
+                f"UPDATE {TABLE} SET last_checked_at=datetime('now') WHERE league=? AND game_id=?",
+                (league, game_id),
+            )
+            fallback_story, fallback_at = _cached_fallback(connection, league, game_id)
+            connection.commit()
+            return {"league": league, "game_id": game_id, "story": fallback_story,
+                    "cached": bool(fallback_story), "cached_at": fallback_at,
+                    "generator": "deterministic", "status": existing[0]}
         failure_type = "audit_blocked" if gate == "blocked" else "audit_incomplete"
         _append_failure(connection, league, game_id, failure_type,
                         ", ".join(quality.get("hard_failures") or ["independent audit incomplete"]))
@@ -152,6 +182,10 @@ def _record_unpublishable_generation(db_path: str | Path, game: dict[str, Any], 
              quality["gate"], quality.get("score")),
         )
         fallback_story, fallback_at = _cached_fallback(connection, league, game_id)
+        connection.execute(
+            f"UPDATE {TABLE} SET last_checked_at=datetime('now') WHERE league=? AND game_id=?",
+            (league, game_id),
+        )
         connection.commit()
     return {"league": league, "game_id": game_id, "story": fallback_story,
             "cached": bool(fallback_story), "cached_at": fallback_at,
@@ -176,7 +210,14 @@ def generate_and_store_preview(db_path: str | Path, game: dict[str, Any], *,
             "AND input_sha256=? AND engine_version=?",
             (game["league"], str(game["game_id"]), input_sha, ENGINE_VERSION),
         ).fetchone()
-        if cached and not refresh:
+        if cached:
+            # `refresh` means to re-collect facts; identical evidence and code do not
+            # create duplicate scored history rows.
+            connection.execute(
+                f"UPDATE {TABLE} SET last_checked_at=datetime('now') WHERE league=? AND game_id=?",
+                (game["league"], str(game["game_id"])),
+            )
+            connection.commit()
             return {"league": game["league"], "game_id": str(game["game_id"]),
                     "story": cached[0], "cached": True, "generator": "deterministic"}
 
@@ -209,8 +250,8 @@ def generate_and_store_preview(db_path: str | Path, game: dict[str, Any], *,
             )
             connection.execute(
                 f"INSERT OR REPLACE INTO {TABLE} "
-                "(league,game_id,story,generated_at,facts_as_of,input_sha256,engine_version,evidence_json) "
-                "VALUES (?,?,?,datetime('now'),?,?,?,?)",
+                "(league,game_id,story,generated_at,facts_as_of,input_sha256,engine_version,evidence_json,last_checked_at) "
+                "VALUES (?,?,?,datetime('now'),?,?,?,?,datetime('now'))",
                 (game["league"], str(game["game_id"]), story, as_of, input_sha,
                  ENGINE_VERSION, evidence),
             )

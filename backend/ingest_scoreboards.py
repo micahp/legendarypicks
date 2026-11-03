@@ -212,7 +212,7 @@ def _fetch_range_chunk(league, chunk, verbose=True):
         if league in ("nba", "nhl", "mlb", "nfl") and games:
             try:
                 from core_stories import kick_game_stories
-                kick_game_stories(league, games)
+                kick_game_stories(league, games, refresh_evidence=True)
             except Exception as exc:
                 print(f"  stories not kicked league={league}: {type(exc).__name__}: {exc}")
 
@@ -344,7 +344,7 @@ def _refresh(league, date, verbose=True):
     if league in ("nba", "nhl", "mlb", "nfl") and games:
         try:
             from core_stories import kick_game_stories
-            kick_game_stories(league, games)
+            kick_game_stories(league, games, refresh_evidence=True)
         except Exception as exc:
             print(f"  stories not kicked league={league}: {type(exc).__name__}: {exc}")
 
