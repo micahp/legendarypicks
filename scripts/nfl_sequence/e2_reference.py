@@ -510,6 +510,19 @@ def refuse_unsafe_cutoff(eligible_before):
                          + ', '.join(sorted(COHORT_UNSAFE_SOURCES)))
 
 
+_PLAY_CALL_FRAMES = {}  # {(db, cutoff): frame}; one entry, so a process running many games keeps one frame in memory
+
+
+def _shared_play_call_frame(pm, db, cutoff):
+    """The play-call frame for the seasons before a cutoff. The point, streak and league-streak priors only read it, and
+    games in one process that share a cutoff reuse it instead of rebuilding it from the database."""
+    key = (str(db), cutoff)
+    if key not in _PLAY_CALL_FRAMES:
+        _PLAY_CALL_FRAMES.clear()
+        _PLAY_CALL_FRAMES[key] = pm.load_frame(range(2010, cutoff), db=db)
+    return _PLAY_CALL_FRAMES[key]
+
+
 def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
          overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None,
          eligible_before=None, contextual_context=None, contextual_mode=None, contextual_bandwidth=1.0,
@@ -518,7 +531,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          playcall_player_shares=False, playcall_exact_yardline=False, playcall_coverage=False,
          playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False, playcall_target_roles=False,
          playcall_decision=False, playcall_qb_decisions=False, playcall_player_outcomes=False,
-         blocker_fixes=(), fg_ordinary_cutoff=60, playcall_season_adapt=None):
+         blocker_fixes=(), fg_ordinary_cutoff=60, playcall_season_adapt=None, fingerprint=True):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `playcall_season_adapt` (SLC V1.5, research): {'game_id', 'kickoff', 'n0'} for one target game. It blends that game's
@@ -610,13 +623,6 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             contextual_sampler.formation_priors = fl.priors(db, int(eligible_before[0]))
             contextual_sampler.formation_outcomes = True
         contextual_sampler.exact_yardline = bool(playcall_exact_yardline)
-        frames_by_cutoff = {}  # the point, streak and league-streak priors read the same frame for a cutoff: build it once
-
-        def shared_play_call_frame(pm, cutoff):
-            if cutoff not in frames_by_cutoff:
-                frames_by_cutoff[cutoff] = pm.load_frame(range(2010, cutoff), db=db)
-            return frames_by_cutoff[cutoff]
-
         if playcall_point_splits:  # team score-state shifts of the dropback rate, from the seasons before the cutoff only
             if eligible_before is None:
                 raise ValueError('point splits need an eligible-before cutoff')
@@ -626,7 +632,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             if isinstance(playcall_point_splits, str):  # a frame cache whose fingerprint matches the same seasons
                 frame = pm2.load_frame_cached(Path(playcall_point_splits), seasons, db=db)
             else:
-                frame = shared_play_call_frame(pm2, int(eligible_before[0]))
+                frame = _shared_play_call_frame(pm2, db, int(eligible_before[0]))
             contextual_sampler.point_shifts = sp.priors(frame, int(eligible_before[0]))
         if playcall_target_roles:  # decision model category A: team target-role priors by situation, prior seasons only
             if eligible_before is None:
@@ -641,7 +647,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             cutoff = int(eligible_before[0])
             seasons = range(2010, cutoff)
             frame = pm3.load_frame_cached(Path(playcall_streak), seasons, db=db) if isinstance(playcall_streak, str) \
-                else shared_play_call_frame(pm3, cutoff)
+                else _shared_play_call_frame(pm3, db, cutoff)
             con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
             try:
                 schedule_rows = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
@@ -663,7 +669,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             cutoff = int(eligible_before[0])
             seasons = range(2010, cutoff)
             frame = pm4.load_frame_cached(Path(playcall_streak_league), seasons, db=db) if isinstance(playcall_streak_league, str) \
-                else shared_play_call_frame(pm4, cutoff)
+                else _shared_play_call_frame(pm4, db, cutoff)
             con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
             try:
                 rows_s = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
@@ -772,5 +778,5 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                             'safety_kick_table': 'observed 2022-2025 regular-season safety free kicks, usable rows only'}
     if contextual_sampler is not None:
         reference.contextual_pool_manifest = contextual_pool_manifest
-    reference.model_inputs = _reference_fingerprint(reference)
+    reference.model_inputs = _reference_fingerprint(reference) if fingerprint else None  # None: the caller fingerprints
     return reference, kex
