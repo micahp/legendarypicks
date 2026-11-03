@@ -7,11 +7,17 @@ from pathlib import Path
 from unittest.mock import patch
 
 from research_narrative_relevance import (
+    COMBINED_SYSTEM,
     CORE_PREVIEW_SYSTEM,
+    EVENT_ONLY_SYSTEM,
     QUARANTINED_CATEGORIES,
     build_matchup_relationship,
     claim_cutoff_rejection,
     _claim_rows,
+    _candidate_prompt_fact,
+    _nfl_kickoff_utc,
+    _recompute_relationship_statistics,
+    _target_rows,
     render_relationship_preview,
     rank_matchup_candidates,
     run_local_inventory,
@@ -96,6 +102,104 @@ class ResearchNarrativeRelevanceTests(unittest.TestCase):
         self.assertEqual(10, result["score_components"]["matchup_relevance"])
         self.assertEqual(2, result["score_components"]["opponent_quality"])
 
+    def test_renderer_explains_how_the_two_recent_trends_relate(self):
+        preview = render_relationship_preview(
+            TARGET, build_matchup_relationship(TARGET, relationship(), AS_OF))
+        self.assertIn("The two trends align toward higher EPA", preview)
+        self.assertNotIn("will win", preview.lower())
+
+    def test_combined_prompt_requires_a_trend_relationship_without_outcome_language(self):
+        self.assertIn("compact selected-evidence summary", COMBINED_SYSTEM)
+        self.assertIn("Do not merely repeat the two measurements", COMBINED_SYSTEM)
+        self.assertIn("favored, stronger", COMBINED_SYSTEM)
+        self.assertIn("Do not predict an outcome", COMBINED_SYSTEM)
+        self.assertIn("compact selected-evidence summary", EVENT_ONLY_SYSTEM)
+
+    def test_candidate_generation_summary_excludes_raw_source_rows(self):
+        item = relationship(
+            league="nfl", offense_delta=0.2, defense_allowed_delta=-0.1,
+            relationship_type="opposing_recent_trends",
+            independent_recomputation={"status": "pass"},
+            evidence={"raw_play_rows": [{"epa": 999}], "offense_recent": [{"game_id": "x"}]},
+        )
+        summary = _candidate_prompt_fact(item)
+        encoded = json.dumps(summary)
+        self.assertEqual("pass", summary["independent_recomputation_status"])
+        self.assertEqual("up", summary["offense"]["delta_direction"])
+        self.assertEqual("down", summary["opposing_defense"]["delta_direction"])
+        self.assertFalse(summary["delta_directions_align"])
+        self.assertNotIn("raw_play_rows", encoded)
+        self.assertNotIn('"evidence"', encoded)
+        self.assertEqual(
+            {"selected_evidence_status": "no_eligible_candidate"},
+            _candidate_prompt_fact(None),
+        )
+
+    def test_relationship_statistics_are_recomputed_from_source_rows(self):
+        windows = {
+            "offense_recent": [("or1", 115, 108), ("or2", 125, 112), ("or3", 120, 116)],
+            "offense_baseline": [("ob1", 104, 111), ("ob2", 106, 113), ("ob3", 105, 114)],
+            "defense_allowed_recent": [("dr1", 108, 110), ("dr2", 112, 112), ("dr3", 109, 114)],
+            "defense_allowed_baseline": [("db1", 120, 120), ("db2", 118, 121), ("db3", 122, 122)],
+        }
+        evidence = {}
+        game_ids, event_ids = [], []
+        for key, rows in windows.items():
+            team = "BOS" if key.startswith("defense") else "CHI"
+            evidence[key] = []
+            for game_id, points_for, points_allowed in rows:
+                item = {
+                    "game_id": game_id, "team": team,
+                    "points_for": points_for, "points_allowed": points_allowed,
+                    "available_at": "2026-10-30T12:00:00Z",
+                }
+                evidence[key].append(item)
+                game_ids.append(game_id)
+                event_ids.append(
+                    f"{game_id}:{team}:{points_for}:{points_allowed}")
+        candidate = relationship(
+            league="nba", metric="points_per_game", defense_metric="points_per_game",
+            offense_recent=120, offense_baseline=105,
+            defense_allowed_recent=112, defense_allowed_baseline=121,
+            defense_team="BOS",
+            offense_recent_games=3, offense_baseline_games=3,
+            defense_recent_games=3, defense_baseline_games=3,
+            offense_recent_n=3, offense_baseline_n=3,
+            defense_recent_n=3, defense_baseline_n=3,
+            supporting_game_ids=sorted(set(game_ids)),
+            supporting_event_ids=sorted(event_ids),
+            evidence=evidence,
+        )
+        nba_target = {**TARGET, "league": "nba", "home_team": "BOS"}
+        scored = build_matchup_relationship(nba_target, candidate, AS_OF)
+        audit = _recompute_relationship_statistics(scored)
+        self.assertEqual("pass", audit["status"])
+        self.assertEqual(120, audit["recomputed"]["offense_recent"])
+        tampered = {**scored, "offense_recent": 121}
+        self.assertEqual("fail", _recompute_relationship_statistics(tampered)["status"])
+
+    def test_nfl_schedule_targets_use_eastern_kickoff_and_skip_out_of_window_or_late_rows(self):
+        self.assertEqual(
+            "2026-11-03T01:15:00+00:00",
+            _nfl_kickoff_utc("2026-11-02", "20:15").isoformat())
+        con = sqlite3.connect(":memory:")
+        con.row_factory = sqlite3.Row
+        con.execute("""CREATE TABLE nfl_schedule(
+            game_id TEXT, season INTEGER, week INTEGER, gameday TEXT, gametime TEXT,
+            away_team TEXT, home_team TEXT, espn TEXT, ingested_at TEXT, game_type TEXT)""")
+        con.executemany("INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,?,?,?,?)", [
+            ("inside", 2026, 8, "2026-11-02", "20:15", "CHI", "SEA", "1",
+             "2026-11-02T21:55:00Z", "REG"),
+            ("outside", 2026, 9, "2026-11-05", "20:15", "JAX", "BAL", "2",
+             "2026-11-02T21:55:00Z", "REG"),
+            ("late-capture", 2026, 8, "2026-11-02", "21:00", "ATL", "IND", "3",
+             "2026-11-03T00:21:00Z", "REG"),
+        ])
+        rows = _target_rows(con, "nfl", "2026-11-03T00:20:00Z", 10)
+        self.assertEqual(["inside"], [row["target_game_id"] for row in rows])
+        self.assertEqual("2026-11-03T01:15:00Z", rows[0]["start_utc"])
+        con.close()
+
     def test_duplicate_relationship_candidates_receive_repetition_penalty(self):
         ranked = rank_matchup_candidates(
             TARGET, [relationship(candidate_id="first"), relationship(candidate_id="second")], AS_OF)
@@ -135,10 +239,13 @@ class ResearchNarrativeRelevanceTests(unittest.TestCase):
         preview = render_relationship_preview(
             TARGET, scored, team_names={"CHI": "Chicago Bears", "SEA": "Seattle Seahawks"})
         claims = _claim_rows(TARGET, scored, preview, AS_OF, "event_only")
-        self.assertEqual(2, len(claims))
+        self.assertEqual(3, len(claims))
         self.assertEqual({"o0", "o1"}, set(claims[0]["supporting_game_ids"]))
         self.assertEqual({"d0", "d1"}, set(claims[1]["supporting_game_ids"]))
-        self.assertTrue(all(claim["mechanical_verification"] == "pass" for claim in claims))
+        self.assertEqual({"o0", "o1", "d0", "d1"},
+                         set(claims[2]["supporting_game_ids"]))
+        self.assertTrue(all(claim["independent_statistic_recomputation"]["status"] == "fail"
+                            for claim in claims))
 
     def test_combined_standings_claim_links_each_source_game_row(self):
         selected = {
@@ -147,7 +254,11 @@ class ResearchNarrativeRelevanceTests(unittest.TestCase):
             "supporting_game_ids": ["chi-1", "chi-2", "chi-3"],
             "supporting_event_ids": ["chi-1:final_result", "chi-2:final_result", "chi-3:final_result"],
             "available_at": "2026-10-30T12:00:00Z",
-            "evidence": {"games": [{"game_id": "chi-3", "available_at": "2026-10-30T12:00:00Z"}]},
+            "streak_length": 3, "streak_result": "win",
+            "evidence": {"games": [
+                {"game_id": game_id, "available_at": "2026-10-30T12:00:00Z", "result": "W"}
+                for game_id in ("chi-1", "chi-2", "chi-3")
+            ]},
         }
         row = lambda game_id, available_at: {
             "game_id": game_id, "available_at": available_at, "date": available_at[:10],
@@ -155,12 +266,18 @@ class ResearchNarrativeRelevanceTests(unittest.TestCase):
         }
         records = {
             "CHI": {"games_detail": [row("chi-1", "2026-10-10T12:00:00Z"),
-                                     row("chi-2", "2026-10-20T12:00:00Z")]},
-            "SEA": {"games_detail": [row("sea-1", "2026-10-12T12:00:00Z")]},
+                                     row("chi-2", "2026-10-20T12:00:00Z")],
+                    "games": 2, "wins": 2, "losses": 0, "ties": 0,
+                    "win_pct": 1.0, "differential": 7.0,
+                    "last10": "2-0", "streak_result": "W", "streak_length": 2},
+            "SEA": {"games_detail": [row("sea-1", "2026-10-12T12:00:00Z")],
+                    "games": 1, "wins": 1, "losses": 0, "ties": 0,
+                    "win_pct": 1.0, "differential": 7.0,
+                    "last10": "1-0", "streak_result": "W", "streak_length": 1},
         }
         preview = (
             "The Chicago Bears have won three straight games. "
-            "The Chicago Bears are 5-1; the Seattle Seahawks are 3-3."
+            "The Chicago Bears are 2-0; the Seattle Seahawks are 1-0."
         )
 
         claims = _claim_rows(TARGET, selected, preview, AS_OF, "combined", records)
@@ -199,16 +316,18 @@ class ResearchNarrativeRelevanceTests(unittest.TestCase):
                 "event_claims": [event_claim], "combined_claims": [combined_claim],
             }
 
-            _write_blind_packet(outdir, [pair])
+            private_key = Path(tmp) / "private" / "identity.jsonl"
+            _write_blind_packet(outdir, [pair], identity_key_path=private_key)
             read_jsonl = lambda path: [json.loads(line) for line in path.read_text().splitlines()]
             packet = read_jsonl(outdir / "blind_review_packet.jsonl")
             evidence = read_jsonl(outdir / "blind_evidence.jsonl")
-            identity = read_jsonl(outdir.parent / "blind_identity_key.jsonl")
+            identity = read_jsonl(private_key)
             identity_by_id = {row["blind_id"]: row["variant"] for row in identity}
             evidence_by_id = {row["blind_id"]: row for row in evidence}
 
             self.assertEqual(2, len(packet))
             self.assertEqual(2, len(evidence))
+            self.assertEqual(0o600, private_key.stat().st_mode & 0o777)
             for item in packet:
                 linked = evidence_by_id[item["blind_id"]]
                 claim = linked["claim_evidence"][0]

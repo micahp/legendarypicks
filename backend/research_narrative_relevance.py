@@ -14,6 +14,7 @@ from datetime import date, datetime, timedelta, timezone
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import secrets
 import sqlite3
@@ -31,6 +32,8 @@ NFL_SEASON, NBA_SEASON, NBA_BASELINE_SEASON = 2026, 2027, 2025
 MIN_RECENT_GAMES = 3
 MIN_BASELINE_GAMES = 3
 MIN_NFL_PLAYS_PER_GAME = 15
+PREVIEW_HORIZON_HOURS = 48
+NFL_SCHEDULE_TIMEZONE = ZoneInfo("America/New_York")
 QUARANTINED_CATEGORIES = {
     "fourth_down_attempts", "fourth_down_conversion", "drive_outcome",
     "drive_outcomes", "scoring_drive", "decisive_drive", "final_lead_change",
@@ -52,19 +55,27 @@ CORE_PREVIEW_SYSTEM = (
     "assume it from a team's usual city. No clichés, no hype, plain confident tone."
 )
 EVENT_ONLY_SYSTEM = (
-    "Use only dated, verified evidence supplied. Explain a matchup relationship only "
-    "when both sides measure the same thing and evidence shows a meaningful connection. "
-    "Describe trends and sample windows; do not claim causation, prediction, or a "
-    "decisive play. If no relationship clears the evidence gates, use one relevant "
-    "team streak or return no preview. Write one to three clear sentences."
+    "Use only the compact selected-evidence summary supplied. For a team_relationship, "
+    "describe both supplied measurements and their sample windows. Do not calculate or "
+    "add other facts. For a team_streak, state only that verified streak. If no eligible "
+    "evidence is supplied, return no preview. Do not claim causation, predict an outcome, "
+    "or describe a play as decisive. Write one to three clear sentences."
 )
 COMBINED_SYSTEM = (
-    "Use only dated, verified evidence supplied. Prefer one matchup relationship "
-    "supported by both teams' recent and baseline data; add at most one distinct "
-    "standings or player fact only when it materially helps explain this matchup. "
-    "Do not force a connection, repeat a category, claim causation, or describe a "
-    "high-EPA or scoring play as game-winning without sequence evidence. Write one "
-    "to three clear sentences."
+    "Use only the compact selected-evidence summary as evidence for a matchup claim. "
+    "Do not derive additional averages, margins, trends, or player statistics from "
+    "background text. For a team_relationship, combine the offense and opposing-defense "
+    "facts into one clear insight: state whether the supplied deltas move in the same "
+    "or opposite directions, and explain what that means for this metric. Treat points "
+    "or EPA allowed as the defense measure; higher means more allowed, lower means less. "
+    "Do not merely repeat the two measurements without explaining their relationship. "
+    "For a team_streak, state the verified streak only; do not connect it to the "
+    "opponent's record or invent a second trend. If no selected evidence is supplied, "
+    "say no verified relationship cleared the evidence gate and add no other facts. "
+    "Do not add player statistics. Do not predict an outcome or call either team "
+    "favored, stronger, a mismatch, or likely to win; avoid 'favors' and 'should win'. "
+    "Do not claim causation or describe a high-EPA or scoring play as game-winning "
+    "without sequence evidence. Write one to three clear sentences."
 )
 HEADLINE_STATS = {
     "nba": [("PTS", "points"), ("REB", "rebounds"), ("AST", "assists")],
@@ -90,6 +101,15 @@ def _as_date(value: Any) -> date | None:
         return date.fromisoformat(str(value)[:10])
     except (TypeError, ValueError):
         return None
+
+
+def _nfl_kickoff_utc(gameday: Any, gametime: Any) -> datetime | None:
+    """Convert nflverse's Eastern-time kickoff field to an aware UTC instant."""
+    try:
+        local = datetime.strptime(f"{gameday} {gametime}", "%Y-%m-%d %H:%M")
+    except (TypeError, ValueError):
+        return None
+    return local.replace(tzinfo=NFL_SCHEDULE_TIMEZONE).astimezone(timezone.utc)
 
 
 def _availability(game_date: Any, ingested_at: Any, player: bool = False) -> tuple[str, str]:
@@ -381,6 +401,8 @@ def render_relationship_preview(target: dict[str, Any], candidate: dict[str, Any
     def_delta = float(candidate["defense_allowed_delta"])
     direction_off, direction_def = ("up" if off_delta >= 0 else "down",
                                     "up" if def_delta >= 0 else "down")
+    amount_off, amount_def = ("more" if off_delta >= 0 else "less",
+                              "more" if def_delta >= 0 else "less")
     if league == "nfl":
         a = (f"The {offense}' offense has averaged {off_value:.2f} EPA per scrimmage play "
              f"over its last {candidate.get('offense_recent_games', 3)} games, "
@@ -397,7 +419,25 @@ def render_relationship_preview(target: dict[str, Any], candidate: dict[str, Any
         b = (f"The {defense} have allowed {def_value:.1f} points over their last "
              f"{candidate.get('defense_recent_games', 3)} games, {direction_def} "
              f"{abs(def_delta):.1f} from their 2025-26 average of {def_base:.1f}.")
-    return " ".join((a, b))
+    if (off_delta >= 0) == (def_delta >= 0):
+        scoring_direction = "higher" if off_delta >= 0 else "lower"
+        if league == "nfl":
+            relation = (f"The two trends align toward {scoring_direction} EPA: the "
+                        f"{offense}'s offense has generated {amount_off} EPA per play, "
+                        f"and the {defense} have allowed {amount_def} EPA per play.")
+        else:
+            relation = (f"The two scoring trends align toward {scoring_direction} totals: "
+                        f"the {offense} have scored {amount_off} points, and the "
+                        f"{defense} have allowed {amount_def} points.")
+    elif league == "nfl":
+        relation = (f"The trends pull in different directions: the {offense}'s offense is "
+                    f"generating {amount_off} EPA per play, while the {defense} have "
+                    f"allowed {amount_def} EPA per play.")
+    else:
+        relation = (f"The trends pull in different directions: the {offense} are scoring "
+                    f"{amount_off} points, while the {defense} have allowed "
+                    f"{amount_def} points.")
+    return " ".join((a, b, relation))
 
 
 def _records(games: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -519,29 +559,33 @@ def _load_nba_baseline(con: sqlite3.Connection, as_of: str) -> list[dict[str, An
 
 def _target_rows(con: sqlite3.Connection, league: str, as_of: str, count: int) -> list[dict[str, Any]]:
     cutoff = _utc(as_of)
+    if cutoff is None:
+        raise ResearchAuditError("target selection requires a valid as_of timestamp")
+    horizon_end = cutoff + timedelta(hours=PREVIEW_HORIZON_HOURS)
     out = []
     if league == "nfl":
+        first_local_date = cutoff.astimezone(NFL_SCHEDULE_TIMEZONE).date().isoformat()
         rows = con.execute(
             "SELECT game_id,season,week,gameday,gametime,away_team,home_team,espn,ingested_at "
-            "FROM nfl_schedule WHERE season=? AND game_type='REG' AND gameday>? "
-            "ORDER BY gameday,week,game_id", (NFL_SEASON, cutoff.date().isoformat())).fetchall()
+            "FROM nfl_schedule WHERE season=? AND game_type='REG' AND gameday>=? "
+            "ORDER BY gameday,gametime,game_id", (NFL_SEASON, first_local_date)).fetchall()
         for raw in rows:
             row = dict(raw)
-            captured = _utc(row["ingested_at"])
-            available = captured.isoformat(timespec="seconds").replace("+00:00", "Z") if captured else None
-            basis = "nfl_schedule.ingested_at_observed_future_schedule"
-            start_bound = f"{row['gameday']}T00:00:00Z"
-            if _utc(available) and _utc(available) <= cutoff and _utc(start_bound) > cutoff:
-                row.update({
-                    "league": "nfl", "start_utc": start_bound,
-                    "kickoff_date": str(row["gameday"])[:10],
-                    "kickoff_time_basis": "nfl_schedule gametime is local and has no timezone; UTC is a conservative date lower bound",
-                    "availability_basis": basis,
-                    "away_team": team_codes.normalize("nfl", row["away_team"]),
-                    "home_team": team_codes.normalize("nfl", row["home_team"]),
-                    "as_of": as_of, "target_game_id": str(row["game_id"]),
-                })
-                out.append(row)
+            available = _utc(row.get("ingested_at"))
+            start = _nfl_kickoff_utc(row.get("gameday"), row.get("gametime"))
+            if (available is None or available > cutoff or start is None
+                    or not cutoff < start <= horizon_end):
+                continue
+            row.update({
+                "league": "nfl", "start_utc": start.isoformat(timespec="seconds").replace("+00:00", "Z"),
+                "kickoff_date": str(row["gameday"])[:10],
+                "kickoff_time_basis": "nflverse gametime is Eastern; converted with America/New_York",
+                "availability_basis": "nfl_schedule.ingested_at_observed_future_schedule",
+                "away_team": team_codes.normalize("nfl", row["away_team"]),
+                "home_team": team_codes.normalize("nfl", row["home_team"]),
+                "as_of": as_of, "target_game_id": str(row["game_id"]),
+            })
+            out.append(row)
             if len(out) >= count:
                 break
     else:
@@ -551,19 +595,20 @@ def _target_rows(con: sqlite3.Connection, league: str, as_of: str, count: int) -
             "AND status=1 AND start_utc>? ORDER BY start_utc,game_id", (NBA_SEASON, as_of)).fetchall()
         for raw in rows:
             row = dict(raw)
-            captured = _utc(row["ingested_at"])
-            available = captured.isoformat(timespec="seconds").replace("+00:00", "Z") if captured else None
-            basis = "nba_schedule.ingested_at_observed_scheduled_game"
-            if _utc(available) and _utc(available) <= cutoff:
-                row.update({
-                    "league": "nba", "kickoff_date": str(row["game_date"]),
-                    "kickoff_time_basis": "nba_schedule.start_utc",
-                    "availability_basis": basis,
-                    "away_team": team_codes.normalize("nba", row["away_team"]),
-                    "home_team": team_codes.normalize("nba", row["home_team"]),
-                    "as_of": as_of, "target_game_id": str(row["game_id"]),
-                })
-                out.append(row)
+            available = _utc(row.get("ingested_at"))
+            start = _utc(row.get("start_utc"))
+            if (available is None or available > cutoff or start is None
+                    or not cutoff < start <= horizon_end):
+                continue
+            row.update({
+                "league": "nba", "kickoff_date": str(row["game_date"]),
+                "kickoff_time_basis": "nba_schedule.start_utc",
+                "availability_basis": "nba_schedule.ingested_at_observed_scheduled_game",
+                "away_team": team_codes.normalize("nba", row["away_team"]),
+                "home_team": team_codes.normalize("nba", row["home_team"]),
+                "as_of": as_of, "target_game_id": str(row["game_id"]),
+            })
+            out.append(row)
             if len(out) >= count:
                 break
     return out[:count]
@@ -582,7 +627,10 @@ def _team_record_line(code: str, record: dict[str, Any] | None, names: dict[str,
     if not record or not record.get("games"):
         return f"{name} ({code}): no games played yet this season (no record to cite)."
     win_pct = f"{record['win_pct']:.3f}".lstrip("0")
-    return (f"{name} ({code}): {record['wins']}-{record['losses']}, "
+    record_text = f"{record['wins']}-{record['losses']}"
+    if record.get("ties"):
+        record_text += f"-{record['ties']}"
+    return (f"{name} ({code}): {record_text}, "
             f"{win_pct} winning percentage, streak {record['streak_result']}{record['streak_length']}, "
             f"last-10 {record['last10']}, run differential {record['differential']}, "
             f"quality rank #{record['rank']} of {len(names)}")
@@ -710,6 +758,260 @@ def _window_evidence(window: list[dict[str, Any]], team: str) -> list[dict[str, 
         "epa_per_play": round(item["mean"], 5), "eligible_plays": len(item["plays"]),
         "play_ids": [str(row["play_id"]) for row in item["plays"]],
     } for item in window]
+
+
+def _attach_raw_nfl_play_rows(candidate: dict[str, Any],
+                              metric_rows: dict[tuple[str, str], list[dict[str, Any]]]) -> None:
+    if candidate.get("league") != "nfl" or candidate.get("candidate_type") != "team_relationship":
+        return
+    evidence = candidate.get("evidence") or {}
+    for key in ("offense_recent", "offense_baseline",
+                "defense_allowed_recent", "defense_allowed_baseline"):
+        side = "defense" if key.startswith("defense") else "offense"
+        team = candidate["defense_team"] if side == "defense" else candidate["offense_team"]
+        for game in evidence.get(key) or []:
+            rows = metric_rows.get((str(game["game_id"]), team), [])
+            plays = [row for row in rows if bool(row.get("allowed")) == (side == "defense")]
+            game["play_rows"] = [{
+                "game_id": str(row["game_id"]), "play_id": str(row["play_id"]),
+                "epa": float(row["epa"]), "posteam": row["posteam"],
+                "defteam": row["defteam"],
+            } for row in plays]
+
+
+def _close(actual: Any, expected: Any, tolerance: float = 1e-6) -> bool:
+    try:
+        return math.isclose(float(actual), float(expected), rel_tol=0.0, abs_tol=tolerance)
+    except (TypeError, ValueError):
+        return False
+
+
+def _recompute_relationship_statistics(candidate: dict[str, Any]) -> dict[str, Any]:
+    evidence = candidate.get("evidence") or {}
+    league = str(candidate.get("league") or "").lower()
+    windows = (
+        ("offense_recent", "offense_recent"),
+        ("offense_baseline", "offense_baseline"),
+        ("defense_allowed_recent", "defense_allowed_recent"),
+        ("defense_allowed_baseline", "defense_allowed_baseline"),
+    )
+    mismatches, recomputed, checked_rows = [], {}, 0
+    all_game_ids, all_event_ids = set(), set()
+    for window_key, value_key in windows:
+        rows = evidence.get(window_key) or []
+        values = []
+        if not rows:
+            mismatches.append(f"{window_key}:missing_source_rows")
+            continue
+        for row in rows:
+            game_id = str(row.get("game_id") or "")
+            all_game_ids.add(game_id)
+            if league == "nfl":
+                plays = row.get("play_rows") or []
+                play_ids = [str(play.get("play_id")) for play in plays]
+                expected_team = (candidate.get("defense_team") if window_key.startswith("defense")
+                                 else candidate.get("offense_team"))
+                if not plays:
+                    mismatches.append(f"{window_key}:{game_id}:raw_play_rows_missing")
+                    continue
+                if len(plays) < MIN_NFL_PLAYS_PER_GAME:
+                    mismatches.append(f"{window_key}:{game_id}:below_minimum_play_count")
+                if len(plays) != int(row.get("eligible_plays") or 0):
+                    mismatches.append(f"{window_key}:{game_id}:play_count_differs")
+                if set(play_ids) != set(map(str, row.get("play_ids") or [])):
+                    mismatches.append(f"{window_key}:{game_id}:play_ids_differ")
+                if any(
+                    str(play.get("game_id")) != game_id or
+                    (str(play.get("defteam")) if window_key.startswith("defense") else
+                     str(play.get("posteam"))) != str(expected_team)
+                    for play in plays
+                ):
+                    mismatches.append(f"{window_key}:{game_id}:team_or_game_id_differs")
+                play_values = [play.get("epa") for play in plays]
+                if any(not isinstance(value, (int, float)) for value in play_values):
+                    mismatches.append(f"{window_key}:{game_id}:invalid_epa_value")
+                    continue
+                game_mean = sum(float(value) for value in play_values) / len(play_values)
+                if not _close(game_mean, row.get("epa_per_play"), tolerance=0.000006):
+                    mismatches.append(f"{window_key}:{game_id}:stored_game_mean_differs")
+                all_event_ids.update(f"{game_id}:{play_id}" for play_id in play_ids)
+                checked_rows += len(plays)
+            else:
+                expected_team = (candidate.get("defense_team") if window_key.startswith("defense")
+                                 else candidate.get("offense_team"))
+                if str(row.get("team")) != str(expected_team):
+                    mismatches.append(f"{window_key}:{game_id}:team_differs")
+                stat_key = "points_allowed" if window_key.startswith("defense") else "points_for"
+                value = row.get(stat_key)
+                if not isinstance(value, (int, float)):
+                    mismatches.append(f"{window_key}:{game_id}:missing_{stat_key}")
+                    continue
+                game_mean = float(value)
+                event_id = (f"{game_id}:{row.get('team')}:{row.get('points_for')}"
+                            f":{row.get('points_allowed')}")
+                all_event_ids.add(event_id)
+                checked_rows += 1
+            values.append(game_mean)
+        if not values:
+            continue
+        computed_value = sum(values) / len(values)
+        recomputed[value_key] = computed_value
+        if not _close(computed_value, candidate.get(value_key)):
+            mismatches.append(f"{value_key}:candidate_summary_differs")
+        count_key = (f"defense_{window_key.rsplit('_', 1)[-1]}_games"
+                     if window_key.startswith("defense_allowed") else f"{value_key}_games")
+        if len(values) != int(candidate.get(count_key) or 0):
+            mismatches.append(f"{count_key}:source_row_count_differs")
+
+    if all(key in recomputed for key in (
+            "offense_recent", "offense_baseline",
+            "defense_allowed_recent", "defense_allowed_baseline")):
+        offense_delta = recomputed["offense_recent"] - recomputed["offense_baseline"]
+        defense_delta = (recomputed["defense_allowed_recent"] -
+                         recomputed["defense_allowed_baseline"])
+        recomputed["offense_delta"] = offense_delta
+        recomputed["defense_allowed_delta"] = defense_delta
+        if not _close(round(offense_delta, 4), candidate.get("offense_delta")):
+            mismatches.append("offense_delta:candidate_summary_differs")
+        if not _close(round(defense_delta, 4), candidate.get("defense_allowed_delta")):
+            mismatches.append("defense_allowed_delta:candidate_summary_differs")
+        expected_relationship = (
+            "aligned_scoring_pressure" if offense_delta * defense_delta > 0
+            else "opposing_recent_trends")
+        if candidate.get("relationship_type") != expected_relationship:
+            mismatches.append("relationship_type:direction_differs")
+    if all_game_ids != set(map(str, candidate.get("supporting_game_ids") or [])):
+        mismatches.append("supporting_game_ids:differ")
+    if all_event_ids != set(map(str, candidate.get("supporting_event_ids") or [])):
+        mismatches.append("supporting_event_ids:differ")
+    return {
+        "status": "pass" if not mismatches else "fail",
+        "method": "raw_nfl_pbp_epa_rows" if league == "nfl" else "schedule_score_rows",
+        "checked_source_rows": checked_rows, "recomputed": recomputed,
+        "reported": {key: candidate.get(key) for _, key in windows},
+        "mismatches": sorted(set(mismatches)),
+    }
+
+
+def _recompute_team_record(record: dict[str, Any]) -> dict[str, Any]:
+    rows = record.get("source_game_rows") or record.get("games_detail") or []
+    mismatches = []
+    results = []
+    for row in rows:
+        if "for" not in row or "against" not in row:
+            mismatches.append("source_row_missing_scores")
+            continue
+        result = "W" if row["for"] > row["against"] else "L" if row["for"] < row["against"] else "T"
+        if row.get("result") != result:
+            mismatches.append(f"{row.get('game_id')}:result_differs_from_scores")
+        results.append({**row, "result": result})
+    if not results:
+        mismatches.append("source_rows_missing")
+    results.sort(key=lambda row: (str(row.get("date") or row.get("game_date") or ""),
+                                  str(row.get("game_id") or "")))
+    wins = sum(row["result"] == "W" for row in results)
+    losses = sum(row["result"] == "L" for row in results)
+    ties = sum(row["result"] == "T" for row in results)
+    count = len(results)
+    recent = results[-10:]
+    last10 = f"{sum(row['result'] == 'W' for row in recent)}-{sum(row['result'] == 'L' for row in recent)}"
+    if any(row["result"] == "T" for row in recent):
+        last10 += f"-{sum(row['result'] == 'T' for row in recent)}"
+    last_result = results[-1]["result"] if results else None
+    streak = 0
+    for row in reversed(results):
+        if row["result"] != last_result:
+            break
+        streak += 1
+    computed = {
+        "games": count, "wins": wins, "losses": losses, "ties": ties,
+        "win_pct": (wins + 0.5 * ties) / count if count else None,
+        "differential": round(sum(row["for"] - row["against"] for row in results) / count, 2)
+        if count else 0,
+        "last10": last10, "streak_result": last_result, "streak_length": streak,
+    }
+    for key, value in computed.items():
+        matches = _close(record.get(key), value) if isinstance(value, (int, float)) else record.get(key) == value
+        if not matches:
+            mismatches.append(f"{key}:record_differs")
+    row_ids = {str(row.get("game_id")) for row in results}
+    if row_ids != set(map(str, record.get("supporting_game_ids") or row_ids)):
+        mismatches.append("supporting_game_ids:differ")
+    return {"status": "pass" if not mismatches else "fail", "source_rows": count,
+            "recomputed": computed, "mismatches": sorted(set(mismatches))}
+
+
+def _recompute_record_population(records: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    audits = {team: _recompute_team_record(record) for team, record in records.items()}
+    ranked = sorted(records, key=lambda team: (
+        -float(audits[team]["recomputed"].get("win_pct") or 0),
+        -float(audits[team]["recomputed"].get("differential") or 0), team))
+    for rank, team in enumerate(ranked, 1):
+        audits[team]["recomputed"]["rank"] = rank
+        if records[team].get("rank") != rank:
+            audits[team]["mismatches"].append("rank:record_differs")
+            audits[team]["status"] = "fail"
+    return audits
+
+
+def _recompute_player_form(player: dict[str, Any], league: str) -> dict[str, Any]:
+    logs = player.get("source_logs") or []
+    mismatches = []
+    recomputed = {}
+    for key, label in HEADLINE_STATS[league]:
+        values = [log.get("stats", {}).get(key) for log in logs
+                  if isinstance(log.get("stats", {}).get(key), (int, float))]
+        if len(values) >= 3:
+            recomputed[label] = values
+    if recomputed != (player.get("statistics") or {}):
+        mismatches.append("displayed_statistics_differ_from_source_logs")
+    source_ids = [log.get("player_game_log_id") for log in logs]
+    if source_ids != list(player.get("supporting_log_ids") or []):
+        mismatches.append("supporting_log_ids:differ")
+    available = [log.get("available_at") for log in logs if log.get("available_at")]
+    if available and max(available) != player.get("available_at"):
+        mismatches.append("available_at:source_log_max_differs")
+    return {"status": "pass" if not mismatches else "fail", "source_rows": len(logs),
+            "recomputed": recomputed, "mismatches": mismatches}
+
+
+def _audit_reconstructed_input(fields: dict[str, Any], league: str) -> dict[str, Any]:
+    records = {
+        record.get("team"): record.get("independent_recomputation")
+        for record in fields.get("record_facts") or [] if record
+    }
+    players = {
+        str(player.get("player_id")): player.get("independent_recomputation")
+        for player in fields.get("player_form") or []
+    }
+    audits = [audit for audit in records.values()] + [audit for audit in players.values()]
+    missing = sum(audit is None for audit in audits)
+    failed = sum(audit is not None and audit.get("status") != "pass" for audit in audits)
+    return {
+        "status": "pass" if not missing and not failed else "fail",
+        "team_records": records, "player_form": players,
+        "checks": len(audits), "missing_audits": missing, "failed_audits": failed,
+        "league": league,
+    }
+
+
+def _recompute_streak(candidate: dict[str, Any]) -> dict[str, Any]:
+    rows = candidate.get("evidence", {}).get("games") or []
+    expected = {"win": "W", "loss": "L", "tie": "T"}.get(
+        candidate.get("streak_result"))
+    mismatches = []
+    if expected is None:
+        mismatches.append("streak_result:unknown_value")
+    if len(rows) != int(candidate.get("streak_length") or 0):
+        mismatches.append("streak_length:source_row_count_differs")
+    if not rows or expected is None or any(row.get("result") != expected for row in rows):
+        mismatches.append("streak_result:source_rows_differ")
+    if {str(row.get("game_id")) for row in rows} != set(
+            map(str, candidate.get("supporting_game_ids") or [])):
+        mismatches.append("supporting_game_ids:differ")
+    return {"status": "pass" if not mismatches else "fail", "source_rows": len(rows),
+            "recomputed": {"streak_length": len(rows), "streak_result": expected},
+            "mismatches": mismatches}
 
 
 def _opponent_quality(team: str, recent_rows: list[dict[str, Any]],
@@ -911,7 +1213,7 @@ def _target_streak(target: dict[str, Any], team: str, records: dict[str, dict[st
         "candidate_id": f"streak:{team}:{record['streak_result']}{record['streak_length']}",
         "candidate_type": "team_streak", "category": "recent_streak",
         "league": target["league"], "team": team, "team_name": names.get(team, team),
-        "streak_result": "win" if record["streak_result"] == "W" else "loss",
+        "streak_result": {"W": "win", "L": "loss", "T": "tie"}[record["streak_result"]],
         "streak_length": record["streak_length"],
         "source_game_date": detail[0]["date"],
             "supporting_game_ids": [str(row["game_id"]) for row in detail],
@@ -920,6 +1222,62 @@ def _target_streak(target: dict[str, Any], team: str, records: dict[str, dict[st
         "evidence": {"source_table": "nfl_schedule" if target["league"] == "nfl"
                      else "nba_schedule", "games": detail},
     }
+
+
+def _candidate_prompt_fact(candidate: dict[str, Any] | None) -> dict[str, Any]:
+    """Return only the independently checked summary fields needed for generation."""
+    if not candidate:
+        return {"selected_evidence_status": "no_eligible_candidate"}
+    candidate_type = candidate.get("candidate_type")
+    audit_status = (candidate.get("independent_recomputation") or {}).get("status")
+    if audit_status != "pass":
+        return {"selected_evidence_status": "independent_recomputation_failed",
+                "independent_recomputation_status": audit_status}
+    if candidate_type == "team_relationship":
+        offense_delta = float(candidate["offense_delta"])
+        defense_delta = float(candidate["defense_allowed_delta"])
+        return {
+            "selected_evidence_status": "eligible_and_independently_recomputed",
+            "candidate_type": candidate_type,
+            "league": candidate.get("league"),
+            "metric": candidate.get("metric"),
+            "offense": {
+                "team": candidate.get("offense_team"),
+                "recent_mean": candidate.get("offense_recent"),
+                "baseline_mean": candidate.get("offense_baseline"),
+                "delta": candidate.get("offense_delta"),
+                "recent_games": candidate.get("offense_recent_games"),
+                "baseline_games": candidate.get("offense_baseline_games"),
+                "delta_direction": "up" if offense_delta > 0 else "down" if offense_delta < 0 else "flat",
+            },
+            "opposing_defense": {
+                "team": candidate.get("defense_team"),
+                "measure": "points_allowed_per_game" if candidate.get("league") == "nba"
+                    else "epa_allowed_per_scrimmage_play",
+                "recent_mean": candidate.get("defense_allowed_recent"),
+                "baseline_mean": candidate.get("defense_allowed_baseline"),
+                "delta": candidate.get("defense_allowed_delta"),
+                "recent_games": candidate.get("defense_recent_games"),
+                "baseline_games": candidate.get("defense_baseline_games"),
+                "delta_direction": "up" if defense_delta > 0 else "down" if defense_delta < 0 else "flat",
+            },
+            "delta_directions_align": (offense_delta > 0) == (defense_delta > 0)
+                if offense_delta and defense_delta else False,
+            "relationship_type": candidate.get("relationship_type"),
+            "independent_recomputation_status": audit_status,
+        }
+    if candidate_type == "team_streak":
+        return {
+            "selected_evidence_status": "eligible_and_independently_recomputed",
+            "candidate_type": candidate_type,
+            "league": candidate.get("league"),
+            "team": candidate.get("team"),
+            "team_name": candidate.get("team_name"),
+            "streak_result": candidate.get("streak_result"),
+            "streak_length": candidate.get("streak_length"),
+            "independent_recomputation_status": audit_status,
+        }
+    return {"selected_evidence_status": "no_supported_prompt_summary"}
 
 
 def _team_record_evidence(record: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -932,6 +1290,8 @@ def _team_record_evidence(record: dict[str, Any] | None) -> dict[str, Any] | Non
     result["supporting_event_ids"] = [f"{item['game_id']}:final_result" for item in record["games_detail"]]
     result["available_at"] = max(item["available_at"] for item in record["games_detail"])
     result["source_game_rows"] = record["games_detail"]
+    result["independent_recomputation"] = record.get("_independent_recomputation") or \
+        _recompute_team_record(record)
     return result
 
 
@@ -980,7 +1340,8 @@ def _date_label(target: dict[str, Any]) -> str:
 
 def _streak_preview(candidate: dict[str, Any], names: dict[str, str]) -> str:
     team = names.get(candidate["team"], candidate["team"])
-    result = "won" if candidate["streak_result"] == "win" else "lost"
+    result = {"win": "won", "loss": "lost", "tie": "tied"}.get(
+        candidate["streak_result"], "played")
     number = {3: "three", 4: "four", 5: "five", 6: "six"}.get(
         int(candidate["streak_length"]), str(candidate["streak_length"]))
     return f"The {team} have {result} {number} straight games."
@@ -990,8 +1351,14 @@ def _record_sentence(home: dict[str, Any] | None, away: dict[str, Any] | None,
                      names: dict[str, str], home_code: str, away_code: str) -> str | None:
     if not home or not away or abs(home["wins"] - away["wins"]) < 2:
         return None
-    return (f"The {names.get(away_code, away_code)} are {away['wins']}-{away['losses']}; "
-            f"the {names.get(home_code, home_code)} are {home['wins']}-{home['losses']}.")
+    away_record = f"{away['wins']}-{away['losses']}"
+    home_record = f"{home['wins']}-{home['losses']}"
+    if away.get("ties"):
+        away_record += f"-{away['ties']}"
+    if home.get("ties"):
+        home_record += f"-{home['ties']}"
+    return (f"The {names.get(away_code, away_code)} are {away_record}; "
+            f"the {names.get(home_code, home_code)} are {home_record}.")
 
 
 def _candidate_grounding(target: dict[str, Any], selected: dict[str, Any] | None,
@@ -1012,16 +1379,28 @@ def _claim_rows(target: dict[str, Any], selected: dict[str, Any] | None,
         return []
     sentences = [part.strip() for part in preview.split(". ") if part.strip()]
     sentences = [part if part.endswith(".") else part + "." for part in sentences]
-    max_selected_claims = 2 if selected.get("candidate_type") == "team_relationship" else 1
+    is_relationship = selected.get("candidate_type") == "team_relationship"
+    max_selected_claims = 3 if is_relationship else 1
     selected_sentences = sentences[:max_selected_claims]
     evidence = selected.get("evidence") or {}
+    statistic_recomputation = selected.get("independent_recomputation")
+    if not statistic_recomputation:
+        statistic_recomputation = (_recompute_relationship_statistics(selected) if is_relationship
+                                   else _recompute_streak(selected))
     rows = []
     for index, sentence in enumerate(selected_sentences):
-        if selected.get("candidate_type") == "team_relationship":
-            side = ("offense" if index == 0 else "defense")
-            evidence_prefix = "offense" if side == "offense" else "defense_allowed"
-            windows = (evidence.get(f"{evidence_prefix}_recent") or []) + (
-                evidence.get(f"{evidence_prefix}_baseline") or [])
+        if is_relationship:
+            if index == 0:
+                evidence_prefixes = ("offense",)
+            elif index == 1:
+                evidence_prefixes = ("defense_allowed",)
+            else:
+                evidence_prefixes = ("offense", "defense_allowed")
+            windows = [
+                item for prefix in evidence_prefixes
+                for suffix in ("recent", "baseline")
+                for item in evidence.get(f"{prefix}_{suffix}") or []
+            ]
             game_ids = sorted({str(item["game_id"]) for item in windows})
             event_ids = []
             for item in windows:
@@ -1045,6 +1424,9 @@ def _claim_rows(target: dict[str, Any], selected: dict[str, Any] | None,
             "supporting_game_ids": game_ids, "supporting_event_ids": event_ids,
         }
         rejection = claim_cutoff_rejection(fact, target, as_of)
+        if statistic_recomputation.get("status") != "pass":
+            recompute_reason = "independent_statistic_recomputation_failed"
+            rejection = f"{rejection};{recompute_reason}" if rejection else recompute_reason
         rows.append({
             "target_game_id": target["target_game_id"], "league": target["league"],
             "variant": variant, "claim_index": index + 1, "as_of": as_of,
@@ -1057,6 +1439,7 @@ def _claim_rows(target: dict[str, Any], selected: dict[str, Any] | None,
             "rejection_reason": rejection, "selection_score": selected.get("selection_score"),
             "score_components": selected.get("score_components"),
             "source_evidence": claim_evidence,
+            "independent_statistic_recomputation": statistic_recomputation,
         })
     if variant == "combined" and records:
         home, away = records.get(target["home_team"]), records.get(target["away_team"])
@@ -1070,6 +1453,16 @@ def _claim_rows(target: dict[str, Any], selected: dict[str, Any] | None,
                     "supporting_game_ids": game_ids, "supporting_event_ids": event_ids}
             rejection = claim_cutoff_rejection(fact, target, as_of)
             sentence = sentences[-1] if len(sentences) > max_selected_claims else ""
+            home_audit = home.get("_independent_recomputation") or _recompute_team_record(home)
+            away_audit = away.get("_independent_recomputation") or _recompute_team_record(away)
+            record_audit = {
+                "status": "pass" if home_audit["status"] == away_audit["status"] == "pass" else "fail",
+                "method": "team_game_score_rows",
+                "teams": {target["home_team"]: home_audit, target["away_team"]: away_audit},
+            }
+            if record_audit["status"] != "pass":
+                recompute_reason = "independent_standings_recomputation_failed"
+                rejection = f"{rejection};{recompute_reason}" if rejection else recompute_reason
             rows.append({
                 "target_game_id": target["target_game_id"], "league": target["league"],
                 "variant": variant, "claim_index": len(rows) + 1, "as_of": as_of,
@@ -1079,6 +1472,7 @@ def _claim_rows(target: dict[str, Any], selected: dict[str, Any] | None,
                 "mechanical_verification": "pass" if not rejection else "fail",
                 "rejection_reason": rejection,
                 "source_evidence": game_rows,
+                "independent_statistic_recomputation": record_audit,
             })
     return rows
 
@@ -1125,10 +1519,36 @@ def _prompt_entry(target: dict[str, Any], variant: str, system: str,
     }
 
 
-def _write_blind_packet(outdir: Path, pairs: list[dict[str, Any]]) -> dict[str, Any]:
+def _blind_identity_key_path(outdir: Path) -> Path:
+    cache_root = Path(os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache")))
+    return (cache_root / "legendarypicks" / "research" / outdir.parent.name /
+            outdir.name / "blind_identity_key.jsonl")
+
+
+def _write_private_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    os.chmod(path.parent, 0o700)
+    temporary = path.with_name(f"{path.name}.{secrets.token_hex(8)}.tmp")
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            for row in rows:
+                handle.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        os.chmod(path, 0o600)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def _write_blind_packet(outdir: Path, pairs: list[dict[str, Any]],
+                        identity_key_path: Path | None = None) -> dict[str, Any]:
     blind_rows, identity, evidence_rows = [], [], []
     for pair in pairs:
         variants = [
+            ("core_stories_baseline", pair.get("baseline_preview"), pair.get("baseline_claims", [])),
             ("event_only", pair["event_only_preview"], pair.get("event_claims", [])),
             ("combined", pair["combined_preview"], pair.get("combined_claims", [])),
         ]
@@ -1148,8 +1568,11 @@ def _write_blind_packet(outdir: Path, pairs: list[dict[str, Any]]) -> dict[str, 
                     key: claim[key] for key in (
                         "category", "claim_index", "claim_text", "occurred_at", "available_at",
                         "supporting_game_ids", "supporting_event_ids", "source_evidence",
-                        "mechanical_verification", "rejection_reason") if key in claim
+                        "mechanical_verification", "rejection_reason",
+                        "independent_statistic_recomputation") if key in claim
                 } for claim in claims],
+                "input_evidence": (pair.get("variant_input_evidence") or {}).get(variant, []),
+                "evidence_note": "Input evidence is supplied for review; it is not an automatic claim alignment for generated prose.",
             })
             identity.append({
                 "blind_id": blind_id, "variant": variant,
@@ -1170,13 +1593,16 @@ def _write_blind_packet(outdir: Path, pairs: list[dict[str, Any]]) -> dict[str, 
             writer.writerow({"blind_id": row["blind_id"],
                              "blind_target_id": row["blind_target_id"],
                              "league": row["league"]})
-    private_key = outdir.parent / "blind_identity_key.jsonl"
-    _jsonl_write(private_key, identity)
+    private_key = identity_key_path or _blind_identity_key_path(outdir)
+    repo_root = Path(__file__).resolve().parents[1]
+    if repo_root == private_key.resolve() or repo_root in private_key.resolve().parents:
+        raise ResearchAuditError("blind identity key must be stored outside the repository")
+    _write_private_jsonl(private_key, identity)
     return {
         "blind_drafts": len(blind_rows),
         "targets_with_candidate_drafts": len({row["blind_target_id"] for row in blind_rows}),
-        "baseline_preview_available": False,
-        "baseline_reason": "core_stories output requires model inference; offline mode preserved its exact system prompt and reconstructed input",
+        "baseline_preview_available": any(pair.get("baseline_preview") for pair in pairs),
+        "identity_key_storage": "external_owner_only_research_cache",
         "identity_key_path": str(private_key),
     }
 
@@ -1193,6 +1619,7 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
         raise ResearchAuditError("database connection is not query-only")
 
     examples, claims, rejected, baseline_queue, candidate_queue = [], [], [], [], []
+    statistic_audits = []
     pairs = []
     category_coverage = Counter()
     with closing(open_readonly(db_path)) as con:
@@ -1202,6 +1629,14 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
         nba_games, nba_schedule_rejected = _load_nba_current_games(con, as_of)
         nba_baseline = _load_nba_baseline(con, as_of)
         nfl_records, nba_records = _records(nfl_games), _records(nba_games)
+        record_audits = {
+            "nfl": _recompute_record_population(nfl_records),
+            "nba": _recompute_record_population(nba_records),
+        }
+        for league_records, audits in ((nfl_records, record_audits["nfl"]),
+                                       (nba_records, record_audits["nba"])):
+            for team, record in league_records.items():
+                record["_independent_recomputation"] = audits[team]
         nfl_names, nba_names = _team_names(con, "nfl"), _team_names(con, "nba")
         nfl_metrics, nfl_eligible_plays = _nfl_play_metrics(con)
 
@@ -1228,6 +1663,7 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
                 }
                 for team, lines in player_lines.items():
                     for line in lines:
+                        line["independent_recomputation"] = _recompute_player_form(line, league)
                         raw_candidates.append({
                             "candidate_id": f"player-form:{line['player_id']}",
                             "candidate_type": "player_form", "category": "player_form",
@@ -1251,15 +1687,21 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
                     target, "core_stories_baseline", CORE_PREVIEW_SYSTEM, baseline_grounding))
 
                 selected = preview["selected"]
-                evidence_json = json.dumps(selected or {}, ensure_ascii=False, sort_keys=True)
+                if selected:
+                    _attach_raw_nfl_play_rows(selected, nfl_metrics)
+                    selected["independent_recomputation"] = (
+                        _recompute_relationship_statistics(selected)
+                        if selected.get("candidate_type") == "team_relationship"
+                        else _recompute_streak(selected))
+                prompt_fact = _candidate_prompt_fact(selected)
+                evidence_json = json.dumps(prompt_fact, ensure_ascii=False, sort_keys=True)
                 event_user = (
                     f"Matchup: {target['away_team']} vs {target['home_team']}. "
-                    f"Date: {_date_label(target)}.\nVerified selected evidence (JSON):\n{evidence_json}")
+                    f"Date: {_date_label(target)}.\nVerified selected-evidence summary (JSON):\n{evidence_json}")
                 candidate_queue.append(_prompt_entry(
                     target, "event_only", EVENT_ONLY_SYSTEM, event_user))
                 combined_user = baseline_grounding
-                if selected:
-                    combined_user += "\nVerified selected matchup evidence (JSON):\n" + evidence_json
+                combined_user += "\nVerified selected-evidence summary (JSON):\n" + evidence_json
                 candidate_queue.append(_prompt_entry(
                     target, "combined", COMBINED_SYSTEM, combined_user))
 
@@ -1298,13 +1740,23 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
                     team: _team_record_evidence(records.get(team))
                     for team in (target["away_team"], target["home_team"])
                 }
+                input_audit = _audit_reconstructed_input(baseline_fields, league)
+                selected_audit = (selected.get("independent_recomputation") if selected else None)
+                target_audit = {
+                    "target_game_id": target["target_game_id"], "league": league,
+                    "input_evidence": input_audit,
+                    "selected_candidate": selected_audit,
+                    "status": "pass" if input_audit["status"] == "pass" and
+                    (selected_audit is None or selected_audit.get("status") == "pass") else "fail",
+                }
+                statistic_audits.append(target_audit)
                 blind_target_id = f"target-{len(pairs) + 1:03d}"
                 example = {
                     "target_game_id": target["target_game_id"], "league": league,
                     "matchup": {"away": target["away_team"], "home": target["home_team"]},
                     "kickoff_date": target["kickoff_date"],
                     "kickoff_time_basis": target["kickoff_time_basis"],
-                    "kickoff_utc_or_conservative_lower_bound": target["start_utc"],
+                    "kickoff_utc": target["start_utc"],
                     "schedule_row_available_at": target["availability_basis"],
                     "as_of": as_of,
                     "baseline_system_prompt": CORE_PREVIEW_SYSTEM,
@@ -1321,6 +1773,7 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
                     "team_record_evidence": record_evidence,
                     "player_form_input_lines": player_lines,
                     "mechanical_claims": target_claims,
+                    "independent_evidence_audit": target_audit,
                     "independent_human_rating": "pending",
                 }
                 examples.append(example)
@@ -1329,10 +1782,19 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
                     "matchup": example["matchup"], "as_of": as_of,
                     "kickoff_date": target["kickoff_date"],
                     "blind_target_id": blind_target_id,
+                    "baseline_preview": None,
                     "event_only_preview": preview["event_only_preview"],
                     "combined_preview": preview["combined_preview"],
                     "event_claims": event_claims,
                     "combined_claims": combined_claims,
+                    "variant_input_evidence": {
+                        "core_stories_baseline": baseline_fields,
+                        "event_only": selected.get("evidence", {}) if selected else {},
+                        "combined": {
+                            "baseline_fields": baseline_fields,
+                            "selected_candidate": selected or {},
+                        },
+                    },
                 })
 
     all_prompts = baseline_queue + candidate_queue
@@ -1341,8 +1803,9 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
     estimated_input_tokens = math.ceil(prompt_chars / 4)
     total_calls = len(all_prompts)
     budget = {
-        "model": "deepseek/deepseek-v4.1-flash (repository default; not reverified online)",
-        "calls_for_10_nfl_plus_10_nba_three_variants": total_calls,
+        "model": "deepseek/deepseek-v4.1-flash (repository default)",
+        "calls_for_selected_targets_three_variants": total_calls,
+        "selected_target_count": len(examples),
         "per_target_calls": 3,
         "max_completion_tokens_per_call_for_opt_in": 600,
         "max_completion_tokens_total": total_calls * 600,
@@ -1361,6 +1824,7 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
     _json_write(outdir / "database_coverage.json", inventory)
     _jsonl_write(outdir / "examples.jsonl", examples)
     _jsonl_write(outdir / "claim_audit.jsonl", claims)
+    _jsonl_write(outdir / "statistic_audit.jsonl", statistic_audits)
     _jsonl_write(outdir / "rejected_facts.jsonl", rejected)
     _jsonl_write(outdir / "baseline_generation_queue.jsonl", baseline_queue)
     _jsonl_write(outdir / "candidate_generation_queue.jsonl", candidate_queue)
@@ -1369,10 +1833,12 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
         row["selected_candidate"]["candidate_type"]
         for row in examples if row.get("selected_candidate"))
     claim_pass = sum(row["mechanical_verification"] == "pass" for row in claims)
+    statistic_pass = sum(row["status"] == "pass" for row in statistic_audits)
     manifest = {
         "objective": "offline deterministic matchup relevance ranking",
         "database": inventory["database"], "database_mode": "mode=ro + query_only",
         "as_of": as_of, "targets": {"nfl": len(nfl_targets), "nba": len(nba_targets)},
+        "target_horizon_hours": PREVIEW_HORIZON_HOURS,
         "core_stories_source": "backend/core_stories.py::generate_game_story",
         "core_system_prompt_sha256": _sha(CORE_PREVIEW_SYSTEM),
         "core_stories_unchanged": True,
@@ -1392,11 +1858,15 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
         "mechanical_claims": {
             "total": len(claims), "passed": claim_pass, "failed": len(claims) - claim_pass,
         },
+        "independent_evidence_recomputation": {
+            "targets_checked": len(statistic_audits), "targets_passed": statistic_pass,
+            "targets_failed": len(statistic_audits) - statistic_pass,
+        },
         "external_requests": 0, "model_inference_requests": 0,
         "human_ratings_entered": 0, "independent_human_evaluation": False,
         "inference_budget": budget, "blind_packet": blind_status,
         "limitations": [
-            "NFL schedule has local gametime without a timezone; its UTC game-date lower bound is sufficient to prove the shared cutoff precedes the target date, but is not the kickoff instant.",
+            "NFL kickoff timestamps convert nflverse's Eastern gametime to UTC using America/New_York.",
             "Upcoming NBA schedule rows have no stored ESPN event crosswalk; no ESPN or publisher request was made.",
             "NBA team_game_stats has no populated current-season stat rows; this ranking uses local NBA schedule scores and prior-season nba_sportsdataverse_games scores.",
             "core_stories matchup_context from ESPN summary is marked unavailable in baseline manifests.",
@@ -1410,6 +1880,299 @@ def build_relevance_packet(db_path: str, outdir: str | Path, as_of: str = AS_OF,
     return manifest
 
 
+def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def _normalized_draft(text: str) -> str:
+    return " ".join(text.casefold().split())
+
+
+def _openrouter_api_key() -> str | None:
+    key = os.environ.get("OPENROUTER_API_KEY")
+    if key:
+        return key.strip()
+    for env_path in ("/root/legendarypicks/.env", "/root/.hermes/.env"):
+        try:
+            with open(env_path, encoding="utf-8") as handle:
+                for line in handle:
+                    if line.startswith("OPENROUTER_API_KEY="):
+                        return line.split("=", 1)[1].strip().strip('"').strip("'")
+        except OSError:
+            continue
+    return None
+
+
+def _openrouter_chat(system: str, user: str, max_tokens: int, model: str) -> str | None:
+    key = _openrouter_api_key()
+    if not key:
+        raise ResearchAuditError("OPENROUTER_API_KEY is not configured")
+    import urllib.error
+    import urllib.request
+
+    body = {
+        "model": model, "temperature": 0.4, "max_tokens": max_tokens,
+        "messages": [{"role": "system", "content": system},
+                     {"role": "user", "content": user}],
+    }
+    effort = os.environ.get("LP_LLM_REASONING", "none")
+    if effort and effort != "default":
+        body["reasoning_effort"] = effort
+    request = urllib.request.Request(
+        "https://openrouter.ai/api/v1/chat/completions",
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                 "User-Agent": "legendarypicks-research/1.0"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=180) as response:
+            payload = json.loads(response.read())
+        return (payload["choices"][0]["message"].get("content") or "").strip() or None
+    except urllib.error.HTTPError as exc:
+        print(f"OpenRouter research request failed with HTTP {exc.code}.", flush=True)
+        return None
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError, IndexError, TypeError) as exc:
+        print(f"OpenRouter research request failed: {type(exc).__name__}.", flush=True)
+        return None
+
+
+def run_three_way_comparison(outdir: str | Path, max_tokens: int = 600,
+                             chat_fn=None, provider: str = "openrouter",
+                             model: str | None = None) -> dict[str, Any]:
+    """Generate matched baseline, event-only, and combined drafts for selected targets."""
+    from research_narrative_event_knowledge import _json_write, _jsonl_write
+
+    if provider != "openrouter":
+        raise ResearchAuditError("this research run is authorized for the OpenRouter provider only")
+    outdir = Path(outdir).resolve()
+    examples = _read_jsonl(outdir / "examples.jsonl")
+    baseline_queue = _read_jsonl(outdir / "baseline_generation_queue.jsonl")
+    candidate_queue = _read_jsonl(outdir / "candidate_generation_queue.jsonl")
+    if not examples:
+        raise ResearchAuditError("build the cutoff-matched research packet before model generation")
+
+    prompts: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    for row in baseline_queue + candidate_queue:
+        prompts[str(row["target_game_id"])][row["variant"]] = row
+    required = {"core_stories_baseline", "event_only", "combined"}
+    cutoff_values = {row.get("as_of") for row in examples}
+    if len(cutoff_values) != 1:
+        raise ResearchAuditError("three-way targets must share one as_of cutoff")
+    as_of = next(iter(cutoff_values))
+    cutoff = _utc(as_of)
+    if cutoff is None:
+        raise ResearchAuditError("three-way targets have an invalid as_of cutoff")
+    for example in examples:
+        target_id = str(example["target_game_id"])
+        target_prompts = prompts.get(target_id, {})
+        if set(target_prompts) != required:
+            raise ResearchAuditError(f"target {target_id} does not have exactly three prompts")
+        kickoff = _utc(example.get("kickoff_utc"))
+        if kickoff is None:
+            raise ResearchAuditError(f"target {target_id} has no exact kickoff timestamp")
+        if not cutoff < kickoff <= cutoff + timedelta(hours=PREVIEW_HORIZON_HOURS):
+            raise ResearchAuditError(f"target {target_id} falls outside the production preview horizon")
+        if any(row.get("as_of") != as_of for row in target_prompts.values()):
+            raise ResearchAuditError(f"target {target_id} prompts do not share the same cutoff")
+        if target_prompts["core_stories_baseline"].get("system_prompt_sha256") != _sha(CORE_PREVIEW_SYSTEM):
+            raise ResearchAuditError("baseline prompt differs from core_stories.py")
+        if (target_prompts["event_only"].get("system_prompt_sha256") ==
+                target_prompts["combined"].get("system_prompt_sha256") or
+                target_prompts["event_only"].get("user_prompt_sha256") ==
+                target_prompts["combined"].get("user_prompt_sha256")):
+            raise ResearchAuditError(f"target {target_id} event-only and combined inputs are not distinct")
+
+    if chat_fn is None:
+        model = model or os.environ.get("LP_LLM_MODEL", "deepseek/deepseek-v4.1-flash")
+        chat_fn = lambda system, user, limit: _openrouter_chat(system, user, limit, model)
+    model = model or "injected-test-chat"
+
+    comparison_path = outdir / "model_comparison.jsonl"
+    prior_rows = _read_jsonl(comparison_path)
+    prior_by_target = {str(row["target_game_id"]): row for row in prior_rows}
+    results = []
+    calls_made = 0
+    generation_failed = False
+    for example in examples:
+            target_id = str(example["target_game_id"])
+            target_prompts = prompts[target_id]
+            old = prior_by_target.get(target_id, {})
+            variants = dict(old.get("variants") or {})
+            target_row = {
+                "target_game_id": target_id, "league": example["league"],
+                "matchup": example["matchup"], "as_of": as_of,
+                "kickoff_utc": example["kickoff_utc"], "model": model,
+                "provider": provider, "variants": variants,
+            }
+            for variant in ("core_stories_baseline", "event_only", "combined"):
+                prompt = target_prompts[variant]
+                cached = variants.get(variant)
+                if (cached and cached.get("status") == "generated" and
+                        cached.get("system_prompt_sha256") == prompt["system_prompt_sha256"] and
+                        cached.get("user_prompt_sha256") == prompt["user_prompt_sha256"]):
+                    continue
+                calls_made += 1
+                output = chat_fn(prompt["system_prompt"], prompt["user_prompt"], max_tokens)
+                if not output:
+                    variants[variant] = {
+                        "status": "failed", "system_prompt_sha256": prompt["system_prompt_sha256"],
+                        "user_prompt_sha256": prompt["user_prompt_sha256"],
+                        "error": "provider returned no text",
+                    }
+                    target_row["variants"] = variants
+                    prior_by_target[target_id] = target_row
+                    generation_failed = True
+                    break
+                output = str(output).strip()
+                variants[variant] = {
+                    "status": "generated", "output": output,
+                    "output_sha256": _sha(output),
+                    "system_prompt_sha256": prompt["system_prompt_sha256"],
+                    "user_prompt_sha256": prompt["user_prompt_sha256"],
+                    "max_completion_tokens": max_tokens,
+                }
+                target_row["variants"] = variants
+                prior_by_target[target_id] = target_row
+            results = [prior_by_target[key] for key in prior_by_target]
+            _jsonl_write(comparison_path, results)
+            if generation_failed:
+                break
+
+    results = [prior_by_target.get(str(example["target_game_id"])) for example in examples]
+    if generation_failed or any(not row or any(
+            row.get("variants", {}).get(variant, {}).get("status") != "generated"
+            for variant in required) for row in results):
+        _jsonl_write(comparison_path, [row for row in results if row])
+        return {
+            "status": "incomplete", "targets": len(examples),
+            "model_inference_requests": calls_made, "provider": provider, "model": model,
+        }
+
+    distinctness = []
+    result_by_target = {str(row["target_game_id"]): row for row in results}
+    for row in results:
+        drafts = {key: _normalized_draft(value["output"])
+                  for key, value in row["variants"].items()}
+        unique = len(set(drafts.values()))
+        distinctness.append({
+            "target_game_id": row["target_game_id"], "league": row["league"],
+            "unique_text_count": unique,
+            "baseline_matches_event_only": drafts["core_stories_baseline"] == drafts["event_only"],
+            "baseline_matches_combined": drafts["core_stories_baseline"] == drafts["combined"],
+            "event_only_matches_combined": drafts["event_only"] == drafts["combined"],
+        })
+
+    for example in examples:
+        generated = result_by_target[str(example["target_game_id"])]["variants"]
+        example["baseline_preview"] = generated["core_stories_baseline"]["output"]
+        example["event_only_model_preview"] = generated["event_only"]["output"]
+        example["combined_model_preview"] = generated["combined"]["output"]
+        example["baseline_status"] = "generated_with_core_stories_prompt_and_reconstructed_local_input"
+    _jsonl_write(outdir / "examples.jsonl", examples)
+    _jsonl_write(outdir / "model_comparison.jsonl", results)
+    _jsonl_write(outdir / "three_way_distinctness.jsonl", distinctness)
+
+    for queue in (baseline_queue, candidate_queue):
+        for prompt in queue:
+            variant = prompt["variant"]
+            generated = result_by_target[str(prompt["target_game_id"])]["variants"][variant]
+            prompt["model_call_made"] = True
+            prompt["provider"] = provider
+            prompt["model"] = model
+            prompt["model_output_sha256"] = generated["output_sha256"]
+    _jsonl_write(outdir / "baseline_generation_queue.jsonl", baseline_queue)
+    _jsonl_write(outdir / "candidate_generation_queue.jsonl", candidate_queue)
+
+    claims_by_key: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for claim in _read_jsonl(outdir / "claim_audit.jsonl"):
+        claims_by_key[(str(claim["target_game_id"]), claim["variant"])].append(claim)
+    pairs = []
+    for index, example in enumerate(examples, 1):
+        target_id = str(example["target_game_id"])
+        selected = example.get("selected_candidate") or {}
+        baseline_fields = example.get("baseline_fields") or {}
+        pairs.append({
+            "target_game_id": target_id, "league": example["league"],
+            "matchup": example["matchup"], "as_of": as_of,
+            "kickoff_date": example["kickoff_date"], "blind_target_id": f"target-{index:03d}",
+            "baseline_preview": example["baseline_preview"],
+            "event_only_preview": example["event_only_model_preview"],
+            "combined_preview": example["combined_model_preview"],
+            "baseline_claims": [],
+            "event_claims": claims_by_key[(target_id, "event_only")],
+            "combined_claims": claims_by_key[(target_id, "combined")],
+            "variant_input_evidence": {
+                "core_stories_baseline": {
+                    "record_facts": baseline_fields.get("record_facts", []),
+                    "player_form": baseline_fields.get("player_form", []),
+                    "matchup_context": baseline_fields.get("matchup_context"),
+                },
+                "event_only": {
+                    "selected_candidate_id": selected.get("candidate_id"),
+                    "supporting_game_ids": selected.get("supporting_game_ids", []),
+                    "supporting_event_ids": selected.get("supporting_event_ids", []),
+                    "independent_recomputation": selected.get("independent_recomputation"),
+                },
+                "combined": {
+                    "record_facts": baseline_fields.get("record_facts", []),
+                    "player_form": baseline_fields.get("player_form", []),
+                    "selected_candidate_id": selected.get("candidate_id"),
+                    "supporting_game_ids": selected.get("supporting_game_ids", []),
+                    "supporting_event_ids": selected.get("supporting_event_ids", []),
+                    "independent_recomputation": selected.get("independent_recomputation"),
+                },
+            },
+        })
+    blind_status = _write_blind_packet(outdir, pairs)
+
+    manifest_path = outdir / "run_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    previous_requests = int(manifest.get("model_comparison", {}).get("request_count", 0))
+    total_requests = previous_requests + calls_made
+    manifest["objective"] = "cutoff-matched three-way pregame narrative comparison"
+    manifest["external_requests"] = total_requests
+    manifest["model_inference_requests"] = total_requests
+    manifest["generated_preview_counts"].update({
+        "event_only_model_output": len(examples), "combined_model_output": len(examples),
+        "core_stories_model_output": len(examples),
+    })
+    manifest["inference_budget"]["inference_requests_made"] = total_requests
+    manifest["inference_budget"]["provider_used"] = provider
+    manifest["inference_budget"]["model"] = model
+    manifest["blind_packet"] = blind_status
+    manifest["limitations"] = [
+        item for item in manifest.get("limitations", [])
+        if "No original-generator model output exists" not in item
+    ]
+    manifest["limitations"].append(
+        "The generated baseline uses reconstructed local records and player form; production ESPN matchup_context was unavailable.")
+    manifest["limitations"].append(
+        "Source-statistic audits validate supplied input rows, not the semantic accuracy of model-generated prose.")
+    manifest["limitations"] = list(dict.fromkeys(manifest["limitations"]))
+    manifest["model_comparison"] = {
+        "status": "completed", "provider": provider, "model": model,
+        "targets": len(examples), "variants_per_target": 3,
+        "matched_inputs_and_cutoff": True,
+        "target_horizon_hours": PREVIEW_HORIZON_HOURS,
+        "request_count": total_requests,
+        "requests_this_invocation": calls_made,
+        "event_only_combined_textually_distinct_targets": sum(
+            not row["event_only_matches_combined"] for row in distinctness),
+        "targets_with_three_unique_outputs": sum(row["unique_text_count"] == 3
+                                                  for row in distinctness),
+        "baseline_prompt_source": "backend/core_stories.py::generate_game_story",
+        "baseline_context_status": "local record and player-form inputs reconstructed; ESPN matchup_context unavailable",
+        "human_ratings_entered": 0,
+    }
+    _json_write(manifest_path, manifest)
+    rejected = _read_jsonl(outdir / "rejected_facts.jsonl")
+    inventory = json.loads((outdir / "database_coverage.json").read_text(encoding="utf-8"))
+    _write_report(outdir, manifest, examples, rejected, inventory, manifest["inference_budget"])
+    return manifest["model_comparison"]
+
+
 def _write_report(outdir: Path, manifest: dict[str, Any],
                   examples: list[dict[str, Any]], rejected: list[dict[str, Any]],
                   inventory: dict[str, Any], budget: dict[str, Any]) -> None:
@@ -1417,20 +2180,21 @@ def _write_report(outdir: Path, manifest: dict[str, Any],
     nba_stat_coverage = inventory["coverage"].get("team_game_stats", {}).get(
         "nba_populated_rows_at_cutoff", 0)
     nba_boxes = inventory["coverage"].get("nba_player_boxes_nbacom", {})
+    comparison = manifest.get("model_comparison")
+    recomputation = manifest.get("independent_evidence_recomputation", {})
+    target_total = sum(manifest.get("targets", {}).values())
     lines = [
-        "# Narrative relevance research — 2026-11-01", "",
+        f"# Narrative relevance research — {manifest['as_of'][:10]}", "",
         f"Database: {manifest['database']} (read-only; query_only={inventory['query_only']}).",
-        f"Shared cutoff: {manifest['as_of']}. External requests: 0. Model calls: 0.", "",
+        f"Shared cutoff: {manifest['as_of']}. Preview horizon: {PREVIEW_HORIZON_HOURS} hours.",
+        f"External model requests: {manifest['model_inference_requests']}.", "",
         "## Result", "",
         f"Prepared {manifest['targets']['nfl']} NFL and {manifest['targets']['nba']} NBA targets. "
-        "Event-only and combined outputs are deterministic research drafts. The exact "
-        "core_stories system prompt and its reconstructable local inputs are saved for a "
-        "later opt-in model comparison.",
+        "The three variants share each target and cutoff. NFL kickoff uses the Eastern-time "
+        "schedule field converted to UTC; the nflverse schedule dictionary documents that "
+        "field's timezone [here](https://nflreadr.nflverse.com/articles/dictionary_schedules.html).",
         "The production core_stories.py file was not changed.",
-        "The core prompt's local team record and player-form fields are reconstructed at "
-        "the shared cutoff. matchup_context is explicitly marked unavailable because the "
-        "production path reads it from ESPN summary. NFL target timestamps use a game-date "
-        "UTC lower bound because the local schedule has no timezone for gametime.", "",
+        "",
         "## Local coverage", "",
         f"- NFL PBP: {inventory['coverage'].get('nfl_pbp', {}).get('all_seasons', {}).get('plays', 0):,} plays "
         f"across {inventory['coverage'].get('nfl_pbp', {}).get('all_seasons', {}).get('games', 0):,} games "
@@ -1457,44 +2221,75 @@ def _write_report(outdir: Path, manifest: dict[str, Any],
         f"Claim-level cutoff checks: {manifest['mechanical_claims']['passed']} passed, "
         f"{manifest['mechanical_claims']['failed']} failed, "
         f"{manifest['mechanical_claims']['total']} total.",
+        f"Independent source-statistic audits: {recomputation.get('targets_passed', 0)} of "
+        f"{recomputation.get('targets_checked', 0)} targets passed; "
+        f"{recomputation.get('targets_failed', 0)} failed. See statistic_audit.jsonl.",
         f"Rejected candidates retained with reasons and evidence IDs: {len(rejected)}.",
         "- NFL EPA is stated as team efficiency across plays; no play is called game-winning.",
         "- Drive, fourth-down, lead-change, and single-play game-winner categories are quarantined.",
         "- Paired trend candidates need a same-metric offense/defense comparison, at least three "
         "recent and baseline games on both sides, both changes above threshold, recent evidence, "
         "and timestamps before the cutoff.", "",
-        "## Human review status", "",
-        f"The blind packet contains {manifest['blind_packet']['blind_drafts']} deterministic "
-        f"candidate drafts across {manifest['blind_packet']['targets_with_candidate_drafts']} "
-        "targets. Original-generator output is absent because no model call was made. "
-        "No independent human ratings were entered; no improvement claim is supported.", "",
-        "## Opt-in inference budget", "",
-        f"Three variants for 20 targets require {budget['calls_for_10_nfl_plus_10_nba_three_variants']} "
-        f"calls. Proposed completion cap: {budget['max_completion_tokens_per_call_for_opt_in']} "
-        f"tokens per call; estimated prompt input {budget['estimated_input_tokens_characters_divided_by_4']:,} "
-        "tokens by characters divided by four. At repository-noted model token rates the estimate "
-        f"is USD {budget['estimated_openrouter_model_token_cost_usd_at_repo_noted_rates']:.6f}. "
-        f"Provider call fees are separately listed: Nous USD "
-        f"{budget['provider_call_fee_range_usd']['nous_0.00005_per_call']:.6f}; OpenRouter USD "
-        f"{budget['provider_call_fee_range_usd']['openrouter_0.0002_per_call']:.6f}. "
-        "The repository does not specify whether these schedules combine; rates were not reverified.", "",
-        "## Example drafts", "",
+        "## Three-way generation and review", "",
     ]
-    for item in examples:
+    if comparison:
         lines.extend([
-            f"### {item['league'].upper()} · {item['matchup']['away']} at "
-            f"{item['matchup']['home']} · {item['kickoff_date']}", "",
-            f"Event-only: {item['event_only_preview'] or '[no eligible preview]'}",
-            f"Combined: {item['combined_preview'] or '[no eligible preview]'}",
-            "Core baseline output: not generated offline; prompt and local evidence are in examples.jsonl.",
-            "",
+            f"Generated {comparison['variants_per_target']} drafts for each of "
+            f"{comparison['targets']} targets with {comparison['request_count']} "
+            f"{comparison['provider']} requests using {comparison['model']}.",
+            "The baseline uses the exact core_stories.py system prompt and reconstructed "
+            "local inputs. The production ESPN matchup_context was unavailable. The event-only "
+            "and combined system and user prompts differ for every target.",
+            f"Event-only and combined output text differs for "
+            f"{comparison['event_only_combined_textually_distinct_targets']} of "
+            f"{comparison['targets']} targets; all three outputs are textually unique for "
+            f"{comparison['targets_with_three_unique_outputs']} targets.",
+            f"Blind packet: {manifest['blind_packet']['blind_drafts']} drafts across "
+            f"{manifest['blind_packet']['targets_with_candidate_drafts']} targets. "
+            "No human ratings were entered, so the comparison does not establish a winner.",
         ])
+    else:
+        lines.extend([
+            f"Prepared {manifest['blind_packet']['blind_drafts']} deterministic candidate "
+            "drafts. Model outputs have not been generated.",
+        ])
+    lines.extend(["", "No automatic or human judgment of generated prose is claimed. The "
+                  "row-level statistic audit rechecks input metrics, not semantic use of those "
+                  "facts in model text.", "", "## Target drafts", "",
+                  "Full text and matched prompt hashes are in examples.jsonl and model_comparison.jsonl.", ""])
+    if comparison:
+        lines.extend([
+            "| League | Matchup | Kickoff UTC | Core baseline | Event-only | Combined |",
+            "| --- | --- | --- | --- | --- | --- |",
+        ])
+        for item in examples:
+            lines.append(
+                f"| {item['league'].upper()} | {item['matchup']['away']} at {item['matchup']['home']} "
+                f"| {item['kickoff_utc']} | {_report_excerpt(item.get('baseline_preview'))} "
+                f"| {_report_excerpt(item.get('event_only_model_preview'))} "
+                f"| {_report_excerpt(item.get('combined_model_preview'))} |")
+    else:
+        lines.extend([
+            "| League | Matchup | Kickoff UTC | Event-only draft | Combined draft |",
+            "| --- | --- | --- | --- | --- |",
+        ])
+        for item in examples:
+            lines.append(
+                f"| {item['league'].upper()} | {item['matchup']['away']} at {item['matchup']['home']} "
+                f"| {item['kickoff_utc']} | {_report_excerpt(item.get('event_only_preview'))} "
+                f"| {_report_excerpt(item.get('combined_preview'))} |")
     lines.extend(["## Remaining limitations", ""])
     lines.extend(f"- {limitation}" for limitation in manifest["limitations"])
-    lines.extend(["", "Row-level artifacts: examples.jsonl, claim_audit.jsonl, "
+    lines.extend(["", "Row-level artifacts: examples.jsonl, claim_audit.jsonl, statistic_audit.jsonl, "
                   "rejected_facts.jsonl, database_coverage.json, baseline_generation_queue.jsonl, "
-                  "candidate_generation_queue.jsonl, and the blind review files.", ""])
+                  "candidate_generation_queue.jsonl, model_comparison.jsonl, "
+                  "three_way_distinctness.jsonl, and the blind review files.", ""])
     (outdir / "research_report.md").write_text("\n".join(lines), encoding="utf-8")
+
+
+def _report_excerpt(value: Any, limit: int = 180) -> str:
+    text = " ".join(str(value or "[none]").split()).replace("|", "\\|")
+    return text if len(text) <= limit else text[:limit - 1].rstrip() + "…"
 
 
 def main() -> int:
@@ -1504,14 +2299,22 @@ def main() -> int:
     parser.add_argument("--outdir", required=True)
     parser.add_argument("--nfl-count", type=int, default=10)
     parser.add_argument("--nba-count", type=int, default=10)
+    parser.add_argument("--generate-three-way", action="store_true",
+                        help="call the configured OpenRouter model for matched baseline/event/combined prompts")
+    parser.add_argument("--max-tokens", type=int, default=600)
     args = parser.parse_args()
     manifest = build_relevance_packet(
         args.db, args.outdir, args.as_of, args.nfl_count, args.nba_count)
+    comparison = (run_three_way_comparison(args.outdir, max_tokens=args.max_tokens)
+                  if args.generate_three_way else None)
+    if comparison:
+        manifest = json.loads((Path(args.outdir) / "run_manifest.json").read_text(encoding="utf-8"))
     print(json.dumps({
         "outdir": str(Path(args.outdir).resolve()), "targets": manifest["targets"],
         "generated_preview_counts": manifest["generated_preview_counts"],
         "external_requests": manifest["external_requests"],
         "model_inference_requests": manifest["model_inference_requests"],
+        "three_way_comparison": comparison,
     }, indent=2))
     return 0
 
