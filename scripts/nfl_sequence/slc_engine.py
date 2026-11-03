@@ -925,9 +925,19 @@ def _blocker_resolution_summary(decisions, fixes, record=None):
 
 
 def describe(ref):
-    """The layer's manifest for a batch payload: None for the S0 control."""
+    """The layer's manifest for a batch payload: None for the S0 control. Hashing the loaded tables costs seconds, so the
+    manifest is computed once per reference and reused while the objects it reads are the same ones."""
     if not is_slc(ref):
         return None
+    memo_key = (id(ref.contextual_sampler), id(ref.model_inputs), id(ref.contextual_sampler.layer.artifact))
+    memo = getattr(ref, '_describe_memo', None)
+    if memo is None or memo[0] != memo_key:
+        memo = (memo_key, _describe_layer(ref))
+        ref._describe_memo = memo
+    return copy.deepcopy(memo[1])
+
+
+def _describe_layer(ref):
     sampler = ref.contextual_sampler
     artifact = sampler.layer.artifact
     score_clock_enabled = bool(getattr(sampler, 'score_clock_playcalling_enabled', True))
