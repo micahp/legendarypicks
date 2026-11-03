@@ -1,0 +1,151 @@
+{
+ "fit_seasons": [
+  2022,
+  2023,
+  2024
+ ],
+ "holdout": [
+  2025
+ ],
+ "kinds": {
+  "entrant": {
+   "features": [
+    "log_share",
+    "returned",
+    "log_gap",
+    "prev_game"
+   ],
+   "holdout": {
+    "chosen": 46746,
+    "events": 39502,
+    "exact_set_rate": {
+     "model": 0.7452,
+     "recency": 0.7216,
+     "share": 0.687
+    },
+    "per_class": {
+     "RB": {
+      "chosen": 11444,
+      "events": 10826,
+      "model_exact": 7950,
+      "model_hits": 8564,
+      "random_hits": 5454.299999999842,
+      "recency_exact": 7677,
+      "recency_hits": 8291,
+      "share_exact": 7424,
+      "share_hits": 8032
+     },
+     "TE": {
+      "chosen": 14422,
+      "events": 12693,
+      "model_exact": 10515,
+      "model_hits": 12243,
+      "random_hits": 9342.86666666663,
+      "recency_exact": 10123,
+      "recency_hits": 11851,
+      "share_exact": 10170,
+      "share_hits": 11899
+     },
+     "WR": {
+      "chosen": 20880,
+      "events": 15983,
+      "model_exact": 10970,
+      "model_hits": 15814,
+      "random_hits": 10730.707142857358,
+      "recency_exact": 10706,
+      "recency_hits": 15541,
+      "share_exact": 9542,
+      "share_hits": 14332
+     }
+    },
+    "recall": {
+     "model": 0.7834,
+     "random": 0.5461,
+     "recency": 0.7633,
+     "share": 0.733
+    }
+   },
+   "train_loglik_per_choice": -0.7459,
+   "weights": [
+    0.2143,
+    4.2881,
+    -0.7238,
+    1.0835
+   ]
+  },
+  "leaver": {
+   "features": [
+    "log_share",
+    "log_stint",
+    "just_entered"
+   ],
+   "holdout": {
+    "chosen": 47251,
+    "events": 40045,
+    "exact_set_rate": {
+     "lowest_share": 0.7931,
+     "model": 0.8079,
+     "shortest_stint": 0.7754
+    },
+    "per_class": {
+     "RB": {
+      "chosen": 11603,
+      "events": 11069,
+      "lowest_share_exact": 10336,
+      "lowest_share_hits": 10870,
+      "model_exact": 10481,
+      "model_hits": 11015,
+      "random_hits": 10585.166666666666,
+      "shortest_stint_exact": 10385,
+      "shortest_stint_hits": 10919
+     },
+     "TE": {
+      "chosen": 14635,
+      "events": 12931,
+      "lowest_share_exact": 10973,
+      "lowest_share_hits": 12677,
+      "model_exact": 10953,
+      "model_hits": 12657,
+      "random_hits": 11409.00000000016,
+      "shortest_stint_exact": 10507,
+      "shortest_stint_hits": 12210
+     },
+     "WR": {
+      "chosen": 21013,
+      "events": 16045,
+      "lowest_share_exact": 10450,
+      "lowest_share_hits": 15414,
+      "model_exact": 10920,
+      "model_hits": 15884,
+      "random_hits": 12487.2166666678,
+      "shortest_stint_exact": 10160,
+      "shortest_stint_hits": 15122
+     }
+    },
+    "recall": {
+     "lowest_share": 0.8246,
+     "model": 0.8371,
+     "random": 0.7297,
+     "shortest_stint": 0.8095
+    }
+   },
+   "train_loglik_per_choice": -0.5549,
+   "weights": [
+    -0.1956,
+    -0.5342,
+    -0.2503
+   ]
+  }
+ },
+ "leakage_check": "share, returned, gap and previous-game features use only earlier games; holdout roles are cutoff-safe; players.csv unused",
+ "pool_coverage": {
+  "holdout": {
+   "entrants": 47266,
+   "entrants_outside_pool": 520
+  },
+  "train": {
+   "entrants": 92536,
+   "entrants_outside_pool": 4952
+  }
+ }
+}
