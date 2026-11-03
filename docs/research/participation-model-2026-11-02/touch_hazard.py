@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
 """Does a recent touch change when a skill player leaves the field? (SLC v2 steps 3 and 4, research).
 
-For each consecutive pair of offensive snaps in a team-game, a skill player on the field at the earlier snap leaves
-before the next snap. Only pairs where his class count holds (the grouping keeps the same number of that class) are
-used, so the rate measures rotation, not forced substitution. The earlier snap's touch is the rusher or receiver of
-that play, from the nflverse play-by-play by game_id and play_id.
+For each consecutive pair of offensive snaps in a team-game, a skill player on the field at the earlier snap is counted
+as leaving if he is off the field at the next snap. Every on-field skill player is used, and nothing about the next
+snap's grouping is conditioned on. So the leave rate is the probability a forecast would need, not a rate that depends
+on the outcome. The features are all from the earlier snap: his class, his stint, and whether he touched the ball on
+that play (the rusher or receiver, from the nflverse play-by-play by game_id and play_id) and that play's type.
 
-Rates are tabulated by class, stint bucket (1 to 6, 6 meaning 6 or more) and whether he touched the ball on the
-earlier snap. Estimation uses 2022 to 2024. The 2025 holdout rates are reported beside them, so the touch effect is
-checked out of sample.
+Because forced substitutions are included, these rates mix rotation with count changes. A grouping model would
+separate them, but that requires the next snap's grouping, which a forecast does not have.
+
+Rates are tabulated by class, stint bucket (1 to 6, 6 meaning 6 or more) and whether he touched the ball on the earlier
+snap. Estimation uses 2022 to 2024, and the 2025 holdout is scored out of sample.
 
 Usage: python3 touch_hazard.py --tables <scrimmage_participation.csv.gz> --raw-dir <pinned nflverse dir> --out <json>
 """
 import argparse
-import math
 import csv
 import gzip
 import json
+import math
 import sys
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -48,38 +51,26 @@ def load_touches(raw_dir, seasons):
 
 
 def pairs(rows, touches):
-    """Yield (season, class, stint bucket, touched earlier snap, earlier play type, left, held) for each pair."""
+    """Yield (season, class, stint bucket, touched the earlier snap, earlier play type, left before the next snap)."""
     seqs = defaultdict(list)
     for row in rows:
         key = (int(row['season']), row['game_id'], row['posteam'])
         skill = {pid: label for pid, label in zip(row['offense_ids'].split(';'), row['offense_positions'].split(';'))
                  if pid and label in lf.SKILL}
-        seqs[key].append((int(row['play_id']), frozenset(skill), {p: lf.SKILL[l] for p, l in skill.items()}))
+        seqs[key].append((int(row['play_id']), frozenset(skill), {p: lf.SKILL[lab] for p, lab in skill.items()}))
     for key, items in seqs.items():
         items.sort(key=lambda it: it[0])
         ids = [it[1] for it in items]
         cls = [it[2] for it in items]
         stints = dg.stint_track(ids)
         for i in range(1, len(items)):
-            prev_play, cur_play = items[i - 1][0], items[i][0]
+            prev_play = items[i - 1][0]
             play_type, touched = touches.get((key[1], prev_play), ('other', frozenset()))
             for pid in ids[i - 1]:
                 c = cls[i - 1].get(pid)
                 if c is None:
                     continue
-                held = Counter(cls[i - 1].values())[c] == Counter(cls[i].values())[c]
-                left = pid not in ids[i]
-                yield key[0], c, min(stints[i - 1][pid], CAP), pid in touched, play_type, left, held
-
-
-def tabulate(events):
-    cells = defaultdict(lambda: [0, 0])
-    for season, c, bucket, touched, play_type, left, held in events:
-        if not held:
-            continue
-        cells[(c, bucket, 'touched' if touched else 'untouched')][0] += 1
-        cells[(c, bucket, 'touched' if touched else 'untouched')][1] += int(left)
-    return cells
+                yield key[0], c, min(stints[i - 1][pid], CAP), pid in touched, play_type, pid not in ids[i]
 
 
 def main():
@@ -93,8 +84,16 @@ def main():
     rows = [r for r in pm.load_scrimmage(args.tables, seasons) if r['season_type'] == 'REG']
     touches = load_touches(args.raw_dir, seasons)
     events = list(pairs(rows, touches))
-    fit = tabulate([e for e in events if e[0] in cs.FIT_SEASONS])
-    hold = tabulate([e for e in events if e[0] in cs.HOLDOUT])
+
+    def tabulate(season_set):
+        cells = defaultdict(lambda: [0, 0])
+        for season, c, bucket, touched, _pt, left in events:
+            if season in season_set:
+                cells[(c, bucket, 'touched' if touched else 'untouched')][0] += 1
+                cells[(c, bucket, 'touched' if touched else 'untouched')][1] += int(left)
+        return cells
+
+    fit, hold = tabulate(cs.FIT_SEASONS), tabulate(cs.HOLDOUT)
 
     def rate(cells, c, bucket, state):
         n, left = cells.get((c, bucket, state), (0, 0))
@@ -112,26 +111,26 @@ def main():
             table[f'{c}|stint{bucket}'] = row
 
     play_type = defaultdict(lambda: [0, 0])
-    for season, c, bucket, touched, pt, left, held in events:
-        if held and not touched and season in cs.FIT_SEASONS:
+    for season, _c, _bucket, touched, pt, left in events:
+        if not touched and season in cs.FIT_SEASONS:
             play_type[pt][0] += 1
             play_type[pt][1] += int(left)
     untouched_by_play = {pt: {'n': n, 'leave_rate': round(l / n, 4)} for pt, (n, l) in sorted(play_type.items()) if n}
 
     def logloss_with(key_fn):
-        # Leave probability from the fit cells, scored on the holdout pairs (held-count pairs only). Cells with no fit
-        # data fall back to the class-by-stint rate, so the spec is never scored on an empty cell.
+        """Leave probability from the fit cells, scored on the holdout pairs. A cell with no fit data falls back to
+        the class-by-stint rate, so a spec is never scored on an empty cell."""
         fit_cells, fit_totals = defaultdict(lambda: [0, 0]), defaultdict(lambda: [0, 0])
-        for season, c, bucket, touched, pt, left, held in events:
-            if held and season in cs.FIT_SEASONS:
+        for season, c, bucket, touched, pt, left in events:
+            if season in cs.FIT_SEASONS:
                 k = key_fn(c, bucket, touched, pt)
                 fit_cells[k][0] += 1
                 fit_cells[k][1] += int(left)
                 fit_totals[(c, bucket)][0] += 1
                 fit_totals[(c, bucket)][1] += int(left)
         total, n = 0.0, 0
-        for season, c, bucket, touched, pt, left, held in events:
-            if not held or season not in cs.HOLDOUT:
+        for season, c, bucket, touched, pt, left in events:
+            if season not in cs.HOLDOUT:
                 continue
             k = key_fn(c, bucket, touched, pt)
             if fit_cells[k][0]:
@@ -149,14 +148,15 @@ def main():
         'class_stint_touch': logloss_with(lambda c, b, t, pt: (c, b, t)),
         'class_stint_touch_playtype': logloss_with(lambda c, b, t, pt: (c, b, t, pt)),
     }
-    out = {'source': args.tables.name, 'cap': CAP, 'holdout_logloss_per_pair': holdout_logloss, 'fit_seasons': sorted(cs.FIT_SEASONS), 'holdout': sorted(cs.HOLDOUT),
-           'leakage_check': 'the touch is the rusher or receiver of the earlier snap; only earlier-snap information is used',
+    out = {'source': args.tables.name, 'cap': CAP, 'fit_seasons': sorted(cs.FIT_SEASONS),
+           'holdout': sorted(cs.HOLDOUT), 'holdout_logloss_per_pair': holdout_logloss,
+           'leakage_check': 'every feature (class, stint, touch, play type) comes from the earlier snap; the next '
+                            'snap is used only for the leave outcome, and nothing about its grouping is conditioned on',
            'pairs': len(events), 'rates_by_class_stint_touch': table,
            'untouched_leave_rate_by_earlier_play_type_fit': untouched_by_play}
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(out, indent=1, sort_keys=True) + '\n', encoding='utf-8')
-    print(json.dumps({'pairs': len(events), 'example': {k: table[k] for k in ('RB|stint1', 'RB|stint3', 'WR|stint3')}},
-                     sort_keys=True))
+    print(json.dumps({'pairs': len(events), 'holdout_logloss_per_pair': holdout_logloss}, sort_keys=True))
 
 
 if __name__ == '__main__':
