@@ -49,6 +49,7 @@ import try_policy as try_policy_module  # noqa: E402
 import simulate_pregame_game as game_cli  # noqa: E402
 import slc_engine  # noqa: E402
 import slc_config  # noqa: E402
+import rng_protocol  # noqa: E402
 import slc_outputs  # noqa: E402
 import historical_archive  # noqa: E402
 import source_preflight  # noqa: E402
@@ -127,6 +128,8 @@ def _reproduction_command(args, seed):
         command.append('--export-boxscores')
     if getattr(args, 'paired_randomness', False):
         command.append('--paired-randomness')
+    if getattr(args, 'rng_protocol', rng_protocol.V1) != rng_protocol.V1:
+        command.append(f"--rng-protocol={args.rng_protocol}")
 
     if args.playcall_point_splits_cache:
         command.extend(['--playcall-point-splits-cache', str(args.playcall_point_splits_cache)])
@@ -401,7 +404,7 @@ def _record_outcome(seed, record=None, error=None, validation_error=False):
         and record.get('final_clock_seconds') == 0 and record.get('tied'))
     valid = bool(record.get('valid_full_game') and record.get('complete_game') and not validation_error)
     status = 'validation_error' if validation_error else record.get('status', 'unknown')
-    return {
+    row = {
         'seed': seed, 'status': status, 'blocker': blocker,
         'valid_full_game': valid, 'complete_game': bool(record.get('complete_game') and not validation_error),
         'regulation_end_reached': regulation_end, 'tied_at_regulation_end': tied_at_regulation_end,
@@ -411,6 +414,9 @@ def _record_outcome(seed, record=None, error=None, validation_error=False):
         'unsupported_rules': record.get('unsupported_rules', []),
         'error': str(error)[:500] if error else None,
     }
+    if 'research_integration' in record:  # present only with a research flag on; flags-off rows are unchanged
+        row['research_integration'] = record['research_integration']
+    return row
 
 
 def _replay_examples(outcomes):
@@ -456,7 +462,7 @@ class FinishedSeeds(dict):
 
 
 def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False,
-                   paired_randomness=False):
+                   paired_randomness=False, rng_plan=None):
     record = None
     error = None
     caught_exception = None
@@ -464,7 +470,8 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
     decisions = None
     try:
         if slc_engine.is_slc(ref):
-            record, decisions = slc_engine.play(seed, ref, snapshot, paired_randomness=paired_randomness)
+            record, decisions = slc_engine.play(seed, ref, snapshot, paired_randomness=paired_randomness,
+                                                rng_plan=rng_plan)
         else:
             record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
                                   paired_randomness=paired_randomness)
@@ -591,7 +598,7 @@ def _open_seed_ledger(path, header, resume, *, seed_end=None, allowed_seeds=None
 
 
 def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=None, archive_validation=None,
-                  export_boxscores=False, paired_randomness=False):
+                  export_boxscores=False, paired_randomness=False, rng_plan=None):
     """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
     cached = finished.get(seed)
     has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
@@ -599,7 +606,7 @@ def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=Non
             and (not export_boxscores or has_boxscore)):
         return cached['outcome'], cached['players']
     outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation,
-                                           export_boxscores, paired_randomness)
+                                           export_boxscores, paired_randomness, rng_plan=rng_plan)
     row = {'seed': seed, 'outcome': outcome, 'players': contribution}
     ledger.write(json.dumps(row, sort_keys=True) + '\n')
     ledger.flush()
@@ -827,6 +834,8 @@ def run_batch(args):
     cutoff_pool_mode = args.context_mode != 'unconditioned'
     try_policy = try_policy_module.TryPolicy.from_fixture() if args.try_policy == 'k1' else None
     safety_kick_table = not args.no_safety_table
+    # The pregame state before the reference attaches: rosters, availability and schedule, with no code hashes.
+    pregame_state_sha256 = snapshot['snapshot_sha256']
     reference_started = time.monotonic()
     if args.playcall_artifact:
         if args.team_tendency or args.context_mode != 'unconditioned' or args.try_policy != 'unconditional' or args.no_safety_table:
@@ -845,6 +854,7 @@ def run_batch(args):
                                                            decision=args.playcall_decision,
                                                            decision_filter=not args.playcall_decision_unfiltered,
                                                            dirichlet_shares=args.playcall_dirichlet_shares,
+                                                           pbv1_table=args.playcall_pbv1_package,
                                                            qb_decisions=args.playcall_qb_decisions,
                                                            player_outcomes=args.playcall_player_outcomes,
                                                            player_outcomes_receiver_only=args.playcall_player_outcomes_receiver_only,
@@ -883,6 +893,7 @@ def run_batch(args):
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
     pregame_snapshot.reseal(snapshot)
     playcall_description = slc_engine.describe(ref)
+    rng_plan = rng_protocol.plan(args.rng_protocol, pregame_state_sha256, ref, playcall_description)
     if slc_engine.is_slc(ref):
         slc_config.validate_engine_layers(resolved_profile, playcall_description)
     elif resolved_profile['profile'] != 's0' and any(resolved_profile['enabled_layers'].values()):
@@ -922,6 +933,7 @@ def run_batch(args):
         'historical_archive_reconstruction': archive_validation,
         'boxscore_export': bool(args.export_boxscores),
         'paired_randomness': bool(args.paired_randomness),
+        'rng_protocol': rng_plan.manifest(),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
@@ -944,6 +956,11 @@ def run_batch(args):
     if seed_selection_manifest is not None:
         ledger_header['seed_selection'] = seed_selection_manifest
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
+    if args.playcall_pbv1_package:  # research flag: its pinned inputs are part of the ledger, so a resume must match them
+        import pbv1_package
+        ledger_header['research_integration'] = {'pbv1_package': {
+            'table': str(args.playcall_pbv1_package), 'table_sha256': pbv1_package.TABLE_SHA256,
+            'model': pbv1_package.MODEL_VERSION, 'K': pbv1_package.K, 'target_column': 'package'}}
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume,
                                          seed_end=seed_end_exclusive,
                                          allowed_seeds=set(seed_values) if seed_selection_manifest else None)
@@ -961,7 +978,7 @@ def run_batch(args):
             outcome, contribution = _seed_outcome(
                 seed, finished, ledger, ref, snapshot, profile_manifest=profile_manifest,
                 archive_validation=archive_validation, export_boxscores=args.export_boxscores,
-                paired_randomness=args.paired_randomness)
+                paired_randomness=args.paired_randomness, rng_plan=rng_plan)
             outcomes.append(outcome)
             if boxscore_handle is not None and seed not in exported_seed_ids and outcome.get('boxscore'):
                 boxscore_handle.write(json.dumps({'type': 'game', **outcome['boxscore']},
@@ -1032,6 +1049,7 @@ def run_batch(args):
                           'one deterministic game per consecutive non-negative integer seed'),
             'paired_randomness': bool(args.paired_randomness),
             'paired_random_stream_schema': ('lp.nfl.paired-random-streams.v1' if args.paired_randomness else None),
+            'rng_protocol': rng_plan.manifest(),
             'regulation_score_policy': ('all runs whose simulation reached the regulation end, including ties and '
                                         'guarded regulation-end outcomes; descriptive, not validated finals'),
             'valid_score_policy': ('only valid_full_game=true, complete_game=true, untied outcomes; all other '
@@ -1178,6 +1196,10 @@ def main(argv=None):
     ap.add_argument('--playcall-dirichlet-shares', action='store_true',
                     help='SLC v1 research: per-game Dirichlet target and carry shares, fitted on the prior season; the receiver and '
                          'rusher are drawn from each game\'s shares; implies --playcall-player-shares')
+    ap.add_argument('--playcall-pbv1-package', type=Path, default=None,
+                    help='SLC v1 research flag (off by default): the personnel label is drawn from the PBV1 RB-only package '
+                         'sampler, refitted on the training table for seasons before each game (pbv1_package.TABLE_SHA256); '
+                         'the table path is the frozen docs/research/pbv1-package-integration-2026-11-02 CSV')
     ap.add_argument('--playcall-qb-decisions', action='store_true',
                     help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
     ap.add_argument('--playcall-qb-run-role-style', action='store_true',
@@ -1234,6 +1256,9 @@ def main(argv=None):
                                                      'selecting from --availability-store'))
     ap.add_argument('--register-dir', help=('write the run read-only under this store and append its index line, '
                                             'so downstream code can find it'))
+    ap.add_argument('--rng-protocol', choices=(rng_protocol.V1, rng_protocol.V2), default=rng_protocol.V1,
+                    help=('per-seed random streams: v1 (legacy, keyed on the resealed snapshot hash, default) or '
+                          'v2 (keyed on stable pregame and model inputs; experiment; SLC layer only)'))
     ap.add_argument('--game-info-snapshot', help=('attach this frozen game-information snapshot to the run as '
                                                   'context: venue capacity, kickoff, forecast, referee status and '
                                                   'broadcast. The model does not read it.'))
