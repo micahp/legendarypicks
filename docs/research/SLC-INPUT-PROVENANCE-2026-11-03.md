@@ -85,12 +85,26 @@ From the observed-reference fingerprint of the run (after every step above):
 | Play cells | 75 |
 | Play samples | 141,176 |
 | Kickoff samples | 9,963 |
-| Participant rows | 188,282 |
+| Participant lookup entries (keyed by game and play, built from every `nfl_pbp` row) | 188,282 |
 | Missed field-goal return samples | 513 |
 | Safety kick samples | 46 |
 | Overtime drive samples | 140 |
 
 The pool before steps 2 to 4 is **not measured** in this document. Only the removed counts above are known.
+
+The participant lookup (`e2_reference.load_participants`) is built from every `nfl_pbp` row, keyed by game and play id,
+including rows with no player ids. So its count (188,282) is a lookup size, not a count of `nfl_hist_participation` rows,
+which holds **187,421** rows. Joining the two tables on game and play id (read-only, measured by the Phase 1 run on the
+research branch):
+
+- 178,129 keys in both tables.
+- 10,153 PBP keys with no participation match: 4,136 with a null `play_type` and 6,017 with `no_play`. None are run or pass.
+- 9,292 participation keys with no PBP match: 8,605 postseason rows (the PBP source covers regular-season games) and 687
+  regular-season rows from 2022. The 687 have every participation field blank (no possession team, formation, personnel
+  or charted attributes; `n_offense` and `n_defense` both zero). They are spread across all 271 regular-season games.
+- Net gap: 10,153 minus 9,292 = 861.
+
+Whether the engine uses the 687 blank rows, or the 8,605 postseason rows, is **not checked** in this document.
 
 ## 7. Known gaps
 
