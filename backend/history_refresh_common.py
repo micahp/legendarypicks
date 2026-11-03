@@ -88,6 +88,17 @@ def backup_database(
     return backup_path
 
 
+def discard_backup(backup_path: str) -> None:
+    """Remove a job's own pre-write copy after its write has succeeded.
+
+    Called only on the success path: a write that raises keeps its copy, which is the
+    restore point. Removes the copy and its -wal/-shm sidecars.
+    """
+    for path in (backup_path, backup_path + "-wal", backup_path + "-shm"):
+        if os.path.exists(path):
+            os.remove(path)
+
+
 # 2026-10-05: nothing ever deleted these. The UFC roster refresh alone left one full
 # 0.4 GB copy per run, and 171 old backups (51 GB) had piled up by October 5.
 # 2026-10-28: one copy per label. Three copies of the 2.9 GB production database used 9 GB

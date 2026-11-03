@@ -66,6 +66,7 @@ def run(
                 inserted = roster.apply_harvest(con, harvest)
         finally:
             con.close()
+        common.discard_backup(harvest_backup)
         emit("  harvested {} new UFC fighters from the card".format(inserted))
     elif harvest.mutations:
         emit("  dry run: {} new UFC fighters would be harvested".format(harvest.mutations))
@@ -150,6 +151,7 @@ def run(
 
     backup_path = common.backup_database(db_path, "ufc-timer", now=now)
     result = apply_ufcstats_plan(db_path, plan)
+    common.discard_backup(backup_path)
     emit(
         "Applied UFCStats timer plan: {} logs, {} updates, {} source mappings".format(
             result["inserted_logs"],
