@@ -210,3 +210,20 @@ def observations(db, first_season=FIRST_SEASON, last_season=LAST_SEASON, cutoff=
                 yield observation(dict(row), season_scores.get(key), season_flags.get(key))
     finally:
         con.close()
+
+
+def rows_sha256(db, first_season, last_season):
+    """SHA-256 over the play rows that `observations` reads for these seasons, in its read order. Other seasons are never
+    selected, so a write to them (the sealed 2026 holdout, or any later cutoff) leaves the digest unchanged. The holdout is
+    refused before any row is read, as in `observations`."""
+    holdout.refuse_if_holdout(last_season, 'play-call observations')
+    digest = hashlib.sha256()
+    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=30)
+    try:
+        sql = (f"SELECT {', '.join(COLUMNS)} FROM nfl_pbp WHERE season BETWEEN ? AND ? AND week <= 18 "
+               "ORDER BY season, game_id, play_id")
+        for row in con.execute(sql, (first_season, last_season)):
+            digest.update(repr(tuple(row)).encode())
+    finally:
+        con.close()
+    return digest.hexdigest()
