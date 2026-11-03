@@ -63,6 +63,14 @@ For managed development, the shared `dev` worktree normally serves the frontend 
 - Verify a change in the rendered route and against an independent source where correctness matters.
 - Keep feature work in an isolated `/root/lp-*` worktree. Preserve concurrent WIP and stage only the intended paths.
 
+## Database writers
+
+Timer-backed services verified with `LP_DB_PATH` set to `picks.dev.db`:
+
+- Feeds and data: `legendarypicks-game-recaps.service`, `legendarypicks-ingest-jobs.service`, `legendarypicks-news.service`, `legendarypicks-news-x.service`, `legendarypicks-props.service`, `legendarypicks-rotowire-probe.service`, `legendarypicks-scoreboards-live.service`, `legendarypicks-scoreboards.service`, `legendarypicks-ufc-dk-pool.service`.
+- NFL: `legendarypicks-nfl-grade.service`, `legendarypicks-nfl-lock.service`, `legendarypicks-nfl-preview.service`, `legendarypicks-nfl-schedule.service`.
+- NBA: `legendarypicks-nba-model-data.service`, `legendarypicks-nba-model-grade.service`, `legendarypicks-nba-model-lock.service`, `legendarypicks-nba-model-preview.service`.
+
 ## Key documents
 
 - [`ORIENTATION.md`](ORIENTATION.md) — current architecture and safe onboarding path.
