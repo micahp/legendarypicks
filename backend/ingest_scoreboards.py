@@ -44,6 +44,7 @@ import argparse
 from contextlib import closing
 import datetime as dt
 import fcntl
+import json
 import os
 import sys
 import time
@@ -497,6 +498,74 @@ def run_schedule(leagues, dates, dry_run=False, verbose=True):
     return 1 if failures else 0
 
 
+# The NCAAF schedule tab shows every day of ESPN's published calendar, including the
+# postseason. The schedule pass above only asks about days near today, so the rest is
+# read here: a few never-read days per run, each asked once. A failed day is not stored,
+# so the next run asks for it again. Serving reads the store and never asks ESPN.
+NCAAF_SCHEDULE_DAYS_PER_RUN = 8
+
+
+def ncaaf_calendar_days(today=None):
+    """Every day inside ESPN's published NCAAF week windows, as YYYY-MM-DD.
+
+    One catalog request per day. The answer is kept in a small file beside the store and
+    reused for the rest of the day, so the 10-minute timer does not ask ESPN every run.
+    The season is the one that started last August, so a January postseason day belongs
+    to the season before it.
+    """
+    today = today or dt.date.today()
+    season = today.year if today.month >= 3 else today.year - 1
+    cache = os.path.join(os.path.dirname(os.path.abspath(scoreboard_store._db_path())),
+                         "ncaaf_calendar.json")
+    try:
+        with open(cache) as f:
+            kept = json.load(f)
+        if kept.get("date") == today.isoformat() and kept.get("season") == season:
+            return kept["days"]
+    except (OSError, ValueError, KeyError):
+        pass
+    days = set()
+    for phase in espn.football_schedule_weeks("ncaaf", season):
+        for week in phase.get("weeks") or []:
+            day = dt.date.fromisoformat(str(week["start_time"])[:10])
+            last = dt.date.fromisoformat(str(week["end_time"])[:10])
+            while day <= last:
+                days.add(day.isoformat())
+                day += dt.timedelta(days=1)
+    days = sorted(days)
+    try:
+        with open(cache, "w") as f:
+            json.dump({"date": today.isoformat(), "season": season, "days": days}, f)
+    except OSError as exc:
+        print(f"  note ncaaf calendar not cached: {exc}")
+    return days
+
+
+def backfill_ncaaf_schedule(today=None, limit=NCAAF_SCHEDULE_DAYS_PER_RUN, verbose=True):
+    """Read up to `limit` never-read NCAAF calendar days into the store.
+
+    Returns the (day, error) pairs that failed. A day with no games is stored as
+    read, so it is not asked again by this step.
+    """
+    unread = [day for day in ncaaf_calendar_days(today)
+              if scoreboard_store.read("ncaaf", day) is None]
+    batch = unread[:limit]
+    failures = []
+    for day in batch:
+        try:
+            games = espn.games("ncaaf", day)
+        except Exception as exc:
+            failures.append((day, f"{type(exc).__name__}: {exc}"))
+            print(f"  FAIL ncaaf {day}: {type(exc).__name__}: {exc}")
+            continue
+        scoreboard_store.save("ncaaf", day, games, source="espn")
+        if verbose:
+            print(f"  ok   ncaaf {day}  games={len(games)}")
+    print(f"[scoreboards] ncaaf calendar: {len(batch)} read, "
+          f"{len(unread) - len(batch)} still unread, {len(failures)} failed")
+    return failures
+
+
 def run_backfill_range(leagues, dates, dry_run=False, verbose=True):
     """Capture finished days with date RANGE requests, not one per day.
 
@@ -681,6 +750,14 @@ def main(argv=None):
             _, cod_error = refresh_cod(verbose=not args.quiet)
             if cod_error:
                 print(f"  FAIL cod: {cod_error}")
+                status = 1
+        if not args.dry_run and "ncaaf" in [l.lower() for l in leagues]:
+            try:
+                ncaaf_failures = backfill_ncaaf_schedule(verbose=not args.quiet)
+            except Exception as exc:
+                print(f"  FAIL ncaaf calendar: {type(exc).__name__}: {exc}")
+                ncaaf_failures = [("calendar", f"{type(exc).__name__}: {exc}")]
+            if ncaaf_failures:
                 status = 1
     # Freeze tennis locks on the timer. Locking used to depend on somebody loading the
     # projections page inside a 60-minute window; a match nobody opened was never
