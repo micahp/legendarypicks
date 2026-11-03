@@ -1,0 +1,102 @@
+{
+ "depth_file": "depth_charts_2025.parquet",
+ "depth_source_sha256": "14f74185b3c2c48df234ced284ba3596bda3333d0b2a8df40841f68cd34539fa",
+ "offsets_fit_weeks_1_9": {
+  "TE1": 0.0777,
+  "TE2": 0.001,
+  "TE3": -0.0655,
+  "TE4": -0.0886,
+  "WR1": 0.0567,
+  "WR2": 0.1207,
+  "WR3": 0.0482,
+  "WR4": -0.0716,
+  "WR5": -0.0669,
+  "WR6": -0.0618
+ },
+ "role_coverage_wr_te": 0.9769,
+ "role_means_2025": {
+  "TE1": {
+   "mean_estimate": 0.6249,
+   "mean_obs_share": 0.7097,
+   "targets": 501
+  },
+  "TE2": {
+   "mean_estimate": 0.4316,
+   "mean_obs_share": 0.4617,
+   "targets": 505
+  },
+  "TE3": {
+   "mean_estimate": 0.3055,
+   "mean_obs_share": 0.2775,
+   "targets": 438
+  },
+  "TE4": {
+   "mean_estimate": 0.2052,
+   "mean_obs_share": 0.183,
+   "targets": 146
+  },
+  "TE5": {
+   "mean_estimate": 0.1148,
+   "mean_obs_share": 0.1782,
+   "targets": 16
+  },
+  "WR1": {
+   "mean_estimate": 0.7397,
+   "mean_obs_share": 0.8102,
+   "targets": 485
+  },
+  "WR10": {
+   "mean_estimate": 0.0047,
+   "mean_obs_share": 0.1562,
+   "targets": 1
+  },
+  "WR2": {
+   "mean_estimate": 0.6217,
+   "mean_obs_share": 0.7437,
+   "targets": 484
+  },
+  "WR3": {
+   "mean_estimate": 0.4794,
+   "mean_obs_share": 0.5608,
+   "targets": 503
+  },
+  "WR4": {
+   "mean_estimate": 0.3582,
+   "mean_obs_share": 0.3418,
+   "targets": 487
+  },
+  "WR5": {
+   "mean_estimate": 0.2732,
+   "mean_obs_share": 0.2402,
+   "targets": 385
+  },
+  "WR6": {
+   "mean_estimate": 0.2248,
+   "mean_obs_share": 0.2028,
+   "targets": 189
+  },
+  "WR7": {
+   "mean_estimate": 0.1811,
+   "mean_obs_share": 0.1723,
+   "targets": 47
+  },
+  "WR8": {
+   "mean_estimate": 0.1413,
+   "mean_obs_share": 0.2552,
+   "targets": 3
+  }
+ },
+ "source": "snap_share_targets_2023_2025.csv",
+ "split_week": 9,
+ "targets_2025": 9899,
+ "test_weeks_10_18": {
+  "improvement": 0.000646,
+  "mse_estimate_only": 0.074098,
+  "mse_estimate_plus_role_offset": 0.073452,
+  "targets": 5005
+ },
+ "unmapped_count": 0,
+ "unmapped_team_games": [],
+ "wr_te_targets": 2557,
+ "wr_te_with_role": 2498
+}
