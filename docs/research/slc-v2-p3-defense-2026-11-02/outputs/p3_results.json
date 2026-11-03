@@ -1,0 +1,180 @@
+{
+  "k_yards": 8,
+  "lag_hours": 10,
+  "bootstrap": {
+    "draws": 10000,
+    "seed": 20261102
+  },
+  "seasons": [
+    {
+      "season": 2023,
+      "outcome": "receiving_WR",
+      "targets": 544,
+      "league_prior": 7.918,
+      "mean_volume_per_defense_game": 18.59,
+      "mse_component": 7.851904,
+      "mse_no_opponent_adjust": 8.153194,
+      "mse_league_baseline": 8.160048,
+      "improvement_over_league_baseline": 0.308145,
+      "improvement_over_league_baseline_ci95": [
+        -0.094423,
+        0.707872
+      ],
+      "improvement_over_no_opponent_adjust": 0.30129,
+      "late_violations": 0
+    },
+    {
+      "season": 2023,
+      "outcome": "receiving_TE",
+      "targets": 538,
+      "league_prior": 7.2035,
+      "mean_volume_per_defense_game": 6.38,
+      "mse_component": 14.152502,
+      "mse_no_opponent_adjust": 14.060245,
+      "mse_league_baseline": 13.598701,
+      "improvement_over_league_baseline": -0.553801,
+      "improvement_over_league_baseline_ci95": [
+        -1.099878,
+        -0.003224
+      ],
+      "improvement_over_no_opponent_adjust": -0.092257,
+      "late_violations": 0
+    },
+    {
+      "season": 2023,
+      "outcome": "receiving_RB",
+      "targets": 539,
+      "league_prior": 5.5531,
+      "mean_volume_per_defense_game": 5.62,
+      "mse_component": 14.66003,
+      "mse_no_opponent_adjust": 14.431179,
+      "mse_league_baseline": 13.931582,
+      "improvement_over_league_baseline": -0.728448,
+      "improvement_over_league_baseline_ci95": [
+        -1.287238,
+        -0.195484
+      ],
+      "improvement_over_no_opponent_adjust": -0.228851,
+      "late_violations": 0
+    },
+    {
+      "season": 2023,
+      "outcome": "rushing_RB",
+      "targets": 544,
+      "league_prior": 4.4013,
+      "mean_volume_per_defense_game": 20.08,
+      "mse_component": 1.94558,
+      "mse_no_opponent_adjust": 1.869639,
+      "mse_league_baseline": 1.935549,
+      "improvement_over_league_baseline": -0.010031,
+      "improvement_over_league_baseline_ci95": [
+        -0.12798,
+        0.108648
+      ],
+      "improvement_over_no_opponent_adjust": -0.075941,
+      "late_violations": 0
+    },
+    {
+      "season": 2023,
+      "outcome": "passing_QB",
+      "targets": 544,
+      "league_prior": 7.0207,
+      "mean_volume_per_defense_game": 31.97,
+      "mse_component": 3.562869,
+      "mse_no_opponent_adjust": 3.619769,
+      "mse_league_baseline": 3.632371,
+      "improvement_over_league_baseline": 0.069502,
+      "improvement_over_league_baseline_ci95": [
+        -0.163145,
+        0.301734
+      ],
+      "improvement_over_no_opponent_adjust": 0.0569,
+      "late_violations": 0
+    },
+    {
+      "season": 2024,
+      "outcome": "receiving_WR",
+      "targets": 544,
+      "league_prior": 7.927,
+      "mean_volume_per_defense_game": 17.49,
+      "mse_component": 8.618014,
+      "mse_no_opponent_adjust": 8.674428,
+      "mse_league_baseline": 8.386325,
+      "improvement_over_league_baseline": -0.231689,
+      "improvement_over_league_baseline_ci95": [
+        -0.5865,
+        0.113261
+      ],
+      "improvement_over_no_opponent_adjust": 0.056414,
+      "late_violations": 0
+    },
+    {
+      "season": 2024,
+      "outcome": "receiving_TE",
+      "targets": 542,
+      "league_prior": 7.2632,
+      "mean_volume_per_defense_game": 6.15,
+      "mse_component": 16.458296,
+      "mse_no_opponent_adjust": 16.900882,
+      "mse_league_baseline": 16.61614,
+      "improvement_over_league_baseline": 0.157844,
+      "improvement_over_league_baseline_ci95": [
+        -0.56588,
+        0.892992
+      ],
+      "improvement_over_no_opponent_adjust": 0.442586,
+      "late_violations": 0
+    },
+    {
+      "season": 2024,
+      "outcome": "receiving_RB",
+      "targets": 534,
+      "league_prior": 5.539,
+      "mean_volume_per_defense_game": 5.19,
+      "mse_component": 16.192525,
+      "mse_no_opponent_adjust": 16.329992,
+      "mse_league_baseline": 16.171408,
+      "improvement_over_league_baseline": -0.021116,
+      "improvement_over_league_baseline_ci95": [
+        -0.762375,
+        0.750918
+      ],
+      "improvement_over_no_opponent_adjust": 0.137467,
+      "late_violations": 0
+    },
+    {
+      "season": 2024,
+      "outcome": "rushing_RB",
+      "targets": 544,
+      "league_prior": 4.1465,
+      "mean_volume_per_defense_game": 20.37,
+      "mse_component": 1.802767,
+      "mse_no_opponent_adjust": 1.744336,
+      "mse_league_baseline": 1.725891,
+      "improvement_over_league_baseline": -0.076876,
+      "improvement_over_league_baseline_ci95": [
+        -0.186464,
+        0.031873
+      ],
+      "improvement_over_no_opponent_adjust": -0.05843,
+      "late_violations": 0
+    },
+    {
+      "season": 2024,
+      "outcome": "passing_QB",
+      "targets": 544,
+      "league_prior": 7.0199,
+      "mean_volume_per_defense_game": 30.05,
+      "mse_component": 3.839745,
+      "mse_no_opponent_adjust": 3.957813,
+      "mse_league_baseline": 3.886387,
+      "improvement_over_league_baseline": 0.046642,
+      "improvement_over_league_baseline_ci95": [
+        -0.212822,
+        0.306269
+      ],
+      "improvement_over_no_opponent_adjust": 0.118069,
+      "late_violations": 0
+    }
+  ]
+}

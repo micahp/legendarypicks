@@ -1,0 +1,15 @@
+Topic,Details / URLs
+Purpose,"Starter research roster for 2025 and 2026 NFL HC, OC, DC and 2026 reported offensive play-caller. NOT a verified per-game coaching ledger or a fitted coaching-tendency model."
+Scope,64 team-season rows. Index of 120 distinct unverified coach name strings (includes play-callers).
+2025 staff source,https://www.drafthistory.com/index.php/articles/view/2025-nfl-team-leaders
+2026 staff source,https://gridironexperts.com/nfl-coaches-list/
+2026 offensive play-callers,https://www.acmepackingcompany.com/green-bay-packers-coaching-staff/79405/the-nfls-play-callers-are-set-for-2026-only-4-new-names-get-a-chance
+2026 coach change evidence,https://www.denverbroncos.com/news/we-ll-do-what-s-best-for-the-team-hc-sean-payton-to-reassume-play-calling-responsibilities-in-broncos-week-5-game-vs-chargers
+2026 Denver first caller,https://www.denverbroncos.com/news/i-wouldn-t-do-it-if-i-didn-t-think-it-was-going-to-help-our-team-win-hc-sean-payton-announces-oc-davis-webb-to-call-plays-for-broncos-offense
+SportsDataverse HC tendencies,https://py.sportsdataverse.org/docs/nfl/reference/loaders/coach
+SportsDataverse HC careers,https://py.sportsdataverse.org/docs/nfl/reference/loaders/coach-2
+2026 TB defensive coordinator,No separately named DC in directory or official TB staff; intentionally left empty; verify defensive play-caller separately; do not insert HC into DC title field.
+Caveat: season rosters,Preseason/current directories may differ from the actual game assignments due to interim replacements and midseason role changes. Backfill per-game stints before use.
+Caveat: coach intent,Observed team output cannot by itself establish which person called each play; avoid causal claims without verified responsibility and controls.
+Cutoff / holdout,"Roster/staff publicity is metadata; no 2026 match results, player outcomes, or team-game stats used in this workbook."
+2025 Cleveland role change,https://www.clevelandbrowns.com/news/5-things-to-know-about-tommy-rees
