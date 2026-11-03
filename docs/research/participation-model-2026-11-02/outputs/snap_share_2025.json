@@ -1,5 +1,5 @@
 {
- "blank_label_note": "2022 offense_positions is blank in this file, so 2023 uses the overall prior-season mean",
+ "blank_label_note": "position groups from the reconstructed PFR positions (position_reconstruction_2022_2025.csv) in every season",
  "dev_seasons": [
   2023,
   2024
@@ -110,8 +110,8 @@
     "players": 32
    },
    "TE4": {
-    "mean_share": 0.1499,
-    "players": 26
+    "mean_share": 0.1534,
+    "players": 25
    },
    "TE5": {
     "mean_share": 0.1107,
@@ -156,15 +156,15 @@
     "players": 32
    },
    "OL10": {
-    "mean_share": 0.2984,
+    "mean_share": 0.2896,
     "players": 26
    },
    "OL11": {
-    "mean_share": 0.2104,
-    "players": 19
+    "mean_share": 0.2145,
+    "players": 18
    },
    "OL12": {
-    "mean_share": 0.1838,
+    "mean_share": 0.1704,
     "players": 8
    },
    "OL2": {
@@ -196,7 +196,7 @@
     "players": 32
    },
    "OL9": {
-    "mean_share": 0.3836,
+    "mean_share": 0.3831,
     "players": 30
    },
    "QB1": {
@@ -248,12 +248,16 @@
     "players": 32
    },
    "TE4": {
-    "mean_share": 0.1561,
+    "mean_share": 0.1533,
     "players": 27
    },
    "TE5": {
-    "mean_share": 0.1099,
-    "players": 13
+    "mean_share": 0.1143,
+    "players": 12
+   },
+   "UNK1": {
+    "mean_share": 0.1465,
+    "players": 6
    },
    "WR1": {
     "mean_share": 0.8385,
@@ -276,16 +280,16 @@
     "players": 32
    },
    "WR5": {
-    "mean_share": 0.3192,
+    "mean_share": 0.315,
     "players": 32
    },
    "WR6": {
-    "mean_share": 0.2294,
+    "mean_share": 0.2287,
     "players": 32
    },
    "WR7": {
-    "mean_share": 0.156,
-    "players": 28
+    "mean_share": 0.1598,
+    "players": 27
    },
    "WR8": {
     "mean_share": 0.1348,
@@ -299,25 +303,25 @@
  },
  "scoring": {
   "2023": {
-   "component_mse": 0.098886,
-   "group_mean_mse": 0.187701,
-   "improvement_over_group_mean": 0.088815,
-   "improvement_over_prior_only": 0.109765,
-   "prior_only_mse": 0.208651,
+   "component_mse": 0.0689,
+   "group_mean_mse": 0.104721,
+   "improvement_over_group_mean": 0.035821,
+   "improvement_over_prior_only": 0.043351,
+   "prior_only_mse": 0.112251,
    "targets": 9940
   },
   "2024": {
    "component_mse": 0.069869,
-   "group_mean_mse": 0.105728,
-   "improvement_over_group_mean": 0.035859,
+   "group_mean_mse": 0.105696,
+   "improvement_over_group_mean": 0.035827,
    "improvement_over_prior_only": 0.045221,
    "prior_only_mse": 0.115091,
    "targets": 9879
   },
   "2025": {
    "component_mse": 0.070152,
-   "group_mean_mse": 0.103354,
-   "improvement_over_group_mean": 0.033202,
+   "group_mean_mse": 0.102984,
+   "improvement_over_group_mean": 0.032832,
    "improvement_over_prior_only": 0.038364,
    "prior_only_mse": 0.108516,
    "targets": 9899
@@ -325,10 +329,35 @@
  },
  "scoring_by_prior_group": {
   "2023": {
+   "OL": {
+    "component_mse": 0.094106,
+    "group_mean_mse": 0.09317,
+    "targets": 2233
+   },
+   "QB": {
+    "component_mse": 0.088023,
+    "group_mean_mse": 0.083738,
+    "targets": 420
+   },
+   "RB": {
+    "component_mse": 0.033539,
+    "group_mean_mse": 0.063194,
+    "targets": 1048
+   },
+   "TE": {
+    "component_mse": 0.030009,
+    "group_mean_mse": 0.076873,
+    "targets": 998
+   },
    "UNK": {
-    "component_mse": 0.098886,
-    "group_mean_mse": 0.187701,
-    "targets": 9940
+    "component_mse": 0.081001,
+    "group_mean_mse": 0.135384,
+    "targets": 3789
+   },
+   "WR": {
+    "component_mse": 0.045278,
+    "group_mean_mse": 0.097654,
+    "targets": 1452
    }
   },
   "2024": {
@@ -349,7 +378,7 @@
    },
    "TE": {
     "component_mse": 0.033106,
-    "group_mean_mse": 0.071937,
+    "group_mean_mse": 0.071628,
     "targets": 1034
    },
    "UNK": {
@@ -365,9 +394,9 @@
   },
   "2025": {
    "OL": {
-    "component_mse": 0.09243,
-    "group_mean_mse": 0.091325,
-    "targets": 2242
+    "component_mse": 0.092224,
+    "group_mean_mse": 0.088366,
+    "targets": 2228
    },
    "QB": {
     "component_mse": 0.091373,
@@ -381,18 +410,18 @@
    },
    "TE": {
     "component_mse": 0.034277,
-    "group_mean_mse": 0.07606,
+    "group_mean_mse": 0.075888,
     "targets": 1083
    },
    "UNK": {
-    "component_mse": 0.085462,
-    "group_mean_mse": 0.136711,
-    "targets": 3716
+    "component_mse": 0.085659,
+    "group_mean_mse": 0.137316,
+    "targets": 3739
    },
    "WR": {
-    "component_mse": 0.048907,
-    "group_mean_mse": 0.095247,
-    "targets": 1474
+    "component_mse": 0.048561,
+    "group_mean_mse": 0.095138,
+    "targets": 1465
    }
   }
  },

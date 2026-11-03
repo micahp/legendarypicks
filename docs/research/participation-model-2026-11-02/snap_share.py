@@ -56,6 +56,9 @@ def main():
     ap.add_argument('--tables', type=Path, required=True)
     ap.add_argument('--out', type=Path, required=True)
     ap.add_argument('--targets-out', type=Path, default=None, help='optional CSV of every scored player-game')
+    ap.add_argument('--positions', type=Path, default=None,
+                    help='optional reconstructed per-game positions (reconstruct_positions.py); replaces the on-field '
+                         'labels for position groups, including 2022')
     args = ap.parse_args()
 
     rows = [r for r in pm.load_scrimmage(args.tables, set(SEASONS)) if r['season_type'] == 'REG']
@@ -67,11 +70,20 @@ def main():
         key = (int(row['season']), row['game_id'], row['posteam'])
         plays[key] += 1
         week_of[key] = int(row['week'])
-        for pid, label in zip(row['offense_ids'].split(';'), row['offense_positions'].split(';')):
-            if pid:
-                snaps[(*key, pid)] += 1
-                if label:
-                    labels[(*key, pid)][label] += 1
+        # Snaps come from the ID list alone. 2022 has no offense_positions, so zipping the two lists would drop every
+        # 2022 snap; labels are taken separately, and only where the position list exists.
+        pids = [pid for pid in row['offense_ids'].split(';') if pid]
+        for pid in pids:
+            snaps[(*key, pid)] += 1
+        for pid, label in zip(pids, [x for x in row['offense_positions'].split(';') if x]):
+            if label:
+                labels[(*key, pid)][label] += 1
+
+    if args.positions:
+        labels = defaultdict(Counter)
+        with open(args.positions, newline='', encoding='utf-8') as handle:
+            for row in csv.DictReader(handle):
+                labels[(int(row['season']), row['game_id'], row['team'], row['gsis_id'])][row['position']] += 1
 
     team_games = defaultdict(list)  # (season, team) -> [(week, game)]
     for key in plays:
@@ -176,7 +188,8 @@ def main():
                                    for name, vals in sorted(ranks.items()) if len(vals) >= 5}
 
     out = {'source': args.tables.name, 'k': K, 'dev_seasons': list(DEV_SEASONS), 'holdout': HOLDOUT_SEASON,
-           'blank_label_note': BLANK_LABEL_NOTE,
+           'blank_label_note': BLANK_LABEL_NOTE if not args.positions else
+           f'position groups from the reconstructed PFR positions ({args.positions.name}) in every season',
            'leakage_check': "the estimate for a game uses only that team's earlier games in the same season and a prior "
                             'from the season before; the position group comes from the prior season only',
            'scoring': results, 'scoring_by_prior_group': by_group, 'role_table_dev_descriptive': role_table}
