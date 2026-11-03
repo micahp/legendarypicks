@@ -29,6 +29,7 @@ sys.path.insert(0, str(HERE))
 import candidate_substitution as cs  # noqa: E402
 import diagnose_substitution_gap as dg  # noqa: E402
 import lineup_fit as lf  # noqa: E402
+import participation_labels as pl  # noqa: E402
 import participation_model as pm  # noqa: E402
 import participation_field as pf  # noqa: E402
 
@@ -50,13 +51,12 @@ def load_touches(raw_dir, seasons):
     return out
 
 
-def pairs(rows, touches):
+def pairs(rows, touches, recon=None):
     """Yield (season, class, stint bucket, touched the earlier snap, earlier play type, left before the next snap)."""
     seqs = defaultdict(list)
     for row in rows:
         key = (int(row['season']), row['game_id'], row['posteam'])
-        skill = {pid: label for pid, label in zip(row['offense_ids'].split(';'), row['offense_positions'].split(';'))
-                 if pid and label in lf.SKILL}
+        skill = {pid: label for pid, label, _source in pl.aligned_labels(row, recon) if label in lf.SKILL}
         seqs[key].append((int(row['play_id']), frozenset(skill), {p: lf.SKILL[lab] for p, lab in skill.items()}))
     for key, items in seqs.items():
         items.sort(key=lambda it: it[0])
@@ -78,12 +78,14 @@ def main():
     ap.add_argument('--tables', type=Path, required=True)
     ap.add_argument('--raw-dir', type=Path, required=True)
     ap.add_argument('--out', type=Path, required=True)
+    ap.add_argument('--positions', type=Path, default=None, help='reconstructed 2022 positions (reconstruct_positions.py)')
     args = ap.parse_args()
 
     seasons = {2022, 2023, 2024, 2025}
     rows = [r for r in pm.load_scrimmage(args.tables, seasons) if r['season_type'] == 'REG']
     touches = load_touches(args.raw_dir, seasons)
-    events = list(pairs(rows, touches))
+    recon = pl.load_reconstruction(args.positions) if args.positions else None
+    events = list(pairs(rows, touches, recon))
 
     def tabulate(season_set):
         cells = defaultdict(lambda: [0, 0])
