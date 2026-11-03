@@ -29,11 +29,15 @@ import validate_lineups as vl  # noqa: E402
 import participation_field as pf  # noqa: E402
 
 
+# The 2025 weekly file has postseason rows (WC week 19, DIV 20, CON 21, SB 22). A REG-only filter left every playoff bench empty.
+POSTSEASON_OR_REG = ('REG', 'WC', 'DIV', 'CON', 'SB')
+
+
 def weekly_status(path):
     status = {}
     with gzip.open(path, 'rt', encoding='utf-8', newline='') as handle:
         for row in csv.DictReader(handle):
-            if row['game_type'] == 'REG' and row['gsis_id']:
+            if row['game_type'] in POSTSEASON_OR_REG and row['gsis_id']:
                 status[(row['gsis_id'], row['team'], int(row['week']))] = row['status']
     return status
 
@@ -117,11 +121,13 @@ def main():
     for mode in ('forced', 'free'):
         result['variants'][mode] = {}
         for name, (field, stint_swap, drive_split, joint) in variants.items():
-            for label, roster_for_key in (('ungated', None), ('gated_to_active_week', gated),
-                                          ('gated_all_act', gated_all)):
+            for label, roster_for_key, feasible in (('ungated', None, False), ('gated_to_active_week', gated, False),
+                                                    ('gated_all_act', gated_all, False),
+                                                    ('gated_all_act_feasible', gated_all, True)):
                 field.status.clear()
                 runs = [cs.simulate(field, seqs, rosters, cls_of, play_drive, seed, stint_swap, drive_split, joint,
-                                    mode, roster_for_key=roster_for_key) for seed in range(1, args.seeds + 1)]
+                                    mode, roster_for_key=roster_for_key, feasible=feasible)
+                        for seed in range(1, args.seeds + 1)]
                 sims = [sim for sim, _d in runs]
                 summary = cs.summarise(cs.evaluate(sims, seqs, play_drive, cls_of))
                 result['variants'][mode][f'{name}|{label}'] = {
