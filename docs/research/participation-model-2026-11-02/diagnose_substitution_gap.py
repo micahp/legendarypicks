@@ -59,17 +59,21 @@ def signature(prev_group, group, enter_cls, leave_cls):
     return f'{prev_group}>{group}|' + (' '.join(parts) if parts else 'none')
 
 
-def pair_records(seq_groups, seq_ids, seq_ok, seq_drive, cls_of):
-    """One record per consecutive snap pair. Clean means both snaps match their listed grouping (observed side)."""
+def pair_records(seq_groups, seq_ids, seq_ok, seq_drive, cls_of, seq_cls=None):
+    """One record per consecutive snap pair. Clean means both snaps match their listed grouping (observed side).
+    seq_cls, when given, is each snap's own {gsis_id: class}; otherwise every snap uses cls_of."""
+    def cls(i, pid):
+        return seq_cls[i].get(pid) if seq_cls is not None else cls_of.get(pid)
+
     st = stint_track(seq_ids)
     records = []
     for i in range(1, len(seq_ids)):
         prev, cur = seq_ids[i - 1], seq_ids[i]
         enter = cur - prev
         leave = prev - cur
-        enter_cls = Counter(cls_of.get(pid) for pid in enter)
-        leave_cls = Counter(cls_of.get(pid) for pid in leave)
-        exposure = [(cls_of.get(pid), min(st[i - 1][pid], CAP), pid not in cur) for pid in prev]
+        enter_cls = Counter(cls(i, pid) for pid in enter)
+        leave_cls = Counter(cls(i - 1, pid) for pid in leave)
+        exposure = [(cls(i - 1, pid), min(st[i - 1][pid], CAP), pid not in cur) for pid in prev]
         drive_known = seq_drive[i] is not None and seq_drive[i - 1] is not None
         records.append({
             'clean': seq_ok[i] and seq_ok[i - 1],

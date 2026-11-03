@@ -31,11 +31,18 @@ def group_counts(group):
     return {'RB': rb, 'TE': te, 'WR': 5 - rb - te}
 
 
-def sequences(rows, positions):
-    """{(season, game_id, team): [(group, cell, skill), ...]} in play order. skill is a frozenset of (gsis_id, class)."""
+def sequences(rows, positions, snap_labels=False):
+    """{(season, game_id, team): [(group, cell, skill), ...]} in play order. skill is a frozenset of (gsis_id, class).
+    snap_labels=True takes each player's class from the position listed on that snap, so a player with several roles
+    keeps the role he had on each snap. Otherwise every snap uses the player's single position from positions."""
     grouped = defaultdict(list)
     for row in rows:
-        skill = frozenset((pid, SKILL[positions[pid]]) for pid in row['ids'] if positions.get(pid) in SKILL)
+        if snap_labels:
+            skill = frozenset((pid, SKILL[label]) for pid, label in
+                              zip(row['offense_ids'].split(';'), row['offense_positions'].split(';'))
+                              if pid and label in SKILL)
+        else:
+            skill = frozenset((pid, SKILL[positions[pid]]) for pid in row['ids'] if positions.get(pid) in SKILL)
         grouped[(int(row['season']), row['game_id'], row['posteam'])].append(
             (int(row['play_id']), row['group'], pm.cell_of(row), skill))
     return {key: [(group, cell, skill) for _, group, cell, skill in sorted(items, key=lambda item: item[0])]
