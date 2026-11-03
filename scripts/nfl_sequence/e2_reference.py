@@ -3,6 +3,7 @@
 The window is E1's: 2022-2025, weeks 1-18. The pool, the kickoff pool, the kick table and the participant lookup all
 come from that window, so every draw in a game is from the same observed seasons.
 """
+import os
 import sqlite3
 import sys
 import hashlib
@@ -519,7 +520,12 @@ def _shared_play_call_frame(pm, db, cutoff):
     key = (str(db), cutoff)
     if key not in _PLAY_CALL_FRAMES:
         _PLAY_CALL_FRAMES.clear()
-        _PLAY_CALL_FRAMES[key] = pm.load_frame(range(2010, cutoff), db=db)
+        cache_dir = os.environ.get('SLC_FRAME_CACHE_DIR')  # opt-in disk cache; every read checks the source fingerprint
+        if cache_dir:
+            frame = pm.load_frame_cached(Path(cache_dir) / f'play-call-frame-{cutoff}.npz', range(2010, cutoff), db=db)
+        else:
+            frame = pm.load_frame(range(2010, cutoff), db=db)
+        _PLAY_CALL_FRAMES[key] = frame
     return _PLAY_CALL_FRAMES[key]
 
 

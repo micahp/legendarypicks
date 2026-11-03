@@ -21,6 +21,7 @@ this baseline is a reconstruction on the same definition.
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 
 import numpy as np
@@ -202,9 +203,14 @@ def save_frame(frame, path, seasons, include_flagged, fingerprint):
     codes = [''] * len(frame.teams)
     for code, index in frame.teams.items():
         codes[index] = code
-    np.savez(path, team_codes=np.array(codes), game_ids=np.array(frame.games, dtype=str),
+    path = Path(path)
+    # Written to a per-process temporary file and renamed into place, so a concurrent reader sees either the old file or the
+    # whole new one, never a partial write.
+    temporary = path.with_name(f'{path.stem}.{os.getpid()}.tmp.npz')
+    np.savez(temporary, team_codes=np.array(codes), game_ids=np.array(frame.games, dtype=str),
              seasons_built=np.array(seasons, dtype=np.int64), include_flagged=np.array(include_flagged),
              fingerprint=np.array(fingerprint), **{k: frame.a[k] for k in FRAME_KEYS})
+    os.replace(temporary, path)
 
 
 def load_frame_cached(path, seasons, include_flagged=True, db=e1.DEFAULT_DB):
