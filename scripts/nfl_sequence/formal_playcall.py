@@ -78,10 +78,19 @@ def offense_personnel(text):
     return groups, other
 
 
-def offense_personnel_code(text):
+def personnel_is_implicit(text):
+    """True when the text leaves out the QB or the offensive line count, which the 2022 format does. The 2022 format names
+    only the skill players, so one QB and five linemen are implied. Such a row is reconstructed, and the caller says so."""
+    groups, _other = offense_personnel(text)
+    return groups is not None and (groups['QB'] == 0 or groups['OL'] == 0)
+
+
+def offense_personnel_code(text, implicit_qb_and_ol=False):
     """'113', '122' and so on, with '-OL6' or '-OL7' for a larger line. A punt-team or field-goal personnel (a punter, kicker or
     long snapper on the field) is SPECIAL, a real play such as a fake punt, and is not dropped. INVALID, with the reason, when
-    the text names a defensive position or does not total eleven players. UNKNOWN when no personnel is recorded."""
+    the text names a defensive position or does not total eleven players. UNKNOWN when no personnel is recorded.
+
+    implicit_qb_and_ol is for the 2022 format only: a missing QB count means one QB, and a missing OL count means five."""
     groups, other = offense_personnel(text)
     if groups is None:
         return UNKNOWN
@@ -90,6 +99,11 @@ def offense_personnel_code(text):
         return f'{SPECIAL}:{"/".join(special)}'
     if other:
         return f'{INVALID}:{"/".join(sorted(other))}'
+    if implicit_qb_and_ol:
+        if groups['QB'] == 0:
+            groups['QB'] = 1
+        if groups['OL'] == 0:
+            groups['OL'] = 5
     total = sum(groups.values())
     if total != OFFENSE_SIZE:
         return f'{INVALID}:size{total}'
@@ -175,13 +189,19 @@ def load_season(raw_dir, season, team=None):
                 continue
             key = (row['game_id'], int(float(row['play_id'])))
             p = part.get(key)
+            personnel = p['offense_personnel'] if p else ''
             out.append({
                 'season': season, 'game_id': row['game_id'], 'play_id': key[1], 'posteam': row['posteam'],
-                'defteam': row['defteam'], 'week': int(row['week']), 'down': row['down'], 'ydstogo': row['ydstogo'],
-                'yardline_100': row['yardline_100'], 'play_type': row['play_type'], 'run_gap': row['run_gap'],
-                'run_location': row['run_location'], 'pass_length': row['pass_length'],
+                'defteam': row['defteam'], 'week': int(row['week']), 'qtr': row['qtr'], 'down': row['down'],
+                'ydstogo': row['ydstogo'], 'yardline_100': row['yardline_100'],
+                'half_seconds_remaining': row['half_seconds_remaining'],
+                'quarter_seconds_remaining': row['quarter_seconds_remaining'],
+                'score_differential': row['score_differential'], 'play_type': row['play_type'],
+                'run_gap': row['run_gap'], 'run_location': row['run_location'], 'pass_length': row['pass_length'],
                 'pass_location': row['pass_location'], 'shotgun': row['shotgun'],
-                'formation': p['offense_formation'] if p else '', 'personnel': p['offense_personnel'] if p else '',
+                'formation': p['offense_formation'] if p else '', 'personnel': personnel,
+                'personnel_code': offense_personnel_code(personnel, implicit_qb_and_ol=(season == 2022)),
+                'personnel_reconstructed': season == 2022 and personnel_is_implicit(personnel),
                 'route': p['route'] if p else '', 'defense_personnel': p['defense_personnel'] if p else '',
                 'coverage': p['defense_coverage_type'] if p else '', 'man_zone': p['defense_man_zone_type'] if p else '',
                 'pass_rushers': p['number_of_pass_rushers'] if p else '', 'has_participation': p is not None,
