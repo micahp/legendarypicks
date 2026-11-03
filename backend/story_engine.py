@@ -22,27 +22,32 @@ RESEARCH_JARGON = re.compile(
     re.IGNORECASE,
 )
 
-TEAM_NAMES = {
-    "ATL": "Atlanta Hawks", "BKN": "Brooklyn Nets", "BOS": "Boston Celtics",
-    "CHA": "Charlotte Hornets", "CHI": "Chicago Bears", "CLE": "Cleveland Cavaliers",
-    "DAL": "Dallas Mavericks", "DEN": "Denver Nuggets", "DET": "Detroit Pistons",
-    "GS": "Golden State Warriors", "HOU": "Houston Rockets", "IND": "Indiana Pacers",
-    "LAC": "LA Clippers", "LAL": "Los Angeles Lakers", "MEM": "Memphis Grizzlies",
-    "MIA": "Miami Heat", "MIL": "Milwaukee Bucks", "MIN": "Minnesota Timberwolves",
-    "NO": "New Orleans Pelicans", "NY": "New York Knicks", "OKC": "Oklahoma City Thunder",
-    "ORL": "Orlando Magic", "PHI": "Philadelphia 76ers", "PHX": "Phoenix Suns",
-    "POR": "Portland Trail Blazers", "SA": "San Antonio Spurs", "SAC": "Sacramento Kings",
-    "TOR": "Toronto Raptors", "UTAH": "Utah Jazz", "WSH": "Washington Wizards",
-    "ARI": "Arizona Cardinals", "BAL": "Baltimore Ravens", "BUF": "Buffalo Bills",
-    "CAR": "Carolina Panthers", "CIN": "Cincinnati Bengals",
-    "DAL_NFL": "Dallas Cowboys", "DEN_NFL": "Denver Broncos", "DET_NFL": "Detroit Lions",
-    "GB": "Green Bay Packers", "HOU_NFL": "Houston Texans", "IND_NFL": "Indianapolis Colts",
-    "JAX": "Jacksonville Jaguars", "KC": "Kansas City Chiefs", "LAC_NFL": "Los Angeles Chargers",
-    "LAR": "Los Angeles Rams", "LV": "Las Vegas Raiders", "MIA_NFL": "Miami Dolphins",
-    "MIN_NFL": "Minnesota Vikings", "NE": "New England Patriots", "NO_NFL": "New Orleans Saints",
-    "NYG": "New York Giants", "NYJ": "New York Jets", "PHI": "Philadelphia Eagles",
-    "PIT": "Pittsburgh Steelers", "SEA": "Seattle Seahawks", "SF": "San Francisco 49ers",
-    "TB": "Tampa Bay Buccaneers", "TEN": "Tennessee Titans", "WSH_NFL": "Washington Commanders",
+LEAGUE_TEAM_NAMES = {
+    "nba": {
+        "ATL": "Atlanta Hawks", "BKN": "Brooklyn Nets", "BOS": "Boston Celtics",
+        "CHA": "Charlotte Hornets", "CHI": "Chicago Bulls", "CLE": "Cleveland Cavaliers",
+        "DAL": "Dallas Mavericks", "DEN": "Denver Nuggets", "DET": "Detroit Pistons",
+        "GS": "Golden State Warriors", "HOU": "Houston Rockets", "IND": "Indiana Pacers",
+        "LAC": "LA Clippers", "LAL": "Los Angeles Lakers", "MEM": "Memphis Grizzlies",
+        "MIA": "Miami Heat", "MIL": "Milwaukee Bucks", "MIN": "Minnesota Timberwolves",
+        "NO": "New Orleans Pelicans", "NY": "New York Knicks", "OKC": "Oklahoma City Thunder",
+        "ORL": "Orlando Magic", "PHI": "Philadelphia 76ers", "PHX": "Phoenix Suns",
+        "POR": "Portland Trail Blazers", "SA": "San Antonio Spurs", "SAC": "Sacramento Kings",
+        "TOR": "Toronto Raptors", "UTAH": "Utah Jazz", "WSH": "Washington Wizards",
+    },
+    "nfl": {
+        "ARI": "Arizona Cardinals", "ATL": "Atlanta Falcons", "BAL": "Baltimore Ravens",
+        "BUF": "Buffalo Bills", "CAR": "Carolina Panthers", "CHI": "Chicago Bears",
+        "CIN": "Cincinnati Bengals", "CLE": "Cleveland Browns", "DAL": "Dallas Cowboys",
+        "DEN": "Denver Broncos", "DET": "Detroit Lions", "GB": "Green Bay Packers",
+        "HOU": "Houston Texans", "IND": "Indianapolis Colts", "JAX": "Jacksonville Jaguars",
+        "KC": "Kansas City Chiefs", "LAC": "Los Angeles Chargers", "LAR": "Los Angeles Rams",
+        "LV": "Las Vegas Raiders", "MIA": "Miami Dolphins", "MIN": "Minnesota Vikings",
+        "NE": "New England Patriots", "NO": "New Orleans Saints", "NYG": "New York Giants",
+        "NYJ": "New York Jets", "PHI": "Philadelphia Eagles", "PIT": "Pittsburgh Steelers",
+        "SEA": "Seattle Seahawks", "SF": "San Francisco 49ers", "TB": "Tampa Bay Buccaneers",
+        "TEN": "Tennessee Titans", "WSH": "Washington Commanders",
+    },
 }
 TEAM_CITIES = {
     "ATL": "Atlanta", "BKN": "Brooklyn", "BOS": "Boston", "CHA": "Charlotte",
@@ -99,6 +104,10 @@ def _city(team: dict[str, Any]) -> str:
     if name:
         return name.rsplit(" ", 1)[0] if len(name.split()) > 1 else name
     return str(team["code"])
+
+
+def _team_name(code: str, league: str) -> str:
+    return LEAGUE_TEAM_NAMES.get(str(league).lower(), {}).get(code, code)
 
 
 def _nickname(team: dict[str, Any]) -> str:
@@ -215,7 +224,8 @@ def select_story_angle(bundle: dict[str, Any]) -> dict[str, Any]:
     teams = (away, home)
     perfect = [t for t in teams if t.get("record_verified") and t["wins"] >= 4 and t["losses"] == 0 and t.get("games", 0) >= 4]
     winless = [t for t in teams if t.get("record_verified") and t["wins"] == 0 and t["losses"] >= 4 and t.get("games", 0) >= 4]
-    long_streaks = [t for t in teams if t.get("streak_length", 0) >= 3]
+    winning_streaks = [t for t in teams if t.get("streak_result") == "W" and t.get("streak_length", 0) >= 3]
+    losing_streaks = [t for t in teams if t.get("streak_result") == "L" and t.get("streak_length", 0) >= 3]
     verified_last = [t for t in winless if (rank := _rank_fact(bundle, t)) and rank["rank"] == rank["league_size"]]
     top_four = [t for t in teams if (rank := _rank_fact(bundle, t)) and rank["rank"] <= 4]
 
@@ -232,11 +242,13 @@ def select_story_angle(bundle: dict[str, Any]) -> dict[str, Any]:
         return {"kind": "winless_last", "lead_team": lead["code"], "teams": [t["code"] for t in teams]}
     if len(top_four) == 2:
         return {"kind": "top_four", "lead_team": home["code"], "teams": [t["code"] for t in teams]}
-    if len(long_streaks) == 2:
+    if winning_streaks and losing_streaks:
         return {"kind": "streak_clash", "lead_team": home["code"], "teams": [t["code"] for t in teams]}
-    if long_streaks:
-        lead = max(long_streaks, key=lambda t: t.get("streak_length", 0))
-        return {"kind": "winning_streak", "lead_team": lead["code"], "teams": [t["code"] for t in teams]}
+    if winning_streaks or losing_streaks:
+        candidates = winning_streaks + losing_streaks
+        lead = max(candidates, key=lambda t: t.get("streak_length", 0))
+        kind = "winning_streak" if lead.get("streak_result") == "W" else "losing_streak"
+        return {"kind": kind, "lead_team": lead["code"], "teams": [t["code"] for t in teams]}
     return {"kind": "records", "lead_team": home["code"], "teams": [t["code"] for t in teams]}
 
 
@@ -414,7 +426,7 @@ def _nba_player_clause(fact: dict[str, Any]) -> str | None:
     ast = stats.get("assists", [])
     rebounds = stats.get("rebounds", [])
     name, team = fact["player"], fact["team"]
-    city = _city({"code": team, "name": TEAM_NAMES.get(team, team)})
+    city = _city({"code": team, "name": _team_name(team, "nba")})
     if len(pts) >= 2 and min(pts[:2]) >= 30:
         return f"{city}'s {name} has scored {_number(pts[0], 0)} and {_number(pts[1], 0)} in his last two"
     if len(pts) >= 5 and sum(value >= 23 for value in pts[:5]) == 5 and max(pts[:5]) >= 35:
@@ -423,13 +435,15 @@ def _nba_player_clause(fact: dict[str, Any]) -> str | None:
     if len(pts) >= 5 and sum(value >= 35 for value in pts[:5]) >= 2 and not (
             pts[0] >= 30 and pts[1] >= 30):
         standout = [int(value) for value in pts[:5] if value >= 35]
-        return f"{city}'s {name} has put up {standout[0]} and {standout[1]} in two of his last five"
+        count = len(standout)
+        score_text = ", ".join(map(str, standout[:-1])) + f" and {standout[-1]}"
+        return f"{city}'s {name} has put up {score_text} in {_count_word(count)} of his last five"
     if len(pts) >= 5 and max(pts[:5]) >= 40:
         average_pts = sum(pts[:5]) / len(pts[:5])
         average_ast = sum(ast[:5]) / len(ast[:5]) if len(ast) >= 5 else None
         if average_pts >= 24 and average_ast is not None and average_ast >= 5:
-            nickname = _nickname({"code": team, "name": TEAM_NAMES.get(team, team)})
-            return (f"{name} has powered the {nickname}' hot start, averaging {_number(average_pts)} points and "
+            nickname = _nickname({"code": team, "name": _team_name(team, "nba")})
+            return (f"{nickname} star {name} is averaging {_number(average_pts)} points and "
                     f"{_number(average_ast)} assists over his last five games, including a "
                     f"{_number(max(pts[:5]), 0)}-point outing")
     if len(pts) >= 5:
@@ -439,10 +453,15 @@ def _nba_player_clause(fact: dict[str, Any]) -> str | None:
             return (f"{name} is averaging {_number(average_pts)} points and {_number(average_ast)} assists "
                     f"over his last five for {city}")
     if len(pts) >= 5 and sum(value >= 23 for value in pts[:5]) >= 4:
-        return f"{city}'s {name} has scored at least 23 in four of his last five"
+        count = sum(value >= 23 for value in pts[:5])
+        frequency = "each of his last five" if count == 5 else "four of his last five"
+        return f"{city}'s {name} has scored at least 23 in {frequency}"
     if len(pts) >= 4 and sum(value >= 20 for value in pts[:4]) >= 3 and max(pts[:4]) >= 30:
+        count = sum(value >= 20 for value in pts[:4])
         scores = [int(value) for value in pts[:4] if value >= 20]
-        return f"{city}'s {name} has scored 20 or more in three of his last four, including {', '.join(map(str, scores))}"
+        frequency = "each of his last four" if count == 4 else f"{_count_word(count)} of his last four"
+        return (f"{city}'s {name} has scored 20 or more in {frequency}, including "
+                f"{', '.join(map(str, scores))}")
     if len(ast) >= 5 and sum(ast[:5]) / len(ast[:5]) >= 8:
         return f"{city}'s {name} is averaging {_number(sum(ast[:5]) / len(ast[:5]))} assists over his last five"
     if len(rebounds) >= 5 and sum(rebounds[:5]) / len(rebounds[:5]) >= 10:
@@ -459,13 +478,13 @@ def _nfl_player_clause(fact: dict[str, Any]) -> str | None:
     passing = stats.get("passing_yards", [])
     carries = stats.get("carries", [])
     targets = stats.get("targets", [])
-    touchdown_arrays = [stats.get("receiving_touchdowns", []), stats.get("rushing_touchdowns", []),
-                        stats.get("passing_touchdowns", [])]
+    # A passing touchdown belongs to the receiver, not the quarterback who threw it.
+    touchdown_arrays = [stats.get("receiving_touchdowns", []), stats.get("rushing_touchdowns", [])]
     td_length = max((len(values) for values in touchdown_arrays), default=0)
     touchdown_series = [sum(values[index] for values in touchdown_arrays if index < len(values))
                         for index in range(min(5, td_length))]
     name, team = fact["player"], fact["team"]
-    city = _city({"code": team, "name": TEAM_NAMES.get(team, team)})
+    city = _city({"code": team, "name": _team_name(team, "nfl")})
     if len(rec) >= 5 and sum(value >= 100 for value in rec[:5]) >= 3:
         count = sum(value >= 100 for value in rec[:5])
         return (f"{name} has been on a tear for {city}, topping 100 receiving yards in "
@@ -488,8 +507,13 @@ def _nfl_player_clause(fact: dict[str, Any]) -> str | None:
     if len(targets) >= 5 and sum(value >= 8 for value in targets[:5]) >= 3:
         count = sum(value >= 8 for value in targets[:5])
         return f"{city}'s {name} has seen at least eight targets in {_count_word(count)} of his last five games"
-    if rec and max(rec) >= 100:
-        return f"{city}'s {name} is coming off a {int(max(rec))}-yard receiving game"
+    if rec and rec[0] >= 100:
+        return f"{city}'s {name} is coming off a {int(rec[0])}-yard receiving game"
+    hundred_yard_games = sum(value >= 100 for value in rec)
+    if hundred_yard_games:
+        count = _count_word(hundred_yard_games)
+        return (f"{city}'s {name} has topped 100 receiving yards in {count} of his last "
+                f"{_count_word(len(rec))} games")
     return None
 
 
@@ -555,8 +579,10 @@ def _lead(bundle: dict[str, Any], angle: dict[str, Any]) -> tuple[str, list[dict
         add_record(leader)
         add_record(opponent)
         add_streak(opponent)
+        opponent_form = _streak_phrase(opponent)
+        form_clause = f", which {opponent_form}" if opponent_form else ""
         lead = (f"{_city(leader)} puts its undefeated {_record_text(leader)} start on the line against "
-                f"{_city(opponent)}, which has {_streak_phrase(opponent)} and sits at {_record_text(opponent)}.")
+                f"{_city(opponent)}{form_clause} and sits at {_record_text(opponent)}.")
         return lead, facts
     if kind == "winless_last":
         loser = next(team for team in (away, home) if team["wins"] == 0 and team["losses"] >= 4)
@@ -569,7 +595,7 @@ def _lead(bundle: dict[str, Any], angle: dict[str, Any]) -> tuple[str, list[dict
         else:
             add_record(other)
             lead = (f"The winless {_nickname(loser)} sit dead last in the {league.upper()} at {_record_text(loser)}, "
-                    f"and visit {_city(other)}'s {_record_text(other)} team.")
+                    f"and visit {_city(other)}, where the {_nickname(other)} are {_record_text(other)}.")
         add_record(loser)
         facts.append(rank)
         return lead, facts
@@ -581,19 +607,28 @@ def _lead(bundle: dict[str, Any], angle: dict[str, Any]) -> tuple[str, list[dict
                 f"{_record_text(home)} {_nickname(home)} host the {_record_text(away)} {_nickname(away)}.")
         return lead, facts
     if kind == "streak_clash":
+        winner = next(team for team in (away, home) if team.get("streak_result") == "W")
+        loser = next(team for team in (away, home) if team.get("streak_result") == "L")
         add_record(away)
         add_record(home)
-        add_streak(away)
-        add_streak(home)
-        lead = (f"{_city(home)} has won {_count_word(home['streak_length'])} straight and sits at {_record_text(home)}, "
-                f"while {_city(away)} arrives at {_record_text(away)} having dropped {_count_word(away['streak_length'])} in a row.")
+        add_streak(winner)
+        add_streak(loser)
+        lead = (f"{_city(winner)} has won {_count_word(winner['streak_length'])} straight and sits at "
+                f"{_record_text(winner)}, while {_city(loser)} has dropped {_count_word(loser['streak_length'])} "
+                f"in a row at {_record_text(loser)}.")
         meeting = _h2h(bundle)
-        if meeting and meeting["winner"] == home["code"]:
+        if meeting and meeting["winner"] == winner["code"]:
             date_text = _date_text(meeting.get("date"))
-            lead = (f"{_city(home)} has won {_count_word(home['streak_length'])} straight at {_record_text(home)} and "
-                    f"already beat {_city(away)} {_number(meeting['winner_score'], 0)}-"
-                    f"{_number(meeting['loser_score'], 0)} on {date_text}; the {_record_text(away)} visitors have lost "
-                    f"{_count_word(away['streak_length'])} in a row.")
+            if winner["code"] == home["code"] and loser["code"] == away["code"]:
+                lead = (f"{_city(winner)} has won {_count_word(winner['streak_length'])} straight at "
+                        f"{_record_text(winner)} and already beat {_city(loser)} "
+                        f"{_number(meeting['winner_score'], 0)}-{_number(meeting['loser_score'], 0)} on {date_text}; "
+                        f"the {_record_text(loser)} visitors have lost {_count_word(loser['streak_length'])} in a row.")
+            else:
+                lead = (f"{_city(winner)} has won {_count_word(winner['streak_length'])} straight at "
+                        f"{_record_text(winner)} and already beat {_city(loser)} "
+                        f"{_number(meeting['winner_score'], 0)}-{_number(meeting['loser_score'], 0)} on {date_text}; "
+                        f"{_city(loser)} has dropped {_count_word(loser['streak_length'])} in a row.")
             facts.append({"id": f"head_to_head:{meeting['game_id']}", "kind": "head_to_head",
                           "description": "prior meeting result", "evidence_ids": [str(row["id"]) for row in meeting["evidence"]],
                           "evidence": meeting["evidence"]})
@@ -604,34 +639,61 @@ def _lead(bundle: dict[str, Any], angle: dict[str, Any]) -> tuple[str, list[dict
         add_record(other)
         add_streak(lead_team)
         lead = (f"{_city(lead_team)} brings a {_count_word(lead_team['streak_length'])}-game winning streak into "
-                f"its matchup with {_city(other)}, who sit at {_record_text(other)}.")
+                f"its matchup with {_city(other)}, which is {_record_text(other)}.")
         return lead, facts
-    if away["streak_length"] >= 2:
+    if kind == "losing_streak":
+        lead_team = bundle["teams"][angle["lead_team"]]
+        other = home if lead_team["code"] == away["code"] else away
+        add_record(lead_team)
+        add_record(other)
+        add_streak(lead_team)
+        lead = (f"{_city(lead_team)} has dropped {_count_word(lead_team['streak_length'])} straight at "
+                f"{_record_text(lead_team)} entering its matchup with {_city(other)}, which is "
+                f"{_record_text(other)}.")
+        return lead, facts
+    if away["streak_length"] >= 2 and away.get("streak_result") == "W":
         add_record(away)
         add_record(home)
         add_streak(away)
         lead = (f"The {_record_text(away)} {_nickname(away)} bring a {_count_word(away['streak_length'])}-game winning streak "
                 f"to {_city(home)}, where the {_nickname(home)} sit at {_record_text(home)}.")
-    elif home["streak_length"] >= 2:
+    elif away["streak_length"] >= 2 and away.get("streak_result") == "L":
+        add_record(away)
+        add_record(home)
+        add_streak(away)
+        lead = (f"The {_record_text(away)} {_nickname(away)} have dropped {_count_word(away['streak_length'])} straight "
+                f"entering {_city(home)}, where the {_nickname(home)} sit at {_record_text(home)}.")
+    elif home["streak_length"] >= 2 and home.get("streak_result") == "W":
         add_record(away)
         add_record(home)
         add_streak(home)
         lead = (f"The {_record_text(away)} {_nickname(away)} visit {_city(home)}, where the {_record_text(home)} "
                 f"{_nickname(home)} are riding a {_count_word(home['streak_length'])}-game winning streak.")
+    elif home["streak_length"] >= 2 and home.get("streak_result") == "L":
+        add_record(away)
+        add_record(home)
+        add_streak(home)
+        lead = (f"The {_record_text(away)} {_nickname(away)} visit {_city(home)}, where the {_record_text(home)} "
+                f"{_nickname(home)} have dropped {_count_word(home['streak_length'])} straight.")
     else:
         add_record(away)
         add_record(home)
+        home_surface = "home court" if league == "nba" else "home turf"
         lead = (f"{_city(away)} brings a {_record_text(away)} record into {_city(home)}, where the "
-                f"{_record_text(home)} { _nickname(home)} look to protect home court.")
+                f"{_record_text(home)} {_nickname(home)} look to protect {home_surface}.")
     return lead, facts
 
 
-def _streak_phrase(team: dict[str, Any]) -> str:
-    if team.get("streak_result") == "W" and team.get("streak_length", 0) >= 2:
-        return f"won {_count_word(team['streak_length'])} straight"
-    if team.get("streak_result") == "L" and team.get("streak_length", 0) >= 2:
-        return f"lost {_count_word(team['streak_length'])} straight"
-    return "won its last game"
+def _streak_phrase(team: dict[str, Any]) -> str | None:
+    result = team.get("streak_result")
+    length = int(team.get("streak_length") or 0)
+    if result == "W":
+        return f"won {_count_word(length)} straight" if length >= 2 else "won its last game"
+    if result == "L":
+        return f"lost {_count_word(length)} straight" if length >= 2 else "lost its last game"
+    if result == "T":
+        return f"tied {_count_word(length)} straight" if length >= 2 else "tied its last game"
+    return None
 
 
 def _date_text(value: str | None) -> str:
@@ -675,11 +737,12 @@ def generate_story(bundle: dict[str, Any]) -> dict[str, Any]:
     if _utc(bundle["as_of"]) >= _utc(bundle["start_utc"]):
         raise ValueError("story cutoff must precede the matchup start")
     teams = bundle.get("teams") or {}
+    league = str(bundle["league"]).lower()
     clean_bundle = dict(bundle)
     clean_bundle["teams"] = {}
     for code in (bundle["away"], bundle["home"]):
         team = dict(teams.get(code) or {
-            "code": code, "name": TEAM_NAMES.get(code, code), "wins": 0, "losses": 0,
+            "code": code, "name": _team_name(code, league), "wins": 0, "losses": 0,
             "ties": 0, "games": 0, "evidence": [],
         })
         clean_bundle["teams"][code] = _recompute_team(team, code, bundle["as_of"])
@@ -763,7 +826,7 @@ def _db_team_standings(connection: sqlite3.Connection, league: str, season: int,
     for row in roster_rows:
         item = dict(row)
         code = str(item.get(code_col) or "")
-        teams[code] = {"code": code, "name": item.get(name_col) or TEAM_NAMES.get(code, code),
+        teams[code] = {"code": code, "name": item.get(name_col) or _team_name(code, league),
                        "wins": 0, "losses": 0, "ties": 0, "for": 0, "against": 0,
                        "games": 0, "results": [], "evidence": []}
     for row in rows:

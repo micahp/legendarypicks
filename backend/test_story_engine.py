@@ -7,7 +7,16 @@ from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
-from story_engine import collect_story_facts, generate_story
+from story_engine import (
+    LEAGUE_TEAM_NAMES,
+    _lead,
+    _nba_player_clause,
+    _nfl_player_clause,
+    _streak_phrase,
+    _team_name,
+    collect_story_facts,
+    generate_story,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -99,6 +108,66 @@ def saved_facts():
 def story_sentence_count(text):
     without_abbreviations = re.sub(r"\b(?:Jr|Sr|Oct|Nov|Dec)\.", "", text)
     return len(re.split(r"(?<=[.!?])\s+", without_abbreviations.strip()))
+
+
+def make_team(code, name, outcomes, opponent):
+    evidence = []
+    for index, result in enumerate(outcomes, start=1):
+        day = index + 1
+        game_date = f"2026-10-{day:02d}"
+        own_score, other_score = (24, 17) if result == "W" else (17, 24) if result == "L" else (20, 20)
+        evidence.append({
+            "id": f"{code}-game-{index}",
+            "available_at": f"{game_date}T18:00:00Z",
+            "date": game_date,
+            "opponent": opponent,
+            "result": result,
+            "for": own_score,
+            "against": other_score,
+        })
+    streak_length = 0
+    if outcomes:
+        for result in reversed(outcomes):
+            if result != outcomes[-1]:
+                break
+            streak_length += 1
+    return {
+        "code": code,
+        "name": name,
+        "wins": outcomes.count("W"),
+        "losses": outcomes.count("L"),
+        "ties": outcomes.count("T"),
+        "games": len(outcomes),
+        "streak_result": outcomes[-1] if outcomes else None,
+        "streak_length": streak_length,
+        "evidence": evidence,
+    }
+
+
+def matchup_facts(away, home, away_results, home_results, league="nba", players=None):
+    return {
+        "league": league,
+        "game_id": "regression-game",
+        "season": 2027 if league == "nba" else 2026,
+        "away": away,
+        "home": home,
+        "start_utc": "2026-11-02T23:00:00Z",
+        "as_of": "2026-11-02T22:00:00Z",
+        "teams": {
+            away: make_team(away, _test_name(away, league), away_results, home),
+            home: make_team(home, _test_name(home, league), home_results, away),
+        },
+        "league_standings": [],
+        "players": players or [],
+    }
+
+
+def _test_name(code, league):
+    names = {
+        "nba": {"BOS": "Boston Celtics", "NY": "New York Knicks", "PHI": "Philadelphia 76ers"},
+        "nfl": {"CHI": "Chicago Bears", "SEA": "Seattle Seahawks"},
+    }
+    return names[league].get(code, code)
 
 
 class StoryEngineTests(unittest.TestCase):
@@ -235,7 +304,7 @@ class StoryEngineTests(unittest.TestCase):
 
     def test_player_team_attribution_is_preserved(self):
         story = self.outputs["0022600165"]["story"]
-        self.assertRegex(story, r"Ty Jerome.{0,80}(Grizzlies|Memphis)")
+        self.assertRegex(story, r"(Grizzlies|Memphis).{0,80}Ty Jerome")
         story = self.outputs["2026_08_CHI_SEA"]["story"]
         self.assertRegex(story, r"Jaxon Smith-Njigba.{0,80}(Seattle|Seahawks)")
 
@@ -268,6 +337,170 @@ class StoryEngineTests(unittest.TestCase):
         self.assertTrue(result["story"])
         self.assertIn("4-1", result["story"])
         self.assertNotIn("No preview", result["story"])
+
+    def test_two_losing_streaks_are_never_called_winning_streaks(self):
+        facts = matchup_facts("BOS", "NY", ["W", "W", "L", "L", "L", "L"],
+                              ["W", "W", "L", "L", "L", "L"])
+        result = generate_story(facts)
+        self.assertEqual(result["angle"]["kind"], "losing_streak")
+        self.assertRegex(result["story"].lower(), r"dropped four straight|lost four in a row")
+        self.assertNotRegex(result["story"].lower(), r"winning streak|won four straight")
+
+    def test_single_losing_streak_is_rendered_in_the_correct_direction(self):
+        facts = matchup_facts("BOS", "NY", ["W", "W", "L", "L", "L", "L"],
+                              ["W", "L", "W", "L", "W", "L"])
+        story = generate_story(facts)["story"].lower()
+        self.assertIn("dropped four straight", story)
+        self.assertNotIn("winning streak", story)
+
+    def test_two_game_loss_streak_uses_loss_language(self):
+        facts = matchup_facts("BOS", "NY", ["W", "W", "L", "L"], ["W", "L", "W", "W"])
+        story = generate_story(facts)["story"].lower()
+        self.assertIn("dropped two straight", story)
+        self.assertNotIn("winning streak", story)
+
+    def test_city_named_opponent_uses_singular_grammar(self):
+        facts = matchup_facts("PIT", "CIN", ["L", "W", "W", "W", "W"],
+                              ["W", "W", "W", "L", "W", "W", "L"], league="nfl")
+        story = generate_story(facts)["story"]
+        self.assertIn("its matchup with Cincinnati, which is 5-2", story)
+        self.assertNotIn("Cincinnati, who sit", story)
+
+    def test_streak_clash_handles_the_winning_streak_on_the_road(self):
+        facts = matchup_facts("BOS", "NY", ["L", "W", "W", "W", "W"],
+                              ["W", "W", "L", "L", "L", "L"])
+        result = generate_story(facts)
+        self.assertEqual(result["angle"]["kind"], "streak_clash")
+        self.assertIn("Boston has won four straight", result["story"])
+        self.assertIn("New York has dropped four in a row", result["story"])
+
+    def test_team_name_maps_cover_both_complete_league_directories(self):
+        self.assertEqual(len(LEAGUE_TEAM_NAMES["nba"]), 30)
+        self.assertEqual(len(LEAGUE_TEAM_NAMES["nfl"]), 32)
+
+    def test_generic_nfl_lead_does_not_use_basketball_home_court_language(self):
+        facts = matchup_facts("CHI", "SEA", ["W", "L", "W"], ["L", "W", "L"], league="nfl")
+        story = generate_story(facts)["story"].lower()
+        self.assertIn("protect home turf", story)
+        self.assertNotIn("home court", story)
+
+    def test_generic_nba_lead_keeps_basketball_home_court_language(self):
+        facts = matchup_facts("BOS", "NY", ["W", "L", "W"], ["L", "W", "L"])
+        story = generate_story(facts)["story"].lower()
+        self.assertIn("protect home court", story)
+        self.assertNotIn("home turf", story)
+
+    def test_winless_last_place_fallback_names_the_opponent_naturally(self):
+        bundle = {
+            "league": "nba", "away": "SAC", "home": "PHX", "league_standings": [],
+            "teams": {
+                "SAC": {"code": "SAC", "name": "Sacramento Kings", "wins": 0, "losses": 6,
+                         "ties": 0, "streak_result": "L", "streak_length": 6, "evidence": []},
+                "PHX": {"code": "PHX", "name": "Phoenix Suns", "wins": 1, "losses": 3,
+                         "ties": 0, "streak_result": "L", "streak_length": 1, "evidence": []},
+            },
+        }
+        lead, _ = _lead(bundle, {"kind": "winless_last", "lead_team": "SAC"})
+        self.assertIn("visit Phoenix, where the Suns are 1-3", lead)
+        self.assertNotIn("Phoenix's 1-3 team", lead)
+
+    def test_one_game_losing_result_does_not_default_to_winning(self):
+        facts = matchup_facts("BOS", "NY", ["W", "W", "W", "W"],
+                              ["W", "W", "W", "L"])
+        story = generate_story(facts)["story"].lower()
+        self.assertIn("lost its last game", story)
+        self.assertNotIn("won its last game", story)
+        self.assertEqual(_streak_phrase({"streak_result": None, "streak_length": 0}), None)
+
+    def test_receiver_is_only_described_as_coming_off_the_latest_game(self):
+        fact = {
+            "player": "Test Receiver",
+            "team": "SEA",
+            "stats": {"receiving_yards": [42, 121, 75, 68, 55]},
+            "season_totals": {},
+        }
+        clause = _nfl_player_clause(fact)
+        self.assertIn("one of his last five", clause)
+        self.assertNotIn("coming off", clause)
+
+        fact["stats"]["receiving_yards"] = [121, 42, 75, 68, 55]
+        clause = _nfl_player_clause(fact)
+        self.assertIn("coming off a 121-yard receiving game", clause)
+
+    def test_quarterback_passing_touchdowns_are_not_called_player_scores(self):
+        fact = {
+            "player": "Test Quarterback",
+            "team": "NYJ",
+            "stats": {
+                "passing_touchdowns": [2, 2, 1, 3, 2],
+                "receiving_touchdowns": [0, 0, 0, 0, 0],
+                "rushing_touchdowns": [0, 0, 0, 0, 0],
+            },
+        }
+        self.assertIsNone(_nfl_player_clause(fact))
+
+    def test_nba_player_template_uses_league_specific_philadelphia_identity(self):
+        self.assertEqual(_team_name("PHI", "nba"), "Philadelphia 76ers")
+        self.assertEqual(_team_name("PHI", "nfl"), "Philadelphia Eagles")
+        fact = {
+            "player": "Test Star",
+            "team": "PHI",
+            "stats": {"points": [45, 22, 21, 24, 25], "assists": [6, 6, 6, 6, 6]},
+        }
+        clause = _nba_player_clause(fact)
+        self.assertIn("76ers star Test Star", clause)
+        self.assertNotIn("Eagles", clause)
+
+    def test_nba_player_numbers_do_not_claim_to_cause_a_team_hot_start(self):
+        fact = {
+            "player": "Test Star",
+            "team": "PHI",
+            "stats": {"points": [45, 22, 21, 24, 25], "assists": [6, 6, 6, 6, 6]},
+        }
+        clause = _nba_player_clause(fact).lower()
+        self.assertIn("is averaging", clause)
+        self.assertNotRegex(clause, r"powered|hot start")
+
+    def test_nba_scoring_clause_lists_exactly_the_games_it_counts(self):
+        fact = {"player": "Test Guard", "team": "BOS",
+                "stats": {"points": [34, 26, 21, 20, 15]}}
+        clause = _nba_player_clause(fact)
+        self.assertIn("in each of his last four", clause)
+        self.assertIn("including 34, 26, 21, 20", clause)
+
+        fact["stats"]["points"] = [40, 20, 35, 36, 10]
+        clause = _nba_player_clause(fact)
+        self.assertIn("40, 35 and 36 in three of his last five", clause)
+
+    def test_nba_four_or_five_game_scoring_run_uses_the_actual_count(self):
+        fact = {"player": "Test Forward", "team": "BOS",
+                "stats": {"points": [24, 25, 23, 24, 26]}}
+        clause = _nba_player_clause(fact)
+        self.assertIn("at least 23 in each of his last five", clause)
+        fact["stats"]["points"] = [24, 25, 23, 24, 10]
+        clause = _nba_player_clause(fact)
+        self.assertIn("at least 23 in four of his last five", clause)
+
+    def test_nba_star_on_struggling_team_does_not_get_credit_for_a_hot_start(self):
+        facts = matchup_facts("PHI", "BOS", ["W", "L", "L", "L", "L", "L"],
+                              ["W", "W", "W", "L", "W", "W"])
+        facts["teams"]["PHI"]["name"] = "Philadelphia 76ers"
+        facts["players"] = [{
+            "player_id": 12,
+            "name": "Test Star",
+            "team": "PHI",
+            "league": "nba",
+            "evidence": [
+                {"id": f"star-{day}", "available_at": f"2026-10-{day:02d}T18:00:00Z",
+                 "date": f"2026-10-{day:02d}", "game_id": f"player-game-{day}",
+                 "stats": {"PTS": points, "AST": 6, "REB": 4}}
+                for day, points in enumerate([25, 24, 21, 22, 45], start=2)
+            ],
+        }]
+        result = generate_story(facts)
+        self.assertIn("1-5", result["story"])
+        self.assertIn("76ers star Test Star", result["story"])
+        self.assertNotRegex(result["story"].lower(), r"powered|hot start")
 
 
 class FactCollectionTests(unittest.TestCase):

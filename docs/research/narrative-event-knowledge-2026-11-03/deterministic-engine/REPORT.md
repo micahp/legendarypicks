@@ -2,6 +2,8 @@
 
 **Status:** research only. The new engine is not wired into `core_stories.py` or production.
 
+**Historical note:** The six examples and initial measurements below document the first prototype, before the regression fixes and held-out evaluation in the final section. The held-out set is the current renderer evaluation.
+
 The engine separates read-only fact collection, team-story selection, player selection, sentence rendering, and the internal evidence manifest. Published prose is returned as `story`; the separate `manifest` carries evidence IDs and omissions. Rendering made zero model calls, zero network calls, and zero database writes.
 
 ## Generated examples
@@ -77,3 +79,68 @@ The deterministic outputs keep the requested headline and key player facts for a
 - Production integration remains untouched until editorial review accepts the examples.
 
 See [evaluation.json](evaluation.json), [NBA standings evidence](nba_standings_2026-11-02.json), [Swift game logs](swift_2026_logs.json), and the original [saved LLM comparison examples](../relevance-ranking/examples.jsonl).
+
+## Regression fixes and held-out evaluation
+
+The renderer fixes losing-streak direction, last-game wording, the NFL "coming off" recency claim, league-specific team names, and causal NBA hot-start phrasing. The added regressions cover those cases. `python -m unittest test_story_engine` passes 36 tests.
+
+The final sample contains 50 NFL and 50 NBA games. It was selected by sorting eligible game IDs with SHA-256 of `20261105|league|game_id`, taking the first 50 in each league. All 200 games in the two exposed diagnostic runs, all six coached comparison games, and the preflight fixtures were excluded. The remaining eligible population was 50 NFL and 992 NBA games. The sample cutoff is 2026-11-03 03:00:53 UTC, or 2026-11-02 9:00:53 PM Central. NFL schedule data has a published game date but no UTC kickoff, so the evaluator used midnight UTC on the published date as a conservative cutoff boundary. NBA rows used their published UTC start.
+
+The earlier, exposed diagnostic sets are retained in [diagnostic run one](heldout_results.jsonl), [diagnostic run one's manifest](heldout_sampling_manifest.json), [diagnostic run two](heldout_v2_results.jsonl), and [diagnostic run two's manifest](heldout_v2_sampling_manifest.json). Manual review found surface-specific copy issues in the first set, and the independent player arithmetic audit found two NBA score-count mismatches in the second. Those games were all excluded from the final set.
+
+The renderer hash is `2791cd0fd723de721859b5d64dacd50646b6b6aed7697d5dedc24b1fa1924e92`. Generation ran sequentially against the existing development database in read-only mode. The evaluator blocks attempted network connections during rendering. There were zero model calls, network calls, or database writes.
+
+| Measure | Result |
+| --- | ---: |
+| Held-out previews | 100, 50 NFL and 50 NBA |
+| Appropriate lead | 100 of 100 |
+| Relevant selected player facts | 96 of 96 previews with a player fact; 4 had no player fact selected |
+| Factual claims supported | 100 of 100 |
+| Fan language | 79 pass, 21 borderline due to repeated player-stat sentence shapes |
+| Incorrect or ambiguous player-team attribution | 0 |
+| Cutoff violations | 0 |
+| Empty previews | 0 |
+| Record or streak claims that failed recomputation | 0 |
+| Player stat claims that failed recomputation | 0 |
+| League rank claims that failed recomputation | 0 |
+| Normalized lead patterns | 93 unique; 14 previews reused a pattern; no pattern appeared more than twice |
+| Repeated player-stat sentence shape within one preview | 21 previews |
+| Median fact collection | 172.732 ms |
+| Median render | 8.986 ms |
+| Human fan ratings | 0 |
+
+Every row preserves the schedule and source evidence, the selected and omitted facts, and the generation checks in [the result JSONL](heldout_final_results.jsonl). [The review JSONL](heldout_final_review.jsonl) has one editorial and evidence assessment per preview. [The post-render audit](heldout_final_post_audit.json) recomputes the record and streak phrases as written in the prose. The sampling population and exclusions are in [the sampling manifest](heldout_final_sampling_manifest.json); aggregate timing and mechanical checks are in [the generation summary](heldout_final_summary.json).
+
+### Additional held-out examples
+
+These are from the unseen sample, not the six coached examples above.
+
+**49ers at Cowboys**
+
+> San Francisco brings a 6-1 record into Dallas, where the 3-5 Cowboys look to protect home turf. Dallas's Javonte Williams has topped 100 rushing yards in one of his last four games, while San Francisco counters with Christian McCaffrey, who has rushed for 389 yards and eight touchdowns.
+
+**Eagles at Giants**
+
+> Philadelphia has dropped six straight at 2-6 entering its matchup with New York, which is 4-2-1. Malik Nabers has been on a tear for New York, topping 100 receiving yards in four of his last five games.
+
+**Bills at Jets**
+
+> Buffalo has won three straight and sits at 6-1, while New York has dropped three in a row at 2-6. New York's Braelon Allen has topped 100 rushing yards in one of his last four games, while Buffalo's James Cook has topped 100 rushing yards in one of his last four games.
+
+**Mavericks at Grizzlies**
+
+> Memphis puts its undefeated 6-0 start on the line against Dallas, which won three straight and sits at 4-2. Grizzlies star Ty Jerome is averaging 25.8 points and 5.8 assists over his last five games, including a 45-point outing, while Cooper Flagg is averaging 26.8 points and 6.6 assists over his last five for Dallas.
+
+**Trail Blazers at Grizzlies**
+
+> Memphis puts its undefeated 6-0 start on the line against Portland, which won its last game and sits at 4-1. Grizzlies star Ty Jerome is averaging 25.8 points and 5.8 assists over his last five games, including a 45-point outing, while Portland's Deni Avdija has scored at least 23 in four of his last five.
+
+**Nuggets at Cavaliers**
+
+> The 3-2 Nuggets bring a two-game winning streak to Cleveland, where the Cavaliers sit at 4-3. Denver's Jamal Murray has put up 39 and 42 in two of his last five.
+
+### Remaining evaluation limits
+
+The editorial scores are Codex's static review of the 100 outputs, not ratings from fans. Repeated player sentence shapes are the main visible quality gap: the prose remains grammatical, but paired players with the same threshold can make a preview feel templated. Exact normalized lead patterns repeat in 14 rows, including the same Boston and Oklahoma City pairing scheduled in both home-away orders. The sample contained no same-city NFL or NBA matchup, so attribution in those specific pairings remains unevaluated. No template changes were made after the final sample was drawn.
+
+The correctness and cutoff checks pass, and production remains unchanged. The next quality gate is human editorial review of the repeated constructions and broader fan preference before any production integration.

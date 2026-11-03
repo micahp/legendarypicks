@@ -1,0 +1,533 @@
+{
+  "as_of": "2026-11-03T03:00:53Z",
+  "seed": 20261103,
+  "sample_counts": {
+    "nfl": 50,
+    "nba": 50
+  },
+  "eligible_population_counts": {
+    "nfl": 150,
+    "nba": 1092
+  },
+  "renderer_sha256": "8284f4f2fac2b0e70027acd1aa24da7610e0277db21a659dbdc79a4a19e6252f",
+  "evaluator_sha256": "d660eb31106b9c528dc0554471311b8db3c8a3655388aafa206fc832d099475c",
+  "python_version": "3.14.7",
+  "total_previews": 100,
+  "empty_previews": 0,
+  "unsupported_evidence_links": 0,
+  "record_or_streak_recompute_failures": 0,
+  "cutoff_violations": 0,
+  "target_game_leakage": 0,
+  "player_team_code_mismatches": 0,
+  "unique_normalized_lead_patterns": 100,
+  "previews_using_repeated_lead_patterns": 0,
+  "lead_patterns": [
+    {
+      "pattern": "pittsburgh brings a four game winning streak into its matchup with cincinnati who sit at # # pittsburgh s [entity] has topped # rushing yards in one of his last four games while cincinnati s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_10_PIT_CIN"
+    },
+    {
+      "pattern": "dallas brings a # # record into washington where the # # # commanders look to protect home court washington s [entity] has topped # rushing yards in one of his last four games while dallas s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_18_DAL_WAS"
+    },
+    {
+      "pattern": "the # # packers visit los angeles where the # # rams are riding a two game winning streak los angeles counters with [entity] who has rushed for # yards and six touchdowns while green bay s [entity] has found the end zone in five of his last five games",
+      "count": 1,
+      "example_game_id": "2026_12_GB_LA"
+    },
+    {
+      "pattern": "the # # rams bring a two game winning streak to tampa bay where the buccaneers sit at # # tampa bay s [entity] has topped # rushing yards in one of his last four games while los angeles counters with [entity] who has rushed for # yards and six touchdowns",
+      "count": 1,
+      "example_game_id": "2026_17_LA_TB"
+    },
+    {
+      "pattern": "the # # rams bring a two game winning streak to seattle where the seahawks sit at # # [entity] has been on a tear for seattle topping # receiving yards in four of his last five games while los angeles counters with [entity] who has rushed for # yards and six touchdowns",
+      "count": 1,
+      "example_game_id": "2026_16_LA_SEA"
+    },
+    {
+      "pattern": "seattle brings a # # record into las vegas where the # # raiders look to protect home court las vegas s [entity] has thrown for # yards in two of his last five games while [entity] has been on a tear for seattle topping # receiving yards in four of his last five games",
+      "count": 1,
+      "example_game_id": "2026_10_SEA_LV"
+    },
+    {
+      "pattern": "the # # buccaneers bring a two game winning streak to chicago where the bears sit at # # chicago counters with [entity] who has rushed for # yards and seven touchdowns while tampa bay s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_09_TB_CHI"
+    },
+    {
+      "pattern": "philadelphia has dropped six straight at # # entering its matchup with new york who sit at # # # philadelphia s [entity] has found the end zone in five of his last five games while [entity] has been on a tear for new york topping # receiving yards in four of his last five games",
+      "count": 1,
+      "example_game_id": "2026_09_NYG_PHI"
+    },
+    {
+      "pattern": "the # # titans have dropped two straight entering houston where the texans sit at # # houston s [entity] has thrown for # yards in two of his last five games while tennessee s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_18_TEN_HOU"
+    },
+    {
+      "pattern": "arizona brings a # # record into new orleans where the # # saints look to protect home court new orleans s [entity] has found the end zone in four of his last five games while arizona s [entity] has found the end zone in three of his last five games",
+      "count": 1,
+      "example_game_id": "2026_16_ARI_NO"
+    },
+    {
+      "pattern": "philadelphia has dropped six straight at # # entering its matchup with seattle who sit at # # philadelphia s [entity] has found the end zone in five of his last five games while [entity] has been on a tear for seattle topping # receiving yards in four of his last five games",
+      "count": 1,
+      "example_game_id": "2026_15_SEA_PHI"
+    },
+    {
+      "pattern": "the # # panthers have dropped two straight entering new orleans where the saints sit at # # new orleans s [entity] has found the end zone in four of his last five games while carolina s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_10_CAR_NO"
+    },
+    {
+      "pattern": "baltimore has dropped three straight at # # entering its matchup with carolina who sit at # # baltimore s [entity] has topped # rushing yards in one of his last four games while carolina s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_11_BAL_CAR"
+    },
+    {
+      "pattern": "pittsburgh has won four straight and sits at # # while baltimore has dropped three in a row at # # baltimore s [entity] has topped # rushing yards in one of his last four games while pittsburgh s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_18_PIT_BAL"
+    },
+    {
+      "pattern": "the # # bears bring a two game winning streak to miami where the dolphins sit at # # miami s [entity] has found the end zone in three of his last five games while chicago counters with [entity] who has rushed for # yards and seven touchdowns",
+      "count": 1,
+      "example_game_id": "2026_14_CHI_MIA"
+    },
+    {
+      "pattern": "detroit brings a three game winning streak into its matchup with atlanta who sit at # # detroit s [entity] has topped # rushing yards in one of his last four games while atlanta counters with [entity] who has rushed for # yards and four touchdowns",
+      "count": 1,
+      "example_game_id": "2026_13_DET_ATL"
+    },
+    {
+      "pattern": "pittsburgh has won four straight and sits at # # while baltimore has dropped three in a row at # # pittsburgh s [entity] has topped # rushing yards in one of his last four games while baltimore s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_15_BAL_PIT"
+    },
+    {
+      "pattern": "detroit brings a three game winning streak into its matchup with tennessee who sit at # # detroit s [entity] has topped # rushing yards in one of his last four games while tennessee s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_14_TEN_DET"
+    },
+    {
+      "pattern": "tampa bay has won two straight entering its matchup with the winless chargers who sit dead last in the nfl at # # los angeles s [entity] has found the end zone in three of his last five games while tampa bay s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_13_LAC_TB"
+    },
+    {
+      "pattern": "the # # chiefs have dropped two straight entering los angeles where the rams sit at # # los angeles counters with [entity] who has rushed for # yards and six touchdowns while kansas city s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_13_KC_LA"
+    },
+    {
+      "pattern": "miami brings a # # record into new england where the # # patriots look to protect home court new england s [entity] has thrown for # yards in two of his last five games while miami s [entity] has found the end zone in three of his last five games",
+      "count": 1,
+      "example_game_id": "2026_18_MIA_NE"
+    },
+    {
+      "pattern": "the # # saints visit tampa bay where the # # buccaneers are riding a two game winning streak tampa bay s [entity] has topped # rushing yards in one of his last four games while new orleans s [entity] has found the end zone in four of his last five games",
+      "count": 1,
+      "example_game_id": "2026_15_NO_TB"
+    },
+    {
+      "pattern": "minnesota brings a # # record into new england where the # # patriots look to protect home court new england s [entity] has thrown for # yards in two of his last five games while minnesota s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_14_MIN_NE"
+    },
+    {
+      "pattern": "denver has won four straight entering its matchup with the winless chargers who sit dead last in the nfl at # # denver s [entity] has found the end zone in four of his last five games while los angeles s [entity] has found the end zone in three of his last five games",
+      "count": 1,
+      "example_game_id": "2026_18_LAC_DEN"
+    },
+    {
+      "pattern": "indianapolis has dropped four straight at # # entering its matchup with tennessee who sit at # # indianapolis counters with [entity] who has rushed for # yards and eight touchdowns while tennessee s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_15_IND_TEN"
+    },
+    {
+      "pattern": "pittsburgh brings a four game winning streak into its matchup with houston who sit at # # pittsburgh s [entity] has topped # rushing yards in one of his last four games while houston s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_13_HOU_PIT"
+    },
+    {
+      "pattern": "detroit brings a three game winning streak into its matchup with miami who sit at # # detroit s [entity] has topped # rushing yards in one of his last four games while miami s [entity] has found the end zone in three of his last five games",
+      "count": 1,
+      "example_game_id": "2026_09_DET_MIA"
+    },
+    {
+      "pattern": "cleveland brings a # # record into new orleans where the # # saints look to protect home court new orleans s [entity] has found the end zone in four of his last five games while cleveland s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_09_CLE_NO"
+    },
+    {
+      "pattern": "the # # chiefs have dropped two straight entering atlanta where the falcons sit at # # atlanta counters with [entity] who has rushed for # yards and four touchdowns while kansas city s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_10_KC_ATL"
+    },
+    {
+      "pattern": "las vegas brings a # # record into arizona where the # # cardinals look to protect home court arizona s [entity] has found the end zone in three of his last five games while las vegas s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_17_LV_ARI"
+    },
+    {
+      "pattern": "dallas brings a # # record into seattle where the # # seahawks look to protect home court [entity] has been on a tear for seattle topping # receiving yards in four of his last five games while dallas s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_13_DAL_SEA"
+    },
+    {
+      "pattern": "pittsburgh has won four straight and sits at # # while philadelphia has dropped six in a row at # # philadelphia s [entity] has found the end zone in five of his last five games while pittsburgh s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_11_PIT_PHI"
+    },
+    {
+      "pattern": "washington brings a # # # record into arizona where the # # cardinals look to protect home court arizona s [entity] has found the end zone in three of his last five games while washington s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_12_WAS_ARI"
+    },
+    {
+      "pattern": "minnesota brings a # # record into green bay where the # # packers look to protect home court green bay s [entity] has found the end zone in five of his last five games while minnesota s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_10_MIN_GB"
+    },
+    {
+      "pattern": "indianapolis has dropped four straight at # # entering its matchup with jacksonville who sit at # # indianapolis counters with [entity] who has rushed for # yards and eight touchdowns while jacksonville s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_18_JAX_IND"
+    },
+    {
+      "pattern": "the winless chargers sit dead last in the nfl at # # and visit kansas city s # # team los angeles s [entity] has found the end zone in three of his last five games while kansas city s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_17_KC_LAC"
+    },
+    {
+      "pattern": "new york has dropped three straight at # # entering its matchup with arizona who sit at # # new york s [entity] has topped # rushing yards in one of his last four games while arizona s [entity] has found the end zone in three of his last five games",
+      "count": 1,
+      "example_game_id": "2026_15_NYJ_ARI"
+    },
+    {
+      "pattern": "pittsburgh brings a four game winning streak into its matchup with jacksonville who sit at # # pittsburgh s [entity] has topped # rushing yards in one of his last four games while jacksonville s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_14_PIT_JAX"
+    },
+    {
+      "pattern": "detroit brings a three game winning streak into its matchup with tampa bay who sit at # # detroit s [entity] has topped # rushing yards in one of his last four games while tampa bay s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_11_TB_DET"
+    },
+    {
+      "pattern": "buffalo brings a three game winning streak into its matchup with kansas city who sit at # # buffalo s [entity] has topped # rushing yards in one of his last four games while kansas city s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_12_KC_BUF"
+    },
+    {
+      "pattern": "san francisco brings a # # record into new york where the # # # giants look to protect home court [entity] has been on a tear for new york topping # receiving yards in four of his last five games while san francisco counters with [entity] who has rushed for # yards and eight touchdowns",
+      "count": 1,
+      "example_game_id": "2026_13_SF_NYG"
+    },
+    {
+      "pattern": "two of the nfl s top four teams meet in minnesota where the # # vikings host the # # bills minnesota s [entity] has topped # rushing yards in one of his last four games while buffalo s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_09_BUF_MIN"
+    },
+    {
+      "pattern": "baltimore has dropped three straight at # # entering its matchup with cleveland who sit at # # baltimore s [entity] has topped # rushing yards in one of his last four games while cleveland s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_16_CLE_BAL"
+    },
+    {
+      "pattern": "atlanta brings a # # record into washington where the # # # commanders look to protect home court washington s [entity] has topped # rushing yards in one of his last four games while atlanta counters with [entity] who has rushed for # yards and four touchdowns",
+      "count": 1,
+      "example_game_id": "2026_15_ATL_WAS"
+    },
+    {
+      "pattern": "philadelphia has dropped six straight at # # entering its matchup with san francisco who sit at # # philadelphia s [entity] has found the end zone in five of his last five games while san francisco counters with [entity] who has rushed for # yards and eight touchdowns",
+      "count": 1,
+      "example_game_id": "2026_17_PHI_SF"
+    },
+    {
+      "pattern": "detroit brings a three game winning streak into its matchup with chicago who sit at # # detroit s [entity] has topped # rushing yards in one of his last four games while chicago counters with [entity] who has rushed for # yards and seven touchdowns",
+      "count": 1,
+      "example_game_id": "2026_17_DET_CHI"
+    },
+    {
+      "pattern": "buffalo brings a three game winning streak into its matchup with green bay who sit at # # buffalo s [entity] has topped # rushing yards in one of his last four games while green bay s [entity] has found the end zone in five of his last five games",
+      "count": 1,
+      "example_game_id": "2026_14_BUF_GB"
+    },
+    {
+      "pattern": "denver brings a four game winning streak into its matchup with pittsburgh who sit at # # denver s [entity] has found the end zone in four of his last five games while pittsburgh s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_12_DEN_PIT"
+    },
+    {
+      "pattern": "indianapolis has dropped four straight at # # entering its matchup with dallas who sit at # # indianapolis counters with [entity] who has rushed for # yards and eight touchdowns while dallas s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_09_DAL_IND"
+    },
+    {
+      "pattern": "the # # panthers have dropped two straight entering tampa bay where the buccaneers sit at # # tampa bay s [entity] has topped # rushing yards in one of his last four games while carolina s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_12_CAR_TB"
+    },
+    {
+      "pattern": "the # # thunder visit phoenix where the # # suns have dropped two straight phoenix s [entity] has scored # or more in three of his last four including # # # while oklahoma city s [entity] has scored # or more in three of his last four including # # # #",
+      "count": 1,
+      "example_game_id": "0022601057"
+    },
+    {
+      "pattern": "boston brings a five game winning streak into its matchup with cleveland who sit at # # boston s [entity] has scored at least # in each of his last five including a # point night",
+      "count": 1,
+      "example_game_id": "0022601113"
+    },
+    {
+      "pattern": "philadelphia has won three straight and sits at # # while los angeles has dropped five in a row at # # philadelphia s [entity] has scored at least # in each of his last five including a # point night",
+      "count": 1,
+      "example_game_id": "0022600456"
+    },
+    {
+      "pattern": "chicago has dropped four straight at # # entering its matchup with portland who sit at # # chicago s [entity] has scored # or more in three of his last four including # # # while portland s [entity] has scored at least # in four of his last five",
+      "count": 1,
+      "example_game_id": "0022600822"
+    },
+    {
+      "pattern": "the # # suns have dropped two straight entering brooklyn where the nets sit at # # phoenix s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600680"
+    },
+    {
+      "pattern": "boston brings a five game winning streak into its matchup with new york who sit at # # boston s [entity] has scored at least # in each of his last five including a # point night while [entity] is averaging # points and # assists over his last five for new york",
+      "count": 1,
+      "example_game_id": "0022600976"
+    },
+    {
+      "pattern": "dallas brings a three game winning streak into its matchup with washington who sit at # # [entity] is averaging # points and # assists over his last five for dallas while washington s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600959"
+    },
+    {
+      "pattern": "san antonio brings a four game winning streak into its matchup with minnesota who sit at # # san antonio s [entity] has scored # and # in his last two while minnesota s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600645"
+    },
+    {
+      "pattern": "memphis puts its undefeated # # start on the line against oklahoma city which won its last game and sits at # # grizzlies star [entity] is averaging # points and # assists over his last five games including a # point outing while oklahoma city s [entity] has scored # or more in three of his last four including # # # #",
+      "count": 1,
+      "example_game_id": "0022600643"
+    },
+    {
+      "pattern": "utah has dropped four straight at # # entering its matchup with phoenix who sit at # # utah s [entity] has scored # or more in three of his last four including # # # while phoenix s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600049"
+    },
+    {
+      "pattern": "san antonio brings a four game winning streak into its matchup with phoenix who sit at # # san antonio s [entity] has scored # and # in his last two while phoenix s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022601110"
+    },
+    {
+      "pattern": "boston brings a five game winning streak into its matchup with washington who sit at # # boston s [entity] has scored at least # in each of his last five including a # point night while washington s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600358"
+    },
+    {
+      "pattern": "memphis puts its undefeated # # start on the line against houston which won its last game and sits at # # grizzlies star [entity] is averaging # points and # assists over his last five games including a # point outing while houston s [entity] has scored # and # in his last two",
+      "count": 1,
+      "example_game_id": "0022600080"
+    },
+    {
+      "pattern": "the # # timberwolves visit denver where the # # nuggets are riding a two game winning streak denver s [entity] has put up # and # in two of his last five while minnesota s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600461"
+    },
+    {
+      "pattern": "san antonio brings a four game winning streak into its matchup with milwaukee who sit at # # san antonio s [entity] has scored # and # in his last two",
+      "count": 1,
+      "example_game_id": "0022600417"
+    },
+    {
+      "pattern": "the # # knicks visit milwaukee where the # # bucks have dropped two straight [entity] is averaging # points and # assists over his last five for new york",
+      "count": 1,
+      "example_game_id": "0022601168"
+    },
+    {
+      "pattern": "indianapolis has dropped four straight at # # entering its matchup with los angeles who sit at # # indianapolis s [entity] is averaging # assists over his last five while los angeles s [entity] has scored # and # in his last two",
+      "count": 1,
+      "example_game_id": "0022600418"
+    },
+    {
+      "pattern": "los angeles has dropped five straight at # # entering its matchup with cleveland who sit at # #",
+      "count": 1,
+      "example_game_id": "0022600479"
+    },
+    {
+      "pattern": "charlotte has dropped three straight at # # entering its matchup with orlando who sit at # # charlotte s [entity] has scored at least # in four of his last five while orlando s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600851"
+    },
+    {
+      "pattern": "boston brings a five game winning streak into its matchup with detroit who sit at # # boston s [entity] has scored at least # in each of his last five including a # point night while detroit s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600911"
+    },
+    {
+      "pattern": "los angeles has dropped five straight at # # entering its matchup with new orleans who sit at # #",
+      "count": 1,
+      "example_game_id": "0022600073"
+    },
+    {
+      "pattern": "san antonio brings a four game winning streak into its matchup with philadelphia who sit at # # san antonio s [entity] has scored # and # in his last two while philadelphia s [entity] has scored at least # in each of his last five including a # point night",
+      "count": 1,
+      "example_game_id": "0022600956"
+    },
+    {
+      "pattern": "the # # magic have dropped two straight entering brooklyn where the nets sit at # # orlando s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600044"
+    },
+    {
+      "pattern": "the # # blazers visit milwaukee where the # # bucks have dropped two straight portland s [entity] has scored at least # in four of his last five",
+      "count": 1,
+      "example_game_id": "0022600271"
+    },
+    {
+      "pattern": "san antonio brings a four game winning streak into its matchup with denver who sit at # # san antonio s [entity] has scored # and # in his last two while denver s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600872"
+    },
+    {
+      "pattern": "the # # wizards bring a two game winning streak to miami where the heat sit at # # [entity] is averaging # points and # assists over his last five for miami while washington s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022601177"
+    },
+    {
+      "pattern": "golden state brings a four game winning streak into its matchup with portland who sit at # # golden state s [entity] has scored # and # in his last two while portland s [entity] has scored at least # in four of his last five",
+      "count": 1,
+      "example_game_id": "0022601018"
+    },
+    {
+      "pattern": "the # # hawks visit toronto where the # # raptors have dropped two straight toronto s [entity] has scored at least # in four of his last five while atlanta s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600860"
+    },
+    {
+      "pattern": "new york brings a # # record into portland where the # # blazers look to protect home court portland s [entity] has scored at least # in four of his last five while [entity] is averaging # points and # assists over his last five for new york",
+      "count": 1,
+      "example_game_id": "0022600515"
+    },
+    {
+      "pattern": "the # # nets visit new orleans where the # # pelicans are riding a two game winning streak",
+      "count": 1,
+      "example_game_id": "0022600223"
+    },
+    {
+      "pattern": "los angeles has dropped five straight at # # entering its matchup with phoenix who sit at # # phoenix s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600616"
+    },
+    {
+      "pattern": "utah has dropped four straight at # # entering its matchup with milwaukee who sit at # # utah s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600674"
+    },
+    {
+      "pattern": "charlotte has dropped three straight at # # entering its matchup with miami who sit at # # charlotte s [entity] has scored at least # in four of his last five while [entity] is averaging # points and # assists over his last five for miami",
+      "count": 1,
+      "example_game_id": "0022600725"
+    },
+    {
+      "pattern": "the # # nuggets bring a two game winning streak to washington where the wizards sit at # # washington s [entity] is averaging # assists over his last five while denver s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022601051"
+    },
+    {
+      "pattern": "charlotte has dropped three straight at # # entering its matchup with washington who sit at # # charlotte s [entity] has scored at least # in four of his last five while washington s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600312"
+    },
+    {
+      "pattern": "the winless kings sit dead last in the nba at # # and visit phoenix s # # team sacramento s [entity] has scored # and # in his last two while phoenix s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600334"
+    },
+    {
+      "pattern": "the # # bucks have dropped two straight entering denver where the nuggets sit at # # denver s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600654"
+    },
+    {
+      "pattern": "boston has won five straight and sits at # # while indianapolis has dropped four in a row at # # indianapolis s [entity] is averaging # assists over his last five while boston s [entity] has scored at least # in each of his last five including a # point night",
+      "count": 1,
+      "example_game_id": "0022600887"
+    },
+    {
+      "pattern": "charlotte has dropped three straight at # # entering its matchup with denver who sit at # # charlotte s [entity] has scored at least # in four of his last five while denver s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600606"
+    },
+    {
+      "pattern": "boston brings a five game winning streak into its matchup with los angeles who sit at # # boston s [entity] has scored at least # in each of his last five including a # point night while los angeles s [entity] has scored # and # in his last two",
+      "count": 1,
+      "example_game_id": "0022600726"
+    },
+    {
+      "pattern": "the # # pistons bring a two game winning streak to cleveland where the cavaliers sit at # # detroit s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600077"
+    },
+    {
+      "pattern": "the # # pelicans bring a two game winning streak to minnesota where the timberwolves sit at # # minnesota s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600934"
+    },
+    {
+      "pattern": "golden state brings a four game winning streak into its matchup with dallas who sit at # # golden state s [entity] has scored # and # in his last two while [entity] is averaging # points and # assists over his last five for dallas",
+      "count": 1,
+      "example_game_id": "0022600267"
+    },
+    {
+      "pattern": "los angeles has dropped five straight at # # entering its matchup with indianapolis who sit at # # indianapolis s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600464"
+    },
+    {
+      "pattern": "los angeles has dropped five straight at # # entering its matchup with brooklyn who sit at # #",
+      "count": 1,
+      "example_game_id": "0022600910"
+    },
+    {
+      "pattern": "utah has dropped four straight at # # entering its matchup with denver who sit at # # utah s [entity] has scored # or more in three of his last four including # # # while denver s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600622"
+    },
+    {
+      "pattern": "the # # nuggets bring a two game winning streak to los angeles where the lakers sit at # # los angeles s [entity] has scored # and # in his last two while denver s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600808"
+    },
+    {
+      "pattern": "minnesota brings a # # record into houston where the # # rockets look to protect home court houston s [entity] has scored # and # in his last two while minnesota s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600522"
+    },
+    {
+      "pattern": "atlanta brings a # # record into oklahoma city where the # # thunder look to protect home court oklahoma city s [entity] has scored # or more in three of his last four including # # # # while atlanta s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600265"
+    },
+    {
+      "pattern": "dallas has won three straight and sits at # # while charlotte has dropped three in a row at # # [entity] is averaging # points and # assists over his last five for dallas while charlotte s [entity] has scored at least # in four of his last five",
+      "count": 1,
+      "example_game_id": "0022600621"
+    }
+  ],
+  "collection_ms_median": 119.207,
+  "render_ms_median": 8.805,
+  "model_calls": 0,
+  "network_calls": 0,
+  "database_writes": 0,
+  "evidence_preserved_in": "heldout_results.jsonl",
+  "status": "generated; editorial ratings are recorded separately"
+}
