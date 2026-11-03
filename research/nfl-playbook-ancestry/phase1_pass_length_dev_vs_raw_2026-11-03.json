@@ -1,0 +1,97 @@
+{
+  "database": "/root/legendarypicks/backend/data/picks.dev.db",
+  "interpretation": "pass_length short/deep is an observed depth bucket, not a route or named play concept; it is outside the dev nfl_pbp schema.",
+  "join_rule": "Exact game_id and integer-valued play_id; regular-season pass rows only.",
+  "local_raw_directory": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp",
+  "run_at_utc": "2026-11-03T17:32:50.824490+00:00",
+  "seasons": {
+    "2022": {
+      "dev_nfl_pbp_pass_rows": 19393,
+      "dev_only_keys": 0,
+      "pass_length_rows_by_value": [
+        {
+          "rows": 1387,
+          "value": null
+        },
+        {
+          "rows": 3140,
+          "value": "deep"
+        },
+        {
+          "rows": 14866,
+          "value": "short"
+        }
+      ],
+      "raw_only_keys": 0,
+      "regular_season_raw_pass_rows": 19393,
+      "source_file": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2022.parquet",
+      "source_sha256": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09"
+    },
+    "2023": {
+      "dev_nfl_pbp_pass_rows": 19735,
+      "dev_only_keys": 0,
+      "pass_length_rows_by_value": [
+        {
+          "rows": 1488,
+          "value": null
+        },
+        {
+          "rows": 3310,
+          "value": "deep"
+        },
+        {
+          "rows": 14937,
+          "value": "short"
+        }
+      ],
+      "raw_only_keys": 0,
+      "regular_season_raw_pass_rows": 19735,
+      "source_file": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2023.parquet",
+      "source_sha256": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776"
+    },
+    "2024": {
+      "dev_nfl_pbp_pass_rows": 19153,
+      "dev_only_keys": 0,
+      "pass_length_rows_by_value": [
+        {
+          "rows": 1413,
+          "value": null
+        },
+        {
+          "rows": 3270,
+          "value": "deep"
+        },
+        {
+          "rows": 14470,
+          "value": "short"
+        }
+      ],
+      "raw_only_keys": 0,
+      "regular_season_raw_pass_rows": 19153,
+      "source_file": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2024.parquet",
+      "source_sha256": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b"
+    },
+    "2025": {
+      "dev_nfl_pbp_pass_rows": 18741,
+      "dev_only_keys": 0,
+      "pass_length_rows_by_value": [
+        {
+          "rows": 1383,
+          "value": null
+        },
+        {
+          "rows": 3209,
+          "value": "deep"
+        },
+        {
+          "rows": 14149,
+          "value": "short"
+        }
+      ],
+      "raw_only_keys": 0,
+      "regular_season_raw_pass_rows": 18741,
+      "source_file": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2025.parquet",
+      "source_sha256": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+    }
+  }
+}

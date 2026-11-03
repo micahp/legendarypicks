@@ -1,6 +1,6 @@
 # NFL Playbook Evolution and Play Ancestry (research plan)
 
-Status: research direction, not started. Source: pasted research notes, 2026-11-03.
+Status: Phases 1–2 complete; findings: [Phase 1 data inventory and play identity](../../research/nfl-playbook-ancestry/PHASE1-FINDINGS-2026-11-03.md) and [Phase 2 weekly evolution](../../research/nfl-playbook-ancestry/PHASE2-WEEKLY-EVOLUTION-2026-11-03.md). Phases 3–6 not started. Source: pasted research notes, 2026-11-03.
 
 Verification status: the external articles, interviews and statistics below are cited as the notes give them. They have
 not been checked against their sources in this repository. Each one needs its URL, publication date and a confidence level

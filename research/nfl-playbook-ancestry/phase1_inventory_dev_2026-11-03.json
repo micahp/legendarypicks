@@ -1,0 +1,2887 @@
+{
+  "coverage": {
+    "2026_direct_table_rows": {
+      "nfl_hist_ftn_charting": 0,
+      "nfl_hist_participation": 0,
+      "nfl_pbp": 21191,
+      "nfl_snap_counts": 11252
+    },
+    "ftn_game_types_via_nfl_schedule": {
+      "2022": {
+        "CON": 2,
+        "DIV": 4,
+        "REG": 271,
+        "SB": 1,
+        "WC": 6
+      },
+      "2023": {
+        "CON": 2,
+        "DIV": 4,
+        "REG": 272,
+        "SB": 1,
+        "WC": 6
+      },
+      "2024": {
+        "CON": 2,
+        "DIV": 4,
+        "REG": 272,
+        "SB": 1,
+        "WC": 6
+      },
+      "2025": {
+        "CON": 2,
+        "DIV": 4,
+        "REG": 272,
+        "SB": 1,
+        "WC": 6
+      }
+    },
+    "nfl_hist_ftn_charting": {
+      "2022": {
+        "games": 284,
+        "max_week": 22,
+        "min_week": 1,
+        "rows": 41643,
+        "weeks": 22
+      },
+      "2023": {
+        "games": 285,
+        "max_week": 22,
+        "min_week": 1,
+        "rows": 48225,
+        "weeks": 22
+      },
+      "2024": {
+        "games": 285,
+        "max_week": 22,
+        "min_week": 1,
+        "rows": 48031,
+        "weeks": 22
+      },
+      "2025": {
+        "games": 285,
+        "max_week": 22,
+        "min_week": 1,
+        "rows": 47316,
+        "weeks": 22
+      },
+      "2026": {
+        "games": 0,
+        "max_week": null,
+        "min_week": null,
+        "rows": 0,
+        "weeks": 0
+      }
+    },
+    "nfl_hist_participation": {
+      "2022": {
+        "games": 284,
+        "rows": 50150
+      },
+      "2023": {
+        "games": 285,
+        "rows": 46168
+      },
+      "2024": {
+        "games": 285,
+        "rows": 45919
+      },
+      "2025": {
+        "games": 285,
+        "rows": 45184
+      },
+      "2026": {
+        "games": 0,
+        "rows": 0
+      }
+    },
+    "nfl_hist_snap_counts_game_type_values": {
+      "2022": [
+        {
+          "rows": 25168,
+          "value": "REG"
+        },
+        {
+          "rows": 556,
+          "value": "WC"
+        },
+        {
+          "rows": 375,
+          "value": "DIV"
+        },
+        {
+          "rows": 189,
+          "value": "CON"
+        },
+        {
+          "rows": 93,
+          "value": "SB"
+        }
+      ],
+      "2023": [
+        {
+          "rows": 25329,
+          "value": "REG"
+        },
+        {
+          "rows": 560,
+          "value": "WC"
+        },
+        {
+          "rows": 371,
+          "value": "DIV"
+        },
+        {
+          "rows": 187,
+          "value": "CON"
+        },
+        {
+          "rows": 93,
+          "value": "SB"
+        }
+      ],
+      "2024": [
+        {
+          "rows": 25398,
+          "value": "REG"
+        },
+        {
+          "rows": 564,
+          "value": "WC"
+        },
+        {
+          "rows": 372,
+          "value": "DIV"
+        },
+        {
+          "rows": 189,
+          "value": "CON"
+        },
+        {
+          "rows": 92,
+          "value": "SB"
+        }
+      ],
+      "2025": [
+        {
+          "rows": 25396,
+          "value": "REG"
+        },
+        {
+          "rows": 560,
+          "value": "WC"
+        },
+        {
+          "rows": 377,
+          "value": "DIV"
+        },
+        {
+          "rows": 186,
+          "value": "CON"
+        },
+        {
+          "rows": 94,
+          "value": "SB"
+        }
+      ]
+    },
+    "nfl_pbp": {
+      "2022": {
+        "games": 271,
+        "max_week": 18,
+        "min_week": 1,
+        "rows": 47157,
+        "weeks": 18
+      },
+      "2023": {
+        "games": 272,
+        "max_week": 18,
+        "min_week": 1,
+        "rows": 47399,
+        "weeks": 18
+      },
+      "2024": {
+        "games": 272,
+        "max_week": 18,
+        "min_week": 1,
+        "rows": 47274,
+        "weeks": 18
+      },
+      "2025": {
+        "games": 272,
+        "max_week": 18,
+        "min_week": 1,
+        "rows": 46452,
+        "weeks": 18
+      },
+      "2026": {
+        "games": 121,
+        "max_week": 8,
+        "min_week": 1,
+        "rows": 21191,
+        "weeks": 8
+      }
+    },
+    "nfl_snap_counts": {
+      "2022": {
+        "max_week": null,
+        "min_week": null,
+        "rows": 0,
+        "weeks": 0
+      },
+      "2023": {
+        "max_week": null,
+        "min_week": null,
+        "rows": 0,
+        "weeks": 0
+      },
+      "2024": {
+        "max_week": 18,
+        "min_week": 1,
+        "rows": 25357,
+        "weeks": 18
+      },
+      "2025": {
+        "max_week": 18,
+        "min_week": 1,
+        "rows": 25344,
+        "weeks": 18
+      },
+      "2026": {
+        "max_week": 8,
+        "min_week": 1,
+        "rows": 11252,
+        "weeks": 8
+      }
+    },
+    "participation_game_types_via_nfl_schedule": {
+      "2022": {
+        "CON": 2,
+        "DIV": 4,
+        "REG": 271,
+        "SB": 1,
+        "WC": 6
+      },
+      "2023": {
+        "CON": 2,
+        "DIV": 4,
+        "REG": 272,
+        "SB": 1,
+        "WC": 6
+      },
+      "2024": {
+        "CON": 2,
+        "DIV": 4,
+        "REG": 272,
+        "SB": 1,
+        "WC": 6
+      },
+      "2025": {
+        "CON": 2,
+        "DIV": 4,
+        "REG": 272,
+        "SB": 1,
+        "WC": 6
+      }
+    },
+    "pbp_game_types_via_nfl_schedule": {
+      "2022": {
+        "REG": 271
+      },
+      "2023": {
+        "REG": 272
+      },
+      "2024": {
+        "REG": 272
+      },
+      "2025": {
+        "REG": 272
+      },
+      "2026": {
+        "REG": 121
+      }
+    },
+    "weekly_pbp_and_current_snap_counts": {
+      "nfl_pbp": {
+        "2022": [
+          {
+            "games": 16,
+            "rows": 2848,
+            "season": 2022,
+            "week": 1
+          },
+          {
+            "games": 16,
+            "rows": 2747,
+            "season": 2022,
+            "week": 2
+          },
+          {
+            "games": 16,
+            "rows": 2807,
+            "season": 2022,
+            "week": 3
+          },
+          {
+            "games": 16,
+            "rows": 2795,
+            "season": 2022,
+            "week": 4
+          },
+          {
+            "games": 16,
+            "rows": 2802,
+            "season": 2022,
+            "week": 5
+          },
+          {
+            "games": 14,
+            "rows": 2459,
+            "season": 2022,
+            "week": 6
+          },
+          {
+            "games": 14,
+            "rows": 2390,
+            "season": 2022,
+            "week": 7
+          },
+          {
+            "games": 15,
+            "rows": 2587,
+            "season": 2022,
+            "week": 8
+          },
+          {
+            "games": 13,
+            "rows": 2238,
+            "season": 2022,
+            "week": 9
+          },
+          {
+            "games": 14,
+            "rows": 2480,
+            "season": 2022,
+            "week": 10
+          },
+          {
+            "games": 14,
+            "rows": 2423,
+            "season": 2022,
+            "week": 11
+          },
+          {
+            "games": 16,
+            "rows": 2791,
+            "season": 2022,
+            "week": 12
+          },
+          {
+            "games": 15,
+            "rows": 2633,
+            "season": 2022,
+            "week": 13
+          },
+          {
+            "games": 13,
+            "rows": 2274,
+            "season": 2022,
+            "week": 14
+          },
+          {
+            "games": 16,
+            "rows": 2853,
+            "season": 2022,
+            "week": 15
+          },
+          {
+            "games": 16,
+            "rows": 2744,
+            "season": 2022,
+            "week": 16
+          },
+          {
+            "games": 15,
+            "rows": 2566,
+            "season": 2022,
+            "week": 17
+          },
+          {
+            "games": 16,
+            "rows": 2720,
+            "season": 2022,
+            "week": 18
+          }
+        ],
+        "2023": [
+          {
+            "games": 16,
+            "rows": 2816,
+            "season": 2023,
+            "week": 1
+          },
+          {
+            "games": 16,
+            "rows": 2844,
+            "season": 2023,
+            "week": 2
+          },
+          {
+            "games": 16,
+            "rows": 2882,
+            "season": 2023,
+            "week": 3
+          },
+          {
+            "games": 16,
+            "rows": 2730,
+            "season": 2023,
+            "week": 4
+          },
+          {
+            "games": 14,
+            "rows": 2430,
+            "season": 2023,
+            "week": 5
+          },
+          {
+            "games": 15,
+            "rows": 2607,
+            "season": 2023,
+            "week": 6
+          },
+          {
+            "games": 13,
+            "rows": 2252,
+            "season": 2023,
+            "week": 7
+          },
+          {
+            "games": 16,
+            "rows": 2834,
+            "season": 2023,
+            "week": 8
+          },
+          {
+            "games": 14,
+            "rows": 2452,
+            "season": 2023,
+            "week": 9
+          },
+          {
+            "games": 14,
+            "rows": 2479,
+            "season": 2023,
+            "week": 10
+          },
+          {
+            "games": 14,
+            "rows": 2410,
+            "season": 2023,
+            "week": 11
+          },
+          {
+            "games": 16,
+            "rows": 2756,
+            "season": 2023,
+            "week": 12
+          },
+          {
+            "games": 13,
+            "rows": 2329,
+            "season": 2023,
+            "week": 13
+          },
+          {
+            "games": 15,
+            "rows": 2664,
+            "season": 2023,
+            "week": 14
+          },
+          {
+            "games": 16,
+            "rows": 2738,
+            "season": 2023,
+            "week": 15
+          },
+          {
+            "games": 16,
+            "rows": 2844,
+            "season": 2023,
+            "week": 16
+          },
+          {
+            "games": 16,
+            "rows": 2692,
+            "season": 2023,
+            "week": 17
+          },
+          {
+            "games": 16,
+            "rows": 2640,
+            "season": 2023,
+            "week": 18
+          }
+        ],
+        "2024": [
+          {
+            "games": 16,
+            "rows": 2740,
+            "season": 2024,
+            "week": 1
+          },
+          {
+            "games": 16,
+            "rows": 2721,
+            "season": 2024,
+            "week": 2
+          },
+          {
+            "games": 16,
+            "rows": 2732,
+            "season": 2024,
+            "week": 3
+          },
+          {
+            "games": 16,
+            "rows": 2748,
+            "season": 2024,
+            "week": 4
+          },
+          {
+            "games": 14,
+            "rows": 2522,
+            "season": 2024,
+            "week": 5
+          },
+          {
+            "games": 14,
+            "rows": 2450,
+            "season": 2024,
+            "week": 6
+          },
+          {
+            "games": 15,
+            "rows": 2566,
+            "season": 2024,
+            "week": 7
+          },
+          {
+            "games": 16,
+            "rows": 2815,
+            "season": 2024,
+            "week": 8
+          },
+          {
+            "games": 15,
+            "rows": 2651,
+            "season": 2024,
+            "week": 9
+          },
+          {
+            "games": 14,
+            "rows": 2401,
+            "season": 2024,
+            "week": 10
+          },
+          {
+            "games": 14,
+            "rows": 2424,
+            "season": 2024,
+            "week": 11
+          },
+          {
+            "games": 13,
+            "rows": 2291,
+            "season": 2024,
+            "week": 12
+          },
+          {
+            "games": 16,
+            "rows": 2848,
+            "season": 2024,
+            "week": 13
+          },
+          {
+            "games": 13,
+            "rows": 2271,
+            "season": 2024,
+            "week": 14
+          },
+          {
+            "games": 16,
+            "rows": 2780,
+            "season": 2024,
+            "week": 15
+          },
+          {
+            "games": 16,
+            "rows": 2764,
+            "season": 2024,
+            "week": 16
+          },
+          {
+            "games": 16,
+            "rows": 2766,
+            "season": 2024,
+            "week": 17
+          },
+          {
+            "games": 16,
+            "rows": 2784,
+            "season": 2024,
+            "week": 18
+          }
+        ],
+        "2025": [
+          {
+            "games": 16,
+            "rows": 2738,
+            "season": 2025,
+            "week": 1
+          },
+          {
+            "games": 16,
+            "rows": 2789,
+            "season": 2025,
+            "week": 2
+          },
+          {
+            "games": 16,
+            "rows": 2746,
+            "season": 2025,
+            "week": 3
+          },
+          {
+            "games": 16,
+            "rows": 2761,
+            "season": 2025,
+            "week": 4
+          },
+          {
+            "games": 14,
+            "rows": 2454,
+            "season": 2025,
+            "week": 5
+          },
+          {
+            "games": 15,
+            "rows": 2523,
+            "season": 2025,
+            "week": 6
+          },
+          {
+            "games": 15,
+            "rows": 2614,
+            "season": 2025,
+            "week": 7
+          },
+          {
+            "games": 13,
+            "rows": 2142,
+            "season": 2025,
+            "week": 8
+          },
+          {
+            "games": 14,
+            "rows": 2385,
+            "season": 2025,
+            "week": 9
+          },
+          {
+            "games": 14,
+            "rows": 2400,
+            "season": 2025,
+            "week": 10
+          },
+          {
+            "games": 15,
+            "rows": 2575,
+            "season": 2025,
+            "week": 11
+          },
+          {
+            "games": 14,
+            "rows": 2445,
+            "season": 2025,
+            "week": 12
+          },
+          {
+            "games": 16,
+            "rows": 2720,
+            "season": 2025,
+            "week": 13
+          },
+          {
+            "games": 14,
+            "rows": 2422,
+            "season": 2025,
+            "week": 14
+          },
+          {
+            "games": 16,
+            "rows": 2688,
+            "season": 2025,
+            "week": 15
+          },
+          {
+            "games": 16,
+            "rows": 2750,
+            "season": 2025,
+            "week": 16
+          },
+          {
+            "games": 16,
+            "rows": 2664,
+            "season": 2025,
+            "week": 17
+          },
+          {
+            "games": 16,
+            "rows": 2636,
+            "season": 2025,
+            "week": 18
+          }
+        ],
+        "2026": [
+          {
+            "games": 16,
+            "rows": 2756,
+            "season": 2026,
+            "week": 1
+          },
+          {
+            "games": 16,
+            "rows": 2733,
+            "season": 2026,
+            "week": 2
+          },
+          {
+            "games": 16,
+            "rows": 2822,
+            "season": 2026,
+            "week": 3
+          },
+          {
+            "games": 16,
+            "rows": 2844,
+            "season": 2026,
+            "week": 4
+          },
+          {
+            "games": 15,
+            "rows": 2687,
+            "season": 2026,
+            "week": 5
+          },
+          {
+            "games": 14,
+            "rows": 2538,
+            "season": 2026,
+            "week": 6
+          },
+          {
+            "games": 14,
+            "rows": 2358,
+            "season": 2026,
+            "week": 7
+          },
+          {
+            "games": 14,
+            "rows": 2453,
+            "season": 2026,
+            "week": 8
+          }
+        ]
+      },
+      "nfl_snap_counts": {
+        "2024": [
+          {
+            "player_rows": 1490,
+            "players": 1490,
+            "season": 2024,
+            "teams": 32,
+            "week": 1
+          },
+          {
+            "player_rows": 1496,
+            "players": 1496,
+            "season": 2024,
+            "teams": 32,
+            "week": 2
+          },
+          {
+            "player_rows": 1498,
+            "players": 1498,
+            "season": 2024,
+            "teams": 32,
+            "week": 3
+          },
+          {
+            "player_rows": 1484,
+            "players": 1484,
+            "season": 2024,
+            "teams": 32,
+            "week": 4
+          },
+          {
+            "player_rows": 1306,
+            "players": 1306,
+            "season": 2024,
+            "teams": 28,
+            "week": 5
+          },
+          {
+            "player_rows": 1301,
+            "players": 1301,
+            "season": 2024,
+            "teams": 28,
+            "week": 6
+          },
+          {
+            "player_rows": 1409,
+            "players": 1409,
+            "season": 2024,
+            "teams": 30,
+            "week": 7
+          },
+          {
+            "player_rows": 1487,
+            "players": 1487,
+            "season": 2024,
+            "teams": 32,
+            "week": 8
+          },
+          {
+            "player_rows": 1402,
+            "players": 1402,
+            "season": 2024,
+            "teams": 30,
+            "week": 9
+          },
+          {
+            "player_rows": 1304,
+            "players": 1304,
+            "season": 2024,
+            "teams": 28,
+            "week": 10
+          },
+          {
+            "player_rows": 1307,
+            "players": 1307,
+            "season": 2024,
+            "teams": 28,
+            "week": 11
+          },
+          {
+            "player_rows": 1221,
+            "players": 1221,
+            "season": 2024,
+            "teams": 26,
+            "week": 12
+          },
+          {
+            "player_rows": 1489,
+            "players": 1489,
+            "season": 2024,
+            "teams": 32,
+            "week": 13
+          },
+          {
+            "player_rows": 1211,
+            "players": 1211,
+            "season": 2024,
+            "teams": 26,
+            "week": 14
+          },
+          {
+            "player_rows": 1498,
+            "players": 1498,
+            "season": 2024,
+            "teams": 32,
+            "week": 15
+          },
+          {
+            "player_rows": 1492,
+            "players": 1492,
+            "season": 2024,
+            "teams": 32,
+            "week": 16
+          },
+          {
+            "player_rows": 1495,
+            "players": 1495,
+            "season": 2024,
+            "teams": 32,
+            "week": 17
+          },
+          {
+            "player_rows": 1467,
+            "players": 1467,
+            "season": 2024,
+            "teams": 32,
+            "week": 18
+          }
+        ],
+        "2025": [
+          {
+            "player_rows": 1479,
+            "players": 1479,
+            "season": 2025,
+            "teams": 32,
+            "week": 1
+          },
+          {
+            "player_rows": 1498,
+            "players": 1498,
+            "season": 2025,
+            "teams": 32,
+            "week": 2
+          },
+          {
+            "player_rows": 1494,
+            "players": 1494,
+            "season": 2025,
+            "teams": 32,
+            "week": 3
+          },
+          {
+            "player_rows": 1492,
+            "players": 1492,
+            "season": 2025,
+            "teams": 32,
+            "week": 4
+          },
+          {
+            "player_rows": 1306,
+            "players": 1306,
+            "season": 2025,
+            "teams": 28,
+            "week": 5
+          },
+          {
+            "player_rows": 1395,
+            "players": 1395,
+            "season": 2025,
+            "teams": 30,
+            "week": 6
+          },
+          {
+            "player_rows": 1401,
+            "players": 1401,
+            "season": 2025,
+            "teams": 30,
+            "week": 7
+          },
+          {
+            "player_rows": 1215,
+            "players": 1215,
+            "season": 2025,
+            "teams": 26,
+            "week": 8
+          },
+          {
+            "player_rows": 1308,
+            "players": 1308,
+            "season": 2025,
+            "teams": 28,
+            "week": 9
+          },
+          {
+            "player_rows": 1309,
+            "players": 1309,
+            "season": 2025,
+            "teams": 28,
+            "week": 10
+          },
+          {
+            "player_rows": 1401,
+            "players": 1401,
+            "season": 2025,
+            "teams": 30,
+            "week": 11
+          },
+          {
+            "player_rows": 1305,
+            "players": 1305,
+            "season": 2025,
+            "teams": 28,
+            "week": 12
+          },
+          {
+            "player_rows": 1487,
+            "players": 1487,
+            "season": 2025,
+            "teams": 32,
+            "week": 13
+          },
+          {
+            "player_rows": 1307,
+            "players": 1307,
+            "season": 2025,
+            "teams": 28,
+            "week": 14
+          },
+          {
+            "player_rows": 1488,
+            "players": 1488,
+            "season": 2025,
+            "teams": 32,
+            "week": 15
+          },
+          {
+            "player_rows": 1501,
+            "players": 1501,
+            "season": 2025,
+            "teams": 32,
+            "week": 16
+          },
+          {
+            "player_rows": 1489,
+            "players": 1489,
+            "season": 2025,
+            "teams": 32,
+            "week": 17
+          },
+          {
+            "player_rows": 1469,
+            "players": 1469,
+            "season": 2025,
+            "teams": 32,
+            "week": 18
+          }
+        ],
+        "2026": [
+          {
+            "player_rows": 1486,
+            "players": 1486,
+            "season": 2026,
+            "teams": 32,
+            "week": 1
+          },
+          {
+            "player_rows": 1497,
+            "players": 1497,
+            "season": 2026,
+            "teams": 32,
+            "week": 2
+          },
+          {
+            "player_rows": 1489,
+            "players": 1489,
+            "season": 2026,
+            "teams": 32,
+            "week": 3
+          },
+          {
+            "player_rows": 1477,
+            "players": 1477,
+            "season": 2026,
+            "teams": 32,
+            "week": 4
+          },
+          {
+            "player_rows": 1396,
+            "players": 1396,
+            "season": 2026,
+            "teams": 30,
+            "week": 5
+          },
+          {
+            "player_rows": 1297,
+            "players": 1297,
+            "season": 2026,
+            "teams": 28,
+            "week": 6
+          },
+          {
+            "player_rows": 1304,
+            "players": 1304,
+            "season": 2026,
+            "teams": 28,
+            "week": 7
+          },
+          {
+            "player_rows": 1306,
+            "players": 1306,
+            "season": 2026,
+            "teams": 28,
+            "week": 8
+          }
+        ]
+      }
+    }
+  },
+  "database": {
+    "data_version": 2,
+    "files": [
+      {
+        "bytes": 3636948992,
+        "mtime_utc": "2026-11-03T17:34:10.008485+00:00",
+        "path": "/root/legendarypicks/backend/data/picks.dev.db"
+      },
+      {
+        "bytes": 8202952,
+        "mtime_utc": "2026-11-03T17:34:25.792215+00:00",
+        "path": "/root/legendarypicks/backend/data/picks.dev.db-wal"
+      }
+    ],
+    "path": "/root/legendarypicks/backend/data/picks.dev.db",
+    "query_only": true,
+    "read_only": true,
+    "schema_version": 433
+  },
+  "exact_join_coverage": {
+    "2022": {
+      "ftn_charting": {
+        "matched_rows": 39742,
+        "matched_scrimmage_rows": 33676,
+        "pbp_rows": 47157,
+        "scrimmage_rows": 33770,
+        "unmatched_by_pbp_play_type": [
+          {
+            "play_type": null,
+            "rows": 1375
+          },
+          {
+            "play_type": "extra_point",
+            "rows": 1187
+          },
+          {
+            "play_type": "kickoff",
+            "rows": 2695
+          },
+          {
+            "play_type": "no_play",
+            "rows": 2064
+          },
+          {
+            "play_type": "pass",
+            "rows": 69
+          },
+          {
+            "play_type": "run",
+            "rows": 25
+          }
+        ],
+        "unmatched_rows": 7415,
+        "unmatched_scrimmage_rows": 94
+      },
+      "participation": {
+        "matched_rows": 47157,
+        "matched_scrimmage_rows": 33770,
+        "pbp_rows": 47157,
+        "scrimmage_rows": 33770,
+        "unmatched_by_pbp_play_type": [],
+        "unmatched_rows": 0,
+        "unmatched_scrimmage_rows": 0
+      }
+    },
+    "2023": {
+      "ftn_charting": {
+        "matched_rows": 46025,
+        "matched_scrimmage_rows": 33957,
+        "pbp_rows": 47399,
+        "scrimmage_rows": 33957,
+        "unmatched_by_pbp_play_type": [
+          {
+            "play_type": null,
+            "rows": 1374
+          }
+        ],
+        "unmatched_rows": 1374,
+        "unmatched_scrimmage_rows": 0
+      },
+      "participation": {
+        "matched_rows": 44057,
+        "matched_scrimmage_rows": 33957,
+        "pbp_rows": 47399,
+        "scrimmage_rows": 33957,
+        "unmatched_by_pbp_play_type": [
+          {
+            "play_type": null,
+            "rows": 1378
+          },
+          {
+            "play_type": "no_play",
+            "rows": 1964
+          }
+        ],
+        "unmatched_rows": 3342,
+        "unmatched_scrimmage_rows": 0
+      }
+    },
+    "2024": {
+      "ftn_charting": {
+        "matched_rows": 45880,
+        "matched_scrimmage_rows": 33470,
+        "pbp_rows": 47274,
+        "scrimmage_rows": 33470,
+        "unmatched_by_pbp_play_type": [
+          {
+            "play_type": null,
+            "rows": 1380
+          },
+          {
+            "play_type": "no_play",
+            "rows": 14
+          }
+        ],
+        "unmatched_rows": 1394,
+        "unmatched_scrimmage_rows": 0
+      },
+      "participation": {
+        "matched_rows": 43866,
+        "matched_scrimmage_rows": 33470,
+        "pbp_rows": 47274,
+        "scrimmage_rows": 33470,
+        "unmatched_by_pbp_play_type": [
+          {
+            "play_type": null,
+            "rows": 1380
+          },
+          {
+            "play_type": "no_play",
+            "rows": 2028
+          }
+        ],
+        "unmatched_rows": 3408,
+        "unmatched_scrimmage_rows": 0
+      }
+    },
+    "2025": {
+      "ftn_charting": {
+        "matched_rows": 45064,
+        "matched_scrimmage_rows": 32941,
+        "pbp_rows": 46452,
+        "scrimmage_rows": 32941,
+        "unmatched_by_pbp_play_type": [
+          {
+            "play_type": null,
+            "rows": 1378
+          },
+          {
+            "play_type": "no_play",
+            "rows": 10
+          }
+        ],
+        "unmatched_rows": 1388,
+        "unmatched_scrimmage_rows": 0
+      },
+      "participation": {
+        "matched_rows": 43049,
+        "matched_scrimmage_rows": 32941,
+        "pbp_rows": 46452,
+        "scrimmage_rows": 32941,
+        "unmatched_by_pbp_play_type": [
+          {
+            "play_type": null,
+            "rows": 1378
+          },
+          {
+            "play_type": "no_play",
+            "rows": 2025
+          }
+        ],
+        "unmatched_rows": 3403,
+        "unmatched_scrimmage_rows": 0
+      }
+    }
+  },
+  "field_coverage_on_run_pass_rows": {
+    "2022": {
+      "air_yards_rows": 18007,
+      "blitzers_rows": 33676,
+      "defense_box_rows": 33676,
+      "formation_rows": 33739,
+      "ftn_join_rows": 33676,
+      "ftn_no_huddle_rows": 33676,
+      "motion_rows": 33676,
+      "offense_backfield_rows": 33676,
+      "participation_join_rows": 33770,
+      "pass_location_rows": 18006,
+      "pass_rows": 19393,
+      "pass_rushers_rows": 33676,
+      "pbp_no_huddle_rows": 33770,
+      "pbp_rows": 47157,
+      "personnel_rows": 33770,
+      "play_action_rows": 33676,
+      "qb_location_rows": 33530,
+      "qb_sneak_rows": 33676,
+      "rpo_rows": 33676,
+      "run_gap_rows": 10696,
+      "run_location_rows": 14226,
+      "run_rows": 14377,
+      "screen_pass_rows": 33676,
+      "scrimmage_rows": 33770,
+      "season": 2022,
+      "shotgun_rows": 33770,
+      "starting_hash_rows": 33527,
+      "trick_play_rows": 33676
+    },
+    "2023": {
+      "air_yards_rows": 18247,
+      "blitzers_rows": 33957,
+      "defense_box_rows": 33957,
+      "formation_rows": 33857,
+      "ftn_join_rows": 33957,
+      "ftn_no_huddle_rows": 33957,
+      "motion_rows": 33957,
+      "offense_backfield_rows": 32954,
+      "participation_join_rows": 33957,
+      "pass_location_rows": 18247,
+      "pass_rows": 19735,
+      "pass_rushers_rows": 33185,
+      "pbp_no_huddle_rows": 33957,
+      "pbp_rows": 47399,
+      "personnel_rows": 33957,
+      "play_action_rows": 33957,
+      "qb_location_rows": 33957,
+      "qb_sneak_rows": 33957,
+      "rpo_rows": 33957,
+      "run_gap_rows": 10352,
+      "run_location_rows": 14073,
+      "run_rows": 14222,
+      "screen_pass_rows": 33957,
+      "scrimmage_rows": 33957,
+      "season": 2023,
+      "shotgun_rows": 33957,
+      "starting_hash_rows": 33957,
+      "trick_play_rows": 33947
+    },
+    "2024": {
+      "air_yards_rows": 17740,
+      "blitzers_rows": 33470,
+      "defense_box_rows": 33470,
+      "formation_rows": 33441,
+      "ftn_join_rows": 33470,
+      "ftn_no_huddle_rows": 33470,
+      "motion_rows": 33470,
+      "offense_backfield_rows": 33470,
+      "participation_join_rows": 33470,
+      "pass_location_rows": 17740,
+      "pass_rows": 19153,
+      "pass_rushers_rows": 33470,
+      "pbp_no_huddle_rows": 33470,
+      "pbp_rows": 47274,
+      "personnel_rows": 33470,
+      "play_action_rows": 33470,
+      "qb_location_rows": 33470,
+      "qb_sneak_rows": 33470,
+      "rpo_rows": 33470,
+      "run_gap_rows": 10596,
+      "run_location_rows": 14161,
+      "run_rows": 14317,
+      "screen_pass_rows": 33470,
+      "scrimmage_rows": 33470,
+      "season": 2024,
+      "shotgun_rows": 33470,
+      "starting_hash_rows": 33470,
+      "trick_play_rows": 33470
+    },
+    "2025": {
+      "air_yards_rows": 17358,
+      "blitzers_rows": 32941,
+      "defense_box_rows": 32941,
+      "formation_rows": 32885,
+      "ftn_join_rows": 32941,
+      "ftn_no_huddle_rows": 32941,
+      "motion_rows": 32941,
+      "offense_backfield_rows": 32901,
+      "participation_join_rows": 32941,
+      "pass_location_rows": 17358,
+      "pass_rows": 18741,
+      "pass_rushers_rows": 32941,
+      "pbp_no_huddle_rows": 32941,
+      "pbp_rows": 46452,
+      "personnel_rows": 32941,
+      "play_action_rows": 32941,
+      "qb_location_rows": 32941,
+      "qb_sneak_rows": 32941,
+      "rpo_rows": 32941,
+      "run_gap_rows": 10298,
+      "run_location_rows": 14074,
+      "run_rows": 14200,
+      "screen_pass_rows": 32941,
+      "scrimmage_rows": 32941,
+      "season": 2025,
+      "shotgun_rows": 32941,
+      "starting_hash_rows": 32941,
+      "trick_play_rows": 32938
+    },
+    "2026": {
+      "air_yards_rows": 7970,
+      "blitzers_rows": 0,
+      "defense_box_rows": 0,
+      "formation_rows": 0,
+      "ftn_join_rows": 0,
+      "ftn_no_huddle_rows": 0,
+      "motion_rows": 0,
+      "offense_backfield_rows": 0,
+      "participation_join_rows": 0,
+      "pass_location_rows": 7970,
+      "pass_rows": 8576,
+      "pass_rushers_rows": 0,
+      "pbp_no_huddle_rows": 14910,
+      "pbp_rows": 21191,
+      "personnel_rows": 0,
+      "play_action_rows": 0,
+      "qb_location_rows": 0,
+      "qb_sneak_rows": 0,
+      "rpo_rows": 0,
+      "run_gap_rows": 4432,
+      "run_location_rows": 6285,
+      "run_rows": 6334,
+      "screen_pass_rows": 0,
+      "scrimmage_rows": 14910,
+      "season": 2026,
+      "shotgun_rows": 14910,
+      "starting_hash_rows": 0,
+      "trick_play_rows": 0
+    }
+  },
+  "hierarchical_signature_counts": {
+    "2022": {
+      "all_pbp_rows": {
+        "equality_claim": "same stored-field tuple only; not an exact play-design or concept match",
+        "pbp_rows": 47157,
+        "unique_tuples_including_unknowns": {
+          "action_descriptor": 11,
+          "broad_charting_tags": 11,
+          "combined_observed_tuple": 3200,
+          "event": 18,
+          "presentation": 678,
+          "team_observed_tuple": 12633
+        }
+      },
+      "run_pass_scrimmage": {
+        "equality_claim": "same stored-field tuple only; not an exact play-design or concept match",
+        "pbp_rows": 33770,
+        "unique_tuples_including_unknowns": {
+          "action_descriptor": 11,
+          "broad_charting_tags": 11,
+          "combined_observed_tuple": 2828,
+          "event": 6,
+          "presentation": 589,
+          "team_observed_tuple": 11218
+        }
+      }
+    },
+    "2023": {
+      "all_pbp_rows": {
+        "equality_claim": "same stored-field tuple only; not an exact play-design or concept match",
+        "pbp_rows": 47399,
+        "unique_tuples_including_unknowns": {
+          "action_descriptor": 12,
+          "broad_charting_tags": 12,
+          "combined_observed_tuple": 7140,
+          "event": 20,
+          "presentation": 2633,
+          "team_observed_tuple": 15825
+        }
+      },
+      "run_pass_scrimmage": {
+        "equality_claim": "same stored-field tuple only; not an exact play-design or concept match",
+        "pbp_rows": 33957,
+        "unique_tuples_including_unknowns": {
+          "action_descriptor": 12,
+          "broad_charting_tags": 11,
+          "combined_observed_tuple": 5185,
+          "event": 6,
+          "presentation": 1334,
+          "team_observed_tuple": 12893
+        }
+      }
+    },
+    "2024": {
+      "all_pbp_rows": {
+        "equality_claim": "same stored-field tuple only; not an exact play-design or concept match",
+        "pbp_rows": 47274,
+        "unique_tuples_including_unknowns": {
+          "action_descriptor": 11,
+          "broad_charting_tags": 10,
+          "combined_observed_tuple": 8033,
+          "event": 19,
+          "presentation": 2881,
+          "team_observed_tuple": 16076
+        }
+      },
+      "run_pass_scrimmage": {
+        "equality_claim": "same stored-field tuple only; not an exact play-design or concept match",
+        "pbp_rows": 33470,
+        "unique_tuples_including_unknowns": {
+          "action_descriptor": 11,
+          "broad_charting_tags": 9,
+          "combined_observed_tuple": 5943,
+          "event": 6,
+          "presentation": 1498,
+          "team_observed_tuple": 13019
+        }
+      }
+    },
+    "2025": {
+      "all_pbp_rows": {
+        "equality_claim": "same stored-field tuple only; not an exact play-design or concept match",
+        "pbp_rows": 46452,
+        "unique_tuples_including_unknowns": {
+          "action_descriptor": 13,
+          "broad_charting_tags": 13,
+          "combined_observed_tuple": 6996,
+          "event": 20,
+          "presentation": 2691,
+          "team_observed_tuple": 16100
+        }
+      },
+      "run_pass_scrimmage": {
+        "equality_claim": "same stored-field tuple only; not an exact play-design or concept match",
+        "pbp_rows": 32941,
+        "unique_tuples_including_unknowns": {
+          "action_descriptor": 13,
+          "broad_charting_tags": 12,
+          "combined_observed_tuple": 5035,
+          "event": 6,
+          "presentation": 1296,
+          "team_observed_tuple": 12979
+        }
+      }
+    },
+    "2026": {
+      "all_pbp_rows": {
+        "equality_claim": "same stored-field tuple only; not an exact play-design or concept match",
+        "pbp_rows": 21191,
+        "unique_tuples_including_unknowns": {
+          "action_descriptor": 11,
+          "broad_charting_tags": 1,
+          "combined_observed_tuple": 89,
+          "event": 18,
+          "presentation": 4,
+          "team_observed_tuple": 1594
+        }
+      },
+      "run_pass_scrimmage": {
+        "equality_claim": "same stored-field tuple only; not an exact play-design or concept match",
+        "pbp_rows": 14910,
+        "unique_tuples_including_unknowns": {
+          "action_descriptor": 11,
+          "broad_charting_tags": 1,
+          "combined_observed_tuple": 68,
+          "event": 6,
+          "presentation": 4,
+          "team_observed_tuple": 1238
+        }
+      }
+    }
+  },
+  "key_quality": {
+    "nfl_hist_ftn_charting": {
+      "2022": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 41643
+      },
+      "2023": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 48225
+      },
+      "2024": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 48031
+      },
+      "2025": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 47316
+      },
+      "2026": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 0
+      }
+    },
+    "nfl_hist_participation": {
+      "2022": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 50150
+      },
+      "2023": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 46168
+      },
+      "2024": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 45919
+      },
+      "2025": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 45184
+      },
+      "2026": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 0
+      }
+    },
+    "nfl_pbp": {
+      "2022": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 47157
+      },
+      "2023": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 47399
+      },
+      "2024": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 47274
+      },
+      "2025": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 46452
+      },
+      "2026": {
+        "duplicate_key_groups": 0,
+        "null_keys": 0,
+        "rows": 21191
+      }
+    }
+  },
+  "personnel_profile": {
+    "2022": {
+      "all_participation_rows": {
+        "distinct_nonnull_labels": 103,
+        "explicit_6_ol_label_rows": 1109,
+        "null_rows": 11922,
+        "rows": 50150,
+        "rows_with_k_ls_or_p_tokens": 44,
+        "rows_with_parsed_c_g_t_tokens": 0,
+        "rows_with_parsed_six_or_more_c_g_t": 0,
+        "top_raw_labels": [
+          {
+            "rows": 23439,
+            "value": "1 RB, 1 TE, 3 WR"
+          },
+          {
+            "rows": 6990,
+            "value": "1 RB, 2 TE, 2 WR"
+          },
+          {
+            "rows": 2944,
+            "value": "2 RB, 1 TE, 2 WR"
+          },
+          {
+            "rows": 1582,
+            "value": "1 RB, 3 TE, 1 WR"
+          },
+          {
+            "rows": 1191,
+            "value": "2 RB, 2 TE, 1 WR"
+          }
+        ]
+      },
+      "matched_pbp_run_pass_rows": {
+        "distinct_nonnull_labels": 89,
+        "explicit_6_ol_label_rows": 998,
+        "null_rows": 0,
+        "rows": 33770,
+        "rows_with_k_ls_or_p_tokens": 31,
+        "rows_with_parsed_c_g_t_tokens": 0,
+        "rows_with_parsed_six_or_more_c_g_t": 0,
+        "top_raw_labels": [
+          {
+            "rows": 20857,
+            "value": "1 RB, 1 TE, 3 WR"
+          },
+          {
+            "rows": 6279,
+            "value": "1 RB, 2 TE, 2 WR"
+          },
+          {
+            "rows": 2647,
+            "value": "2 RB, 1 TE, 2 WR"
+          },
+          {
+            "rows": 1295,
+            "value": "1 RB, 3 TE, 1 WR"
+          },
+          {
+            "rows": 868,
+            "value": "2 RB, 2 TE, 1 WR"
+          }
+        ]
+      },
+      "ol6_method": "raw '6 OL' token and/or sum of raw C/G/T count tokens; raw source string remains authoritative"
+    },
+    "2023": {
+      "all_participation_rows": {
+        "distinct_nonnull_labels": 1468,
+        "explicit_6_ol_label_rows": 0,
+        "null_rows": 0,
+        "rows": 46168,
+        "rows_with_k_ls_or_p_tokens": 4883,
+        "rows_with_parsed_c_g_t_tokens": 40884,
+        "rows_with_parsed_six_or_more_c_g_t": 2864,
+        "top_raw_labels": [
+          {
+            "rows": 16250,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 5071,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 2 TE, 2 WR"
+          },
+          {
+            "rows": 2694,
+            "value": "1 C, 1 G, 1 QB, 1 RB, 3 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 1846,
+            "value": "1 C, 3 G, 1 QB, 1 RB, 1 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 1225,
+            "value": "2 C, 1 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          }
+        ]
+      },
+      "matched_pbp_run_pass_rows": {
+        "distinct_nonnull_labels": 281,
+        "explicit_6_ol_label_rows": 0,
+        "null_rows": 0,
+        "rows": 33957,
+        "rows_with_k_ls_or_p_tokens": 28,
+        "rows_with_parsed_c_g_t_tokens": 33935,
+        "rows_with_parsed_six_or_more_c_g_t": 877,
+        "top_raw_labels": [
+          {
+            "rows": 14565,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 4536,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 2 TE, 2 WR"
+          },
+          {
+            "rows": 2341,
+            "value": "1 C, 1 G, 1 QB, 1 RB, 3 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 1620,
+            "value": "1 C, 3 G, 1 QB, 1 RB, 1 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 1025,
+            "value": "2 C, 1 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          }
+        ]
+      },
+      "ol6_method": "raw '6 OL' token and/or sum of raw C/G/T count tokens; raw source string remains authoritative"
+    },
+    "2024": {
+      "all_participation_rows": {
+        "distinct_nonnull_labels": 1458,
+        "explicit_6_ol_label_rows": 0,
+        "null_rows": 0,
+        "rows": 45919,
+        "rows_with_k_ls_or_p_tokens": 4778,
+        "rows_with_parsed_c_g_t_tokens": 40795,
+        "rows_with_parsed_six_or_more_c_g_t": 3384,
+        "top_raw_labels": [
+          {
+            "rows": 12749,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 4174,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 2 TE, 2 WR"
+          },
+          {
+            "rows": 2321,
+            "value": "1 C, 3 G, 1 QB, 1 RB, 1 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 2116,
+            "value": "1 C, 1 G, 1 QB, 1 RB, 3 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 1830,
+            "value": "3 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          }
+        ]
+      },
+      "matched_pbp_run_pass_rows": {
+        "distinct_nonnull_labels": 274,
+        "explicit_6_ol_label_rows": 0,
+        "null_rows": 0,
+        "rows": 33470,
+        "rows_with_k_ls_or_p_tokens": 23,
+        "rows_with_parsed_c_g_t_tokens": 33450,
+        "rows_with_parsed_six_or_more_c_g_t": 973,
+        "top_raw_labels": [
+          {
+            "rows": 11315,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 3818,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 2 TE, 2 WR"
+          },
+          {
+            "rows": 2036,
+            "value": "1 C, 3 G, 1 QB, 1 RB, 1 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 1759,
+            "value": "1 C, 1 G, 1 QB, 1 RB, 3 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 1678,
+            "value": "3 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          }
+        ]
+      },
+      "ol6_method": "raw '6 OL' token and/or sum of raw C/G/T count tokens; raw source string remains authoritative"
+    },
+    "2025": {
+      "all_participation_rows": {
+        "distinct_nonnull_labels": 1522,
+        "explicit_6_ol_label_rows": 0,
+        "null_rows": 0,
+        "rows": 45184,
+        "rows_with_k_ls_or_p_tokens": 4654,
+        "rows_with_parsed_c_g_t_tokens": 40158,
+        "rows_with_parsed_six_or_more_c_g_t": 4123,
+        "top_raw_labels": [
+          {
+            "rows": 15725,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 6230,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 2 TE, 2 WR"
+          },
+          {
+            "rows": 1918,
+            "value": "1 C, 1 G, 1 QB, 1 RB, 3 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 1597,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 3 TE, 1 WR"
+          },
+          {
+            "rows": 1360,
+            "value": "2 C, 1 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          }
+        ]
+      },
+      "matched_pbp_run_pass_rows": {
+        "distinct_nonnull_labels": 257,
+        "explicit_6_ol_label_rows": 0,
+        "null_rows": 0,
+        "rows": 32941,
+        "rows_with_k_ls_or_p_tokens": 15,
+        "rows_with_parsed_c_g_t_tokens": 32930,
+        "rows_with_parsed_six_or_more_c_g_t": 1786,
+        "top_raw_labels": [
+          {
+            "rows": 13836,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 5588,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 2 TE, 2 WR"
+          },
+          {
+            "rows": 1683,
+            "value": "1 C, 1 G, 1 QB, 1 RB, 3 T, 1 TE, 3 WR"
+          },
+          {
+            "rows": 1320,
+            "value": "1 C, 2 G, 1 QB, 1 RB, 2 T, 3 TE, 1 WR"
+          },
+          {
+            "rows": 1213,
+            "value": "2 C, 1 G, 1 QB, 1 RB, 2 T, 1 TE, 3 WR"
+          }
+        ]
+      },
+      "ol6_method": "raw '6 OL' token and/or sum of raw C/G/T count tokens; raw source string remains authoritative"
+    }
+  },
+  "play_type_rows_by_season": {
+    "2022": [
+      {
+        "rows": 1384,
+        "value": null
+      },
+      {
+        "rows": 1187,
+        "value": "extra_point"
+      },
+      {
+        "rows": 1062,
+        "value": "field_goal"
+      },
+      {
+        "rows": 2698,
+        "value": "kickoff"
+      },
+      {
+        "rows": 4372,
+        "value": "no_play"
+      },
+      {
+        "rows": 19393,
+        "value": "pass"
+      },
+      {
+        "rows": 2200,
+        "value": "punt"
+      },
+      {
+        "rows": 423,
+        "value": "qb_kneel"
+      },
+      {
+        "rows": 61,
+        "value": "qb_spike"
+      },
+      {
+        "rows": 14377,
+        "value": "run"
+      }
+    ],
+    "2023": [
+      {
+        "rows": 1386,
+        "value": null
+      },
+      {
+        "rows": 1169,
+        "value": "extra_point"
+      },
+      {
+        "rows": 1060,
+        "value": "field_goal"
+      },
+      {
+        "rows": 2698,
+        "value": "kickoff"
+      },
+      {
+        "rows": 4371,
+        "value": "no_play"
+      },
+      {
+        "rows": 19735,
+        "value": "pass"
+      },
+      {
+        "rows": 2263,
+        "value": "punt"
+      },
+      {
+        "rows": 428,
+        "value": "qb_kneel"
+      },
+      {
+        "rows": 67,
+        "value": "qb_spike"
+      },
+      {
+        "rows": 14222,
+        "value": "run"
+      }
+    ],
+    "2024": [
+      {
+        "rows": 1380,
+        "value": null
+      },
+      {
+        "rows": 1246,
+        "value": "extra_point"
+      },
+      {
+        "rows": 1115,
+        "value": "field_goal"
+      },
+      {
+        "rows": 2809,
+        "value": "kickoff"
+      },
+      {
+        "rows": 4732,
+        "value": "no_play"
+      },
+      {
+        "rows": 19153,
+        "value": "pass"
+      },
+      {
+        "rows": 2046,
+        "value": "punt"
+      },
+      {
+        "rows": 405,
+        "value": "qb_kneel"
+      },
+      {
+        "rows": 71,
+        "value": "qb_spike"
+      },
+      {
+        "rows": 14317,
+        "value": "run"
+      }
+    ],
+    "2025": [
+      {
+        "rows": 1378,
+        "value": null
+      },
+      {
+        "rows": 1268,
+        "value": "extra_point"
+      },
+      {
+        "rows": 1088,
+        "value": "field_goal"
+      },
+      {
+        "rows": 2794,
+        "value": "kickoff"
+      },
+      {
+        "rows": 4538,
+        "value": "no_play"
+      },
+      {
+        "rows": 18741,
+        "value": "pass"
+      },
+      {
+        "rows": 1933,
+        "value": "punt"
+      },
+      {
+        "rows": 433,
+        "value": "qb_kneel"
+      },
+      {
+        "rows": 79,
+        "value": "qb_spike"
+      },
+      {
+        "rows": 14200,
+        "value": "run"
+      }
+    ],
+    "2026": [
+      {
+        "rows": 619,
+        "value": null
+      },
+      {
+        "rows": 558,
+        "value": "extra_point"
+      },
+      {
+        "rows": 504,
+        "value": "field_goal"
+      },
+      {
+        "rows": 1248,
+        "value": "kickoff"
+      },
+      {
+        "rows": 2213,
+        "value": "no_play"
+      },
+      {
+        "rows": 8576,
+        "value": "pass"
+      },
+      {
+        "rows": 913,
+        "value": "punt"
+      },
+      {
+        "rows": 181,
+        "value": "qb_kneel"
+      },
+      {
+        "rows": 45,
+        "value": "qb_spike"
+      },
+      {
+        "rows": 6334,
+        "value": "run"
+      }
+    ]
+  },
+  "raw_categories": {
+    "offense_formation_2022_2025": {
+      "2022": [
+        {
+          "rows": 20438,
+          "value": "SHOTGUN"
+        },
+        {
+          "rows": 13358,
+          "value": null
+        },
+        {
+          "rows": 8919,
+          "value": "SINGLEBACK"
+        },
+        {
+          "rows": 3028,
+          "value": "EMPTY"
+        },
+        {
+          "rows": 2238,
+          "value": "I_FORM"
+        },
+        {
+          "rows": 1584,
+          "value": "PISTOL"
+        },
+        {
+          "rows": 317,
+          "value": "JUMBO"
+        },
+        {
+          "rows": 268,
+          "value": "WILDCAT"
+        }
+      ],
+      "2023": [
+        {
+          "rows": 25459,
+          "value": "SHOTGUN"
+        },
+        {
+          "rows": 10042,
+          "value": "UNDER CENTER"
+        },
+        {
+          "rows": 9209,
+          "value": null
+        },
+        {
+          "rows": 1458,
+          "value": "PISTOL"
+        }
+      ],
+      "2024": [
+        {
+          "rows": 22859,
+          "value": "SHOTGUN"
+        },
+        {
+          "rows": 10426,
+          "value": "UNDER CENTER"
+        },
+        {
+          "rows": 9237,
+          "value": null
+        },
+        {
+          "rows": 3397,
+          "value": "PISTOL"
+        }
+      ],
+      "2025": [
+        {
+          "rows": 22227,
+          "value": "SHOTGUN"
+        },
+        {
+          "rows": 12145,
+          "value": "UNDER CENTER"
+        },
+        {
+          "rows": 9108,
+          "value": null
+        },
+        {
+          "rows": 1704,
+          "value": "PISTOL"
+        }
+      ]
+    },
+    "pass_location_2022_2026": {
+      "2022": [
+        {
+          "rows": 29151,
+          "value": null
+        },
+        {
+          "rows": 7361,
+          "value": "right"
+        },
+        {
+          "rows": 6722,
+          "value": "left"
+        },
+        {
+          "rows": 3923,
+          "value": "middle"
+        }
+      ],
+      "2023": [
+        {
+          "rows": 29152,
+          "value": null
+        },
+        {
+          "rows": 7630,
+          "value": "right"
+        },
+        {
+          "rows": 7049,
+          "value": "left"
+        },
+        {
+          "rows": 3568,
+          "value": "middle"
+        }
+      ],
+      "2024": [
+        {
+          "rows": 29534,
+          "value": null
+        },
+        {
+          "rows": 7260,
+          "value": "right"
+        },
+        {
+          "rows": 6584,
+          "value": "left"
+        },
+        {
+          "rows": 3896,
+          "value": "middle"
+        }
+      ],
+      "2025": [
+        {
+          "rows": 29093,
+          "value": null
+        },
+        {
+          "rows": 7096,
+          "value": "right"
+        },
+        {
+          "rows": 6653,
+          "value": "left"
+        },
+        {
+          "rows": 3610,
+          "value": "middle"
+        }
+      ],
+      "2026": [
+        {
+          "rows": 13221,
+          "value": null
+        },
+        {
+          "rows": 3319,
+          "value": "right"
+        },
+        {
+          "rows": 2965,
+          "value": "left"
+        },
+        {
+          "rows": 1686,
+          "value": "middle"
+        }
+      ]
+    },
+    "run_gap_2022_2026": {
+      "2022": [
+        {
+          "rows": 36461,
+          "value": null
+        },
+        {
+          "rows": 3755,
+          "value": "end"
+        },
+        {
+          "rows": 3518,
+          "value": "guard"
+        },
+        {
+          "rows": 3423,
+          "value": "tackle"
+        }
+      ],
+      "2023": [
+        {
+          "rows": 37047,
+          "value": null
+        },
+        {
+          "rows": 3810,
+          "value": "end"
+        },
+        {
+          "rows": 3473,
+          "value": "guard"
+        },
+        {
+          "rows": 3069,
+          "value": "tackle"
+        }
+      ],
+      "2024": [
+        {
+          "rows": 36677,
+          "value": null
+        },
+        {
+          "rows": 3763,
+          "value": "end"
+        },
+        {
+          "rows": 3561,
+          "value": "guard"
+        },
+        {
+          "rows": 3273,
+          "value": "tackle"
+        }
+      ],
+      "2025": [
+        {
+          "rows": 36154,
+          "value": null
+        },
+        {
+          "rows": 3542,
+          "value": "guard"
+        },
+        {
+          "rows": 3386,
+          "value": "tackle"
+        },
+        {
+          "rows": 3370,
+          "value": "end"
+        }
+      ],
+      "2026": [
+        {
+          "rows": 16759,
+          "value": null
+        },
+        {
+          "rows": 1539,
+          "value": "guard"
+        },
+        {
+          "rows": 1461,
+          "value": "end"
+        },
+        {
+          "rows": 1432,
+          "value": "tackle"
+        }
+      ]
+    },
+    "run_location_2022_2026": {
+      "2022": [
+        {
+          "rows": 32931,
+          "value": null
+        },
+        {
+          "rows": 5470,
+          "value": "left"
+        },
+        {
+          "rows": 5226,
+          "value": "right"
+        },
+        {
+          "rows": 3530,
+          "value": "middle"
+        }
+      ],
+      "2023": [
+        {
+          "rows": 33326,
+          "value": null
+        },
+        {
+          "rows": 5272,
+          "value": "left"
+        },
+        {
+          "rows": 5081,
+          "value": "right"
+        },
+        {
+          "rows": 3720,
+          "value": "middle"
+        }
+      ],
+      "2024": [
+        {
+          "rows": 33112,
+          "value": null
+        },
+        {
+          "rows": 5425,
+          "value": "left"
+        },
+        {
+          "rows": 5172,
+          "value": "right"
+        },
+        {
+          "rows": 3565,
+          "value": "middle"
+        }
+      ],
+      "2025": [
+        {
+          "rows": 32378,
+          "value": null
+        },
+        {
+          "rows": 5197,
+          "value": "right"
+        },
+        {
+          "rows": 5103,
+          "value": "left"
+        },
+        {
+          "rows": 3774,
+          "value": "middle"
+        }
+      ],
+      "2026": [
+        {
+          "rows": 14906,
+          "value": null
+        },
+        {
+          "rows": 2275,
+          "value": "left"
+        },
+        {
+          "rows": 2157,
+          "value": "right"
+        },
+        {
+          "rows": 1853,
+          "value": "middle"
+        }
+      ]
+    }
+  },
+  "run_at_utc": "2026-11-03T17:34:25.986163+00:00",
+  "schema": {
+    "columns": {
+      "nfl_hist_ftn_charting": [
+        "nflverse_game_id",
+        "nflverse_play_id",
+        "season",
+        "week",
+        "starting_hash",
+        "qb_location",
+        "n_offense_backfield",
+        "n_defense_box",
+        "is_no_huddle",
+        "is_motion",
+        "is_play_action",
+        "is_screen_pass",
+        "is_rpo",
+        "is_trick_play",
+        "is_qb_out_of_pocket",
+        "is_interception_worthy",
+        "is_throw_away",
+        "read_thrown",
+        "is_catchable_ball",
+        "is_contested_ball",
+        "is_created_reception",
+        "is_drop",
+        "is_qb_sneak",
+        "n_blitzers",
+        "n_pass_rushers",
+        "is_qb_fault_sack",
+        "date_pulled"
+      ],
+      "nfl_hist_participation": [
+        "nflverse_game_id",
+        "play_id",
+        "season",
+        "possession_team",
+        "offense_formation",
+        "offense_personnel",
+        "defenders_in_box",
+        "defense_personnel",
+        "number_of_pass_rushers",
+        "was_pressure",
+        "defense_man_zone_type",
+        "defense_coverage_type",
+        "time_to_throw",
+        "n_offense",
+        "n_defense"
+      ],
+      "nfl_pbp": [
+        "game_id",
+        "play_id",
+        "season",
+        "week",
+        "posteam",
+        "defteam",
+        "home_team",
+        "away_team",
+        "game_date",
+        "qtr",
+        "down",
+        "ydstogo",
+        "yardline_100",
+        "game_seconds_remaining",
+        "play_type",
+        "epa",
+        "wpa",
+        "qb_epa",
+        "air_yards",
+        "yards_gained",
+        "cpoe",
+        "passer_player_id",
+        "rusher_player_id",
+        "receiver_player_id",
+        "pass_location",
+        "run_location",
+        "run_gap",
+        "complete_pass",
+        "touchdown",
+        "series",
+        "series_result",
+        "drive",
+        "success",
+        "shotgun",
+        "sack",
+        "two_point_attempt",
+        "pass_attempt",
+        "rush_attempt",
+        "passing_yards",
+        "rushing_yards",
+        "receiving_yards",
+        "pass_touchdown",
+        "rush_touchdown",
+        "interception",
+        "lateral_receiver_player_id",
+        "lateral_receiver_player_name",
+        "lateral_receiving_yards",
+        "lateral_rusher_player_id",
+        "lateral_rusher_player_name",
+        "lateral_rushing_yards",
+        "qb_hit",
+        "qb_scramble",
+        "qb_dropback",
+        "no_huddle",
+        "penalty",
+        "penalty_team",
+        "fumble_lost",
+        "fumble",
+        "xpass",
+        "pass_oe"
+      ]
+    },
+    "field_interpretation_notes": {
+      "air_yards": "Numeric pass outcome/trajectory field; not a route tree or named concept.",
+      "nfl_hist_depth_charts.formation": "Roster/depth-chart field, not per-play offensive formation.",
+      "nulls": "Keep null values distinct from rows with no matched source record.",
+      "offense_personnel": "Preserve exact raw strings; observed value encoding differs by season."
+    },
+    "relevant_fields_by_family": {
+      "concept_or_play_name": [],
+      "formation": [
+        {
+          "column": "formation",
+          "table": "nfl_hist_depth_charts"
+        },
+        {
+          "column": "offense_formation",
+          "table": "nfl_hist_participation"
+        }
+      ],
+      "motion": [
+        {
+          "column": "is_motion",
+          "table": "nfl_hist_ftn_charting"
+        }
+      ],
+      "pass_depth": [
+        {
+          "column": "air_yards",
+          "table": "nfl_pbp"
+        },
+        {
+          "column": "air_yards",
+          "table": "nfl_team_game_totals"
+        },
+        {
+          "column": "air_yards_unassigned",
+          "table": "nfl_team_game_totals"
+        }
+      ],
+      "pass_location": [
+        {
+          "column": "pass_location",
+          "table": "nfl_pbp"
+        }
+      ],
+      "personnel": [
+        {
+          "column": "offense_personnel",
+          "table": "nfl_hist_participation"
+        },
+        {
+          "column": "defense_personnel",
+          "table": "nfl_hist_participation"
+        }
+      ],
+      "route": [],
+      "run_gap": [
+        {
+          "column": "run_gap",
+          "table": "nfl_pbp"
+        }
+      ]
+    }
+  },
+  "scope": {
+    "current_observation_season": 2026,
+    "historical_seasons": [
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "join_key_rule": "Exact source key join on game ID and native play ID; no fuzzy match.",
+    "play_signature_warning": "A repeated observed-field signature is not evidence of an identical play design or concept."
+  },
+  "signature_schema": {
+    "action_descriptor": {
+      "confidence": "high for recorded values; coarse execution descriptors, not an exact design",
+      "fields": [
+        "run_gap",
+        "run_location",
+        "pass_location"
+      ],
+      "provenance": "nfl_pbp"
+    },
+    "broad_charting_tags": {
+      "confidence": "high for present literal tags; broad charting categories, not exact play designs",
+      "fields": [
+        "is_screen_pass",
+        "is_rpo",
+        "is_trick_play",
+        "is_qb_sneak"
+      ],
+      "provenance": "nfl_hist_ftn_charting"
+    },
+    "concept": {
+      "confidence": "none",
+      "status": "unresolved_without_route_or_design_annotation",
+      "value": null
+    },
+    "context_excluded_from_signature_equality": {
+      "confidence": "recorded context/outcome fields; retained as attributes, not stable design identity",
+      "fields": [
+        "starting_hash",
+        "qb_location",
+        "n_offense_backfield",
+        "n_defense_box",
+        "n_blitzers",
+        "n_pass_rushers",
+        "air_yards"
+      ],
+      "provenance": "nfl_hist_ftn_charting and nfl_pbp"
+    },
+    "event": {
+      "confidence": "high for recorded event label; not design identity",
+      "fields": [
+        "play_type",
+        "pass_attempt",
+        "rush_attempt",
+        "qb_dropback",
+        "qb_scramble",
+        "sack",
+        "two_point_attempt"
+      ],
+      "provenance": "nfl_pbp"
+    },
+    "presentation": {
+      "confidence": "high for present literal labels; joined coverage is source- and season-specific",
+      "fields": [
+        "participation_joined",
+        "offense_formation",
+        "offense_personnel",
+        "shotgun",
+        "no_huddle",
+        "ftn_joined",
+        "is_motion",
+        "is_play_action",
+        "is_no_huddle"
+      ],
+      "provenance": "nfl_hist_participation, nfl_pbp, nfl_hist_ftn_charting"
+    },
+    "record_identity": {
+      "confidence": "high for a unique source execution record",
+      "fields": [
+        "game_id",
+        "play_id"
+      ]
+    },
+    "same_tuple_interpretation": "Same tuple means same observed values and source-join state only."
+  },
+  "source_provenance": {
+    "load_manifest": [
+      {
+        "attribution": "FTN Data via nflverse, CC BY-SA 4.0",
+        "file": "ftn_charting_2022.parquet",
+        "file_rows": 41643,
+        "loaded_at": "2026-10-11T22:08:37.713903+00:00",
+        "season": 2022,
+        "sha256": "2846ef9bcc5f7298a5c783fb9a5edc85b3820c0b4943bf60a1217398e412985b",
+        "source": "ftn_charting",
+        "stored_rows": 41643
+      },
+      {
+        "attribution": "FTN Data via nflverse, CC BY-SA 4.0",
+        "file": "ftn_charting_2023.parquet",
+        "file_rows": 48225,
+        "loaded_at": "2026-10-11T22:08:40.243220+00:00",
+        "season": 2023,
+        "sha256": "162f0f48a8fca23f86a334c78e27f8daa7443e6b383beada0416b65c593b2c0e",
+        "source": "ftn_charting",
+        "stored_rows": 48225
+      },
+      {
+        "attribution": "FTN Data via nflverse, CC BY-SA 4.0",
+        "file": "ftn_charting_2024.parquet",
+        "file_rows": 48031,
+        "loaded_at": "2026-10-11T22:08:42.982820+00:00",
+        "season": 2024,
+        "sha256": "9396c95effac1a81cc30efcf9c4c87ab89855548ae605404318ae949d4356119",
+        "source": "ftn_charting",
+        "stored_rows": 48031
+      },
+      {
+        "attribution": "FTN Data via nflverse, CC BY-SA 4.0",
+        "file": "ftn_charting_2025.parquet",
+        "file_rows": 47316,
+        "loaded_at": "2026-10-11T22:08:45.551535+00:00",
+        "season": 2025,
+        "sha256": "2ee4b11962f4c91d426e0edeca5bbded078616ce0efab0710aa2b40b4cfad898",
+        "source": "ftn_charting",
+        "stored_rows": 47316
+      },
+      {
+        "attribution": "nflverse",
+        "file": "p2022.parquet",
+        "file_rows": 50150,
+        "loaded_at": "2026-10-12T16:51:01.090044+00:00",
+        "season": 2022,
+        "sha256": "5f8d349316bf68de487ee0eb926706e65f5a8e37078c1faa37cb07cda2bf9e5e",
+        "source": "participation",
+        "stored_rows": 50150
+      },
+      {
+        "attribution": "nflverse",
+        "file": "p2023.parquet",
+        "file_rows": 46168,
+        "loaded_at": "2026-10-12T16:51:04.780149+00:00",
+        "season": 2023,
+        "sha256": "b157736972248e6f71e0c5ad6c1010b71375a500a63944dc4956c65de263e5a6",
+        "source": "participation",
+        "stored_rows": 46168
+      },
+      {
+        "attribution": "nflverse",
+        "file": "p2024.parquet",
+        "file_rows": 45919,
+        "loaded_at": "2026-10-12T16:51:08.400129+00:00",
+        "season": 2024,
+        "sha256": "5e8cf1f6a11bb2be573c3db1533c28a5658907302d1ad45ca769a4ca35890d7c",
+        "source": "participation",
+        "stored_rows": 45919
+      },
+      {
+        "attribution": "nflverse",
+        "file": "p2025.parquet",
+        "file_rows": 45184,
+        "loaded_at": "2026-10-12T16:51:11.979175+00:00",
+        "season": 2025,
+        "sha256": "3b26b9487267f011fdbafbce133800ce964c963fdb8b27725abf65663cc46e0f",
+        "source": "participation",
+        "stored_rows": 45184
+      },
+      {
+        "attribution": "nflverse",
+        "file": "snap_counts_2022.parquet",
+        "file_rows": 26381,
+        "loaded_at": "2026-10-11T22:07:47.804557+00:00",
+        "season": 2022,
+        "sha256": "3cfde83eb6d859e3477aba4238fa2fb8e0592a5fc5ab8b26128fce085d4b7fea",
+        "source": "snap_counts",
+        "stored_rows": 26381
+      },
+      {
+        "attribution": "nflverse",
+        "file": "snap_counts_2023.parquet",
+        "file_rows": 26540,
+        "loaded_at": "2026-10-11T22:07:49.814574+00:00",
+        "season": 2023,
+        "sha256": "97873cab365dfb39286bc1de3ac772fa4b51f09cce52ae5f8317e006cc007f62",
+        "source": "snap_counts",
+        "stored_rows": 26540
+      },
+      {
+        "attribution": "nflverse",
+        "file": "snap_counts_2024.parquet",
+        "file_rows": 26615,
+        "loaded_at": "2026-10-11T22:07:51.759045+00:00",
+        "season": 2024,
+        "sha256": "9ec66a0c755939b329d4eba3f90e716bb874b5a6544f325ba220f003991ff99f",
+        "source": "snap_counts",
+        "stored_rows": 26615
+      },
+      {
+        "attribution": "nflverse",
+        "file": "snap_counts_2025.parquet",
+        "file_rows": 26613,
+        "loaded_at": "2026-10-11T22:07:53.759587+00:00",
+        "season": 2025,
+        "sha256": "47220218fecda7af7ee5b0272a8ecce7c1bfb1f4e1f0a2c8c90047571728ce20",
+        "source": "snap_counts",
+        "stored_rows": 26613
+      }
+    ],
+    "nfl_pbp_load_manifest_rows": 0,
+    "nfl_pbp_provenance_note": "The table has no matching per-season entry in nfl_hist_loads; its in-repo producer is backend/ingest_nfl_pbp_logs.py."
+  }
+}
