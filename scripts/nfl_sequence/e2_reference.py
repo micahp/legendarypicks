@@ -610,6 +610,13 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             contextual_sampler.formation_priors = fl.priors(db, int(eligible_before[0]))
             contextual_sampler.formation_outcomes = True
         contextual_sampler.exact_yardline = bool(playcall_exact_yardline)
+        frames_by_cutoff = {}  # the point, streak and league-streak priors read the same frame for a cutoff: build it once
+
+        def shared_play_call_frame(pm, cutoff):
+            if cutoff not in frames_by_cutoff:
+                frames_by_cutoff[cutoff] = pm.load_frame(range(2010, cutoff), db=db)
+            return frames_by_cutoff[cutoff]
+
         if playcall_point_splits:  # team score-state shifts of the dropback rate, from the seasons before the cutoff only
             if eligible_before is None:
                 raise ValueError('point splits need an eligible-before cutoff')
@@ -619,7 +626,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             if isinstance(playcall_point_splits, str):  # a frame cache whose fingerprint matches the same seasons
                 frame = pm2.load_frame_cached(Path(playcall_point_splits), seasons, db=db)
             else:
-                frame = pm2.load_frame(seasons, db=db)
+                frame = shared_play_call_frame(pm2, int(eligible_before[0]))
             contextual_sampler.point_shifts = sp.priors(frame, int(eligible_before[0]))
         if playcall_target_roles:  # decision model category A: team target-role priors by situation, prior seasons only
             if eligible_before is None:
@@ -634,7 +641,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             cutoff = int(eligible_before[0])
             seasons = range(2010, cutoff)
             frame = pm3.load_frame_cached(Path(playcall_streak), seasons, db=db) if isinstance(playcall_streak, str) \
-                else pm3.load_frame(seasons, db=db)
+                else shared_play_call_frame(pm3, cutoff)
             con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
             try:
                 schedule_rows = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
@@ -656,7 +663,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             cutoff = int(eligible_before[0])
             seasons = range(2010, cutoff)
             frame = pm4.load_frame_cached(Path(playcall_streak_league), seasons, db=db) if isinstance(playcall_streak_league, str) \
-                else pm4.load_frame(seasons, db=db)
+                else shared_play_call_frame(pm4, cutoff)
             con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
             try:
                 rows_s = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
