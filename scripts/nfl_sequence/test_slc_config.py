@@ -9,6 +9,13 @@ import slc_config as config  # noqa: E402
 import pre_event  # noqa: E402
 
 
+def loaded_layers(resolved):
+    """The layers an engine loads for a resolved profile: Dirichlet shares load the fixed share adapter."""
+    layers = dict(resolved['enabled_layers'])
+    layers['fixed_player_target_carry_shares'] = bool(layers['dirichlet_player_target_carry_shares'])
+    return layers
+
+
 class FullStackProfile(unittest.TestCase):
     def setUp(self):
         self.resolved = config.resolve_profile('v1_full_stack', artifact_path='artifact.json',
@@ -98,6 +105,19 @@ class FullStackProfile(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'qb_decisions'):
             config.validate_engine_layers(self.resolved, description)
 
+    def test_dirichlet_shares_expect_the_fixed_share_adapter_to_load(self):
+        self.assertTrue(self.resolved['enabled_layers']['dirichlet_player_target_carry_shares'])
+        self.assertFalse(self.resolved['enabled_layers']['fixed_player_target_carry_shares'])
+        description = {'enabled_layers': dict(self.resolved['enabled_layers'])}
+        description['enabled_layers']['fixed_player_target_carry_shares'] = True
+        self.assertTrue(config.validate_engine_layers(self.resolved, description))
+
+    def test_dirichlet_shares_without_the_share_adapter_still_fail(self):
+        description = {'enabled_layers': dict(self.resolved['enabled_layers'])}
+        description['enabled_layers']['fixed_player_target_carry_shares'] = False
+        with self.assertRaisesRegex(RuntimeError, 'fixed_player_target_carry_shares'):
+            config.validate_engine_layers(self.resolved, description)
+
     def test_batch_namespace_receives_the_complete_profile_without_manual_flag_omissions(self):
         values = {
             'slc_profile': 'v1_full_stack', 'slc_disable_layer': [], 'playcall_artifact': 'artifact.json',
@@ -117,7 +137,7 @@ class FullStackProfile(unittest.TestCase):
 
     def test_manifest_hashes_every_enabled_layer_and_pins_input_provenance(self):
         description = {
-            'enabled_layers': dict(self.resolved['enabled_layers']),
+            'enabled_layers': loaded_layers(self.resolved),
             'artifact_sha256': 'a' * 64,
             'reference_sha256': 'b' * 64,
             'layer_artifact_sha256': {key: 'c' * 64 for key, enabled in self.resolved['enabled_layers'].items()
@@ -148,7 +168,7 @@ class FullStackProfile(unittest.TestCase):
         resolved = config.resolve_profile('v1_full_stack', artifact_path='a', streak_file='s',
                                           disable_layers=('score_clock_playcalling',))
         description = {
-            'enabled_layers': dict(resolved['enabled_layers']),
+            'enabled_layers': loaded_layers(resolved),
             'artifact_sha256': 'a' * 64,
             'reference_sha256': 'b' * 64,
             'layer_artifact_sha256': {
@@ -185,7 +205,7 @@ class FullStackProfile(unittest.TestCase):
         self.assertAlmostEqual(combined['RB'], (.7 * .1) ** .5 / ((.7 * .1) ** .5 + (.2 * .8) ** .5))
 
     def test_missing_hash_for_an_enabled_layer_fails_manifest_creation(self):
-        description = {'enabled_layers': dict(self.resolved['enabled_layers']),
+        description = {'enabled_layers': loaded_layers(self.resolved),
                        'layer_artifact_sha256': {}}
         with self.assertRaisesRegex(RuntimeError, 'no 64-character model hash'):
             config.build_manifest(self.resolved, description, {'snapshot_sha256': 'x'}, {})
