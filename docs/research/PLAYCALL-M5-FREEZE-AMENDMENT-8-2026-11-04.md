@@ -74,4 +74,17 @@ the table as the file spells it, and lookups use the `TeamKeyed` view, so draws 
 
 ## Verification
 
-To be filled from the runs below, measured, not expected.
+Measured 2026-11-04 on the fast host, code `5edb8b49`.
+
+- Tests against clean `c417da22`: scripts suite, the same 5 failures as clean head (none new); backend suite, the same
+  failures as clean head plus 2 `test_sports_predict_api` tests that also fail on clean head when run today (they
+  depend on the date). `test_team_code_interface` reports 0 alias tables and 0 lines with two spellings.
+- Rerun: all 15 Rams and Washington games of 2026 weeks 1 to 8 for V1, V1.5 and v2, 45 batches, all exit 0, box
+  scores written. v2 now loads these games (the kicker lookup raised before).
+- v2 controls (`2026_01_ARI_LAC`, `2026_08_KC_DEN`): identical to the earlier v2 run in every seed record and box-score
+  line except `configuration_hash`. The random streams did not move.
+- V1 and V1.5 controls: their streams are keyed on a fingerprint that includes source-file hashes and the git commit,
+  so a new commit reshuffles every game. Run on `5edb8b49` with the fingerprint given the old file bytes and commit
+  (`ffea8f0e`, and separately `ffe7e0ef`), all 8 batches match the earlier batches except `configuration_hash`. The
+  interface changes nothing in these games but the draws.
+- Results: `SLC-V2-VS-V15-RESULTS-2026-11-04.md`.
