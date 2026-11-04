@@ -18,6 +18,7 @@ import random
 import sqlite3
 from collections import defaultdict
 
+import fit_cache
 import player_shares as ps
 
 FLOOR = ps.FLOOR
@@ -144,7 +145,17 @@ def filter_position_group(games, positions, allowed_positions):
 
 
 def fit_from_counts(games, season_counts, season):
-    """The fit on counts already gathered: games is {team: {game: {player: count}}}, season_counts is {team: {player: count}}."""
+    """The fit on counts already gathered: games is {team: {game: {player: count}}}, season_counts is {team: {player: count}}.
+
+    The 401-point grid is the slow part of loading a share table, so the result is memoised on these exact counts, in their
+    order, when SLC_FIT_CACHE_DIR is set (fit_cache.py)."""
+    plain = ({team: {game: dict(counts) for game, counts in by_game.items()} for team, by_game in games.items()},
+             {team: dict(players) for team, players in season_counts.items()}, int(season))
+    return fit_cache.memo('share_distributions.fit_from_counts', plain,
+                          lambda: _fit_from_counts(games, season_counts, season), code_files=(__file__,))
+
+
+def _fit_from_counts(games, season_counts, season):
     base = base_shares(season_counts)
     team_list = []  # (team, game, total, counts, roster-with-base) for every team-game with a sample
     for team, by_game in games.items():
