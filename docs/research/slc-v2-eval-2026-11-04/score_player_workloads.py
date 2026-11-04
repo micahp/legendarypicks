@@ -144,10 +144,13 @@ def main():
         coverage['published_not_on_simulated_roster'] += len(not_projected)
         coverage['published_not_on_simulated_roster_with_offense'] += sum(
             1 for pid in not_projected if any(getattr(obs[(game, pid)], STATS[s][2]) or 0 for s in STATS))
+        coverage['published_without_player_id'] += sum(1 for pid in not_projected if pid is None)
         coverage['games'] += 1
         coverage['seeds_' + '_'.join(f'{n}{len(v[0])}' for n, v in sorted(loaded.items()))] += 1
         for stat, (group, key, column) in STATS.items():
-            for pid in sorted(roster):
+            # A player who recorded the stat but is on no arm's simulated roster is scored too: every arm projected 0 for
+            # him (box[s] has no row, so each draw is 0). Leaving him out understated every arm's error.
+            for pid in sorted(set(roster) | {p for p in not_projected if p is not None}):
                 y = float(getattr(obs[(game, pid)], column) or 0) if (game, pid) in obs else 0.0
                 per_arm = {}
                 for name, (keep, box, _l, _r) in loaded.items():
