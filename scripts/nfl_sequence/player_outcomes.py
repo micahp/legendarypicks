@@ -13,6 +13,8 @@ import sqlite3
 from collections import Counter, defaultdict
 from pathlib import Path
 
+import fit_cache
+
 MODEL_VERSION = 'slc-player-outcomes-v1'
 FIRST_SEASON = 2022
 PRIOR_STRENGTH = 40.0
@@ -218,7 +220,9 @@ def load(db, cutoff_season):
                     f"ORDER BY p.game_id,p.play_id", seasons)]
     finally:
         con.close()
-    return _fit_rows(rows, cutoff, seasons)
+    # The fit is memoised on these exact rows, in order, when SLC_FIT_CACHE_DIR is set (fit_cache.py).
+    return fit_cache.memo('player_outcomes.fit_rows', (rows, cutoff, seasons), lambda: _fit_rows(rows, cutoff, seasons),
+                          code_files=(__file__,))
 
 
 def _base_distribution(counts, categories=None):
