@@ -254,7 +254,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             return halt(sampling_guard.unavailable_reason())
         if len(cell) < MIN_POOL and not getattr(sampling_policy, 'allow_sparse_cells', False):
             return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
-        field_goal_distance = fg_feasibility.evaluate(st['yl'])
+        field_goal_distance = fg_feasibility.evaluate(  # research flag kicker_field_goals: the record rule
+            st['yl'], rule=fg_feasibility.RECORD_RULE if getattr(sampling_policy, 'fg_kicker', None) is not None else None)
         shares = Counter(ev for ev, _, _, _ in cell
                          if ev != 'field_goal_attempt' or field_goal_distance['eligible'])
         if not shares:

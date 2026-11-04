@@ -96,7 +96,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
                    player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
-                   qb_run_role_style=None, score_clock_playcalling=True, pbv1_table=None, participation_field=None):
+                   qb_run_role_style=None, score_clock_playcalling=True, pbv1_table=None, participation_field=None,
+                   fg_kicker=None):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -189,6 +190,17 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         if not field.seasons or max(field.seasons) >= season:
             raise ValueError(f'participation field is fitted on {field.seasons}; a {season} game needs earlier seasons only')
         ref.contextual_sampler.participation_field = field
+    if fg_kicker:  # research flag: field goals by the team's kicker, (path, expected sha256); kicker_field_goals
+        if 'long_field_goal_feasibility' not in fixes:
+            raise ValueError('the kicker field-goal flag needs the long_field_goal_feasibility blocker fix')
+        import kicker_field_goals
+        table = kicker_field_goals.KickerTable.load(*fg_kicker)
+        if max(table.fit_seasons) >= season:
+            raise ValueError(f'kicker table is fitted through {max(table.fit_seasons)}; a {season} game needs earlier seasons')
+        teams = side_teams(snapshot)
+        ref.contextual_sampler.fg_kicker = {
+            'table': table,
+            'kickers': {label: table.kicker(season, int(schedule['week']), team) for label, team in teams.items()}}
     if playbook:  # the playbook files as the prior for pass depth, pass location and run gap; needs the decision labels on
         if not decision:
             raise ValueError('the playbook input replaces decision labels, so it needs decision=True')
