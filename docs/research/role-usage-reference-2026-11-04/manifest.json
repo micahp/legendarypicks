@@ -1,0 +1,179 @@
+{
+ "coverage": {
+  "2016": {
+   "snap_unmatched_skill_snaps": 76.0,
+   "team_weeks": 534,
+   "team_weeks_without_stats": 0
+  },
+  "2017": {
+   "snap_unmatched_skill_snaps": 0.0,
+   "team_weeks": 534,
+   "team_weeks_without_stats": 0
+  },
+  "2018": {
+   "snap_unmatched_skill_snaps": 0.0,
+   "team_weeks": 534,
+   "team_weeks_without_stats": 0
+  },
+  "2019": {
+   "snap_unmatched_skill_snaps": 100.0,
+   "team_weeks": 534,
+   "team_weeks_without_stats": 0
+  },
+  "2020": {
+   "snap_unmatched_skill_snaps": 50.0,
+   "team_weeks": 538,
+   "team_weeks_without_stats": 0
+  },
+  "2021": {
+   "snap_unmatched_skill_snaps": 77.0,
+   "team_weeks": 570,
+   "team_weeks_without_stats": 0
+  },
+  "2022": {
+   "snap_unmatched_skill_snaps": 10.0,
+   "team_weeks": 568,
+   "team_weeks_without_stats": 0
+  },
+  "2023": {
+   "snap_unmatched_skill_snaps": 57.0,
+   "team_weeks": 570,
+   "team_weeks_without_stats": 0
+  },
+  "2024": {
+   "snap_unmatched_skill_snaps": 132.0,
+   "team_weeks": 570,
+   "team_weeks_without_stats": 0
+  },
+  "2025": {
+   "snap_unmatched_skill_snaps": 177.0,
+   "team_weeks": 570,
+   "team_weeks_without_stats": 0
+  },
+  "2026": {
+   "snap_unmatched_skill_snaps": 153.0,
+   "team_weeks": 214,
+   "team_weeks_without_stats": 0
+  }
+ },
+ "outputs": {
+  "role_usage_league.csv": "5b89c78f0daf5c4e9c0a0ba822a4602fdc396386f67994d3a5abff966c3d0490",
+  "role_usage_team_season.csv": "6cee5a53d459e706cd4b4b4bc09c68a46e3d8354d8a89eaea947001a25615dea",
+  "role_usage_team_week.csv.gz": "e7028d48ea3a49b29c021f7983c5f5946dd55528ec2e24e6dec40c82f8188256",
+  "snap_trajectory_players.csv": "ed2d4c1ed011a08ec9d0bf53f4431624a01ff395d30a2298452a1f9be5e1e7a9",
+  "snap_trajectory_team.csv": "d7e79e38593f0e30050cc00b08fd7c8265063928047ce2e5caaa4e5e4a89cd3f"
+ },
+ "sources": {
+  "2016": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2016.parquet",
+    "02fbeb10dd1369d858ac460ef67b0a2e9a4da689e24149d81dec57863f975198"
+   ],
+   "stats_player_week": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/stats_player/stats_player_week_2016.parquet",
+    "f9d648fdf1f26d60ac0ac0e02c672840b604c6b8372cbb8a8bf847fdbc047acf"
+   ]
+  },
+  "2017": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2017.parquet",
+    "46805183af6d987bac7292a84d787343bd10d5323fba96e9ce624cfe9c085dc5"
+   ],
+   "stats_player_week": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/stats_player/stats_player_week_2017.parquet",
+    "23398fa5ff45dbf8aeb0986be87eed28dd92213d8f862912f95d522963e0ce8e"
+   ]
+  },
+  "2018": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2018.parquet",
+    "db5ab19bb95e290ce38cd73c40795b15ecf9b01cbc90b6f339f8010c51c1d506"
+   ],
+   "stats_player_week": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/stats_player/stats_player_week_2018.parquet",
+    "d40914a95fdb97245567d8d816e474547b0d28d5152259813ba1542f13a8f0f4"
+   ]
+  },
+  "2019": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2019.parquet",
+    "ef9068cc9eebaf01fa78c783a29cc1658a32b35fd7226e98146aa178e13aedc2"
+   ],
+   "stats_player_week": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/stats_player/stats_player_week_2019.parquet",
+    "1a80298e2aca5a830e0dcfeb834c220bc79918211dc42e2f1e46acc39cd437c9"
+   ]
+  },
+  "2020": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2020.parquet",
+    "0dee77ab7595cbef05ce6239f04e7a97c56955e5a9b376dcccf58324f4dd8abc"
+   ],
+   "stats_player_week": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/stats_player/stats_player_week_2020.parquet",
+    "e788d88318a6e99b8005c1c9814423d05bb91f757d5d977d3280f2eb83927b23"
+   ]
+  },
+  "2021": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2021.parquet",
+    "1f6ab4c26a7d394c857652234dd39acd4088ffd92cfcf3f91ce03f4dc9fcaa2a"
+   ],
+   "stats_player_week": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/stats_player/stats_player_week_2021.parquet",
+    "2c6894499e96dcf20b060969c607a0ff4e2018f369efad6e97d88abbe77b7277"
+   ]
+  },
+  "2022": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2022.parquet",
+    "3cfde83eb6d859e3477aba4238fa2fb8e0592a5fc5ab8b26128fce085d4b7fea"
+   ],
+   "stats_player_week": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/stats_player/stats_player_week_2022.parquet",
+    "64c1684938b029d68e33d7852cbee918266c8ac7f30b4c097c0a8912b4384e52"
+   ]
+  },
+  "2023": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2023.parquet",
+    "97873cab365dfb39286bc1de3ac772fa4b51f09cce52ae5f8317e006cc007f62"
+   ],
+   "stats_player_week": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/stats_player/stats_player_week_2023.parquet",
+    "ac776fbd7c9fefdb4069b72304f4c5fa05ae417acd49f6e4e27be14b9d7a4bbc"
+   ]
+  },
+  "2024": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2024.parquet",
+    "9ec66a0c755939b329d4eba3f90e716bb874b5a6544f325ba220f003991ff99f"
+   ],
+   "stats_player_week": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/stats_player/stats_player_week_2024.parquet",
+    "847569d194ca3d96b5efcf91e6eac5e18780fc47568a713fd545a82d29d155c1"
+   ]
+  },
+  "2025": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2025.parquet",
+    "47220218fecda7af7ee5b0272a8ecce7c1bfb1f4e1f0a2c8c90047571728ce20"
+   ],
+   "stats_player_week": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/stats_player/stats_player_week_2025.parquet",
+    "2a461becaa9adb3c93a3074a3a31f1e960162a50163371a2d34e28393b5fff10"
+   ]
+  },
+  "2026": {
+   "snap_counts": [
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/snap_counts/snap_counts_2026.parquet",
+    "a25005f128a6e560cbafb400eb531f39c97e56810bf0876165dbb5fae36dedcc"
+   ],
+   "stats_player_week": [
+    "/tmp/stats_player_week_2026.parquet",
+    "0df020e7790671495cfea5d08da933781c98b155da6f8aad516bc69dcd071783"
+   ]
+  }
+ },
+ "team_week_rows": 42454
+}
