@@ -1,0 +1,9 @@
+Entity,One row per,Required keys / fields,Why it matters
+coach,Unique person,"coach_id, normalized_name, aliases, name-source links","Stable identity across jobs and teams, prevent name collisions"
+staff_stint,Person/team/role/effective interval,"coach_id, team, role, effective_start, effective_end, evidence_url, source_date",HC/OC/DC title is not identical to actual play-calling duty
+playcalling_stint,Person/team/side/effective interval,"coach_id, team, side, start_game_id, end_game_id, responsibility, source","Separate offensive vs defensive play-callers, including switches within season"
+game_staff,Team-game,"game_id, offense_team/defense_team, hc_id, oc_id, dc_id, offensive_caller_id, defensive_caller_id, completeness","Every game gets two staff records, not just year/team joins"
+coaching_observation,Standing play,"game_id, play_id, coach_id, role_at_play, pre_play_state, action, event, is_available_by_cutoff","Train tendencies with pre-snap situation, true action attribution and cutoff"
+coach_profile,Coach/role/as-of cutoff,"coach_id, side, as_of, source_window, sample, smoothed_rates, uncertainty, fallback","General coaching priors transfer between teams, conditional on roster/era/opponent"
+evaluation,Historical cutoff and cohort,"baseline league/team/coach, group_holdout, conditional_logloss, decision_calibration",Establish incremental predictive value vs team-only models
+2026 sealed boundary,Research protocol,"2026 rosters-only: descriptive metadata; NO 2026 game results, stats or outcomes for training/evaluation",Prohibit 2026 outcome leakage under existing holdout policy

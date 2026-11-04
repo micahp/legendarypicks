@@ -173,6 +173,8 @@ class PlayCallSampler:
         self.scramble_bounds = None
         self.blocker_fixes = frozenset()
         self.fg_ordinary_cutoff = 60.0
+        # research flag (kicker_field_goals, amendment 6): {'table': KickerTable, 'kickers': {side label: gsis_id}}, None off
+        self.fg_kicker = None
         self.participant_chooser = None  # set per game by slc_engine: chooses the rusher or target before the outcome is drawn
         # a team_tendency.TeamTendencies from prior seasons: reweights the outcome drawn within the intent (None: no split)
         self.team_outcomes = None
@@ -373,14 +375,20 @@ class PlayCallSampler:
     def sample(self, rng, cell, offense, defense, state=None):
         if state is None or any(state.get(k) is None for k in ('quarter', 'clock', 'down', 'togo', 'yl', 'score_diff')):
             raise e1.SamplingUnavailable('playcall_state_incomplete')
+        fg_rule = None
+        if self.fg_kicker is not None:
+            import kicker_field_goals
+            fg_rule = kicker_field_goals.RULE
         field_goal = state.get('field_goal_feasibility')
         if (not isinstance(field_goal, dict)
-                or field_goal.get('snap_yardline_100') != int(state['yl'])):
-            field_goal = fg_feasibility.evaluate(int(state['yl']))
+                or field_goal.get('snap_yardline_100') != int(state['yl']) or field_goal.get('rule') != fg_rule):
+            field_goal = fg_feasibility.evaluate(int(state['yl']), rule=fg_rule)
         source_row_filter = state.get('_source_row_filter')
         entry = self._entry(cell, cache=not state.get('_source_cell_filtered', False))
         self._current_team_outcome_fallbacks = []
-        total = sum(entry['base'].values())
+        # the kick decision's counts: the whole cell, or with the flag the cell's rows weighted by yard line near the snap
+        kick_base = entry['base'] if fg_rule is None else kicker_field_goals.kernel_counts(entry, int(state['yl']))
+        total = sum(kick_base.values())
         fg_rejected_distance = False
         fg_long_range_exception = False
         fg_allowed_events = None
@@ -390,17 +398,17 @@ class PlayCallSampler:
                 fg_allowed_events.discard('field_goal_attempt')
                 fg_rejected_distance = True
                 fg_long_range_exception = False
-            kick_keys = [k for k in entry['base'] if k[0] == KICK_INTENT]
+            kick_keys = [k for k in kick_base if k[0] == KICK_INTENT]
             rejected_keys = [key for key in kick_keys if key[1] not in fg_allowed_events]
             eligible_kick_keys = [key for key in kick_keys if key[1] in fg_allowed_events]
-            feasible_total = total - sum(entry['base'][key] for key in rejected_keys)
-            kick_share = (sum(entry['base'][key] for key in eligible_kick_keys) / feasible_total
+            feasible_total = total - sum(kick_base[key] for key in rejected_keys)
+            kick_share = (sum(kick_base[key] for key in eligible_kick_keys) / feasible_total
                           if feasible_total else 0.0)
             kick_keys = eligible_kick_keys
         else:
-            kick_keys = [k for k in entry['base'] if k[0] == KICK_INTENT
+            kick_keys = [k for k in kick_base if k[0] == KICK_INTENT
                          and (k[1] != 'field_goal_attempt' or field_goal['eligible'])]
-            kick_share = sum(entry['base'][k] for k in kick_keys) / total if total else 0.0
+            kick_share = sum(kick_base[k] for k in kick_keys) / total if total else 0.0
         team = self._team(offense)
         p, call_policy_source = self._dropback_probability(entry, state, team)
         point_shift = 0.0
@@ -417,7 +425,9 @@ class PlayCallSampler:
             league_streak_shift = streak_splits.shift_for(self.streak_league, streak_splits.LEAGUE, self.current_streak[team])
             p = point_splits.adjust(p, league_streak_shift)  # the league's streak tendency, in log-odds
         if kick_keys and rng.random() < kick_share:
-            intent, fallback = KICK_INTENT, 'kick decision: historical share of this situation cell (not yet modelled)'
+            intent, fallback = KICK_INTENT, ('kick decision: historical share of this situation cell (not yet modelled)'
+                                             if fg_rule is None else
+                                             'kick decision: historical share of this cell weighted by yard line')
         else:
             intent = 'dropback' if rng.random() < p else 'run'
             fallback = None
@@ -495,9 +505,10 @@ class PlayCallSampler:
         streak_fallback = None
         weights = []
         baseline_weights = []
+        choice_base = kick_base if outcome_intent == KICK_INTENT else entry['base']  # kick_base is entry['base'] flag off
         if fallback_by_key is None:
             for k in keys:
-                base_weight = (exact_counts[k[1]] if exact_outcome_rows is not None else entry['base'][k])
+                base_weight = (exact_counts[k[1]] if exact_outcome_rows is not None else choice_base[k])
                 baseline_weights.append(base_weight)
                 weight = base_weight
                 if use_formation:  # lifts multiply: formation and coverage are treated as independent given the outcome
@@ -524,7 +535,7 @@ class PlayCallSampler:
         if (self.team_outcomes is None and not use_formation and not use_coverage and not use_streak and not use_labels
                 and not use_player_outcomes):
             if fallback_by_key is None:
-                key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]  # the unchanged baseline draw
+                key = rng.choices(keys, weights=[choice_base[k] for k in keys])[0]  # the unchanged baseline draw
         elif fallback_by_key is None:
             key = rng.choices(keys, weights=weights)[0]
         candidates = fallback_by_key[key] if fallback_by_key is not None else entry['by_key'][key]
@@ -665,7 +676,18 @@ class PlayCallSampler:
                 scramble_eligible_candidates=(len(backoff_candidates) if backoff_candidates is not None else
                                               len(exact_outcome_rows) if scramble and exact_outcome_rows is not None else 0),
             )
-        if 'long_field_goal_feasibility' in self.blocker_fixes:
+        if fg_rule is not None:
+            kicker = self.fg_kicker['kickers'].get(offense)
+            decision_record.update(fg_rule=fg_rule, fg_kick_kernel_yards=kicker_field_goals.KERNEL_YARDS,
+                                   fg_kicker=kicker, fg_kicker_logit_offset=self.fg_kicker['table'].offset(kicker)[0])
+        if 'long_field_goal_feasibility' in self.blocker_fixes and fg_rule is not None:
+            decision_record.update(
+                fg_rejected_distance=fg_rejected_distance,
+                fg_long_range_exception=False,
+                fg_rejection_reason='beyond_record_attempt' if fg_rejected_distance else None,
+                fg_fallback_level=None,
+            )
+        elif 'long_field_goal_feasibility' in self.blocker_fixes:
             decision_record.update(
                 fg_rejected_distance=fg_rejected_distance,
                 fg_long_range_exception=bool(fg_long_range_exception and event == 'field_goal_attempt'),
@@ -690,6 +712,11 @@ class PlayCallSampler:
         kick_events = {key[1] for key in entry['base'] if key[0] == KICK_INTENT}
         if 'field_goal_attempt' not in kick_events:
             return kick_events, False, False
+        if self.fg_kicker is not None:  # research flag: the record ceiling only; the yard-line kernel sets the share
+            import kicker_field_goals
+            allowed = fg_feasibility.evaluate(int(state['yl']), rule=kicker_field_goals.RULE)['eligible']
+            eligible = {event for event in kick_events if event != 'field_goal_attempt' or allowed}
+            return eligible, not allowed, False
         distance = min(99, int(state['yl']) + 7) + 10
         model = getattr(self, 'field_goal_distance_model', None)
         maximum = float(model['max_observed_attempt_yards']) if model else 0.0
@@ -701,9 +728,17 @@ class PlayCallSampler:
         eligible = {event for event in kick_events if event != 'field_goal_attempt' or allowed}
         return eligible, not allowed, bool(allowed and distance > ordinary)
 
-    def _field_goal_probability_result(self, distance, rng):
+    def _field_goal_probability_result(self, distance, rng, offense=None):
         import measure_kick_outcomes as mk
-        distribution = mk.field_goal_distribution(self.field_goal_distance_model, distance)
+        if self.fg_kicker is not None:  # research flag: the league curve plus the offense's kicker offset
+            import kicker_field_goals
+            kicker = self.fg_kicker['kickers'][offense]
+            offset, attempts = self.fg_kicker['table'].offset(kicker)
+            distribution = kicker_field_goals.distribution(self.field_goal_distance_model, distance, offset)
+            distribution.update(kicker=kicker, kicker_earlier_attempts=attempts,
+                                fallback_level='kicker_logit_offset' if attempts else 'league_curve_no_kicker_history')
+        else:
+            distribution = mk.field_goal_distribution(self.field_goal_distance_model, distance)
         draw = rng.random()
         result = ('made' if draw < distribution['made'] else
                   'blocked' if draw < distribution['made'] + distribution['blocked'] else 'missed')

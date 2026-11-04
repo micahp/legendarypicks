@@ -1,0 +1,125 @@
+{
+  "rules": "- Scrimmage means play_type run or pass in play-by-play. Kneels, spikes and special teams are not personnel plays here.\n- A defensive position label (CB, S, LB, DL and similar) in offense_personnel excludes the row from the personnel fit.\n- A count of on-field players other than 11 is kept and flagged. n_offense always equals the number of listed IDs.\n- The personnel group is the running back count (RB plus FB) followed by the tight end count, so 1 RB, 1 TE, 3 WR is 11.\n- Rows with no offense_personnel are excluded.",
+  "schema": "lp.nfl.participation-model-tables.v1",
+  "scrimmage_participation": {
+    "fields": [
+      "season",
+      "week",
+      "season_type",
+      "game_id",
+      "play_id",
+      "posteam",
+      "play_type",
+      "down",
+      "ydstogo",
+      "yardline_100",
+      "qtr",
+      "score_differential",
+      "group",
+      "n_rb",
+      "n_te",
+      "n_wr",
+      "personnel_raw",
+      "n_offense",
+      "offense_ids",
+      "offense_positions",
+      "flag_defensive_label",
+      "flag_count_not_11"
+    ],
+    "file": "scrimmage_participation.csv.gz",
+    "per_season": {
+      "2022": {
+        "clean_personnel": 35366,
+        "count_11": 35427,
+        "count_not_11": 3,
+        "defensive_label": 64,
+        "not_scrimmage_or_unmatched": 14720,
+        "participation_rows": 50150,
+        "scrimmage_rows": 35430,
+        "written": 35430
+      },
+      "2023": {
+        "clean_personnel": 35521,
+        "count_11": 35596,
+        "count_not_11": 4,
+        "defensive_label": 79,
+        "not_scrimmage_or_unmatched": 10568,
+        "participation_rows": 46168,
+        "scrimmage_rows": 35600,
+        "written": 35600
+      },
+      "2024": {
+        "clean_personnel": 34963,
+        "count_11": 35050,
+        "defensive_label": 87,
+        "not_scrimmage_or_unmatched": 10869,
+        "participation_rows": 45919,
+        "scrimmage_rows": 35050,
+        "written": 35050
+      },
+      "2025": {
+        "clean_personnel": 34475,
+        "count_11": 34623,
+        "count_not_11": 9,
+        "defensive_label": 157,
+        "not_scrimmage_or_unmatched": 10552,
+        "participation_rows": 45184,
+        "scrimmage_rows": 34632,
+        "written": 34632
+      }
+    },
+    "sha256": "211324f0a51754a3c8c5be6245bc4d243d24827e51ec42e288b1c7ddda0d698f",
+    "totals": {
+      "clean_personnel": 140325,
+      "count_11": 140696,
+      "count_not_11": 16,
+      "defensive_label": 387,
+      "not_scrimmage_or_unmatched": 46709,
+      "participation_rows": 187421,
+      "scrimmage_rows": 140712,
+      "written": 140712
+    }
+  },
+  "usage_plays": {
+    "fields": [
+      "season",
+      "week",
+      "season_type",
+      "game_id",
+      "play_id",
+      "posteam",
+      "play_type",
+      "role",
+      "player_id"
+    ],
+    "file": "usage_plays.csv.gz",
+    "per_season": {
+      "2022": {
+        "carry": 15037,
+        "dropback": 20393,
+        "target": 18283
+      },
+      "2023": {
+        "carry": 14877,
+        "dropback": 20723,
+        "target": 18445
+      },
+      "2024": {
+        "carry": 15043,
+        "dropback": 20007,
+        "target": 17848
+      },
+      "2025": {
+        "carry": 14895,
+        "dropback": 19737,
+        "target": 17582
+      },
+      "2026": {
+        "carry": 4791,
+        "dropback": 6693,
+        "target": 5992
+      }
+    },
+    "sha256": "929aeb9df1d48f009409b4af433587377f9fb2831c2dc95f115f065aa13682c2"
+  }
+}

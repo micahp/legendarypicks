@@ -1,0 +1,44 @@
+{
+ "B_minus_A": {
+  "ci95": [
+   -0.0942,
+   0.11347
+  ],
+  "mean": 0.00874
+ },
+ "C_minus_A": {
+  "ci95": [
+   -0.0381,
+   0.21655
+  ],
+  "mean": 0.08044
+ },
+ "counts": {
+  "snaps": 34451,
+  "thin:1|mid|deep": 8,
+  "thin:4|long|own": 15,
+  "thin:4|long|red": 14,
+  "thin:4|mid|deep": 2,
+  "thin:4|short|deep": 7,
+  "thin:4|xl|deep": 3,
+  "thin:4|xl|red": 10,
+  "thin_cell_snaps": 59,
+  "unscorable_under_some_rule": 1
+ },
+ "fit_seasons": [
+  2022,
+  2023,
+  2024
+ ],
+ "mean_log_prob": {
+  "A": -1.01145,
+  "B": -1.00272,
+  "C": -0.93101
+ },
+ "min_cell_plays": 20.0,
+ "scored_snaps": 58,
+ "season": 2025,
+ "table": "field_v4_2022_2024.json",
+ "table_sha256": "1dfd02770c0bdc4d2616f406b8112f680a0c13bc91da1e065a51b81f9a2dc4bd",
+ "team_games": 55
+}

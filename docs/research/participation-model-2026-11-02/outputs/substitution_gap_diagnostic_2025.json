@@ -1,0 +1,597 @@
+{
+ "alignment": {
+  "snaps_missing_drive_id": 3,
+  "team_games_observed": 570
+ },
+ "arms": {
+  "forced": {
+   "clean_signature_top5": [
+    {
+     "contribution_to_entries_gap": 0.04169,
+     "entries_in_signature": 3,
+     "model_share": 0.00547,
+     "observed_share": 0.01937,
+     "signature": "11>11|RB:-1+1 TE:-1+1 WR:-1+1"
+    },
+    {
+     "contribution_to_entries_gap": 0.01941,
+     "entries_in_signature": 2,
+     "model_share": 0.01826,
+     "observed_share": 0.02797,
+     "signature": "11>11|TE:-1+1 WR:-1+1"
+    },
+    {
+     "contribution_to_entries_gap": -0.01936,
+     "entries_in_signature": 1,
+     "model_share": 0.05999,
+     "observed_share": 0.04064,
+     "signature": "11>12|TE:-0+1 WR:-1+0"
+    },
+    {
+     "contribution_to_entries_gap": -0.01918,
+     "entries_in_signature": 1,
+     "model_share": 0.07881,
+     "observed_share": 0.05963,
+     "signature": "11>11|WR:-1+1"
+    },
+    {
+     "contribution_to_entries_gap": 0.01846,
+     "entries_in_signature": 3,
+     "model_share": 0.00133,
+     "observed_share": 0.00748,
+     "signature": "11>12|RB:-1+1 TE:-0+1 WR:-2+1"
+    }
+   ],
+   "gap_by_factor": {
+    "clean_vs_contradicting": {
+     "clean": {
+      "contribution_to_gap": 0.1219,
+      "model_entries_per_pair": 1.1912,
+      "observed_entries_per_pair": 1.3311,
+      "share_of_pairs": 0.871
+     },
+     "contradict": {
+      "contribution_to_gap": 0.0592,
+      "model_entries_per_pair": 1.3679,
+      "observed_entries_per_pair": 1.8267,
+      "share_of_pairs": 0.129
+     }
+    },
+    "drive_boundary": {
+     "new_drive": {
+      "contribution_to_gap": 0.0809,
+      "model_entries_per_pair": 1.2932,
+      "observed_entries_per_pair": 1.8181,
+      "share_of_pairs": 0.1542
+     },
+     "same_drive": {
+      "contribution_to_gap": 0.1002,
+      "model_entries_per_pair": 1.1993,
+      "observed_entries_per_pair": 1.3178,
+      "share_of_pairs": 0.8456
+     },
+     "unknown": {
+      "contribution_to_gap": -0.0001,
+      "model_entries_per_pair": 2.0556,
+      "observed_entries_per_pair": 1.5,
+      "share_of_pairs": 0.0002
+     }
+    },
+    "package_change": {
+     "changed": {
+      "contribution_to_gap": 0.1324,
+      "model_entries_per_pair": 1.7136,
+      "observed_entries_per_pair": 2.0129,
+      "share_of_pairs": 0.4425
+     },
+     "same": {
+      "contribution_to_gap": 0.0487,
+      "model_entries_per_pair": 0.8174,
+      "observed_entries_per_pair": 0.9047,
+      "share_of_pairs": 0.5575
+     }
+    }
+   },
+   "leave_rate_by_class_stint_clean": {
+    "model": {
+     "RB|1": {
+      "leave_rate": 0.3376,
+      "player_snaps": 28643
+     },
+     "RB|2": {
+      "leave_rate": 0.3317,
+      "player_snaps": 18916
+     },
+     "RB|3": {
+      "leave_rate": 0.2758,
+      "player_snaps": 12349
+     },
+     "RB|4": {
+      "leave_rate": 0.2732,
+      "player_snaps": 8749
+     },
+     "RB|5": {
+      "leave_rate": 0.2536,
+      "player_snaps": 6249
+     },
+     "RB|6": {
+      "leave_rate": 0.1927,
+      "player_snaps": 21568
+     },
+     "TE|1": {
+      "leave_rate": 0.389,
+      "player_snaps": 36402
+     },
+     "TE|2": {
+      "leave_rate": 0.3512,
+      "player_snaps": 22092
+     },
+     "TE|3": {
+      "leave_rate": 0.2798,
+      "player_snaps": 13988
+     },
+     "TE|4": {
+      "leave_rate": 0.2434,
+      "player_snaps": 9856
+     },
+     "TE|5": {
+      "leave_rate": 0.2346,
+      "player_snaps": 7401
+     },
+     "TE|6": {
+      "leave_rate": 0.1559,
+      "player_snaps": 31123
+     },
+     "WR|1": {
+      "leave_rate": 0.3165,
+      "player_snaps": 47126
+     },
+     "WR|2": {
+      "leave_rate": 0.24,
+      "player_snaps": 31678
+     },
+     "WR|3": {
+      "leave_rate": 0.2054,
+      "player_snaps": 23694
+     },
+     "WR|4": {
+      "leave_rate": 0.1773,
+      "player_snaps": 18506
+     },
+     "WR|5": {
+      "leave_rate": 0.1619,
+      "player_snaps": 14911
+     },
+     "WR|6": {
+      "leave_rate": 0.1136,
+      "player_snaps": 89529
+     }
+    },
+    "observed": {
+     "RB|1": {
+      "leave_rate": 0.369,
+      "player_snaps": 30384
+     },
+     "RB|2": {
+      "leave_rate": 0.3726,
+      "player_snaps": 19179
+     },
+     "RB|3": {
+      "leave_rate": 0.2925,
+      "player_snaps": 11847
+     },
+     "RB|4": {
+      "leave_rate": 0.2592,
+      "player_snaps": 8229
+     },
+     "RB|5": {
+      "leave_rate": 0.2546,
+      "player_snaps": 5973
+     },
+     "RB|6": {
+      "leave_rate": 0.18,
+      "player_snaps": 20871
+     },
+     "TE|1": {
+      "leave_rate": 0.4109,
+      "player_snaps": 39198
+     },
+     "TE|2": {
+      "leave_rate": 0.395,
+      "player_snaps": 22893
+     },
+     "TE|3": {
+      "leave_rate": 0.303,
+      "player_snaps": 13398
+     },
+     "TE|4": {
+      "leave_rate": 0.258,
+      "player_snaps": 9138
+     },
+     "TE|5": {
+      "leave_rate": 0.224,
+      "player_snaps": 6576
+     },
+     "TE|6": {
+      "leave_rate": 0.1371,
+      "player_snaps": 29832
+     },
+     "WR|1": {
+      "leave_rate": 0.3714,
+      "player_snaps": 58026
+     },
+     "WR|2": {
+      "leave_rate": 0.2985,
+      "player_snaps": 35121
+     },
+     "WR|3": {
+      "leave_rate": 0.2403,
+      "player_snaps": 23733
+     },
+     "WR|4": {
+      "leave_rate": 0.1912,
+      "player_snaps": 17334
+     },
+     "WR|5": {
+      "leave_rate": 0.1759,
+      "player_snaps": 13455
+     },
+     "WR|6": {
+      "leave_rate": 0.1047,
+      "player_snaps": 77778
+     }
+    }
+   },
+   "model": {
+    "all_pairs": {
+     "entries_per_pair": 1.214,
+     "entries_per_pair_by_class": {
+      "RB": 0.3163,
+      "TE": 0.3972,
+      "WR": 0.5004
+     },
+     "histogram": {
+      "0": 0.2272,
+      "1": 0.4157,
+      "2": 0.2796,
+      "3": 0.0712,
+      "4+": 0.0063
+     },
+     "pairs": 101715,
+     "share_pairs_two_or_more_classes_entering": 0.2566,
+     "unchanged_lineup_share": 0.2272
+    },
+    "clean_pairs": {
+     "entries_per_pair": 1.1912,
+     "entries_per_pair_by_class": {
+      "RB": 0.3092,
+      "TE": 0.3872,
+      "WR": 0.4947
+     },
+     "histogram": {
+      "0": 0.2372,
+      "1": 0.4155,
+      "2": 0.2724,
+      "3": 0.0688,
+      "4+": 0.006
+     },
+     "pairs": 88593,
+     "share_pairs_two_or_more_classes_entering": 0.2495,
+     "unchanged_lineup_share": 0.2372
+    }
+   },
+   "observed_on_same_pairs": {
+    "all_pairs": {
+     "entries_per_pair": 1.395,
+     "entries_per_pair_by_class": {
+      "RB": 0.3382,
+      "TE": 0.4371,
+      "WR": 0.6198
+     },
+     "histogram": {
+      "0": 0.247,
+      "1": 0.3085,
+      "2": 0.2809,
+      "3": 0.1326,
+      "4+": 0.0311
+     },
+     "pairs": 101715,
+     "share_pairs_two_or_more_classes_entering": 0.354,
+     "unchanged_lineup_share": 0.247
+    },
+    "clean_pairs": {
+     "entries_per_pair": 1.3311,
+     "entries_per_pair_by_class": {
+      "RB": 0.329,
+      "TE": 0.4135,
+      "WR": 0.5886
+     },
+     "histogram": {
+      "0": 0.2629,
+      "1": 0.3168,
+      "2": 0.2745,
+      "3": 0.12,
+      "4+": 0.0258
+     },
+     "pairs": 88593,
+     "share_pairs_two_or_more_classes_entering": 0.3373,
+     "unchanged_lineup_share": 0.2629
+    }
+   },
+   "team_games_dropped_per_seed_summed": 0
+  },
+  "free": {
+   "leave_rate_by_class_stint_clean": {
+    "model": {
+     "RB|1": {
+      "leave_rate": 0.3397,
+      "player_snaps": 28337
+     },
+     "RB|2": {
+      "leave_rate": 0.3353,
+      "player_snaps": 18511
+     },
+     "RB|3": {
+      "leave_rate": 0.2712,
+      "player_snaps": 12114
+     },
+     "RB|4": {
+      "leave_rate": 0.267,
+      "player_snaps": 8723
+     },
+     "RB|5": {
+      "leave_rate": 0.2478,
+      "player_snaps": 6336
+     },
+     "RB|6": {
+      "leave_rate": 0.1979,
+      "player_snaps": 21785
+     },
+     "TE|1": {
+      "leave_rate": 0.4021,
+      "player_snaps": 34719
+     },
+     "TE|2": {
+      "leave_rate": 0.3522,
+      "player_snaps": 20633
+     },
+     "TE|3": {
+      "leave_rate": 0.2827,
+      "player_snaps": 13107
+     },
+     "TE|4": {
+      "leave_rate": 0.2532,
+      "player_snaps": 9288
+     },
+     "TE|5": {
+      "leave_rate": 0.2366,
+      "player_snaps": 6886
+     },
+     "TE|6": {
+      "leave_rate": 0.1571,
+      "player_snaps": 29601
+     },
+     "WR|1": {
+      "leave_rate": 0.2985,
+      "player_snaps": 47691
+     },
+     "WR|2": {
+      "leave_rate": 0.2372,
+      "player_snaps": 32848
+     },
+     "WR|3": {
+      "leave_rate": 0.2022,
+      "player_snaps": 24675
+     },
+     "WR|4": {
+      "leave_rate": 0.1744,
+      "player_snaps": 19326
+     },
+     "WR|5": {
+      "leave_rate": 0.159,
+      "player_snaps": 15689
+     },
+     "WR|6": {
+      "leave_rate": 0.1221,
+      "player_snaps": 92540
+     }
+    },
+    "observed": {
+     "RB|1": {
+      "leave_rate": 0.369,
+      "player_snaps": 30384
+     },
+     "RB|2": {
+      "leave_rate": 0.3726,
+      "player_snaps": 19179
+     },
+     "RB|3": {
+      "leave_rate": 0.2925,
+      "player_snaps": 11847
+     },
+     "RB|4": {
+      "leave_rate": 0.2592,
+      "player_snaps": 8229
+     },
+     "RB|5": {
+      "leave_rate": 0.2546,
+      "player_snaps": 5973
+     },
+     "RB|6": {
+      "leave_rate": 0.18,
+      "player_snaps": 20871
+     },
+     "TE|1": {
+      "leave_rate": 0.4109,
+      "player_snaps": 39198
+     },
+     "TE|2": {
+      "leave_rate": 0.395,
+      "player_snaps": 22893
+     },
+     "TE|3": {
+      "leave_rate": 0.303,
+      "player_snaps": 13398
+     },
+     "TE|4": {
+      "leave_rate": 0.258,
+      "player_snaps": 9138
+     },
+     "TE|5": {
+      "leave_rate": 0.224,
+      "player_snaps": 6576
+     },
+     "TE|6": {
+      "leave_rate": 0.1371,
+      "player_snaps": 29832
+     },
+     "WR|1": {
+      "leave_rate": 0.3714,
+      "player_snaps": 58026
+     },
+     "WR|2": {
+      "leave_rate": 0.2985,
+      "player_snaps": 35121
+     },
+     "WR|3": {
+      "leave_rate": 0.2403,
+      "player_snaps": 23733
+     },
+     "WR|4": {
+      "leave_rate": 0.1912,
+      "player_snaps": 17334
+     },
+     "WR|5": {
+      "leave_rate": 0.1759,
+      "player_snaps": 13455
+     },
+     "WR|6": {
+      "leave_rate": 0.1047,
+      "player_snaps": 77778
+     }
+    }
+   },
+   "model": {
+    "all_pairs": {
+     "entries_per_pair": 1.1902,
+     "entries_per_pair_by_class": {
+      "RB": 0.3066,
+      "TE": 0.3771,
+      "WR": 0.5065
+     },
+     "histogram": {
+      "0": 0.2372,
+      "1": 0.4179,
+      "2": 0.27,
+      "3": 0.0678,
+      "4+": 0.0072
+     },
+     "pairs": 101715,
+     "share_pairs_two_or_more_classes_entering": 0.2489,
+     "unchanged_lineup_share": 0.2372
+    },
+    "clean_pairs": {
+     "entries_per_pair": 1.1861,
+     "entries_per_pair_by_class": {
+      "RB": 0.3061,
+      "TE": 0.3737,
+      "WR": 0.5063
+     },
+     "histogram": {
+      "0": 0.2392,
+      "1": 0.4177,
+      "2": 0.2684,
+      "3": 0.0677,
+      "4+": 0.0071
+     },
+     "pairs": 88593,
+     "share_pairs_two_or_more_classes_entering": 0.2488,
+     "unchanged_lineup_share": 0.2392
+    }
+   },
+   "observed_on_same_pairs": {
+    "all_pairs": {
+     "entries_per_pair": 1.395,
+     "entries_per_pair_by_class": {
+      "RB": 0.3382,
+      "TE": 0.4371,
+      "WR": 0.6198
+     },
+     "histogram": {
+      "0": 0.247,
+      "1": 0.3085,
+      "2": 0.2809,
+      "3": 0.1326,
+      "4+": 0.0311
+     },
+     "pairs": 101715,
+     "share_pairs_two_or_more_classes_entering": 0.354,
+     "unchanged_lineup_share": 0.247
+    },
+    "clean_pairs": {
+     "entries_per_pair": 1.3311,
+     "entries_per_pair_by_class": {
+      "RB": 0.329,
+      "TE": 0.4135,
+      "WR": 0.5886
+     },
+     "histogram": {
+      "0": 0.2629,
+      "1": 0.3168,
+      "2": 0.2745,
+      "3": 0.12,
+      "4+": 0.0258
+     },
+     "pairs": 88593,
+     "share_pairs_two_or_more_classes_entering": 0.3373,
+     "unchanged_lineup_share": 0.2629
+    }
+   },
+   "team_games_dropped_per_seed_summed": 0
+  }
+ },
+ "field": {
+  "file": "field_2022_2024.json",
+  "sha256": "8f555979fe6ba08f37f926c2a9fb93d52998722e1fa55ad706250a5b52d5d0e9"
+ },
+ "holdout": 2025,
+ "ledger_2025": {
+  "categories": {
+   "consistent": {
+    "share": 0.9193,
+    "snaps": 31692
+   },
+   "extra_skill_labels": {
+    "share": 0.0026,
+    "snaps": 88
+   },
+   "five_labels_wrong_position_mix": {
+    "share": 0.014,
+    "snaps": 481
+   },
+   "missing_skill_labels": {
+    "share": 0.0642,
+    "snaps": 2214
+   }
+  },
+  "inconsistent_by_grouping": {
+   "03": 22,
+   "10": 159,
+   "11": 1040,
+   "12": 841,
+   "13": 88,
+   "20": 126,
+   "21": 362,
+   "22": 115
+  },
+  "inconsistent_teams_top": {
+   "HOU": 233,
+   "JAX": 406,
+   "NE": 310,
+   "NO": 215,
+   "PIT": 253
+  },
+  "snaps": 34475
+ },
+ "seeds": 3
+}

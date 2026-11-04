@@ -1,0 +1,955 @@
+{
+ "bench_players_per_game_mean": {
+  "gated_all_act_players": 11.81,
+  "gated_players": 11.66,
+  "ungated_players": 17.81
+ },
+ "fit_seasons": [
+  2022,
+  2023,
+  2024
+ ],
+ "holdout": [
+  2025
+ ],
+ "observed": {
+  "all": {
+   "entries_per_pair": 1.395,
+   "entries_per_pair_by_class": {
+    "RB": 0.3382,
+    "TE": 0.4371,
+    "WR": 0.6198
+   },
+   "histogram": {
+    "0": 0.247,
+    "1": 0.3085,
+    "2": 0.2809,
+    "3": 0.1326,
+    "4": 0.0311
+   },
+   "pairs": 33905,
+   "share_two_or_more_classes_entering": 0.354
+  },
+  "clean": {
+   "entries_per_pair": 1.3311,
+   "entries_per_pair_by_class": {
+    "RB": 0.329,
+    "TE": 0.4135,
+    "WR": 0.5886
+   },
+   "histogram": {
+    "0": 0.2629,
+    "1": 0.3168,
+    "2": 0.2745,
+    "3": 0.12,
+    "4": 0.0258
+   },
+   "pairs": 29531,
+   "share_two_or_more_classes_entering": 0.3373
+  },
+  "new_drive": {
+   "entries_per_pair": 1.7696,
+   "pairs": 4492
+  },
+  "same_drive": {
+   "entries_per_pair": 1.2524,
+   "pairs": 25036
+  }
+ },
+ "seeds": 3,
+ "variants": {
+  "forced": {
+   "B0_runtime|gated_all_act": {
+    "status": {
+     "ok": 101759,
+     "short": 1666,
+     "short_RB_roster_covers_target": 51,
+     "short_TE_roster_below_target": 18,
+     "short_TE_roster_covers_target": 1333,
+     "short_WR_roster_covers_target": 264
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.2083,
+      "entries_per_pair_by_class": {
+       "RB": 0.316,
+       "TE": 0.3895,
+       "WR": 0.5029
+      },
+      "histogram": {
+       "0": 0.2268,
+       "1": 0.4171,
+       "2": 0.2827,
+       "3": 0.0678,
+       "4": 0.0056
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2576
+     },
+     "clean": {
+      "entries_per_pair": 1.1853,
+      "entries_per_pair_by_class": {
+       "RB": 0.3088,
+       "TE": 0.3798,
+       "WR": 0.4966
+      },
+      "histogram": {
+       "0": 0.2376,
+       "1": 0.4168,
+       "2": 0.274,
+       "3": 0.0659,
+       "4": 0.0056
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2499
+     },
+     "new_drive": {
+      "entries_per_pair": 1.2671,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1706,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "B0_runtime|gated_all_act_feasible": {
+    "status": {
+     "feasible_redraw": 2309,
+     "ok": 103407,
+     "short": 18,
+     "short_TE_roster_below_target": 18
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.1912,
+      "entries_per_pair_by_class": {
+       "RB": 0.3163,
+       "TE": 0.3788,
+       "WR": 0.4962
+      },
+      "histogram": {
+       "0": 0.2336,
+       "1": 0.4167,
+       "2": 0.2796,
+       "3": 0.0649,
+       "4": 0.0051
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.253
+     },
+     "clean": {
+      "entries_per_pair": 1.1694,
+      "entries_per_pair_by_class": {
+       "RB": 0.3094,
+       "TE": 0.3691,
+       "WR": 0.4909
+      },
+      "histogram": {
+       "0": 0.2439,
+       "1": 0.4163,
+       "2": 0.2716,
+       "3": 0.0632,
+       "4": 0.0051
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2456
+     },
+     "new_drive": {
+      "entries_per_pair": 1.2518,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1546,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "B0_runtime|gated_to_active_week": {
+    "status": {
+     "ok": 101614,
+     "short": 1811,
+     "short_RB_roster_covers_target": 97,
+     "short_TE_roster_below_target": 18,
+     "short_TE_roster_covers_target": 1402,
+     "short_WR_roster_covers_target": 294
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.2077,
+      "entries_per_pair_by_class": {
+       "RB": 0.3159,
+       "TE": 0.3894,
+       "WR": 0.5024
+      },
+      "histogram": {
+       "0": 0.2266,
+       "1": 0.4174,
+       "2": 0.2831,
+       "3": 0.0675,
+       "4": 0.0054
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.258
+     },
+     "clean": {
+      "entries_per_pair": 1.1845,
+      "entries_per_pair_by_class": {
+       "RB": 0.3088,
+       "TE": 0.3798,
+       "WR": 0.4959
+      },
+      "histogram": {
+       "0": 0.2375,
+       "1": 0.4171,
+       "2": 0.2743,
+       "3": 0.0657,
+       "4": 0.0054
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2502
+     },
+     "new_drive": {
+      "entries_per_pair": 1.2655,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.17,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "B0_runtime|ungated": {
+    "status": {
+     "ok": 103181,
+     "short": 244,
+     "short_RB_roster_covers_target": 9,
+     "short_TE_roster_below_target": 9,
+     "short_TE_roster_covers_target": 223,
+     "short_WR_roster_covers_target": 3
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.214,
+      "entries_per_pair_by_class": {
+       "RB": 0.3163,
+       "TE": 0.3972,
+       "WR": 0.5004
+      },
+      "histogram": {
+       "0": 0.2272,
+       "1": 0.4157,
+       "2": 0.2796,
+       "3": 0.0712,
+       "4": 0.0063
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2566
+     },
+     "clean": {
+      "entries_per_pair": 1.1912,
+      "entries_per_pair_by_class": {
+       "RB": 0.3092,
+       "TE": 0.3872,
+       "WR": 0.4947
+      },
+      "histogram": {
+       "0": 0.2372,
+       "1": 0.4155,
+       "2": 0.2724,
+       "3": 0.0688,
+       "4": 0.006
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2495
+     },
+     "new_drive": {
+      "entries_per_pair": 1.2772,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1757,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "JD_joint_drive|gated_all_act": {
+    "status": {
+     "joint_capped": 76,
+     "joint_fallback": 5325,
+     "ok": 102561,
+     "short": 864,
+     "short_RB_roster_covers_target": 58,
+     "short_TE_roster_below_target": 18,
+     "short_TE_roster_covers_target": 572,
+     "short_WR_roster_covers_target": 217
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.3354,
+      "entries_per_pair_by_class": {
+       "RB": 0.3367,
+       "TE": 0.4219,
+       "WR": 0.5768
+      },
+      "histogram": {
+       "0": 0.2643,
+       "1": 0.3111,
+       "2": 0.2775,
+       "3": 0.1206,
+       "4": 0.0265
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3389
+     },
+     "clean": {
+      "entries_per_pair": 1.3063,
+      "entries_per_pair_by_class": {
+       "RB": 0.3279,
+       "TE": 0.4117,
+       "WR": 0.5666
+      },
+      "histogram": {
+       "0": 0.2773,
+       "1": 0.3098,
+       "2": 0.2696,
+       "3": 0.1175,
+       "4": 0.0258
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3303
+     },
+     "new_drive": {
+      "entries_per_pair": 1.769,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2232,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "JD_joint_drive|gated_all_act_feasible": {
+    "status": {
+     "feasible_redraw": 384,
+     "joint_fallback": 5331,
+     "joint_no_feasible": 6,
+     "ok": 103407,
+     "short": 18,
+     "short_TE_roster_below_target": 18
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.323,
+      "entries_per_pair_by_class": {
+       "RB": 0.3351,
+       "TE": 0.4162,
+       "WR": 0.5717
+      },
+      "histogram": {
+       "0": 0.2676,
+       "1": 0.3126,
+       "2": 0.2761,
+       "3": 0.1183,
+       "4": 0.0255
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3335
+     },
+     "clean": {
+      "entries_per_pair": 1.2968,
+      "entries_per_pair_by_class": {
+       "RB": 0.327,
+       "TE": 0.4065,
+       "WR": 0.5633
+      },
+      "histogram": {
+       "0": 0.2799,
+       "1": 0.3101,
+       "2": 0.2696,
+       "3": 0.1153,
+       "4": 0.025
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3265
+     },
+     "new_drive": {
+      "entries_per_pair": 1.7576,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2141,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "JD_joint_drive|gated_to_active_week": {
+    "status": {
+     "joint_capped": 86,
+     "joint_fallback": 5325,
+     "ok": 102448,
+     "short": 977,
+     "short_RB_roster_covers_target": 92,
+     "short_TE_roster_below_target": 18,
+     "short_TE_roster_covers_target": 617,
+     "short_WR_roster_covers_target": 251
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.3351,
+      "entries_per_pair_by_class": {
+       "RB": 0.3365,
+       "TE": 0.4218,
+       "WR": 0.5767
+      },
+      "histogram": {
+       "0": 0.264,
+       "1": 0.3114,
+       "2": 0.2779,
+       "3": 0.1204,
+       "4": 0.0263
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3389
+     },
+     "clean": {
+      "entries_per_pair": 1.306,
+      "entries_per_pair_by_class": {
+       "RB": 0.3277,
+       "TE": 0.4117,
+       "WR": 0.5665
+      },
+      "histogram": {
+       "0": 0.277,
+       "1": 0.31,
+       "2": 0.2701,
+       "3": 0.1173,
+       "4": 0.0256
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3303
+     },
+     "new_drive": {
+      "entries_per_pair": 1.7673,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2232,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "JD_joint_drive|ungated": {
+    "status": {
+     "joint_capped": 8,
+     "joint_fallback": 5325,
+     "ok": 103354,
+     "short": 71,
+     "short_RB_roster_covers_target": 1,
+     "short_TE_roster_below_target": 9,
+     "short_TE_roster_covers_target": 60,
+     "short_WR_roster_covers_target": 1
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.3388,
+      "entries_per_pair_by_class": {
+       "RB": 0.3368,
+       "TE": 0.4237,
+       "WR": 0.5784
+      },
+      "histogram": {
+       "0": 0.2655,
+       "1": 0.3085,
+       "2": 0.277,
+       "3": 0.1216,
+       "4": 0.0275
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3378
+     },
+     "clean": {
+      "entries_per_pair": 1.3092,
+      "entries_per_pair_by_class": {
+       "RB": 0.3278,
+       "TE": 0.4131,
+       "WR": 0.5683
+      },
+      "histogram": {
+       "0": 0.2783,
+       "1": 0.3074,
+       "2": 0.2695,
+       "3": 0.1181,
+       "4": 0.0268
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3293
+     },
+     "new_drive": {
+      "entries_per_pair": 1.7817,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2244,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   }
+  },
+  "free": {
+   "B0_runtime|gated_all_act": {
+    "status": {
+     "ok": 101484,
+     "short": 1941,
+     "short_RB_roster_below_target": 1,
+     "short_RB_roster_covers_target": 159,
+     "short_TE_roster_below_target": 294,
+     "short_TE_roster_covers_target": 1175,
+     "short_WR_roster_covers_target": 312
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.1783,
+      "entries_per_pair_by_class": {
+       "RB": 0.3077,
+       "TE": 0.3654,
+       "WR": 0.5053
+      },
+      "histogram": {
+       "0": 0.2358,
+       "1": 0.4251,
+       "2": 0.2699,
+       "3": 0.0637,
+       "4": 0.0055
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2489
+     },
+     "clean": {
+      "entries_per_pair": 1.175,
+      "entries_per_pair_by_class": {
+       "RB": 0.3067,
+       "TE": 0.3634,
+       "WR": 0.5049
+      },
+      "histogram": {
+       "0": 0.2381,
+       "1": 0.4241,
+       "2": 0.2683,
+       "3": 0.064,
+       "4": 0.0055
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2486
+     },
+     "new_drive": {
+      "entries_per_pair": 1.1849,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1731,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "B0_runtime|gated_all_act_feasible": {
+    "status": {
+     "feasible_redraw": 2435,
+     "group_redraw": 264,
+     "ok": 103425
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.1595,
+      "entries_per_pair_by_class": {
+       "RB": 0.3051,
+       "TE": 0.3576,
+       "WR": 0.4967
+      },
+      "histogram": {
+       "0": 0.2427,
+       "1": 0.4257,
+       "2": 0.2662,
+       "3": 0.0604,
+       "4": 0.005
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2435
+     },
+     "clean": {
+      "entries_per_pair": 1.1571,
+      "entries_per_pair_by_class": {
+       "RB": 0.3043,
+       "TE": 0.3555,
+       "WR": 0.4974
+      },
+      "histogram": {
+       "0": 0.2444,
+       "1": 0.4247,
+       "2": 0.2655,
+       "3": 0.0605,
+       "4": 0.005
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2432
+     },
+     "new_drive": {
+      "entries_per_pair": 1.1656,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1555,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "B0_runtime|gated_to_active_week": {
+    "status": {
+     "ok": 101342,
+     "short": 2083,
+     "short_RB_roster_below_target": 1,
+     "short_RB_roster_covers_target": 208,
+     "short_TE_roster_below_target": 306,
+     "short_TE_roster_covers_target": 1213,
+     "short_WR_roster_covers_target": 357
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.177,
+      "entries_per_pair_by_class": {
+       "RB": 0.3067,
+       "TE": 0.365,
+       "WR": 0.5052
+      },
+      "histogram": {
+       "0": 0.236,
+       "1": 0.4249,
+       "2": 0.2709,
+       "3": 0.0629,
+       "4": 0.0053
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2492
+     },
+     "clean": {
+      "entries_per_pair": 1.1737,
+      "entries_per_pair_by_class": {
+       "RB": 0.3058,
+       "TE": 0.3631,
+       "WR": 0.5048
+      },
+      "histogram": {
+       "0": 0.2383,
+       "1": 0.4236,
+       "2": 0.2696,
+       "3": 0.0632,
+       "4": 0.0053
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.249
+     },
+     "new_drive": {
+      "entries_per_pair": 1.1818,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1722,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "B0_runtime|ungated": {
+    "status": {
+     "ok": 103242,
+     "short": 183,
+     "short_RB_roster_covers_target": 19,
+     "short_TE_roster_below_target": 1,
+     "short_TE_roster_covers_target": 162,
+     "short_WR_roster_covers_target": 1
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.1902,
+      "entries_per_pair_by_class": {
+       "RB": 0.3066,
+       "TE": 0.3771,
+       "WR": 0.5065
+      },
+      "histogram": {
+       "0": 0.2372,
+       "1": 0.4179,
+       "2": 0.27,
+       "3": 0.0678,
+       "4": 0.0072
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2489
+     },
+     "clean": {
+      "entries_per_pair": 1.1861,
+      "entries_per_pair_by_class": {
+       "RB": 0.3061,
+       "TE": 0.3737,
+       "WR": 0.5063
+      },
+      "histogram": {
+       "0": 0.2392,
+       "1": 0.4177,
+       "2": 0.2684,
+       "3": 0.0677,
+       "4": 0.0071
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2488
+     },
+     "new_drive": {
+      "entries_per_pair": 1.2053,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1826,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "JD_joint_drive|gated_all_act": {
+    "status": {
+     "joint_capped": 154,
+     "joint_fallback": 4894,
+     "ok": 101907,
+     "short": 1518,
+     "short_RB_roster_below_target": 1,
+     "short_RB_roster_covers_target": 177,
+     "short_TE_roster_below_target": 252,
+     "short_TE_roster_covers_target": 851,
+     "short_WR_roster_covers_target": 240
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.3144,
+      "entries_per_pair_by_class": {
+       "RB": 0.3333,
+       "TE": 0.4144,
+       "WR": 0.5667
+      },
+      "histogram": {
+       "0": 0.2677,
+       "1": 0.3167,
+       "2": 0.2746,
+       "3": 0.1168,
+       "4": 0.0241
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3359
+     },
+     "clean": {
+      "entries_per_pair": 1.3109,
+      "entries_per_pair_by_class": {
+       "RB": 0.3325,
+       "TE": 0.412,
+       "WR": 0.5664
+      },
+      "histogram": {
+       "0": 0.2695,
+       "1": 0.317,
+       "2": 0.2726,
+       "3": 0.1164,
+       "4": 0.0245
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3347
+     },
+     "new_drive": {
+      "entries_per_pair": 1.6938,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2423,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "JD_joint_drive|gated_all_act_feasible": {
+    "status": {
+     "feasible_redraw": 501,
+     "group_redraw": 260,
+     "joint_fallback": 4826,
+     "ok": 103425
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.2957,
+      "entries_per_pair_by_class": {
+       "RB": 0.3314,
+       "TE": 0.4059,
+       "WR": 0.5584
+      },
+      "histogram": {
+       "0": 0.2733,
+       "1": 0.3178,
+       "2": 0.2727,
+       "3": 0.1138,
+       "4": 0.0225
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3295
+     },
+     "clean": {
+      "entries_per_pair": 1.2939,
+      "entries_per_pair_by_class": {
+       "RB": 0.3299,
+       "TE": 0.4046,
+       "WR": 0.5593
+      },
+      "histogram": {
+       "0": 0.2742,
+       "1": 0.3182,
+       "2": 0.2713,
+       "3": 0.1134,
+       "4": 0.0229
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3283
+     },
+     "new_drive": {
+      "entries_per_pair": 1.6684,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2268,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "JD_joint_drive|gated_to_active_week": {
+    "status": {
+     "joint_capped": 186,
+     "joint_fallback": 4882,
+     "ok": 101712,
+     "short": 1713,
+     "short_RB_roster_below_target": 2,
+     "short_RB_roster_covers_target": 262,
+     "short_TE_roster_below_target": 272,
+     "short_TE_roster_covers_target": 894,
+     "short_WR_roster_below_target": 1,
+     "short_WR_roster_covers_target": 286
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.3148,
+      "entries_per_pair_by_class": {
+       "RB": 0.333,
+       "TE": 0.4146,
+       "WR": 0.5672
+      },
+      "histogram": {
+       "0": 0.2673,
+       "1": 0.3169,
+       "2": 0.2751,
+       "3": 0.1168,
+       "4": 0.024
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3363
+     },
+     "clean": {
+      "entries_per_pair": 1.3114,
+      "entries_per_pair_by_class": {
+       "RB": 0.3323,
+       "TE": 0.4122,
+       "WR": 0.5669
+      },
+      "histogram": {
+       "0": 0.2691,
+       "1": 0.317,
+       "2": 0.2731,
+       "3": 0.1164,
+       "4": 0.0244
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3352
+     },
+     "new_drive": {
+      "entries_per_pair": 1.6933,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2429,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "JD_joint_drive|ungated": {
+    "status": {
+     "joint_capped": 4,
+     "joint_fallback": 4860,
+     "ok": 103368,
+     "short": 57,
+     "short_RB_roster_covers_target": 15,
+     "short_TE_roster_below_target": 1,
+     "short_TE_roster_covers_target": 41
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.3169,
+      "entries_per_pair_by_class": {
+       "RB": 0.3331,
+       "TE": 0.4169,
+       "WR": 0.5669
+      },
+      "histogram": {
+       "0": 0.2695,
+       "1": 0.3137,
+       "2": 0.2738,
+       "3": 0.118,
+       "4": 0.025
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3346
+     },
+     "clean": {
+      "entries_per_pair": 1.3125,
+      "entries_per_pair_by_class": {
+       "RB": 0.332,
+       "TE": 0.4141,
+       "WR": 0.5663
+      },
+      "histogram": {
+       "0": 0.2709,
+       "1": 0.3147,
+       "2": 0.2721,
+       "3": 0.1174,
+       "4": 0.025
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3331
+     },
+     "new_drive": {
+      "entries_per_pair": 1.6962,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2437,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   }
+  }
+ }
+}

@@ -108,10 +108,20 @@ def _by_player_share(players, table, team, role, positions, draw):
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
            share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None,
-           scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False):
+           scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False, pbv1=None, seed_root=None,
+           field=None, lineup_state=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
-    With formation priors and the situation, also the formation and personnel grouping, from the historical shares."""
+    With formation priors and the situation, also the formation and personnel grouping, from the historical shares.
+    With `pbv1` (research flag, a pbv1_package.Draws), the personnel label is the PBV1 package when it can be drawn; the
+    formation draw above is unchanged, and a play that cannot be drawn keeps the formation layer's personnel.
+    With `field` (research flag, a participation_field.Field) and this side's `lineup_state`, the skill lineup advances one
+    snap before any player is chosen: the grouping is drawn from the previous snap's, and the runner, receiver and trick
+    thrower come only from the RB, FB, TE and WR on the field. The starting QB is the passer and is not in the lineup; a
+    second QB is on the field only in a grouping that has one (a -QB2 code), and only then can carry or catch. The
+    game's share population stays the full eligible roster, so the Dirichlet shares are the same draw as with the flag off.
+    The personnel label is the lineup's grouping (RB and FB together, then TE). A table with call-conditioned transitions
+    (schema v4) draws the grouping given this play's run or dropback call, so heavy groupings go with runs."""
     if intent not in ('run', 'dropback'):
         return None
     roster = snapshot['rosters'][side]
@@ -119,8 +129,21 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     import share_distributions
     available_players = share_distributions.eligible_players(players, roster.get('injury_report'))
     observed = snapshot['model_reference']['observed_reference']
-    base = f"{snapshot['snapshot_sha256']}:{seed}:{index}"
+    # v1 keys the draws on the snapshot hash (legacy). v2 passes seed_root, keyed on stable inputs only.
+    root = snapshot['snapshot_sha256'] if seed_root is None else seed_root
+    base = f"{root}:{seed}:{index}"
     chosen = {'side': side, 'team': team}
+    on_field = _advance_lineup(field, lineup_state, team, available_players, state, base, chosen, intent) \
+        if field is not None else None
+
+    def on(candidates):  # the flag-off path returns the list unchanged
+        if on_field is None:
+            return candidates
+        import participation_field
+        starter = participation_field.starter_qb(available_players)
+        return [p for p in candidates
+                if p['gsis_id'] in on_field or p['gsis_id'] == starter
+                or p['pos_abb'] not in participation_field.SKILL and p['pos_abb'] != 'QB']
     if share_table is not None:
         chosen['participant_share_model'] = 'dirichlet_multinomial'
     elif player_shares is not None:
@@ -186,7 +209,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                     labels['B'] = role
         chosen['labels'] = labels
     if intent == 'dropback':
-        qbd_players = available_players
+        qbd_players = on(available_players)
         if qb_decision_table is not None:
             eligible_qbs = sorted((p for p in qbd_players if p['pos_abb'] == 'QB'),
                                   key=lambda p: (p['pos_rank'], p['gsis_id']))
@@ -287,14 +310,15 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                    if share_distributions.conditional_role_shares(share_table) else population)
                     share_group_name = (share_distributions.group_for_positions('receive', positions)
                                         if share_distributions.conditional_role_shares(share_table) else 'all')
-                    chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), snapshot['snapshot_sha256'],
+                    chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), root,
                                                         _draw(f'{base}:receiver:dirichlet'), share_cache, population=share_group,
                                                         group=share_group_name)
                 else:
                     chosen['receiver'] = _by_player_share(receivers, player_shares, team, 'receive', positions,
                                                           _draw(f'{base}:receiver:player'))
     else:
-        run_players = _run_eligible_players(available_players)
+        run_population = _run_eligible_players(available_players)
+        run_players = on(run_population)
         if player_shares is None and share_table is None:
             chosen['rusher'] = _by_usage(run_players, observed['runner_position_usage'], team, 'rusher',
                                          _draw(f'{base}:rusher:position'))
@@ -307,16 +331,17 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
             if share_table is not None:  # the game's Dirichlet carry shares over the eligible players, then this play's draw
                 import share_distributions
                 population = share_distributions.eligible_players(
-                    [p for p in run_players if p['pos_abb'] in player_shares_positions('carry')],
+                    [p for p in run_population if p['pos_abb'] in player_shares_positions('carry')],
                     roster.get('injury_report'))
-                eligible = [p for p in population if p['pos_abb'] in positions]
+                run_ids = {p['gsis_id'] for p in run_players}
+                eligible = [p for p in population if p['pos_abb'] in positions and p['gsis_id'] in run_ids]
                 if not eligible:
                     raise ValueError(f'no eligible rushers for {team} after the injury report')
                 share_group = ([p for p in population if p['pos_abb'] in positions]
                                if share_distributions.conditional_role_shares(share_table) else population)
                 share_group_name = (share_distributions.group_for_positions('carry', positions)
                                     if share_distributions.conditional_role_shares(share_table) else 'all')
-                chosen['rusher'] = _by_game_share(eligible, share_table, team, 'carry', str(seed), snapshot['snapshot_sha256'],
+                chosen['rusher'] = _by_game_share(eligible, share_table, team, 'carry', str(seed), root,
                                                   _draw(f'{base}:rusher:dirichlet'), share_cache, population=share_group,
                                                   group=share_group_name)
             else:
@@ -326,6 +351,12 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
         import formation_layer  # local: the formation layer is optional
         chosen['formation'], chosen['personnel'] = formation_layer.choose(
             formation_priors, intent, state['down'], state['togo'], f'{base}:formation', team=team)
+    if pbv1 is not None and state is not None:
+        package = pbv1.draw(intent, state['down'], state['togo'], state['yl'], f'{base}:pbv1')
+        if package is not None:
+            chosen['personnel'] = package
+    if on_field is not None:
+        chosen['personnel'] = chosen['lineup']['group']
     if defense_priors is not None and intent == 'dropback':
         import defense_layer
         other = 'away' if side == 'home' else 'home'  # the defense is the other roster's team
@@ -355,10 +386,12 @@ def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw
 
 def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None,
             share_table=None, playbook_table=None, qb_decision_table=None, scramble_backoff_enabled=False,
-            qb_receiver_package=False, qb_run_role_style_enabled=False):
+            qb_receiver_package=False, qb_run_role_style_enabled=False, pbv1=None, seed_root=None, field=None):
     """A callable for PlayCallSampler.participant_chooser: called once per scrimmage play, after the intent, before the outcome.
-    The decision index counts those calls, so it is the same on every replay of the same game."""
+    The decision index counts those calls, so it is the same on every replay of the same game. With `field`, each side's
+    skill lineup carries from one of its scrimmage plays to the next, starting from an empty lineup."""
     counter = {'index': 0}
+    lineups = {side: {'lineup': {}, 'group': None} for side in ('home', 'away')}
     share_cache = {}  # one game and seed: each team's Dirichlet draw is made once and reused by every play
 
     def pick(intent, offense, state=None):
@@ -371,8 +404,36 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
                       share_cache=share_cache, qb_decision_table=qb_decision_table,
                       scramble_backoff_enabled=scramble_backoff_enabled,
                       qb_receiver_package=qb_receiver_package,
-                      qb_run_role_style_enabled=qb_run_role_style_enabled)
+                      qb_run_role_style_enabled=qb_run_role_style_enabled, pbv1=pbv1, seed_root=seed_root,
+                      field=field, lineup_state=lineups[side] if field is not None else None)
     return pick
+
+
+def _advance_lineup(field, lineup_state, team, available_players, state, base, chosen, intent=None):
+    """Advance this side's skill lineup by one snap and record it on `chosen`. Returns the on-field ids. Refuses, rather than
+    falling back, when the situation has no grouping data or the grouping cannot be read."""
+    import participation_field
+    if state is None or lineup_state is None:
+        raise ValueError('the participation field needs the play state and the side lineup')
+    if team not in field.teams:  # a team code the table does not use (LAR for LA, say) would silently get league rates
+        raise ValueError(f'participation field has no transitions for team {team!r}; its teams are {sorted(field.teams)}')
+    prev = lineup_state['group']
+    situation = participation_field.cell_of(state['down'], state['togo'], state['yl'])
+    cell = field.supported_cell(situation)
+    if cell is None:
+        raise ValueError(f'participation field has no supported cell for down {situation.split("|")[0]} ({situation})')
+    group = field.draw_group(team, participation_field.START if prev is None else prev, cell,
+                             _draw(f'{base}:field:group'), call=intent)  # a v4 table draws the grouping given the call
+    skill = [p for p in available_players if p['pos_abb'] in participation_field.SKILL or p['pos_abb'] == 'QB']
+    lineup, record = field.advance(team, lineup_state['lineup'], group, skill, _draw(f'{base}:field:advance'),
+                                   prev_group=prev)
+    if lineup is None:
+        raise ValueError(f"participation field: {record['status']} for {team} in cell {cell} (grouping {group!r})")
+    lineup_state['lineup'], lineup_state['group'] = lineup, group
+    chosen['lineup'] = {'team': team, 'group': group, 'on_field': sorted(lineup), 'status': record['status'], 'cell': cell,
+                        'cell_fallback_from': situation if cell != situation else None,
+                        'entrants': record['entrants'], 'leavers': record['leavers'], 'short': record['short']}
+    return set(lineup)
 
 
 def ids(pre):
@@ -383,7 +444,7 @@ def ids(pre):
     if pre.get('target_role') is not None:  # the decision model's category, not a player: kept so the record shows it
         out['target_role'] = pre['target_role']
     for key in ('participant_share_model', 'target_role_prior_used', 'target_role_prior_combined',
-                'playbook_used', 'playbook_fallback', 'qb_run_role_style'):
+                'playbook_used', 'playbook_fallback', 'qb_run_role_style', 'lineup'):
         if pre.get(key) is not None:
             out[key] = pre[key]
     if pre.get('labels') is not None:  # the drawn decision labels, for the record

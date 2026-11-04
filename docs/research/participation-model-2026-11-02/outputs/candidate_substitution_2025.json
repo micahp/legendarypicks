@@ -1,0 +1,702 @@
+{
+ "base_field": {
+  "file": "field_2022_2024.json",
+  "sha256": "8f555979fe6ba08f37f926c2a9fb93d52998722e1fa55ad706250a5b52d5d0e9"
+ },
+ "fit_checks": {
+  "snaps_with_drive_unknown": 31,
+  "transitions": 104142
+ },
+ "fit_seasons": [
+  2022,
+  2023,
+  2024
+ ],
+ "holdout": [
+  2025
+ ],
+ "joint_keys": {
+  "pooled": {
+   "transitions_total": 147,
+   "transitions_with_support": 31
+  },
+  "split": {
+   "transitions_total": 233,
+   "transitions_with_support": 42
+  }
+ },
+ "joint_min_pairs": 30,
+ "observed": {
+  "all": {
+   "entries_per_pair": 1.395,
+   "entries_per_pair_by_class": {
+    "RB": 0.3382,
+    "TE": 0.4371,
+    "WR": 0.6198
+   },
+   "histogram": {
+    "0": 0.247,
+    "1": 0.3085,
+    "2": 0.2809,
+    "3": 0.1326,
+    "4": 0.0311
+   },
+   "pairs": 33905,
+   "share_two_or_more_classes_entering": 0.354
+  },
+  "clean": {
+   "entries_per_pair": 1.3311,
+   "entries_per_pair_by_class": {
+    "RB": 0.329,
+    "TE": 0.4135,
+    "WR": 0.5886
+   },
+   "histogram": {
+    "0": 0.2629,
+    "1": 0.3168,
+    "2": 0.2745,
+    "3": 0.12,
+    "4": 0.0258
+   },
+   "pairs": 29531,
+   "share_two_or_more_classes_entering": 0.3373
+  },
+  "new_drive": {
+   "entries_per_pair": 1.7696,
+   "pairs": 4492
+  },
+  "same_drive": {
+   "entries_per_pair": 1.2524,
+   "pairs": 25036
+  }
+ },
+ "pooled_vs_runtime_mismatch": [],
+ "pooled_vs_runtime_mismatch_count": 0,
+ "seeds": 3,
+ "variants": {
+  "forced": {
+   "B0_runtime": {
+    "status": {
+     "ok": 103181,
+     "short": 244
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.214,
+      "entries_per_pair_by_class": {
+       "RB": 0.3163,
+       "TE": 0.3972,
+       "WR": 0.5004
+      },
+      "histogram": {
+       "0": 0.2272,
+       "1": 0.4157,
+       "2": 0.2796,
+       "3": 0.0712,
+       "4": 0.0063
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2566
+     },
+     "clean": {
+      "entries_per_pair": 1.1912,
+      "entries_per_pair_by_class": {
+       "RB": 0.3092,
+       "TE": 0.3872,
+       "WR": 0.4947
+      },
+      "histogram": {
+       "0": 0.2372,
+       "1": 0.4155,
+       "2": 0.2724,
+       "3": 0.0688,
+       "4": 0.006
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2495
+     },
+     "new_drive": {
+      "entries_per_pair": 1.2772,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1757,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "D_drive_split": {
+    "status": {
+     "ok": 103195,
+     "short": 230
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.2157,
+      "entries_per_pair_by_class": {
+       "RB": 0.3162,
+       "TE": 0.3958,
+       "WR": 0.5037
+      },
+      "histogram": {
+       "0": 0.2309,
+       "1": 0.4083,
+       "2": 0.2818,
+       "3": 0.0722,
+       "4": 0.0067
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2573
+     },
+     "clean": {
+      "entries_per_pair": 1.1924,
+      "entries_per_pair_by_class": {
+       "RB": 0.3087,
+       "TE": 0.3861,
+       "WR": 0.4976
+      },
+      "histogram": {
+       "0": 0.2414,
+       "1": 0.408,
+       "2": 0.2739,
+       "3": 0.0701,
+       "4": 0.0065
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2499
+     },
+     "new_drive": {
+      "entries_per_pair": 1.5842,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1221,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "JD_joint_drive": {
+    "status": {
+     "joint_capped": 8,
+     "joint_fallback": 5325,
+     "ok": 103354,
+     "short": 71
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.3388,
+      "entries_per_pair_by_class": {
+       "RB": 0.3368,
+       "TE": 0.4237,
+       "WR": 0.5784
+      },
+      "histogram": {
+       "0": 0.2655,
+       "1": 0.3085,
+       "2": 0.277,
+       "3": 0.1216,
+       "4": 0.0275
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3378
+     },
+     "clean": {
+      "entries_per_pair": 1.3092,
+      "entries_per_pair_by_class": {
+       "RB": 0.3278,
+       "TE": 0.4131,
+       "WR": 0.5683
+      },
+      "histogram": {
+       "0": 0.2783,
+       "1": 0.3074,
+       "2": 0.2695,
+       "3": 0.1181,
+       "4": 0.0268
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3293
+     },
+     "new_drive": {
+      "entries_per_pair": 1.7817,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2244,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "J_joint": {
+    "status": {
+     "joint_capped": 5,
+     "joint_fallback": 3987,
+     "ok": 103366,
+     "short": 59
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.335,
+      "entries_per_pair_by_class": {
+       "RB": 0.3329,
+       "TE": 0.4218,
+       "WR": 0.5803
+      },
+      "histogram": {
+       "0": 0.267,
+       "1": 0.309,
+       "2": 0.2754,
+       "3": 0.1211,
+       "4": 0.0275
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3363
+     },
+     "clean": {
+      "entries_per_pair": 1.3063,
+      "entries_per_pair_by_class": {
+       "RB": 0.3245,
+       "TE": 0.4116,
+       "WR": 0.5702
+      },
+      "histogram": {
+       "0": 0.2793,
+       "1": 0.3077,
+       "2": 0.2685,
+       "3": 0.1179,
+       "4": 0.0265
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3286
+     },
+     "new_drive": {
+      "entries_per_pair": 1.4656,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2777,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "SD_both": {
+    "status": {
+     "ok": 103167,
+     "short": 258
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.2412,
+      "entries_per_pair_by_class": {
+       "RB": 0.3262,
+       "TE": 0.4083,
+       "WR": 0.5067
+      },
+      "histogram": {
+       "0": 0.2307,
+       "1": 0.3974,
+       "2": 0.2809,
+       "3": 0.0821,
+       "4": 0.0089
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2643
+     },
+     "clean": {
+      "entries_per_pair": 1.216,
+      "entries_per_pair_by_class": {
+       "RB": 0.3174,
+       "TE": 0.3984,
+       "WR": 0.5002
+      },
+      "histogram": {
+       "0": 0.2414,
+       "1": 0.3973,
+       "2": 0.2737,
+       "3": 0.0791,
+       "4": 0.0084
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2566
+     },
+     "new_drive": {
+      "entries_per_pair": 1.6497,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1381,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "S_stint_swap": {
+    "status": {
+     "ok": 103154,
+     "short": 271
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.2442,
+      "entries_per_pair_by_class": {
+       "RB": 0.3281,
+       "TE": 0.4075,
+       "WR": 0.5086
+      },
+      "histogram": {
+       "0": 0.2292,
+       "1": 0.3978,
+       "2": 0.2825,
+       "3": 0.0811,
+       "4": 0.0095
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2652
+     },
+     "clean": {
+      "entries_per_pair": 1.2176,
+      "entries_per_pair_by_class": {
+       "RB": 0.3194,
+       "TE": 0.3969,
+       "WR": 0.5014
+      },
+      "histogram": {
+       "0": 0.2396,
+       "1": 0.3988,
+       "2": 0.275,
+       "3": 0.0777,
+       "4": 0.0089
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2568
+     },
+     "new_drive": {
+      "entries_per_pair": 1.3084,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2013,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   }
+  },
+  "free": {
+   "B0_runtime": {
+    "status": {
+     "ok": 103242,
+     "short": 183
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.1902,
+      "entries_per_pair_by_class": {
+       "RB": 0.3066,
+       "TE": 0.3771,
+       "WR": 0.5065
+      },
+      "histogram": {
+       "0": 0.2372,
+       "1": 0.4179,
+       "2": 0.27,
+       "3": 0.0678,
+       "4": 0.0072
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2489
+     },
+     "clean": {
+      "entries_per_pair": 1.1861,
+      "entries_per_pair_by_class": {
+       "RB": 0.3061,
+       "TE": 0.3737,
+       "WR": 0.5063
+      },
+      "histogram": {
+       "0": 0.2392,
+       "1": 0.4177,
+       "2": 0.2684,
+       "3": 0.0677,
+       "4": 0.0071
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2488
+     },
+     "new_drive": {
+      "entries_per_pair": 1.2053,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1826,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "D_drive_split": {
+    "status": {
+     "ok": 103236,
+     "short": 189
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.2005,
+      "entries_per_pair_by_class": {
+       "RB": 0.3093,
+       "TE": 0.378,
+       "WR": 0.5132
+      },
+      "histogram": {
+       "0": 0.2355,
+       "1": 0.4139,
+       "2": 0.2723,
+       "3": 0.0715,
+       "4": 0.0068
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2512
+     },
+     "clean": {
+      "entries_per_pair": 1.194,
+      "entries_per_pair_by_class": {
+       "RB": 0.3065,
+       "TE": 0.3742,
+       "WR": 0.5133
+      },
+      "histogram": {
+       "0": 0.2387,
+       "1": 0.4127,
+       "2": 0.2713,
+       "3": 0.0708,
+       "4": 0.0065
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2499
+     },
+     "new_drive": {
+      "entries_per_pair": 1.5386,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1322,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "JD_joint_drive": {
+    "status": {
+     "joint_capped": 4,
+     "joint_fallback": 4860,
+     "ok": 103368,
+     "short": 57
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.3169,
+      "entries_per_pair_by_class": {
+       "RB": 0.3331,
+       "TE": 0.4169,
+       "WR": 0.5669
+      },
+      "histogram": {
+       "0": 0.2695,
+       "1": 0.3137,
+       "2": 0.2738,
+       "3": 0.118,
+       "4": 0.025
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3346
+     },
+     "clean": {
+      "entries_per_pair": 1.3125,
+      "entries_per_pair_by_class": {
+       "RB": 0.332,
+       "TE": 0.4141,
+       "WR": 0.5663
+      },
+      "histogram": {
+       "0": 0.2709,
+       "1": 0.3147,
+       "2": 0.2721,
+       "3": 0.1174,
+       "4": 0.025
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3331
+     },
+     "new_drive": {
+      "entries_per_pair": 1.6962,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2437,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "J_joint": {
+    "status": {
+     "joint_capped": 2,
+     "joint_fallback": 3721,
+     "ok": 103371,
+     "short": 54
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.3178,
+      "entries_per_pair_by_class": {
+       "RB": 0.3348,
+       "TE": 0.4163,
+       "WR": 0.5667
+      },
+      "histogram": {
+       "0": 0.2725,
+       "1": 0.31,
+       "2": 0.2718,
+       "3": 0.1201,
+       "4": 0.0256
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.3356
+     },
+     "clean": {
+      "entries_per_pair": 1.3131,
+      "entries_per_pair_by_class": {
+       "RB": 0.3337,
+       "TE": 0.4139,
+       "WR": 0.5655
+      },
+      "histogram": {
+       "0": 0.2744,
+       "1": 0.31,
+       "2": 0.2707,
+       "3": 0.1194,
+       "4": 0.0255
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.3347
+     },
+     "new_drive": {
+      "entries_per_pair": 1.3625,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.3042,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "SD_both": {
+    "status": {
+     "ok": 103175,
+     "short": 250
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.2183,
+      "entries_per_pair_by_class": {
+       "RB": 0.3178,
+       "TE": 0.3889,
+       "WR": 0.5115
+      },
+      "histogram": {
+       "0": 0.2369,
+       "1": 0.4031,
+       "2": 0.2739,
+       "3": 0.0773,
+       "4": 0.0088
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2578
+     },
+     "clean": {
+      "entries_per_pair": 1.2136,
+      "entries_per_pair_by_class": {
+       "RB": 0.3169,
+       "TE": 0.3855,
+       "WR": 0.5111
+      },
+      "histogram": {
+       "0": 0.2391,
+       "1": 0.4028,
+       "2": 0.2724,
+       "3": 0.077,
+       "4": 0.0086
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2573
+     },
+     "new_drive": {
+      "entries_per_pair": 1.5611,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.1512,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   },
+   "S_stint_swap": {
+    "status": {
+     "ok": 103203,
+     "short": 222
+    },
+    "summary": {
+     "all": {
+      "entries_per_pair": 1.225,
+      "entries_per_pair_by_class": {
+       "RB": 0.3217,
+       "TE": 0.3907,
+       "WR": 0.5126
+      },
+      "histogram": {
+       "0": 0.2321,
+       "1": 0.4064,
+       "2": 0.275,
+       "3": 0.0775,
+       "4": 0.009
+      },
+      "pairs": 101715,
+      "share_two_or_more_classes_entering": 0.2592
+     },
+     "clean": {
+      "entries_per_pair": 1.2215,
+      "entries_per_pair_by_class": {
+       "RB": 0.3205,
+       "TE": 0.387,
+       "WR": 0.5139
+      },
+      "histogram": {
+       "0": 0.2338,
+       "1": 0.4064,
+       "2": 0.2736,
+       "3": 0.0772,
+       "4": 0.009
+      },
+      "pairs": 88593,
+      "share_two_or_more_classes_entering": 0.2582
+     },
+     "new_drive": {
+      "entries_per_pair": 1.231,
+      "pairs": 13476
+     },
+     "same_drive": {
+      "entries_per_pair": 1.2198,
+      "pairs": 75108
+     }
+    },
+    "team_games_dropped_no_league_cell": 0
+   }
+  }
+ }
+}
