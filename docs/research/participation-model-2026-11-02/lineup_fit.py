@@ -63,8 +63,10 @@ def sequences(rows, positions, snap_labels=False, recon=None, with_intent=False)
             for key, items in grouped.items()}
 
 
-def fit(seqs, seasons):
-    """The export pieces: grouping transitions, team grouping transitions and leave counts, all recency weighted."""
+def fit(seqs, seasons, weights=None):
+    """The export pieces: grouping transitions, team grouping transitions and leave counts, all recency weighted.
+    weights: {season: weight}; participation_model.RECENCY when None."""
+    weights = pm.RECENCY if weights is None else weights
     league_transitions = defaultdict(Counter)  # (cell, previous grouping) -> grouping -> weight
     team_transitions = defaultdict(Counter)  # (team, cell, previous grouping) -> grouping -> weight
     league_by_intent = defaultdict(Counter)  # (cell, call, previous grouping) -> grouping -> weight
@@ -75,7 +77,7 @@ def fit(seqs, seasons):
     for (season, _game, team), seq in sorted(seqs.items()):
         if season not in seasons:
             continue
-        w = pm.RECENCY[season]
+        w = weights[season]
         prev, prev_skill, prev_on, stint, prev_ok = START, None, set(), {}, False
         for group, cell, skill, *call in seq:
             league_transitions[(cell, prev)][group] += w

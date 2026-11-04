@@ -105,14 +105,16 @@ def weekly_best(model, team, cell, cur):
                / (n_cur + GROUP_PRIOR_PLAYS))
 
 
-def fit_player_rates(rows, seasons, positions):
-    """Recency-weighted on-field appearances and team plays by (player, team, group)."""
+def fit_player_rates(rows, seasons, positions, weights=None):
+    """Recency-weighted on-field appearances and team plays by (player, team, group). weights: {season: weight}; RECENCY
+    when None."""
+    weights = RECENCY if weights is None else weights
     appearances = defaultdict(float)
     team_plays = defaultdict(float)
     for row in rows:
         if int(row['season']) not in seasons:
             continue
-        w = RECENCY[int(row['season'])]
+        w = weights[int(row['season'])]
         team_plays[(row['posteam'], row['group'])] += w
         for pid in row['ids']:
             appearances[(pid, row['posteam'], row['group'])] += w
