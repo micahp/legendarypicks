@@ -189,6 +189,20 @@ class PlayerShareManifest(unittest.TestCase):
         self.assertFalse(description['enabled_layers']['score_clock_playcalling'])
 
 
+class DescribeMemo(unittest.TestCase):
+    def test_the_manifest_is_reused_only_while_its_sources_are_the_same_objects(self):
+        ref = SimpleNamespace(contextual_sampler=SimpleNamespace(layer=SimpleNamespace(artifact={})),
+                              model_inputs={'sha256': 'first'})
+        layer = Mock(side_effect=lambda r: {'reference_sha256': r.model_inputs['sha256']})
+        with patch.object(se, 'is_slc', return_value=True), patch.object(se, '_describe_layer', layer):
+            se.describe(ref)['reference_sha256'] = 'edited by a caller'
+            self.assertEqual(se.describe(ref)['reference_sha256'], 'first')
+            self.assertEqual(layer.call_count, 1)
+            ref.model_inputs = {'sha256': 'second'}  # a new object, even one that reuses the old address
+            self.assertEqual(se.describe(ref)['reference_sha256'], 'second')
+            self.assertEqual(layer.call_count, 2)
+
+
 class PlayerOutcomeRoleManifest(unittest.TestCase):
     def test_receiver_only_role_scope_is_recorded_in_the_model_manifest(self):
         import player_outcomes as po

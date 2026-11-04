@@ -964,10 +964,12 @@ def describe(ref):
     manifest is computed once per reference and reused while the objects it reads are the same ones."""
     if not is_slc(ref):
         return None
-    memo_key = (id(ref.contextual_sampler), id(ref.model_inputs), id(ref.contextual_sampler.layer.artifact))
+    # The memo holds the objects themselves and compares identity: a key of id()s could match a new object that reused a
+    # freed object's address (a caller replacing ref.model_inputs, say) and return the old manifest.
+    sources = (ref.contextual_sampler, ref.model_inputs, ref.contextual_sampler.layer.artifact)
     memo = getattr(ref, '_describe_memo', None)
-    if memo is None or memo[0] != memo_key:
-        memo = (memo_key, _describe_layer(ref))
+    if memo is None or any(held is not current for held, current in zip(memo[0], sources)):
+        memo = (sources, _describe_layer(ref))
         ref._describe_memo = memo
     return copy.deepcopy(memo[1])
 
