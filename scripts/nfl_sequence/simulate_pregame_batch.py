@@ -858,6 +858,8 @@ def run_batch(args):
                                                            participation_field=((args.participation_field,
                                                                                  args.participation_field_sha256)
                                                                                 if args.participation_field else None),
+                                                           fg_kicker=((args.playcall_fg_kicker, args.playcall_fg_kicker_sha256)
+                                                                      if args.playcall_fg_kicker else None),
                                                            qb_decisions=args.playcall_qb_decisions,
                                                            player_outcomes=args.playcall_player_outcomes,
                                                            player_outcomes_receiver_only=args.playcall_player_outcomes_receiver_only,
@@ -968,6 +970,11 @@ def run_batch(args):
         ledger_header['research_integration'] = {'participation_field': {
             'table': str(args.participation_field), 'table_sha256': args.participation_field_sha256,
             'fit_seasons': ref.contextual_sampler.participation_field.seasons, 'personnel_label': 'lineup grouping'}}
+    if args.playcall_fg_kicker:  # research flag: the kicker table is pinned in the ledger too
+        fg = ref.contextual_sampler.fg_kicker
+        ledger_header.setdefault('research_integration', {})['fg_kicker'] = {
+            'table': str(args.playcall_fg_kicker), 'table_sha256': args.playcall_fg_kicker_sha256,
+            'fit_seasons': [min(fg['table'].fit_seasons), max(fg['table'].fit_seasons)], 'kickers': fg['kickers']}
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume,
                                          seed_end=seed_end_exclusive,
                                          allowed_seeds=set(seed_values) if seed_selection_manifest else None)
@@ -1213,6 +1220,12 @@ def main(argv=None):
                          '--participation-field-sha256 and --rng-protocol v2; cannot run with --playcall-pbv1-package')
     ap.add_argument('--participation-field-sha256', default=None,
                     help='the expected SHA-256 of the --participation-field table; a different file is refused')
+    ap.add_argument('--playcall-fg-kicker', type=Path, default=None,
+                    help='SLC v2 research flag (off by default): field goals by the team kicker: distance +18, 76-yard '
+                         'record ceiling, kick share weighted by yard line, kicker make offset (kicker_field_goals.py). '
+                         'Needs --playcall-fg-kicker-sha256 and --slc-blocker-fix long_field_goal_feasibility')
+    ap.add_argument('--playcall-fg-kicker-sha256', default=None,
+                    help='the expected SHA-256 of the --playcall-fg-kicker table; a different file is refused')
     ap.add_argument('--playcall-qb-decisions', action='store_true',
                     help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
     ap.add_argument('--playcall-qb-run-role-style', action='store_true',
@@ -1298,6 +1311,13 @@ def main(argv=None):
             ap.error('--participation-field cannot run with --playcall-pbv1-package; both set the personnel label')
         if not args.playcall_artifact:
             ap.error('--participation-field requires --playcall-artifact (the SLC engine)')
+    if args.playcall_fg_kicker:
+        if not args.playcall_fg_kicker_sha256:
+            ap.error('--playcall-fg-kicker requires --playcall-fg-kicker-sha256')
+        if not args.playcall_artifact:
+            ap.error('--playcall-fg-kicker requires --playcall-artifact (the SLC engine)')
+        if 'long_field_goal_feasibility' not in args.slc_blocker_fix:
+            ap.error('--playcall-fg-kicker requires --slc-blocker-fix long_field_goal_feasibility')
     if args.availability_snapshot and not args.roster_snapshot:
         ap.error('--availability-snapshot needs the full-depth roster: pass --roster-snapshot and --roster-provenance')
     if args.availability_store and not args.roster_snapshot:
