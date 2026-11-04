@@ -103,12 +103,7 @@ class Offense:
 
     def advance(self, code):
         """Build the lineup for the next snap and return (entered, left). The snap is counted for every player on the field."""
-        return self.advance_counts(package(code), code)
-
-    def advance_counts(self, need, code='counts'):
-        """advance() for slot counts given directly ({'QB': 1, 'BACK': 1, ...}), as a replay of observed packages does."""
-        if set(need) != set(SLOTS) or sum(need.values()) != fp.OFFENSE_SIZE:
-            raise InvalidPackage(f'{code}: slot counts {need} are not eleven players in {SLOTS}')
+        need = package(code)
         voluntary = [p for p in self.on_field
                      if self.rng.random() < self.leave_hazard(p, self.roster[p], self.stint[p])]
         staying = [p for p in self.on_field if p not in voluntary]
