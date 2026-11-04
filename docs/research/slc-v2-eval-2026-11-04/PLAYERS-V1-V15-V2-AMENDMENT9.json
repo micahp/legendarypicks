@@ -1,0 +1,1332 @@
+{
+ "arms": {
+  "V1": "/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/full/V1",
+  "V15": "/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/full/V15",
+  "V2": "/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/full/V2"
+ },
+ "coverage": {
+  "V2_snap_team_game_without_published_snaps": 28,
+  "games": 121,
+  "published_not_on_simulated_roster": 974,
+  "published_not_on_simulated_roster_with_offense": 67,
+  "published_without_player_id": 8,
+  "seeds_V116_V1518_V219": 1,
+  "seeds_V117_V1517_V220": 1,
+  "seeds_V117_V1519_V217": 1,
+  "seeds_V117_V1519_V220": 1,
+  "seeds_V117_V1520_V219": 1,
+  "seeds_V117_V1520_V220": 1,
+  "seeds_V118_V1515_V218": 1,
+  "seeds_V118_V1518_V219": 1,
+  "seeds_V118_V1518_V220": 1,
+  "seeds_V118_V1519_V219": 2,
+  "seeds_V118_V1519_V220": 3,
+  "seeds_V118_V1520_V219": 3,
+  "seeds_V118_V1520_V220": 5,
+  "seeds_V119_V1517_V220": 1,
+  "seeds_V119_V1518_V220": 3,
+  "seeds_V119_V1519_V218": 1,
+  "seeds_V119_V1519_V219": 7,
+  "seeds_V119_V1519_V220": 11,
+  "seeds_V119_V1520_V219": 10,
+  "seeds_V119_V1520_V220": 9,
+  "seeds_V120_V1517_V220": 1,
+  "seeds_V120_V1518_V219": 2,
+  "seeds_V120_V1518_V220": 4,
+  "seeds_V120_V1519_V218": 1,
+  "seeds_V120_V1519_V219": 5,
+  "seeds_V120_V1519_V220": 12,
+  "seeds_V120_V1520_V218": 4,
+  "seeds_V120_V1520_V219": 4,
+  "seeds_V120_V1520_V220": 24
+ },
+ "differences": {
+  "V15_minus_V1": {
+   "carries.all.crps": [
+    -0.24439,
+    -0.31234,
+    -0.18272
+   ],
+   "carries.all.mae": [
+    -0.28081,
+    -0.36086,
+    -0.20225
+   ],
+   "carries.observed_positive.crps": [
+    -0.72947,
+    -0.90467,
+    -0.56251
+   ],
+   "carries.observed_positive.mae": [
+    -0.85641,
+    -1.08077,
+    -0.64768
+   ],
+   "pass_attempts.all.crps": [
+    -0.03244,
+    -0.10201,
+    0.03729
+   ],
+   "pass_attempts.all.mae": [
+    -0.04667,
+    -0.13775,
+    0.0444
+   ],
+   "pass_attempts.observed_positive.crps": [
+    -0.16553,
+    -0.38577,
+    0.04433
+   ],
+   "pass_attempts.observed_positive.mae": [
+    -0.19793,
+    -0.52745,
+    0.11569
+   ],
+   "passing_yards.all.crps": [
+    -0.79365,
+    -1.60976,
+    0.01243
+   ],
+   "passing_yards.all.mae": [
+    -0.83474,
+    -1.89997,
+    0.21629
+   ],
+   "passing_yards.observed_positive.crps": [
+    -2.55306,
+    -4.78459,
+    -0.45336
+   ],
+   "passing_yards.observed_positive.mae": [
+    -2.47719,
+    -5.43811,
+    0.39106
+   ],
+   "receiving_tds.all.crps": [
+    -0.00264,
+    -0.00636,
+    0.00118
+   ],
+   "receiving_tds.all.mae": [
+    -0.00153,
+    -0.00703,
+    0.0038
+   ],
+   "receiving_tds.observed_positive.crps": [
+    -0.00796,
+    -0.03013,
+    0.01276
+   ],
+   "receiving_tds.observed_positive.mae": [
+    0.00073,
+    -0.01551,
+    0.01715
+   ],
+   "receiving_yards.all.crps": [
+    -1.26912,
+    -1.56436,
+    -0.96496
+   ],
+   "receiving_yards.all.mae": [
+    -1.43041,
+    -1.83063,
+    -1.04639
+   ],
+   "receiving_yards.observed_positive.crps": [
+    -1.94791,
+    -2.4169,
+    -1.47767
+   ],
+   "receiving_yards.observed_positive.mae": [
+    -2.12257,
+    -2.72272,
+    -1.53493
+   ],
+   "receptions.all.crps": [
+    -0.13572,
+    -0.16165,
+    -0.10941
+   ],
+   "receptions.all.mae": [
+    -0.15616,
+    -0.18918,
+    -0.12263
+   ],
+   "receptions.observed_positive.crps": [
+    -0.20676,
+    -0.2456,
+    -0.16664
+   ],
+   "receptions.observed_positive.mae": [
+    -0.23581,
+    -0.28804,
+    -0.18625
+   ],
+   "rushing_tds.all.crps": [
+    -0.00661,
+    -0.01277,
+    -0.0006
+   ],
+   "rushing_tds.all.mae": [
+    0.0021,
+    -0.0058,
+    0.00997
+   ],
+   "rushing_tds.observed_positive.crps": [
+    -0.0323,
+    -0.06949,
+    0.00326
+   ],
+   "rushing_tds.observed_positive.mae": [
+    -0.00569,
+    -0.04081,
+    0.02964
+   ],
+   "rushing_yards.all.crps": [
+    -0.85962,
+    -1.12458,
+    -0.61221
+   ],
+   "rushing_yards.all.mae": [
+    -0.97331,
+    -1.29131,
+    -0.65913
+   ],
+   "rushing_yards.observed_positive.crps": [
+    -2.65506,
+    -3.37437,
+    -1.96438
+   ],
+   "rushing_yards.observed_positive.mae": [
+    -2.93084,
+    -3.81493,
+    -2.04747
+   ],
+   "targets.all.crps": [
+    -0.22992,
+    -0.27252,
+    -0.18645
+   ],
+   "targets.all.mae": [
+    -0.25693,
+    -0.31129,
+    -0.20818
+   ],
+   "targets.observed_positive.crps": [
+    -0.31516,
+    -0.37614,
+    -0.25516
+   ],
+   "targets.observed_positive.mae": [
+    -0.34456,
+    -0.42385,
+    -0.26986
+   ],
+   "top_carry_share.crps": [
+    -0.01619,
+    -0.02423,
+    -0.00828
+   ],
+   "top_target_share.crps": [
+    -0.01675,
+    -0.02097,
+    -0.01245
+   ]
+  },
+  "V2_minus_V15": {
+   "carries.all.crps": [
+    0.11294,
+    0.06381,
+    0.16362
+   ],
+   "carries.all.mae": [
+    0.15807,
+    0.09174,
+    0.22609
+   ],
+   "carries.observed_positive.crps": [
+    0.16862,
+    0.02255,
+    0.3177
+   ],
+   "carries.observed_positive.mae": [
+    0.28459,
+    0.08203,
+    0.47764
+   ],
+   "pass_attempts.all.crps": [
+    -0.00138,
+    -0.04819,
+    0.04537
+   ],
+   "pass_attempts.all.mae": [
+    -0.01042,
+    -0.07361,
+    0.05117
+   ],
+   "pass_attempts.observed_positive.crps": [
+    0.00108,
+    -0.14619,
+    0.14747
+   ],
+   "pass_attempts.observed_positive.mae": [
+    -0.02931,
+    -0.24419,
+    0.18941
+   ],
+   "passing_yards.all.crps": [
+    0.45464,
+    -0.12965,
+    1.03408
+   ],
+   "passing_yards.all.mae": [
+    0.36294,
+    -0.42038,
+    1.17778
+   ],
+   "passing_yards.observed_positive.crps": [
+    0.93785,
+    -0.56267,
+    2.44198
+   ],
+   "passing_yards.observed_positive.mae": [
+    0.76896,
+    -1.53556,
+    3.0084
+   ],
+   "receiving_tds.all.crps": [
+    0.00064,
+    -0.00224,
+    0.00358
+   ],
+   "receiving_tds.all.mae": [
+    0.00015,
+    -0.0041,
+    0.00461
+   ],
+   "receiving_tds.observed_positive.crps": [
+    0.00127,
+    -0.01795,
+    0.02005
+   ],
+   "receiving_tds.observed_positive.mae": [
+    8e-05,
+    -0.01609,
+    0.01624
+   ],
+   "receiving_yards.all.crps": [
+    0.73172,
+    0.51294,
+    0.9701
+   ],
+   "receiving_yards.all.mae": [
+    0.73412,
+    0.44331,
+    1.0322
+   ],
+   "receiving_yards.observed_positive.crps": [
+    1.01831,
+    0.63464,
+    1.41954
+   ],
+   "receiving_yards.observed_positive.mae": [
+    1.35775,
+    0.86609,
+    1.83929
+   ],
+   "receptions.all.crps": [
+    0.07762,
+    0.05779,
+    0.09834
+   ],
+   "receptions.all.mae": [
+    0.06964,
+    0.04052,
+    0.09704
+   ],
+   "receptions.observed_positive.crps": [
+    0.10493,
+    0.0715,
+    0.14033
+   ],
+   "receptions.observed_positive.mae": [
+    0.1311,
+    0.08388,
+    0.17909
+   ],
+   "rushing_tds.all.crps": [
+    0.00363,
+    -0.00225,
+    0.00988
+   ],
+   "rushing_tds.all.mae": [
+    0.00591,
+    -0.0018,
+    0.01342
+   ],
+   "rushing_tds.observed_positive.crps": [
+    0.03212,
+    -0.00477,
+    0.0689
+   ],
+   "rushing_tds.observed_positive.mae": [
+    0.03146,
+    -0.00755,
+    0.06779
+   ],
+   "rushing_yards.all.crps": [
+    0.42041,
+    0.21337,
+    0.62015
+   ],
+   "rushing_yards.all.mae": [
+    0.6135,
+    0.33528,
+    0.89217
+   ],
+   "rushing_yards.observed_positive.crps": [
+    0.52844,
+    -0.03329,
+    1.06694
+   ],
+   "rushing_yards.observed_positive.mae": [
+    0.84164,
+    0.06866,
+    1.59569
+   ],
+   "targets.all.crps": [
+    0.11433,
+    0.08519,
+    0.14354
+   ],
+   "targets.all.mae": [
+    0.10723,
+    0.06648,
+    0.14747
+   ],
+   "targets.observed_positive.crps": [
+    0.15115,
+    0.10534,
+    0.19788
+   ],
+   "targets.observed_positive.mae": [
+    0.19449,
+    0.13173,
+    0.25747
+   ],
+   "top_carry_share.crps": [
+    0.00501,
+    -0.00509,
+    0.01495
+   ],
+   "top_target_share.crps": [
+    0.00282,
+    -0.00026,
+    0.00586
+   ]
+  }
+ },
+ "games": 121,
+ "roles": {
+  "CAR1": {
+   "V1": {
+    "mae": 0.1476,
+    "mean_observed": 0.6018,
+    "mean_simulated": 0.6966,
+    "team_games": 242
+   },
+   "V15": {
+    "mae": 0.1303,
+    "mean_observed": 0.6018,
+    "mean_simulated": 0.6602,
+    "team_games": 242
+   },
+   "V2": {
+    "mae": 0.1335,
+    "mean_observed": 0.6018,
+    "mean_simulated": 0.5882,
+    "team_games": 242
+   }
+  },
+  "CAR2": {
+   "V1": {
+    "mae": 0.0882,
+    "mean_observed": 0.235,
+    "mean_simulated": 0.1845,
+    "team_games": 242
+   },
+   "V15": {
+    "mae": 0.0825,
+    "mean_observed": 0.235,
+    "mean_simulated": 0.2011,
+    "team_games": 242
+   },
+   "V2": {
+    "mae": 0.0846,
+    "mean_observed": 0.235,
+    "mean_simulated": 0.2305,
+    "team_games": 242
+   }
+  },
+  "RB1_snap": {
+   "V2": {
+    "mae": 0.1095,
+    "mean_observed": 0.6476,
+    "mean_simulated": 0.6603,
+    "team_games": 214
+   }
+  },
+  "RB2_snap": {
+   "V2": {
+    "mae": 0.096,
+    "mean_observed": 0.2915,
+    "mean_simulated": 0.2723,
+    "team_games": 214
+   }
+  },
+  "TE1_snap": {
+   "V2": {
+    "mae": 0.1072,
+    "mean_observed": 0.7381,
+    "mean_simulated": 0.7505,
+    "team_games": 214
+   }
+  },
+  "TE2_snap": {
+   "V2": {
+    "mae": 0.129,
+    "mean_observed": 0.4601,
+    "mean_simulated": 0.3729,
+    "team_games": 214
+   }
+  },
+  "TGT1": {
+   "V1": {
+    "mae": 0.097,
+    "mean_observed": 0.2972,
+    "mean_simulated": 0.3679,
+    "team_games": 242
+   },
+   "V15": {
+    "mae": 0.0713,
+    "mean_observed": 0.2972,
+    "mean_simulated": 0.3365,
+    "team_games": 242
+   },
+   "V2": {
+    "mae": 0.077,
+    "mean_observed": 0.2972,
+    "mean_simulated": 0.3468,
+    "team_games": 242
+   }
+  },
+  "TGT2": {
+   "V1": {
+    "mae": 0.0367,
+    "mean_observed": 0.2095,
+    "mean_simulated": 0.2114,
+    "team_games": 242
+   },
+   "V15": {
+    "mae": 0.0361,
+    "mean_observed": 0.2095,
+    "mean_simulated": 0.2099,
+    "team_games": 242
+   },
+   "V2": {
+    "mae": 0.0376,
+    "mean_observed": 0.2095,
+    "mean_simulated": 0.2085,
+    "team_games": 242
+   }
+  },
+  "TGT3": {
+   "V1": {
+    "mae": 0.0298,
+    "mean_observed": 0.1594,
+    "mean_simulated": 0.1474,
+    "team_games": 242
+   },
+   "V15": {
+    "mae": 0.0294,
+    "mean_observed": 0.1594,
+    "mean_simulated": 0.1506,
+    "team_games": 242
+   },
+   "V2": {
+    "mae": 0.03,
+    "mean_observed": 0.1594,
+    "mean_simulated": 0.1486,
+    "team_games": 242
+   }
+  },
+  "WR1_snap": {
+   "V2": {
+    "mae": 0.0753,
+    "mean_observed": 0.8389,
+    "mean_simulated": 0.8379,
+    "team_games": 214
+   }
+  },
+  "WR2_snap": {
+   "V2": {
+    "mae": 0.1095,
+    "mean_observed": 0.7228,
+    "mean_simulated": 0.6862,
+    "team_games": 214
+   }
+  },
+  "WR3_snap": {
+   "V2": {
+    "mae": 0.1215,
+    "mean_observed": 0.5279,
+    "mean_simulated": 0.4889,
+    "team_games": 214
+   }
+  }
+ },
+ "shape": {
+  "top_carry_share": {
+   "V1": 0.1126,
+   "V15": 0.0964,
+   "V2": 0.1015,
+   "team_games": 242
+  },
+  "top_target_share": {
+   "V1": 0.0667,
+   "V15": 0.0499,
+   "V2": 0.0528,
+   "team_games": 242
+  }
+ },
+ "snap_share": {
+  "V2": {
+   "mae": 0.1606,
+   "mae_observed_positive": 0.1711,
+   "player_games": 3124
+  }
+ },
+ "stats": {
+  "carries": {
+   "all": {
+    "V1": {
+     "coverage80": 0.8511,
+     "crps": 1.2235,
+     "mae": 1.6518,
+     "mean_observed": 1.9377,
+     "mean_projection": 2.1999
+    },
+    "V15": {
+     "coverage80": 0.8776,
+     "crps": 0.9791,
+     "mae": 1.371,
+     "mean_observed": 1.9377,
+     "mean_projection": 2.2022
+    },
+    "V2": {
+     "coverage80": 0.8579,
+     "crps": 1.092,
+     "mae": 1.529,
+     "mean_observed": 1.9377,
+     "mean_projection": 2.2067
+    },
+    "n": 3357
+   },
+   "observed_positive": {
+    "V1": {
+     "coverage80": 0.5438,
+     "crps": 3.5622,
+     "mae": 4.39,
+     "mean_observed": 6.7902,
+     "mean_projection": 6.3108
+    },
+    "V15": {
+     "coverage80": 0.6336,
+     "crps": 2.8327,
+     "mae": 3.5335,
+     "mean_observed": 6.7902,
+     "mean_projection": 6.4464
+    },
+    "V2": {
+     "coverage80": 0.5887,
+     "crps": 3.0014,
+     "mae": 3.8181,
+     "mean_observed": 6.7902,
+     "mean_projection": 6.1926
+    },
+    "n": 958
+   },
+   "observed_positive_week8": {
+    "V1": {
+     "crps": 4.0657,
+     "mae": 4.8566
+    },
+    "V15": {
+     "crps": 3.2003,
+     "mae": 3.887
+    },
+    "V2": {
+     "crps": 2.9969,
+     "mae": 3.7647
+    },
+    "n": 107
+   },
+   "observed_positive_weeks1_7": {
+    "V1": {
+     "crps": 3.4989,
+     "mae": 4.3313
+    },
+    "V15": {
+     "crps": 2.7865,
+     "mae": 3.4891
+    },
+    "V2": {
+     "crps": 3.0019,
+     "mae": 3.8248
+    },
+    "n": 851
+   }
+  },
+  "pass_attempts": {
+   "all": {
+    "V1": {
+     "coverage80": 0.8627,
+     "crps": 2.4325,
+     "mae": 2.9962,
+     "mean_observed": 7.7515,
+     "mean_projection": 8.4198
+    },
+    "V15": {
+     "coverage80": 0.8694,
+     "crps": 2.4001,
+     "mae": 2.9495,
+     "mean_observed": 7.7515,
+     "mean_projection": 8.4215
+    },
+    "V2": {
+     "coverage80": 0.8723,
+     "crps": 2.3987,
+     "mae": 2.9391,
+     "mean_observed": 7.7515,
+     "mean_projection": 8.4013
+    },
+    "n": 1034
+   },
+   "observed_positive": {
+    "V1": {
+     "coverage80": 0.5415,
+     "crps": 7.4248,
+     "mae": 9.2495,
+     "mean_observed": 28.935,
+     "mean_projection": 29.4953
+    },
+    "V15": {
+     "coverage80": 0.5668,
+     "crps": 7.2592,
+     "mae": 9.0516,
+     "mean_observed": 28.935,
+     "mean_projection": 29.4776
+    },
+    "V2": {
+     "coverage80": 0.5776,
+     "crps": 7.2603,
+     "mae": 9.0222,
+     "mean_observed": 28.935,
+     "mean_projection": 29.412
+    },
+    "n": 277
+   },
+   "observed_positive_week8": {
+    "V1": {
+     "crps": 7.3442,
+     "mae": 9.4258
+    },
+    "V15": {
+     "crps": 7.5247,
+     "mae": 9.3288
+    },
+    "V2": {
+     "crps": 7.1066,
+     "mae": 8.9032
+    },
+    "n": 34
+   },
+   "observed_positive_weeks1_7": {
+    "V1": {
+     "crps": 7.4361,
+     "mae": 9.2248
+    },
+    "V15": {
+     "crps": 7.2221,
+     "mae": 9.0128
+    },
+    "V2": {
+     "crps": 7.2818,
+     "mae": 9.0389
+    },
+    "n": 243
+   }
+  },
+  "passing_yards": {
+   "all": {
+    "V1": {
+     "coverage80": 0.8312,
+     "crps": 23.4141,
+     "mae": 28.961,
+     "mean_observed": 72.4028,
+     "mean_projection": 77.3178
+    },
+    "V15": {
+     "coverage80": 0.8338,
+     "crps": 22.6205,
+     "mae": 28.1262,
+     "mean_observed": 72.4028,
+     "mean_projection": 76.9486
+    },
+    "V2": {
+     "coverage80": 0.8274,
+     "crps": 23.0751,
+     "mae": 28.4892,
+     "mean_observed": 72.4028,
+     "mean_projection": 76.909
+    },
+    "n": 782
+   },
+   "observed_positive": {
+    "V1": {
+     "coverage80": 0.5644,
+     "crps": 55.8276,
+     "mae": 69.602,
+     "mean_observed": 214.4659,
+     "mean_projection": 212.8421
+    },
+    "V15": {
+     "coverage80": 0.572,
+     "crps": 53.2745,
+     "mae": 67.1248,
+     "mean_observed": 214.4659,
+     "mean_projection": 211.7452
+    },
+    "V2": {
+     "coverage80": 0.553,
+     "crps": 54.2123,
+     "mae": 67.8938,
+     "mean_observed": 214.4659,
+     "mean_projection": 211.3192
+    },
+    "n": 264
+   },
+   "observed_positive_week8": {
+    "V1": {
+     "crps": 48.7147,
+     "mae": 61.8616
+    },
+    "V15": {
+     "crps": 50.9845,
+     "mae": 69.8991
+    },
+    "V2": {
+     "crps": 49.3218,
+     "mae": 65.7002
+    },
+    "n": 31
+   },
+   "observed_positive_weeks1_7": {
+    "V1": {
+     "crps": 56.7739,
+     "mae": 70.6319
+    },
+    "V15": {
+     "crps": 53.5792,
+     "mae": 66.7557
+    },
+    "V2": {
+     "crps": 54.863,
+     "mae": 68.1857
+    },
+    "n": 233
+   }
+  },
+  "receiving_tds": {
+   "all": {
+    "V1": {
+     "coverage80": 0.9307,
+     "crps": 0.1282,
+     "mae": 0.2164,
+     "mean_observed": 0.1425,
+     "mean_projection": 0.1235
+    },
+    "V15": {
+     "coverage80": 0.9341,
+     "crps": 0.1256,
+     "mae": 0.2148,
+     "mean_observed": 0.1425,
+     "mean_projection": 0.1217
+    },
+    "V2": {
+     "coverage80": 0.9314,
+     "crps": 0.1262,
+     "mae": 0.215,
+     "mean_observed": 0.1425,
+     "mean_projection": 0.1218
+    },
+    "n": 2596
+   },
+   "observed_positive": {
+    "V1": {
+     "coverage80": 0.4427,
+     "crps": 0.8523,
+     "mae": 0.9463,
+     "mean_observed": 1.1455,
+     "mean_projection": 0.1998
+    },
+    "V15": {
+     "coverage80": 0.4706,
+     "crps": 0.8443,
+     "mae": 0.9471,
+     "mean_observed": 1.1455,
+     "mean_projection": 0.1984
+    },
+    "V2": {
+     "coverage80": 0.4489,
+     "crps": 0.8456,
+     "mae": 0.9471,
+     "mean_observed": 1.1455,
+     "mean_projection": 0.1984
+    },
+    "n": 323
+   },
+   "observed_positive_week8": {
+    "V1": {
+     "crps": 0.755,
+     "mae": 0.8295
+    },
+    "V15": {
+     "crps": 0.7467,
+     "mae": 0.8422
+    },
+    "V2": {
+     "crps": 0.7554,
+     "mae": 0.8542
+    },
+    "n": 41
+   },
+   "observed_positive_weeks1_7": {
+    "V1": {
+     "crps": 0.8664,
+     "mae": 0.9633
+    },
+    "V15": {
+     "crps": 0.8585,
+     "mae": 0.9623
+    },
+    "V2": {
+     "crps": 0.8587,
+     "mae": 0.9607
+    },
+    "n": 282
+   }
+  },
+  "receiving_yards": {
+   "all": {
+    "V1": {
+     "coverage80": 0.7461,
+     "crps": 11.9837,
+     "mae": 17.0611,
+     "mean_observed": 18.1084,
+     "mean_projection": 19.3354
+    },
+    "V15": {
+     "coverage80": 0.7883,
+     "crps": 10.7146,
+     "mae": 15.6307,
+     "mean_observed": 18.1084,
+     "mean_projection": 19.2432
+    },
+    "V2": {
+     "coverage80": 0.7637,
+     "crps": 11.4463,
+     "mae": 16.3649,
+     "mean_observed": 18.1084,
+     "mean_projection": 19.2332
+    },
+    "n": 3127
+   },
+   "observed_positive": {
+    "V1": {
+     "coverage80": 0.5848,
+     "crps": 18.6116,
+     "mae": 23.1351,
+     "mean_observed": 33.9898,
+     "mean_projection": 27.4597
+    },
+    "V15": {
+     "coverage80": 0.6627,
+     "crps": 16.6637,
+     "mae": 21.0126,
+     "mean_observed": 33.9898,
+     "mean_projection": 27.8438
+    },
+    "V2": {
+     "coverage80": 0.6213,
+     "crps": 17.682,
+     "mae": 22.3703,
+     "mean_observed": 33.9898,
+     "mean_projection": 27.8069
+    },
+    "n": 1669
+   },
+   "observed_positive_week8": {
+    "V1": {
+     "crps": 19.4475,
+     "mae": 23.099
+    },
+    "V15": {
+     "crps": 16.5225,
+     "mae": 20.4369
+    },
+    "V2": {
+     "crps": 18.3072,
+     "mae": 22.5329
+    },
+    "n": 181
+   },
+   "observed_positive_weeks1_7": {
+    "V1": {
+     "crps": 18.5099,
+     "mae": 23.1395
+    },
+    "V15": {
+     "crps": 16.6809,
+     "mae": 21.0826
+    },
+    "V2": {
+     "crps": 17.606,
+     "mae": 22.3505
+    },
+    "n": 1488
+   }
+  },
+  "receptions": {
+   "all": {
+    "V1": {
+     "coverage80": 0.8048,
+     "crps": 1.0374,
+     "mae": 1.4662,
+     "mean_observed": 1.6425,
+     "mean_projection": 1.8114
+    },
+    "V15": {
+     "coverage80": 0.8399,
+     "crps": 0.9017,
+     "mae": 1.31,
+     "mean_observed": 1.6425,
+     "mean_projection": 1.8031
+    },
+    "V2": {
+     "coverage80": 0.8003,
+     "crps": 0.9793,
+     "mae": 1.3797,
+     "mean_observed": 1.6425,
+     "mean_projection": 1.8045
+    },
+    "n": 3130
+   },
+   "observed_positive": {
+    "V1": {
+     "coverage80": 0.6902,
+     "crps": 1.5117,
+     "mae": 1.887,
+     "mean_observed": 2.9994,
+     "mean_projection": 2.5174
+    },
+    "V15": {
+     "coverage80": 0.7515,
+     "crps": 1.3049,
+     "mae": 1.6512,
+     "mean_observed": 2.9994,
+     "mean_projection": 2.5516
+    },
+    "V2": {
+     "coverage80": 0.6849,
+     "crps": 1.4099,
+     "mae": 1.7823,
+     "mean_observed": 2.9994,
+     "mean_projection": 2.5582
+    },
+    "n": 1714
+   },
+   "observed_positive_week8": {
+    "V1": {
+     "crps": 1.5359,
+     "mae": 1.9064
+    },
+    "V15": {
+     "crps": 1.2394,
+     "mae": 1.5589
+    },
+    "V2": {
+     "crps": 1.4311,
+     "mae": 1.8214
+    },
+    "n": 182
+   },
+   "observed_positive_weeks1_7": {
+    "V1": {
+     "crps": 1.5088,
+     "mae": 1.8847
+    },
+    "V15": {
+     "crps": 1.3127,
+     "mae": 1.6622
+    },
+    "V2": {
+     "crps": 1.4073,
+     "mae": 1.7777
+    },
+    "n": 1532
+   }
+  },
+  "rushing_tds": {
+   "all": {
+    "V1": {
+     "coverage80": 0.9496,
+     "crps": 0.1301,
+     "mae": 0.2285,
+     "mean_observed": 0.1481,
+     "mean_projection": 0.1752
+    },
+    "V15": {
+     "coverage80": 0.9572,
+     "crps": 0.1235,
+     "mae": 0.2306,
+     "mean_observed": 0.1481,
+     "mean_projection": 0.1773
+    },
+    "V2": {
+     "coverage80": 0.9534,
+     "crps": 0.1272,
+     "mae": 0.2365,
+     "mean_observed": 0.1481,
+     "mean_projection": 0.1747
+    },
+    "n": 1566
+   },
+   "observed_positive": {
+    "V1": {
+     "coverage80": 0.5842,
+     "crps": 0.7489,
+     "mae": 0.8414,
+     "mean_observed": 1.2211,
+     "mean_projection": 0.4023
+    },
+    "V15": {
+     "coverage80": 0.6474,
+     "crps": 0.7166,
+     "mae": 0.8358,
+     "mean_observed": 1.2211,
+     "mean_projection": 0.3959
+    },
+    "V2": {
+     "coverage80": 0.6158,
+     "crps": 0.7487,
+     "mae": 0.8672,
+     "mean_observed": 1.2211,
+     "mean_projection": 0.3575
+    },
+    "n": 190
+   },
+   "observed_positive_week8": {
+    "V1": {
+     "crps": 0.7324,
+     "mae": 0.7735
+    },
+    "V15": {
+     "crps": 0.6482,
+     "mae": 0.7674
+    },
+    "V2": {
+     "crps": 0.6002,
+     "mae": 0.7071
+    },
+    "n": 25
+   },
+   "observed_positive_weeks1_7": {
+    "V1": {
+     "crps": 0.7514,
+     "mae": 0.8517
+    },
+    "V15": {
+     "crps": 0.727,
+     "mae": 0.8461
+    },
+    "V2": {
+     "crps": 0.7712,
+     "mae": 0.8915
+    },
+    "n": 165
+   }
+  },
+  "rushing_yards": {
+   "all": {
+    "V1": {
+     "coverage80": 0.8424,
+     "crps": 5.8017,
+     "mae": 8.2562,
+     "mean_observed": 8.3162,
+     "mean_projection": 9.9796
+    },
+    "V15": {
+     "coverage80": 0.8661,
+     "crps": 4.9421,
+     "mae": 7.2829,
+     "mean_observed": 8.3162,
+     "mean_projection": 9.9454
+    },
+    "V2": {
+     "coverage80": 0.8551,
+     "crps": 5.3625,
+     "mae": 7.8964,
+     "mean_observed": 8.3162,
+     "mean_projection": 9.9531
+    },
+    "n": 3286
+   },
+   "observed_positive": {
+    "V1": {
+     "coverage80": 0.5191,
+     "crps": 17.9907,
+     "mae": 22.9978,
+     "mean_observed": 30.8953,
+     "mean_projection": 29.565
+    },
+    "V15": {
+     "coverage80": 0.6047,
+     "crps": 15.3356,
+     "mae": 20.067,
+     "mean_observed": 30.8953,
+     "mean_projection": 30.1105
+    },
+    "V2": {
+     "coverage80": 0.5845,
+     "crps": 15.864,
+     "mae": 20.9086,
+     "mean_observed": 30.8953,
+     "mean_projection": 28.6912
+    },
+    "n": 888
+   },
+   "observed_positive_week8": {
+    "V1": {
+     "crps": 21.3666,
+     "mae": 26.6702
+    },
+    "V15": {
+     "crps": 18.2322,
+     "mae": 23.5628
+    },
+    "V2": {
+     "crps": 16.9888,
+     "mae": 22.1292
+    },
+    "n": 103
+   },
+   "observed_positive_weeks1_7": {
+    "V1": {
+     "crps": 17.5477,
+     "mae": 22.516
+    },
+    "V15": {
+     "crps": 14.9555,
+     "mae": 19.6083
+    },
+    "V2": {
+     "crps": 15.7165,
+     "mae": 20.7485
+    },
+    "n": 785
+   }
+  },
+  "targets": {
+   "all": {
+    "V1": {
+     "coverage80": 0.7704,
+     "crps": 1.5056,
+     "mae": 2.0979,
+     "mean_observed": 2.4243,
+     "mean_projection": 2.7647
+    },
+    "V15": {
+     "coverage80": 0.8161,
+     "crps": 1.2757,
+     "mae": 1.8409,
+     "mean_observed": 2.4243,
+     "mean_projection": 2.7653
+    },
+    "V2": {
+     "coverage80": 0.7679,
+     "crps": 1.39,
+     "mae": 1.9482,
+     "mean_observed": 2.4243,
+     "mean_projection": 2.7586
+    },
+    "n": 3149
+   },
+   "observed_positive": {
+    "V1": {
+     "coverage80": 0.6786,
+     "crps": 2.0187,
+     "mae": 2.5594,
+     "mean_observed": 3.9513,
+     "mean_projection": 3.6463
+    },
+    "V15": {
+     "coverage80": 0.7417,
+     "crps": 1.7035,
+     "mae": 2.2148,
+     "mean_observed": 3.9513,
+     "mean_projection": 3.7214
+    },
+    "V2": {
+     "coverage80": 0.6786,
+     "crps": 1.8547,
+     "mae": 2.4093,
+     "mean_observed": 3.9513,
+     "mean_projection": 3.7303
+    },
+    "n": 1932
+   },
+   "observed_positive_week8": {
+    "V1": {
+     "crps": 1.9569,
+     "mae": 2.5073
+    },
+    "V15": {
+     "crps": 1.5121,
+     "mae": 2.019
+    },
+    "V2": {
+     "crps": 1.8097,
+     "mae": 2.4146
+    },
+    "n": 206
+   },
+   "observed_positive_weeks1_7": {
+    "V1": {
+     "crps": 2.0261,
+     "mae": 2.5656
+    },
+    "V15": {
+     "crps": 1.7264,
+     "mae": 2.2382
+    },
+    "V2": {
+     "crps": 1.86,
+     "mae": 2.4087
+    },
+    "n": 1726
+   }
+  }
+ },
+ "stats_file_sha256": "0df020e7790671495cfea5d08da933781c98b155da6f8aad516bc69dcd071783"
+}
