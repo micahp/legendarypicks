@@ -1,6 +1,6 @@
 # NFL Playbook Evolution and Play Ancestry (research plan)
 
-Status: Phases 1–6 measurement pass complete, with concept-level ancestry and closed-loop workload impact unresolved. Findings: [Phase 1 data inventory and play identity](../../research/nfl-playbook-ancestry/PHASE1-FINDINGS-2026-11-03.md), [Phase 2 weekly evolution](../../research/nfl-playbook-ancestry/PHASE2-WEEKLY-EVOLUTION-2026-11-03.md), and [Phases 3–6 findings](../../research/nfl-playbook-ancestry/PHASE3-6-FINDINGS-2026-11-03.md). Source: research notes and local dev data, 2026-11-03.
+Status: Phase 1 inventory and Phases 2–6 source-field measurements are complete with corrected snap denominators, a stationary-order null, controlled postseason usage comparisons, and matched forecast cohorts. Exact play/concept ancestry and closed-loop workload impact remain unresolved. Findings: [Phase 1 data inventory and play identity](../../research/nfl-playbook-ancestry/PHASE1-FINDINGS-2026-11-03.md), [Phase 2 weekly evolution](../../research/nfl-playbook-ancestry/PHASE2-WEEKLY-EVOLUTION-2026-11-03.md), and [corrected findings](../../research/nfl-playbook-ancestry/PHASE3-6-FINDINGS-2026-11-03.md). Source: research notes and local dev data, 2026-11-03.
 
 Verification status: sources checked for Phases 3–6 are recorded with URLs, publication dates, confidence and scope notes in
 [the external evidence table](../../research/nfl-playbook-ancestry/phase3_6_external_evidence_2026-11-03.csv). Some claims are verified or partially verified; the original unnamed NFL.com game-planning article remains unidentified and unverified. Unverified or partial claims are not used as play-identity labels.
@@ -73,9 +73,8 @@ adaptation within a single game. (Field Gulls)
 
 This is the priority project.
 
-The Legendary Picks code already has `formal_playcall.py`, which represents a play by formation, personnel, play type and
-a limited concept description. That is a starting vocabulary, not a complete identity system. (To check: confirm its
-current fields and coverage before relying on this statement.)
+An earlier handoff referenced `formal_playcall.py` as a possible starting vocabulary. The Phase 1 source inventory did not
+confirm that file or establish its fields and coverage; check the current repository before relying on that reference.
 
 Classifications:
 
@@ -105,24 +104,25 @@ previous appearances. Illustrative shape only (not a verified match between spec
 - Film and charting: All-22 and reliable route or concept annotations are needed to establish that two plays with
   different presentations share a specific underlying design.
 
-We can start matching play signatures now, but we cannot call every signature an exact play ID. Some matches will stay
-uncertain. Distinguish a concept that is new to our data from one that is new to the team: we only observe what our data
-covers.
+Current data supports matching observed source-field signatures only. Such overlap cannot establish an exact repeat, a
+shared concept, or an imported concept. Concept-level classifications remain unresolved until annotated play designs
+are linked to the game/play keys. A first-seen descriptor means first seen in this dataset, not new to the team's playbook.
 
 ## 4. Measurements, week by week
 
 | Question | Measurement |
 |---|---|
-| How much changes in Week 1? | First-observed concept and presentation rates |
-| Does the playbook stabilize by Week 2? | Week-to-week novelty and distribution change |
+| How much changes in Week 1? | First-observed descriptor and presentation rates |
+| Does the descriptor distribution stabilize by Week 2? | Week-to-week novelty and distribution change, compared with the stationary-order null |
 | When do teams become predictable? | Forward predictive log loss as games accumulate |
 | Does a coordinator change reset the offense? | Carryover rate by coaching continuity |
-| What changes in the playoffs? | Context-adjusted usage shifts and first-observed concepts |
-| Do playoff concepts return next season? | Postseason-to-next-season reuse rate |
-| Does it affect workloads? | Player snap and opportunity-share changes by concept |
+| What changes in the playoffs? | Context-adjusted personnel, formation, motion, shotgun, run/pass and tagged play-action usage; first-observed action descriptors |
+| Do playoff descriptors return next season? | Postseason-to-next-season descriptor reuse rate |
+| Does it affect workloads? | Player snap and opportunity-share changes; concept linkage requires annotated designs |
 
-For novelty, compare the actual rate of new concepts with the probability of seeing a new concept given how many prior
-snaps are available. Otherwise Week 1 looks maximally novel only because the observed catalog is empty.
+For novelty, compare observed descriptor novelty with a stationary-order control that jointly shuffles whole game-week
+packages across played-week labels. Preserve each team-season's signature frequencies by family, game and play counts,
+and cross-family co-occurrence. Keep descriptor novelty separate from concept novelty.
 
 Run a control using the whole league independently of team history. That shows whether a change is an NFL-wide trend or
 specific to one offense.
@@ -145,9 +145,9 @@ and evolution analysis.
 
 - For every team, season and week, compare observed play signatures against all previous weeks of that season.
 - Compare against the previous season, older team history and league-wide history.
-- Track first-observed concepts, reused concepts, changed presentations and shifting call frequencies.
+- Track first-observed descriptors, descriptor reuse, recorded presentation changes and shifting call frequencies.
 - Evaluate Week 1 separately, then Weeks 2 to 3, 4 to 8, 9 to 13 and 14 to 18.
-- Quantify playbook stability, novelty, turnover and concentration.
+- Quantify descriptor novelty, distribution change, turnover and concentration; do not call these concept-level playbook stability.
 - Test whether early-season uncertainty is higher and whether team identity becomes more identifiable as current-season
   games accumulate. Do not assume the hypothesis is true.
 
@@ -155,23 +155,23 @@ and evolution analysis.
 
 - Add head coach, offensive coordinator and play-caller tenure.
 - Compare continuity seasons with seasons that have coordinator or QB changes.
-- Investigate whether concepts follow coaching staffs between franchises.
+- Investigate whether annotated concepts follow coaching staffs between franchises; raw signature overlap cannot answer this.
 - Distinguish carryover of concepts from carryover of frequency and sequencing.
 
 ### Phase 4: postseason
 
 - Treat the postseason as a distinct evaluation segment across all playoff teams.
 - Compare postseason calls with the team's regular-season catalog through the playoff game cutoff.
-- Measure first-observed concepts, usage changes, formation changes and tendency breakers, controlling for opponent and
+- Measure first-observed descriptors and attribute usage changes, controlling for opponent and
   game state.
-- Measure which postseason concepts reappear during the following regular season.
+- Measure which postseason descriptors reappear during the following regular season; concept reuse needs annotated designs.
 - Report uncertainty, because the postseason has small, selected samples.
 
 ### Phase 5: Seahawks case study
 
 - Compare Seattle's 2024, 2025 regular season, 2025 postseason and available 2026 games.
 - Examine the Grubb-to-Kubiak and Kubiak-to-Fleury transitions.
-- Identify which concepts, personnel packages and formations carried over, changed in frequency or first appeared.
+- Measure which recorded personnel packages and formations carried over, changed in frequency or first appeared; concept carryover needs annotated designs.
 - Pay particular attention to Jaxon Smith-Njigba, secondary receiver usage, tight ends, running backs, heavy personnel and
   play-action.
 - Use reputable film-analysis articles and coaching interviews as qualitative evidence, with URLs, publication dates and
@@ -181,7 +181,7 @@ and evolution analysis.
 ### Phase 6: predictive and simulation evaluation
 
 - Compare static previous-season, current-season expanding-window, last-N-game and adaptive models.
-- Evaluate run/pass, personnel, formation and concept distributions separately.
+- Evaluate run/pass, personnel, formation and action-descriptor distributions separately.
 - Use strict chronological cutoff rules. Report log loss, calibration, novelty prediction and uncertainty intervals.
 - Evaluate whether the resulting personnel and play-call distributions improve closed-loop player workloads.
 - Do not use winner prediction as the primary criterion.
@@ -190,9 +190,9 @@ and evolution analysis.
 
 1. Data coverage and confidence audit.
 2. Weekly playbook evolution dataset.
-3. Play ancestry matching rules and tests.
-4. Seahawks case study with actual matched examples.
-5. League-wide postseason study.
+3. Source-field matching rules and regression tests; actual play ancestry remains unresolved.
+4. Seahawks usage case study with raw descriptor matches, not identified play designs.
+5. League-wide postseason usage study with supported context matches.
 6. Model comparison and PASS/FAIL research report.
 
 Preserve reproducible scripts and artifacts on the research branch. Do not activate a new simulation model until its

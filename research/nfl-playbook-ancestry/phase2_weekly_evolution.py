@@ -27,6 +27,7 @@ SEASONS = range(2022, 2027)
 FAMILIES = ("action", "presentation", "chart_tags", "combined")
 ALPHA = 0.5
 BOOTSTRAP_REPS = 4000
+STATIONARY_PERMUTATIONS = 2000
 PERIODS = ((1, 1, "week_1"), (2, 3, "weeks_2_3"), (4, 8, "weeks_4_8"),
            (9, 13, "weeks_9_13"), (14, 18, "weeks_14_18"))
 
@@ -125,16 +126,19 @@ def js_divergence(left: Counter, right: Counter) -> float | None:
     nl, nr = sum(left.values()), sum(right.values())
     if not nl or not nr:
         return None
-    keys = left.keys() | right.keys()
     result = 0.0
-    for key in keys:
-        p, q = left.get(key, 0) / nl, right.get(key, 0) / nr
+    right_overlap = 0
+    for key, left_count in left.items():
+        right_count = right.get(key, 0)
+        right_overlap += right_count
+        p, q = left_count / nl, right_count / nr
         m = (p + q) / 2
-        if p:
-            result += 0.5 * p * math.log2(p / m)
+        result += 0.5 * p * math.log2(p / m)
         if q:
             result += 0.5 * q * math.log2(q / m)
-    return result
+    # For right-only categories p=0, so each contributes exactly 0.5*q.
+    result += 0.5 * (nr - right_overlap) / nr
+    return min(1.0, max(0.0, result))
 
 
 def predictive_score(train: Counter, test: Counter, alpha: float = ALPHA) -> tuple[float | None, float | None]:
@@ -202,6 +206,19 @@ def metric_mean(records: list[dict], key: str) -> float | None:
     return mean(values) if values else None
 
 
+def holm_adjust(pvalues: list[float | None]) -> list[float | None]:
+    """Return Holm family-wise adjusted p-values in the original input order."""
+    indexed = [(index, value) for index, value in enumerate(pvalues) if value is not None]
+    ordered = sorted(indexed, key=lambda item: item[1])
+    adjusted = [None] * len(pvalues)
+    running_max = 0.0
+    count = len(ordered)
+    for rank, (index, value) in enumerate(ordered):
+        running_max = max(running_max, min(1.0, (count - rank) * value))
+        adjusted[index] = running_max
+    return adjusted
+
+
 def period_for(week: int) -> str:
     for low, high, label in PERIODS:
         if low <= week <= high:
@@ -222,6 +239,182 @@ def bootstrap_team_ci(values_by_team: dict[str, list[float]], reps: int, seed: i
             samples.append(mean(observations))
     samples.sort()
     return [samples[int(0.025 * (len(samples) - 1))], samples[int(0.975 * (len(samples) - 1))]]
+
+
+def signature_change_curve(weekly: dict[int, Counter],
+                           previous_week_jsd: dict[tuple[int, int], float | None] | None = None,
+                           source_week_by_label: dict[int, int] | None = None) -> dict[int, dict]:
+    prior = Counter()
+    previous = None
+    result = {}
+    for week in sorted(weekly):
+        current = weekly[week]
+        total = sum(current.values())
+        novel = sum(n for signature, n in current.items() if signature not in prior)
+        result[week] = {
+            "novel_row_share": novel / total if total and prior else None,
+            "jsd_vs_prior_catalog": js_divergence(current, prior) if prior else None,
+            "jsd_vs_previous_played_week": (
+                previous_week_jsd[(
+                    source_week_by_label.get(previous_week, previous_week) if source_week_by_label else previous_week,
+                    source_week_by_label.get(week, week) if source_week_by_label else week,
+                )]
+                if previous and previous_week_jsd is not None
+                else (js_divergence(current, previous) if previous else None)
+            ),
+        }
+        prior.update(current)
+        previous = current
+        previous_week = week
+    return result
+
+
+def shuffle_week_packages(weeks: list[int], packages: list[list[Counter]], rng: random.Random) -> dict[int, list[Counter]]:
+    if len(weeks) != len(packages):
+        raise ValueError("played-week labels and game packages must have equal length")
+    shuffled = list(packages)
+    rng.shuffle(shuffled)
+    return dict(zip(weeks, shuffled))
+
+
+def stationary_week_order_null(game_counters: dict, reps: int = STATIONARY_PERMUTATIONS,
+                                seed: int = 20261103) -> dict[str, list[dict]]:
+    """Permute whole team-week packages jointly across all observed signature families."""
+    groups = defaultdict(lambda: defaultdict(list))
+    for (season, week, team, game_id), families in game_counters.items():
+        if 2022 <= int(season) <= 2025:
+            groups[(int(season), team)][int(week)].append(families)
+    cohorts = {}
+    for key, by_week in groups.items():
+        weeks = sorted(by_week)
+        packages = []
+        for week in weeks:
+            games = list(by_week[week])
+            packages.append({
+                "source_week": week,
+                "games": games,
+                "families": {
+                    family: merge_signature_counters([game.get(family, Counter()) for game in games])
+                    for family in FAMILIES
+                },
+            })
+        pairwise_jsd = {}
+        for family in FAMILIES:
+            counts = [package["families"][family] for package in packages]
+            family_pairwise = {}
+            for i, left_week in enumerate(weeks):
+                for j, right_week in enumerate(weeks):
+                    if i != j:
+                        family_pairwise[(left_week, right_week)] = js_divergence(counts[i], counts[j])
+            pairwise_jsd[family] = family_pairwise
+        cohorts[key] = (weeks, packages, pairwise_jsd)
+
+    metric_names = ("novel_row_share", "jsd_vs_prior_catalog", "jsd_vs_previous_played_week")
+    observed = defaultdict(list)
+    observed_contrasts = defaultdict(list)
+    for weeks, packages, pairwise_jsd in cohorts.values():
+        for family in FAMILIES:
+            weekly_counts = {week: package["families"][family]
+                             for week, package in zip(weeks, packages)}
+            source_weeks = {week: package["source_week"]
+                            for week, package in zip(weeks, packages)}
+            curve = signature_change_curve(weekly_counts, pairwise_jsd[family], source_weeks)
+            for week, values in curve.items():
+                for metric in metric_names:
+                    if values[metric] is not None:
+                        observed[(family, week, metric)].append(values[metric])
+            for metric in metric_names:
+                early = [curve[w][metric] for w in (2, 3) if w in curve and curve[w][metric] is not None]
+                late = [curve[w][metric] for w in range(14, 19) if w in curve and curve[w][metric] is not None]
+                if early and late:
+                    observed_contrasts[(family, metric)].append(mean(early) - mean(late))
+
+    rng = random.Random(seed)
+    null_values = defaultdict(list)
+    null_contrasts = defaultdict(list)
+    for _ in range(reps):
+        replicate = defaultdict(list)
+        replicate_contrasts = defaultdict(list)
+        for weeks, packages, pairwise_jsd in cohorts.values():
+            shuffled = shuffle_week_packages(weeks, packages, rng)
+            for family in FAMILIES:
+                weekly_counts = {week: package["families"][family]
+                                 for week, package in shuffled.items()}
+                source_weeks = {week: package["source_week"]
+                                for week, package in shuffled.items()}
+                curve = signature_change_curve(weekly_counts, pairwise_jsd[family], source_weeks)
+                for week, values in curve.items():
+                    for metric in metric_names:
+                        if values[metric] is not None:
+                            replicate[(family, week, metric)].append(values[metric])
+                for metric in metric_names:
+                    early = [curve[w][metric] for w in (2, 3) if w in curve and curve[w][metric] is not None]
+                    late = [curve[w][metric] for w in range(14, 19) if w in curve and curve[w][metric] is not None]
+                    if early and late:
+                        replicate_contrasts[(family, metric)].append(mean(early) - mean(late))
+        for key, values in replicate.items():
+            null_values[key].append(mean(values))
+        for metric, values in replicate_contrasts.items():
+            null_contrasts[metric].append(mean(values))
+
+    rows = []
+    for family in FAMILIES:
+        for week in range(1, 19):
+            for metric in metric_names:
+                actual_values = observed.get((family, week, metric), [])
+                permutation_values = sorted(null_values.get((family, week, metric), []))
+                actual = mean(actual_values) if actual_values else None
+                null_mean = mean(permutation_values) if permutation_values else None
+                if actual is not None and permutation_values:
+                    lower = sum(value <= actual for value in permutation_values)
+                    upper = sum(value >= actual for value in permutation_values)
+                    p_two_sided = min(1.0, 2 * min((lower + 1) / (len(permutation_values) + 1), (upper + 1) / (len(permutation_values) + 1)))
+                    lo = permutation_values[int(0.025 * (len(permutation_values) - 1))]
+                    hi = permutation_values[int(0.975 * (len(permutation_values) - 1))]
+                else:
+                    p_two_sided = lo = hi = None
+                rows.append({"family": family, "week": week, "metric": metric,
+                             "observed_team_week_mean": actual,
+                             "stationary_null_mean": null_mean, "stationary_null_2_5pct": lo,
+                             "stationary_null_97_5pct": hi,
+                             "observed_minus_null_mean": actual-null_mean if actual is not None and null_mean is not None else None,
+                             "permutation_two_sided_p": p_two_sided,
+                             "team_season_week_observations": len(actual_values),
+                             "permutations": reps, "seed": seed,
+                             "null": "joint whole game-week packages shuffled among the same team's played weeks; pooled counts by family, games, per-game play counts, and cross-family co-occurrence preserved"})
+    contrast_rows = []
+    for family in FAMILIES:
+        for metric in metric_names:
+            actual_values = observed_contrasts.get((family, metric), [])
+            distribution = sorted(null_contrasts.get((family, metric), []))
+            actual = mean(actual_values) if actual_values else None
+            null_mean = mean(distribution) if distribution else None
+            if actual is not None and distribution:
+                lower = sum(value <= actual for value in distribution)
+                upper = sum(value >= actual for value in distribution)
+                p_two_sided = min(1.0, 2 * min((lower + 1) / (len(distribution) + 1), (upper + 1) / (len(distribution) + 1)))
+                lo = distribution[int(0.025 * (len(distribution) - 1))]
+                hi = distribution[int(0.975 * (len(distribution) - 1))]
+            else:
+                p_two_sided = lo = hi = None
+            contrast_rows.append({"family": family, "metric": metric,
+                                  "contrast": "team-season mean weeks 2-3 minus weeks 14-18",
+                                  "observed_mean_contrast": actual, "stationary_null_mean": null_mean,
+                                  "stationary_null_2_5pct": lo, "stationary_null_97_5pct": hi,
+                                  "observed_minus_null_mean": actual-null_mean if actual is not None and null_mean is not None else None,
+                                  "permutation_two_sided_p": p_two_sided,
+                                  "paired_team_seasons": len(actual_values), "permutations": reps, "seed": seed})
+    adjusted_p = holm_adjust([row["permutation_two_sided_p"] for row in contrast_rows])
+    for row, value in zip(contrast_rows, adjusted_p):
+        row["holm_adjusted_permutation_p"] = value
+    return {"weekly": rows, "contrasts": contrast_rows}
+
+
+def merge_signature_counters(game_counters: list[Counter]) -> Counter:
+    combined = Counter()
+    for counter in game_counters:
+        combined.update(counter)
+    return combined
 
 
 def build(db_path: Path, out_dir: Path) -> dict:
@@ -270,6 +463,7 @@ def build(db_path: Path, out_dir: Path) -> dict:
     })
     season_team: dict[tuple[int, str, str], Counter] = defaultdict(Counter)
     season_league: dict[tuple[int, str], Counter] = defaultdict(Counter)
+    game_counters = defaultdict(lambda: {family: Counter() for family in FAMILIES})
 
     for row in rows:
         season, week, team = int(row["season"]), int(row["week"]), row["posteam"]
@@ -290,6 +484,19 @@ def build(db_path: Path, out_dir: Path) -> dict:
             bucket["payloads"][family][signature] = payload
             season_team[(season, team, family)][signature] += 1
             season_league[(season, family)][signature] += 1
+            game_counters[(season, week, team, row["game_id"])][family][signature] += 1
+
+    stationary_null = stationary_week_order_null(game_counters)
+    stationary_weekly_path = out_dir / "phase2_stationary_null_weekly_2026-11-03.csv"
+    stationary_contrasts_path = out_dir / "phase2_stationary_null_early_late_2026-11-03.csv"
+    with stationary_weekly_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(stationary_null["weekly"][0]), lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(stationary_null["weekly"])
+    with stationary_contrasts_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(stationary_null["contrasts"][0]), lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(stationary_null["contrasts"])
 
     all_period_rows = []
     signature_usage = []
@@ -513,15 +720,26 @@ def build(db_path: Path, out_dir: Path) -> dict:
             "open_set_forecast": {"alpha": ALPHA, "model": "Dirichlet smoothing over observed exact signatures plus one aggregate unseen-signature bucket",
                                   "interpretation": "tests known-versus-unseen descriptor probability, not which unseen signature occurs"},
             "early_late_test": "paired 2022-25 team-season early (weeks 2-3) versus late (weeks 14-18) open-set loss; bootstrap resamples franchises",
+            "stationary_playbook_null": {
+                "scope": "2022-25 action, presentation, chart-tag, and combined signatures; complete historical regular seasons",
+                "permutations": STATIONARY_PERMUTATIONS, "seed": 20261103,
+                "unit": "whole team-week packages of game-level counters for all signature families jointly shuffled among that team's played weeks",
+                "preserved": "each team-season pooled signature frequencies by family, number of games, per-game play counts, played-week labels, and cross-family co-occurrence",
+                "curves": "first-observed signature row share, JSD versus cumulative prior catalog, and JSD versus previous played week",
+                "contrast": "team-season mean weeks 2-3 minus weeks 14-18; uncertainty from week-package permutations",
+                "artifacts": [stationary_weekly_path.name, stationary_contrasts_path.name],
+            },
         },
         "period_summary": period_summary,
         "early_late_open_set_loss": early_late,
+        "stationary_playbook_null_early_late": stationary_null["contrasts"],
     }
     manifest_path = out_dir / "phase2_weekly_evolution_dev_2026-11-03.json"
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     manifest["artifact_sha256"] = {
         name: hashlib.sha256((out_dir / name).read_bytes()).hexdigest()
-        for name in ("phase2_weekly_evolution_dev_2026-11-03.csv", "phase2_signature_usage_dev_2026-11-03.csv.gz")
+        for name in ("phase2_weekly_evolution_dev_2026-11-03.csv", "phase2_signature_usage_dev_2026-11-03.csv.gz",
+                     stationary_weekly_path.name, stationary_contrasts_path.name)
     }
     manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return manifest
@@ -539,6 +757,7 @@ def main() -> None:
         "weekly_team_grid_rows": result["scope"]["weekly_team_grid_rows"],
         "signature_usage_rows": result["scope"]["signature_usage_rows"],
         "early_late_open_set_loss": result["early_late_open_set_loss"],
+        "stationary_playbook_null_early_late": result["stationary_playbook_null_early_late"],
         "artifacts": result["artifact_sha256"],
     }, indent=2, sort_keys=True))
 
