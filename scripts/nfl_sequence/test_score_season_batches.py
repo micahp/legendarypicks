@@ -61,6 +61,15 @@ class Maths(unittest.TestCase):
         self.assertEqual([row['seed'] for row in valid], [1])
         self.assertEqual(seeds, [1, 2, 3])
 
+    def test_the_complete_game_rule_counts_unverified_archive_seeds_and_still_drops_blocked_ones(self):
+        rows = [{'seed': 1, 'valid_full_game': False, 'complete_game': True, 'home_points': 20, 'away_points': 17},
+                {'seed': 2, 'valid_full_game': False, 'complete_game': False, 'home_points': 0, 'away_points': 0},
+                {'seed': 3, 'valid_full_game': False, 'complete_game': True, 'home_points': 10, 'away_points': 13}]
+        self.assertEqual(ssb.seed_outcomes(payload('g', rows))[0], [])
+        valid, seeds = ssb.seed_outcomes(payload('g', rows), 'complete_game')
+        self.assertEqual([row['seed'] for row in valid], [1, 3])
+        self.assertEqual(seeds, [1, 2, 3])
+
     def test_bootstrap_of_constant_values_is_that_value(self):
         low, high = ssb.bootstrap_interval([0.25] * 5, random.Random(1))
         self.assertAlmostEqual(low, 0.25)

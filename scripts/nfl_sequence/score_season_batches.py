@@ -67,11 +67,21 @@ def load_arm(directory):
     return games
 
 
-def seed_outcomes(payload):
+SEED_RULES = {
+    # A verified pregame snapshot and a complete, unblocked, legal game.
+    'valid_full_game': 'valid_full_game',
+    # A complete, unblocked, legal game. Archive reconstructions are never verified (their local capture time is not
+    # established), so the engine never marks them valid_full_game; this rule scores them, and the report says so.
+    'complete_game': 'complete_game',
+}
+
+
+def seed_outcomes(payload, rule='valid_full_game'):
     """(valid untied seed rows, seed numbers of every row) for one game."""
     rows = payload['summary']['outcomes']
     seeds = sorted(row['seed'] for row in rows)
-    valid = [row for row in rows if row.get('valid_full_game') and row['home_points'] != row['away_points']]
+    field = SEED_RULES[rule]
+    valid = [row for row in rows if row.get(field) and row['home_points'] != row['away_points']]
     return valid, seeds
 
 
@@ -139,7 +149,7 @@ def bootstrap_interval(values, rng):
     return means[int(0.025 * BOOTSTRAP_REPS)], means[int(0.975 * BOOTSTRAP_REPS) - 1]
 
 
-def score(baseline_dir, candidate_dir, db, weeks, season=2026):
+def score(baseline_dir, candidate_dir, db, weeks, season=2026, seed_rule='valid_full_game'):
     results, unscored = load_results(db, season, weeks)
     baseline, candidate = load_arm(baseline_dir), load_arm(candidate_dir)
     if set(baseline) != set(candidate):
@@ -153,8 +163,8 @@ def score(baseline_dir, candidate_dir, db, weeks, season=2026):
             accounting['excluded'][game_id] = 'no final score in nfl_schedule for the requested weeks'
             continue
         result = results[game_id]
-        base_valid, base_seeds = seed_outcomes(baseline[game_id])
-        cand_valid, cand_seeds = seed_outcomes(candidate[game_id])
+        base_valid, base_seeds = seed_outcomes(baseline[game_id], seed_rule)
+        cand_valid, cand_seeds = seed_outcomes(candidate[game_id], seed_rule)
         if base_seeds != cand_seeds:
             raise ValueError(f'{game_id}: arms do not share a seed list')
         if not base_valid or not cand_valid:
@@ -185,7 +195,7 @@ def score(baseline_dir, candidate_dir, db, weeks, season=2026):
     advance = mean_d_ll < 0 and mean_d_brier < 0 and ll_high < 0
     return {
         'label': 'retrospective-exposure' if max(weeks) <= 8 else 'prospective (weeks 9 onward are prospective)',
-        'weeks': weeks, 'games_scored': len(games), 'accounting': accounting,
+        'weeks': weeks, 'games_scored': len(games), 'accounting': accounting, 'seed_rule': seed_rule,
         'baseline': arm_metrics(rows['baseline']), 'candidate': arm_metrics(rows['candidate']),
         'paired': {'mean_log_loss_difference': mean_d_ll, 'log_loss_difference_95ci': [ll_low, ll_high],
                    'mean_brier_difference': mean_d_brier, 'brier_difference_95ci': [brier_low, brier_high],
@@ -204,8 +214,11 @@ def main(argv=None):
     ap.add_argument('--season', type=int, default=2026)
     ap.add_argument('--db', default=DEFAULT_DB)
     ap.add_argument('--out', type=Path, required=True)
+    ap.add_argument('--seed-rule', choices=sorted(SEED_RULES), default='valid_full_game',
+                    help='which seeds count: valid_full_game (verified snapshots only) or complete_game')
     args = ap.parse_args(argv)
-    report = score(args.baseline_dir, args.candidate_dir, args.db, args.weeks, season=args.season)
+    report = score(args.baseline_dir, args.candidate_dir, args.db, args.weeks, season=args.season,
+                   seed_rule=args.seed_rule)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=1, sort_keys=True) + '\n')
     base, cand, paired = report['baseline']['season'], report['candidate']['season'], report['paired']
