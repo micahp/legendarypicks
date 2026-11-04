@@ -20,7 +20,7 @@ sys.path.insert(0, str(HERE))
 import lineup_fit  # noqa: E402
 import participation_model as pm  # noqa: E402
 
-SCHEMA = 'lp.nfl.participation-field.v3'  # grouping codes carry -OL<n> and -QB<n> (build_tables.group_code)
+SCHEMA = 'lp.nfl.participation-field.v4'  # v3 codes (-OL<n>, -QB<n>) plus transitions conditioned on the call
 
 
 def sha256(path):
@@ -37,7 +37,7 @@ def main():
     seasons = {int(season) for season in args.seasons.split(',')}
     rows = pm.load_scrimmage(args.tables, seasons)
     positions = pm.load_positions(args.raw_dir)
-    seqs = lineup_fit.sequences(rows, positions)
+    seqs = lineup_fit.sequences(rows, positions, with_intent=True)
     fitted = lineup_fit.fit(seqs, seasons)
     rates = pm.fit_player_rates(rows, seasons, positions)
     data = {
@@ -50,6 +50,8 @@ def main():
         'fit_checks': fitted['checks'],
         'league_transitions': fitted['league_transitions'],
         'team_transitions': fitted['team_transitions'],
+        'league_transitions_by_intent': fitted['league_transitions_by_intent'],
+        'team_transitions_by_intent': fitted['team_transitions_by_intent'],
         'leave_counts': fitted['leave_counts'],
         'appearances': [[pid, team, group, weight]
                         for (pid, team, group), weight in sorted(rates['appearances'].items())],

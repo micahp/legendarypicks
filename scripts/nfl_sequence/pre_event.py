@@ -120,7 +120,8 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     thrower come only from the RB, FB, TE and WR on the field. The starting QB is the passer and is not in the lineup; a
     second QB is on the field only in a grouping that has one (a -QB2 code), and only then can carry or catch. The
     game's share population stays the full eligible roster, so the Dirichlet shares are the same draw as with the flag off.
-    The personnel label is the lineup's grouping (RB and FB together, then TE)."""
+    The personnel label is the lineup's grouping (RB and FB together, then TE). A table with call-conditioned transitions
+    (schema v4) draws the grouping given this play's run or dropback call, so heavy groupings go with runs."""
     if intent not in ('run', 'dropback'):
         return None
     roster = snapshot['rosters'][side]
@@ -132,7 +133,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     root = snapshot['snapshot_sha256'] if seed_root is None else seed_root
     base = f"{root}:{seed}:{index}"
     chosen = {'side': side, 'team': team}
-    on_field = _advance_lineup(field, lineup_state, team, available_players, state, base, chosen) \
+    on_field = _advance_lineup(field, lineup_state, team, available_players, state, base, chosen, intent) \
         if field is not None else None
 
     def on(candidates):  # the flag-off path returns the list unchanged
@@ -408,7 +409,7 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
     return pick
 
 
-def _advance_lineup(field, lineup_state, team, available_players, state, base, chosen):
+def _advance_lineup(field, lineup_state, team, available_players, state, base, chosen, intent=None):
     """Advance this side's skill lineup by one snap and record it on `chosen`. Returns the on-field ids. Refuses, rather than
     falling back, when the situation has no grouping data or the grouping cannot be read."""
     import participation_field
@@ -422,7 +423,7 @@ def _advance_lineup(field, lineup_state, team, available_players, state, base, c
     if cell is None:
         raise ValueError(f'participation field has no supported cell for down {situation.split("|")[0]} ({situation})')
     group = field.draw_group(team, participation_field.START if prev is None else prev, cell,
-                             _draw(f'{base}:field:group'))
+                             _draw(f'{base}:field:group'), call=intent)  # a v4 table draws the grouping given the call
     skill = [p for p in available_players if p['pos_abb'] in participation_field.SKILL or p['pos_abb'] == 'QB']
     lineup, record = field.advance(team, lineup_state['lineup'], group, skill, _draw(f'{base}:field:advance'),
                                    prev_group=prev)
