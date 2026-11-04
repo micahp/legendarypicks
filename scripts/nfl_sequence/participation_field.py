@@ -22,7 +22,8 @@ import json
 from collections import Counter
 from pathlib import Path
 
-SCHEMA = 'lp.nfl.participation-field.v2'
+SCHEMA = 'lp.nfl.participation-field.v3'  # v3 grouping codes carry -OL<n> and -QB<n>; v2 tables (two digits) still load
+SCHEMAS = ('lp.nfl.participation-field.v2', SCHEMA)
 PLAYER_PRIOR_PLAYS = 20.0  # shrinks a player's on-field rate to the position prior, as in participation_model.py
 LEAGUE_TRANSITION_PRIOR_PLAYS = 20.0  # shrinks a league grouping transition to the league's mix for the cell
 TEAM_TRANSITION_PRIOR_PLAYS = 50.0  # shrinks a team's grouping transition to the league's transition
@@ -32,6 +33,7 @@ MIN_CELL_PLAYS = 20.0  # a situation cell with fewer league plays borrows the ne
 DISTANCES = ('short', 'mid', 'long', 'xl')
 SKILL = {'RB': 'RB', 'FB': 'RB', 'TE': 'TE', 'WR': 'WR'}
 SKILL_CLASSES = ('RB', 'TE', 'WR')
+LINEUP_CLASSES = SKILL_CLASSES + ('QB',)  # 'QB' is a second QB on the field; the starter is the engine's passer
 START = 'START'
 FLOOR = 1e-9  # a zero weight still gets a draw, so no bench player is impossible by construction
 
@@ -55,16 +57,47 @@ def cell_of(down, togo, yl):
 
 
 def group_counts(group):
-    rb, te = int(group[0]), int(group[1])
-    return {'RB': rb, 'TE': te, 'WR': 5 - rb - te}
+    """{'RB', 'TE', 'WR', 'QB'} for a grouping code. '12' is 1 RB (with FB), 2 TE and 2 WR; '12-OL6' has six linemen, so
+    1 WR; '11-QB2' has a second QB, counted as 'QB', so 2 WR. The WR count is what the line, QBs, RBs and TEs leave of
+    eleven. Raises ValueError for an unreadable code, no QB, or a negative WR count."""
+    head, *suffixes = group.split('-')
+    if len(head) != 2 or not head.isdigit():
+        raise ValueError(f'unreadable grouping code {group!r}')
+    line, qbs = 5, 1
+    for suffix in suffixes:
+        if suffix.startswith('OL') and suffix[2:].isdigit():
+            line = int(suffix[2:])
+        elif suffix.startswith('QB') and suffix[2:].isdigit():
+            qbs = int(suffix[2:])
+        else:
+            raise ValueError(f'unreadable grouping code {group!r}')
+    rb, te = int(head[0]), int(head[1])
+    wr = 11 - line - qbs - rb - te
+    if qbs < 1 or wr < 0:
+        raise ValueError(f'grouping code {group!r} has {qbs} QBs and {wr} WRs')
+    return {'RB': rb, 'TE': te, 'WR': wr, 'QB': qbs - 1}
+
+
+def readable(group):
+    try:
+        group_counts(group)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def starter_qb(players):
+    """The QB the engine throws with: the lowest depth rank among the players given, ties by id."""
+    qbs = sorted((p for p in players if p['pos_abb'] == 'QB'), key=lambda p: (p['pos_rank'], p['gsis_id']))
+    return qbs[0]['gsis_id'] if qbs else None
 
 
 class Field:
     """The exported transition table. Every snap's outcome is counted in `status`, so a zero is printed, not hidden."""
 
     def __init__(self, data, sha256):
-        if data.get('schema') != SCHEMA:
-            raise ValueError(f"participation field schema is {data.get('schema')!r}, expected {SCHEMA}")
+        if data.get('schema') not in SCHEMAS:
+            raise ValueError(f"participation field schema is {data.get('schema')!r}, expected one of {SCHEMAS}")
         self.sha256 = sha256
         self.seasons = sorted(data.get('seasons') or [])  # the fit seasons; the engine refuses a game not after all of them
         self.teams = {team for team, _cell, _prev, _counts in data['team_transitions']}
@@ -155,10 +188,12 @@ class Field:
         """The skill lineup after one snap. `lineup` maps each skill player on the field to his stint, the number of
         consecutive snaps ending at the last snap. Returns (next lineup, record). Only this method draws leaves and entrants.
         Rotation (the stint hazard) applies only when the grouping holds; a grouping change moves players by count."""
-        if group is None or len(group) != 2 or not group.isdigit() or group_counts(group)['WR'] < 0:
+        if group is None or not readable(group):
             self.status['unsupported_grouping'] += 1
             return None, {'status': 'unsupported_grouping', 'group': group}
+        starter = starter_qb(roster)  # the passer is never in the lineup; a second QB is drawn from the other QBs
         cls_of = {p['gsis_id']: SKILL[p['pos_abb']] for p in roster if p['pos_abb'] in SKILL}
+        cls_of.update({p['gsis_id']: 'QB' for p in roster if p['pos_abb'] == 'QB' and p['gsis_id'] != starter})
         target = group_counts(group)
         leavers = set()
         kind = 'held' if prev_group == group else 'changed'
@@ -177,7 +212,7 @@ class Field:
         kept = {pid: stint for pid, stint in lineup.items() if pid not in leavers}
         removed = set(leavers)
         count_removed, entrants, short = [], [], {}
-        for cls in SKILL_CLASSES:  # the grouping's counts: surplus leaves by hazard, deficit enters from the bench
+        for cls in LINEUP_CLASSES:  # the grouping's counts: surplus leaves by hazard, deficit enters from the bench
             on = sorted(pid for pid in kept if cls_of.get(pid) == cls)
             while len(on) > target[cls]:
                 weights = [max(self.leave_prob(kind, cls, kept[pid]), FLOOR) for pid in on]

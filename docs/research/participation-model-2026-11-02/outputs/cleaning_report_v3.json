@@ -1,0 +1,131 @@
+{
+  "rules": "- Scrimmage means play_type run or pass in play-by-play. Kneels, spikes and special teams are not personnel plays here.\n- A defensive position label (CB, S, LB, DL and similar) in offense_personnel excludes the row from the personnel fit.\n- A count of on-field players other than 11 is kept and flagged. n_offense always equals the number of listed IDs.\n- The personnel group is the running back count (RB plus FB) followed by the tight end count, so 1 RB, 1 TE, 3 WR is 11.\n  A line other than five adds -OL<n> and a QB count other than one adds -QB<n>, so a six-lineman 12 is 12-OL6 and a\n  two-QB 11 is 11-QB2. From 2023 the file lists every position (C, G and T for the line), so a missing QB is zero QBs.\n  The 2022 format lists only the skill players, plus OL and QB when they are not five and one.\n- A row with no QB, a kicker, punter or long snapper in offense_personnel (a fake kick), or a personnel string that does\n  not total eleven is kept and flagged flag_nonstandard_offense, and the personnel fit leaves it out.\n- Rows with no offense_personnel are excluded.",
+  "schema": "lp.nfl.participation-model-tables.v1",
+  "scrimmage_participation": {
+    "fields": [
+      "season",
+      "week",
+      "season_type",
+      "game_id",
+      "play_id",
+      "posteam",
+      "play_type",
+      "down",
+      "ydstogo",
+      "yardline_100",
+      "qtr",
+      "score_differential",
+      "group",
+      "n_rb",
+      "n_te",
+      "n_wr",
+      "personnel_raw",
+      "n_offense",
+      "offense_ids",
+      "offense_positions",
+      "flag_defensive_label",
+      "flag_count_not_11",
+      "flag_nonstandard_offense"
+    ],
+    "file": "scrimmage_participation.csv.gz",
+    "per_season": {
+      "2022": {
+        "clean_personnel": 35366,
+        "count_11": 35427,
+        "count_not_11": 3,
+        "defensive_label": 64,
+        "nonstandard_offense": 173,
+        "not_scrimmage_or_unmatched": 14720,
+        "participation_rows": 50150,
+        "scrimmage_rows": 35430,
+        "written": 35430
+      },
+      "2023": {
+        "clean_personnel": 35521,
+        "count_11": 35596,
+        "count_not_11": 4,
+        "defensive_label": 79,
+        "nonstandard_offense": 86,
+        "not_scrimmage_or_unmatched": 10568,
+        "participation_rows": 46168,
+        "scrimmage_rows": 35600,
+        "written": 35600
+      },
+      "2024": {
+        "clean_personnel": 34963,
+        "count_11": 35050,
+        "defensive_label": 87,
+        "nonstandard_offense": 95,
+        "not_scrimmage_or_unmatched": 10869,
+        "participation_rows": 45919,
+        "scrimmage_rows": 35050,
+        "written": 35050
+      },
+      "2025": {
+        "clean_personnel": 34475,
+        "count_11": 34623,
+        "count_not_11": 9,
+        "defensive_label": 157,
+        "nonstandard_offense": 181,
+        "not_scrimmage_or_unmatched": 10552,
+        "participation_rows": 45184,
+        "scrimmage_rows": 34632,
+        "written": 34632
+      }
+    },
+    "sha256": "64e2c49664741e8f5a33da549feffb4f504f30cdae03877b7ad156d6703ac05a",
+    "totals": {
+      "clean_personnel": 140325,
+      "count_11": 140696,
+      "count_not_11": 16,
+      "defensive_label": 387,
+      "nonstandard_offense": 535,
+      "not_scrimmage_or_unmatched": 46709,
+      "participation_rows": 187421,
+      "scrimmage_rows": 140712,
+      "written": 140712
+    }
+  },
+  "usage_plays": {
+    "fields": [
+      "season",
+      "week",
+      "season_type",
+      "game_id",
+      "play_id",
+      "posteam",
+      "play_type",
+      "role",
+      "player_id"
+    ],
+    "file": "usage_plays.csv.gz",
+    "per_season": {
+      "2022": {
+        "carry": 15037,
+        "dropback": 20393,
+        "target": 18283
+      },
+      "2023": {
+        "carry": 14877,
+        "dropback": 20723,
+        "target": 18445
+      },
+      "2024": {
+        "carry": 15043,
+        "dropback": 20007,
+        "target": 17848
+      },
+      "2025": {
+        "carry": 14895,
+        "dropback": 19737,
+        "target": 17582
+      },
+      "2026": {
+        "carry": 4791,
+        "dropback": 6693,
+        "target": 5992
+      }
+    },
+    "sha256": "852ea3521de1e5caad0222293b51646df0de915247259b26e9ab014a383505a4"
+  }
+}

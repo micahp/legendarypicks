@@ -124,6 +124,51 @@ class Cells(unittest.TestCase):
         self.assertEqual(chosen['lineup']['cell'], FIELD.supported_cell('1|short|deep'))
 
 
+V3_TABLE = ROOT / 'docs/research/participation-model-2026-11-02/outputs/field_v3_2022_2025.json'
+V3_SHA256 = 'a31fc7150c107b3c15b11e2e643ace88828c033f8da3576b51348e4b5a677107'
+
+
+class LineAndQbGroupings(unittest.TestCase):
+    """v3 codes: a sixth lineman or a second QB takes a skill spot, and only a second QB in the grouping can carry."""
+
+    def setUp(self):
+        self.field = pf.Field.load(V3_TABLE, V3_SHA256)
+        self.roster = [p for p in SNAPSHOT['rosters']['home']['players'] if p['pos_abb'] in pf.SKILL or p['pos_abb'] == 'QB']
+        self.starter = pf.starter_qb(self.roster)
+
+    def _advance(self, group):
+        lineup, record = self.field.advance('DEN', {}, group, self.roster, random.Random(1), prev_group=None)
+        return lineup, record
+
+    def test_a_six_lineman_grouping_puts_four_skill_players_on(self):
+        lineup, record = self._advance('12-OL6')
+        self.assertEqual(record['status'], 'ok')
+        self.assertEqual(len(lineup), 4)
+
+    def test_a_two_qb_grouping_puts_a_backup_qb_on_never_the_starter(self):
+        backups = [p['gsis_id'] for p in self.roster if p['pos_abb'] == 'QB' and p['gsis_id'] != self.starter]
+        self.assertTrue(backups, 'the fixture roster needs a backup QB')
+        lineup, record = self._advance('11-QB2')
+        self.assertEqual(record['status'], 'ok')
+        self.assertEqual(len(lineup), 5)
+        self.assertEqual(len(set(lineup) & set(backups)), 1)
+        self.assertNotIn(self.starter, lineup)
+
+    def test_a_backup_qb_carries_only_when_on_the_field(self):
+        backups = {p['gsis_id'] for p in self.roster if p['pos_abb'] == 'QB' and p['gsis_id'] != self.starter}
+        pick = pe.chooser(SNAPSHOT, 21, seed_root='r' * 64, field=self.field)
+        rng = random.Random(21)
+        for state in states(150, 21):
+            chosen = pick(rng.choice(['run', 'dropback']), 'A', state)
+            for role in ('rusher', 'receiver'):
+                player = chosen.get(role)
+                if player is not None and player['gsis_id'] in backups:
+                    self.assertIn(player['gsis_id'], chosen['lineup']['on_field'])
+            passer = chosen.get('passer')
+            if passer is not None and passer['pos_abb'] == 'QB':
+                self.assertEqual(passer['gsis_id'], self.starter)
+
+
 class Loading(unittest.TestCase):
     def test_a_different_table_hash_is_refused(self):
         with self.assertRaisesRegex(ValueError, 'expected'):

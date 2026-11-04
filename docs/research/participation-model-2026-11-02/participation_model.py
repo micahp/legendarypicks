@@ -49,6 +49,8 @@ def load_scrimmage(path, seasons):
         for row in csv.DictReader(handle):
             if int(row['season']) not in seasons or row['flag_defensive_label'] != '0':
                 continue  # defensive labels were excluded in build_tables.py; kept out here as a second guard
+            if row.get('flag_nonstandard_offense', '0') != '0':
+                continue  # no QB, or a kicker, punter or snapper on the field: a fake kick or direct snap, not a package
             row['ids'] = [x for x in row['offense_ids'].split(';') if x]
             rows.append(row)
     return rows

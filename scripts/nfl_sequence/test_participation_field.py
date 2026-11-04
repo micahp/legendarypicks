@@ -47,8 +47,21 @@ class Cells(unittest.TestCase):
         self.assertEqual(pf.cell_of(None, None, None), 'na|na|na')
 
     def test_a_grouping_counts_its_five_skill_players(self):
-        self.assertEqual(pf.group_counts('11'), {'RB': 1, 'TE': 1, 'WR': 3})
-        self.assertEqual(pf.group_counts('22'), {'RB': 2, 'TE': 2, 'WR': 1})
+        self.assertEqual(pf.group_counts('11'), {'RB': 1, 'TE': 1, 'WR': 3, 'QB': 0})
+        self.assertEqual(pf.group_counts('22'), {'RB': 2, 'TE': 2, 'WR': 1, 'QB': 0})
+
+    def test_a_sixth_lineman_takes_a_skill_spot(self):
+        self.assertEqual(pf.group_counts('12-OL6'), {'RB': 1, 'TE': 2, 'WR': 1, 'QB': 0})
+        self.assertEqual(pf.group_counts('21-OL7'), {'RB': 2, 'TE': 1, 'WR': 0, 'QB': 0})
+
+    def test_a_second_qb_is_counted_and_takes_a_skill_spot(self):
+        self.assertEqual(pf.group_counts('11-QB2'), {'RB': 1, 'TE': 1, 'WR': 2, 'QB': 1})
+        self.assertEqual(pf.group_counts('11-OL6-QB2'), {'RB': 1, 'TE': 1, 'WR': 1, 'QB': 1})
+
+    def test_unreadable_codes_raise(self):
+        for code in ('1', '11-XX', '11-QB0', '33-OL6', 'ab'):
+            with self.assertRaises(ValueError, msg=code):
+                pf.group_counts(code)
 
 
 class Loading(unittest.TestCase):
