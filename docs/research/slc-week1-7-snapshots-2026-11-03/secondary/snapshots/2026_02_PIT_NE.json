@@ -1,0 +1,2942 @@
+{
+  "archive_reconstruction": {
+    "archive_manifest_sha256": "2b91e02bff322dbe01654ba0a676ad7ceae5ba8832c679793969cd6c88273f46",
+    "archive_tag": "archive-2026-09-17",
+    "builder_sha256": "d4fab680bdb2556e8edff24a6330fd761fcbc8dfef7dd221453d0edbb2b94aa5",
+    "cutoff_basis": "kickoff-1s proxy; no recorded LP lock",
+    "identity_resolution": {
+      "join_key": "players.league=nfl AND players.nfl_gsis_id=archived.gsis_id",
+      "resolved_unique_gsis_ids": 105,
+      "source_name_checks": "stable GSIS identity joined; both archive and canonical names retained for review"
+    },
+    "injury_supplements": {},
+    "local_capture_observed_utc": null,
+    "mode": "retrospective_archive_reconstruction",
+    "note": "Retrospective archive reconstruction. Exact official asset hashes and publication times are pinned; local acquisition before the historical cutoff is not established.",
+    "prospective_eligible": false,
+    "readiness_class": "exploratory reconstruction",
+    "readiness_matrix_sha256": "3702009e706a2ba73b6b6a9901db263a7c404c2a758caa31e6d6db9eeb47603b",
+    "readiness_reasons": [],
+    "schema": "lp-nfl-historical-archive-reconstruction-1",
+    "source_assets": {
+      "depth": {
+        "archive_tag": "archive-2026-09-17",
+        "file_name": "depth_charts_2026.rds",
+        "path": "archive-2026-09-17/depth_charts_2026.rds",
+        "published_at_utc": "2026-09-17T19:07:40Z",
+        "sha256": "1f6553f106fd6bf2777789065ca65c1308d32a7cd1cf8064f7b8dd4a2a6f64d1",
+        "source": "official_nflverse_dated_archive"
+      },
+      "injury": {
+        "archive_tag": "archive-2026-09-17",
+        "file_name": "injuries_2026.rds",
+        "path": "archive-2026-09-17/injuries_2026.rds",
+        "published_at_utc": "2026-09-17T19:05:56Z",
+        "sha256": "914c4a14fb33b0347363343a45086333582340b0620fc80e01a450b2dc3f8fab",
+        "source": "official_nflverse_dated_archive"
+      },
+      "roster": {
+        "archive_tag": "archive-2026-09-17",
+        "file_name": "roster_weekly_2026.rds",
+        "path": "archive-2026-09-17/roster_weekly_2026.rds",
+        "published_at_utc": "2026-09-17T19:03:32Z",
+        "sha256": "9acc7586ca4058babd005f2d7a22379775a8fd311b671cd1b73dbd775f266cfe",
+        "source": "official_nflverse_dated_archive"
+      },
+      "schedule": {
+        "archive_tag": "archive-2026-09-17",
+        "file_name": "games.rds",
+        "path": "archive-2026-09-17/games.rds",
+        "published_at_utc": "2026-09-17T19:02:04Z",
+        "sha256": "eda9d0ac3bbaf64c8caa3e9180e0f426267abe2281955d301a412c90348cc9c1",
+        "source": "official_nflverse_dated_archive"
+      }
+    },
+    "source_availability_verified": true,
+    "streak_context": {
+      "cutoff_utc": "2026-09-20T16:59:59Z",
+      "file": "../streaks/2026_02_PIT_NE.json",
+      "file_sha256": "834a7b300a23b49161dae4ab2f7b7084105ea54c6f5aeeb2423b380ac6c1e87e",
+      "game_id": "2026_02_PIT_NE",
+      "source_archive_sha256": "eda9d0ac3bbaf64c8caa3e9180e0f426267abe2281955d301a412c90348cc9c1",
+      "source_games": [
+        "2026_01_NE_SEA",
+        "2026_01_SF_LA",
+        "2026_01_CHI_CAR",
+        "2026_01_TB_CIN",
+        "2026_01_NO_DET",
+        "2026_01_BUF_HOU",
+        "2026_01_BAL_IND",
+        "2026_01_CLE_JAX",
+        "2026_01_ATL_PIT",
+        "2026_01_NYJ_TEN",
+        "2026_01_ARI_LAC",
+        "2026_01_MIA_LV",
+        "2026_01_GB_MIN",
+        "2026_01_WAS_PHI",
+        "2026_01_DAL_NYG",
+        "2026_01_DEN_KC"
+      ],
+      "teams": {
+        "NE": {
+          "streak": "L1"
+        },
+        "PIT": {
+          "streak": "W1"
+        }
+      }
+    },
+    "tier": "secondary"
+  },
+  "as_of": "2026-09-20T16:59:59Z",
+  "evaluation": {
+    "class": "retrospective_archive_reconstruction",
+    "source_availability_verified": true,
+    "unverified_inputs": [
+      "retrospective local acquisition time is unknown; this is not prospective"
+    ],
+    "verified": false
+  },
+  "model_reference": {
+    "participant_assignment_version": "pregame-role-usage-v1",
+    "play_pool": "nfl_pbp seasons before 2026 only; target-season outcomes excluded",
+    "rule_version": "NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix"
+  },
+  "roster_snapshot_id": "archive:16b5e99180b862f3a347c15970ce3e38ac148020367d1fa7e4c95b022e4e0ac8",
+  "rosters": {
+    "away": {
+      "defense_group": "Base 3-4 D",
+      "defense_group_source": "readiness_matrix",
+      "depth_chart_dt": "2026-09-17T12:34:29Z",
+      "injury_report": {
+        "available": true,
+        "players": [
+          {
+            "gsis_id": "00-0036252",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0038558",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0039167",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0039871",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": null
+          }
+        ],
+        "rows": 4
+      },
+      "jersey_week": 2,
+      "missing": [],
+      "players": [
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0039896",
+          "jersey_number": 54,
+          "player_id": 7499,
+          "player_name": "Zach Frazier",
+          "pos_abb": "C",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0036783",
+          "jersey_number": 62,
+          "player_id": 14670,
+          "player_name": "Ryan McCollum",
+          "pos_abb": "C",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041398",
+          "jersey_number": 37,
+          "player_id": 16618,
+          "player_name": "Riley Nowakowski",
+          "pos_abb": "FB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0039358",
+          "jersey_number": 66,
+          "player_id": 14680,
+          "player_name": "Mason McCormick",
+          "pos_abb": "LG",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041396",
+          "jersey_number": 73,
+          "player_id": 6236,
+          "player_name": "Gennings Dunker",
+          "pos_abb": "LG",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0039871",
+          "jersey_number": 76,
+          "player_id": 6932,
+          "player_name": "Troy Fautanu",
+          "pos_abb": "LT",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0037480",
+          "jersey_number": 60,
+          "player_id": 4647,
+          "player_name": "Dylan Cook",
+          "pos_abb": "LT",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0023459",
+          "jersey_number": 8,
+          "player_id": 19023,
+          "player_name": "Aaron Rodgers",
+          "pos_abb": "QB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0034771",
+          "jersey_number": 2,
+          "player_id": 19303,
+          "player_name": "Mason Rudolph",
+          "pos_abb": "QB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0040203",
+          "jersey_number": 18,
+          "player_id": 10506,
+          "player_name": "Will Howard",
+          "pos_abb": "QB",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041565",
+          "jersey_number": 16,
+          "player_id": 412,
+          "player_name": "Drew Allar",
+          "pos_abb": "QB",
+          "pos_rank": 4,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0037228",
+          "jersey_number": 30,
+          "player_id": 23316,
+          "player_name": "Jaylen Warren",
+          "pos_abb": "RB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0036139",
+          "jersey_number": 13,
+          "player_id": 6071,
+          "player_name": "Rico Dowdle",
+          "pos_abb": "RB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041490",
+          "jersey_number": 29,
+          "player_id": 9703,
+          "player_name": "Eli Heidenreich",
+          "pos_abb": "RB",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0038645",
+          "jersey_number": 74,
+          "player_id": 654,
+          "player_name": "Spencer Anderson",
+          "pos_abb": "RG",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0037336",
+          "jersey_number": 67,
+          "player_id": 10196,
+          "player_name": "Brock Hoffman",
+          "pos_abb": "RG",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0037480",
+          "jersey_number": 60,
+          "player_id": 4647,
+          "player_name": "Dylan Cook",
+          "pos_abb": "RT",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041482",
+          "jersey_number": 71,
+          "player_id": 10800,
+          "player_name": "Max Iheanachor",
+          "pos_abb": "RT",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0038558",
+          "jersey_number": 80,
+          "player_id": 23360,
+          "player_name": "Darnell Washington",
+          "pos_abb": "TE",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0036894",
+          "jersey_number": 88,
+          "player_id": 7532,
+          "player_name": "Pat Freiermuth",
+          "pos_abb": "TE",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0033757",
+          "jersey_number": 85,
+          "player_id": 22388,
+          "player_name": "Robert Tonyan",
+          "pos_abb": "TE",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0035640",
+          "jersey_number": 4,
+          "player_id": 15260,
+          "player_name": "DK Metcalf",
+          "pos_abb": "WR",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0036252",
+          "jersey_number": 11,
+          "player_id": 17733,
+          "player_name": "Michael Pittman Jr.",
+          "pos_abb": "WR",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0039739",
+          "jersey_number": 14,
+          "player_id": 24524,
+          "player_name": "Roman Wilson",
+          "pos_abb": "WR",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041489",
+          "jersey_number": 17,
+          "player_id": 1773,
+          "player_name": "Germie Bernard",
+          "pos_abb": "WR",
+          "pos_rank": 4,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0036862",
+          "jersey_number": 15,
+          "player_id": 20404,
+          "player_name": "Ben Skowronek",
+          "pos_abb": "WR",
+          "pos_rank": 5,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041397",
+          "jersey_number": 10,
+          "player_id": 23709,
+          "player_name": "Kaden Wetjen",
+          "pos_abb": "WR",
+          "pos_rank": 6,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0038135",
+          "jersey_number": 3,
+          "player_id": 2591,
+          "player_name": "Jaquan Brisker",
+          "pos_abb": "FS",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0041401",
+          "jersey_number": 28,
+          "player_id": 20933,
+          "player_name": "Robert Spears-Jennings",
+          "pos_abb": "FS",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0039167",
+          "jersey_number": 24,
+          "player_id": 17871,
+          "player_name": "Joey Porter Jr.",
+          "pos_abb": "LCB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0036617",
+          "jersey_number": 22,
+          "player_id": 19484,
+          "player_name": "Asante Samuel Jr.",
+          "pos_abb": "LCB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0040678",
+          "jersey_number": 99,
+          "player_id": 9201,
+          "player_name": "Derrick Harmon",
+          "pos_abb": "LDE",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0041261",
+          "jersey_number": 92,
+          "player_id": 11422,
+          "player_name": "Kevin Jobity Jr.",
+          "pos_abb": "LDE",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0039741",
+          "jersey_number": 41,
+          "player_id": 24515,
+          "player_name": "Payton Wilson",
+          "pos_abb": "LILB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0035286",
+          "jersey_number": 55,
+          "player_id": 10221,
+          "player_name": "Cole Holcomb",
+          "pos_abb": "LILB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0033055",
+          "jersey_number": 5,
+          "player_id": 18237,
+          "player_name": "Jalen Ramsey",
+          "pos_abb": "NB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0036504",
+          "jersey_number": 26,
+          "player_id": 6375,
+          "player_name": "Brandin Echols",
+          "pos_abb": "NB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0039110",
+          "jersey_number": 95,
+          "player_id": 1749,
+          "player_name": "Keeanu Benton",
+          "pos_abb": "NT",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0034810",
+          "jersey_number": 69,
+          "player_id": 12222,
+          "player_name": "Sebastian Joseph-Day",
+          "pos_abb": "NT",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0035699",
+          "jersey_number": 35,
+          "player_id": 5618,
+          "player_name": "Jamel Dean",
+          "pos_abb": "RCB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0041393",
+          "jersey_number": 23,
+          "player_id": 6795,
+          "player_name": "Daylen Everette",
+          "pos_abb": "RCB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0027969",
+          "jersey_number": 97,
+          "player_id": 9921,
+          "player_name": "Cameron Heyward",
+          "pos_abb": "RDE",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0040188",
+          "jersey_number": 94,
+          "player_id": 1944,
+          "player_name": "Yahya Black",
+          "pos_abb": "RDE",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0036323",
+          "jersey_number": 6,
+          "player_id": 18144,
+          "player_name": "Patrick Queen",
+          "pos_abb": "RILB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0040231",
+          "jersey_number": 44,
+          "player_id": 3025,
+          "player_name": "Carson Bruener",
+          "pos_abb": "RILB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0036333",
+          "jersey_number": 56,
+          "player_id": 9976,
+          "player_name": "Alex Highsmith",
+          "pos_abb": "SLB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0040160",
+          "jersey_number": 33,
+          "player_id": 19627,
+          "player_name": "Jack Sawyer",
+          "pos_abb": "SLB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0033941",
+          "jersey_number": 20,
+          "player_id": 11348,
+          "player_name": "Rayshawn Jenkins",
+          "pos_abb": "SS",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0033886",
+          "jersey_number": 90,
+          "player_id": 23476,
+          "player_name": "T.J. Watt",
+          "pos_abb": "WLB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0038577",
+          "jersey_number": 51,
+          "player_id": 9850,
+          "player_name": "Nick Herbig",
+          "pos_abb": "WLB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0033729",
+          "jersey_number": 19,
+          "player_id": 11828,
+          "player_name": "Cameron Johnston",
+          "pos_abb": "H",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0041397",
+          "jersey_number": 10,
+          "player_id": 23709,
+          "player_name": "Kaden Wetjen",
+          "pos_abb": "KR",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0041490",
+          "jersey_number": 29,
+          "player_id": 9703,
+          "player_name": "Eli Heidenreich",
+          "pos_abb": "KR",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0039739",
+          "jersey_number": 14,
+          "player_id": 24524,
+          "player_name": "Roman Wilson",
+          "pos_abb": "KR",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0034051",
+          "jersey_number": 46,
+          "player_id": 12953,
+          "player_name": "Christian Kuntz",
+          "pos_abb": "LS",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0033729",
+          "jersey_number": 19,
+          "player_id": 11828,
+          "player_name": "Cameron Johnston",
+          "pos_abb": "P",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0031136",
+          "jersey_number": 9,
+          "player_id": 2247,
+          "player_name": "Chris Boswell",
+          "pos_abb": "PK",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0041397",
+          "jersey_number": 10,
+          "player_id": 23709,
+          "player_name": "Kaden Wetjen",
+          "pos_abb": "PR",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "PIT",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0039739",
+          "jersey_number": 14,
+          "player_id": 24524,
+          "player_name": "Roman Wilson",
+          "pos_abb": "PR",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0036139",
+          "jersey_number": 13,
+          "player_id": 6071,
+          "player_name": "Rico Dowdle",
+          "pos_abb": "PR",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "PIT",
+          "unit": "special_teams"
+        }
+      ],
+      "promotions": [],
+      "role_fallbacks": [],
+      "snapshot_at": "2026-09-17T12:34:29Z",
+      "source": "nflverse_depth_charts_archived",
+      "source_row_counts": {
+        "depth_rows": 69,
+        "matched_players": 60,
+        "week_roster_rows": 76
+      },
+      "team": "PIT"
+    },
+    "home": {
+      "defense_group": "Base 3-4 D",
+      "defense_group_source": "readiness_matrix",
+      "depth_chart_dt": "2026-09-17T12:34:29Z",
+      "injury_report": {
+        "available": true,
+        "players": [
+          {
+            "gsis_id": "00-0034720",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0034778",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0035678",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0037413",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0040734",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0041103",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": null
+          }
+        ],
+        "rows": 6
+      },
+      "jersey_week": 2,
+      "missing": [],
+      "players": [
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0040147",
+          "jersey_number": 55,
+          "player_id": 24482,
+          "player_name": "Jared Wilson",
+          "pos_abb": "C",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0037413",
+          "jersey_number": 77,
+          "player_id": 2978,
+          "player_name": "Ben Brown",
+          "pos_abb": "C",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0036187",
+          "jersey_number": 44,
+          "player_id": 8057,
+          "player_name": "Reggie Gilliam",
+          "pos_abb": "FB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0036979",
+          "jersey_number": 75,
+          "player_id": 22909,
+          "player_name": "Alijah Vera-Tucker",
+          "pos_abb": "LG",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0029685",
+          "jersey_number": 70,
+          "player_id": 22828,
+          "player_name": "Greg Van Roten",
+          "pos_abb": "LG",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0040699",
+          "jersey_number": 66,
+          "player_id": 3571,
+          "player_name": "Will Campbell",
+          "pos_abb": "LT",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041103",
+          "jersey_number": 68,
+          "player_id": 5030,
+          "player_name": "Dametrious Crownover",
+          "pos_abb": "LT",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0039851",
+          "jersey_number": 10,
+          "player_id": 14506,
+          "player_name": "Drake Maye",
+          "pos_abb": "QB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0038476",
+          "jersey_number": 16,
+          "player_id": 5607,
+          "player_name": "Tommy DeVito",
+          "pos_abb": "QB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041123",
+          "jersey_number": 15,
+          "player_id": 15983,
+          "player_name": "Behren Morton",
+          "pos_abb": "QB",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0036875",
+          "jersey_number": 38,
+          "player_id": 21218,
+          "player_name": "Rhamondre Stevenson",
+          "pos_abb": "RB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0040734",
+          "jersey_number": 32,
+          "player_id": 9772,
+          "player_name": "TreVeyon Henderson",
+          "pos_abb": "RB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0040556",
+          "jersey_number": 9,
+          "player_id": 12617,
+          "player_name": "Corey Kiner",
+          "pos_abb": "RB",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0036198",
+          "jersey_number": 71,
+          "player_id": 16902,
+          "player_name": "Mike Onwenu",
+          "pos_abb": "RG",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0039828",
+          "jersey_number": 72,
+          "player_id": 19236,
+          "player_name": "Walter Rouse",
+          "pos_abb": "RG",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0037413",
+          "jersey_number": 77,
+          "player_id": 2978,
+          "player_name": "Ben Brown",
+          "pos_abb": "RG",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0031330",
+          "jersey_number": 76,
+          "player_id": 16003,
+          "player_name": "Morgan Moses",
+          "pos_abb": "RT",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041541",
+          "jersey_number": 74,
+          "player_id": 13712,
+          "player_name": "Caleb Lomu",
+          "pos_abb": "RT",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0033090",
+          "jersey_number": 85,
+          "player_id": 9819,
+          "player_name": "Hunter Henry",
+          "pos_abb": "TE",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041395",
+          "jersey_number": 82,
+          "player_id": 18281,
+          "player_name": "Eli Raridon",
+          "pos_abb": "TE",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0041314",
+          "jersey_number": 84,
+          "player_id": 764,
+          "player_name": "Tanner Arkin",
+          "pos_abb": "TE",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0038564",
+          "jersey_number": 36,
+          "player_id": 13186,
+          "player_name": "Cameron Latu",
+          "pos_abb": "TE",
+          "pos_rank": 4,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0037816",
+          "jersey_number": 87,
+          "player_id": 6034,
+          "player_name": "Romeo Doubs",
+          "pos_abb": "WR",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0038621",
+          "jersey_number": 3,
+          "player_id": 6047,
+          "player_name": "DeMario Douglas",
+          "pos_abb": "WR",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0033555",
+          "jersey_number": 13,
+          "player_id": 10270,
+          "player_name": "Mack Hollins",
+          "pos_abb": "WR",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0040131",
+          "jersey_number": 18,
+          "player_id": 24226,
+          "player_name": "Kyle Williams",
+          "pos_abb": "WR",
+          "pos_rank": 4,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "3WR 1TE",
+          "gsis_id": "00-0040563",
+          "jersey_number": 86,
+          "player_id": 4058,
+          "player_name": "Efton Chism III",
+          "pos_abb": "WR",
+          "pos_rank": 5,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "offense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0033132",
+          "jersey_number": 31,
+          "player_id": 3400,
+          "player_name": "Kevin Byard",
+          "pos_abb": "FS",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0040204",
+          "jersey_number": 23,
+          "player_id": 18425,
+          "player_name": "Jaylen Reed",
+          "pos_abb": "FS",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0034778",
+          "jersey_number": 7,
+          "player_id": 5337,
+          "player_name": "Carlton Davis III",
+          "pos_abb": "LCB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0041316",
+          "jersey_number": 29,
+          "player_id": 3578,
+          "player_name": "Channing Canada",
+          "pos_abb": "LCB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0036981",
+          "jersey_number": 90,
+          "player_id": 1243,
+          "player_name": "Christian Barmore",
+          "pos_abb": "LDE",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0039289",
+          "jersey_number": 93,
+          "player_id": 21801,
+          "player_name": "Leonard Taylor III",
+          "pos_abb": "LDE",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0036813",
+          "jersey_number": 53,
+          "player_id": 6600,
+          "player_name": "Christian Elliss",
+          "pos_abb": "LILB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0039829",
+          "jersey_number": 54,
+          "player_id": 16062,
+          "player_name": "Darius Muasau",
+          "pos_abb": "LILB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0041109",
+          "jersey_number": 48,
+          "player_id": 16717,
+          "player_name": "Namdi Obiazor",
+          "pos_abb": "LILB",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0037253",
+          "jersey_number": 25,
+          "player_id": 12063,
+          "player_name": "Marcus Jones",
+          "pos_abb": "NB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0039770",
+          "jersey_number": 22,
+          "player_id": 24723,
+          "player_name": "Charles Woods",
+          "pos_abb": "NB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0038653",
+          "jersey_number": 94,
+          "player_id": 6280,
+          "player_name": "Cory Durden",
+          "pos_abb": "NT",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0039147",
+          "jersey_number": 0,
+          "player_id": 8200,
+          "player_name": "Christian Gonzalez",
+          "pos_abb": "RCB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0041088",
+          "jersey_number": 21,
+          "player_id": 18082,
+          "player_name": "Karon Prunty",
+          "pos_abb": "RCB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0036916",
+          "jersey_number": 97,
+          "player_id": 24270,
+          "player_name": "Milton Williams",
+          "pos_abb": "RDE",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0031054",
+          "jersey_number": 92,
+          "player_id": 11925,
+          "player_name": "DaQuan Jones",
+          "pos_abb": "RDE",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0040171",
+          "jersey_number": 92,
+          "player_id": 6883,
+          "player_name": "Joshua Farmer",
+          "pos_abb": "RDE",
+          "pos_rank": 3,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0034720",
+          "jersey_number": 14,
+          "player_id": 20975,
+          "player_name": "Robert Spillane",
+          "pos_abb": "RILB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0041455",
+          "jersey_number": 49,
+          "player_id": 10694,
+          "player_name": "Erick Hunter",
+          "pos_abb": "RILB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0035678",
+          "jersey_number": 5,
+          "player_id": 11955,
+          "player_name": "Dre'Mont Jones",
+          "pos_abb": "SLB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0041569",
+          "jersey_number": 50,
+          "player_id": 10926,
+          "player_name": "Gabe Jacas",
+          "pos_abb": "SLB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0040716",
+          "jersey_number": 4,
+          "player_id": 24754,
+          "player_name": "Craig Woodson",
+          "pos_abb": "SS",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0039692",
+          "jersey_number": 24,
+          "player_id": 17560,
+          "player_name": "Dell Pettus",
+          "pos_abb": "SS",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0040574",
+          "jersey_number": 91,
+          "player_id": 17827,
+          "player_name": "Elijah Ponder",
+          "pos_abb": "WLB",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Base 3-4 D",
+          "gsis_id": "00-0041402",
+          "jersey_number": 45,
+          "player_id": 10753,
+          "player_name": "Quintayvious Hutchins",
+          "pos_abb": "WLB",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "defense"
+        },
+        {
+          "availability": {
+            "decision": "include_practice_squad_elevation",
+            "designation": null,
+            "flags": [
+              "practice_squad_elevation"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0034941",
+          "jersey_number": 19,
+          "player_id": 24625,
+          "player_name": "Mitch Wishnowsky",
+          "pos_abb": "H",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "practice_squad_elevation",
+          "source_role_before_fallback": {
+            "group": "weekly_roster",
+            "pos_abb": "P",
+            "status": "DEV"
+          },
+          "starter": true,
+          "starter_assignment": {
+            "classification": "retrospective_practice_squad_elevation",
+            "group": "Special Teams",
+            "pos_abb": "H",
+            "starter_rank": 1
+          },
+          "team": "NE",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0040131",
+          "jersey_number": 18,
+          "player_id": 24226,
+          "player_name": "Kyle Williams",
+          "pos_abb": "KR",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0040563",
+          "jersey_number": 86,
+          "player_id": 4058,
+          "player_name": "Efton Chism III",
+          "pos_abb": "KR",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0040246",
+          "jersey_number": 47,
+          "player_id": 833,
+          "player_name": "Julian Ashby",
+          "pos_abb": "LS",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_practice_squad_elevation",
+            "designation": null,
+            "flags": [
+              "practice_squad_elevation"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0034941",
+          "jersey_number": 19,
+          "player_id": 24625,
+          "player_name": "Mitch Wishnowsky",
+          "pos_abb": "P",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "practice_squad_elevation",
+          "source_role_before_fallback": {
+            "group": "weekly_roster",
+            "pos_abb": "P",
+            "status": "DEV"
+          },
+          "starter": true,
+          "starter_assignment": {
+            "classification": "retrospective_practice_squad_elevation",
+            "group": "Special Teams",
+            "pos_abb": "P",
+            "starter_rank": 1
+          },
+          "team": "NE",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0040200",
+          "jersey_number": 8,
+          "player_id": 2217,
+          "player_name": "Andy Borregales",
+          "pos_abb": "PK",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0037253",
+          "jersey_number": 25,
+          "player_id": 12063,
+          "player_name": "Marcus Jones",
+          "pos_abb": "PR",
+          "pos_rank": 1,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": true,
+          "team": "NE",
+          "unit": "special_teams"
+        },
+        {
+          "availability": {
+            "decision": "include_missing_report",
+            "designation": null,
+            "flags": [
+              "missing_report"
+            ]
+          },
+          "group": "Special Teams",
+          "gsis_id": "00-0038621",
+          "jersey_number": 3,
+          "player_id": 6047,
+          "player_name": "DeMario Douglas",
+          "pos_abb": "PR",
+          "pos_rank": 2,
+          "roster_eligible": true,
+          "snapshot_at": "2026-09-17T12:34:29Z",
+          "source": "nflverse_depth_charts_archived",
+          "starter": false,
+          "team": "NE",
+          "unit": "special_teams"
+        }
+      ],
+      "promotions": [
+        {
+          "assigned_role_rank": 1,
+          "group": "Special Teams",
+          "pos_abb": "H",
+          "promoted_gsis_id": "00-0034941",
+          "reason": "no eligible archived H; the practice-squad P is assumed elevated for the game (the weekly roster records no gameday elevations)",
+          "source_role": {
+            "group": "weekly_roster",
+            "pos_abb": "P",
+            "status": "DEV"
+          },
+          "starter_rank": 1
+        },
+        {
+          "assigned_role_rank": 1,
+          "group": "Special Teams",
+          "pos_abb": "P",
+          "promoted_gsis_id": "00-0034941",
+          "reason": "no eligible archived P; the practice-squad P is assumed elevated for the game (the weekly roster records no gameday elevations)",
+          "source_role": {
+            "group": "weekly_roster",
+            "pos_abb": "P",
+            "status": "DEV"
+          },
+          "starter_rank": 1
+        }
+      ],
+      "role_fallbacks": [
+        {
+          "assigned_role_rank": 1,
+          "group": "Special Teams",
+          "pos_abb": "H",
+          "promoted_gsis_id": "00-0034941",
+          "reason": "no eligible archived H; the practice-squad P is assumed elevated for the game (the weekly roster records no gameday elevations)",
+          "source_role": {
+            "group": "weekly_roster",
+            "pos_abb": "P",
+            "status": "DEV"
+          },
+          "starter_rank": 1
+        },
+        {
+          "assigned_role_rank": 1,
+          "group": "Special Teams",
+          "pos_abb": "P",
+          "promoted_gsis_id": "00-0034941",
+          "reason": "no eligible archived P; the practice-squad P is assumed elevated for the game (the weekly roster records no gameday elevations)",
+          "source_role": {
+            "group": "weekly_roster",
+            "pos_abb": "P",
+            "status": "DEV"
+          },
+          "starter_rank": 1
+        }
+      ],
+      "snapshot_at": "2026-09-17T12:34:29Z",
+      "source": "nflverse_depth_charts_archived",
+      "source_row_counts": {
+        "depth_rows": 68,
+        "matched_players": 60,
+        "week_roster_rows": 80
+      },
+      "team": "NE"
+    }
+  },
+  "schedule": {
+    "availability_classification": "retrospective_archive_reconstruction",
+    "away_team": "PIT",
+    "game_id": "2026_02_PIT_NE",
+    "game_type": "REG",
+    "gameday": "2026-09-20",
+    "gametime": "13:00",
+    "gametime_timezone": "America/New_York",
+    "home_team": "NE",
+    "ingested_at": null,
+    "kickoff_source_url": "https://github.com/nflverse/nflverse-data-archives/releases",
+    "scheduled_kickoff_utc": "2026-09-20T17:00:00Z",
+    "season": 2026,
+    "source": "official_nflverse_archived_games",
+    "week": 2
+  },
+  "schema": "lp-nfl-pregame-snapshot-1",
+  "snapshot_sha256": "532f86afbd19768a7df831f80949a06177b4fe957cc7b737e2de7310d5d83eb6"
+}

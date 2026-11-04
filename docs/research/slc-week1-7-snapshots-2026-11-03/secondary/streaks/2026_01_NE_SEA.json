@@ -1,0 +1,16 @@
+{
+  "cutoff_utc": "2026-09-10T00:19:59Z",
+  "game_id": "2026_01_NE_SEA",
+  "schema": "lp-nfl-pregame-streak-1",
+  "source_archive_sha256": "a330f21717dad6b38c4141ab116ee77b3447baabb8d5d24c6e6f990f46f92f97",
+  "source_archive_tag": "archive-2026-09-03",
+  "source_games": [],
+  "teams": {
+    "NE": {
+      "streak": ""
+    },
+    "SEA": {
+      "streak": ""
+    }
+  }
+}
