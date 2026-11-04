@@ -855,6 +855,9 @@ def run_batch(args):
                                                            decision_filter=not args.playcall_decision_unfiltered,
                                                            dirichlet_shares=args.playcall_dirichlet_shares,
                                                            pbv1_table=args.playcall_pbv1_package,
+                                                           participation_field=((args.participation_field,
+                                                                                 args.participation_field_sha256)
+                                                                                if args.participation_field else None),
                                                            qb_decisions=args.playcall_qb_decisions,
                                                            player_outcomes=args.playcall_player_outcomes,
                                                            player_outcomes_receiver_only=args.playcall_player_outcomes_receiver_only,
@@ -961,6 +964,10 @@ def run_batch(args):
         ledger_header['research_integration'] = {'pbv1_package': {
             'table': str(args.playcall_pbv1_package), 'table_sha256': pbv1_package.TABLE_SHA256,
             'model': pbv1_package.MODEL_VERSION, 'K': pbv1_package.K, 'target_column': 'package'}}
+    if args.participation_field:  # research flag: the lineup table is pinned in the ledger like PBV1's
+        ledger_header['research_integration'] = {'participation_field': {
+            'table': str(args.participation_field), 'table_sha256': args.participation_field_sha256,
+            'fit_seasons': ref.contextual_sampler.participation_field.seasons, 'personnel_label': 'lineup grouping'}}
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume,
                                          seed_end=seed_end_exclusive,
                                          allowed_seeds=set(seed_values) if seed_selection_manifest else None)
@@ -1200,6 +1207,12 @@ def main(argv=None):
                     help='SLC v1 research flag (off by default): the personnel label is drawn from the PBV1 RB-only package '
                          'sampler, refitted on the training table for seasons before each game (pbv1_package.TABLE_SHA256); '
                          'the table path is the frozen docs/research/pbv1-package-integration-2026-11-02 CSV')
+    ap.add_argument('--participation-field', type=Path, default=None,
+                    help='SLC v2 research flag (off by default): skill lineups carry from snap to snap and the runner and '
+                         'receiver come only from players on the field (participation_field.py). Needs '
+                         '--participation-field-sha256 and --rng-protocol v2; cannot run with --playcall-pbv1-package')
+    ap.add_argument('--participation-field-sha256', default=None,
+                    help='the expected SHA-256 of the --participation-field table; a different file is refused')
     ap.add_argument('--playcall-qb-decisions', action='store_true',
                     help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
     ap.add_argument('--playcall-qb-run-role-style', action='store_true',
@@ -1276,6 +1289,15 @@ def main(argv=None):
         ap.error('--slc-blocker-fix requires --playcall-artifact')
     if args.playcall_player_outcomes_receiver_only and not args.playcall_player_outcomes:
         ap.error('--playcall-player-outcomes-receiver-only requires --playcall-player-outcomes')
+    if args.participation_field:
+        if not args.participation_field_sha256:
+            ap.error('--participation-field requires --participation-field-sha256')
+        if args.rng_protocol != rng_protocol.V2:
+            ap.error('--participation-field requires --rng-protocol v2')
+        if args.playcall_pbv1_package:
+            ap.error('--participation-field cannot run with --playcall-pbv1-package; both set the personnel label')
+        if not args.playcall_artifact:
+            ap.error('--participation-field requires --playcall-artifact (the SLC engine)')
     if args.availability_snapshot and not args.roster_snapshot:
         ap.error('--availability-snapshot needs the full-depth roster: pass --roster-snapshot and --roster-provenance')
     if args.availability_store and not args.roster_snapshot:

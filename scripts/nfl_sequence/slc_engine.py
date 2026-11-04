@@ -96,7 +96,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
                    player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
-                   qb_run_role_style=None, score_clock_playcalling=True, pbv1_table=None):
+                   qb_run_role_style=None, score_clock_playcalling=True, pbv1_table=None, participation_field=None):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -181,6 +181,14 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     if pbv1_table:  # research flag: PBV1 package codes for the personnel label, refitted on the seasons before the game season
         import pbv1_package
         ref.contextual_sampler.pbv1_model = pbv1_package.load(pbv1_table, pbv1_package.TABLE_SHA256, season)
+    if participation_field:  # research flag: skill lineups that carry from snap to snap, (path, expected sha256)
+        if pbv1_table:
+            raise ValueError('the participation field sets the personnel label itself; it cannot run with PBV1')
+        import participation_field as pf
+        field = pf.Field.load(*participation_field)
+        if not field.seasons or max(field.seasons) >= season:
+            raise ValueError(f'participation field is fitted on {field.seasons}; a {season} game needs earlier seasons only')
+        ref.contextual_sampler.participation_field = field
     if playbook:  # the playbook files as the prior for pass depth, pass location and run gap; needs the decision labels on
         if not decision:
             raise ValueError('the playbook input replaces decision labels, so it needs decision=True')
@@ -317,6 +325,9 @@ def play(seed, ref, snapshot, *, paired_randomness=False, rng_plan=None):
     if getattr(sampler, 'pbv1_model', None) is not None:
         import pbv1_package
         pbv1_draws = pbv1_package.Draws(sampler.pbv1_model)  # per game: its own counters, the shared model
+    field = getattr(sampler, 'participation_field', None)
+    if field is not None and seed_root is None:
+        raise ValueError('the participation field needs RNG protocol v2')
     sampler.participant_chooser = pre_event.chooser(require_snapshot(snapshot), seed,
                                                     formation_priors=sampler.formation_priors,
                                                     player_shares=sampler.player_shares,
@@ -327,7 +338,7 @@ def play(seed, ref, snapshot, *, paired_randomness=False, rng_plan=None):
                                                     scramble_backoff_enabled=sampler.scramble_backoff_enabled,
                                                     qb_run_role_style_enabled=getattr(
                                                         sampler, 'qb_run_role_style_enabled', False),
-                                                    pbv1=pbv1_draws, seed_root=seed_root)
+                                                    pbv1=pbv1_draws, seed_root=seed_root, field=field)
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
                               paired_randomness=paired_randomness, seed_root=seed_root)
@@ -849,7 +860,32 @@ def summary(decisions, record=None):
     fixes = sorted({fix for decision in decisions for fix in decision.get('blocker_fixes', [])})
     if fixes:
         result['blocker_resolution'] = _blocker_resolution_summary(decisions, fixes, record)
+    lineup = lineup_summary(decisions)
+    if lineup is not None:  # only with the participation field flag, so a flags-off summary is unchanged
+        result['lineup'] = lineup
     return result
+
+
+def lineup_summary(decisions):
+    """Per-team skill snaps from the participation field's lineups: each scrimmage play the lineup was built for counts one
+    team snap, and one snap for every RB, FB, TE and WR on the field. QBs and linemen are not in the lineup model. None
+    when no play carries a lineup."""
+    lineups = [(d.get('participants') or {}).get('lineup') for d in decisions]
+    lineups = [lineup for lineup in lineups if lineup is not None]
+    if not lineups:
+        return None
+    teams = {}
+    for lineup in lineups:
+        row = teams.setdefault(str(lineup['team']), {'team_snaps': 0, 'player_snaps': Counter(), 'groups': Counter(),
+                                           'short_snaps': 0, 'cell_fallbacks': Counter()})
+        row['team_snaps'] += 1
+        row['player_snaps'].update(lineup['on_field'])
+        row['groups'][lineup['group']] += 1
+        row['short_snaps'] += lineup['status'] == 'short'
+        if lineup.get('cell_fallback_from'):
+            row['cell_fallbacks'][f"{lineup['cell_fallback_from']}->{lineup['cell']}"] += 1
+    return {team: {key: dict(sorted(value.items())) if isinstance(value, Counter) else value
+                   for key, value in row.items()} for team, row in sorted(teams.items())}
 
 
 def _blocker_resolution_summary(decisions, fixes, record=None):
