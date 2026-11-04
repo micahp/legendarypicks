@@ -40,7 +40,9 @@ on branch `slc-v1.5` in `/root/lp-slc-v1-5`, 16 commits ahead of `origin`, also 
 | 7. Field goals by kicker | `524827d1` to `7580c9f6`, `20e3dba6` (amendment 6) | `--playcall-fg-kicker`; flags-off 0 of 3; smoke 3 of 3 valid; 359 tests |
 
 V1 against V1.5 (`94cf8dcb` on `slc-v1.5`): 121 games of 2026 weeks 1 to 8, 20 seeds each. Winner log loss 0.6888 (V1)
-against 0.6948 (V1.5), difference +0.0060 [-0.054, +0.070]. Both within noise of a coin flip (0.6931).
+against 0.6948 (V1.5), difference +0.0060 [-0.054, +0.070]. Both within noise of a coin flip (0.6931). Week 8 player
+projections (14 games, the only scorable week) favour V1.5 on carries, rushing yards, targets, receptions and receiving
+yards, also among players who recorded the stat (`dada4c08` adds this to the results doc; the verdict is unchanged).
 
 ## 4. Work on 2026-11-04 after the queue
 
