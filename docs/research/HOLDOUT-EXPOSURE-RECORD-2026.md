@@ -88,3 +88,30 @@ Synthetic fixtures in `test_pregame_context.py`, `test_pregame_snapshot.py` and 
 
 Quarantine: the directory is mode 0700 and the copies are mode 0400. Row 16 is an open decision. Row 17 is resolved on
 `main` (`096454b`) and open on the research branch.
+
+## 7. 2026-11-03: authorisation for the SLC V1.5 retrospective run
+
+Owner authorisation: lift the 2026 refusals in `holdout.py` and the loaders for a retrospective run of weeks 1 to 8 only, on branch `slc-v1.5`, under `docs/research/SLC-V15-WALKFORWARD-PROTOCOL-2026-11-03.md`. The guards stay on `dev` and `main`. Week 9 onward is prospective and needs its manifest locked before the first game's cutoff (Thursday 2026-11-05, 18:45 Eastern, assumed). No 2026 read has happened under this entry yet. Each read will be added below with its file and scope.
+
+## 8. 2026-11-04: SLC v2 realism-gate draft threshold work
+
+| # | what | read or produced | exact location | status |
+|---|---|---|---|---|
+| 20 | Accidental broad repository text search while revising the SLC v2 realism-gate draft. The query matched `Phase 6`, `1.190`, `1.395`, `0.2947`, and `0.0000`; its output was large and truncated, so the complete set of surfaced paths cannot be reconstructed. The output may have included result-bearing 2026 text from mixed-season research artifacts. | Search output only. No value from that output was used in threshold calculations or copied from it into the draft. | `rg -n "Phase 6|1.190|1.395|0.2947|0.0000" docs/research` in `/root/lp-slc-v1` on 2026-11-04. | Accidental possible exposure to sealed result text. No simulation was run. Micah directed no full clean-room redo; observed thresholds are being made reproducible from hash-pinned 2022-2024 inputs only. Strict non-exposure cannot be certified. |
+
+The threshold script for this gate is `docs/research/slc-v2-realism-gate-2026-11-04/materialize_thresholds.py`; its deterministic output is `observed_thresholds.json` in the same directory. It verifies the source hashes and rejects seasons outside 2022-2024 before calculation. Micah will rerun it in a fresh process to check the materialized values.
+
+## 9. 2026-11-04: baseline scoring and threshold rerun (SLC v2 evaluation)
+
+| # | what | read or produced | exact location | status |
+|---|---|---|---|---|
+| 21 | Scored the V1 and V1.5 baselines on 2026 weeks 1-8, as Micah directed in the product directive of 2026-11-04. Inputs: final scores from `nfl_schedule` (2026 REG weeks 1-8, 121 games), `stats_player_week_2026` (weeks 1-8, sha256 prefix 0df020e779067149), and 2026 snap counts through week 7 (used for the snap-to-player mapping only). | Read and produced: winner log loss and Brier, points CRPS, player MAE and CRPS, role shares. Written to scratch JSON only. Not used for fitting, tuning or threshold selection. | `/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/baseline/season_v1_vs_v15.json` and `/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/baseline/players_v1_vs_v15.json`; scorers `scripts/nfl_sequence/score_season_batches.py` and `docs/research/slc-v2-eval-2026-11-04/score_player_workloads.py` (lp-slc-v2 commit 448e7dee). | Done. User-directed evaluation read of 2026 values. The v2 scoring will be logged the same way. |
+| 22 | Fresh-process rerun of `materialize_thresholds.py` to check pi's output. It reads the pinned 2022 to 2024 inputs only, and the script refuses other seasons. Run under the DuckDB environment `/root/lp-goalie-research/.venv`, because the default Python has no DuckDB. | Produced a copy of `observed_thresholds.json` in scratch. No 2026 read. | `/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/observed_thresholds_rerun.json` | Byte-identical to `docs/research/slc-v2-realism-gate-2026-11-04/observed_thresholds.json` (sha256 prefix df17d68e7f397cdd). |
+
+## 10. 2026-11-04: v2 scoring on the 105 games that completed (SLC v2 evaluation)
+
+| # | what | read or produced | exact location | status |
+|---|---|---|---|---|
+| 23 | Scored the v2 run against V1.5 on the 105 of 121 games that completed, as directed by Micah (product directive, 2026-11-04). Inputs: final scores from `nfl_schedule` (2026 REG weeks 1-8), `stats_player_week_2026` (weeks 1-8), and 2026 snap counts through week 7 (snap mapping only). The 16 games that failed (15 LAR or WSH games, 1 MIA game) are excluded from both arms. | Read and produced: winner log loss and Brier, points CRPS, player MAE and CRPS, role shares, snap-share MAE. Written to scratch JSON only. Not used for fitting, tuning or threshold selection. | `/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/baseline/season_v15_vs_v2_paired.json` and `/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/baseline/players_v15_v2_paired.json`; v2 outputs in `/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/baseline/V2`. | Done. User-directed evaluation read of 2026 values. The 16 failed games were not scored. |
+| 24 | Interim scoring on Micah's request ("run it", 2026-11-04) while the amendment 8 rerun was in progress. Arms: the earlier V1, V1.5 and v2 outputs with the 7 (V1, V1.5) and 6 (v2) Rams and Washington games that had finished on `5edb8b49` swapped in. V1 vs V1.5 on 121 games; V1.5 vs v2 on the 111 games v2 has. Same inputs as row 23. | Read and produced: winner log loss and Brier, player workload MAE and role and snap-share errors. Interim: superseded by the full rerun. | `/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/partial/` |
+| 25 | Full scoring after the amendment 8 rerun: all 15 Rams and Washington games of 2026 weeks 1-8 rerun on `5edb8b49` in V1, V1.5 and v2, the other games from the earlier runs. V1 vs V1.5 on 121 games; V1.5 vs v2 on 120 (MIA week 8 has no v2 run). Same inputs as row 23. | Read and produced: winner log loss and Brier, points CRPS, player workload MAE, role and snap-share errors. | `/tmp/claude-0/-root/744b1ddf-da1c-4751-b1ee-106793d5f525/scratchpad/full/` |
