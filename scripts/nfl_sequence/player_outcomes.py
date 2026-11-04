@@ -191,13 +191,19 @@ def _fit_rows(rows, cutoff, seasons):
     }
 
 
-def load(db, cutoff_season):
-    """Fit player outcome profiles on regular seasons before cutoff_season, never its season or later."""
+def load(db, cutoff_season, evidence=None):
+    """Fit player outcome profiles on regular seasons before cutoff_season, never its season or later.
+
+    `evidence` (season_layers.Evidence, SLC V1.5) fits the same profiles on the current-season games available at its cutoff."""
     cutoff = int(cutoff_season)
-    seasons = list(range(FIRST_SEASON, cutoff))
-    if not seasons:
-        raise ValueError(f'player outcome model needs data from {FIRST_SEASON} or later before cutoff {cutoff}')
-    marks = ','.join('?' for _ in seasons)
+    if evidence is None:
+        seasons = list(range(FIRST_SEASON, cutoff))
+        if not seasons:
+            raise ValueError(f'player outcome model needs data from {FIRST_SEASON} or later before cutoff {cutoff}')
+        where, params = f"p.season IN ({','.join('?' for _ in seasons)})", seasons
+    else:
+        seasons = [evidence.season]
+        where, params = evidence.sql_filter('p.')
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         duplicate_positions = con.execute(
@@ -216,8 +222,8 @@ def load(db, cutoff_season):
                     f"receiving_yards,rushing_yards,pass_touchdown,touchdown,rush_touchdown,game_id,play_id "
                     f"FROM nfl_pbp p LEFT JOIN (SELECT nfl_gsis_id,MIN(position) AS position FROM players "
                     f"WHERE lower(league)='nfl' GROUP BY nfl_gsis_id) q ON q.nfl_gsis_id=p.passer_player_id "
-                    f"WHERE p.season IN ({marks}) AND p.week BETWEEN 1 AND 18 "
-                    f"ORDER BY p.game_id,p.play_id", seasons)]
+                    f"WHERE {where} AND p.week BETWEEN 1 AND 18 "
+                    f"ORDER BY p.game_id,p.play_id", params)]
     finally:
         con.close()
     # The fit is memoised on these exact rows, in order, when SLC_FIT_CACHE_DIR is set (fit_cache.py).

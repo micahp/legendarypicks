@@ -29,19 +29,25 @@ def cell_of(down, togo, yl):
     return (int(down), e0.ydstogo_bucket(togo), e0.yardline_bucket(yl))
 
 
-def load(db, cutoff_season):
-    """Team and league counts of target roles per situation, from pass plays before the cutoff."""
-    seasons = list(range(FIRST_SEASON, int(cutoff_season)))
-    if not seasons:
-        raise ValueError('no prior seasons before the cutoff')
+def load(db, cutoff_season, evidence=None):
+    """Team and league counts of target roles per situation, from pass plays before the cutoff.
+
+    `evidence` (season_layers.Evidence, SLC V1.5) reads the current-season games available at its cutoff instead."""
+    if evidence is None:
+        seasons = list(range(FIRST_SEASON, int(cutoff_season)))
+        if not seasons:
+            raise ValueError('no prior seasons before the cutoff')
+        where, params = f"p.season IN ({','.join('?' * len(seasons))})", seasons
+    else:
+        seasons = [evidence.season]
+        where, params = evidence.sql_filter('p.')
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
-        marks = ','.join('?' * len(seasons))
         rows = con.execute(
             f"SELECT p.posteam, p.down, p.ydstogo, p.yardline_100, pl.position FROM nfl_pbp p "
             f"JOIN players pl ON pl.nfl_gsis_id = p.receiver_player_id AND pl.league = 'nfl' "
-            f"WHERE p.season IN ({marks}) AND p.week <= 18 AND p.play_type = 'pass' AND p.posteam IS NOT NULL "
-            f"AND p.down BETWEEN 1 AND 4 AND p.ydstogo IS NOT NULL AND p.yardline_100 IS NOT NULL", seasons).fetchall()
+            f"WHERE {where} AND p.week <= 18 AND p.play_type = 'pass' AND p.posteam IS NOT NULL "
+            f"AND p.down BETWEEN 1 AND 4 AND p.ydstogo IS NOT NULL AND p.yardline_100 IS NOT NULL", params).fetchall()
     finally:
         con.close()
     team = defaultdict(Counter)

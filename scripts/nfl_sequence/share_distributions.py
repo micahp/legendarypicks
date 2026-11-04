@@ -40,14 +40,17 @@ def _rng(text):
     return random.Random(int.from_bytes(hashlib.sha256(text.encode()).digest()[:8], 'big'))
 
 
-def team_game_counts(db, season, role):
-    """{team: {game_id: {player: count}}} and {team: {player: season count}}, from the play-by-play of one season."""
+def team_game_counts(db, season, role, evidence=None):
+    """{team: {game_id: {player: count}}} and {team: {player: season count}}, from the play-by-play of one season.
+
+    `evidence` (season_layers.Evidence, SLC V1.5) reads only the current-season games available at its cutoff."""
     column, play_type = ROLE_SQL[role]
+    where, params = ('season = ?', [int(season)]) if evidence is None else evidence.sql_filter()
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         rows = con.execute(
-            f"SELECT game_id, posteam, {column} FROM nfl_pbp WHERE season = ? AND week <= 18 AND play_type = ? "
-            f"AND posteam IS NOT NULL AND {column} IS NOT NULL", (int(season), play_type)).fetchall()
+            f"SELECT game_id, posteam, {column} FROM nfl_pbp WHERE {where} AND week <= 18 AND play_type = ? "
+            f"AND posteam IS NOT NULL AND {column} IS NOT NULL", (*params, play_type)).fetchall()
     finally:
         con.close()
     games = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))  # team -> game -> player -> count

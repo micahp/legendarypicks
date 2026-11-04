@@ -45,6 +45,9 @@ K = 20.0  # the decision model's chosen shrinkage weight, from its 2025 validati
 FIRST_CHARTED_SEASON = 2022  # FTN charting starts in 2022
 PBP_PARQUET = '/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_{season}.parquet'  # the decision model's source
 PLAYERS_PARQUET = '/root/lp-snapshots/nfl-backfill-2026-10-27/raw/players/players.parquet'  # its position source
+FTN_PARQUET = '/root/lp-snapshots/nfl-backfill-2026-10-27/raw/ftn_charting/ftn_charting_{season}.parquet'  # the current season's charting, which the database does not hold
+CHARTING_FIELDS = ('starting_hash', 'qb_location', 'n_offense_backfield', 'n_defense_box', 'is_play_action', 'is_motion', 'n_blitzers',
+                   'n_pass_rushers')
 
 
 def role_of_receiver(pos):
@@ -130,23 +133,54 @@ def _pass_length(seasons):
     return out
 
 
-def load_rows(db, seasons):
-    """Labelled scrimmage plays for the given seasons, from the play-by-play joined to FTN charting. Regular season only."""
+PBP_FIELDS = ('p.game_id, p.play_id, p.season, p.posteam, p.pass_attempt, p.rush_attempt, p.qb_scramble, p.down, p.ydstogo, '
+              'p.yardline_100, p.pass_location, p.run_gap, p.shotgun, p.receiver_player_id, p.rusher_player_id')
+PBP_SCOPE = ("p.week <= 18 AND p.play_type IN ('pass', 'run') AND p.posteam IS NOT NULL "
+             "AND p.down BETWEEN 1 AND 4 AND p.ydstogo IS NOT NULL AND p.yardline_100 IS NOT NULL")
+
+
+def charting_from_release(season):
+    """(game_id, play_id) -> the charting fields, from the nflverse FTN release file. Refuses a play charted twice."""
+    import pyarrow.parquet as pq
+    table = pq.read_table(FTN_PARQUET.format(season=season),
+                          columns=['nflverse_game_id', 'nflverse_play_id', *CHARTING_FIELDS]).to_pydict()
+    out = {}
+    for i, (game, play) in enumerate(zip(table['nflverse_game_id'], table['nflverse_play_id'])):
+        if game is None or play is None:
+            continue
+        key = (game, int(play))
+        if key in out:
+            raise ValueError(f'FTN release {season} charts {key} twice')
+        out[key] = tuple(table[field][i] for field in CHARTING_FIELDS)
+    return out
+
+
+def load_rows(db, seasons, evidence=None):
+    """Labelled scrimmage plays for the given seasons, from the play-by-play joined to FTN charting. Regular season only.
+
+    `evidence` (season_layers.Evidence, SLC V1.5) labels the current-season games available at its cutoff instead. The database
+    holds no current-season charting, so those plays are joined to the nflverse FTN release file; only charted plays are kept,
+    as the database join keeps them."""
+    if evidence is not None:
+        seasons = [evidence.season]
     seasons = sorted(int(s) for s in seasons)
     if not seasons or seasons[0] < FIRST_CHARTED_SEASON:
         raise ValueError(f'decision categories need FTN charting seasons ({FIRST_CHARTED_SEASON} on) before the cutoff')
     positions = _positions()
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
-        marks = ','.join('?' * len(seasons))
-        rows = con.execute(
-            f"SELECT p.game_id, p.play_id, p.season, p.posteam, p.pass_attempt, p.rush_attempt, p.qb_scramble, p.down, p.ydstogo, "
-            f"p.yardline_100, p.pass_location, p.run_gap, p.shotgun, p.receiver_player_id, p.rusher_player_id, "
-            f"c.starting_hash, c.qb_location, c.n_offense_backfield, c.n_defense_box, c.is_play_action, c.is_motion, "
-            f"c.n_blitzers, c.n_pass_rushers FROM nfl_pbp p JOIN nfl_hist_ftn_charting c "
-            f"ON c.nflverse_game_id = p.game_id AND c.nflverse_play_id = p.play_id "
-            f"WHERE p.season IN ({marks}) AND p.week <= 18 AND p.play_type IN ('pass', 'run') AND p.posteam IS NOT NULL "
-            f"AND p.down BETWEEN 1 AND 4 AND p.ydstogo IS NOT NULL AND p.yardline_100 IS NOT NULL", seasons).fetchall()
+        if evidence is None:
+            marks = ','.join('?' * len(seasons))
+            rows = con.execute(
+                f"SELECT {PBP_FIELDS}, {', '.join('c.' + f for f in CHARTING_FIELDS)} FROM nfl_pbp p JOIN nfl_hist_ftn_charting c "
+                f"ON c.nflverse_game_id = p.game_id AND c.nflverse_play_id = p.play_id "
+                f"WHERE p.season IN ({marks}) AND {PBP_SCOPE}", seasons).fetchall()
+        else:
+            where, params = evidence.sql_filter('p.')
+            plays = con.execute(f"SELECT {PBP_FIELDS} FROM nfl_pbp p WHERE {where} AND {PBP_SCOPE} "
+                                f"ORDER BY p.game_id, p.play_id", params).fetchall()
+            charting = charting_from_release(evidence.season)
+            rows = [(*play, *charting[(play[0], int(play[1]))]) for play in plays if (play[0], int(play[1])) in charting]
     finally:
         con.close()
     length = _pass_length(seasons)

@@ -55,13 +55,19 @@ def _distribution(counts, prior, strength=SHRINKAGE, categories=TARGET_ROLES):
             for category in categories}
 
 
-def load(db, cutoff_season):
-    """Fit team/QB decision counts using regular-season rows strictly before cutoff_season."""
+def load(db, cutoff_season, evidence=None):
+    """Fit team/QB decision counts using regular-season rows strictly before cutoff_season.
+
+    `evidence` (season_layers.Evidence, SLC V1.5) fits the same counts on the current-season games available at its cutoff."""
     cutoff = int(cutoff_season)
-    seasons = list(range(FIRST_SEASON, cutoff))
-    if not seasons:
-        raise ValueError(f'QB decision model needs data from {FIRST_SEASON} or later before cutoff {cutoff}')
-    marks = ','.join('?' for _ in seasons)
+    if evidence is None:
+        seasons = list(range(FIRST_SEASON, cutoff))
+        if not seasons:
+            raise ValueError(f'QB decision model needs data from {FIRST_SEASON} or later before cutoff {cutoff}')
+        where, params = f"p.season IN ({','.join('?' for _ in seasons)})", seasons
+    else:
+        seasons = [evidence.season]
+        where, params = evidence.sql_filter('p.')
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         duplicate_positions = con.execute(
@@ -83,21 +89,21 @@ def load(db, cutoff_season):
             f"WHERE lower(league)='nfl' GROUP BY nfl_gsis_id) s ON s.nfl_gsis_id=p.rusher_player_id "
             f"LEFT JOIN (SELECT nfl_gsis_id, MIN(position) AS position FROM players "
             f"WHERE lower(league)='nfl' GROUP BY nfl_gsis_id) q ON q.nfl_gsis_id=p.passer_player_id "
-            f"WHERE p.season IN ({marks}) AND p.week BETWEEN 1 AND 18 AND p.posteam IS NOT NULL "
+            f"WHERE {where} AND p.week BETWEEN 1 AND 18 AND p.posteam IS NOT NULL "
             f"AND p.down BETWEEN 1 AND 4 AND p.ydstogo IS NOT NULL AND p.yardline_100 IS NOT NULL "
             f"AND COALESCE(p.penalty,0) != 1 AND COALESCE(p.two_point_attempt,0) != 1 "
             f"AND (p.qb_dropback=1 OR (p.pass_attempt=1 AND p.passer_player_id IS NOT NULL)) "
-            f"ORDER BY p.game_id,p.play_id", seasons).fetchall()
+            f"ORDER BY p.game_id,p.play_id", params).fetchall()
         run_rows = con.execute(
             f"SELECT p.season,p.game_id,p.posteam,p.rusher_player_id,p.down,p.ydstogo,p.yardline_100,"
             f"p.rush_attempt,p.qb_scramble,p.qb_dropback,p.two_point_attempt,p.penalty,s.position "
             f"FROM nfl_pbp p LEFT JOIN (SELECT nfl_gsis_id, MIN(position) AS position FROM players "
             f"WHERE lower(league)='nfl' GROUP BY nfl_gsis_id) s ON s.nfl_gsis_id=p.rusher_player_id "
-            f"WHERE p.season IN ({marks}) AND p.week BETWEEN 1 AND 18 AND p.play_type='run' "
+            f"WHERE {where} AND p.week BETWEEN 1 AND 18 AND p.play_type='run' "
             f"AND p.rush_attempt=1 AND p.posteam IS NOT NULL AND p.down BETWEEN 1 AND 4 "
             f"AND p.ydstogo IS NOT NULL AND p.yardline_100 IS NOT NULL "
             f"AND COALESCE(p.penalty,0) != 1 AND COALESCE(p.two_point_attempt,0) != 1 "
-            f"ORDER BY p.game_id,p.play_id", seasons).fetchall()
+            f"ORDER BY p.game_id,p.play_id", params).fetchall()
     finally:
         con.close()
 
