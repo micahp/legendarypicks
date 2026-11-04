@@ -1,6 +1,6 @@
-# ESPN/AP pregame editorial benchmark (initial matched sample)
+# ESPN/AP pregame editorial benchmark (five-game matched sample)
 
-Status: research-only manual comparison, November 3, 2026. Does **not** change `core_stories.py`, the deterministic renderer, its scoring thresholds, or production.
+Status: initial five-game research comparison completed November 4, 2026. Does **not** change `core_stories.py`, the deterministic renderer, its scoring thresholds, or production.
 
 ## Why this benchmark matters
 
@@ -10,7 +10,7 @@ The current LP deterministic engine is good at combining records and player-form
 
 ## Matched November 4 NBA sample
 
-LP outputs here are the frozen stories in `../deterministic-engine/MULTISPORT_RUN_2026-11-03.md`. That run reports 2026-11-03T16:54:59Z and zero inference/network calls. Wire copies were published November 3 (about 02:02 a.m. ET). Comparisons below are qualitative, **not blinded ratings** and not a claim of human editorial preference.
+LP outputs here are the frozen stories in `../deterministic-engine/MULTISPORT_RUN_2026-11-03.md`. That run reports 2026-11-03T16:54:59Z and zero inference/network calls. The three FOX Sports copies show publication at 02:02 a.m. ET; 6abc shows 07:07 a.m. ET, and ABC7 shows 07:06 a.m. PT on November 3. Comparisons below are qualitative, **not blinded ratings** and not a claim of human editorial preference.
 
 | Game / ESPN ID | LP lead and content | AP/Data Skrive lead and content (paraphrased) | Editorial gap |
 | --- | --- | --- | --- |
@@ -41,6 +41,28 @@ These are matching AP/Data Skrive syndications; **do not silently relabel them f
 7. **Keep the production path free of ESPN requests and LLM calls.** An offline research collector may capture preview metadata with compliant throttling, caching, and provenance. Match by ESPN event ID plus team codes, not guessed names.
 8. **Track trends by engine version** in the append-only quality ledger. Report hook recall and preference separately from factual audit pass rate and the six pastel rubric dimensions. Never optimize exclusively for ESPN imitation: human preference and zero unsupported claims remain the product standard.
 
+## Initial five-game results
+
+The five frozen November 4 NBA stories were replayed from their saved fact bundles with the current PR renderer. All five regenerated stories exactly match the frozen outputs, and the independent audit passed all 50 checks across the five stories. The sample is curated and unblinded; no human preference ratings were collected.
+
+| Measure | Result |
+| --- | ---: |
+| Matched games | 5 NBA |
+| Source type | 5 AP/Data Skrive/Sportradar syndications; 0 ESPN staff previews |
+| Source publication time before LP generation | 5 of 5 |
+| Renderer replay matched frozen story | 5 of 5 |
+| Independent LP claim-audit checks | 50 of 50 passed |
+| Main hook alignment | 2 same, 2 partial, 1 different |
+| Wire stories with head-to-head/rematch context | 3; LP used it in 0 |
+| Wire pages with injury lists | 5; injury facts were absent from all 5 LP input bundles |
+| Blind human ratings | 0 |
+
+The clearest gap is story selection and joining the facts. Cleveland at Oklahoma City had cutoff-safe evidence for Shai Gilgeous-Alexander's 43-point game and Oklahoma City's 117-112 win over Cleveland, but LP led with the teams' records and a generic scoring trend. Indiana at Memphis included Ty Jerome's 40 points but omitted that the performance came in a one-point loss; the overtime detail was not in the LP input. The Philadelphia-Detroit and Charlotte-Brooklyn bundles had the prior meeting scores, but the renderer did not select those facts for their top-four and losing-streak leads. The Lakers-Sacramento story included Luka Doncic's 42 and 45 points, but not the latest game's opponent and result. The linked stories' injury lists could not be compared as supported engine output because the story-engine bundles contained no injury facts.
+
+All five linked pages identify Associated Press syndication, with Data Skrive and Sportradar attribution. Three are hosted by FOX Sports; the other two are on ABC local affiliate pages carrying ESPN branding/copyright. None is an ESPN staff-authored preview, so this is an ESPN-linked wire benchmark, not a direct comparison to ESPN editorial writing. The pages show publication times before the LP run, but were reviewed on Nov. 4; no immutable page captures or modified timestamps are available. Publication timing passes, while exact article-content-at-cutoff verification remains incomplete.
+
+The per-game review is in [`results.md`](results.md); [`results.json`](results.json) preserves source metadata, replay checks, claim-audit results, and gap diagnoses in machine-readable form. No full article text is stored. These results are diagnostic only: the sample cannot establish overall preference, representativeness, or product quality.
+
 ## Concrete next tests
 
 - `CLE@OKC`: If the most recent game against this same opponent included a 40+ point star performance, the headline selector considers the performance and immediate rematch before generic 20+ point consistency.
@@ -51,4 +73,4 @@ These are matching AP/Data Skrive syndications; **do not silently relabel them f
 
 Reference fixtures: `matched_sample.jsonl`.
 
-**Gate:** This is a benchmark design and five-source seed review, not permission to claim full ESPN comparison coverage or source completeness.
+**Gate:** The initial five-game seed comparison is complete. It is not full ESPN coverage, does not contain first-party ESPN staff previews or immutable historical article captures, and has no blind human ratings. Do not treat it as a general preference result.
