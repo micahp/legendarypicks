@@ -84,11 +84,15 @@ def load_position_usage(db=e1.DEFAULT_DB, eligible_before=None):
     return result
 
 
+_FINGERPRINT_ENCODER = json.JSONEncoder(sort_keys=True, separators=(',', ':'), ensure_ascii=False)  # json.dumps's, built once
+
+
 def _reference_fingerprint(reference):
     digest = hashlib.sha256()
+    encode = _FINGERPRINT_ENCODER.encode  # the same bytes json.dumps(..., sort_keys=True, separators=(',', ':'), ensure_ascii=False) gives
 
     def add(value):
-        digest.update(json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode())
+        digest.update(encode(value).encode())
         digest.update(b'\n')
 
     for key in sorted(reference.pool):
@@ -529,6 +533,25 @@ def _shared_play_call_frame(pm, db, cutoff):
     return _PLAY_CALL_FRAMES[key]
 
 
+def _prior_streak_states(ss, db, cutoff, memo):
+    """{game_id: {team: bucket}} for the regular-season games of the seasons before the cutoff. The team and league streak
+    layers read the same schedule, so `memo` (one dict per load) keeps the first read for the second. Read-only to callers."""
+    if cutoff not in memo:
+        con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
+        try:
+            schedule_rows = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
+                                        "WHERE game_type='REG' AND season < ? AND home_score IS NOT NULL", (cutoff,)).fetchall()
+        finally:
+            con.close()
+        results = []
+        for season, week, game_id, home, away, hs, aw in schedule_rows:
+            outcome = None if hs == aw else hs > aw
+            results.append((season, week, game_id, home, outcome))
+            results.append((season, week, game_id, away, None if outcome is None else not outcome))
+        memo[cutoff] = ss.streak_states(results)
+    return memo[cutoff]
+
+
 def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_table=True, overtime_table=True,
          overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None,
          eligible_before=None, contextual_context=None, contextual_mode=None, contextual_bandwidth=1.0,
@@ -607,6 +630,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             raise ValueError('the play-call layer cannot be combined with team tendency or contextual sampling')
         import slc_playcall as slc
         contextual_sampler = slc.PlayCallSampler(slc.PlayCallLayer.load(playcall_artifact), side_teams=playcall_teams)
+        streak_states = {}  # the schedule streak states, read once for the team and league streak layers
         if playcall_team_outcomes:  # team event splits from the prior seasons only, the same cutoff as the pool
             if eligible_before is None:
                 raise ValueError('team outcome splits need an eligible-before cutoff')
@@ -654,19 +678,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             seasons = range(2010, cutoff)
             frame = pm3.load_frame_cached(Path(playcall_streak), seasons, db=db) if isinstance(playcall_streak, str) \
                 else _shared_play_call_frame(pm3, db, cutoff)
-            con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
-            try:
-                schedule_rows = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
-                                            "WHERE game_type='REG' AND season < ? AND home_score IS NOT NULL", (cutoff,)).fetchall()
-            finally:
-                con.close()
-            results = []
-            for season, week, game_id, home, away, hs, aw in schedule_rows:
-                outcome = None if hs == aw else hs > aw
-                results.append((season, week, game_id, home, outcome))
-                results.append((season, week, game_id, away, None if outcome is None else not outcome))
-            states = ss.streak_states(results)
-            contextual_sampler.streak_shifts = ss.priors(frame, states, cutoff)
+            contextual_sampler.streak_shifts = ss.priors(frame, _prior_streak_states(ss, db, cutoff, streak_states), cutoff)
         if playcall_streak_league:  # league-wide streak splits: a league dropback shift and outcome lifts, prior seasons only
             if eligible_before is None:
                 raise ValueError('league streak splits need an eligible-before cutoff')
@@ -676,18 +688,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             seasons = range(2010, cutoff)
             frame = pm4.load_frame_cached(Path(playcall_streak_league), seasons, db=db) if isinstance(playcall_streak_league, str) \
                 else _shared_play_call_frame(pm4, db, cutoff)
-            con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
-            try:
-                rows_s = con.execute("SELECT season, week, game_id, home_team, away_team, home_score, away_score FROM nfl_schedule "
-                                     "WHERE game_type='REG' AND season < ? AND home_score IS NOT NULL", (cutoff,)).fetchall()
-            finally:
-                con.close()
-            res = []
-            for season, week, game_id, home, away, hs, aw in rows_s:
-                outcome = None if hs == aw else hs > aw
-                res.append((season, week, game_id, home, outcome))
-                res.append((season, week, game_id, away, None if outcome is None else not outcome))
-            states_l = ss2.streak_states(res)
+            states_l = _prior_streak_states(ss2, db, cutoff, streak_states)
             ss2.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], states_l)
             contextual_sampler.streak_league = ss2.league_priors(frame, states_l, cutoff)
             contextual_sampler.streak_outcomes = True
