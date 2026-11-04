@@ -28,6 +28,8 @@ LEAGUE_TRANSITION_PRIOR_PLAYS = 20.0  # shrinks a league grouping transition to 
 TEAM_TRANSITION_PRIOR_PLAYS = 50.0  # shrinks a team's grouping transition to the league's transition
 HAZARD_PRIOR_PLAYS = 20.0  # shrinks a stint bucket's leave rate to its position class's rate
 STINT_CAP = 6
+MIN_CELL_PLAYS = 20.0  # a situation cell with fewer league plays borrows the nearest cell of the same down (supported_cell)
+DISTANCES = ('short', 'mid', 'long', 'xl')
 SKILL = {'RB': 'RB', 'FB': 'RB', 'TE': 'TE', 'WR': 'WR'}
 SKILL_CLASSES = ('RB', 'TE', 'WR')
 START = 'START'
@@ -64,6 +66,8 @@ class Field:
         if data.get('schema') != SCHEMA:
             raise ValueError(f"participation field schema is {data.get('schema')!r}, expected {SCHEMA}")
         self.sha256 = sha256
+        self.seasons = sorted(data.get('seasons') or [])  # the fit seasons; the engine refuses a game not after all of them
+        self.teams = {team for team, _cell, _prev, _counts in data['team_transitions']}
         self.league_transitions = {(cell, prev): Counter(counts) for cell, prev, counts in data['league_transitions']}
         self.team_transitions = {(team, cell, prev): Counter(counts)
                                  for team, cell, prev, counts in data['team_transitions']}
@@ -103,6 +107,25 @@ class Field:
         n_team = sum(team_counts.values())
         return {group: (team_counts[group] + TEAM_TRANSITION_PRIOR_PLAYS * league[group])
                 / (n_team + TEAM_TRANSITION_PRIOR_PLAYS) for group in league}
+
+    def supported_cell(self, cell):
+        """The cell itself when the league has MIN_CELL_PLAYS plays there. Otherwise the same down and field bucket at the
+        nearest distance that has them, then the same down's largest cell. None when the down has no supported cell. The
+        caller records the substitution; the count is in `status`."""
+        def plays(c):
+            return sum(self.marginal_by_cell.get(c, {}).values())
+        if plays(cell) >= MIN_CELL_PLAYS:
+            return cell
+        down, distance, field = cell.split('|')
+        self.status['cell_fallback'] += 1
+        if distance in DISTANCES:
+            rank = DISTANCES.index(distance)
+            near = sorted(DISTANCES, key=lambda d: (abs(DISTANCES.index(d) - rank), DISTANCES.index(d)))
+            for other in near:
+                if plays(f'{down}|{other}|{field}') >= MIN_CELL_PLAYS:
+                    return f'{down}|{other}|{field}'
+        same_down = [c for c in self.marginal_by_cell if c.startswith(f'{down}|') and plays(c) >= MIN_CELL_PLAYS]
+        return max(same_down, key=lambda c: (plays(c), c)) if same_down else None
 
     def draw_group(self, team, prev, cell, draw):
         """The grouping for one snap, from the transition out of the previous snap's grouping (START on a game's first)."""
