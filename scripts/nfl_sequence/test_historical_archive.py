@@ -154,6 +154,58 @@ class HistoricalArchiveValidation(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'only cutoff-valid'):
             self._validate()
 
+    def _rewrite_row(self, **fields):
+        with self.readiness.open('r', newline='') as handle:
+            rows = list(csv.DictReader(handle))
+        rows[0].update(fields)
+        with self.readiness.open('w', newline='') as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
+        self.snapshot['archive_reconstruction']['readiness_matrix_sha256'] = hashlib.sha256(
+            self.readiness.read_bytes()).hexdigest()
+
+    def _supplement(self, published_after_cutoff=True, published='2026-10-15T21:00:00Z'):
+        tag = 'archive-2026-10-15'
+        (self.asset_root / tag).mkdir(exist_ok=True)
+        (self.asset_root / tag / 'injuries_2026.rds').write_bytes(b'later injury release')
+        return {'archive_tag': tag, 'file_name': 'injuries_2026.rds', 'published_at_utc': published,
+                'sha256': hashlib.sha256(b'later injury release').hexdigest(), 'rows': 7,
+                'published_after_cutoff': published_after_cutoff, 'source': 'official_nflverse_dated_archive'}
+
+    def test_a_refused_game_validates_only_in_the_labelled_secondary_tier(self):
+        self._rewrite_row(readiness_class='refused')
+        snapshots.reseal(self.snapshot)
+        with self.assertRaisesRegex(ValueError, 'only cutoff-valid'):
+            self._validate()
+        self.snapshot['archive_reconstruction']['tier'] = 'secondary'
+        self.snapshot['archive_reconstruction']['injury_supplements'] = {'home': self._supplement()}
+        snapshots.reseal(self.snapshot)
+        result = self._validate()
+        self.assertEqual((result['tier'], result['readiness_class']), ('secondary', 'refused'))
+        self.assertTrue(result['injury_supplements']['home']['published_after_cutoff'])
+
+    def test_a_supplement_that_hides_its_late_publication_is_refused(self):
+        self._rewrite_row(readiness_class='refused')
+        self.snapshot['archive_reconstruction']['tier'] = 'secondary'
+        self.snapshot['archive_reconstruction']['injury_supplements'] = {'home': self._supplement(False)}
+        snapshots.reseal(self.snapshot)
+        with self.assertRaisesRegex(ValueError, 'mislabels its publication'):
+            self._validate()
+
+    def test_the_primary_tier_never_takes_an_injury_report_from_another_release(self):
+        self.snapshot['archive_reconstruction']['injury_supplements'] = {'home': self._supplement()}
+        snapshots.reseal(self.snapshot)
+        with self.assertRaisesRegex(ValueError, 'only the secondary tier'):
+            self._validate()
+
+    def test_without_a_recorded_lock_the_cutoff_is_the_audit_boundary(self):
+        row = {'cutoff_basis': 'kickoff-1s proxy; no recorded LP lock', 'cutoff_utc': '',
+               'audit_boundary_utc': '2026-10-10T00:14:59Z', 'game_id': 'g'}
+        self.assertEqual(archive.row_cutoff(row), '2026-10-10T00:14:59Z')
+        with self.assertRaisesRegex(ValueError, 'neither a recorded lock'):
+            archive.row_cutoff({**row, 'audit_boundary_utc': ''})
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -14,6 +14,7 @@ from pathlib import Path
 
 SCHEMA = 'lp-nfl-historical-archive-reconstruction-1'
 MODE = 'retrospective_archive_reconstruction'
+SECONDARY_CLASSES = ('exploratory reconstruction', 'refused')
 ASSETS = {
     'schedule': ('s', 'games.rds', 'schedule_sha256', 'schedule_observed_utc'),
     'depth': ('d', 'depth_charts_2026.rds', 'depth_sha256', 'depth_published_utc'),
@@ -42,12 +43,24 @@ def _sha256(path):
     return digest.hexdigest()
 
 
-def readiness_row(path, game_id):
+def readiness_row(path, game_id, tier='primary'):
+    """The game's readiness row, checked for its tier.
+
+    primary: the 28 cutoff-valid Week 5-7 games with a recorded LP lock (the only tier for the primary comparison).
+    secondary: the exploratory and refused Week 1-7 games, built and scored separately and always labelled as such."""
     with Path(path).open(newline='') as handle:
         rows = [row for row in csv.DictReader(handle) if row.get('game_id') == game_id]
     if len(rows) != 1:
         raise ValueError(f'{game_id}: readiness matrix must contain exactly one row (found {len(rows)})')
     row = rows[0]
+    if tier == 'secondary':
+        if row.get('readiness_class') not in SECONDARY_CLASSES:
+            raise ValueError(f'{game_id}: the secondary tier holds only exploratory and refused readiness rows')
+        if row.get('week') not in ('1', '2', '3', '4', '5', '6', '7'):
+            raise ValueError(f'{game_id}: archive reconstruction is restricted to Weeks 1-7')
+        return row
+    if tier != 'primary':
+        raise ValueError(f'{game_id}: unknown archive reconstruction tier {tier!r}')
     if row.get('readiness_class') != 'cutoff-valid':
         raise ValueError(f'{game_id}: only cutoff-valid readiness rows may enter the primary comparison')
     if row.get('cutoff_basis') != 'recorded LP lock':
@@ -57,6 +70,15 @@ def readiness_row(path, game_id):
     if row.get('simulation_ready_with_committed_loader') == 'True':
         raise ValueError(f'{game_id}: readiness row unexpectedly describes the prospective loader')
     return row
+
+
+def row_cutoff(row):
+    """The cutoff text of a readiness row: the recorded LP lock, or kickoff minus one second where none was recorded."""
+    if row.get('cutoff_basis') == 'recorded LP lock':
+        return row['cutoff_utc']
+    if not row.get('audit_boundary_utc'):
+        raise ValueError(f"{row.get('game_id')}: readiness row has neither a recorded lock nor an audit boundary")
+    return row['audit_boundary_utc']
 
 
 def _asset_path(root, archive_tag, filename, expected_sha):
@@ -88,7 +110,8 @@ def validate_snapshot(snapshot, *, readiness_matrix, archive_manifest, archive_r
     if schedule.get('availability_classification') != MODE:
         raise ValueError('archive reconstruction schedule must retain its retrospective classification')
 
-    row = readiness_row(readiness_matrix, game_id)
+    tier = block.get('tier', 'primary')
+    row = readiness_row(readiness_matrix, game_id, tier)
     matrix_sha = _sha256(readiness_matrix)
     if block.get('readiness_matrix_sha256') != matrix_sha:
         raise ValueError(f'{game_id}: readiness matrix does not match the snapshot pin')
@@ -96,8 +119,8 @@ def validate_snapshot(snapshot, *, readiness_matrix, archive_manifest, archive_r
     kickoff = _utc(schedule.get('scheduled_kickoff_utc'), 'scheduled kickoff')
     if cutoff >= kickoff:
         raise ValueError(f'{game_id}: archive cutoff is not before kickoff')
-    if cutoff != _utc(row.get('cutoff_utc'), 'readiness cutoff'):
-        raise ValueError(f'{game_id}: snapshot cutoff differs from the recorded LP lock')
+    if cutoff != _utc(row_cutoff(row), 'readiness cutoff'):
+        raise ValueError(f'{game_id}: snapshot cutoff differs from the readiness cutoff')
     if kickoff != _utc(row.get('kickoff_utc'), 'readiness kickoff'):
         raise ValueError(f'{game_id}: snapshot kickoff differs from the readiness matrix')
     if (str(schedule.get('season')) != '2026' or str(schedule.get('week')) != row.get('week')
@@ -130,6 +153,9 @@ def validate_snapshot(snapshot, *, readiness_matrix, archive_manifest, archive_r
     resolved = {}
     for name, (code, filename, matrix_hash_field, matrix_time_field) in ASSETS.items():
         source = pinned[name]
+        if source is None and name == 'injury' and tier == 'secondary' and release.get(code) is None:
+            resolved[name] = None  # this archive release published no injury file; the supplements below must cover it
+            continue
         release_entry = release.get(code)
         if not isinstance(release_entry, list) or len(release_entry) != 2:
             raise ValueError(f'{game_id}: archive manifest has no {name} release entry')
@@ -146,6 +172,22 @@ def validate_snapshot(snapshot, *, readiness_matrix, archive_manifest, archive_r
         resolved[name] = {'path': f'{archive_tag}/{filename}', 'sha256': expected_sha,
                           'published_at_utc': published_at}
 
+    supplements = block.get('injury_supplements') or {}
+    if supplements and tier != 'secondary':
+        raise ValueError(f'{game_id}: only the secondary tier may take an injury report from another archive release')
+    if resolved['injury'] is None and set(supplements) != {'away', 'home'}:
+        raise ValueError(f'{game_id}: the pinned release has no injury file and the supplements do not cover both teams')
+    for side, supplement in supplements.items():
+        if side not in ('away', 'home') or not isinstance(supplement, dict):
+            raise ValueError(f'{game_id}: malformed injury supplement {side!r}')
+        published = _utc(supplement.get('published_at_utc'), f'{side} injury supplement publication')
+        if supplement.get('published_after_cutoff') is not (published > cutoff):
+            raise ValueError(f'{game_id}: {side} injury supplement mislabels its publication relative to the cutoff')
+        _asset_path(archive_root, supplement.get('archive_tag', ''), supplement.get('file_name', ''),
+                              supplement.get('sha256'))
+        if not supplement.get('rows'):
+            raise ValueError(f'{game_id}: {side} injury supplement carries no rows')
+
     streak = block.get('streak_context')
     if not isinstance(streak, dict) or streak.get('game_id') != game_id:
         raise ValueError(f'{game_id}: missing frozen pregame streak provenance')
@@ -158,13 +200,17 @@ def validate_snapshot(snapshot, *, readiness_matrix, archive_manifest, archive_r
     if actual_streak_sha != streak.get('file_sha256'):
         raise ValueError(f'{game_id}: streak context does not match the snapshot pin')
     streak_payload = json.loads(streak_path.read_text())
-    if (streak_payload.get('game_id') != game_id or streak_payload.get('cutoff_utc') != row.get('cutoff_utc')
+    if (streak_payload.get('game_id') != game_id or streak_payload.get('cutoff_utc') != row_cutoff(row)
             or streak_payload.get('teams') != streak.get('teams')):
         raise ValueError(f'{game_id}: streak file identity/content differs from its snapshot provenance')
     return {
         'classification': MODE,
         'prospective': False,
-        'recorded_cutoff_utc': row['cutoff_utc'],
+        'tier': tier,
+        'readiness_class': row['readiness_class'],
+        'recorded_cutoff_utc': row_cutoff(row),
+        'cutoff_basis': row.get('cutoff_basis'),
+        'injury_supplements': {side: {k: v for k, v in sup.items() if k != 'rows'} for side, sup in supplements.items()},
         'kickoff_utc': row['kickoff_utc'],
         'archive_tag': archive_tag,
         'archive_manifest_sha256': manifest_sha,

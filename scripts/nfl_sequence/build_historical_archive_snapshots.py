@@ -63,7 +63,22 @@ EXPECTED_STARTERS = 28
 DEFENSIVE_FRONT_COMPATIBILITY = {
     'interior': frozenset({'LDT', 'RDT', 'NT'}),
     'edge': frozenset({'LDE', 'RDE'}),
+    # A safety slot with no eligible safety left takes the next eligible defensive back the archive lists in the same
+    # base group (first seen 2026_01_NE_SEA: SS1 Out on the injury report, SS2 on reserve).
+    'safety': frozenset({'FS', 'SS', 'NB'}),
+    # Linebackers the same way (first seen 2026_06_WAS_SF: no eligible WLB left).
+    'linebacker': frozenset({'MLB', 'WLB', 'SLB', 'LILB', 'RILB'}),
+    # The offensive line the same way (first seen 2026_05_PHI_JAX: C1 Out, no C2 listed).
+    'interior_line': frozenset({'C', 'LG', 'RG'}),
+    'tackle': frozenset({'LT', 'RT'}),
+    # Returners (first seen 2026_07_DAL_PHI: no eligible KR left).
+    'returner': frozenset({'KR', 'PR'}),
 }
+OFFENSE_FAMILIES = ('interior_line', 'tackle')
+SPECIAL_TEAMS_FAMILIES = ('returner',)
+# An interior slot with no eligible interior lineman left takes an eligible edge backup (first seen 2026_01_WAS_PHI: PHI's
+# published 3-4 depth chart lists its NT slot with no player).
+FRONT_SECOND_CHOICE = {'interior': 'edge', 'interior_line': 'tackle', 'tackle': 'interior_line'}
 # NFL's official 2022 Rams and 2025 Packers media guides use both "Matthew Orzech" and
 # "Matt Orzech" for this player. Keep the exception keyed by GSIS and exact normalized
 # names; never use it to join identities. Sources:
@@ -99,6 +114,18 @@ VERIFIED_NAME_VARIANTS = {
     '00-0039821': frozenset({('dru phillips', 'andru phillips')}),
     '00-0040186': frozenset({('kiko mauigoa', 'francisco mauigoa')}),
     '00-0040744': frozenset({('jaylahn tuimoloau', 'jt tuimoloau')}),
+    # Weeks 1-7 secondary tier (2026-11-03): the depth chart's name differs from the registry's, and the same publisher's
+    # weekly roster (archive-2026-10-22) carries the registry's name for the same GSIS with the same team and position.
+    '00-0034275': frozenset({('folorunso fatukasi', 'foley fatukasi')}),
+    '00-0035359': frozenset({('david sills v', 'david sills')}),
+    '00-0035662': frozenset({('hollywood brown', 'marquise brown')}),
+    '00-0036378': frozenset({('mike danna', 'michael danna')}),
+    '00-0036988': frozenset({('joshua palmer', 'josh palmer')}),
+    '00-0037156': frozenset({('irv charles', 'irvin charles')}),
+    '00-0037633': frozenset({('jake hummel', 'jacob hummel')}),
+    # A surname change, not a spelling: the weekly roster names this GSIS Zach Bako-Bewele, GB offensive line, Wake
+    # Forest, born 1999-03-26, which is the registry's Zach Tom.
+    '00-0037817': frozenset({('zach bako bewele', 'zach tom')}),
 }
 
 
@@ -146,14 +173,22 @@ def _identity_name_matches(gsis_id, source_name, canonical_name):
 
 
 def _cross_role_front_backup(retained, *, group, pos, expected_roles, game_id, team):
-    """Choose an eligible same-front backup for an unfilled defensive-line role."""
+    """Choose an eligible compatible backup (same front, or defensive back for a safety) for an unfilled defensive role."""
     compatible_positions = next((roles for roles in DEFENSIVE_FRONT_COMPATIBILITY.values() if pos in roles), None)
-    if group not in ('Base 3-4 D', 'Base 4-3 D') or compatible_positions is None:
+    family = next((name for name, roles in DEFENSIVE_FRONT_COMPATIBILITY.items() if roles is compatible_positions), None)
+    unit = ('offense' if family in OFFENSE_FAMILIES else 'special_teams' if family in SPECIAL_TEAMS_FAMILIES
+            else 'defense')
+    groups = {'offense': ('3WR 1TE',), 'special_teams': ('Special Teams',), 'defense': BASE_DEFENSE_GROUPS}[unit]
+    if compatible_positions is None or group not in groups:
         raise ValueError(f'{game_id}: {team} has no available depth player for starter role {group}/{pos}/1')
     reserved = {(g, p, r) for g, p, r in expected_roles if p != pos}
-    candidates = [p for p in retained if p['roster_eligible'] and not p['starter']
-                  and p['group'] == group and p['unit'] == 'defense' and p['pos_abb'] in compatible_positions
-                  and (p['group'], p['pos_abb'], p['pos_rank']) not in reserved]
+    candidates = []
+    for allowed in (compatible_positions, DEFENSIVE_FRONT_COMPATIBILITY.get(FRONT_SECOND_CHOICE.get(family), ())):
+        candidates = [p for p in retained if p['roster_eligible'] and not p['starter']
+                      and p['group'] == group and p['unit'] == unit and p['pos_abb'] in allowed
+                      and (p['group'], p['pos_abb'], p['pos_rank']) not in reserved]
+        if candidates:
+            break
     if not candidates:
         raise ValueError(f'{game_id}: {team} has no eligible compatible defensive-front backup for {pos}/1')
     candidates.sort(key=lambda p: (p['pos_rank'], p['gsis_id']))
@@ -169,11 +204,99 @@ def _emergency_long_snapper(retained, *, game_id, team):
     return sorted(candidates, key=lambda p: (p['pos_rank'], p['gsis_id']))[0]
 
 
+# A specialist slot the archived depth chart leaves with no eligible player takes the team's practice-squad player at that
+# position, as the standard gameday elevation the weekly roster file does not record (first seen 2026_02_PIT_NE: the
+# punter-holder on reserve, the practice-squad punter the only other punter on the weekly roster).
+SPECIALIST_ROSTER_POSITION = {'P': 'P', 'H': 'P', 'PK': 'K'}
+
+
+def _practice_squad_specialist(retained, *, pos, roster_rows, injury_by_gsis, elevation_identity, team, game_id,
+                               snapshot_at):
+    want = SPECIALIST_ROSTER_POSITION[pos]
+    earlier = [p for p in retained if p.get('source') == 'practice_squad_elevation'
+               and SPECIALIST_ROSTER_POSITION.get(p['pos_abb']) == want]
+    if earlier:
+        base = earlier[0]
+    else:
+        pool = sorted({_text(r.get('gsis_id')) for r in roster_rows.to_dict('records')
+                       if _text(r.get('status')) == 'DEV' and _text(r.get('position')) == want and _text(r.get('gsis_id'))})
+        if len(pool) != 1:
+            raise ValueError(f'{game_id}: {team} has no eligible {pos} and {len(pool)} practice-squad {want} players: {pool}')
+        gsis_id = pool[0]
+        if injury_by_gsis.get(gsis_id) in ('Out', 'Doubtful'):
+            raise ValueError(f'{game_id}: {team} practice-squad {want} {gsis_id} is listed {injury_by_gsis[gsis_id]}')
+        player_identity = elevation_identity(gsis_id)
+        if not player_identity:
+            raise ValueError(f'{game_id}: {team} practice-squad {want} {gsis_id} has no unique canonical ID')
+        record = next(r for r in roster_rows.to_dict('records') if _text(r.get('gsis_id')) == gsis_id)
+        if not _identity_name_matches(gsis_id, record.get('full_name'), player_identity['canonical_name']):
+            raise ValueError(f'{game_id}: {team} practice-squad {want} {gsis_id} name differs from the registry')
+        base = {'gsis_id': gsis_id, 'player_id': player_identity['player_id'], 'player_name': _text(record.get('full_name')),
+                'team': team, 'group': 'Special Teams', 'unit': 'special_teams', 'roster_eligible': True,
+                'availability': {'decision': 'include_practice_squad_elevation',
+                                 'designation': injury_by_gsis.get(gsis_id), 'flags': ['practice_squad_elevation']},
+                'jersey_number': None if _missing(record.get('jersey_number')) else int(record['jersey_number']),
+                'snapshot_at': snapshot_at, 'source': 'practice_squad_elevation'}
+    occupied = [p['pos_rank'] for p in retained if p['group'] == 'Special Teams' and p['pos_abb'] == pos]
+    chosen = {**base, 'pos_abb': pos, 'pos_rank': max(occupied, default=0) + 1, 'starter': False,
+              'source_role_before_fallback': {'group': 'weekly_roster', 'pos_abb': want, 'status': 'DEV'},
+              'starter_assignment': {'group': 'Special Teams', 'pos_abb': pos, 'starter_rank': 1,
+                                     'classification': 'retrospective_practice_squad_elevation'}}
+    retained.append(chosen)
+    return chosen
+
+
 def _iso_utc(value):
     parsed = datetime.fromisoformat(str(value).replace('Z', '+00:00'))
     if parsed.tzinfo is None:
         raise ValueError(f'timestamp lacks a timezone: {value}')
     return parsed.astimezone(timezone.utc).isoformat().replace('+00:00', 'Z')
+
+
+# Dated nflverse archive releases used only as later injury-report sources for the secondary tier, beyond those in the
+# audit's archive manifest. Publication time and SHA-256 are the GitHub release asset's updated_at and digest, read
+# 2026-11-03 from api.github.com/repos/nflverse/nflverse-data-archives/releases/tags/<tag>.
+SUPPLEMENT_RELEASES = {
+    '2026-10-29': {'i': ['2026-10-29T20:21:15Z', 'a509645ed5f4454985134f696a2626bab61806df5b2b28e0155824a91bd60cff']},
+}
+BASE_DEFENSE_GROUPS = ('Base 3-4 D', 'Base 4-3 D')
+_INJURY_TABLES = {}
+
+
+def _defense_group(roster_summary, team_depth, team):
+    """(group, source). The readiness row names the group, except where the 2026-10-29 audit missed the team's depth rows
+    (LA and WAS were looked up under LAR and WSH); then the group is read from the archived depth chart itself."""
+    group = roster_summary.get('defense_group')
+    if group:
+        return group, 'readiness_matrix'
+    if 'team_absent_from_depth' not in (roster_summary.get('gaps') or []):
+        raise ValueError(f'{team}: readiness row names no defense group and records no depth gap')
+    groups = sorted({str(value) for value in team_depth['pos_grp']} & set(BASE_DEFENSE_GROUPS))
+    if len(groups) != 1:
+        raise ValueError(f'{team}: archived depth chart names {groups} base defense groups; expected exactly one')
+    return groups[0], 'archived_depth_chart (readiness row had team_absent_from_depth from a team-code miss)'
+
+
+def _injury_supplement(pyreadr, root, manifest, pinned_tag, source_team, week):
+    """(rows, source) from the earliest later dated archive release that has this team's Week injury report, else None."""
+    pinned = pinned_tag[len('archive-'):]
+    releases = {**{date: entry for date, entry in manifest.get('archives', {}).items()}, **SUPPLEMENT_RELEASES}
+    for date in sorted(releases):
+        entry = releases[date].get('i')
+        if date <= pinned or not entry:
+            continue
+        tag = f'archive-{date}'
+        if tag not in _INJURY_TABLES:
+            path, _ = archive._asset_path(root, tag, RDS_FILES['injury'][1], entry[1])
+            print(f'archive {tag}: reading injury supplement from {path}', file=sys.stderr, flush=True)
+            _INJURY_TABLES[tag] = next(iter(pyreadr.read_r(str(path)).values()))
+        table = _INJURY_TABLES[tag]
+        rows = table[(table['season'] == 2026) & (table['week'] == week) & (table['game_type'] == 'REG')
+                     & (table['team'].astype(str) == source_team)]
+        if not rows.empty:
+            return table, {'archive_tag': tag, 'file_name': RDS_FILES['injury'][1], 'published_at_utc': entry[0],
+                           'sha256': entry[1], 'rows': len(rows), 'source': 'official_nflverse_dated_archive'}
+    return None
 
 
 def _schedule_row(games, row):
@@ -197,7 +320,7 @@ def _schedule_row(games, row):
     return game, kickoff
 
 
-def _source_pins(row, manifest):
+def _source_pins(row, manifest, tier='primary'):
     archive_tag = row['archive_tag']
     date = archive_tag[len('archive-'):] if archive_tag.startswith('archive-') else archive_tag
     release = manifest.get('archives', {}).get(date)
@@ -206,6 +329,9 @@ def _source_pins(row, manifest):
     pins = {}
     for key, (code, filename) in RDS_FILES.items():
         entry = release.get(code)
+        if entry is None and key == 'injury' and tier == 'secondary':
+            pins[key] = None  # the release published no injury file; secondary games take a later release's report
+            continue
         if not isinstance(entry, list) or len(entry) != 2 or not entry[1]:
             raise ValueError(f'{archive_tag}: missing {key} publication/hash pin')
         row_hash = row.get({'games': 'schedule_sha256', 'depth': 'depth_sha256',
@@ -224,6 +350,11 @@ def _source_pins(row, manifest):
 def _load_archive(pyreadr, root, pins):
     tables, paths = {}, {}
     for key, pin in pins.items():
+        if pin is None:
+            import pandas as pd
+            tables[key] = pd.DataFrame(columns=['season', 'week', 'game_type', 'team', 'gsis_id'])
+            paths[key] = None
+            continue
         tag, filename = pin['archive_tag'], pin['file_name']
         path, _ = archive._asset_path(root, tag, filename, pin['sha256'])
         print(f'archive {tag}: reading {key} from {path}', file=sys.stderr, flush=True)
@@ -292,7 +423,8 @@ def _current_streaks(games, game, cutoff, game_id):
     return streaks, source_games
 
 
-def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity, roster_summary, game_id):
+def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity, roster_summary, game_id,
+                 elevation_identity=None):
     source_team = nfl_team_codes.to_nflverse_team_code(team)
     depth_rows = depth[(depth['team'].astype(str) == source_team)]
     depth_rows = depth_rows[depth_rows['dt'].map(lambda x: archive._utc(x, f'{team} depth timestamp') <= cutoff)]
@@ -331,8 +463,8 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
         injury_rows.append({'gsis_id': gsis_id, 'report_status': status, 'practice_status': practice})
         injury_by_gsis[gsis_id] = status
 
-    defense_group = roster_summary.get('defense_group')
-    if defense_group not in ('Base 3-4 D', 'Base 4-3 D'):
+    defense_group, defense_group_source = _defense_group(roster_summary, depth_rows, team)
+    if defense_group not in BASE_DEFENSE_GROUPS:
         raise ValueError(f'{game_id}: unsupported defense group for {team}: {defense_group!r}')
     expected_roles = {(group, position, rank) for group, roles in STARTER_ROLES.items()
                       if group in ('3WR 1TE', 'Special Teams', defense_group)
@@ -402,7 +534,9 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
         same_position = sorted((p for p in retained if p['roster_eligible']
                                 and p['group'] == group and p['pos_abb'] == pos),
                                key=lambda p: (p['pos_rank'], p['gsis_id']))
-        exact = next((p for p in same_position if p['pos_rank'] == rank), None)
+        # A player already promoted into an earlier slot is not this slot's exact match (2026_03_ATL_GB: WR2 Out, WR3
+        # promoted to WR2, then taken again as WR3, leaving 27 starters).
+        exact = next((p for p in same_position if p['pos_rank'] == rank and not p['starter']), None)
         chosen = exact or next((p for p in same_position if not p['starter']), None)
         if chosen is None:
             if group == 'Special Teams' and pos == 'LS':
@@ -419,6 +553,13 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
                                                       'classification': 'retrospective_emergency_role_fallback'}})
                 retained.append(chosen)
                 reason = 'no eligible archived long snapper; eligible center assigned as an unverified emergency snapper'
+            elif group == 'Special Teams' and pos in SPECIALIST_ROSTER_POSITION and elevation_identity is not None:
+                chosen = _practice_squad_specialist(retained, pos=pos, roster_rows=roster_rows,
+                                                    injury_by_gsis=injury_by_gsis, elevation_identity=elevation_identity,
+                                                    team=team, game_id=game_id, snapshot_at=depth_date)
+                source_role = chosen['source_role_before_fallback']
+                reason = (f'no eligible archived {pos}; the practice-squad {SPECIALIST_ROSTER_POSITION[pos]} is assumed '
+                          'elevated for the game (the weekly roster records no gameday elevations)')
             else:
                 chosen = _cross_role_front_backup(retained, group=group, pos=pos,
                                                   expected_roles=expected_roles, game_id=game_id, team=team)
@@ -431,7 +572,11 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
                 chosen['pos_rank'] = max(occupied_ranks, default=0) + 1
                 chosen['starter_assignment'] = {'group': group, 'pos_abb': pos, 'starter_rank': rank,
                                                 'classification': 'retrospective_role_fallback'}
-                reason = 'no eligible same-position depth player; selected eligible same-front backup'
+                reason = ('no eligible same-position depth player; selected eligible '
+                          + ('defensive-back backup' if pos in DEFENSIVE_FRONT_COMPATIBILITY['safety']
+                             else 'linebacker backup' if pos in DEFENSIVE_FRONT_COMPATIBILITY['linebacker']
+                             else 'offensive-line backup' if chosen['unit'] == 'offense'
+                             else 'returner backup' if chosen['unit'] == 'special_teams' else 'same-front backup'))
             record = {'group': group, 'pos_abb': pos, 'starter_rank': rank,
                       'promoted_gsis_id': chosen['gsis_id'], 'source_role': source_role,
                       'assigned_role_rank': chosen['pos_rank'], 'reason': reason}
@@ -443,7 +588,12 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
                 promotions.append({'group': group, 'pos_abb': pos, 'starter_rank': rank,
                                    'promoted_gsis_id': chosen['gsis_id'], 'promoted_depth_rank': chosen['pos_rank']})
     if sum(bool(player['starter']) for player in retained) != EXPECTED_STARTERS:
-        raise ValueError(f'{game_id}: {team} archive roster does not resolve to exactly {EXPECTED_STARTERS} starter roles')
+        filled = sorted((p['group'], p['pos_abb'], p.get('starter_assignment', {}).get('starter_rank', p['pos_rank']))
+                        for p in retained if p['starter'])
+        raise ValueError(f'{game_id}: {team} archive roster resolves {len(filled)} starter roles, not {EXPECTED_STARTERS}; '
+                         f'unfilled {sorted(set(expected_roles) - set(filled))}, '
+                         f'extra {sorted(set(filled) - set(expected_roles))}, '
+                         f'repeated {sorted({r for r in filled if filled.count(r) > 1})}')
     if not any(p['pos_abb'] == 'QB' and p['pos_rank'] == 1 and p['roster_eligible'] for p in retained):
         if not any(p['pos_abb'] == 'QB' and p['roster_eligible'] for p in retained):
             raise ValueError(f'{game_id}: {team} has no pregame-eligible quarterback after roster/injury checks')
@@ -454,6 +604,7 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
         'source': 'nflverse_depth_charts_archived',
         'depth_chart_dt': depth_date,
         'defense_group': defense_group,
+        'defense_group_source': defense_group_source,
         'jersey_week': week,
         'missing': [],
         'players': sorted(retained, key=lambda p: (p['group'], p['pos_abb'], p['pos_rank'], p['gsis_id'])),
@@ -467,12 +618,13 @@ def _team_roster(*, side, team, week, cutoff, depth, roster, injuries, identity,
 
 
 def _build_one(*, row, tables, paths, db_path, archive_manifest, archive_manifest_sha,
-               readiness_matrix, out_dir):
+               readiness_matrix, out_dir, tier='primary', pyreadr=None, archive_root=None):
     game, kickoff = _schedule_row(tables['games'], row)
-    cutoff = archive._utc(row['cutoff_utc'], 'readiness cutoff')
+    cutoff_text = archive.row_cutoff(row)
+    cutoff = archive._utc(cutoff_text, 'readiness cutoff')
     if cutoff >= kickoff:
         raise ValueError(f"{row['game_id']}: readiness cutoff is not before kickoff")
-    pins = _source_pins(row, archive_manifest)
+    pins = _source_pins(row, archive_manifest, tier)
     all_depth_ids = set()
     teams = {'away': str(game['away_team']), 'home': str(game['home_team'])}
     depth = tables['depth']
@@ -491,12 +643,15 @@ def _build_one(*, row, tables, paths, db_path, archive_manifest, archive_manifes
                                   & (tables['roster']['team'].astype(str) == source_team)]
         roster_ids = {str(r['gsis_id']) for r in weekly.to_dict('records')
                       if not _missing(r.get('gsis_id')) and _text(r.get('status')) == 'ACT'}
-        groups = {'3WR 1TE', 'Special Teams', roster_summary.get('defense_group')}
+        groups = {'3WR 1TE', 'Special Teams', _defense_group(roster_summary, team_depth, team)[0]}
         for record in team_depth.to_dict('records'):
             gsis_id = _text(record.get('gsis_id'))
             if gsis_id and gsis_id in roster_ids and record.get('pos_grp') in groups:
                 all_depth_ids.add(gsis_id)
     identity = _database_players(db_path, all_depth_ids)
+
+    def elevation_identity(gsis_id):  # only a fallback specialist outside the depth chart is looked up this way
+        return _database_players(db_path, {gsis_id}).get(gsis_id)
     # Rebuild with the pinned identity map, asserting that GSIS is the only join key.
     rosters = {}
     for side, team in teams.items():
@@ -504,12 +659,31 @@ def _build_one(*, row, tables, paths, db_path, archive_manifest, archive_manifes
         rosters[side] = _team_roster(
             side=side, team=team, week=int(game['week']), cutoff=cutoff,
             depth=depth, roster=tables['roster'], injuries=tables['injury'], identity=identity,
-            roster_summary=roster_summary, game_id=row['game_id'])
+            roster_summary=roster_summary, game_id=row['game_id'], elevation_identity=elevation_identity)
+
+    supplements = {}
+    if tier == 'secondary':
+        for side, team in teams.items():
+            if rosters[side]['injury_report']['rows']:
+                continue
+            found = _injury_supplement(pyreadr, archive_root, archive_manifest, row['archive_tag'],
+                                       nfl_team_codes.to_nflverse(team), int(game['week']))
+            if found is None:
+                raise ValueError(f"{row['game_id']}: no dated archive release has {team}'s Week {game['week']} injury report")
+            table, source = found
+            source['published_after_cutoff'] = archive._utc(source['published_at_utc'], 'supplement') > cutoff
+            rosters[side] = _team_roster(
+                side=side, team=team, week=int(game['week']), cutoff=cutoff,
+                depth=depth, roster=tables['roster'], injuries=table, identity=identity,
+                roster_summary=json.loads(row[f'{side}_full_roster']), game_id=row['game_id'],
+                elevation_identity=elevation_identity)
+            rosters[side]['injury_report']['source'] = {k: v for k, v in source.items() if k != 'rows'}
+            supplements[side] = source
 
     streak_teams, source_games = _current_streaks(tables['games'], game, cutoff, row['game_id'])
     streak_payload = {
         'schema': 'lp-nfl-pregame-streak-1', 'game_id': row['game_id'],
-        'cutoff_utc': row['cutoff_utc'], 'teams': {team: {'streak': entry['streak']}
+        'cutoff_utc': cutoff_text, 'teams': {team: {'streak': entry['streak']}
                                                     for team, entry in streak_teams.items()},
         'source_archive_tag': row['archive_tag'],
         'source_archive_sha256': pins['games']['sha256'],
@@ -523,6 +697,9 @@ def _build_one(*, row, tables, paths, db_path, archive_manifest, archive_manifes
 
     source_assets = {}
     for key, pin in pins.items():
+        if pin is None:
+            source_assets['injury'] = None
+            continue
         code, filename = RDS_FILES[key]
         source_assets[{'games': 'schedule', 'depth': 'depth', 'roster': 'roster', 'injury': 'injury'}[key]] = {
             **pin, 'source': 'official_nflverse_dated_archive',
@@ -535,7 +712,7 @@ def _build_one(*, row, tables, paths, db_path, archive_manifest, archive_manifes
     }
     snapshot = {
         'schema': ps.SCHEMA,
-        'as_of': row['cutoff_utc'].replace('+00:00', 'Z'),
+        'as_of': cutoff_text.replace('+00:00', 'Z'),
         'evaluation': {'class': archive.MODE, 'verified': False,
                        'source_availability_verified': True,
                        'unverified_inputs': ['retrospective local acquisition time is unknown; this is not prospective']},
@@ -557,6 +734,9 @@ def _build_one(*, row, tables, paths, db_path, archive_manifest, archive_manifes
         },
         'archive_reconstruction': {
             'schema': archive.SCHEMA, 'mode': archive.MODE, 'prospective_eligible': False,
+            'tier': tier, 'readiness_class': row['readiness_class'], 'cutoff_basis': row['cutoff_basis'],
+            'readiness_reasons': json.loads(row['reasons'] or '[]'),
+            'injury_supplements': supplements,
             'source_availability_verified': True,
             'local_capture_observed_utc': None,
             'archive_tag': row['archive_tag'], 'archive_manifest_sha256': archive_manifest_sha,
@@ -564,7 +744,7 @@ def _build_one(*, row, tables, paths, db_path, archive_manifest, archive_manifes
             'builder_sha256': _sha(Path(__file__).resolve()),
             'source_assets': source_assets,
             'identity_resolution': full_identity,
-            'streak_context': {'game_id': row['game_id'], 'cutoff_utc': row['cutoff_utc'],
+            'streak_context': {'game_id': row['game_id'], 'cutoff_utc': cutoff_text,
                                'teams': streak_payload['teams'], 'source_games': streak_payload['source_games'],
                                'source_archive_sha256': pins['games']['sha256'], 'file_sha256': streak_sha,
                                'file': os.path.relpath(streak_path, start=output_dir / 'snapshots')},
@@ -593,6 +773,9 @@ def main(argv=None):
     parser.add_argument('--db', required=True, help='canonical identity SQLite DB, opened read-only')
     parser.add_argument('--out-dir', required=True)
     parser.add_argument('--resume', action='store_true', help='validate and keep complete existing snapshots; refuse mismatches')
+    parser.add_argument('--tier', choices=('primary', 'secondary'), default='primary',
+                        help='primary: the 28 cutoff-valid Week 5-7 games; secondary: the 79 exploratory and refused '
+                             'Week 1-7 games, labelled and scored separately')
     args = parser.parse_args(argv)
 
     try:
@@ -611,11 +794,15 @@ def main(argv=None):
         raise ValueError(f'readiness matrix population changed; expected 28 cutoff-valid, 51 exploratory, 28 refused: {classes}')
     rows = []
     for row in matrix_rows:
-        if row.get('week') in ('5', '6', '7') and row.get('readiness_class') == 'cutoff-valid':
+        if args.tier == 'primary' and row.get('week') in ('5', '6', '7') and row.get('readiness_class') == 'cutoff-valid':
             archive.readiness_row(readiness_path, row['game_id'])
             rows.append(row)
-    if len(rows) != 28:
-        raise ValueError(f'expected 28 source-valid locked Week 5-7 games; readiness matrix has {len(rows)}')
+        elif args.tier == 'secondary' and row.get('readiness_class') in archive.SECONDARY_CLASSES:
+            archive.readiness_row(readiness_path, row['game_id'], 'secondary')
+            rows.append(row)
+    expected = {'primary': 28, 'secondary': 79}[args.tier]
+    if len(rows) != expected:
+        raise ValueError(f'expected {expected} {args.tier} games; readiness matrix has {len(rows)}')
     manifest_bytes = manifest_path.read_bytes()
     manifest_sha = hashlib.sha256(manifest_bytes).hexdigest()
     manifest = json.loads(manifest_bytes)
@@ -628,7 +815,7 @@ def main(argv=None):
     completed = 0
     for archive_tag, archive_rows in sorted(by_archive.items()):
         print(f'loading {archive_tag}: {len(archive_rows)} eligible games', file=sys.stderr, flush=True)
-        pins = _source_pins(archive_rows[0], manifest)
+        pins = _source_pins(archive_rows[0], manifest, args.tier)
         tables, paths = _load_archive(pyreadr, args.archive_root, pins)
         for row in archive_rows:
             snapshot_path = output_dir / 'snapshots' / f"{row['game_id']}.json"
@@ -647,7 +834,8 @@ def main(argv=None):
                 continue
             snapshot, streak_path = _build_one(row=row, tables=tables, paths=paths, db_path=args.db,
                                                archive_manifest=manifest, archive_manifest_sha=manifest_sha,
-                                               readiness_matrix=readiness_path, out_dir=output_dir)
+                                               readiness_matrix=readiness_path, out_dir=output_dir,
+                                               tier=args.tier, pyreadr=pyreadr, archive_root=args.archive_root)
             archive.validate_snapshot(snapshot, readiness_matrix=readiness_path, archive_manifest=manifest_path,
                                       archive_root=args.archive_root, streak_file=streak_path,
                                       expected_game_id=row['game_id'])
