@@ -15,14 +15,14 @@ from test_slc_blocker_resolution import layer, sample  # noqa: E402
 
 TABLE = {'schema': kfg.SCHEMA, 'fit_seasons': [2024, 2025], 'sigma': 0.3, 'recency': 0.5,
          'kickers': {'K_GOOD': {'offset': 0.4, 'attempts': 120, 'career_long': 61}},
-         'assignments': [[2026, 8, 'AAA', 'K_GOOD'], [2026, 8, 'BBB', 'K_ROOKIE']]}
+         'assignments': [[2026, 8, 'KC', 'K_GOOD'], [2026, 8, 'LA', 'K_ROOKIE']]}
 MODEL = {'intercept': 1.0, 'distance_slope_per_10_yards': -1.0, 'distance_center_yards': 40.0,
          'max_observed_attempt_yards': 70, 'global_block_rate': 0.02, 'attempted_n': 100,
          'block_counts_by_distance': {'40.0': {'attempts': 100, 'blocked': 2}}}
 
 
 def sampler_with_flag(flag=True):
-    sampler = slc.PlayCallSampler(layer(-100.0), side_teams={'A': 'AAA', 'B': 'BBB'})
+    sampler = slc.PlayCallSampler(layer(-100.0), side_teams={'A': 'KC', 'B': 'LA'})
     sampler.blocker_fixes = frozenset({'long_field_goal_feasibility'})
     sampler.fg_ordinary_cutoff = 60.0
     sampler.field_goal_distance_model = MODEL
@@ -121,9 +121,25 @@ class MakeProbability(unittest.TestCase):
 class Table(unittest.TestCase):
     def test_a_team_without_an_active_kicker_is_refused(self):
         table = kfg.KickerTable(TABLE, 'test')
-        self.assertEqual(table.kicker(2026, 8, 'AAA'), 'K_GOOD')
+        self.assertEqual(table.kicker(2026, 8, 'KC'), 'K_GOOD')
         with self.assertRaisesRegex(ValueError, 'no active kicker'):
-            table.kicker(2026, 9, 'AAA')
+            table.kicker(2026, 9, 'KC')
+
+    def test_either_spelling_finds_the_club(self):
+        table = kfg.KickerTable(TABLE, 'test')
+        self.assertEqual(table.kicker(2026, 8, 'LAR'), 'K_ROOKIE')  # the table says LA, the engine asks LAR
+        self.assertEqual(table.kicker(2026, 8, 'LA'), 'K_ROOKIE')
+        with self.assertRaisesRegex(ValueError, 'unknown NFL team code'):
+            table.kicker(2026, 8, 'XYZ')
+
+    def test_the_pinned_table_answers_the_database_codes(self):
+        # 2026-11-04: 15 Rams and Washington games failed here, the table spelling LA/WAS and the engine LAR/WSH.
+        import simulate_pregame_batch as batch
+        path, sha = batch.SLC_V2_TABLES['playcall_fg_kicker']
+        table = kfg.KickerTable.load(HERE.parents[1] / path, sha)
+        for team in ('LAR', 'WSH', 'LA', 'WAS'):
+            with self.subTest(team=team):
+                self.assertTrue(table.kicker(2026, 1, team))
 
     def test_a_wrong_schema_or_hash_is_refused(self):
         with self.assertRaisesRegex(ValueError, 'schema'):

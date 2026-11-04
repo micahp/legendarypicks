@@ -44,13 +44,15 @@ class SnapCounts:
             raise ValueError(f"snap counts schema is {data.get('schema')!r}, expected {SCHEMA!r}")
         self.sha256 = sha256
         self.season = int(data['season'])
-        self.team_snaps = {(team, int(week)): float(snaps) for team, week, snaps in data['team_snaps']}
-        self.player = defaultdict(dict)  # (team, week) -> gsis_id -> offensive snaps
+        # Team-keyed tables go through nfl_team_codes.TeamKeyed: the file uses nflverse codes, callers may hold either.
+        self.team_snaps = pf.TeamKeyed((((team, int(week)), float(snaps)) for team, week, snaps in data['team_snaps']),
+                                       team_at=0)
+        self.player = pf.TeamKeyed(team_at=0)  # (team, week) -> gsis_id -> offensive snaps
         self.position = {}
         for team, week, pid, pos, snaps in data['player_snaps']:
-            self.player[(team, int(week))][pid] = float(snaps)
+            self.player.setdefault((team, int(week)), {})[pid] = float(snaps)
             self.position[pid] = pos
-        self.active = {(team, int(week)): set(ids) for team, week, ids in data['active']}
+        self.active = pf.TeamKeyed((((team, int(week)), set(ids)) for team, week, ids in data['active']), team_at=0)
         self.coverage = data.get('coverage', {})
 
     @classmethod
@@ -62,6 +64,7 @@ class SnapCounts:
 
     def weeks_before(self, team, week):
         """The team's games before `week` that have published team snaps."""
+        team = pf.nfl_team_codes.to_db(team)  # the keys are database codes; compare in the same vocabulary
         return sorted(w for (t, w) in self.team_snaps if t == team and w < week)
 
     def class_shares(self, team, week):
@@ -229,7 +232,7 @@ def apply(field, snaps, week, rosters, player_n0, group_n0=GROUP_N0):
     of what was used, for the ledger."""
     if snaps.season is None:
         raise ValueError('snap counts have no season')
-    field.group_tilt, field.player_weight = {}, {}
+    field.group_tilt, field.player_weight = pf.TeamKeyed(), pf.TeamKeyed(team_at=0)
     record = {'snap_counts_sha256': snaps.sha256, 'season': snaps.season, 'week': week, 'group_n0': group_n0,
               'player_n0': player_n0, 'teams': {}}
     for team, players in sorted(rosters.items()):

@@ -20,8 +20,14 @@ are the ones in lineup_fit.py and export_field.py; test_participation_field.py c
 import hashlib
 import json
 import math
+import sys
 from collections import Counter
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import nfl_team_codes  # noqa: E402
+
+TeamKeyed = nfl_team_codes.TeamKeyed  # every team-keyed table below: nflverse codes in the file, any spelling on lookup
 
 SCHEMA = 'lp.nfl.participation-field.v4'  # v4 adds transitions conditioned on the call; v3 codes carry -OL<n>, -QB<n>
 SCHEMAS = ('lp.nfl.participation-field.v2', 'lp.nfl.participation-field.v3', SCHEMA)
@@ -123,18 +129,19 @@ class Field:
             raise ValueError(f"participation field schema is {data.get('schema')!r}, expected one of {SCHEMAS}")
         self.sha256 = sha256
         self.seasons = sorted(data.get('seasons') or [])  # the fit seasons; the engine refuses a game not after all of them
-        self.teams = {team for team, _cell, _prev, _counts in data['team_transitions']}
+        self.teams = TeamKeyed((team, True) for team, _cell, _prev, _counts in data['team_transitions'])
         self.league_transitions = {(cell, prev): Counter(counts) for cell, prev, counts in data['league_transitions']}
-        self.team_transitions = {(team, cell, prev): Counter(counts)
-                                 for team, cell, prev, counts in data['team_transitions']}
+        self.team_transitions = TeamKeyed((((team, cell, prev), Counter(counts))
+                                           for team, cell, prev, counts in data['team_transitions']), team_at=0)
         self.marginal_by_cell = {}  # cell -> grouping -> weight, summed over the previous grouping
         for (cell, _prev), counts in self.league_transitions.items():
             self.marginal_by_cell.setdefault(cell, Counter()).update(counts)
         # v4: the same transitions split by the call (run or dropback), so the grouping depends on the call
         self.league_by_call = {(cell, call, prev): Counter(counts)
                                for cell, call, prev, counts in data.get('league_transitions_by_intent', [])}
-        self.team_by_call = {(team, cell, call, prev): Counter(counts)
-                             for team, cell, call, prev, counts in data.get('team_transitions_by_intent', [])}
+        self.team_by_call = TeamKeyed((((team, cell, call, prev), Counter(counts))
+                                       for team, cell, call, prev, counts in data.get('team_transitions_by_intent', [])),
+                                      team_at=0)
         self.marginal_by_cell_call = {}
         for (cell, call, _prev), counts in self.league_by_call.items():
             self.marginal_by_cell_call.setdefault((cell, call), Counter()).update(counts)
@@ -145,14 +152,14 @@ class Field:
         for (kind, cls, _bucket), (leaves, total) in self.leave_counts.items():
             pooled = self.leave_class.get((kind, cls), (0.0, 0.0))
             self.leave_class[(kind, cls)] = (pooled[0] + leaves, pooled[1] + total)
-        self.appearances = {(pid, team, group): w for pid, team, group, w in data['appearances']}
-        self.team_plays = {(team, group): w for team, group, w in data['team_plays']}
+        self.appearances = TeamKeyed((((pid, team, group), w) for pid, team, group, w in data['appearances']), team_at=1)
+        self.team_plays = TeamKeyed((((team, group), w) for team, group, w in data['team_plays']), team_at=0)
         self.position_prior = {(pos, group): v for pos, group, v in data['position_prior']}
         # The current-season update from published snap counts (set per game by snap_update.apply; empty = no update):
         # team -> (lambda_RB, lambda_TE, lambda_WR), the exponential tilt of the grouping draw, and (team, gsis_id) -> a
         # multiplier on the player's on-field rate.
-        self.group_tilt = {}
-        self.player_weight = {}
+        self.group_tilt = TeamKeyed()
+        self.player_weight = TeamKeyed(team_at=0)
         # A player's leave hazard scaled by ((1 - his rate) / (1 - his class's on-field mean rate)) ** leave_power, so a
         # regular leaves less often than a backup. 0 (no scaling) unless the table sets it.
         self.leave_power = float(data.get('leave_power', 0.0))
