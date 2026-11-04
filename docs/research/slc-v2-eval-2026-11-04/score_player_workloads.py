@@ -13,7 +13,9 @@ receiving touchdowns) and arm, over player-games where any arm projects more tha
 mean absolute error of the mean projection, CRPS of the seed distribution, and the share of observations inside the
 central 80% interval of the seeds (10th to 90th percentile, inclusive). Also for players who recorded the stat.
 Team workload shape per team-game: the top target share (most targets / team targets) and the top carry share, CRPS
-against the observed value. Paired differences between arms have game-clustered bootstrap 95% intervals. Players with
+against the observed value. Role shares per team-game, the mean over seeds against the observed: usage roles TGT1-3
+(players ranked by targets, each one's target share) and CAR1-2 (by carries), for every arm; and for an arm with lineups,
+snap roles RB1-2, TE1-2, WR1-3 ranked by snaps within position, as in docs/research/role-usage-reference-2026-11-04. Paired differences between arms have game-clustered bootstrap 95% intervals. Players with
 published stats who are not on the simulated roster are counted, not scored.
 
 Usage: python3 score_player_workloads.py --arm V1=DIR --arm V15=DIR --arm V2=DIR --stats stats_player_week_2026.parquet
@@ -130,6 +132,7 @@ def main():
     rows = defaultdict(list)  # stat -> [(game, week, pid, observed, {arm: (mean, crps, inside)})]
     shape = defaultdict(list)  # 'top_target_share' / 'top_carry_share' -> [(game, team, observed, {arm: crps})]
     snap_rows = []  # (game, team, pid, observed share, {arm: mean simulated share})
+    role_rows = []  # (game, team, role, observed share, arm, mean simulated share)
     coverage = defaultdict(int)
     for game in games:
         week = int(game.split('_')[1])
@@ -174,9 +177,50 @@ def main():
                         per_arm[name] = crps(xs, y)
                 if len(per_arm) == len(loaded):
                     shape[label].append((game, team, y, per_arm))
+        for team in sorted(teams):  # usage roles: top receivers by targets, top backs by carries
+            team_pids = [pid for pid, (t, _p) in roster.items() if t == team]
+            for label, (group, key, column), depth in (('TGT', STATS['targets'], 3), ('CAR', STATS['carries'], 2)):
+                vals = sorted((float(getattr(obs[(game, pid)], column) or 0) for pid in team_pids if (game, pid) in obs),
+                              reverse=True)
+                total = sum(vals)
+                if not total:
+                    continue
+                for name, (keep, box, _l, _r) in loaded.items():
+                    sims = defaultdict(float)
+                    for s in keep:
+                        v = sorted((float(box[s].get(pid, {}).get(group, {}).get(key, 0) or 0) for pid in team_pids),
+                                   reverse=True)
+                        tot = sum(v)
+                        for rank in range(depth):
+                            sims[rank] += (v[rank] / tot if tot and rank < len(v) else 0.0) / len(keep)
+                    for rank in range(depth):
+                        role_rows.append((game, team, f'{label}{rank + 1}',
+                                          vals[rank] / total if rank < len(vals) else 0.0, name, sims[rank]))
         for name, (keep, _b, lineups, r) in loaded.items():
             if not any(lineups.get(s) for s in keep):
                 continue
+            for team in sorted(teams):  # snap roles, as in the role usage reference: rank by snaps within position
+                team_snaps = snaps.team_snaps.get((team, week))
+                if not team_snaps:
+                    continue
+                published = snaps.player.get((team, week), {})
+                for pos, depth in (('RB', 2), ('TE', 2), ('WR', 3)):
+                    obs_ranked = sorted((n for pid, n in published.items()
+                                         if {'HB': 'RB'}.get(snaps.position.get(pid), snaps.position.get(pid)) == pos),
+                                        reverse=True)
+                    sims = defaultdict(float)
+                    for s in keep:
+                        lu = (lineups.get(s) or {}).get(team)
+                        if not lu or not lu['team_snaps']:
+                            continue
+                        v = sorted((n for pid, n in lu['player_snaps'].items() if r.get(pid, (None, None))[1] == pos),
+                                   reverse=True)
+                        for rank in range(depth):
+                            sims[rank] += (v[rank] / lu['team_snaps'] if rank < len(v) else 0.0) / len(keep)
+                    for rank in range(depth):
+                        role_rows.append((game, team, f'{pos}{rank + 1}_snap',
+                                          obs_ranked[rank] / team_snaps if rank < len(obs_ranked) else 0.0, name,
+                                          sims[rank]))
             for team in sorted(teams):
                 team_snaps = snaps.team_snaps.get((team, week))
                 if not team_snaps:
@@ -226,6 +270,13 @@ def main():
         report['snap_share'][name] = {'player_games': len(items),
                                       'mae': round(sum(abs(x - y) for _g, y, x in items) / len(items), 4),
                                       'mae_observed_positive': round(sum(abs(x - y) for _g, y, x in pos) / len(pos), 4)}
+    roles = defaultdict(lambda: defaultdict(list))
+    for game, team, role, y, name, x in role_rows:
+        roles[role][name].append((y, x))
+    report['roles'] = {role: {name: {'team_games': len(v), 'mae': round(sum(abs(x - y) for y, x in v) / len(v), 4),
+                                     'mean_simulated': round(sum(x for _y, x in v) / len(v), 4),
+                                     'mean_observed': round(sum(y for y, _x in v) / len(v), 4)}
+                              for name, v in sorted(by.items())} for role, by in sorted(roles.items())}
     rng = random.Random(20261104)
     for pair in args.compare:
         a, b = pair.split(',')
@@ -258,6 +309,8 @@ def main():
             print(stat, o['n'], {n: (o[n]['mae'], o[n]['crps'], o[n]['coverage80']) for n in names})
     print('shape', report['shape'])
     print('snap_share', report['snap_share'])
+    for role, by in report['roles'].items():
+        print('role', role, {n: (v['mae'], v['mean_simulated'], v['mean_observed']) for n, v in by.items()})
     for k, v in report['differences'].items():
         print(k, {s: v[s] for s in v if s.endswith('observed_positive.mae') or s.endswith('crps') and 'share' in s})
 
