@@ -9,6 +9,7 @@ Set SLC_FIT_CACHE_DIR to enable it; unset, every fit is computed as before. Each
 and whether it was a hit, a miss, or a rebuild of an unreadable entry. Entries are written to a per-process temp file and
 renamed into place, so a concurrent reader sees the whole previous entry or the whole new one, never a partial file.
 """
+import gc
 import hashlib
 import json
 import os
@@ -39,6 +40,17 @@ def key(name, inputs, code_files):
     return digest.hexdigest()
 
 
+def _without_gc(fn, *args):
+    """A large table unpickles into millions of containers and no cycles; the cyclic collector's passes are pure cost."""
+    collecting = gc.isenabled()
+    gc.disable()
+    try:
+        return fn(*args)
+    finally:
+        if collecting:
+            gc.enable()
+
+
 def memo(name, inputs, compute, code_files):
     """compute() if the cache is off; otherwise the stored result for this exact (name, inputs, code), computing it once."""
     cache_dir = os.environ.get('SLC_FIT_CACHE_DIR')
@@ -50,7 +62,7 @@ def memo(name, inputs, compute, code_files):
     if path.exists():
         try:
             with path.open('rb') as source:
-                stored = pickle.load(source)
+                stored = _without_gc(pickle.load, source)
             if stored.get('key') == entry_key:
                 print(f'fit-cache {name} {entry_key[:12]}: hit', file=sys.stderr)
                 return stored['result']

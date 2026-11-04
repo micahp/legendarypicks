@@ -6,6 +6,7 @@ come from that window, so every draw in a game is from the same observed seasons
 import os
 import sqlite3
 import sys
+import gc
 import hashlib
 import json
 import math
@@ -88,6 +89,17 @@ _FINGERPRINT_ENCODER = json.JSONEncoder(sort_keys=True, separators=(',', ':'), e
 
 
 def _reference_fingerprint(reference):
+    # One JSON string per pool row and no cycles; pausing the cyclic collector only removes its passes.
+    collecting = gc.isenabled()
+    gc.disable()
+    try:
+        return _fingerprint(reference)
+    finally:
+        if collecting:
+            gc.enable()
+
+
+def _fingerprint(reference):
     digest = hashlib.sha256()
     encode = _FINGERPRINT_ENCODER.encode  # the same bytes json.dumps(..., sort_keys=True, separators=(',', ':'), ensure_ascii=False) gives
 

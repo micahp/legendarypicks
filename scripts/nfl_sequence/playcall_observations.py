@@ -15,6 +15,7 @@ Score status:
 """
 import csv
 import gzip
+import gc
 import hashlib
 import json
 import sqlite3
@@ -219,6 +220,8 @@ def rows_sha256(db, first_season, last_season):
     holdout.refuse_if_holdout(last_season, 'play-call observations')
     digest = hashlib.sha256()
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=30)
+    collecting = gc.isenabled()
+    gc.disable()  # one tuple per row and no cycles: the cyclic collector's passes are pure cost here
     try:
         sql = (f"SELECT {', '.join(COLUMNS)} FROM nfl_pbp WHERE season BETWEEN ? AND ? AND week <= 18 "
                "ORDER BY season, game_id, play_id")
@@ -226,4 +229,6 @@ def rows_sha256(db, first_season, last_season):
             digest.update(repr(tuple(row)).encode())
     finally:
         con.close()
+        if collecting:
+            gc.enable()
     return digest.hexdigest()
