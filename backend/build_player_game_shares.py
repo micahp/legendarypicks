@@ -34,12 +34,12 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_player_shares  # noqa: E402
+import team_codes  # noqa: E402
 from migrate_player_game_shares import migrate  # noqa: E402
 
 LEAGUE = "nfl"
 PER_GAME_METRICS = build_player_shares.PER_GAME_METRICS
 TEAM_URL = "https://github.com/nflverse/nflverse-data/releases/download/stats_team/stats_team_week_%d.parquet"
-TEAM_CODE_VOCAB = {"LA": "LAR", "WAS": "WSH"}
 TEAM_FILE_MAX_AGE_S = 6 * 3600
 SHARE_TOLERANCE = 1e-6
 TEAM_COLUMNS = ["season", "week", "team", "season_type", "game_id",
@@ -74,7 +74,7 @@ def totals_from_rows(rows, season):
             if r[col] is None:
                 raise RuntimeError("published team-game %s %s has null %s"
                                    % (r["game_id"], r["team"], col))
-        team = TEAM_CODE_VOCAB.get(r["team"], r["team"])
+        team = team_codes.normalize("nfl", r["team"])  # nflverse spells LA, WAS
         key = (r["game_id"], team)
         if key in totals:
             raise RuntimeError("duplicate published team-game %s %s" % key)

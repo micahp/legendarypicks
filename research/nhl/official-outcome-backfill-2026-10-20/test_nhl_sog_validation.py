@@ -45,7 +45,7 @@ class NHLSogValidationTests(unittest.TestCase):
             body = path.read_bytes()
             if hashlib.sha256(body).hexdigest() != entry["sha256"]:
                 raise AssertionError(f"PINNED_PBP_HASH_MISMATCH {game_id}")
-            cls.parsed[game_id] = parse_pbp_sog_events(game_id, json.loads(body), {"PHX": "ARI"})
+            cls.parsed[game_id] = parse_pbp_sog_events(game_id, json.loads(body))
 
     def test_all_20_original_skater_only_discrepancies_pass_with_goalie_sog(self) -> None:
         self.assertEqual(len(self.issues), 20)

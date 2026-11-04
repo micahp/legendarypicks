@@ -16,7 +16,9 @@ HERE = Path(__file__).resolve().parent
 ARTIFACT_ROOT = Path("/root/lp-data/nhl-official-outcome-backfill-2026-10-20")
 FRAME_SHA256 = "336d8a8d055febd742dbf31ce7a613bd2e47c2cd8fbc7a8d956fc8967ba47b1c"
 FRAME_COUNTS = {2018: 1271, 2019: 1082, 2020: 868, 2021: 1312, 2022: 343}
-TEAM_ALIASES = {"PHX": "ARI"}
+import sys  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
+import team_codes  # noqa: E402  the one place team codes are defined
 
 
 def sha256(value: bytes) -> str:
@@ -139,7 +141,7 @@ def main() -> int:
 
         for side in ("home", "away"):
             team = payload[f"{side}Team"]
-            team_code = TEAM_ALIASES.get(str(team.get("abbrev", "")), str(team.get("abbrev", "")))
+            team_code = team_codes.to_source("nhl", "nhle", str(team.get("abbrev", "")))
             if team_code != game[f"{side}_team"]:
                 raise ValueError(f"game_id={game_id}: {side} team identity mismatch")
             expected_games[(game_id, side)] = (

@@ -422,11 +422,11 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                 [component[0] for component in components],
                 [component[1] for component in components],
                 espn_id=prop["espn_id"],
-                missing_as_zero=league in ("ncaaf", "nfl"))
+                missing_as_zero=league in ("ncaaf", "nfl"), league=league)
         else:
             actual = _find_player_stat(
                 box, prop["player_name"], prop["player_team"],
-                category, stat_key, espn_id=prop["espn_id"])
+                category, stat_key, espn_id=prop["espn_id"], league=league)
 
         # ESPN omits a player from a category when his result there is zero.
         # Grade that omission as zero only when another boxscore category
@@ -436,7 +436,7 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         if (actual is None and league in ("ncaaf", "nfl")
                 and _player_appeared(
                     box, prop["player_name"], prop["player_team"],
-                    espn_id=prop["espn_id"])):
+                    espn_id=prop["espn_id"], league=league)):
             actual = 0.0
 
         # A missing player stat is not a zero. For NBA, only ESPN's explicit
@@ -444,7 +444,7 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         if (actual is None and league == "nba"
                 and _player_did_not_play(
                     box, prop["player_name"], prop["player_team"],
-                    espn_id=prop["espn_id"])):
+                    espn_id=prop["espn_id"], league=league)):
             try:
                 con.execute(
                     "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) "

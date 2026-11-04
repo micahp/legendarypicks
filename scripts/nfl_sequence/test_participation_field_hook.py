@@ -89,7 +89,7 @@ class FlagOn(unittest.TestCase):
         snapshot = copy.deepcopy(SNAPSHOT)
         snapshot['rosters']['home']['team'] = 'DNV'
         pick = pe.chooser(snapshot, 1, seed_root='r' * 64, field=FIELD)
-        with self.assertRaisesRegex(ValueError, "unknown NFL team code 'DNV'"):  # refused by nfl_team_codes.TeamKeyed
+        with self.assertRaisesRegex(ValueError, "unknown NFL team code.*'DNV'"):  # refused by nfl_team_codes.TeamKeyed
             pick('run', 'A', states(1)[0])
 
     def test_a_real_club_the_table_lacks_is_refused(self):

@@ -28,8 +28,9 @@ POISSON_ALPHA = (0.01, 0.1, 1.0, 10.0)
 LOGIT_C = (0.01, 0.1, 1.0, 10.0, 100.0)
 RNG = np.random.default_rng(20261014)
 
-TEAM_ID = {"PHX":"ARI", "T.B":"TBL", "N.J":"NJD", "L.A":"LAK", "S.J":"SJS",
-           "ATL":"WPG"}
+import sys  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
+import team_codes  # noqa: E402  the one place team codes are defined
 
 
 def sha(path):
@@ -50,7 +51,7 @@ def f(row,key):
     except ValueError: return None
 
 
-def team_key(code): return TEAM_ID.get(code,code)
+def team_key(code): return team_codes.to_source("nhl", "nhle", code)  # NHL tricodes
 
 
 def lograte(value): return math.log(max(float(value),0.05))

@@ -54,12 +54,13 @@ SIM_GAMES = 400     # period-simulator matched subset
 SIM_TRIALS = 100_000
 
 MODELS = ("b3_elo", "b5_xg", "b7_elo_xg")
-TEAM_ID = {"PHX": "ARI", "T.B": "TBL", "TB": "TBL", "N.J": "NJD", "L.A": "LAK",
-           "LA": "LAK", "S.J": "SJS", "ATL": "WPG"}
+import sys  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
+import team_codes  # noqa: E402  the one place team codes are defined
 
 
 def team_key(code: str) -> str:
-    return TEAM_ID.get(code, code)
+    return team_codes.to_source("nhl", "nhle", code)  # NHL tricodes
 
 
 def read_csv(path: Path) -> list[dict]:

@@ -48,42 +48,42 @@ def test_a_pitching_line_does_not_answer_a_batting_question():
     pitcher's hits ALLOWED — 4, not 2."""
     box = _group(PITCHING_LABELS, PITCHING_STATS)
     assert settlement._find_player_stat(box, "Zack Wheeler", "PHI", "batting", "H",
-                                        espn_id="31005") is None
+                                        espn_id="31005", league="mlb") is None
 
 
 def test_a_batting_line_does_not_answer_a_pitching_question():
     box = _group(BATTING_LABELS, BATTING_STATS)
     assert settlement._find_player_stat(box, "Zack Wheeler", "PHI", "pitching", "K",
-                                        espn_id="31005") is None
+                                        espn_id="31005", league="mlb") is None
 
 
 def test_an_unnamed_pitching_group_still_resolves_pitching():
     box = _group(PITCHING_LABELS, PITCHING_STATS)
     assert settlement._find_player_stat(box, "Zack Wheeler", "PHI", "pitching", "K",
-                                        espn_id="31005") == 8.0
+                                        espn_id="31005", league="mlb") == 8.0
 
 
 def test_an_unnamed_batting_group_still_resolves_batting():
     box = _group(BATTING_LABELS, BATTING_STATS)
     assert settlement._find_player_stat(box, "Zack Wheeler", "PHI", "batting", "RBI",
-                                        espn_id="31005") == 1.0
+                                        espn_id="31005", league="mlb") == 1.0
 
 
 def test_a_named_group_is_still_trusted():
     box = _group(PITCHING_LABELS, PITCHING_STATS, name="pitching")
     assert settlement._find_player_stat(box, "Zack Wheeler", "PHI", "pitching", "ER",
-                                        espn_id="31005") == 2.0
+                                        espn_id="31005", league="mlb") == 2.0
 
 
 def test_total_bases_is_never_derived_from_slugging():
     """SLG x AB = .460 x 4 = 1.84 -> 2. A plausible number, invented."""
     box = _group(BATTING_LABELS, BATTING_STATS)
     assert settlement._find_player_stat(box, "Zack Wheeler", "PHI", "batting", "TB",
-                                        espn_id="31005") is None
+                                        espn_id="31005", league="mlb") is None
 
 
 def test_total_bases_is_read_when_it_is_published():
     labels = BATTING_LABELS + ["TB"]
     box = _group(labels, BATTING_STATS + ["5"])
     assert settlement._find_player_stat(box, "Zack Wheeler", "PHI", "batting", "TB",
-                                        espn_id="31005") == 5.0
+                                        espn_id="31005", league="mlb") == 5.0

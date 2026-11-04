@@ -80,13 +80,13 @@ def main():
         game_type = {}
         sc = pq.read_table(snap_path, columns=['week', 'team', 'game_type']).to_pydict()
         for i in range(len(sc['week'])):
-            game_type[(su.SNAP_TEAM.get(sc['team'][i], sc['team'][i]), int(sc['week'][i]))] = \
+            game_type[(su.snap_team(sc['team'][i]), int(sc['week'][i]))] = \
                 'REG' if sc['game_type'][i] == 'REG' else 'POST'
         st = pq.read_table(stats_path, columns=['player_id', 'week', 'team', 'targets', 'carries']).to_pydict()
         usage = defaultdict(dict)
         team_tot = defaultdict(lambda: [0.0, 0.0])
         for i in range(len(st['player_id'])):
-            team, week = su.SNAP_TEAM.get(st['team'][i], st['team'][i]), int(st['week'][i])
+            team, week = su.snap_team(st['team'][i]), int(st['week'][i])
             t, c = float(st['targets'][i] or 0), float(st['carries'][i] or 0)
             usage[(team, week)][st['player_id'][i]] = (t, c)
             team_tot[(team, week)][0] += t

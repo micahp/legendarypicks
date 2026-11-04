@@ -9,6 +9,11 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
+import team_codes  # noqa: E402  the one place team codes are defined
+
 
 FINAL_STATES = {"OFF", "FINAL"}
 SOG_EVENT_TYPES = {"shot-on-goal", "goal"}
@@ -71,7 +76,6 @@ def _nonnegative_int(value: Any, label: str) -> int:
 def parse_pbp_sog_events(
     game_id: str,
     pbp: Mapping[str, Any],
-    team_aliases: Mapping[str, str] | None = None,
 ) -> ParsedPbpSog:
     """Extract regulation/OT shots on goal using NHL numeric player IDs.
 
@@ -80,7 +84,6 @@ def parse_pbp_sog_events(
     Unattributed goals without a shot type are retained separately and are not
     silently counted as SOG. Shootout events are excluded.
     """
-    aliases = dict(team_aliases or {})
     if not isinstance(pbp, Mapping):
         raise ValueError(f"PBP_PAYLOAD_NOT_OBJECT {game_id}")
     if str(pbp.get("id", "")) != str(game_id):
@@ -96,9 +99,10 @@ def parse_pbp_sog_events(
         team_id = team.get("id")
         if isinstance(team_id, bool) or not isinstance(team_id, int) or team_id <= 0 or team_id in team_ids:
             raise ValueError(f"PBP_INVALID_TEAM_ID {game_id}/{side}")
-        abbrev = aliases.get(str(team.get("abbrev", "")), str(team.get("abbrev", "")))
-        if not abbrev:
+        raw_abbrev = str(team.get("abbrev", ""))
+        if not raw_abbrev:
             raise ValueError(f"PBP_TEAM_ABBREVIATION_MISSING {game_id}/{side}")
+        abbrev = team_codes.to_source("nhl", "nhle", raw_abbrev)  # PHX to ARI; raises on an unknown code
         team_ids[team_id] = (abbrev, side)
 
     roster = pbp.get("rosterSpots")

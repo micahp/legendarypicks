@@ -161,7 +161,11 @@ def _playbook_errors(season, target_teams):
                 errors.append(f'playbook has no offensive observed_plays: {path}')
         except Exception as exc:
             errors.append(f'playbook cannot be verified: {path}: {type(exc).__name__}: {exc}')
-    missing_teams = nfl_team_codes.missing_pbp_team_codes(target_teams, teams)
+    try:
+        missing_teams = nfl_team_codes.missing_pbp_team_codes(target_teams, teams)
+    except ValueError as exc:
+        errors.append(f'playbook prior teams cannot be compared for season {int(season)-1}: {exc}')
+        missing_teams = []
     if missing_teams:
         errors.append(f'playbook prior is missing target-game teams {missing_teams} for season {int(season)-1}')
     return errors, len(entries)

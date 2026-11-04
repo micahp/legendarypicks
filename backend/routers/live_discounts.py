@@ -23,6 +23,7 @@ from contextlib import closing
 from fastapi import APIRouter, HTTPException, Query
 
 from _core import _db
+import team_codes
 import espn_client as espn
 
 router = APIRouter()
@@ -32,9 +33,9 @@ _SERIES = {"mlb": "KXMLBGAME", "nfl": "KXNFLGAME", "nba": "KXNBAGAME", "nhl": "K
            # WC knockouts: the market that matters is "to advance" (covers ET/pens), and it's
            # where the account's own best trades live (no public WP models -> stale prices).
            "wc": "KXWCADVANCE"}
-# ESPN abbrev -> Kalshi ticker abbrev, where they differ. Unmatched games are reported in the
+# ESPN abbrev -> Kalshi ticker abbrev comes from backend/team_codes.py (SOURCE_VOCABULARIES[league]["kalshi"]);
+# only MLB is registered, the other leagues' tickers use ESPN's spelling. Unmatched games are reported in the
 # payload's `unmatched` list rather than silently dropped.
-_ESPN_TO_KALSHI = {"mlb": {"ARI": "AZ", "CHW": "CWS", "OAK": "ATH"}}
 
 _CACHE_TTL = 40          # seconds; widget polls at ~45s
 # How long a failing build may keep serving its last good answer. Generous
@@ -379,8 +380,10 @@ def _build(league):
     markets = _kalshi_markets(series)
     rank, meta = _strength(league)
     sits = _situations(league)
-    alias = _ESPN_TO_KALSHI.get(league, {})
-    k = lambda ab: alias.get(ab, ab)
+    if "kalshi" in team_codes.SOURCE_VOCABULARIES.get(league, {}):
+        k = lambda ab: team_codes.to_source(league, "kalshi", ab)  # noqa: E731
+    else:
+        k = lambda ab: ab  # noqa: E731  (no league vocabulary registered: World Cup sides; ESPN = Kalshi)
 
     cards, upcoming, unmatched = [], [], []
     with closing(_db()) as con:

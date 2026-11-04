@@ -44,7 +44,7 @@ class PlaybookTargetTeamAliases(unittest.TestCase):
         with mock.patch.object(playbook_crosscheck, 'PLAYBOOKS', str(self.root)):
             errors, _ = source_preflight._playbook_errors(2026, ('XYZ',))
 
-        self.assertTrue(any("playbook prior is missing target-game teams ['XYZ']" in error for error in errors), errors)
+        self.assertTrue(any('playbook prior teams cannot be compared' in error and "'XYZ'" in error for error in errors), errors)
 
 
 if __name__ == '__main__':

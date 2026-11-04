@@ -56,7 +56,9 @@ N0S = (1, 2, 4, 8, 16)
 A0 = (0.5, 4)
 TILT_CLASSES = ('RB', 'TE', 'WR')
 SNAP_CLASS = {'RB': 'RB', 'FB': 'RB', 'TE': 'TE', 'WR': 'WR'}
-SNAP_TEAM = {'OAK': 'LV', 'SD': 'LAC', 'STL': 'LA'}  # snap counts keep the old codes; play-by-play uses the current ones
+sys.path.insert(0, str(HERE.parents[2] / 'scripts'))
+import nfl_team_codes  # noqa: E402
+snap_team = nfl_team_codes.to_nflverse  # snap counts keep the old codes; play-by-play uses the current ones
 TEAM_MIX_PRIOR_PLAYS = 50.0  # pseudo-plays of the league mix in a team's prior grouping mix (for the tilt only)
 BOOT = 2000
 
@@ -89,7 +91,7 @@ def load_snaps(snap_dir, seasons):
         d = pq.read_table(Path(snap_dir) / f'snap_counts_{season}.parquet').to_pydict()
         team_snaps = defaultdict(list)
         for i in range(len(d['game_id'])):
-            team = SNAP_TEAM.get(d['team'][i], d['team'][i])
+            team = snap_team(d['team'][i])
             key = (season, team, int(d['week'][i]))
             snaps, pct = d['offense_snaps'][i] or 0.0, d['offense_pct'][i] or 0.0
             cls = SNAP_CLASS.get(d['position'][i])

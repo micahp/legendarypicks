@@ -59,8 +59,9 @@ def _kickoff(gameday: str, gametime: str | None) -> pd.Timestamp:
 def build(venues_path: str, forecasts_path: str, db_path: str, store: str, season: int = 2026, week: int = 8) -> dict:
     venues_doc = json.loads(Path(venues_path).read_text())
     forecasts_doc = json.loads(Path(forecasts_path).read_text())
-    shared = venues_doc['shared_venue_teams']
-    venues = venues_doc['venues']
+    # Both tables are keyed by team; the venue file spells clubs as nflverse does (LA), the schedule as the database (LAR).
+    shared = nfl_team_codes.TeamKeyed(venues_doc['shared_venue_teams'].items())
+    venues = nfl_team_codes.TeamKeyed(venues_doc['venues'].items())
     con = sqlite3.connect(f'file:{db_path}?mode=ro', uri=True)
     rows = con.execute(
         "select game_id, away_team, home_team, gameday, gametime, stadium, roof, referee, location from nfl_schedule "
@@ -69,8 +70,7 @@ def build(venues_path: str, forecasts_path: str, db_path: str, store: str, seaso
     frozen = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
     games = {}
     for game_id, away, home, gameday, gametime, db_stadium, db_roof, referee, location in rows:
-        key = shared.get(home, nfl_team_codes.to_nflverse_team_code(home))
-        venue = venues[key]
+        venue = venues[shared.get(home, home)]
         kickoff = _kickoff(gameday, gametime)
         forecast_entry = forecasts_doc['games'].get(game_id, {})
         forecast = forecast_entry.get('forecast')

@@ -50,19 +50,19 @@ GORDON = _ath("Aaron Gordon Jr.", ["4", "3", "3", "3"], aid="3064290")
 def test_the_publishers_id_decides():
     box = _box(GORDON, PORTER, BRAUN)
     assert settlement._find_player_stat(box, "Michael Porter Jr.", "DEN", "batting", "H",
-                                        espn_id="4278077") == 2.0
+                                        espn_id="4278077", league="nba") == 2.0
 
 
 def test_a_suffix_token_no_longer_reaches_a_different_person():
     """The bug, stated directly: "jr." matched the first suffixed athlete."""
     box = _box(GORDON, BRAUN)
-    assert settlement._find_player_stat(box, "Michael Porter Jr.", "DEN", "batting", "H") is None
+    assert settlement._find_player_stat(box, "Michael Porter Jr.", "DEN", "batting", "H", league="nba") is None
 
 
 def test_an_id_that_is_not_in_the_box_score_is_a_dnp():
     box = _box(GORDON, BRAUN)
     assert settlement._find_player_stat(box, "Michael Porter Jr.", "DEN", "batting", "H",
-                                        espn_id="4278077") is None
+                                        espn_id="4278077", league="nba") is None
 
 
 def test_the_id_wins_over_a_name_that_also_matches():
@@ -70,30 +70,30 @@ def test_the_id_wins_over_a_name_that_also_matches():
     other = _ath("Will Smith", ["4", "0", "1", "0"], aid="111")
     ours = _ath("Will Smith", ["4", "2", "3", "2"], aid="222")
     assert settlement._find_player_stat(_box(other, ours, team="LAD"), "Will Smith", "LAD",
-                                        "batting", "H", espn_id="222") == 3.0
+                                        "batting", "H", espn_id="222", league="mlb") == 3.0
 
 
 def test_without_an_id_an_exact_name_still_resolves():
     """852 of 2,441 MLB players carry an espn_id; the rest must still grade."""
     box = _box(PORTER, BRAUN)
-    assert settlement._find_player_stat(box, "Christian Braun", "DEN", "batting", "AB") == 4.0
+    assert settlement._find_player_stat(box, "Christian Braun", "DEN", "batting", "AB", league="nba") == 4.0
 
 
 def test_name_matching_ignores_case_punctuation_and_spacing():
     box = _box(PORTER)
-    assert settlement._find_player_stat(box, "michael porter jr", "DEN", "batting", "H") == 2.0
+    assert settlement._find_player_stat(box, "michael porter jr", "DEN", "batting", "H", league="nba") == 2.0
 
 
 def test_a_name_that_is_a_substring_of_another_does_not_match_it():
     """"Will Smith" used to match "Will Smith Jr." by substring."""
     box = _box(_ath("Will Smith Jr.", ["4", "1", "1", "1"]), team="LAD")
-    assert settlement._find_player_stat(box, "Will Smith", "LAD", "batting", "H") is None
+    assert settlement._find_player_stat(box, "Will Smith", "LAD", "batting", "H", league="mlb") is None
 
 
 def test_two_athletes_with_the_same_name_and_no_id_void():
     box = _box(_ath("Will Smith", ["4", "0", "1", "0"]),
                _ath("Will Smith", ["4", "2", "3", "2"]), team="LAD")
-    assert settlement._find_player_stat(box, "Will Smith", "LAD", "batting", "H") is None
+    assert settlement._find_player_stat(box, "Will Smith", "LAD", "batting", "H", league="mlb") is None
 
 
 def test_the_settle_path_selects_and_passes_the_espn_id_it_already_has():

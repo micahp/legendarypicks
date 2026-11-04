@@ -11,7 +11,7 @@ sys.path.insert(0, str(HERE))
 import slc_engine as se  # noqa: E402
 import e1_drive as e1  # noqa: E402
 
-SNAPSHOT = {'schedule': {'game_id': '2026_05_AAA_BBB', 'season': 2026, 'week': 5, 'home_team': 'AAA', 'away_team': 'BBB'},
+SNAPSHOT = {'schedule': {'game_id': '2026_05_KC_DEN', 'season': 2026, 'week': 5, 'home_team': 'KC', 'away_team': 'DEN'},
             'rosters': {'home': {}, 'away': {}}}
 
 
@@ -66,7 +66,7 @@ class CutoffByReferenceSeason(unittest.TestCase):
 
 class Mapping(unittest.TestCase):
     def test_offense_side_a_is_the_home_team_as_in_the_engine_record(self):
-        self.assertEqual(se.side_teams(SNAPSHOT), {'A': 'AAA', 'B': 'BBB'})
+        self.assertEqual(se.side_teams(SNAPSHOT), {'A': 'KC', 'B': 'DEN'})
 
     def test_playcall_team_keys_are_normalized_to_the_pbp_codes(self):
         snapshot = {
@@ -115,21 +115,21 @@ class ScoreClockAblation(unittest.TestCase):
 
     def test_disabled_score_clock_uses_only_the_historical_cell_run_pass_rate(self):
         self.sampler.score_clock_playcalling_enabled = False
-        probability, source = self.sampler._dropback_probability(self.entry, self.state, 'AAA')
+        probability, source = self.sampler._dropback_probability(self.entry, self.state, 'KC')
         self.assertEqual(probability, 0.4)
         self.assertEqual(source, 'historical_down_distance_field_cell_rate')
         self.layer.p_dropback.assert_not_called()
 
     def test_enabled_score_clock_uses_the_frozen_model(self):
-        probability, source = self.sampler._dropback_probability(self.entry, self.state, 'AAA')
+        probability, source = self.sampler._dropback_probability(self.entry, self.state, 'KC')
         self.assertEqual(probability, 0.27)
         self.assertEqual(source, 'score_clock_logistic_artifact')
-        self.layer.p_dropback.assert_called_once_with(2, 7, 64, -3, 4, 240, 'AAA')
+        self.layer.p_dropback.assert_called_once_with(2, 7, 64, -3, 4, 240, 'KC')
 
     def test_disabled_score_clock_fails_closed_when_cell_has_no_scrimmage_rows(self):
         self.sampler.score_clock_playcalling_enabled = False
         with self.assertRaisesRegex(e1.SamplingUnavailable, 'no_supported_scrimmage_intent_in_cell'):
-            self.sampler._dropback_probability({'base': {('kick', 'punt'): 3}}, self.state, 'AAA')
+            self.sampler._dropback_probability({'base': {('kick', 'punt'): 3}}, self.state, 'KC')
 
     def test_fixed_and_dirichlet_share_applications_have_separate_runtime_counts(self):
         decisions = [
@@ -149,7 +149,7 @@ class PlayerShareManifest(unittest.TestCase):
         layer_artifact = {**artifact(list(range(2010, 2026)), 2026), 'artifact_id': 'a', 'sha256': 'b',
                           'frame_sha256': 'frame-hash'}
         sampler = se.slc.PlayCallSampler(SimpleNamespace(artifact=layer_artifact),
-                                         side_teams={'A': 'AAA', 'B': 'BBB'})
+                                         side_teams={'A': 'KC', 'B': 'DEN'})
         ref = SimpleNamespace(contextual_sampler=sampler,
                               pool={('cell',): [('pass_complete',
                                                  {'game_id': '2022_16_LAC_IND', 'play_id': 3371.0}, 0, 0)]},
@@ -210,7 +210,7 @@ class PlayerOutcomeRoleManifest(unittest.TestCase):
         sampler = SimpleNamespace(layer=SimpleNamespace(artifact=layer_artifact),
                                   share_model_manifest=None, qb_decision_table=None,
                                   player_outcome_table=None,
-                                  describe=lambda: {'side_teams': {'A': 'AAA', 'B': 'BBB'}})
+                                  describe=lambda: {'side_teams': {'A': 'KC', 'B': 'DEN'}})
         ref = SimpleNamespace(contextual_sampler=sampler, pool={}, participants={}, pool_scope={})
         table = {'model_version': po.MODEL_VERSION, 'source_seasons': [2022, 2023, 2024, 2025],
                  'cutoff_season': 2026, 'sha256': 'outcome-hash', 'player_units': {},

@@ -9,7 +9,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import game_info_snapshot as gis  # noqa: E402
 
-VENUES = {'shared_venue_teams': {'NYJ': 'NYG', 'LAC': 'LA', 'LAR': 'LA'},
+VENUES = {'shared_venue_teams': {'NYJ': 'NYG', 'LAC': 'LAR'},
           'capacity_source': 'test', 'fetched_at_utc': '2026-10-27T00:00:00Z',
           'venues': {'GB': {'stadium': 'Lambeau Field', 'city': 'Green Bay', 'state': 'Wisconsin', 'roof': 'Open',
                             'listed_capacity': 81441, 'geo': {'lat': 44.501, 'lon': -88.062}},

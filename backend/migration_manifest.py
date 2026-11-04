@@ -22,6 +22,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
 
+import team_codes
+
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent  # manifest lives in backend/, scripts are repo-root-relative
@@ -101,9 +103,12 @@ def _probe_nfl_td_columns(con: sqlite3.Connection) -> str:
 
 
 def _probe_nfl_team_vocabulary(con: sqlite3.Connection) -> str:
+    # Every legacy NFL spelling backend/team_codes.py knows (it listed four by hand before 2026-11-04).
+    legacy = sorted(team_codes.ALIASES["nfl"])
     return _no_rows(
         con,
-        "SELECT COUNT(*) FROM players WHERE league='nfl' AND team IN ('STL','SD','LA','AZ')",
+        "SELECT COUNT(*) FROM players WHERE league='nfl' AND team IN (%s)" % ",".join("?" * len(legacy)),
+        legacy,
     )
 
 

@@ -55,8 +55,9 @@ import statistics as stt
 import sys
 
 import nfl_feature_backtest as fb
+import team_codes
 
-CODE = {"OAK": "LV"}
+CODE = lambda code: team_codes.normalize("nfl", code)  # noqa: E731  the 538 file spells Las Vegas OAK
 BASE = {"K": 20.0, "hfa": 65.0, "carry": 1.0 / 3.0, "mov": True}
 MEAN = 1505.0
 TIE_MULT = 1.525
@@ -67,7 +68,7 @@ def load_games(con):
     rows = con.execute(
         "SELECT game_id, season, gameday, location, home_team, away_team, home_score, away_score "
         "FROM nfl_schedule WHERE season >= 2010 AND home_score IS NOT NULL ORDER BY gameday, game_id").fetchall()
-    return [(g, int(s), (loc or "").strip().lower() == "neutral", CODE.get(h, h), CODE.get(a, a), hs, as_)
+    return [(g, int(s), (loc or "").strip().lower() == "neutral", CODE(h), CODE(a), hs, as_)
             for g, s, d, loc, h, a, hs, as_ in rows]
 
 
@@ -76,8 +77,8 @@ def start_ratings(con):
     out = {}
     for t1, t2, e1, e2 in con.execute(
             "SELECT team1, team2, elo1, elo2 FROM nfl_elo_538 WHERE season = '2010' ORDER BY date, rowid"):
-        out.setdefault(CODE.get(t1, t1), float(e1))
-        out.setdefault(CODE.get(t2, t2), float(e2))
+        out.setdefault(CODE(t1), float(e1))
+        out.setdefault(CODE(t2), float(e2))
     return out
 
 
@@ -140,7 +141,7 @@ def e0(con):
     for date, t1, t2, e1, e2, neu in con.execute(
             "SELECT date, team1, team2, elo1, elo2, neutral FROM nfl_elo_538 "
             "WHERE CAST(season AS INTEGER) BETWEEN 2010 AND 2020"):
-        file_[(date, CODE.get(t1, t1), CODE.get(t2, t2))] = (float(e1), float(e2), int(neu) == 1)
+        file_[(date, CODE(t1), CODE(t2))] = (float(e1), float(e2), int(neu) == 1)
     file_neutral, lookup = {}, {}
     for g, season, neutral, h, a, hs, as_ in games:
         if season > 2020:
