@@ -26,14 +26,28 @@ def assignments(raw, season):
     import pyarrow.parquet as pq
     t = pq.read_table(Path(raw) / 'weekly_rosters' / f'roster_weekly_{season}.parquet',
                       columns=['season', 'week', 'team', 'position', 'status', 'gsis_id']).to_pydict()
-    active = defaultdict(set)
+    active, practice, teams = defaultdict(set), defaultdict(set), set()
     for i in range(len(t['position'])):
+        key = (int(t['season'][i]), int(t['week'][i]), t['team'][i])
+        teams.add(key)
         if t['position'][i] == 'K' and t['status'][i] == 'ACT':
-            active[(int(t['season'][i]), int(t['week'][i]), t['team'][i])].add(t['gsis_id'][i])
+            active[key].add(t['gsis_id'][i])
+        elif t['position'][i] == 'K' and t['status'][i] == 'DEV':
+            practice[key].add(t['gsis_id'][i])
     several = {k: sorted(v) for k, v in active.items() if len(v) != 1}
     if several:
         raise ValueError(f'team-weeks with more than one active kicker: {several}')
-    return sorted((s, w, team, next(iter(v))) for (s, w, team), v in active.items())
+    # A team-week with no active K kicked with a practice-squad K elevated for the game: the weekly roster can be captured
+    # after the elevation reverted (2026 week 8, MIA: Zane Gonzalez is DEV in the 2026-10-27 file and ACT in the
+    # 2026-11-04 republication). Exactly one practice-squad K is required; anything else refuses.
+    elevated = {}
+    for key in sorted(teams - set(active)):
+        if len(practice[key]) != 1:
+            raise ValueError(f'{key} has no active kicker and {len(practice[key])} practice-squad kickers')
+        elevated[key] = set(practice[key])
+        print(f'no active K for {key}: using practice-squad K {sorted(practice[key])[0]}')
+    print(f'{len(elevated)} team-weeks take an elevated practice-squad kicker')
+    return sorted((s, w, team, next(iter(v))) for (s, w, team), v in {**active, **elevated}.items())
 
 
 def main():
