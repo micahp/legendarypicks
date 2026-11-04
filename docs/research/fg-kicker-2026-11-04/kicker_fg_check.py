@@ -5,7 +5,9 @@ Three measurements, all as of each game's week (only kicks before that week are 
 
 1. Reconciliation. Per kicker-week, the play-by-play field-goal attempts (play_type field_goal, field_goal_result made,
    missed or blocked) against the published player stats (stats_player_week and stats_player_post: fg_made, fg_missed,
-   fg_blocked, fg_long), 2016 to 2025.
+   fg_blocked, fg_long), 2016 to 2025. The weekly file is regular season only; the postseason file is one total per
+   kicker-season, so a postseason long counts from the next season on (a kicker's earlier games in the same postseason
+   are not in his career long).
 2. Range. Each attempt's distance against the kicker's career longest make before that week (the published fg_long,
    maximum over earlier weeks since 1999). Counted per season: attempts beyond it, how many of those come at the end of a
    half (Q2 or Q4, 60 seconds or less left in the half) or in desperation (Q4, 300 seconds or less, trailing by 8 or more:
@@ -67,19 +69,26 @@ def load_attempts(raw):
     return out, dict(skipped)
 
 
+POST_WEEK = 99  # the published postseason stats are season totals: known from the next season on
+
+
 def load_published(raw):
-    """{(player_id, season, week): {'made', 'missed', 'blocked', 'long'}} from the published weekly player stats."""
+    """{(player_id, season, week): {'made', 'missed', 'blocked', 'long'}} from the published player stats: regular-season
+    weeks (stats_player_week) and one postseason total per season (stats_player_post, which has no week), keyed POST_WEEK."""
     import pyarrow.parquet as pq
     out = {}
     for season in range(FIRST, LAST + 1):
         for kind in ('week', 'post'):
             path = Path(raw) / 'stats_player' / f'stats_player_{kind}_{season}.parquet'
-            cols = ['player_id', 'season', 'week', 'fg_made', 'fg_missed', 'fg_blocked', 'fg_long', 'fg_att']
+            cols = ['player_id', 'season', 'fg_made', 'fg_missed', 'fg_blocked', 'fg_long', 'fg_att'] + \
+                (['week', 'season_type'] if kind == 'week' else [])
             t = pq.read_table(path, columns=cols).to_pydict()
             for i in range(len(t['player_id'])):
                 if not t['fg_att'][i]:
                     continue
-                key = (t['player_id'][i], int(t['season'][i]), int(t['week'][i]))
+                if kind == 'week' and t['season_type'][i] != 'REG':
+                    raise ValueError(f'{path.name} has a {t["season_type"][i]} row; expected regular season only')
+                key = (t['player_id'][i], int(t['season'][i]), int(t['week'][i]) if kind == 'week' else POST_WEEK)
                 if key in out:
                     raise ValueError(f'duplicate published kicker-week {key}')
                 out[key] = {'made': t['fg_made'][i] or 0, 'missed': t['fg_missed'][i] or 0,
@@ -91,7 +100,7 @@ def reconcile(attempts, published, seasons):
     pbp = defaultdict(Counter)
     for r in attempts:
         if r['season'] in seasons:
-            c = pbp[(r['kicker_player_id'], r['season'], r['week'])]
+            c = pbp[(r['kicker_player_id'], r['season'], POST_WEEK if r['season_type'] == 'POST' else r['week'])]
             c[r['field_goal_result']] += 1
             if r['field_goal_result'] == 'made':
                 c['long'] = max(c['long'], int(r['kick_distance']))
