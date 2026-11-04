@@ -93,7 +93,8 @@ SOURCE = "rotowire"
 # rows on 2026-08-19, against 0 of 30 NFL and 0 of 10 MLB. The board cannot place those at
 # all. See `_fill_missing_start_time`.
 LEAGUES = {
-    "nfl": {"sport": "NFL", "kind": "code", "teams": {"WAS": "WSH"}},
+    # Every NFL spelling backend/team_codes.py knows (it had its own one-entry copy, WAS only, before 2026-11-04).
+    "nfl": {"sport": "NFL", "kind": "code", "teams": TEAM_CODE_ALIASES.get("nfl", {})},
     # Hockey uses the same durable fixture contract as college football: both
     # clubs and the exact kickoff must match one stored scoreboard event before
     # a prop game can be created. RotoWire's UTA/LAK/TBL/SJS/NJD spellings are

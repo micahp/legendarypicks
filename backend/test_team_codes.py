@@ -23,9 +23,10 @@ from team_codes import (
 
 
 def test_every_alias_target_is_canonical():
-    """Every alias must map to a code that IS in CANONICAL for that league."""
+    """Every alias must map to a code that IS in CANONICAL for that league, or to a declared historical club."""
+    from team_codes import HISTORICAL
     for league, alias_map in ALIASES.items():
-        canonical_set = CANONICAL[league]
+        canonical_set = CANONICAL[league] | HISTORICAL.get(league, frozenset())
         for src, tgt in alias_map.items():
             assert tgt in canonical_set, (
                 f"Alias {league}:{src} -> {tgt} but {tgt} is not canonical"

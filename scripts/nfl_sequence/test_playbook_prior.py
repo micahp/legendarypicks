@@ -27,13 +27,13 @@ def playbook(team, season, plays):
 
 class Rows(unittest.TestCase):
     def test_a_pass_gives_its_length_and_location_and_a_run_its_gap(self):
-        rows = pbp.rows_of(playbook('AAA', 2025, [('pass', 1, 10, 50, 'deep', 'left', ''), ('run', 1, 10, 50, '', '', 'guard')]), 2025)
+        rows = pbp.rows_of(playbook('KC', 2025, [('pass', 1, 10, 50, 'deep', 'left', ''), ('run', 1, 10, 50, '', '', 'guard')]), 2025)
         self.assertEqual(rows[0]['labels'], {'D': 'deep', 'E': 'left'})
         self.assertEqual(rows[1]['labels'], {'C': 'guard'})
         self.assertEqual(rows[0]['cell'], CELL)
 
     def test_a_play_with_no_concept_gives_no_row(self):
-        self.assertEqual(pbp.rows_of(playbook('AAA', 2025, [('pass', 1, 10, 50, '', '', '')]), 2025), [])
+        self.assertEqual(pbp.rows_of(playbook('KC', 2025, [('pass', 1, 10, 50, '', '', '')]), 2025), [])
 
     def test_the_team_code_is_mapped_to_the_database_code(self):
         rows = pbp.rows_of(playbook('LA', 2025, [('pass', 1, 10, 50, 'short', 'right', '')]), 2025)

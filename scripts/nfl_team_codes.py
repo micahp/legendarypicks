@@ -1,4 +1,6 @@
-"""The one place NFL team codes are translated. Every read of an outside NFL source goes through it.
+"""NFL view of backend/team_codes.py, the one place team codes are defined for the whole app (since 2026-11-04).
+
+This module holds no list of its own: every code, alias and source spelling comes from backend/team_codes.py.
 
 Measured 2026-11-03 (picks.dev.db and the published nflverse files):
 
@@ -17,37 +19,27 @@ The legacy names (PBP_TEAM_CODE_ALIASES, to_pbp_team_code, ...) predate this not
 nfl_pbp table, whose codes are the database vocabulary.
 """
 
-DB_CODES = frozenset({
-    'ARI', 'ATL', 'BAL', 'BUF', 'CAR', 'CHI', 'CIN', 'CLE', 'DAL', 'DEN', 'DET', 'GB', 'HOU', 'IND', 'JAX', 'KC',
-    'LAC', 'LAR', 'LV', 'MIA', 'MIN', 'NE', 'NO', 'NYG', 'NYJ', 'PHI', 'PIT', 'SEA', 'SF', 'TB', 'TEN', 'WSH',
-})
-DB_TO_NFLVERSE = {'LAR': 'LA', 'WSH': 'WAS'}
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
+import team_codes  # noqa: E402
+
+LEAGUE = 'nfl'
+DB_CODES = frozenset(team_codes.CANONICAL[LEAGUE])
+DB_TO_NFLVERSE = dict(team_codes.SOURCE_VOCABULARIES[LEAGUE]['nflverse'])
 NFLVERSE_CODES = frozenset(DB_TO_NFLVERSE.get(code, code) for code in DB_CODES)
-
-# Every spelling seen from an outside source, mapped to the database code. Relocations map to the current club.
-TO_DB = {
-    **{code: code for code in DB_CODES},
-    'LA': 'LAR', 'STL': 'LAR', 'RAM': 'LAR',
-    'WAS': 'WSH',
-    'JAC': 'JAX',
-    'ARZ': 'ARI', 'AZ': 'ARI',
-    'OAK': 'LV', 'LVR': 'LV',
-    'SD': 'LAC', 'SDG': 'LAC',
-    'GNB': 'GB', 'KAN': 'KC', 'NOR': 'NO', 'NWE': 'NE', 'SFO': 'SF', 'TAM': 'TB',
-}
-
-PBP_TEAM_CODE_ALIASES = {'LA': 'LAR', 'WAS': 'WSH', 'JAC': 'JAX'}
-NFLVERSE_TEAM_CODE_ALIASES = dict(DB_TO_NFLVERSE)
-# Franchise-level normalization is used only for cross-season identity comparisons. It is not a PBP or roster-file key.
-FRANCHISE_TEAM_CODE_ALIASES = {**PBP_TEAM_CODE_ALIASES, 'OAK': 'LV'}
+# Every spelling the app knows, mapped to the database code (read-only view of backend/team_codes.py).
+TO_DB = {**{code: code for code in DB_CODES}, **team_codes.ALIASES[LEAGUE]}
 
 
 def to_db(code):
     """The database code (LAR, WSH, ...) for any known spelling. Raises on anything else."""
-    key = str(code).strip().upper() if code is not None else None
-    if key not in TO_DB:
-        raise ValueError(f'unknown NFL team code {code!r}; add it to nfl_team_codes.TO_DB if a source really uses it')
-    return TO_DB[key]
+    try:
+        return team_codes.normalize(LEAGUE, code)
+    except team_codes.UnknownTeamCode:
+        raise ValueError(f'unknown NFL team code {code!r}; add it to backend/team_codes.py ALIASES if a source '
+                         'really uses it') from None
 
 
 def to_nflverse(code):
@@ -62,8 +54,9 @@ def convert(codes, to='db'):
     codes = list(codes)
     unknown = {}
     for code in codes:
-        key = str(code).strip().upper() if code is not None else None
-        if key not in TO_DB:
+        try:
+            to_db(code)
+        except ValueError:
             unknown[code] = unknown.get(code, 0) + 1
     if unknown:
         raise ValueError(f'unknown NFL team codes (value: rows): {unknown}')
@@ -87,77 +80,18 @@ def teams_from_game_id(game_id, to='db'):
     return away, home
 
 
-def to_pbp_team_code(team_code):
-    """Return the PBP/database code for an alias used by frozen source artifacts."""
-    return PBP_TEAM_CODE_ALIASES.get(team_code, team_code)
-
-
-def to_nflverse_team_code(team_code):
-    """Return the nflverse roster/venue code for a PBP or already-normalized code."""
-    pbp_code = to_pbp_team_code(team_code)
-    return NFLVERSE_TEAM_CODE_ALIASES.get(pbp_code, pbp_code)
-
-
-def canonical_franchise_team_code(team_code):
-    """Normalize known historical abbreviations for identity comparisons across seasons."""
-    return FRANCHISE_TEAM_CODE_ALIASES.get(team_code, team_code)
-
-
-def missing_pbp_team_codes(required_team_codes, available_team_codes):
-    """Return required PBP teams absent from a source table, after normalizing both sides."""
-    required = {to_pbp_team_code(team_code) for team_code in required_team_codes}
-    available = {to_pbp_team_code(team_code) for team_code in available_team_codes}
-    return sorted(required - available)
-
-
-class TeamKeyed(dict):
-    """A table keyed by team that cannot miss on spelling.
-
-    Every key is stored under its database code, and every read (`[]`, `get`, `in`, `pop`, `setdefault`) translates the
-    asked-for code the same way, so a table built from nflverse files (LA, WAS) and a caller holding database codes (LAR,
-    WSH) meet on one key. An unknown code raises instead of missing. `team_at` is None when the key is the team code itself,
-    or the position of the team in a tuple key ((team, week), (pid, team, group), ...). It stays a dict, so code that only
-    reads it (including hash-pinned layers) is protected without being changed, and it serializes as one.
-    """
+class TeamKeyed(team_codes.TeamKeyed):
+    """backend/team_codes.TeamKeyed for the NFL: keys stored as database codes, any known spelling on lookup, an unknown
+    code raises. `team_at` is the team's position in a tuple key, or None when the key is the team itself."""
 
     def __init__(self, items=(), team_at=None):
-        super().__init__()
-        self.team_at = team_at
-        self.update(items)
+        super().__init__(LEAGUE, items, team_at=team_at)
 
     def _key(self, key):
-        if self.team_at is None:
-            return to_db(key)
-        if not isinstance(key, tuple) or len(key) <= self.team_at:
-            raise ValueError(f'team-keyed table expects a tuple key with the team at position {self.team_at}: {key!r}')
-        return key[:self.team_at] + (to_db(key[self.team_at]),) + key[self.team_at + 1:]
-
-    def __getitem__(self, key):
-        return super().__getitem__(self._key(key))
-
-    def __setitem__(self, key, value):
-        super().__setitem__(self._key(key), value)
-
-    def __delitem__(self, key):
-        super().__delitem__(self._key(key))
-
-    def __contains__(self, key):
-        return super().__contains__(self._key(key))
-
-    def get(self, key, default=None):
-        return super().get(self._key(key), default)
-
-    def pop(self, key, *default):
-        return super().pop(self._key(key), *default)
-
-    def setdefault(self, key, default=None):
-        return super().setdefault(self._key(key), default)
-
-    def update(self, items=(), **kwargs):
-        if kwargs:
-            raise TypeError('TeamKeyed.update takes a mapping or (key, value) pairs only')
-        for key, value in (items.items() if hasattr(items, 'items') else items):
-            self[key] = value
+        try:
+            return super()._key(key)
+        except team_codes.UnknownTeamCode as exc:
+            raise ValueError(f'unknown NFL team code: {exc}') from None
 
     def copy(self):
         return TeamKeyed(self, team_at=self.team_at)
@@ -165,6 +99,34 @@ class TeamKeyed(dict):
     def __reduce__(self):
         return (TeamKeyed, ((), self.team_at), None, None, iter(dict.items(self)))
 
-    def teams(self):
-        """The database codes present."""
-        return {key if self.team_at is None else key[self.team_at] for key in dict.keys(self)}
+
+# Legacy names, kept for their callers. They used to pass an unknown code through unchanged, which is how a wrong
+# spelling missed instead of raising; they are strict now. An absent code (None, or the blank the play extras file
+# writes when no timeout was called) is returned as given.
+PBP_TEAM_CODE_ALIASES = {code: target for code, target in TO_DB.items() if code != target}
+NFLVERSE_TEAM_CODE_ALIASES = dict(DB_TO_NFLVERSE)
+FRANCHISE_TEAM_CODE_ALIASES = dict(PBP_TEAM_CODE_ALIASES)
+
+
+def _absent(team_code):
+    return team_code is None or team_code == ''
+
+
+def to_pbp_team_code(team_code):
+    """The database code; an absent code is returned as given. Raises on an unknown code."""
+    return team_code if _absent(team_code) else to_db(team_code)
+
+
+def to_nflverse_team_code(team_code):
+    """The nflverse code; an absent code is returned as given. Raises on an unknown code."""
+    return team_code if _absent(team_code) else to_nflverse(team_code)
+
+
+def canonical_franchise_team_code(team_code):
+    """The current club's database code (relocations collapse: OAK to LV, STL to LAR); an absent code as given."""
+    return team_code if _absent(team_code) else to_db(team_code)
+
+
+def missing_pbp_team_codes(required_team_codes, available_team_codes):
+    """Required teams absent from a source table, compared as database codes. Raises on an unknown code."""
+    return sorted(set(convert(required_team_codes)) - set(convert(available_team_codes)))

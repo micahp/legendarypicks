@@ -216,23 +216,23 @@ def _espn_box(labels, stats):
 def test_espn_returns_none_when_the_label_is_absent():
     """Found the athlete, but this box score does not report that stat."""
     box = _espn_box(["AB", "R", "H", "RBI"], ["4", "1", "2", "0"])
-    assert settlement._find_player_stat(box, "Austin Riley", "ATL", "batting", "SB") is None
+    assert settlement._find_player_stat(box, "Austin Riley", "ATL", "batting", "SB", league="mlb") is None
 
 
 def test_espn_still_reads_a_real_zero():
     box = _espn_box(["AB", "R", "H", "RBI"], ["4", "0", "0", "0"])
-    assert settlement._find_player_stat(box, "Austin Riley", "ATL", "batting", "H") == 0.0
+    assert settlement._find_player_stat(box, "Austin Riley", "ATL", "batting", "H", league="mlb") == 0.0
 
 
 def test_espn_reads_a_real_value():
     box = _espn_box(["AB", "R", "H", "RBI"], ["4", "1", "2", "3"])
-    assert settlement._find_player_stat(box, "Austin Riley", "ATL", "batting", "RBI") == 3.0
+    assert settlement._find_player_stat(box, "Austin Riley", "ATL", "batting", "RBI", league="mlb") == 3.0
 
 
 def test_an_empty_string_is_absent_not_zero():
     """ESPN publishes "" for a stat it is not reporting for that athlete."""
     box = _espn_box(["AB", "R", "H", "RBI"], ["4", "1", "2", ""])
-    assert settlement._find_player_stat(box, "Austin Riley", "ATL", "batting", "RBI") is None
+    assert settlement._find_player_stat(box, "Austin Riley", "ATL", "batting", "RBI", league="mlb") is None
 
 
 def test_a_compound_stat_needs_every_part():
@@ -240,10 +240,10 @@ def test_a_compound_stat_needs_every_part():
     so H + (missing RBI) graded as H."""
     box = _espn_box(["AB", "R", "H"], ["4", "1", "2"])
     assert settlement._find_player_compound_stat(
-        box, "Austin Riley", "ATL", ["batting", "batting", "batting"], ["H", "R", "RBI"]) is None
+        box, "Austin Riley", "ATL", ["batting", "batting", "batting"], ["H", "R", "RBI"], league="mlb") is None
 
 
 def test_a_complete_compound_stat_sums():
     box = _espn_box(["AB", "R", "H", "RBI"], ["4", "1", "2", "3"])
     assert settlement._find_player_compound_stat(
-        box, "Austin Riley", "ATL", ["batting", "batting", "batting"], ["H", "R", "RBI"]) == 6.0
+        box, "Austin Riley", "ATL", ["batting", "batting", "batting"], ["H", "R", "RBI"], league="mlb") == 6.0

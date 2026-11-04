@@ -28,7 +28,14 @@ from pathlib import Path
 import participation_field as pf
 
 SCHEMA = 'lp.nfl.snap-counts.v1'
-SNAP_TEAM = {'OAK': 'LV', 'SD': 'LAC', 'STL': 'LA'}  # snap counts and weekly rosters keep the old codes before the moves
+
+
+def snap_team(code):
+    """The nflverse spelling of a club (snap counts and weekly rosters keep STL, OAK, SD before the moves), through
+    backend/team_codes.py. Raises on an unknown code."""
+    return pf.nfl_team_codes.to_nflverse(code)
+
+
 SNAP_CLASS = {'RB': 'RB', 'FB': 'RB', 'TE': 'TE', 'WR': 'WR'}
 TEAM_MIX_PRIOR_PLAYS = 50.0  # pseudo-plays of the league mix in a team's table mix (the tilt's reference mix)
 GROUP_N0 = 8.0  # selected on 2019 to 2021 (weekly_backtest.py, arm A2)
@@ -110,14 +117,14 @@ def load_published(raw_dir, season, players_csv=None):
         if roster['pfr_id'][i] and roster['gsis_id'][i]:
             pfr_to_gsis.setdefault(roster['pfr_id'][i], roster['gsis_id'][i])
         if roster['status'][i] == 'ACT' and roster['gsis_id'][i]:
-            active[(SNAP_TEAM.get(roster['team'][i], roster['team'][i]), int(roster['week'][i]))].add(roster['gsis_id'][i])
+            active[(snap_team(roster['team'][i]), int(roster['week'][i]))].add(roster['gsis_id'][i])
     d = pq.read_table(raw_dir / 'snap_counts' / f'snap_counts_{season}.parquet',
                       columns=['week', 'team', 'pfr_player_id', 'position', 'offense_snaps', 'offense_pct']).to_pydict()
     implied = defaultdict(list)
     player = {}
     coverage = Counter()
     for i in range(len(d['team'])):
-        team, week = SNAP_TEAM.get(d['team'][i], d['team'][i]), int(d['week'][i])
+        team, week = snap_team(d['team'][i]), int(d['week'][i])
         snaps, pct = float(d['offense_snaps'][i] or 0.0), float(d['offense_pct'][i] or 0.0)
         if pct >= 0.5:
             implied[(team, week)].append(snaps / pct)

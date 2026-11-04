@@ -249,18 +249,18 @@ def _settle_ncaaf_props(con: sqlite3.Connection, game, props: list,
             actual = _find_player_compound_stat(
                 box, prop["player_name"], prop["player_team"],
                 [c[0] for c in components], [c[1] for c in components],
-                espn_id=prop["espn_id"], missing_as_zero=True)
+                espn_id=prop["espn_id"], missing_as_zero=True, league="ncaaf")
         else:
             actual = _find_player_stat(
                 box, prop["player_name"], prop["player_team"],
-                category, stat_key, espn_id=prop["espn_id"])
+                category, stat_key, espn_id=prop["espn_id"], league="ncaaf")
 
         # The DNP rule: zero only when another boxscore category proves the
         # same stable athlete appeared; absent from the whole boxscore the
         # prop stays pending rather than guessing a participation.
         if (actual is None and _player_appeared(
                 box, prop["player_name"], prop["player_team"],
-                espn_id=prop["espn_id"])):
+                espn_id=prop["espn_id"], league="ncaaf")):
             actual = 0.0
 
         if actual is None:

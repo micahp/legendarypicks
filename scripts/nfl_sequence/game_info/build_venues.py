@@ -53,7 +53,8 @@ VENUES = {
     'WAS': ('Northwest Stadium', 'Landover', 'Maryland', 'Open', 64000),
 }
 # The NY Jets and Giants share MetLife; the Chargers and Rams share SoFi. Both teams point at the same venue row.
-SHARED = {'NYJ': 'NYG', 'LAC': 'LA', 'LAR': nfl_team_codes.to_nflverse_team_code('LAR')}
+# Declared once in club terms and written in the venue file's nflverse spelling (the Rams' venue key is LA).
+SHARED = {team: nfl_team_codes.to_nflverse(venue) for team, venue in (('NYJ', 'NYG'), ('LAC', 'LAR'), ('LAR', 'LAR'))}
 
 
 def geocode(name, city, state):

@@ -121,7 +121,7 @@ def prepare(raw, players_csv, seasons):
     for season in seasons:
         r = pq.read_table(Path(raw) / 'weekly_rosters' / f'roster_weekly_{season}.parquet',
                           columns=['team', 'week', 'status', 'position', 'gsis_id']).to_pydict()
-        roster = sorted([su.SNAP_TEAM.get(r['team'][i], r['team'][i]), int(r['week'][i]), r['gsis_id'][i], r['position'][i]]
+        roster = sorted([su.snap_team(r['team'][i]), int(r['week'][i]), r['gsis_id'][i], r['position'][i]]
                         for i in range(len(r['team']))
                         if r['status'][i] == 'ACT' and r['gsis_id'][i] and r['position'][i] in LINEUP_POS)
         out[str(season)] = {'snaps': su.load_published(raw, season, players_csv), 'roster': roster}

@@ -44,10 +44,11 @@ import os
 import sqlite3
 import sys
 
-# statsapi spelling -> the spelling players.team and _TEAM_MAPS['mlb'] already use.
-MLB_RESPELL = {"AZ": "ARI", "CWS": "CHW"}
-
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import team_codes  # noqa: E402
+
+# statsapi spelling -> the spelling players.team and _TEAM_MAPS['mlb'] already use, from backend/team_codes.py.
+MLB_RESPELL = {source: canonical for canonical, source in team_codes.SOURCE_VOCABULARIES["mlb"]["statsapi"].items()}
 
 from game_types import ALLSTAR as ALLSTAR_GAME_TYPE
 

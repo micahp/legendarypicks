@@ -405,7 +405,7 @@ def _nhl_summary_history(con, player, market):
         boxscore = payload.get("boxscore") or {}
         value = _find_player_stat(
             boxscore, player["name"], player["team"] or "",
-            category, stat_key, espn_id=espn_id,
+            category, stat_key, espn_id=espn_id, league="nhl",
         )
         if value is None:
             continue

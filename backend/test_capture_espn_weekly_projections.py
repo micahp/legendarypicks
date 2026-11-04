@@ -24,7 +24,8 @@ class Capture(unittest.TestCase):
         """)
         mig.migrate(self.con)
         self.con.execute("INSERT INTO players VALUES (10,'nfl','555','LAR')")
-        self.con.execute("INSERT INTO nfl_schedule VALUES ('2026_06_LA_NO',2026,6,'REG','NO','LA')")
+        # As in the dev table: the team columns are database codes (LAR), the game_id keeps nflverse's spelling (LA).
+        self.con.execute("INSERT INTO nfl_schedule VALUES ('2026_06_LA_NO',2026,6,'REG','NO','LAR')")
 
     def test_only_the_weekly_projection_entries_are_read_and_mapped(self):
         got = cap.projections(entity("555", {6: (9.0, 6.0, 80.0, 0.5), 7: (1, 1, 1, 1)}), {6})

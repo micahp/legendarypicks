@@ -35,7 +35,9 @@ class TeamCodeDirections(unittest.TestCase):
 
     def test_coverage_checks_normalize_required_and_available_codes(self):
         self.assertEqual(teams.missing_pbp_team_codes(('LA', 'WAS'), ('LAR', 'WSH')), [])
-        self.assertEqual(teams.missing_pbp_team_codes(('LA', 'XYZ'), ('LAR',)), ['XYZ'])
+        with self.assertRaisesRegex(ValueError, 'XYZ'):  # an unknown code raises; it is not reported as merely missing
+            teams.missing_pbp_team_codes(('LA', 'XYZ'), ('LAR',))
+        self.assertEqual(teams.missing_pbp_team_codes(('LA', 'KC'), ('LAR',)), ['KC'])
 
 
 class StrictTranslation(unittest.TestCase):
@@ -127,7 +129,11 @@ class SimulationTablesUseTheInterface(unittest.TestCase):
         import slc_engine
         import snap_update
         repo = HERE.parents[1]
-        streaks = slc_engine.current_streaks(repo / 'docs/research/slc-week8-2026/wl-streaks-2026-10-29.json')
+        streaks, as_published = slc_engine.current_streaks(repo / 'docs/research/slc-week8-2026/wl-streaks-2026-10-29.json')
+        # The hashed view keeps the file's spelling, so the v2 random streams of every other game do not move.
+        self.assertIn('LA', as_published)
+        self.assertNotIn('LAR', as_published)
+        self.assertEqual(len(as_published), len(streaks))
         path, sha = batch.SLC_V2_TABLES['playcall_fg_kicker']
         kicker = kfg.KickerTable.load(repo / path, sha)
         path, sha = batch.SLC_V2_TABLES['participation_field']

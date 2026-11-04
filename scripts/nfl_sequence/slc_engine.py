@@ -112,14 +112,18 @@ def require_snapshot(snapshot):
 
 
 def current_streaks(streak_file):
-    """Each team's current streak bucket from a verified streak file, keyed so either team spelling finds it.
+    """(lookup, as_published) for a verified streak file: each team's current streak bucket.
 
-    The streak files use nflverse codes (LA, WAS) and the play-call sampler asks with database codes (LAR, WSH). As a plain
-    dict this missed silently for both clubs: on 2026 weeks 1-8 their streak layers ran on about half the plays."""
+    `lookup` is keyed so either team spelling finds the club. The streak files use nflverse codes (LA, WAS) and the
+    play-call sampler asks with database codes (LAR, WSH); as a plain dict this missed silently for both clubs, and on
+    2026 weeks 1-8 their streak layers ran on about half the plays. `as_published` is the same table as the file spells
+    it: the layer description hashes it, and that hash keys the v2 random streams, so it must not move when only the
+    lookup changes (a game's draws stay exactly as they were)."""
     import json as _json
     import streak_splits as ss
     records = _json.loads(Path(streak_file).read_text())['teams']
-    return nfl_team_codes.TeamKeyed((team, ss.bucket_from_text(rec.get('streak', ''))) for team, rec in records.items())
+    as_published = {team: ss.bucket_from_text(rec.get('streak', '')) for team, rec in records.items()}
+    return nfl_team_codes.TeamKeyed(as_published.items()), as_published
 
 
 def side_teams(snapshot):
@@ -293,7 +297,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         if missing_teams:
             raise ValueError(f'playbook prior is missing target-game teams {missing_teams} for season {season - 1}')
     if streak_file is not None:  # each team's current streak as of the cutoff, from the verified records
-        ref.contextual_sampler.current_streak = current_streaks(streak_file)
+        ref.contextual_sampler.current_streak, ref.contextual_sampler.current_streak_as_published = \
+            current_streaks(streak_file)
         sampler.optional_input_sha256['current_streak_file'] = _file_sha256(streak_file)
     if season_evidence is not None:  # after every table is loaded, so each one is blended once
         season_layers.apply(ref, db, season_evidence)
@@ -1118,7 +1123,7 @@ def _describe_layer(ref):
         'exact_yardline_outcomes': {'reference_sha256': reference_sha,
                                     'rule': 'exact yard line inside the 20 where source rows exist'},
         'current_streak_context': {'file_sha256': sampler.optional_input_sha256.get('current_streak_file'),
-                                   'current_streak': sampler.current_streak},
+                                   'current_streak': getattr(sampler, 'current_streak_as_published', sampler.current_streak)},
     }
     layer_artifact_sha256 = {
         key: (_model_hash(value) if value is not None else None)

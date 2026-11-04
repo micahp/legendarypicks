@@ -28,7 +28,8 @@ import participation_model as pm  # noqa: E402
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
 SKILL = {'RB', 'FB', 'TE', 'WR'}
 # PFR uses LAR and WSH; the participation and play-by-play files use LA and WAS for 2022 to 2025 posteam.
-TEAM_FIX = {'LAR': 'LA', 'WSH': 'WAS'}
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'scripts'))
+import nfl_team_codes  # noqa: E402  backend/team_codes.py, the one place team codes are defined
 
 
 def main():
@@ -54,7 +55,7 @@ def main():
     audit = Counter()
     recon = {}  # (season, game_id, team, gsis) -> position
     for game_id, season, week, raw_team, pfr, position, offense in snaps:
-        team = TEAM_FIX.get(raw_team, raw_team)
+        team = nfl_team_codes.to_nflverse(raw_team)
         if not offense or not offense > 0:
             audit['no_offense_snaps'] += 1
             continue

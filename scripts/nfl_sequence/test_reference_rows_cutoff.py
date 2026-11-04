@@ -46,8 +46,8 @@ class SafetyKickRows(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.path = Path(self.tmp.name) / 'safety.csv'
-        write_csv(self.path, SAFETY_HEADER, [safety_row('2024_05_AAA_BBB', PAST, 10),
-                                             safety_row('2025_01_AAA_BBB', FUTURE, 20)])
+        write_csv(self.path, SAFETY_HEADER, [safety_row('2024_05_KC_DEN', PAST, 10),
+                                             safety_row('2025_01_KC_DEN', FUTURE, 20)])
         manifest_for(self.path, record_count=2, usable_count=2)
 
     def tearDown(self):
@@ -55,7 +55,7 @@ class SafetyKickRows(unittest.TestCase):
 
     def test_a_future_row_is_dropped_under_a_cutoff_and_kept_without_one(self):
         self.assertEqual({p['game_id'] for p in er.load_safety_kick_pool(self.path, eligible_before=CUTOFF)[0]},
-                         {'2024_05_AAA_BBB'})
+                         {'2024_05_KC_DEN'})
         self.assertEqual(len(er.load_safety_kick_pool(self.path)[0]), 2)
 
     def test_a_cutoff_still_refuses_a_checksum_mismatch(self):
@@ -85,11 +85,11 @@ class OvertimeDriveRows(unittest.TestCase):
     def test_a_future_drive_is_dropped_under_a_cutoff(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'overtime.csv'
-            write_csv(path, OVERTIME_HEADER, [overtime_row('2024_05_AAA_BBB', PAST, 1),
-                                              overtime_row('2025_01_AAA_BBB', FUTURE, 2)])
+            write_csv(path, OVERTIME_HEADER, [overtime_row('2024_05_KC_DEN', PAST, 1),
+                                              overtime_row('2025_01_KC_DEN', FUTURE, 2)])
             manifest_for(path, drive_count=2, usable_count=2)
             self.assertEqual([d['game_id'] for d in er.load_overtime_drive_pool(path, eligible_before=CUTOFF)[0]],
-                             ['2024_05_AAA_BBB'])
+                             ['2024_05_KC_DEN'])
             self.assertEqual(len(er.load_overtime_drive_pool(path)[0]), 2)
 
 
@@ -105,27 +105,27 @@ class ParticipantRows(unittest.TestCase):
             db = Path(tmp) / 'pbp.sqlite3'
             con = sqlite3.connect(db)
             con.execute(f"CREATE TABLE nfl_pbp ({', '.join(PBP_COLUMNS)})")
-            con.execute("INSERT INTO nfl_pbp VALUES ('2024_05_AAA_BBB', 1, 'P1', 'R1', 'W1', 'AAA', 'BBB', 7, 5, 'pass', 'L1', -4, NULL, NULL, 5, 0, 2024, 5)")
-            con.execute("INSERT INTO nfl_pbp VALUES ('2025_01_AAA_BBB', 2, 'P2', 'R2', 'W2', 'AAA', 'BBB', 7, 5, 'pass', NULL, NULL, NULL, NULL, 5, 5, 2025, 1)")
+            con.execute("INSERT INTO nfl_pbp VALUES ('2024_05_KC_DEN', 1, 'P1', 'R1', 'W1', 'KC', 'DEN', 7, 5, 'pass', 'L1', -4, NULL, NULL, 5, 0, 2024, 5)")
+            con.execute("INSERT INTO nfl_pbp VALUES ('2025_01_KC_DEN', 2, 'P2', 'R2', 'W2', 'KC', 'DEN', 7, 5, 'pass', NULL, NULL, NULL, NULL, 5, 5, 2025, 1)")
             con.commit()
             con.close()
             extras = Path(tmp) / 'extras.csv'
             write_csv(extras, EXTRAS_HEADER, [
-                {'game_id': '2024_05_AAA_BBB', 'play_id': '1', 'season': '2024', 'week': '5', 'posteam': 'AAA',
-                 'defteam': 'BBB', 'timeout': '1', 'timeout_team': 'AAA', 'out_of_bounds': '0'},
-                {'game_id': '2025_01_AAA_BBB', 'play_id': '2', 'season': '2025', 'week': '1', 'posteam': 'AAA',
-                 'defteam': 'BBB', 'timeout': '1', 'timeout_team': 'AAA', 'out_of_bounds': '0'}])
+                {'game_id': '2024_05_KC_DEN', 'play_id': '1', 'season': '2024', 'week': '5', 'posteam': 'KC',
+                 'defteam': 'DEN', 'timeout': '1', 'timeout_team': 'KC', 'out_of_bounds': '0'},
+                {'game_id': '2025_01_KC_DEN', 'play_id': '2', 'season': '2025', 'week': '1', 'posteam': 'KC',
+                 'defteam': 'DEN', 'timeout': '1', 'timeout_team': 'KC', 'out_of_bounds': '0'}])
             cut = er.load_participants(str(db), extras=str(extras), eligible_before=CUTOFF)
-            self.assertEqual(set(cut), {('2024_05_AAA_BBB', 1)})
-            self.assertEqual(cut[('2024_05_AAA_BBB', 1)]['timeout'], 1)
-            self.assertEqual(cut[('2024_05_AAA_BBB', 1)]['lateral_receiver_player_id'], 'L1')
-            self.assertEqual(cut[('2024_05_AAA_BBB', 1)]['lateral_receiving_yards'], -4)
+            self.assertEqual(set(cut), {('2024_05_KC_DEN', 1)})
+            self.assertEqual(cut[('2024_05_KC_DEN', 1)]['timeout'], 1)
+            self.assertEqual(cut[('2024_05_KC_DEN', 1)]['lateral_receiver_player_id'], 'L1')
+            self.assertEqual(cut[('2024_05_KC_DEN', 1)]['lateral_receiving_yards'], -4)
             with_player_yardage = er.load_participants(
                 str(db), extras=str(extras), eligible_before=CUTOFF, include_player_yardage=True)
-            self.assertEqual(with_player_yardage[('2024_05_AAA_BBB', 1)]['passing_yards'], 5)
-            self.assertEqual(with_player_yardage[('2024_05_AAA_BBB', 1)]['rushing_yards'], 0)
+            self.assertEqual(with_player_yardage[('2024_05_KC_DEN', 1)]['passing_yards'], 5)
+            self.assertEqual(with_player_yardage[('2024_05_KC_DEN', 1)]['rushing_yards'], 0)
             self.assertEqual(set(er.load_participants(str(db), extras=str(extras))),
-                             {('2024_05_AAA_BBB', 1), ('2025_01_AAA_BBB', 2)})
+                             {('2024_05_KC_DEN', 1), ('2025_01_KC_DEN', 2)})
 
 
 class BlockedKickRows(unittest.TestCase):
@@ -146,11 +146,11 @@ class BlockedKickRows(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'blocked.csv'
-            write_csv(path, header, [row('2024_05_AAA_BBB', PAST, 1), row('2025_01_AAA_BBB', FUTURE, 2)])
+            write_csv(path, header, [row('2024_05_KC_DEN', PAST, 1), row('2025_01_KC_DEN', FUTURE, 2)])
             manifest_for(path, record_count=2, sources={'x.csv': 'abc'}, observed_rates={'k': 1},
                          source_dataset='test', window='test')
             cut = er.load_blocked_kicks(path, eligible_before=CUTOFF)
-            self.assertEqual([r['game_id'] for r in cut['records']['field_goal']], ['2024_05_AAA_BBB'])
+            self.assertEqual([r['game_id'] for r in cut['records']['field_goal']], ['2024_05_KC_DEN'])
             self.assertIsNone(cut['rates'])
             full = er.load_blocked_kicks(path)
             self.assertEqual(len(full['records']['field_goal']), 2)

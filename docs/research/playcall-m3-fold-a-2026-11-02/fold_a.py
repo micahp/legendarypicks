@@ -37,7 +37,8 @@ BOOT = 10000
 SEED = 20261102
 GATE_LOG_LOSS = 0.001
 GATE_BRIER = 0.001
-TEAM_CODES = {'LA': 'LAR', 'WAS': 'WSH'}  # nflverse posteam to the production frame's team codes
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'scripts'))
+import nfl_team_codes  # noqa: E402  backend/team_codes.py, the one place team codes are defined
 COLUMNS = ['season', 'season_type', 'game_id', 'play_id', 'posteam', 'play_type', 'qb_kneel', 'qb_spike', 'qb_scramble',
            'down', 'ydstogo', 'yardline_100', 'qtr', 'quarter_seconds_remaining', 'score_differential']
 
@@ -60,7 +61,7 @@ def arrays_from_raw(df, teams, games):
     game_index = {g: i for i, g in enumerate(games)}
     for i, row in enumerate(df.itertuples(index=False)):
         arrays['season'][i] = int(row.season)
-        arrays['team'][i] = teams.setdefault(TEAM_CODES.get(row.posteam, row.posteam), len(teams))
+        arrays['team'][i] = teams.setdefault(nfl_team_codes.to_db(row.posteam), len(teams))
         arrays['down'][i] = int(row.down) - 1
         arrays['dist'][i] = pm.distance_bucket(int(row.ydstogo))
         arrays['field'][i] = pm.field_bucket(int(row.yardline_100))
