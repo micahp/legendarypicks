@@ -368,6 +368,49 @@ def test_scoreboard_refresh_skips_recent_checks_and_prioritizes_unchecked_games(
     assert len(scheduled) == 1
 
 
+def test_scoreboard_refresh_cools_down_failed_games_without_accepted_cache(
+    monkeypatch, harness, exercise_story_warming
+):
+    import threading
+
+    path, _ = harness
+    con = _open(path)
+    con.execute("CREATE TABLE game_story_deterministic_failure_cooldowns("
+                "league TEXT,game_id TEXT,last_failed_at TEXT,PRIMARY KEY(league,game_id))")
+    con.executemany(
+        "INSERT INTO game_story_deterministic_failure_cooldowns VALUES (?, ?, ?)",
+        [
+            ("nba", "failed-recent", ""),
+            ("nba", "failed-old", ""),
+        ],
+    )
+    # Bind timestamps through SQLite so the due check receives ISO-like UTC values.
+    con.execute(
+        "UPDATE game_story_deterministic_failure_cooldowns SET last_failed_at=datetime('now') "
+        "WHERE game_id='failed-recent'")
+    con.execute(
+        "UPDATE game_story_deterministic_failure_cooldowns "
+        "SET last_failed_at=datetime('now','-2 minutes') WHERE game_id='failed-old'")
+    con.commit()
+    con.close()
+    monkeypatch.setenv("LP_DETERMINISTIC_STORY_ENGINE", "1")
+    monkeypatch.setattr(cs, "_story_inflight", set())
+    monkeypatch.setattr(cs, "_story_lock", threading.Lock())
+    scheduled = []
+    monkeypatch.setattr(cs._threading, "Thread", lambda target, daemon=True: scheduled.append(target) or type(
+        "T", (), {"start": lambda self: None})())
+
+    games = [
+        {"game_id": game_id, "home": {"abbrev": "MIA"}, "away": {"abbrev": "TOR"},
+         "state": "pre", "date": _soon()}
+        for game_id in ("failed-recent", "failed-old", "never-failed")
+    ]
+    cs.kick_game_stories("nba", games, refresh_evidence=True)
+
+    assert len(scheduled) == 2
+    assert cs._story_inflight == {"failed-old", "never-failed"}
+
+
 def test_large_slate_never_creates_more_story_threads_than_the_limit(
     monkeypatch, harness, exercise_story_warming
 ):

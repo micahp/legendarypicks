@@ -16,7 +16,9 @@ import story_rubric
 
 TABLE = "game_story_deterministic"
 HISTORY_TABLE = "game_story_deterministic_history"
+ACCEPTED_KEYS_TABLE = "game_story_deterministic_accepted_keys"
 FAILURE_TABLE = "game_story_deterministic_failures"
+FAILURE_COOLDOWN_TABLE = "game_story_deterministic_failure_cooldowns"
 ENGINE_VERSION = hashlib.sha256(b"\n".join(
     Path(module.__file__).read_bytes()
     for module in (story_engine, story_engine_audit, story_rubric)
@@ -60,12 +62,27 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
     )""")
     connection.execute(f"""CREATE INDEX IF NOT EXISTS idx_{HISTORY_TABLE}_game_time
         ON {HISTORY_TABLE}(league,game_id,generated_at)""")
+    connection.execute(f"""CREATE INDEX IF NOT EXISTS idx_{HISTORY_TABLE}_idempotency
+        ON {HISTORY_TABLE}(league,game_id,input_sha256,engine_version,gate_status)""")
     connection.execute(f"""CREATE TRIGGER IF NOT EXISTS trg_{HISTORY_TABLE}_no_update
         BEFORE UPDATE ON {HISTORY_TABLE}
         BEGIN SELECT RAISE(ABORT,'deterministic story history is append-only'); END""")
     connection.execute(f"""CREATE TRIGGER IF NOT EXISTS trg_{HISTORY_TABLE}_no_delete
         BEFORE DELETE ON {HISTORY_TABLE}
         BEGIN SELECT RAISE(ABORT,'deterministic story history is append-only'); END""")
+    connection.execute(f"""CREATE TABLE IF NOT EXISTS {ACCEPTED_KEYS_TABLE} (
+        league TEXT NOT NULL,
+        game_id TEXT NOT NULL,
+        input_sha256 TEXT NOT NULL,
+        engine_version TEXT NOT NULL,
+        PRIMARY KEY (league,game_id,input_sha256,engine_version)
+    )""")
+    connection.execute(f"""CREATE TRIGGER IF NOT EXISTS trg_{ACCEPTED_KEYS_TABLE}_no_update
+        BEFORE UPDATE ON {ACCEPTED_KEYS_TABLE}
+        BEGIN SELECT RAISE(ABORT,'deterministic accepted keys are immutable'); END""")
+    connection.execute(f"""CREATE TRIGGER IF NOT EXISTS trg_{ACCEPTED_KEYS_TABLE}_no_delete
+        BEFORE DELETE ON {ACCEPTED_KEYS_TABLE}
+        BEGIN SELECT RAISE(ABORT,'deterministic accepted keys are immutable'); END""")
     connection.execute(f"""CREATE TABLE IF NOT EXISTS {FAILURE_TABLE} (
         failure_id INTEGER PRIMARY KEY AUTOINCREMENT,
         league TEXT NOT NULL,
@@ -73,6 +90,12 @@ def _ensure_tables(connection: sqlite3.Connection) -> None:
         failed_at TEXT NOT NULL,
         failure_type TEXT NOT NULL,
         detail TEXT NOT NULL
+    )""")
+    connection.execute(f"""CREATE TABLE IF NOT EXISTS {FAILURE_COOLDOWN_TABLE} (
+        league TEXT NOT NULL,
+        game_id TEXT NOT NULL,
+        last_failed_at TEXT NOT NULL,
+        PRIMARY KEY (league,game_id)
     )""")
 
 
@@ -111,12 +134,22 @@ def _append_failure(connection: sqlite3.Connection, league: str, game_id: str,
     )
 
 
+def _mark_failure_cooldown(connection: sqlite3.Connection, league: str, game_id: str) -> None:
+    connection.execute(
+        f"INSERT INTO {FAILURE_COOLDOWN_TABLE}(league,game_id,last_failed_at) "
+        "VALUES (?,?,datetime('now')) "
+        "ON CONFLICT(league,game_id) DO UPDATE SET last_failed_at=excluded.last_failed_at",
+        (league, str(game_id)),
+    )
+
+
 def record_generation_failure(db_path: str | Path, league: str, game_id: str,
                               error: Exception) -> None:
     """Append operational failures separately from rubric quality warnings."""
     with closing(_connect(db_path)) as connection:
         _ensure_tables(connection)
         _append_failure(connection, league, game_id, type(error).__name__, str(error))
+        _mark_failure_cooldown(connection, league, game_id)
         connection.execute(
             f"UPDATE {TABLE} SET last_checked_at=datetime('now') WHERE league=? AND game_id=?",
             (league, str(game_id)),
@@ -160,6 +193,7 @@ def _record_unpublishable_generation(db_path: str | Path, game: dict[str, Any], 
             (league, game_id, input_sha, ENGINE_VERSION),
         ).fetchone()
         if existing:
+            _mark_failure_cooldown(connection, league, game_id)
             connection.execute(
                 f"UPDATE {TABLE} SET last_checked_at=datetime('now') WHERE league=? AND game_id=?",
                 (league, game_id),
@@ -172,6 +206,7 @@ def _record_unpublishable_generation(db_path: str | Path, game: dict[str, Any], 
         failure_type = "audit_blocked" if gate == "blocked" else "audit_incomplete"
         _append_failure(connection, league, game_id, failure_type,
                         ", ".join(quality.get("hard_failures") or ["independent audit incomplete"]))
+        _mark_failure_cooldown(connection, league, game_id)
         connection.execute(
             f"INSERT INTO {HISTORY_TABLE} "
             "(generation_id,league,game_id,story,generated_at,facts_as_of,input_sha256,"
@@ -240,6 +275,34 @@ def generate_and_store_preview(db_path: str | Path, game: dict[str, Any], *,
         _ensure_tables(connection)
         connection.execute("BEGIN IMMEDIATE")
         try:
+            accepted = connection.execute(
+                f"SELECT story FROM {HISTORY_TABLE} WHERE league=? AND game_id=? "
+                "AND input_sha256=? AND engine_version=? AND gate_status IN ('eligible','review') "
+                "ORDER BY generated_at,generation_id LIMIT 1",
+                (game["league"], str(game["game_id"]), input_sha, ENGINE_VERSION),
+            ).fetchone()
+            if accepted:
+                connection.execute(
+                    f"INSERT OR IGNORE INTO {ACCEPTED_KEYS_TABLE} "
+                    "(league,game_id,input_sha256,engine_version) VALUES (?,?,?,?)",
+                    (game["league"], str(game["game_id"]), input_sha, ENGINE_VERSION),
+                )
+                connection.execute(
+                    f"UPDATE {TABLE} SET last_checked_at=datetime('now') "
+                    "WHERE league=? AND game_id=? AND input_sha256=? AND engine_version=?",
+                    (game["league"], str(game["game_id"]), input_sha, ENGINE_VERSION),
+                )
+                connection.commit()
+                return {"league": game["league"], "game_id": str(game["game_id"]),
+                        "story": accepted[0], "cached": True, "generator": "deterministic"}
+            key_insert = connection.execute(
+                f"INSERT OR IGNORE INTO {ACCEPTED_KEYS_TABLE} "
+                "(league,game_id,input_sha256,engine_version) VALUES (?,?,?,?)",
+                (game["league"], str(game["game_id"]), input_sha, ENGINE_VERSION),
+            )
+            if key_insert.rowcount == 0:
+                connection.rollback()
+                raise RuntimeError("accepted generation key exists without its history row")
             connection.execute(
                 f"INSERT INTO {HISTORY_TABLE} "
                 "(generation_id,league,game_id,story,generated_at,facts_as_of,input_sha256,"

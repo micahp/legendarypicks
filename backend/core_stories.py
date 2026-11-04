@@ -1027,6 +1027,7 @@ def kick_game_stories(lg: str, games: list, *, refresh_evidence: bool = False):
     gid_list = [i[0] for i in ids]
     deterministic_cached = {}
     deterministic_checked = {}
+    deterministic_failure_checked = {}
     try:
         with closing(_db()) as con:
             con.execute("""CREATE TABLE IF NOT EXISTS game_story(
@@ -1052,13 +1053,30 @@ def kick_game_stories(lg: str, games: list, *, refresh_evidence: bool = False):
                 except sqlite3.OperationalError as exc:
                     if "no such table" not in str(exc).lower():
                         raise
+                cooldown_table = con.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' "
+                    "AND name='game_story_deterministic_failure_cooldowns'"
+                ).fetchone()
+                if cooldown_table:
+                    failed_rows = con.execute(
+                        "SELECT game_id,last_failed_at "
+                        "FROM game_story_deterministic_failure_cooldowns "
+                        f"WHERE league=? AND game_id IN ({qs})",
+                        [lg] + gid_list,
+                    )
+                    deterministic_failure_checked.update(
+                        (row[0], row[1]) for row in failed_rows)
     except Exception:
         cached = {}
     if (refresh_evidence and lg in _DETERMINISTIC_PREVIEW_LEAGUES
             and _deterministic_story_engine_enabled()):
         # Start with never-checked and oldest-checked games so a large slate can
         # progress across scoreboard polls despite the bounded worker count.
-        ids.sort(key=lambda item: deterministic_checked.get(item[0]) or "")
+        ids.sort(key=lambda item: max(
+            (str(value) for value in (deterministic_checked.get(item[0]),
+                                      deterministic_failure_checked.get(item[0])) if value),
+            default="",
+        ))
     deferred = 0
     for gid, home, away, state, start_time in ids:
         # A cached story is enough UNLESS it is a preview of a game that has since ended —
@@ -1083,8 +1101,10 @@ def kick_game_stories(lg: str, games: list, *, refresh_evidence: bool = False):
         recheck_deterministic_inputs = (
             refresh_evidence and lg in _DETERMINISTIC_PREVIEW_LEAGUES
             and _deterministic_story_engine_enabled() and state_key not in {"in", "post"})
-        if (cache_is_current and recheck_deterministic_inputs
-                and not _story_evidence_refresh_due(deterministic_checked.get(gid))):
+        if (recheck_deterministic_inputs and any(
+                checked and not _story_evidence_refresh_due(checked)
+                for checked in (deterministic_checked.get(gid),
+                                deterministic_failure_checked.get(gid)))):
             continue
         if cache_is_current and not recheck_deterministic_inputs:
             continue

@@ -142,6 +142,67 @@ def test_repeated_kickoff_observation_time_does_not_change_evidence_hash():
     assert story_engine_runtime._input_sha256(first) != story_engine_runtime._input_sha256(second)
 
 
+def test_concurrent_same_input_appends_one_accepted_generation(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    import threading
+
+    path = tmp_path / "picks.db"
+    _build_db(path)
+    con = sqlite3.connect(path)
+    story_engine_runtime._ensure_tables(con)
+    con.commit()
+    con.close()
+
+    game = {"league": "nba", "game_id": "parallel-game", "matchup_evidence": []}
+    as_of = "2026-11-03T20:00:00Z"
+    bundle = {"league": "nba", "game_id": "parallel-game", "as_of": as_of,
+              "matchup_evidence": []}
+    render_barrier = threading.Barrier(2)
+    monkeypatch.setattr(story_engine, "collect_story_facts", lambda *_a, **_k: dict(bundle))
+
+    def render(_bundle):
+        # Both calls reach rendering only after independently observing the cache miss.
+        render_barrier.wait(timeout=10)
+        return {"story": "A deterministic parallel preview.", "angle": "balanced",
+                "manifest": [{"kind": "record", "team": "BOS"}]}
+
+    monkeypatch.setattr(story_engine, "generate_story", render)
+    monkeypatch.setattr(story_engine_runtime, "_quality_record", lambda *_: {
+        "gate": "eligible", "score": 95, "hard_failures": [],
+    })
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(story_engine_runtime.generate_and_store_preview,
+                               str(path), game, as_of=as_of, refresh=True)
+                   for _ in range(2)]
+        results = [future.result(timeout=15) for future in futures]
+
+    assert [result["story"] for result in results] == [
+        "A deterministic parallel preview.", "A deterministic parallel preview."]
+    assert sorted(result["cached"] for result in results) == [False, True]
+    con = sqlite3.connect(path)
+    accepted = con.execute(
+        "SELECT COUNT(*) FROM game_story_deterministic_history WHERE league=? AND game_id=? "
+        "AND input_sha256=? AND engine_version=? AND gate_status IN ('eligible','review')",
+        ("nba", "parallel-game", story_engine_runtime._input_sha256(bundle),
+         story_engine_runtime.ENGINE_VERSION),
+    ).fetchone()[0]
+    latest = con.execute(
+        "SELECT COUNT(*) FROM game_story_deterministic WHERE league=? AND game_id=?",
+        ("nba", "parallel-game"),
+    ).fetchone()[0]
+    accepted_keys = con.execute(
+        "SELECT COUNT(*) FROM game_story_deterministic_accepted_keys "
+        "WHERE league=? AND game_id=? AND input_sha256=? AND engine_version=?",
+        ("nba", "parallel-game", story_engine_runtime._input_sha256(bundle),
+         story_engine_runtime.ENGINE_VERSION),
+    ).fetchone()[0]
+    con.close()
+    assert accepted == 1
+    assert latest == 1
+    assert accepted_keys == 1
+
+
 def _iso(value):
     return value.astimezone(dt.timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
@@ -353,6 +414,10 @@ def test_needs_audit_record_is_saved_but_not_published(tmp_path, monkeypatch):
     assert con.execute(
         "SELECT failure_type FROM game_story_deterministic_failures WHERE game_id='2000000001'"
     ).fetchone()[0] == "audit_incomplete"
+    cooldown = con.execute(
+        "SELECT last_failed_at FROM game_story_deterministic_failure_cooldowns "
+        "WHERE league='nba' AND game_id='2000000001'").fetchone()
+    assert cooldown and cooldown[0]
     con.close()
 
 
