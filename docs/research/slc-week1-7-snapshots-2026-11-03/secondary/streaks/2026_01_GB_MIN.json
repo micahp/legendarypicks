@@ -1,0 +1,16 @@
+{
+  "cutoff_utc": "2026-09-13T20:24:59Z",
+  "game_id": "2026_01_GB_MIN",
+  "schema": "lp-nfl-pregame-streak-1",
+  "source_archive_sha256": "5963d352575f3f1ba17dcd1f6263bc3be3a5f794e3537fed114921e96dbca198",
+  "source_archive_tag": "archive-2026-09-10",
+  "source_games": [],
+  "teams": {
+    "GB": {
+      "streak": ""
+    },
+    "MIN": {
+      "streak": ""
+    }
+  }
+}

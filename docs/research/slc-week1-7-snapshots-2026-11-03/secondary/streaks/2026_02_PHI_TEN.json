@@ -1,0 +1,33 @@
+{
+  "cutoff_utc": "2026-09-20T16:59:59Z",
+  "game_id": "2026_02_PHI_TEN",
+  "schema": "lp-nfl-pregame-streak-1",
+  "source_archive_sha256": "eda9d0ac3bbaf64c8caa3e9180e0f426267abe2281955d301a412c90348cc9c1",
+  "source_archive_tag": "archive-2026-09-17",
+  "source_games": [
+    "2026_01_NE_SEA",
+    "2026_01_SF_LA",
+    "2026_01_CHI_CAR",
+    "2026_01_TB_CIN",
+    "2026_01_NO_DET",
+    "2026_01_BUF_HOU",
+    "2026_01_BAL_IND",
+    "2026_01_CLE_JAX",
+    "2026_01_ATL_PIT",
+    "2026_01_NYJ_TEN",
+    "2026_01_ARI_LAC",
+    "2026_01_MIA_LV",
+    "2026_01_GB_MIN",
+    "2026_01_WAS_PHI",
+    "2026_01_DAL_NYG",
+    "2026_01_DEN_KC"
+  ],
+  "teams": {
+    "PHI": {
+      "streak": "W1"
+    },
+    "TEN": {
+      "streak": "L1"
+    }
+  }
+}

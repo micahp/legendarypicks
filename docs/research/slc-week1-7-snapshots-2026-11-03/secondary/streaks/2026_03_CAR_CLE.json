@@ -1,0 +1,49 @@
+{
+  "cutoff_utc": "2026-09-27T16:59:59Z",
+  "game_id": "2026_03_CAR_CLE",
+  "schema": "lp-nfl-pregame-streak-1",
+  "source_archive_sha256": "c604f6b96d0704e5db9fdebcc3d7fdcac53e2bb51f473a77fc49f24da7e8f7a3",
+  "source_archive_tag": "archive-2026-09-24",
+  "source_games": [
+    "2026_01_NE_SEA",
+    "2026_01_SF_LA",
+    "2026_01_CHI_CAR",
+    "2026_01_TB_CIN",
+    "2026_01_NO_DET",
+    "2026_01_BUF_HOU",
+    "2026_01_BAL_IND",
+    "2026_01_CLE_JAX",
+    "2026_01_ATL_PIT",
+    "2026_01_NYJ_TEN",
+    "2026_01_ARI_LAC",
+    "2026_01_MIA_LV",
+    "2026_01_GB_MIN",
+    "2026_01_WAS_PHI",
+    "2026_01_DAL_NYG",
+    "2026_01_DEN_KC",
+    "2026_02_DET_BUF",
+    "2026_02_CAR_ATL",
+    "2026_02_NO_BAL",
+    "2026_02_MIN_CHI",
+    "2026_02_CIN_HOU",
+    "2026_02_PIT_NE",
+    "2026_02_GB_NYJ",
+    "2026_02_CLE_TB",
+    "2026_02_PHI_TEN",
+    "2026_02_JAX_DEN",
+    "2026_02_LV_LAC",
+    "2026_02_SEA_ARI",
+    "2026_02_WAS_DAL",
+    "2026_02_MIA_SF",
+    "2026_02_IND_KC",
+    "2026_02_NYG_LA"
+  ],
+  "teams": {
+    "CAR": {
+      "streak": "W1"
+    },
+    "CLE": {
+      "streak": "W1"
+    }
+  }
+}
