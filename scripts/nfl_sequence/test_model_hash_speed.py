@@ -156,6 +156,40 @@ class FitCache(unittest.TestCase):
         self.fit({'counts': [4]})
         self.assertEqual(list(Path(self.dir.name).glob('*.tmp')), [])
 
+    def test_a_reader_never_sees_a_partial_entry_while_workers_rewrite_it(self):
+        import multiprocessing
+        context = multiprocessing.get_context('spawn')
+        workers = [context.Process(target=_rewrite_entry, args=(self.dir.name, str(self.code), 15)) for _ in range(4)]
+        for worker in workers:
+            worker.start()
+        reads = 0
+        while any(worker.is_alive() for worker in workers) or reads == 0:
+            for path in Path(self.dir.name).glob('test.big-*.pkl'):
+                try:
+                    source = path.open('rb')
+                except FileNotFoundError:  # a worker removed it between the listing and the open; nothing was read
+                    continue
+                with source:
+                    self.assertEqual(len(pickle.load(source)['result']), 200_000)  # a partial file would not unpickle
+                reads += 1
+        for worker in workers:
+            worker.join()
+            self.assertEqual(worker.exitcode, 0)
+        self.assertGreater(reads, 0)
+        self.assertEqual(list(Path(self.dir.name).glob('*.tmp')), [])
+
+
+def _rewrite_entry(cache_dir, code, times):
+    """A worker that recomputes and rewrites one large entry (its stored file is removed first, so each call writes)."""
+    os.environ['SLC_FIT_CACHE_DIR'] = cache_dir
+    for _ in range(times):
+        for path in Path(cache_dir).glob('test.big-*.pkl'):
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+        fit_cache.memo('test.big', {'n': 200_000}, lambda: list(range(200_000)), code_files=(code,))
+
 
 if __name__ == '__main__':
     unittest.main()
