@@ -137,8 +137,9 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it.
 
-    `season_adapt` (SLC V1.5, research, off by default) blends the season's available results into the team outcome splits.
-    Its target is this snapshot's game, and its cutoff is that game's kickoff minus 90 minutes."""
+    `season_adapt` (SLC V1.5, research, off by default) shrinks every loaded layer that has a current-season source toward the
+    current season (season_layers.py): weight N0 / (N0 + g) on history, g the team's games available at the cutoff. Its target
+    is this snapshot's game, and its cutoff is that game's kickoff minus 90 minutes."""
     schedule = require_snapshot(snapshot)['schedule']
     season = int(schedule['season'])
     if player_outcomes_receiver_only and not player_outcomes:
@@ -146,12 +147,11 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
     fixes = er.normalize_blocker_fixes(blocker_fixes)
     run_scramble_backoff = 'run_scramble_backoff' in fixes
-    season_adapt_target = None
+    season_evidence = None
     if season_adapt:
-        if not team_outcomes:
-            raise ValueError('season adaptation blends into the team outcome splits, so it needs team_outcomes=True')
+        import season_layers
         kickoff = datetime.strptime(schedule['scheduled_kickoff_utc'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=pytz.utc)
-        season_adapt_target = {'game_id': schedule['game_id'], 'kickoff': kickoff, 'n0': float(season_adapt_n0)}
+        season_evidence = season_layers.Evidence.for_target(db, season, schedule['game_id'], kickoff, n0=season_adapt_n0)
     ref, excluded = er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
                    playcall_formation=formation, playcall_player_shares=player_shares,
@@ -160,8 +160,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league,
                    playcall_qb_decisions=(qb_decisions or run_scramble_backoff),
                    playcall_player_outcomes=player_outcomes, blocker_fixes=fixes,
-                   fg_ordinary_cutoff=fg_ordinary_cutoff, playcall_season_adapt=season_adapt_target,
-                   fingerprint=False)  # fingerprinted below, after the pool exclusions and the adapters
+                   fg_ordinary_cutoff=fg_ordinary_cutoff, fingerprint=False)  # fingerprinted below, after the pool exclusions and the adapters
     ref.contextual_sampler.score_clock_playcalling_enabled = bool(score_clock_playcalling)
     ref.pool, lateral_source_filter = exclude_unmodeled_lateral_rows(ref.pool, ref.participants)
     ref.pool, pass_yardage_source_filter = exclude_inconsistent_pass_yardage_rows(ref.pool, ref.participants)
@@ -250,6 +249,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         records = _json.loads(Path(streak_file).read_text())['teams']
         ref.contextual_sampler.current_streak = {team: ss.bucket_from_text(rec.get('streak', '')) for team, rec in records.items()}
         sampler.optional_input_sha256['current_streak_file'] = _file_sha256(streak_file)
+    if season_evidence is not None:  # after every table is loaded, so each one is blended once
+        season_layers.apply(ref, db, season_evidence)
     # Include every enabled model table and manifest in the reference identity. e2 computes an initial fingerprint before
     # these optional adapters are attached, so the final reference must be fingerprinted after all loading is complete.
     ref.model_inputs = er._reference_fingerprint(ref)
@@ -1061,6 +1062,9 @@ def _describe_layer(ref):
     share_manifest = getattr(sampler, 'share_model_manifest', None)
     if share_manifest is not None:
         description['player_share_distribution'] = share_manifest
+    season_blend = getattr(sampler, 'season_blend_manifest', None)
+    if season_blend is not None:  # SLC V1.5: what each layer was blended with, and what stayed historical
+        description['season_blend'] = season_blend
     qb_manifest = getattr(sampler, 'qb_decision_manifest', None)
     if qb_manifest is not None:
         description['qb_decision_model'] = qb_manifest
