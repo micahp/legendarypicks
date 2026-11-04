@@ -1,0 +1,358 @@
+{
+ "accounting": {
+  "arm_games": 121,
+  "excluded": {},
+  "results_in_weeks": 121,
+  "unscored_in_weeks": []
+ },
+ "advance_rule": {
+  "advance": false,
+  "rule": "advance only if mean log loss and mean Brier are both lower than baseline and the 95% interval for the log-loss difference is below zero",
+  "verdict": "FAIL"
+ },
+ "baseline": {
+  "by_week": {
+   "1": {
+    "brier": 0.1917355607280873,
+    "crps_away_points": 7.157207260353612,
+    "crps_home_points": 6.931005720777334,
+    "games": 16,
+    "log_loss": 0.5677859667746967
+   },
+   "2": {
+    "brier": 0.2774401782828769,
+    "crps_away_points": 6.087422698031045,
+    "crps_home_points": 7.125284249092187,
+    "games": 16,
+    "log_loss": 0.7600633859304095
+   },
+   "3": {
+    "brier": 0.262859875688246,
+    "crps_away_points": 5.815054461201738,
+    "crps_home_points": 4.118200338351971,
+    "games": 16,
+    "log_loss": 0.7290737701276754
+   },
+   "4": {
+    "brier": 0.2391034848514298,
+    "crps_away_points": 4.606655924314955,
+    "crps_home_points": 5.275434873774192,
+    "games": 16,
+    "log_loss": 0.6931225635373357
+   },
+   "5": {
+    "brier": 0.23602185287780858,
+    "crps_away_points": 4.478894759641142,
+    "crps_home_points": 4.966768185082589,
+    "games": 15,
+    "log_loss": 0.6590193783372096
+   },
+   "6": {
+    "brier": 0.25296263929805024,
+    "crps_away_points": 5.652179412957345,
+    "crps_home_points": 4.044196718648473,
+    "games": 14,
+    "log_loss": 0.6982676146939676
+   },
+   "7": {
+    "brier": 0.2919458414630978,
+    "crps_away_points": 6.818181292474864,
+    "crps_home_points": 4.836308130362026,
+    "games": 14,
+    "log_loss": 0.7886890906295763
+   },
+   "8": {
+    "brier": 0.23900098828842273,
+    "crps_away_points": 8.455466138712286,
+    "crps_home_points": 5.057004228039595,
+    "games": 14,
+    "log_loss": 0.6662534673962848
+   }
+  },
+  "calibration": [
+   {
+    "bin": [
+     0.0,
+     0.1
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.1,
+     0.2
+    ],
+    "games": 5,
+    "mean_forecast": 0.13421052631578947,
+    "observed_home_win_rate": 0.4
+   },
+   {
+    "bin": [
+     0.2,
+     0.3
+    ],
+    "games": 6,
+    "mean_forecast": 0.24873294346978558,
+    "observed_home_win_rate": 0.6666666666666666
+   },
+   {
+    "bin": [
+     0.3,
+     0.4
+    ],
+    "games": 15,
+    "mean_forecast": 0.34789588349959855,
+    "observed_home_win_rate": 0.2
+   },
+   {
+    "bin": [
+     0.4,
+     0.5
+    ],
+    "games": 28,
+    "mean_forecast": 0.4369497579733647,
+    "observed_home_win_rate": 0.5357142857142857
+   },
+   {
+    "bin": [
+     0.5,
+     0.6
+    ],
+    "games": 20,
+    "mean_forecast": 0.5263304093567251,
+    "observed_home_win_rate": 0.4
+   },
+   {
+    "bin": [
+     0.6,
+     0.7
+    ],
+    "games": 26,
+    "mean_forecast": 0.6288117541213516,
+    "observed_home_win_rate": 0.6538461538461539
+   },
+   {
+    "bin": [
+     0.7,
+     0.8
+    ],
+    "games": 15,
+    "mean_forecast": 0.7367251461988303,
+    "observed_home_win_rate": 0.5333333333333333
+   },
+   {
+    "bin": [
+     0.8,
+     0.9
+    ],
+    "games": 5,
+    "mean_forecast": 0.8647368421052631,
+    "observed_home_win_rate": 0.8
+   },
+   {
+    "bin": [
+     0.9,
+     1.0
+    ],
+    "games": 1,
+    "mean_forecast": 0.9,
+    "observed_home_win_rate": 1.0
+   }
+  ],
+  "season": {
+   "brier": 0.24837426407166402,
+   "crps_away_points": 6.105838369545966,
+   "crps_home_points": 5.329135973279927,
+   "games": 121,
+   "log_loss": 0.6944707774798149
+  }
+ },
+ "candidate": {
+  "by_week": {
+   "1": {
+    "brier": 0.21068838488765773,
+    "crps_away_points": 6.407723348637187,
+    "crps_home_points": 6.7596762037891995,
+    "games": 16,
+    "log_loss": 0.610236861173383
+   },
+   "2": {
+    "brier": 0.2662637114838754,
+    "crps_away_points": 5.654613657834889,
+    "crps_home_points": 7.370720526187543,
+    "games": 16,
+    "log_loss": 0.724981994789973
+   },
+   "3": {
+    "brier": 0.271970654432133,
+    "crps_away_points": 5.667632011772853,
+    "crps_home_points": 4.56447584833795,
+    "games": 16,
+    "log_loss": 0.7460304113625115
+   },
+   "4": {
+    "brier": 0.2798680451014769,
+    "crps_away_points": 4.5068359305709835,
+    "crps_home_points": 4.455529537768341,
+    "games": 16,
+    "log_loss": 0.7718568932375086
+   },
+   "5": {
+    "brier": 0.17867992430719423,
+    "crps_away_points": 4.957301921958893,
+    "crps_home_points": 5.757337625252215,
+    "games": 15,
+    "log_loss": 0.5483682636784634
+   },
+   "6": {
+    "brier": 0.25275066931461204,
+    "crps_away_points": 5.893764027515181,
+    "crps_home_points": 3.444823492698608,
+    "games": 14,
+    "log_loss": 0.6975270717267926
+   },
+   "7": {
+    "brier": 0.31848414288315946,
+    "crps_away_points": 7.565122669973969,
+    "crps_home_points": 4.648814346579434,
+    "games": 14,
+    "log_loss": 0.874594059727418
+   },
+   "8": {
+    "brier": 0.21245224603882074,
+    "crps_away_points": 7.915840349362518,
+    "crps_home_points": 5.819924476426097,
+    "games": 14,
+    "log_loss": 0.6121668668388672
+   }
+  },
+  "calibration": [
+   {
+    "bin": [
+     0.0,
+     0.1
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.1,
+     0.2
+    ],
+    "games": 3,
+    "mean_forecast": 0.13508771929824562,
+    "observed_home_win_rate": 0.6666666666666666
+   },
+   {
+    "bin": [
+     0.2,
+     0.3
+    ],
+    "games": 10,
+    "mean_forecast": 0.2336842105263158,
+    "observed_home_win_rate": 0.3
+   },
+   {
+    "bin": [
+     0.3,
+     0.4
+    ],
+    "games": 15,
+    "mean_forecast": 0.33951381722279556,
+    "observed_home_win_rate": 0.4
+   },
+   {
+    "bin": [
+     0.4,
+     0.5
+    ],
+    "games": 24,
+    "mean_forecast": 0.4434088693957114,
+    "observed_home_win_rate": 0.4166666666666667
+   },
+   {
+    "bin": [
+     0.5,
+     0.6
+    ],
+    "games": 26,
+    "mean_forecast": 0.5329483210288166,
+    "observed_home_win_rate": 0.5769230769230769
+   },
+   {
+    "bin": [
+     0.6,
+     0.7
+    ],
+    "games": 25,
+    "mean_forecast": 0.6381637426900585,
+    "observed_home_win_rate": 0.56
+   },
+   {
+    "bin": [
+     0.7,
+     0.8
+    ],
+    "games": 14,
+    "mean_forecast": 0.7329389650597081,
+    "observed_home_win_rate": 0.7857142857142857
+   },
+   {
+    "bin": [
+     0.8,
+     0.9
+    ],
+    "games": 4,
+    "mean_forecast": 0.8361842105263159,
+    "observed_home_win_rate": 0.25
+   },
+   {
+    "bin": [
+     0.9,
+     1.0
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   }
+  ],
+  "season": {
+   "brier": 0.24886339185456582,
+   "crps_away_points": 6.028054435259182,
+   "crps_home_points": 5.384763393850989,
+   "games": 121,
+   "log_loss": 0.6979773099197858
+  }
+ },
+ "games_scored": 121,
+ "label": "retrospective-exposure",
+ "paired": {
+  "bootstrap_reps": 10000,
+  "bootstrap_seed": 20260103,
+  "brier_difference_95ci": [
+   -0.028299953817382692,
+   0.02977125930115492
+  ],
+  "log_loss_difference_95ci": [
+   -0.06297288312304401,
+   0.07262865413345174
+  ],
+  "mean_brier_difference": 0.0004891277829019363,
+  "mean_log_loss_difference": 0.0035065324399705462
+ },
+ "seed_rule": "complete_game",
+ "weeks": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8
+ ]
+}
