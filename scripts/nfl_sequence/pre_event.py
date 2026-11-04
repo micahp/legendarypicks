@@ -117,7 +117,8 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     formation draw above is unchanged, and a play that cannot be drawn keeps the formation layer's personnel.
     With `field` (research flag, a participation_field.Field) and this side's `lineup_state`, the skill lineup advances one
     snap before any player is chosen: the grouping is drawn from the previous snap's, and the runner, receiver and trick
-    thrower come only from the RB, FB, TE and WR on the field. QBs are not in the lineup model and are not restricted. The
+    thrower come only from the RB, FB, TE and WR on the field. The starting QB is the passer and is not in the lineup; a
+    second QB is on the field only in a grouping that has one (a -QB2 code), and only then can carry or catch. The
     game's share population stays the full eligible roster, so the Dirichlet shares are the same draw as with the flag off.
     The personnel label is the lineup's grouping (RB and FB together, then TE)."""
     if intent not in ('run', 'dropback'):
@@ -138,7 +139,10 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
         if on_field is None:
             return candidates
         import participation_field
-        return [p for p in candidates if p['pos_abb'] not in participation_field.SKILL or p['gsis_id'] in on_field]
+        starter = participation_field.starter_qb(available_players)
+        return [p for p in candidates
+                if p['gsis_id'] in on_field or p['gsis_id'] == starter
+                or p['pos_abb'] not in participation_field.SKILL and p['pos_abb'] != 'QB']
     if share_table is not None:
         chosen['participant_share_model'] = 'dirichlet_multinomial'
     elif player_shares is not None:
@@ -419,7 +423,7 @@ def _advance_lineup(field, lineup_state, team, available_players, state, base, c
         raise ValueError(f'participation field has no supported cell for down {situation.split("|")[0]} ({situation})')
     group = field.draw_group(team, participation_field.START if prev is None else prev, cell,
                              _draw(f'{base}:field:group'))
-    skill = [p for p in available_players if p['pos_abb'] in participation_field.SKILL]
+    skill = [p for p in available_players if p['pos_abb'] in participation_field.SKILL or p['pos_abb'] == 'QB']
     lineup, record = field.advance(team, lineup_state['lineup'], group, skill, _draw(f'{base}:field:advance'),
                                    prev_group=prev)
     if lineup is None:

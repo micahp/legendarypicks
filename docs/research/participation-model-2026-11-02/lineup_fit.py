@@ -17,6 +17,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parents[2] / 'scripts' / 'nfl_sequence'))  # the runtime module the simulator loads
+import participation_field as pf  # noqa: E402
 import participation_labels as pl  # noqa: E402
 import participation_model as pm  # noqa: E402
 
@@ -27,9 +29,9 @@ START = 'START'  # the previous grouping of a team's first offensive snap in a g
 
 
 def group_counts(group):
-    """The RB, TE and WR counts of a grouping code. The five skill players are the grouping's RB, TE and the rest WR."""
-    rb, te = int(group[0]), int(group[1])
-    return {'RB': rb, 'TE': te, 'WR': 5 - rb - te}
+    """The RB, TE, WR and second-QB counts of a grouping code, decoded by the runtime module so the fit and the simulator
+    read the same code the same way (participation_field.group_counts)."""
+    return pf.group_counts(group)
 
 
 def sequences(rows, positions, snap_labels=False, recon=None):

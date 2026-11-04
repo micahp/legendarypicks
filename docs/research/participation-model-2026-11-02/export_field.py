@@ -20,7 +20,7 @@ sys.path.insert(0, str(HERE))
 import lineup_fit  # noqa: E402
 import participation_model as pm  # noqa: E402
 
-SCHEMA = 'lp.nfl.participation-field.v2'
+SCHEMA = 'lp.nfl.participation-field.v3'  # grouping codes carry -OL<n> and -QB<n> (build_tables.group_code)
 
 
 def sha256(path):
