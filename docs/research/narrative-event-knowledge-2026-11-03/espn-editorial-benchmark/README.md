@@ -1,0 +1,54 @@
+# ESPN/AP pregame editorial benchmark (initial matched sample)
+
+Status: research-only manual comparison, November 3, 2026. Does **not** change `core_stories.py`, the deterministic renderer, its scoring thresholds, or production.
+
+## Why this benchmark matters
+
+The current LP deterministic engine is good at combining records and player-form templates, but it sometimes loses the most recent exceptional performance, immediate rematch, or previous head-to-head result. Some matchup previews linked by ESPN are Associated Press / Data Skrive / Sportradar syndicated briefs rather than handcrafted long-form ESPN reporting. Both are useful comparison categories, but they must be distinguished. This seed audit uses **verified AP syndication** and not an independently captured first-party ESPN article body. Direct ESPN game pages were not readable in the research environment.
+
+**Do not copy source text into the product or repository.** Store story URLs, credited publisher, publication/capture times, headline metadata, and short paraphrased editorial annotations. Respect copyright and source terms. ESPN must be a **benchmark only**, not a runtime dependency. The LP server's deterministic pregame generator remains zero-network, zero-model.
+
+## Matched November 4 NBA sample
+
+LP outputs here are the frozen stories in `../deterministic-engine/MULTISPORT_RUN_2026-11-03.md`. That run reports 2026-11-03T16:54:59Z and zero inference/network calls. Wire copies were published November 3 (about 02:02 a.m. ET). Comparisons below are qualitative, **not blinded ratings** and not a claim of human editorial preference.
+
+| Game / ESPN ID | LP lead and content | AP/Data Skrive lead and content (paraphrased) | Editorial gap |
+| --- | --- | --- | --- |
+| CLE at OKC / 401909929 | Cleveland 4-3 visits 5-2 OKC; Shai Gilgeous-Alexander scored 23+ in four of five | Shai scored **43** as OKC **beat Cleveland 117-112**, and they immediately meet again | **Wire wins hook**: LP missed spectacular latest performance and immediate same-opponent rematch |
+| IND at MEM / 401909927 | Indiana on five-game skid; Jerome's five-game average plus passing mention of 40 | Jerome's **40 points in Memphis's 135-134 OT loss** to New Orleans is the headline | **Wire wins immediacy**: LP treats the signature game as a footnote |
+| PHI at DET / 401909922 | Top-four matchup at 7-1 vs 6-1, with Cade Cunningham and Tyrese Maxey form | Matchup of East leaders; Detroit beat Philadelphia **106-93 on Oct. 25**, plus injury availability | **LP wins tone/player context**; wire contributes head-to-head and availability |
+| CHA at BKN / 401909925 | Charlotte has dropped four straight and Brooklyn is 1-6 | Charlotte tries to end four-game slide; earlier **110-103** meeting and injuries | **Similar lead**, wire adds specific previous meeting |
+| LAL at SAC / 401909934 | Lakers 6-2 against Kings 1-6, Darius Acuff and Luka's 42/45 recent scoring | Luka's latest **42-point game** leads the preview | **Different choice**: compare whether recent star eruption or record mismatch better sells this one |
+
+### Verified wire sources
+
+- CLE at OKC: https://www.foxsports.com/articles/nba/gilgeousalexander-leads-oklahoma-city-against-cleveland-after-43point-game
+- IND at MEM: https://www.foxsports.com/articles/nba/jerome-leads-memphis-against-indiana-after-40point-game
+- PHI at DET: https://6abc.com/post/pistons-set-play-76ers-wednesday/20010737/
+- CHA at BKN: https://www.foxsports.com/articles/nba/charlotte-takes-on-brooklyn-aims-to-halt-4game-slide
+- LAL at SAC: https://abc7.com/post/sacramento-hosts-los-angeles-doncics-42-point-game/20010733/
+
+These are matching AP/Data Skrive syndications; **do not silently relabel them first-party ESPN editorial articles**. Official ESPN matchup URLs and article provenance must be confirmed separately before an `espn_verified` label is assigned.
+
+## Repeatable, apples-to-apples evaluation
+
+1. **Sample** upcoming NFL/NBA games within a consistent pregame interval (e.g., 24-48 hours before kickoff). Save event ID, matchup, league, kickoff, LP generated-at, engine version, cutoff timestamp, and evidence IDs.
+2. **Capture ESPN presentation** at the same cutoff. Archive article headline, canonical URL, credited writer/wire, published and modified timestamps, exact capture time, and short semantic annotations; do not ship or commit copyrighted full article text. Classify `ap_data_skrive_wire`, `espn_staff_preview`, `espn_scoreboard_auto`, or `no_preview`. A game page containing only odds/stats is not a written preview. Do not turn an API summary into fictional editorial copy.
+3. **Prevent temporal leakage.** If the ESPN piece was published after LP's cutoff, mark `later_publication` and exclude it from same-cutoff rankings. Do not incorporate future injuries, same-day results, or newly learned starters into a retroactive LP comparison.
+4. **Evaluate independently.** For the same game, score LP and the external preview for: primary hook choice, standout player inclusion, recent game/result context, head-to-head/rematch significance, opponent-specific stakes, readability/natural fan tone, and supported factual claims. Mark `not_applicable` for unavailable content. Provide a short reason for each comparison. Do not call the existing deterministic grader's headline-match heuristic an independent editorial judgment.
+5. **Use blind editorial ratings** on a smaller human-reviewed subset, with generator/source identity hidden until scoring. Record whether the viewer prefers LP, external, or tie; preserve the reason.
+6. **Diagnose missing facts vs prioritization.** For every lost hook, distinguish `missing_data`, `candidate_not_extracted`, `candidate_ranked_too_low`, `copy_template_failure`, and `article_later_than_cutoff`. The distinction determines the actual engineering change.
+7. **Keep the production path free of ESPN requests and LLM calls.** An offline research collector may capture preview metadata with compliant throttling, caching, and provenance. Match by ESPN event ID plus team codes, not guessed names.
+8. **Track trends by engine version** in the append-only quality ledger. Report hook recall and preference separately from factual audit pass rate and the six pastel rubric dimensions. Never optimize exclusively for ESPN imitation: human preference and zero unsupported claims remain the product standard.
+
+## Concrete next tests
+
+- `CLE@OKC`: If the most recent game against this same opponent included a 40+ point star performance, the headline selector considers the performance and immediate rematch before generic 20+ point consistency.
+- `IND@MEM`: A 40-point outing in a one-point overtime loss is recognized as a significant recent performance, without implying Memphis won.
+- `PHI@DET`: If previous meeting is source-backed and in the current season, it remains a viable supporting fact even if records/top-four is the lead.
+- `CHA@BKN`: Losing-streak headline retains the streak; a sourced recent head-to-head may supplement it.
+- Each fixture must recompute all claims from cutoff-safe LP facts. Editorial reference material must not be injected as factual input.
+
+Reference fixtures: `matched_sample.jsonl`.
+
+**Gate:** This is a benchmark design and five-source seed review, not permission to claim full ESPN comparison coverage or source completeness.
