@@ -97,7 +97,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
                    player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
                    qb_run_role_style=None, score_clock_playcalling=True, pbv1_table=None, participation_field=None,
-                   fg_kicker=None):
+                   participation_snap_counts=None, fg_kicker=None):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -190,6 +190,21 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         if not field.seasons or max(field.seasons) >= season:
             raise ValueError(f'participation field is fitted on {field.seasons}; a {season} game needs earlier seasons only')
         ref.contextual_sampler.participation_field = field
+        if participation_snap_counts:  # research flag: this season's published snap counts before the game's week
+            import snap_update
+            snaps = snap_update.SnapCounts.load(*participation_snap_counts)
+            week = int(schedule['week'])
+            if snaps.season != season:
+                raise ValueError(f'snap counts are for {snaps.season}; the game is in {season}')
+            rosters = {roster['team']: roster['players'] for roster in snapshot['rosters'].values()}
+            earlier = {team for (team, w) in snaps.team_snaps if w < week}
+            missing = sorted(team for team in rosters if earlier and team not in earlier)
+            if missing:  # a team code the file spells differently would silently get no update
+                raise ValueError(f'snap counts have games before week {week} but none for {missing}')
+            ref.contextual_sampler.participation_snap_update = snap_update.apply(
+                field, snaps, week, rosters, player_n0=snap_update.PLAYER_N0)
+    elif participation_snap_counts:
+        raise ValueError('the snap-count update needs the participation field')
     if fg_kicker:  # research flag: field goals by the team's kicker, (path, expected sha256); kicker_field_goals
         if 'long_field_goal_feasibility' not in fixes:
             raise ValueError('the kicker field-goal flag needs the long_field_goal_feasibility blocker fix')

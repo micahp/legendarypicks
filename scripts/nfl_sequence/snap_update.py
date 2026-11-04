@@ -12,8 +12,9 @@ lineup table fitted on earlier seasons in two ways:
   to 2021 and scored on 2022 to 2025 (docs/research/participation-model-2026-11-02/WEEKLY-BACKTEST-RESULTS-2026-11-04.md).
 - Player weight: each player's share of his team's offensive snaps in the earlier games he was active for, blended with the
   table's expected on-field rate for him as (N0 * table + G_p * share) / (N0 + G_p), G_p his active games. His draw weight
-  is multiplied by blend / table (participation_field.Field.player_weight). Selected and scored in
-  weekly_player_backtest.py.
+  is multiplied by blend / table (participation_field.Field.player_weight). On 2022 to 2025, week over week, this
+  lowers the error of player snap shares from 0.203 to 0.155 (mean absolute error per player-game; WEEKLY-PLAYER-
+  BACKTEST-RESULTS-2026-11-04.md).
 
 The snap counts file (SCHEMA) holds one season's published counts by week; nothing from the game's week or later is used.
 """
@@ -31,6 +32,7 @@ SNAP_TEAM = {'OAK': 'LV', 'SD': 'LAC', 'STL': 'LA'}  # snap counts and weekly ro
 SNAP_CLASS = {'RB': 'RB', 'FB': 'RB', 'TE': 'TE', 'WR': 'WR'}
 TEAM_MIX_PRIOR_PLAYS = 50.0  # pseudo-plays of the league mix in a team's table mix (the tilt's reference mix)
 GROUP_N0 = 8.0  # selected on 2019 to 2021 (weekly_backtest.py, arm A2)
+PLAYER_N0 = 1.0  # selected on 2019 to 2021, the smallest of the grid (weekly_player_backtest.py); None turns it off
 WEIGHT_RANGE = (0.02, 50.0)  # a player weight outside this is clipped and counted
 
 
@@ -228,13 +230,15 @@ def apply(field, snaps, week, rosters, player_n0, group_n0=GROUP_N0):
     if snaps.season is None:
         raise ValueError('snap counts have no season')
     field.group_tilt, field.player_weight = {}, {}
-    record = {'snap_counts_sha256': snaps.sha256, 'season': snaps.season, 'week': week, 'teams': {}}
+    record = {'snap_counts_sha256': snaps.sha256, 'season': snaps.season, 'week': week, 'group_n0': group_n0,
+              'player_n0': player_n0, 'teams': {}}
     for team, players in sorted(rosters.items()):
         weeks = snaps.weeks_before(team, week)
         lam = group_lambda(field, snaps, team, week, group_n0)
         if lam is not None:
             field.group_tilt[team] = tuple(lam)
-        weights, status = player_weights(field, snaps, team, week, players, player_n0)
+        weights, status = ({}, Counter({'player_weights_off': 1})) if player_n0 is None else \
+            player_weights(field, snaps, team, week, players, player_n0)
         field.player_weight.update(weights)
         record['teams'][team] = {'earlier_games': len(weeks), 'last_week_used': max(weeks) if weeks else None,
                                  'group_lambda': [round(x, 6) for x in lam] if lam is not None else None,
