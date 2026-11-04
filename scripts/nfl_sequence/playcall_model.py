@@ -223,12 +223,12 @@ def load_frame_cached(path, seasons, include_flagged=True, db=e1.DEFAULT_DB):
     fingerprint = source_fingerprint(seasons, db, include_flagged)
     status = 'miss'
     if path.exists():
-        cached = np.load(path)
-        if 'fingerprint' in cached.files and str(cached['fingerprint']) == fingerprint:
-            teams = {str(code): index for index, code in enumerate(cached['team_codes'])}
-            frame = Frame({k: cached[k] for k in FRAME_KEYS}, teams, [str(g) for g in cached['game_ids']])
-            frame.cache_status, frame.fingerprint = 'hit', fingerprint
-            return frame
+        with np.load(path) as cached:  # the arrays are read out before it closes
+            if 'fingerprint' in cached.files and str(cached['fingerprint']) == fingerprint:
+                teams = {str(code): index for index, code in enumerate(cached['team_codes'])}
+                frame = Frame({k: cached[k] for k in FRAME_KEYS}, teams, [str(g) for g in cached['game_ids']])
+                frame.cache_status, frame.fingerprint = 'hit', fingerprint
+                return frame
         status = 'rebuilt'
     frame = load_frame(seasons, db=db, include_flagged=include_flagged)
     save_frame(frame, path, seasons, include_flagged, fingerprint)
