@@ -75,7 +75,7 @@ Milestones (from the context summary):
 | M2 PBV1 sampler | Primary target (RB plus FB) passes under the B0 reading of criterion (c). The RB-only target has no retrospective fold, so (c) is not evaluated for it. |
 | M3 play-call ablation | Situation cell model rejected. Worse than the production model on log loss in both folds. |
 | M4 weekly models | P1 pass share and P2 target share built and frozen. P1 tempo and go rate rejected. P3 defense rejected as built. P2 snap share inconclusive. |
-| M5 integration | PBV1 hook written, flag off. The flags-off regression does not match the baseline yet. |
+| M5 integration | PBV1 hook written, flag off. The flags-off regression passes (0 of 3 seeds differ; `docs/research/pbv1-flags-off-regression-2026-11-02/`). |
 | M6 prospective locks | Not started. Week 10 has 14 games. |
 | M7 decisions | Decision ledger committed. |
 
