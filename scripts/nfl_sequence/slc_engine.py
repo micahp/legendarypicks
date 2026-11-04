@@ -111,6 +111,17 @@ def require_snapshot(snapshot):
     return snapshot
 
 
+def current_streaks(streak_file):
+    """Each team's current streak bucket from a verified streak file, keyed so either team spelling finds it.
+
+    The streak files use nflverse codes (LA, WAS) and the play-call sampler asks with database codes (LAR, WSH). As a plain
+    dict this missed silently for both clubs: on 2026 weeks 1-8 their streak layers ran on about half the plays."""
+    import json as _json
+    import streak_splits as ss
+    records = _json.loads(Path(streak_file).read_text())['teams']
+    return nfl_team_codes.TeamKeyed((team, ss.bucket_from_text(rec.get('streak', ''))) for team, rec in records.items())
+
+
 def side_teams(snapshot):
     """Return PBP team keys for play-call tables; frozen schedules may use nflverse aliases."""
     schedule = require_snapshot(snapshot)['schedule']
@@ -243,7 +254,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
             if snaps.season != season:
                 raise ValueError(f'snap counts are for {snaps.season}; the game is in {season}')
             rosters = {roster['team']: roster['players'] for roster in snapshot['rosters'].values()}
-            earlier = {team for (team, w) in snaps.team_snaps if w < week}
+            earlier = nfl_team_codes.TeamKeyed((team, True) for (team, w) in snaps.team_snaps if w < week)
             missing = sorted(team for team in rosters if earlier and team not in earlier)
             if missing:  # a team code the file spells differently would silently get no update
                 raise ValueError(f'snap counts have games before week {week} but none for {missing}')
@@ -282,10 +293,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         if missing_teams:
             raise ValueError(f'playbook prior is missing target-game teams {missing_teams} for season {season - 1}')
     if streak_file is not None:  # each team's current streak as of the cutoff, from the verified records
-        import json as _json
-        import streak_splits as ss
-        records = _json.loads(Path(streak_file).read_text())['teams']
-        ref.contextual_sampler.current_streak = {team: ss.bucket_from_text(rec.get('streak', '')) for team, rec in records.items()}
+        ref.contextual_sampler.current_streak = current_streaks(streak_file)
         sampler.optional_input_sha256['current_streak_file'] = _file_sha256(streak_file)
     if season_evidence is not None:  # after every table is loaded, so each one is blended once
         season_layers.apply(ref, db, season_evidence)

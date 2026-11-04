@@ -89,7 +89,16 @@ class FlagOn(unittest.TestCase):
         snapshot = copy.deepcopy(SNAPSHOT)
         snapshot['rosters']['home']['team'] = 'DNV'
         pick = pe.chooser(snapshot, 1, seed_root='r' * 64, field=FIELD)
-        with self.assertRaisesRegex(ValueError, "no transitions for team 'DNV'"):
+        with self.assertRaisesRegex(ValueError, "unknown NFL team code 'DNV'"):  # refused by nfl_team_codes.TeamKeyed
+            pick('run', 'A', states(1)[0])
+
+    def test_a_real_club_the_table_lacks_is_refused(self):
+        snapshot = copy.deepcopy(SNAPSHOT)
+        snapshot['rosters']['home']['team'] = 'MIA'
+        field = copy.deepcopy(FIELD)
+        del field.teams['MIA']
+        pick = pe.chooser(snapshot, 1, seed_root='r' * 64, field=field)
+        with self.assertRaisesRegex(ValueError, "no transitions for team 'MIA'"):
             pick('run', 'A', states(1)[0])
 
 
@@ -205,7 +214,7 @@ class Loading(unittest.TestCase):
     def test_the_table_records_its_fit_seasons(self):
         self.assertEqual(FIELD.seasons, [2022, 2023, 2024, 2025])
         self.assertIn('LA', FIELD.teams)
-        self.assertNotIn('LAR', FIELD.teams)
+        self.assertIn('LAR', FIELD.teams)  # nfl_team_codes.TeamKeyed: either spelling finds the Rams
 
 
 if __name__ == '__main__':

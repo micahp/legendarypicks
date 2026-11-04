@@ -81,5 +81,75 @@ class StrictTranslation(unittest.TestCase):
         self.assertEqual(frame['opponent'].tolist(), ['WSH', 'LAR', 'LV'])
 
 
+class TeamKeyedTables(unittest.TestCase):
+    """The interface every team-keyed table on the simulation path goes through (2026-11-04)."""
+
+    def test_both_spellings_meet_on_one_key(self):
+        table = teams.TeamKeyed([('LA', 1), ('WAS', 2), ('KC', 3)])
+        self.assertEqual(dict(table), {'LAR': 1, 'WSH': 2, 'KC': 3})
+        for code, value in (('LAR', 1), ('LA', 1), ('STL', 1), ('WSH', 2), ('WAS', 2), ('kc', 3)):
+            with self.subTest(code=code):
+                self.assertIn(code, table)
+                self.assertEqual(table[code], value)
+                self.assertEqual(table.get(code), value)
+
+    def test_the_team_inside_a_tuple_key(self):
+        table = teams.TeamKeyed([(('pid', 'LA', 'g'), 1.0)], team_at=1)
+        self.assertEqual(table[('pid', 'LAR', 'g')], 1.0)
+        self.assertNotIn(('pid', 'LAR', 'other'), table)  # a real absence is still an absence
+        table.setdefault(('pid', 'WAS', 'g'), 2.0)
+        self.assertEqual(table.pop(('pid', 'WSH', 'g')), 2.0)
+
+    def test_an_unknown_code_raises_on_every_read_and_write(self):
+        table = teams.TeamKeyed([('KC', 1)])
+        for operation in (lambda: table['XYZ'], lambda: table.get('XYZ'), lambda: 'XYZ' in table,
+                          lambda: table.__setitem__('XYZ', 1), lambda: teams.TeamKeyed([('AAA', 1)])):
+            with self.assertRaisesRegex(ValueError, 'unknown NFL team code'):
+                operation()
+
+    def test_it_stays_a_dict_for_json_pickle_and_copies(self):
+        import copy, json, pickle
+        table = teams.TeamKeyed([(('LA', 3), 5)], team_at=0)
+        self.assertEqual(json.loads(json.dumps(teams.TeamKeyed([('WAS', 1)]))), {'WSH': 1})
+        for clone in (pickle.loads(pickle.dumps(table)), copy.deepcopy(table), table.copy()):
+            self.assertEqual(clone[('LAR', 3)], 5)
+            self.assertEqual(clone.team_at, 0)
+
+
+class SimulationTablesUseTheInterface(unittest.TestCase):
+    """Every team-keyed table the SLC engine loads is a TeamKeyed, checked on the pinned tables themselves."""
+
+    def test_streak_kicker_field_and_snap_tables(self):
+        sys.path.insert(0, str(HERE))
+        import kicker_field_goals as kfg
+        import participation_field as pf
+        import simulate_pregame_batch as batch
+        import slc_engine
+        import snap_update
+        repo = HERE.parents[1]
+        streaks = slc_engine.current_streaks(repo / 'docs/research/slc-week8-2026/wl-streaks-2026-10-29.json')
+        path, sha = batch.SLC_V2_TABLES['playcall_fg_kicker']
+        kicker = kfg.KickerTable.load(repo / path, sha)
+        path, sha = batch.SLC_V2_TABLES['participation_field']
+        field = pf.Field.load(repo / path, sha)
+        snaps = snap_update.SnapCounts({'schema': snap_update.SCHEMA, 'season': 2026, 'team_snaps': [['LA', 1, 60.0]],
+                                        'player_snaps': [['WAS', 1, 'p', 'WR', 30.0]], 'active': [['LA', 1, ['p']]]}, 't')
+        tables = {'current_streak': streaks, 'kicker.assignments': kicker.assignments, 'field.teams': field.teams,
+                  'field.team_transitions': field.team_transitions, 'field.team_by_call': field.team_by_call,
+                  'field.appearances': field.appearances, 'field.team_plays': field.team_plays,
+                  'field.group_tilt': field.group_tilt, 'field.player_weight': field.player_weight,
+                  'snaps.team_snaps': snaps.team_snaps, 'snaps.player': snaps.player, 'snaps.active': snaps.active}
+        for name, table in tables.items():
+            with self.subTest(table=name):
+                self.assertIsInstance(table, teams.TeamKeyed)
+        for code in ('LAR', 'WSH'):  # the two clubs whose spelling differs; each must be found by the database code
+            with self.subTest(code=code):
+                self.assertIn(code, streaks)
+                self.assertIn(code, field.teams)
+                self.assertTrue(kicker.kicker(2026, 1, code))
+        self.assertEqual(snaps.weeks_before('LAR', 2), [1])
+        self.assertEqual(snaps.player_share('LAR', 2, 'p')[0], 1)
+
+
 if __name__ == '__main__':
     unittest.main()

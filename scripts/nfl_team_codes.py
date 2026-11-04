@@ -108,3 +108,63 @@ def missing_pbp_team_codes(required_team_codes, available_team_codes):
     required = {to_pbp_team_code(team_code) for team_code in required_team_codes}
     available = {to_pbp_team_code(team_code) for team_code in available_team_codes}
     return sorted(required - available)
+
+
+class TeamKeyed(dict):
+    """A table keyed by team that cannot miss on spelling.
+
+    Every key is stored under its database code, and every read (`[]`, `get`, `in`, `pop`, `setdefault`) translates the
+    asked-for code the same way, so a table built from nflverse files (LA, WAS) and a caller holding database codes (LAR,
+    WSH) meet on one key. An unknown code raises instead of missing. `team_at` is None when the key is the team code itself,
+    or the position of the team in a tuple key ((team, week), (pid, team, group), ...). It stays a dict, so code that only
+    reads it (including hash-pinned layers) is protected without being changed, and it serializes as one.
+    """
+
+    def __init__(self, items=(), team_at=None):
+        super().__init__()
+        self.team_at = team_at
+        self.update(items)
+
+    def _key(self, key):
+        if self.team_at is None:
+            return to_db(key)
+        if not isinstance(key, tuple) or len(key) <= self.team_at:
+            raise ValueError(f'team-keyed table expects a tuple key with the team at position {self.team_at}: {key!r}')
+        return key[:self.team_at] + (to_db(key[self.team_at]),) + key[self.team_at + 1:]
+
+    def __getitem__(self, key):
+        return super().__getitem__(self._key(key))
+
+    def __setitem__(self, key, value):
+        super().__setitem__(self._key(key), value)
+
+    def __delitem__(self, key):
+        super().__delitem__(self._key(key))
+
+    def __contains__(self, key):
+        return super().__contains__(self._key(key))
+
+    def get(self, key, default=None):
+        return super().get(self._key(key), default)
+
+    def pop(self, key, *default):
+        return super().pop(self._key(key), *default)
+
+    def setdefault(self, key, default=None):
+        return super().setdefault(self._key(key), default)
+
+    def update(self, items=(), **kwargs):
+        if kwargs:
+            raise TypeError('TeamKeyed.update takes a mapping or (key, value) pairs only')
+        for key, value in (items.items() if hasattr(items, 'items') else items):
+            self[key] = value
+
+    def copy(self):
+        return TeamKeyed(self, team_at=self.team_at)
+
+    def __reduce__(self):
+        return (TeamKeyed, ((), self.team_at), None, None, iter(dict.items(self)))
+
+    def teams(self):
+        """The database codes present."""
+        return {key if self.team_at is None else key[self.team_at] for key in dict.keys(self)}

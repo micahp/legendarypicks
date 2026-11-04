@@ -16,10 +16,14 @@ With the flag on (it needs the long_field_goal_feasibility blocker fix):
 import hashlib
 import json
 import math
+import sys
 from collections import Counter
 from pathlib import Path
 
 import field_goal_feasibility as fg_feasibility
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import nfl_team_codes  # noqa: E402
 
 SCHEMA = 'kicker-fg-v1'
 RULE = fg_feasibility.RECORD_RULE
@@ -34,7 +38,9 @@ class KickerTable:
         self.fit_seasons = sorted(data['fit_seasons'])
         self.sigma, self.recency = data['sigma'], data['recency']
         self.kickers = data['kickers']  # gsis_id -> {'offset', 'attempts', 'career_long'}
-        self.assignments = {(int(s), int(w), team): pid for s, w, team, pid in data['assignments']}
+        # The table is built from nflverse rosters (LA, WAS); callers hold database codes (LAR, WSH). TeamKeyed meets them.
+        self.assignments = nfl_team_codes.TeamKeyed((((int(s), int(w), team), pid) for s, w, team, pid in data['assignments']),
+                                                    team_at=2)
 
     @classmethod
     def load(cls, path, expected_sha256):
