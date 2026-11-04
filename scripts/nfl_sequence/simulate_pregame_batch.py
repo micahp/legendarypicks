@@ -32,6 +32,13 @@ import sys
 import time
 
 HERE = Path(__file__).resolve().parent
+# SLC v2 (--slc-v2): the pinned tables each v2 layer loads unless the run names another (amendments 6 and 7).
+SLC_V2_TABLES = {
+    'participation_field': ('docs/research/participation-model-2026-11-02/outputs/field_v4_decay075_2020_2025.json',
+                            '9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41'),
+    'playcall_fg_kicker': ('docs/research/fg-kicker-2026-11-04/kicker_table_through_2025_assign_2026.json',
+                           '9fdc57b223db5c4944b9d84ce7e2f4aa71c0e7639dfea9d41fc80a77e728e81f'),
+}
 REPO = HERE.parents[1]
 BACKEND = REPO / 'backend'
 sys.path[:0] = [str(HERE), str(BACKEND)]
@@ -49,6 +56,7 @@ import try_policy as try_policy_module  # noqa: E402
 import simulate_pregame_game as game_cli  # noqa: E402
 import slc_engine  # noqa: E402
 import slc_config  # noqa: E402
+import rng_protocol  # noqa: E402
 import slc_outputs  # noqa: E402
 import historical_archive  # noqa: E402
 import source_preflight  # noqa: E402
@@ -125,8 +133,18 @@ def _reproduction_command(args, seed):
             command.extend(['--historical-streak-file', str(args.historical_streak_file)])
     if args.export_boxscores:
         command.append('--export-boxscores')
+    if getattr(args, 'slc_v2', False):
+        command.append('--slc-v2')
+    for flag, sha in (('participation_field', 'participation_field_sha256'),
+                      ('participation_snap_counts', 'participation_snap_counts_sha256'),
+                      ('playcall_fg_kicker', 'playcall_fg_kicker_sha256')):  # research tables, so a replay runs the same model
+        if getattr(args, flag, None):
+            command.extend([f"--{flag.replace('_', '-')}", str(getattr(args, flag)),
+                            f"--{sha.replace('_', '-')}", getattr(args, sha)])
     if getattr(args, 'paired_randomness', False):
         command.append('--paired-randomness')
+    if getattr(args, 'rng_protocol', rng_protocol.V1) != rng_protocol.V1:
+        command.append(f"--rng-protocol={args.rng_protocol}")
 
     if args.playcall_point_splits_cache:
         command.extend(['--playcall-point-splits-cache', str(args.playcall_point_splits_cache)])
@@ -401,7 +419,7 @@ def _record_outcome(seed, record=None, error=None, validation_error=False):
         and record.get('final_clock_seconds') == 0 and record.get('tied'))
     valid = bool(record.get('valid_full_game') and record.get('complete_game') and not validation_error)
     status = 'validation_error' if validation_error else record.get('status', 'unknown')
-    return {
+    row = {
         'seed': seed, 'status': status, 'blocker': blocker,
         'valid_full_game': valid, 'complete_game': bool(record.get('complete_game') and not validation_error),
         'regulation_end_reached': regulation_end, 'tied_at_regulation_end': tied_at_regulation_end,
@@ -411,6 +429,9 @@ def _record_outcome(seed, record=None, error=None, validation_error=False):
         'unsupported_rules': record.get('unsupported_rules', []),
         'error': str(error)[:500] if error else None,
     }
+    if 'research_integration' in record:  # present only with a research flag on; flags-off rows are unchanged
+        row['research_integration'] = record['research_integration']
+    return row
 
 
 def _replay_examples(outcomes):
@@ -456,7 +477,7 @@ class FinishedSeeds(dict):
 
 
 def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False,
-                   paired_randomness=False):
+                   paired_randomness=False, rng_plan=None):
     record = None
     error = None
     caught_exception = None
@@ -464,7 +485,8 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
     decisions = None
     try:
         if slc_engine.is_slc(ref):
-            record, decisions = slc_engine.play(seed, ref, snapshot, paired_randomness=paired_randomness)
+            record, decisions = slc_engine.play(seed, ref, snapshot, paired_randomness=paired_randomness,
+                                                rng_plan=rng_plan)
         else:
             record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
                                   paired_randomness=paired_randomness)
@@ -591,7 +613,7 @@ def _open_seed_ledger(path, header, resume, *, seed_end=None, allowed_seeds=None
 
 
 def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=None, archive_validation=None,
-                  export_boxscores=False, paired_randomness=False):
+                  export_boxscores=False, paired_randomness=False, rng_plan=None):
     """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
     cached = finished.get(seed)
     has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
@@ -599,7 +621,7 @@ def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=Non
             and (not export_boxscores or has_boxscore)):
         return cached['outcome'], cached['players']
     outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation,
-                                           export_boxscores, paired_randomness)
+                                           export_boxscores, paired_randomness, rng_plan=rng_plan)
     row = {'seed': seed, 'outcome': outcome, 'players': contribution}
     ledger.write(json.dumps(row, sort_keys=True) + '\n')
     ledger.flush()
@@ -827,6 +849,8 @@ def run_batch(args):
     cutoff_pool_mode = args.context_mode != 'unconditioned'
     try_policy = try_policy_module.TryPolicy.from_fixture() if args.try_policy == 'k1' else None
     safety_kick_table = not args.no_safety_table
+    # The pregame state before the reference attaches: rosters, availability and schedule, with no code hashes.
+    pregame_state_sha256 = snapshot['snapshot_sha256']
     reference_started = time.monotonic()
     if args.playcall_artifact:
         if args.team_tendency or args.context_mode != 'unconditioned' or args.try_policy != 'unconditional' or args.no_safety_table:
@@ -845,6 +869,16 @@ def run_batch(args):
                                                            decision=args.playcall_decision,
                                                            decision_filter=not args.playcall_decision_unfiltered,
                                                            dirichlet_shares=args.playcall_dirichlet_shares,
+                                                           pbv1_table=args.playcall_pbv1_package,
+                                                           participation_field=((args.participation_field,
+                                                                                 args.participation_field_sha256)
+                                                                                if args.participation_field else None),
+                                                           participation_snap_counts=(
+                                                               (args.participation_snap_counts,
+                                                                args.participation_snap_counts_sha256)
+                                                               if args.participation_snap_counts else None),
+                                                           fg_kicker=((args.playcall_fg_kicker, args.playcall_fg_kicker_sha256)
+                                                                      if args.playcall_fg_kicker else None),
                                                            qb_decisions=args.playcall_qb_decisions,
                                                            player_outcomes=args.playcall_player_outcomes,
                                                            player_outcomes_receiver_only=args.playcall_player_outcomes_receiver_only,
@@ -885,6 +919,7 @@ def run_batch(args):
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
     pregame_snapshot.reseal(snapshot)
     playcall_description = slc_engine.describe(ref)
+    rng_plan = rng_protocol.plan(args.rng_protocol, pregame_state_sha256, ref, playcall_description)
     if slc_engine.is_slc(ref):
         slc_config.validate_engine_layers(resolved_profile, playcall_description)
     elif resolved_profile['profile'] != 's0' and any(resolved_profile['enabled_layers'].values()):
@@ -924,6 +959,7 @@ def run_batch(args):
         'historical_archive_reconstruction': archive_validation,
         'boxscore_export': bool(args.export_boxscores),
         'paired_randomness': bool(args.paired_randomness),
+        'rng_protocol': rng_plan.manifest(),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
@@ -946,6 +982,28 @@ def run_batch(args):
     if seed_selection_manifest is not None:
         ledger_header['seed_selection'] = seed_selection_manifest
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
+    if args.playcall_pbv1_package:  # research flag: its pinned inputs are part of the ledger, so a resume must match them
+        import pbv1_package
+        ledger_header['research_integration'] = {'pbv1_package': {
+            'table': str(args.playcall_pbv1_package), 'table_sha256': pbv1_package.TABLE_SHA256,
+            'model': pbv1_package.MODEL_VERSION, 'K': pbv1_package.K, 'target_column': 'package'}}
+    if args.participation_field:  # research flag: the lineup table is pinned in the ledger like PBV1's
+        ledger_header['research_integration'] = {'participation_field': {
+            'table': str(args.participation_field), 'table_sha256': args.participation_field_sha256,
+            'fit_seasons': ref.contextual_sampler.participation_field.seasons, 'personnel_label': 'lineup grouping'}}
+    if args.participation_snap_counts:  # research flag: the current-season snap counts and what they set, in the ledger
+        ledger_header['research_integration']['participation_snap_counts'] = {
+            'file': str(args.participation_snap_counts), 'sha256': args.participation_snap_counts_sha256,
+            'update': ref.contextual_sampler.participation_snap_update}
+    if args.playcall_fg_kicker:  # research flag: the kicker table is pinned in the ledger too
+        fg = ref.contextual_sampler.fg_kicker
+        ledger_header.setdefault('research_integration', {})['fg_kicker'] = {
+            'table': str(args.playcall_fg_kicker), 'table_sha256': args.playcall_fg_kicker_sha256,
+            'fit_seasons': [min(fg['table'].fit_seasons), max(fg['table'].fit_seasons)], 'kickers': fg['kickers']}
+    if args.slc_v2:  # the model is SLC v2: V1.5's season update plus the v2 layers above
+        ledger_header.setdefault('research_integration', {})['slc_v2'] = {
+            'season_adapt': args.playcall_season_adapt, 'season_adapt_n0': args.season_adapt_n0,
+            'rng_protocol': args.rng_protocol, 'blocker_fixes': sorted(args.slc_blocker_fix)}
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume,
                                          seed_end=seed_end_exclusive,
                                          allowed_seeds=set(seed_values) if seed_selection_manifest else None)
@@ -963,7 +1021,7 @@ def run_batch(args):
             outcome, contribution = _seed_outcome(
                 seed, finished, ledger, ref, snapshot, profile_manifest=profile_manifest,
                 archive_validation=archive_validation, export_boxscores=args.export_boxscores,
-                paired_randomness=args.paired_randomness)
+                paired_randomness=args.paired_randomness, rng_plan=rng_plan)
             outcomes.append(outcome)
             if boxscore_handle is not None and seed not in exported_seed_ids and outcome.get('boxscore'):
                 boxscore_handle.write(json.dumps({'type': 'game', **outcome['boxscore']},
@@ -1034,6 +1092,7 @@ def run_batch(args):
                           'one deterministic game per consecutive non-negative integer seed'),
             'paired_randomness': bool(args.paired_randomness),
             'paired_random_stream_schema': ('lp.nfl.paired-random-streams.v1' if args.paired_randomness else None),
+            'rng_protocol': rng_plan.manifest(),
             'regulation_score_policy': ('all runs whose simulation reached the regulation end, including ties and '
                                         'guarded regulation-end outcomes; descriptive, not validated finals'),
             'valid_score_policy': ('only valid_full_game=true, complete_game=true, untied outcomes; all other '
@@ -1180,6 +1239,29 @@ def main(argv=None):
     ap.add_argument('--playcall-dirichlet-shares', action='store_true',
                     help='SLC v1 research: per-game Dirichlet target and carry shares, fitted on the prior season; the receiver and '
                          'rusher are drawn from each game\'s shares; implies --playcall-player-shares')
+    ap.add_argument('--playcall-pbv1-package', type=Path, default=None,
+                    help='SLC v1 research flag (off by default): the personnel label is drawn from the PBV1 RB-only package '
+                         'sampler, refitted on the training table for seasons before each game (pbv1_package.TABLE_SHA256); '
+                         'the table path is the frozen docs/research/pbv1-package-integration-2026-11-02 CSV')
+    ap.add_argument('--participation-field', type=Path, default=None,
+                    help='SLC v2 research flag (off by default): skill lineups carry from snap to snap and the runner and '
+                         'receiver come only from players on the field (participation_field.py). Needs '
+                         '--participation-field-sha256 and --rng-protocol v2; cannot run with --playcall-pbv1-package')
+    ap.add_argument('--participation-field-sha256', default=None,
+                    help='the expected SHA-256 of the --participation-field table; a different file is refused')
+    ap.add_argument('--participation-snap-counts', type=Path, default=None,
+                    help='SLC v2 research flag (off by default): the current season\'s published snap counts '
+                         '(snap_update.SCHEMA, built by docs/research/participation-model-2026-11-02/build_snap_counts.py) '
+                         'update the lineup table before each game, from the weeks before it only (snap_update.py). Needs '
+                         '--participation-field and --participation-snap-counts-sha256')
+    ap.add_argument('--participation-snap-counts-sha256', default=None,
+                    help='the expected SHA-256 of the --participation-snap-counts file; a different file is refused')
+    ap.add_argument('--playcall-fg-kicker', type=Path, default=None,
+                    help='SLC v2 research flag (off by default): field goals by the team kicker: distance +18, 76-yard '
+                         'record ceiling, kick share weighted by yard line, kicker make offset (kicker_field_goals.py). '
+                         'Needs --playcall-fg-kicker-sha256 and --slc-blocker-fix long_field_goal_feasibility')
+    ap.add_argument('--playcall-fg-kicker-sha256', default=None,
+                    help='the expected SHA-256 of the --playcall-fg-kicker table; a different file is refused')
     ap.add_argument('--playcall-qb-decisions', action='store_true',
                     help='SLC research: QB-specific target-role and scramble decisions from prior seasons')
     ap.add_argument('--playcall-qb-run-role-style', action='store_true',
@@ -1211,6 +1293,13 @@ def main(argv=None):
     ap.add_argument('--playcall-team-outcomes', action='store_true',
                     help='SLC v1 research: reweight which historical outcome is drawn by prior-season team event splits '
                          '(offense and defense), within the play-call intent. Needs --playcall-artifact')
+    ap.add_argument('--slc-v2', action='store_true',
+                    help='SLC v2: the V1.5 stack (needs --slc-profile v1_full_stack) with every v2 layer on by default: '
+                         'the season update (--playcall-season-adapt), lineup groupings and substitutions with the '
+                         'refit table (--participation-field), the snap-count update (--participation-snap-counts, '
+                         'required: build it with build_snap_counts.py for the game season), field goals by the '
+                         'team kicker (--playcall-fg-kicker with --slc-blocker-fix long_field_goal_feasibility) and '
+                         'RNG protocol v2. A table named explicitly replaces the pinned default.')
     ap.add_argument('--playcall-season-adapt', action='store_true',
                     help='SLC V1.5 research: blend the target season\'s results available at the cutoff into the team '
                          'splits. Needs --playcall-team-outcomes')
@@ -1241,6 +1330,9 @@ def main(argv=None):
                                                      'selecting from --availability-store'))
     ap.add_argument('--register-dir', help=('write the run read-only under this store and append its index line, '
                                             'so downstream code can find it'))
+    ap.add_argument('--rng-protocol', choices=(rng_protocol.V1, rng_protocol.V2), default=rng_protocol.V1,
+                    help=('per-seed random streams: v1 (legacy, keyed on the resealed snapshot hash, default) or '
+                          'v2 (keyed on stable pregame and model inputs; experiment; SLC layer only)'))
     ap.add_argument('--game-info-snapshot', help=('attach this frozen game-information snapshot to the run as '
                                                   'context: venue capacity, kickoff, forecast, referee status and '
                                                   'broadcast. The model does not read it.'))
@@ -1254,10 +1346,47 @@ def main(argv=None):
         args.seed_selection_manifest = selection.manifest()
         args.games = len(selection.seeds)
         args.seed_start = selection.seed_start
+    if args.slc_v2:  # every v2 layer on, with the pinned tables (SLC_V2_TABLES)
+        if args.slc_profile != 'v1_full_stack':
+            ap.error('--slc-v2 runs on --slc-profile v1_full_stack')
+        if not args.participation_snap_counts:
+            ap.error('--slc-v2 requires --participation-snap-counts and --participation-snap-counts-sha256 '
+                     '(docs/research/participation-model-2026-11-02/build_snap_counts.py for the game season)')
+        if args.playcall_pbv1_package:
+            ap.error('--slc-v2 sets the personnel label from the lineup; it cannot run with --playcall-pbv1-package')
+        args.playcall_season_adapt = True
+        args.rng_protocol = rng_protocol.V2
+        for flag, (path, sha) in SLC_V2_TABLES.items():
+            if not getattr(args, flag):
+                setattr(args, flag, REPO / path)
+                setattr(args, f'{flag}_sha256', sha)
+        if 'long_field_goal_feasibility' not in args.slc_blocker_fix:
+            args.slc_blocker_fix = list(args.slc_blocker_fix) + ['long_field_goal_feasibility']
     if args.slc_blocker_fix and not args.playcall_artifact:
         ap.error('--slc-blocker-fix requires --playcall-artifact')
     if args.playcall_player_outcomes_receiver_only and not args.playcall_player_outcomes:
         ap.error('--playcall-player-outcomes-receiver-only requires --playcall-player-outcomes')
+    if args.participation_field:
+        if not args.participation_field_sha256:
+            ap.error('--participation-field requires --participation-field-sha256')
+        if args.rng_protocol != rng_protocol.V2:
+            ap.error('--participation-field requires --rng-protocol v2')
+        if args.playcall_pbv1_package:
+            ap.error('--participation-field cannot run with --playcall-pbv1-package; both set the personnel label')
+        if not args.playcall_artifact:
+            ap.error('--participation-field requires --playcall-artifact (the SLC engine)')
+    if args.participation_snap_counts:
+        if not args.participation_field:
+            ap.error('--participation-snap-counts requires --participation-field')
+        if not args.participation_snap_counts_sha256:
+            ap.error('--participation-snap-counts requires --participation-snap-counts-sha256')
+    if args.playcall_fg_kicker:
+        if not args.playcall_fg_kicker_sha256:
+            ap.error('--playcall-fg-kicker requires --playcall-fg-kicker-sha256')
+        if not args.playcall_artifact:
+            ap.error('--playcall-fg-kicker requires --playcall-artifact (the SLC engine)')
+        if 'long_field_goal_feasibility' not in args.slc_blocker_fix:
+            ap.error('--playcall-fg-kicker requires --slc-blocker-fix long_field_goal_feasibility')
     if args.availability_snapshot and not args.roster_snapshot:
         ap.error('--availability-snapshot needs the full-depth roster: pass --roster-snapshot and --roster-provenance')
     if args.availability_store and not args.roster_snapshot:

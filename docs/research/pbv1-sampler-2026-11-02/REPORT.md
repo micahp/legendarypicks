@@ -46,11 +46,11 @@ The spec's rule asks for (a) a positive gain over B0 with an interval above zero
 
 - (a) Met: +0.0594 and +0.0667, intervals above zero.
 - (b) Met: 0.02% and 0.01% against B1's 0.54% and 0.21%.
-- (c) Met under the reading below: the retrospective gain over B0 is +0.0691, same sign.
+- (c) Met under B0: the primary retrospective gain over B0 is +0.0691, matching the positive development gains. The RB-only retrospective gain over B0 is +0.04882, also matching its positive development gains.
 
-**Reading of (c).** The spec does not name the comparison that (c) refers to. I read it as the B0 comparison, because criterion (a) uses it. If the owner reads it as the B1 comparison, the retrospective fold agrees in sign on that comparison as well (+0.00007, not significant), so the verdict does not change. The owner should confirm the reading. This is recorded here, not changed in the spec.
+**Reading of (c).** The spec does not name the comparison that (c) refers to. Under B0, criterion (c) passes because the retrospective gains have the same positive sign as the development gains. Under B1, it does not pass for the RB-only sensitivity: dev_2023 is -0.00025 and dev_2024 is -0.00036, while the 2025 retrospective gain is +0.00014 (95% CI -0.00008 to +0.00038; `outputs/pbv1_rb_only_retro_2025.json`). The signs do not agree. The owner should confirm the intended reading. This is recorded here, not changed in the spec.
 
-PBV1 passes Milestone 2's package-level criteria. The result is package-level only. It does not establish that named players, workloads or team opportunities are realistic.
+Under the B0 reading, PBV1 passes Milestone 2's package-level criteria. The result is package-level only. It does not establish that named players, workloads or team opportunities are realistic.
 
 ## What is not evaluated
 

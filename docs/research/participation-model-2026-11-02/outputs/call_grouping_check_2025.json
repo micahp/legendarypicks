@@ -1,0 +1,172 @@
+{
+ "season": 2025,
+ "seeds": 3,
+ "snaps": 34451,
+ "team_games": 570,
+ "v3_unconditioned": {
+  "by_grouping": [
+   {
+    "grouping": "11",
+    "observed_dropback_rate": 0.7104,
+    "observed_snaps": 19641,
+    "simulated_dropback_rate": 0.6419,
+    "simulated_snaps": 64610
+   },
+   {
+    "grouping": "12",
+    "observed_dropback_rate": 0.5269,
+    "observed_snaps": 7498,
+    "simulated_dropback_rate": 0.5454,
+    "simulated_snaps": 21897
+   },
+   {
+    "grouping": "21",
+    "observed_dropback_rate": 0.4583,
+    "observed_snaps": 2182,
+    "simulated_dropback_rate": 0.5297,
+    "simulated_snaps": 6660
+   },
+   {
+    "grouping": "13",
+    "observed_dropback_rate": 0.4032,
+    "observed_snaps": 1751,
+    "simulated_dropback_rate": 0.5304,
+    "simulated_snaps": 3571
+   },
+   {
+    "grouping": "other",
+    "observed_dropback_rate": 0.5571,
+    "observed_snaps": 1077,
+    "simulated_dropback_rate": 0.6017,
+    "simulated_snaps": 2699
+   },
+   {
+    "grouping": "22",
+    "observed_dropback_rate": 0.2818,
+    "observed_snaps": 834,
+    "simulated_dropback_rate": 0.513,
+    "simulated_snaps": 1766
+   },
+   {
+    "grouping": "12-OL6",
+    "observed_dropback_rate": 0.2192,
+    "observed_snaps": 698,
+    "simulated_dropback_rate": 0.5014,
+    "simulated_snaps": 1091
+   },
+   {
+    "grouping": "11-OL6",
+    "observed_dropback_rate": 0.3401,
+    "observed_snaps": 538,
+    "simulated_dropback_rate": 0.496,
+    "simulated_snaps": 885
+   },
+   {
+    "grouping": "21-OL6",
+    "observed_dropback_rate": 0.1379,
+    "observed_snaps": 232,
+    "simulated_dropback_rate": 0.4598,
+    "simulated_snaps": 174
+   }
+  ],
+  "field_status": {
+   "cell_fallback": 177
+  },
+  "fit_seasons": [
+   2022,
+   2023,
+   2024
+  ],
+  "mean_log_prob_observed_grouping": -1.2699,
+  "scored_snaps": 34325,
+  "skipped": {
+   "observed_grouping_not_in_table": 126
+  },
+  "table": "field_v3_2022_2024.json",
+  "table_sha256": "da0c439b17a286c524b33f7005b6280f66a13b4ea9dc3603324ddedc1a3ef917",
+  "weighted_abs_dropback_rate_error": 0.07131
+ },
+ "v4_given_call": {
+  "by_grouping": [
+   {
+    "grouping": "11",
+    "observed_dropback_rate": 0.7104,
+    "observed_snaps": 19641,
+    "simulated_dropback_rate": 0.6894,
+    "simulated_snaps": 64980
+   },
+   {
+    "grouping": "12",
+    "observed_dropback_rate": 0.5269,
+    "observed_snaps": 7498,
+    "simulated_dropback_rate": 0.4981,
+    "simulated_snaps": 21869
+   },
+   {
+    "grouping": "21",
+    "observed_dropback_rate": 0.4583,
+    "observed_snaps": 2182,
+    "simulated_dropback_rate": 0.4436,
+    "simulated_snaps": 6434
+   },
+   {
+    "grouping": "13",
+    "observed_dropback_rate": 0.4032,
+    "observed_snaps": 1751,
+    "simulated_dropback_rate": 0.3959,
+    "simulated_snaps": 3559
+   },
+   {
+    "grouping": "other",
+    "observed_dropback_rate": 0.5571,
+    "observed_snaps": 1077,
+    "simulated_dropback_rate": 0.5698,
+    "simulated_snaps": 2708
+   },
+   {
+    "grouping": "22",
+    "observed_dropback_rate": 0.2818,
+    "observed_snaps": 834,
+    "simulated_dropback_rate": 0.2689,
+    "simulated_snaps": 1748
+   },
+   {
+    "grouping": "12-OL6",
+    "observed_dropback_rate": 0.2192,
+    "observed_snaps": 698,
+    "simulated_dropback_rate": 0.2165,
+    "simulated_snaps": 1016
+   },
+   {
+    "grouping": "11-OL6",
+    "observed_dropback_rate": 0.3401,
+    "observed_snaps": 538,
+    "simulated_dropback_rate": 0.2643,
+    "simulated_snaps": 855
+   },
+   {
+    "grouping": "21-OL6",
+    "observed_dropback_rate": 0.1379,
+    "observed_snaps": 232,
+    "simulated_dropback_rate": 0.1413,
+    "simulated_snaps": 184
+   }
+  ],
+  "field_status": {
+   "cell_fallback": 177
+  },
+  "fit_seasons": [
+   2022,
+   2023,
+   2024
+  ],
+  "mean_log_prob_observed_grouping": -1.25374,
+  "scored_snaps": 34263,
+  "skipped": {
+   "observed_grouping_not_in_table": 188
+  },
+  "table": "field_v4_2022_2024.json",
+  "table_sha256": "1dfd02770c0bdc4d2616f406b8112f680a0c13bc91da1e065a51b81f9a2dc4bd",
+  "weighted_abs_dropback_rate_error": 0.02151
+ }
+}

@@ -1,0 +1,45 @@
+{
+  "inputs": {
+    "players.csv": "c5239e1480b397732d004f81c87dbb07565ff6ea4b2a0e6382cbb7ed35f6481e",
+    "scrimmage_participation.csv.gz": "211324f0a51754a3c8c5be6245bc4d243d24827e51ec42e288b1c7ddda0d698f",
+    "usage_plays.csv.gz": "929aeb9df1d48f009409b4af433587377f9fb2831c2dc95f115f065aa13682c2"
+  },
+  "mode": "evaluate",
+  "on_field": {
+    "brier_player_rate": 0.09046,
+    "brier_position_mean": 0.12324,
+    "candidate_player_plays": 1840061,
+    "candidates": "players with at least one 2022 to 2024 appearance for the same team and group",
+    "log_loss_player_rate": 0.29828,
+    "log_loss_position_mean": 0.41094,
+    "on_field_share": 0.1415
+  },
+  "personnel": {
+    "log_loss_league_mix": 1.17222,
+    "log_loss_team_mix_prior_only": 1.14657,
+    "log_loss_team_mix_with_2025_weeks_counterfactual": 1.08917,
+    "note": "the counterfactual uses 2025 participation through the prior week, which the 2026 season does not have; it bounds what a current-season personnel feed could add",
+    "plays": 34475,
+    "top_group_accuracy_league_mix": 0.5883,
+    "top_group_accuracy_team_mix_prior_only": 0.5905,
+    "top_group_accuracy_with_2025_weeks_counterfactual": 0.5916
+  },
+  "test_season": 2025,
+  "train_seasons": [
+    2022,
+    2023,
+    2024
+  ],
+  "usage": {
+    "carry": {
+      "log_loss_prior_only": 3.02132,
+      "log_loss_weekly_update": 1.66154,
+      "uses": 14895
+    },
+    "target": {
+      "log_loss_prior_only": 3.59192,
+      "log_loss_weekly_update": 2.47934,
+      "uses": 17582
+    }
+  }
+}

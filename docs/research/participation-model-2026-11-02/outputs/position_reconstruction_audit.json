@@ -1,0 +1,73 @@
+{
+ "audit": {
+  "gsis_with_multiple_pfr": 0,
+  "matched": 40138,
+  "no_offense_snaps": 61078,
+  "pfr_unmatched": 75
+ },
+ "note": "validation compares the PFR position with the on-field label for the same game, team and player; the 2022 rows are reconstructed only and have no on-field labels to check against",
+ "pfr_to_gsis_unique_fraction": 1.0,
+ "reconstructed_player_games_by_season_and_position": {
+  "2022|C": 601,
+  "2022|FB": 206,
+  "2022|G": 1300,
+  "2022|QB": 652,
+  "2022|RB": 1499,
+  "2022|T": 1441,
+  "2022|TE": 1644,
+  "2022|WR": 2607,
+  "2022|other": 34,
+  "2023|C": 643,
+  "2023|FB": 191,
+  "2023|G": 1314,
+  "2023|QB": 697,
+  "2023|RB": 1448,
+  "2023|T": 1405,
+  "2023|TE": 1598,
+  "2023|WR": 2731,
+  "2023|other": 39,
+  "2024|C": 624,
+  "2024|FB": 156,
+  "2024|G": 1274,
+  "2024|QB": 682,
+  "2024|RB": 1457,
+  "2024|T": 1462,
+  "2024|TE": 1664,
+  "2024|WR": 2651,
+  "2024|other": 52,
+  "2025|C": 473,
+  "2025|FB": 171,
+  "2025|G": 754,
+  "2025|QB": 687,
+  "2025|RB": 1419,
+  "2025|T": 1091,
+  "2025|TE": 1647,
+  "2025|WR": 2628,
+  "2025|other": 1196
+ },
+ "validation_on_onfield_labels_2023_2025": {
+  "FB": {
+   "agree": 513,
+   "disagree": 18,
+   "matched_agreement": 0.966102
+  },
+  "RB": {
+   "agree": 4225,
+   "disagree": 44,
+   "matched_agreement": 0.989693,
+   "no_pfr_row": 5
+  },
+  "TE": {
+   "agree": 4835,
+   "disagree": 2,
+   "matched_agreement": 0.999587,
+   "no_pfr_row": 17
+  },
+  "WR": {
+   "agree": 7931,
+   "disagree": 2,
+   "matched_agreement": 0.999748,
+   "no_pfr_row": 16
+  }
+ }
+}

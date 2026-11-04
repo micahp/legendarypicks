@@ -1068,7 +1068,9 @@ class _Game:
     def _resolve_special_teams(self, event, state, source_row, runoff, spot, rng):
         """Sample kick outcomes from the observed rate tables and resolve blocked kicks using audited source records."""
         if event == 'field_goal_attempt':
-            feasibility = fg_feasibility.evaluate(state['yl'])
+            sampler = getattr(self.ref, 'contextual_sampler', None)
+            kicker_flag = getattr(sampler, 'fg_kicker', None) is not None  # research flag: kicker_field_goals
+            feasibility = fg_feasibility.evaluate(state['yl'], rule=fg_feasibility.RECORD_RULE if kicker_flag else None)
             if not feasibility['eligible']:
                 return {'blocker': 'field_goal_attempt_exceeds_historical_feasibility_ceiling'}
             if 'long_field_goal_feasibility' in getattr(self.ref, 'blocker_fixes', ()):
@@ -1076,13 +1078,13 @@ class _Game:
                 if model is None:
                     return {'blocker': 'field_goal_distance_model_missing'}
                 kick_distance = feasibility['kick_distance_yards']
-                if kick_distance > float(model['max_observed_attempt_yards']):
+                if kick_distance > float(model['max_observed_attempt_yards']) and not kicker_flag:
                     return {'blocker': 'field_goal_distance_over_observed_max'}
-                sampler = getattr(self.ref, 'contextual_sampler', None)
                 if sampler is None:
                     return {'blocker': 'field_goal_distance_sampler_missing'}
                 try:
-                    result, distribution = sampler._field_goal_probability_result(kick_distance, rng)
+                    result, distribution = (sampler._field_goal_probability_result(kick_distance, rng, state['offense'])
+                                            if kicker_flag else sampler._field_goal_probability_result(kick_distance, rng))
                 except ValueError as exc:
                     return {'blocker': f'field_goal_distance_model_unavailable:{exc}'}
                 source = {'table': model['source_file'], 'fallback_level': distribution['fallback_level'],
@@ -1741,7 +1743,7 @@ def active_unsupported_rules(guarded, blocker):
 
 
 def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None,
-              paired_randomness=False):
+              paired_randomness=False, seed_root=None):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
 
     `ref` is the observed Reference (e2_reference.load). It is required, so a game is never played with a silent
@@ -1749,6 +1751,9 @@ def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame
     unless a caller fixes them for a test.
     """
     snapshot_digest = pregame_snapshot['snapshot_sha256'] if pregame_snapshot else ''
+    if seed_root is not None:
+        # v2: the stream root is keyed on stable inputs, and the named streams are always on
+        paired_randomness, snapshot_digest = True, seed_root
     if paired_randomness and not snapshot_digest:
         raise ValueError('paired random streams require a frozen pregame snapshot')
     material = f'{seed}:{snapshot_digest}'.encode()
@@ -1839,7 +1844,11 @@ def _validate_game_impl(record):
             event, outcome = play['event_type'], play['outcome']
             if outcome.get('field_goal_attempt'):
                 before = play.get('state_before') or {}
-                feasibility = fg_feasibility.evaluate(before.get('yardline_100'))
+                recorded_rule = (outcome.get('field_goal_feasibility') or {}).get('rule')
+                if recorded_rule not in fg_feasibility.RULES:
+                    raise AssertionError(f"drive {drive['index']} play {play['sequence']} records an unknown field-goal "
+                                         f"feasibility rule {recorded_rule!r}")
+                feasibility = fg_feasibility.evaluate(before.get('yardline_100'), rule=recorded_rule)
                 if not feasibility['eligible']:
                     raise AssertionError(
                         f"drive {drive['index']} play {play['sequence']} attempts a field goal beyond the "

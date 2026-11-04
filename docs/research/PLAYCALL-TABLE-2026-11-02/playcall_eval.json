@@ -1,0 +1,840 @@
+{
+ "acceptance": {
+  "deterministic": true,
+  "hi_team": "CIN",
+  "lo_team": "BAL",
+  "pass_rate_gap": 0.126,
+  "pass_rate_history": {
+   "BAL": 0.4962,
+   "CIN": 0.646
+  },
+  "situation": {
+   "dist": "10",
+   "down": "1",
+   "field": "36-50",
+   "score": "0",
+   "time": "q1"
+  },
+  "teams": {
+   "BAL": {
+    "legal_share": 1.0,
+    "offense_calls": 4000,
+    "personnel_mix": {
+     "113": 0.1507,
+     "122": 0.1842,
+     "131": 0.0043,
+     "203": 0.1168,
+     "212": 0.3757,
+     "221": 0.1653
+    },
+    "sample_pass_rate": 0.416,
+    "sampled_calls": 4000
+   },
+   "CIN": {
+    "legal_share": 1.0,
+    "offense_calls": 4000,
+    "personnel_mix": {
+     "014": 0.0003,
+     "113": 0.6685,
+     "121-OL6": 0.063,
+     "122": 0.2625,
+     "131": 0.0035,
+     "212": 0.0022
+    },
+    "sample_pass_rate": 0.542,
+    "sampled_calls": 4000
+   }
+  }
+ },
+ "criteria": {
+  "C1_joint_beats_league_and_team_rate": "joint log loss of the table is below both the league-only table and the team-rate baseline in every fold",
+  "C2_family_beats_playcalllayer_2025": "run-or-pass log loss of the family table is no worse than PlayCallLayer on 2025",
+  "C3_calibration_2025": "the largest gap between predicted and observed pass rate across deciles is at most 0.03 (2025)",
+  "C4_personnel_frequencies": "total variation between the expected and the observed personnel distribution is at most 0.05 in every fold",
+  "C5_team_behaviour_2025": "correlation of predicted and observed team pass rate across the 32 teams is at least 0.80 (2025)",
+  "C6_two_team_acceptance": "two teams with opposite historical pass rates, in the same pre-snap state, differ in predicted pass probability by at least 0.05 and in the direction of their history",
+  "C7_legality": "every sampled call in the acceptance draws is legal: its joint call has league support of at least 5 plays",
+  "C8_determinism": "the same seed gives the same sampled calls on a second run",
+  "C9_situational_sense": "league-wide, predicted pass rate on third and eleven or more is above first and ten"
+ },
+ "excluded_by_reason": {
+  "2022:INVALID": 139,
+  "2023:INVALID": 56,
+  "2024:INVALID": 62,
+  "2025:INVALID": 150,
+  "not_a_call:blank": 3286,
+  "not_a_call:extra_point": 4870,
+  "not_a_call:field_goal": 4325,
+  "not_a_call:kickoff": 10999,
+  "not_a_call:no_play": 9962,
+  "not_a_call:punt": 8442,
+  "not_a_call:qb_kneel": 1689,
+  "not_a_call:qb_spike": 278
+ },
+ "folds": [
+  {
+   "calibration_deciles": [
+    {
+     "mean_predicted": 0.3001,
+     "n": 3387,
+     "observed": 0.351
+    },
+    {
+     "mean_predicted": 0.3978,
+     "n": 3387,
+     "observed": 0.4402
+    },
+    {
+     "mean_predicted": 0.4438,
+     "n": 3387,
+     "observed": 0.4656
+    },
+    {
+     "mean_predicted": 0.4809,
+     "n": 3388,
+     "observed": 0.4944
+    },
+    {
+     "mean_predicted": 0.5212,
+     "n": 3387,
+     "observed": 0.5223
+    },
+    {
+     "mean_predicted": 0.5633,
+     "n": 3387,
+     "observed": 0.55
+    },
+    {
+     "mean_predicted": 0.622,
+     "n": 3388,
+     "observed": 0.6201
+    },
+    {
+     "mean_predicted": 0.7153,
+     "n": 3387,
+     "observed": 0.6856
+    },
+    {
+     "mean_predicted": 0.8216,
+     "n": 3387,
+     "observed": 0.809
+    },
+    {
+     "mean_predicted": 0.9103,
+     "n": 3388,
+     "observed": 0.8805
+    }
+   ],
+   "calibration_max_gap": 0.0509,
+   "family": {
+    "league_only": 0.601331,
+    "table_team_aware": 0.624482
+   },
+   "has_formation": false,
+   "league": {
+    "fallback_rate": {
+     "C": 0.008355,
+     "P": 0.013314,
+     "R": 0.113365
+    },
+    "joint_no_formation": 3.4836,
+    "steps": {
+     "C": 1.553473,
+     "P": 1.329385,
+     "R": 0.600742
+    }
+   },
+   "offense_calls": 33873,
+   "personnel_total_variation": 0.034678,
+   "rate": {
+    "fallback_rate": {
+     "C": 0.021403,
+     "P": 0.0,
+     "R": 0.018746
+    },
+    "joint_no_formation": 3.501993,
+    "steps": {
+     "C": 1.565856,
+     "P": 1.280527,
+     "R": 0.65561
+    }
+   },
+   "season": 2023,
+   "special_calls": 28,
+   "table": {
+    "fallback_rate": {
+     "C": 0.067192,
+     "P": 0.466183,
+     "R": 0.646119
+    },
+    "joint_no_formation": 3.528191,
+    "steps": {
+     "C": 1.575414,
+     "P": 1.326229,
+     "R": 0.626549
+    }
+   },
+   "team_pass_rate": {
+    "ARI": {
+     "observed": 0.5647,
+     "predicted": 0.6193
+    },
+    "ATL": {
+     "observed": 0.5254,
+     "predicted": 0.4781
+    },
+    "BAL": {
+     "observed": 0.5028,
+     "predicted": 0.5143
+    },
+    "BUF": {
+     "observed": 0.5521,
+     "predicted": 0.5914
+    },
+    "CAR": {
+     "observed": 0.5952,
+     "predicted": 0.5339
+    },
+    "CHI": {
+     "observed": 0.5197,
+     "predicted": 0.4646
+    },
+    "CIN": {
+     "observed": 0.6444,
+     "predicted": 0.6386
+    },
+    "CLE": {
+     "observed": 0.5648,
+     "predicted": 0.5385
+    },
+    "DAL": {
+     "observed": 0.5947,
+     "predicted": 0.5231
+    },
+    "DEN": {
+     "observed": 0.564,
+     "predicted": 0.5863
+    },
+    "DET": {
+     "observed": 0.5748,
+     "predicted": 0.5739
+    },
+    "GB": {
+     "observed": 0.5885,
+     "predicted": 0.5716
+    },
+    "HOU": {
+     "observed": 0.5905,
+     "predicted": 0.6082
+    },
+    "IND": {
+     "observed": 0.5696,
+     "predicted": 0.5964
+    },
+    "JAX": {
+     "observed": 0.6031,
+     "predicted": 0.5896
+    },
+    "KC": {
+     "observed": 0.6274,
+     "predicted": 0.6343
+    },
+    "LA": {
+     "observed": 0.5674,
+     "predicted": 0.5974
+    },
+    "LAC": {
+     "observed": 0.6164,
+     "predicted": 0.6463
+    },
+    "LV": {
+     "observed": 0.5994,
+     "predicted": 0.5853
+    },
+    "MIA": {
+     "observed": 0.5763,
+     "predicted": 0.6063
+    },
+    "MIN": {
+     "observed": 0.6371,
+     "predicted": 0.6425
+    },
+    "NE": {
+     "observed": 0.5957,
+     "predicted": 0.5928
+    },
+    "NO": {
+     "observed": 0.5912,
+     "predicted": 0.5891
+    },
+    "NYG": {
+     "observed": 0.5716,
+     "predicted": 0.5681
+    },
+    "NYJ": {
+     "observed": 0.6338,
+     "predicted": 0.6286
+    },
+    "PHI": {
+     "observed": 0.5458,
+     "predicted": 0.5436
+    },
+    "PIT": {
+     "observed": 0.5382,
+     "predicted": 0.5557
+    },
+    "SEA": {
+     "observed": 0.622,
+     "predicted": 0.611
+    },
+    "SF": {
+     "observed": 0.5231,
+     "predicted": 0.5102
+    },
+    "TB": {
+     "observed": 0.5944,
+     "predicted": 0.6837
+    },
+    "TEN": {
+     "observed": 0.5672,
+     "predicted": 0.5241
+    },
+    "WAS": {
+     "observed": 0.6638,
+     "predicted": 0.5485
+    }
+   },
+   "team_pass_rate_correlation": 0.6398,
+   "test_calls": 33901,
+   "train_seasons": [
+    2022
+   ]
+  },
+  {
+   "calibration_deciles": [
+    {
+     "mean_predicted": 0.3075,
+     "n": 3338,
+     "observed": 0.3478
+    },
+    {
+     "mean_predicted": 0.4052,
+     "n": 3339,
+     "observed": 0.4103
+    },
+    {
+     "mean_predicted": 0.4504,
+     "n": 3338,
+     "observed": 0.4404
+    },
+    {
+     "mean_predicted": 0.4866,
+     "n": 3339,
+     "observed": 0.4846
+    },
+    {
+     "mean_predicted": 0.5226,
+     "n": 3338,
+     "observed": 0.5141
+    },
+    {
+     "mean_predicted": 0.5646,
+     "n": 3339,
+     "observed": 0.5424
+    },
+    {
+     "mean_predicted": 0.6228,
+     "n": 3338,
+     "observed": 0.6159
+    },
+    {
+     "mean_predicted": 0.7065,
+     "n": 3339,
+     "observed": 0.7008
+    },
+    {
+     "mean_predicted": 0.8089,
+     "n": 3338,
+     "observed": 0.7999
+    },
+    {
+     "mean_predicted": 0.9095,
+     "n": 3339,
+     "observed": 0.873
+    }
+   ],
+   "calibration_max_gap": 0.0403,
+   "family": {
+    "league_only": 0.5989,
+    "table_team_aware": 0.624065
+   },
+   "has_formation": true,
+   "league": {
+    "fallback_rate": {
+     "C": 0.002516,
+     "F": 0.002816,
+     "P": 0.004972,
+     "R": 0.196645
+    },
+    "joint_no_formation": 3.302257,
+    "joint_with_formation": 4.063061,
+    "steps": {
+     "C": 1.549001,
+     "F": 0.760804,
+     "P": 1.211317,
+     "R": 0.541939
+    }
+   },
+   "offense_calls": 33385,
+   "personnel_total_variation": 0.033948,
+   "rate": {
+    "fallback_rate": {
+     "C": 0.009375,
+     "F": 0.022855,
+     "P": 0.0,
+     "R": 0.039688
+    },
+    "joint_no_formation": 3.41106,
+    "joint_with_formation": 4.217831,
+    "steps": {
+     "C": 1.567711,
+     "F": 0.806772,
+     "P": 1.277775,
+     "R": 0.565574
+    }
+   },
+   "season": 2024,
+   "special_calls": 23,
+   "table": {
+    "fallback_rate": {
+     "C": 0.03867,
+     "F": 0.052958,
+     "P": 0.333024,
+     "R": 0.748809
+    },
+    "joint_no_formation": 3.403325,
+    "joint_with_formation": 4.200493,
+    "steps": {
+     "C": 1.572517,
+     "F": 0.797168,
+     "P": 1.275626,
+     "R": 0.555181
+    }
+   },
+   "team_pass_rate": {
+    "ARI": {
+     "observed": 0.5553,
+     "predicted": 0.5764
+    },
+    "ATL": {
+     "observed": 0.5485,
+     "predicted": 0.5011
+    },
+    "BAL": {
+     "observed": 0.4793,
+     "predicted": 0.5105
+    },
+    "BUF": {
+     "observed": 0.5313,
+     "predicted": 0.5761
+    },
+    "CAR": {
+     "observed": 0.5919,
+     "predicted": 0.5492
+    },
+    "CHI": {
+     "observed": 0.6043,
+     "predicted": 0.4992
+    },
+    "CIN": {
+     "observed": 0.657,
+     "predicted": 0.6247
+    },
+    "CLE": {
+     "observed": 0.6571,
+     "predicted": 0.5677
+    },
+    "DAL": {
+     "observed": 0.6157,
+     "predicted": 0.5854
+    },
+    "DEN": {
+     "observed": 0.5718,
+     "predicted": 0.571
+    },
+    "DET": {
+     "observed": 0.5296,
+     "predicted": 0.5545
+    },
+    "GB": {
+     "observed": 0.4941,
+     "predicted": 0.5723
+    },
+    "HOU": {
+     "observed": 0.5962,
+     "predicted": 0.6006
+    },
+    "IND": {
+     "observed": 0.5276,
+     "predicted": 0.5864
+    },
+    "JAX": {
+     "observed": 0.5893,
+     "predicted": 0.6045
+    },
+    "KC": {
+     "observed": 0.6009,
+     "predicted": 0.621
+    },
+    "LA": {
+     "observed": 0.5764,
+     "predicted": 0.5734
+    },
+    "LAC": {
+     "observed": 0.5552,
+     "predicted": 0.6295
+    },
+    "LV": {
+     "observed": 0.6491,
+     "predicted": 0.6146
+    },
+    "MIA": {
+     "observed": 0.5907,
+     "predicted": 0.6049
+    },
+    "MIN": {
+     "observed": 0.5802,
+     "predicted": 0.6256
+    },
+    "NE": {
+     "observed": 0.5714,
+     "predicted": 0.5933
+    },
+    "NO": {
+     "observed": 0.5771,
+     "predicted": 0.6019
+    },
+    "NYG": {
+     "observed": 0.6095,
+     "predicted": 0.5592
+    },
+    "NYJ": {
+     "observed": 0.6458,
+     "predicted": 0.6035
+    },
+    "PHI": {
+     "observed": 0.4576,
+     "predicted": 0.5454
+    },
+    "PIT": {
+     "observed": 0.5127,
+     "predicted": 0.5475
+    },
+    "SEA": {
+     "observed": 0.6378,
+     "predicted": 0.614
+    },
+    "SF": {
+     "observed": 0.5562,
+     "predicted": 0.539
+    },
+    "TB": {
+     "observed": 0.5676,
+     "predicted": 0.6263
+    },
+    "TEN": {
+     "observed": 0.5668,
+     "predicted": 0.5447
+    },
+    "WAS": {
+     "observed": 0.528,
+     "predicted": 0.5922
+    }
+   },
+   "team_pass_rate_correlation": 0.4227,
+   "test_calls": 33408,
+   "train_seasons": [
+    2022,
+    2023
+   ]
+  },
+  {
+   "calibration_deciles": [
+    {
+     "mean_predicted": 0.3042,
+     "n": 3277,
+     "observed": 0.3198
+    },
+    {
+     "mean_predicted": 0.3999,
+     "n": 3278,
+     "observed": 0.4152
+    },
+    {
+     "mean_predicted": 0.4454,
+     "n": 3277,
+     "observed": 0.4284
+    },
+    {
+     "mean_predicted": 0.4822,
+     "n": 3278,
+     "observed": 0.4579
+    },
+    {
+     "mean_predicted": 0.5196,
+     "n": 3278,
+     "observed": 0.507
+    },
+    {
+     "mean_predicted": 0.5628,
+     "n": 3277,
+     "observed": 0.5511
+    },
+    {
+     "mean_predicted": 0.6217,
+     "n": 3278,
+     "observed": 0.6272
+    },
+    {
+     "mean_predicted": 0.7091,
+     "n": 3277,
+     "observed": 0.7025
+    },
+    {
+     "mean_predicted": 0.8115,
+     "n": 3278,
+     "observed": 0.8023
+    },
+    {
+     "mean_predicted": 0.9082,
+     "n": 3278,
+     "observed": 0.8856
+    }
+   ],
+   "calibration_max_gap": 0.0243,
+   "family": {
+    "calls_compared_with_playcalllayer": 32648,
+    "league_only": 0.598612,
+    "playcalllayer": 0.590103,
+    "playcalllayer_skipped_blank_input": 128,
+    "table_team_aware": 0.618675,
+    "table_team_aware_on_same_calls": 0.618828
+   },
+   "has_formation": true,
+   "league": {
+    "fallback_rate": {
+     "C": 0.003509,
+     "F": 0.003234,
+     "P": 0.004668,
+     "R": 0.145747
+    },
+    "joint_no_formation": 3.555271,
+    "joint_with_formation": 4.199249,
+    "steps": {
+     "C": 1.548778,
+     "F": 0.643977,
+     "P": 1.452014,
+     "R": 0.554479
+    }
+   },
+   "offense_calls": 32776,
+   "personnel_total_variation": 0.068988,
+   "rate": {
+    "fallback_rate": {
+     "C": 0.015316,
+     "F": 0.01614,
+     "P": 0.0,
+     "R": 0.022791
+    },
+    "joint_no_formation": 3.679946,
+    "joint_with_formation": 4.358242,
+    "steps": {
+     "C": 1.568256,
+     "F": 0.678295,
+     "P": 1.532118,
+     "R": 0.579572
+    }
+   },
+   "season": 2025,
+   "special_calls": 15,
+   "table": {
+    "fallback_rate": {
+     "C": 0.053728,
+     "F": 0.049396,
+     "P": 0.251251,
+     "R": 0.649195
+    },
+    "joint_no_formation": 3.748801,
+    "joint_with_formation": 4.38981,
+    "steps": {
+     "C": 1.5723,
+     "F": 0.641009,
+     "P": 1.609299,
+     "R": 0.567201
+    }
+   },
+   "team_pass_rate": {
+    "ARI": {
+     "observed": 0.6608,
+     "predicted": 0.5861
+    },
+    "ATL": {
+     "observed": 0.5512,
+     "predicted": 0.5184
+    },
+    "BAL": {
+     "observed": 0.4874,
+     "predicted": 0.495
+    },
+    "BUF": {
+     "observed": 0.5099,
+     "predicted": 0.5563
+    },
+    "CAR": {
+     "observed": 0.5532,
+     "predicted": 0.5653
+    },
+    "CHI": {
+     "observed": 0.5475,
+     "predicted": 0.5166
+    },
+    "CIN": {
+     "observed": 0.6454,
+     "predicted": 0.6553
+    },
+    "CLE": {
+     "observed": 0.6018,
+     "predicted": 0.6073
+    },
+    "DAL": {
+     "observed": 0.5938,
+     "predicted": 0.579
+    },
+    "DEN": {
+     "observed": 0.5931,
+     "predicted": 0.5692
+    },
+    "DET": {
+     "observed": 0.5895,
+     "predicted": 0.5656
+    },
+    "GB": {
+     "observed": 0.5227,
+     "predicted": 0.5406
+    },
+    "HOU": {
+     "observed": 0.571,
+     "predicted": 0.5968
+    },
+    "IND": {
+     "observed": 0.5738,
+     "predicted": 0.548
+    },
+    "JAX": {
+     "observed": 0.5615,
+     "predicted": 0.5799
+    },
+    "KC": {
+     "observed": 0.6017,
+     "predicted": 0.6215
+    },
+    "LA": {
+     "observed": 0.5843,
+     "predicted": 0.5503
+    },
+    "LAC": {
+     "observed": 0.5787,
+     "predicted": 0.6094
+    },
+    "LV": {
+     "observed": 0.6142,
+     "predicted": 0.6257
+    },
+    "MIA": {
+     "observed": 0.5499,
+     "predicted": 0.61
+    },
+    "MIN": {
+     "observed": 0.5801,
+     "predicted": 0.6245
+    },
+    "NE": {
+     "observed": 0.5453,
+     "predicted": 0.566
+    },
+    "NO": {
+     "observed": 0.5974,
+     "predicted": 0.59
+    },
+    "NYG": {
+     "observed": 0.5358,
+     "predicted": 0.5631
+    },
+    "NYJ": {
+     "observed": 0.5522,
+     "predicted": 0.6574
+    },
+    "PHI": {
+     "observed": 0.5352,
+     "predicted": 0.531
+    },
+    "PIT": {
+     "observed": 0.5967,
+     "predicted": 0.5322
+    },
+    "SEA": {
+     "observed": 0.5075,
+     "predicted": 0.5989
+    },
+    "SF": {
+     "observed": 0.5662,
+     "predicted": 0.524
+    },
+    "TB": {
+     "observed": 0.5654,
+     "predicted": 0.6205
+    },
+    "TEN": {
+     "observed": 0.6258,
+     "predicted": 0.5659
+    },
+    "WAS": {
+     "observed": 0.5148,
+     "predicted": 0.5768
+    }
+   },
+   "team_pass_rate_correlation": 0.4241,
+   "test_calls": 32791,
+   "train_seasons": [
+    2022,
+    2023,
+    2024
+   ]
+  }
+ ],
+ "overall": "FAIL",
+ "situational_sense": {
+  "1st_and_10": 0.482,
+  "3rd_and_11plus": 0.8255
+ },
+ "thresholds": {
+  "K": 20.0,
+  "MAX_CALIBRATION_GAP": 0.03,
+  "MAX_PERSONNEL_TV": 0.05,
+  "MIN_SUPPORT": 5,
+  "MIN_TEAM_CORRELATION": 0.8,
+  "MIN_TWO_TEAM_GAP": 0.05,
+  "SAMPLE_CALLS": 4000
+ },
+ "verdict": {
+  "C1_joint_beats_league_and_team_rate": "FAIL",
+  "C2_family_beats_playcalllayer_2025": "FAIL",
+  "C3_calibration_2025": "PASS",
+  "C4_personnel_frequencies": "FAIL",
+  "C5_team_behaviour_2025": "FAIL",
+  "C6_two_team_acceptance": "PASS",
+  "C7_legality": "PASS",
+  "C8_determinism": "PASS",
+  "C9_situational_sense": "PASS"
+ }
+}

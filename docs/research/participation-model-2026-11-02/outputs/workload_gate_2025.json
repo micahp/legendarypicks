@@ -1,0 +1,123 @@
+{
+ "holdout": [
+  2025
+ ],
+ "leave_beta": 0.0,
+ "leave_r0": 0.5,
+ "legality": "a snap is legal when its skill players match the grouping counts by season-primary class; observed snaps with other than five skill players (mostly six linemen) are excluded and counted in observed_snaps.not_five_skill; simulated short snaps are illegal",
+ "not_measured": "carries and targets: no carrier or target allocation model in the simulator",
+ "notes": "ACT eligibility is retrospective (weekly roster status). Stints are measured per player-game as the longest run of consecutive snaps.",
+ "observed": {
+  "classes": {
+   "RB": {
+    "entries_per_team_game_mean": 20.3123,
+    "max_stint_p95": 19,
+    "max_stint_p99": 32,
+    "player_games": 1683,
+    "rank_mean_snap_share": {
+     "1": 0.6558,
+     "2": 0.3184,
+     "3": 0.145,
+     "4": 0.0912
+    },
+    "snap_share_mean": 0.3721,
+    "snap_share_p95": 0.8158,
+    "snap_share_p99": 0.9216
+   },
+   "TE": {
+    "entries_per_team_game_mean": 25.5842,
+    "max_stint_p95": 25,
+    "max_stint_p99": 42,
+    "player_games": 1702,
+    "rank_mean_snap_share": {
+     "1": 0.7474,
+     "2": 0.4344,
+     "3": 0.2019,
+     "4": 0.0992
+    },
+    "snap_share_mean": 0.4571,
+    "snap_share_p95": 0.9143,
+    "snap_share_p99": 0.9701
+   },
+   "WR": {
+    "entries_per_team_game_mean": 37.0263,
+    "max_stint_p95": 35,
+    "max_stint_p99": 56,
+    "player_games": 2735,
+    "rank_mean_snap_share": {
+     "1": 0.8616,
+     "2": 0.7442,
+     "3": 0.5292,
+     "4": 0.2491
+    },
+    "snap_share_mean": 0.5161,
+    "snap_share_p95": 0.9467,
+    "snap_share_p99": 1.0
+   }
+  },
+  "legal_rate": 0.992982
+ },
+ "observed_games": 570,
+ "observed_snaps": {
+  "all": 34475,
+  "not_five_skill": 2042
+ },
+ "seeds": 3,
+ "simulated": {
+  "classes": {
+   "RB": {
+    "entries_per_team_game_mean": 19.6708,
+    "max_stint_p95": 13,
+    "max_stint_p99": 18,
+    "player_games": 5586,
+    "rank_mean_snap_share": {
+     "1": 0.5264,
+     "2": 0.3666,
+     "3": 0.1765,
+     "4": 0.0832
+    },
+    "snap_share_mean": 0.3311,
+    "snap_share_p95": 0.6087,
+    "snap_share_p99": 0.6863
+   },
+   "TE": {
+    "entries_per_team_game_mean": 24.1251,
+    "max_stint_p95": 16,
+    "max_stint_p99": 21,
+    "player_games": 5324,
+    "rank_mean_snap_share": {
+     "1": 0.5903,
+     "2": 0.4474,
+     "3": 0.2615,
+     "4": 0.0903
+    },
+    "snap_share_mean": 0.4147,
+    "snap_share_p95": 0.68,
+    "snap_share_p99": 0.7627
+   },
+   "WR": {
+    "entries_per_team_game_mean": 33.3374,
+    "max_stint_p95": 24,
+    "max_stint_p99": 32,
+    "player_games": 8766,
+    "rank_mean_snap_share": {
+     "1": 0.7503,
+     "2": 0.6539,
+     "3": 0.5529,
+     "4": 0.4207
+    },
+    "snap_share_mean": 0.5125,
+    "snap_share_p95": 0.8,
+    "snap_share_p99": 0.8704
+   }
+  },
+  "legal_rate": 1.0
+ },
+ "simulated_games": 1710,
+ "simulator_status": {
+  "feasible_redraw": 466,
+  "group_redraw": 402,
+  "joint_fallback": 4495,
+  "ok": 103425
+ }
+}

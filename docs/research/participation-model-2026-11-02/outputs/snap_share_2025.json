@@ -1,0 +1,446 @@
+{
+ "blank_label_note": "position groups from the reconstructed PFR positions (position_reconstruction_2022_2025.csv) in every season",
+ "dev_seasons": [
+  2023,
+  2024
+ ],
+ "holdout": 2025,
+ "k": 4,
+ "leakage_check": "the estimate for a game uses only that team's earlier games in the same season and a prior from the season before; the position group comes from the prior season only",
+ "prior_source_counts": {
+  "2023": {
+   "cross_team": 1965,
+   "overall": 1821,
+   "same_team": 6154
+  },
+  "2024": {
+   "cross_team": 1916,
+   "overall": 1782,
+   "same_team": 6181
+  },
+  "2025": {
+   "cross_team": 1937,
+   "overall": 1779,
+   "same_team": 6183
+  }
+ },
+ "role_table_POSTGAME_DESCRIPTIVE_ONLY": {
+  "2023": {
+   "OL1": {
+    "mean_share": 0.995,
+    "players": 32
+   },
+   "OL10": {
+    "mean_share": 0.3086,
+    "players": 20
+   },
+   "OL11": {
+    "mean_share": 0.2714,
+    "players": 13
+   },
+   "OL12": {
+    "mean_share": 0.264,
+    "players": 8
+   },
+   "OL13": {
+    "mean_share": 0.112,
+    "players": 6
+   },
+   "OL2": {
+    "mean_share": 0.9815,
+    "players": 32
+   },
+   "OL3": {
+    "mean_share": 0.9646,
+    "players": 32
+   },
+   "OL4": {
+    "mean_share": 0.9369,
+    "players": 32
+   },
+   "OL5": {
+    "mean_share": 0.906,
+    "players": 32
+   },
+   "OL6": {
+    "mean_share": 0.7575,
+    "players": 32
+   },
+   "OL7": {
+    "mean_share": 0.5814,
+    "players": 32
+   },
+   "OL8": {
+    "mean_share": 0.4682,
+    "players": 30
+   },
+   "OL9": {
+    "mean_share": 0.4075,
+    "players": 27
+   },
+   "QB1": {
+    "mean_share": 0.9495,
+    "players": 32
+   },
+   "QB2": {
+    "mean_share": 0.5466,
+    "players": 32
+   },
+   "QB3": {
+    "mean_share": 0.3064,
+    "players": 18
+   },
+   "RB1": {
+    "mean_share": 0.6199,
+    "players": 32
+   },
+   "RB2": {
+    "mean_share": 0.3729,
+    "players": 32
+   },
+   "RB3": {
+    "mean_share": 0.2303,
+    "players": 32
+   },
+   "RB4": {
+    "mean_share": 0.1705,
+    "players": 28
+   },
+   "RB5": {
+    "mean_share": 0.1309,
+    "players": 18
+   },
+   "RB6": {
+    "mean_share": 0.0854,
+    "players": 12
+   },
+   "TE1": {
+    "mean_share": 0.7096,
+    "players": 32
+   },
+   "TE2": {
+    "mean_share": 0.4308,
+    "players": 32
+   },
+   "TE3": {
+    "mean_share": 0.2575,
+    "players": 32
+   },
+   "TE4": {
+    "mean_share": 0.1534,
+    "players": 25
+   },
+   "TE5": {
+    "mean_share": 0.1107,
+    "players": 10
+   },
+   "WR1": {
+    "mean_share": 0.8382,
+    "players": 32
+   },
+   "WR2": {
+    "mean_share": 0.7566,
+    "players": 32
+   },
+   "WR3": {
+    "mean_share": 0.6134,
+    "players": 32
+   },
+   "WR4": {
+    "mean_share": 0.4455,
+    "players": 32
+   },
+   "WR5": {
+    "mean_share": 0.2984,
+    "players": 32
+   },
+   "WR6": {
+    "mean_share": 0.2019,
+    "players": 32
+   },
+   "WR7": {
+    "mean_share": 0.1286,
+    "players": 28
+   },
+   "WR8": {
+    "mean_share": 0.0794,
+    "players": 16
+   }
+  },
+  "2024": {
+   "OL1": {
+    "mean_share": 0.9959,
+    "players": 32
+   },
+   "OL10": {
+    "mean_share": 0.2896,
+    "players": 26
+   },
+   "OL11": {
+    "mean_share": 0.2145,
+    "players": 18
+   },
+   "OL12": {
+    "mean_share": 0.1704,
+    "players": 8
+   },
+   "OL2": {
+    "mean_share": 0.9876,
+    "players": 32
+   },
+   "OL3": {
+    "mean_share": 0.9738,
+    "players": 32
+   },
+   "OL4": {
+    "mean_share": 0.9528,
+    "players": 32
+   },
+   "OL5": {
+    "mean_share": 0.9,
+    "players": 32
+   },
+   "OL6": {
+    "mean_share": 0.7668,
+    "players": 32
+   },
+   "OL7": {
+    "mean_share": 0.6082,
+    "players": 32
+   },
+   "OL8": {
+    "mean_share": 0.4868,
+    "players": 32
+   },
+   "OL9": {
+    "mean_share": 0.3831,
+    "players": 30
+   },
+   "QB1": {
+    "mean_share": 0.9489,
+    "players": 32
+   },
+   "QB2": {
+    "mean_share": 0.4884,
+    "players": 32
+   },
+   "QB3": {
+    "mean_share": 0.3457,
+    "players": 13
+   },
+   "RB1": {
+    "mean_share": 0.6296,
+    "players": 32
+   },
+   "RB2": {
+    "mean_share": 0.3712,
+    "players": 32
+   },
+   "RB3": {
+    "mean_share": 0.2212,
+    "players": 32
+   },
+   "RB4": {
+    "mean_share": 0.1458,
+    "players": 29
+   },
+   "RB5": {
+    "mean_share": 0.1098,
+    "players": 20
+   },
+   "RB6": {
+    "mean_share": 0.0883,
+    "players": 9
+   },
+   "TE1": {
+    "mean_share": 0.7074,
+    "players": 32
+   },
+   "TE2": {
+    "mean_share": 0.4563,
+    "players": 32
+   },
+   "TE3": {
+    "mean_share": 0.2899,
+    "players": 32
+   },
+   "TE4": {
+    "mean_share": 0.1533,
+    "players": 27
+   },
+   "TE5": {
+    "mean_share": 0.1143,
+    "players": 12
+   },
+   "UNK1": {
+    "mean_share": 0.1465,
+    "players": 6
+   },
+   "WR1": {
+    "mean_share": 0.8385,
+    "players": 32
+   },
+   "WR10": {
+    "mean_share": 0.0646,
+    "players": 7
+   },
+   "WR2": {
+    "mean_share": 0.7605,
+    "players": 32
+   },
+   "WR3": {
+    "mean_share": 0.6583,
+    "players": 32
+   },
+   "WR4": {
+    "mean_share": 0.4302,
+    "players": 32
+   },
+   "WR5": {
+    "mean_share": 0.315,
+    "players": 32
+   },
+   "WR6": {
+    "mean_share": 0.2287,
+    "players": 32
+   },
+   "WR7": {
+    "mean_share": 0.1598,
+    "players": 27
+   },
+   "WR8": {
+    "mean_share": 0.1348,
+    "players": 20
+   },
+   "WR9": {
+    "mean_share": 0.1126,
+    "players": 9
+   }
+  }
+ },
+ "scoring": {
+  "2023": {
+   "component_mse": 0.06437,
+   "group_mean_mse": 0.098105,
+   "improvement_over_group_mean": 0.033735,
+   "improvement_over_prior_only": 0.026245,
+   "prior_only_mse": 0.090615,
+   "targets": 9940
+  },
+  "2024": {
+   "component_mse": 0.064897,
+   "group_mean_mse": 0.100119,
+   "improvement_over_group_mean": 0.035222,
+   "improvement_over_prior_only": 0.027536,
+   "prior_only_mse": 0.092433,
+   "targets": 9879
+  },
+  "2025": {
+   "component_mse": 0.06583,
+   "group_mean_mse": 0.097304,
+   "improvement_over_group_mean": 0.031475,
+   "improvement_over_prior_only": 0.021638,
+   "prior_only_mse": 0.087467,
+   "targets": 9899
+  }
+ },
+ "scoring_by_prior_group": {
+  "2023": {
+   "OL": {
+    "component_mse": 0.090709,
+    "group_mean_mse": 0.099476,
+    "targets": 2817
+   },
+   "QB": {
+    "component_mse": 0.101372,
+    "group_mean_mse": 0.104518,
+    "targets": 559
+   },
+   "RB": {
+    "component_mse": 0.030742,
+    "group_mean_mse": 0.059097,
+    "targets": 1352
+   },
+   "TE": {
+    "component_mse": 0.029433,
+    "group_mean_mse": 0.068491,
+    "targets": 1324
+   },
+   "UNK": {
+    "component_mse": 0.086676,
+    "group_mean_mse": 0.14261,
+    "targets": 1824
+   },
+   "WR": {
+    "component_mse": 0.043127,
+    "group_mean_mse": 0.099714,
+    "targets": 2064
+   }
+  },
+  "2024": {
+   "OL": {
+    "component_mse": 0.089488,
+    "group_mean_mse": 0.099185,
+    "targets": 2767
+   },
+   "QB": {
+    "component_mse": 0.10672,
+    "group_mean_mse": 0.104979,
+    "targets": 573
+   },
+   "RB": {
+    "component_mse": 0.031997,
+    "group_mean_mse": 0.061991,
+    "targets": 1289
+   },
+   "TE": {
+    "component_mse": 0.032063,
+    "group_mean_mse": 0.067742,
+    "targets": 1360
+   },
+   "UNK": {
+    "component_mse": 0.085452,
+    "group_mean_mse": 0.156167,
+    "targets": 1782
+   },
+   "WR": {
+    "component_mse": 0.045176,
+    "group_mean_mse": 0.096845,
+    "targets": 2108
+   }
+  },
+  "2025": {
+   "OL": {
+    "component_mse": 0.088947,
+    "group_mean_mse": 0.102578,
+    "targets": 2847
+   },
+   "QB": {
+    "component_mse": 0.095332,
+    "group_mean_mse": 0.096777,
+    "targets": 555
+   },
+   "RB": {
+    "component_mse": 0.0254,
+    "group_mean_mse": 0.061087,
+    "targets": 1236
+   },
+   "TE": {
+    "component_mse": 0.033646,
+    "group_mean_mse": 0.072574,
+    "targets": 1399
+   },
+   "UNK": {
+    "component_mse": 0.087855,
+    "group_mean_mse": 0.142038,
+    "targets": 1802
+   },
+   "WR": {
+    "component_mse": 0.052781,
+    "group_mean_mse": 0.089553,
+    "targets": 2060
+   }
+  }
+ },
+ "source": "scrimmage_participation.csv.gz"
+}
