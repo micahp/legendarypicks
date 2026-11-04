@@ -1,0 +1,235 @@
+{
+ "attempts_1999_2025": 27760,
+ "kick_distance_minus_yardline_2016_2025": {
+  "10": 2,
+  "17": 141,
+  "18": 9632,
+  "19": 954,
+  "20": 1,
+  "23": 1
+ },
+ "range_by_season": {
+  "2016": {
+   "attempts": 1050,
+   "beyond_career_long": 22,
+   "beyond_career_long_by_5_or_more": 6,
+   "beyond_career_long_in_window": 11,
+   "beyond_career_long_results": {
+    "blocked": 2,
+    "made": 6,
+    "missed": 14
+   },
+   "last_season_kickers": 38,
+   "league_median_career_long_of_last_season_kickers": 57.0,
+   "no_earlier_make": 5,
+   "over_60": 2,
+   "over_60_outside_window": 1
+  },
+  "2017": {
+   "attempts": 1065,
+   "beyond_career_long": 40,
+   "beyond_career_long_by_5_or_more": 20,
+   "beyond_career_long_in_window": 21,
+   "beyond_career_long_results": {
+    "blocked": 4,
+    "made": 24,
+    "missed": 12
+   },
+   "last_season_kickers": 36,
+   "league_median_career_long_of_last_season_kickers": 57.0,
+   "no_earlier_make": 23,
+   "over_60": 5,
+   "over_60_outside_window": 0
+  },
+  "2018": {
+   "attempts": 989,
+   "beyond_career_long": 33,
+   "beyond_career_long_by_5_or_more": 14,
+   "beyond_career_long_in_window": 14,
+   "beyond_career_long_results": {
+    "made": 21,
+    "missed": 12
+   },
+   "last_season_kickers": 41,
+   "league_median_career_long_of_last_season_kickers": 56,
+   "no_earlier_make": 15,
+   "over_60": 6,
+   "over_60_outside_window": 0
+  },
+  "2019": {
+   "attempts": 1018,
+   "beyond_career_long": 43,
+   "beyond_career_long_by_5_or_more": 16,
+   "beyond_career_long_in_window": 13,
+   "beyond_career_long_results": {
+    "blocked": 1,
+    "made": 27,
+    "missed": 15
+   },
+   "last_season_kickers": 41,
+   "league_median_career_long_of_last_season_kickers": 57,
+   "no_earlier_make": 13,
+   "over_60": 4,
+   "over_60_outside_window": 0
+  },
+  "2020": {
+   "attempts": 1015,
+   "beyond_career_long": 45,
+   "beyond_career_long_by_5_or_more": 25,
+   "beyond_career_long_in_window": 17,
+   "beyond_career_long_results": {
+    "blocked": 4,
+    "made": 29,
+    "missed": 12
+   },
+   "last_season_kickers": 41,
+   "league_median_career_long_of_last_season_kickers": 57,
+   "no_earlier_make": 20,
+   "over_60": 8,
+   "over_60_outside_window": 1
+  },
+  "2021": {
+   "attempts": 1076,
+   "beyond_career_long": 42,
+   "beyond_career_long_by_5_or_more": 20,
+   "beyond_career_long_in_window": 19,
+   "beyond_career_long_results": {
+    "blocked": 1,
+    "made": 26,
+    "missed": 15
+   },
+   "last_season_kickers": 43,
+   "league_median_career_long_of_last_season_kickers": 56,
+   "no_earlier_make": 22,
+   "over_60": 7,
+   "over_60_outside_window": 0
+  },
+  "2022": {
+   "attempts": 1105,
+   "beyond_career_long": 27,
+   "beyond_career_long_by_5_or_more": 4,
+   "beyond_career_long_in_window": 13,
+   "beyond_career_long_results": {
+    "blocked": 3,
+    "made": 14,
+    "missed": 10
+   },
+   "last_season_kickers": 44,
+   "league_median_career_long_of_last_season_kickers": 56.0,
+   "no_earlier_make": 15,
+   "over_60": 9,
+   "over_60_outside_window": 1
+  },
+  "2023": {
+   "attempts": 1107,
+   "beyond_career_long": 29,
+   "beyond_career_long_by_5_or_more": 8,
+   "beyond_career_long_in_window": 9,
+   "beyond_career_long_results": {
+    "blocked": 1,
+    "made": 17,
+    "missed": 11
+   },
+   "last_season_kickers": 42,
+   "league_median_career_long_of_last_season_kickers": 58.0,
+   "no_earlier_make": 14,
+   "over_60": 6,
+   "over_60_outside_window": 0
+  },
+  "2024": {
+   "attempts": 1166,
+   "beyond_career_long": 47,
+   "beyond_career_long_by_5_or_more": 17,
+   "beyond_career_long_in_window": 16,
+   "beyond_career_long_results": {
+    "blocked": 1,
+    "made": 31,
+    "missed": 15
+   },
+   "last_season_kickers": 40,
+   "league_median_career_long_of_last_season_kickers": 58.0,
+   "no_earlier_make": 20,
+   "over_60": 10,
+   "over_60_outside_window": 1
+  },
+  "2025": {
+   "attempts": 1140,
+   "beyond_career_long": 39,
+   "beyond_career_long_by_5_or_more": 13,
+   "beyond_career_long_in_window": 23,
+   "beyond_career_long_results": {
+    "made": 22,
+    "missed": 17
+   },
+   "last_season_kickers": 44,
+   "league_median_career_long_of_last_season_kickers": 58.0,
+   "no_earlier_make": 13,
+   "over_60": 20,
+   "over_60_outside_window": 3
+  }
+ },
+ "reconciliation_2016_2025": {
+  "counts_agree": 4862,
+  "kicker_weeks": 4862,
+  "long_agree": 4862
+ },
+ "selected": {
+  "recency": 0.5,
+  "sigma": 0.3
+ },
+ "skipped_pbp_rows": {},
+ "targets_2022_2025": {
+  "40-49": {
+   "attempts": 1248,
+   "ci95": [
+    -0.0041,
+    0.00093
+   ],
+   "kicker_log_loss": 0.49133,
+   "kicker_minus_league": -0.00162,
+   "league_log_loss": 0.49295
+  },
+  "50+": {
+   "attempts": 1034,
+   "ci95": [
+    -0.00801,
+    -0.00018
+   ],
+   "kicker_log_loss": 0.6106,
+   "kicker_minus_league": -0.00418,
+   "league_log_loss": 0.61478
+  },
+  "<40": {
+   "attempts": 2236,
+   "ci95": [
+    -0.00143,
+    0.00115
+   ],
+   "kicker_log_loss": 0.17616,
+   "kicker_minus_league": -0.00019,
+   "league_log_loss": 0.17635
+  },
+  "all": {
+   "attempts": 4518,
+   "ci95": [
+    -0.00281,
+    -0.00024
+   ],
+   "kicker_log_loss": 0.36265,
+   "kicker_minus_league": -0.0015,
+   "league_log_loss": 0.36415
+  }
+ },
+ "tune": {
+  "sigma=0.1,recency=0.5": 0.37275,
+  "sigma=0.1,recency=1.0": 0.37266,
+  "sigma=0.2,recency=0.5": 0.37235,
+  "sigma=0.2,recency=1.0": 0.3727,
+  "sigma=0.3,recency=0.5": 0.37219,
+  "sigma=0.3,recency=1.0": 0.37309,
+  "sigma=0.5,recency=0.5": 0.37284,
+  "sigma=0.5,recency=1.0": 0.37413,
+  "sigma=0.8,recency=0.5": 0.37481,
+  "sigma=0.8,recency=1.0": 0.3757
+ }
+}
