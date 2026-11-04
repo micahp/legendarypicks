@@ -19,6 +19,7 @@ are the ones in lineup_fit.py and export_field.py; test_participation_field.py c
 """
 import hashlib
 import json
+import math
 from collections import Counter
 from pathlib import Path
 
@@ -78,6 +79,28 @@ def group_counts(group):
     return {'RB': rb, 'TE': te, 'WR': wr, 'QB': qbs - 1}
 
 
+def class_vector(group):
+    """The grouping's (RB, TE, WR) counts, the coordinates of the snap-count tilt."""
+    counts = group_counts(group)
+    return tuple(counts[cls] for cls in SKILL_CLASSES)
+
+
+def leave_reference_rate(appearances, team_plays, position_prior, positions):
+    """{class: the on-field mean of the shrunk on-field rate}: each (player, team, grouping) rate weighted by its
+    appearances. The normaliser of leave_factor, so the mean factor over players on the field is about 1. The table's
+    export writes it; positions maps gsis_id to position."""
+    num, den = Counter(), Counter()
+    for (pid, team, group), a in appearances.items():
+        cls = SKILL.get(positions.get(pid))
+        if cls is None or a <= 0:
+            continue
+        prior = position_prior.get((positions[pid], group), 0.0)
+        plays = team_plays.get((team, group), 0.0)
+        num[cls] += a * (a + PLAYER_PRIOR_PLAYS * prior) / (plays + PLAYER_PRIOR_PLAYS)
+        den[cls] += a
+    return {cls: num[cls] / den[cls] for cls in SKILL_CLASSES if den[cls]}
+
+
 def readable(group):
     try:
         group_counts(group)
@@ -125,6 +148,17 @@ class Field:
         self.appearances = {(pid, team, group): w for pid, team, group, w in data['appearances']}
         self.team_plays = {(team, group): w for team, group, w in data['team_plays']}
         self.position_prior = {(pos, group): v for pos, group, v in data['position_prior']}
+        # The current-season update from published snap counts (set per game by snap_update.apply; empty = no update):
+        # team -> (lambda_RB, lambda_TE, lambda_WR), the exponential tilt of the grouping draw, and (team, gsis_id) -> a
+        # multiplier on the player's on-field rate.
+        self.group_tilt = {}
+        self.player_weight = {}
+        # A player's leave hazard scaled by ((1 - his rate) / (1 - his class's on-field mean rate)) ** leave_power, so a
+        # regular leaves less often than a backup. 0 (no scaling) unless the table sets it.
+        self.leave_power = float(data.get('leave_power', 0.0))
+        self.leave_reference = dict(data.get('leave_reference_rate', {}))
+        if self.leave_power and set(self.leave_reference) != set(SKILL_CLASSES):
+            raise ValueError(f'leave_power needs a leave_reference_rate for {SKILL_CLASSES}, got {sorted(self.leave_reference)}')
         self.status = Counter()
 
     @classmethod
@@ -139,6 +173,15 @@ class Field:
         """P(grouping | team, situation cell, previous grouping), and given the call ('run' or 'dropback') when the table
         has call-conditioned transitions. Empty when the cell has no league data. A call with no league data in the cell
         uses the unconditioned transition, counted in status."""
+        probs = self._group_probs(team, cell, prev, call)
+        lam = self.group_tilt.get(team)
+        if lam is None or not probs:
+            return probs
+        weights = {g: p * math.exp(sum(l * x for l, x in zip(lam, class_vector(g)))) for g, p in probs.items()}
+        total = sum(weights.values())
+        return {g: w / total for g, w in weights.items()}
+
+    def _group_probs(self, team, cell, prev, call):
         if call is not None and self.conditions_on_call:
             if self.marginal_by_cell_call.get((cell, call)):
                 marginal = self.marginal_by_cell_call[(cell, call)]
@@ -201,11 +244,18 @@ class Field:
         prior = pooled_leaves / pooled_total if pooled_total else 0.0
         return max(0.0, leaves + HAZARD_PRIOR_PLAYS * prior) / (total + HAZARD_PRIOR_PLAYS)
 
+    def leave_factor(self, pid, team, group, pos, cls):
+        """The player's multiplier on his class's leave hazard (leave_power > 0 only)."""
+        r = min(0.99, self.rate(pid, team, group, pos))
+        return ((1.0 - r) / (1.0 - self.leave_reference[cls])) ** self.leave_power
+
     def rate(self, pid, team, group, pos):
         prior = self.position_prior.get((pos, group), 0.0)
         appearances = self.appearances.get((pid, team, group), 0.0)
         plays = self.team_plays.get((team, group), 0.0)
-        return (appearances + PLAYER_PRIOR_PLAYS * prior) / (plays + PLAYER_PRIOR_PLAYS)
+        rate = (appearances + PLAYER_PRIOR_PLAYS * prior) / (plays + PLAYER_PRIOR_PLAYS)
+        weight = self.player_weight.get((team, pid))
+        return rate if weight is None else rate * weight
 
     def advance(self, team, lineup, group, roster, draw, prev_group=None):
         """The skill lineup after one snap. `lineup` maps each skill player on the field to his stint, the number of
@@ -217,6 +267,13 @@ class Field:
         starter = starter_qb(roster)  # the passer is never in the lineup; a second QB is drawn from the other QBs
         cls_of = {p['gsis_id']: SKILL[p['pos_abb']] for p in roster if p['pos_abb'] in SKILL}
         cls_of.update({p['gsis_id']: 'QB' for p in roster if p['pos_abb'] == 'QB' and p['gsis_id'] != starter})
+        pos_of = {p['gsis_id']: p['pos_abb'] for p in roster}
+
+        def hazard(kind_, cls, stint, pid):
+            base = self.leave_prob(kind_, cls, stint)
+            if not self.leave_power or cls not in self.leave_reference:
+                return base
+            return min(1.0, base * self.leave_factor(pid, team, group, pos_of[pid], cls))
         target = group_counts(group)
         leavers = set()
         kind = 'held' if prev_group == group else 'changed'
@@ -225,12 +282,12 @@ class Field:
             if cls is None:  # not a skill player on the roster any more
                 leavers.add(pid)
             elif prev_group is not None and group_counts(prev_group)[cls] == target[cls] \
-                    and draw.random() < self.leave_prob(kind, cls, lineup[pid]):  # rotation in a class whose count holds
+                    and draw.random() < hazard(kind, cls, lineup[pid], pid):  # rotation in a class whose count holds
                 leavers.add(pid)
         for pid in sorted(lineup):  # churn in a class whose count changes, beyond the count change itself
             cls = cls_of.get(pid)
             if pid not in leavers and cls is not None and prev_group is not None \
-                    and group_counts(prev_group)[cls] != target[cls] and draw.random() < self.leave_prob('swap', cls, 0):
+                    and group_counts(prev_group)[cls] != target[cls] and draw.random() < hazard('swap', cls, 0, pid):
                 leavers.add(pid)
         kept = {pid: stint for pid, stint in lineup.items() if pid not in leavers}
         removed = set(leavers)
@@ -238,7 +295,7 @@ class Field:
         for cls in LINEUP_CLASSES:  # the grouping's counts: surplus leaves by hazard, deficit enters from the bench
             on = sorted(pid for pid in kept if cls_of.get(pid) == cls)
             while len(on) > target[cls]:
-                weights = [max(self.leave_prob(kind, cls, kept[pid]), FLOOR) for pid in on]
+                weights = [max(hazard(kind, cls, kept[pid], pid), FLOOR) for pid in on]
                 pid = draw.choices(on, weights=weights, k=1)[0]
                 on.remove(pid)
                 del kept[pid]
