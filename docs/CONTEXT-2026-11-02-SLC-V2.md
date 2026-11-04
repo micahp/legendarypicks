@@ -39,7 +39,7 @@ Owner rulings, 2026-11-02:
 | M2 PBV1 sampler | Primary target (RB plus FB) passes Milestone 2 under the B0 reading of criterion (c). The SLC's RB-only target has no retrospective fold, so (c) is not evaluated for it. |
 | M3 play-call ablation | A2 (situation cell model, K = 20) rejected. Worse than A0 on log loss in both folds: +0.0166 (2023), +0.0116 (2024). Amendment 1 records this. |
 | M4 weekly models | P1 pass share and P2 target share built and frozen (C1, C2). P1 tempo, P1 go rate rejected. P3 rejected as built. P2 snap share inconclusive. |
-| M5 integration | PBV1 hook written, flag off. Flags-off regression NOT passing (section 8). P1 and P2 hooks not written. |
+| M5 integration | PBV1 hook written, flag off. Flags-off regression passing as of 2026-11-02 evening (section 8, item 1). P1 and P2 hooks not written. |
 | M6 prospective locks | NOT started. Lock tooling, per-game manifests and the streak-file builder are not built. Week 10 has 14 games, all unplayed on 2026-11-02. |
 | M7 decisions | Decision ledger committed (`SLC-V2-M4-M7-DECISIONS-2026-11-02.md`). |
 
@@ -108,13 +108,13 @@ Full hashes are in `PLAYCALL-M5-FREEZE-AMENDMENT-2-2026-11-02.md`.
 
 - `cd scripts/nfl_sequence && python3 -m unittest test_pbv1_package test_pbv1_criterion test_team_pass_share test_weekly_target_share`: all pass (run after the last `pbv1_package.py` edit, before the push).
 - `python3 -m unittest test_pbv1_hook`: 5 pass (local).
-- Flags-off regression: NOT passing (section 8).
+- Flags-off regression: passing as of 2026-11-02 evening (section 8, item 1).
 - No flags-on run has been made.
 - No 2026 outcome was compared. The smokes used Week 8 pre-game inputs only.
 
 ## 8. Open problems
 
-1. **Flags-off regression does not match the baseline.** Per-seed outcomes differ (for example seed 1, home points 44 against 36), the decision count differs (150 against 156), and `observed_reference_sha256` changed from `63e85483…` to `36f5281a…`. The reference hash is computed from DB rows. The dev DB `/root/legendarypicks/backend/data/picks.dev.db` was modified at 14:49:11 (during the flags-off run) and again at 14:50:10. The writer is unknown. Either the DB moved or the code edits changed behaviour; the HEAD control run decides which.
+1. **Resolved later on 2026-11-02:** on a frozen reference extract the flags-off run, a repeat and the legacy run all match with 0 of 3 seeds differing. The cause was the seed design (each seed is keyed on the resealed snapshot hash, which carries the live reference fingerprint), not the code edits. Evidence: `docs/research/pbv1-flags-off-regression-2026-11-02/`. The original note follows. **Flags-off regression does not match the baseline.** Per-seed outcomes differ (for example seed 1, home points 44 against 36), the decision count differs (150 against 156), and `observed_reference_sha256` changed from `63e85483…` to `36f5281a…`. The reference hash is computed from DB rows. The dev DB `/root/legendarypicks/backend/data/picks.dev.db` was modified at 14:49:11 (during the flags-off run) and again at 14:50:10. The writer is unknown. Either the DB moved or the code edits changed behaviour; the HEAD control run decides which.
    - Control: `git worktree add --detach` at `scratchpad/headwt` (HEAD), batch output `scratchpad/regress/head_control_seeds1-3.json`. Still running at the time of writing. Remove the worktree after the comparison (`git worktree remove`).
    - Comparison script: `scratchpad/regress/compare_runs.py`.
 2. **Pushed error in `pbv1-sampler-2026-11-02/REPORT.md`.** Section on criterion (c) says the retrospective fold agrees in sign under the B1 reading. It does not. The correction is in the unpushed amendment only. Needs a follow-up commit to the report.

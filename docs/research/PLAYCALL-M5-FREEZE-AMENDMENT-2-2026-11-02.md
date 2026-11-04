@@ -88,7 +88,7 @@ Unit and equality tests, run from `scripts/nfl_sequence`:
 Batch regression, Week 8 frozen snapshot `2026_08_KC_DEN`, `v1_full_stack`, seeds 1 to 3, same command as the baseline:
 
 - Baseline (HEAD code, before this amendment): `scratchpad/baseline/v1_full_stack_seeds1-3.json`, SHA-256 `0145bc4440e66674a0bf61e4578f65ec04e7a349244fb136fb00b236cf005082`, per-seed rows `…seeds.jsonl` SHA-256 `f22f120078f6882eb9819d928a1cbfcbcdba0ac20bb0b45b337dd6e2073ada93`.
-- Flags off, amended code: PENDING.
+- Flags off, amended code (RNG protocol v2, frozen reference extract): 0 of 3 seeds differ from the HEAD-code v2 run, which matches its own repeat. The legacy-RNG HEAD run is byte-identical to the baseline rows above. Evidence: `docs/research/pbv1-flags-off-regression-2026-11-02/`.
 - Flags on, `--playcall-pbv1-package`: PENDING.
 
 ## 7. Known defects, not fixed here
