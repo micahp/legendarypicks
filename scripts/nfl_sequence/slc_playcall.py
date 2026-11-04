@@ -112,11 +112,12 @@ class PlayCallLayer:
         return cls(json.loads(Path(path).read_text()))
 
     def logit(self, down, togo, yl, score_diff, quarter, clock, team=None):
-        d = int(down) - 1
-        dist = pm.distance_bucket(int(togo))
-        field = pm.field_bucket(int(yl))
-        score = pm.score_bucket(int(score_diff))
-        clock_index = pm.clock_bucket(int(quarter), None if clock is None else int(clock))
+        return self.logit_of_buckets(int(down) - 1, pm.distance_bucket(int(togo)), pm.field_bucket(int(yl)),
+                                     pm.score_bucket(int(score_diff)),
+                                     pm.clock_bucket(int(quarter), None if clock is None else int(clock)), team)
+
+    def logit_of_buckets(self, d, dist, field, score, clock_index, team=None):
+        """The logit for a situation already in the frame's buckets (d is the down minus one)."""
         eta = self.intercept
         eta += self.blocks['down_dist'][d * len(pm.DISTANCE_BUCKETS) + dist]
         eta += self.blocks['field'][field]
@@ -208,6 +209,10 @@ class PlayCallSampler:
         # Per-player event and joint yards/touchdown outcome profiles, off unless explicitly loaded.
         self.player_outcome_table = None
         self.player_outcome_roles = None
+        # SLC V1.5 (season_layers): the log-odds offset of each (team, down minus one) toward the current season, applied to the
+        # score-clock artifact's probability, and the manifest of every layer's current-season blend. None in V1.
+        self.season_team_down = None
+        self.season_blend_manifest = None
         self._current_team_outcome_fallbacks = []
 
     def _team(self, label):
@@ -357,9 +362,11 @@ class PlayCallSampler:
 
     def _dropback_probability(self, entry, state, team):
         if self.score_clock_playcalling_enabled:
-            return (self.layer.p_dropback(
-                state['down'], state['togo'], state['yl'], state['score_diff'], state['quarter'],
-                state['clock'], team), 'score_clock_logistic_artifact')
+            p = self.layer.p_dropback(state['down'], state['togo'], state['yl'], state['score_diff'], state['quarter'],
+                                      state['clock'], team)
+            if self.season_team_down is not None:
+                p = point_splits.adjust(p, self.season_team_down.get((team, int(state['down']) - 1), 0.0))
+            return p, 'score_clock_logistic_artifact'
         return (historical_cell_dropback_probability(entry['base']),
                 'historical_down_distance_field_cell_rate')
 
@@ -761,6 +768,8 @@ class PlayCallSampler:
             out['player_outcome_model'] = self.player_outcome_manifest
         if getattr(self, 'share_model_manifest', None) is not None:
             out['player_share_distribution'] = self.share_model_manifest
+        if getattr(self, 'season_blend_manifest', None) is not None:
+            out['season_blend'] = self.season_blend_manifest
         if getattr(self, 'qb_decision_manifest', None) is not None or getattr(self, 'player_outcome_manifest', None) is not None:
             integration_files = ('clock_d.py', 'e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
                                  'qb_decisions.py', 'player_outcomes.py', 'run_slc_game.py',
