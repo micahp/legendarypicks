@@ -22,8 +22,8 @@ import json
 from collections import Counter
 from pathlib import Path
 
-SCHEMA = 'lp.nfl.participation-field.v3'  # v3 grouping codes carry -OL<n> and -QB<n>; v2 tables (two digits) still load
-SCHEMAS = ('lp.nfl.participation-field.v2', SCHEMA)
+SCHEMA = 'lp.nfl.participation-field.v4'  # v4 adds transitions conditioned on the call; v3 codes carry -OL<n>, -QB<n>
+SCHEMAS = ('lp.nfl.participation-field.v2', 'lp.nfl.participation-field.v3', SCHEMA)
 PLAYER_PRIOR_PLAYS = 20.0  # shrinks a player's on-field rate to the position prior, as in participation_model.py
 LEAGUE_TRANSITION_PRIOR_PLAYS = 20.0  # shrinks a league grouping transition to the league's mix for the cell
 TEAM_TRANSITION_PRIOR_PLAYS = 50.0  # shrinks a team's grouping transition to the league's transition
@@ -107,6 +107,15 @@ class Field:
         self.marginal_by_cell = {}  # cell -> grouping -> weight, summed over the previous grouping
         for (cell, _prev), counts in self.league_transitions.items():
             self.marginal_by_cell.setdefault(cell, Counter()).update(counts)
+        # v4: the same transitions split by the call (run or dropback), so the grouping depends on the call
+        self.league_by_call = {(cell, call, prev): Counter(counts)
+                               for cell, call, prev, counts in data.get('league_transitions_by_intent', [])}
+        self.team_by_call = {(team, cell, call, prev): Counter(counts)
+                             for team, cell, call, prev, counts in data.get('team_transitions_by_intent', [])}
+        self.marginal_by_cell_call = {}
+        for (cell, call, _prev), counts in self.league_by_call.items():
+            self.marginal_by_cell_call.setdefault((cell, call), Counter()).update(counts)
+        self.conditions_on_call = bool(self.league_by_call)
         self.leave_counts = {(kind, cls, bucket): (leaves, total)
                              for kind, cls, bucket, leaves, total in data['leave_counts']}
         self.leave_class = {}  # (kind, class) -> pooled leaves and player-snaps, the prior for each stint bucket
@@ -126,17 +135,30 @@ class Field:
             raise ValueError(f'participation field {path} has sha256 {digest}, expected {expected_sha256}')
         return cls(json.loads(Path(path).read_text(encoding='utf-8')), digest)
 
-    def group_probs(self, team, cell, prev):
-        """P(grouping | team, situation cell, previous grouping). Empty when the cell has no league data."""
+    def group_probs(self, team, cell, prev, call=None):
+        """P(grouping | team, situation cell, previous grouping), and given the call ('run' or 'dropback') when the table
+        has call-conditioned transitions. Empty when the cell has no league data. A call with no league data in the cell
+        uses the unconditioned transition, counted in status."""
+        if call is not None and self.conditions_on_call:
+            if self.marginal_by_cell_call.get((cell, call)):
+                marginal = self.marginal_by_cell_call[(cell, call)]
+                league_counts = self.league_by_call.get((cell, call, prev), Counter())
+                team_counts = self.team_by_call.get((team, cell, call, prev), Counter())
+                return self._shrunk(marginal, league_counts, team_counts)
+            self.status['call_cell_missing'] += 1
         marginal = self.marginal_by_cell.get(cell)
         if not marginal:
             return {}
+        return self._shrunk(marginal, self.league_transitions.get((cell, prev), Counter()),
+                            self.team_transitions.get((team, cell, prev), Counter()))
+
+    @staticmethod
+    def _shrunk(marginal, league_counts, team_counts):
+        """The team transition shrunk to the league transition, shrunk to the league's mix for the cell."""
         total = sum(marginal.values())
-        league_counts = self.league_transitions.get((cell, prev), Counter())
         n_league = sum(league_counts.values())
         league = {group: (league_counts[group] + LEAGUE_TRANSITION_PRIOR_PLAYS * marginal[group] / total)
                   / (n_league + LEAGUE_TRANSITION_PRIOR_PLAYS) for group in marginal}
-        team_counts = self.team_transitions.get((team, cell, prev), Counter())
         n_team = sum(team_counts.values())
         return {group: (team_counts[group] + TEAM_TRANSITION_PRIOR_PLAYS * league[group])
                 / (n_team + TEAM_TRANSITION_PRIOR_PLAYS) for group in league}
@@ -160,9 +182,10 @@ class Field:
         same_down = [c for c in self.marginal_by_cell if c.startswith(f'{down}|') and plays(c) >= MIN_CELL_PLAYS]
         return max(same_down, key=lambda c: (plays(c), c)) if same_down else None
 
-    def draw_group(self, team, prev, cell, draw):
-        """The grouping for one snap, from the transition out of the previous snap's grouping (START on a game's first)."""
-        probs = self.group_probs(team, cell, prev)
+    def draw_group(self, team, prev, cell, draw, call=None):
+        """The grouping for one snap, from the transition out of the previous snap's grouping (START on a game's first),
+        given the call when the table conditions on it."""
+        probs = self.group_probs(team, cell, prev, call)
         if not probs:
             self.status['no_league_cell'] += 1
             return None

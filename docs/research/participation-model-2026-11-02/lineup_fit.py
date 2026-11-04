@@ -34,8 +34,18 @@ def group_counts(group):
     return pf.group_counts(group)
 
 
-def sequences(rows, positions, snap_labels=False, recon=None):
+def intent_of(row):
+    """The engine's call for a scrimmage row: 'dropback' when play-by-play marks a QB dropback (passes, sacks and scrambles),
+    else 'run'. A row with no qb_dropback field (a table built before it was added) is None."""
+    value = row.get('qb_dropback')
+    if value in (None, ''):
+        return None
+    return 'dropback' if float(value) == 1.0 else 'run'
+
+
+def sequences(rows, positions, snap_labels=False, recon=None, with_intent=False):
     """{(season, game_id, team): [(group, cell, skill), ...]} in play order. skill is a frozenset of (gsis_id, class).
+    with_intent=True appends the call (intent_of) to each tuple, for the call-conditioned transitions.
     snap_labels=True takes each player's class from the position listed on that snap, so a player with several roles
     keeps the role he had on each snap. Where the listed labels are missing (2022), the reconstructed position is used
     (participation_labels.aligned_labels). A player with no label from either source is left out of skill and is
@@ -47,9 +57,9 @@ def sequences(rows, positions, snap_labels=False, recon=None):
                               if label in SKILL)
         else:
             skill = frozenset((pid, SKILL[positions[pid]]) for pid in row['ids'] if positions.get(pid) in SKILL)
-        grouped[(int(row['season']), row['game_id'], row['posteam'])].append(
-            (int(row['play_id']), row['group'], pm.cell_of(row), skill))
-    return {key: [(group, cell, skill) for _, group, cell, skill in sorted(items, key=lambda item: item[0])]
+        item = (int(row['play_id']), row['group'], pm.cell_of(row), skill) + ((intent_of(row),) if with_intent else ())
+        grouped[(int(row['season']), row['game_id'], row['posteam'])].append(item)
+    return {key: [item[1:] for item in sorted(items, key=lambda item: item[0])]
             for key, items in grouped.items()}
 
 
@@ -57,6 +67,8 @@ def fit(seqs, seasons):
     """The export pieces: grouping transitions, team grouping transitions and leave counts, all recency weighted."""
     league_transitions = defaultdict(Counter)  # (cell, previous grouping) -> grouping -> weight
     team_transitions = defaultdict(Counter)  # (team, cell, previous grouping) -> grouping -> weight
+    league_by_intent = defaultdict(Counter)  # (cell, call, previous grouping) -> grouping -> weight
+    team_by_intent = defaultdict(Counter)  # (team, cell, call, previous grouping) -> grouping -> weight
     leave_counts = defaultdict(lambda: [0.0, 0.0])  # (kind, class, stint bucket) -> [leaves, player-snaps]
     swap_counts = defaultdict(lambda: [0.0, 0.0])  # class -> [leaves beyond the count change, player-snaps]
     checks = Counter()
@@ -65,9 +77,12 @@ def fit(seqs, seasons):
             continue
         w = pm.RECENCY[season]
         prev, prev_skill, prev_on, stint, prev_ok = START, None, set(), {}, False
-        for group, cell, skill in seq:
+        for group, cell, skill, *call in seq:
             league_transitions[(cell, prev)][group] += w
             team_transitions[(team, cell, prev)][group] += w
+            if call and call[0] is not None:
+                league_by_intent[(cell, call[0], prev)][group] += w
+                team_by_intent[(team, cell, call[0], prev)][group] += w
             on = {pid for pid, _ in skill}
             counted = Counter(cls for _, cls in skill)
             checks['snaps'] += 1
@@ -103,6 +118,10 @@ def fit(seqs, seasons):
                                for (cell, prev), counts in sorted(league_transitions.items())],
         'team_transitions': [[team, cell, prev, dict(sorted(counts.items()))]
                              for (team, cell, prev), counts in sorted(team_transitions.items())],
+        'league_transitions_by_intent': [[cell, call, prev, dict(sorted(counts.items()))]
+                                         for (cell, call, prev), counts in sorted(league_by_intent.items())],
+        'team_transitions_by_intent': [[team, cell, call, prev, dict(sorted(counts.items()))]
+                                       for (team, cell, call, prev), counts in sorted(team_by_intent.items())],
         'leave_counts': [[kind, cls, bucket, round(leaves, 6), round(total, 6)]
                          for (kind, cls, bucket), (leaves, total) in sorted(leave_counts.items())]
                         + [['swap', cls, 0, round(excess, 6), round(total, 6)]

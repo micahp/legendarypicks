@@ -40,7 +40,7 @@ SPECIAL_POSITIONS = {'K', 'P', 'LS'}
 DEFENSIVE_POSITIONS = {'DL', 'DE', 'DT', 'NT', 'LB', 'ILB', 'OLB', 'MLB', 'CB', 'FS', 'SS', 'S', 'DB', 'NB'}
 TOKEN = re.compile(r'(\d+)\s+([A-Z]+)')
 SCRIMMAGE_PLAYS = ('run', 'pass')
-PLAY_FIELDS = ('season', 'week', 'season_type', 'game_id', 'play_id', 'posteam', 'play_type', 'down', 'ydstogo',
+PLAY_FIELDS = ('season', 'week', 'season_type', 'game_id', 'play_id', 'posteam', 'play_type', 'qb_dropback', 'down', 'ydstogo',
                'yardline_100', 'qtr', 'score_differential', 'passer_player_id', 'rusher_player_id', 'receiver_player_id')
 
 
@@ -97,7 +97,7 @@ def load_plays(path):
 def build_participation(raw, out_dir, report):
     out_path = out_dir / 'scrimmage_participation.csv.gz'
     fields = ['season', 'week', 'season_type', 'game_id', 'play_id', 'posteam', 'play_type', 'down', 'ydstogo',
-              'yardline_100', 'qtr', 'score_differential', 'group', 'n_rb', 'n_te', 'n_wr', 'personnel_raw',
+              'yardline_100', 'qtr', 'score_differential', 'qb_dropback', 'group', 'n_rb', 'n_te', 'n_wr', 'personnel_raw',
               'n_offense', 'offense_ids', 'offense_positions', 'flag_defensive_label', 'flag_count_not_11',
               'flag_nonstandard_offense']
     counts = Counter()
@@ -130,7 +130,8 @@ def build_participation(raw, out_dir, report):
                         'game_id': play['game_id'], 'play_id': play['play_id'], 'posteam': play['posteam'],
                         'play_type': play['play_type'], 'down': play['down'], 'ydstogo': play['ydstogo'],
                         'yardline_100': play['yardline_100'], 'qtr': play['qtr'],
-                        'score_differential': play['score_differential'], 'group': group_code(personnel),
+                        'score_differential': play['score_differential'], 'qb_dropback': play['qb_dropback'],
+                        'group': group_code(personnel),
                         'n_rb': personnel.get('RB', 0) + personnel.get('FB', 0), 'n_te': personnel.get('TE', 0),
                         'n_wr': personnel.get('WR', 0), 'personnel_raw': row['offense_personnel'],
                         'n_offense': n_offense, 'offense_ids': ';'.join(ids),

@@ -5,6 +5,7 @@ the runner and receiver are players on the field, the personnel label is the lin
 same lineups. A team code the table does not use is refused.
 """
 import copy
+from collections import Counter
 import json
 import random
 import unittest
@@ -167,6 +168,33 @@ class LineAndQbGroupings(unittest.TestCase):
             passer = chosen.get('passer')
             if passer is not None and passer['pos_abb'] == 'QB':
                 self.assertEqual(passer['gsis_id'], self.starter)
+
+
+V4_TABLE = ROOT / 'docs/research/participation-model-2026-11-02/outputs/field_v4_2022_2025.json'
+V4_SHA256 = 'b53b2566e3abf3874f738f1c26f3e2975c6f03d65887bad9590c276006c9a4c3'
+
+
+class GroupingGivenCall(unittest.TestCase):
+    def test_heavy_groupings_go_with_runs(self):
+        field = pf.Field.load(V4_TABLE, V4_SHA256)
+        self.assertTrue(field.conditions_on_call)
+        pick = pe.chooser(SNAPSHOT, 31, seed_root='r' * 64, field=field)
+        rng = random.Random(31)
+        calls = {'heavy': Counter(), 'eleven': Counter()}
+        for state in states(600, 31):
+            intent = rng.choice(['run', 'dropback'])
+            group = pick(intent, 'A', state)['lineup']['group']
+            heavy = '-OL' in group or pf.group_counts(group)['WR'] <= 1
+            if heavy or group == '11':
+                calls['heavy' if heavy else 'eleven'][intent] += 1
+        share = {k: v['dropback'] / sum(v.values()) for k, v in calls.items()}
+        self.assertLess(share['heavy'], share['eleven'] - 0.2, share)
+
+    def test_a_v3_table_ignores_the_call(self):
+        field = pf.Field.load(V3_TABLE, V3_SHA256)
+        self.assertFalse(field.conditions_on_call)
+        self.assertEqual(field.group_probs('DEN', '1|xl|mid', pf.START, 'run'),
+                         field.group_probs('DEN', '1|xl|mid', pf.START, 'dropback'))
 
 
 class Loading(unittest.TestCase):
