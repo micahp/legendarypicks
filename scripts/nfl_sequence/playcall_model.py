@@ -147,11 +147,17 @@ def load_frame(seasons, db=e1.DEFAULT_DB, include_flagged=True):
     """Build the frame for the given seasons from the observations. Refuses the holdout before reading anything."""
     seasons = tuple(sorted(seasons))
     holdout.refuse_if_holdout(seasons[-1], 'play-call model frame')
+    return frame_from_observations(pco.observations(db, first_season=seasons[0], last_season=seasons[-1]), seasons,
+                                   include_flagged)
+
+
+def frame_from_observations(observations, seasons, include_flagged=True):
+    """The frame of the kept plays among `observations` (playcall_observations.observation records) in `seasons`."""
     team_index = {}
     cols = {k: [] for k in FRAME_KEYS}
     game_index = {}
     wanted = set(seasons)
-    for obs in pco.observations(db, first_season=seasons[0], last_season=seasons[-1]):
+    for obs in observations:
         if obs['season'] not in wanted or not keep_play(obs, include_flagged):
             continue
         cols['season'].append(obs['season'])
