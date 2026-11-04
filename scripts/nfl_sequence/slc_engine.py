@@ -7,6 +7,7 @@ A game without a snapshot is refused: the first-piece path has no pregame missed
 different model under the SLC name.
 """
 import copy
+import gc
 import hashlib
 import json
 import math
@@ -69,12 +70,14 @@ def _stable_model_value(value):
         return value
     if type(value) is _Stable:
         return value.value
+    plain = _PLAIN_TYPES  # plain leaves are their own stable value; skipping the call for them is most of the saving
     if isinstance(value, dict) or isinstance(value, Mapping):
-        entries = [(_stable_model_value(key), _stable_model_value(item)) for key, item in value.items()]
+        entries = [(key if type(key) in plain else _stable_model_value(key),
+                    item if type(item) in plain else _stable_model_value(item)) for key, item in value.items()]
         entries.sort(key=lambda pair: _sort_key(pair[0]))
         return {'__mapping__': entries}
     if isinstance(value, (tuple, list)):
-        return [_stable_model_value(item) for item in value]
+        return [item if type(item) in plain else _stable_model_value(item) for item in value]
     if isinstance(value, (set, frozenset)):
         entries = [_stable_model_value(item) for item in value]
         return sorted(entries, key=_sort_key)
@@ -91,7 +94,14 @@ def _stable_model_value(value):
 
 
 def _model_hash(value):
-    encoded = json.dumps(_stable_model_value(value), sort_keys=True, separators=(',', ':'), default=str).encode()
+    # The walk allocates millions of short-lived lists and no cycles; pausing the cyclic collector only removes its passes.
+    collecting = gc.isenabled()
+    gc.disable()
+    try:
+        encoded = json.dumps(_stable_model_value(value), sort_keys=True, separators=(',', ':'), default=str).encode()
+    finally:
+        if collecting:
+            gc.enable()
     return hashlib.sha256(encoded).hexdigest()
 
 
