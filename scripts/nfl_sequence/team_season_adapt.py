@@ -82,14 +82,18 @@ def load_plays(db, season, game_ids, cutoff):
         con.close()
 
 
-def adapt(hist, rows, n0=csa.DEFAULT_N0, prior_strength=tt.PRIOR_STRENGTH, focus_teams=()):
+def adapt(hist, rows, n0=csa.DEFAULT_N0, prior_strength=tt.PRIOR_STRENGTH, focus_teams=(), team_games=None):
     """(TeamTendencies with current-season evidence blended in, diagnostics).
 
     `rows` are current-season play rows already filtered to games available at the cutoff. With no rows the historical
     object is returned unchanged. A cell with no historical league share cannot be blended; its plays are counted in the
-    diagnostics and left at the historical value."""
+    diagnostics and left at the historical value.
+
+    `team_games` ({team: games available at the cutoff}, SLC V1.5 every-layer rule) sets the weight on history to
+    N0 / (N0 + the team's games), the predeclared rule. Without it the weight uses the cell's play count n, as before."""
     league_shares = hist.league_shares  # {cell name: {event: historical league share}}; moves between shares and ratios
     diagnostics = {'method': METHOD, 'n0': float(n0), 'prior_strength': float(prior_strength), 'plays': len(rows),
+                   'weight_unit': 'cell plays' if team_games is None else 'team games',
                    'cells_blended': 0, 'cells_without_history': 0, 'plays_without_history_cell': 0,
                    'focus': {}}
     if not rows:
@@ -111,6 +115,7 @@ def adapt(hist, rows, n0=csa.DEFAULT_N0, prior_strength=tt.PRIOR_STRENGTH, focus
         for team, by_cell in by_team.items():
             for cname, season_counts in by_cell.items():
                 n = sum(season_counts.values())
+                evidence = n if team_games is None else team_games.get(team, 0)
                 shares = league_shares[cname]
                 team_ratios = ratios[side].setdefault(team, {})
                 historical = team_ratios.get(cname, {})
@@ -119,7 +124,7 @@ def adapt(hist, rows, n0=csa.DEFAULT_N0, prior_strength=tt.PRIOR_STRENGTH, focus
                 for event, league_share in shares.items():
                     hist_share = historical.get(event, 1.0) * league_share
                     season_share = (season_counts[event] + prior_strength * league_share) / (n + prior_strength)
-                    share = csa.blend_probability(hist_share, season_share, n, n0)
+                    share = csa.blend_probability(hist_share, season_share, evidence, n0)
                     blended[event] = share / league_share
                     if team in focus_teams:
                         focus_rows[event] = {'historical_share': hist_share, 'season_share': season_share,
@@ -130,10 +135,11 @@ def adapt(hist, rows, n0=csa.DEFAULT_N0, prior_strength=tt.PRIOR_STRENGTH, focus
                     diagnostics['cells_without_history'] += 1
                 if team in focus_teams:
                     key = f'{side}:{team}:{cname}'
-                    diagnostics['focus'][key] = {'n': n, 'weight_on_history': csa.effective_weight_on_history(n, n0),
+                    diagnostics['focus'][key] = {'n': n, 'weight_on_history': csa.effective_weight_on_history(evidence, n0),
                                                  'events': focus_rows}
     values = [v for side in ratios.values() for team in side.values() for cell in team.values() for v in cell.values()]
     manifest = {'method': METHOD, 'historical_sha256': hist.manifest['sha256'], 'n0': float(n0),
+                'weight_unit': diagnostics['weight_unit'],
                 'prior_strength': float(prior_strength), 'season_plays': len(rows),
                 'ratio_range': [min(values), max(values)] if values else None,
                 'tables_sha256': tt._sha(ratios)}
@@ -142,13 +148,13 @@ def adapt(hist, rows, n0=csa.DEFAULT_N0, prior_strength=tt.PRIOR_STRENGTH, focus
     return adapted, diagnostics
 
 
-def build_for_target(db, season, target_game_id, kickoff, hist, n0=csa.DEFAULT_N0, focus_teams=()):
+def build_for_target(db, season, target_game_id, kickoff, hist, n0=csa.DEFAULT_N0, focus_teams=(), team_games=None):
     """The adapted tendencies for one target game: only games whose results were available at its cutoff are used."""
     cutoff = cutoff_utc(kickoff)
     schedule = load_schedule(db, season)
     game_ids, undated = available_games(schedule, season, cutoff, target_game_id)
     rows = load_plays(db, season, game_ids, cutoff)
-    tendencies, diagnostics = adapt(hist, rows, n0=n0, focus_teams=focus_teams)
+    tendencies, diagnostics = adapt(hist, rows, n0=n0, focus_teams=focus_teams, team_games=team_games)
     diagnostics.update({'target_game_id': target_game_id, 'cutoff_utc': cutoff.isoformat(),
                         'season_games': game_ids, 'undated_games': undated})
     return tendencies, diagnostics
