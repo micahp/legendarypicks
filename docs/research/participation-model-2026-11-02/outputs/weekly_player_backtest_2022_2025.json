@@ -1,0 +1,1017 @@
+{
+ "alpha_grid": [
+  0.5,
+  1.0,
+  1.5,
+  2.0
+ ],
+ "differences_mae": {
+  "N_minus_P2": {
+   "all": {
+    "ci95": [
+     -0.03044,
+     -0.02632
+    ],
+    "mean": -0.02841,
+    "team_games": 2278
+   },
+   "observed_positive": {
+    "ci95": [
+     -0.03216,
+     -0.02783
+    ],
+    "mean": -0.03001,
+    "team_games": 2278
+   },
+   "period_post": {
+    "ci95": [
+     -0.04892,
+     -0.03078
+    ],
+    "mean": -0.03955,
+    "team_games": 104
+   },
+   "period_w01-04": {
+    "ci95": [
+     -0.02276,
+     -0.01509
+    ],
+    "mean": -0.019,
+    "team_games": 512
+   },
+   "period_w05-09": {
+    "ci95": [
+     -0.0309,
+     -0.02245
+    ],
+    "mean": -0.02674,
+    "team_games": 578
+   },
+   "period_w10-18": {
+    "ci95": [
+     -0.0358,
+     -0.02951
+    ],
+    "mean": -0.0327,
+    "team_games": 1084
+   },
+   "with_earlier_game": {
+    "ci95": [
+     -0.03597,
+     -0.03161
+    ],
+    "mean": -0.03371,
+    "team_games": 2150
+   }
+  },
+  "P1_minus_P0": {
+   "all": {
+    "ci95": [
+     0.00066,
+     0.00167
+    ],
+    "mean": 0.00118,
+    "team_games": 2278
+   },
+   "observed_positive": {
+    "ci95": [
+     0.00086,
+     0.0019
+    ],
+    "mean": 0.00138,
+    "team_games": 2278
+   },
+   "period_post": {
+    "ci95": [
+     0.00054,
+     0.00486
+    ],
+    "mean": 0.00267,
+    "team_games": 104
+   },
+   "period_w01-04": {
+    "ci95": [
+     -0.00074,
+     0.00136
+    ],
+    "mean": 0.00033,
+    "team_games": 512
+   },
+   "period_w05-09": {
+    "ci95": [
+     -0.00021,
+     0.00177
+    ],
+    "mean": 0.00077,
+    "team_games": 578
+   },
+   "period_w10-18": {
+    "ci95": [
+     0.00095,
+     0.00233
+    ],
+    "mean": 0.00165,
+    "team_games": 1084
+   },
+   "with_earlier_game": {
+    "ci95": [
+     0.00084,
+     0.00186
+    ],
+    "mean": 0.00134,
+    "team_games": 2150
+   }
+  },
+  "P1h_minus_P1": {
+   "all": {
+    "ci95": [
+     -0.01537,
+     -0.01279
+    ],
+    "mean": -0.01405,
+    "team_games": 2278
+   },
+   "observed_positive": {
+    "ci95": [
+     -0.01347,
+     -0.01082
+    ],
+    "mean": -0.01215,
+    "team_games": 2278
+   },
+   "period_post": {
+    "ci95": [
+     -0.01905,
+     -0.00697
+    ],
+    "mean": -0.01283,
+    "team_games": 104
+   },
+   "period_w01-04": {
+    "ci95": [
+     -0.02061,
+     -0.0152
+    ],
+    "mean": -0.01792,
+    "team_games": 512
+   },
+   "period_w05-09": {
+    "ci95": [
+     -0.0176,
+     -0.01228
+    ],
+    "mean": -0.0149,
+    "team_games": 578
+   },
+   "period_w10-18": {
+    "ci95": [
+     -0.01379,
+     -0.01006
+    ],
+    "mean": -0.01189,
+    "team_games": 1084
+   },
+   "with_earlier_game": {
+    "ci95": [
+     -0.01482,
+     -0.01215
+    ],
+    "mean": -0.01344,
+    "team_games": 2150
+   }
+  },
+  "P2_minus_P1h": {
+   "all": {
+    "ci95": [
+     -0.04978,
+     -0.04645
+    ],
+    "mean": -0.04818,
+    "team_games": 2278
+   },
+   "observed_positive": {
+    "ci95": [
+     -0.04423,
+     -0.04101
+    ],
+    "mean": -0.04263,
+    "team_games": 2278
+   },
+   "period_post": {
+    "ci95": [
+     -0.05915,
+     -0.0461
+    ],
+    "mean": -0.05263,
+    "team_games": 104
+   },
+   "period_w01-04": {
+    "ci95": [
+     -0.04533,
+     -0.03847
+    ],
+    "mean": -0.04189,
+    "team_games": 512
+   },
+   "period_w05-09": {
+    "ci95": [
+     -0.0556,
+     -0.04919
+    ],
+    "mean": -0.05237,
+    "team_games": 578
+   },
+   "period_w10-18": {
+    "ci95": [
+     -0.05098,
+     -0.0461
+    ],
+    "mean": -0.04851,
+    "team_games": 1084
+   },
+   "with_earlier_game": {
+    "ci95": [
+     -0.05186,
+     -0.04869
+    ],
+    "mean": -0.05027,
+    "team_games": 2150
+   }
+  }
+ },
+ "inputs": "/root/repro/player-backtest/data/pbt_inputs.json",
+ "inputs_sha256": "b546bad44d292d6e66dfdfe2a741c8ce8f549017273013f0fc614474a54042ae",
+ "n0_grid": [
+  1,
+  2,
+  4,
+  8,
+  16,
+  32
+ ],
+ "players_csv_sha256": "c5239e1480b397732d004f81c87dbb07565ff6ea4b2a0e6382cbb7ed35f6481e",
+ "runs": 16,
+ "scores": {
+  "N": {
+   "all": {
+    "mae": 0.12683,
+    "mean_forecast": 0.41357,
+    "mean_observed": 0.42005,
+    "n": 26872,
+    "rmse": 0.17943
+   },
+   "class_RB": {
+    "mae": 0.11044,
+    "mean_forecast": 0.31001,
+    "mean_observed": 0.31682,
+    "n": 7911,
+    "rmse": 0.15515
+   },
+   "class_TE": {
+    "mae": 0.12133,
+    "mean_forecast": 0.41691,
+    "mean_observed": 0.42408,
+    "n": 7121,
+    "rmse": 0.16704
+   },
+   "class_WR": {
+    "mae": 0.14109,
+    "mean_forecast": 0.48076,
+    "mean_observed": 0.4866,
+    "n": 11840,
+    "rmse": 0.20052
+   },
+   "observed_positive": {
+    "mae": 0.12968,
+    "mean_forecast": 0.43922,
+    "mean_observed": 0.45344,
+    "n": 24893,
+    "rmse": 0.1806
+   },
+   "period_post": {
+    "mae": 0.11634,
+    "mean_forecast": 0.42457,
+    "mean_observed": 0.41717,
+    "n": 1235,
+    "rmse": 0.1538
+   },
+   "period_w01-04": {
+    "mae": 0.13415,
+    "mean_forecast": 0.41894,
+    "mean_observed": 0.41943,
+    "n": 6067,
+    "rmse": 0.19065
+   },
+   "period_w05-09": {
+    "mae": 0.1218,
+    "mean_forecast": 0.41431,
+    "mean_observed": 0.42093,
+    "n": 6804,
+    "rmse": 0.17152
+   },
+   "period_w10-18": {
+    "mae": 0.12705,
+    "mean_forecast": 0.40956,
+    "mean_observed": 0.42015,
+    "n": 12766,
+    "rmse": 0.18036
+   },
+   "with_earlier_game": {
+    "mae": 0.12021,
+    "mean_forecast": 0.41776,
+    "mean_observed": 0.42933,
+    "n": 24512,
+    "rmse": 0.17047
+   }
+  },
+  "P0": {
+   "all": {
+    "mae": 0.21631,
+    "mean_forecast": 0.41918,
+    "mean_observed": 0.42005,
+    "n": 26872,
+    "rmse": 0.26918
+   },
+   "class_RB": {
+    "mae": 0.18375,
+    "mean_forecast": 0.3157,
+    "mean_observed": 0.31682,
+    "n": 7911,
+    "rmse": 0.2344
+   },
+   "class_TE": {
+    "mae": 0.19838,
+    "mean_forecast": 0.41682,
+    "mean_observed": 0.42408,
+    "n": 7121,
+    "rmse": 0.24467
+   },
+   "class_WR": {
+    "mae": 0.24885,
+    "mean_forecast": 0.48973,
+    "mean_observed": 0.4866,
+    "n": 11840,
+    "rmse": 0.30289
+   },
+   "observed_positive": {
+    "mae": 0.21309,
+    "mean_forecast": 0.43208,
+    "mean_observed": 0.45344,
+    "n": 24893,
+    "rmse": 0.26556
+   },
+   "period_post": {
+    "mae": 0.21869,
+    "mean_forecast": 0.4158,
+    "mean_observed": 0.41717,
+    "n": 1235,
+    "rmse": 0.27046
+   },
+   "period_w01-04": {
+    "mae": 0.21263,
+    "mean_forecast": 0.41835,
+    "mean_observed": 0.41943,
+    "n": 6067,
+    "rmse": 0.26557
+   },
+   "period_w05-09": {
+    "mae": 0.21504,
+    "mean_forecast": 0.42011,
+    "mean_observed": 0.42093,
+    "n": 6804,
+    "rmse": 0.26678
+   },
+   "period_w10-18": {
+    "mae": 0.2185,
+    "mean_forecast": 0.4194,
+    "mean_observed": 0.42015,
+    "n": 12766,
+    "rmse": 0.27202
+   },
+   "with_earlier_game": {
+    "mae": 0.21629,
+    "mean_forecast": 0.42287,
+    "mean_observed": 0.42933,
+    "n": 24512,
+    "rmse": 0.26939
+   }
+  },
+  "P1": {
+   "all": {
+    "mae": 0.21748,
+    "mean_forecast": 0.41923,
+    "mean_observed": 0.42005,
+    "n": 26872,
+    "rmse": 0.27171
+   },
+   "class_RB": {
+    "mae": 0.18532,
+    "mean_forecast": 0.3157,
+    "mean_observed": 0.31682,
+    "n": 7911,
+    "rmse": 0.23712
+   },
+   "class_TE": {
+    "mae": 0.19978,
+    "mean_forecast": 0.41696,
+    "mean_observed": 0.42408,
+    "n": 7121,
+    "rmse": 0.24717
+   },
+   "class_WR": {
+    "mae": 0.24962,
+    "mean_forecast": 0.48978,
+    "mean_observed": 0.4866,
+    "n": 11840,
+    "rmse": 0.30536
+   },
+   "observed_positive": {
+    "mae": 0.21447,
+    "mean_forecast": 0.43226,
+    "mean_observed": 0.45344,
+    "n": 24893,
+    "rmse": 0.26814
+   },
+   "period_post": {
+    "mae": 0.22136,
+    "mean_forecast": 0.41587,
+    "mean_observed": 0.41717,
+    "n": 1235,
+    "rmse": 0.27378
+   },
+   "period_w01-04": {
+    "mae": 0.21296,
+    "mean_forecast": 0.41841,
+    "mean_observed": 0.41943,
+    "n": 6067,
+    "rmse": 0.26744
+   },
+   "period_w05-09": {
+    "mae": 0.21581,
+    "mean_forecast": 0.42015,
+    "mean_observed": 0.42093,
+    "n": 6804,
+    "rmse": 0.26897
+   },
+   "period_w10-18": {
+    "mae": 0.22015,
+    "mean_forecast": 0.41946,
+    "mean_observed": 0.42015,
+    "n": 12766,
+    "rmse": 0.27495
+   },
+   "with_earlier_game": {
+    "mae": 0.21763,
+    "mean_forecast": 0.42309,
+    "mean_observed": 0.42933,
+    "n": 24512,
+    "rmse": 0.27205
+   }
+  },
+  "P1h": {
+   "all": {
+    "mae": 0.20343,
+    "mean_forecast": 0.41875,
+    "mean_observed": 0.42005,
+    "n": 26872,
+    "rmse": 0.26436
+   },
+   "class_RB": {
+    "mae": 0.17852,
+    "mean_forecast": 0.31569,
+    "mean_observed": 0.31682,
+    "n": 7911,
+    "rmse": 0.23448
+   },
+   "class_TE": {
+    "mae": 0.18152,
+    "mean_forecast": 0.41617,
+    "mean_observed": 0.42408,
+    "n": 7121,
+    "rmse": 0.23607
+   },
+   "class_WR": {
+    "mae": 0.23325,
+    "mean_forecast": 0.48917,
+    "mean_observed": 0.4866,
+    "n": 11840,
+    "rmse": 0.29726
+   },
+   "observed_positive": {
+    "mae": 0.20232,
+    "mean_forecast": 0.43476,
+    "mean_observed": 0.45344,
+    "n": 24893,
+    "rmse": 0.2629
+   },
+   "period_post": {
+    "mae": 0.20853,
+    "mean_forecast": 0.41569,
+    "mean_observed": 0.41717,
+    "n": 1235,
+    "rmse": 0.26908
+   },
+   "period_w01-04": {
+    "mae": 0.19504,
+    "mean_forecast": 0.41807,
+    "mean_observed": 0.41943,
+    "n": 6067,
+    "rmse": 0.25686
+   },
+   "period_w05-09": {
+    "mae": 0.20092,
+    "mean_forecast": 0.41973,
+    "mean_observed": 0.42093,
+    "n": 6804,
+    "rmse": 0.26071
+   },
+   "period_w10-18": {
+    "mae": 0.20826,
+    "mean_forecast": 0.41886,
+    "mean_observed": 0.42015,
+    "n": 12766,
+    "rmse": 0.26931
+   },
+   "with_earlier_game": {
+    "mae": 0.20419,
+    "mean_forecast": 0.42344,
+    "mean_observed": 0.42933,
+    "n": 24512,
+    "rmse": 0.2653
+   }
+  },
+  "P2": {
+   "all": {
+    "mae": 0.15525,
+    "mean_forecast": 0.41985,
+    "mean_observed": 0.42005,
+    "n": 26872,
+    "rmse": 0.214
+   },
+   "class_RB": {
+    "mae": 0.13426,
+    "mean_forecast": 0.31575,
+    "mean_observed": 0.31682,
+    "n": 7911,
+    "rmse": 0.18611
+   },
+   "class_TE": {
+    "mae": 0.13927,
+    "mean_forecast": 0.41924,
+    "mean_observed": 0.42408,
+    "n": 7121,
+    "rmse": 0.18964
+   },
+   "class_WR": {
+    "mae": 0.17887,
+    "mean_forecast": 0.48978,
+    "mean_observed": 0.4866,
+    "n": 11840,
+    "rmse": 0.24324
+   },
+   "observed_positive": {
+    "mae": 0.15969,
+    "mean_forecast": 0.44533,
+    "mean_observed": 0.45344,
+    "n": 24893,
+    "rmse": 0.21651
+   },
+   "period_post": {
+    "mae": 0.15589,
+    "mean_forecast": 0.41685,
+    "mean_observed": 0.41717,
+    "n": 1235,
+    "rmse": 0.21592
+   },
+   "period_w01-04": {
+    "mae": 0.15315,
+    "mean_forecast": 0.41884,
+    "mean_observed": 0.41943,
+    "n": 6067,
+    "rmse": 0.2107
+   },
+   "period_w05-09": {
+    "mae": 0.14855,
+    "mean_forecast": 0.42093,
+    "mean_observed": 0.42093,
+    "n": 6804,
+    "rmse": 0.20517
+   },
+   "period_w10-18": {
+    "mae": 0.15975,
+    "mean_forecast": 0.42006,
+    "mean_observed": 0.42015,
+    "n": 12766,
+    "rmse": 0.2199
+   },
+   "with_earlier_game": {
+    "mae": 0.15392,
+    "mean_forecast": 0.43008,
+    "mean_observed": 0.42933,
+    "n": 24512,
+    "rmse": 0.21187
+   }
+  }
+ },
+ "scores_by_season": {
+  "N": {
+   "2022": 0.12808,
+   "2023": 0.12599,
+   "2024": 0.12568,
+   "2025": 0.12758
+  },
+  "P0": {
+   "2022": 0.21912,
+   "2023": 0.22235,
+   "2024": 0.21814,
+   "2025": 0.20561
+  },
+  "P1": {
+   "2022": 0.21978,
+   "2023": 0.22471,
+   "2024": 0.21852,
+   "2025": 0.20692
+  },
+  "P1h": {
+   "2022": 0.20332,
+   "2023": 0.21215,
+   "2024": 0.20759,
+   "2025": 0.19066
+  },
+  "P2": {
+   "2022": 0.15675,
+   "2023": 0.16234,
+   "2024": 0.15474,
+   "2025": 0.14716
+  }
+ },
+ "season_weights": {
+  "P0": [
+   0.5,
+   4
+  ],
+  "P1": [
+   0.75,
+   6
+  ]
+ },
+ "selected": {
+  "alpha": 1.5,
+  "n0": 1
+ },
+ "status": {
+  "P0": {
+   "2022": {
+    "P0:lineup_ok": 556717,
+    "P0:lineup_short": 7395,
+    "published_skill_snaps": 185802.0,
+    "published_skill_snaps_off_roster": 93.0,
+    "snap_coverage": {
+     "offense_rows": 10458,
+     "offense_snaps": 411250.0,
+     "unmatched_rows": 1,
+     "unmatched_skill_snaps": 10.0,
+     "unmatched_snaps": 10.0
+    }
+   },
+   "2023": {
+    "P0:lineup_ok": 560601,
+    "P0:lineup_short": 7623,
+    "published_skill_snaps": 186354.0,
+    "published_skill_snaps_off_roster": 0,
+    "snap_coverage": {
+     "offense_rows": 10552,
+     "offense_snaps": 413399.0,
+     "unmatched_rows": 13,
+     "unmatched_skill_snaps": 57.0,
+     "unmatched_snaps": 57.0
+    }
+   },
+   "2024": {
+    "P0:lineup_ok": 551100,
+    "P0:lineup_short": 8180,
+    "published_skill_snaps": 184876.0,
+    "published_skill_snaps_off_roster": 0,
+    "snap_coverage": {
+     "offense_rows": 10552,
+     "offense_snaps": 409763.0,
+     "unmatched_rows": 37,
+     "unmatched_skill_snaps": 132.0,
+     "unmatched_snaps": 510.0
+    }
+   },
+   "2025": {
+    "P0:lineup_ok": 542034,
+    "P0:lineup_short": 9182,
+    "published_skill_snaps": 179743.0,
+    "published_skill_snaps_off_roster": 0,
+    "snap_coverage": {
+     "offense_rows": 10573,
+     "offense_snaps": 403573.0,
+     "unmatched_rows": 30,
+     "unmatched_skill_snaps": 177.0,
+     "unmatched_snaps": 384.0
+    }
+   }
+  },
+  "P1_P1h_P2_N": {
+   "2022": {
+    "P1:lineup_ok": 557117,
+    "P1:lineup_short": 6995,
+    "P1h:lineup_ok": 553251,
+    "P1h:lineup_short": 10861,
+    "P2:clipped": 634,
+    "P2:lineup_ok": 560089,
+    "P2:lineup_short": 4023,
+    "P2:no_earlier_active_game": 600,
+    "P2:weighted": 5502,
+    "published_skill_snaps": 185802.0,
+    "published_skill_snaps_off_roster": 93.0,
+    "snap_coverage": {
+     "offense_rows": 10458,
+     "offense_snaps": 411250.0,
+     "unmatched_rows": 1,
+     "unmatched_skill_snaps": 10.0,
+     "unmatched_snaps": 10.0
+    }
+   },
+   "2023": {
+    "P1:lineup_ok": 560880,
+    "P1:lineup_short": 7344,
+    "P1h:lineup_ok": 557897,
+    "P1h:lineup_short": 10327,
+    "P2:clipped": 683,
+    "P2:lineup_ok": 563620,
+    "P2:lineup_short": 4604,
+    "P2:no_earlier_active_game": 572,
+    "P2:weighted": 5446,
+    "published_skill_snaps": 186354.0,
+    "published_skill_snaps_off_roster": 0,
+    "snap_coverage": {
+     "offense_rows": 10552,
+     "offense_snaps": 413399.0,
+     "unmatched_rows": 13,
+     "unmatched_skill_snaps": 57.0,
+     "unmatched_snaps": 57.0
+    }
+   },
+   "2024": {
+    "P1:lineup_ok": 551556,
+    "P1:lineup_short": 7724,
+    "P1h:lineup_ok": 549114,
+    "P1h:lineup_short": 10166,
+    "P2:clipped": 769,
+    "P2:lineup_ok": 555644,
+    "P2:lineup_short": 3636,
+    "P2:no_earlier_active_game": 589,
+    "P2:weighted": 5368,
+    "published_skill_snaps": 184876.0,
+    "published_skill_snaps_off_roster": 0,
+    "snap_coverage": {
+     "offense_rows": 10552,
+     "offense_snaps": 409763.0,
+     "unmatched_rows": 37,
+     "unmatched_skill_snaps": 132.0,
+     "unmatched_snaps": 510.0
+    }
+   },
+   "2025": {
+    "P1:lineup_ok": 542313,
+    "P1:lineup_short": 8903,
+    "P1h:lineup_ok": 539987,
+    "P1h:lineup_short": 11229,
+    "P2:clipped": 676,
+    "P2:lineup_ok": 547378,
+    "P2:lineup_short": 3838,
+    "P2:no_earlier_active_game": 599,
+    "P2:weighted": 5434,
+    "published_skill_snaps": 179743.0,
+    "published_skill_snaps_off_roster": 0,
+    "snap_coverage": {
+     "offense_rows": 10573,
+     "offense_snaps": 403573.0,
+     "unmatched_rows": 30,
+     "unmatched_skill_snaps": 177.0,
+     "unmatched_snaps": 384.0
+    }
+   }
+  }
+ },
+ "stride": 1,
+ "tables": "/root/repro/player-backtest/data/scrimmage_participation.csv.gz",
+ "tables_sha256": "324c4e1ad87be60a0f57f7504cbe10962749539d695bf397ddcdb398928cfd23",
+ "targets": [
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "tune": [
+  2019,
+  2020,
+  2021
+ ],
+ "tune_alpha_mae": {
+  "P1": 0.21558,
+  "P1h_0.5": 0.20646,
+  "P1h_1.0": 0.20419,
+  "P1h_1.5": 0.20392,
+  "P1h_2.0": 0.20491
+ },
+ "tune_n0_mae": {
+  "P2_1": 0.14954,
+  "P2_16": 0.16631,
+  "P2_2": 0.15044,
+  "P2_32": 0.17417,
+  "P2_4": 0.15371,
+  "P2_8": 0.15877
+ },
+ "tune_status": {
+  "alpha": {
+   "2019": {
+    "P1:lineup_ok": 523057,
+    "P1:lineup_short": 10799,
+    "P1h_0.5:lineup_ok": 522171,
+    "P1h_0.5:lineup_short": 11685,
+    "P1h_1.0:lineup_ok": 519850,
+    "P1h_1.0:lineup_short": 14006,
+    "P1h_1.5:lineup_ok": 515946,
+    "P1h_1.5:lineup_short": 17910,
+    "P1h_2.0:lineup_ok": 509743,
+    "P1h_2.0:lineup_short": 24113,
+    "published_skill_snaps": 176488.0,
+    "published_skill_snaps_off_roster": 0,
+    "snap_coverage": {
+     "offense_rows": 9689,
+     "offense_snaps": 392825.0,
+     "unmatched_rows": 11,
+     "unmatched_skill_snaps": 100.0,
+     "unmatched_snaps": 100.0
+    }
+   },
+   "2020": {
+    "P1:lineup_ok": 536922,
+    "P1:lineup_short": 7814,
+    "P1h_0.5:lineup_ok": 536475,
+    "P1h_0.5:lineup_short": 8261,
+    "P1h_1.0:lineup_ok": 535479,
+    "P1h_1.0:lineup_short": 9257,
+    "P1h_1.5:lineup_ok": 533519,
+    "P1h_1.5:lineup_short": 11217,
+    "P1h_2.0:lineup_ok": 530438,
+    "P1h_2.0:lineup_short": 14298,
+    "published_skill_snaps": 176104.0,
+    "published_skill_snaps_off_roster": 11.0,
+    "snap_coverage": {
+     "offense_rows": 10079,
+     "offense_snaps": 397382.0,
+     "unmatched_rows": 8,
+     "unmatched_skill_snaps": 50.0,
+     "unmatched_snaps": 50.0
+    }
+   },
+   "2021": {
+    "P1:lineup_ok": 562327,
+    "P1:lineup_short": 8681,
+    "P1h_0.5:lineup_ok": 561992,
+    "P1h_0.5:lineup_short": 9016,
+    "P1h_1.0:lineup_ok": 561013,
+    "P1h_1.0:lineup_short": 9995,
+    "P1h_1.5:lineup_ok": 559490,
+    "P1h_1.5:lineup_short": 11518,
+    "P1h_2.0:lineup_ok": 556904,
+    "P1h_2.0:lineup_short": 14104,
+    "published_skill_snaps": 187109.0,
+    "published_skill_snaps_off_roster": 0,
+    "snap_coverage": {
+     "offense_rows": 10537,
+     "offense_snaps": 415694.0,
+     "unmatched_rows": 10,
+     "unmatched_skill_snaps": 77.0,
+     "unmatched_snaps": 88.0
+    }
+   }
+  },
+  "n0": {
+   "2019": {
+    "P2_16:lineup_ok": 522074,
+    "P2_16:lineup_short": 11782,
+    "P2_16:no_earlier_active_game": 588,
+    "P2_16:weighted": 5786,
+    "P2_1:clipped": 61,
+    "P2_1:lineup_ok": 526629,
+    "P2_1:lineup_short": 7227,
+    "P2_1:no_earlier_active_game": 588,
+    "P2_1:weighted": 5725,
+    "P2_2:clipped": 37,
+    "P2_2:lineup_ok": 526083,
+    "P2_2:lineup_short": 7773,
+    "P2_2:no_earlier_active_game": 588,
+    "P2_2:weighted": 5749,
+    "P2_32:lineup_ok": 520414,
+    "P2_32:lineup_short": 13442,
+    "P2_32:no_earlier_active_game": 588,
+    "P2_32:weighted": 5786,
+    "P2_4:clipped": 12,
+    "P2_4:lineup_ok": 525333,
+    "P2_4:lineup_short": 8523,
+    "P2_4:no_earlier_active_game": 588,
+    "P2_4:weighted": 5774,
+    "P2_8:clipped": 6,
+    "P2_8:lineup_ok": 523773,
+    "P2_8:lineup_short": 10083,
+    "P2_8:no_earlier_active_game": 588,
+    "P2_8:weighted": 5780,
+    "published_skill_snaps": 176488.0,
+    "published_skill_snaps_off_roster": 0,
+    "snap_coverage": {
+     "offense_rows": 9689,
+     "offense_snaps": 392825.0,
+     "unmatched_rows": 11,
+     "unmatched_skill_snaps": 100.0,
+     "unmatched_snaps": 100.0
+    }
+   },
+   "2020": {
+    "P2_16:clipped": 2,
+    "P2_16:lineup_ok": 537137,
+    "P2_16:lineup_short": 7599,
+    "P2_16:no_earlier_active_game": 592,
+    "P2_16:weighted": 5896,
+    "P2_1:clipped": 233,
+    "P2_1:lineup_ok": 540354,
+    "P2_1:lineup_short": 4382,
+    "P2_1:no_earlier_active_game": 592,
+    "P2_1:weighted": 5665,
+    "P2_2:clipped": 160,
+    "P2_2:lineup_ok": 539825,
+    "P2_2:lineup_short": 4911,
+    "P2_2:no_earlier_active_game": 592,
+    "P2_2:weighted": 5738,
+    "P2_32:lineup_ok": 535985,
+    "P2_32:lineup_short": 8751,
+    "P2_32:no_earlier_active_game": 592,
+    "P2_32:weighted": 5898,
+    "P2_4:clipped": 84,
+    "P2_4:lineup_ok": 539245,
+    "P2_4:lineup_short": 5491,
+    "P2_4:no_earlier_active_game": 592,
+    "P2_4:weighted": 5814,
+    "P2_8:clipped": 32,
+    "P2_8:lineup_ok": 538229,
+    "P2_8:lineup_short": 6507,
+    "P2_8:no_earlier_active_game": 592,
+    "P2_8:weighted": 5866,
+    "published_skill_snaps": 176104.0,
+    "published_skill_snaps_off_roster": 11.0,
+    "snap_coverage": {
+     "offense_rows": 10079,
+     "offense_snaps": 397382.0,
+     "unmatched_rows": 8,
+     "unmatched_skill_snaps": 50.0,
+     "unmatched_snaps": 50.0
+    }
+   },
+   "2021": {
+    "P2_16:clipped": 8,
+    "P2_16:lineup_ok": 563466,
+    "P2_16:lineup_short": 7542,
+    "P2_16:no_earlier_active_game": 649,
+    "P2_16:weighted": 6156,
+    "P2_1:clipped": 377,
+    "P2_1:lineup_ok": 566846,
+    "P2_1:lineup_short": 4162,
+    "P2_1:no_earlier_active_game": 649,
+    "P2_1:weighted": 5787,
+    "P2_2:clipped": 279,
+    "P2_2:lineup_ok": 566468,
+    "P2_2:lineup_short": 4540,
+    "P2_2:no_earlier_active_game": 649,
+    "P2_2:weighted": 5885,
+    "P2_32:lineup_ok": 562272,
+    "P2_32:lineup_short": 8736,
+    "P2_32:no_earlier_active_game": 649,
+    "P2_32:weighted": 6164,
+    "P2_4:clipped": 162,
+    "P2_4:lineup_ok": 565724,
+    "P2_4:lineup_short": 5284,
+    "P2_4:no_earlier_active_game": 649,
+    "P2_4:weighted": 6002,
+    "P2_8:clipped": 64,
+    "P2_8:lineup_ok": 564852,
+    "P2_8:lineup_short": 6156,
+    "P2_8:no_earlier_active_game": 649,
+    "P2_8:weighted": 6100,
+    "published_skill_snaps": 187109.0,
+    "published_skill_snaps_off_roster": 0,
+    "snap_coverage": {
+     "offense_rows": 10537,
+     "offense_snaps": 415694.0,
+     "unmatched_rows": 10,
+     "unmatched_skill_snaps": 77.0,
+     "unmatched_snaps": 88.0
+    }
+   }
+  }
+ }
+}
