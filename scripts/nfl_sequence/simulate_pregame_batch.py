@@ -126,6 +126,12 @@ def _reproduction_command(args, seed):
             command.extend(['--historical-streak-file', str(args.historical_streak_file)])
     if args.export_boxscores:
         command.append('--export-boxscores')
+    for flag, sha in (('participation_field', 'participation_field_sha256'),
+                      ('participation_snap_counts', 'participation_snap_counts_sha256'),
+                      ('playcall_fg_kicker', 'playcall_fg_kicker_sha256')):  # research tables, so a replay runs the same model
+        if getattr(args, flag, None):
+            command.extend([f"--{flag.replace('_', '-')}", str(getattr(args, flag)),
+                            f"--{sha.replace('_', '-')}", getattr(args, sha)])
     if getattr(args, 'paired_randomness', False):
         command.append('--paired-randomness')
     if getattr(args, 'rng_protocol', rng_protocol.V1) != rng_protocol.V1:
@@ -858,6 +864,10 @@ def run_batch(args):
                                                            participation_field=((args.participation_field,
                                                                                  args.participation_field_sha256)
                                                                                 if args.participation_field else None),
+                                                           participation_snap_counts=(
+                                                               (args.participation_snap_counts,
+                                                                args.participation_snap_counts_sha256)
+                                                               if args.participation_snap_counts else None),
                                                            fg_kicker=((args.playcall_fg_kicker, args.playcall_fg_kicker_sha256)
                                                                       if args.playcall_fg_kicker else None),
                                                            qb_decisions=args.playcall_qb_decisions,
@@ -970,6 +980,10 @@ def run_batch(args):
         ledger_header['research_integration'] = {'participation_field': {
             'table': str(args.participation_field), 'table_sha256': args.participation_field_sha256,
             'fit_seasons': ref.contextual_sampler.participation_field.seasons, 'personnel_label': 'lineup grouping'}}
+    if args.participation_snap_counts:  # research flag: the current-season snap counts and what they set, in the ledger
+        ledger_header['research_integration']['participation_snap_counts'] = {
+            'file': str(args.participation_snap_counts), 'sha256': args.participation_snap_counts_sha256,
+            'update': ref.contextual_sampler.participation_snap_update}
     if args.playcall_fg_kicker:  # research flag: the kicker table is pinned in the ledger too
         fg = ref.contextual_sampler.fg_kicker
         ledger_header.setdefault('research_integration', {})['fg_kicker'] = {
@@ -1220,6 +1234,13 @@ def main(argv=None):
                          '--participation-field-sha256 and --rng-protocol v2; cannot run with --playcall-pbv1-package')
     ap.add_argument('--participation-field-sha256', default=None,
                     help='the expected SHA-256 of the --participation-field table; a different file is refused')
+    ap.add_argument('--participation-snap-counts', type=Path, default=None,
+                    help='SLC v2 research flag (off by default): the current season\'s published snap counts '
+                         '(snap_update.SCHEMA, built by docs/research/participation-model-2026-11-02/build_snap_counts.py) '
+                         'update the lineup table before each game, from the weeks before it only (snap_update.py). Needs '
+                         '--participation-field and --participation-snap-counts-sha256')
+    ap.add_argument('--participation-snap-counts-sha256', default=None,
+                    help='the expected SHA-256 of the --participation-snap-counts file; a different file is refused')
     ap.add_argument('--playcall-fg-kicker', type=Path, default=None,
                     help='SLC v2 research flag (off by default): field goals by the team kicker: distance +18, 76-yard '
                          'record ceiling, kick share weighted by yard line, kicker make offset (kicker_field_goals.py). '
@@ -1311,6 +1332,11 @@ def main(argv=None):
             ap.error('--participation-field cannot run with --playcall-pbv1-package; both set the personnel label')
         if not args.playcall_artifact:
             ap.error('--participation-field requires --playcall-artifact (the SLC engine)')
+    if args.participation_snap_counts:
+        if not args.participation_field:
+            ap.error('--participation-snap-counts requires --participation-field')
+        if not args.participation_snap_counts_sha256:
+            ap.error('--participation-snap-counts requires --participation-snap-counts-sha256')
     if args.playcall_fg_kicker:
         if not args.playcall_fg_kicker_sha256:
             ap.error('--playcall-fg-kicker requires --playcall-fg-kicker-sha256')
