@@ -55,15 +55,19 @@ def load_results(db, season, weeks):
 
 
 def load_arm(directory):
-    """{game_id: payload} for every batch JSON in a directory. The file name must match the payload's game_id."""
+    """{game_id: payload} for every batch JSON in a directory, plain or gzipped (<game_id>.json or <game_id>.json.gz).
+    The file name must match the payload's game_id."""
+    import gzip
     games = {}
-    for path in sorted(Path(directory).glob('*.json')):
-        payload = json.loads(path.read_text())
-        if payload.get('game_id') != path.stem:
+    for path in sorted(list(Path(directory).glob('*.json')) + list(Path(directory).glob('*.json.gz'))):
+        gz = path.suffix == '.gz'
+        stem = path.name[:-len('.json.gz')] if gz else path.stem
+        payload = json.loads(gzip.open(path, 'rt').read() if gz else path.read_text())
+        if payload.get('game_id') != stem:
             raise ValueError(f'{path}: payload game_id {payload.get("game_id")!r} does not match the file name')
-        if path.stem in games:
-            raise ValueError(f'{path}: duplicate game {path.stem}')
-        games[path.stem] = payload
+        if stem in games:
+            raise ValueError(f'{path}: duplicate game {stem}')
+        games[stem] = payload
     return games
 
 
