@@ -1,0 +1,221 @@
+{
+  "rules": "- Scrimmage means play_type run or pass in play-by-play. Kneels, spikes and special teams are not personnel plays here.\n- A defensive position label (CB, S, LB, DL and similar) in offense_personnel excludes the row from the personnel fit.\n- A count of on-field players other than 11 is kept and flagged. n_offense always equals the number of listed IDs.\n- The personnel group is the running back count (RB plus FB) followed by the tight end count, so 1 RB, 1 TE, 3 WR is 11.\n  A line other than five adds -OL<n> and a QB count other than one adds -QB<n>, so a six-lineman 12 is 12-OL6 and a\n  two-QB 11 is 11-QB2. From 2023 the file lists every position (C, G and T for the line), so a missing QB is zero QBs.\n  The 2022 format lists only the skill players, plus OL and QB when they are not five and one.\n- A row with no QB, a kicker, punter or long snapper in offense_personnel (a fake kick), or a personnel string that does\n  not total eleven is kept and flagged flag_nonstandard_offense, and the personnel fit leaves it out.\n- Rows with no offense_personnel are excluded.",
+  "schema": "lp.nfl.participation-model-tables.v1",
+  "scrimmage_participation": {
+    "fields": [
+      "season",
+      "week",
+      "season_type",
+      "game_id",
+      "play_id",
+      "posteam",
+      "play_type",
+      "down",
+      "ydstogo",
+      "yardline_100",
+      "qtr",
+      "score_differential",
+      "qb_dropback",
+      "group",
+      "n_rb",
+      "n_te",
+      "n_wr",
+      "personnel_raw",
+      "n_offense",
+      "offense_ids",
+      "offense_positions",
+      "flag_defensive_label",
+      "flag_count_not_11",
+      "flag_nonstandard_offense"
+    ],
+    "file": "scrimmage_participation.csv.gz",
+    "per_season": {
+      "2016": {
+        "clean_personnel": 33702,
+        "count_11": 31614,
+        "count_not_11": 2163,
+        "defensive_label": 75,
+        "excluded_blank_personnel": 13,
+        "nonstandard_offense": 102,
+        "not_scrimmage_or_unmatched": 14644,
+        "participation_rows": 48434,
+        "scrimmage_rows": 33790,
+        "written": 33777
+      },
+      "2017": {
+        "clean_personnel": 33209,
+        "count_11": 33500,
+        "count_not_11": 2,
+        "defensive_label": 293,
+        "excluded_blank_personnel": 1,
+        "nonstandard_offense": 306,
+        "not_scrimmage_or_unmatched": 14495,
+        "participation_rows": 47998,
+        "scrimmage_rows": 33503,
+        "written": 33502
+      },
+      "2018": {
+        "clean_personnel": 33116,
+        "count_11": 31330,
+        "count_not_11": 1962,
+        "defensive_label": 176,
+        "nonstandard_offense": 180,
+        "not_scrimmage_or_unmatched": 14583,
+        "participation_rows": 47875,
+        "scrimmage_rows": 33292,
+        "written": 33292
+      },
+      "2019": {
+        "clean_personnel": 33373,
+        "count_11": 32733,
+        "count_not_11": 780,
+        "defensive_label": 140,
+        "nonstandard_offense": 147,
+        "not_scrimmage_or_unmatched": 14521,
+        "participation_rows": 48034,
+        "scrimmage_rows": 33513,
+        "written": 33513
+      },
+      "2020": {
+        "clean_personnel": 34072,
+        "count_11": 34238,
+        "count_not_11": 3,
+        "defensive_label": 169,
+        "nonstandard_offense": 195,
+        "not_scrimmage_or_unmatched": 14272,
+        "participation_rows": 48513,
+        "scrimmage_rows": 34241,
+        "written": 34241
+      },
+      "2021": {
+        "clean_personnel": 35695,
+        "count_11": 35765,
+        "defensive_label": 70,
+        "excluded_blank_personnel": 1,
+        "nonstandard_offense": 77,
+        "not_scrimmage_or_unmatched": 14948,
+        "participation_rows": 50714,
+        "scrimmage_rows": 35766,
+        "written": 35765
+      },
+      "2022": {
+        "clean_personnel": 35366,
+        "count_11": 35427,
+        "count_not_11": 3,
+        "defensive_label": 64,
+        "nonstandard_offense": 173,
+        "not_scrimmage_or_unmatched": 14720,
+        "participation_rows": 50150,
+        "scrimmage_rows": 35430,
+        "written": 35430
+      },
+      "2023": {
+        "clean_personnel": 35521,
+        "count_11": 35596,
+        "count_not_11": 4,
+        "defensive_label": 79,
+        "nonstandard_offense": 86,
+        "not_scrimmage_or_unmatched": 10568,
+        "participation_rows": 46168,
+        "scrimmage_rows": 35600,
+        "written": 35600
+      },
+      "2024": {
+        "clean_personnel": 34963,
+        "count_11": 35050,
+        "defensive_label": 87,
+        "nonstandard_offense": 95,
+        "not_scrimmage_or_unmatched": 10869,
+        "participation_rows": 45919,
+        "scrimmage_rows": 35050,
+        "written": 35050
+      },
+      "2025": {
+        "clean_personnel": 34475,
+        "count_11": 34623,
+        "count_not_11": 9,
+        "defensive_label": 157,
+        "nonstandard_offense": 181,
+        "not_scrimmage_or_unmatched": 10552,
+        "participation_rows": 45184,
+        "scrimmage_rows": 34632,
+        "written": 34632
+      }
+    },
+    "sha256": "324c4e1ad87be60a0f57f7504cbe10962749539d695bf397ddcdb398928cfd23",
+    "sources": {
+      "2016": {
+        "participation": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp_participation/pbp_participation_2016.parquet",
+        "participation_sha256": "e876e5c3127497825baa18c5b49ed953cc685f701819a0d555f9e318b9295087",
+        "pbp": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2016.parquet",
+        "pbp_sha256": "95eba04e2145e3c1c8ca502f2a3a76cfb0a5990680c3fb480f02a74a45f54a3b"
+      },
+      "2017": {
+        "participation": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp_participation/pbp_participation_2017.parquet",
+        "participation_sha256": "e4b2ce19b0da7a7aa6b9e764b00de831003e622e2719c371665ed32bf2f4f3f8",
+        "pbp": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2017.parquet",
+        "pbp_sha256": "84eacd963c1fdd45965f6222c62e9329a7f3412f029d92c1ac5e34a1bb4d3710"
+      },
+      "2018": {
+        "participation": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp_participation/pbp_participation_2018.parquet",
+        "participation_sha256": "334f03887775e98f818ab7f5b22c7973f050cae7c3594e5d4b6f5c9c9890969d",
+        "pbp": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2018.parquet",
+        "pbp_sha256": "2e6f2dce7c7ebd46e985cabe0c17eb72b39a77f98cb4478409294f50b5820150"
+      },
+      "2019": {
+        "participation": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp_participation/pbp_participation_2019.parquet",
+        "participation_sha256": "5dd6c4ff1610cd4f100ec6b29dfbea521099eda06fd199902477edf61f334bc0",
+        "pbp": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2019.parquet",
+        "pbp_sha256": "60c3067017db2d28a78f66a79b657268be8578d9a5288e6a827efdcd7fe42540"
+      },
+      "2020": {
+        "participation": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp_participation/pbp_participation_2020.parquet",
+        "participation_sha256": "dbabfbef30c7e1657d566cad44dd1a9db434ae6aab1321b38b6a87f0fd963dba",
+        "pbp": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2020.parquet",
+        "pbp_sha256": "8889f5d8782b5c5dce3c3644acdc0322b228a7e9cb13fa36cbac250e260e9f60"
+      },
+      "2021": {
+        "participation": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp_participation/pbp_participation_2021.parquet",
+        "participation_sha256": "bc16b14c7043e780f995f914331e2f7ebd6661d024e61a2c892d560af04d9af1",
+        "pbp": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2021.parquet",
+        "pbp_sha256": "333ad34378e5339d5172717cc83378e908daf02c8699416ab3e17c2ec10f78d8"
+      },
+      "2022": {
+        "participation": "/root/gridiron-playbooks-research/data/raw/pbp_participation_2022.csv",
+        "participation_sha256": "37eae0a8c388d0974c6df9a1f9a1d01f09f63a21440d3b03d7f208c1438c51e4",
+        "pbp": "/root/gridiron-playbooks-research/data/raw/pbp_2022.csv.gz",
+        "pbp_sha256": "0c69a71eb39498956c7b1d5c1ca52ce7fe679934a95d1af249facb5ea9829ea4"
+      },
+      "2023": {
+        "participation": "/root/gridiron-playbooks-research/data/raw/pbp_participation_2023.csv",
+        "participation_sha256": "ad01aeb4045ee19a4f086ff38b52b14c8f427d3401e529c3078a4545921650a9",
+        "pbp": "/root/gridiron-playbooks-research/data/raw/pbp_2023.csv.gz",
+        "pbp_sha256": "4649804ee0f0a40b41e51ec75a1ce921949d7fab5459213488656b92f78560e8"
+      },
+      "2024": {
+        "participation": "/root/gridiron-playbooks-research/data/raw/pbp_participation_2024.csv",
+        "participation_sha256": "b1f436a98b2a7759eb4ed1181e072a35c2666f9aeb356a49c943d28d6be6b0b9",
+        "pbp": "/root/gridiron-playbooks-research/data/raw/pbp_2024.csv.gz",
+        "pbp_sha256": "23370d5d10f8104d80d46a1fc5e61f4f6f5a3263fe96fe2dd629913cfcb08c06"
+      },
+      "2025": {
+        "participation": "/root/gridiron-playbooks-research/data/raw/pbp_participation_2025.csv",
+        "participation_sha256": "59069adfee7b0f464befba8a5e8be331e523633cc6a7ab403d37bcbcdfbe66ac",
+        "pbp": "/root/gridiron-playbooks-research/data/raw/pbp_2025.csv.gz",
+        "pbp_sha256": "2f135887790a013fd004e609e37096bb4816d5cc80b9f19122e1bad478961978"
+      }
+    },
+    "totals": {
+      "clean_personnel": 343492,
+      "count_11": 339876,
+      "count_not_11": 4926,
+      "defensive_label": 1310,
+      "excluded_blank_personnel": 15,
+      "nonstandard_offense": 1542,
+      "not_scrimmage_or_unmatched": 134172,
+      "participation_rows": 478989,
+      "scrimmage_rows": 344817,
+      "written": 344802
+    }
+  }
+}
