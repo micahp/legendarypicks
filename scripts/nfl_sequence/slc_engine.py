@@ -14,6 +14,7 @@ import sys
 from collections.abc import Mapping
 from collections import Counter, defaultdict
 from datetime import datetime
+from json.encoder import encode_basestring_ascii
 from pathlib import Path
 
 import pytz
@@ -44,16 +45,39 @@ def _file_sha256(path):
     return digest.hexdigest()
 
 
+_SORT_KEY_ENCODER = json.JSONEncoder(sort_keys=True, default=str)  # what json.dumps(v, sort_keys=True, default=str) builds per call
+_PLAIN_TYPES = frozenset((str, int, float, bool, type(None)))  # exact types only: numpy scalars still go through .item()
+
+
+def _sort_key(value):
+    """json.dumps(value, sort_keys=True, default=str), the order the manifests have always used, without a new encoder per call."""
+    if type(value) is str:
+        return encode_basestring_ascii(value)  # what the encoder returns for a str when ensure_ascii is on
+    return _SORT_KEY_ENCODER.encode(value)
+
+
+class _Stable:
+    """A value already passed through _stable_model_value, so a table that appears twice in a manifest is walked once."""
+    __slots__ = ('value',)
+
+    def __init__(self, value):
+        self.value = value
+
+
 def _stable_model_value(value):
-    if isinstance(value, Mapping):
+    if type(value) in _PLAIN_TYPES:  # none of the branches below applies to these, so the result is the value itself
+        return value
+    if type(value) is _Stable:
+        return value.value
+    if isinstance(value, dict) or isinstance(value, Mapping):
         entries = [(_stable_model_value(key), _stable_model_value(item)) for key, item in value.items()]
-        entries.sort(key=lambda pair: json.dumps(pair[0], sort_keys=True, default=str))
+        entries.sort(key=lambda pair: _sort_key(pair[0]))
         return {'__mapping__': entries}
     if isinstance(value, (tuple, list)):
         return [_stable_model_value(item) for item in value]
     if isinstance(value, (set, frozenset)):
         entries = [_stable_model_value(item) for item in value]
-        return sorted(entries, key=lambda item: json.dumps(item, sort_keys=True, default=str))
+        return sorted(entries, key=_sort_key)
     if hasattr(value, 'tolist'):
         return _stable_model_value(value.tolist())
     if hasattr(value, 'item'):
@@ -965,6 +989,8 @@ def _describe_layer(ref):
         'current_streak_context': bool(sampler.current_streak),
     }
     reference_sha = (getattr(ref, 'model_inputs', None) or {}).get('sha256')
+    # The QB table is hashed on its own and inside the run-role component; walk it once (the hashes are unchanged).
+    qb_table = None if sampler.qb_decision_table is None else _Stable(_stable_model_value(sampler.qb_decision_table))
     component_values = {
         'score_clock_playcalling': ({'artifact_sha256': artifact['sha256']}
                                     if score_clock_enabled else None),
@@ -975,8 +1001,8 @@ def _describe_layer(ref):
                                       'outcomes_enabled': sampler.coverage_outcomes},
         'fixed_player_target_carry_shares': sampler.player_shares,
         'dirichlet_player_target_carry_shares': sampler.share_table,
-        'qb_decisions': sampler.qb_decision_table,
-        'qb_run_role_style': {'model': sampler.qb_decision_table,
+        'qb_decisions': qb_table,
+        'qb_run_role_style': {'model': qb_table,
                                   'enabled': bool(getattr(sampler, 'qb_run_role_style_enabled', False))},
         'player_conditioned_outcomes': {'table': sampler.player_outcome_table,
                                         'roles': sampler.player_outcome_roles},
@@ -1044,7 +1070,7 @@ def _describe_layer(ref):
                          'playcall_model.py',
                          'team_tendency.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
                          'streak_splits.py', 'target_roles.py', 'decision_layer.py', 'player_shares.py',
-                         'share_distributions.py', 'qb_decisions.py', 'player_outcomes.py', 'playbook_prior.py',
+                         'share_distributions.py', 'fit_cache.py', 'qb_decisions.py', 'player_outcomes.py', 'playbook_prior.py',
                          'paired_random_streams.py', 'run_slc_game.py', 'simulate_pregame_batch.py',
                          'slc_engine.py', 'slc_playcall.py')
     description['integration_code_sha256'] = {
