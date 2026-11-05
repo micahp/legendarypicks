@@ -48,7 +48,7 @@ The `valid` column is zero by construction, so "valid" in the request is answere
 
 ### 1d. Export inconsistencies found and how they were handled
 
-- **Boxscore record status.** Every completed seed carries `status: "incomplete"` in its boxscore record, while the batch summary says `complete_regulation` or `complete_overtime`. The boxscore record's `quarter_by_quarter.complete` is false in those records. The batch summary is used as authoritative for completion. The mismatch is reported in `boxscore_vs_outcome_status.csv`. It should be fixed in the exporter before anyone reads that field.
+- **Boxscore record status.** Every completed seed carries `status: "incomplete"` in its boxscore record, while the batch summary says `complete_regulation` or `complete_overtime`. The cause is not yet known: `quarter_by_quarter.complete` is true in 27 of 29 non-blocked records of one checked game, so it does not explain the label. The batch summary is used as authoritative for completion. The mismatch is reported in `boxscore_vs_outcome_status.csv`, and the exporter's status field should be fixed before anyone reads it.
 - **Snap counts exist for V2 only.** The V1 and V1.5 realism exports have `lineup: null`, so their player snap counts are absent, not zero. Snap metrics are reported as "not exported" for those arms.
 - **Touchdowns by half.** These were not in the first extraction and were added. In 98.3% of observed team-games, every touchdown falls in a regulation half. The rest include an overtime touchdown.
 
