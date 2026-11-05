@@ -173,10 +173,14 @@ class ColumnDiscoveryTests(unittest.TestCase):
             "roster_snap", "tennis_atp_players", "tennis_ranking_snapshots",
             "tennis_wta_players",
         }
+        # 2026-11-05: dev-only. nfl_player_news_updates.player_id is set only through the RotoWire crosswalk
+        # (player_source_ids), and nfl_rotowire_id_decisions.player_id is the audit log of that backfill. A merge must
+        # repoint both, or stored news and decisions would name a player id that no longer exists.
         expected = {
             "picks.db": shared,
             "picks.dev.db": shared | {
                 "nfl_player_birth_dates", "nfl_published_fantasy_points",
+                "nfl_player_news_updates", "nfl_rotowire_id_decisions",
             },
         }
         checked = 0
