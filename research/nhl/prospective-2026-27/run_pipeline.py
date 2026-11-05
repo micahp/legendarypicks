@@ -40,9 +40,7 @@ NHL = "https://api-web.nhle.com/v1"
 MONEYPUCK = "https://moneypuck.com/moneypuck/playerData/careers/gameByGame/regular/teams"
 USER_AGENT = "LegendaryPicks-NHL-prospective-research/1.0"
 MODELS = ("B3_elo", "B5_xg_poisson", "B7_elo_xg_poisson")
-import sys  # noqa: E402
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
-import team_codes  # noqa: E402  the one place team codes are defined
+TEAM_ID = {"PHX": "ARI", "T.B": "TBL", "TB": "TBL", "N.J": "NJD", "L.A": "LAK", "LA": "LAK", "S.J": "SJS", "ATL": "WPG"}
 KALSHI_NAME = {
     "ANA": "Anaheim", "BOS": "Boston", "BUF": "Buffalo", "CGY": "Calgary", "CAR": "Carolina",
     "CHI": "Chicago", "COL": "Colorado", "CBJ": "Columbus", "DAL": "Dallas", "DET": "Detroit",
@@ -147,7 +145,7 @@ def load_csv(path: Path) -> list[dict]:
 
 
 def team_key(team: str) -> str:
-    return team_codes.to_source("nhl", "nhle", team)  # NHL tricodes
+    return TEAM_ID.get(team, team)
 
 
 def elo_predictions_all(canon: list[dict], k: int = 10, hfa: float = 35) -> tuple[dict, dict]:

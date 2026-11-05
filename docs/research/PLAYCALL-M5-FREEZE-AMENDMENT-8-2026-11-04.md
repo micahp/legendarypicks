@@ -1,5 +1,9 @@
 # M5 freeze amendment 8, 2026-11-04: one interface for team-keyed tables (LA/LAR, WAS/WSH)
 
+Status update, 2026-11-05: the non-NFL parts of the app-wide interface (commit ef9e8346) are reverted on slc-v2 and parked,
+as they stand, in draft PR #33 (base dev). The NFL interface, and the shared settlement, props and team_codes code that NFL
+also uses, remain on slc-v2. Sections below that describe the non-NFL replacements describe the parked code, not slc-v2.
+
 Status: owner-authorized (2026-11-04: "every single place that has the mismatched team codes, I want an interface
 between so we never run into this issue again"). No pinned layer file (`slc_config.LAYER_CODE_FILES`) changes. This
 amendment changes behaviour for every profile in games of the Rams and Washington, because it fixes a silent miss in the

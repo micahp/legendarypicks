@@ -125,8 +125,8 @@ def make_canonical_index(canon: list[dict]) -> dict[tuple[int, int, str, str], d
         key = (
             int(row["season"]),
             mmdd(row["game_date"]),
-            bt.team_key(row["home_team"]),
-            bt.team_key(row["away_team"]),
+            bt.TEAM_ID.get(row["home_team"], row["home_team"]),
+            bt.TEAM_ID.get(row["away_team"], row["away_team"]),
         )
         if key in index:
             raise RuntimeError(f"duplicate canonical join key: {key}")
@@ -136,8 +136,8 @@ def make_canonical_index(canon: list[dict]) -> dict[tuple[int, int, str, str], d
 
 def make_game_row(c: dict, f: dict, fc: dict, elo_row: dict, sbr: dict,
                   sbr_home: str, sbr_away: str, orientation: str) -> dict:
-    canonical_home = bt.team_key(c["home_team"])
-    canonical_away = bt.team_key(c["away_team"])
+    canonical_home = bt.TEAM_ID.get(c["home_team"], c["home_team"])
+    canonical_away = bt.TEAM_ID.get(c["away_team"], c["away_team"])
     sbr_sides = {sbr_home: sbr["home"], sbr_away: sbr["away"]}
     if canonical_home not in sbr_sides or canonical_away not in sbr_sides:
         raise RuntimeError("matched game does not contain both canonical teams")
@@ -195,8 +195,8 @@ def reconcile_sbr_results(sbr: dict, c: dict, sbr_home: str, sbr_away: str) -> b
     if sbr_hg == sbr_ag:
         raise RuntimeError(f"tied completed SBR final for game {c['game_id']}")
     sbr_winner = sbr_home if sbr_hg > sbr_ag else sbr_away
-    canonical_home = bt.team_key(c["home_team"])
-    canonical_away = bt.team_key(c["away_team"])
+    canonical_home = bt.TEAM_ID.get(c["home_team"], c["home_team"])
+    canonical_away = bt.TEAM_ID.get(c["away_team"], c["away_team"])
     canonical_winner = canonical_home if int(c["official_home_winner"]) == 1 else canonical_away
     if sbr_winner != canonical_winner:
         raise RuntimeError(

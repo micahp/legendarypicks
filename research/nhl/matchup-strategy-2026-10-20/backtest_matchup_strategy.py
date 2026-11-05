@@ -58,9 +58,8 @@ EVAL_SEASONS = (2018, 2019, 2020, 2021, 2022)
 THRESHOLD_SEASON = 2017          # strength cuts frozen on 2008-09..2017-18
 MIN_GP = 10
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
-import team_codes  # noqa: E402  the one place team codes are defined
-team_key = lambda code: team_codes.to_source("nhl", "nhle", code)  # noqa: E731  NHL tricodes
+TEAM_ID = {"PHX": "ARI", "T.B": "TBL", "TB": "TBL", "N.J": "NJD", "L.A": "LAK", "LA": "LAK",
+           "S.J": "SJS", "ATL": "WPG"}
 NAME = {"anaheim":"ANA","arizona":"ARI","boston":"BOS","buffalo":"BUF","calgary":"CGY","carolina":"CAR",
         "chicago":"CHI","colorado":"COL","columbus":"CBJ","dallas":"DAL","detroit":"DET","edmonton":"EDM",
         "florida":"FLA","losangeles":"LAK","minnesota":"MIN","montreal":"MTL","nashville":"NSH",
@@ -113,8 +112,8 @@ def elo_replay(canon: list[dict], k: float = 10.0, hfa: float = 35.0) -> dict[in
     for day in sorted(by_day):
         updates = []
         for row in sorted(by_day[day], key=lambda x: (x["start_time_utc"], int(x["game_id"]))):
-            h = team_key(row["home_team"])
-            a = team_key(row["away_team"])
+            h = TEAM_ID.get(row["home_team"], row["home_team"])
+            a = TEAM_ID.get(row["away_team"], row["away_team"])
             venue = 0.0 if str(row["neutral_site"]).lower() == "true" else hfa
             rh, ra = ratings[h], ratings[a]
             p = 1.0 / (1.0 + 10.0 ** (-((rh - ra + venue) / 400.0)))
@@ -139,8 +138,8 @@ def load_games(canon: list[dict], features: dict[int, dict]) -> list[dict]:
             "season": int(c["season"]),
             "game_date": c["game_date"],
             "start_time_utc": c["start_time_utc"],
-            "home_team": team_key(c["home_team"]),
-            "away_team": team_key(c["away_team"]),
+            "home_team": TEAM_ID.get(c["home_team"], c["home_team"]),
+            "away_team": TEAM_ID.get(c["away_team"], c["away_team"]),
             "home_goals": int(c["home_goals_model_target"]),
             "away_goals": int(c["away_goals_model_target"]),
             "official_home_winner": int(c["official_home_winner"]),
@@ -172,8 +171,8 @@ def load_all_games(canon: list[dict]) -> list[dict]:
             "season": int(c["season"]),
             "game_date": c["game_date"],
             "start_time_utc": c["start_time_utc"],
-            "home_team": team_key(c["home_team"]),
-            "away_team": team_key(c["away_team"]),
+            "home_team": TEAM_ID.get(c["home_team"], c["home_team"]),
+            "away_team": TEAM_ID.get(c["away_team"], c["away_team"]),
             "home_goals": int(c["home_goals_model_target"]),
             "away_goals": int(c["away_goals_model_target"]),
             "official_home_winner": int(c["official_home_winner"]),
@@ -504,8 +503,8 @@ def main() -> None:
         gid = int(c["game_id"])
         f = features.get(gid)
         md = int(c["game_date"][5:7]) * 100 + int(c["game_date"][8:10])
-        by_key[(int(c["season"]), md, team_key(c["home_team"]),
-                team_key(c["away_team"]))] = {
+        by_key[(int(c["season"]), md, TEAM_ID.get(c["home_team"], c["home_team"]),
+                TEAM_ID.get(c["away_team"], c["away_team"]))] = {
             "game_id": gid,
             "complete": f is not None and str(f.get("required_features_complete", "")).lower() == "true",
         }

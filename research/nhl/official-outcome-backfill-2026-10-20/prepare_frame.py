@@ -12,12 +12,6 @@ from collections import Counter, defaultdict
 from itertools import product
 from pathlib import Path
 from typing import Any
-import sys
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
-import team_codes  # noqa: E402  the one place team codes are defined
-
-K = lambda code: team_codes.key_code("nhl", code)  # noqa: E731  one key per club, any spelling
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_CANONICAL = Path(
@@ -38,7 +32,7 @@ MARKET_TOTAL = 4872
 CUTOFF = "2022-11-27"
 
 SBR_TEAM_CODES = {
-    "Anaheim": ("ANA",), "Arizona": ("ARI",), "Arizonas": ("ARI",),
+    "Anaheim": ("ANA",), "Arizona": ("ARI", "PHX"), "Arizonas": ("ARI", "PHX"),
     "Boston": ("BOS",), "Buffalo": ("BUF",), "Calgary": ("CGY",),
     "Carolina": ("CAR",), "Chicago": ("CHI",), "Colorado": ("COL",),
     "Columbus": ("CBJ",), "Dallas": ("DAL",), "Detroit": ("DET",),
@@ -108,7 +102,7 @@ def prepare(canonical_source: Path, sbr_source: Path, output_dir: Path) -> None:
             if game_id in canonical_by_id:
                 raise ValueError(f"duplicate canonical game_id={game_id}")
             canonical_by_id[game_id] = row
-            key = (row["game_date"], tuple(sorted((K(row["home_team"]), K(row["away_team"])))))
+            key = (row["game_date"], tuple(sorted((row["home_team"], row["away_team"]))))
             by_date_pair[key].append(row)
 
     sbr_by_game: dict[int, dict[str, Any]] = {}
@@ -125,7 +119,7 @@ def prepare(canonical_source: Path, sbr_source: Path, output_dir: Path) -> None:
             date = parse_sbr_date(row["season"], row["date"])
             candidates: dict[int, dict[str, str]] = {}
             for home_code, away_code in product(SBR_TEAM_CODES[home_name], SBR_TEAM_CODES[away_name]):
-                pair = tuple(sorted((K(home_code), K(away_code))))
+                pair = tuple(sorted((home_code, away_code)))
                 for candidate in by_date_pair.get((date, pair), []):
                     candidates[int(candidate["game_id"])] = candidate
             if len(candidates) != 1:
@@ -143,8 +137,8 @@ def prepare(canonical_source: Path, sbr_source: Path, output_dir: Path) -> None:
             }
             sbr_rows += 1
             if (
-                not team_codes.same_team("nhl", canonical["home_team"], SBR_TEAM_CODES[home_name][0])
-                or not team_codes.same_team("nhl", canonical["away_team"], SBR_TEAM_CODES[away_name][0])
+                canonical["home_team"] not in SBR_TEAM_CODES[home_name]
+                or canonical["away_team"] not in SBR_TEAM_CODES[away_name]
             ):
                 venue_order_mismatches.append(game_id)
 

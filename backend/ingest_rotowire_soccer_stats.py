@@ -31,7 +31,6 @@ import urllib.parse
 import urllib.request
 
 from scripts_add_rotowire_soccer_logs import TABLE
-import team_codes
 
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -99,6 +98,17 @@ STAT_KEYS = {
     "min": "minutes",
 }
 
+TEAM_ALIASES = {
+    "mls": {
+        "DCU": "DC", "GAL": "LA", "LAF": "LAFC", "NER": "NE",
+        "NYR": "RBNY", "SJE": "SJ", "FIR": "CHI", "MNU": "MIN",
+        "RAP": "COL", "SOU": "SEA", "WHI": "VAN",
+    },
+    "ligamx": {
+        "CA": "CAZ", "GUA": "GDL", "MON": "MTY", "NEC": "NCX", "QUE": "QRO",
+        "TIG": "UANL", "UNM": "UNAM",
+    },
+}
 
 
 class SourceContractError(RuntimeError):
@@ -121,7 +131,7 @@ def normalize_team(league, value):
     code = str(value or "").strip().upper()
     if not code:
         raise SourceContractError(f"blank {league} team code")
-    return team_codes.key_code(league, code)  # backend/team_codes.py; RotoWire spellings are registered there
+    return TEAM_ALIASES.get(league, {}).get(code, code)
 
 
 def _number(value):

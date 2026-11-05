@@ -37,8 +37,7 @@ DEFAULT_LABEL_OUTPUT = Path("/root/lp-data/nhl-official-outcome-quality-adjudica
 PIN_FILE = "research_label_source_pins.json"
 PIN_FILE_SHA256 = "0f64e178942471ed9003082c4ba914861bf0a8d4eef693ba639b898db61bc230"
 BASE_COMMIT = "c91ae36c39b57f86c7c839a2e424eec3ee9330a0"
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
-import team_codes  # noqa: E402  the one place team codes are defined
+TEAM_ALIASES = {"PHX": "ARI"}
 STAT_FIELDS = {
     "SOG": "sog",
     "SAVES": "saves",
@@ -325,13 +324,13 @@ def build_outputs(
         pbp_meta_by_game[game_id] = pbp_meta
         pbp_body_by_game[game_id] = pbp_body
 
-        parsed_pbp = parse_pbp_sog_events(game_id, pbp)
+        parsed_pbp = parse_pbp_sog_events(game_id, pbp, TEAM_ALIASES)
         team_ids = parsed_pbp.team_ids
         for side in ("home", "away"):
             pbp_team = pbp[f"{side}Team"]
-            team_code = team_codes.to_source("nhl", "nhle", str(pbp_team.get("abbrev", "")))
+            team_code = TEAM_ALIASES.get(str(pbp_team.get("abbrev", "")), str(pbp_team.get("abbrev", "")))
             source_team = original[f"{side}Team"]
-            if team_code != frame_by_id[game_id][f"{side}_team"] or team_code != team_codes.to_source("nhl", "nhle", str(source_team.get("abbrev", ""))):
+            if team_code != frame_by_id[game_id][f"{side}_team"] or team_code != TEAM_ALIASES.get(str(source_team.get("abbrev", "")), str(source_team.get("abbrev", ""))):
                 raise ValueError(f"PBP_TEAM_IDENTITY_MISMATCH {game_id}/{side}/{team_code}")
         roster_by_id = parsed_pbp.roster_by_id
         by_player: dict[tuple[str, str], list[dict[str, Any]]] = {
