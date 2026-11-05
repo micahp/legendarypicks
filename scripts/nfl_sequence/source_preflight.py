@@ -290,3 +290,32 @@ def validate_comparison_sources(args, target_games):
         raise PreflightError('input preflight failed before simulation:\n - ' + '\n - '.join(errors))
     print(f'input preflight passed: {len(target_games)} comparison games; {decision_files} decision Parquets; '
           f'{playbook_files} manifest-pinned playbooks; 16 play-call frame score sources', flush=True)
+
+
+MANUAL_ROSTER_OVERRIDES = ('roster_snapshot', 'availability_snapshot', 'availability_store')
+
+
+def validate_news_evidence(args, snapshot):
+    """Bind RotoWire news captured before the cutoff to a frozen snapshot, as evidence only.
+
+    Off unless --news-evidence-dir is given. With it, the evidence is rebuilt from the raw captures and the snapshot, and
+    the run is refused when no capture was acquired at or before the cutoff, or when any manual roster or availability
+    override is also given. The evidence never changes the snapshot or a workload input.
+    """
+    capture_dir = getattr(args, 'news_evidence_dir', None)
+    if not capture_dir:
+        return None
+    overrides = [f'--{name.replace("_", "-")}' for name in MANUAL_ROSTER_OVERRIDES if getattr(args, name, None)]
+    if overrides:
+        raise PreflightError('input preflight failed before simulation:\n - news evidence is bound to the frozen snapshot '
+                             'and cannot be combined with manual overrides: ' + ', '.join(overrides))
+    import news_evidence
+    try:
+        evidence = news_evidence.build(args.db, capture_dir, snapshot)
+    except (OSError, ValueError) as exc:
+        raise PreflightError(f'input preflight failed before simulation:\n - news evidence: {exc}') from exc
+    print(f"news evidence preflight passed: {len(evidence['captures_before_cutoff'])} captures at or before the cutoff "
+          f"({evidence['captures_after_cutoff_count']} after, not read); {len(evidence['items'])} game-scoped items; "
+          f"counts {evidence['counts']}; evidence sha256 {evidence['evidence_sha256'][:16]}; "
+          f"workload effect {evidence['workload_effect']}", flush=True)
+    return evidence
