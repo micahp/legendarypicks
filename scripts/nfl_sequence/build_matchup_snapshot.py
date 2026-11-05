@@ -16,12 +16,28 @@ Usage: build_matchup_snapshot.py --db PATH --capture-dir DIR --game GAME_ID --as
 import argparse
 import json
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import news_evidence
 import pregame_snapshot
 import source_preflight
 import starter_consistency
+
+
+CUTOFF_BEFORE_KICKOFF = timedelta(minutes=90)
+
+
+def cutoff_for(kickoff_utc):
+    """The pregame cutoff: 90 minutes before the verified kickoff."""
+    return datetime.fromisoformat(kickoff_utc.replace('Z', '+00:00')) - CUTOFF_BEFORE_KICKOFF
+
+
+def status_for(now, cutoff):
+    """PREVIEW until the cutoff has passed. Only a build run at or after the cutoff may be called a cutoff snapshot."""
+    if now < cutoff:
+        return f'PREVIEW: the cutoff is {cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")}; inputs can still change until then'
+    return f'CUTOFF SNAPSHOT: built at {now.strftime("%Y-%m-%dT%H:%M:%SZ")}, after the cutoff'
 
 
 def main(argv=None):
@@ -35,25 +51,33 @@ def main(argv=None):
     ap.add_argument('--evaluation', default='exploratory_replay')
     ap.add_argument('--out-dir', required=True)
     a = ap.parse_args(argv)
+    cutoff = cutoff_for(a.kickoff_utc)
+    as_of = datetime.fromisoformat(a.as_of.replace('Z', '+00:00'))
+    if as_of != cutoff:
+        raise SystemExit(f'--as-of {a.as_of} must be the cutoff, 90 minutes before the kickoff: '
+                         f'{cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")}')
+    status = status_for(datetime.now(timezone.utc), cutoff)
     out = Path(a.out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
     snapshot = pregame_snapshot.build(a.db, a.game, a.as_of, kickoff_utc=a.kickoff_utc,
                                       kickoff_source_url=a.kickoff_source_url, evaluation=a.evaluation)
     (out / 'snapshot.json').write_text(json.dumps(snapshot, indent=1, sort_keys=True) + '\n')
+    (out / 'status.txt').write_text(status + '\n')
 
     args = argparse.Namespace(db=a.db, news_evidence_dir=a.capture_dir, roster_snapshot=None,
                               availability_snapshot=None, availability_store=None)
     try:
         evidence = source_preflight.validate_news_evidence(args, snapshot)
     except source_preflight.PreflightError as exc:
-        (out / 'summary.txt').write_text(f'REFUSED\n{exc}\n')
+        (out / 'summary.txt').write_text(f'{status}\nREFUSED\n{exc}\n')
         print(f'REFUSED: {exc}', file=sys.stderr)
         return 2
     (out / 'evidence.json').write_text(json.dumps(evidence, indent=1, sort_keys=True, default=str) + '\n')
 
     rosters = {side: snapshot['rosters'][side]['team'] for side in ('away', 'home')}
-    summary = [f'game {a.game}; as of {a.as_of}; kickoff {a.kickoff_utc}; evaluation {snapshot["evaluation"]}',
+    summary = [status,
+               f'game {a.game}; as of {a.as_of}; kickoff {a.kickoff_utc}; evaluation {snapshot["evaluation"]}',
                f'snapshot sha256 {snapshot["snapshot_sha256"]}',
                f'teams {rosters["away"]} (away) and {rosters["home"]} (home)',
                f'news evidence sha256 {evidence["evidence_sha256"]}; items {len(evidence["items"])}',
