@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Measure news_evidence.classify against hand labels.
 
-sample: freeze the parsed items of one raw RotoWire capture as JSON. Each item carries the other players' surnames that
-        build() would have used for it (both teams of its next game, own surname removed), so scoring needs no database.
+sample: freeze the parsed items of one raw RotoWire capture as JSON. Each item carries the other players' surnames from
+        the player table and same-capture updates for both teams of its next game (own surname removed), so scoring
+        needs no database.
 score:  run classify on the frozen sample and compare it with labels.csv. Prints precision and recall per class with
         Wilson 95% intervals, with borderline items excluded and included, and every disagreement.
 
@@ -38,6 +39,8 @@ def build_sample(capture_xml, db_path, out_path, season=SEASON):
         tokens = ne.nfl_news.normalize_person_name(row['name']).split()
         if tokens:
             surnames.setdefault(row['team'], set()).add(tokens[-1])
+    for team_code, names in ne._reported_surnames(items).items():
+        surnames.setdefault(team_code, set()).update(names)
     out, unresolved = [], 0
     for item in items:
         try:
@@ -126,13 +129,16 @@ def score(sample_path, labels_path, excluded):
         raise SystemExit(f"label mismatch: {len(unlabelled)} sample items unlabelled {unlabelled[:5]}, "
                          f"{len(orphan)} labels with no sample item {orphan[:5]}")
     rows = {}
+    reported_surnames = ne._reported_surnames(sample['items'])
     for item in sample['items']:
         uid = item['update_id']
         if uid in excluded:
             continue
         own = ne._name_tokens(item['last_name'])
-        other = frozenset(name for team_code in item['teams']
-                          for name in sample['surnames_by_team'].get(team_code, [])) - own
+        other = frozenset(({name for team_code in item['teams']
+                            for name in sample['surnames_by_team'].get(team_code, [])} |
+                           {name for team_code in item['teams']
+                            for name in reported_surnames.get(team_code, set())}) - own)
         emitted = {hit['class']: hit['span'] for hit in ne.classify(item, other)}
         rows[uid] = (item, labels[uid], emitted)
     print(f"capture sha256 {sample['capture_sha256']}; sample items {len(sample_ids)}; "
