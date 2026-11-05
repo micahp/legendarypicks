@@ -1,3 +1,5 @@
+import contextlib
+import io
 import json
 import math
 import random
@@ -128,6 +130,46 @@ class EndToEnd(unittest.TestCase):
         report = ssb.score(self.base_dir, self.cand_dir, self.db, [1, 2])
         self.assertEqual(report['games_scored'], 1)
         self.assertIn('g1', report['accounting']['excluded'])
+
+    def test_one_missing_score_is_not_final(self):
+        write_schedule(self.db, [('g1', 1, 'HOM', 'AWY', 24, None), ('g2', 2, 'HOM2', 'AWY2', 10, 21)])
+        report = ssb.score(self.base_dir, self.cand_dir, self.db, [1, 2])
+        self.assertEqual(report['games_scored'], 1)
+        self.assertIn('g1', report['accounting']['excluded'])
+
+    def test_zero_final_scores_is_a_not_scored_result_not_a_crash(self):
+        write_schedule(self.db, [('g1', 1, 'HOM', 'AWY', None, None), ('g2', 2, 'HOM2', 'AWY2', None, None)])
+        report = ssb.score(self.base_dir, self.cand_dir, self.db, [1, 2])
+        self.assertEqual(report['games_scored'], 0)
+        self.assertEqual(sorted(report['accounting']['excluded']), ['g1', 'g2'])
+        self.assertIsNone(report['baseline'])
+        self.assertIsNone(report['candidate'])
+        self.assertIsNone(report['paired'])
+        self.assertEqual(report['advance_rule']['verdict'], 'NOT SCORED')
+        self.assertFalse(report['advance_rule']['advance'])
+        self.assertEqual(report['advance_rule']['reason'], 'no final score in nfl_schedule for the requested weeks')
+
+    def test_finals_without_valid_untied_seeds_is_not_scored(self):
+        write_schedule(self.db, [('g1', 1, 'HOM', 'AWY', 24, 17), ('g2', 2, 'HOM2', 'AWY2', 10, 21)])
+        for directory in (self.base_dir, self.cand_dir):
+            for game_id in ('g1', 'g2'):
+                rows = [outcome(s, 20, 17, valid=False) for s in (1, 2)]
+                (directory / f'{game_id}.json').write_text(json.dumps(payload(game_id, rows)))
+        report = ssb.score(self.base_dir, self.cand_dir, self.db, [1, 2])
+        self.assertEqual(report['games_scored'], 0)
+        self.assertEqual(report['advance_rule']['verdict'], 'NOT SCORED')
+        self.assertEqual(report['advance_rule']['reason'], 'no valid untied seeds in an arm')
+
+    def test_cli_prints_zero_games_scored_and_writes_the_report(self):
+        write_schedule(self.db, [('g1', 1, 'HOM', 'AWY', None, None), ('g2', 2, 'HOM2', 'AWY2', None, None)])
+        out = Path(self.tmp.name) / 'report.json'
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            ssb.main(['--baseline-dir', str(self.base_dir), '--candidate-dir', str(self.cand_dir), '--weeks', '1-2',
+                      '--db', self.db, '--out', str(out), '--seed-rule', 'complete_game'])
+        self.assertIn('games scored 0, excluded 2', stdout.getvalue())
+        self.assertIn('advance rule: NOT SCORED', stdout.getvalue())
+        self.assertEqual(json.loads(out.read_text())['advance_rule']['verdict'], 'NOT SCORED')
 
 
 if __name__ == '__main__':
