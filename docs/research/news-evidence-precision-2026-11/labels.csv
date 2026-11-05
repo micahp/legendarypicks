@@ -38,7 +38,7 @@ index,update_id,gold_codes,borderline,note
 36,646009,none,no,
 37,646008,SE,no,should resume his role as starting slot CB
 38,646007,ID,no,
-39,646006,SN,yes,will resume role as one of its starting CBs; borderline SN vs SE
+39,646006,SN,no,Will resume his role as one of the starting CBs; definite upcoming starter role.
 40,646005,IO,no,IR-R
 41,646004,ID,no,
 42,646003,ID,no,"Styles would start, not Reid"
@@ -50,7 +50,7 @@ index,update_id,gold_codes,borderline,note
 48,645997,none,no,
 49,645996,none,no,
 50,645995,ID,no,
-51,645994,SE,no,in line for his second start; assuming clearance he'll be under center
+51,645994,ID;SE,no,QUESTIONABLE field; in line for a conditional second start.
 52,645993,ID,no,
 53,645992,ID,no,
 54,645991,none,no,
@@ -75,7 +75,7 @@ index,update_id,gold_codes,borderline,note
 73,645972,ID,no,
 74,645971,ID,no,
 75,645970,SE,no,will likely be back in his starting role
-76,645969,IO;ID,yes,"field IR-R, text says officially questionable Thursday"
+76,645969,ID;IO,yes,IR-R field and text says questionable Thursday while still on IR pending activation; status sources conflict.
 77,645968,IO,no,
 78,645967,ID,no,
 79,645966,IO,no,
@@ -86,7 +86,7 @@ index,update_id,gold_codes,borderline,note
 84,645961,ID,no,
 85,645960,ID,no,
 86,645959,none,no,
-87,645958,SN,yes,continue to lead the offense Sunday implies he starts; no start word
+87,645958,none,no,"Continue to lead the offense describes a role, not a start decision."
 88,645957,IO,no,
 89,645956,ID,no,
 90,645955,ID,no,
@@ -116,7 +116,7 @@ index,update_id,gold_codes,borderline,note
 114,645931,ID,no,
 115,645930,IO,no,
 116,645929,ID,no,
-117,645928,SN,yes,coach announced he will be kicker in Week 9; role decision
+117,645928,none,no,Coach assigned kicker duties for Week 9; rubric requires a starter claim.
 118,645927,ID,no,
 119,645926,ID,no,
 120,645925,IO,no,
@@ -152,14 +152,14 @@ index,update_id,gold_codes,borderline,note
 150,645895,SE,no,"set to start Sunday per reporter, not a coach statement"
 151,645894,IO,no,
 152,645893,ID,no,
-153,645892,SE,no,slated to start Sunday per reporter
+153,645892,ID;SE,no,QUESTIONABLE field; slated to start Sunday per reporter.
 154,645891,ID,no,
 155,645890,ID,no,
 156,645889,ID,no,
 157,645888,ID,no,
 158,645887,ID,no,
 159,645886,ID,no,
-160,645885,SN,yes,coach says he will remain the kicker Sunday; role decision
+160,645885,none,no,"Coach says he will remain the kicker Sunday; role assignment, no starter claim."
 161,645884,IO,no,
 162,645883,IO,no,
 163,645882,ID,no,
@@ -210,7 +210,7 @@ index,update_id,gold_codes,borderline,note
 208,645837,none,no,
 209,645836,IO,no,
 210,645835,SE,no,likely back in his starting role at RG
-211,645834,none,yes,field QUESTIONABLE on a player removed from IR and becoming a free agent
+211,645834,none,yes,QUESTIONABLE field conflicts with removal from IR/free-agent status; no upcoming game.
 212,645833,IO,no,
 213,645832,none,no,
 214,645831,none,no,
@@ -234,26 +234,26 @@ index,update_id,gold_codes,borderline,note
 232,645813,IO,no,
 233,645812,none,no,
 234,645811,none,no,
-235,645810,none,yes,field QUESTIONABLE on a player cut from the practice-squad IL
+235,645810,none,yes,QUESTIONABLE field conflicts with cut from practice-squad injured list; no upcoming game.
 236,645809,none,no,
 237,645808,IO,no,
-238,645807,none,yes,listed as starting receiver on unofficial depth chart: roster role per the paste
+238,645807,SE,no,"Listed as a starting receiver on an unofficial depth chart for Sunday; expected, not confirmed."
 239,645806,IO,no,
 240,645805,none,no,
 241,645804,none,no,
 242,645803,none,no,
-243,645802,SE,yes,"slated to work as No. 1 RB from Sunday: lead-back role, no start word"
+243,645802,none,no,No. 1 running back is a role description; no start decision.
 244,645801,IO,no,
 245,645800,IO,no,
 246,645799,none,no,
 247,645798,none,no,
 248,645797,none,no,
-249,645796,SN,yes,team plans to have him handle kicking duties Sunday; role decision
+249,645796,none,no,Team plans to assign kicking duties Sunday; rubric requires a starter claim.
 250,645795,none,no,
 251,645794,none,no,
 252,645793,none,no,
 253,645792,none,no,
-254,645791,IO,yes,"field OUT; text says practice-squad IR, unavailable four games"
+254,645791,IO,yes,"OUT field conflicts with practice-squad IR; no upcoming game, so field is off-scope."
 255,645790,none,no,
 256,645789,ID,no,field QUESTIONABLE; concussion is past
 257,645788,none,no,

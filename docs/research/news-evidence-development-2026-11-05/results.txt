@@ -1,0 +1,17 @@
+capture sha256 73d845cbb3d8e2584707f8e0240937f1abb595fe73c1b375a737e12940a2ec7b; sample items 9; excluded 0; teams unresolved 0
+
+borderline excluded (main): 9 items scored
+  starter_named                precision 1/1 = 100.0% [95% CI 20.7-100.0]                           recall 1/1 = 100.0% [95% CI 20.7-100.0]
+  starter_expected             precision 1/1 = 100.0% [95% CI 20.7-100.0]                           recall 1/1 = 100.0% [95% CI 20.7-100.0]
+  coach_confirmation_reported  precision no denominator                                             recall no denominator
+  injury_designation           precision 5/5 = 100.0% [95% CI 56.6-100.0]                           recall 5/5 = 100.0% [95% CI 56.6-100.0]
+  injury_status_other          precision no denominator                                             recall no denominator
+
+borderline included: 9 items scored
+  starter_named                precision 1/1 = 100.0% [95% CI 20.7-100.0]                           recall 1/1 = 100.0% [95% CI 20.7-100.0]
+  starter_expected             precision 1/1 = 100.0% [95% CI 20.7-100.0]                           recall 1/1 = 100.0% [95% CI 20.7-100.0]
+  coach_confirmation_reported  precision no denominator                                             recall no denominator
+  injury_designation           precision 5/5 = 100.0% [95% CI 56.6-100.0]                           recall 5/5 = 100.0% [95% CI 56.6-100.0]
+  injury_status_other          precision no denominator                                             recall no denominator
+
+disagreements (borderline items marked):
