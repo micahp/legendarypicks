@@ -190,19 +190,116 @@ class NewsEvidenceTests(unittest.TestCase):
         evidence = ne.build(self.db, self.captures, self.snapshot)
         self.assertEqual([c['class'] for c in self.items(evidence)[112]['classes']], ['injury_status_other'])
 
-    def test_notes_sentence_naming_another_player_is_not_attributed(self):
+    def test_explicit_subject_claim_survives_a_separate_teammate_mention(self):
         multi = update_xml(113, 1001, 'Joe', 'Fagnano', 'BAL', 'QB', '2026-11-04T18:00:00-05:00',
                            'Fagnano update', 'Brissett is out, and Joe Fagnano is named starter.', 'Analysis text.')
         self.capture([multi], '2026-11-04T18:30:00Z')
         evidence = ne.build(self.db, self.captures, self.snapshot)
-        self.assertNotIn('starter_named', [c['class'] for c in self.items(evidence).get(113, {}).get('classes', [])])
+        self.assertIn('starter_named', [c['class'] for c in self.items(evidence)[113]['classes']])
 
-    def test_possessive_name_of_another_player_is_guarded(self):
+    def test_explicit_subject_claim_survives_a_preceding_possessive_teammate_mention(self):
         possessive = update_xml(114, 1001, 'Joe', 'Fagnano', 'BAL', 'QB', '2026-11-04T19:00:00-05:00',
                                 'Fagnano update', 'Notes text.', "Brissett's status is unclear; Joe Fagnano named starter.")
         self.capture([possessive], '2026-11-05T00:30:00Z')
         evidence = ne.build(self.db, self.captures, self.snapshot)
-        self.assertNotIn('starter_named', [c['class'] for c in self.items(evidence).get(114, {}).get('classes', [])])
+        self.assertIn('starter_named', [c['class'] for c in self.items(evidence)[114]['classes']])
+
+    def test_same_feed_player_surname_guards_a_teammate_claim_missing_from_the_db(self):
+        subject = update_xml(115, 1001, 'Joe', 'Fagnano', 'BAL', 'QB', '2026-11-04T19:00:00-05:00',
+                            'Fagnano update', 'Notes text.', 'Newcomer is expected to start Thursday.')
+        other = update_xml(116, 1998, 'Alex', 'Newcomer', 'BAL', 'QB', '2026-11-04T19:00:00-05:00',
+                           'Newcomer update', 'Notes text.', 'Analysis text.')
+        self.capture([subject, other], '2026-11-05T00:30:00Z')
+        evidence = ne.build(self.db, self.captures, self.snapshot)
+        self.assertNotIn(115, self.items(evidence))
+
+    def test_subject_pronoun_and_age_reference_resolve_from_recent_subject_mention(self):
+        item = {'last_name': 'Pitre', 'headline': 'Practice update',
+                'notes': 'Pitre practiced fully Wednesday.',
+                'analysis': 'Pitre missed the previous game. The 26-year-old should resume his starting role Sunday.',
+                'injury_status': ''}
+        classes = {row['class'] for row in ne.classify(item, {'Jackson'})}
+        self.assertEqual(classes, {'starter_expected'})
+
+    def test_item_subject_resolves_a_pronoun_when_no_competing_player_is_named(self):
+        item = {'last_name': 'Johnson', 'headline': 'Practice update', 'notes': '',
+                'analysis': 'He should be back in his starting role Sunday.', 'injury_status': ''}
+        classes = {row['class'] for row in ne.classify(item, {'Smith'})}
+        self.assertEqual(classes, {'starter_expected'})
+
+    def test_subject_claim_is_not_suppressed_by_sentence_level_negation_elsewhere(self):
+        item = {'last_name': 'Johnson', 'headline': 'Practice update', 'notes': '',
+                'analysis': 'Johnson may not be at full strength, but he should return to his starting role.',
+                'injury_status': ''}
+        classes = {row['class'] for row in ne.classify(item)}
+        self.assertEqual(classes, {'starter_expected'})
+
+    def test_negation_scoped_to_the_start_claim_still_suppresses_it(self):
+        item = {'last_name': 'Johnson', 'headline': 'Practice update', 'notes': '',
+                'analysis': 'Johnson should not start Thursday.', 'injury_status': ''}
+        self.assertEqual(ne.classify(item), [])
+
+    def test_negated_starter_announcement_is_not_emitted(self):
+        item = {'last_name': 'Johnson', 'headline': 'Practice update', 'notes': '',
+                'analysis': "Johnson hasn't been named the starter for Sunday.", 'injury_status': ''}
+        self.assertEqual(ne.classify(item), [])
+
+    def test_hypothetical_naming_is_not_a_completed_starter_announcement(self):
+        item = {'last_name': 'Johnson', 'headline': 'Practice update', 'notes': '',
+                'analysis': 'Johnson might be named the starter for Sunday.', 'injury_status': ''}
+        self.assertEqual(ne.classify(item), [])
+
+    def test_pronoun_after_a_teammate_mention_is_not_assigned_to_the_subject(self):
+        item = {'last_name': 'Fagnano', 'headline': 'Fagnano update', 'notes': 'Fagnano practiced Tuesday.',
+                'analysis': 'Brissett met with coaches. He is expected to start Thursday.', 'injury_status': ''}
+        classes = {row['class'] for row in ne.classify(item, {'Brissett'})}
+        self.assertNotIn('starter_expected', classes)
+
+    def test_conditional_teammate_start_remains_excluded(self):
+        item = {'last_name': 'Okereke', 'headline': 'Okereke update', 'notes': 'Okereke was limited Tuesday.',
+                'analysis': 'If Okereke cannot play Sunday, Tyrel Dodson would likely get the start in his place.',
+                'injury_status': ''}
+        self.assertEqual(ne.classify(item, {'Dodson'}), [])
+
+    def test_practice_start_and_past_start_counts_are_not_game_start_claims(self):
+        item = {'last_name': 'Rice', 'headline': 'Rice update', 'notes': 'Rice is limited to start preparation Tuesday.',
+                'analysis': 'He had no starts through five career appearances.', 'injury_status': ''}
+        self.assertEqual(ne.classify(item), [])
+
+    def test_dnp_to_start_week_phrase_describes_timing_not_a_starting_role(self):
+        item = {'last_name': 'Wicks', 'headline': 'Practice update', 'notes': '',
+                'analysis': 'Wicks is trending toward being a DNP to start Week 9.', 'injury_status': ''}
+        self.assertEqual(ne.classify(item), [])
+
+    def test_definite_return_to_starting_role_is_named_claim(self):
+        item = {'last_name': 'Holland', 'headline': 'Practice update', 'notes': 'Holland practiced fully Tuesday.',
+                'analysis': 'Holland has cleared the protocol. He will be back in his starting role Sunday.',
+                'injury_status': ''}
+        classes = {row['class'] for row in ne.classify(item)}
+        self.assertEqual(classes, {'starter_named'})
+
+    def test_role_expectation_and_decided_assignment_language_are_extracted(self):
+        item = {'last_name': 'Wentz', 'headline': 'In line to draw MNF start',
+                'notes': 'Wentz is stated to start Monday night.',
+                'analysis': 'Wentz will get the Week 9 assignment at QB.', 'injury_status': ''}
+        classes = {row['class'] for row in ne.classify(item)}
+        self.assertEqual(classes, {'starter_expected', 'starter_named'})
+
+    def test_coach_naming_a_starter_is_reported_as_coach_confirmation(self):
+        item = {'last_name': 'Fagnano', 'headline': 'Week 9 update', 'notes': '',
+                'analysis': 'Head coach Jesse Minter named Fagnano as the starting quarterback for Thursday.',
+                'injury_status': ''}
+        classes = {row['class'] for row in ne.classify(item)}
+        self.assertEqual(classes, {'starter_named', 'coach_confirmation_reported'})
+
+    def test_reported_would_start_and_announced_might_start_are_distinguished(self):
+        confirmed = {'last_name': 'Fagnano', 'headline': 'Week 9 update', 'notes': '',
+                     'analysis': 'Head coach confirmed Fagnano would start Thursday.', 'injury_status': ''}
+        possible = {'last_name': 'Fagnano', 'headline': 'Week 9 update', 'notes': '',
+                    'analysis': 'Head coach announced Fagnano might start Thursday.', 'injury_status': ''}
+        confirmed_classes = {row['class'] for row in ne.classify(confirmed)}
+        self.assertEqual(confirmed_classes, {'starter_named', 'coach_confirmation_reported'})
+        self.assertEqual(ne.classify(possible), [])
 
     def test_publisher_time_after_cutoff_is_excluded_even_in_a_pre_cutoff_capture(self):
         self.standard_captures()

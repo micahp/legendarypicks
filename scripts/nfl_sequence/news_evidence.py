@@ -46,13 +46,54 @@ CLASSES = ('starter_named', 'starter_expected', 'coach_confirmation_reported', '
 GAME_DESIGNATIONS = frozenset({'OUT', 'DOUBTFUL', 'QUESTIONABLE', 'PROBABLE'})
 
 SENTENCE_SPLIT = re.compile(r'(?<=[.!?])\s+')
-START = re.compile(r'\bstart(?:s|ed|ing|er|ers)?\b', re.IGNORECASE)
-NAMED = re.compile(r'\bnamed\b[^.!?]{0,40}?\bstart(?:er|ing)?\b', re.IGNORECASE)
-EXPECTED = re.compile(r'\b(?:expected|projected|likely|set|slated|should|favored|in line)\b[^.!?]{0,40}?'
-                      r'\bstart(?:er|ing)?\b', re.IGNORECASE)
+CLAUSE_SPLIT = re.compile(r'\s+(?:but|however|yet|although|though|whereas)\s+|;\s*', re.IGNORECASE)
+START_WORD = r'start(?:s|ed|ing|er|ers)?'
+START = re.compile(rf'\b{START_WORD}\b', re.IGNORECASE)
+NAMED = re.compile(rf'\b(?:named|announced|confirmed|tabbed)\b[^.!?;]{{0,80}}?\b{START_WORD}\b|'
+                    rf'\b{START_WORD}\b[^.!?;]{{0,35}}?\b(?:named|announced|confirmed|tabbed)\b',
+                    re.IGNORECASE)
+EXPECTED = re.compile(rf'\b(?:expected|projected|projects|likely|set|slated|should|favored|favorite|in line|on track|poised)\b'
+                      rf'[^.!?;]{{0,45}}?\b{START_WORD}\b', re.IGNORECASE)
+WILL_START = re.compile(r'\b(?:will|shall)\s+(?:(?:still|also|again|continue to)\s+)?'
+                        r'(?:start|be starting)\b', re.IGNORECASE)
+WILL_START_ROLE = re.compile(
+    r'\bwill\s+(?:be|return|resume|take over|remain|retain|hold|keep)\b[^.!?;]{0,35}\b'
+    r'(?:starter|starting\s+(?:(?:[A-Za-z-]+)\s+){0,2}'
+    r'(?:roles?|jobs?|positions?|spots?|lineups?|quarterbacks?|QBs?|receivers?|wideouts?|running\s+backs?|'
+    r'cornerbacks?|CBs?|guards?|linebackers?|safet(?:y|ies)|tackles?|centers?|tight\s+ends?|RBs?|WRs?|TEs?|'
+    r'DEs?|DTs?|OL))\b', re.IGNORECASE)
+WILL_START_NOUN = re.compile(
+    r'\bwill\s+(?:get|make|draw|earn|receive|take)\b[^.!?;]{0,35}\b'
+    r'(?:(?:first|second|third|next|the|a|his|her|their)\s+)?start\b', re.IGNORECASE)
+DEFINITE = (WILL_START, WILL_START_ROLE, WILL_START_NOUN)
+DIRECT_START = re.compile(r'\b(?:is|are)\s+starting\b|\bstarts?\s+(?:(?:on|this|next)\s+)?'
+                          r'(?:Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Week\s+\d+|the game)\b',
+                          re.IGNORECASE)
+WEEKLY_STATUS_START = re.compile(r'\bDNP\b[^.!?;]{0,45}\bto\s+start\s+Week\s+\d+\b', re.IGNORECASE)
+START_ASSIGNMENT = re.compile(
+    r'\bwill\s+(?:get|draw|receive|take|earn)\b[^.!?;]{0,60}\b(?:starting\s+)?(?:assignment|job|nod|call)\b',
+    re.IGNORECASE)
 COACH = re.compile(r'\b(?:coach|head coach|team|staff|organization)\b', re.IGNORECASE)
-CONFIRM = re.compile(r'\bconfirm(?:s|ed|ing)?\b', re.IGNORECASE)
-NEGATION = re.compile(r"\b(?:not|no longer|won't|will not|isn't|doesn't|unlikely)\b|n't\b", re.IGNORECASE)
+COACH_CONFIRM = re.compile(r'\b(?:confirm(?:s|ed|ing)?|announc(?:e|es|ed|ing)|named|names|said|says|told)\b',
+                           re.IGNORECASE)
+HYPOTHETICAL_MODAL = re.compile(r'\b(?P<modal>could|might|would)\b[^.!?;]{0,55}\b' + START_WORD + r'\b',
+                                re.IGNORECASE)
+NEGATIVE_BEFORE_EXPECTATION = re.compile(
+    r"\b(?:not|never|no longer|isn't|aren't|wasn't|weren't|hasn't|haven't|hadn't|doesn't|don't|didn't|"
+    r"won't|can't|is not|are not|was not|were not|has not|have not|had not|does not|do not|did not|will not)"
+    r"\s+(?:(?:be|been)\s+)?$",
+    re.IGNORECASE)
+NEGATIVE_IN_CLAIM = re.compile(
+    r"\b(?:not|never|no longer|won't|will not|isn't|is not|aren't|are not|shouldn't|should not|"
+    r"couldn't|could not|wouldn't|would not|doesn't|does not|didn't|did not|can't|cannot|unlikely)\b",
+    re.IGNORECASE)
+SUBJECT_REFERENCE = re.compile(
+    r'\b(?:he|him|his|she|her|hers|they|them|their|theirs|themselves|'
+    r'the\s+(?:\d{1,2}[- ]year[- ]old|(?:\d{4}\s+)?(?:first|second|third|fourth|fifth|sixth|'
+    r'seventh|eighth|ninth|tenth)[- ]round\s+pick|rookie|veteran|favorite|backup|quarterback|QB|'
+    r'signal[- ]caller|running back|wideout|receiver|linebacker|cornerback|safety|guard|tackle|center|'
+    r'tight end))\b', re.IGNORECASE)
+NAME_TOKEN = re.compile(r"\b[A-Z][A-Za-z'\-]*[a-z][A-Za-z'\-]*\b")
 
 
 def _utc(text, label):
@@ -146,34 +187,126 @@ def _name_tokens(text):
     return out
 
 
-def classify(item, other_surnames=frozenset()):
-    """Evidence classes for one update. Negated sentences make no starter claim.
+def _reported_surnames(items):
+    """Surnames of players represented in the same feed, including recent moves missing from the DB roster."""
+    out = {}
+    for item in items:
+        try:
+            team = nfl_news.normalize_team(item['team'])
+        except team_codes.UnknownTeamCode:
+            continue
+        tokens = nfl_news.normalize_person_name(item['last_name']).split()
+        if tokens:
+            out.setdefault(team, set()).add(tokens[-1].lower())
+    return out
 
-    An update is about its Player element, and RotoWire headlines often leave the name out ("Named Week 9 starter"), so
-    the headline is attributed to that player. It is not attributed when it names another player on either team
-    (other_surnames), because then the headline may be about someone else. Notes and analysis are attributed only from
-    sentences that name the player's last name and no other player on either team.
+
+def _surname_mentions(text, own_surnames, other_surnames):
+    """Known player-surname mentions with offsets and an unambiguous subject/other tag."""
+    mentions = []
+    other_names = {part.lower() for name in other_surnames for part in str(name).replace("'", '').split('-') if part}
+    for match in NAME_TOKEN.finditer(text):
+        token = re.sub(r"'s$", '', match.group(), flags=re.IGNORECASE).replace("'", '').lower()
+        parts = {part for part in token.split('-') if part}
+        is_subject = bool(parts & own_surnames)
+        is_other = bool(parts & other_names)
+        owner = 'subject' if is_subject and not is_other else 'other' if is_other and not is_subject else None
+        if is_subject or is_other:
+            mentions.append((match.start(), match.end(), owner))
+    return mentions
+
+
+def _claim_matches(clause):
+    """Return starter-claim class and source spans, with negation scoped to each claim."""
+    expected = list(EXPECTED.finditer(clause))
+    matches = []
+    for match in NAMED.finditer(clause):
+        if not _claim_is_negated(clause, match) and not _claim_is_hypothetical(clause, match):
+            matches.append(('starter_named', match))
+    for match in expected:
+        if (not _claim_is_negated(clause, match) and not _claim_is_hypothetical(clause, match)
+                and not re.search(r'\b(?:behind|backup|supporting role)\b', match.group(), re.IGNORECASE)):
+            matches.append(('starter_expected', match))
+    definite = [match for pattern in DEFINITE for match in pattern.finditer(clause)]
+    definite += list(DIRECT_START.finditer(clause)) + list(START_ASSIGNMENT.finditer(clause))
+    weekly_status_start = WEEKLY_STATUS_START.search(clause)
+    for match in definite:
+        overlaps_expectation = any(match.start() < item.end() and item.start() < match.end() for item in expected)
+        is_week_period = (weekly_status_start and weekly_status_start.start() <= match.start()
+                          and match.end() <= weekly_status_start.end())
+        if (not overlaps_expectation and not is_week_period and not _claim_is_negated(clause, match)
+                and not _claim_is_hypothetical(clause, match)):
+            matches.append(('starter_named', match))
+    return matches
+
+
+def _claim_is_negated(clause, match):
+    prefix = clause[max(0, match.start() - 24):match.start()]
+    claim = clause[match.start():match.end()]
+    return bool(NEGATIVE_BEFORE_EXPECTATION.search(prefix) or NEGATIVE_IN_CLAIM.search(claim))
+
+
+def _claim_is_hypothetical(clause, match):
+    context_start = max(0, match.start() - 45)
+    context = clause[context_start:match.end()]
+    modal = HYPOTHETICAL_MODAL.search(context)
+    if (modal and context_start + modal.start() >= match.start()
+            and modal.group('modal').lower() == 'would'
+            and re.match(r'\s*(?:named|announced|confirmed)\b', clause[match.start():], re.IGNORECASE)):
+        return False
+    return bool(modal)
+
+
+def _claim_is_subject(clause, match, own_surnames, other_surnames, prior_entity, implicit_headline):
+    mentions = _surname_mentions(clause, own_surnames, other_surnames)
+    overlapping = [entry for entry in mentions if entry[0] < match.end() and match.start() < entry[1]]
+    if overlapping:
+        return len({entry[2] for entry in overlapping}) == 1 and overlapping[0][2] == 'subject'
+
+    before = [entry for entry in mentions if entry[1] <= match.start()]
+    if before:
+        return before[-1][2] == 'subject'
+
+    if prior_entity == 'subject' and SUBJECT_REFERENCE.search(clause):
+        return True
+    if mentions:
+        nearest = min(mentions, key=lambda entry: max(entry[0] - match.end(), match.start() - entry[1], 0))
+        distance = max(nearest[0] - match.end(), match.start() - nearest[1], 0)
+        tied = [entry for entry in mentions
+                if max(entry[0] - match.end(), match.start() - entry[1], 0) == distance]
+        return len({entry[2] for entry in tied}) == 1 and nearest[2] == 'subject'
+    return implicit_headline
+
+
+def _last_mentioned_entity(clause, own_surnames, other_surnames, prior_entity):
+    mentions = _surname_mentions(clause, own_surnames, other_surnames)
+    return mentions[-1][2] if mentions else prior_entity
+
+
+def classify(item, other_surnames=frozenset()):
+    """Classify starter evidence with local negation and player-reference resolution.
+
+    A nameless headline belongs to the update's player. Body claims need an explicit surname or a clear pronoun/role
+    reference whose most recent named player is the subject. A nearby teammate's name no longer suppresses a separate
+    claim, while a claim nearest to another player or an ambiguous pronoun remains excluded.
     """
     found = {}
-    last_name = re.compile(r'\b' + re.escape(item['last_name']) + r'\b', re.IGNORECASE)
-    headline_is_about_someone_else = bool(_name_tokens(item['headline']) & other_surnames)
+    own_surnames = _name_tokens(item['last_name'])
+    prior_entity = 'subject'  # The feed item is anchored to its Player element; named teammates override this context.
     for index, text in enumerate((item['headline'], item['notes'], item['analysis'])):
         for sentence in SENTENCE_SPLIT.split(text):
-            if index == 0 and headline_is_about_someone_else:
-                continue
-            if index > 0 and (not last_name.search(sentence) or _name_tokens(sentence) & other_surnames):
-                continue  # a sentence that also names another player may carry that player's status
-            if NEGATION.search(sentence):
-                continue
-            checks = (
-                ('starter_named', NAMED.search(sentence)),
-                ('starter_expected', EXPECTED.search(sentence)),
-                ('coach_confirmation_reported',
-                 COACH.search(sentence) and CONFIRM.search(sentence) and START.search(sentence)),
-            )
-            for name, hit in checks:
-                if hit and name not in found:
-                    found[name] = sentence.strip()[:300]
+            clauses = [part.strip() for part in CLAUSE_SPLIT.split(sentence) if part.strip()]
+            for clause in clauses:
+                hits = _claim_matches(clause)
+                for name, hit in hits:
+                    if not _claim_is_subject(clause, hit, own_surnames, other_surnames, prior_entity, index == 0):
+                        continue
+                    if name not in found:
+                        found[name] = sentence.strip()[:300]
+                    if (name == 'starter_named' and COACH.search(clause) and COACH_CONFIRM.search(clause)
+                            and (START.search(clause) or START_ASSIGNMENT.search(clause))):
+                        found.setdefault('coach_confirmation_reported', sentence.strip()[:300])
+                prior_entity = _last_mentioned_entity(clause, own_surnames, other_surnames, prior_entity)
     classes = [{'class': name, 'span': found[name]} for name in CLASSES if name in found]
     if item['injury_status']:
         status = item['injury_status'].upper()
@@ -220,6 +353,8 @@ def build(db, capture_dir, snapshot):
             versions[item['id']] = {'item': item, 'item_sha256': digest, 'first_seen': acquired, 'capture': entry}
 
     teams = {game['home_team'], game['away_team']}
+    reported_surnames = _reported_surnames([version['item'] for version in versions.values()])
+    current_reported_surnames = set().union(*(reported_surnames.get(team, set()) for team in teams))
     roster_index = {side: {player['gsis_id']: player for player in roster['players']}
                     for side, roster in snapshot['rosters'].items()}
     items = []
@@ -256,7 +391,7 @@ def build(db, capture_dir, snapshot):
                 counts['not_next_game'] += 1
                 continue
             own = _name_tokens(item['last_name'])
-            other = frozenset(surname for surname in surnames.values() if surname not in own)
+            other = frozenset((set(surnames.values()) | current_reported_surnames) - own)
             classes = classify(item, other)
             if not classes:
                 counts['no_classified_content'] += 1
