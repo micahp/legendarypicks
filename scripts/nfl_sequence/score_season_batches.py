@@ -35,7 +35,11 @@ def parse_weeks(text):
 
 
 def load_results(db, season, weeks):
-    """{game_id: {'week', 'home', 'away', 'home_points', 'away_points'}} for finished regular-season games in the weeks."""
+    """{game_id: {'week', 'home', 'away', 'home_points', 'away_points'}} for final regular-season games in the weeks.
+
+    A game is final only when both scores are present. nfl_schedule has no status column, so the score is the only
+    finality signal this scorer has. A game without a final score is listed as unscored, never scored.
+    """
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         marks = ', '.join('?' for _ in weeks)
@@ -153,6 +157,23 @@ def bootstrap_interval(values, rng):
     return means[int(0.025 * BOOTSTRAP_REPS)], means[int(0.975 * BOOTSTRAP_REPS) - 1]
 
 
+ADVANCE_RULE = ('advance only if mean log loss and mean Brier are both lower than baseline and the 95% interval for the '
+                'log-loss difference is below zero')
+
+
+def label_for(weeks):
+    return 'retrospective-exposure' if max(weeks) <= 8 else 'prospective (weeks 9 onward are prospective)'
+
+
+def not_scored(weeks, accounting, seed_rule):
+    """The report when no game can be scored. It estimates nothing, and nothing advances."""
+    reasons = sorted(set(accounting['excluded'].values())) or ['the arms hold no games']
+    return {'label': label_for(weeks), 'weeks': weeks, 'games_scored': 0, 'accounting': accounting,
+            'seed_rule': seed_rule, 'baseline': None, 'candidate': None, 'paired': None,
+            'advance_rule': {'rule': ADVANCE_RULE, 'advance': False, 'verdict': 'NOT SCORED',
+                             'reason': '; '.join(reasons)}}
+
+
 def score(baseline_dir, candidate_dir, db, weeks, season=2026, seed_rule='valid_full_game'):
     results, unscored = load_results(db, season, weeks)
     baseline, candidate = load_arm(baseline_dir), load_arm(candidate_dir)
@@ -186,6 +207,8 @@ def score(baseline_dir, candidate_dir, db, weeks, season=2026, seed_rule='valid_
                 'crps_home': crps(home_samples, result['home_points']),
                 'crps_away': crps(away_samples, result['away_points']),
             })
+    if not rows['baseline']:
+        return not_scored(weeks, accounting, seed_rule)
     games = [g for g in sorted({r['game_id'] for r in rows['baseline']})]
     base_by_game = {r['game_id']: r for r in rows['baseline']}
     cand_by_game = {r['game_id']: r for r in rows['candidate']}
@@ -198,15 +221,13 @@ def score(baseline_dir, candidate_dir, db, weeks, season=2026, seed_rule='valid_
     mean_d_brier = sum(d_brier) / len(d_brier)
     advance = mean_d_ll < 0 and mean_d_brier < 0 and ll_high < 0
     return {
-        'label': 'retrospective-exposure' if max(weeks) <= 8 else 'prospective (weeks 9 onward are prospective)',
+        'label': label_for(weeks),
         'weeks': weeks, 'games_scored': len(games), 'accounting': accounting, 'seed_rule': seed_rule,
         'baseline': arm_metrics(rows['baseline']), 'candidate': arm_metrics(rows['candidate']),
         'paired': {'mean_log_loss_difference': mean_d_ll, 'log_loss_difference_95ci': [ll_low, ll_high],
                    'mean_brier_difference': mean_d_brier, 'brier_difference_95ci': [brier_low, brier_high],
                    'bootstrap_reps': BOOTSTRAP_REPS, 'bootstrap_seed': BOOTSTRAP_SEED},
-        'advance_rule': {'rule': 'advance only if mean log loss and mean Brier are both lower than baseline and the '
-                                 '95% interval for the log-loss difference is below zero',
-                         'advance': advance, 'verdict': 'PASS' if advance else 'FAIL'},
+        'advance_rule': {'rule': ADVANCE_RULE, 'advance': advance, 'verdict': 'PASS' if advance else 'FAIL'},
     }
 
 
@@ -225,8 +246,12 @@ def main(argv=None):
                    seed_rule=args.seed_rule)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=1, sort_keys=True) + '\n')
-    base, cand, paired = report['baseline']['season'], report['candidate']['season'], report['paired']
     print(f"games scored {report['games_scored']}, excluded {len(report['accounting']['excluded'])}")
+    if report['games_scored'] == 0:
+        print(f"advance rule: NOT SCORED ({report['advance_rule']['reason']})")
+        print(f'wrote {args.out}')
+        return
+    base, cand, paired = report['baseline']['season'], report['candidate']['season'], report['paired']
     print(f"brier   baseline {base['brier']:.4f}  candidate {cand['brier']:.4f}")
     print(f"logloss baseline {base['log_loss']:.4f}  candidate {cand['log_loss']:.4f}")
     print(f"mean log-loss difference {paired['mean_log_loss_difference']:+.4f}  95% interval "
