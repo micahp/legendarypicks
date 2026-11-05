@@ -10,7 +10,10 @@ calibration is missing or conflicting is tz_unresolved, and its articles cannot 
 
 Cutoff: kickoff minus 90 minutes, in UTC. A publication within 120 seconds of the cutoff is boundary; it stays
 out of the strict set unless second-level metadata settles it. Content version is kept apart from publication
-time: a current page whose dateModified is after the cutoff may not show what existed at publication.
+time: a current page whose dateModified is after the cutoff may not show what existed at publication, and a page
+with no dateModified has an unknown version. Strictness is decided per article (article_evidence.csv: published
+before the cutoff AND dateModified not after it). A team-game is strict only with at least one strict report article
+and no report article that cannot establish a pregame version.
 
 Articles dated two or more days before kickoff need no fetch: they precede the cutoff in any timezone, and they
 are marked pre_cutoff_by_date.
@@ -256,21 +259,43 @@ def main(argv=None):
             return "pre_cutoff_by_date", None
         return "fetch_failed", None
 
-    out_rows = []
+    def content_state(modified, cutoff):
+        # No dateModified (or no fetch) means the version that existed at publication is unknown.
+        if modified is None:
+            return "unverified"
+        return "modified_after_cutoff" if modified > cutoff else "modified_before_cutoff"
+
+    def iso(value):
+        return value.isoformat() if value else ""
+
+    # Strictness is decided per article: published before the cutoff by its own metadata AND its current
+    # dateModified not after the cutoff. A team-game is strict only when it has a strict report article and no
+    # report article that cannot establish a pregame version.
+    out_rows, evidence = [], []
     summary = Counter()
     for r, g, refs in team_games:
         counts = {"report": Counter(), "inactives": Counter()}
-        rolling = 0
-        content_flags = []
+        strict_urls, unresolved = [], Counter()
         for kind, u, d in refs:
             if re.search(r"/news/updates-", u):
-                rolling += 1
                 counts[kind]["rolling_page_entries_unparsed"] += 1
+                evidence.append([r["game_id"], r["team"], kind, u, d, "rolling_page_entries_unparsed", "", "",
+                                 g["cutoff"].isoformat(), "unverified", False])
+                if kind == "report":
+                    unresolved["rolling_page_entries_unparsed"] += 1
                 continue
             status, modified = classify(u, d, g)
             counts[kind][status] += 1
-            if status in ("pre_cutoff", "pre_cutoff_by_date") and modified is not None:
-                content_flags.append("modified_after_cutoff" if modified > g["cutoff"] else "modified_before_cutoff")
+            i = info.get(u) or {}
+            state = content_state(modified, g["cutoff"]) if status in ("pre_cutoff", "pre_cutoff_by_date") else "not_applicable"
+            strict = status == "pre_cutoff" and state == "modified_before_cutoff"
+            evidence.append([r["game_id"], r["team"], kind, u, d, status, iso(i.get("published_utc")), iso(modified),
+                             g["cutoff"].isoformat(), state, strict])
+            if kind == "report":
+                if strict:
+                    strict_urls.append(u)
+                elif status in ("pre_cutoff", "pre_cutoff_by_date", "boundary", "tz_unresolved", "no_timestamp", "fetch_failed"):
+                    unresolved[status if status != "pre_cutoff" else "pre_cutoff_" + state] += 1
 
         def headline(kind):
             c = counts[kind]
@@ -282,21 +307,25 @@ def main(argv=None):
             return "none_found"
 
         inj, ina = headline("report"), headline("inactives")
-        content = "modified_after_cutoff" if "modified_after_cutoff" in content_flags else (
-            "modified_before_cutoff" if content_flags else "unchecked")
-        strict = inj == "pre_cutoff_verified" and content != "modified_after_cutoff"
-        row = [g["week"], r["game_id"], r["team"], r["opponent"], g["cutoff"].isoformat(), inj, ina, content, strict]
+        strict = bool(strict_urls) and not unresolved
+        row = [g["week"], r["game_id"], r["team"], r["opponent"], g["cutoff"].isoformat(), inj, ina,
+               len(strict_urls), ";".join(sorted(unresolved)) or "none", strict]
         out_rows.append(row)
         summary[("injury", inj)] += 1
         summary[("inactives", ina)] += 1
-        summary[("content", content)] += 1
         summary[("strict", strict)] += 1
 
     with open(os.path.join(HERE, "team_game_matrix.csv"), "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["week", "game_id", "team", "opponent", "cutoff_utc", "injury_designations", "inactives",
-                    "content_version", "strict_timestamp_ok"])
+                    "report_strict_articles", "report_unresolved", "strict_timestamp_ok"])
         w.writerows(out_rows)
+
+    with open(os.path.join(HERE, "article_evidence.csv"), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["game_id", "team", "kind", "url", "sitemap_date", "classification", "published_utc",
+                    "modified_utc", "cutoff_utc", "content_state", "strict"])
+        w.writerows(evidence)
 
     print("\nmatrix: %d team-game sides" % len(out_rows))
     for key in sorted(summary, key=lambda k: (k[0], str(k[1]))):
