@@ -1,0 +1,42 @@
+{
+  "batches": {
+    "v1": 272,
+    "v15": 272,
+    "v2": 272
+  },
+  "games_with_all_arms": 272,
+  "games_with_same_seed_sets": 272,
+  "manifest_files_hashed": 816,
+  "manifest_mismatches": 0,
+  "manifest_rows": 816,
+  "per_arm": {
+    "v1": {
+      "blocked": 352,
+      "complete": 7766,
+      "complete_game_flag_without_complete_status": 12,
+      "complete_not_valid_full_game": 7778,
+      "incomplete": 30,
+      "seeds": 8160,
+      "tied": 12
+    },
+    "v15": {
+      "blocked": 327,
+      "complete": 7794,
+      "complete_game_flag_without_complete_status": 9,
+      "complete_not_valid_full_game": 7803,
+      "incomplete": 30,
+      "seeds": 8160,
+      "tied": 9
+    },
+    "v2": {
+      "blocked": 267,
+      "complete": 7855,
+      "complete_game_flag_without_complete_status": 8,
+      "complete_not_valid_full_game": 7863,
+      "incomplete": 30,
+      "seeds": 8160,
+      "tied": 8
+    }
+  },
+  "problems": []
+}
