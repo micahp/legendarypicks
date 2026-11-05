@@ -1,0 +1,759 @@
+{
+  "allowed_source_seasons": [
+    2022,
+    2023,
+    2024
+  ],
+  "calibration_seasons": [
+    2023,
+    2024
+  ],
+  "input_sha256": {
+    "build_tables.py": "733845e294337f60c9ce0b34bdd68fc2f58b37db7e3c46a1e59b11607e0bcf31",
+    "e3_football_realism_joint_reference.py": "935cbeb1ad4266d957fae1816a7bfbb85b29e76626d5c7751de46ed2e532eb98",
+    "football_realism_eval.py": "6ec2f03871f3962de95240a5e3db39d58330d6a8f8174e323b33ee8437d124dd",
+    "participation_field.py": "ce0d3733370a793922284c89cf1435322105446e5d88b174842bf56b85dffa0f",
+    "pbp_2022.csv.gz": "0c69a71eb39498956c7b1d5c1ca52ce7fe679934a95d1af249facb5ea9829ea4",
+    "pbp_2023.csv.gz": "4649804ee0f0a40b41e51ec75a1ce921949d7fab5459213488656b92f78560e8",
+    "pbp_2024.csv.gz": "23370d5d10f8104d80d46a1fc5e61f4f6f5a3263fe96fe2dd629913cfcb08c06",
+    "pbp_participation_2023.csv": "ad01aeb4045ee19a4f086ff38b52b14c8f427d3401e529c3078a4545921650a9",
+    "pbp_participation_2024.csv": "b1f436a98b2a7759eb4ed1181e072a35c2666f9aeb356a49c943d28d6be6b0b9",
+    "playcall_model.py": "b472cb80eb4aa76f418a68cb3aaf5316ab99a2c694520fca8fdacc1f761acbec",
+    "players.csv": "c5239e1480b397732d004f81c87dbb07565ff6ea4b2a0e6382cbb7ed35f6481e",
+    "roster_weekly_2022.parquet": "063c0da93f612811e1c4a4c12727a56fd2716197864795f15aa2f10a591b00c0",
+    "roster_weekly_2023.parquet": "0fa5abf9b462a087ecb17f3268ed7233ce9935e95d77be94ad6bac66adf8e281",
+    "roster_weekly_2024.parquet": "4b144e8eda5a159f36037b02e8b7d5a7861acb65b0816b0a063244992038dcf8",
+    "snap_counts_2022.parquet": "3cfde83eb6d859e3477aba4238fa2fb8e0592a5fc5ab8b26128fce085d4b7fea",
+    "snap_counts_2023.parquet": "97873cab365dfb39286bc1de3ac772fa4b51f09cce52ae5f8317e006cc007f62",
+    "snap_counts_2024.parquet": "9ec66a0c755939b329d4eba3f90e716bb874b5a6544f325ba220f003991ff99f"
+  },
+  "metric_7": {
+    "active_roster_player_games": {
+      "2022": 26016,
+      "2023": 26112,
+      "2024": 26121
+    },
+    "coverage_envelopes": {
+      "offensive_snap_share": {
+        "coverage_2023": 0.9622012867647058,
+        "coverage_2024": 0.9552467363424065,
+        "lower": 0.9552467363424065,
+        "upper": 0.9622012867647058
+      },
+      "offensive_touchdowns": {
+        "coverage_2023": 0.9681672882258924,
+        "coverage_2024": 0.9449920085242408,
+        "lower": 0.9449920085242408,
+        "upper": 0.9681672882258924
+      },
+      "passing_attempts": {
+        "coverage_2023": 0.9073741007194245,
+        "coverage_2024": 0.9326047358834244,
+        "lower": 0.9073741007194245,
+        "upper": 0.9326047358834244
+      },
+      "receiving_yards": {
+        "coverage_2023": 0.8836772983114447,
+        "coverage_2024": 0.8870514820592824,
+        "lower": 0.8836772983114447,
+        "upper": 0.8870514820592824
+      },
+      "receptions": {
+        "coverage_2023": 0.9202626641651032,
+        "coverage_2024": 0.9212168486739469,
+        "lower": 0.9202626641651032,
+        "upper": 0.9212168486739469
+      },
+      "rushing_attempts": {
+        "coverage_2023": 0.9496537027171018,
+        "coverage_2024": 0.9495205114544486,
+        "lower": 0.9495205114544486,
+        "upper": 0.9496537027171018
+      },
+      "rushing_yards": {
+        "coverage_2023": 0.9037027171017581,
+        "coverage_2024": 0.8971763452317528,
+        "lower": 0.8971763452317528,
+        "upper": 0.9037027171017581
+      },
+      "targets": {
+        "coverage_2023": 0.9185428392745466,
+        "coverage_2024": 0.9249609984399376,
+        "lower": 0.9185428392745466,
+        "upper": 0.9249609984399376
+      }
+    },
+    "fold_details": {
+      "2023": {
+        "offensive_snap_share": {
+          "coverage": 0.9622012867647058,
+          "covered": 25125,
+          "game_clusters": 272,
+          "player_game_lines": 26112,
+          "position_role_detail": {
+            "OL": {
+              "covered": 4366,
+              "held_out_player_games": 4366,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 4343
+            },
+            "OTHER": {
+              "covered": 14199,
+              "held_out_player_games": 14238,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 14141
+            },
+            "QB": {
+              "covered": 1112,
+              "held_out_player_games": 1112,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 1102
+            },
+            "RB": {
+              "covered": 1658,
+              "held_out_player_games": 1850,
+              "p10": 0.0,
+              "p90": 0.69,
+              "training_player_games": 1969
+            },
+            "TE": {
+              "covered": 1337,
+              "held_out_player_games": 1669,
+              "p10": 0.06200000000000017,
+              "p90": 0.82,
+              "training_player_games": 1693
+            },
+            "WR": {
+              "covered": 2453,
+              "held_out_player_games": 2877,
+              "p10": 0.03,
+              "p90": 0.93,
+              "training_player_games": 2768
+            }
+          },
+          "training_player_games": 26016
+        },
+        "offensive_touchdowns": {
+          "coverage": 0.9681672882258924,
+          "covered": 7269,
+          "game_clusters": 272,
+          "player_game_lines": 7508,
+          "position_role_detail": {
+            "QB": {
+              "covered": 1011,
+              "held_out_player_games": 1112,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 1102
+            },
+            "RB": {
+              "covered": 1781,
+              "held_out_player_games": 1850,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 1969
+            },
+            "TE": {
+              "covered": 1654,
+              "held_out_player_games": 1669,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 1693
+            },
+            "WR": {
+              "covered": 2823,
+              "held_out_player_games": 2877,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 2768
+            }
+          },
+          "training_player_games": 7532
+        },
+        "passing_attempts": {
+          "coverage": 0.9073741007194245,
+          "covered": 1009,
+          "game_clusters": 272,
+          "player_game_lines": 1112,
+          "position_role_detail": {
+            "QB": {
+              "covered": 1009,
+              "held_out_player_games": 1112,
+              "p10": 0.0,
+              "p90": 42.0,
+              "training_player_games": 1102
+            }
+          },
+          "training_player_games": 1102
+        },
+        "receiving_yards": {
+          "coverage": 0.8836772983114447,
+          "covered": 5652,
+          "game_clusters": 272,
+          "player_game_lines": 6396,
+          "position_role_detail": {
+            "RB": {
+              "covered": 1599,
+              "held_out_player_games": 1850,
+              "p10": 0.0,
+              "p90": 29.200000000000045,
+              "training_player_games": 1969
+            },
+            "TE": {
+              "covered": 1474,
+              "held_out_player_games": 1669,
+              "p10": 0.0,
+              "p90": 45.0,
+              "training_player_games": 1693
+            },
+            "WR": {
+              "covered": 2579,
+              "held_out_player_games": 2877,
+              "p10": 0.0,
+              "p90": 80.0,
+              "training_player_games": 2768
+            }
+          },
+          "training_player_games": 6430
+        },
+        "receptions": {
+          "coverage": 0.9202626641651032,
+          "covered": 5886,
+          "game_clusters": 272,
+          "player_game_lines": 6396,
+          "position_role_detail": {
+            "RB": {
+              "covered": 1727,
+              "held_out_player_games": 1850,
+              "p10": 0.0,
+              "p90": 4.0,
+              "training_player_games": 1969
+            },
+            "TE": {
+              "covered": 1497,
+              "held_out_player_games": 1669,
+              "p10": 0.0,
+              "p90": 4.0,
+              "training_player_games": 1693
+            },
+            "WR": {
+              "covered": 2662,
+              "held_out_player_games": 2877,
+              "p10": 0.0,
+              "p90": 6.0,
+              "training_player_games": 2768
+            }
+          },
+          "training_player_games": 6430
+        },
+        "rushing_attempts": {
+          "coverage": 0.9496537027171018,
+          "covered": 7130,
+          "game_clusters": 272,
+          "player_game_lines": 7508,
+          "position_role_detail": {
+            "QB": {
+              "covered": 1007,
+              "held_out_player_games": 1112,
+              "p10": 0.0,
+              "p90": 6.0,
+              "training_player_games": 1102
+            },
+            "RB": {
+              "covered": 1689,
+              "held_out_player_games": 1850,
+              "p10": 0.0,
+              "p90": 17.0,
+              "training_player_games": 1969
+            },
+            "TE": {
+              "covered": 1645,
+              "held_out_player_games": 1669,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 1693
+            },
+            "WR": {
+              "covered": 2789,
+              "held_out_player_games": 2877,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 2768
+            }
+          },
+          "training_player_games": 7532
+        },
+        "rushing_yards": {
+          "coverage": 0.9037027171017581,
+          "covered": 6785,
+          "game_clusters": 272,
+          "player_game_lines": 7508,
+          "position_role_detail": {
+            "QB": {
+              "covered": 912,
+              "held_out_player_games": 1112,
+              "p10": 0.0,
+              "p90": 32.0,
+              "training_player_games": 1102
+            },
+            "RB": {
+              "covered": 1665,
+              "held_out_player_games": 1850,
+              "p10": 0.0,
+              "p90": 78.0,
+              "training_player_games": 1969
+            },
+            "TE": {
+              "covered": 1652,
+              "held_out_player_games": 1669,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 1693
+            },
+            "WR": {
+              "covered": 2556,
+              "held_out_player_games": 2877,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 2768
+            }
+          },
+          "training_player_games": 7532
+        },
+        "targets": {
+          "coverage": 0.9185428392745466,
+          "covered": 5875,
+          "game_clusters": 272,
+          "player_game_lines": 6396,
+          "position_role_detail": {
+            "RB": {
+              "covered": 1722,
+              "held_out_player_games": 1850,
+              "p10": 0.0,
+              "p90": 5.0,
+              "training_player_games": 1969
+            },
+            "TE": {
+              "covered": 1511,
+              "held_out_player_games": 1669,
+              "p10": 0.0,
+              "p90": 6.0,
+              "training_player_games": 1693
+            },
+            "WR": {
+              "covered": 2642,
+              "held_out_player_games": 2877,
+              "p10": 0.0,
+              "p90": 9.0,
+              "training_player_games": 2768
+            }
+          },
+          "training_player_games": 6430
+        }
+      },
+      "2024": {
+        "offensive_snap_share": {
+          "coverage": 0.9552467363424065,
+          "covered": 24952,
+          "game_clusters": 272,
+          "player_game_lines": 26121,
+          "position_role_detail": {
+            "OL": {
+              "covered": 4372,
+              "held_out_player_games": 4372,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 8709
+            },
+            "OTHER": {
+              "covered": 14189,
+              "held_out_player_games": 14241,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 28379
+            },
+            "QB": {
+              "covered": 1098,
+              "held_out_player_games": 1098,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 2214
+            },
+            "RB": {
+              "covered": 1639,
+              "held_out_player_games": 1846,
+              "p10": 0.0,
+              "p90": 0.69,
+              "training_player_games": 3819
+            },
+            "TE": {
+              "covered": 1355,
+              "held_out_player_games": 1730,
+              "p10": 0.07,
+              "p90": 0.82,
+              "training_player_games": 3362
+            },
+            "WR": {
+              "covered": 2299,
+              "held_out_player_games": 2834,
+              "p10": 0.04,
+              "p90": 0.92,
+              "training_player_games": 5645
+            }
+          },
+          "training_player_games": 52128
+        },
+        "offensive_touchdowns": {
+          "coverage": 0.9449920085242408,
+          "covered": 7095,
+          "game_clusters": 272,
+          "player_game_lines": 7508,
+          "position_role_detail": {
+            "QB": {
+              "covered": 1005,
+              "held_out_player_games": 1098,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 2214
+            },
+            "RB": {
+              "covered": 1770,
+              "held_out_player_games": 1846,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 3819
+            },
+            "TE": {
+              "covered": 1562,
+              "held_out_player_games": 1730,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 3362
+            },
+            "WR": {
+              "covered": 2758,
+              "held_out_player_games": 2834,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 5645
+            }
+          },
+          "training_player_games": 15040
+        },
+        "passing_attempts": {
+          "coverage": 0.9326047358834244,
+          "covered": 1024,
+          "game_clusters": 272,
+          "player_game_lines": 1098,
+          "position_role_detail": {
+            "QB": {
+              "covered": 1024,
+              "held_out_player_games": 1098,
+              "p10": 0.0,
+              "p90": 42.0,
+              "training_player_games": 2214
+            }
+          },
+          "training_player_games": 2214
+        },
+        "receiving_yards": {
+          "coverage": 0.8870514820592824,
+          "covered": 5686,
+          "game_clusters": 272,
+          "player_game_lines": 6410,
+          "position_role_detail": {
+            "RB": {
+              "covered": 1623,
+              "held_out_player_games": 1846,
+              "p10": 0.0,
+              "p90": 30.0,
+              "training_player_games": 3819
+            },
+            "TE": {
+              "covered": 1532,
+              "held_out_player_games": 1730,
+              "p10": 0.0,
+              "p90": 47.0,
+              "training_player_games": 3362
+            },
+            "WR": {
+              "covered": 2531,
+              "held_out_player_games": 2834,
+              "p10": 0.0,
+              "p90": 80.0,
+              "training_player_games": 5645
+            }
+          },
+          "training_player_games": 12826
+        },
+        "receptions": {
+          "coverage": 0.9212168486739469,
+          "covered": 5905,
+          "game_clusters": 272,
+          "player_game_lines": 6410,
+          "position_role_detail": {
+            "RB": {
+              "covered": 1736,
+              "held_out_player_games": 1846,
+              "p10": 0.0,
+              "p90": 4.0,
+              "training_player_games": 3819
+            },
+            "TE": {
+              "covered": 1554,
+              "held_out_player_games": 1730,
+              "p10": 0.0,
+              "p90": 4.0,
+              "training_player_games": 3362
+            },
+            "WR": {
+              "covered": 2615,
+              "held_out_player_games": 2834,
+              "p10": 0.0,
+              "p90": 6.0,
+              "training_player_games": 5645
+            }
+          },
+          "training_player_games": 12826
+        },
+        "rushing_attempts": {
+          "coverage": 0.9495205114544486,
+          "covered": 7129,
+          "game_clusters": 272,
+          "player_game_lines": 7508,
+          "position_role_detail": {
+            "QB": {
+              "covered": 1001,
+              "held_out_player_games": 1098,
+              "p10": 0.0,
+              "p90": 6.0,
+              "training_player_games": 2214
+            },
+            "RB": {
+              "covered": 1667,
+              "held_out_player_games": 1846,
+              "p10": 0.0,
+              "p90": 17.0,
+              "training_player_games": 3819
+            },
+            "TE": {
+              "covered": 1699,
+              "held_out_player_games": 1730,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 3362
+            },
+            "WR": {
+              "covered": 2762,
+              "held_out_player_games": 2834,
+              "p10": 0.0,
+              "p90": 1.0,
+              "training_player_games": 5645
+            }
+          },
+          "training_player_games": 15040
+        },
+        "rushing_yards": {
+          "coverage": 0.8971763452317528,
+          "covered": 6736,
+          "game_clusters": 272,
+          "player_game_lines": 7508,
+          "position_role_detail": {
+            "QB": {
+              "covered": 906,
+              "held_out_player_games": 1098,
+              "p10": 0.0,
+              "p90": 32.0,
+              "training_player_games": 2214
+            },
+            "RB": {
+              "covered": 1595,
+              "held_out_player_games": 1846,
+              "p10": 0.0,
+              "p90": 75.0,
+              "training_player_games": 3819
+            },
+            "TE": {
+              "covered": 1702,
+              "held_out_player_games": 1730,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 3362
+            },
+            "WR": {
+              "covered": 2533,
+              "held_out_player_games": 2834,
+              "p10": 0.0,
+              "p90": 0.0,
+              "training_player_games": 5645
+            }
+          },
+          "training_player_games": 15040
+        },
+        "targets": {
+          "coverage": 0.9249609984399376,
+          "covered": 5929,
+          "game_clusters": 272,
+          "player_game_lines": 6410,
+          "position_role_detail": {
+            "RB": {
+              "covered": 1744,
+              "held_out_player_games": 1846,
+              "p10": 0.0,
+              "p90": 5.0,
+              "training_player_games": 3819
+            },
+            "TE": {
+              "covered": 1569,
+              "held_out_player_games": 1730,
+              "p10": 0.0,
+              "p90": 6.0,
+              "training_player_games": 3362
+            },
+            "WR": {
+              "covered": 2616,
+              "held_out_player_games": 2834,
+              "p10": 0.0,
+              "p90": 9.0,
+              "training_player_games": 5645
+            }
+          },
+          "training_player_games": 12826
+        }
+      }
+    }
+  },
+  "schema": "lp.nfl.slc-v2-observed-realism-thresholds.v1",
+  "season_policy": "Fixed explicit files only; row season is validated; no other season is accepted.",
+  "simulation_outputs_read": false,
+  "threshold_method": {
+    "coverage": "For 2023, fit on 2022. For 2024, fit on 2022-2023. Envelope is min/max held-out coverage.",
+    "distance_gates": "Point statistic between observed 2023 and observed 2024; no candidate simulation data.",
+    "quantile": "Linear interpolation at rank (n-1)*p.",
+    "tvd": "0.5 times the sum of absolute differences in normalized cell shares.",
+    "wasserstein_1": "Integral of absolute empirical CDF difference in the native unit."
+  },
+  "thresholds": {
+    "metric_1": {
+      "T_personnel": 0.18571426994770737,
+      "T_personnel_RB_only_sensitivity": 0.1926540211365505,
+      "accepted_grouped_plays": {
+        "2023": 33872,
+        "2024": 33379
+      },
+      "team_count": 32
+    },
+    "metric_2": {
+      "T_situation": 0.05975669823485892,
+      "eligible_decisions_by_fold": {
+        "2023": 37473,
+        "2024": 36780
+      },
+      "minimum_supported_decision_share": 0.31756389342033714,
+      "supported_contexts": 150,
+      "supported_decision_share_by_fold": {
+        "2023": 0.3208443412590398,
+        "2024": 0.31756389342033714
+      }
+    },
+    "metric_3": {
+      "T_top": 0.027768993317502256,
+      "quantile_terms": 96,
+      "team_count": 32,
+      "team_games_with_identified_targets": {
+        "2023": 544,
+        "2024": 544
+      }
+    },
+    "metric_4": {
+      "T_RB2_appears": 0.007352941176470562,
+      "T_RB2_opportunities": 0.6764705882352942,
+      "T_RB2_snaps": 1.28125,
+      "appearance_rate_by_fold": {
+        "2023": 0.9908088235294118,
+        "2024": 0.9981617647058824
+      },
+      "position_exclusions": {
+        "2023": {
+          "fullback_excluded": 191
+        },
+        "2024": {
+          "fullback_excluded": 161,
+          "missing_pfr_identity": 1,
+          "position_unresolved_or_other": 1
+        }
+      },
+      "team_games_by_fold": {
+        "2023": 544,
+        "2024": 544
+      }
+    },
+    "metric_5": {
+      "T_snap_all": 0.0033843421866324094,
+      "T_snap_position": 0.039670425560477916,
+      "position_detail": {
+        "FB": {
+          "W1": 0.039670425560477916,
+          "n_2023": 191,
+          "n_2024": 156
+        },
+        "OL": {
+          "W1": 0.004256699485020541,
+          "n_2023": 3362,
+          "n_2024": 3380
+        },
+        "OTHER": {
+          "W1": 0.006089743589743589,
+          "n_2023": 39,
+          "n_2024": 52
+        },
+        "QB": {
+          "W1": 0.016901025341114203,
+          "n_2023": 697,
+          "n_2024": 682
+        },
+        "RB": {
+          "W1": 0.01173616983357159,
+          "n_2023": 1448,
+          "n_2024": 1457
+        },
+        "TE": {
+          "W1": 0.00901853707043048,
+          "n_2023": 1610,
+          "n_2024": 1674
+        },
+        "WR": {
+          "W1": 0.009300043236578556,
+          "n_2023": 2731,
+          "n_2024": 2655
+        }
+      },
+      "positive_snap_player_games": {
+        "2023": 10078,
+        "2024": 10056
+      },
+      "supported_position_groups": [
+        "FB",
+        "OL",
+        "QB",
+        "RB",
+        "TE",
+        "WR"
+      ]
+    },
+    "metric_6": {
+      "T_joint": 0.07972434178868495,
+      "nonempty_joint_bins": {
+        "2023": 121,
+        "2024": 122
+      },
+      "skill_player_games": {
+        "2023": 5968,
+        "2024": 5928
+      }
+    }
+  }
+}
