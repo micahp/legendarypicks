@@ -1,0 +1,589 @@
+{
+ "as_of": "2026-11-05T23:45:00Z",
+ "captures_after_cutoff_count": 0,
+ "captures_before_cutoff": [
+  {
+   "acquired_at_utc": "2026-11-05T21:00:03.349712Z",
+   "bytes": 367547,
+   "feed_date": "2026-11-03",
+   "name": "rotowire-nfl-news-20261105T210003Z.xml",
+   "sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "updates": 301,
+   "url": "https://rotowire-secrets-ebgmaeh8ecc4huhf.canadaeast-01.azurewebsites.net/api/proxy?feed=NFLNews"
+  }
+ ],
+ "counts": {
+  "no_classified_content": 11,
+  "other_team": 273,
+  "player_unresolved": 1
+ },
+ "evidence_sha256": "67bdd0b33dfeffcd7c1e82571fa498f95a0f864807eaf0531735dd0a86a7a51a",
+ "game_id": "2026_09_JAX_BAL",
+ "items": [
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_status_other",
+     "span": "Injury Status=IR"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Lands on injured reserve",
+   "in_snapshot_roster": true,
+   "item_sha256": "34b8efe9e33d76ecb9028c9cd8723483ae19818a30e2f2863fe7567dfbd25703",
+   "player": {
+    "gsis_id": "00-0040074",
+    "lp_player_id": 13759,
+    "name": "Tyler Loop",
+    "position": "K",
+    "resolution": "name_team_position",
+    "source_player_id": "18742"
+   },
+   "publisher_time_utc": "2026-11-03T21:44:28Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "home",
+   "source_url": "https://www.rotowire.com/football/player/tyler-loop-18742",
+   "team": "BAL",
+   "update_id": 645783
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_designation",
+     "span": "Injury Status=QUESTIONABLE"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Sits out Tuesday's practice",
+   "in_snapshot_roster": true,
+   "item_sha256": "aa328200adbfa3bc2aab15438ce6641f60a489661b340ea24b8435ff870ba6f3",
+   "player": {
+    "gsis_id": "00-0040719",
+    "lp_player_id": 22683,
+    "name": "Bhayshul Tuten",
+    "position": "RB",
+    "resolution": "name_team_position",
+    "source_player_id": "18524"
+   },
+   "publisher_time_utc": "2026-11-03T21:49:15Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "away",
+   "source_url": "https://www.rotowire.com/football/player/bhayshul-tuten-18524",
+   "team": "JAX",
+   "update_id": 645784
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_designation",
+     "span": "Injury Status=QUESTIONABLE"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Limited in Tuesday's practice",
+   "in_snapshot_roster": true,
+   "item_sha256": "d1ac55ca5b630338046e23a56d535cc7bc5bffd33db37ef326233ee3f24f13c8",
+   "player": {
+    "gsis_id": "00-0038611",
+    "lp_player_id": 19042,
+    "name": "Chris Rodriguez",
+    "position": "RB",
+    "resolution": "name_team_position",
+    "source_player_id": "16933"
+   },
+   "publisher_time_utc": "2026-11-03T21:54:09Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "away",
+   "source_url": "https://www.rotowire.com/football/player/chris-rodriguez-16933",
+   "team": "JAX",
+   "update_id": 645785
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_designation",
+     "span": "Injury Status=QUESTIONABLE"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Remains limited in Tuesday's practice",
+   "in_snapshot_roster": true,
+   "item_sha256": "0519c070cb1f0478800fbd90f741197a0a848bdbb9a7f8cb555d5b56ccb3eda9",
+   "player": {
+    "gsis_id": "00-0034960",
+    "lp_player_id": 15278,
+    "name": "Jakobi Meyers",
+    "position": "WR",
+    "resolution": "name_team_position",
+    "source_player_id": "13517"
+   },
+   "publisher_time_utc": "2026-11-03T21:57:29Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "away",
+   "source_url": "https://www.rotowire.com/football/player/jakobi-meyers-13517",
+   "team": "JAX",
+   "update_id": 645786
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_status_other",
+     "span": "Injury Status=IR"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Officially goes to IR",
+   "in_snapshot_roster": true,
+   "item_sha256": "e7c8a53fad0917a35bfb7d8fcd8cb9d6648b9a3d3521a11d5ef63ee539b9dafd",
+   "player": {
+    "gsis_id": "00-0036262",
+    "lp_player_id": 8992,
+    "name": "DaVon Hamilton",
+    "position": "DT",
+    "resolution": "name_team_position",
+    "source_player_id": "14714"
+   },
+   "publisher_time_utc": "2026-11-04T01:05:55Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "away",
+   "source_url": "https://www.rotowire.com/football/player/davon-hamilton-14714",
+   "team": "JAX",
+   "update_id": 645813
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_status_other",
+     "span": "Injury Status=IR"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Officially placed on IR",
+   "in_snapshot_roster": true,
+   "item_sha256": "d3a7405aa214c9e4bf3b160adacbd14c72478b298f701a71b644d0da7c39160c",
+   "player": {
+    "gsis_id": "00-0033038",
+    "lp_player_id": 16174,
+    "name": "Eric Murray",
+    "position": "S",
+    "resolution": "name_team_position",
+    "source_player_id": "11141"
+   },
+   "publisher_time_utc": "2026-11-04T01:11:52Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "away",
+   "source_url": "https://www.rotowire.com/football/player/eric-murray-11141",
+   "team": "JAX",
+   "update_id": 645816
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_designation",
+     "span": "Injury Status=QUESTIONABLE"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Still dealing with rib issue",
+   "in_snapshot_roster": true,
+   "item_sha256": "c550d503fc7cff274d49da4af74bf089f397afb95ccb9e40939e31014d3b61fb",
+   "player": {
+    "gsis_id": "00-0037235",
+    "lp_player_id": 23163,
+    "name": "Travon Walker",
+    "position": "DE",
+    "resolution": "name_team_position",
+    "source_player_id": "16066"
+   },
+   "publisher_time_utc": "2026-11-04T01:30:29Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "away",
+   "source_url": "https://www.rotowire.com/football/player/travon-walker-16066",
+   "team": "JAX",
+   "update_id": 645823
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "starter_expected",
+     "span": "The 22-year-old will likely be back in his starting role at right guard versus Jacksonville."
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Healthy ahead of Week 9",
+   "in_snapshot_roster": false,
+   "item_sha256": "f6fa58d669eb505d82a18399ca60ddb17722627601bd5091408e4f3e75137f96",
+   "player": {
+    "gsis_id": null,
+    "lp_player_id": null,
+    "name": "Vega Ioane",
+    "position": "OG",
+    "resolution": "unresolved_candidate",
+    "source_player_id": "19400"
+   },
+   "publisher_time_utc": "2026-11-04T02:05:20Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "home",
+   "source_url": "https://www.rotowire.com/football/player/vega-ioane-19400",
+   "team": "BAL",
+   "update_id": 645835
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_designation",
+     "span": "Injury Status=OUT"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Reportedly out for season with turf toe",
+   "in_snapshot_roster": true,
+   "item_sha256": "1ab6c0b5f85164c50a917e9733b151bfe14de3da97ceaed10957e680d463b305",
+   "player": {
+    "gsis_id": "00-0035993",
+    "lp_player_id": 10728,
+    "name": "Tyler Huntley",
+    "position": "QB",
+    "resolution": "name_team_position",
+    "source_player_id": "14563"
+   },
+   "publisher_time_utc": "2026-11-04T14:00:26Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "home",
+   "source_url": "https://www.rotowire.com/football/player/tyler-huntley-14563",
+   "team": "BAL",
+   "update_id": 645869
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_designation",
+     "span": "Injury Status=QUESTIONABLE"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Trending toward game-time call Thursday",
+   "in_snapshot_roster": true,
+   "item_sha256": "da40990526263da8275bad2e09ad29e8ed4be4b2f85b3ae39707f21e9a708f35",
+   "player": {
+    "gsis_id": "00-0040719",
+    "lp_player_id": 22683,
+    "name": "Bhayshul Tuten",
+    "position": "RB",
+    "resolution": "name_team_position",
+    "source_player_id": "18524"
+   },
+   "publisher_time_utc": "2026-11-04T15:38:21Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "away",
+   "source_url": "https://www.rotowire.com/football/player/bhayshul-tuten-18524",
+   "team": "JAX",
+   "update_id": 645875
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_designation",
+     "span": "Injury Status=QUESTIONABLE"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Questionable for Thursday after no practice",
+   "in_snapshot_roster": true,
+   "item_sha256": "615e0f36ea3d57215771f38cd6e39b17621bb7591aa7dcbc23a68cd679f436bb",
+   "player": {
+    "gsis_id": "00-0040719",
+    "lp_player_id": 22683,
+    "name": "Bhayshul Tuten",
+    "position": "RB",
+    "resolution": "name_team_position",
+    "source_player_id": "18524"
+   },
+   "publisher_time_utc": "2026-11-04T20:07:57Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "away",
+   "source_url": "https://www.rotowire.com/football/player/bhayshul-tuten-18524",
+   "team": "JAX",
+   "update_id": 645904
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "starter_named",
+     "span": "With Lamar Jackson bound for IR with a thumb injury on his throwing hand and Tyler Huntley expected to miss the rest of the season with turf toe, coach Jesse Minter named Fagnano as the Ravens' starting quarterback for Week 9 on Tuesday."
+    },
+    {
+     "class": "starter_expected",
+     "span": "Still in line to start Thursday"
+    },
+    {
+     "class": "coach_confirmation_reported",
+     "span": "With Lamar Jackson bound for IR with a thumb injury on his throwing hand and Tyler Huntley expected to miss the rest of the season with turf toe, coach Jesse Minter named Fagnano as the Ravens' starting quarterback for Week 9 on Tuesday."
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Still in line to start Thursday",
+   "in_snapshot_roster": true,
+   "item_sha256": "85b0d089a1155e7f759ff2b33847477595f370340f2a6b7f73f047da17798412",
+   "player": {
+    "gsis_id": "00-0040981",
+    "lp_player_id": 6825,
+    "name": "Joe Fagnano",
+    "position": "QB",
+    "resolution": "name_team_position",
+    "source_player_id": "19428"
+   },
+   "publisher_time_utc": "2026-11-05T00:14:10Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "home",
+   "source_url": "https://www.rotowire.com/football/player/joe-fagnano-19428",
+   "team": "BAL",
+   "update_id": 645952
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_designation",
+     "span": "Injury Status=QUESTIONABLE"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Questionable for TNF",
+   "in_snapshot_roster": true,
+   "item_sha256": "74c490c259729a5e63f9c43f6fa218b6994ba4ecb343ec4ce783fadd524231f5",
+   "player": {
+    "gsis_id": "00-0037235",
+    "lp_player_id": 23163,
+    "name": "Travon Walker",
+    "position": "DE",
+    "resolution": "name_team_position",
+    "source_player_id": "16066"
+   },
+   "publisher_time_utc": "2026-11-05T00:51:31Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "away",
+   "source_url": "https://www.rotowire.com/football/player/travon-walker-16066",
+   "team": "JAX",
+   "update_id": 645963
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "starter_expected",
+     "span": "The 25-year-old was a limited participant at the team's final practice of the week Wednesday, so he may not be back to 100 percent, but Johnson should be back in his starting role at free safety versus the Ravens."
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "No injury designation for TNF",
+   "in_snapshot_roster": true,
+   "item_sha256": "30b68e9a35b4f5678ca9884edaad602d2d857d4d87c0e2a4d84e994f2468121d",
+   "player": {
+    "gsis_id": "00-0038596",
+    "lp_player_id": 11459,
+    "name": "Antonio Johnson",
+    "position": "S",
+    "resolution": "name_team_position",
+    "source_player_id": "17369"
+   },
+   "publisher_time_utc": "2026-11-05T00:56:16Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "away",
+   "source_url": "https://www.rotowire.com/football/player/antonio-johnson-17369",
+   "team": "JAX",
+   "update_id": 645965
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_designation",
+     "span": "Injury Status=QUESTIONABLE"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Questionable for Thursday",
+   "in_snapshot_roster": true,
+   "item_sha256": "4dc99d623970b84f83ec3bc4c1b92a22a4a2f47908dbeaaa50f91d93231d77ed",
+   "player": {
+    "gsis_id": "00-0039232",
+    "lp_player_id": 23924,
+    "name": "Nate Wiggins",
+    "position": "CB",
+    "resolution": "name_team_position",
+    "source_player_id": "17709"
+   },
+   "publisher_time_utc": "2026-11-05T01:06:12Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "home",
+   "source_url": "https://www.rotowire.com/football/player/nate-wiggins-17709",
+   "team": "BAL",
+   "update_id": 645967
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_status_other",
+     "span": "Injury Status=IR-R"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Listed as questionable for Thursday",
+   "in_snapshot_roster": true,
+   "item_sha256": "10f441005c63f62ae8c94fb741b307aa320252a5fecd8a9146e5ab7bd6d00975",
+   "player": {
+    "gsis_id": "00-0040888",
+    "lp_player_id": 18247,
+    "name": "Adam Randall",
+    "position": "RB",
+    "resolution": "name_team_position",
+    "source_player_id": "19301"
+   },
+   "publisher_time_utc": "2026-11-05T01:10:19Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "home",
+   "source_url": "https://www.rotowire.com/football/player/adam-randall-19301",
+   "team": "BAL",
+   "update_id": 645969
+  },
+  {
+   "capture": "rotowire-nfl-news-20261105T210003Z.xml",
+   "capture_sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "classes": [
+    {
+     "class": "injury_designation",
+     "span": "Injury Status=OUT"
+    }
+   ],
+   "first_seen_utc": "2026-11-05T21:00:03.349712Z",
+   "headline": "Won't play Thursday",
+   "in_snapshot_roster": true,
+   "item_sha256": "9462c0973ff4d4f6470db79e6379900e63da1d96568092ddb68833a788676063",
+   "player": {
+    "gsis_id": "00-0036302",
+    "lp_player_id": 9570,
+    "name": "Jaylinn Hawkins",
+    "position": "S",
+    "resolution": "name_team_position",
+    "source_player_id": "14697"
+   },
+   "publisher_time_utc": "2026-11-05T01:14:30Z",
+   "scope": {
+    "kickoff_utc": "2026-11-06T01:15:00Z",
+    "method": "next_kickoff_after_publication"
+   },
+   "side": "home",
+   "source_url": "https://www.rotowire.com/football/player/jaylinn-hawkins-14697",
+   "team": "BAL",
+   "update_id": 645971
+  }
+ ],
+ "not_captured": [
+  "team_articles",
+  "team_injury_reports_as_news",
+  "fantasy_projections_espn_cbs",
+  "depth_chart_news"
+ ],
+ "roster_snapshot_id": "nflverse-full-depth:2aab15417d6e61e9aed42f701a52d25cc6774c988031e6424c28d42a55957d9a",
+ "schema": "lp-nfl-news-evidence-1",
+ "season": 2026,
+ "snapshot_sha256": "02a779876863dfea155e763aca3cff724d0948f6f1e37a46398d01ca2bf9af2d",
+ "source": "rotowire_nfl_news",
+ "starter_consistency": {
+  "conflicts": [],
+  "counts": {
+   "announced agrees": 1,
+   "announced checked": 1,
+   "announced differs": 0,
+   "announced not checked (multi-starter position)": 0,
+   "announced unverified": 0,
+   "expected agrees": 0,
+   "expected checked": 0,
+   "expected differs": 0,
+   "expected not checked (multi-starter position)": 2,
+   "expected unverified": 0
+  },
+  "notes": [],
+  "starter_source": "pinned starter flag"
+ },
+ "week": 9,
+ "workload_effect": "none"
+}
