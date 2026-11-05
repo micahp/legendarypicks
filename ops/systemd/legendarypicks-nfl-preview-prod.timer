@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly unlocked NFL projections for the upcoming week (PROD)
+
+[Timer]
+# Preview rows update the Model page; lock_nfl_models.py still writes immutable locks 90 minutes before kickoff.
+OnCalendar=*-*-* *:20:00 America/Chicago
+Persistent=true
+Unit=legendarypicks-nfl-preview-prod.service
+
+[Install]
+WantedBy=timers.target
