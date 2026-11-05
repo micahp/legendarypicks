@@ -1,6 +1,6 @@
 # Injury reconstruction 2025, v1 (research only)
 
-Status: source audit and a one-game check are done. Sampling of 15 to 20 games is in progress. Nothing here feeds the 2025 realism run, which keeps its injury-excluded inputs. Nothing is committed.
+Status: source audit and a one-game check are done. A rule-based gold-set extractor (v1) was evaluated once on a 77-item test split; its OUT precision is 88.9%, below the 98% gate, so no automatic exclusion is enabled. See `EXTRACTOR-RESULTS.md`. Nothing here feeds the 2025 realism run, which keeps its injury-excluded inputs.
 
 ## Question
 
