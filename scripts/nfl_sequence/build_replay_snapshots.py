@@ -8,7 +8,8 @@ as a prospective forecast.
 
 Per game: the cutoff is kickoff minus --cutoff-minutes. The depth roster is the team's latest dated depth chart (dt) at or
 before the cutoff, offense positions only, ids resolved by GSIS as the depth ingest does; exactly one resolved QB1 is required.
-The injury report is the game week's rows. The streak file holds each team's current win-loss run over the games whose results
+The injury report is the game week's rows, excluded unless --include-injury-report (the source has no timestamps).
+The streak file holds each team's current win-loss run over the games whose results
 were available at the cutoff (season_layers' rule: kickoff + 10 h <= cutoff). nflverse spells LA and WAS in all three files, so
 teams are joined as written.
 
@@ -33,6 +34,10 @@ import wl_streak  # noqa: E402
 SOURCE = 'nflverse_depth_charts'  # not a verified capture source: input_provenance records it as unverified
 UNVERIFIED = ['replay: the season files were downloaded after the season; no input has a verified availability time',
               'depth: rows are filtered by their published dt, which is the only time used']
+INJURY_NOTE = {
+    True: 'injury: game-week designations are included; the injury file has no timestamps, so a designation may be known after the cutoff',
+    False: 'injury: game-week designations are excluded; the injury file has no timestamps',
+}
 
 
 def _sha(path):
@@ -56,7 +61,7 @@ def streaks(games, season, cutoff, target_game_id):
                       for team, r in sorted(results.items())}}
 
 
-def build_one(game, depth, injuries, by_gsis, cutoff, files):
+def build_one(game, depth, injuries, by_gsis, cutoff, files, include_injuries=False):
     game_id = str(game['game_id'])
     teams = {'away': str(game['away_team']), 'home': str(game['home_team'])}
     rosters = {}
@@ -78,7 +83,7 @@ def build_one(game, depth, injuries, by_gsis, cutoff, files):
             raise ValueError(f'{game_id}: {team} depth at {at} must have exactly one QB1 with a resolved id '
                              f'(found {len(qb1)}; {len(unresolved)} rows unresolved)')
         team_injuries = injuries[(injuries['team'] == team) & (injuries['week'] == int(game['week']))
-                                 & (injuries['game_type'] == 'REG')]
+                                 & (injuries['game_type'] == 'REG')] if include_injuries else injuries.iloc[0:0]
         rosters[side] = {'team': team, 'snapshot_at': at, 'source': SOURCE, 'players': players,
                          'injury_report': {'rows': len(team_injuries), 'available': len(team_injuries) > 0,
                                            'players': [{'gsis_id': str(r['gsis_id']), 'report_status': r['report_status'],
@@ -91,8 +96,9 @@ def build_one(game, depth, injuries, by_gsis, cutoff, files):
         'schema': ps.SCHEMA,
         'as_of': cutoff.isoformat().replace('+00:00', 'Z'),
         'evaluation': {'class': 'exploratory_replay', 'verified': False,
-                       'unverified_inputs': UNVERIFIED + provenance['unverified']},
-        'replay': {'files': files, 'kickoff_rule': f'nflverse gametime as {pc.SCHEDULE_TZ}',
+                       'unverified_inputs': UNVERIFIED + [INJURY_NOTE[include_injuries]] + provenance['unverified']},
+        'replay': {'files': files, 'injury_report': 'included' if include_injuries else 'excluded',
+                   'kickoff_rule': f'nflverse gametime as {pc.SCHEDULE_TZ}',
                    'cutoff_rule': 'kickoff minus --cutoff-minutes'},
         'roster_snapshot_id': 'replay:' + ps._canonical_hash(rosters),
         'schedule': {
@@ -123,6 +129,8 @@ def main():
     ap.add_argument('--cutoff-minutes', type=int, default=90)
     ap.add_argument('--out-dir', type=Path, required=True)
     ap.add_argument('--games', nargs='*', help='only these game ids')
+    ap.add_argument('--include-injury-report', action='store_true',
+                    help='keep the game-week injury designations; the source has no timestamps, so they are excluded by default')
     args = ap.parse_args()
     if args.season >= 2026:
         raise SystemExit('replay snapshots are for completed past seasons; 2026 is sealed')
@@ -146,7 +154,8 @@ def main():
     for game in targets.to_dict('records'):
         cutoff = game['_kickoff'] - timedelta(minutes=args.cutoff_minutes)
         try:
-            snapshot = build_one(game, depth, injuries, by_gsis, cutoff, files)
+            snapshot = build_one(game, depth, injuries, by_gsis, cutoff, files,
+                                 include_injuries=args.include_injury_report)
         except ValueError as exc:
             refused.append(str(exc))
             continue
