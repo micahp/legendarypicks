@@ -382,6 +382,26 @@ def _quarter_by_quarter(record, snapshot):
     }
 
 
+REALISM_SCHEMA = 'lp-nfl-slc-realism-export-1'
+
+
+def play_rows(record):
+    """Each realized play in game order: its drive, sequence, event type, decision type, yards and the state before the play.
+    The realism gate's situation metric reads these from the sidecar. Read-only: nothing here feeds back into the simulation."""
+    return [{'drive': drive.get('index'), 'sequence': play.get('sequence'), 'event_type': play.get('event_type'),
+             'decision_type': (play.get('decision') or {}).get('type'),
+             'yards_gained': (play.get('outcome') or {}).get('yards_gained'), 'state_before': play.get('state_before')}
+            for drive in (record or {}).get('drives', []) for play in drive.get('plays', [])]
+
+
+def realism_export(outcome, record):
+    """The opt-in realism block of a box-score line (--export-plays). `plays` is every realized play with the state before it.
+    `lineup` is the V2 lineup summary in outcome['playcall'] (team snaps, player snaps, groups, short snaps, cell fallbacks),
+    or None when the participation field did not run. Read-only: nothing here feeds back into the simulation."""
+    return {'schema': REALISM_SCHEMA, 'flag': '--export-plays', 'plays': play_rows(record),
+            'lineup': (outcome.get('playcall') or {}).get('lineup')}
+
+
 def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_validation=None):
     """Create one self-contained game record. SLC participant IDs must belong to the frozen roster."""
     schedule = snapshot['schedule']

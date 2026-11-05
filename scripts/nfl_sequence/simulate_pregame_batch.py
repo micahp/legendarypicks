@@ -477,7 +477,7 @@ class FinishedSeeds(dict):
 
 
 def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False,
-                   paired_randomness=False, rng_plan=None):
+                   paired_randomness=False, rng_plan=None, export_plays=False):
     record = None
     error = None
     caught_exception = None
@@ -523,6 +523,8 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
                 game_id = (snapshot.get('schedule') or {}).get('game_id', 'unknown')
                 raise ValueError(f"STAT_ACCOUNTING: game_id={game_id} seed={seed}: {boxscore['reconciliation']}")
             if export_boxscores:
+                if export_plays:
+                    boxscore['realism'] = slc_outputs.realism_export(outcome, record)
                 outcome['boxscore'] = boxscore
         except Exception as exc:
             game_id = (snapshot.get('schedule') or {}).get('game_id', 'unknown')
@@ -555,6 +557,8 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
                 # Preserve an auditable error line even when strict roster identity or reconciliation fails.
                 minimal = slc_outputs.build_boxscore(seed, outcome, None, snapshot, profile_manifest, archive_validation)
                 minimal['boxscore_error'] = boxscore_error
+                if export_plays:
+                    minimal['realism'] = slc_outputs.realism_export(outcome, record)
                 outcome['boxscore'] = minimal
     contribution = None
     if outcome['valid_full_game'] and record:
@@ -613,15 +617,17 @@ def _open_seed_ledger(path, header, resume, *, seed_end=None, allowed_seeds=None
 
 
 def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=None, archive_validation=None,
-                  export_boxscores=False, paired_randomness=False, rng_plan=None):
+                  export_boxscores=False, paired_randomness=False, rng_plan=None, export_plays=False):
     """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
     cached = finished.get(seed)
     has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
+    has_plays = has_boxscore and 'realism' in cached['outcome']['boxscore']
     if (cached is not None and cached['outcome']['status'] not in ERROR_STATUSES
-            and (not export_boxscores or has_boxscore)):
+            and (not export_boxscores or has_boxscore) and (not export_plays or has_plays)):
         return cached['outcome'], cached['players']
     outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation,
-                                           export_boxscores, paired_randomness, rng_plan=rng_plan)
+                                           export_boxscores, paired_randomness, rng_plan=rng_plan,
+                                           export_plays=export_plays)
     row = {'seed': seed, 'outcome': outcome, 'players': contribution}
     ledger.write(json.dumps(row, sort_keys=True) + '\n')
     ledger.flush()
@@ -1021,7 +1027,7 @@ def run_batch(args):
             outcome, contribution = _seed_outcome(
                 seed, finished, ledger, ref, snapshot, profile_manifest=profile_manifest,
                 archive_validation=archive_validation, export_boxscores=args.export_boxscores,
-                paired_randomness=args.paired_randomness, rng_plan=rng_plan)
+                paired_randomness=args.paired_randomness, rng_plan=rng_plan, export_plays=args.export_plays)
             outcomes.append(outcome)
             if boxscore_handle is not None and seed not in exported_seed_ids and outcome.get('boxscore'):
                 boxscore_handle.write(json.dumps({'type': 'game', **outcome['boxscore']},
@@ -1153,6 +1159,9 @@ def run_batch(args):
         'comparison_to_v1': comparison,
         'summary': summary,
         'boxscore_export': {'enabled': bool(args.export_boxscores),
+                            'realism': {'enabled': bool(args.export_plays),
+                                        'schema': slc_outputs.REALISM_SCHEMA if args.export_plays else None,
+                                        'flag': '--export-plays' if args.export_plays else None},
                             'schema': slc_outputs.BOX_SCHEMA if args.export_boxscores else None,
                             'path': str(boxscore_path) if args.export_boxscores else None},
         'boxscore_distributions': boxscore_summary,
@@ -1318,6 +1327,10 @@ def main(argv=None):
                     help='continue the seed ledger next to --out (<out stem>.seeds.jsonl); refuses a ledger from other inputs')
     ap.add_argument('--export-boxscores', action='store_true',
                     help='write a versioned per-seed box-score JSONL sidecar and valid-game distributions')
+    ap.add_argument('--export-plays', action='store_true',
+                    help='with --export-boxscores: add a realism block to each box-score line (schema lp-nfl-slc-realism-'
+                         'export-1): every realized play with the state before it, and the V2 lineup summary when '
+                         '--participation-field ran; the simulation itself is unchanged')
     ap.add_argument('--paired-randomness', action='store_true',
                     help='research evaluation mode: isolate random draws by game snapshot, drive, play and semantic event '
                          'so matched-seed ablations do not shift unrelated random streams')
@@ -1393,6 +1406,8 @@ def main(argv=None):
         ap.error('--availability-store needs the full-depth roster: pass --roster-snapshot and --roster-provenance')
     if args.games < 1:
         ap.error('--games must be positive')
+    if args.export_plays and not args.export_boxscores:
+        ap.error('--export-plays needs --export-boxscores: the plays are written into the box-score sidecar')
     if args.seed_start < 0:
         ap.error('--seed-start must be non-negative')
     if args.progress_every < 0:
