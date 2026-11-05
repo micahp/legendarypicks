@@ -48,10 +48,12 @@ import sqlite3
 import sys
 import urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import team_codes  # noqa: E402
+
 STATSAPI = "https://statsapi.mlb.com/api/v1"
 
-# statsapi -> this repo's vocabulary. The only place this conversion happens.
-TEAM_FIX = {"AZ": "ARI", "CWS": "CHW"}
+# statsapi spellings (AZ, CWS) are registered aliases in backend/team_codes.py, the one place codes are converted.
 
 
 def _get(url):
@@ -85,7 +87,7 @@ def published_people(mlbam_ids, teams):
         for p in d.get("people", []):
             ct = p.get("currentTeam") or {}
             abbr = teams.get(ct.get("id"))          # None => not an MLB club
-            out[p["id"]] = {"team": TEAM_FIX.get(abbr, abbr),
+            out[p["id"]] = {"team": team_codes.normalize_optional("mlb", abbr),
                             "team_name": ct.get("name"),
                             "pos": (p.get("primaryPosition") or {}).get("abbreviation"),
                             "active": p.get("active")}
