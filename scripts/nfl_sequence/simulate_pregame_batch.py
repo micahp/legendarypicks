@@ -831,6 +831,7 @@ def run_batch(args):
         raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
     resolved_profile = slc_config.apply_profile_to_args(args)
     source_preflight.validate_model_sources(args, snapshot)
+    news_evidence = source_preflight.validate_news_evidence(args, snapshot)
     if args.slc_profile == 'v1_full_stack' and not args.historical_archive_reconstruction:
         # Prospective snapshots continue through the existing capture checks; archival inputs use the separate mode above.
         evaluation = snapshot.get('evaluation', {})
@@ -985,6 +986,11 @@ def run_batch(args):
         'playcall_target_roles': bool(args.playcall_target_roles),
         'playcall_decision_filter_enabled': (not args.playcall_decision_unfiltered if args.playcall_decision else None),
     }
+    if news_evidence is not None:
+        ledger_header['news_evidence'] = {'evidence_sha256': news_evidence['evidence_sha256'],
+                                          'workload_effect': news_evidence['workload_effect'],
+                                          'captures_before_cutoff': len(news_evidence['captures_before_cutoff']),
+                                          'items': len(news_evidence['items'])}
     if seed_selection_manifest is not None:
         ledger_header['seed_selection'] = seed_selection_manifest
     ledger_path = Path(args.out).with_suffix('.seeds.jsonl')
@@ -1342,6 +1348,11 @@ def main(argv=None):
                     help='stop once more than this many seeds have errored (default 0: stop at the first error); '
                          'finished seeds stay in the ledger')
     ap.add_argument('--out', required=True)
+    ap.add_argument('--news-evidence-dir',
+                    help='opt-in: directory of raw RotoWire news captures (news_evidence.py capture). Builds game-scoped '
+                         'evidence bound to the frozen snapshot, using only captures acquired at or before the cutoff. '
+                         'Evidence only: it never changes a roster, an availability value or a workload input, and it is '
+                         'refused with --roster-snapshot, --availability-snapshot or --availability-store')
     ap.add_argument('--availability-store', help=('opt-in: directory of weekly availability snapshots; applies the newest '
                                                   'one frozen by --as-of (needs --roster-snapshot)'))
     ap.add_argument('--availability-snapshot', help=('opt-in: apply this availability snapshot file instead of '
