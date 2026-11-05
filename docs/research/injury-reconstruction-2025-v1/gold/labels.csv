@@ -1,0 +1,155 @@
+item_id,split,stratum,gold_label,basis,note
+G001,dev,table,DOUBTFUL,table Game Status cell,
+G002,test,table,DOUBTFUL,table Game Status cell,
+G003,dev,table,OUT,table Game Status cell,
+G004,dev,table,OUT,table Game Status cell,
+G005,dev,table,OUT,table Game Status cell,injury not injury related; still a game status
+G006,dev,table,OUT,table Game Status cell,
+G007,test,table,OUT,table Game Status cell,
+G008,test,table,OUT,table Game Status cell,
+G009,test,table,OUT,table Game Status cell,
+G010,test,table,OUT,table Game Status cell,
+G011,dev,table,QUESTIONABLE,table Game Status cell,
+G012,dev,table,QUESTIONABLE,table Game Status cell,
+G013,dev,table,QUESTIONABLE,table Game Status cell,
+G014,dev,table,QUESTIONABLE,table Game Status cell,
+G015,dev,table,QUESTIONABLE,table Game Status cell,
+G016,dev,table,QUESTIONABLE,table Game Status cell,
+G017,dev,table,QUESTIONABLE,table Game Status cell,
+G018,test,table,QUESTIONABLE,table Game Status cell,
+G019,test,table,QUESTIONABLE,table Game Status cell,
+G020,test,table,QUESTIONABLE,table Game Status cell,
+G021,test,table,QUESTIONABLE,table Game Status cell,
+G022,test,table,QUESTIONABLE,table Game Status cell,
+G023,test,table,QUESTIONABLE,table Game Status cell,
+G024,test,table,QUESTIONABLE,table Game Status cell,
+G025,dev,table,NONE,table Game Status blank,practice only
+G026,dev,table,NONE,table Game Status blank,practice only
+G027,dev,table,NONE,table Game Status blank,practice only
+G028,dev,table,NONE,table Game Status blank,practice only
+G029,test,table,NONE,table Game Status blank,practice only
+G030,test,table,NONE,table Game Status blank,practice only
+G031,test,table,NONE,table Game Status blank,practice only
+G032,test,table,NONE,table Game Status blank,practice only
+G033,dev,table,NONE,table Game Status dash,dash means no designation
+G034,dev,table,NONE,table Game Status dash,dash means no designation
+G035,dev,table,NONE,table Game Status dash,dash means no designation
+G036,dev,table,NONE,table Game Status parenthesised dash,(-) means no designation
+G037,dev,table,NONE,table Game Status dash,
+G038,dev,table,NONE,table Game Status dash,
+G039,dev,table,NONE,table Game Status dash,
+G040,dev,table,NONE,table Game Status dash,
+G041,dev,table,NONE,table Game Status dash,
+G042,dev,table,NONE,table Game Status dash,
+G043,test,table,NONE,table Game Status dash,
+G044,test,table,NONE,table Game Status parenthesised dash,
+G045,test,table,NONE,table Game Status dash,
+G046,test,table,NONE,table Game Status dash,
+G047,test,table,NONE,table Game Status dash,
+G048,test,table,NONE,table Game Status dash,
+G049,test,table,NONE,table Game Status dash,
+G050,test,table,NONE,table Game Status dash,
+G051,test,table,NONE,table Game Status dash,
+G052,test,table,NONE,table Game Status dash,
+G053,dev,table,OTHER,table Game Status Placed on IR,injured reserve is not a game designation
+G054,test,table,OTHER,table Game Status Placed on IR,injured reserve is not a game designation
+G055,dev,narrative,OUT,game status line in body,Ruled out and Game Status: Out for this game
+G056,dev,narrative,NONE,roster move,"waived, not an injury designation"
+G057,dev,narrative,NONE,not designated,"Kendrick replaces Witherspoon; Witherspoon out, Kendrick not"
+G058,dev,narrative,NONE,different game,"NFC Championship Game text, not week 16 vs SEA"
+G059,dev,narrative,NONE,not designated,"season-ending injury in week 2, not a game designation"
+G060,dev,narrative,QUESTIONABLE,explicit designation,listed as questionable on the final report of the week
+G061,dev,narrative,OUT,explicit designation,has been ruled out
+G062,dev,narrative,NONE,explicit designation,"questionable for Thursday night; scheme audit: designation not in body, NONE"
+G063,dev,narrative,NONE,practice only,limited participant Friday
+G064,dev,narrative,QUESTIONABLE,explicit designation,also questionable
+G065,dev,narrative,NONE,different game,Sunday game in Green Bay is not this week 7 game vs NO
+G066,dev,narrative,NONE,healthy,will be out on Thanksgiving night is figurative; will play
+G067,dev,narrative,NONE,different game,"season opener vs Saints, not week 4 vs ARI"
+G068,dev,narrative,NONE,different game,Week 15 game
+G069,dev,narrative,QUESTIONABLE,explicit designation,WR questionable
+G070,dev,narrative,DOUBTFUL,explicit designation,listed as doubtful for the game
+G071,dev,narrative,OUT,explicit designation,downgraded to out for Sunday's game
+G072,dev,narrative,OUT,explicit designation,downgraded to out for Sunday's game vs NE
+G073,dev,narrative,UNKNOWN,conflicting context,title says Sunday vs Bills; body says Thursday night in Chicago
+G074,dev,narrative,QUESTIONABLE,explicit designation,also questionable; non-injury personal matter
+G075,dev,narrative,NONE,different game,week 14 article
+G076,dev,narrative,OUT,explicit designation,have been ruled out
+G077,dev,narrative,QUESTIONABLE,explicit designation,listed as questionable for Thursday matchup
+G078,dev,narrative,NONE,different game,"ahead of Week 8, page is week 6"
+G079,dev,narrative,NONE,explicit designation,"Fred Warner OUT; scheme audit: designation not in body, NONE"
+G080,dev,narrative,OUT,explicit designation,OUT - updated on Sat
+G081,dev,narrative,DOUBTFUL,explicit designation,doubtful to play Sunday
+G082,dev,narrative,QUESTIONABLE,explicit designation,CB Upton Stout - Questionable
+G083,dev,narrative,NONE,different game,"Week 7 vs Titans, page is week 5"
+G084,dev,narrative,UNKNOWN,not a designation,will be without this week; held out of walk-through
+G085,dev,narrative,OUT,explicit designation,ruled out
+G086,dev,narrative,NONE,different game,Week 4 teaser on a week 5 page
+G087,dev,narrative,NONE,historical,week 5 loss recap
+G088,dev,narrative,OUT,explicit designation,downgraded to out for Sunday's game
+G089,dev,narrative,NONE,lifted,lifted questionable designation
+G090,dev,narrative,QUESTIONABLE,explicit designation,also questionable to play
+G091,dev,narrative,NONE,different game,week 2 Thursday teaser on a week 11 page
+G092,dev,narrative,NONE,different team,Cardinals list on a Rams page
+G093,dev,narrative,NONE,different team,Chargers list on a Rams page
+G094,dev,narrative,OUT,explicit designation,ruled out for Thursday night's game
+G095,test,narrative,NONE,different game,Inactives for Week 17 vs Houston
+G096,test,narrative,NONE,different game,Falcons in Atlanta game
+G097,test,narrative,OUT,explicit designation,officially ruled out
+G098,test,narrative,UNKNOWN,conflicting context,ruled out roster status vs out and full participation
+G099,test,narrative,NONE,not designated,shout out
+G100,test,narrative,NONE,different game,headlines for other games
+G101,test,narrative,NONE,different game,"Sunday matchup vs Saints, page is SEA week 4 vs ARI"
+G102,test,narrative,NONE,explicit designation,"questionable for Sunday's game; scheme audit: designation not in body, NONE"
+G103,test,narrative,NONE,different game,week 4 teaser on a week 6 page
+G104,test,narrative,QUESTIONABLE,explicit designation,questionable to play
+G105,test,narrative,NONE,different game,week 5 teaser on a week 10 page
+G106,test,narrative,NONE,different game,Dolphins week 4 of 2026 teaser
+G107,test,narrative,NONE,full participant,Shrader full participant; Dulin is the one out
+G108,test,narrative,QUESTIONABLE,explicit designation,listed as questionable for Sunday's contest
+G109,test,narrative,NONE,roster move,"elevated, not designated"
+G110,test,narrative,NONE,explicit designation,"Questionable headline; scheme audit: designation not in body, NONE"
+G111,test,narrative,OUT,explicit designation,ruled out for Week 5 game
+G112,test,narrative,QUESTIONABLE,explicit designation,questionable; practiced fully Friday
+G113,test,narrative,NONE,explicit cleared,ready to go; Packers doubtful headline is another game
+G114,test,narrative,NONE,historical,week 5 loss recap
+G115,test,narrative,UNKNOWN,truncated context,Questionable vs. with no opponent
+G116,test,narrative,OUT,explicit designation,New England ruled out DE on Friday
+G117,test,narrative,NONE,different team,Bears in-game teaser
+G118,test,narrative,NONE,different team,Saints week 6 headline on a Giants page
+G119,test,narrative,NONE,different game,AFC Championship headline
+G120,test,narrative,UNKNOWN,truncated context,body truncated; other vikings teaser in same item
+G121,test,narrative,NONE,different game,NFC Championship Game text
+G122,test,narrative,DOUBTFUL,explicit designation,doubtful after missing last week
+G123,test,narrative,OUT,explicit designation,Out
+G124,test,narrative,NONE,different game,"questionable heading into week 5 Sunday, page is week 6"
+G125,test,narrative,NONE,different game,Week 18 teaser on a week 5 page
+G126,test,narrative,UNKNOWN,truncated context,Questionable vs. with no opponent
+G127,test,narrative,NONE,lifted,questionable designations lifted
+G128,test,narrative,OUT,explicit designation,ruled out; Out
+G129,test,narrative,NONE,different game,week 2 Thursday teaser on a week 6 page; week 6 article says Wyatt out
+G130,test,narrative,NONE,cleared,activated and no longer questionable
+G131,test,narrative,QUESTIONABLE,explicit designation,downgraded to questionable due to illness
+G132,test,narrative,NONE,different game,week 6 game on a week 5 page
+G133,test,narrative,QUESTIONABLE,explicit designation,questionable to play Week 2
+G134,test,narrative,NONE,different game,Week 4 mention on a week 12 page
+G135,dev,mention,NONE,full participant,listed as full participant
+G136,dev,mention,NONE,activated,active for a different week
+G137,dev,mention,NONE,not designated,performance mention
+G138,dev,mention,NONE,not designated,waiver claim
+G139,dev,mention,NONE,not designated,photo caption
+G140,dev,mention,NONE,roster move,signing
+G141,dev,mention,NONE,not designated,roster listing
+G142,dev,mention,NONE,not designated,photo caption
+G143,dev,mention,NONE,not designated,photo caption
+G144,dev,mention,NONE,not designated,photo caption
+G145,test,mention,NONE,practice only,NIR-Rest full or DNP
+G146,test,mention,NONE,not designated,performance mention
+G147,test,mention,NONE,not designated,roster listing
+G148,test,mention,NONE,not designated,photo caption
+G149,test,mention,NONE,full participant,good to go
+G150,test,mention,NONE,roster status,"reserve/injured July 28, not a game designation"
+G151,test,mention,NONE,roster move,activated from practice squad
+G152,test,mention,NONE,not designated,photo caption
+G153,test,mention,NONE,not designated,roster listing
+G154,test,mention,NONE,not designated,roster listing
