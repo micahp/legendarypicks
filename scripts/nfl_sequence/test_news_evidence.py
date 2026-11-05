@@ -395,12 +395,20 @@ class NewsEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'already exists'):
             self.capture([FAGNANO_NAMED], '2026-11-04T16:00:00Z')
 
-    def test_preflight_refuses_manual_roster_overrides_with_news(self):
+    def test_preflight_refuses_availability_overrides_with_news(self):
         self.standard_captures()
         args = type('Args', (), {'news_evidence_dir': str(self.captures), 'db': self.db,
-                                 'roster_snapshot': 'manual.json', 'availability_snapshot': None,
+                                 'roster_snapshot': None, 'availability_snapshot': 'manual.json',
                                  'availability_store': None})()
         with self.assertRaisesRegex(source_preflight.PreflightError, 'cannot be combined with manual overrides'):
+            source_preflight.validate_news_evidence(args, self.snapshot)
+
+    def test_preflight_needs_the_pinned_roster_applied_before_it_checks_starters(self):
+        self.standard_captures()
+        args = type('Args', (), {'news_evidence_dir': str(self.captures), 'db': self.db,
+                                 'roster_snapshot': 'pinned.json', 'availability_snapshot': None,
+                                 'availability_store': None})()
+        with self.assertRaisesRegex(source_preflight.PreflightError, 'is not applied to this snapshot'):
             source_preflight.validate_news_evidence(args, self.snapshot)
 
     def test_preflight_is_off_without_the_flag_and_binds_with_it(self):

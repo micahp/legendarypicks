@@ -37,12 +37,37 @@ def depth_rank_one(snapshot):
     return out
 
 
+def _has_starter_flags(snapshot):
+    return any('starter' in player for side in ('away', 'home') for player in snapshot['rosters'][side]['players'])
+
+
+def starters(snapshot):
+    """({(team, pos_abb): player}, source). Uses the pinned starter flags when the overlay is applied, else depth rank 1.
+
+    The source is recorded so a preview cannot be mistaken for the pinned roster. A position with two flagged starters
+    cannot be a single-starter position, so it fails loudly.
+    """
+    if not _has_starter_flags(snapshot):
+        return depth_rank_one(snapshot), 'depth rank 1 (preview)'
+    out = {}
+    for side in ('away', 'home'):
+        roster = snapshot['rosters'][side]
+        for player in roster['players']:
+            if not player.get('starter') or not player.get('pos_abb'):
+                continue
+            key = (roster['team'], player['pos_abb'])
+            if key in out and player['pos_abb'] in SINGLE_STARTER_POSITIONS:
+                raise ValueError(f'roster flags two starters for {key}; a single-starter position cannot have two')
+            out.setdefault(key, player)
+    return out, 'pinned starter flag'
+
+
 def check(snapshot, items):
     """Compare announced and expected starters in the evidence items with depth rank 1.
 
     Returns {'counts': {...}, 'conflicts': [...], 'notes': [...]}. Every count is reported, including zeros.
     """
-    starters = depth_rank_one(snapshot)
+    lookup, source = starters(snapshot)
     counts = Counter({'announced checked': 0, 'announced agrees': 0, 'announced differs': 0,
                       'announced unverified': 0, 'announced not checked (multi-starter position)': 0,
                       'expected checked': 0, 'expected agrees': 0, 'expected differs': 0,
@@ -59,7 +84,7 @@ def check(snapshot, items):
             counts[f'{kind} not checked (multi-starter position)'] += 1
             continue
         counts[f'{kind} checked'] += 1
-        starter = starters.get((item['team'], position))
+        starter = lookup.get((item['team'], position))
         if starter is None:
             counts[f'{kind} unverified'] += 1
             notes.append({'kind': kind, 'update_id': item.get('update_id'), 'team': item['team'], 'position': position,
@@ -73,14 +98,15 @@ def check(snapshot, items):
                   'announced_gsis_id': player['gsis_id'], 'announced_name': player.get('name'),
                   'depth_rank_one_gsis_id': starter['gsis_id'], 'depth_rank_one_name': starter.get('player_name')}
         (conflicts if kind == 'announced' else notes).append(record)
-    return {'counts': dict(counts), 'conflicts': conflicts, 'notes': notes}
+    return {'counts': dict(counts), 'conflicts': conflicts, 'notes': notes, 'starter_source': source}
 
 
 def summary_line(result):
     counts = result['counts']
-    return ('starter consistency: announced {announced checked} checked, {announced agrees} agree, '
+    keys = ('announced checked', 'announced agrees', 'announced differs', 'announced unverified',
+            'expected checked', 'expected agrees', 'expected differs', 'expected unverified')
+    values = {k: counts.get(k, 0) for k in keys}
+    return ('starter consistency against {source}: announced {announced checked} checked, {announced agrees} agree, '
             '{announced differs} differ, {announced unverified} unverified; expected {expected checked} checked, '
             '{expected agrees} agree, {expected differs} differ, {expected unverified} unverified').format(
-        **{k: counts.get(k, 0) for k in (
-            'announced checked', 'announced agrees', 'announced differs', 'announced unverified',
-            'expected checked', 'expected agrees', 'expected differs', 'expected unverified')})
+        source=result['starter_source'], **values)

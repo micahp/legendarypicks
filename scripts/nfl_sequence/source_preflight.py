@@ -292,7 +292,8 @@ def validate_comparison_sources(args, target_games):
           f'{playbook_files} manifest-pinned playbooks; 16 play-call frame score sources', flush=True)
 
 
-MANUAL_ROSTER_OVERRIDES = ('roster_snapshot', 'availability_snapshot', 'availability_store')
+# The pinned full-depth roster is the engine's own input, so it is allowed. Availability overrides change workload inputs.
+MANUAL_ROSTER_OVERRIDES = ('availability_snapshot', 'availability_store')
 
 
 def validate_news_evidence(args, snapshot):
@@ -309,6 +310,11 @@ def validate_news_evidence(args, snapshot):
     if overrides:
         raise PreflightError('input preflight failed before simulation:\n - news evidence is bound to the frozen snapshot '
                              'and cannot be combined with manual overrides: ' + ', '.join(overrides))
+    if getattr(args, 'roster_snapshot', None) and not any(
+            'starter' in player for side in ('away', 'home') for player in snapshot['rosters'][side]['players']):
+        raise PreflightError('input preflight failed before simulation:\n - news evidence was asked to check the pinned '
+                             'roster, but the roster is not applied to this snapshot; the check must read the roster the '
+                             'engine reads')
     import news_evidence
     try:
         evidence = news_evidence.build(args.db, capture_dir, snapshot)
