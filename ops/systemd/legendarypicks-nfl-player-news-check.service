@@ -1,0 +1,8 @@
+[Unit]
+Description=Alert if the NFL player news poll history is stale (dev database)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/lp-nfl-player-news/backend
+# Exit 2 when the newest stored poll is older than 45 minutes, or none exists. The unit is then marked failed.
+ExecStart=/root/legendarypicks/backend/venv/bin/python /root/lp-nfl-player-news/backend/ingest_nfl_player_news.py --db /root/legendarypicks/backend/data/picks.dev.db --check-stale 45

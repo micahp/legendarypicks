@@ -1,0 +1,10 @@
+[Unit]
+Description=Check the NFL player news poll history every 30 minutes
+
+[Timer]
+OnCalendar=*:07,37
+Persistent=true
+Unit=legendarypicks-nfl-player-news-check.service
+
+[Install]
+WantedBy=timers.target

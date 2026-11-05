@@ -1,0 +1,11 @@
+[Unit]
+Description=Poll the RotoWire NFL news feed every 15 minutes
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+AccuracySec=1min
+Unit=legendarypicks-nfl-player-news.service
+
+[Install]
+WantedBy=timers.target

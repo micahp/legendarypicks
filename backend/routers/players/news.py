@@ -11,28 +11,13 @@ from league_offering import offered_leagues, sql_league_filter
 from league_stats import LEADERBOARD_LEAGUES, canonical_population_sql
 from nfl_rankings import nfl_player_rank_context
 from nfl_stat_derivations import with_derived as _with_derived
-from nfl_news import (ROTOWIRE_LABEL, load_news_feed, load_player_news_page, load_sleeper_crosswalk, merge_player_news, resolve_rotowire_id)
+from nfl_news import ROTOWIRE_LABEL
+import nfl_player_evidence
+from datetime import datetime, timezone
 from . import router
 import espn_client as espn
 
 
-
-def _load_sleeper_crosswalk_pkg(*args, **kwargs):
-    """Resolve `routers.players.load_sleeper_crosswalk` at call time (tests patch the package attr)."""
-    from routers.players import load_sleeper_crosswalk as _pkg
-    return _pkg(*args, **kwargs)
-
-
-def _load_news_feed_pkg(*args, **kwargs):
-    """Resolve `routers.players.load_news_feed` at call time (tests patch the package attr)."""
-    from routers.players import load_news_feed as _pkg
-    return _pkg(*args, **kwargs)
-
-
-def _load_player_news_page_pkg(*args, **kwargs):
-    """Resolve `routers.players.load_player_news_page` at call time (tests patch the package attr)."""
-    from routers.players import load_player_news_page as _pkg
-    return _pkg(*args, **kwargs)
 
 def __db_pkg(*args, **kwargs):
     """Resolve `routers.players._db` at call time (tests patch the package attr)."""
@@ -156,7 +141,7 @@ def player_news(player_id: int,
 @router.get("/api/player/{player_id}/fantasy-news")
 def player_fantasy_news(player_id: int,
                         limit: int = Query(10, ge=1, le=25)):
-    """Fetch player-specific RotoWire history for the fantasy draft surface."""
+    """Fantasy news for one NFL player, read from the stored RotoWire history. No request fetches RotoWire."""
     with closing(__db_pkg()) as con:
         p = con.execute(
             """SELECT id,name,team,league,position,espn_id,nfl_gsis_id
@@ -174,59 +159,4 @@ def player_fantasy_news(player_id: int,
                 "message": "Fantasy news is available for NFL players only.",
                 "articles": [],
             }
-        crosswalk = _load_sleeper_crosswalk_pkg()
-        resolution = resolve_rotowire_id(con, p, crosswalk)
-
-    source_player_id = resolution["source_player_id"]
-    if source_player_id is None:
-        message = crosswalk.get("message") or "Fantasy news identity could not be verified for this player."
-        return {
-            "player_id": player_id,
-            "name": p["name"],
-            "source": ROTOWIRE_LABEL,
-            "data_status": "unavailable",
-            "message": message,
-            "source_updated_at": None,
-            "articles": [],
-        }
-
-    feed = _load_news_feed_pkg()
-    history = _load_player_news_page_pkg(source_player_id)
-    articles = merge_player_news(source_player_id, feed, history, limit)
-    if articles:
-        status = "stale" if history["status"] == "stale" and feed["status"] != "ready" else "ready"
-        message = history["message"] if status == "stale" else None
-    elif history["status"] == "ready":
-        status = "no_news"
-        message = "No fantasy news is published for this player."
-    else:
-        status = "unavailable"
-        message = history["message"] or feed["message"] or "Fantasy news is temporarily unavailable."
-
-    response_articles = []
-    for item in articles:
-        response_articles.append(
-            {
-                "id": item["id"],
-                "source_player_id": str(item["source_player_id"]),
-                "headline": item["headline"],
-                "notes": item["notes"],
-                "analysis": item["analysis"],
-                "injury_status": item["injury_status"] or None,
-                "injury_type": item["injury_type"] or None,
-                "injury_location": item["injury_location"] or None,
-                "return_date": item["return_date"] or None,
-                "published": item["published"],
-                "link": item["link"],
-            }
-        )
-
-    return {
-        "player_id": player_id,
-        "name": p["name"],
-        "source": ROTOWIRE_LABEL,
-        "data_status": status,
-        "message": message,
-        "source_updated_at": history["fetched_at"] or feed["fetched_at"],
-        "articles": response_articles,
-    }
+        return nfl_player_evidence.fantasy_news_response(con, p, limit, datetime.now(timezone.utc))

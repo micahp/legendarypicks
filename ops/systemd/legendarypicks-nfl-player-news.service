@@ -1,0 +1,12 @@
+[Unit]
+Description=Poll the RotoWire NFL news feed into the dev database (picks.dev.db only)
+Documentation=file:///root/lp-nfl-player-news/backend/ingest_nfl_player_news.py
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/lp-nfl-player-news/backend
+# Exit 3 means ids are missing from the feed: the poll is stored and the unit is marked failed.
+ExecStart=/usr/bin/flock -n /run/lock/legendarypicks-nfl-player-news.lock /root/legendarypicks/backend/venv/bin/python /root/lp-nfl-player-news/backend/ingest_nfl_player_news.py --db /root/legendarypicks/backend/data/picks.dev.db
+TimeoutStartSec=300

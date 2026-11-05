@@ -10,13 +10,13 @@ import ingest_nfl_player_news as ingest
 
 
 def update_xml(update_id, rotowire_id, first='Ann', last='Smith', team='BAL', position='QB',
-               published='2026-11-03T09:00:00-08:00', headline=None):
+               published='2026-11-03T09:00:00-08:00', headline=None, notes=None, analysis=None):
     return f"""
     <Update Id="{update_id}">
       <DateTime>{published}</DateTime>
       <Headline>{headline or f'Headline {update_id}'}</Headline>
-      <Notes>Notes {update_id}</Notes>
-      <Analysis>Analysis {update_id}</Analysis>
+      <Notes>{notes or f'Notes {update_id}'}</Notes>
+      <Analysis>{analysis or f'Analysis {update_id}'}</Analysis>
       <Injury Status="" Type="" Location="" ReturnDate="" />
       <Player Id="{rotowire_id}">
         <FirstName>{first}</FirstName><LastName>{last}</LastName>
@@ -122,6 +122,74 @@ class PollTests(unittest.TestCase):
                          [(99, 'crosswalk')])
         self.assertEqual(self.query("SELECT COUNT(*) FROM unresolved_players WHERE source_player_key='2002'"), [(0,)])
 
+    def add_roster(self):
+        con = sqlite3.connect(self.db)
+        con.execute("INSERT INTO players VALUES (100, 'Tyler Huntley', 'nfl', 'BAL', 'QB')")
+        con.execute("INSERT INTO players VALUES (101, 'Joe Fagnano', 'nfl', 'BAL', 'QB')")
+        con.commit()
+        con.close()
+
+    def claims(self):
+        return self.query('SELECT update_id, subject_player_id, update_player_id, attribution, claim_class, field '
+                          'FROM nfl_player_news_claims ORDER BY update_id, claim_class')
+
+    def test_starter_claim_about_a_teammate_is_linked_to_that_teammate(self):
+        self.add_roster()
+        self.crosswalk(('2001', 100, 'nfl'))
+        code, _ = self.poll([update_xml(1000, 2001, first='Tyler', last='Huntley', headline='Injury update',
+                                        notes='Coach Jesse Minter named Joe Fagnano Week 9 starter.')]
+                            + filler(1001, 20))
+        self.assertEqual(code, 0)
+        # The article stays with Huntley. The claim is about Fagnano.
+        self.assertEqual(self.query('SELECT player_id FROM nfl_player_news_updates WHERE update_id=1000'), [(100,)])
+        self.assertEqual(self.claims(), [(1000, 101, 100, 'named_in_other_update', 'starter_named', 'notes')])
+
+    def test_starter_claim_about_the_update_player_is_own(self):
+        self.add_roster()
+        self.crosswalk(('2002', 101, 'nfl'))
+        self.poll([update_xml(1000, 2002, first='Joe', last='Fagnano', headline='Named Week 9 starter')]
+                  + filler(1001, 20))
+        self.assertEqual(self.claims(), [(1000, 101, 101, 'own', 'starter_named', 'headline')])
+
+    def test_sentence_naming_two_players_makes_no_claim_and_is_counted(self):
+        self.add_roster()
+        self.crosswalk(('2001', 100, 'nfl'))
+        self.poll([update_xml(1000, 2001, first='Tyler', last='Huntley', headline='Injury update',
+                              notes='Minter named Joe Fagnano the starter ahead of Tyler Huntley.')]
+                  + filler(1001, 20))
+        self.assertEqual(self.claims(), [])
+        counts = self.query('SELECT claim_counts FROM nfl_player_news_polls WHERE id=1')[0][0]
+        self.assertEqual(json.loads(counts), {'multi_player_sentence': 1})
+
+    def test_claims_are_stored_once_per_version(self):
+        self.add_roster()
+        self.crosswalk(('2001', 100, 'nfl'))
+        updates = [update_xml(1000, 2001, first='Tyler', last='Huntley', headline='Injury update',
+                              notes='Coach Jesse Minter named Joe Fagnano Week 9 starter.')] + filler(1001, 20)
+        self.poll(updates)
+        self.poll(updates)
+        self.assertEqual(len(self.claims()), 1)
+        self.assertEqual(self.query('SELECT new_claims FROM nfl_player_news_polls WHERE id=2'), [(0,)])
+
+    def test_stale_check_reports_a_missing_or_old_poll(self):
+        from datetime import datetime, timedelta, timezone
+        con = sqlite3.connect(self.db)
+        ingest.ensure_schema(con)
+        con.commit()
+        ok, message = ingest.check_stale(con, 30, datetime.now(timezone.utc))
+        self.assertFalse(ok)
+        self.assertIn('no poll', message)
+        old = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+        con.execute("INSERT INTO nfl_player_news_polls(polled_at_utc, feed_min_id, feed_max_id, feed_count, new_updates, "
+                    "changed_updates, new_claims, claim_counts, matched, unmatched, boundary_gap_count, internal_gap_count, "
+                    "gap_ids) VALUES (?,1,2,2,0,0,0,'{}',0,0,0,0,'[]')", (old,))
+        con.commit()
+        ok, message = ingest.check_stale(con, 30, datetime.now(timezone.utc))
+        con.close()
+        self.assertFalse(ok)
+        self.assertIn('older than 30', message)
+
+
     def test_adjacent_polls_have_no_gap(self):
         self.poll(filler(1000, 25))
         self.poll(filler(1025, 25))
@@ -131,7 +199,7 @@ class PollTests(unittest.TestCase):
     def test_gap_between_polls_is_recorded(self):
         self.poll(filler(1000, 25))
         code, out = self.poll(filler(1030, 25))
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 3)  # ids missing: stored, and the run is flagged
         rows = self.query('SELECT previous_max_id, boundary_gap_count, internal_gap_count, gap_ids '
                           'FROM nfl_player_news_polls WHERE id=2')
         self.assertEqual(rows, [(1024, 5, 0, json.dumps(list(range(1025, 1030))))])
@@ -141,7 +209,7 @@ class PollTests(unittest.TestCase):
         updates = filler(1000, 25)
         del updates[10]  # update 1010 is missing from the feed
         code, _ = self.poll(updates)
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 3)
         self.assertEqual(self.query('SELECT internal_gap_count, gap_ids FROM nfl_player_news_polls WHERE id=1'),
                          [(1, '[1010]')])
 

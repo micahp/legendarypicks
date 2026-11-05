@@ -2,6 +2,7 @@
 
 import os
 import sqlite3
+from datetime import datetime, timedelta, timezone
 import tempfile
 import unittest
 from unittest import mock
@@ -11,6 +12,7 @@ _IMPORT_DB = tempfile.NamedTemporaryFile(prefix="nfl-news-import-", suffix=".db"
 _IMPORT_DB.close()
 os.environ["LP_DB_PATH"] = _IMPORT_DB.name
 
+import ingest_nfl_player_news as ingest
 import nfl_news  # noqa: E402
 from routers import players  # noqa: E402
 
@@ -438,52 +440,125 @@ class NflNewsIdentityAndApiTests(unittest.TestCase):
 
         self.assertEqual([], result["articles"])
 
-    def test_api_returns_verified_suffix_news_and_rejects_false_prefix(self):
-        items = [
-            self.item(17700, "Michael", "Penix", "ATL", "QB", update_id=20),
-            self.item(12531, "Carlton", "Davis", "NE", "CB", update_id=21),
-        ]
-        crosswalk = self.crosswalk(**{"4361653": 17700, "16945": 99999})
-        history = {"status": "ready", "items": [], "fetched_at": "now", "message": None}
-        with mock.patch.object(players, "load_sleeper_crosswalk", return_value=crosswalk), \
-             mock.patch.object(players, "load_news_feed", return_value=self.snapshot(items)), \
-             mock.patch.object(players, "load_player_news_page", return_value=history):
+    def link(self, player_id, rotowire_key):
+        con = sqlite3.connect(self.path)
+        con.execute("CREATE TABLE IF NOT EXISTS player_source_ids(id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT, "
+                    "league TEXT, source_player_key TEXT, player_id INTEGER, first_seen TEXT, last_seen TEXT)")
+        con.execute("INSERT INTO player_source_ids(source, league, source_player_key, player_id) "
+                    "VALUES ('rotowire', 'nfl', ?, ?)", (rotowire_key, player_id))
+        con.commit()
+        con.close()
+
+    def store_update(self, update_id, player_id, headline="Headline", first_seen="2026-11-03T17:00:00+00:00"):
+        self.link(player_id, f"link-{player_id}")
+        con = sqlite3.connect(self.path)
+        ingest.ensure_schema(con)
+        con.execute(
+            """INSERT INTO nfl_player_news_updates(update_id, content_sha256, rotowire_player_id, player_id, match,
+                 team, first_name, last_name, position, injury_status, injury_type, injury_location, return_date,
+                 headline, notes, analysis, link, published_utc, published_raw, first_seen_utc, poll_id)
+               VALUES (?, 'sha', '4000', ?, 'crosswalk', 'ATL', 'Michael', 'Penix', 'QB', '', '', '', '', ?,
+                 'Notes', 'Analysis', 'https://www.rotowire.com/football/player/x', '2026-11-03T17:00:00+00:00',
+                 '2026-11-03T09:00:00-08:00', ?, 1)""",
+            (update_id, player_id, headline, first_seen))
+        con.commit()
+        con.close()
+
+    def store_poll(self, polled_at):
+        con = sqlite3.connect(self.path)
+        ingest.ensure_schema(con)
+        con.execute(
+            """INSERT INTO nfl_player_news_polls(polled_at_utc, feed_min_id, feed_max_id, feed_count, new_updates,
+                 changed_updates, new_claims, claim_counts, matched, unmatched, boundary_gap_count, internal_gap_count,
+                 gap_ids) VALUES (?,1,2,2,0,0,0,'{}',0,0,0,0,'[]')""", (polled_at,))
+        con.commit()
+        con.close()
+
+    @staticmethod
+    def now_iso():
+        return datetime.now(timezone.utc).isoformat()
+
+    def test_api_returns_stored_news_and_never_fetches_during_the_request(self):
+        self.store_update(20, 1, headline="Penix named starter")
+        self.store_poll(self.now_iso())
+        with mock.patch("urllib.request.urlopen", side_effect=AssertionError("no fetch per request")):
             penix = players.player_fantasy_news(1, 10)
-            carl = players.player_fantasy_news(2, 10)
 
         self.assertEqual("ready", penix["data_status"])
         self.assertEqual([20], [article["id"] for article in penix["articles"]])
-        self.assertEqual("no_news", carl["data_status"])
-        self.assertEqual([], carl["articles"])
+        self.assertEqual("Penix named starter", penix["articles"][0]["headline"])
+        self.assertEqual("https://www.rotowire.com/football/player/x", penix["articles"][0]["link"])
+        self.assertEqual("2026-11-03T09:00:00-08:00", penix["articles"][0]["published"])
 
-    def test_api_uses_stable_crosswalk_despite_team_change(self):
-        item = self.item(13429, "Deebo", "Samuel", "SF", "WR")
-        crosswalk = self.crosswalk(**{"3126486": 13429})
-        history = {"status": "ready", "items": [], "fetched_at": "now", "message": None}
-        with mock.patch.object(players, "load_sleeper_crosswalk", return_value=crosswalk), \
-             mock.patch.object(players, "load_news_feed", return_value=self.snapshot([item])), \
-             mock.patch.object(players, "load_player_news_page", return_value=history):
-            result = players.player_fantasy_news(6, 10)
+    def test_api_reports_no_news_for_a_linked_player_with_nothing_stored(self):
+        self.store_update(20, 1)
+        self.link(2, "link-2")
+        self.store_poll(self.now_iso())
+        result = players.player_fantasy_news(2, 10)
 
-        self.assertEqual("ready", result["data_status"])
-        self.assertEqual([1], [article["id"] for article in result["articles"]])
+        self.assertEqual("no_news", result["data_status"])
+        self.assertEqual([], result["articles"])
 
-    def test_api_exposes_source_outage_instead_of_no_news(self):
-        unavailable = {
-                "status": "unavailable",
-                "items": [],
-                "feed_date": None,
-                "fetched_at": None,
-                "message": "Fantasy news is temporarily unavailable.",
-            }
-        crosswalk = self.crosswalk(**{"4361653": 17700})
-        with mock.patch.object(players, "load_sleeper_crosswalk", return_value=crosswalk), \
-             mock.patch.object(players, "load_news_feed", return_value=unavailable), \
-             mock.patch.object(players, "load_player_news_page", return_value=unavailable):
-            result = players.player_fantasy_news(1, 10)
+    def test_api_says_identity_is_missing_rather_than_no_news_for_an_unlinked_player(self):
+        self.store_update(20, 1)
+        self.store_poll(self.now_iso())
+        result = players.player_fantasy_news(2, 10)
 
         self.assertEqual("unavailable", result["data_status"])
+        self.assertIn("not linked", result["message"])
         self.assertNotEqual("no_news", result["data_status"])
+
+    def test_api_matches_on_the_stored_player_id_not_the_team_name(self):
+        self.store_update(31, 6, headline="Samuel status")
+        self.store_poll(self.now_iso())
+        result = players.player_fantasy_news(6, 10)
+
+        self.assertEqual("ready", result["data_status"])
+        self.assertEqual([31], [article["id"] for article in result["articles"]])
+
+    def test_api_reports_a_stale_store_and_keeps_the_last_news(self):
+        self.store_update(20, 1)
+        old = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+        self.store_poll(old)
+        result = players.player_fantasy_news(1, 10)
+
+        self.assertEqual("stale", result["data_status"])
+        self.assertIn("minutes old", result["message"])
+        self.assertEqual([20], [article["id"] for article in result["articles"]])
+
+    def test_api_without_any_ingested_poll_is_unavailable_not_no_news(self):
+        self.store_update(20, 1)
+        con = sqlite3.connect(self.path)
+        ingest.ensure_schema(con)
+        con.execute("DELETE FROM nfl_player_news_polls")
+        con.commit()
+        con.close()
+        result = players.player_fantasy_news(1, 10)
+
+        self.assertEqual("unavailable", result["data_status"])
+        self.assertIn("not been ingested", result["message"])
+        self.assertNotEqual("no_news", result["data_status"])
+
+    def test_api_returns_a_teammate_claim_under_the_teammate_and_keeps_the_article_with_its_player(self):
+        self.store_update(30, 1, headline="Injury update")
+        self.link(8, "link-8")
+        con = sqlite3.connect(self.path)
+        con.execute(
+            """INSERT INTO nfl_player_news_claims(update_id, content_sha256, claim_index, extractor, subject_player_id,
+                 update_player_id, attribution, claim_class, field, span, poll_id)
+               VALUES (30, 'sha', 0, 'claims-v1', 8, 1, 'named_in_other_update', 'starter_named', 'notes',
+                 'Coach named Josh Allen the starter.', 1)""")
+        con.commit()
+        con.close()
+        self.store_poll(self.now_iso())
+
+        about_teammate = players.player_fantasy_news(8, 10)
+        own = players.player_fantasy_news(1, 10)
+
+        self.assertEqual([30], [article["id"] for article in about_teammate["articles"]])
+        self.assertTrue(about_teammate["articles"][0]["about_player"])
+        self.assertEqual(1, own["articles"][0]["player_id"])
+        self.assertEqual(8, own["articles"][0]["claims"][0]["subject_player_id"])
 
     def test_non_nfl_response_is_explicitly_unsupported(self):
         result = players.player_fantasy_news(7, 10)
