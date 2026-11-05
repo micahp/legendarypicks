@@ -1,0 +1,160 @@
+{
+  "as_of": "2026-11-03T00:32:27Z",
+  "blind_packet": {
+    "baseline_preview_available": true,
+    "blind_drafts": 33,
+    "identity_key_path": "/root/.cache/legendarypicks/research/narrative-event-knowledge-2026-11-03/relevance-ranking/blind_identity_key.jsonl",
+    "identity_key_storage": "external_owner_only_research_cache",
+    "targets_with_candidate_drafts": 11
+  },
+  "candidate_input_category_counts": {
+    "player_form": 66,
+    "selected:none": 2,
+    "selected:team_relationship": 5,
+    "selected:team_streak": 4,
+    "team_relationship": 22,
+    "team_streak": 9
+  },
+  "core_stories_source": "backend/core_stories.py::generate_game_story",
+  "core_stories_unchanged": true,
+  "core_system_prompt_sha256": "614420901837550a19e93290e471142cb9da3a1c47d9fa1af33a999210582657",
+  "database": "/root/legendarypicks/backend/data/picks.dev.db",
+  "database_mode": "mode=ro + query_only",
+  "espn_context_capture": {
+    "all_targets_have_snapshot": false,
+    "cache_directory": "/root/legendarypicks/backend/.espn-cache",
+    "cache_timestamp_source": "backend/paced_http.py::_write_disk writes cache payload by atomic replacement; file mtime=ctime",
+    "capture_mode": "reuse_pre_cutoff_disk_cache",
+    "context_lines_function": "backend/matchup_context.py::context_lines",
+    "cutoff_utc": "2026-11-03T00:32:27Z",
+    "external_espn_requests_made_by_research_replay": 0,
+    "same_snapshot_supplied_to_all_variants_for_captured_targets": true,
+    "snapshot_artifact": "espn_context_snapshots.jsonl",
+    "targets_with_verified_pre_cutoff_snapshots": 10,
+    "targets_without_verified_snapshots": [
+      "0022600173"
+    ]
+  },
+  "external_requests": 98,
+  "generated_preview_counts": {
+    "combined": 9,
+    "combined_model_output": 11,
+    "core_stories_model_output": 11,
+    "event_only": 9,
+    "event_only_model_output": 11
+  },
+  "human_ratings_entered": 0,
+  "independent_evidence_recomputation": {
+    "targets_checked": 11,
+    "targets_failed": 0,
+    "targets_passed": 11
+  },
+  "independent_human_evaluation": false,
+  "inference_budget": {
+    "calls_for_selected_targets_three_variants": 33,
+    "estimated_input_tokens_characters_divided_by_4": 147944,
+    "estimated_openrouter_model_token_cost_usd_at_repo_noted_rates": 0.034072,
+    "inference_requests_made": 98,
+    "max_completion_tokens_per_call_for_opt_in": 600,
+    "max_completion_tokens_total": 19800,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "per_target_calls": 3,
+    "pricing_note": "backend/_core.py comments dated 2026-09-10 list these provider call fees and model token rates; how they combine is unspecified. Planning estimate only.",
+    "provider_call_fee_range_usd": {
+      "nous_0.00005_per_call": 0.00165,
+      "openrouter_0.0002_per_call": 0.0066
+    },
+    "provider_used": "openrouter",
+    "selected_target_count": 11
+  },
+  "limitations": [
+    "NFL kickoff timestamps convert nflverse's Eastern gametime to UTC using America/New_York.",
+    "Upcoming NBA schedule rows have no stored ESPN event crosswalk; no ESPN or publisher request was made.",
+    "NBA team_game_stats has no populated current-season stat rows; this ranking uses local NBA schedule scores and prior-season nba_sportsdataverse_games scores.",
+    "Ranking weights are deterministic heuristics and have not been trained or independently human-validated.",
+    "Fourth-down and drive classifications remain quarantined in their separate correctness workstream.",
+    "Source-statistic audits validate supplied input rows, not the semantic accuracy of model-generated prose.",
+    "Cutoff-safe ESPN summary snapshots were unavailable for 1 of 11 targets; those targets retain a reduced-context baseline.",
+    "The full core_stories generator was not invoked; local records and player-form inputs remain reconstructed."
+  ],
+  "mechanical_claims": {
+    "failed": 0,
+    "passed": 41,
+    "total": 41
+  },
+  "model_comparison": {
+    "baseline_context_status": "cutoff-safe ESPN context shared across 10 of 11 targets; local records and player-form inputs reconstructed",
+    "baseline_prompt_source": "backend/core_stories.py::generate_game_story",
+    "event_only_combined_textually_distinct_targets": 10,
+    "human_ratings_entered": 0,
+    "matched_targets_and_cutoff": true,
+    "model": "deepseek/deepseek-v4.1-flash",
+    "production_baseline_fidelity": "partial_reconstructed_local_inputs",
+    "production_input_comparison": {
+      "espn_context": {
+        "context_line_count": 40,
+        "helper": "matchup_context.context_lines",
+        "historical_replay_external_espn_requests": 0,
+        "observed_context_line_families": {
+          "lastFiveGames form": 20,
+          "leaders": 20
+        },
+        "same_snapshot_and_derived_lines_shared_across_variants": true,
+        "targets_with_verified_pre_cutoff_snapshots": 10,
+        "targets_without_verified_pre_cutoff_snapshots": [
+          "0022600173"
+        ]
+      },
+      "input_differences": [
+        "The replay rebuilds matchup, date, host, game state, and team records from cutoff-filtered local schedule rows; production generate_game_story uses its runtime game_result, schedule, and standings paths. Replay state is fixed to pre.",
+        "Production calls stakes.for_matchup; the reconstructed baseline supplies no stakes lines.",
+        "Production prioritizes game-specific prop-board player form, then falls back to player_form.lines. The replay derives player form directly from cutoff-filtered player_game_logs, so its player selection and wording are not guaranteed to match.",
+        "Production derives matchup_context current_season from its runtime records_stale check and passes runtime state. The replay infers current_season from reconstructed record rows and supplies state=pre.",
+        "The baseline uses the same system prompt hash, but this run called OpenRouter directly with a 600-token completion limit. Production uses the configured _llm_chat provider path and defaults to an 8000-token limit."
+      ],
+      "production_generator_invoked": false,
+      "production_model_call": {
+        "dispatch": "core_stories._deepseek_chat -> _core._llm_chat",
+        "max_completion_tokens_default": 8000,
+        "provider_setting": "LP_LLM_PROVIDERS (code default: nous,openrouter)"
+      },
+      "research_model_call": {
+        "max_completion_tokens": 600,
+        "model": "deepseek/deepseek-v4.1-flash",
+        "provider": "openrouter",
+        "temperature": 0.4
+      },
+      "system_prompt_sha256_matches_core_stories": true
+    },
+    "provider": "openrouter",
+    "request_count": 98,
+    "requests_this_invocation": 0,
+    "same_espn_snapshot_across_variants": true,
+    "status": "completed",
+    "target_horizon_hours": 48,
+    "targets": 11,
+    "targets_with_cutoff_safe_espn_context": 10,
+    "targets_with_three_unique_outputs": 10,
+    "targets_without_cutoff_safe_espn_context": [
+      "0022600173"
+    ],
+    "variants_per_target": 3
+  },
+  "model_inference_requests": 98,
+  "nba_previous_season_regular_games_at_cutoff": 1230,
+  "nba_recent_completed_games_at_cutoff": 92,
+  "nba_schedule_rejections": {},
+  "nfl_pbp_run_pass_plays_with_epa": 14784,
+  "nfl_schedule_completed_games_at_cutoff": 120,
+  "nfl_schedule_rejections": {},
+  "objective": "cutoff-matched three-way pregame narrative comparison",
+  "selected_category_counts": {
+    "team_relationship": 5,
+    "team_streak": 4
+  },
+  "target_horizon_hours": 48,
+  "targets": {
+    "nba": 10,
+    "nfl": 1
+  }
+}
