@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import gzip
 import hashlib
 import json
 import sqlite3
@@ -89,6 +90,14 @@ SCHEMA = (
          boundary_gap_count INTEGER NOT NULL,
          internal_gap_count INTEGER NOT NULL,
          gap_ids TEXT NOT NULL)""",
+    """CREATE TABLE IF NOT EXISTS nfl_player_news_raw_polls(
+         poll_id INTEGER PRIMARY KEY,
+         polled_at_utc TEXT NOT NULL,
+         source_url TEXT NOT NULL,
+         feed_date TEXT,
+         payload_sha256 TEXT NOT NULL,
+         payload_bytes INTEGER NOT NULL,
+         payload_gzip BLOB NOT NULL)""",
     """CREATE TABLE IF NOT EXISTS unresolved_players(
          id INTEGER PRIMARY KEY AUTOINCREMENT,
          source TEXT NOT NULL, raw_name TEXT NOT NULL,
@@ -221,8 +230,11 @@ def rebuild_claims(con):
     return stored
 
 
-def poll(con, feed, polled_at):
-    """Store one parsed feed snapshot in one transaction. Returns the counts printed for this poll."""
+def poll(con, feed, polled_at, raw=None, source_url=None):
+    """Store one parsed feed snapshot in one transaction. Returns the counts printed for this poll.
+
+    raw, when given, is the untouched payload. It is stored once per poll with its SHA-256 and is never updated.
+    """
     items = feed['items']
     ids = [item['id'] for item in items]
     feed_min, feed_max = min(ids), max(ids)
@@ -247,6 +259,12 @@ def poll(con, feed, polled_at):
         (polled_at, feed['feed_date'], feed_min, feed_max, len(items), previous, len(boundary), len(internal),
          json.dumps(gap_ids)))
     poll_id = cursor.lastrowid
+    if raw is not None:
+        con.execute(
+            'INSERT INTO nfl_player_news_raw_polls(poll_id, polled_at_utc, source_url, feed_date, payload_sha256, '
+            'payload_bytes, payload_gzip) VALUES (?,?,?,?,?,?,?)',
+            (poll_id, polled_at, source_url or nfl_news.ROTOWIRE_NFL_NEWS_URL, feed['feed_date'],
+             hashlib.sha256(raw).hexdigest(), len(raw), gzip.compress(raw, 9)))
 
     new_updates = changed_updates = 0
     claim_counts = collections.Counter()
@@ -355,7 +373,7 @@ def main(argv=None):
     try:
         with con:
             ensure_schema(con)
-            summary = poll(con, feed, polled_at)
+            summary = poll(con, feed, polled_at, raw=raw, source_url=a.url)
     except sqlite3.Error as exc:
         print(f'NFL player news: database error, poll rolled back: {exc}', file=sys.stderr)
         return 1

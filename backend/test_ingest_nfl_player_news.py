@@ -190,6 +190,31 @@ class PollTests(unittest.TestCase):
         self.assertIn('older than 30', message)
 
 
+    def test_every_poll_keeps_its_untouched_payload_with_its_sha256(self):
+        import gzip
+        import hashlib
+        updates = filler(1000, 25)
+        self.poll(updates)
+        self.poll(updates)
+        with open(self.xml, 'rb') as handle:
+            raw = handle.read()
+        rows = self.query('SELECT poll_id, payload_sha256, payload_bytes, payload_gzip, source_url '
+                          'FROM nfl_player_news_raw_polls ORDER BY poll_id')
+        self.assertEqual([1, 2], [row[0] for row in rows])
+        for poll_id, digest, size, blob, url in rows:
+            self.assertEqual(hashlib.sha256(raw).hexdigest(), digest)
+            self.assertEqual(len(raw), size)
+            self.assertEqual(raw, gzip.decompress(blob))
+            self.assertTrue(url.startswith('https://'))
+
+    def test_a_raw_row_is_never_rewritten_by_a_later_poll(self):
+        self.poll(filler(1000, 25))
+        before = self.query('SELECT poll_id, payload_sha256 FROM nfl_player_news_raw_polls')
+        self.poll(filler(1025, 25))
+        after = self.query('SELECT poll_id, payload_sha256 FROM nfl_player_news_raw_polls ORDER BY poll_id')
+        self.assertEqual(before, after[:1])
+        self.assertEqual(2, len(after))
+
     def test_adjacent_polls_have_no_gap(self):
         self.poll(filler(1000, 25))
         self.poll(filler(1025, 25))
