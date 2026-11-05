@@ -11,7 +11,8 @@ locked = 0 is what makes it a preview, and the Model tab reports that time as "p
 checks read locked = 1 only), and the lock job writes the real lock 90 minutes before kickoff as before. Each run
 replaces the previews of its week and model version, so a preview always reflects the latest inputs.
 
-Dev DB only (a path ending in picks.db is refused). Dry run unless --apply.
+Dev DB by default. The prod database (a path ending in picks.db) needs --allow-prod, as lock_nfl_models.py does.
+Dry run unless --apply.
 
   cd backend && LP_DB_PATH=/abs/path/picks.dev.db venv/bin/python nfl_projection_preview.py --season 2026 --week 6 [--apply]
 """
@@ -127,10 +128,14 @@ def main(argv=None) -> int:
     ap.add_argument("--week", type=int, default=None,
                     help="default: the earliest REG week that still has an unscored game (the upcoming slate)")
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--allow-prod", action="store_true", help="required to write the prod database (LP_DB_PATH ending in picks.db)")
     ap.add_argument("--now", default=None, help="ISO time (default: now); a game kicked off before it is not previewed")
     args = ap.parse_args(argv)
-    if DB.endswith("picks.db"):
-        raise SystemExit("refusing: %s is the prod database; previews are dev only" % DB)
+    is_prod = os.path.basename(os.path.normpath(DB)) == "picks.db"
+    if is_prod and not args.allow_prod:
+        raise SystemExit("refusing the production database %s without --allow-prod" % DB)
+    if args.allow_prod and not is_prod:
+        raise SystemExit("--allow-prod requires LP_DB_PATH to end in picks.db (got %s)" % DB)
     now = dt.datetime.fromisoformat(args.now.replace("Z", "+00:00")) if args.now else dt.datetime.now(dt.timezone.utc)
 
     con = sqlite3.connect(DB, timeout=60)
