@@ -1050,8 +1050,12 @@ def run_batch(args):
                 print(f'progress {completed}/{args.games}; errors {errors}; elapsed {elapsed:.0f}s; ETA {remaining:.0f}s',
                       file=sys.stderr, flush=True)
             if args.max_simulation_errors is not None and errors > args.max_simulation_errors:
-                raise RuntimeError(f'{errors} error seeds after {completed} of {args.games}; stopped. Finished seeds are '
-                                   f'in {ledger_path}; fix the cause and rerun with --resume')
+                game_id = (snapshot.get('schedule') or {}).get('game_id', 'unknown')
+                reason = outcome.get('error') or outcome.get('boxscore_error') or outcome['status']
+                raise RuntimeError(f'game_id={game_id} seed={seed} {outcome["status"]}: {reason}; {errors} error seed(s) '
+                                   f'after {completed} of {args.games}; stopped at the first failure beyond '
+                                   f'--max-simulation-errors {args.max_simulation_errors}. Finished seeds are in '
+                                   f'{ledger_path}; fix the cause and rerun with --resume')
     finally:
         if boxscore_handle is not None:
             boxscore_handle.close()
@@ -1334,8 +1338,9 @@ def main(argv=None):
     ap.add_argument('--paired-randomness', action='store_true',
                     help='research evaluation mode: isolate random draws by game snapshot, drive, play and semantic event '
                          'so matched-seed ablations do not shift unrelated random streams')
-    ap.add_argument('--max-simulation-errors', type=int,
-                    help='stop once more than this many seeds have errored; finished seeds stay in the ledger')
+    ap.add_argument('--max-simulation-errors', type=int, default=0,
+                    help='stop once more than this many seeds have errored (default 0: stop at the first error); '
+                         'finished seeds stay in the ledger')
     ap.add_argument('--out', required=True)
     ap.add_argument('--availability-store', help=('opt-in: directory of weekly availability snapshots; applies the newest '
                                                   'one frozen by --as-of (needs --roster-snapshot)'))
