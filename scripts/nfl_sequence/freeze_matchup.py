@@ -115,6 +115,7 @@ def build(args, tmp):
 
 
 def write_outputs(tmp, out, status, args, exported, snapshot, evidence, commit):
+    tmp = Path(tmp)
     summary = [status,
                f'game {args.game}; cutoff {args.cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")}; kickoff {args.kickoff_utc}',
                f'repository commit {commit}',
