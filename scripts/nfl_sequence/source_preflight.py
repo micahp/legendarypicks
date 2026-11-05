@@ -318,4 +318,15 @@ def validate_news_evidence(args, snapshot):
           f"({evidence['captures_after_cutoff_count']} after, not read); {len(evidence['items'])} game-scoped items; "
           f"counts {evidence['counts']}; evidence sha256 {evidence['evidence_sha256'][:16]}; "
           f"workload effect {evidence['workload_effect']}", flush=True)
+    import starter_consistency
+    try:
+        consistency = starter_consistency.check(snapshot, evidence['items'])
+    except ValueError as exc:
+        raise PreflightError(f'input preflight failed before simulation:\n - starter consistency: {exc}') from exc
+    print(starter_consistency.summary_line(consistency), flush=True)
+    if consistency['conflicts']:
+        lines = [f"announced starter {c['announced_name']} ({c['team']} {c['position']}, article {c['update_id']}) "
+                 f"differs from depth rank 1 {c['depth_rank_one_name']}" for c in consistency['conflicts']]
+        raise PreflightError('input preflight failed before simulation:\n - ' + '\n - '.join(lines))
+    evidence['starter_consistency'] = consistency
     return evidence
