@@ -10,6 +10,9 @@ import json
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from scripts import nfl_team_codes
+
 import e1_drive as e1  # noqa: E402
 import game_state as gs  # noqa: E402
 import measure_kick_outcomes as mk  # noqa: E402
@@ -188,13 +191,8 @@ def load_blocked_kicks(path=BLOCKED_KICKS):
             'source_hashes': manifest['sources'], 'source': manifest['source_dataset'], 'window': manifest['window']}
 
 
-# The play extras file spells two clubs as nflverse does (LA, WAS); the play-by-play table spells them LAR and WSH. A timeout
-# caller must match the play's own team codes, so the extras are mapped to the table's codes.
-EXTRAS_TEAM_CODES = {'LA': 'LAR', 'WAS': 'WSH'}
-
-
 def extras_team(code):
-    return EXTRAS_TEAM_CODES.get(code, code)
+    return nfl_team_codes.to_pbp_team_code(code)
 
 
 def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS):

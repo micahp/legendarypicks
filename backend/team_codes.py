@@ -50,6 +50,16 @@ ALIASES: dict[str, dict[str, str]] = {
         "OAK": "LV",
         "SD": "LAC",
         "STL": "LAR",
+        "RAM": "LAR",
+        "LVR": "LV",
+        "ARZ": "ARI",
+        "SDG": "LAC",
+        "GNB": "GB",
+        "KAN": "KC",
+        "NOR": "NO",
+        "NWE": "NE",
+        "SFO": "SF",
+        "TAM": "TB",
     },
     "mlb": {
         "CWS": "CHW",
@@ -178,6 +188,110 @@ def normalize_optional(league: str, code: str | None) -> str | None:
     if code is None or code == "":
         return None
     return normalize(league, code)
+
+
+# ---------------------------------------------------------------------------
+# Source vocabularies and guarded lookup keys
+# ---------------------------------------------------------------------------
+
+SOURCE_VOCABULARIES: dict[str, dict[str, dict[str, str]]] = {
+    "nfl": {
+        "nflverse": {"LAR": "LA", "WSH": "WAS"},
+    },
+}
+
+COMPLETE_VOCABULARY = frozenset({"nfl"})
+UNREGISTERED_SEEN: dict[tuple[str, str], int] = {}
+
+
+def to_source(league: str, source: str, code: str) -> str:
+    """Return a team's spelling in a registered source vocabulary."""
+    try:
+        vocabulary = SOURCE_VOCABULARIES[league][source]
+    except KeyError:
+        raise UnknownTeamCode(f"no {source!r} vocabulary registered for {league!r}") from None
+    canonical = normalize(league, code)
+    return vocabulary.get(canonical, canonical)
+
+
+def key_code(league: str, code: str) -> str:
+    """Canonical lookup key; unknown NFL codes fail, incomplete vocabularies pass through visibly."""
+    try:
+        return normalize(league, code)
+    except UnknownTeamCode:
+        if league in COMPLETE_VOCABULARY or league not in CANONICAL:
+            raise
+        clean = _sanitise(code)
+        key = (league, clean)
+        if key not in UNREGISTERED_SEEN:
+            import logging
+            logging.getLogger(__name__).warning(
+                "team code %r is not registered for %s; used as written", clean, league)
+        UNREGISTERED_SEEN[key] = UNREGISTERED_SEEN.get(key, 0) + 1
+        return clean
+
+
+def same_team(league: str, left: str, right: str) -> bool:
+    """Whether two spellings identify the same team in one league."""
+    return key_code(league, left) == key_code(league, right)
+
+
+class TeamKeyed(dict):
+    """A dict keyed by league team codes that normalizes every lookup and write."""
+
+    def __init__(self, league: str, items=(), team_at: int | None = None):
+        if league not in CANONICAL:
+            raise UnknownTeamCode(f"unknown league: {league!r}")
+        super().__init__()
+        self.league = league
+        self.team_at = team_at
+        self.update(items)
+
+    def _key(self, key):
+        if self.team_at is None:
+            return key_code(self.league, key)
+        if not isinstance(key, tuple) or len(key) <= self.team_at:
+            raise TypeError(
+                f"team-keyed table expects a tuple key with team at position {self.team_at}: {key!r}")
+        index = self.team_at
+        return key[:index] + (key_code(self.league, key[index]),) + key[index + 1:]
+
+    def __getitem__(self, key):
+        return super().__getitem__(self._key(key))
+
+    def __setitem__(self, key, value):
+        super().__setitem__(self._key(key), value)
+
+    def __delitem__(self, key):
+        super().__delitem__(self._key(key))
+
+    def __contains__(self, key):
+        return super().__contains__(self._key(key))
+
+    def get(self, key, default=None):
+        return super().get(self._key(key), default)
+
+    def pop(self, key, *default):
+        return super().pop(self._key(key), *default)
+
+    def setdefault(self, key, default=None):
+        return super().setdefault(self._key(key), default)
+
+    def update(self, items=(), **kwargs):
+        if kwargs:
+            raise TypeError("TeamKeyed.update accepts a mapping or key-value pairs only")
+        for key, value in (items.items() if hasattr(items, "items") else items):
+            self[key] = value
+
+    def copy(self):
+        return TeamKeyed(self.league, self, team_at=self.team_at)
+
+    def __reduce__(self):
+        return (TeamKeyed, (self.league, (), self.team_at), None, None, iter(dict.items(self)))
+
+    def teams(self) -> set:
+        """The canonical team codes present as keys."""
+        return {key if self.team_at is None else key[self.team_at] for key in dict.keys(self)}
 
 
 def is_canonical(league: str, code: str) -> bool:

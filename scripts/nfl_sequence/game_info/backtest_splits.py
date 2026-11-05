@@ -17,11 +17,15 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from scripts import nfl_team_codes
 
 HERE = Path(__file__).resolve().parent
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
@@ -34,7 +38,6 @@ N_PERM = 2000
 MIN_N = {'referee': 30, 'venue': 30}
 DEFAULT_MIN_N = 40
 SEED = 20261027
-DB_TO_VENUE = {'WSH': 'WAS', 'LAR': 'LA', 'LAC': 'LAC'}
 OUTCOMES = {'total_resid': 'total points minus leave-one-out team-season expectation',
             'margin_resid': 'home margin minus leave-one-out team-season expectation',
             'penalties': 'flagged penalties (penalty == 1)', 'penalty_yards': 'yards on flagged penalties'}
@@ -112,11 +115,11 @@ def factors(df: pd.DataFrame) -> pd.DataFrame:
         ['NBC', 'CBS', 'Fox', 'ESPN/ABC', 'Prime Video', 'NFL Network'], default=np.nan)
     df['broadcast'] = df.broadcast.where(df.broadcast.notna(), None)
     venue_doc = json.loads(VENUES.read_text())
-    venues = venue_doc['venues']
-    shared = venue_doc['shared_venue_teams']
+    venues = nfl_team_codes.TeamKeyed(venue_doc['venues'])
+    shared = nfl_team_codes.TeamKeyed(venue_doc['shared_venue_teams'])
 
     def venue_key(team: str) -> str:
-        return shared.get(team, DB_TO_VENUE.get(team, team))
+        return shared.get(team, team)
 
     cap = df.home_team.map(lambda t: venues[venue_key(t)]['listed_capacity'])
     pct = df.attendance / cap

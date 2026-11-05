@@ -13,11 +13,15 @@ from __future__ import annotations
 import importlib.util
 import json
 import sqlite3
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from scripts import nfl_team_codes
 
 HERE = Path(__file__).resolve().parent
 REPO = Path(__file__).resolve().parent
@@ -58,11 +62,11 @@ def family(df: pd.DataFrame, factors: list[str]) -> list[dict]:
 
 
 def travel(df: pd.DataFrame) -> pd.DataFrame:
-    venues = VENUES['venues']
-    shared = VENUES['shared_venue_teams']
+    venues = nfl_team_codes.TeamKeyed(VENUES['venues'])
+    shared = nfl_team_codes.TeamKeyed(VENUES['shared_venue_teams'])
     state = {}
     for team in set(df.home_team) | set(df.away_team):
-        key = shared.get(team, {'WSH': 'WAS', 'LAR': 'LA'}.get(team, team))
+        key = shared.get(team, team)
         state[team] = venues[key]['state']
     con = sqlite3.connect(DB, uri=True)
     rest = pd.read_sql("select game_id, home_rest, away_rest from nfl_schedule "

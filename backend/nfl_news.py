@@ -17,6 +17,7 @@ import logging
 import re
 import threading
 
+import team_codes
 from team_codes import normalize_position_optional as _shared_normalize_position
 import time
 import unicodedata
@@ -40,11 +41,6 @@ PLAYER_PAGE_TTL_SECONDS = 600
 MIN_VALID_UPDATES = 20
 
 _SUFFIXES = frozenset({"jr", "sr", "ii", "iii", "iv", "v"})
-_TEAM_ALIASES = {
-    "JAC": "JAX",
-    "LA": "LAR",
-    "WAS": "WSH",
-}
 # Position normalisation lives in `team_codes`, not here. This file used to
 # carry its own table -- {"K": "PK", "G": "OG"} -- written without the shared
 # one in view, and the two disagreed: `team_codes` collapsed `OL` INTO `G`
@@ -394,8 +390,10 @@ def normalize_person_name(value):
 
 
 def normalize_team(value):
-    team = str(value or "").strip().upper()
-    return _TEAM_ALIASES.get(team, team)
+    """The canonical NFL code (backend/team_codes.py), or an empty string for an empty value. Raises UnknownTeamCode on any
+    other value, so an unrecognized spelling is reported instead of quietly matching nothing."""
+    team = str(value or "").strip()
+    return team_codes.normalize("nfl", team) if team else team
 
 
 def normalize_position(value):
@@ -497,7 +495,11 @@ def resolve_source_player(connection, item):
         (base_name, f"{base_name} %"),
     ).fetchall()
     candidates = []
-    source_team = normalize_team(item.get("team"))
+    try:
+        source_team = normalize_team(item.get("team"))
+    except team_codes.UnknownTeamCode:
+        LOGGER.warning("news item team %r is not an NFL team code; not matched by name", item.get("team"))
+        return {"player_id": None, "method": "unknown_source_team"}
     source_position = normalize_position(item.get("position"))
     for row in rows:
         if normalize_person_name(row["name"]) != source_name:
