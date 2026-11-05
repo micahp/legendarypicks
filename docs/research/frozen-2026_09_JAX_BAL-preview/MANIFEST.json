@@ -1,0 +1,42 @@
+{
+ "built_from_commit": "ce97e1c0c05a5bd75ddd0200e378b2ff49ba1202",
+ "cutoff_utc": "2026-11-05T23:45:00Z",
+ "evaluation": {
+  "class": "exploratory_replay",
+  "unverified_inputs": [
+   "schedule: observed_at is a loader import time, not a capture time",
+   "away depth: snapshot_at is the nflverse artifact date, not a capture time",
+   "home depth: snapshot_at is the nflverse artifact date, not a capture time"
+  ],
+  "verified": false
+ },
+ "evidence_sha256": "67bdd0b33dfeffcd7c1e82571fa498f95a0f864807eaf0531735dd0a86a7a51a",
+ "files": {
+  "evidence.json": "71e8c0f993c8dda260b1405e377fc4e8b06c4180f449588b5279cf3353741778",
+  "full_depth_provenance.json": "0772f6c73868cdb847a1c405507171e983579fe176c82c375ced8c060390a8aa",
+  "full_depth_roster.json": "9d6bef8e07a52f12370e7df32bcbfeaf53c9a73ee4262d1f931cc0f7641b8a37",
+  "inputs/depth_charts_2026.parquet": "4c0119a7c609b3fbdf4e2059d3a1de24d99e2b4a29d0ee7d816d41c5b21d291d",
+  "inputs/roster_weekly_2026.parquet": "e98ea21d7a64511f54304ba8417fc9fe0c48713e87b9b57ee659759e7e629b87",
+  "news-captures/manifest.json": "59b0bad953bd2f1f4384fab23b40412c61595d751d7a6c0811213c3eda822eb4",
+  "news-captures/rotowire-nfl-news-20261105T210003Z.xml": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+  "snapshot.json": "69eaa843667ab475df7c3e5483f28570bb76c51b02bb4323aa1b56c9737347d7",
+  "starters.json": "d0be0e719c3bfc43f468362ac29b7234a80f9852b296b9173c78fd86ecefc7c1",
+  "starters_provenance.json": "9d8e2e4b7d9930c857bca342688fd09d77fa2ec7e95ddc6a5e88b479e2691536",
+  "status.txt": "2d1014f4478bd95030355a39dc840325184c4a6fbe7c07772168e302f430c711",
+  "summary.txt": "2c7051ba2f2e384df739e52ec3690f27c5a1cbadc4b70db52fedb0b0abdc1f23"
+ },
+ "game": "2026_09_JAX_BAL",
+ "kickoff_source_url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv",
+ "kickoff_utc": "2026-11-06T01:15:00Z",
+ "news_payloads": [
+  {
+   "acquired_at_utc": "2026-11-05T21:00:03.349712Z",
+   "name": "rotowire-nfl-news-20261105T210003Z.xml",
+   "poll_id": 11,
+   "sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "updates": 301
+  }
+ ],
+ "snapshot_sha256": "02a779876863dfea155e763aca3cff724d0948f6f1e37a46398d01ca2bf9af2d",
+ "status": "PREVIEW: the cutoff is 2026-11-05T23:45:00Z; inputs can still change until then"
+}

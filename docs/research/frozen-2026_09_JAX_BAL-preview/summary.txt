@@ -1,0 +1,6 @@
+PREVIEW: the cutoff is 2026-11-05T23:45:00Z; inputs can still change until then
+game 2026_09_JAX_BAL; cutoff 2026-11-05T23:45:00Z; kickoff 2026-11-06T01:15:00Z
+repository commit ce97e1c0c05a5bd75ddd0200e378b2ff49ba1202
+snapshot sha256 02a779876863dfea155e763aca3cff724d0948f6f1e37a46398d01ca2bf9af2d
+evidence sha256 67bdd0b33dfeffcd7c1e82571fa498f95a0f864807eaf0531735dd0a86a7a51a; news payloads exported 1
+starter consistency against pinned starter flag: announced 1 checked, 1 agree, 0 differ, 0 unverified; expected 0 checked, 0 agree, 0 differ, 0 unverified
