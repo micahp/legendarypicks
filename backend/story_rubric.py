@@ -24,7 +24,7 @@ from pathlib import Path
 import re
 from typing import Any
 
-VERSION = "lp-story-quality-v1.0.0"
+VERSION = "lp-story-quality-v1.1.0"
 WEIGHTS = {
     "grounding": 25,
     "headline": 20,
@@ -73,6 +73,8 @@ MECHANICAL_CHECKS = (
     "selected_facts_have_linked_source_rows",
     "team_record_and_streak_claims_recompute",
     "head_to_head_claims_recompute",
+    "player_game_result_claims_recompute",
+    "rematch_storyline_recomputes",
     "league_rank_claims_recompute",
     "player_stat_claims_recompute",
     "player_team_attribution_matches_prose",

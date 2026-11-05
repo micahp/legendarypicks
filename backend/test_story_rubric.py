@@ -44,6 +44,8 @@ def sample_row(story=None):
                 "selected_facts_have_linked_source_rows": True,
                 "team_record_and_streak_claims_recompute": True,
                 "head_to_head_claims_recompute": True,
+                "player_game_result_claims_recompute": True,
+                "rematch_storyline_recomputes": True,
                 "league_rank_claims_recompute": True,
                 "player_stat_claims_recompute": True,
                 "player_team_attribution_matches_prose": True,
@@ -76,6 +78,15 @@ class RubricTests(unittest.TestCase):
         result = grade_record(row)
         self.assertEqual(result["gate"], "blocked")
         self.assertEqual(result["dimensions"]["grounding"]["score"], 0)
+
+    def test_unverified_player_game_result_or_rematch_blocks_publication(self):
+        for check in ("player_game_result_claims_recompute", "rematch_storyline_recomputes"):
+            with self.subTest(check=check):
+                row = sample_row()
+                row["mechanical_audit"][check] = False
+                result = grade_record(row)
+                self.assertEqual(result["gate"], "blocked")
+                self.assertIn(f"Independent audit failed: {check}", result["hard_failures"])
 
     def test_future_source_blocks_publication(self):
         row = sample_row()

@@ -63,14 +63,12 @@ All five linked pages identify Associated Press syndication, with Data Skrive an
 
 The per-game review is in [`results.md`](results.md); [`results.json`](results.json) preserves source metadata, replay checks, claim-audit results, and gap diagnoses in machine-readable form. No full article text is stored. These results are diagnostic only: the sample cannot establish overall preference, representativeness, or product quality.
 
-## Concrete next tests
+## Cutoff-safe fact-join follow-up
 
-- `CLE@OKC`: If the most recent game against this same opponent included a 40+ point star performance, the headline selector considers the performance and immediate rematch before generic 20+ point consistency.
-- `IND@MEM`: A 40-point outing in a one-point overtime loss is recognized as a significant recent performance, without implying Memphis won.
-- `PHI@DET`: If previous meeting is source-backed and in the current season, it remains a viable supporting fact even if records/top-four is the lead.
-- `CHA@BKN`: Losing-streak headline retains the streak; a sourced recent head-to-head may supplement it.
-- Each fixture must recompute all claims from cutoff-safe LP facts. Editorial reference material must not be injected as factual input.
+The five fact-join cases have been implemented on PR #30's research branch and replayed against the same cutoff-filtered inputs. The generated stories, full fact bundles, selected evidence, per-claim audit results, and limitations are in [`fact-join-followup.md`](fact-join-followup.md) and [`fact-join-followup.json`](fact-join-followup.json).
 
-Reference fixtures: `matched_sample.jsonl`.
+The implementation joins NBA player logs to archived finals by exact ESPN event ID, adds supported prior-meeting results, and lets a 40-point latest performance against the upcoming opponent lead the story. All 60 independent audit checks passed, and all five outputs were eligible under the revised pastel grader. Injury availability remains missing because the development database has NFL injury reports only and no archived NBA injury snapshots. Current player injury fields were not used retroactively.
+
+The sample remains curated and unblinded, with no human preference ratings. It is a diagnostic follow-up, not evidence of general quality or production readiness. Reference fixtures: `matched_sample.jsonl`.
 
 **Gate:** The initial five-game seed comparison is complete. It is not full ESPN coverage, does not contain first-party ESPN staff previews or immutable historical article captures, and has no blind human ratings. Do not treat it as a general preference result.

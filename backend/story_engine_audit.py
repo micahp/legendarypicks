@@ -5,7 +5,7 @@ use the renderer's selected numeric values as the source of truth.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import re
 from typing import Any
 
@@ -17,6 +17,10 @@ COUNT_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
 HEAD_TO_HEAD_CLAIM = re.compile(
     r"\balready beat\s+(?P<loser>.+?)\s+(?P<score>(?P<winner_score>\d+)-"
     r"(?P<loser_score>\d+))\s+on (?P<date>[A-Z][a-z]{2}\.\s+\d{1,2})\b", re.I)
+PLAYER_GAME_RESULT_CLAIM = re.compile(
+    r"\bscored (?P<points>\d+) in the (?P<team>.+?) "
+    r"(?P<team_score>\d{2,3})-(?P<opponent_score>\d{2,3}) "
+    r"(?:(?:overtime) )?(?:win over|loss to|tie with)\b", re.I)
 
 
 def _time(value: Any) -> datetime | None:
@@ -40,6 +44,7 @@ def _input_evidence(facts: dict[str, Any]):
         yield from player.get("evidence") or []
         yield from player.get("season_logs") or []
     yield from facts.get("matchup_evidence") or []
+    yield from facts.get("game_results") or []
 
 
 def _prior_evidence(facts: dict[str, Any]):
@@ -50,6 +55,7 @@ def _prior_evidence(facts: dict[str, Any]):
     for player in facts.get("players") or []:
         yield from player.get("evidence") or []
         yield from player.get("season_logs") or []
+    yield from facts.get("game_results") or []
 
 
 def _selected_rows_linked(selected: list[dict], facts: dict[str, Any]) -> bool:
@@ -170,7 +176,8 @@ def _record_and_streak_claims_match(story: str, facts: dict[str, Any], selected:
             if outcomes.count("T"):
                 value += f"-{outcomes.count('T')}"
             records[str(fact.get("team"))] = value
-    verified_score_spans = _verified_head_to_head_score_spans(story, facts, selected)
+    verified_score_spans = (_verified_head_to_head_score_spans(story, facts, selected)
+                            | _verified_player_game_result_score_spans(story, facts, selected))
     for match in re.finditer(r"(?<!\d)(\d{1,2}-\d{1,2}(?:-\d{1,2})?)(?!\d)", story):
         if match.span() in verified_score_spans:
             continue
@@ -249,6 +256,125 @@ def _verified_head_to_head_score_spans(story: str, facts: dict[str, Any],
     if not _head_to_head_claims_recompute(story, facts, selected):
         return set()
     return {match.span("score") for match in HEAD_TO_HEAD_CLAIM.finditer(story)}
+
+
+def _player_game_result_expected_claims(fact: dict, player: dict, facts: dict) -> list[str]:
+    """Rebuild the latest 40-point game sentence from its player log and saved snapshot."""
+    if str(facts.get("league", "")).lower() != "nba":
+        return []
+    rows = _player_rows(player, facts.get("as_of", ""))
+    if not rows:
+        return []
+    selected_evidence = {str(row.get("id")): row for row in fact.get("evidence") or []}
+    source_results = {str(row.get("id")): row for row in facts.get("game_results") or []}
+    cutoff = _time(facts.get("as_of", ""))
+    claims = []
+    for index, log in enumerate(rows[:5]):
+        stats = log.get("stats") or {}
+        points = stats.get("PTS", stats.get("points"))
+        if points is None or float(points) < 38:
+            continue
+        game_id = str(log.get("game_id") or "")
+        for result in fact.get("game_results") or []:
+            result_id = str(result.get("id") or "")
+            available_at = _time(result.get("available_at"))
+            start_utc = _time(result.get("start_utc"))
+            if (not game_id or str(result.get("game_id") or "") != game_id
+                    or result_id not in source_results or result_id not in selected_evidence
+                    or selected_evidence[result_id] != source_results[result_id]
+                    or result.get("source") != "scoreboard_snapshots" or result.get("state") != "post"
+                    or result.get("completed") is not True or str(result.get("season_type")) != "2"
+                    or str(result.get("competition_type") or "").upper() != "STD"
+                    or not cutoff or not available_at or available_at > cutoff
+                    or not start_utc or start_utc > cutoff
+                    or player.get("team") != fact.get("team")
+                    or fact.get("team") not in {result.get("home"), result.get("away")}
+                    or not {str(result.get("home")), str(result.get("away"))}.issubset(
+                        set(LEAGUE_TEAM_NAMES["nba"]))):
+                continue
+            team = str(fact["team"])
+            opponent = str(result["away"] if result["home"] == team else result["home"])
+            own_score = int(result["home_score"] if result["home"] == team else result["away_score"])
+            opponent_score = int(result["away_score"] if result["home"] == team else result["home_score"])
+            team_nickname = LEAGUE_TEAM_NAMES["nba"][team].split()[-1]
+            opponent_nickname = LEAGUE_TEAM_NAMES["nba"][opponent].split()[-1]
+            possessive = f"{team_nickname}'" if team_nickname.endswith("s") else f"{team_nickname}'s"
+            overtime = "overtime " if "ot" in str(result.get("status_detail") or "").lower() else ""
+            if own_score > opponent_score:
+                ending = f"{own_score}-{opponent_score} {overtime}win over the {opponent_nickname}"
+            elif own_score < opponent_score:
+                ending = f"{own_score}-{opponent_score} {overtime}loss to the {opponent_nickname}"
+            else:
+                ending = f"{own_score}-{opponent_score} tie with the {opponent_nickname}"
+            date_suffix = ""
+            if index:
+                try:
+                    date_suffix = " on " + date.fromisoformat(str(log.get("date"))[:10]).strftime("%b. %-d")
+                except ValueError:
+                    continue
+            claims.append(f"{player['name']} scored {int(round(float(points)))} in the {possessive} "
+                          f"{ending}{date_suffix}")
+    return claims
+
+
+def _player_game_result_claims_recompute(story: str, facts: dict[str, Any],
+                                         selected: list[dict]) -> bool:
+    candidates = []
+    for fact in selected:
+        if fact.get("kind") != "player_form":
+            continue
+        identity = str(fact.get("id", "")).partition(":")[2]
+        player = next((row for row in facts.get("players") or []
+                       if str(row.get("player_id", row.get("name"))) == identity
+                       and row.get("name") == fact.get("player")
+                       and row.get("team") == fact.get("team")), None)
+        if player:
+            candidates.extend(_player_game_result_expected_claims(fact, player, facts))
+    matches = list(PLAYER_GAME_RESULT_CLAIM.finditer(story))
+    if len(matches) != len([claim for claim in candidates if claim.lower() in story.lower()]):
+        return False
+    for match in matches:
+        if not any(claim.lower() in story.lower()
+                   and match.group(0).lower() in claim.lower() for claim in candidates):
+            return False
+    return True
+
+
+def _verified_player_game_result_score_spans(story: str, facts: dict[str, Any],
+                                             selected: list[dict]) -> set[tuple[int, int]]:
+    if not _player_game_result_claims_recompute(story, facts, selected):
+        return set()
+    return {(match.start("team_score"), match.end("opponent_score"))
+            for match in PLAYER_GAME_RESULT_CLAIM.finditer(story)}
+
+
+def _rematch_claim_recomputes(result: dict, facts: dict[str, Any], selected: list[dict]) -> bool:
+    angle = result.get("angle") or {}
+    if angle.get("kind") != "rematch_performance":
+        return True
+    identity = str(angle.get("player_id") or "")
+    fact = next((row for row in selected if row.get("kind") == "player_form"
+                 and str(row.get("id", "")).partition(":")[2] == identity), None)
+    if fact is None:
+        return False
+    source_result = next((row for row in facts.get("game_results") or []
+                          if str(row.get("id")) == str(angle.get("result_id"))), None)
+    selected_result = next((row for row in fact.get("game_results") or []
+                            if str(row.get("id")) == str(angle.get("result_id"))), None)
+    if (source_result is None or selected_result != source_result
+            or str(source_result.get("game_id")) != str(angle.get("game_id"))
+            or source_result.get("source") != "scoreboard_snapshots"
+            or source_result.get("state") != "post" or source_result.get("completed") is not True
+            or str(source_result.get("season_type")) != "2"
+            or str(source_result.get("competition_type") or "").upper() != "STD"
+            or {str(source_result.get("home")), str(source_result.get("away"))}
+            != {str(facts.get("away")), str(facts.get("home"))}):
+        return False
+    home_city = TEAM_CITIES.get(str(facts.get("home")), "")
+    away_city = TEAM_CITIES.get(str(facts.get("away")), "")
+    suffix = f"and {home_city} hosts {away_city} again."
+    return bool(home_city and away_city and suffix.lower() in str(result.get("story") or "").lower()
+                and _player_game_result_claims_recompute(str(result.get("story") or ""), facts, selected))
 
 
 def _rank_claims_recompute(facts: dict[str, Any], selected: list[dict]) -> bool:
@@ -345,6 +471,10 @@ def _player_claim_matches(story: str, facts: dict[str, Any], fact: dict) -> bool
         return False
     rows = _player_rows(player, facts["as_of"])
     league = str(facts.get("league", "")).lower()
+    result_claim = PLAYER_GAME_RESULT_CLAIM.search(clause)
+    if result_claim:
+        return any(expected.lower() in clause.lower()
+                   for expected in _player_game_result_expected_claims(fact, player, facts))
     if league == "nba":
         points, assists, rebounds = (_stat(rows, key) for key in ("PTS", "AST", "REB"))
         match = re.search(r"has scored (\d+) and (\d+) in his last two", clause, re.I)
@@ -508,6 +638,8 @@ def audit_story(result: dict[str, Any], facts: dict[str, Any]) -> dict[str, bool
             _record_and_streak_facts_recompute(selected, facts, facts.get("as_of", ""))
             and _record_and_streak_claims_match(story, facts, selected)),
         "head_to_head_claims_recompute": _head_to_head_claims_recompute(story, facts, selected),
+        "player_game_result_claims_recompute": _player_game_result_claims_recompute(story, facts, selected),
+        "rematch_storyline_recomputes": _rematch_claim_recomputes(result, facts, selected),
         "league_rank_claims_recompute": _rank_claims_recompute({**facts, "story": story}, selected),
         "player_stat_claims_recompute": player_claims,
         "player_team_attribution_matches_prose": _player_attribution_matches(story, facts, selected),

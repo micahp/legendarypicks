@@ -18,6 +18,7 @@ from story_engine import (
     collect_story_facts,
     generate_story,
 )
+from story_engine_audit import audit_story
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -222,6 +223,99 @@ class StoryEngineTests(unittest.TestCase):
             self.assertLessEqual(len(result["story"].split()), 85)
             self.assertNotIn("No preview", result["story"])
 
+    def test_cutoff_safe_rematch_star_result_leads_and_passes_audit(self):
+        facts = matchup_facts("CLE", "OKC", ["W", "L", "W", "L"],
+                              ["W", "W", "L", "W"])
+        facts["teams"]["CLE"]["name"] = "Cleveland Cavaliers"
+        facts["teams"]["OKC"]["name"] = "Oklahoma City Thunder"
+        log = {"id": "sgalog", "date": "2026-11-01", "game_id": "event-cle-okc",
+               "available_at": "2026-11-02T06:17:57Z", "stats": {"PTS": 43, "AST": 7, "REB": 5}}
+        result = {"id": "scoreboard:event-cle-okc:2026-11-02T05:58:11Z",
+                  "source": "scoreboard_snapshots", "game_id": "event-cle-okc",
+                  "available_at": "2026-11-02T05:58:11Z", "game_date": "2026-11-01",
+                  "start_utc": "2026-11-02T01:00:00Z", "state": "post", "completed": True,
+                  "home": "OKC", "away": "CLE", "home_score": 117, "away_score": 112,
+                  "status_detail": "Final", "season_type": 2, "competition_type": "STD"}
+        facts["players"] = [{"player_id": "12", "name": "Shai Gilgeous-Alexander",
+                             "team": "OKC", "league": "nba", "evidence": [log],
+                             "season_logs": [log], "season_totals_complete": False}]
+        facts["game_results"] = [result]
+
+        rendered = generate_story(facts)
+
+        self.assertTrue(rendered["story"].startswith("Shai Gilgeous-Alexander scored 43"))
+        self.assertIn("Thunder's 117-112 win over the Cavaliers", rendered["story"])
+        self.assertIn("Oklahoma City hosts Cleveland again", rendered["story"])
+        self.assertEqual(rendered["angle"]["kind"], "rematch_performance")
+        self.assertTrue(all(audit_story(rendered, facts).values()), audit_story(rendered, facts))
+
+    def test_game_results_and_h2h_are_not_selected_after_cutoff(self):
+        facts = matchup_facts("CLE", "OKC", ["W", "L", "W", "L"],
+                              ["W", "W", "L", "W"])
+        facts["players"] = [{"player_id": "12", "name": "Shai Gilgeous-Alexander",
+                             "team": "OKC", "league": "nba",
+                             "evidence": [{"id": "late-log", "date": "2026-11-02",
+                                           "game_id": "late-event", "available_at": "2026-11-02T21:00:00Z",
+                                           "stats": {"PTS": 43}}]}]
+        facts["game_results"] = [{"id": "late-result", "game_id": "late-event",
+                                  "available_at": "2026-11-02T23:00:00Z", "home": "OKC", "away": "CLE",
+                                  "home_score": 117, "away_score": 112,
+                                  "status_detail": "Final", "season_type": 2, "competition_type": "STD"}]
+        facts["as_of"] = "2026-11-02T22:00:00Z"
+        facts["start_utc"] = "2026-11-02T23:00:00Z"
+
+        rendered = generate_story(facts)
+
+        self.assertNotEqual(rendered["angle"]["kind"], "rematch_performance")
+        self.assertNotIn("117-112", rendered["story"])
+
+    def test_older_standout_game_is_not_misdescribed_as_coming_off(self):
+        facts = matchup_facts("CHA", "BKN", ["W", "L", "L", "L"],
+                              ["L", "W", "L", "L"])
+        facts["teams"]["CHA"]["name"] = "Charlotte Hornets"
+        facts["teams"]["BKN"]["name"] = "Brooklyn Nets"
+        logs = [
+            {"id": "brandon-latest", "date": "2026-11-02", "game_id": "latest-game",
+             "available_at": "2026-11-02T20:00:00Z", "stats": {"PTS": 17, "AST": 4, "REB": 1}},
+            {"id": "brandon-39", "date": "2026-10-26", "game_id": "charlotte-washington",
+             "available_at": "2026-10-27T07:29:33Z", "stats": {"PTS": 39, "AST": 1, "REB": 6}},
+        ]
+        result = {"id": "scoreboard:charlotte-washington:2026-10-27T07:00:00Z",
+                  "source": "scoreboard_snapshots", "game_id": "charlotte-washington",
+                  "available_at": "2026-10-27T07:00:00Z", "start_utc": "2026-10-26T23:00:00Z",
+                  "home": "CHA", "away": "WSH", "home_score": 110, "away_score": 103,
+                  "status_detail": "Final", "state": "post", "completed": True,
+                  "season_type": 2, "competition_type": "STD"}
+        facts["players"] = [{"player_id": "29380", "name": "Brandon Miller", "team": "CHA",
+                             "league": "nba", "evidence": logs, "season_logs": logs,
+                             "season_totals_complete": False}]
+        facts["game_results"] = [result]
+
+        rendered = generate_story(facts)
+
+        self.assertIn("Brandon Miller scored 39 in the Hornets' 110-103 win over the Wizards on Oct. 26",
+                      rendered["story"])
+        self.assertNotIn("coming off", rendered["story"].lower())
+        self.assertTrue(all(audit_story(rendered, facts).values()), audit_story(rendered, facts))
+
+    def test_prior_meeting_is_rendered_and_audited_when_it_supports_the_matchup(self):
+        facts = matchup_facts("PHI", "DET", ["W", "L", "W"], ["L", "W", "L"])
+        facts["teams"]["PHI"]["name"] = "Philadelphia 76ers"
+        facts["teams"]["DET"]["name"] = "Detroit Pistons"
+        philadelphia_row = {"id": "prior-philly-detroit", "date": "2026-10-25",
+                            "available_at": "2026-10-26T03:00:00Z", "opponent": "DET",
+                            "for": 93, "against": 106, "result": "L"}
+        detroit_row = {**philadelphia_row, "opponent": "PHI", "for": 106,
+                       "against": 93, "result": "W"}
+        facts["teams"]["PHI"]["evidence"].append(philadelphia_row)
+        facts["teams"]["DET"]["evidence"].append(detroit_row)
+        facts["teams"]["PHI"].update({"wins": 2, "losses": 2, "games": 4})
+        facts["teams"]["DET"].update({"wins": 2, "losses": 2, "games": 4})
+
+        rendered = generate_story(facts)
+
+        self.assertIn("Detroit already beat Philadelphia 106-93 on Oct. 25", rendered["story"])
+        self.assertTrue(all(audit_story(rendered, facts).values()), audit_story(rendered, facts))
     def test_rank_language_requires_verified_full_league_coverage(self):
         story = self.outputs["0022600164"]["story"].lower()
         self.assertIn("dead last", story)
@@ -573,6 +667,63 @@ class FactCollectionTests(unittest.TestCase):
         self.assertIn("Test Star", story)
         self.assertIn("42 and 35 in his last two", story)
         self.assertNotIn("50", story)
+
+    def test_collector_joins_only_cutoff_safe_archived_nba_results_by_event_id(self):
+        cutoff = "2026-11-02T22:00:00Z"
+        with tempfile.NamedTemporaryFile(suffix=".db") as db:
+            connection = sqlite3.connect(db.name)
+            connection.executescript("""
+                CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, league TEXT);
+                CREATE TABLE player_game_logs(
+                    id INTEGER PRIMARY KEY, player_id INTEGER, league TEXT, season INTEGER,
+                    game_id TEXT, game_date TEXT, team TEXT, opponent TEXT, stats TEXT,
+                    ingested_at TEXT, game_type TEXT
+                );
+                CREATE TABLE scoreboard_snapshots(
+                    league TEXT, game_id TEXT, state TEXT, payload TEXT, fetched_at TEXT, start_time TEXT
+                );
+            """)
+            connection.execute("INSERT INTO players VALUES (12,'Shai Gilgeous-Alexander','nba')")
+            connection.executemany("INSERT INTO player_game_logs VALUES (?,?,?,?,?,?,?,?,?,?,?)", [
+                (1, 12, "nba", 2027, "event-prior", "2026-11-01", "OKC", "CLE",
+                 '{"PTS":43}', "2026-11-02T06:17:57Z", "REG"),
+                (2, 12, "nba", 2027, "event-late", "2026-11-01", "OKC", "CLE",
+                 '{"PTS":42}', "2026-11-02T21:00:00Z", "REG"),
+                (3, 12, "nba", 2027, "event-incomplete", "2026-11-01", "OKC", "CLE",
+                 '{"PTS":41}', "2026-11-02T20:00:00Z", "REG"),
+                (4, 12, "nba", 2027, "event-cup", "2026-11-01", "OKC", "CLE",
+                 '{"PTS":40}', "2026-11-02T19:00:00Z", "REG"),
+            ])
+            def payload(event_date, home_score, *, completed=True, competition="STD"):
+                return json.dumps({
+                    "date": event_date, "completed": completed, "season_type": 2,
+                    "competition_type": competition, "status_detail": "Final",
+                    "home": {"abbrev": "OKC", "score": home_score},
+                    "away": {"abbrev": "CLE", "score": 112},
+                })
+            connection.executemany(
+                "INSERT INTO scoreboard_snapshots VALUES (?,?,?,?,?,?)", [
+                    ("nba", "event-prior", "post", payload("2026-11-02T01:00:00Z", 117),
+                     "2026-11-02T05:58:11Z", "2026-11-02T01:00:00Z"),
+                    ("nba", "event-late", "post", payload("2026-11-02T01:00:00Z", 120),
+                     "2026-11-02T23:00:00Z", "2026-11-02T01:00:00Z"),
+                    ("nba", "event-incomplete", "post", payload("2026-11-02T01:00:00Z", 121, completed=False),
+                     "2026-11-02T05:00:00Z", "2026-11-02T01:00:00Z"),
+                    ("nba", "event-cup", "post", payload("2026-11-02T01:00:00Z", 122, competition="CUP"),
+                     "2026-11-02T05:00:00Z", "2026-11-02T01:00:00Z"),
+                ])
+            connection.commit()
+            connection.close()
+
+            facts = collect_story_facts(
+                db.name,
+                {"league": "nba", "season": 2027, "away": "CLE", "home": "OKC",
+                 "game_id": "upcoming-game", "start_utc": "2026-11-03T23:00:00Z"},
+                as_of=cutoff,
+            )
+
+        self.assertEqual([row["game_id"] for row in facts["game_results"]], ["event-prior"])
+        self.assertEqual(facts["game_results"][0]["home_score"], 117)
 
     def test_collector_rejects_a_post_cutoff_matchup(self):
         with tempfile.NamedTemporaryFile(suffix=".db") as db:

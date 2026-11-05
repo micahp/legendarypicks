@@ -218,8 +218,58 @@ def _rank_fact(bundle: dict[str, Any], team: dict[str, Any]) -> dict[str, Any] |
     }
 
 
+def _cutoff_nba_game_results(bundle: dict[str, Any]) -> list[dict[str, Any]]:
+    cutoff = _utc(bundle["as_of"])
+    valid = []
+    for row in bundle.get("game_results") or []:
+        try:
+            if (row.get("source") == "scoreboard_snapshots" and row.get("state") == "post"
+                    and row.get("completed") is True and str(row.get("season_type")) == "2"
+                    and str(row.get("competition_type") or "").upper() == "STD"
+                    and _utc(row["available_at"]) <= cutoff and _utc(row["start_utc"]) <= cutoff):
+                valid.append(row)
+        except (KeyError, TypeError, ValueError):
+            continue
+    return valid
+
+
+def _rematch_performance(bundle: dict[str, Any]) -> dict[str, Any] | None:
+    """Find a 40-point NBA performance in a cutoff-safe game between these teams."""
+    if str(bundle.get("league", "")).lower() != "nba":
+        return None
+    matchup = {str(bundle.get("away")), str(bundle.get("home"))}
+    results = {str(row.get("game_id")): row for row in _cutoff_nba_game_results(bundle)}
+    candidates = []
+    for player in bundle.get("players") or []:
+        team = str(player.get("team") or "")
+        if team not in matchup:
+            continue
+        logs = _available(list(player.get("evidence") or []), bundle["as_of"])
+        logs.sort(key=lambda row: (str(row.get("date") or ""), _utc(row["available_at"])), reverse=True)
+        if not logs:
+            continue
+        latest = logs[0]
+        stats = latest.get("stats") or {}
+        points = stats.get("PTS", stats.get("points"))
+        result = results.get(str(latest.get("game_id") or ""))
+        if (points is None or float(points) < 40 or not result
+                or {str(result.get("home")), str(result.get("away"))} != matchup
+                or team not in {str(result.get("home")), str(result.get("away"))}):
+            continue
+        candidates.append({
+            "player_id": str(player.get("player_id", player.get("name"))),
+            "player": str(player.get("name") or ""), "team": team,
+            "points": float(points), "game_id": str(latest.get("game_id")),
+            "result_id": str(result.get("id")),
+        })
+    if not candidates:
+        return None
+    candidates.sort(key=lambda row: (-row["points"], row["player"], row["game_id"]))
+    return candidates[0]
+
+
 def select_story_angle(bundle: dict[str, Any]) -> dict[str, Any]:
-    """Choose the game headline from team narratives before inspecting player stats."""
+    """Rank standout team stories first, then consider a star-led same-opponent rematch."""
     away, home = bundle["teams"][bundle["away"]], bundle["teams"][bundle["home"]]
     teams = (away, home)
     perfect = [t for t in teams if t.get("record_verified") and t["wins"] >= 4 and t["losses"] == 0 and t.get("games", 0) >= 4]
@@ -242,6 +292,13 @@ def select_story_angle(bundle: dict[str, Any]) -> dict[str, Any]:
         return {"kind": "winless_last", "lead_team": lead["code"], "teams": [t["code"] for t in teams]}
     if len(top_four) == 2:
         return {"kind": "top_four", "lead_team": home["code"], "teams": [t["code"] for t in teams]}
+    rematch = _rematch_performance(bundle)
+    if rematch:
+        return {"kind": "rematch_performance", "lead_team": rematch["team"],
+                "player_id": rematch["player_id"], "player": rematch["player"],
+                "team": rematch["team"], "game_id": rematch["game_id"],
+                "result_id": rematch["result_id"], "points": rematch["points"],
+                "teams": [t["code"] for t in teams]}
     if winning_streaks and losing_streaks:
         return {"kind": "streak_clash", "lead_team": home["code"], "teams": [t["code"] for t in teams]}
     if winning_streaks or losing_streaks:
@@ -392,13 +449,22 @@ def select_players(bundle: dict[str, Any], angle: dict[str, Any]) -> tuple[list[
         evidence_by_id = {str(item["id"]): item for item in row["evidence"]}
         totals, season_logs = _player_season_totals(player, as_of)
         evidence_by_id.update({str(item["id"]): item for item in season_logs})
+        result_bundle = {**bundle, "as_of": as_of}
+        result_by_game = {str(item.get("game_id")): item
+                          for item in _cutoff_nba_game_results(result_bundle)}
+        player_results = []
+        for log in row["evidence"][:5]:
+            result = result_by_game.get(str(log.get("game_id") or ""))
+            if result and player["team"] in {result.get("home"), result.get("away")}:
+                player_results.append(result)
+                evidence_by_id[str(result["id"])] = result
         evidence = list(evidence_by_id.values())
         facts.append({
             "id": f"player_form:{identity}", "kind": "player_form",
             "player": player["name"], "team": player["team"],
             "description": f"{player['name']} recent form",
             "evidence_ids": [str(item["id"]) for item in evidence], "evidence": evidence,
-            "stats": row["stats"], "season_totals": totals,
+            "stats": row["stats"], "season_totals": totals, "game_results": player_results,
         })
     omitted = []
     for player in bundle.get("players", []):
@@ -427,6 +493,9 @@ def _nba_player_clause(fact: dict[str, Any]) -> str | None:
     rebounds = stats.get("rebounds", [])
     name, team = fact["player"], fact["team"]
     city = _city({"code": team, "name": _team_name(team, "nba")})
+    result_clause = _nba_game_result_clause(fact)
+    if result_clause:
+        return result_clause
     if len(pts) >= 2 and _recent_logs_complete(fact, ("PTS", "points"), 2) and min(pts[:2]) >= 30:
         return f"{city}'s {name} has scored {_number(pts[0], 0)} and {_number(pts[1], 0)} in his last two"
     if len(pts) >= 5 and _recent_logs_complete(fact, ("PTS", "points"), 5) \
@@ -482,9 +551,45 @@ def _nba_player_clause(fact: dict[str, Any]) -> str | None:
 
 def _recent_player_logs(fact: dict[str, Any]) -> list[dict[str, Any]]:
     by_id = {str(row.get("id")): row for row in fact.get("evidence") or []}
+    by_id = {key: row for key, row in by_id.items() if isinstance(row.get("stats"), dict)}
     return sorted(by_id.values(),
                   key=lambda row: (str(row.get("date") or ""), str(row.get("available_at") or "")),
                   reverse=True)
+
+
+def _possessive_nickname(code: str, league: str = "nba") -> str:
+    nickname = _nickname({"code": code, "name": _team_name(code, league)})
+    return f"{nickname}'" if nickname.endswith("s") else f"{nickname}'s"
+
+
+def _nba_game_result_clause(fact: dict[str, Any]) -> str | None:
+    results = {str(row.get("game_id")): row for row in fact.get("game_results") or []}
+    candidates = []
+    for index, log in enumerate(_recent_player_logs(fact)[:5]):
+        stats = log.get("stats") or {}
+        points = stats.get("PTS", stats.get("points"))
+        result = results.get(str(log.get("game_id") or ""))
+        if (points is not None and float(points) >= 38 and result
+                and fact.get("team") in {result.get("home"), result.get("away")}):
+            candidates.append((float(points), index, log, result))
+    if not candidates:
+        return None
+    points, index, log, result = min(candidates, key=lambda item: (item[1], -item[0], str(item[2].get("game_id"))))
+    team = str(fact["team"])
+    opponent = str(result["away"] if result["home"] == team else result["home"])
+    own_score = int(result["home_score"] if result["home"] == team else result["away_score"])
+    opponent_score = int(result["away_score"] if result["home"] == team else result["home_score"])
+    overtime = "overtime " if "ot" in str(result.get("status_detail") or "").lower() else ""
+    opponent_name = _nickname({"code": opponent, "name": _team_name(opponent, "nba")})
+    if own_score > opponent_score:
+        outcome = f"{own_score}-{opponent_score} {overtime}win over the {opponent_name}"
+    elif own_score < opponent_score:
+        outcome = f"{own_score}-{opponent_score} {overtime}loss to the {opponent_name}"
+    else:
+        outcome = f"{own_score}-{opponent_score} tie with the {opponent_name}"
+    date_clause = f" on {_date_text(log.get('date'))}" if index else ""
+    return (f"{fact['player']} scored {int(round(points))} in the "
+            f"{_possessive_nickname(team)} {outcome}{date_clause}")
 
 
 def _recent_logs_complete(fact: dict[str, Any], keys: tuple[str, ...], count: int) -> bool:
@@ -589,6 +694,7 @@ def _render_player_facts(facts: list[dict[str, Any]], league: str) -> tuple[str 
 def _h2h(bundle: dict[str, Any]) -> dict[str, Any] | None:
     away, home = bundle["teams"][bundle["away"]], bundle["teams"][bundle["home"]]
     away_rows = {str(row["id"]): row for row in away.get("evidence", []) if row.get("opponent") == home["code"]}
+    meetings = []
     for row in home.get("evidence", []):
         game_id = str(row.get("id"))
         other = away_rows.get(game_id)
@@ -596,15 +702,18 @@ def _h2h(bundle: dict[str, Any]) -> dict[str, Any] | None:
             if int(row["for"]) == int(row["against"]):
                 continue
             winner = away if int(other["for"]) > int(other["against"]) else home
-            return {"game_id": game_id, "date": row.get("date"),
-                    "winner": winner["code"], "loser": home["code"] if winner["code"] == away["code"] else away["code"],
-                    "winner_score": int(other["for"] if winner["code"] == away["code"] else row["for"]),
-                    "loser_score": int(other["against"] if winner["code"] == away["code"] else row["against"]),
-                    "evidence": [other, row]}
-    return None
+            meetings.append({"game_id": game_id, "date": row.get("date"),
+                            "winner": winner["code"],
+                            "loser": home["code"] if winner["code"] == away["code"] else away["code"],
+                            "winner_score": int(other["for"] if winner["code"] == away["code"] else row["for"]),
+                            "loser_score": int(other["against"] if winner["code"] == away["code"] else row["against"]),
+                            "evidence": [other, row]})
+    return max(meetings, key=lambda meeting: (str(meeting.get("date") or ""), meeting["game_id"])) \
+        if meetings else None
 
 
-def _lead(bundle: dict[str, Any], angle: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
+def _lead(bundle: dict[str, Any], angle: dict[str, Any],
+          player_facts: list[dict[str, Any]] | None = None) -> tuple[str, list[dict[str, Any]]]:
     league = str(bundle["league"]).lower()
     away, home = bundle["teams"][bundle["away"]], bundle["teams"][bundle["home"]]
     kind = angle["kind"]
@@ -618,6 +727,15 @@ def _lead(bundle: dict[str, Any], angle: dict[str, Any]) -> tuple[str, list[dict
             return
         result = "winning" if team.get("streak_result") == "W" else "losing"
         facts.append(_team_fact(team, kind="streak", description=f"{team['name']} {team['streak_length']}-game {result} streak"))
+
+    if kind == "rematch_performance":
+        player_fact = next((fact for fact in player_facts or []
+                            if fact.get("kind") == "player_form"
+                            and str(fact.get("id", "")).partition(":")[2] == str(angle.get("player_id"))), None)
+        clause = _nba_game_result_clause(player_fact) if player_fact else None
+        if clause:
+            facts.append(player_fact)
+            return f"{clause}, and {_city(home)} hosts {_city(away)} again.", facts
 
     if kind == "undefeated":
         leader = bundle["teams"][angle["lead_team"]]
@@ -752,12 +870,30 @@ def _date_text(value: str | None) -> str:
         return "in their last meeting"
 
 
+def _head_to_head_fact(meeting: dict[str, Any]) -> dict[str, Any]:
+    return {"id": f"head_to_head:{meeting['game_id']}", "kind": "head_to_head",
+            "description": "prior meeting result",
+            "evidence_ids": [str(row["id"]) for row in meeting["evidence"]],
+            "evidence": meeting["evidence"]}
+
+
 def render_story(bundle: dict[str, Any], angle: dict[str, Any], player_facts: list[dict[str, Any]]) -> tuple[str, list[dict[str, Any]]]:
-    lead, lead_facts = _lead(bundle, angle)
-    player_sentence, used_players = _render_player_facts(player_facts, str(bundle["league"]).lower())
+    lead, lead_facts = _lead(bundle, angle, player_facts)
+    lead_player_ids = {fact.get("id") for fact in lead_facts if fact.get("kind") == "player_form"}
+    player_sentence, used_players = _render_player_facts(
+        [fact for fact in player_facts if fact.get("id") not in lead_player_ids],
+        str(bundle["league"]).lower())
     sentences = [lead]
     if player_sentence:
         sentences.append(player_sentence)
+    meeting = _h2h(bundle)
+    already_selected_meeting = any(fact.get("kind") == "head_to_head" for fact in lead_facts)
+    if meeting and not already_selected_meeting and angle.get("kind") != "rematch_performance":
+        winner = _city(bundle["teams"][meeting["winner"]])
+        loser = _city(bundle["teams"][meeting["loser"]])
+        sentences.append(f"{winner} already beat {loser} {meeting['winner_score']}-{meeting['loser_score']} "
+                         f"on {_date_text(meeting.get('date'))}.")
+        lead_facts.append(_head_to_head_fact(meeting))
     story = " ".join(sentences)
     if not 1 <= len(sentences) <= 3:
         raise ValueError("story renderer must produce one to three sentences")
@@ -797,29 +933,38 @@ def generate_story(bundle: dict[str, Any]) -> dict[str, Any]:
         for row in (bundle.get("league_standings") or [])
     ]
     if not all(clean_bundle["teams"][code].get("record_verified") for code in (bundle["away"], bundle["home"])):
-        best_player = _best_player(clean_bundle.get("players", []), bundle["as_of"], str(bundle["league"]))
-        player_lead = best_player["player"]["team"] if best_player and best_player["score"] >= 8 else None
-        angle = {"kind": "star_performance" if player_lead else "available_player_facts",
-                 "lead_team": player_lead,
-                 "teams": [bundle["away"], bundle["home"]]}
-        player_facts, omitted = select_players(clean_bundle, angle)
-        player_sentence, selected_players = _render_player_facts(player_facts, str(bundle["league"]).lower())
-        _record_unrendered_players(player_facts, selected_players, omitted)
-        home_city = _city(clean_bundle["teams"][bundle["home"]])
-        away_city = _city(clean_bundle["teams"][bundle["away"]])
-        matchup_evidence = _available(list(bundle.get("matchup_evidence") or []), bundle["as_of"])
-        matchup_sentence = f"{home_city} hosts {away_city}."
-        if player_sentence and player_lead:
-            story = f"{player_sentence} {matchup_sentence}"
-        elif player_sentence:
-            story = f"{matchup_sentence} {player_sentence}"
+        rematch = _rematch_performance(clean_bundle)
+        if rematch:
+            angle = {"kind": "rematch_performance", **rematch,
+                     "lead_team": rematch["team"], "teams": [bundle["away"], bundle["home"]]}
+            player_facts, omitted = select_players(clean_bundle, angle)
+            story, selected = render_story(clean_bundle, angle, player_facts)
+            _record_unrendered_players(player_facts,
+                                       [fact for fact in selected if fact.get("kind") == "player_form"], omitted)
         else:
-            story = matchup_sentence
-        selected = [{"id": f"scheduled_matchup:{bundle['away']}@{bundle['home']}",
-                     "kind": "scheduled_matchup", "team": None,
-                     "description": f"{home_city} hosts {away_city}",
-                     "evidence_ids": [str(x["id"]) for x in matchup_evidence],
-                     "evidence": matchup_evidence}] + selected_players
+            best_player = _best_player(clean_bundle.get("players", []), bundle["as_of"], str(bundle["league"]))
+            player_lead = best_player["player"]["team"] if best_player and best_player["score"] >= 8 else None
+            angle = {"kind": "star_performance" if player_lead else "available_player_facts",
+                     "lead_team": player_lead,
+                     "teams": [bundle["away"], bundle["home"]]}
+            player_facts, omitted = select_players(clean_bundle, angle)
+            player_sentence, selected_players = _render_player_facts(player_facts, str(bundle["league"]).lower())
+            _record_unrendered_players(player_facts, selected_players, omitted)
+            home_city = _city(clean_bundle["teams"][bundle["home"]])
+            away_city = _city(clean_bundle["teams"][bundle["away"]])
+            matchup_evidence = _available(list(bundle.get("matchup_evidence") or []), bundle["as_of"])
+            matchup_sentence = f"{home_city} hosts {away_city}."
+            if player_sentence and player_lead:
+                story = f"{player_sentence} {matchup_sentence}"
+            elif player_sentence:
+                story = f"{matchup_sentence} {player_sentence}"
+            else:
+                story = matchup_sentence
+            selected = [{"id": f"scheduled_matchup:{bundle['away']}@{bundle['home']}",
+                         "kind": "scheduled_matchup", "team": None,
+                         "description": f"{home_city} hosts {away_city}",
+                         "evidence_ids": [str(x["id"]) for x in matchup_evidence],
+                         "evidence": matchup_evidence}] + selected_players
     else:
         angle = select_story_angle(clean_bundle)
         player_facts, omitted = select_players(clean_bundle, angle)
@@ -909,6 +1054,61 @@ def _db_team_standings(connection: sqlite3.Connection, league: str, season: int,
     return teams, ranked
 
 
+def _db_game_results(connection: sqlite3.Connection, league: str,
+                     players: list[dict[str, Any]], as_of: str) -> list[dict[str, Any]]:
+    """Join recent player logs to archived final scoreboard rows by exact event ID."""
+    if league.lower() != "nba":
+        return []
+    game_ids = sorted({str(row.get("game_id")) for player in players
+                       for row in (player.get("evidence") or [])[:5] if row.get("game_id")})
+    if not game_ids:
+        return []
+    latest: dict[str, dict[str, Any]] = {}
+    cutoff = _utc(as_of)
+    try:
+        for offset in range(0, len(game_ids), 400):
+            chunk = game_ids[offset:offset + 400]
+            placeholders = ",".join("?" for _ in chunk)
+            rows = connection.execute(
+                f"""SELECT game_id,payload,fetched_at FROM scoreboard_snapshots
+                    WHERE LOWER(league)=? AND LOWER(state)='post'
+                      AND game_id IN ({placeholders})
+                      AND julianday(fetched_at)<=julianday(?)
+                    ORDER BY game_id,julianday(fetched_at),fetched_at""",
+                (league.lower(), *chunk, as_of))
+            for row in rows:
+                try:
+                    payload = json.loads(row["payload"] or "{}")
+                    fetched_at = _iso_utc(row["fetched_at"])
+                    start_utc = _iso_utc(payload["date"])
+                    if (not isinstance(payload, dict) or payload.get("completed") is not True
+                            or int(payload.get("season_type") or 0) != 2
+                            or str(payload.get("competition_type") or "").upper() != "STD"
+                            or _utc(fetched_at) > cutoff or _utc(start_utc) > cutoff):
+                        continue
+                    home, away = payload.get("home") or {}, payload.get("away") or {}
+                    home_code, away_code = str(home.get("abbrev") or ""), str(away.get("abbrev") or "")
+                    home_score, away_score = int(home["score"]), int(away["score"])
+                    if not home_code or not away_code or home_code == away_code:
+                        continue
+                except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+                    continue
+                event_id = str(row["game_id"])
+                latest[event_id] = {
+                    "id": f"scoreboard:{event_id}:{fetched_at}", "source": "scoreboard_snapshots",
+                    "available_at": fetched_at, "game_id": event_id,
+                    "game_date": start_utc[:10], "start_utc": start_utc,
+                    "home": home_code, "away": away_code,
+                    "home_score": home_score, "away_score": away_score,
+                    "status_detail": str(payload.get("status_detail") or ""),
+                    "state": "post", "completed": True,
+                    "season_type": 2, "competition_type": "STD",
+                }
+    except sqlite3.OperationalError:
+        return []
+    return [latest[game_id] for game_id in sorted(latest)]
+
+
 def _db_player_facts(connection: sqlite3.Connection, league: str, season: int,
                      away: str, home: str, as_of: str, target_game_id: str | None,
                      team_game_counts: dict[str, int]) -> list[dict[str, Any]]:
@@ -983,12 +1183,13 @@ def collect_story_facts(db_path: str | Path, game: dict[str, Any], *, as_of: str
         players = _db_player_facts(
             connection, league, int(game["season"]), game["away"], game["home"], as_of,
             game.get("game_id"), {code: row["games"] for code, row in teams.items()})
+        game_results = _db_game_results(connection, league, players, as_of)
     finally:
         connection.close()
     return {
         "league": league, "season": int(game["season"]), "game_id": game.get("game_id"),
         "away": game["away"], "home": game["home"], "start_utc": _iso_utc(game["start_utc"]),
         "as_of": _iso_utc(as_of), "teams": {code: teams[code] for code in (game["away"], game["home"]) if code in teams},
-        "league_standings": standings, "players": players,
+        "league_standings": standings, "players": players, "game_results": game_results,
         "source": {"database": str(path), "mode": "read_only", "facts_are_cutoff_filtered": True},
     }
