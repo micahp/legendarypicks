@@ -1,0 +1,43 @@
+{
+  "blocked_seeds_per_arm": {
+    "v1": 352,
+    "v15": 327,
+    "v2": 267
+  },
+  "bootstrap_draws": 2000,
+  "bootstrap_seed": 2026,
+  "completed_seeds_per_arm": {
+    "v1": 7778,
+    "v15": 7803,
+    "v2": 7863
+  },
+  "development_exposed": true,
+  "error_seeds_per_arm": {
+    "v1": 30,
+    "v15": 30,
+    "v2": 30
+  },
+  "games_requested": 272,
+  "games_scored": 271,
+  "seeds_per_arm": 8160,
+  "snap_metrics_exported": {
+    "v1": false,
+    "v15": false,
+    "v2": true
+  },
+  "team_games_dropped_no_completed_seed_in_some_arm": [
+    "2025_07_GB_ARI ARI",
+    "2025_07_GB_ARI GB"
+  ],
+  "team_games_scored": 542,
+  "tied_seeds_per_arm": {
+    "v1": 12,
+    "v15": 9,
+    "v2": 8
+  },
+  "valid_full_game_seeds_per_arm": {
+    "v1": 0,
+    "v15": 0,
+    "v2": 0
+  }
+}

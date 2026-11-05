@@ -1,0 +1,19 @@
+family,arm,n_metrics,mean_abs_std_bias,mean_normalized_mae,mean_pit_deviation,mean_coverage_deviation,note
+drive_half_totals,v1,28,0.24710064084158495,0.8649698718848128,,,
+drive_half_totals,v15,28,0.2438052728752506,0.8659943929377282,,,
+drive_half_totals,v2,28,0.24112886872162795,0.8613889479623201,,,
+variability,v1,8,0.2805869906701306,0.13114676032977865,0.07847278716250596,0.07333948339483393,
+variability,v15,8,0.27755439175962565,0.12653586022596094,0.07753516100254314,0.07472324723247233,
+variability,v2,8,0.268240624744641,0.12281767848201182,0.0752095592802903,0.07887453874538744,
+yardage_buckets,v1,2,,0.03818747244759335,,,"total variation distance between simulated and observed bucket shares, run and pass"
+yardage_buckets,v15,2,,0.03486647681511725,,,"total variation distance between simulated and observed bucket shares, run and pass"
+yardage_buckets,v2,2,,0.03429786279335235,,,"total variation distance between simulated and observed bucket shares, run and pass"
+extremes,v1,4,,0.039149355880290615,,,
+extremes,v15,4,,0.03820362165559372,,,
+extremes,v2,4,,0.038133138389758556,,,
+player_allocation,v1,8,0.5318909384711501,,,,all metrics with a simulated value; V2 adds the snap metrics
+player_allocation,v15,8,0.4357008417515413,,,,all metrics with a simulated value; V2 adds the snap metrics
+player_allocation,v2,10,0.45116698615246076,,,,all metrics with a simulated value; V2 adds the snap metrics
+player_allocation_core,v1,8,0.5318909384711501,,,,the same eight metrics for every arm
+player_allocation_core,v15,8,0.4357008417515413,,,,the same eight metrics for every arm
+player_allocation_core,v2,8,0.49173478612324684,,,,the same eight metrics for every arm
