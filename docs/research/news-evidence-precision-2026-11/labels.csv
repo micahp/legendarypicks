@@ -1,0 +1,278 @@
+index,update_id,gold_codes,borderline,note
+0,646045,ID,no,
+1,646044,ID,no,
+2,646043,ID,no,"unlikely to play, negated; field carries the designation"
+3,646042,ID,no,isn't expected to play; field carries the designation
+4,646041,ID,no,
+5,646040,IO,no,IR
+6,646039,none,no,
+7,646038,ID,no,Lock/Milroe starter talk is about other players
+8,646037,ID,no,
+9,646036,none,no,
+10,646035,none,no,
+11,646034,none,no,
+12,646033,none,no,
+13,646032,IO,no,IR
+14,646031,none,no,
+15,646030,IO,no,IR-R
+16,646029,IO,no,IR-R
+17,646028,ID,no,
+18,646027,IO,no,IR-R
+19,646026,ID,no,
+20,646025,IO,no,IR-R
+21,646024,IO,no,IR
+22,646023,IO,no,"IR, season over"
+23,646022,IO,no,IR-R
+24,646021,ID,no,
+25,646020,ID,no,
+26,646019,ID,no,"""started each of the first four games"" is past, not a claim"
+27,646018,ID,no,
+28,646017,ID,no,
+29,646016,ID,no,
+30,646015,IO,no,IR-R
+31,646014,ID,no,
+32,646013,ID,no,
+33,646012,none,no,
+34,646011,ID,no,
+35,646010,ID,no,
+36,646009,none,no,
+37,646008,SE,no,should resume his role as starting slot CB
+38,646007,ID,no,
+39,646006,SN,yes,will resume role as one of its starting CBs; borderline SN vs SE
+40,646005,IO,no,IR-R
+41,646004,ID,no,
+42,646003,ID,no,"Styles would start, not Reid"
+43,646002,ID,no,
+44,646001,ID,no,
+45,646000,ID,no,
+46,645999,none,no,
+47,645998,IO,no,IR-R
+48,645997,none,no,
+49,645996,none,no,
+50,645995,ID,no,
+51,645994,SE,no,in line for his second start; assuming clearance he'll be under center
+52,645993,ID,no,
+53,645992,ID,no,
+54,645991,none,no,
+55,645990,ID,no,"Dodson would start, not Okereke"
+56,645989,none,no,
+57,645988,none,no,activated from IR; not a game-status claim
+58,645987,IO,no,IR-R
+59,645986,ID,no,
+60,645985,ID,no,
+61,645984,ID,no,"OUT, season-ending; field says OUT"
+62,645983,ID,no,
+63,645982,ID,no,
+64,645981,IO,no,IR-R
+65,645980,ID,no,
+66,645979,ID,no,
+67,645978,SN,no,will be back in his starting role
+68,645977,IO,no,PUP-R
+69,645976,none,no,No. 2 role behind starter Likely: not a start claim for Johnson
+70,645975,ID,no,
+71,645974,none,no,
+72,645973,none,no,
+73,645972,ID,no,
+74,645971,ID,no,
+75,645970,SE,no,will likely be back in his starting role
+76,645969,IO;ID,yes,"field IR-R, text says officially questionable Thursday"
+77,645968,IO,no,
+78,645967,ID,no,
+79,645966,IO,no,
+80,645965,SE,no,should be back in his starting role at FS
+81,645964,ID,no,
+82,645963,ID,no,
+83,645962,ID,no,
+84,645961,ID,no,
+85,645960,ID,no,
+86,645959,none,no,
+87,645958,SN,yes,continue to lead the offense Sunday implies he starts; no start word
+88,645957,IO,no,
+89,645956,ID,no,
+90,645955,ID,no,
+91,645954,IO,no,
+92,645953,IO,no,
+93,645952,SN;SE;CC,no,coach Minter named him starter Tuesday; still projects to start
+94,645951,ID,no,remains sidelined for start of prep: not a start claim
+95,645950,ID,no,
+96,645949,ID,no,
+97,645948,ID,no,
+98,645947,none,no,"backup behind Lock; likely won't play, negated"
+99,645946,ID,no,
+100,645945,ID,no,"Milton starts, not Smith"
+101,645944,ID,no,
+102,645943,none,no,
+103,645942,IO,no,
+104,645941,IO,no,
+105,645940,IO,no,
+106,645939,ID,no,
+107,645938,ID,no,"Sanders trending to start, about Sanders"
+108,645937,ID,no,"new starting QB is Minshew, not Wilson"
+109,645936,ID,no,
+110,645935,ID,no,
+111,645934,none,no,
+112,645933,ID,no,
+113,645932,IO,no,
+114,645931,ID,no,
+115,645930,IO,no,
+116,645929,ID,no,
+117,645928,SN,yes,coach announced he will be kicker in Week 9; role decision
+118,645927,ID,no,
+119,645926,ID,no,
+120,645925,IO,no,
+121,645924,IO,no,
+122,645923,none,no,
+123,645922,ID,no,
+124,645921,ID,no,
+125,645920,ID,no,
+126,645919,ID,no,
+127,645918,ID,no,
+128,645917,ID,no,
+129,645916,ID,no,
+130,645915,ID,no,
+131,645914,ID,no,
+132,645913,ID,no,
+133,645912,ID,no,
+134,645911,ID,no,
+135,645910,none,no,
+136,645909,none,no,
+137,645908,IO,no,
+138,645907,none,no,
+139,645906,none,no,
+140,645905,none,no,
+141,645904,ID,no,
+142,645903,none,no,
+143,645902,none,no,"could step in as starter in Week 10: hypothetical, not this game"
+144,645901,none,no,
+145,645900,ID,no,
+146,645899,none,no,
+147,645898,none,no,
+148,645897,none,no,earlier McKee start announcement superseded; now backup
+149,645896,none,no,
+150,645895,SE,no,"set to start Sunday per reporter, not a coach statement"
+151,645894,IO,no,
+152,645893,ID,no,
+153,645892,SE,no,slated to start Sunday per reporter
+154,645891,ID,no,
+155,645890,ID,no,
+156,645889,ID,no,
+157,645888,ID,no,
+158,645887,ID,no,
+159,645886,ID,no,
+160,645885,SN,yes,coach says he will remain the kicker Sunday; role decision
+161,645884,IO,no,
+162,645883,IO,no,
+163,645882,ID,no,
+164,645881,ID,no,
+165,645880,ID,no,
+166,645879,IO,no,
+167,645878,ID,no,"Sanders is the likely starter, not Watson"
+168,645877,IO,no,
+169,645876,IO,no,
+170,645875,ID,no,
+171,645874,ID,no,
+172,645873,none,no,could start: hypothetical
+173,645872,ID,no,"Sanders in line to start, not Watson"
+174,645871,IO,no,RESERVE-DNR
+175,645870,IO,no,
+176,645869,ID,no,out for season; field says OUT
+177,645868,none,no,
+178,645867,none,no,
+179,645866,none,no,
+180,645865,none,no,
+181,645864,none,no,
+182,645863,none,no,
+183,645862,none,no,
+184,645861,none,no,
+185,645860,none,no,
+186,645859,none,no,
+187,645858,none,no,
+188,645857,none,no,
+189,645856,none,no,
+190,645855,none,no,
+191,645854,none,no,past starting role
+192,645853,none,no,
+193,645852,none,no,
+194,645851,none,no,
+195,645850,none,no,
+196,645849,none,no,
+197,645848,none,no,
+198,645847,none,no,
+199,645846,none,no,
+200,645845,none,no,
+201,645844,none,no,
+202,645843,none,no,
+203,645842,none,no,
+204,645841,none,no,
+205,645840,none,no,
+206,645839,none,no,
+207,645838,none,no,
+208,645837,none,no,
+209,645836,IO,no,
+210,645835,SE,no,likely back in his starting role at RG
+211,645834,none,yes,field QUESTIONABLE on a player removed from IR and becoming a free agent
+212,645833,IO,no,
+213,645832,none,no,
+214,645831,none,no,
+215,645830,IO,no,
+216,645829,IO,no,could be moved into a starting role: hypothetical
+217,645828,none,no,
+218,645827,none,no,
+219,645826,IO,no,
+220,645825,ID,no,
+221,645824,none,no,
+222,645823,ID,no,
+223,645822,none,no,
+224,645821,none,no,
+225,645820,IO,no,
+226,645819,none,no,
+227,645818,none,no,
+228,645817,none,no,
+229,645816,IO,no,
+230,645815,none,no,
+231,645814,none,no,
+232,645813,IO,no,
+233,645812,none,no,
+234,645811,none,no,
+235,645810,none,yes,field QUESTIONABLE on a player cut from the practice-squad IL
+236,645809,none,no,
+237,645808,IO,no,
+238,645807,none,yes,listed as starting receiver on unofficial depth chart: roster role per the paste
+239,645806,IO,no,
+240,645805,none,no,
+241,645804,none,no,
+242,645803,none,no,
+243,645802,SE,yes,"slated to work as No. 1 RB from Sunday: lead-back role, no start word"
+244,645801,IO,no,
+245,645800,IO,no,
+246,645799,none,no,
+247,645798,none,no,
+248,645797,none,no,
+249,645796,SN,yes,team plans to have him handle kicking duties Sunday; role decision
+250,645795,none,no,
+251,645794,none,no,
+252,645793,none,no,
+253,645792,none,no,
+254,645791,IO,yes,"field OUT; text says practice-squad IR, unavailable four games"
+255,645790,none,no,
+256,645789,ID,no,field QUESTIONABLE; concussion is past
+257,645788,none,no,
+258,645787,IO,no,
+259,645786,ID,no,
+260,645785,ID,no,
+261,645784,ID,no,
+262,645783,IO,no,
+263,645782,none,no,
+264,645781,IO,no,
+265,645780,IO,no,
+266,645779,IO,no,
+267,645778,ID,no,DOUBTFUL; text says sitting out Thursday
+268,645777,SN;CC,no,coach Minter confirmed Fagnano will start Thursday
+269,645776,none,no,
+270,645775,IO,no,
+271,645774,ID,no,DOUBTFUL; unlikely to practice
+272,645773,ID,no,field OUT; text says IR-bound
+273,645772,ID,no,
+274,645771,ID;SE,no,favorite to start for Baltimore
+275,645770,ID,no,
+276,645769,none,no,
