@@ -49,8 +49,12 @@ def main(argv=None):
     ap.add_argument('--kickoff-utc', required=True)
     ap.add_argument('--kickoff-source-url', required=True)
     ap.add_argument('--evaluation', default='exploratory_replay')
+    ap.add_argument('--roster-snapshot', help='pinned full-depth roster JSON (build_full_depth_roster_snapshot.py)')
+    ap.add_argument('--roster-provenance', help='provenance for --roster-snapshot')
     ap.add_argument('--out-dir', required=True)
     a = ap.parse_args(argv)
+    if bool(a.roster_snapshot) != bool(a.roster_provenance):
+        raise SystemExit('--roster-snapshot and --roster-provenance must be supplied together')
     cutoff = cutoff_for(a.kickoff_utc)
     as_of = datetime.fromisoformat(a.as_of.replace('Z', '+00:00'))
     if as_of != cutoff:
@@ -62,10 +66,13 @@ def main(argv=None):
 
     snapshot = pregame_snapshot.build(a.db, a.game, a.as_of, kickoff_utc=a.kickoff_utc,
                                       kickoff_source_url=a.kickoff_source_url, evaluation=a.evaluation)
+    if a.roster_snapshot:
+        # The same overlay the registered batch applies, before the news check reads the snapshot.
+        pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, a.roster_snapshot, a.roster_provenance)
     (out / 'snapshot.json').write_text(json.dumps(snapshot, indent=1, sort_keys=True) + '\n')
     (out / 'status.txt').write_text(status + '\n')
 
-    args = argparse.Namespace(db=a.db, news_evidence_dir=a.capture_dir, roster_snapshot=None,
+    args = argparse.Namespace(db=a.db, news_evidence_dir=a.capture_dir, roster_snapshot=a.roster_snapshot,
                               availability_snapshot=None, availability_store=None)
     try:
         evidence = source_preflight.validate_news_evidence(args, snapshot)
@@ -79,11 +86,13 @@ def main(argv=None):
     summary = [status,
                f'game {a.game}; as of {a.as_of}; kickoff {a.kickoff_utc}; evaluation {snapshot["evaluation"]}',
                f'snapshot sha256 {snapshot["snapshot_sha256"]}',
+               f'pinned roster: {a.roster_snapshot or "none (depth chart preview)"}',
                f'teams {rosters["away"]} (away) and {rosters["home"]} (home)',
                f'news evidence sha256 {evidence["evidence_sha256"]}; items {len(evidence["items"])}',
                starter_consistency.summary_line(evidence['starter_consistency'])]
-    summary += [f"  depth rank 1 {key[0]} {key[1]}: {player['player_name']} (gsis {player['gsis_id']})"
-                for key, player in sorted(starter_consistency.depth_rank_one(snapshot).items())]
+    lookup, source = starter_consistency.starters(snapshot)
+    summary += [f"  {source} {key[0]} {key[1]}: {player.get('player_name')} (gsis {player['gsis_id']})"
+                for key, player in sorted(lookup.items()) if key[1] in starter_consistency.SINGLE_STARTER_POSITIONS]
     (out / 'summary.txt').write_text('\n'.join(summary) + '\n')
     print('\n'.join(summary))
     return 0

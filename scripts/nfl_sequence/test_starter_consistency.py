@@ -98,3 +98,44 @@ class PreflightWiring(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class PinnedFlags(unittest.TestCase):
+    def flagged_snapshot(self, bal_qb='00-FAG', jax_qb='00-LAW'):
+        snap = snapshot(bal_qb, jax_qb)
+        for side in ('away', 'home'):
+            for p in snap['rosters'][side]['players']:
+                p['starter'] = p['pos_abb'] == 'QB' and p['pos_rank'] == 1
+        return snap
+
+    def test_pinned_flag_is_read_instead_of_rank_one_when_the_overlay_is_applied(self):
+        snap = self.flagged_snapshot(bal_qb='00-SLO')
+        snap['rosters']['home']['players'][0]['starter'] = False
+        snap['rosters']['home']['players'][1]['starter'] = True
+        result = sc.check(snap, [item(9, 'BAL', '00-SLO', 'Kedon Slovis', 'QB', ['starter_named'])])
+        self.assertEqual('pinned starter flag', result['starter_source'])
+        self.assertEqual(1, result['counts']['announced agrees'])
+
+    def test_a_flagged_starter_that_differs_from_the_announcement_is_a_conflict(self):
+        snap = self.flagged_snapshot()
+        result = sc.check(snap, [item(9, 'BAL', '00-SLO', 'Kedon Slovis', 'QB', ['starter_named'])])
+        self.assertEqual(1, len(result['conflicts']))
+
+    def test_a_qb_with_no_flagged_starter_is_unverified_not_agreement(self):
+        snap = self.flagged_snapshot()
+        for p in snap['rosters']['home']['players']:
+            p['starter'] = False
+        result = sc.check(snap, [item(9, 'BAL', '00-FAG', 'Joe Fagnano', 'QB', ['starter_named'])])
+        self.assertEqual(1, result['counts']['announced unverified'])
+        self.assertEqual(0, result['counts'].get('announced agrees', 0))
+
+    def test_two_flagged_quarterbacks_fail_loudly(self):
+        snap = self.flagged_snapshot()
+        snap['rosters']['home']['players'][1]['starter'] = True
+        with self.assertRaises(ValueError):
+            sc.check(snap, [])
+
+    def test_the_summary_says_which_roster_was_read(self):
+        result = sc.check(self.flagged_snapshot(), [])
+        self.assertIn('against pinned starter flag', sc.summary_line(result))
+        self.assertIn('against depth rank 1 (preview)', sc.summary_line(sc.check(snapshot(), [])))

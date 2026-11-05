@@ -831,7 +831,6 @@ def run_batch(args):
         raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
     resolved_profile = slc_config.apply_profile_to_args(args)
     source_preflight.validate_model_sources(args, snapshot)
-    news_evidence = source_preflight.validate_news_evidence(args, snapshot)
     if args.slc_profile == 'v1_full_stack' and not args.historical_archive_reconstruction:
         # Prospective snapshots continue through the existing capture checks; archival inputs use the separate mode above.
         evaluation = snapshot.get('evaluation', {})
@@ -842,6 +841,8 @@ def run_batch(args):
         raise ValueError('--roster-snapshot and --roster-provenance must be supplied together')
     if args.roster_snapshot:
         pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
+    # The news check runs here, after the pinned roster is applied, so it reads the roster the engine reads.
+    news_evidence = source_preflight.validate_news_evidence(args, snapshot)
     if args.availability_snapshot or args.availability_store:
         availability_path = args.availability_snapshot or availability_adapter.select(
             args.availability_store, snapshot['schedule']['season'], snapshot['schedule']['week'], snapshot['as_of'])
@@ -1351,8 +1352,9 @@ def main(argv=None):
     ap.add_argument('--news-evidence-dir',
                     help='opt-in: directory of raw RotoWire news captures (news_evidence.py capture). Builds game-scoped '
                          'evidence bound to the frozen snapshot, using only captures acquired at or before the cutoff. '
-                         'Evidence only: it never changes a roster, an availability value or a workload input, and it is '
-                         'refused with --roster-snapshot, --availability-snapshot or --availability-store')
+                         'Evidence only: it never changes a roster, an availability value or a workload input. It checks the '
+                         'announced starters against the pinned --roster-snapshot the engine reads, and is refused with '
+                         '--availability-snapshot or --availability-store')
     ap.add_argument('--availability-store', help=('opt-in: directory of weekly availability snapshots; applies the newest '
                                                   'one frozen by --as-of (needs --roster-snapshot)'))
     ap.add_argument('--availability-snapshot', help=('opt-in: apply this availability snapshot file instead of '
