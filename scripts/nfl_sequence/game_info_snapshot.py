@@ -18,16 +18,19 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from scripts import nfl_team_codes
+
 SCHEMA = 'lp-nfl-game-info-snapshot-1'
 DEFAULT_STORE = '/root/lp-snapshots/nfl-game-info'
 DEFAULT_DB = '/root/legendarypicks/backend/data/picks.dev.db'
-DB_TO_VENUE = {'WSH': 'WAS', 'LAR': 'LA'}
 # National windows, from published schedules. Other Sunday games are CBS or FOX, and the split is not confirmed.
 BROADCAST_2026_W08 = {
     '2026_08_CAR_GB': {'network': 'Prime Video', 'window': 'Thursday Night Football', 'status': 'confirmed',
@@ -55,8 +58,9 @@ def _kickoff(gameday: str, gametime: str | None) -> pd.Timestamp:
 def build(venues_path: str, forecasts_path: str, db_path: str, store: str, season: int = 2026, week: int = 8) -> dict:
     venues_doc = json.loads(Path(venues_path).read_text())
     forecasts_doc = json.loads(Path(forecasts_path).read_text())
-    shared = venues_doc['shared_venue_teams']
-    venues = venues_doc['venues']
+    # The venue file and schedule use different spellings for some clubs.
+    shared = nfl_team_codes.TeamKeyed(venues_doc['shared_venue_teams'])
+    venues = nfl_team_codes.TeamKeyed(venues_doc['venues'])
     con = sqlite3.connect(f'file:{db_path}?mode=ro', uri=True)
     rows = con.execute(
         "select game_id, away_team, home_team, gameday, gametime, stadium, roof, referee, location from nfl_schedule "
@@ -65,8 +69,7 @@ def build(venues_path: str, forecasts_path: str, db_path: str, store: str, seaso
     frozen = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00', 'Z')
     games = {}
     for game_id, away, home, gameday, gametime, db_stadium, db_roof, referee, location in rows:
-        key = shared.get(home, DB_TO_VENUE.get(home, home))
-        venue = venues[key]
+        venue = venues[shared.get(home, home)]
         kickoff = _kickoff(gameday, gametime)
         forecast_entry = forecasts_doc['games'].get(game_id, {})
         forecast = forecast_entry.get('forecast')

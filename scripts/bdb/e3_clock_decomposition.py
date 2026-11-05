@@ -41,11 +41,15 @@ import csv
 import json
 import sqlite3
 import statistics
+import sys
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+from scripts import nfl_team_codes
+
 BDB = Path('/root/nfl-tracking-data/bdb2025/code-data')
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
 INPUTS = ROOT / 'docs' / 'evidence' / 'e3' / 'inputs'
@@ -53,7 +57,6 @@ PAIRS = INPUTS / 'e3-tracking-join-pairs-2026-10-24.csv'
 OLD_PAIRS = INPUTS / 'bdb2022-join-pairs-2026-10-24.csv'
 FLAGS = INPUTS / 'nflverse-2022-w1-9-flags.csv'
 WEEKS = (1, 9)
-TEAM = {'LA': 'LAR', 'WAS': 'WSH'}
 QUARTER = 900
 LATE_CLOCK = 120
 BOUNDARY_CLOCKS = (0, 900, 1800, 2700)
@@ -76,7 +79,7 @@ COLUMNS = ['bdb_gameId', 'bdb_playId', 'lp_game_id', 'lp_play_id', 'week', 'quar
 
 
 def lp_team(abbr):
-    return TEAM.get(abbr, abbr) if abbr else None
+    return nfl_team_codes.to_db(abbr) if abbr else None
 
 
 def parse_time(text):

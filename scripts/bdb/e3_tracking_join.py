@@ -26,14 +26,17 @@ import argparse
 import csv
 import json
 import sqlite3
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
 BDB = Path('/root/nfl-tracking-data/bdb2025/code-data')
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+from scripts import nfl_team_codes
+
 WEEKS = (1, 9)
-TEAM = {'LA': 'LAR', 'WAS': 'WSH'}
 QUARTER_SECONDS = 900
 SCRIMMAGE = ('run', 'pass', 'qb_kneel', 'qb_spike')
 REASON_ORDER = ('game_not_in_lp', 'play_id_not_in_lp_game', 'overtime_unverified', 'quarter_mismatch', 'clock_mismatch',
@@ -41,7 +44,7 @@ REASON_ORDER = ('game_not_in_lp', 'play_id_not_in_lp_game', 'overtime_unverified
 
 
 def lp_team(abbr):
-    return TEAM.get(abbr, abbr) if abbr else None
+    return nfl_team_codes.to_db(abbr) if abbr else None
 
 
 def bdb_clock(mmss):

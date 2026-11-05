@@ -2,6 +2,64 @@
 """boxscore_extract.py — read a single stat for a player from an ESPN boxscore."""
 from typing import Optional, List
 
+import team_codes
+
+
+def _team_matches(league: str | None, published: str, ours: str) -> bool:
+    """Match an NFL boxscore club through the shared interface; keep other leagues' old rule unchanged."""
+    if not published or not ours:
+        return False
+    published_upper = published.upper()
+    ours_upper = ours.upper()
+    if published_upper == ours_upper:
+        return True
+    if league == "nfl":
+        return team_codes.same_team(league, published, ours)
+    return _legacy_non_nfl_alias(published_upper) == ours_upper
+
+
+def _legacy_non_nfl_alias(code: str) -> str:
+    """Preserve the pre-existing non-NFL boxscore spellings while NFL uses team_codes."""
+    if code == "WAS":
+        return "WSH"
+    if code == "WSH":
+        return "WAS"
+    if code == "ATH":
+        return "OAK"
+    if code == "OAK":
+        return "ATH"
+    if code == "LAL":
+        return "LAL"
+    if code == "LAC":
+        return "LAC"
+    if code == "TB":
+        return "TB"
+    if code == "TBL":
+        return "TB"
+    if code == "ARI":
+        return "ARI"
+    if code == "AZ":
+        return "ARI"
+    return code
+
+
+def _appearance_team_matches(league: str | None, published: str, ours: str) -> bool:
+    if not published or not ours:
+        return False
+    if league == "nfl":
+        return team_codes.same_team(league, published, ours)
+    return published.upper() == ours.upper()
+
+
+def _dnp_team_matches(published: str, ours: str) -> bool:
+    if published == ours:
+        return True
+    if published == "WAS":
+        return ours == "WSH"
+    if published == "WSH":
+        return ours == "WAS"
+    return False
+
 
 def _norm_name(text: str) -> str:
     """Lowercase, drop punctuation, collapse whitespace — so "Michael Porter Jr."
@@ -11,7 +69,7 @@ def _norm_name(text: str) -> str:
 
 def _find_player_stat(boxscore: dict, player_name: str, team: str,
                        category: str, stat_key: str,
-                       espn_id: Optional[str] = None) -> Optional[float]:
+                       espn_id: Optional[str] = None, *, league: str | None = None) -> Optional[float]:
     """Extract a single stat for a player from ESPN's boxscore JSON.
 
     Identity, exact key first — ESPN publishes `athlete.id` on the same object as
@@ -39,15 +97,6 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
     if not players:
         return None
 
-    # Team abbreviation aliases (ESPN sometimes uses different abbrevs than our data)
-    _TEAM_ALIASES = {
-        "WAS": "WSH", "WSH": "WAS",  # Washington
-        "ATH": "OAK", "OAK": "ATH",  # Athletics
-        "LAL": "LAL", "LAC": "LAC",  # LA teams
-        "TB": "TB", "TBL": "TB",     # Tampa Bay
-        "ARI": "ARI", "AZ": "ARI",   # Arizona
-    }
-
     # ESPN MLB boxscore label sets (used to identify stat group when name is None)
     _BATTING_ONLY = {'AB', 'R', 'H', 'RBI', 'HR', 'BB', 'K', 'AVG', 'OBP', 'SLG', 'H-AB', '#P', 'TB', '2B', '3B', 'SB', 'CS'} - {'IP', 'H', 'R', 'ER', 'BB', 'K', 'HR', 'ERA', 'PC-ST', 'PC', 'SO', 'outs', 'BF'}
     _PITCHING_ONLY = {'IP', 'H', 'R', 'ER', 'BB', 'K', 'HR', 'ERA', 'PC-ST', 'PC', 'SO', 'outs', 'BF'} - {'AB', 'R', 'H', 'RBI', 'HR', 'BB', 'K', 'AVG', 'OBP', 'SLG', 'H-AB', '#P', 'TB', '2B', '3B', 'SB', 'CS'}
@@ -55,8 +104,7 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
     for team_group in players:
         tg_team = (team_group.get("team") or {}).get("abbreviation", "")
         tg_upper = tg_team.upper()
-        team_upper = team.upper()
-        if tg_upper != team_upper and _TEAM_ALIASES.get(tg_upper) != team_upper:
+        if not _team_matches(league, tg_team, team):
             tg_name = (team_group.get("team") or {}).get("displayName", "")
             tg_short = (team_group.get("team") or {}).get("shortDisplayName", "")
             # A durable ESPN athlete id is globally scoped and stronger than a
@@ -144,7 +192,7 @@ def _find_player_stat(boxscore: dict, player_name: str, team: str,
 
 
 def _player_appeared(boxscore: dict, player_name: str, team: str,
-                     espn_id: Optional[str] = None) -> bool:
+                     espn_id: Optional[str] = None, *, league: str | None = None) -> bool:
     """Whether the completed boxscore proves this athlete participated.
 
     A missing receiving row is zero only when the same athlete appears in some
@@ -162,28 +210,28 @@ def _player_appeared(boxscore: dict, player_name: str, team: str,
                 athlete = entry.get("athlete") or {}
                 if wanted_id and str(athlete.get("id") or "") == wanted_id:
                     return True
-                if (not wanted_id and published_team == wanted_team
+                if (not wanted_id and _appearance_team_matches(league, published_team, wanted_team)
                         and _norm_name(athlete.get("displayName")) == wanted_name):
                     return True
     return False
 
 
 def _player_did_not_play(boxscore: dict, player_name: str, team: str,
-                         espn_id: Optional[str] = None) -> bool:
+                         espn_id: Optional[str] = None, *, league: str | None = None) -> bool:
     """Return true only when ESPN explicitly marks this athlete as a DNP."""
     players = (boxscore or {}).get("players") or []
     wanted_id = str(espn_id or "")
     wanted_name = _norm_name(player_name)
     wanted_team = str(team or "").upper()
-    team_aliases = {"WAS": "WSH", "WSH": "WAS"}
     for team_group in players:
         published_team = str(
             (team_group.get("team") or {}).get("abbreviation") or ""
         ).upper()
-        if wanted_team and published_team not in (
-            wanted_team, team_aliases.get(wanted_team), team_aliases.get(published_team)
-        ):
-            continue
+        if wanted_team:
+            matched = (_team_matches(league, published_team, wanted_team) if league == "nfl"
+                       else _dnp_team_matches(published_team, wanted_team))
+            if not matched:
+                continue
         for stats_group in team_group.get("statistics", []) or []:
             for entry in stats_group.get("athletes", []) or []:
                 athlete = entry.get("athlete") or {}
@@ -199,12 +247,12 @@ def _player_did_not_play(boxscore: dict, player_name: str, team: str,
 def _find_player_compound_stat(boxscore: dict, player_name: str, team: str,
                                 categories: List[str], stat_keys: List[str],
                                 espn_id: Optional[str] = None,
-                                missing_as_zero: bool = False) -> Optional[float]:
+                                missing_as_zero: bool = False, *, league: str | None = None) -> Optional[float]:
     """Sum multiple stats across categories (e.g. hits_runs_rbis = H + R + RBI)."""
     total = 0.0
     found = False
     for cat, key in zip(categories, stat_keys):
-        val = _find_player_stat(boxscore, player_name, team, cat, key, espn_id=espn_id)
+        val = _find_player_stat(boxscore, player_name, team, cat, key, espn_id=espn_id, league=league)
         if val is None:
             if missing_as_zero:
                 continue

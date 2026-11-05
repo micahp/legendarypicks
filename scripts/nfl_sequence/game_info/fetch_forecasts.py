@@ -8,6 +8,7 @@ Output: forecasts.json next to this script. Two requests per venue, one second a
 """
 import json
 import sqlite3
+import sys
 import time
 import urllib.request
 from datetime import datetime, timezone
@@ -15,13 +16,12 @@ from pathlib import Path
 
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from scripts import nfl_team_codes
+
 HERE = Path(__file__).resolve().parent
 DB = 'file:/root/legendarypicks/backend/data/picks.dev.db?mode=ro'
 UA = 'LegendaryPicksResearch/1.0 (weather forecast for backtests and pregame inputs)'
-# The database uses WSH and LAR; the venue table is keyed on the nflverse codes WAS and LA.
-DB_TO_VENUE = {'WSH': 'WAS', 'LAR': 'LA'}
-
-
 def get(url):
     req = urllib.request.Request(url, headers={'User-Agent': UA, 'Accept': 'application/geo+json'})
     with urllib.request.urlopen(req, timeout=30) as resp:
@@ -35,8 +35,9 @@ def kickoff_utc(gameday, gametime):
 
 
 def main():
-    venues = json.loads((HERE / 'venues.json').read_text())
-    shared = venues['shared_venue_teams']
+    venue_doc = json.loads((HERE / 'venues.json').read_text())
+    venues = nfl_team_codes.TeamKeyed(venue_doc['venues'])
+    shared = nfl_team_codes.TeamKeyed(venue_doc['shared_venue_teams'])
     con = sqlite3.connect(DB, uri=True)
     games = con.execute("select game_id, away_team, home_team, gameday, gametime from nfl_schedule "
                         "where season=2026 and week=8 order by gameday, gametime").fetchall()
@@ -44,8 +45,8 @@ def main():
     out = {'fetched_at_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
            'source': 'api.weather.gov forecastHourly', 'games': {}}
     for game_id, away, home, gameday, gametime in games:
-        venue_team = shared.get(home, DB_TO_VENUE.get(home, home))
-        venue = venues['venues'][venue_team]
+        venue_team = shared.get(home, home)
+        venue = venues[venue_team]
         kickoff = kickoff_utc(gameday, gametime)
         entry = {'home': home, 'away': away, 'venue': venue['stadium'], 'roof': venue['roof'],
                  'kickoff_utc': kickoff.strftime('%Y-%m-%dT%H:%M:%SZ'),
