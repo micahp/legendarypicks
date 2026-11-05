@@ -20,3 +20,13 @@ team's No. 1 back", "lead RB"), fantasy and projection talk, and designations fo
 
 Ambiguous (code "?"): the sentence is about two players and the text does not say which one is the subject.
 Ambiguous items are counted and excluded from the scores. They are not scored as wrong.
+
+## Independent-review clarifications (2026-11-05)
+
+The rules above were frozen before initial labelling. After the blind second review, these interpretations were applied to the corrected labels:
+
+- A definite future statement that a player will resume a starting role (for example, one of the starting cornerbacks) is SN. A player listed as a starter on an unofficial depth chart for an upcoming game is SE, since it reports an expectation rather than a confirmed team decision.
+- General role descriptions do not establish a start decision. “No. 1 running back,” “continue to lead the offense,” and game-specific kicking duties are not SN/SE/CC without an explicit starting claim. A coach assigning kicking duties does not alone count as coach confirmation of a start.
+- “DNP to start Week N” describes when the player may be inactive, not that the player will start.
+- ID requires a relevant upcoming game. A status field on a player with no team or upcoming game is out of scope when the accompanying roster transaction says the player is a free agent or on a practice squad. A current non-game status such as practice-squad IR remains IO.
+- If the field reports IR/PUP and the text reports a game-week designation for the upcoming game, label both IO and ID. Keep the item borderline when those sources conflict on game eligibility.

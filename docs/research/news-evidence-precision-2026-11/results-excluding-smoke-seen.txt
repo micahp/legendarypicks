@@ -1,37 +1,23 @@
 capture sha256 56de86d072e40edb3d3750d1cc0c179e1c7b74405d25af9c9f35cf8125b5807d; sample items 277; excluded 2; teams unresolved 0
 
-borderline excluded (main): 264 items scored
-  starter_named                precision no denominator                                             recall 0/1 = 0.0% [95% CI 0.0-79.3]
-  starter_expected             precision 2/2 = 100.0% [95% CI 34.2-100.0]                           recall 2/8 = 25.0% [95% CI 7.1-59.1]
+borderline excluded (main): 271 items scored
+  starter_named                precision 2/2 = 100.0% [95% CI 34.2-100.0]                           recall 2/2 = 100.0% [95% CI 34.2-100.0]
+  starter_expected             precision 8/8 = 100.0% [95% CI 67.6-100.0]                           recall 8/9 = 88.9% [95% CI 56.5-98.0]
   coach_confirmation_reported  precision no denominator                                             recall no denominator
-  injury_designation           precision 105/107 = 98.1% [95% CI 93.4-99.5]                         recall 105/105 = 100.0% [95% CI 96.5-100.0]
+  injury_designation           precision 107/107 = 100.0% [95% CI 96.5-100.0]                       recall 107/107 = 100.0% [95% CI 96.5-100.0]
   injury_status_other          precision 54/54 = 100.0% [95% CI 93.4-100.0]                         recall 54/54 = 100.0% [95% CI 93.4-100.0]
 
 borderline included: 275 items scored
-  starter_named                precision no denominator                                             recall 0/6 = 0.0% [95% CI 0.0-39.0]
-  starter_expected             precision 2/2 = 100.0% [95% CI 34.2-100.0]                           recall 2/9 = 22.2% [95% CI 6.3-54.7]
+  starter_named                precision 2/2 = 100.0% [95% CI 34.2-100.0]                           recall 2/2 = 100.0% [95% CI 34.2-100.0]
+  starter_expected             precision 8/8 = 100.0% [95% CI 67.6-100.0]                           recall 8/9 = 88.9% [95% CI 56.5-98.0]
   coach_confirmation_reported  precision no denominator                                             recall no denominator
-  injury_designation           precision 105/110 = 95.5% [95% CI 89.8-98.0]                         recall 105/106 = 99.1% [95% CI 94.8-99.8]
+  injury_designation           precision 107/110 = 97.3% [95% CI 92.3-99.1]                         recall 107/108 = 99.1% [95% CI 94.9-99.8]
   injury_status_other          precision 55/55 = 100.0% [95% CI 93.5-100.0]                         recall 55/56 = 98.2% [95% CI 90.6-99.7]
 
 disagreements (borderline items marked):
-  FN starter_expected             update 646008 Jalen Pitre (HOU); gold ['starter_expected']; note: should resume his role as starting slot CB
-  FN starter_named                update 646006 Greg Newsome (NYG) [borderline]; gold ['starter_named']; note: will resume role as one of its starting CBs; borderline SN vs SE
-  FP injury_designation           update 645994 Drew Lock (SEA): 'Injury Status=QUESTIONABLE'; gold ['starter_expected']; note: in line for his second start; assuming clearance he'll be under center
-  FN starter_expected             update 645994 Drew Lock (SEA); gold ['starter_expected']; note: in line for his second start; assuming clearance he'll be under center
-  FN starter_named                update 645978 Jevon Holland (NYG); gold ['starter_named']; note: will be back in his starting role
-  FN starter_expected             update 645970 Bryce Boettcher (IND); gold ['starter_expected']; note: will likely be back in his starting role
-  FN injury_designation           update 645969 Adam Randall (BAL) [borderline]; gold ['injury_designation', 'injury_status_other']; note: field IR-R, text says officially questionable Thursday
-  FN starter_expected             update 645965 Antonio Johnson (JAC); gold ['starter_expected']; note: should be back in his starting role at FS
-  FN starter_named                update 645958 Matthew Stafford (LA) [borderline]; gold ['starter_named']; note: continue to lead the offense Sunday implies he starts; no start word
-  FN starter_named                update 645928 Charlie Smyth (NO) [borderline]; gold ['starter_named']; note: coach announced he will be kicker in Week 9; role decision
-  FP injury_designation           update 645892 Drew Lock (SEA): 'Injury Status=QUESTIONABLE'; gold ['starter_expected']; note: slated to start Sunday per reporter
-  FN starter_named                update 645885 Harrison Butker (KC) [borderline]; gold ['starter_named']; note: coach says he will remain the kicker Sunday; role decision
-  FN starter_expected             update 645835 Vega Ioane (BAL); gold ['starter_expected']; note: likely back in his starting role at RG
-  FP injury_designation           update 645834 Tre Brown () [borderline]: 'Injury Status=QUESTIONABLE'; gold []; note: field QUESTIONABLE on a player removed from IR and becoming a free agent
-  FP injury_designation           update 645810 Bub Means () [borderline]: 'Injury Status=QUESTIONABLE'; gold []; note: field QUESTIONABLE on a player cut from the practice-squad IL
-  FN starter_expected             update 645802 Tyler Allgeier (ARZ) [borderline]; gold ['starter_expected']; note: slated to work as No. 1 RB from Sunday: lead-back role, no start word
-  FN starter_named                update 645796 Charlie Smyth (NO) [borderline]; gold ['starter_named']; note: team plans to have him handle kicking duties Sunday; role decision
-  FP injury_designation           update 645791 Kenny Yeboah () [borderline]: 'Injury Status=OUT'; gold ['injury_status_other']; note: field OUT; text says practice-squad IR, unavailable four games
-  FN injury_status_other          update 645791 Kenny Yeboah () [borderline]; gold ['injury_status_other']; note: field OUT; text says practice-squad IR, unavailable four games
-  FN starter_expected             update 645771 Joe Fagnano (BAL); gold ['injury_designation', 'starter_expected']; note: favorite to start for Baltimore
+  FN injury_designation           update 645969 Adam Randall (BAL) [borderline]; gold ['injury_designation', 'injury_status_other']; note: IR-R field and text says questionable Thursday while still on IR pending activation; status sources conflict.
+  FP injury_designation           update 645834 Tre Brown () [borderline]: 'Injury Status=QUESTIONABLE'; gold []; note: QUESTIONABLE field conflicts with removal from IR/free-agent status; no upcoming game.
+  FP injury_designation           update 645810 Bub Means () [borderline]: 'Injury Status=QUESTIONABLE'; gold []; note: QUESTIONABLE field conflicts with cut from practice-squad injured list; no upcoming game.
+  FN starter_expected             update 645807 Simi Fehoko (ARZ); gold ['starter_expected']; note: Listed as a starting receiver on an unofficial depth chart for Sunday; expected, not confirmed.
+  FP injury_designation           update 645791 Kenny Yeboah () [borderline]: 'Injury Status=OUT'; gold ['injury_status_other']; note: OUT field conflicts with practice-squad IR; no upcoming game, so field is off-scope.
+  FN injury_status_other          update 645791 Kenny Yeboah () [borderline]; gold ['injury_status_other']; note: OUT field conflicts with practice-squad IR; no upcoming game, so field is off-scope.
