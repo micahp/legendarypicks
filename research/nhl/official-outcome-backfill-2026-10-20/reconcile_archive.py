@@ -17,9 +17,7 @@ from typing import Any
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_DUCKDB = Path("/root/nhl_database_2025-26-playoffs.duckdb")
-import sys  # noqa: E402
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
-import team_codes  # noqa: E402  the one place team codes are defined
+TEAM_ALIASES = {"PHX": "ARI"}
 SOG_LINES = (0.5, 1.5, 2.5, 3.5)
 SAVE_LINES = (20.5, 24.5, 28.5)
 
@@ -61,7 +59,7 @@ def numeric_seconds(value: Any) -> float | None:
 
 
 def canonical_team(value: str) -> str:
-    return team_codes.to_source("nhl", "nhle", value)
+    return TEAM_ALIASES.get(value, value)
 
 
 def name_tokens(value: Any) -> list[str]:

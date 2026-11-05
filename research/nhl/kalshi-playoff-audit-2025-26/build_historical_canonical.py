@@ -27,9 +27,11 @@ REPORT = HERE / "historical_data_integrity.md"
 PACE_SECONDS = 0.20
 USER_AGENT = "LegendaryPicksHistoricalAudit/1.0"
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
-import team_codes  # noqa: E402  the one place team codes are defined
-K = lambda code: team_codes.key_code("nhl", code)  # noqa: E731  one join key per club, any spelling
+ALIAS_GROUPS = [
+    {"PHX", "ARI"}, {"TBL", "T.B"}, {"NJD", "N.J"},
+    {"LAK", "L.A"}, {"SJS", "S.J"},
+]
+ALIAS = {code: min(group) for group in ALIAS_GROUPS for code in group}
 
 
 def sha256(path):
@@ -194,8 +196,8 @@ def main():
         game = src["game"]
         home, away = game["homeTeam"], game["awayTeam"]
         home_code, away_code = home["abbrev"], away["abbrev"]
-        normalized = {K(str(r["team"])): r for r in team_rows}
-        hkey, akey = K(home_code), K(away_code)
+        normalized = {ALIAS.get(str(r["team"]), str(r["team"])): r for r in team_rows}
+        hkey, akey = ALIAS.get(home_code, home_code), ALIAS.get(away_code, away_code)
         if hkey not in normalized or akey not in normalized:
             raise RuntimeError(f"Team identity mismatch game {gid}: log={list(normalized)}, official={home_code}/{away_code}")
         hr, ar = normalized[hkey], normalized[akey]
@@ -296,9 +298,9 @@ def main():
         game_day = datetime.fromisoformat(kickoff.replace("Z", "+00:00")).date() if kickoff else datetime.strptime(str(rows[0]["gameDate"]), "%Y%m%d").date()
         home = off["homeTeam"]["abbrev"]
         away = off["awayTeam"]["abbrev"]
-        normalized = {K(str(r["team"])): r for r in rows}
-        team_game[(gid, K(home))] = (game_day, normalized[K(home)])
-        team_game[(gid, K(away))] = (game_day, normalized[K(away)])
+        normalized = {ALIAS.get(str(r["team"]), str(r["team"])): r for r in rows}
+        team_game[(gid, ALIAS.get(home,home))] = (game_day, normalized[ALIAS.get(home,home)])
+        team_game[(gid, ALIAS.get(away,away))] = (game_day, normalized[ALIAS.get(away,away)])
     histories = defaultdict(list)
     feature_rows = []
     canonical_by_id = {r["game_id"]: r for r in canonical}
@@ -348,7 +350,7 @@ def main():
         })
         # Add current game to each team's history only after both teams' features were computed.
         for team in (cg["home_team"], cg["away_team"]):
-            _, raw = team_game[(gid, K(team))]
+            _, raw = team_game[(gid, ALIAS.get(team,team))]
             canonical_team_goals = (cg["home_goals_model_target"] if team == cg["home_team"]
                                     else cg["away_goals_model_target"])
             opponent_goals = (cg["away_goals_model_target"] if team == cg["home_team"]

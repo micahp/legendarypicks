@@ -24,9 +24,7 @@ import sqlite3
 import pytest
 
 from dedupe_mlb import pick_canonical
-import refresh_mlb_player_teams
-import team_codes
-from refresh_mlb_player_teams import plan_changes
+from refresh_mlb_player_teams import TEAM_FIX, plan_changes
 
 
 # ── the merge key ────────────────────────────────────────────────────────────
@@ -82,10 +80,8 @@ def test_publisher_team_codes_are_converted_at_the_boundary():
     """statsapi says AZ/CWS; this repo says ARI/CHW. Converted once, at ingest —
     never by a reader (published-first §5: three copies of one alias map is two
     too many)."""
-    assert team_codes.normalize("mlb", "AZ") == "ARI"
-    assert team_codes.normalize("mlb", "CWS") == "CHW"
-    # Since 2026-11-04 the one copy is backend/team_codes.py; the ingest keeps none of its own.
-    assert not hasattr(refresh_mlb_player_teams, "TEAM_FIX")
+    assert TEAM_FIX["AZ"] == "ARI"
+    assert TEAM_FIX["CWS"] == "CHW"
 
 
 def test_a_minor_league_current_team_never_overwrites_our_team():

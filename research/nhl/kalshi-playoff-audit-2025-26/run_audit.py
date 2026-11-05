@@ -22,10 +22,7 @@ SEASON = 2025
 SEASON_START = "2026-04-18"
 SEASON_END = "2026-06-30"
 USER_AGENT = "nhl-kalshi-playoff-research-audit/1.0"
-import sys  # noqa: E402
-from pathlib import Path  # noqa: E402
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
-import team_codes  # noqa: E402  the one place team codes are defined
+TEAM_ALIAS = {"TB": "TBL", "LA": "LAK"}
 
 
 def utcnow():
@@ -122,7 +119,7 @@ for m in all_markets:
     if not (SEASON_START <= event_date <= SEASON_END):
         continue
     side_raw = m.get("ticker", "").rsplit("-", 1)[-1]
-    side = team_codes.to_source("nhl", "nhle", side_raw)
+    side = TEAM_ALIAS.get(side_raw, side_raw)
     by_event[event].append({"market": m, "date": event_date, "side_raw": side_raw, "side": side})
 
 # Validate every event's binary outcome contracts and form game keys.

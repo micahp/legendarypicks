@@ -75,8 +75,8 @@ def build() -> list[dict]:
         gid = int(c["game_id"])
         f = features.get(gid)
         md = int(c["game_date"][5:7]) * 100 + int(c["game_date"][8:10])
-        by_key[(int(c["season"]), md, bt.team_key(c["home_team"]),
-                bt.team_key(c["away_team"]))] = gid
+        by_key[(int(c["season"]), md, bt.TEAM_ID.get(c["home_team"], c["home_team"]),
+                bt.TEAM_ID.get(c["away_team"], c["away_team"]))] = gid
     game_by_id = {g["game_id"]: g for g in games}
 
     rows = []

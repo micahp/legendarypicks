@@ -39,8 +39,7 @@ USER_AGENT = "Mozilla/5.0 (compatible; LegendaryPicks-NHL-OfficialOutcomeResearc
 MIN_REQUEST_INTERVAL = 1.0
 TIMEOUT_SECONDS = 30
 RETRY_DELAYS = (5.0, 20.0)
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'backend'))
-import team_codes  # noqa: E402  the one place team codes are defined
+TEAM_ALIASES = {"PHX": "ARI"}
 COMPLETED_STATES = {"OFF", "FINAL"}
 ACCESS_REFUSAL_STATUSES = {401, 403, 407, 429, 451}
 
@@ -214,9 +213,9 @@ def validate_game_payload(payload: Any, game: dict[str, Any]) -> dict[str, Any]:
         team = payload.get(f"{side}Team")
         if not isinstance(team, dict):
             raise ValueError(f"game_id={gid}: missing {side}Team metadata")
-        official = team_codes.to_source("nhl", "nhle", str(team.get("abbrev") or ""))
+        official = TEAM_ALIASES.get(str(team.get("abbrev") or ""), str(team.get("abbrev") or ""))
         canonical = game[f"{side}_team"]
-        if not team_codes.same_team("nhl", official, canonical):
+        if official != canonical:
             raise ValueError(f"game_id={gid}: {side} team {official!r} != canonical {canonical!r}")
         for key in ("score", "sog"):
             if parse_nonnegative_int(team.get(key), key, gid, "") is None:
