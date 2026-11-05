@@ -1,0 +1,11 @@
+[Unit]
+Description=One final RotoWire NFL news poll before the 2026-11-05 23:45 UTC pregame cutoff
+
+[Timer]
+# 17:40 Central is 23:40 UTC, 20 minutes before the cutoff and after the 23:30 UTC poll.
+OnCalendar=2026-11-05 17:40:00
+AccuracySec=1s
+Unit=legendarypicks-nfl-player-news.service
+
+[Install]
+WantedBy=timers.target
