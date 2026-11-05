@@ -1,0 +1,70 @@
+{
+  "method": "Read datePublished and dateModified from each article's JSON-LD (explicit UTC, 'Z'), then compare with the date line shown on the page. Pages fetched directly on 2026-11-05, no archive.",
+  "publishers": [
+    {
+      "publisher": "tennesseetitans.com",
+      "timezone_resolved": "America/Chicago",
+      "basis": "machine-readable: displayed 1:55 PM equals datePublished 18:55:54Z converted to CDT",
+      "examples": [
+        {
+          "url": "https://www.tennesseetitans.com/news/game-inactives-week-8-titans-at-colts-x1456",
+          "datePublished_utc": "2025-10-26T18:55:54.146Z",
+          "dateModified_utc": "2025-10-26T18:58:35.062Z",
+          "displayed": "Oct 26, 2025 at 01:55 PM",
+          "kickoff_utc": "2025-10-26T20:25:00Z",
+          "cutoff_utc": "2025-10-26T18:55:00Z",
+          "published_vs_cutoff": "54 seconds after the cutoff (boundary, after)"
+        }
+      ]
+    },
+    {
+      "publisher": "baltimoreravens.com",
+      "timezone_resolved": "America/New_York",
+      "basis": "machine-readable: displayed 4:33 PM equals datePublished 20:33:00Z converted to EDT",
+      "examples": [
+        {
+          "url": "https://www.baltimoreravens.com/news/lamar-jackson-downgraded-rules-out-bears-tyler-huntley",
+          "datePublished_utc": "2025-10-25T20:33:00Z",
+          "dateModified_utc": "2025-10-26T12:50:20.185Z",
+          "displayed": "Oct 25, 2025 at 04:33 PM",
+          "cutoff_utc": "2025-10-26T15:30:00Z",
+          "published_vs_cutoff": "before the cutoff by about 19 hours",
+          "modified_vs_cutoff": "before the cutoff; current content dates from 12:50 UTC, so the current version existed before the cutoff"
+        }
+      ]
+    },
+    {
+      "publisher": "buffalobills.com",
+      "timezone_resolved": "America/New_York",
+      "basis": "machine-readable: displayed 11:29 AM equals datePublished 15:29:00Z converted to EDT. The page also carries an unrelated datePublished (14:46:54Z) that is not the article's.",
+      "examples": [
+        {
+          "url": "https://www.buffalobills.com/news/buffalo-bills-inactives-list-at-panthers-week-8",
+          "datePublished_utc": "2025-10-26T15:29:00Z",
+          "dateModified_utc": ["2025-10-26T15:30:45.578Z", "2025-10-26T15:57:44.134Z"],
+          "displayed": "Oct 26, 2025 at 11:29 AM",
+          "cutoff_utc": "2025-10-26T15:30:00Z",
+          "published_vs_cutoff": "60 seconds before the cutoff (before)",
+          "modified_vs_cutoff": "edited 45 seconds and 28 minutes after the cutoff; the original version needs an archived capture before the cutoff"
+        }
+      ]
+    },
+    {
+      "publisher": "dallascowboys.com",
+      "timezone_resolved": null,
+      "basis": "not resolved. The page-level datePublished (2025-11-04T05:45:00Z) and dateModified cover the whole rolling page, not each dated entry. Entry times on the page have no zone and no year.",
+      "examples": [
+        {
+          "url": "https://www.dallascowboys.com/news/updates-october-2025-x1111",
+          "datePublished_utc": "2025-11-04T05:45:00Z",
+          "dateModified_utc": "2025-11-04T06:00:27.775Z",
+          "note": "page-level only; entries need their own calibration"
+        }
+      ]
+    }
+  ],
+  "open_items": [
+    "Dallas entry times: calibrate against Cowboys articles that carry both a visible time and a datePublished.",
+    "Buffalo and Dallas content versions: the current page is not the version that existed at publication."
+  ]
+}
