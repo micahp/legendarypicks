@@ -49,9 +49,11 @@ export default function GoogleAnalytics({ trackingId }: Props) {
               cookie_domain: 'auto',
               cookie_expires: 63072000
             });
+            var arcadeSafePageUrl = new URL(window.location.href);
+            arcadeSafePageUrl.searchParams.delete('share');
             gtag('event', 'page_view', {
-              page_path: window.location.pathname + window.location.search,
-              page_location: window.location.href,
+              page_path: arcadeSafePageUrl.pathname + arcadeSafePageUrl.search + arcadeSafePageUrl.hash,
+              page_location: arcadeSafePageUrl.href,
               page_title: document.title
             });
           `,

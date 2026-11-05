@@ -345,6 +345,154 @@ MIGRATIONS: tuple[Migration, ...] = (
             ),
         ),
     ),
+    Migration(
+        migration_id="20261101_001_arcade_anonymous_scores",
+        table="arcade_anonymous_claims",
+        additions=(),
+        required_columns=(
+            ColumnContract("token_hash", "TEXT", not_null=True, primary_key=1),
+            ColumnContract("created_at", "INTEGER", not_null=True),
+            ColumnContract("last_seen_at", "INTEGER", not_null=True),
+        ),
+        create_sql=(
+            "CREATE TABLE arcade_anonymous_claims ("
+            "token_hash TEXT PRIMARY KEY NOT NULL CHECK(length(token_hash)=64), "
+            "created_at INTEGER NOT NULL, last_seen_at INTEGER NOT NULL)"
+        ),
+        objects=(
+            SchemaObject(
+                "table",
+                "arcade_anonymous_claims",
+                "CREATE TABLE arcade_anonymous_claims ("
+                "token_hash TEXT PRIMARY KEY NOT NULL CHECK(length(token_hash)=64), "
+                "created_at INTEGER NOT NULL, last_seen_at INTEGER NOT NULL)",
+            ),
+            SchemaObject(
+                "table",
+                "arcade_service_state",
+                "CREATE TABLE arcade_service_state ("
+                "id INTEGER PRIMARY KEY CHECK(id=1), ip_hash_secret TEXT NOT NULL)",
+            ),
+            SchemaObject(
+                "table",
+                "arcade_rate_limits",
+                "CREATE TABLE arcade_rate_limits ("
+                "bucket_hash TEXT PRIMARY KEY NOT NULL, "
+                "window_started_at INTEGER NOT NULL, "
+                "request_count INTEGER NOT NULL CHECK(request_count>=0))",
+            ),
+            SchemaObject(
+                "table",
+                "arcade_attempts",
+                "CREATE TABLE arcade_attempts ("
+                "claim_hash TEXT NOT NULL, attempt_id TEXT NOT NULL, "
+                "challenge_id TEXT NOT NULL, config_hash TEXT NOT NULL, "
+                "origin TEXT NOT NULL CHECK(origin IN ('fictional_practice','observed_nfl_play')), "
+                "input_json TEXT NOT NULL, score INTEGER NOT NULL CHECK(score BETWEEN 0 AND 1000), "
+                "made INTEGER NOT NULL CHECK(made IN (0,1)), result_json TEXT NOT NULL, "
+                "drill_id TEXT, drill_run_id TEXT, drill_attempt_index INTEGER, "
+                "created_at INTEGER NOT NULL, "
+                "PRIMARY KEY(claim_hash,attempt_id), "
+                "UNIQUE(claim_hash,drill_run_id,drill_attempt_index), "
+                "CHECK((drill_id IS NULL AND drill_run_id IS NULL AND drill_attempt_index IS NULL) "
+                "OR (drill_id IS NOT NULL AND drill_run_id IS NOT NULL AND drill_attempt_index>=0)), "
+                "FOREIGN KEY(claim_hash) REFERENCES arcade_anonymous_claims(token_hash))",
+            ),
+            SchemaObject(
+                "table",
+                "arcade_shares",
+                "CREATE TABLE arcade_shares ("
+                "share_hash TEXT PRIMARY KEY NOT NULL CHECK(length(share_hash)=64), "
+                "claim_hash TEXT NOT NULL, attempt_id TEXT NOT NULL, "
+                "challenge_id TEXT NOT NULL, config_hash TEXT NOT NULL, created_at INTEGER NOT NULL, "
+                "FOREIGN KEY(claim_hash,attempt_id) "
+                "REFERENCES arcade_attempts(claim_hash,attempt_id))",
+            ),
+            SchemaObject(
+                "table",
+                "arcade_observed_events",
+                "CREATE TABLE arcade_observed_events ("
+                "challenge_id TEXT PRIMARY KEY NOT NULL, game_id TEXT NOT NULL, play_id TEXT NOT NULL, "
+                "event_id TEXT NOT NULL, source_revision TEXT NOT NULL, game_date TEXT, "
+                "away_team TEXT NOT NULL, home_team TEXT NOT NULL, period INTEGER, clock TEXT, "
+                "attempt_distance_yards INTEGER NOT NULL CHECK(attempt_distance_yards BETWEEN 1 AND 70), "
+                "event_type TEXT NOT NULL CHECK(event_type IN ('Field Goal Good','Field Goal Missed','Blocked Field Goal')), "
+                "game_status TEXT NOT NULL, publisher_updated_at TEXT, first_observed_at_utc TEXT NOT NULL, "
+                "last_observed_at_utc TEXT NOT NULL, source_ref_json TEXT NOT NULL, "
+                "observed_context_json TEXT NOT NULL, superseded_by TEXT, "
+                "UNIQUE(event_id,source_revision))",
+            ),
+            SchemaObject(
+                "index",
+                "idx_arcade_attempts_challenge_score",
+                "CREATE INDEX idx_arcade_attempts_challenge_score "
+                "ON arcade_attempts(challenge_id,score DESC,created_at ASC)",
+            ),
+            SchemaObject(
+                "index",
+                "idx_arcade_attempts_owner_challenge",
+                "CREATE INDEX idx_arcade_attempts_owner_challenge "
+                "ON arcade_attempts(claim_hash,challenge_id,score DESC)",
+            ),
+            SchemaObject(
+                "index",
+                "idx_arcade_shares_owner",
+                "CREATE INDEX idx_arcade_shares_owner "
+                "ON arcade_shares(claim_hash,created_at DESC)",
+            ),
+            SchemaObject(
+                "index",
+                "idx_arcade_observed_events_freshness",
+                "CREATE INDEX idx_arcade_observed_events_freshness "
+                "ON arcade_observed_events(game_status,superseded_by,last_observed_at_utc DESC)",
+            ),
+        ),
+    ),
+    Migration(
+        migration_id="20261102_001_arcade_referral_activations",
+        table="arcade_referral_activations",
+        additions=(),
+        required_columns=(
+            ColumnContract("sharer_hash", "TEXT", not_null=True, primary_key=1),
+            ColumnContract("recipient_hash", "TEXT", not_null=True, primary_key=2),
+            ColumnContract("share_hash", "TEXT", not_null=True),
+            ColumnContract("challenge_id", "TEXT", not_null=True),
+            ColumnContract("attempt_id", "TEXT", not_null=True),
+            ColumnContract("created_at", "INTEGER", not_null=True),
+        ),
+        create_sql=(
+            "CREATE TABLE arcade_referral_activations ("
+            "sharer_hash TEXT NOT NULL CHECK(length(sharer_hash)=64), "
+            "recipient_hash TEXT NOT NULL CHECK(length(recipient_hash)=64), "
+            "share_hash TEXT NOT NULL CHECK(length(share_hash)=64), "
+            "challenge_id TEXT NOT NULL, attempt_id TEXT NOT NULL, created_at INTEGER NOT NULL, "
+            "PRIMARY KEY(sharer_hash,recipient_hash), "
+            "FOREIGN KEY(sharer_hash) REFERENCES arcade_anonymous_claims(token_hash), "
+            "FOREIGN KEY(recipient_hash,attempt_id) REFERENCES arcade_attempts(claim_hash,attempt_id), "
+            "FOREIGN KEY(share_hash) REFERENCES arcade_shares(share_hash))"
+        ),
+        objects=(
+            SchemaObject(
+                "table",
+                "arcade_referral_activations",
+                "CREATE TABLE arcade_referral_activations ("
+                "sharer_hash TEXT NOT NULL CHECK(length(sharer_hash)=64), "
+                "recipient_hash TEXT NOT NULL CHECK(length(recipient_hash)=64), "
+                "share_hash TEXT NOT NULL CHECK(length(share_hash)=64), "
+                "challenge_id TEXT NOT NULL, attempt_id TEXT NOT NULL, created_at INTEGER NOT NULL, "
+                "PRIMARY KEY(sharer_hash,recipient_hash), "
+                "FOREIGN KEY(sharer_hash) REFERENCES arcade_anonymous_claims(token_hash), "
+                "FOREIGN KEY(recipient_hash,attempt_id) REFERENCES arcade_attempts(claim_hash,attempt_id), "
+                "FOREIGN KEY(share_hash) REFERENCES arcade_shares(share_hash))",
+            ),
+            SchemaObject(
+                "index",
+                "idx_arcade_referral_activations_sharer",
+                "CREATE INDEX idx_arcade_referral_activations_sharer "
+                "ON arcade_referral_activations(sharer_hash,created_at DESC)",
+            ),
+        ),
+    ),
 )
 
 REGISTRY_CONTRACT = (

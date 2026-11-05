@@ -1,0 +1,74 @@
+[
+  {
+    "game_id": "401772718",
+    "date": "2025-09-07T17:00Z",
+    "label": "ARI at NO",
+    "away_team": "Arizona Cardinals",
+    "home_team": "New Orleans Saints",
+    "event_count": 195,
+    "raw_fixture_sha256": "0eff08d4759ecbedc7d36f0c875f51911f7828627b9fb76890fb917fc989e7c2"
+  },
+  {
+    "game_id": "401772719",
+    "date": "2025-09-07T17:00Z",
+    "label": "MIA at IND",
+    "away_team": "Miami Dolphins",
+    "home_team": "Indianapolis Colts",
+    "event_count": 163,
+    "raw_fixture_sha256": "674fe440c5958a748b2e76f251d51d9d49c5cbc5b583bcdfe21fffe7bfdf4fe0"
+  },
+  {
+    "game_id": "401772720",
+    "date": "2025-09-07T17:00Z",
+    "label": "LV at NE",
+    "away_team": "Las Vegas Raiders",
+    "home_team": "New England Patriots",
+    "event_count": 197,
+    "raw_fixture_sha256": "e6bdf60ef6ce0718dc8878cca418af2357de5cb5a1bd86135c6a1f03be39d643"
+  },
+  {
+    "game_id": "401772721",
+    "date": "2025-09-07T17:00Z",
+    "label": "PIT at NYJ",
+    "away_team": "Pittsburgh Steelers",
+    "home_team": "New York Jets",
+    "event_count": 175,
+    "raw_fixture_sha256": "76dc385eb3741ff96585b011af4e33d6e9b615946653c049273643ae6542181d"
+  },
+  {
+    "game_id": "401772827",
+    "date": "2025-09-07T17:00Z",
+    "label": "NYG at WSH",
+    "away_team": "New York Giants",
+    "home_team": "Washington Commanders",
+    "event_count": 190,
+    "raw_fixture_sha256": "31fedb6e91c75cf8ffac1eca6500f4caeb3b6de76d95c6afc3acdab5d06a5e86"
+  },
+  {
+    "game_id": "401772828",
+    "date": "2025-09-07T17:00Z",
+    "label": "CAR at JAX",
+    "away_team": "Carolina Panthers",
+    "home_team": "Jacksonville Jaguars",
+    "event_count": 177,
+    "raw_fixture_sha256": "a85423981449736e6dbec4c85bbd97a701a5334870d3ffb247ffce98df3c1a4e"
+  },
+  {
+    "game_id": "401772829",
+    "date": "2025-09-07T17:00Z",
+    "label": "CIN at CLE",
+    "away_team": "Cincinnati Bengals",
+    "home_team": "Cleveland Browns",
+    "event_count": 180,
+    "raw_fixture_sha256": "349693297cd6f8abdabe0f4e35bc3917d20bc542f2f10ca50a5066d417390161"
+  },
+  {
+    "game_id": "401772830",
+    "date": "2025-09-07T17:00Z",
+    "label": "TB at ATL",
+    "away_team": "Tampa Bay Buccaneers",
+    "home_team": "Atlanta Falcons",
+    "event_count": 187,
+    "raw_fixture_sha256": "9b64fd8607e1bbe12c2fdc120a46da46532f7e883874bcc099bf825483224930"
+  }
+]

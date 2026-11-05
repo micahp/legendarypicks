@@ -2,6 +2,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import LiveDot from '../components/LiveDot'
+import LeagueLocker from '../components/Home/LeagueLocker'
 import FirstHero from '../components/Home/FirstHero'
 import HeroCarousel from '../components/Home/HeroCarousel'
 import ModelsSlide from '../components/Home/ModelsSlide'
@@ -58,12 +59,23 @@ export default function Home() {
         <meta name="twitter:image" content="https://legendarypicks.xyz/og-image.png" />
       </Head>
 
-      <HeroCarousel
-        slides={[
-          { label: 'Player props', node: <FirstHero featured={featured} /> },
-          { label: 'Prediction models', node: <ModelsSlide /> },
-        ]}
-      />
+      <LeagueLocker />
+
+      <section aria-label="Featured sports data" className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[.18em] text-zinc-500">The data behind the picks</p>
+            <h2 className="text-xl font-bold">History before hype</h2>
+          </div>
+          <Link href="/props?league=nfl" className="text-sm font-semibold text-emerald-400 hover:text-emerald-300">Open player props →</Link>
+        </div>
+        <HeroCarousel
+          slides={[
+            { label: 'Player prop history', node: <FirstHero featured={featured} /> },
+            { label: 'Prediction models', node: <ModelsSlide /> },
+          ]}
+        />
+      </section>
 
       {/* Primary surface: props and their history. Position and space carry the
           hierarchy — the props card is the first and largest; everything else
