@@ -1,0 +1,189 @@
+week,game_id,team,gsis_id,player,recovered_status,article_url,published_utc,cutoff_utc
+1,2025_01_DAL_PHI,PHI,00-0038400,Tanner McKee,Out,https://www.philadelphiaeagles.com/news/cowboys-vs-eagles-injury-report-week-1-2025,2025-09-03T19:48:00+00:00,2025-09-04T22:50:00+00:00
+1,2025_01_LV_NE,NE,00-0039147,Christian Gonzalez,Out,https://www.patriots.com/news/week-1-injury-report-raiders-at-patriots,2025-09-06T19:26:00+00:00,2025-09-07T15:30:00+00:00
+1,2025_01_MIN_CHI,MIN,00-0038440,Zavier Scott,Out,https://www.vikings.com/news/bears-injury-report-week-1-2025,2025-09-07T19:55:00+00:00,2025-09-08T22:45:00+00:00
+1,2025_01_MIN_CHI,MIN,00-0040624,Elijah Williams,Out,https://www.vikings.com/news/bears-injury-report-week-1-2025,2025-09-07T19:55:00+00:00,2025-09-08T22:45:00+00:00
+1,2025_01_NYG_WAS,NYG,00-0036386,Andrew Thomas,Doubtful,https://www.giants.com/news/week-1-nfl-injury-report-new-york-giants-at-washington-commanders-andrew-thomas,2025-09-06T10:55:00+00:00,2025-09-07T15:30:00+00:00
+1,2025_01_SF_SEA,SF,00-0040172,Jordan Watkins,Doubtful,https://www.49ers.com/news/christian-mccaffrey-questionable-for-week-1-injury-report-ahead-of-sfvssea,2025-09-06T00:10:00+00:00,2025-09-07T18:35:00+00:00
+1,2025_01_SF_SEA,SF,00-0040177,Jordan James,Doubtful,https://www.49ers.com/news/christian-mccaffrey-questionable-for-week-1-injury-report-ahead-of-sfvssea,2025-09-06T00:10:00+00:00,2025-09-07T18:35:00+00:00
+2,2025_02_ATL_MIN,ATL,00-0033702,Younghoe Koo,Out,https://www.atlantafalcons.com/news/younghoe-koo-ruled-out-does-not-travel-for-falcons-week-2-game-vs-minnesota-vikings,2025-09-13T19:52:23+00:00,2025-09-14T22:50:00+00:00
+2,2025_02_ATL_MIN,ATL,00-0040156,Billy Bowman Jr.,Out,https://www.atlantafalcons.com/news/younghoe-koo-ruled-out-does-not-travel-for-falcons-week-2-game-vs-minnesota-vikings,2025-09-13T19:52:23+00:00,2025-09-14T22:50:00+00:00
+2,2025_02_PHI_KC,KC,00-0039894,Xavier Worthy,Out,https://www.chiefs.com/news/week-2-injury-report-chiefs-vs-eagles,2025-09-13T15:52:00+00:00,2025-09-14T18:55:00+00:00
+2,2025_02_PHI_KC,KC,00-0040646,Jalen Royals,Out,https://www.chiefs.com/news/week-2-injury-report-chiefs-vs-eagles,2025-09-13T15:52:00+00:00,2025-09-14T18:55:00+00:00
+2,2025_02_SEA_PIT,PIT,00-0034277,DeShon Elliott,Out,https://www.steelers.com/news/week-2-injury-report-seahawks-x5503,2025-09-13T12:20:00+00:00,2025-09-14T15:30:00+00:00
+2,2025_02_SEA_PIT,PIT,00-0039167,Joey Porter Jr.,Out,https://www.steelers.com/news/week-2-injury-report-seahawks-x5503,2025-09-13T12:20:00+00:00,2025-09-14T15:30:00+00:00
+2,2025_02_SEA_PIT,PIT,00-0040678,Derrick Harmon,Out,https://www.steelers.com/news/week-2-injury-report-seahawks-x5503,2025-09-13T12:20:00+00:00,2025-09-14T15:30:00+00:00
+2,2025_02_SEA_PIT,SEA,00-0039169,Devon Witherspoon,Doubtful,https://www.seahawks.com/news/seahawks-injury-updates-from-mike-macdonald-week-2-game-at-pittsburgh-devon-witherspoon-nick-emmanwori,2025-09-13T16:00:00+00:00,2025-09-14T15:30:00+00:00
+2,2025_02_SF_NO,NO,00-0039339,Taliese Fuaga,Questionable,https://www.neworleanssaints.com/news/morning-break-rookie-jonas-sanker-larger-role-julian-blackmon-injury-news-headlines-9-12-2025,2025-09-13T13:30:38+00:00,2025-09-14T15:30:00+00:00
+2,2025_02_WAS_GB,GB,00-0036871,Nate Hobbs,Questionable,https://www.packers.com/news/packers-commanders-injury-report-week-2-sept-10-2025,2025-09-10T19:00:00+00:00,2025-09-11T22:45:00+00:00
+2,2025_02_WAS_GB,GB,00-0038463,Brenton Cox Jr.,Out,https://www.packers.com/news/packers-commanders-injury-report-week-2-sept-10-2025,2025-09-10T19:00:00+00:00,2025-09-11T22:45:00+00:00
+2,2025_02_WAS_GB,WAS,00-0030140,Tress Way,Questionable,https://www.commanders.com/news/game-status-commanders-packers-week-2,2025-09-10T18:59:56+00:00,2025-09-11T22:45:00+00:00
+2,2025_02_WAS_GB,WAS,00-0033947,Deatrich Wise,Questionable,https://www.commanders.com/news/game-status-commanders-packers-week-2,2025-09-10T18:59:56+00:00,2025-09-11T22:45:00+00:00
+3,2025_03_DET_BAL,BAL,00-0033376,Patrick Ricard,Out,https://www.baltimoreravens.com/news/nnamdi-madubuike-kyle-van-noy-jaire-alexander-mike-green-depth-injuries-lions-week-3,2025-09-21T13:00:48+00:00,2025-09-22T22:45:00+00:00
+3,2025_03_DET_BAL,BAL,00-0037838,Isaiah Likely,Out,https://www.baltimoreravens.com/news/nnamdi-madubuike-kyle-van-noy-jaire-alexander-mike-green-depth-injuries-lions-week-3,2025-09-21T13:00:48+00:00,2025-09-22T22:45:00+00:00
+3,2025_03_IND_TEN,IND,00-0040128,Tyler Warren,Questionable,https://www.colts.com/news/colts-lift-questionable-designations-tyler-warren-charvarius-ward-sr-week-3-tennessee-titans,2025-09-20T15:54:59+00:00,2025-09-21T15:30:00+00:00
+3,2025_03_KC_NYG,NYG,00-0035020,Demetrius Flannigan-Fowles,Doubtful,https://www.giants.com/news/tracker-latest-news-notes-roster-moves-injury-report-nfl-week-3-kansas-city-chiefs,2025-09-20T20:40:00+00:00,2025-09-21T22:50:00+00:00
+3,2025_03_KC_NYG,NYG,00-0036386,Andrew Thomas,Out,https://www.giants.com/news/tracker-latest-news-notes-roster-moves-injury-report-nfl-week-3-kansas-city-chiefs,2025-09-20T20:40:00+00:00,2025-09-21T22:50:00+00:00
+3,2025_03_KC_NYG,NYG,00-0039829,Darius Muasau,Out,https://www.giants.com/news/tracker-latest-news-notes-roster-moves-injury-report-nfl-week-3-kansas-city-chiefs,2025-09-20T20:40:00+00:00,2025-09-21T22:50:00+00:00
+3,2025_03_KC_NYG,KC,00-0036416,Kristian Fulton,Out,https://www.chiefs.com/news/week-3-injury-report-chiefs-vs-giants,2025-09-20T15:46:00+00:00,2025-09-21T22:50:00+00:00
+3,2025_03_KC_NYG,KC,00-0039894,Xavier Worthy,Questionable,https://www.chiefs.com/news/week-3-injury-report-chiefs-vs-giants,2025-09-20T15:46:00+00:00,2025-09-21T22:50:00+00:00
+3,2025_03_KC_NYG,KC,00-0040646,Jalen Royals,Out,https://www.chiefs.com/news/week-3-injury-report-chiefs-vs-giants,2025-09-20T15:46:00+00:00,2025-09-21T22:50:00+00:00
+3,2025_03_NYJ_TB,TB,00-0036406,Tristan Wirfs,Out,https://www.buccaneers.com/news/jets-buccaneers-injury-report-sept-19-week-3-2025,2025-09-20T13:33:00+00:00,2025-09-21T15:30:00+00:00
+3,2025_03_NYJ_TB,TB,00-0040129,Emeka Egbuka,Out,https://www.buccaneers.com/news/jets-buccaneers-injury-report-sept-19-week-3-2025,2025-09-20T13:33:00+00:00,2025-09-21T15:30:00+00:00
+3,2025_03_PIT_NE,NE,00-0039147,Christian Gonzalez,Out,https://www.patriots.com/news/roster-analysis-patriots-downgrade-cb-christian-gonzalez-to-out-for-sunday-s-game-vs-the-steelers,2025-09-20T19:39:13+00:00,2025-09-21T15:30:00+00:00
+4,2025_04_BAL_KC,KC,00-0036416,Kristian Fulton,Doubtful,https://www.chiefs.com/news/week-4-injury-report-chiefs-vs-ravens,2025-09-27T23:08:00+00:00,2025-09-28T18:55:00+00:00
+4,2025_04_BAL_KC,KC,00-0040640,Ashton Gillotte,Questionable,https://www.chiefs.com/news/week-4-injury-report-chiefs-vs-ravens,2025-09-27T23:08:00+00:00,2025-09-28T18:55:00+00:00
+4,2025_04_BAL_KC,KC,00-0036416,Kristian Fulton,Doubtful,https://www.chiefs.com/news/week-4-injury-report-chiefs-vs-ravens,2025-09-27T23:08:00+00:00,2025-09-28T18:55:00+00:00
+4,2025_04_BAL_KC,KC,00-0040640,Ashton Gillotte,Questionable,https://www.chiefs.com/news/week-4-injury-report-chiefs-vs-ravens,2025-09-27T23:08:00+00:00,2025-09-28T18:55:00+00:00
+4,2025_04_BAL_KC,BAL,00-0037756,Travis Jones,Questionable,https://www.baltimoreravens.com/news/nnamdi-madubuike-broderick-washington-injury-report-injured-reserve-zaire-mitchell-paden-brent-urban-roster-ravens-chiefs-week-4,2025-09-27T20:14:51+00:00,2025-09-28T18:55:00+00:00
+4,2025_04_SEA_ARI,ARI,00-0029316,Kelvin Beachum,Doubtful,https://www.azcardinals.com/news/injury-report-week-4-vs-seahawks,2025-09-24T22:45:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,ARI,00-0033891,Zay Jones,Out,https://www.azcardinals.com/news/injury-report-week-4-vs-seahawks,2025-09-24T22:45:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,ARI,00-0034346,Will Hernandez,Questionable,https://www.azcardinals.com/news/injury-report-week-4-vs-seahawks,2025-09-24T22:45:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,ARI,00-0034495,Evan Brown,Questionable,https://www.azcardinals.com/news/injury-report-week-4-vs-seahawks,2025-09-24T22:45:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,ARI,00-0036298,Akeem Davis-Gaither,Questionable,https://www.azcardinals.com/news/injury-report-week-4-vs-seahawks,2025-09-24T22:45:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,ARI,00-0036956,Darren Hall,Questionable,https://www.azcardinals.com/news/injury-report-week-4-vs-seahawks,2025-09-24T22:45:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,ARI,00-0038540,Paris Johnson Jr.,Questionable,https://www.azcardinals.com/news/injury-report-week-4-vs-seahawks,2025-09-24T22:45:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,ARI,00-0040751,Will Johnson,Out,https://www.azcardinals.com/news/injury-report-week-4-vs-seahawks,2025-09-24T22:45:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,SEA,00-0039165,Zach Charbonnet,Doubtful,https://www.seahawks.com/news/2025-seahawks-vs-saints-week-3-injury-report,2025-09-20T23:03:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,SEA,00-0036363,Josh Jones,Out,https://www.seahawks.com/news/week-4-injury-report-seahawks-at-cardinals,2025-09-24T23:41:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,SEA,00-0038133,Boye Mafe,Questionable,https://www.seahawks.com/news/week-4-injury-report-seahawks-at-cardinals,2025-09-24T23:41:00+00:00,2025-09-25T22:45:00+00:00
+4,2025_04_SEA_ARI,SEA,00-0040733,Nick Emmanwori,Questionable,https://www.seahawks.com/news/week-4-injury-report-seahawks-at-cardinals,2025-09-24T23:41:00+00:00,2025-09-25T22:45:00+00:00
+5,2025_05_DAL_NYJ,NYJ,00-0036842,Kene Nwangwu,Questionable,https://www.newyorkjets.com/news/jets-injury-report-week-5-vs-cowboys-wednesday-10-01-2025,2025-10-01T20:00:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_DAL_NYJ,NYJ,00-0036842,Kene Nwangwu,Questionable,https://www.newyorkjets.com/news/jets-injury-report-week-5-vs-cowboys-thursday-10-02-2025,2025-10-02T20:00:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_DAL_NYJ,NYJ,00-0036501,Michael Carter II,Out,https://www.newyorkjets.com/news/jets-injury-report-week-5-vs-cowboys-friday-10-03-2025,2025-10-03T20:00:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_DAL_NYJ,NYJ,00-0036842,Kene Nwangwu,Questionable,https://www.newyorkjets.com/news/jets-injury-report-week-5-vs-cowboys-friday-10-03-2025,2025-10-03T20:00:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_DAL_NYJ,NYJ,00-0037663,Jermaine Johnson II,Out,https://www.newyorkjets.com/news/jets-injury-report-week-5-vs-cowboys-friday-10-03-2025,2025-10-03T20:00:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_DAL_NYJ,DAL,00-0039387,Caelen Carson,Out,https://www.dallascowboys.com/news/injury-report-in-depth-update-on-17-injured-cowboys-players,2025-10-01T21:41:15+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_DEN_PHI,PHI,00-0037615,Nakobe Dean,Out,https://www.philadelphiaeagles.com/news/broncos-eagles-injury-report-nfl-week-5-dallas-goedert,2025-10-03T20:00:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_HOU_BAL,HOU,00-0031254,Denico Autry,Out,https://www.houstontexans.com/news/week-5-injury-report-texans-at-ravens,2025-10-03T20:08:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_HOU_BAL,HOU,00-0032071,Trent Brown,Out,https://www.houstontexans.com/news/week-5-injury-report-texans-at-ravens,2025-10-03T20:08:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_HOU_BAL,HOU,00-0040204,Jaylen Reed,Out,https://www.houstontexans.com/news/week-5-injury-report-texans-at-ravens,2025-10-03T20:08:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_KC_JAX,KC,00-0036416,Kristian Fulton,Questionable,https://www.chiefs.com/news/week-5-injury-report-chiefs-vs-jaguars,2025-10-04T19:37:00+00:00,2025-10-06T22:45:00+00:00
+5,2025_05_KC_JAX,KC,00-0040748,Omarr Norman-Lott,Questionable,https://www.chiefs.com/news/week-5-injury-report-chiefs-vs-jaguars,2025-10-04T19:37:00+00:00,2025-10-06T22:45:00+00:00
+5,2025_05_LV_IND,IND,00-0037120,Tyler Goodson,Out,https://www.colts.com/news/colts-rule-out-rb-tyler-goodson-wr-alec-pierce-cb-kenny-moore-ii-s-daniel-scott-for-week-5-game-vs-las-vegas-raiders,2025-10-03T16:50:17+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_LV_IND,IND,00-0037664,Alec Pierce,Out,https://www.colts.com/news/colts-rule-out-rb-tyler-goodson-wr-alec-pierce-cb-kenny-moore-ii-s-daniel-scott-for-week-5-game-vs-las-vegas-raiders,2025-10-03T16:50:17+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_LV_IND,LV,00-0036901,Eric Stokes,Questionable,https://www.raiders.com/news/las-vegas-raiders-indianapolis-colts-nfl-week-5-injury-report,2025-10-03T20:21:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_LV_IND,LV,00-0039066,Michael Mayer,Questionable,https://www.raiders.com/news/las-vegas-raiders-indianapolis-colts-nfl-week-5-injury-report,2025-10-03T20:21:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_MIN_CLE,CLE,00-0039895,Mike Hall Jr.,Out,https://www.clevelandbrowns.com/news/mike-hall-jr-ruled-out-for-week-5-vs-vikings,2025-10-01T22:57:46+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,CLE,00-0033057,Jack Conklin,Questionable,https://www.clevelandbrowns.com/news/greg-newsome-ii-questionable-for-week-5-vs-vikings-injury-report,2025-10-03T13:18:06+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,CLE,00-0036996,Greg Newsome II,Questionable,https://www.clevelandbrowns.com/news/greg-newsome-ii-questionable-for-week-5-vs-vikings-injury-report,2025-10-03T13:18:06+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,CLE,00-0039895,Mike Hall Jr.,Out,https://www.clevelandbrowns.com/news/greg-newsome-ii-questionable-for-week-5-vs-vikings-injury-report,2025-10-03T13:18:06+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,MIN,00-0032383,Ryan Kelly,Out,https://www.vikings.com/news/browns-injury-report-week-5-2025,2025-10-03T15:25:00+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,MIN,00-0032918,C.J. Ham,Questionable,https://www.vikings.com/news/browns-injury-report-week-5-2025,2025-10-03T15:25:00+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,MIN,00-0035272,Andrew Van Ginkel,Out,https://www.vikings.com/news/browns-injury-report-week-5-2025,2025-10-03T15:25:00+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,MIN,00-0039419,Michael Jurgens,Out,https://www.vikings.com/news/browns-injury-report-week-5-2025,2025-10-03T15:25:00+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,MIN,00-0039923,J.J. McCarthy,Out,https://www.vikings.com/news/browns-injury-report-week-5-2025,2025-10-03T15:25:00+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,MIN,00-0040492,Tyler Batty,Out,https://www.vikings.com/news/browns-injury-report-week-5-2025,2025-10-03T15:25:00+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,MIN,00-0040509,Ben Yurosek,Questionable,https://www.vikings.com/news/browns-injury-report-week-5-2025,2025-10-03T15:25:00+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_MIN_CLE,MIN,00-0040661,Donovan Jackson,Out,https://www.vikings.com/news/browns-injury-report-week-5-2025,2025-10-03T15:25:00+00:00,2025-10-05T12:00:00+00:00
+5,2025_05_NYG_NO,NO,00-0037283,John Ridgeway,Out,https://www.neworleanssaints.com/news/new-orleans-saints-roster-moves-2025-nfl-week-5-transactions-new-york-giants,2025-10-04T19:58:23+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_NYG_NO,NYG,00-0035020,Demetrius Flannigan-Fowles,Out,https://www.giants.com/news/injury-report-statuses-for-giants-at-saints-tyrone-tracy-tyler-nubin-jaxson-dart,2025-10-03T18:25:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_NYG_NO,NYG,00-0035683,Dexter Lawrence,Questionable,https://www.giants.com/news/injury-report-statuses-for-giants-at-saints-tyrone-tracy-tyler-nubin-jaxson-dart,2025-10-03T18:25:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_NYG_NO,NYG,00-0039384,Tyrone Tracy Jr.,Questionable,https://www.giants.com/news/injury-report-statuses-for-giants-at-saints-tyrone-tracy-tyler-nubin-jaxson-dart,2025-10-03T18:25:00+00:00,2025-10-05T15:30:00+00:00
+5,2025_05_SF_LA,SF,00-0036259,Jauan Jennings,Out,https://www.49ers.com/news/purdy-jennings-pearsall-out-vs-rams-injury-report-ahead-of-sfvslar,2025-10-01T20:50:00+00:00,2025-10-02T22:45:00+00:00
+5,2025_05_SF_LA,SF,00-0037834,Brock Purdy,Out,https://www.49ers.com/news/purdy-jennings-pearsall-out-vs-rams-injury-report-ahead-of-sfvslar,2025-10-01T20:50:00+00:00,2025-10-02T22:45:00+00:00
+5,2025_05_SF_LA,SF,00-0038603,Robert Beal Jr.,Out,https://www.49ers.com/news/purdy-jennings-pearsall-out-vs-rams-injury-report-ahead-of-sfvslar,2025-10-01T20:50:00+00:00,2025-10-02T22:45:00+00:00
+5,2025_05_SF_LA,SF,00-0040172,Jordan Watkins,Out,https://www.49ers.com/news/purdy-jennings-pearsall-out-vs-rams-injury-report-ahead-of-sfvslar,2025-10-01T20:50:00+00:00,2025-10-02T22:45:00+00:00
+5,2025_05_TB_SEA,SEA,00-0034974,Julian Love,Out,https://www.seahawks.com/news/week-5-injury-report-seahawks-vs-buccaneers,2025-10-04T00:29:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_TB_SEA,SEA,00-0039169,Devon Witherspoon,Out,https://www.seahawks.com/news/week-5-injury-report-seahawks-vs-buccaneers,2025-10-04T00:29:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_TB_SEA,TB,00-0031408,Mike Evans,Out,https://www.buccaneers.com/news/buccaneers-seahawks-injury-report-oct-3-week-5-2025,2025-10-03T21:30:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_TB_SEA,TB,00-0035699,Jamel Dean,Out,https://www.buccaneers.com/news/buccaneers-seahawks-injury-report-oct-3-week-5-2025,2025-10-03T21:30:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_TB_SEA,TB,00-0038820,Christian Izien,Out,https://www.buccaneers.com/news/buccaneers-seahawks-injury-report-oct-3-week-5-2025,2025-10-03T21:30:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_TEN_ARI,ARI,00-0034346,Will Hernandez,Questionable,https://www.azcardinals.com/news/injury-report-week-5-vs-titans,2025-10-03T19:52:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_TEN_ARI,ARI,00-0034387,Bilal Nichols,Questionable,https://www.azcardinals.com/news/injury-report-week-5-vs-titans,2025-10-03T19:52:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_TEN_ARI,ARI,00-0034495,Evan Brown,Out,https://www.azcardinals.com/news/injury-report-week-5-vs-titans,2025-10-03T19:52:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_TEN_ARI,ARI,00-0035500,Greg Dortch,Questionable,https://www.azcardinals.com/news/injury-report-week-5-vs-titans,2025-10-03T19:52:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_TEN_ARI,ARI,00-0040195,Denzel Burke,Doubtful,https://www.azcardinals.com/news/injury-report-week-5-vs-titans,2025-10-03T19:52:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_TEN_ARI,ARI,00-0040751,Will Johnson,Questionable,https://www.azcardinals.com/news/injury-report-week-5-vs-titans,2025-10-03T19:52:00+00:00,2025-10-05T18:35:00+00:00
+5,2025_05_WAS_LAC,WAS,00-0033591,Noah Brown,Out,https://www.commanders.com/news/commanders-vs-chargers-week-5-injury-report,2025-10-01T21:59:31+00:00,2025-10-05T18:55:00+00:00
+5,2025_05_WAS_LAC,WAS,00-0035659,Terry McLaurin,Out,https://www.commanders.com/news/commanders-vs-chargers-week-5-injury-report,2025-10-01T21:59:31+00:00,2025-10-05T18:55:00+00:00
+5,2025_05_WAS_LAC,WAS,00-0036618,Sam Cosmi,Out,https://www.commanders.com/news/commanders-vs-chargers-week-5-injury-report,2025-10-01T21:59:31+00:00,2025-10-05T18:55:00+00:00
+6,2025_06_ARI_IND,ARI,00-0033891,Zay Jones,Questionable,https://www.azcardinals.com/news/injury-report-week-6-vs-colts,2025-10-10T20:05:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_ARI_IND,ARI,00-0035144,Mack Wilson,Questionable,https://www.azcardinals.com/news/injury-report-week-6-vs-colts,2025-10-10T20:05:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_ARI_IND,ARI,00-0035228,Kyler Murray,Out,https://www.azcardinals.com/news/injury-report-week-6-vs-colts,2025-10-10T20:05:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_ARI_IND,ARI,00-0039807,Max Melton,Out,https://www.azcardinals.com/news/injury-report-week-6-vs-colts,2025-10-10T20:05:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_ARI_IND,ARI,00-0040645,Cody Simon,Questionable,https://www.azcardinals.com/news/injury-report-week-6-vs-colts,2025-10-10T20:05:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_BUF_ATL,ATL,00-0040156,Billy Bowman Jr.,Out,https://www.atlantafalcons.com/news/aj-terrell-taquon-graham-injury-updates-week-6-buffalo-bills,2025-10-07T19:35:40+00:00,2025-10-13T21:45:00+00:00
+6,2025_06_BUF_ATL,ATL,00-0040156,Billy Bowman Jr.,Out,https://www.atlantafalcons.com/news/falcons-injury-report-a-j-terrell-returns-to-practice-darnell-mooney,2025-10-09T19:59:13+00:00,2025-10-13T21:45:00+00:00
+6,2025_06_BUF_ATL,ATL,00-0036309,Darnell Mooney,Questionable,https://www.atlantafalcons.com/news/falcons-injury-report-darnell-mooney-xavier-watts-billy-bowman-buffalo-bills-monday-night-football,2025-10-10T19:59:40+00:00,2025-10-13T21:45:00+00:00
+6,2025_06_BUF_ATL,ATL,00-0040156,Billy Bowman Jr.,Out,https://www.atlantafalcons.com/news/falcons-injury-report-darnell-mooney-xavier-watts-billy-bowman-buffalo-bills-monday-night-football,2025-10-10T19:59:40+00:00,2025-10-13T21:45:00+00:00
+6,2025_06_BUF_ATL,BUF,00-0038933,Dalton Kincaid,Out,https://www.buffalobills.com/news/bills-lb-matt-milano-week-to-week-after-re-aggravating-pec-injury-cb-dorian-strong-neck-to-see-specialist,2025-10-07T12:38:00+00:00,2025-10-13T21:45:00+00:00
+6,2025_06_CIN_GB,GB,00-0037075,Devonte Wyatt,Questionable,https://www.packers.com/news/packers-bengals-injury-report-oct-8-2025,2025-10-08T20:41:54+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_CIN_GB,GB,00-0037075,Devonte Wyatt,Questionable,https://www.packers.com/news/packers-bengals-injury-report-oct-9-2025,2025-10-09T20:30:11+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_CIN_GB,GB,00-0029822,Brandon McManus,Questionable,https://www.packers.com/news/packers-bengals-injury-report-week-6-oct-10-2025,2025-10-10T19:52:01+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_CIN_GB,GB,00-0037075,Devonte Wyatt,Questionable,https://www.packers.com/news/packers-bengals-injury-report-week-6-oct-10-2025,2025-10-10T19:52:01+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_CIN_GB,GB,00-0037196,Rasheed Walker,Questionable,https://www.packers.com/news/packers-bengals-injury-report-week-6-oct-10-2025,2025-10-10T19:52:01+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_CIN_GB,GB,00-0038124,Christian Watson,Out,https://www.packers.com/news/packers-bengals-injury-report-week-6-oct-10-2025,2025-10-10T19:52:01+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_CIN_GB,CIN,00-0033082,Lucas Patrick,Out,https://www.bengals.com/news/bengals-packers-injury-report-week-6-2025,2025-10-11T20:00:00+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_CLE_PIT,PIT,00-0037837,Calvin Austin III,Out,https://www.steelers.com/news/week-6-injury-report-browns-x1116,2025-10-11T15:00:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_CLE_PIT,CLE,00-0039895,Mike Hall Jr.,Out,https://www.clevelandbrowns.com/news/mike-hall-jr-out-for-week-6-vs-steelers-injury-report,2025-10-10T18:07:45+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_DAL_CAR,CAR,00-0033284,Taylor Moton,Out,https://www.panthers.com/news/panthers-add-two-from-practice-squad-for-cowboys-game-jalen-coker-downgraded-out,2025-10-11T19:59:33+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_DAL_CAR,CAR,00-0036555,Chuba Hubbard,Out,https://www.panthers.com/news/panthers-add-two-from-practice-squad-for-cowboys-game-jalen-coker-downgraded-out,2025-10-11T19:59:33+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_DAL_CAR,CAR,00-0039491,Jalen Coker,Out,https://www.panthers.com/news/panthers-add-two-from-practice-squad-for-cowboys-game-jalen-coker-downgraded-out,2025-10-11T19:59:33+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_LAC_MIA,LAC,00-0032103,Denzel Perryman,Questionable,https://www.chargers.com/news/dolphins-injury-report-week-6-2025,2025-10-11T12:59:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_LAC_MIA,LAC,00-0038573,Derius Davis,Out,https://www.chargers.com/news/dolphins-injury-report-week-6-2025,2025-10-11T12:59:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_LAC_MIA,LAC,00-0038614,Scott Matlock,Out,https://www.chargers.com/news/dolphins-injury-report-week-6-2025,2025-10-11T12:59:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_LAC_MIA,LAC,00-0039897,Joe Alt,Out,https://www.chargers.com/news/dolphins-injury-report-week-6-2025,2025-10-11T12:59:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_LA_BAL,LA,00-0039774,Omar Speights,Doubtful,https://www.therams.com/news/rams-injury-updates-week-6-2025-ravens-omar-speights-colby-parkinson-tyler-higbee-rob-havenstein,2025-10-06T20:05:13+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_LA_BAL,LA,00-0036849,Tutu Atwell,Questionable,https://www.therams.com/news/rams-injury-report-week-6-2025-at-ravens-omar-speights-rob-havenstein-colby-parkinson-tutu-atwell,2025-10-10T21:18:54+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_LA_BAL,LA,00-0039774,Omar Speights,Doubtful,https://www.therams.com/news/rams-injury-report-week-6-2025-at-ravens-omar-speights-rob-havenstein-colby-parkinson-tutu-atwell,2025-10-10T21:18:54+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_NE_NO,NO,00-0037283,John Ridgeway,Out,https://www.neworleanssaints.com/news/new-orleans-saints-roster-moves-2025-nfl-week-6-transactions-new-england-patriots,2025-10-11T20:00:13+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_NE_NO,NE,00-0036193,Anfernee Jennings,Out,https://www.patriots.com/news/injury-report-analysis-patriots-rule-out-three-defenders-cb-christian-gonzalez-questionable-for-week-6-vs-the-saints,2025-10-10T18:52:57+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_NE_NO,NE,00-0039148,Keion White,Out,https://www.patriots.com/news/injury-report-analysis-patriots-rule-out-three-defenders-cb-christian-gonzalez-questionable-for-week-6-vs-the-saints,2025-10-10T18:52:57+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_NE_NO,NE,00-0039770,Charles Woods,Questionable,https://www.patriots.com/news/injury-report-analysis-patriots-rule-out-three-defenders-cb-christian-gonzalez-questionable-for-week-6-vs-the-saints,2025-10-10T18:52:57+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_PHI_NYG,NYG,00-0035020,Demetrius Flannigan-Fowles,Out,https://www.giants.com/news/injury-report-statuses-for-giants-at-saints-tyrone-tracy-tyler-nubin-jaxson-dart,2025-10-03T18:25:00+00:00,2025-10-09T22:45:00+00:00
+6,2025_06_PHI_NYG,NYG,00-0035020,Demetrius Flannigan-Fowles,Questionable,https://www.giants.com/news/nfl-week-5-inactives-giants-saints-injury-report-statuses-tyrone-tracy-jr-malik-nabers,2025-10-05T15:30:00+00:00,2025-10-09T22:45:00+00:00
+6,2025_06_PHI_NYG,PHI,00-0037615,Nakobe Dean,Out,https://www.philadelphiaeagles.com/news/broncos-eagles-injury-report-nfl-week-5-dallas-goedert,2025-10-03T20:00:00+00:00,2025-10-09T22:45:00+00:00
+6,2025_06_PHI_NYG,PHI,00-0037002,Landon Dickerson,Out,https://www.philadelphiaeagles.com/news/eagles-giants-injury-report-saquon-barkley-jaxson-dart-landon-dickerson,2025-10-08T18:15:00+00:00,2025-10-09T22:45:00+00:00
+6,2025_06_PHI_NYG,PHI,00-0038386,Jalen Carter,Questionable,https://www.philadelphiaeagles.com/news/eagles-giants-injury-report-saquon-barkley-jaxson-dart-landon-dickerson,2025-10-08T18:15:00+00:00,2025-10-09T22:45:00+00:00
+6,2025_06_SEA_JAX,SEA,00-0037079,Riq Woolen,Out,https://www.seahawks.com/news/injury-updates-from-the-seahawks-week-5-loss-to-the-buccaneers,2025-10-06T00:51:45+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_SEA_JAX,SEA,00-0039047,Derick Hall,Out,https://www.seahawks.com/news/injury-updates-from-the-seahawks-week-5-loss-to-the-buccaneers,2025-10-06T00:51:45+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_SEA_JAX,SEA,00-0037079,Riq Woolen,Doubtful,https://www.seahawks.com/news/week-6-injury-reports-seahawks-at-jaguars,2025-10-11T00:17:00+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_SEA_JAX,SEA,00-0034974,Julian Love,Doubtful,https://www.seahawks.com/news/seahawks-elevate-two-from-practice-squad-riq-woolen-downgraded-to-out,2025-10-11T20:14:25+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_SEA_JAX,SEA,00-0039169,Devon Witherspoon,Doubtful,https://www.seahawks.com/news/seahawks-elevate-two-from-practice-squad-riq-woolen-downgraded-to-out,2025-10-11T20:14:25+00:00,2025-10-12T15:30:00+00:00
+6,2025_06_SF_TB,SF,00-0035026,Kevin Givens,Questionable,https://www.49ers.com/news/brock-purdy-out-mac-jones-questionable-vs-buccaneers-injury-report-ahead-of-sfvstb,2025-10-10T21:50:00+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_SF_TB,SF,00-0036259,Jauan Jennings,Out,https://www.49ers.com/news/brock-purdy-out-mac-jones-questionable-vs-buccaneers-injury-report-ahead-of-sfvstb,2025-10-10T21:50:00+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_SF_TB,SF,00-0036288,Yetur Gross-Matos,Out,https://www.49ers.com/news/brock-purdy-out-mac-jones-questionable-vs-buccaneers-injury-report-ahead-of-sfvstb,2025-10-10T21:50:00+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_SF_TB,SF,00-0036972,Mac Jones,Questionable,https://www.49ers.com/news/brock-purdy-out-mac-jones-questionable-vs-buccaneers-injury-report-ahead-of-sfvstb,2025-10-10T21:50:00+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_SF_TB,SF,00-0037832,Kalia Davis,Questionable,https://www.49ers.com/news/brock-purdy-out-mac-jones-questionable-vs-buccaneers-injury-report-ahead-of-sfvstb,2025-10-10T21:50:00+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_SF_TB,SF,00-0039360,Malik Mustapha,Questionable,https://www.49ers.com/news/brock-purdy-out-mac-jones-questionable-vs-buccaneers-injury-report-ahead-of-sfvstb,2025-10-10T21:50:00+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_SF_TB,SF,00-0039916,Ricky Pearsall,Questionable,https://www.49ers.com/news/brock-purdy-out-mac-jones-questionable-vs-buccaneers-injury-report-ahead-of-sfvstb,2025-10-10T21:50:00+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_SF_TB,SF,00-0040152,Upton Stout,Out,https://www.49ers.com/news/brock-purdy-out-mac-jones-questionable-vs-buccaneers-injury-report-ahead-of-sfvstb,2025-10-10T21:50:00+00:00,2025-10-12T18:55:00+00:00
+6,2025_06_SF_TB,SF,00-0040172,Jordan Watkins,Questionable,https://www.49ers.com/news/brock-purdy-out-mac-jones-questionable-vs-buccaneers-injury-report-ahead-of-sfvstb,2025-10-10T21:50:00+00:00,2025-10-12T18:55:00+00:00
+7,2025_07_ATL_SF,SF,00-0037834,Brock Purdy,Out,https://www.49ers.com/news/george-kittle-active-brock-purdy-out-vs-falcons-injury-report-ahead-of-atlvssf,2025-10-17T22:50:00+00:00,2025-10-19T22:50:00+00:00
+7,2025_07_ATL_SF,SF,00-0039345,Renardo Green,Questionable,https://www.49ers.com/news/george-kittle-active-brock-purdy-out-vs-falcons-injury-report-ahead-of-atlvssf,2025-10-17T22:50:00+00:00,2025-10-19T22:50:00+00:00
+7,2025_07_ATL_SF,SF,00-0040152,Upton Stout,Out,https://www.49ers.com/news/george-kittle-active-brock-purdy-out-vs-falcons-injury-report-ahead-of-atlvssf,2025-10-17T22:50:00+00:00,2025-10-19T22:50:00+00:00
+7,2025_07_CAR_NYJ,NYJ,00-0037740,Garrett Wilson,Doubtful,https://www.newyorkjets.com/news/jets-garrett-wilson-doubtful-for-panthers-game-10-17-2025,2025-10-18T20:59:00+00:00,2025-10-19T15:30:00+00:00
+7,2025_07_CAR_NYJ,NYJ,00-0038513,Cam Jones,Doubtful,https://www.newyorkjets.com/news/jets-garrett-wilson-doubtful-for-panthers-game-10-17-2025,2025-10-18T20:59:00+00:00,2025-10-19T15:30:00+00:00
+7,2025_07_CAR_NYJ,NYJ,00-0039789,Qwan'tez Stiggers,Doubtful,https://www.newyorkjets.com/news/jets-garrett-wilson-doubtful-for-panthers-game-10-17-2025,2025-10-18T20:59:00+00:00,2025-10-19T15:30:00+00:00
+7,2025_07_HOU_SEA,HOU,00-0031254,Denico Autry,Questionable,https://www.houstontexans.com/news/week-7-injury-report-texans-at-seahawks,2025-10-18T20:53:00+00:00,2025-10-21T00:30:00+00:00
+7,2025_07_HOU_SEA,HOU,00-0034775,Christian Kirk,Questionable,https://www.houstontexans.com/news/week-7-injury-report-texans-at-seahawks,2025-10-18T20:53:00+00:00,2025-10-21T00:30:00+00:00
+7,2025_07_HOU_SEA,HOU,00-0040204,Jaylen Reed,Out,https://www.houstontexans.com/news/week-7-injury-report-texans-at-seahawks,2025-10-18T20:53:00+00:00,2025-10-21T00:30:00+00:00
+7,2025_07_HOU_SEA,HOU,00-0040411,Alijah Huzzie,Out,https://www.houstontexans.com/news/week-7-injury-report-texans-at-seahawks,2025-10-18T20:53:00+00:00,2025-10-21T00:30:00+00:00
+7,2025_07_NO_CHI,NO,00-0037283,John Ridgeway,Out,https://www.neworleanssaints.com/news/new-orleans-saints-roster-moves-2025-nfl-week-7-transactions-chicago-bears,2025-10-18T20:00:10+00:00,2025-10-19T15:30:00+00:00
+7,2025_07_PHI_MIN,PHI,00-0038386,Jalen Carter,Questionable,https://www.philadelphiaeagles.com/news/eagles-vikings-injury-report-nfl-week-7-jalen-carter-quinyon-mitchell,2025-10-17T19:53:00+00:00,2025-10-19T15:30:00+00:00
+7,2025_07_PIT_CIN,CIN,00-0033082,Lucas Patrick,Out,https://www.bengals.com/news/bengals-packers-injury-report-week-6-2025,2025-10-11T20:00:00+00:00,2025-10-16T22:45:00+00:00
+7,2025_07_PIT_CIN,CIN,00-0033082,Lucas Patrick,Out,https://www.bengals.com/news/bengals-steelers-injury-report-week-7-2025,2025-10-15T20:00:00+00:00,2025-10-16T22:45:00+00:00
+7,2025_07_PIT_CIN,PIT,00-0037837,Calvin Austin III,Out,https://www.steelers.com/news/week-6-injury-report-browns-x1116,2025-10-11T15:00:00+00:00,2025-10-16T22:45:00+00:00
+8,2025_08_MIN_LAC,MIN,00-0032918,C.J. Ham,Out,https://www.vikings.com/news/chargers-injury-report-week-8-2025,2025-10-22T20:14:00+00:00,2025-10-23T22:45:00+00:00
+8,2025_08_MIN_LAC,MIN,00-0033293,Aaron Jones,Questionable,https://www.vikings.com/news/chargers-injury-report-week-8-2025,2025-10-22T20:14:00+00:00,2025-10-23T22:45:00+00:00
+8,2025_08_MIN_LAC,MIN,00-0034158,Brian O'Neill,Questionable,https://www.vikings.com/news/chargers-injury-report-week-8-2025,2025-10-22T20:14:00+00:00,2025-10-23T22:45:00+00:00
+8,2025_08_MIN_LAC,MIN,00-0035272,Andrew Van Ginkel,Out,https://www.vikings.com/news/chargers-injury-report-week-8-2025,2025-10-22T20:14:00+00:00,2025-10-23T22:45:00+00:00
+8,2025_08_MIN_LAC,MIN,00-0036616,Christian Darrisaw,Out,https://www.vikings.com/news/chargers-injury-report-week-8-2025,2025-10-22T20:14:00+00:00,2025-10-23T22:45:00+00:00
+8,2025_08_MIN_LAC,MIN,00-0038440,Zavier Scott,Questionable,https://www.vikings.com/news/chargers-injury-report-week-8-2025,2025-10-22T20:14:00+00:00,2025-10-23T22:45:00+00:00
+8,2025_08_MIN_LAC,MIN,00-0039923,J.J. McCarthy,Questionable,https://www.vikings.com/news/chargers-injury-report-week-8-2025,2025-10-22T20:14:00+00:00,2025-10-23T22:45:00+00:00
+8,2025_08_NYJ_CIN,NYJ,00-0028118,Tyrod Taylor,Questionable,https://www.newyorkjets.com/news/jets-garrett-wilson-sauce-gardner-ruled-out-vs-bengals-aaron-glenn-10-24-2025,2025-10-25T20:56:00+00:00,2025-10-26T15:30:00+00:00
+8,2025_08_NYJ_CIN,NYJ,00-0037190,Sauce Gardner,Out,https://www.newyorkjets.com/news/jets-garrett-wilson-sauce-gardner-ruled-out-vs-bengals-aaron-glenn-10-24-2025,2025-10-25T20:56:00+00:00,2025-10-26T15:30:00+00:00
+8,2025_08_NYJ_CIN,NYJ,00-0037740,Garrett Wilson,Out,https://www.newyorkjets.com/news/jets-garrett-wilson-sauce-gardner-ruled-out-vs-bengals-aaron-glenn-10-24-2025,2025-10-25T20:56:00+00:00,2025-10-26T15:30:00+00:00
+8,2025_08_NYJ_CIN,NYJ,00-0028118,Tyrod Taylor,Out,https://www.newyorkjets.com/news/tyrod-taylor-josh-reynolds-ruled-out-jets-vs-bengals-10-25-2025,2025-10-25T20:57:00+00:00,2025-10-26T15:30:00+00:00
+8,2025_08_NYJ_CIN,NYJ,00-0033943,Josh Reynolds,Out,https://www.newyorkjets.com/news/tyrod-taylor-josh-reynolds-ruled-out-jets-vs-bengals-10-25-2025,2025-10-25T20:57:00+00:00,2025-10-26T15:30:00+00:00
+9,2025_09_DEN_HOU,HOU,00-0031254,Denico Autry,Questionable,https://www.houstontexans.com/news/week-9-injury-report-texans-vs-broncos,2025-11-01T20:21:00+00:00,2025-11-02T16:30:00+00:00
+9,2025_09_DEN_HOU,HOU,00-0034383,Dalton Schultz,Questionable,https://www.houstontexans.com/news/week-9-injury-report-texans-vs-broncos,2025-11-01T20:21:00+00:00,2025-11-02T16:30:00+00:00
+9,2025_09_DEN_HOU,HOU,00-0035726,Jakob Johnson,Questionable,https://www.houstontexans.com/news/week-9-injury-report-texans-vs-broncos,2025-11-01T20:21:00+00:00,2025-11-02T16:30:00+00:00
+9,2025_09_DEN_HOU,HOU,00-0039009,Dylan Horton,Out,https://www.houstontexans.com/news/week-9-injury-report-texans-vs-broncos,2025-11-01T20:21:00+00:00,2025-11-02T16:30:00+00:00
+9,2025_09_DEN_HOU,HOU,00-0040411,Alijah Huzzie,Out,https://www.houstontexans.com/news/week-9-injury-report-texans-vs-broncos,2025-11-01T20:21:00+00:00,2025-11-02T16:30:00+00:00
+9,2025_09_IND_PIT,PIT,00-0033294,Chuck Clark,Questionable,https://www.steelers.com/news/week-9-injury-report-colts-x3828,2025-11-01T15:07:00+00:00,2025-11-02T16:30:00+00:00
+9,2025_09_IND_PIT,PIT,00-0033883,Jabrill Peppers,Out,https://www.steelers.com/news/week-9-injury-report-colts-x3828,2025-11-01T15:07:00+00:00,2025-11-02T16:30:00+00:00
+9,2025_09_IND_PIT,PIT,00-0035286,Cole Holcomb,Out,https://www.steelers.com/news/week-9-injury-report-colts-x3828,2025-11-01T15:07:00+00:00,2025-11-02T16:30:00+00:00
+9,2025_09_IND_PIT,PIT,00-0038639,Cory Trice Jr.,Out,https://www.steelers.com/news/week-9-injury-report-colts-x3828,2025-11-01T15:07:00+00:00,2025-11-02T16:30:00+00:00
+9,2025_09_IND_PIT,PIT,00-0040203,Will Howard,Out,https://www.steelers.com/news/week-9-injury-report-colts-x3828,2025-11-01T15:07:00+00:00,2025-11-02T16:30:00+00:00
