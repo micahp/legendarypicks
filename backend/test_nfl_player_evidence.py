@@ -96,6 +96,26 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual([210.0], [r['mean'] for r in result['projections']['rows']])
         self.assertEqual(['Questionable'], [r['report_status'] for r in result['availability']])
 
+    def test_a_newer_projection_for_another_game_does_not_hide_this_game(self):
+        self.con.executemany("INSERT INTO player_projections(run_id, player_id, season, week, game_id, team, stat, mean, "
+                             "as_of, source, model_version, league) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                             [('r1', 101, 2026, 9, 'g9', 'BAL', 'rec', 5.5, '2026-11-05T12:00:00+00:00', 'espn', 'espn-weekly', 'nfl'),
+                              ('r2', 101, 2026, 10, 'g10', 'BAL', 'rec', 7.0, '2026-11-05T22:00:00+00:00', 'espn', 'espn-weekly', 'nfl')])
+        self.con.commit()
+        result = evidence.projections_for(self.con, 101, '2026-11-05T23:45:00+00:00', game_id='g9')
+        self.assertEqual(['g9'], [r['game_id'] for r in result['rows']])
+        self.assertEqual([5.5], [r['mean'] for r in result['rows']])
+
+    def test_every_source_and_model_for_the_game_is_returned(self):
+        self.con.executemany("INSERT INTO player_projections(run_id, player_id, season, week, game_id, team, stat, mean, "
+                             "as_of, source, model_version, league) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                             [('e1', 101, 2026, 9, 'g9', 'BAL', 'rec', 5.5, '2026-11-05T12:00:00+00:00', 'espn', 'espn-weekly', 'nfl'),
+                              ('p1', 101, 2026, 9, 'g9', 'BAL', 'rec', 6.5, '2026-11-05T13:00:00+00:00', 'lp', 'v2', 'nfl')])
+        self.con.commit()
+        result = evidence.projections_for(self.con, 101, '2026-11-05T23:45:00+00:00', game_id='g9')
+        self.assertEqual({('espn', 'espn-weekly'), ('lp', 'v2')},
+                         {(r['source'], r['model_version']) for r in result['rows']})
+
     def test_external_projections_are_counted_as_not_joinable(self):
         result = evidence.player_evidence(self.con, 101, self.cutoff())
         self.assertEqual(1, result['external_projections_not_joinable_rows'])

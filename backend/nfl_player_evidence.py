@@ -72,6 +72,7 @@ def news_for_player(con, player_id, cutoff_iso, limit):
             'source_player_id': row['rotowire_player_id'],
             'rotowire_player_id': row['rotowire_player_id'],
             'player_id': row['player_id'],
+            'team': row['team'],
             'match': row['match'],
             'injury_status': row['injury_status'] or None,
             'injury_type': row['injury_type'] or None,
@@ -84,16 +85,26 @@ def news_for_player(con, player_id, cutoff_iso, limit):
     return articles[:limit]
 
 
-def projections_for(con, player_id, cutoff_iso, limit=20):
-    latest = con.execute('SELECT MAX(as_of) FROM player_projections WHERE player_id=? AND as_of<=?',
-                         (player_id, cutoff_iso)).fetchone()[0]
-    if latest is None:
-        return {'as_of': None, 'rows': []}
-    rows = con.execute(
-        """SELECT run_id, source, model_version, season, week, game_id, team, stat, mean, median, p10, p90, scenario,
-                  p_plays, as_of FROM player_projections WHERE player_id=? AND as_of=?
-           ORDER BY season, week, game_id, stat LIMIT ?""", (player_id, latest, limit)).fetchall()
-    return {'as_of': latest, 'rows': [dict(row) for row in rows]}
+def projections_for(con, player_id, cutoff_iso, game_id=None):
+    """The latest stored projection for each (game, source, model_version, stat) known at the cutoff.
+
+    The game filter is applied before the latest-row choice, so a newer projection for another game cannot hide a valid
+    projection for this one. Rows are returned for every source and model version, not a single run.
+    """
+    sql = ('SELECT run_id, game_id, source, model_version, season, week, team, stat, mean, median, p10, p90, scenario, '
+           'p_plays, as_of FROM player_projections WHERE player_id=? AND as_of<=?')
+    args = [player_id, cutoff_iso]
+    if game_id is not None:
+        sql += ' AND game_id=?'
+        args.append(game_id)
+    rows = [dict(row) for row in con.execute(sql, args).fetchall()]
+    latest = {}
+    for row in rows:
+        key = (row['game_id'], row['source'], row['model_version'], row['stat'])
+        if key not in latest or row['as_of'] > latest[key]['as_of']:
+            latest[key] = row
+    chosen = sorted(latest.values(), key=lambda r: (r['game_id'] or '', r['source'] or '', r['stat'] or ''))
+    return {'as_of': max((r['as_of'] for r in chosen), default=None), 'rows': chosen}
 
 
 def availability_for(con, player_id, cutoff_iso, limit=10):
@@ -112,7 +123,7 @@ def unjoinable_external_rows(con):
     return con.execute('SELECT COUNT(*) FROM external_projections').fetchone()[0]
 
 
-def player_evidence(con, player_id, cutoff, limit=10):
+def player_evidence(con, player_id, cutoff, limit=10, game_id=None):
     """Everything stored about one canonical player, as of one cutoff (a timezone-aware datetime)."""
     cutoff_iso = _utc_iso(cutoff)
     news = news_for_player(con, player_id, cutoff_iso, limit)
@@ -124,7 +135,7 @@ def player_evidence(con, player_id, cutoff, limit=10):
         'cutoff_utc': cutoff_iso,
         'news': news,
         'starter_claims': starter_claims,
-        'projections': projections_for(con, player_id, cutoff_iso),
+        'projections': projections_for(con, player_id, cutoff_iso, game_id),
         'availability': availability_for(con, player_id, cutoff_iso),
         'external_projections_not_joinable_rows': unjoinable_external_rows(con),
     }
