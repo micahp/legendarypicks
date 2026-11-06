@@ -584,6 +584,18 @@ def reconcile_boxscore(boxscore, *, strict):
                 'players': player_offensive_tds, 'team': team_stats['offensive_touchdowns'],
                 'unassigned_observed_overtime': unassigned_offensive_tds,
                 'reconciled_team_total': reconciled_team_offensive_tds}
+        player_snaps = (((boxscore.get('realism') or {}).get('lineup') or {}).get(team['team']) or {}).get('player_snaps')
+        if player_snaps is not None:  # the field model's snap counts: no skill player may exceed his snaps
+            for p in players:
+                if p['position'] not in ('RB', 'FB', 'WR', 'TE'):
+                    continue
+                snaps = player_snaps.get(p['stable_player_id'], 0)
+                for label, value in (('carries', p['rushing']['att']), ('targets', p['receiving']['tgt']),
+                                     ('catches', p['receiving']['rec']), ('rushing_touchdowns', p['rushing']['td']),
+                                     ('receiving_touchdowns', p['receiving']['td'])):
+                    if value > snaps:
+                        mismatches.setdefault('player_stats_exceed_snaps', []).append(
+                            {'player': p['name'], 'stat': label, 'value': value, 'snaps': snaps})
         results.append({'team': team['team'], 'side': side, 'player_sums': sums,
                         'team_values': {key: team_stats[key] for key in checks.values()},
                         'matches': not mismatches, 'mismatches': mismatches})

@@ -105,6 +105,19 @@ def _by_player_share(players, table, team, role, positions, draw):
     return draw.choices(candidates, weights=weights, k=1)[0]
 
 
+def lineup_filter(candidates, on_field, available_players, roster_players):
+    """The candidates the skill lineup allows. A skill player is allowed only on the field. The starting QB and any player
+    with no skill row are always allowed. The test is per player: depth charts list some returners as separate KR or PR
+    rows, and a KR or PR row must not exempt a player who has a WR, TE or RB row."""
+    import participation_field
+    starter = participation_field.starter_qb(available_players)
+    skill_players = {p['gsis_id'] for p in roster_players if p['pos_abb'] in participation_field.SKILL}
+    return [p for p in candidates
+            if p['gsis_id'] in on_field or p['gsis_id'] == starter
+            or p['gsis_id'] not in skill_players and p['pos_abb'] not in participation_field.SKILL
+            and p['pos_abb'] != 'QB']
+
+
 def choose(snapshot, side, intent, seed, index, formation_priors=None, state=None, player_shares=None, defense_priors=None,
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
            share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None,
@@ -139,11 +152,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     def on(candidates):  # the flag-off path returns the list unchanged
         if on_field is None:
             return candidates
-        import participation_field
-        starter = participation_field.starter_qb(available_players)
-        return [p for p in candidates
-                if p['gsis_id'] in on_field or p['gsis_id'] == starter
-                or p['pos_abb'] not in participation_field.SKILL and p['pos_abb'] != 'QB']
+        return lineup_filter(candidates, on_field, available_players, players)
     if share_table is not None:
         chosen['participant_share_model'] = 'dirichlet_multinomial'
     elif player_shares is not None:
