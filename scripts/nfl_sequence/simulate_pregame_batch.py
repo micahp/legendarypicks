@@ -1328,16 +1328,20 @@ def main(argv=None):
     ap.add_argument('--playcall-artifact',
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')
-    ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
-                    help='opt-in SLC research blocker fix; repeat to enable multiple fixes')
+    ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=None,
+                    help='SLC blocker fix; repeat to choose a subset. Default: all of them (see --no-slc-blocker-fixes)')
+    ap.add_argument('--no-slc-blocker-fixes', action='store_true',
+                    help='run without the blocker fixes, to reproduce the runs made before they were the default')
     ap.add_argument('--slc-fg-ordinary-cutoff', type=float, default=60.0,
                     help='ordinary field-goal decision maximum in yards when long_field_goal_feasibility is enabled')
     ap.add_argument('--progress-every', type=int, default=1000,
                     help='print a progress line every N games; use 0 to disable')
     ap.add_argument('--resume', action='store_true',
                     help='continue the seed ledger next to --out (<out stem>.seeds.jsonl); refuses a ledger from other inputs')
-    ap.add_argument('--export-boxscores', action='store_true',
-                    help='write a versioned per-seed box-score JSONL sidecar and valid-game distributions')
+    ap.add_argument('--export-boxscores', dest='export_boxscores', action='store_true', default=True,
+                    help='write a versioned per-seed box-score JSONL sidecar and valid-game distributions (default on)')
+    ap.add_argument('--no-export-boxscores', dest='export_boxscores', action='store_false',
+                    help='do not write the box-score sidecar')
     ap.add_argument('--export-plays', action='store_true',
                     help='with --export-boxscores: add a realism block to each box-score line (schema lp-nfl-slc-realism-'
                          'export-1): every realized play with the state before it, and the V2 lineup summary when '
@@ -1368,6 +1372,13 @@ def main(argv=None):
                                                   'context: venue capacity, kickoff, forecast, referee status and '
                                                   'broadcast. The model does not read it.'))
     args = ap.parse_args(argv)
+    if args.no_slc_blocker_fixes and args.slc_blocker_fix:
+        ap.error('--no-slc-blocker-fixes cannot be combined with --slc-blocker-fix')
+    if args.no_slc_blocker_fixes:
+        args.slc_blocker_fix = []
+    elif args.slc_blocker_fix is None:
+        # The fixes need the play-call artifact, so a run without one keeps the pre-fix behaviour (no fixes).
+        args.slc_blocker_fix = list(er.BLOCKER_FIXES) if args.playcall_artifact else []
     if args.seed_list_file:
         try:
             selection = seed_selection.load_seed_selection(args.seed_list_file)
