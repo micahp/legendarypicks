@@ -435,13 +435,14 @@ def _advance_lineup(field, lineup_state, team, available_players, state, base, c
                              _draw(f'{base}:field:group'), call=intent)  # a v4 table draws the grouping given the call
     skill = [p for p in available_players if p['pos_abb'] in participation_field.SKILL or p['pos_abb'] == 'QB']
     lineup, record = field.advance(team, lineup_state['lineup'], group, skill, _draw(f'{base}:field:advance'),
-                                   prev_group=prev)
+                                   prev_group=prev, slots=lineup_state.get('slots'))
     if lineup is None:
         raise ValueError(f"participation field: {record['status']} for {team} in cell {cell} (grouping {group!r})")
-    lineup_state['lineup'], lineup_state['group'] = lineup, group
+    lineup_state['lineup'], lineup_state['group'], lineup_state['slots'] = lineup, group, record['slots']
     chosen['lineup'] = {'team': team, 'group': group, 'on_field': sorted(lineup), 'status': record['status'], 'cell': cell,
                         'cell_fallback_from': situation if cell != situation else None,
-                        'entrants': record['entrants'], 'leavers': record['leavers'], 'short': record['short']}
+                        'entrants': record['entrants'], 'leavers': record['leavers'], 'short': record['short'],
+                        'slots': record['slots']}
     return set(lineup)
 
 
