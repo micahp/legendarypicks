@@ -152,5 +152,64 @@ class Advance(unittest.TestCase):
         self.assertEqual(field.status['short'], 1)
 
 
+class OneOffensiveIdentity(unittest.TestCase):
+    """One identity per player with every offensive role he has; one slot per player per snap; returner rows change nothing."""
+    RETURNER_ROWS = [_player('wr1', 'PR', 1), _player('rb1', 'KR', 1), _player('wr2', 'KR', 2)]
+    HYBRID_ROWS = [_player('hy1', 'RB', 2), _player('hy1', 'WR', 5)]  # a WR/RB hybrid: both roles, one player
+    GROUPS = ('11', '12', '10', '11', '12')
+
+    def augmented(self, reverse=False, hybrid=False):
+        rows = _roster() + self.RETURNER_ROWS + (self.HYBRID_ROWS if hybrid else [])
+        return list(reversed(rows)) if reverse else rows
+
+    def walk(self, roster, seed):
+        field = _field()
+        rng = random.Random(seed)
+        lineup, slots, previous, steps = {}, None, pf.START, []
+        for group in self.GROUPS:
+            lineup, record = field.advance('KC', lineup, group, roster, rng, prev_group=previous, slots=slots)
+            slots = record['slots']
+            previous = group
+            steps.append((sorted(lineup.items()), record))
+        return steps
+
+    def test_a_returner_row_adds_no_role_and_a_hybrid_keeps_both(self):
+        rows = pf.offense_identities(self.augmented(hybrid=True))
+        self.assertEqual(sorted(rows), sorted({p['gsis_id'] for p in _roster()} | {'hy1'}))
+        self.assertEqual(rows['wr1']['roles'], {'WR': 1})
+        self.assertEqual(rows['rb1']['roles'], {'RB': 1})
+        self.assertEqual(rows['hy1']['roles'], {'RB': 2, 'WR': 5})
+
+    def test_adding_or_reordering_returner_rows_leaves_the_draws_unchanged(self):
+        for seed in range(1, 41):
+            base = self.walk(_roster(), seed)
+            self.assertEqual(self.walk(self.augmented(), seed), base, f'seed {seed}')
+            self.assertEqual(self.walk(self.augmented(reverse=True), seed), base, f'reversed, seed {seed}')
+
+    def test_a_duplicate_role_row_adds_no_selection_weight(self):
+        for seed in range(1, 41):
+            self.assertEqual(self.walk(_roster() + [_player('wr1', 'WR', 1)], seed), self.walk(_roster(), seed),
+                             f'seed {seed}')
+
+    def test_each_player_fills_one_slot_and_the_classes_match_the_grouping(self):
+        for seed in range(1, 41):
+            for lineup, record in self.walk(self.augmented(hybrid=True), seed):
+                on = [pid for pid, _stint in lineup]
+                self.assertEqual(sorted(on), sorted(record['slots']), f'seed {seed}')  # one slot for each on-field player
+                self.assertEqual(len(record['entrants']), len(set(record['entrants'])), f'seed {seed}')
+                classes = list(record['slots'].values())
+                want = pf.group_counts(record['group'])
+                self.assertEqual({c: classes.count(c) for c in ('RB', 'TE', 'WR')},
+                                 {c: want[c] for c in ('RB', 'TE', 'WR')}, f'seed {seed} group {record["group"]}')
+
+    def test_a_hybrid_fills_either_role(self):
+        roles_used = set()
+        for seed in range(1, 201):
+            for lineup, record in self.walk(self.augmented(hybrid=True), seed):
+                if 'hy1' in record['slots']:
+                    roles_used.add(record['slots']['hy1'])
+        self.assertEqual(roles_used, {'RB', 'WR'})  # both roles occur over the draws; one slot per snap is tested above
+
+
 if __name__ == '__main__':
     unittest.main()

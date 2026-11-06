@@ -121,6 +121,31 @@ def starter_qb(players):
     return qbs[0]['gsis_id'] if qbs else None
 
 
+def offense_identities(roster):
+    """{gsis_id: {'roles': {class: best rank}, 'pos_rank': best rank}}: one entry per player, with every offensive role he
+    has. A WR listed twice as WR has the role WR once. A player listed as WR and PR has the role WR, since KR and PR rows
+    give no role and so never overwrite a position. A WR/RB hybrid has both roles, and fills one slot per snap, whichever
+    role the lineup gives him. Players with no skill or QB row are absent. The result does not depend on row order."""
+    players = {}
+    for p in roster:
+        if p['pos_abb'] in SKILL:
+            role = SKILL[p['pos_abb']]
+        elif p['pos_abb'] == 'QB':
+            role = 'QB'
+        else:
+            continue
+        ident = players.setdefault(p['gsis_id'], {'roles': {}, 'pos_rank': p['pos_rank']})
+        ident['roles'][role] = min(ident['roles'].get(role, p['pos_rank']), p['pos_rank'])
+        ident['pos_rank'] = min(ident['pos_rank'], p['pos_rank'])
+    return players
+
+
+def starter_of(identities):
+    """The QB who throws: the lowest-ranked QB role, ties by id, as starter_qb."""
+    return starter_qb([{'gsis_id': gsis, 'pos_abb': 'QB', 'pos_rank': ident['roles']['QB']}
+                       for gsis, ident in identities.items() if 'QB' in ident['roles']])
+
+
 class Field:
     """The exported transition table. Every snap's outcome is counted in `status`, so a zero is printed, not hidden."""
 
@@ -264,57 +289,71 @@ class Field:
         weight = self.player_weight.get((team, pid))
         return rate if weight is None else rate * weight
 
-    def advance(self, team, lineup, group, roster, draw, prev_group=None):
+    def advance(self, team, lineup, group, roster, draw, prev_group=None, slots=None):
         """The skill lineup after one snap. `lineup` maps each skill player on the field to his stint, the number of
-        consecutive snaps ending at the last snap. Returns (next lineup, record). Only this method draws leaves and entrants.
+        consecutive snaps ending at the last snap, and `slots` maps him to the class (RB, TE, WR or QB) he filled. A player
+        fills one slot per snap, whatever his roles, and his slot sets the position prior and the leave hazard used for him.
+        Returns (next lineup, record); record['slots'] is the next `slots`. Only this method draws leaves and entrants.
         Rotation (the stint hazard) applies only when the grouping holds; a grouping change moves players by count."""
         if group is None or not readable(group):
             self.status['unsupported_grouping'] += 1
             return None, {'status': 'unsupported_grouping', 'group': group}
-        starter = starter_qb(roster)  # the passer is never in the lineup; a second QB is drawn from the other QBs
-        cls_of = {p['gsis_id']: SKILL[p['pos_abb']] for p in roster if p['pos_abb'] in SKILL}
-        cls_of.update({p['gsis_id']: 'QB' for p in roster if p['pos_abb'] == 'QB' and p['gsis_id'] != starter})
-        pos_of = {p['gsis_id']: p['pos_abb'] for p in roster}
+        identities = offense_identities(roster)
+        starter = starter_of(identities)  # the passer is never in the lineup; a second QB is drawn from the other QBs
+        eligible = {gsis: sorted(cls for cls in ident['roles'] if not (cls == 'QB' and gsis == starter))
+                    for gsis, ident in identities.items()}
+        ranks = {gsis: ident['pos_rank'] for gsis, ident in identities.items()}
+        slots = dict(slots or {})
+
+        def slot_of(pid):  # the class a player on the field fills: his last slot, if it is still one of his roles
+            if pid not in eligible:
+                return None
+            if slots.get(pid) in eligible[pid]:
+                return slots[pid]
+            return eligible[pid][0] if len(eligible[pid]) == 1 else None
 
         def hazard(kind_, cls, stint, pid):
             base = self.leave_prob(kind_, cls, stint)
             if not self.leave_power or cls not in self.leave_reference:
                 return base
-            return min(1.0, base * self.leave_factor(pid, team, group, pos_of[pid], cls))
+            return min(1.0, base * self.leave_factor(pid, team, group, cls, cls))
         target = group_counts(group)
         leavers = set()
         kind = 'held' if prev_group == group else 'changed'
         for pid in sorted(lineup):
-            cls = cls_of.get(pid)
-            if cls is None:  # not a skill player on the roster any more
+            cls = slot_of(pid)
+            if cls is None:  # not a skill player on the roster any more, or no longer in a role he can fill
                 leavers.add(pid)
             elif prev_group is not None and group_counts(prev_group)[cls] == target[cls] \
                     and draw.random() < hazard(kind, cls, lineup[pid], pid):  # rotation in a class whose count holds
                 leavers.add(pid)
         for pid in sorted(lineup):  # churn in a class whose count changes, beyond the count change itself
-            cls = cls_of.get(pid)
+            cls = slot_of(pid)
             if pid not in leavers and cls is not None and prev_group is not None \
                     and group_counts(prev_group)[cls] != target[cls] and draw.random() < hazard('swap', cls, 0, pid):
                 leavers.add(pid)
         kept = {pid: stint for pid, stint in lineup.items() if pid not in leavers}
+        kept_slot = {pid: slot_of(pid) for pid in kept}
         removed = set(leavers)
         count_removed, entrants, short = [], [], {}
         for cls in LINEUP_CLASSES:  # the grouping's counts: surplus leaves by hazard, deficit enters from the bench
-            on = sorted(pid for pid in kept if cls_of.get(pid) == cls)
+            on = sorted(pid for pid in kept if kept_slot[pid] == cls)
             while len(on) > target[cls]:
                 weights = [max(hazard(kind, cls, kept[pid], pid), FLOOR) for pid in on]
                 pid = draw.choices(on, weights=weights, k=1)[0]
                 on.remove(pid)
                 del kept[pid]
+                del kept_slot[pid]
                 removed.add(pid)
                 count_removed.append(pid)
             need = target[cls] - len(on)
-            if need > 0:
-                bench = [p for p in sorted(roster, key=lambda p: (p['pos_rank'], p['gsis_id']))
-                         if cls_of.get(p['gsis_id']) == cls and p['gsis_id'] not in kept and p['gsis_id'] not in removed]
-                picked = self._weighted(bench, need, team, group, draw)
+            if need > 0:  # one bench entry per player, and only a player not already on the field can fill this slot
+                bench = [{'gsis_id': pid, 'pos_rank': ranks[pid]} for pid in sorted(identities, key=lambda g: (ranks[g], g))
+                         if cls in eligible[pid] and pid not in kept and pid not in removed]
+                picked = self._weighted(bench, need, team, group, draw, cls)
                 for player in picked:
                     kept[player['gsis_id']] = 0  # set to its stint below
+                    kept_slot[player['gsis_id']] = cls
                     entrants.append(player['gsis_id'])
                 if len(picked) < need:
                     short[cls] = need - len(picked)
@@ -322,14 +361,15 @@ class Field:
         status = 'short' if short else 'ok'
         self.status[status] += 1
         return nxt, {'status': status, 'group': group, 'leavers': sorted(leavers),
-                     'count_removed': count_removed, 'entrants': sorted(entrants), 'short': short}
+                     'count_removed': count_removed, 'entrants': sorted(entrants), 'short': short,
+                     'slots': dict(sorted(kept_slot.items()))}
 
-    def _weighted(self, pool, k, team, group, draw):
-        """k distinct players, each drawn in proportion to his on-field rate for this team and grouping."""
+    def _weighted(self, pool, k, team, group, draw, cls):
+        """k distinct players, each drawn in proportion to his on-field rate at class `cls` for this team and grouping."""
         pool = list(pool)
         out = []
         for _ in range(min(k, len(pool))):
-            weights = [max(self.rate(p['gsis_id'], team, group, p['pos_abb']), FLOOR) for p in pool]
+            weights = [max(self.rate(p['gsis_id'], team, group, cls), FLOOR) for p in pool]
             pick = draw.choices(pool, weights=weights, k=1)[0]
             out.append(pick)
             pool = [p for p in pool if p is not pick]
