@@ -540,6 +540,18 @@ def exclude_inconsistent_pass_yardage_rows(pool, participant_facts):
                        'source_rows': source_rows}
 
 
+def _starter_qb_id(snapshot, team):
+    """The QB who throws for this team. He is always on the field and is never in the skill lineup. The chooser picks him
+    from the eligible roster (no Out or Doubtful), so this must use the same list or an injured starter would be refused."""
+    import participation_field  # local: the field model is optional
+    import share_distributions
+    for roster in ((snapshot or {}).get('rosters') or {}).values():
+        if roster.get('team') == team:
+            available = share_distributions.eligible_players(roster.get('players') or [], roster.get('injury_report'))
+            return participation_field.starter_qb(available)
+    return None
+
+
 def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
     """Refuse mismatches between a pre-outcome QB choice and the play/stat event it produced."""
     plays = [play for drive in record.get('drives', []) for play in drive.get('plays', [])]
@@ -689,6 +701,17 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                 fail(index, decision, play,
                      f'pre-outcome {role} selection {chosen_id!r} disagrees with credited participant {realized_id!r}',
                      failure_class='STAT_ACCOUNTING')
+        field_lineup = selected.get('lineup')
+        if field_lineup is not None:  # the field model built this snap: everyone credited on it must be on the field
+            on_field = set(field_lineup.get('on_field') or ())
+            starter = _starter_qb_id(snapshot, field_lineup.get('team'))
+            for role in ('passer', 'rusher', 'receiver'):
+                credited = participants.get(f'{role}_id')
+                if credited is not None and credited != starter and credited not in on_field:
+                    fail(index, decision, play,
+                         f'{role} {credited!r} is credited on this play but is not on the field: '
+                         f'{field_lineup.get("team")} {field_lineup.get("group")} lineup has {sorted(on_field)}',
+                         failure_class='STAT_ACCOUNTING')
 
         yards = outcome.get('yards_gained')
         if event == 'pass_incomplete':

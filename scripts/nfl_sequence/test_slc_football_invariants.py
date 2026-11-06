@@ -8,6 +8,7 @@ sys.path.insert(0, str(HERE))
 import game_stats  # noqa: E402
 import slc_engine  # noqa: E402
 import football_assertions  # noqa: E402
+import pre_event  # noqa: E402
 
 
 def participants(*, passer=None, rusher=None, receiver=None, play_type=None):
@@ -493,6 +494,106 @@ class QBPlayTypeInvariants(unittest.TestCase):
                          (1, 2, 1, 1))
         self.assertEqual((qb['rushing']['att'], qb['rushing']['yds'], qb['miscellaneous']['fumbles_lost']),
                          (1, 2, 1))
+
+
+def field_snapshot(*players):
+    """A snapshot whose one team AAA has the given (gsis_id, pos_abb, pos_rank) roster."""
+    roster = [{'gsis_id': gsis, 'pos_abb': pos, 'pos_rank': rank} for gsis, pos, rank in players]
+    return {'snapshot_sha256': 'b' * 64, 'schedule': {'game_id': '2025_01_AAA_BBB'},
+            'rosters': {'home': {'team': 'AAA', 'players': roster}}}
+
+
+def lineup(on_field, group='11'):
+    return {'team': 'AAA', 'group': group, 'on_field': sorted(on_field), 'status': 'ok', 'cell': '1|mid|own'}
+
+
+class CreditedPlayersMustBeOnTheField(unittest.TestCase):
+    ROSTER = (('QB1', 'QB', 1), ('QB2', 'QB', 2), ('RB1', 'RB', 1), ('WR1', 'WR', 1))
+
+    def check(self, row, call, on_field):
+        call['participants']['lineup'] = lineup(on_field)
+        return slc_engine.validate_decision_outcomes(
+            one_play_record(row), [call], seed=7, snapshot=field_snapshot(*self.ROSTER))
+
+    def test_a_rusher_off_the_field_is_refused_as_stat_accounting(self):
+        row = play('run', 4, participants(rusher='RB1', play_type='run'))
+        call = decision('run', intent='run', outcome_intent='run', selected={'rusher': 'RB1'})
+        with self.assertRaises(football_assertions.FootballAssertionError) as raised:
+            self.check(row, call, on_field=['WR1'])
+        self.assertEqual(raised.exception.failure_class, 'STAT_ACCOUNTING')
+        self.assertIn("rusher 'RB1' is credited on this play but is not on the field", str(raised.exception))
+
+    def test_a_rusher_on_the_field_passes(self):
+        row = play('run', 4, participants(rusher='RB1', play_type='run'))
+        call = decision('run', intent='run', outcome_intent='run', selected={'rusher': 'RB1'})
+        self.assertEqual(self.check(row, call, on_field=['RB1', 'WR1']), {'status': 'passed', 'plays_checked': 1})
+
+    def test_a_target_off_the_field_is_refused(self):
+        row = play('pass_complete', 6, participants(passer='QB1', receiver='WR1', play_type='pass'))
+        call = decision('pass_complete', intent='dropback', outcome_intent='dropback',
+                        selected={'passer': 'QB1', 'receiver': 'WR1'})
+        with self.assertRaises(football_assertions.FootballAssertionError) as raised:
+            self.check(row, call, on_field=['RB1'])
+        self.assertEqual(raised.exception.failure_class, 'STAT_ACCOUNTING')
+        self.assertIn("receiver 'WR1' is credited", str(raised.exception))
+
+    def test_the_starting_qb_needs_no_lineup_slot(self):
+        row = play('pass_complete', 6, participants(passer='QB1', receiver='WR1', play_type='pass'))
+        call = decision('pass_complete', intent='dropback', outcome_intent='dropback',
+                        selected={'passer': 'QB1', 'receiver': 'WR1'})
+        self.assertEqual(self.check(row, call, on_field=['WR1']), {'status': 'passed', 'plays_checked': 1})
+
+    def test_a_backup_qb_passing_off_the_field_is_refused(self):
+        row = play('pass_complete', 6, participants(passer='QB2', receiver='WR1', play_type='pass'))
+        call = decision('pass_complete', intent='dropback', outcome_intent='dropback',
+                        selected={'passer': 'QB2', 'receiver': 'WR1'})
+        with self.assertRaises(football_assertions.FootballAssertionError) as raised:
+            self.check(row, call, on_field=['WR1'])
+        self.assertIn("passer 'QB2' is credited", str(raised.exception))
+
+    def test_a_play_without_a_field_lineup_is_not_checked_here(self):
+        row = play('run', 4, participants(rusher='RB1', play_type='run'))
+        call = decision('run', intent='run', outcome_intent='run', selected={'rusher': 'RB1'})
+        result = slc_engine.validate_decision_outcomes(
+            one_play_record(row), [call], seed=7, snapshot=field_snapshot(*self.ROSTER))
+        self.assertEqual(result, {'status': 'passed', 'plays_checked': 1})
+
+
+class LineupFilterIsPerPlayer(unittest.TestCase):
+    ROSTER = [
+        {'gsis_id': 'QB1', 'pos_abb': 'QB', 'pos_rank': 1},
+        {'gsis_id': 'QB2', 'pos_abb': 'QB', 'pos_rank': 2},
+        {'gsis_id': 'WR1', 'pos_abb': 'WR', 'pos_rank': 1},
+        {'gsis_id': 'WR1', 'pos_abb': 'PR', 'pos_rank': 1},  # the returner row of the same player
+        {'gsis_id': 'RB1', 'pos_abb': 'RB', 'pos_rank': 1},
+        {'gsis_id': 'RB1', 'pos_abb': 'KR', 'pos_rank': 1},
+        {'gsis_id': 'OL1', 'pos_abb': 'LT', 'pos_rank': 1},
+    ]
+
+    @staticmethod
+    def row(gsis, pos):
+        return {'gsis_id': gsis, 'pos_abb': pos, 'pos_rank': 1}
+
+    def keep(self, candidates, on_field):
+        return [p['gsis_id'] + ':' + p['pos_abb'] for p in
+                pre_event.lineup_filter(candidates, set(on_field), self.ROSTER, self.ROSTER)]
+
+    def test_an_off_field_wide_receiver_is_not_saved_by_his_returner_row(self):
+        self.assertEqual(self.keep([self.row('WR1', 'PR')], on_field=['RB1']), [])
+
+    def test_an_off_field_running_back_is_not_saved_by_his_kick_returner_row(self):
+        self.assertEqual(self.keep([self.row('RB1', 'KR')], on_field=['WR1']), [])
+
+    def test_a_player_on_the_field_is_kept_on_every_row(self):
+        self.assertEqual(self.keep([self.row('WR1', 'WR'), self.row('WR1', 'PR')], on_field=['WR1']),
+                         ['WR1:WR', 'WR1:PR'])
+
+    def test_a_player_with_no_skill_row_is_always_kept(self):
+        self.assertEqual(self.keep([self.row('OL1', 'LT')], on_field=[]), ['OL1:LT'])
+
+    def test_the_starting_qb_is_kept_and_a_backup_qb_needs_the_field(self):
+        self.assertEqual(self.keep([self.row('QB1', 'QB'), self.row('QB2', 'QB')], on_field=[]), ['QB1:QB'])
+        self.assertEqual(self.keep([self.row('QB2', 'QB')], on_field=['QB2']), ['QB2:QB'])
 
 
 if __name__ == '__main__':
