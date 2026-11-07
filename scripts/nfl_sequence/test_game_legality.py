@@ -252,6 +252,30 @@ class BlockedKickTouchdown(unittest.TestCase):
             gl._scoring_team(drive)
 
 
+class FirstHalfExpiry(unittest.TestCase):
+    """A post-score kickoff that runs the first half out is followed by the second-half kickoff, not by a quarter change."""
+
+    def kick(self, kind='post_field_goal', after_drive=12, quarter=2, expired=True, **extra):
+        return dict({'after_drive': after_drive, 'kind': kind, 'quarter': quarter, 'kicking_team': 'A',
+                     'receiving_team': 'B', 'clock_before': 5, 'clock_after': 0, 'clock_clamped_to_zero': False,
+                     'clock_expired_during_kickoff': expired}, **extra)
+
+    def record(self, *kicks):
+        return {'kickoffs': list(kicks)}
+
+    def test_the_second_half_kickoff_is_paired_with_the_first_half_expiry(self):
+        kicks = gl._kicks_after(self.record(self.kick(), self.kick(kind='half_start', quarter=3, clock_before=900,
+                                                                   clock_after=895, expired=False)))
+        self.assertEqual(kicks[12]['half_start']['kind'], 'half_start')
+
+    def test_two_kickoffs_without_a_first_half_expiry_are_still_refused(self):
+        with self.assertRaisesRegex(FootballAssertionError, 'two kickoffs follow drive 12'):
+            gl._kicks_after(self.record(self.kick(expired=False), self.kick(kind='half_start', quarter=3)))
+
+    def test_a_first_half_expiry_without_a_second_half_kickoff_is_not_paired(self):
+        self.assertNotIn('half_start', gl._kicks_after(self.record(self.kick()))[12])
+
+
 class HalftimeSkip(unittest.TestCase):
     """A score whose clock expires in Q2 takes no post-score kick, whichever team and whichever kind of score."""
 
