@@ -1,0 +1,10 @@
+,value
+yards_per_point_observed,14.29
+yards_per_point_sim,16.92
+yards_per_point_inflation,0.184
+plays_per_drive_observed,5.872
+plays_per_drive_sim,6.586
+yards_per_play_observed,5.428
+yards_per_play_sim,5.657
+points_per_play_observed,0.3798
+points_per_play_sim,0.3344

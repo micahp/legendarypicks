@@ -1,0 +1,13 @@
+event,arm,observed_share,sim_share
+points_ge_35,v1,0.1218,0.0907
+points_ge_35,v15,0.1218,0.0905
+points_ge_35,v2,0.1218,0.0932
+points_le_6,v1,0.0461,0.0262
+points_le_6,v15,0.0461,0.0297
+points_le_6,v2,0.0461,0.0297
+scrimmage_yards_ge_500,v1,0.0221,0.0649
+scrimmage_yards_ge_500,v15,0.0221,0.067
+scrimmage_yards_ge_500,v2,0.0221,0.0692
+scrimmage_yards_le_200,v1,0.0701,0.0072
+scrimmage_yards_le_200,v15,0.0701,0.0099
+scrimmage_yards_le_200,v2,0.0701,0.0097

@@ -1,0 +1,15 @@
+,value
+observed_team_season_mean_sd_raw,4.15
+observed_sampling_noise_sd,2.411
+estimated_true_team_strength_sd,3.377
+v1_sim_sd,1.961
+v15_sim_sd,2.379
+v2_sim_sd,2.587
+v1_share_of_true,0.581
+v15_share_of_true,0.704
+v2_share_of_true,0.766
+observed_range,16.29
+v2_range,9.11
+v2_team_season_corr,0.8018
+v2_team_game_corr,0.2702
+v2_team_game_r2,0.073
