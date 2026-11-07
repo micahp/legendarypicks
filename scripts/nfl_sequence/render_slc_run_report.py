@@ -98,9 +98,14 @@ def _artifact_files(path: Path):
         yield str(candidate.relative_to(path)), data, _sha256_bytes(data)
 
 
+def _strip_suffix(text, suffix):
+    # str.removesuffix needs Python 3.9; this box runs 3.8
+    return text[:-len(suffix)] if suffix and text.endswith(suffix) else text
+
+
 def _archive_files(path: Path):
     digest = _sha256_file(path)
-    archive_label = path.name.removesuffix('.tar.gz')
+    archive_label = _strip_suffix(path.name, '.tar.gz')
     with tarfile.open(path, 'r:*') as archive:
         for member in archive.getmembers():
             name = Path(member.name).name
@@ -877,7 +882,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     for run_path in args.run:
         result = analyze_run(run_path)
-        run_name = run_path.stem.removesuffix('.tar')
+        run_name = _strip_suffix(run_path.stem, '.tar')
         destination = args.output_dir / run_name
         write_report(result, destination, force=args.force)
         print(f"{result['game_ids'] or ['unknown']} {result['status_counts']} -> {destination}")

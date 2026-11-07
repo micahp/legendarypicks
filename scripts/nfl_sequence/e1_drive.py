@@ -249,7 +249,8 @@ def _credit_field_boundary_yards(event, sampled_yards, yardline):
 
 
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
-             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None):
+             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None,
+             ot_fourth_down_kick_share=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
@@ -302,6 +303,16 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             return halt(f'thin pool cell {key} ({len(cell)} observed plays, floor {MIN_POOL}); no fallback')
         field_goal_distance = fg_feasibility.evaluate(  # research flag kicker_field_goals: the record rule
             st['yl'], rule=fg_feasibility.RECORD_RULE if getattr(sampling_policy, 'fg_kicker', None) is not None else None)
+        if ot_fourth_down_kick_share is not None and st['quarter'] == 5 and st['down'] == 4:
+            # Overtime calibration: a fourth down is a field-goal attempt with this probability when one is eligible,
+            # otherwise the cell is restricted to go-for-it and punt rows. Regulation never takes this branch.
+            kick_rows = [x for x in cell if x[0] == 'field_goal_attempt' and field_goal_distance['eligible']]
+            if kick_rows and event_rng.random() < ot_fourth_down_kick_share:
+                cell = kick_rows
+            else:
+                cell = [x for x in cell if x[0] != 'field_goal_attempt']
+            if not cell:
+                return halt('no overtime fourth-down action remains after the kick-share calibration')
         shares = Counter(ev for ev, _, _, _ in cell
                          if ev != 'field_goal_attempt' or field_goal_distance['eligible'])
         if not shares:

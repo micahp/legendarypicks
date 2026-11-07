@@ -48,6 +48,7 @@ import game_stats  # noqa: E402
 import pre_event as pe  # noqa: E402
 import reducer  # noqa: E402
 import football_assertions  # noqa: E402
+import game_legality  # noqa: E402
 import field_goal_feasibility as fg_feasibility  # noqa: E402
 from paired_random_streams import PairedRandomStreams  # noqa: E402
 
@@ -55,6 +56,13 @@ NORMAL_MODE = 'normal_nfl_game'
 EXCEPTION_MODE = 'explicit_exception_scenario'
 PREGAME_USAGE_VERSION = 'pregame-role-usage-v1'
 QUARTER_LENGTH = 900
+# On: an overtime possession is played by the regulation play simulator, so it has plays the legality checks can read.
+# Off: a regulation tie is blocked as overtime_not_modelled, and the observed overtime rows (no plays) are not used.
+OVERTIME_PLAY_MODEL = True
+# Overtime fourth downs: the share of eligible fourth downs taken as a field-goal attempt. Calibrated on the observed
+# 2022-2025 overtime drives (even rows, 0.9: field goals 33.3% against 35.7% observed; odd rows held out: 32.9%
+# against 28.6%). Regulation is unchanged.
+OVERTIME_FOURTH_DOWN_KICK_SHARE = 0.9
 TD_POINTS = 6
 FG_POINTS = 3
 SAFETY_POINTS = 2
@@ -797,7 +805,7 @@ class _Game:
         """The clock ran out at the end of regulation or of overtime. A tie after regulation goes to overtime (Rule 16)."""
         if self.quarter == 5:
             self._end_overtime(self._points_leader())
-        elif self.points['A'] == self.points['B'] and self.ref.overtime_pool is not None:
+        elif self.points['A'] == self.points['B'] and self.ref.overtime_pool is not None and OVERTIME_PLAY_MODEL:
             self._begin_overtime()
         else:
             self.status = 'complete_regulation'
@@ -839,6 +847,11 @@ class _Game:
             self._end_overtime(self._points_leader())
             return
         possessions.append(offense)
+
+    def _sudden_death_touchdown(self, scorer):
+        """Rule 16, sudden death: the scorer's touchdown comes from a tie after both teams have possessed."""
+        tied_before = self.points[scorer] == self.points[other(scorer, self.ledger.teams)]
+        return tied_before and len(set(self.overtime['possessions'])) == 2
 
     def _overtime_after_score(self, then):
         """A kick after a score in overtime. Returns True when the score decides the game."""
@@ -1419,7 +1432,7 @@ class _Game:
             self._continue(('possession', other(offense, self.ledger.teams), sample['next_yardline']))
 
     def _drive_body(self):
-        if self.quarter == 5:
+        if self.quarter == 5 and not OVERTIME_PLAY_MODEL:
             return self._observed_overtime_drive()
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
                  'yl': self.yl, 'down': self.down, 'togo': self.togo,
@@ -1439,7 +1452,9 @@ class _Game:
                                       play_index_start=self.next_play_sequence,
                                       drive_index=len(self.drives) + 1,
                                       paired_random_streams=self.paired_random_streams,
-                                      sampling_guard=timeout_guard, **research)
+                                      sampling_guard=timeout_guard,
+                                      ot_fourth_down_kick_share=(OVERTIME_FOURTH_DOWN_KICK_SHARE if self.quarter == 5 else None),
+                                      **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
@@ -1535,20 +1550,32 @@ class _Game:
         elif terminal == 'touchdown':
             scorer = plays[-1]['outcome'].get('scoring_team') or self.offense
             drive['touchdown_scored_by'] = scorer
-            situation = p_two = None
-            if self.ref.try_policy is not None:
-                situation = self._try_situation(scorer)
-                p_two = self.ref.try_policy.p_two(**situation)
-            try_points, try_record, why = _try_after_touchdown(
-                self._rng('post_touchdown_try', self.next_play_sequence), self.ref.kicks, p_two)
-            if why:
-                self.block(why)
-                return
-            if situation is not None:
-                drive['try_policy'] = {**situation, 'p_two': p_two, 'kind': try_record['kind']}
-            self.points[scorer] += TD_POINTS + try_points
-            drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
-            self._continue(('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
+            if self.quarter == 5 and self._sudden_death_touchdown(scorer):
+                # Rule 16, sudden death: a touchdown from a tie, once both teams have possessed, ends the game with no try
+                self.points[scorer] += TD_POINTS
+                drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS, 'try': None}
+                drive['try_source'] = 'not_attempted_game_ends'
+                self._continue(('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
+            else:
+                situation = p_two = None
+                if self.quarter == 5 and self.ref.overtime_try_p_two is not None:
+                    # Overtime tries use the conditional overtime table for the margin after the six points, as the observed path does
+                    margin = self._try_situation(scorer)['margin']
+                    p_two = self.ref.overtime_try_p_two[try_margin_bucket(margin)]
+                    drive['try_source'] = 'conditional_try_fallback'
+                elif self.ref.try_policy is not None:
+                    situation = self._try_situation(scorer)
+                    p_two = self.ref.try_policy.p_two(**situation)
+                try_points, try_record, why = _try_after_touchdown(
+                    self._rng('post_touchdown_try', self.next_play_sequence), self.ref.kicks, p_two)
+                if why:
+                    self.block(why)
+                    return
+                if situation is not None:
+                    drive['try_policy'] = {**situation, 'p_two': p_two, 'kind': try_record['kind']}
+                self.points[scorer] += TD_POINTS + try_points
+                drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
+                self._continue(('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
         elif terminal == 'safety':
             scorer = self.defense
             self.points[scorer] += SAFETY_POINTS
@@ -2044,6 +2071,8 @@ def _validate_game_impl(record):
                 'valid_full_game requires pregame_full_game mode, complete regulation, no blocker, a tie only after its '
                 'overtime period, and no unsupported rule')
     checks.append('valid_full_game only when pregame_full_game, complete, unblocked, any tie played out in overtime, and no unsupported rule')
+    if record.get('complete_regulation'):
+        checks.extend(game_legality.check(record))  # refuses the first illegal play, drive, kickoff or quarter transition
     return checks
 
 

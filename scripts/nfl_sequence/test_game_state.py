@@ -1255,17 +1255,15 @@ class OvertimeObservedDrives(unittest.TestCase):
         self.assertEqual(game.overtime['possessions'], ['A', 'B', 'B'])
         self.assertEqual(game.drives[-1]['observed_overtime_drive']['source_next_offense'], 'SEA')
 
-    def test_observed_scores_decide_overtime_by_the_sudden_death_rule(self):
-        touchdown = {'outcome': 'touchdown', 'duration': 120, 'points_offense': 6, 'points_defense': 0,
-                     'next_offense': None, 'next_yardline': None, 'try_kind': None, 'try_made': None, 'turnover_kind': 'other',
-                       'game_id': 'fixture', 'drive': 1}
-        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[touchdown]),
+    def test_a_play_level_overtime_period_that_expires_on_the_first_possession_ends_tied(self):
+        # A zero-yard run game ends regulation 0-0. The overtime possession is played: the period runs out with no score,
+        # so Rule 16 ends the game tied after one possession, and the record passes every legality check.
+        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[PERIOD_END_OVERTIME]),
                               winner_choice='receive', max_drives=80)
         self.assertEqual(record['status'], 'complete_overtime')
-        self.assertIn(record['overtime']['winner'], ('A', 'B'))
-        self.assertEqual(record['overtime']['possessions'][:2], [record['overtime']['toss_winner'],
-                                                                 record['overtime']['kicking_team']])
-        self.assertTrue(all(d['plays'] == [] for d in record['drives'] if d['quarter_start'] == 5))
+        self.assertEqual(record['overtime']['result'], 'tie')
+        overtime_drives = [d for d in record['drives'] if d['quarter_start'] == 5]
+        self.assertTrue(overtime_drives and all(d['plays'] for d in overtime_drives))
         gs.validate_game(record)
 
     def test_an_observed_drive_longer_than_the_clock_is_refused_by_name(self):
@@ -1284,6 +1282,33 @@ class OvertimeObservedDrives(unittest.TestCase):
         self.assertEqual(game.drives, [])
 
 
+class QuarterPool:
+    """Zero-yard runs in regulation and 80-yard runs in overtime, so a tied regulation is followed by scoring possessions.
+    The simulator call reports its starting quarter, and the pool reads it: the pool key itself carries no quarter."""
+
+    def __init__(self):
+        self.quarter = 1
+        self.regulation = StaticPool('run', 0, 450)
+        self.overtime = StaticPool('run', 80, 5)
+
+    def get(self, key, default=None):
+        return (self.overtime if self.quarter == 5 else self.regulation).get(key, default)
+
+
+def play_level_overtime_game(**ref_overrides):
+    from unittest import mock
+    pool = QuarterPool()
+    real_simulate = gs.e1.simulate
+
+    def simulate(start, *args, **kwargs):
+        pool.quarter = start['quarter']
+        return real_simulate(start, *args, **kwargs)
+
+    with mock.patch.object(gs.e1, 'simulate', simulate):
+        return gs.play_game(1, ref(pool, kickoff_pool(), **{'overtime_pool': [PERIOD_END_OVERTIME], **ref_overrides}),
+                            winner_choice='receive', max_drives=80)
+
+
 class OvertimeCompletedRules(unittest.TestCase):
     """The completed overtime rules: a try only where the game goes on, and Article 5(a) for an interception or fumble
     after the first team has scored (rules file, Rule 16, Article 5(a))."""
@@ -1292,33 +1317,29 @@ class OvertimeCompletedRules(unittest.TestCase):
           'next_yardline': None, 'try_kind': None, 'try_made': None, 'turnover_kind': 'other', 'game_id': 'fixture', 'drive': 1}
 
     def test_a_first_possession_touchdown_carries_a_try_and_the_game_goes_on(self):
-        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD]),
-                              winner_choice='receive', max_drives=80)
+        record = play_level_overtime_game()
         first = next(d for d in record['drives'] if d['quarter_start'] == 5)
-        self.assertEqual(first['try_source'], 'regulation_try_rates_fallback')
-        self.assertIsNotNone(first['points_scored_on_drive']['try'])
+        self.assertEqual(first['offense_team'], record['overtime']['possessions'][0])
+        self.assertEqual(first['points_scored_on_drive']['try']['kind'], 'extra_point')
         self.assertGreaterEqual(len(record['overtime']['possessions']), 2)
-
+        gs.validate_game(record)
     def test_an_answering_touchdown_that_ties_carries_its_try(self):
-        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD]),
-                              winner_choice='receive', max_drives=80)
+        record = play_level_overtime_game()
         answer = [d for d in record['drives'] if d['quarter_start'] == 5][1]
         self.assertEqual(answer['offense_team'], record['overtime']['possessions'][1])
-        self.assertEqual(answer['try_source'], 'regulation_try_rates_fallback')
         try_rec = answer['points_scored_on_drive']['try']
+        self.assertIsNotNone(try_rec)
         self.assertEqual(answer['points_scored_on_drive']['points'],
                          gs.TD_POINTS + (gs.TRY_POINTS[try_rec['kind']] if try_rec['made'] else 0))
-
+        gs.validate_game(record)
     def test_a_winning_touchdown_from_a_tie_takes_no_try(self):
-        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD]),
-                              winner_choice='receive', max_drives=80)
-        last = record['drives'][-1]
-        self.assertEqual(last['try_source'], 'not_attempted_game_ends')
+        record = play_level_overtime_game()
+        last = [d for d in record['drives'] if d['quarter_start'] == 5][-1]
+        self.assertEqual(last.get('try_source'), 'not_attempted_game_ends')
         self.assertIsNone(last['points_scored_on_drive']['try'])
         self.assertEqual(last['points_scored_on_drive']['points'], gs.TD_POINTS)
         self.assertEqual(record['overtime']['winner'], last['offense_team'])
         gs.validate_game(record)
-
     def test_an_interception_after_a_first_possession_score_ends_the_game_on_the_down(self):
         from types import SimpleNamespace
         import random
@@ -1371,8 +1392,7 @@ class OvertimeConditionalTry(unittest.TestCase):
         always_two = {bucket: 1.0 for bucket in ('<=-9', '-8..-5', '-4..-1', '0', '1..4', '5..8', '>=9')}
         kicks = certain_kicks()
         kicks['two_point'] = (40, 0)  # a populated two-point cell: the table, not a thin cell, decides the try
-        record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), kicks=kicks, overtime_pool=[self.TD],
-                                     overtime_try_p_two=always_two), winner_choice='receive', max_drives=80)
+        record = play_level_overtime_game(overtime_try_p_two=always_two, kicks=kicks)
         first = next(d for d in record['drives'] if d['quarter_start'] == 5)
         self.assertEqual(first['try_source'], 'conditional_try_fallback')
         self.assertEqual(first['points_scored_on_drive']['try']['kind'], 'two_point')
@@ -1386,6 +1406,7 @@ class OvertimeChoice(unittest.TestCase):
     TD = {'outcome': 'touchdown', 'duration': 120, 'points_offense': 6, 'points_defense': 0, 'next_offense': None,
           'next_yardline': None, 'try_kind': None, 'try_made': None, 'turnover_kind': 'other', 'game_id': 'fixture', 'drive': 1}
 
+    @unittest.skipUnless(gs.OVERTIME_PLAY_MODEL, 'overtime has no play model: its possessions are rows with no plays')
     def test_a_receive_gives_the_first_possession_to_the_toss_winner(self):
         record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD],
                                      overtime_choice='receive'), winner_choice='receive', max_drives=80)
@@ -1393,6 +1414,7 @@ class OvertimeChoice(unittest.TestCase):
         self.assertEqual(ot['first_possession_choice'], 'receive')
         self.assertEqual(ot['possessions'][0], ot['toss_winner'])
 
+    @unittest.skipUnless(gs.OVERTIME_PLAY_MODEL, 'overtime has no play model: its possessions are rows with no plays')
     def test_a_kick_gives_the_first_possession_to_the_other_team(self):
         record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD],
                                      overtime_choice='kick'), winner_choice='receive', max_drives=80)
@@ -1401,6 +1423,7 @@ class OvertimeChoice(unittest.TestCase):
         self.assertNotEqual(ot['possessions'][0], ot['toss_winner'])
         self.assertEqual(ot['choice_source'], 'forced decision (labelled control)')
 
+    @unittest.skipUnless(gs.OVERTIME_PLAY_MODEL, 'overtime has no play model: its possessions are rows with no plays')
     def test_the_observed_rate_draws_the_choice_from_a_seeded_bernoulli(self):
         record_a = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD],
                                        overtime_p_kick=1.0), winner_choice='receive', max_drives=80)
@@ -1935,6 +1958,7 @@ class SafetyFreeKickSampled(unittest.TestCase):
 class ScopeRefusals(unittest.TestCase):
     """Overtime and rare kick outcomes are scoped out, and the validator refuses any record that calls them complete."""
 
+    @unittest.skipUnless(gs.OVERTIME_PLAY_MODEL, 'overtime has no play model: its possessions are rows with no plays')
     def test_a_tie_described_as_complete_without_its_overtime_period_is_refused(self):
         # R07, adversarial: a 0-0 tie described as a complete regulation game, with its overtime period taken away.
         record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[PERIOD_END_OVERTIME]),
