@@ -64,14 +64,16 @@ def sample(event, *, play_type=None, index=0, down=1, togo=10, yl=50, yards=4,
 
 
 def key_for(down, togo, yl):
-    return (down, e0.ydstogo_bucket(togo), e0.yardline_bucket(yl))
+    return e0.pool_key(down, togo, yl)
 
 
 class RunScrambleBackoff(unittest.TestCase):
     def test_sparse_run_cell_backs_off_without_changing_run_intent_and_replays_by_seed(self):
         target = key_for(1, 10, 50)
-        broad_rows = [sample('run', index=i, togo=15, yards=3) for i in range(25)]
-        source_pool = {key_for(1, 15, 50): broad_rows}
+        # 2 yards, not 15: the target is 10 yards, and pool_key puts 10+ in one cell, so broad rows
+        # at 15 would share the target's exact cell and never exercise the backoff.
+        broad_rows = [sample('run', index=i, togo=2, yards=3) for i in range(25)]
+        source_pool = {key_for(1, 2, 50): broad_rows}
         current = [sample('pass_complete', index=900, play_type='pass')]
 
         results = []
@@ -92,11 +94,11 @@ class RunScrambleBackoff(unittest.TestCase):
         self.assertEqual(target, key_for(1, 10, 50))
 
     def test_scramble_backoff_keeps_scrambles_distinct_and_rejects_out_of_support_gains(self):
-        broad_rows = [sample('run', index=i, togo=15, yards=3, qb_scramble=1) for i in range(25)]
-        broad_rows.append(sample('run', index=25, togo=15, yards=8, qb_scramble=1))
+        broad_rows = [sample('run', index=i, togo=2, yards=3, qb_scramble=1) for i in range(25)]
+        broad_rows.append(sample('run', index=25, togo=2, yards=8, qb_scramble=1))
         current = [sample('pass_complete', index=900, play_type='pass')]
         sampler = slc.PlayCallSampler(layer(100.0), side_teams={'A': 'AAA', 'B': 'BBB'})
-        sampler.source_pool = {key_for(1, 15, 50): broad_rows}
+        sampler.source_pool = {key_for(1, 2, 50): broad_rows}
         sampler.outcome_backoff_enabled = True
         sampler.allow_sparse_cells = True
         sampler.scramble_backoff_enabled = True

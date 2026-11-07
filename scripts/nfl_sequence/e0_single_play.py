@@ -43,6 +43,17 @@ def yardline_bucket(y):
     return '1-9' if y <= 9 else '10-19' if y <= 19 else '20-49' if y <= 49 else '50-79' if y <= 79 else '80-99'
 
 
+def pool_key(down, togo, yardline_100):
+    """Sampling cell for a play. Finer than e0's buckets where the fourth-down choice changes with distance: the
+    go-for-it share falls steeply from 1-2 to 10+ yards and from the 50 to the 70, so one 50-79 cell mixed them.
+    The 20s and the 30s and 40s also differ (3-5 yards to go: 23% go for it at 20-29, 41-44% at 30-49), so 20-49 splits."""
+    dist = '1-2' if togo <= 2 else '3-5' if togo <= 5 else '6-9' if togo <= 9 else '10+'
+    field = ('1-9' if yardline_100 <= 9 else '10-19' if yardline_100 <= 19 else '20-29' if yardline_100 <= 29
+             else '30-49' if yardline_100 <= 49 else '50-59' if yardline_100 <= 59 else '60-69' if yardline_100 <= 69
+             else '70-79' if yardline_100 <= 79 else '80-99')
+    return (down, dist, field)
+
+
 def as_int(x):
     return None if x is None else int(x)
 

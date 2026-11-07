@@ -17,6 +17,11 @@ OVERTIME_SECONDS = 600
 OVERTIME_TIMEOUTS = 2  # Rule 16, Article 3(e): two timeouts per team in overtime, as the engine states
 PERIOD_START_CLOCK = {3: QUARTER_SECONDS, OVERTIME_QUARTER: OVERTIME_SECONDS}  # the clock a half or overtime opens at
 PERIOD_KICKOFFS = ('half_start', 'overtime_start')
+# Who may score on each terminal. A touchdown or a made field goal is the offense's; a turnover return, a punt return or a
+# safety is the defense's. Regulation's last drive and the half's last drive are not scoring terminals.
+SCORING_SIDE = {'touchdown': 'offense', 'field_goal_attempt': 'offense', 'turnover': 'defense', 'punt': 'defense',
+                'safety': 'defense'}
+POST_SCORE_KICKS = ('post_score', 'post_field_goal')
 
 
 def _fail(message):
@@ -39,12 +44,21 @@ def _where(drive, play=None):
     return f"drive {drive['index']} play {play['sequence']}"
 
 
+def _period_length(quarter):
+    return OVERTIME_SECONDS if quarter == OVERTIME_QUARTER else QUARTER_SECONDS
+
+
 def _state_domain(drive, play):
     for tag in ('state_before', 'state_after'):
         s = play[tag]
         where = f'{_where(drive, play)} {tag}'
         if s['quarter'] not in (1, 2, 3, 4, OVERTIME_QUARTER):
             _fail(f'{where}: quarter {s["quarter"]} is not a quarter')
+        if s['offense_team'] not in ('A', 'B') or s['defense_team'] != _other(s['offense_team']):
+            _fail(f'{where}: offense {s["offense_team"]} and defense {s["defense_team"]} are not the two teams')
+        for key in ('home_score', 'away_score'):
+            if s[key] < 0:
+                _fail(f'{where}: {key} {s[key]} is negative')
         if not 0 <= s['clock_seconds'] <= QUARTER_SECONDS:
             _fail(f'{where}: clock {s["clock_seconds"]} is outside 0..{QUARTER_SECONDS}')
         for side in ('home_timeouts', 'away_timeouts'):
@@ -113,7 +127,39 @@ def _down_and_distance(drive, play):
         _fail(f'{where}: a gain of {gain} left {after["yards_to_go"]} to go from {before["yards_to_go"]}')
 
 
-def _drive(drive):
+def _play_clock(drive, play):
+    """Inside a quarter the clock falls by the play's runoff and stops at 0:00. A quarter changes only when the clock runs
+    out, and the new quarter opens at its full length. A penalty moves the clock by a rule this check does not model."""
+    before, after, outcome = play['state_before'], play['state_after'], play['outcome']
+    if outcome.get('penalty'):
+        return
+    where = f'{_where(drive, play)}'
+    runoff = outcome.get('clock_runoff_seconds')
+    if runoff is None:
+        _fail(f'{where} carries no clock runoff, so its clock cannot be checked')
+    if before['quarter'] == after['quarter']:
+        expected = max(0, before['clock_seconds'] - runoff)
+        if after['clock_seconds'] != expected:
+            _fail(f'{where}: a runoff of {runoff} from {before["clock_seconds"]} leaves the clock at {expected}, '
+                  f'not {after["clock_seconds"]}')
+        return
+    if before['clock_seconds'] > runoff:
+        _fail(f'{where}: quarter {before["quarter"]} ends with {before["clock_seconds"] - runoff} seconds left after '
+              f'a runoff of {runoff}')
+    if after['clock_seconds'] != _period_length(after['quarter']):
+        _fail(f'{where}: quarter {after["quarter"]} opens at {after["clock_seconds"]}, not '
+              f'{_period_length(after["quarter"])}')
+
+
+def _play_scores(drive, play):
+    """A score never falls within a play."""
+    before, after = play['state_before'], play['state_after']
+    for key in ('home_score', 'away_score'):
+        if after[key] < before[key]:
+            _fail(f'{_where(drive, play)}: {key} fell from {before[key]} to {after[key]}')
+
+
+def _drive(drive, return_drives=frozenset()):
     """One drive is a contiguous run of plays that starts and ends where its header says."""
     plays = drive['plays']
     if not plays:
@@ -132,12 +178,50 @@ def _drive(drive):
     _play_chain(drive, plays)
     for play in plays:
         _state_domain(drive, play)
-    _drive_points(drive, plays)
+        _play_clock(drive, play)
+        _play_scores(drive, play)
+    _drive_points(drive, plays, return_drives)
 
 
-def _drive_points(drive, plays):
+def _blocked_kick_touchdown(drive):
+    """The drive ends on a blocked kick that is a touchdown: the kicking or receiving side scores, as the kick was classified."""
+    plays = drive.get('plays')
+    if not plays:
+        return False
+    last = plays[-1]
+    return last['event_type'] in ('blocked_punt', 'blocked_field_goal') and bool(last['outcome'].get('touchdown'))
+
+
+def _scoring_team(drive, return_drives=frozenset()):
+    """Only the side the terminal names may score on that drive: the offense on a touchdown or a made field goal, the
+    defense on a turnover return, a punt return or a safety. Regulation's and the half's last drives score nothing here."""
+    scored = drive.get('points_scored_on_drive')
+    if not scored:
+        return
+    terminal = drive['terminal']
+    if terminal not in SCORING_SIDE:
+        if terminal in ('halftime', 'end_of_regulation'):
+            return
+        _fail(f'{_where(drive)} scores {scored["points"]} for {scored["team"]} on a {terminal} drive')
+    if terminal == 'touchdown' and _blocked_kick_touchdown(drive):
+        expected = drive['plays'][-1]['outcome'].get('scoring_team')  # a blocked kick may score for either side
+        if scored['team'] != expected:
+            _fail(f'{_where(drive)} is a blocked-kick touchdown that scores for {scored["team"]}, but the kick '
+                  f'was classified for {expected}')
+        return
+    side = SCORING_SIDE[terminal]
+    if terminal == 'touchdown' and drive['index'] in return_drives:
+        side = 'defense'  # Article 5(a): the overtime return touchdown the record names, scored by the defense
+    expected = drive['offense_team'] if side == 'offense' else _other(drive['offense_team'])
+    if scored['team'] != expected:
+        _fail(f'{_where(drive)} is a {terminal} that scores for {scored["team"]}; only the {side}, team {expected}, '
+              f'can score on it')
+
+
+def _drive_points(drive, plays, return_drives=frozenset()):
     """The score moves by the drive's own points for the team that scored, and by nothing for anyone else."""
     before, after = plays[0]['state_before'], plays[-1]['state_after']
+    _scoring_team(drive, return_drives)
     scored = drive.get('points_scored_on_drive')
     for team in ('A', 'B'):
         delta = _score(after, team) - _score(before, team)
@@ -163,14 +247,28 @@ def _kicks_after(record):
             _fail(f'a kickoff after drive {kick.get("after_drive")} lacks {missing}; this record predates the '
                   f'legality checks and cannot be checked')
         if kick['after_drive'] in kicks:
-            _fail(f'two kickoffs follow drive {kick["after_drive"]}')
-        kicks[kick['after_drive']] = kick
+            first = kicks[kick['after_drive']]
+            if not (_ends_first_half(first) and kick['kind'] == 'half_start'):
+                _fail(f'two kickoffs follow drive {kick["after_drive"]}')
+            first['half_start'] = kick  # the second-half kickoff that a first-half kickoff expiring the half is followed by
+            continue
+        kicks[kick['after_drive']] = dict(kick)
     return kicks
 
 
+def _ends_first_half(kick):
+    """A post-score kickoff in the second quarter whose runoff expires the half: the second-half kickoff follows it."""
+    return (kick['kind'] in POST_SCORE_KICKS and kick['quarter'] == 2 and kick['clock_expired_during_kickoff'])
+
+
 def _expects_kickoff(drive):
-    return drive['terminal'] in ('touchdown', 'halftime', 'safety') or (
-        drive['terminal'] == 'field_goal_attempt' and drive.get('field_goal_made'))
+    """A drive that ends the ball's possession by a score, a half or a safety is followed by a kickoff. A turnover return or
+    a punt return that scores hands the ball back to the team it was taken from, through a kickoff by the scorer."""
+    if drive['terminal'] in ('touchdown', 'halftime', 'safety'):
+        return True
+    if drive['terminal'] == 'field_goal_attempt':
+        return bool(drive.get('field_goal_made'))
+    return drive['terminal'] in ('turnover', 'punt') and bool(drive.get('points_scored_on_drive'))
 
 
 def _opening_receiver(record):
@@ -182,14 +280,32 @@ def _opening_receiver(record):
     _fail(f'opening choice {ledger["winner_choice"]!r} is not a legal opening choice')
 
 
-def _ends_the_game(record, drive):
-    """The game ends after regulation's last drive, or after an overtime drive, or on a score at 0:00 that leaves it untied."""
+def _ends_the_game(record, drive, kick):
+    """The game ends after regulation's last drive, or after an overtime drive, or on a score that leaves it untied and
+    runs the fourth quarter out: either the drive reaches 0:00, or the post-score kickoff's runoff expires the clock."""
     if drive['terminal'] == 'end_of_regulation' or drive['end_quarter'] == OVERTIME_QUARTER:
         return True
     final = drive['plays'][-1]['state_after']
     scored = drive.get('points_scored_on_drive')
-    return (drive['end_quarter'] == 4 and drive['end_clock'] == 0 and bool(scored)
-            and _score(final, 'A') != _score(final, 'B') and record['points']['A'] != record['points']['B'])
+    if not (drive['end_quarter'] == 4 and bool(scored)
+            and _score(final, 'A') != _score(final, 'B') and record['points']['A'] != record['points']['B']):
+        return False
+    if drive['end_clock'] == 0:
+        return True
+    # a late score: the kick that follows is what runs the clock out, so the game ends on its return
+    return kick is not None and _game_ending_kick(kick)
+
+
+def _skips_post_score_kick(drive):
+    """A score whose clock expires in the second quarter takes no post-score kick: a touchdown, made field goal or safety
+    ending the first half (the provisional no_post_score_kick_at_halftime rule)."""
+    return (drive['terminal'] in ('touchdown', 'field_goal_attempt', 'safety') and bool(drive.get('points_scored_on_drive'))
+            and drive['end_quarter'] == 2 and drive['end_clock'] == 0)
+
+
+def _game_ending_kick(kick):
+    """A post-score or post-field-goal kickoff in the fourth quarter whose runoff expires the clock: the game ends on its return."""
+    return kick['kind'] in POST_SCORE_KICKS and kick['quarter'] == 4 and kick['clock_expired_during_kickoff']
 
 
 def _kickoff_clock(drive, kick):
@@ -234,10 +350,10 @@ def _possession_and_clock(record, drives, kicks):
         elif drive['terminal'] == 'end_of_overtime':
             _fail(f'{_where(drive)} ends overtime, but {_where(nxt)} follows it')
         elif nxt is None:
-            if not _ends_the_game(record, drive):
+            if not _ends_the_game(record, drive, kick):
                 _fail(f'the last drive ends with {drive["terminal"]!r} in quarter {drive["end_quarter"]} '
                       f'at {drive["end_clock"]}, which does not end the game')
-            if kick is not None:
+            if kick is not None and not _game_ending_kick(kick):
                 _fail('a kickoff follows the last drive')
             continue
         if kick is None:
@@ -250,14 +366,26 @@ def _possession_and_clock(record, drives, kicks):
             if drive['terminal'] != 'end_of_regulation' and not _expects_kickoff(drive):
                 _fail(f'{_where(drive)} ends with {drive["terminal"]} and no kickoff can follow it')
             _kickoff_clock(drive, kick)
-            if nxt['offense_team'] != kick['receiving_team']:
-                _fail(f'{_where(nxt)} has {nxt["offense_team"]} on offense but the kickoff went to {kick["receiving_team"]}')
+            half = kick.get('half_start') if _ends_first_half(kick) else None
+            if _ends_first_half(kick) and half is None:
+                _fail(f'the kickoff after {_where(drive)} expires the first half, but no second-half kickoff follows it')
+            handoff = half or kick  # after a first-half expiry the ball changes hands on the second-half kickoff
+            scored = drive.get('points_scored_on_drive')
+            if scored and kick['kind'] in POST_SCORE_KICKS and kick['kicking_team'] != scored['team']:
+                _fail(f'the {kick["kind"]} kickoff after {_where(drive)} is kicked by {kick["kicking_team"]}, '
+                      f'but {scored["team"]} scored')
+            if nxt['offense_team'] != handoff['receiving_team']:
+                _fail(f'{_where(nxt)} has {nxt["offense_team"]} on offense but the kickoff went to {handoff["receiving_team"]}')
             if kick['kicking_team'] != _other(kick['receiving_team']):
                 _fail(f'the kickoff after {_where(drive)} is kicked and received by the same team')
             expired = kick['clock_clamped_to_zero'] or kick['clock_expired_during_kickoff']
             if not expired and nxt['clock_start'] != kick['clock_after']:
                 _fail(f'{_where(nxt)} starts at {nxt["clock_start"]}, but the kickoff ends at {kick["clock_after"]}')
-            if kick['clock_clamped_to_zero'] or kick['clock_expired_during_kickoff']:
+            if half is not None:
+                if nxt['quarter_start'] != half['quarter'] or nxt['clock_start'] != half['clock_after']:
+                    _fail(f'{_where(nxt)} should open the second half at {half["clock_after"]} after the second-half kickoff, '
+                          f'found quarter {nxt["quarter_start"]} at {nxt["clock_start"]}')
+            elif kick['clock_clamped_to_zero'] or kick['clock_expired_during_kickoff']:
                 # the period ends during the kick: the next quarter opens where the kick left off, not with a second kick
                 if nxt['quarter_start'] != kick['quarter'] + 1 or nxt['clock_start'] != QUARTER_SECONDS:
                     _fail(f'{_where(nxt)} should open quarter {kick["quarter"] + 1} at {QUARTER_SECONDS} after a kick '
@@ -268,10 +396,10 @@ def _possession_and_clock(record, drives, kicks):
                 _fail(f'a second-half kickoff follows {_where(drive)}, which does not end the first half')
             if kick['kind'] == 'overtime_start' and drive['terminal'] != 'end_of_regulation':
                 _fail(f'an overtime kickoff follows {_where(drive)}, which does not end regulation')
-        _check_boundary(drive, nxt)
+        _check_boundary(drive, nxt, kick_expired_half=kick is not None and _ends_first_half(kick))
 
 
-def _check_boundary(drive, nxt):
+def _check_boundary(drive, nxt, kick_expired_half=False):
     """Quarters step forward by one, and the score and the timeouts run continuously across the drive boundary."""
     last = drive['plays'][-1]['state_after']
     first = nxt['plays'][0]['state_before']
@@ -281,7 +409,7 @@ def _check_boundary(drive, nxt):
         if first[key] != last[key]:
             _fail(f'{_where(nxt)} starts with {key} {first[key]}, but {_where(drive)} ended with {last[key]}')
     if (drive['end_quarter'], nxt['quarter_start']) == (2, 3):
-        if drive['end_clock'] != 0:
+        if drive['end_clock'] != 0 and not kick_expired_half:  # a kickoff that expires the half is the drive's last event
             _fail(f'{_where(nxt)} opens the second half after {_where(drive)}, which ends at quarter '
                   f'{drive["end_quarter"]} {drive["end_clock"]}')
         for side in ('home_timeouts', 'away_timeouts'):
@@ -316,8 +444,8 @@ def _quarters(record, drives):
     for b in record['boundaries']:
         if b['kind'] == 'skipped_post_score_kick':
             drive = drives[b['drive_index'] - 1]
-            if (drive['terminal'], drive['end_quarter'], drive['end_clock']) != ('touchdown', 2, 0):
-                _fail(f'{_where(drive)} skips a post-score kick but is not a touchdown ending the first half')
+            if not _skips_post_score_kick(drive):
+                _fail(f'{_where(drive)} skips a post-score kick but is not a score ending the first half')
     declared = [(b['drive_index'], b['from_quarter'], b['to_quarter']) for b in record['boundaries']
                 if b['kind'] != 'skipped_post_score_kick']
     if sorted(observed) != sorted(declared):
@@ -367,12 +495,15 @@ def check(record):
     drives = record['drives']
     if not drives:
         _fail('the record has no drives to check')
+    overtime = record.get('overtime') or {}
+    article_5a = overtime.get('article_5a')
+    return_drives = frozenset({article_5a['drive_index']} if article_5a and article_5a['return_touchdown'] else ())
     for drive in drives:
-        _drive(drive)
+        _drive(drive, return_drives)
     kicks = _kicks_after(record)
     _possession_and_clock(record, drives, kicks)
     _quarters(record, drives)
     _timeouts(drives)
     _game(record, drives)
-    return ['play domain', 'play chain and downs', 'drive headers', 'drive points', 'possession and kickoffs',
-            'quarter boundaries', 'timeouts', 'final score']
+    return ['play domain', 'play clock and score', 'play chain and downs', 'drive headers', 'scoring side',
+            'drive points', 'possession and kickoffs', 'quarter boundaries', 'timeouts', 'final score']

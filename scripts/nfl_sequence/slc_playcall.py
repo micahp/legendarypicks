@@ -254,8 +254,7 @@ class PlayCallSampler:
         key = None
         by_key = defaultdict(list)
         for sample in samples:
-            situation = (int(sample[1]['down']), e0.ydstogo_bucket(sample[1]['ydstogo']),
-                         e0.yardline_bucket(sample[1]['yardline_100']))
+            situation = e0.pool_key(int(sample[1]['down']), sample[1]['ydstogo'], sample[1]['yardline_100'])
             if key is None:
                 key = situation
             elif situation != key:
@@ -322,7 +321,7 @@ class PlayCallSampler:
         """Find cutoff-safe outcomes without changing the selected play intent or scramble class."""
         if self.source_pool is None:
             return None, None
-        target = (int(state['down']), e0.ydstogo_bucket(state['togo']), e0.yardline_bucket(state['yl']))
+        target = e0.pool_key(int(state['down']), state['togo'], state['yl'])
         down, distance, field = target
         use_lateral_filter = self.participant_chooser is not None
         if (self._backoff_index is None
@@ -335,8 +334,7 @@ class PlayCallSampler:
                 for sample in samples:
                     event, row = sample[0], sample[1]
                     outcome_class = 'qb_scramble' if row.get('qb_scramble') == 1 else intent_of(event, row)
-                    exact = (int(row['down']), e0.ydstogo_bucket(row['ydstogo']),
-                             e0.yardline_bucket(row['yardline_100']))
+                    exact = e0.pool_key(int(row['down']), row['ydstogo'], row['yardline_100'])
                     row_down, row_distance, row_field = exact
                     keys = {'exact_cell': exact, 'down_field': (row_down, row_field),
                             'down_distance': (row_down, row_distance), 'field_zone': row_field,
@@ -447,7 +445,7 @@ class PlayCallSampler:
         labels = pre_event.get('labels') if pre_event else None
         use_labels = bool(labels) and self.decision_outcomes
         use_player_outcomes = self.player_outcome_table is not None
-        target = (int(state['down']), e0.ydstogo_bucket(state['togo']), e0.yardline_bucket(state['yl']))
+        target = e0.pool_key(int(state['down']), state['togo'], state['yl'])
         exact_outcome_rows = None
         backoff_candidates, outcome_fallback = (None, None)
         backoff_ess = None
