@@ -32,10 +32,12 @@ def sampler_with_flag(flag=True):
 
 
 def fourth_down_cell():
-    """One 4th-and-10 cell (yard-line bucket 20-49): field goals from the 22, punts from the 47, runs from the 35."""
-    rows = [sample('field_goal_attempt', index=i, play_type='field_goal', down=4, togo=10, yl=22) for i in range(10)]
+    """One 4th-and-10 cell (pool_key field 30-49): field goals from the 34, punts from the 47, runs from the 40.
+    The kernel is 2 yards wide, so the runs sit 6 and 7 yards from the two snap spots the test draws from.
+    The 20-29 rows are not in this cell: pool_key splits the 20s from the 30s and 40s."""
+    rows = [sample('field_goal_attempt', index=i, play_type='field_goal', down=4, togo=10, yl=34) for i in range(10)]
     rows += [sample('punt', index=10 + i, play_type='punt', down=4, togo=10, yl=47) for i in range(10)]
-    rows += [sample('run', index=20 + i, play_type='run', down=4, togo=10, yl=35, yards=2) for i in range(10)]
+    rows += [sample('run', index=20 + i, play_type='run', down=4, togo=10, yl=40, yards=2) for i in range(10)]
     return rows
 
 
@@ -69,14 +71,14 @@ class KickDecision(unittest.TestCase):
         far = self.draw(sampler, 47)  # 65 yards: the rows at the 47 are punts
         self.assertEqual(far['field_goal_attempt'], 0)
         self.assertGreater(far['punt'], 55)
-        near = self.draw(sampler, 22)  # 40 yards: the rows at the 22 are field goals
+        near = self.draw(sampler, 34)  # 51 yards: the rows at the 34 are field goals
         self.assertGreater(near['field_goal_attempt'], 55)
         self.assertEqual(sampler.decisions[-1]['fg_rule'], fg.RECORD_RULE)
         self.assertEqual(sampler.decisions[-1]['fg_kicker'], 'K_GOOD')
 
     def test_flag_off_keeps_the_whole_cell_share(self):
         sampler = sampler_with_flag(flag=False)
-        near = self.draw(sampler, 22)  # the cell's share: two thirds kicks, half of them field goals
+        near = self.draw(sampler, 34)  # the cell's share: two thirds kicks, half of them field goals
         self.assertGreater(near['run'], 5)
         self.assertGreater(near['punt'], 5)
         self.assertNotIn('fg_rule', sampler.decisions[-1])
