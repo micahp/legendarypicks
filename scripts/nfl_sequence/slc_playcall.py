@@ -37,6 +37,8 @@ import run_playcall_eval as rpe  # noqa: E402
 ARTIFACT_ID = 'slc_playcall_v1'
 UNKNOWN = formation_layer.UNKNOWN
 SCRIMMAGE_INTENTS = ('run', 'dropback')
+# restore_sack_mass (ablation A): (0.068806 - 0.0239) / (1 - 0.0239), the observed sack share of pass plays less the V2 share
+SACK_MASS_PI = 0.046
 KICK_INTENT = 'kick'
 LATERAL_ROW_FIELDS = ('lateral_receiver_player_id', 'lateral_receiving_yards',
                       'lateral_rusher_player_id', 'lateral_rushing_yards')
@@ -536,6 +538,11 @@ class PlayCallSampler:
                 key = rng.choices(keys, weights=[choice_base[k] for k in keys])[0]  # the unchanged baseline draw
         elif fallback_by_key is None:
             key = rng.choices(keys, weights=weights)[0]
+        if ('restore_sack_mass' in self.blocker_fixes and outcome_intent == 'dropback' and not scramble
+                and fallback_by_key is None and key[1] != 'sack' and (outcome_intent, 'sack') in entry['by_key']
+                and rng.random() < SACK_MASS_PI):
+            # ablation A: a forced sack with probability pi on each dropback, so the sack rate reaches the observed 6.88%
+            key = (outcome_intent, 'sack')
         candidates = fallback_by_key[key] if fallback_by_key is not None else entry['by_key'][key]
         if self.qb_decision_table is not None:
             if scramble and fallback_by_key is None:
