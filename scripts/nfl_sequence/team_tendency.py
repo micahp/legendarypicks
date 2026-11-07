@@ -17,7 +17,7 @@ METHOD = 'team_tendency_v1_log_odds_offense_defense'
 
 
 def cell_key(row):
-    return (int(row['down']), e0.ydstogo_bucket(row['ydstogo']), e0.yardline_bucket(row['yardline_100']))
+    return e0.pool_key(int(row['down']), row['ydstogo'], row['yardline_100'])
 
 
 def cell_name(cell):

@@ -180,7 +180,7 @@ def build_pool(rows, regulation_only=False, include_qb_scrambles=False):
             if hit is None:
                 continue
             event, runoff, spot = hit
-            key = (int(row['down']), e0.ydstogo_bucket(row['ydstogo']), e0.yardline_bucket(row['yardline_100']))
+            key = e0.pool_key(int(row['down']), row['ydstogo'], row['yardline_100'])
             pool.setdefault(key, []).append((event, row, runoff, spot))
     return pool, excluded
 
@@ -210,7 +210,7 @@ def build_pools(rows, regulation_only=False, include_qb_scrambles=False, team_be
             if row['play_type'] not in PLAY_TYPES or row['down'] is None or not 1 <= row['down'] <= 4:
                 continue
             nxt = plays[i + 1] if i + 1 < len(plays) else None
-            key = (int(row['down']), e0.ydstogo_bucket(row['ydstogo']), e0.yardline_bucket(row['yardline_100']))
+            key = e0.pool_key(int(row['down']), row['ydstogo'], row['yardline_100'])
             if in_main:
                 counted = Counter()
                 hit = classify(row, nxt, counted, include_qb_scrambles=include_qb_scrambles)
@@ -294,7 +294,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 stream_keys['clock_hazard'] = paired_random_streams.key(
                     'clock_quarter_end_hazard', drive_index, play_index)
                 stream_keys['clock_runoff'] = paired_random_streams.key('clock_runoff', drive_index, play_index)
-        key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
+        key = e0.pool_key(st['down'], st['togo'], st['yl'])
         source_cell = pool.get(key, [])
         cell = sampling_guard.filter_cell(source_cell, st) if sampling_guard is not None else source_cell
         if not cell and source_cell:
