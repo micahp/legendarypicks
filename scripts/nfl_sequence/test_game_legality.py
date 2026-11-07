@@ -189,6 +189,86 @@ class ScoringSide(unittest.TestCase):
         self.assertFalse(gl._expects_kickoff(self.drive('punt', None)))
 
 
+class LateScore(unittest.TestCase):
+    """A touchdown that leaves the clock at 0:01 ends the game only when the kickoff that follows runs the clock out."""
+
+    def drive(self, end_clock=1):
+        final = {'home_score': 7, 'away_score': 3}
+        return {'index': 9, 'terminal': 'touchdown', 'end_quarter': 4, 'end_clock': end_clock,
+                'points_scored_on_drive': {'team': 'A', 'points': 7}, 'plays': [{'state_after': final}]}
+
+    record = {'points': {'A': 7, 'B': 3}}
+
+    def kick(self, expired=True, quarter=4, kind='post_score'):
+        return {'kind': kind, 'quarter': quarter, 'clock_expired_during_kickoff': expired}
+
+    def test_a_kickoff_that_runs_the_clock_out_ends_the_game(self):
+        self.assertTrue(gl._ends_the_game(self.record, self.drive(), self.kick()))
+
+    def test_a_kickoff_that_leaves_time_does_not_end_the_game(self):
+        self.assertFalse(gl._ends_the_game(self.record, self.drive(), self.kick(expired=False)))
+
+    def test_no_kickoff_at_one_second_does_not_end_the_game(self):
+        self.assertFalse(gl._ends_the_game(self.record, self.drive(), None))
+
+    def test_a_zero_clock_ends_the_game_without_a_kickoff(self):
+        self.assertTrue(gl._ends_the_game(self.record, self.drive(end_clock=0), None))
+
+
+class OvertimeReturnTouchdown(unittest.TestCase):
+    """Article 5(a): a return touchdown in overtime is a touchdown terminal scored by the defense, and only when the
+    record names that drive as the return touchdown."""
+
+    drive = {'index': 12, 'offense_team': 'A', 'terminal': 'touchdown', 'points_scored_on_drive': {'team': 'B', 'points': 6}}
+
+    def test_the_defense_scores_on_a_named_return_touchdown(self):
+        gl._scoring_team(self.drive, frozenset({12}))
+
+    def test_the_defense_cannot_score_a_touchdown_the_record_does_not_name(self):
+        with self.assertRaisesRegex(FootballAssertionError, 'only the offense, team A, can score'):
+            gl._scoring_team(self.drive, frozenset({11}))
+        with self.assertRaisesRegex(FootballAssertionError, 'only the offense, team A, can score'):
+            gl._scoring_team(self.drive)
+
+
+class BlockedKickTouchdown(unittest.TestCase):
+    """A blocked kick returned for a touchdown scores for the side its classified outcome names, either side."""
+
+    def drive(self, scorer, kick='blocked_field_goal'):
+        last = {'event_type': kick, 'outcome': {'touchdown': True, 'scoring_team': scorer}}
+        return {'index': 12, 'offense_team': 'A', 'terminal': 'touchdown', 'plays': [last],
+                'points_scored_on_drive': {'team': scorer, 'points': 7}}
+
+    def test_the_defense_scores_on_a_blocked_kick_it_returns(self):
+        gl._scoring_team(self.drive('B'))
+
+    def test_the_kicking_team_scores_on_a_blocked_kick_it_recovers_and_returns(self):
+        gl._scoring_team(self.drive('A', kick='blocked_punt'))
+
+    def test_the_scorer_must_be_the_side_the_kick_was_classified_for(self):
+        drive = self.drive('B')
+        drive['points_scored_on_drive']['team'] = 'A'
+        with self.assertRaisesRegex(FootballAssertionError, 'classified for B'):
+            gl._scoring_team(drive)
+
+
+class HalftimeSkip(unittest.TestCase):
+    """A score whose clock expires in Q2 takes no post-score kick, whichever team and whichever kind of score."""
+
+    def drive(self, terminal, end_quarter=2, end_clock=0, points=True):
+        return {'terminal': terminal, 'end_quarter': end_quarter, 'end_clock': end_clock,
+                'points_scored_on_drive': {'team': 'A', 'points': 7} if points else None}
+
+    def test_a_touchdown_field_goal_or_safety_ending_the_first_half_skips_the_kick(self):
+        for terminal in ('touchdown', 'field_goal_attempt', 'safety'):
+            self.assertTrue(gl._skips_post_score_kick(self.drive(terminal)), terminal)
+
+    def test_a_score_that_leaves_time_or_is_not_scored_cannot_skip_the_kick(self):
+        self.assertFalse(gl._skips_post_score_kick(self.drive('touchdown', end_clock=12)))
+        self.assertFalse(gl._skips_post_score_kick(self.drive('touchdown', end_quarter=3)))
+        self.assertFalse(gl._skips_post_score_kick(self.drive('turnover', points=False)))
+
+
 class Domain(unittest.TestCase):
     def test_the_offense_and_defense_must_be_the_two_teams(self):
         record = json.loads(FIXTURE.read_text(encoding='utf-8'))
