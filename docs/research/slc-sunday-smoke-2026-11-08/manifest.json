@@ -1,0 +1,131 @@
+{
+ "bundle": "slc-sunday-smoke-2026-11-08",
+ "scope": "one seed per matchup, the smoke test before the 50-seed pass",
+ "builder_code": {
+  "repo": "lp-slc-v2",
+  "branch": "slc-v2",
+  "commit": "7890e7cc",
+  "files": [
+   "scripts/nfl_sequence/pregame_snapshot.py"
+  ]
+ },
+ "executed_simulator_code": {
+  "host": "fast host /root/lp-slc-v2-sim",
+  "base_commit": "9667cbc148f88fcb5aa945cac836b3df10cd6e31",
+  "uncommitted_patch": "executed-code.patch",
+  "patch_sha256": "0e6d790f6dcf01e8bc60e4355d6d89360f7135dc9ef30f3679411c3bb4bb8d56",
+  "note": "game_legality.py on the host equals local HEAD; e0_single_play.py, e1_drive.py, slc_playcall.py and team_tendency.py are uncommitted on the host and exist in no commit"
+ },
+ "inputs": {
+  "db": "/root/legendarypicks/backend/data/picks.dev.db (read-only)",
+  "playcall_artifact": "docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+  "streak_file": "wl-streaks-2026-11-07.json (rebuilt from published nfl_schedule scores before 2026-11-07T23:00Z)"
+ },
+ "flags": "--slc-profile v1_full_stack --slc-fg-ordinary-cutoff 60.0 --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --games 1 --seed-start 1 --export-boxscores",
+ "games": [
+  {
+   "game_id": "2026_09_CIN_ATL",
+   "snapshot_file": "snapshots/2026_09_CIN_ATL.json",
+   "snapshot_sha256": "2e5f93a3b61f7db8701f14fb9acdab6b5310a5f2b778bcdfa732cb221a33ce8c",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T14:30:00Z"
+  },
+  {
+   "game_id": "2026_09_DEN_CAR",
+   "snapshot_file": "snapshots/2026_09_DEN_CAR.json",
+   "snapshot_sha256": "8ccb71f7cf292f6c1d3f51a18acea49e065bc10f6444c958dbf23172a9cf7c6e",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T18:00:00Z"
+  },
+  {
+   "game_id": "2026_09_DAL_IND",
+   "snapshot_file": "snapshots/2026_09_DAL_IND.json",
+   "snapshot_sha256": "82744967a803bcc4a7bb72e7da2b409aed6e9bac7e204483e3eae9cdbe0a2d4a",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T18:00:00Z"
+  },
+  {
+   "game_id": "2026_09_NYJ_KC",
+   "snapshot_file": "snapshots/2026_09_NYJ_KC.json",
+   "snapshot_sha256": "e30519638c57c306e3c664c6782f787278fd9ee1fbc93d4387f55200964d73a1",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T18:00:00Z"
+  },
+  {
+   "game_id": "2026_09_DET_MIA",
+   "snapshot_file": "snapshots/2026_09_DET_MIA.json",
+   "snapshot_sha256": "6d039a82c17272766e19feaf171e713d209748ff9fb94e58a0e3bab4fe0bcb21",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T18:00:00Z"
+  },
+  {
+   "game_id": "2026_09_CLE_NO",
+   "snapshot_file": "snapshots/2026_09_CLE_NO.json",
+   "snapshot_sha256": "e5cc837e1d73eca868bb9ece767e516f4828eca88175f5764ed45890b9506c6b",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T18:00:00Z"
+  },
+  {
+   "game_id": "2026_09_NYG_PHI",
+   "snapshot_file": "snapshots/2026_09_NYG_PHI.json",
+   "snapshot_sha256": "83133b2b5cfdce205e631c94fa8d1754836fb652bca222dd184acbea97f8b0db",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T18:00:00Z"
+  },
+  {
+   "game_id": "2026_09_LA_WAS",
+   "snapshot_file": "snapshots/2026_09_LA_WAS.json",
+   "snapshot_sha256": "b59fcb702b7afe1cfce16844812c1c6557db805b601ede8c6ca9be454b51fa77",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T18:00:00Z"
+  },
+  {
+   "game_id": "2026_09_HOU_LAC",
+   "snapshot_file": "snapshots/2026_09_HOU_LAC.json",
+   "snapshot_sha256": "881152e932dc5c9a59e4a18a0274405b16d084a07eacc038753e2de8c7cf8ff6",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T21:05:00Z"
+  },
+  {
+   "game_id": "2026_09_LV_SF",
+   "snapshot_file": "snapshots/2026_09_LV_SF.json",
+   "snapshot_sha256": "9a67d76264e4666692546c01b14bdf2f35cbb34983e201e85a074c8a0e96cac5",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T21:05:00Z"
+  },
+  {
+   "game_id": "2026_09_GB_NE",
+   "snapshot_file": "snapshots/2026_09_GB_NE.json",
+   "snapshot_sha256": "406298bdf04051522a7719904d2843c9f5d32d2c5811b5bf556d4def892a5bdf",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T21:25:00Z"
+  },
+  {
+   "game_id": "2026_09_ARI_SEA",
+   "snapshot_file": "snapshots/2026_09_ARI_SEA.json",
+   "snapshot_sha256": "cc44c5e0f0e3216a6785d2b79af65174a27b95133e8600da07d412237338e475",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-08T21:25:00Z"
+  },
+  {
+   "game_id": "2026_09_TB_CHI",
+   "snapshot_file": "snapshots/2026_09_TB_CHI.json",
+   "snapshot_sha256": "79193ef93c6967fd1ac4a8acaa08f202b346730275a358b361f942a590215197",
+   "as_of": "2026-11-07T22:16:59Z",
+   "built_at_utc": "2026-11-07T22:16:59Z",
+   "kickoff_utc": "2026-11-09T01:20:00Z"
+  }
+ ]
+}
