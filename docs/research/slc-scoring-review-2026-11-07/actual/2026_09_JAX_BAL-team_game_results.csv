@@ -1,0 +1,3 @@
+league,game_id,team,game_date,opponent,home_away,score_for,score_against,win,ingested_at,season,status,source,run_id,result
+nfl,2026_09_JAX_BAL,BAL,2026-11-05,JAX,home,10.0,33.0,0,2026-07-27 13:03:42,2026,completed,,,
+nfl,2026_09_JAX_BAL,JAX,2026-11-05,BAL,away,33.0,10.0,1,2026-07-27 13:03:42,2026,completed,,,

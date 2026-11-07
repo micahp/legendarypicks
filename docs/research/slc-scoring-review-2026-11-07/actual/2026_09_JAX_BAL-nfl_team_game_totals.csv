@@ -1,0 +1,3 @@
+league,season,week,game_id,team,carries,targets,air_yards,source,sha256,fetched_at,air_yards_unassigned
+nfl,2026,9,2026_09_JAX_BAL,BAL,34.0,16.0,34.0,nflverse_stats_team_week,dec7e4b06995984b8e7b1c33e2717f9db7671665486ff542867c755c40b2bcca,2026-11-07T10:10:09.528453+00:00,-2.0
+nfl,2026,9,2026_09_JAX_BAL,JAX,30.0,26.0,199.0,nflverse_stats_team_week,dec7e4b06995984b8e7b1c33e2717f9db7671665486ff542867c755c40b2bcca,2026-11-07T10:10:09.528453+00:00,0.0
