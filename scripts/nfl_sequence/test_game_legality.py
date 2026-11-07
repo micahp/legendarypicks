@@ -205,6 +205,9 @@ class LateScore(unittest.TestCase):
     def test_a_kickoff_that_runs_the_clock_out_ends_the_game(self):
         self.assertTrue(gl._ends_the_game(self.record, self.drive(), self.kick()))
 
+    def test_a_made_field_goal_at_two_seconds_ends_the_game_on_its_kickoff(self):
+        self.assertTrue(gl._ends_the_game(self.record, self.drive(), self.kick(kind='post_field_goal')))
+
     def test_a_kickoff_that_leaves_time_does_not_end_the_game(self):
         self.assertFalse(gl._ends_the_game(self.record, self.drive(), self.kick(expired=False)))
 
