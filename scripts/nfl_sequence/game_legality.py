@@ -304,8 +304,8 @@ def _skips_post_score_kick(drive):
 
 
 def _game_ending_kick(kick):
-    """A post-score kickoff in the fourth quarter whose runoff expires the clock: the game ends on its return."""
-    return kick['kind'] == 'post_score' and kick['quarter'] == 4 and kick['clock_expired_during_kickoff']
+    """A post-score or post-field-goal kickoff in the fourth quarter whose runoff expires the clock: the game ends on its return."""
+    return kick['kind'] in POST_SCORE_KICKS and kick['quarter'] == 4 and kick['clock_expired_during_kickoff']
 
 
 def _kickoff_clock(drive, kick):
