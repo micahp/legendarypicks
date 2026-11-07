@@ -1,0 +1,29 @@
+{
+ "bundle": "slc-sunday-pass50-2026-11-08",
+ "seeds_per_matchup": 50,
+ "seed_range": "1-50",
+ "executed_code": "same as slc-sunday-smoke-2026-11-08 (base 9667cbc1 + executed-code.patch; patch sha256 in that bundle manifest)",
+ "snapshots": "slc-sunday-smoke-2026-11-08/snapshots/*.json (sha256 in that bundle manifest)",
+ "runner": "run_one.sh (all seeds run; --max-simulation-errors 1000)",
+ "validation_failures": {
+  "2026_09_CIN_ATL": "seed 50: drive 6 play 58 field_goal_attempt ends the drive but play 59 follows",
+  "2026_09_DAL_IND": "seed 47: drive 19 play 130 field_goal_attempt ends the drive but play 131 follows",
+  "2026_09_CLE_NO": "seed 29: overtime kickoff follows drive 23, which does not end regulation"
+ },
+ "raw_outputs": "on fast host /root/ot-sim-out/sunday/<game>-n50.{seeds,boxscores}.jsonl (not pushed; ~7 MB per matchup)",
+ "seed_outcome_sha256": {
+  "2026_09_ARI_SEA-n50.csv": "480c084a973acb889fbe81d314668b49619026b6002af532b148e6875259fa11",
+  "2026_09_CIN_ATL-n50.csv": "bf9c2a6d70bfbe5b9486329695a2c8b8bde28ca5eb965a5495e410f765161b81",
+  "2026_09_CLE_NO-n50.csv": "271587ae216759cf46a1eb425b328583bfed02c11e27dd8677b2c5042b620fb8",
+  "2026_09_DAL_IND-n50.csv": "f14743d622836c3274ffd41a86a354fc68dcf91642543f01966bbc4ab4558d90",
+  "2026_09_DEN_CAR-n50.csv": "8787f6125ed924809a0d7907e7e475b13b002e64c46069508dce69671d0db8b8",
+  "2026_09_DET_MIA-n50.csv": "1732884507d0046e5f1a1f80f54d1817c3f059ceefebcd134617a70422db0ada",
+  "2026_09_GB_NE-n50.csv": "218b6db2523f8a1d249f409cfed744abe99e0f45da11589c541f5b76e7311508",
+  "2026_09_HOU_LAC-n50.csv": "c900c8b4f9c03d324fda4bb9461e4bba3bba3eaeb35f898cb8b790b0380a28e2",
+  "2026_09_LA_WAS-n50.csv": "960a04752ffc3bbec8786d5bf7914a0a10a0cf88e76c078531fcf46dd8e67b14",
+  "2026_09_LV_SF-n50.csv": "d0079260f86713c7c520957fd678acb2cac9a968fdcd85152ac44aafdcc43f5a",
+  "2026_09_NYG_PHI-n50.csv": "57e515ecab717ff70b03d300727eef2d818256bbf6787db6de13913774f80f34",
+  "2026_09_NYJ_KC-n50.csv": "260c09b3213e94244657164ee2408e6aa1a6092d4e2569bd6527d7538cb9cc96",
+  "2026_09_TB_CHI-n50.csv": "6f54a7f808f9f10ba605f903bcb60896ffb270b08287ecd38d00e487e3783d3e"
+ }
+}
