@@ -1,0 +1,94 @@
+{
+  "bundle": "slc-scoring-review-2026-11-07",
+  "matchup": "2026_09_JAX_BAL",
+  "purpose": "raw evidence for the team scoring-distribution review; no narrative",
+  "snapshot": {
+    "frozen_folder": "docs/research/frozen-2026_09_JAX_BAL (untracked; not staged, per standing rule)",
+    "frozen_manifest_sha256": "fcafed1a53775f75715c1eba0280bdf9836c37d1886d524f45fe7ce01075dd83",
+    "built_from_commit": "5faf047f3350ed8305f72ff13b28a8ff62b3dd9f",
+    "cutoff_utc": "2026-11-05T23:45:00Z",
+    "evaluation_class": "exploratory_replay",
+    "verified": false,
+    "unverified_inputs": [
+      "schedule: observed_at is a loader import time, not a capture time",
+      "away depth: snapshot_at is the nflverse artifact date, not a capture time",
+      "home depth: snapshot_at is the nflverse artifact date, not a capture time"
+    ],
+    "preview_snapshot_for_runs": "docs/research/frozen-2026_09_JAX_BAL-preview/snapshot.json (21:00 UTC preview; used by the original runs)"
+  },
+  "runs": [
+    {
+      "arm": "v1",
+      "label": "V1 original",
+      "host_output_dir": "/root/repro/jax-bal-w09/out/v1",
+      "script": "/root/repro/jax-bal-w09/run_arms.sh",
+      "status": "started 2026-11-05T21:25:27Z, exit 0, ended 2026-11-05T22:10:43Z",
+      "result_in_log": "1000 seeds, 0 errors, 0 valid, 67 blocked before regulation",
+      "raw_files_on_host": false,
+      "note": "game.json, game.seeds.jsonl and game.boxscores.jsonl are NOT present in out/v1; only run.log and status.txt"
+    },
+    {
+      "arm": "v15",
+      "label": "V1.5 original",
+      "host_output_dir": "/root/repro/jax-bal-w09/out/v15",
+      "script": "/root/repro/jax-bal-w09/run_arms.sh (--playcall-season-adapt --season-adapt-n0 4.0)",
+      "status": "started 2026-11-05T21:25:27Z, exit 0, ended 2026-11-05T22:10:57Z",
+      "result_in_log": "1000 seeds, 0 errors, 0 valid, 66 blocked before regulation",
+      "raw_files_on_host": false,
+      "note": "game.json, game.seeds.jsonl and game.boxscores.jsonl are NOT present in out/v15; only run.log and status.txt"
+    },
+    {
+      "arm": "v2",
+      "label": "V2 original",
+      "host_output_dir": "/root/repro/jax-bal-w09/out/v2",
+      "script": "/root/repro/jax-bal-w09/run_v2.sh",
+      "status": "started 2026-11-05T21:33:42Z, exit 0, ended 2026-11-05T22:46:44Z",
+      "result_in_log": "1000 seeds, 0 errors, 0 valid, 76 blocked before regulation",
+      "raw_files_on_host": false,
+      "note": "game.json, game.seeds.jsonl and game.boxscores.jsonl are NOT present in out/v2; only run.log and status.txt"
+    },
+    {
+      "arm": "v1",
+      "label": "V1 corrected rerun (five registered blocker fixes)",
+      "host_output_dir": "/root/repro/jax-bal-w09/out-cutoff/v1",
+      "script": "/root/repro/jax-bal-w09/run_cutoff.sh",
+      "blocker_fixes": ["run_scramble_backoff", "long_field_goal_feasibility", "blocked_kick_source_audit", "blocked_kick_geometry", "safety_free_kick_boundaries"],
+      "status": "started 2026-11-06T00:28:22Z, exit 0, ended 2026-11-06T02:04:31Z",
+      "result_in_log": "1000 seeds, 0 errors, 0 valid, 0 blocked before regulation",
+      "raw_files_on_host": true,
+      "raw_files": ["game.seeds.jsonl (196 MB)", "game.boxscores.jsonl (152 MB)", "game.json (297 MB)"],
+      "seed_outcomes_csv": "seed-outcomes/JAX-BAL-corrected-v1.csv",
+      "game_json_sha256": null
+    },
+    {
+      "arm": "v15",
+      "label": "V1.5 corrected rerun (five registered blocker fixes)",
+      "host_output_dir": "/root/repro/jax-bal-w09/out-cutoff/v15",
+      "script": "/root/repro/jax-bal-w09/run_cutoff.sh",
+      "blocker_fixes": ["run_scramble_backoff", "long_field_goal_feasibility", "blocked_kick_source_audit", "blocked_kick_geometry", "safety_free_kick_boundaries"],
+      "status": "started 2026-11-06T00:28:22Z, exit 0, ended 2026-11-06T02:04:22Z",
+      "result_in_log": "1000 seeds, 0 errors, 0 valid, 0 blocked before regulation",
+      "raw_files_on_host": true,
+      "raw_files": ["game.seeds.jsonl (197 MB)", "game.boxscores.jsonl (152 MB)", "game.json (298 MB)"],
+      "seed_outcomes_csv": "seed-outcomes/JAX-BAL-corrected-v15.csv",
+      "game_json_sha256": null
+    },
+    {
+      "arm": "v2",
+      "label": "V2 corrected rerun (five registered blocker fixes)",
+      "host_output_dir": "/root/repro/jax-bal-w09/out-cutoff/v2",
+      "script": "/root/repro/jax-bal-w09/run_cutoff.sh",
+      "blocker_fixes": ["run_scramble_backoff", "long_field_goal_feasibility", "blocked_kick_source_audit", "blocked_kick_geometry", "safety_free_kick_boundaries"],
+      "status": "started 2026-11-06T00:28:22Z, exit 0, ended 2026-11-06T02:37:55Z",
+      "result_in_log": "1000 seeds, 0 errors, 0 valid, 0 blocked before regulation",
+      "raw_files_on_host": true,
+      "raw_files": ["game.seeds.jsonl (199 MB)", "game.boxscores.jsonl (154 MB)", "game.json (302 MB)"],
+      "seed_outcomes_csv": "seed-outcomes/JAX-BAL-corrected-v2.csv",
+      "game_json_sha256": null
+    }
+  ],
+  "seed_range": "1-1000",
+  "flags_common": "see /root/repro/jax-bal-w09/common-cutoff.inc and run_cutoff.sh on the fast host (not copied here)",
+  "actual_result": "actual/2026_09_JAX_BAL.json",
+  "other_matchups": "docs/research/slc-week8-2026/, docs/research/slc-week8-recoveries-2026-10-31/, docs/research/slc-week8-player-workload-10k-2026-10-30/ (existing seed ledgers, not re-exported)"
+}
