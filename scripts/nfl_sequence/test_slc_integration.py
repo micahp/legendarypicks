@@ -42,8 +42,12 @@ class Game(unittest.TestCase):
         unresolved = blocked.get('unrepresented_decisions') or []
         self.assertEqual(
             len(self.decisions), len(self.plays) + len(partial_plays) + len(unresolved))
-        self.assertEqual([d['event'] for d in self.decisions[:len(self.plays)]],
-                         [p['event_type'] for p in self.plays])
+        # A kick decision may resolve to its blocked form (engine contract: _decision_resolves_to_event).
+        for decision, play in zip(self.decisions[:len(self.plays)], self.plays):
+            self.assertTrue(
+                self.engine._decision_resolves_to_event(decision, play['event_type']),
+                f"decision {decision.get('event')} does not resolve to {play['event_type']}",
+            )
         for decision, play in zip(self.decisions[len(self.plays):], partial_plays):
             self.assertTrue(
                 self.engine._decision_resolves_to_event(decision, play['event_type']),
