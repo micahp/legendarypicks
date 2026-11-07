@@ -223,7 +223,7 @@ def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenanc
 
 
 HISTORICAL_DEPTH_LAST_SEASON = 2024
-EVALUATION_CLASSES = ('backtest', 'exploratory_replay', 'prospective_forecast')
+EVALUATION_CLASSES = ('backtest', 'exploratory_replay', 'prospective_forecast', 'verified_forecast')
 # A source enters this table only with a documented capture time: when its content became publicly available. A loader import
 # time, a publisher's artifact date and a historical season file do not qualify. Nothing qualifies yet.
 VERIFIED_CAPTURE_SOURCES = {
@@ -233,21 +233,28 @@ VERIFIED_CAPTURE_SOURCES = {
 CAPTURED_SCHEDULE = 'captured_before_cutoff'
 
 
-def input_provenance(game, rosters):
-    """The pregame inputs with no verified availability time. A backtest needs none; an exploratory replay records them."""
+def _in_database_by(ingested_at, as_of):
+    """True when a row was written to our database at or before the cutoff. The row's ingest time is the availability time."""
+    return as_of is not None and ingested_at is not None and _utc(ingested_at, 'ingested_at') <= as_of
+
+
+def input_provenance(game, rosters, as_of=None):
+    """The pregame inputs with no verified availability time. An input is available when our database held it at the cutoff
+    (its ingest time, not the publisher's capture time). Anything else is unverified."""
     unverified = []
     availability = game.get('availability_classification', 'versioned_as_of')
     if availability == CAPTURED_SCHEDULE:
         pass  # a hash-pinned capture acquired before the cutoff (pregame_capture checks the chain)
     elif availability != 'versioned_as_of':
         unverified.append('schedule: no versioned row observed by the cutoff; the current row was used')
-    else:
-        unverified.append('schedule: observed_at is a loader import time, not a capture time')
+    elif not _in_database_by(game.get('ingested_at'), as_of):
+        unverified.append('schedule: the row was ingested after the cutoff, or has no ingest time')
     for side, roster in rosters.items():
         if roster['source'] in VERIFIED_CAPTURE_SOURCES:
             continue
         if roster['source'] == 'nflverse_depth_charts':
-            unverified.append(f'{side} depth: snapshot_at is the nflverse artifact date, not a capture time')
+            if not _in_database_by(roster.get('ingested_at_latest'), as_of):
+                unverified.append(f'{side} depth: rows were ingested after the cutoff, or have no ingest time')
         else:
             unverified.append(f"{side} depth: source {roster['source']!r} has no verified capture time")
     return {'unverified': unverified}
@@ -288,7 +295,8 @@ def historical_depth_rows(con, game, team, as_of_text):
 def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
           kickoff_source_url: str | None = None,
           allow_unverified_current_schedule_exploratory: bool = False, evaluation: str | None = None) -> dict:
-    """evaluation is 'backtest' or 'exploratory_replay'. A backtest is refused while any input lacks a verified availability time;
+    """evaluation is 'backtest', 'verified_forecast' or 'exploratory_replay'. A backtest or verified forecast is refused while any
+    input lacks a verified availability time; a verified forecast is a game not yet played, built from inputs all in our database by the cutoff;
     an exploratory replay is built and labelled. Default: backtest for 2026 and later, exploratory for earlier seasons."""
     if evaluation == 'prospective_forecast':
         raise ValueError('prospective forecasts come from pregame_capture only, from captured raw inputs')
@@ -341,7 +349,7 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
             else:
                 rows = con.execute(
                     """SELECT player_id, gsis_id, player_name, team, pos_abb, pos_rank,
-                              snapshot_at, source
+                              snapshot_at, source, ingested_at
                          FROM nfl_depth_chart
                         WHERE season=? AND team=? AND player_id IS NOT NULL
                           AND gsis_id IS NOT NULL AND pos_rank > 0
@@ -372,16 +380,24 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
                 'team': team,
                 'snapshot_at': latest,
                 'source': selected[0]['source'],
+                'ingested_at': min(row['ingested_at'] for row in selected),
+                'ingested_at_latest': max(row['ingested_at'] for row in selected),
                 'players': selected,
             }
     finally:
         con.close()
 
-    provenance = input_provenance(game, rosters)
-    if evaluation == 'backtest' and provenance['unverified']:
-        raise ValueError(f"{game_id}: backtest refused; unverified pregame inputs: " + '; '.join(provenance['unverified']))
+    provenance = input_provenance(game, rosters, as_of=cutoff)
+    if evaluation in ('backtest', 'verified_forecast') and provenance['unverified']:
+        raise ValueError(f"{game_id}: {evaluation} refused; unverified pregame inputs: " + '; '.join(provenance['unverified']))
+    input_ingests = [{'input': 'schedule', 'game_id': game['game_id'], 'ingested_at': game['ingested_at']}]
+    input_ingests += [{'input': f'depth:{side}', 'team': rosters[side]['team'], 'snapshot_at': rosters[side]['snapshot_at'],
+                       'ingested_at': rosters[side]['ingested_at']} for side in ('away', 'home')]
     snapshot = {
         'schema': SCHEMA,
+        'built_at_utc': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+        'input_ingests': input_ingests,
+        'snapshot_date_utc': min(_utc(item['ingested_at'], f"{item['input']} ingested_at") for item in input_ingests).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'evaluation': {'class': evaluation, 'verified': not provenance['unverified'],
                        'unverified_inputs': provenance['unverified']},
         'as_of': cutoff.isoformat().replace('+00:00', 'Z'),

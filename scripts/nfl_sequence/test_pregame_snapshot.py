@@ -175,16 +175,16 @@ class ScheduleAsOf(unittest.TestCase):
                     gameday TEXT, gametime TEXT, away_team TEXT, home_team TEXT, location TEXT,
                     source TEXT, ingested_at TEXT);
                 CREATE TABLE nfl_depth_chart (season INTEGER, team TEXT, player_id INTEGER, gsis_id TEXT,
-                    player_name TEXT, pos_abb TEXT, pos_rank INTEGER, snapshot_at TEXT, source TEXT);
+                    player_name TEXT, pos_abb TEXT, pos_rank INTEGER, snapshot_at TEXT, source TEXT, ingested_at TEXT);
             ''')
             con.execute('INSERT INTO nfl_schedule VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                         ('2025_06_ARI_LA', 2025, 'REG', 6, '2025-10-18', '16:05', 'ARI', 'LAR',
                          'Home', 'nflverse', '2025-10-26 15:00:01'))
             for team, offset in (('ARI', 0), ('LAR', 10)):
                 for index, position in enumerate(('QB', 'RB', 'WR')):
-                    con.execute('INSERT INTO nfl_depth_chart VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    con.execute('INSERT INTO nfl_depth_chart VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                                 (2025, team, offset + index + 1, f'{team}-{index}', f'{team} player {index}',
-                                 position, 1, '2025-10-12T12:00:00Z', 'nflverse'))
+                                 position, 1, '2025-10-12T12:00:00Z', 'nflverse', '2025-10-13 09:00:00'))
             con.commit()
             con.close()
 
