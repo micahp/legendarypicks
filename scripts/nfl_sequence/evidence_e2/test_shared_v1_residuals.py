@@ -61,7 +61,10 @@ class Guards(unittest.TestCase):
         self.assertIn('V-teams-unresolved', res.residual_ids(invented, RECORD))
 
     def test_valid_full_game_cannot_be_claimed_while_a_rule_is_unsupported(self):
-        tampered = copy.deepcopy(RECORD)
+        # RECORD predates the clock-transition annotations, so the validator refuses it before this check; a current legal
+        # game reaches the valid_full_game refusal this test is about
+        legal = Path(__file__).resolve().parents[1] / 'legality_fixtures' / 'full_game_seed7.json'
+        tampered = json.loads(legal.read_text(encoding='utf-8'))
         tampered['valid_full_game'] = True
         with self.assertRaisesRegex(AssertionError, 'valid_full_game'):
             gs.validate_game(tampered)

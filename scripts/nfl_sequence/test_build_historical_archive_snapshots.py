@@ -59,9 +59,18 @@ class DefensiveFrontFallback(unittest.TestCase):
                                                   expected_roles=expected, game_id='test', team='MIA')
         self.assertEqual(chosen['gsis_id'], 'biggers')
 
-    def test_fallback_fails_when_no_eligible_compatible_front_backup_exists(self):
+    def test_an_interior_vacancy_takes_an_eligible_edge_backup(self):
+        # FRONT_SECOND_CHOICE: an interior slot with no interior lineman left takes an edge (first seen 2026_01_WAS_PHI)
         players = [{'gsis_id': 'edge', 'group': 'Base 4-3 D', 'pos_abb': 'RDE', 'pos_rank': 2,
                     'unit': 'defense', 'roster_eligible': True, 'starter': False}]
+        chosen = builder._cross_role_front_backup(players, group='Base 4-3 D', pos='LDT',
+                                                  expected_roles={('Base 4-3 D', 'LDT', 1)},
+                                                  game_id='test', team='MIA')
+        self.assertEqual(chosen['gsis_id'], 'edge')
+
+    def test_fallback_fails_when_no_eligible_compatible_front_backup_exists(self):
+        players = [{'gsis_id': 'qb', 'group': 'Base 4-3 D', 'pos_abb': 'QB', 'pos_rank': 1,
+                    'unit': 'offense', 'roster_eligible': True, 'starter': False}]
         with self.assertRaisesRegex(ValueError, 'no eligible compatible defensive-front backup'):
             builder._cross_role_front_backup(players, group='Base 4-3 D', pos='LDT',
                                              expected_roles={('Base 4-3 D', 'LDT', 1)},
