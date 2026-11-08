@@ -1,0 +1,5747 @@
+{
+  "source_commit": "8007ebf99f0fd6c98d4fd7676b998efec00eb388",
+  "host_output_directory": "/root/ot-sim-out/slc-v2-100-noon-2026-11-08",
+  "rng_protocol": "v2",
+  "games": [
+    {
+      "game_id": "2026_09_CLE_NO",
+      "as_of": "2026-11-07T22:16:59Z",
+      "snapshot_sha256": "d1c618a218748cb5f68f2756aaac1d5627a44094fdd8058c843fe0892095f8e4",
+      "requested_seed_ids_complete": true,
+      "seed_ledger_sha256": "e99229064115f432be6680ad7c26c8894103a899f3332416398a22b092d4dcdd",
+      "boxscore_sha256": "3d81824bd6beac83f8829655f7e3990d7ac352809aa7c95b448487e978b317f3",
+      "batch_output_sha256": "12b32d0ae7227af1b50de3c01982447483efeda6a4780f6a110f49ddf02d0af5",
+      "reconciliation_counts": {
+        "passed": 100
+      },
+      "clock_counts": {
+        "reconciled": 100
+      },
+      "roster_eligibility_counts": {
+        "None": 3900
+      },
+      "seeds": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 3,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 4,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 33,
+          "error": null
+        },
+        {
+          "seed": 5,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 6,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 7,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 8,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 0,
+          "home_points": 41,
+          "error": null
+        },
+        {
+          "seed": 9,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 32,
+          "error": null
+        },
+        {
+          "seed": 10,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 11,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 12,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 13,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 14,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 12,
+          "error": null
+        },
+        {
+          "seed": 15,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 16,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 17,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 18,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 19,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 20,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 21,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 22,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 23,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 24,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 25,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 38,
+          "error": null
+        },
+        {
+          "seed": 26,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 27,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 28,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 7,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 29,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 39,
+          "error": null
+        },
+        {
+          "seed": 30,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 31,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 32,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 33,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 34,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 35,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 36,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 32,
+          "error": null
+        },
+        {
+          "seed": 37,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 35,
+          "error": null
+        },
+        {
+          "seed": 38,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 39,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 29,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 40,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 41,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 42,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 33,
+          "error": null
+        },
+        {
+          "seed": 43,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 44,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 45,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 46,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 46,
+          "error": null
+        },
+        {
+          "seed": 47,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 48,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 49,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 50,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 51,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 7,
+          "error": null
+        },
+        {
+          "seed": 52,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 18,
+          "error": null
+        },
+        {
+          "seed": 53,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 54,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 47,
+          "error": null
+        },
+        {
+          "seed": 55,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 36,
+          "error": null
+        },
+        {
+          "seed": 56,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 57,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 58,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 59,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 60,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 61,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 43,
+          "error": null
+        },
+        {
+          "seed": 62,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 63,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 11,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 64,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 65,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 0,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 66,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 67,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 68,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 69,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 33,
+          "error": null
+        },
+        {
+          "seed": 70,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 11,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 71,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 72,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 33,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 73,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 74,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 75,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 33,
+          "home_points": 41,
+          "error": null
+        },
+        {
+          "seed": 76,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 77,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 78,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 79,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 80,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 32,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 81,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 32,
+          "home_points": 32,
+          "error": null
+        },
+        {
+          "seed": 82,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 83,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 84,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 85,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 86,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 12,
+          "error": null
+        },
+        {
+          "seed": 87,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 88,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 89,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 90,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 91,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 92,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 93,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 94,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 95,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 7,
+          "error": null
+        },
+        {
+          "seed": 96,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 97,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 98,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 32,
+          "error": null
+        },
+        {
+          "seed": 99,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 100,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 44,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_DAL_IND",
+      "as_of": "2026-11-07T22:16:59Z",
+      "snapshot_sha256": "13d3f377ae7f16dcb0a2205ea140b8934fa9ce29726fb4f2c2dd4d0cb73a40fc",
+      "requested_seed_ids_complete": true,
+      "seed_ledger_sha256": "f4b13e44820c77902786ea8f0f950155134208ccd0012cf9d046b2242c373d4d",
+      "boxscore_sha256": "b4e34b6cdeb121f7a3a0b85a775dd4ac5c4fdae0a44bb0454f16178b8f09797a",
+      "batch_output_sha256": "6791de2fe8c205f16cfde1aee16fb64a5d1fca5ffc31babc99d544847df8009f",
+      "reconciliation_counts": {
+        "passed": 100
+      },
+      "clock_counts": {
+        "reconciled": 100
+      },
+      "roster_eligibility_counts": {
+        "None": 3600
+      },
+      "seeds": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 3,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 4,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 45,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 5,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 6,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 7,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 8,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 9,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 10,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 12,
+          "error": null
+        },
+        {
+          "seed": 11,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 18,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 12,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 13,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 14,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 15,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 18,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 16,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 17,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 18,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 19,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 32,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 20,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 21,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 22,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 23,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 24,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 25,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 32,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 26,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 27,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 40,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 28,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 29,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 35,
+          "error": null
+        },
+        {
+          "seed": 30,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 31,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 32,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 33,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 34,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 35,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 36,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 37,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 38,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 39,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 39,
+          "error": null
+        },
+        {
+          "seed": 40,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 3,
+          "error": null
+        },
+        {
+          "seed": 41,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 7,
+          "error": null
+        },
+        {
+          "seed": 42,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 43,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 25,
+          "error": null
+        },
+        {
+          "seed": 44,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 45,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 46,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 47,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 48,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 18,
+          "error": null
+        },
+        {
+          "seed": 49,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 7,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 50,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 51,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 52,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 53,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 33,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 54,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 55,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 56,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 57,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 44,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 58,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 59,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 39,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 60,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 7,
+          "error": null
+        },
+        {
+          "seed": 61,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 62,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 63,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 64,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 65,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 66,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 67,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 68,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 69,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 70,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 44,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 71,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 72,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 36,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 73,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 41,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 74,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 75,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 76,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 77,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 42,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 78,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 33,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 79,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 80,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 81,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 32,
+          "home_points": 25,
+          "error": null
+        },
+        {
+          "seed": 82,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 83,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 84,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 85,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 86,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 87,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 88,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 89,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 90,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 91,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 92,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 93,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 94,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 18,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 95,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 7,
+          "error": null
+        },
+        {
+          "seed": 96,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 97,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 98,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 99,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 100,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 17,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_DEN_CAR",
+      "as_of": "2026-11-07T22:16:59Z",
+      "snapshot_sha256": "6f87fa2fdf6dd8904e41d42750afda3d49d312c34cd64bd2c0f0659c5752a409",
+      "requested_seed_ids_complete": true,
+      "seed_ledger_sha256": "17c876175a3e7a25a4041541673d2c7be61f6c624b04e48490340fc7b23a4f54",
+      "boxscore_sha256": "21c8e72876ee546f642fa0fed00043bd7f03637cb99c935465019c0d94bd48d4",
+      "batch_output_sha256": "37c91e2398b42f52bcbd1955a66a249046351d212493ac50af1a38eeedd557fe",
+      "reconciliation_counts": {
+        "passed": 100
+      },
+      "clock_counts": {
+        "reconciled": 100
+      },
+      "roster_eligibility_counts": {
+        "None": 3900
+      },
+      "seeds": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 38,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 3,
+          "error": null
+        },
+        {
+          "seed": 3,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 3,
+          "error": null
+        },
+        {
+          "seed": 4,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 5,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 6,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 7,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 8,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 3,
+          "error": null
+        },
+        {
+          "seed": 9,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 10,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 11,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 12,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 13,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 14,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 15,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 16,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 17,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 12,
+          "error": null
+        },
+        {
+          "seed": 18,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 19,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 48,
+          "home_points": 7,
+          "error": null
+        },
+        {
+          "seed": 20,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 32,
+          "error": null
+        },
+        {
+          "seed": 21,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 22,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 23,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 35,
+          "error": null
+        },
+        {
+          "seed": 24,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 25,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 26,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 27,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 28,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 40,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 29,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 30,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 31,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 32,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 33,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 34,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 35,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 7,
+          "error": null
+        },
+        {
+          "seed": 36,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 15,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 37,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 38,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 39,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 40,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 41,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 42,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 43,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 44,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 45,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 46,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 47,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 48,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 49,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 50,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 12,
+          "error": null
+        },
+        {
+          "seed": 51,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 52,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 53,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 49,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 54,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 55,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 56,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 57,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 45,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 58,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 59,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 33,
+          "home_points": 18,
+          "error": null
+        },
+        {
+          "seed": 60,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 61,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 62,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 63,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 64,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 65,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 66,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 67,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 68,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 69,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 12,
+          "error": null
+        },
+        {
+          "seed": 70,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 33,
+          "error": null
+        },
+        {
+          "seed": 71,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 72,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 73,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 74,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 75,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 76,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 77,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 78,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 79,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 18,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 80,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 81,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 82,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 41,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 83,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 84,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 3,
+          "error": null
+        },
+        {
+          "seed": 85,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 86,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 44,
+          "home_points": 3,
+          "error": null
+        },
+        {
+          "seed": 87,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 88,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 89,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 42,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 90,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 91,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 92,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 15,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 93,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 94,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 95,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 96,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 97,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 98,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 3,
+          "error": null
+        },
+        {
+          "seed": 99,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 100,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 17,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_DET_MIA",
+      "as_of": "2026-11-07T22:16:59Z",
+      "snapshot_sha256": "808e5b92bcaeb8a64f02213432da69066fcd25e8db7875324458d2bceea64df0",
+      "requested_seed_ids_complete": true,
+      "seed_ledger_sha256": "50940468226f251d2fde90a7fcf6834e710a54978e5e8b880f8a12a186c189d2",
+      "boxscore_sha256": "55632864c928b1cbc90ea766a70795f70f56175e57de69c785b0b90c233b84f6",
+      "batch_output_sha256": "59e647020347d8ffe975675891740bd283a4087750b4bf21c58a63264586d064",
+      "reconciliation_counts": {
+        "passed": 100
+      },
+      "clock_counts": {
+        "reconciled": 100
+      },
+      "roster_eligibility_counts": {
+        "None": 3500
+      },
+      "seeds": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 48,
+          "home_points": 18,
+          "error": null
+        },
+        {
+          "seed": 3,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 44,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 4,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 5,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 32,
+          "error": null
+        },
+        {
+          "seed": 6,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 7,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 8,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 9,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 10,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 11,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 36,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 12,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 13,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 39,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 14,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 15,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 16,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 17,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 35,
+          "error": null
+        },
+        {
+          "seed": 18,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 19,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 20,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 21,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 22,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 23,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 24,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 8,
+          "error": null
+        },
+        {
+          "seed": 25,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 3,
+          "error": null
+        },
+        {
+          "seed": 26,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 44,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 27,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 41,
+          "error": null
+        },
+        {
+          "seed": 28,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 29,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 30,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 48,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 31,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 32,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 33,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 34,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 33,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 35,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 36,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 37,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 29,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 38,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 39,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 40,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 41,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 42,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 43,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 44,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 29,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 45,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 41,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 46,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 44,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 47,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 48,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 38,
+          "error": null
+        },
+        {
+          "seed": 49,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 32,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 50,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 55,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 51,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 52,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 53,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 54,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 55,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 56,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 57,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 58,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 59,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 40,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 60,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 61,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 29,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 62,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 45,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 63,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 64,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 65,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 36,
+          "error": null
+        },
+        {
+          "seed": 66,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 67,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 68,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 41,
+          "home_points": 38,
+          "error": null
+        },
+        {
+          "seed": 69,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 70,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 71,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 72,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 73,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 74,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 75,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 76,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 77,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 41,
+          "error": null
+        },
+        {
+          "seed": 78,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 79,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 80,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 25,
+          "error": null
+        },
+        {
+          "seed": 81,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 82,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 83,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 84,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 85,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 45,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 86,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 87,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 88,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 89,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 90,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 41,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 91,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 35,
+          "error": null
+        },
+        {
+          "seed": 92,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 93,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 94,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 95,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 40,
+          "error": null
+        },
+        {
+          "seed": 96,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 97,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 29,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 98,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 41,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 99,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 100,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 9,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_LA_WAS",
+      "as_of": "2026-11-07T22:16:59Z",
+      "snapshot_sha256": "adb4038c0b9d33f44cbb63223a47c1fc6cbc926991b9477a2eb3324e900a5694",
+      "requested_seed_ids_complete": true,
+      "seed_ledger_sha256": "1e47fde7f433aa4e2070bab38697ee86bc426bb2c5459424d19040d2cb6215c7",
+      "boxscore_sha256": "47fe24cb519abde5a4ef161937246b904bcf474b4c645e5e0ce96ce4423cc2c5",
+      "batch_output_sha256": "15c7583ceea396705164aae3d15b392b085e25c2c6102ba81dee39162b9148f5",
+      "reconciliation_counts": {
+        "passed": 100
+      },
+      "clock_counts": {
+        "reconciled": 100
+      },
+      "roster_eligibility_counts": {
+        "None": 3900
+      },
+      "seeds": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 15,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 3,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 4,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 18,
+          "error": null
+        },
+        {
+          "seed": 5,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 6,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 39,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 7,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 8,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 9,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 18,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 10,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 25,
+          "error": null
+        },
+        {
+          "seed": 11,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 12,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 13,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 14,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 15,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 33,
+          "home_points": 40,
+          "error": null
+        },
+        {
+          "seed": 16,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 17,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 7,
+          "error": null
+        },
+        {
+          "seed": 18,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 43,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 19,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 40,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 20,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 21,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 22,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 23,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 42,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 24,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 25,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 26,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 27,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 28,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 29,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 30,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 31,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 32,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 7,
+          "error": null
+        },
+        {
+          "seed": 33,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 34,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 35,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 36,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 36,
+          "error": null
+        },
+        {
+          "seed": 37,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 32,
+          "error": null
+        },
+        {
+          "seed": 38,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 33,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 39,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 40,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 7,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 41,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 36,
+          "error": null
+        },
+        {
+          "seed": 42,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 43,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 44,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 45,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 46,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 47,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 48,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 33,
+          "error": null
+        },
+        {
+          "seed": 49,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 50,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 51,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 52,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 53,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 54,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 55,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 56,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 57,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 58,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 59,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 60,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 61,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 0,
+          "home_points": 42,
+          "error": null
+        },
+        {
+          "seed": 62,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 63,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 3,
+          "error": null
+        },
+        {
+          "seed": 64,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 65,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 66,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 41,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 67,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 43,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 68,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 32,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 69,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 70,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 71,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 72,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 73,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 74,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 75,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 76,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 77,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 78,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 79,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 80,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 81,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 82,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 83,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 7,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 84,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 85,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 86,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 33,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 87,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 88,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 89,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 90,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 32,
+          "error": null
+        },
+        {
+          "seed": 91,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 92,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 93,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 94,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 95,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 96,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 97,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 98,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 99,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 100,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 9,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_NYG_PHI",
+      "as_of": "2026-11-07T22:16:59Z",
+      "snapshot_sha256": "1a88763c7c1f3ace61e6fae895145aaa4e44a3bf2ad5e9af260099184b29ebfe",
+      "requested_seed_ids_complete": true,
+      "seed_ledger_sha256": "e32747b65506c0d7a10810d96c08033934176486b7cd0d97992ea3443a821b31",
+      "boxscore_sha256": "7e15c96ff7592b26e999c4b8c8fe9c4e67db27a41503e62d1365d04b08aef2ff",
+      "batch_output_sha256": "f59f2d7381ef16bf10ab31112ba4c64e52b47fa36c640cf7b61d67b35e920d88",
+      "reconciliation_counts": {
+        "passed": 100
+      },
+      "clock_counts": {
+        "reconciled": 100
+      },
+      "roster_eligibility_counts": {
+        "None": 3900
+      },
+      "seeds": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 3,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 4,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 5,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 6,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 7,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 8,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 9,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 10,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 11,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 12,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 13,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 14,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 38,
+          "error": null
+        },
+        {
+          "seed": 15,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 16,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 17,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 36,
+          "error": null
+        },
+        {
+          "seed": 18,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 43,
+          "error": null
+        },
+        {
+          "seed": 19,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 20,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 21,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 22,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 23,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 24,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 12,
+          "error": null
+        },
+        {
+          "seed": 25,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 26,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 27,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 28,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 29,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 40,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 30,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 31,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 32,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 33,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 34,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 35,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 7,
+          "home_points": 12,
+          "error": null
+        },
+        {
+          "seed": 36,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 33,
+          "home_points": 36,
+          "error": null
+        },
+        {
+          "seed": 37,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 38,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 25,
+          "error": null
+        },
+        {
+          "seed": 39,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 7,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 40,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 41,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 42,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 43,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 18,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 44,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 45,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 7,
+          "error": null
+        },
+        {
+          "seed": 46,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 33,
+          "error": null
+        },
+        {
+          "seed": 47,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 15,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 48,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 49,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 50,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 36,
+          "error": null
+        },
+        {
+          "seed": 51,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 52,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 38,
+          "error": null
+        },
+        {
+          "seed": 53,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 54,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 55,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 56,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 7,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 57,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 58,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 59,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 11,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 60,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 15,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 61,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 62,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 63,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 64,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 65,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 66,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 67,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 29,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 68,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 69,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 32,
+          "error": null
+        },
+        {
+          "seed": 70,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 71,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 72,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 73,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 11,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 74,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 75,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 18,
+          "error": null
+        },
+        {
+          "seed": 76,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 77,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 78,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 79,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 80,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 32,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 81,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 82,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 83,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 84,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 85,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 18,
+          "home_points": 25,
+          "error": null
+        },
+        {
+          "seed": 86,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 87,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 88,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 89,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 90,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 91,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 92,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 93,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 35,
+          "error": null
+        },
+        {
+          "seed": 94,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 18,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 95,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 96,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 97,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 98,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 99,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 36,
+          "error": null
+        },
+        {
+          "seed": 100,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 24,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_NYJ_KC",
+      "as_of": "2026-11-07T22:16:59Z",
+      "snapshot_sha256": "238d36c2c35a18fb0469da9150316e6df61f5e970c9eadabcee8eb6afc89bc70",
+      "requested_seed_ids_complete": true,
+      "seed_ledger_sha256": "3f5495d9e21663405ebec7e7e53fd029d018182f37b22155f8a0ae8600fc3872",
+      "boxscore_sha256": "3d8a22f1a520f98395881a33f0a8b15f2073af4bcb54959df3cfbb4fb6d6dc96",
+      "batch_output_sha256": "c95e432eb964d3b6c965e5638ba0329a3dbe1e6ab82e8624f18dcd5fac7191e7",
+      "reconciliation_counts": {
+        "passed": 100
+      },
+      "clock_counts": {
+        "reconciled": 100
+      },
+      "roster_eligibility_counts": {
+        "None": 4100
+      },
+      "seeds": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 40,
+          "error": null
+        },
+        {
+          "seed": 3,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 4,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 5,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 41,
+          "error": null
+        },
+        {
+          "seed": 6,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 7,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 8,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 9,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 10,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 11,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 12,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 13,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 29,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 14,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 37,
+          "error": null
+        },
+        {
+          "seed": 15,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 16,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 17,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 18,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 19,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 20,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 21,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 36,
+          "error": null
+        },
+        {
+          "seed": 22,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 23,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 24,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 25,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 26,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 32,
+          "error": null
+        },
+        {
+          "seed": 27,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 28,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 29,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 30,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 31,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 32,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 41,
+          "error": null
+        },
+        {
+          "seed": 33,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 34,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 14,
+          "error": null
+        },
+        {
+          "seed": 35,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 8,
+          "error": null
+        },
+        {
+          "seed": 36,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 37,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 38,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 39,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 6,
+          "error": null
+        },
+        {
+          "seed": 40,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 41,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 5,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 42,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 43,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 44,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 45,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 46,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 47,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 2,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 48,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 49,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 9,
+          "error": null
+        },
+        {
+          "seed": 50,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 51,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 46,
+          "error": null
+        },
+        {
+          "seed": 52,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 42,
+          "error": null
+        },
+        {
+          "seed": 53,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 54,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 55,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 56,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 57,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 37,
+          "home_points": 34,
+          "error": null
+        },
+        {
+          "seed": 58,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 30,
+          "error": null
+        },
+        {
+          "seed": 59,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 60,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 19,
+          "error": null
+        },
+        {
+          "seed": 61,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 15,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 62,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 12,
+          "error": null
+        },
+        {
+          "seed": 63,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 64,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 65,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 66,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 40,
+          "error": null
+        },
+        {
+          "seed": 67,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 68,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 69,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 70,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 13,
+          "error": null
+        },
+        {
+          "seed": 71,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 11,
+          "error": null
+        },
+        {
+          "seed": 72,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 73,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 10,
+          "error": null
+        },
+        {
+          "seed": 74,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 35,
+          "error": null
+        },
+        {
+          "seed": 75,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 76,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 26,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 77,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 78,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 25,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 79,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 29,
+          "error": null
+        },
+        {
+          "seed": 80,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 32,
+          "home_points": 26,
+          "error": null
+        },
+        {
+          "seed": 81,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 15,
+          "error": null
+        },
+        {
+          "seed": 82,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 83,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 22,
+          "error": null
+        },
+        {
+          "seed": 84,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 85,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 86,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 87,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 20,
+          "error": null
+        },
+        {
+          "seed": 88,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 21,
+          "error": null
+        },
+        {
+          "seed": 89,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 17,
+          "error": null
+        },
+        {
+          "seed": 90,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 28,
+          "error": null
+        },
+        {
+          "seed": 91,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 92,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 31,
+          "error": null
+        },
+        {
+          "seed": 93,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 27,
+          "error": null
+        },
+        {
+          "seed": 94,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 10,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 95,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 23,
+          "error": null
+        },
+        {
+          "seed": 96,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 16,
+          "error": null
+        },
+        {
+          "seed": 97,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 9,
+          "home_points": 24,
+          "error": null
+        },
+        {
+          "seed": 98,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 42,
+          "error": null
+        },
+        {
+          "seed": 99,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 38,
+          "error": null
+        },
+        {
+          "seed": 100,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 28,
+          "error": null
+        }
+      ]
+    }
+  ]
+}
