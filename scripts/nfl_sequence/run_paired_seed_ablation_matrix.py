@@ -6,6 +6,7 @@ full-stack game simulator's independently switchable play-call and participant l
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 import math
@@ -240,6 +241,7 @@ def _arm_evidence(arm_dir: Path, partitions: list[tuple[int, int]]) -> list[dict
     for index, (seed_start, games) in enumerate(partitions, start=1):
         out, ledger, boxes = _worker_paths(arm_dir, index)
         header = _ledger_header(ledger)
+        verification = json.loads(out.read_text(encoding='utf-8')).get('execution_verification')
         evidence.append({
             'worker': index, 'seed_start': seed_start, 'games': games,
             'output': {'path': str(out), 'sha256': sha256_file(out)},
@@ -249,8 +251,31 @@ def _arm_evidence(arm_dir: Path, partitions: list[tuple[int, int]]) -> list[dict
             'observed_reference_sha256': header.get('observed_reference_sha256'),
             'configuration_hash': (header.get('slc_profile') or {}).get('configuration_hash'),
             'enabled_layers': header.get('playcall_enabled_layers'),
+            'execution_verification': verification,
         })
     return evidence
+
+
+def _fallback_coverage(evidence):
+    """Summarize observed fallback events without treating missing traces as zero."""
+    totals = Counter()
+    traced = 0
+    for item in evidence:
+        verification = item.get('execution_verification')
+        if not isinstance(verification, dict) or not isinstance(verification.get('fallback_events'), dict):
+            return {'status': 'unavailable', 'requested_seeds': sum(row['games'] for row in evidence)}
+        n = verification.get('simulation_seeds_with_playcall_trace')
+        if type(n) is not int or n < 0 or n > item['games']:
+            raise ValueError('invalid playcall trace coverage in worker output')
+        traced += n
+        for key, value in verification['fallback_events'].items():
+            if type(value) is not int or value < 0:
+                raise ValueError(f'invalid fallback event count for {key}')
+            totals[key] += value
+    return {'status': 'observed', 'requested_seeds': sum(row['games'] for row in evidence),
+            'seeds_with_playcall_trace': traced, 'event_count': sum(totals.values()),
+            'events_by_kind': dict(sorted(totals.items())),
+            'scope': 'All requested seeds with a playcall trace, including invalid games; counts are events, not games.'}
 
 
 PLAYER_METRICS = {
@@ -466,8 +491,9 @@ def _compare_layer(args, layer: str, partitions: list[tuple[int, int]]) -> dict:
     return {
         'schema': 'lp.nfl.paired-seed-ablation-report.v1',
         'status': 'paired_with_seed_errors' if error_seeds else 'paired',
-        'valid_for_complete_game_comparison': bool(pairs) and not error_seeds and all(
-            row['control_valid_full_game'] and row['ablation_valid_full_game'] for row in pairs),
+        'valid_for_complete_game_comparison': (bool(pairs) and not error_seeds
+                                              and boxscore_summaries['complete_boxscore_pair_count'] == len(pairs) and all(
+            row['control_valid_full_game'] and row['ablation_valid_full_game'] for row in pairs)),
         'game_id': control_header.get('game_id'),
         'source_snapshot_sha256': control_header.get('source_snapshot_sha256'),
         'disabled_layer': layer,
@@ -478,6 +504,7 @@ def _compare_layer(args, layer: str, partitions: list[tuple[int, int]]) -> dict:
         'ablation_enabled_layers': sorted(key for key, enabled in (ablation[0]['enabled_layers'] or {}).items() if enabled),
         'worker_reports': worker_reports,
         'control_artifacts': control, 'ablation_artifacts': ablation,
+        'fallback_coverage': {'control': _fallback_coverage(control), 'ablation': _fallback_coverage(ablation)},
         'paired_boxscore_summaries': boxscore_summaries,
         'pairs': pairs,
     }

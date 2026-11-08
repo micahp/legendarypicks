@@ -125,6 +125,19 @@ class WorkerCompletion(unittest.TestCase):
 
 
 class AggregatedComparison(unittest.TestCase):
+    def test_fallback_coverage_counts_observed_events_and_marks_missing_data(self):
+        rows = [{'games': 3, 'execution_verification': {'simulation_seeds_with_playcall_trace': 2,
+                 'fallback_events': {'missing_category': 5}}},
+                {'games': 2, 'execution_verification': {'simulation_seeds_with_playcall_trace': 2,
+                 'fallback_events': {'missing_category': 3, 'missing_cell': 1}}}]
+        result = matrix._fallback_coverage(rows)
+        self.assertEqual(result['requested_seeds'], 5)
+        self.assertEqual(result['seeds_with_playcall_trace'], 4)
+        self.assertEqual(result['event_count'], 9)
+        self.assertEqual(result['events_by_kind'], {'missing_category': 8, 'missing_cell': 1})
+        rows[1]['execution_verification'] = None
+        self.assertEqual(matrix._fallback_coverage(rows)['status'], 'unavailable')
+
     def test_shard_pairs_are_combined_without_losing_seed_or_artifact_evidence(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -190,6 +203,11 @@ class AggregatedComparison(unittest.TestCase):
                          if row['player_id'] == 'qb-1' and row['metric'] == 'rush_attempts')
             self.assertEqual(usage['paired_delta_ablation_minus_control']['mean'], -1)
             self.assertEqual(report['paired_boxscore_summaries']['complete_boxscore_pair_count'], 2)
+            _out, _ledger, missing_box = matrix._worker_paths(ablation_dir, 2)
+            missing_box.write_text('{"type":"manifest"}\n', encoding='utf-8')
+            incomplete = matrix._compare_layer(args, 'score_clock_playcalling', partitions)
+            self.assertFalse(incomplete['valid_for_complete_game_comparison'])
+            self.assertEqual(incomplete['paired_boxscore_summaries']['missing_ablation_boxscore_count'], 1)
 
 
 if __name__ == '__main__':
