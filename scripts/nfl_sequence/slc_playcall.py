@@ -37,8 +37,10 @@ import run_playcall_eval as rpe  # noqa: E402
 ARTIFACT_ID = 'slc_playcall_v1'
 UNKNOWN = formation_layer.UNKNOWN
 SCRIMMAGE_INTENTS = ('run', 'dropback')
-# restore_sack_mass (ablation A): (0.068806 - 0.0239) / (1 - 0.0239), the observed sack share of pass plays less the V2 share
-SACK_MASS_PI = 0.046
+# restore_sack_mass (ablation A): the observed per-cell sack rates, written by obs_sack_cells.py and pinned by sha256
+OBS_SACK_CELLS_PATH = Path(__file__).resolve().parents[2] / 'docs/research/slc-scoring-realism-ablation-A/obs_sack_cells.json'
+OBS_SACK_CELLS_SHA256 = '3010131cc898d1c534a1d023b7d6c31dba6fd94d2506eaf60bb952d61a2a31e8'
+_OBS_SACK_CELLS = None
 KICK_INTENT = 'kick'
 LATERAL_ROW_FIELDS = ('lateral_receiver_player_id', 'lateral_receiving_yards',
                       'lateral_rusher_player_id', 'lateral_rushing_yards')
@@ -140,6 +142,35 @@ def intent_of(event, row):
     if event in e1.KICK_EVENTS:
         return KICK_INTENT
     return 'run' if row['play_type'] == 'run' else 'dropback'
+
+
+def _obs_sack_cells():
+    """The committed observed sack rates by cell. Refuses to load a file whose sha256 is not the pinned one."""
+    global _OBS_SACK_CELLS
+    if _OBS_SACK_CELLS is None:
+        raw = OBS_SACK_CELLS_PATH.read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != OBS_SACK_CELLS_SHA256:
+            raise ValueError(f'obs_sack_cells.json sha256 {digest} is not the pinned {OBS_SACK_CELLS_SHA256}')
+        _OBS_SACK_CELLS = json.loads(raw)['cells']
+    return _OBS_SACK_CELLS
+
+
+def sack_substitution_rate(entry):
+    """q(cell) = max(0, (obs - r) / inc): the chance an incomplete pass in this cell becomes a sack under ablation A.
+
+    r and inc are the simulator's own sack and incomplete shares for the cell, read from its outcome counts."""
+    cell = _obs_sack_cells().get(str(entry['key']))
+    if cell is None:
+        raise ValueError(f'no observed sack rate for cell {entry["key"]}')
+    dropbacks = sum(count for key, count in entry['base'].items() if key[0] == 'dropback')
+    if dropbacks == 0:
+        return 0.0
+    sim_sack = entry['base'].get(('dropback', 'sack'), 0) / dropbacks
+    sim_incomplete = entry['base'].get(('dropback', 'pass_incomplete'), 0) / dropbacks
+    if sim_incomplete == 0:
+        return 0.0
+    return max(0.0, (cell['obs_sack_rate'] - sim_sack) / sim_incomplete)
 
 
 def historical_cell_dropback_probability(base_counts):
@@ -538,10 +569,10 @@ class PlayCallSampler:
                 key = rng.choices(keys, weights=[choice_base[k] for k in keys])[0]  # the unchanged baseline draw
         elif fallback_by_key is None:
             key = rng.choices(keys, weights=weights)[0]
-        if ('restore_sack_mass' in self.blocker_fixes and outcome_intent == 'dropback' and not scramble
-                and fallback_by_key is None and key[1] != 'sack' and (outcome_intent, 'sack') in entry['by_key']
-                and rng.random() < SACK_MASS_PI):
-            # ablation A: a forced sack with probability pi on each dropback, so the sack rate reaches the observed 6.88%
+        if ('restore_sack_mass' in self.blocker_fixes and key == (outcome_intent, 'pass_incomplete') and not scramble
+                and fallback_by_key is None and (outcome_intent, 'sack') in entry['by_key']
+                and rng.random() < sack_substitution_rate(entry)):
+            # ablation A: an incomplete pass becomes a sack at the cell's q, so the cell's sack rate reaches its observed rate
             key = (outcome_intent, 'sack')
         candidates = fallback_by_key[key] if fallback_by_key is not None else entry['by_key'][key]
         if self.qb_decision_table is not None:
