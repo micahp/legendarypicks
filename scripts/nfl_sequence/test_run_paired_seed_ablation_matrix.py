@@ -81,6 +81,9 @@ class RunSpecification(unittest.TestCase):
         self.assertEqual(command[command.index('--slc-disable-layer') + 1], 'qb_decisions')
         self.assertIn('run_scramble_backoff', command)
         self.assertIn('--playcall-qb-run-role-style', command)
+        args.blocker_fixes = []
+        command = matrix._worker_command(args, Path('/runs/control.json'), 101, 20, None)
+        self.assertIn('--no-slc-blocker-fixes', command)
 
     def test_matrix_manifest_is_immutable_and_rejects_a_different_run_spec(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -155,7 +158,8 @@ class AggregatedComparison(unittest.TestCase):
                                 'rush_attempts': 9, 'sacks_taken': 2, 'drives': 7}},
                         ],
                         'players': [{
-                            'player_id': 'qb-1', 'player_name': 'QB One', 'team': 'AAA', 'position': 'QB',
+                            'stable_player_id': 'qb-1', 'identity_namespace': 'nfl_gsis_id',
+                            'name': 'QB One', 'team': 'AAA', 'position': 'QB',
                             'rushing': {'att': rushing_attempts, 'yds': 8},
                             'receiving': {'tgt': 0, 'rec': 0, 'yds': 0},
                             'passing': {'att': 20, 'yds': 200},

@@ -159,6 +159,8 @@ def _worker_command(args, out: Path, seed_start: int, games: int, disabled_layer
     ]
     if getattr(args, 'enable_qb_run_role_style', False):
         command.append('--playcall-qb-run-role-style')
+    if not args.blocker_fixes:
+        command.append('--no-slc-blocker-fixes')
     for fix in args.blocker_fixes:
         command.extend(('--slc-blocker-fix', fix))
     if disabled_layer is not None:
@@ -351,7 +353,16 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
                     values['ablation'].append(y)
 
         def players_by_id(box):
-            players = {str(player.get('player_id')): player for player in box.get('players', [])}
+            players = {}
+            for player in box.get('players', []):
+                player_id = player.get('stable_player_id', player.get('player_id'))
+                namespace = player.get('identity_namespace') or 'legacy_player_id'
+                if player_id is None or not str(player_id).strip():
+                    raise ValueError(f'seed {seed}: player has no stable identity in boxscore')
+                key = (str(namespace), str(player_id))
+                if key in players:
+                    raise ValueError(f'seed {seed}: duplicate player IDs in boxscore')
+                players[key] = player
             if len(players) != len(box.get('players', [])):
                 raise ValueError(f'seed {seed}: duplicate player IDs in boxscore')
             return players
@@ -359,14 +370,17 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
         control_players, ablation_players = players_by_id(control), players_by_id(ablation)
         if control_players.keys() != ablation_players.keys():
             raise ValueError(f'seed {seed}: roster identities differ between paired boxscores')
-        for player_id in sorted(control_players):
-            left, right = control_players[player_id], ablation_players[player_id]
-            identity = ('player_name', 'team', 'position')
+        for namespace, player_id in sorted(control_players):
+            left, right = control_players[(namespace, player_id)], ablation_players[(namespace, player_id)]
+            identity = ('team', 'position')
             if any(left.get(field) != right.get(field) for field in identity):
+                raise ValueError(f'seed {seed}: player metadata differs for {player_id}')
+            name = left.get('name', left.get('player_name'))
+            if name != right.get('name', right.get('player_name')):
                 raise ValueError(f'seed {seed}: player metadata differs for {player_id}')
             for metric, (category, field, _record) in PLAYER_METRICS.items():
                 values = player_values.setdefault(
-                    (player_id, left.get('player_name'), left.get('team'), left.get('position'), metric),
+                    (namespace, player_id, name, left.get('team'), left.get('position'), metric),
                     {'control': [], 'ablation': []})
                 x = _numeric(left.get(category) or {}, field)
                 y = _numeric(right.get(category) or {}, field)
@@ -382,8 +396,8 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
             row = {'control': _distribution(control), 'ablation': _distribution(ablation),
                    'paired_delta_ablation_minus_control': _distribution(delta)}
             if player:
-                player_id, name, team, position, metric = key
-                row.update({'player_id': player_id, 'player_name': name, 'team': team,
+                namespace, player_id, name, team, position, metric = key
+                row.update({'player_id': player_id, 'identity_namespace': namespace, 'player_name': name, 'team': team,
                             'position': position, 'metric': metric})
                 record = PLAYER_METRICS[metric][2]
                 row['historical_record_boundary'] = record
