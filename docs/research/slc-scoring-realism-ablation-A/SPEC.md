@@ -40,6 +40,8 @@ Other outcomes are unchanged. Restricting the substitution to incomplete passes 
 
 - Run both arms with `--rng-protocol v2`. `--ablation-restore-sack-mass` refuses to run under v1, which keys each seed's stream on the resealed snapshot and the enabled fixes, so the arms would not share draws.
 - Record `stream_root_sha256` for each arm, and assert before the run that the two roots are identical. The root is keyed on the pregame state and model inputs, and excludes the ablation switch.
+- Pass the baseline root as `--expected-stream-root-sha256 <baseline-root>` to the intervention run. `--ablation-restore-sack-mass` requires this value; a mismatch refuses before any seed is simulated. SLC batches default to RNG v2; explicitly selecting v1 is reserved for legacy replay and is refused for paired experiments.
+- Snapshot content seals still cover build timestamps for integrity. The v2 pregame stream identity excludes `built_at_utc`, the seal itself, and the model-reference wrapper; loaded model tables are hashed separately. A rebuilt snapshot with identical inputs therefore keeps the same v2 draws.
 - Pin the snapshot file sha256, the playcall artifact sha256, the streak file sha256, the code commit and the patch sha256 in the manifest of each arm.
 
 ## Decision rules

@@ -12,6 +12,32 @@ import simulate_pregame_batch as batch  # noqa: E402
 
 
 class BatchAggregation(unittest.TestCase):
+    def test_ablation_requires_baseline_root_and_replay_uses_dedicated_flag(self):
+        import contextlib
+        import io
+        import shlex
+        with tempfile.TemporaryDirectory() as tmp:
+            snapshot, artifact = Path(tmp) / 'snapshot.json', Path(tmp) / 'artifact.json'
+            snapshot.write_text('{}')
+            artifact.write_text('{}')
+            common = ['--snapshot-file', str(snapshot), '--playcall-artifact', str(artifact), '--out', 'out.json']
+            with patch.object(batch, 'run_batch') as run, contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    batch.main(common + ['--ablation-restore-sack-mass'])
+                run.assert_not_called()
+            with patch.object(batch, 'run_batch') as run:
+                batch.main(common + ['--ablation-restore-sack-mass', '--expected-stream-root-sha256', 'a' * 64])
+            args = run.call_args.args[0]
+            self.assertEqual(args.rng_protocol, 'v2')
+            replay = shlex.split(batch._reproduction_command(args, 7))
+            self.assertIn('--ablation-restore-sack-mass', replay)
+            self.assertNotIn('restore_sack_mass', replay)
+            self.assertIn('--expected-stream-root-sha256', replay)
+            with patch.object(batch, 'run_batch') as run:
+                batch.main(common + ['--rng-protocol', 'v1'])
+            replay = shlex.split(batch._reproduction_command(run.call_args.args[0], 7))
+            self.assertIn('--rng-protocol=v1', replay)
+
     def test_batch_cli_accepts_an_explicit_noncontiguous_seed_list(self):
         with tempfile.TemporaryDirectory() as tmp:
             snapshot = Path(tmp) / 'snapshot.json'

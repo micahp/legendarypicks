@@ -35,6 +35,25 @@ def _description(**overrides):
 
 
 class RngProtocol(unittest.TestCase):
+    def test_stable_pregame_identity_ignores_build_time_but_not_roster(self):
+        import copy
+        original = {'built_at_utc': '2026-11-05T12:00:00Z', 'snapshot_sha256': 'a' * 64,
+                    'rosters': {'home': ['QB1']}, 'as_of': '2026-11-05T11:00:00Z'}
+        moved = copy.deepcopy(original)
+        moved.update(built_at_utc='2026-11-05T12:00:01Z', snapshot_sha256='b' * 64,
+                     model_reference={'observed_reference': {'sha256': 'c' * 64}})
+        self.assertEqual(rng_protocol.pregame_state_sha256(original), rng_protocol.pregame_state_sha256(moved))
+        moved['rosters']['home'] = ['QB2']
+        self.assertNotEqual(rng_protocol.pregame_state_sha256(original), rng_protocol.pregame_state_sha256(moved))
+
+    def test_pair_gate_refuses_mismatched_or_legacy_roots(self):
+        control = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), _description())
+        control.require_root(control.root)
+        with self.assertRaisesRegex(ValueError, 'mismatch'):
+            control.require_root('f' * 64)
+        with self.assertRaisesRegex(ValueError, 'requires v2'):
+            rng_protocol.plan(rng_protocol.V1, None, None, None).require_root(control.root)
+
     def test_v1_keeps_the_legacy_snapshot_key(self):
         plan = rng_protocol.plan(rng_protocol.V1, None, None, None)
         self.assertIsNone(plan.seed_root({'snapshot_sha256': PREGAME}))
