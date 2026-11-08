@@ -46,6 +46,11 @@ def apply(table, input_path, expected_sha256, season, week, teams, concentration
                 if group not in result['phi'][role] or not isinstance(phi, (int, float)) or phi <= 0:
                     raise ValueError(f'unsupported concentration {role}:{group}')
                 result['phi'][role][group] = float(phi)
+                fit = result.get('fit', {}).get(role, {}).get(group)
+                if fit is not None:
+                    fit['control_phi'] = fit.get('phi')
+                    fit['phi'] = float(phi)
+                    fit['concentration_source'] = 'research_adaptive_fit'
     return result, {'input_sha256': digest, 'target_season': season, 'target_week': week,
                     'n0': n0, 'evidence': evidence, 'concentrations': concentrations,
                     'cutoff_safety': 'week_bounded_source_acquisition_unverified'}
