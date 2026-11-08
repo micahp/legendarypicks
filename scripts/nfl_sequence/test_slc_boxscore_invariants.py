@@ -121,6 +121,8 @@ class BoxscoreHardInvariants(unittest.TestCase):
                          snapshot['snapshot_sha256'])
 
     def test_blocked_game_emits_unresolved_rule_evidence_and_never_contributes(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
         record = game_record()
         record.update({
             'status': 'blocked', 'blocker': 'blocked_kick_outcome_unresolved',
@@ -135,7 +137,8 @@ class BoxscoreHardInvariants(unittest.TestCase):
         with patch.object(batch.slc_engine, 'is_slc', return_value=False), \
                 patch.object(batch.gs, 'play_game', return_value=record), \
                 patch.object(batch.gs, 'validate_game'):
-            outcome, contribution = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, export_boxscores=False)
+            outcome, contribution = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, export_boxscores=False,
+                                                          failure_dir=directory.name)
 
         self.assertEqual(outcome['status'], 'blocked')
         self.assertFalse(outcome['valid_full_game'])
@@ -149,6 +152,20 @@ class BoxscoreHardInvariants(unittest.TestCase):
         self.assertEqual(failure['outcome']['blocker'], record['blocker'])
         self.assertEqual(failure['source_artifact_hashes']['snapshot.snapshot_sha256'],
                          SNAPSHOT['snapshot_sha256'])
+        with gzip.open(outcome['failed_record']['path'], 'rt', encoding='utf-8') as handle:
+            saved = json.load(handle)
+        self.assertEqual(saved['record'], record)
+        self.assertEqual(saved['blocker'], 'blocked_kick_outcome_unresolved')
+        self.assertEqual(saved['unresolved_transition'], failure)
+
+    def test_error_before_record_reports_why_capture_is_unavailable(self):
+        with tempfile.TemporaryDirectory() as directory, \
+                patch.object(batch.slc_engine, 'is_slc', return_value=False), \
+                patch.object(batch.gs, 'play_game', side_effect=ValueError('failed before record')):
+            outcome, _ = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, failure_dir=directory)
+            self.assertEqual(outcome['status'], 'simulation_error')
+            self.assertIn('before a complete record', outcome['failed_record_unavailable'])
+            self.assertEqual(list(Path(directory).iterdir()), [])
 
     def test_mutation_completions_over_attempts_and_receptions_over_targets_fails(self):
         record = game_record()
