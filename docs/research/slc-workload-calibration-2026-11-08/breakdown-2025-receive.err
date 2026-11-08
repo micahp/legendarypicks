@@ -1,0 +1,14 @@
+fit-cache share_distributions.fit_from_counts cf775842fbee: hit
+Traceback (most recent call last):
+  File "scripts/nfl_sequence/breakdown_workload_calibration.py", line 156, in <module>
+    main()
+  File "scripts/nfl_sequence/breakdown_workload_calibration.py", line 147, in main
+    summary = summarise(rows)
+  File "scripts/nfl_sequence/breakdown_workload_calibration.py", line 124, in summarise
+    'interval_80_coverage_group': float(np.mean({(r['game_id'], r['team'], r['group']): r['group_covered']
+  File "<__array_function__ internals>", line 200, in mean
+  File "/usr/local/lib/python3.8/dist-packages/numpy/core/fromnumeric.py", line 3464, in mean
+    return _methods._mean(a, axis=axis, dtype=dtype,
+  File "/usr/local/lib/python3.8/dist-packages/numpy/core/_methods.py", line 194, in _mean
+    ret = ret / rcount
+TypeError: unsupported operand type(s) for /: 'dict_values' and 'int'

@@ -1,0 +1,25 @@
+{
+ "base_share_prior_season": 0.20483870967741935,
+ "candidate_population_size": 7,
+ "conditional_share_in_group_mean": 0.7755229100710385,
+ "conditional_share_in_group_p10": 0.5810666113922944,
+ "conditional_share_in_group_p90": 0.9368050206477896,
+ "cutoff": 2026,
+ "floor_weight_used": false,
+ "group": "WR",
+ "group_frequency_real_current_to_cutoff": 0.5079872204472844,
+ "group_frequency_real_prior": 0.4467741935483871,
+ "gsis_id": "00-0038559",
+ "implied_team_share": 0.3939557274801761,
+ "last_week": 8,
+ "lineup_restriction": "not traced: the simulated lineup filter is not exported by this script",
+ "phi_group": 8.222426,
+ "player": "Michael Wilson",
+ "population_positions": [
+  "WR"
+ ],
+ "real_player_share_current_to_cutoff": 0.25878594249201275,
+ "real_player_share_prior_season": 0.20483870967741935,
+ "role": "receive",
+ "team": "ARI"
+}
