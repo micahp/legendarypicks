@@ -1,0 +1,6 @@
+CUTOFF SNAPSHOT: built at 2026-11-05T23:46:06Z, after the cutoff
+game 2026_09_JAX_BAL; cutoff 2026-11-05T23:45:00Z; kickoff 2026-11-06T01:15:00Z
+repository commit 5faf047f3350ed8305f72ff13b28a8ff62b3dd9f
+snapshot sha256 e7b0183e20af137738f7fc6bff7519f232f5f8c907c91e6c8d8163531f699527
+evidence sha256 8090effa9c81ab9897e8607a4d830dc718d858c9a43f3d06f30091f1fcea4305; news payloads exported 12
+starter consistency against pinned starter flag: announced 1 checked, 1 agree, 0 differ, 0 unverified; expected 0 checked, 0 agree, 0 differ, 0 unverified
