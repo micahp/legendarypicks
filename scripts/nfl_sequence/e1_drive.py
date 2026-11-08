@@ -174,6 +174,7 @@ def build_pool(rows, regulation_only=False, include_qb_scrambles=False):
                 excluded['overtime rows (regulation-only pool)'] += 1
                 continue
             if row['play_type'] not in PLAY_TYPES or row['down'] is None or not 1 <= row['down'] <= 4:
+                excluded['unsupported play type or invalid down'] += 1
                 continue
             nxt = plays[i + 1] if i + 1 < len(plays) else None
             hit = classify(row, nxt, excluded, include_qb_scrambles=include_qb_scrambles)
@@ -208,6 +209,8 @@ def build_pools(rows, regulation_only=False, include_qb_scrambles=False, team_be
             if not (in_main or in_team):
                 continue
             if row['play_type'] not in PLAY_TYPES or row['down'] is None or not 1 <= row['down'] <= 4:
+                if in_main:
+                    excluded['unsupported play type or invalid down'] += 1
                 continue
             nxt = plays[i + 1] if i + 1 < len(plays) else None
             key = e0.pool_key(int(row['down']), row['ydstogo'], row['yardline_100'])

@@ -105,7 +105,7 @@ class League(unittest.TestCase):
     def test_attach_tags_each_pool_row_with_the_offense_streak(self):
         rows = [{'game_id': 'g0', 'posteam': 'AAA'}, {'game_id': 'g1', 'posteam': 'AAA'}]
         ss.attach(rows, {'g0': {'AAA': 'W3'}})
-        self.assertEqual([r['streak'] for r in rows], ['W3', 'NONE'])
+        self.assertEqual([r['streak'] for r in rows], ['W3', None])
 
     def test_a_streak_state_reweights_the_outcome_mix_within_the_intent(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})

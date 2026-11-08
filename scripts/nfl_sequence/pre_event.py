@@ -426,6 +426,7 @@ def _advance_lineup(field, lineup_state, team, available_players, state, base, c
         raise ValueError('the participation field needs the play state and the side lineup')
     if team not in field.teams:  # a team code the table does not use (LAR for LA, say) would silently get league rates
         raise ValueError(f'participation field has no transitions for team {team!r}; its teams are {sorted(field.teams)}')
+    status_before = field.status.copy()
     prev = lineup_state['group']
     situation = participation_field.cell_of(state['down'], state['togo'], state['yl'])
     cell = field.supported_cell(situation)
@@ -442,7 +443,7 @@ def _advance_lineup(field, lineup_state, team, available_players, state, base, c
     chosen['lineup'] = {'team': team, 'group': group, 'on_field': sorted(lineup), 'status': record['status'], 'cell': cell,
                         'cell_fallback_from': situation if cell != situation else None,
                         'entrants': record['entrants'], 'leavers': record['leavers'], 'short': record['short'],
-                        'slots': record['slots']}
+                        'slots': record['slots'], 'field_status': dict(field.status - status_before)}
     return set(lineup)
 
 

@@ -902,7 +902,7 @@ def summary(decisions, record=None):
                 fallbacks[str(decision[key])] += 1
         for category in decision.get('labels_unmatched', []):
             fallbacks[f'decision_row_missing_category_{category}'] += 1
-        for fallback in decision.get('team_outcome_fallbacks', []):
+        for fallback in decision.get('team_outcome_fallbacks', []) + decision.get('split_fallbacks', []):
             fallbacks[str(fallback)] += 1
         for category in (decision.get('participants') or {}).get('playbook_fallback', []):
             fallbacks[f'playbook_missing_category_{category}'] += 1
@@ -988,7 +988,8 @@ def lineup_summary(decisions):
     teams = {}
     for lineup in lineups:
         row = teams.setdefault(str(lineup['team']), {'team_snaps': 0, 'player_snaps': Counter(), 'groups': Counter(),
-                                           'short_snaps': 0, 'cell_fallbacks': Counter()})
+                                           'short_snaps': 0, 'cell_fallbacks': Counter(), 'field_status': Counter()})
+        row['field_status'].update(lineup.get('field_status', {}))
         row['team_snaps'] += 1
         row['player_snaps'].update(lineup['on_field'])
         row['groups'][lineup['group']] += 1

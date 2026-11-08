@@ -46,6 +46,13 @@ def game_rows(game, season, posteam, defteam, kinds):
 
 
 class TendencyRatios(unittest.TestCase):
+    def test_missing_cell_and_event_are_counted_but_neutral_values_are_not(self):
+        model = tt.TeamTendencies({'offense': {'AAA': {'1|10|50': {'run': 1.0}}}}, {'sha256': 'x'})
+        self.assertEqual(model.ratio('offense', 'AAA', (1, 10, 50), 'run'), 1.0)
+        self.assertFalse(model.fallbacks)
+        self.assertEqual(model.ratio('offense', 'AAA', (1, 10, 50), 'pass'), 1.0)
+        self.assertEqual(sum(model.fallbacks.values()), 1)
+
     def test_a_team_that_matches_the_league_has_ratio_one(self):
         pool = pool_from(NEUTRAL)
         built = tt.build_from_pool(pool, 2025)

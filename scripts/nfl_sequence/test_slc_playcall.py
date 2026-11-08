@@ -89,6 +89,17 @@ class Sampler(unittest.TestCase):
             'no_prior_sample:defense:BBB:pass_complete',
         ])
 
+    def test_missing_tendency_event_is_counted_in_summary(self):
+        import slc_engine
+        import team_tendency
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.team_outcomes = team_tendency.TeamTendencies(
+            {'offense': {'AAA': {}}, 'defense': {'BBB': {}}}, {'sha256': 'test'})
+        sampler.sample(random.Random(1), cell([('run', 'run'), ('pass_complete', 'pass')]), 'A', 'B', state=STATE)
+        counts = slc_engine.summary(sampler.decisions)['fallback_events']
+        self.assertTrue(any(k.startswith('no_prior_cell_event:offense:AAA:') for k in counts))
+        self.assertTrue(any(k.startswith('no_prior_cell_event:defense:BBB:') for k in counts))
+
     def test_a_near_certain_dropback_draws_only_dropback_outcomes(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
         pool = cell([('run', 'run'), ('pass_complete', 'pass'), ('pass_incomplete', 'pass'), ('sack', 'pass')])

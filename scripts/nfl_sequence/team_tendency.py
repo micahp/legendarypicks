@@ -34,13 +34,20 @@ class TeamTendencies:
     def __init__(self, ratios, manifest, league_shares=None):
         self.ratios = ratios  # {'offense' | 'defense': {team: {cell_name: {event: ratio}}}}
         self.manifest = manifest
+        self.fallbacks = Counter()
+        self.fallback_count = 0
         self.league_shares = league_shares  # {cell_name: {event: league share}}, the base the ratios are taken against
 
     def ratio(self, side, team, cell, event):
         by_team = self.ratios[side]
         if team not in by_team:
             raise ValueError(f'no {side} tendency for team {team!r} in the prior seasons')
-        return by_team[team].get(cell_name(cell), {}).get(event, 1.0)
+        events = by_team[team].get(cell_name(cell), {})
+        if event not in events:
+            self.fallbacks[(side, team, cell_name(cell), event)] += 1
+            self.fallback_count += 1
+            return 1.0
+        return events[event]
 
 
 def build_from_pool(pool, target_season, prior_strength=PRIOR_STRENGTH, cutoff=None):
@@ -148,4 +155,6 @@ class TendencySampler:
 
     def describe(self):
         return {'method': METHOD, 'tendency_sha256': self.tendencies.manifest['sha256'],
-                'side_teams': self.side_teams}
+                'side_teams': self.side_teams,
+                'fallback_events': [{'side': k[0], 'team': k[1], 'cell': k[2], 'event': k[3], 'count': v}
+                                    for k, v in sorted(self.tendencies.fallbacks.items())]}
