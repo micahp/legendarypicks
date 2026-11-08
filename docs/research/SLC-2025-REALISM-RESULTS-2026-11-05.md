@@ -1,5 +1,7 @@
 # SLC 2025 realism results: V1, V1.5 and V2
 
+> Post-audit interpretation correction: the historical simulated target total is assigned pass volume (throwaways/spikes are absent), and modeled lineup counts are skill-position appearances rather than full player snaps. Any interpretation of these quantities as independent receiver-volume skill or complete snap realism is withdrawn. The raw historical figures below are preserved; they are not reruns of the repaired engine. See [SLC audit remediation](slc-code-audit-2026-11-08/README.md).
+
 Date: 2026-11-05
 Status: **development-exposed retrospective result.** The 2025 season was used while the play-call layer was being developed (the penalty settings in the playcall artifact were chosen in an evaluation that looked at 2025). These numbers are not a clean holdout and are not a forecast. The 2026 prospective results are kept separate.
 
