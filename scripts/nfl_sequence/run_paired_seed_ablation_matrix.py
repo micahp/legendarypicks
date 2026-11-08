@@ -18,7 +18,9 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 import slc_config  # noqa: E402
-from paired_seed_ablation import compare_ledgers  # noqa: E402
+import rng_protocol  # noqa: E402
+from paired_seed_ablation import (compare_ledgers, validate_v2_header, validate_v2_streams,
+                                  _read_ledger)  # noqa: E402
 
 
 SCHEMA = 'lp.nfl.paired-seed-ablation-matrix.v1'
@@ -94,7 +96,8 @@ def _ledger_header(path: Path) -> dict:
     return header
 
 
-def _complete_worker(out: Path, ledger: Path, boxes: Path, seed_start: int, games: int) -> bool:
+def _complete_worker(out: Path, ledger: Path, boxes: Path, seed_start: int, games: int,
+                     *, args=None, baseline=None, disabled_layer=None) -> bool:
     """Recognize a completed shard only when its report, ledger, and boxscore export agree."""
     if not out.exists():
         return False
@@ -121,10 +124,25 @@ def _complete_worker(out: Path, ledger: Path, boxes: Path, seed_start: int, game
     expected = set(range(seed_start, seed_start + games))
     if seeds != expected:
         raise ValueError(f'{ledger}: expected {games} unique seeds; found {len(seeds)}')
+    if args is not None:
+        root, identity = validate_v2_header(header)
+        if (header.get('source_commit') != args.source_commit
+                or header.get('source_snapshot_sha256') != args.snapshot_sha256
+                or identity['pregame_state_sha256'] != args.pregame_state_sha256
+                or identity['artifact_sha256'] != args.artifact_sha256
+                or identity['enabled_layers'] != args.expected_layers[disabled_layer]):
+            raise ValueError(f'completed worker has incorrect pairing identity: {ledger}')
+        _, outcomes, _ = _read_ledger(ledger)
+        for seed, outcome in outcomes.items():
+            validate_v2_streams(outcome, root, seed, 'worker')
+        if baseline is not None:
+            compare_ledgers(baseline, ledger, disabled_layer=disabled_layer, expected_games=games)
+        elif 'paired_layer_baseline' in header:
+            raise ValueError(f'control worker has a baseline binding: {ledger}')
     return True
 
 
-def _worker_command(args, out: Path, seed_start: int, games: int, disabled_layer: str | None) -> list[str]:
+def _worker_command(args, out: Path, seed_start: int, games: int, disabled_layer: str | None, baseline: Path | None = None) -> list[str]:
     command = [
         sys.executable, str(HERE / 'simulate_pregame_batch.py'),
         '--snapshot-file', str(args.snapshot_file),
@@ -132,7 +150,7 @@ def _worker_command(args, out: Path, seed_start: int, games: int, disabled_layer
         '--playcall-artifact', str(args.playcall_artifact),
         '--playcall-streak-file', str(args.playcall_streak_file),
         '--db', str(args.db),
-        '--paired-randomness', '--export-boxscores', '--resume',
+        '--paired-randomness', '--export-boxscores', '--resume', '--rng-protocol', 'v2',
         '--games', str(games), '--seed-start', str(seed_start),
         '--progress-every', str(args.progress_every),
         '--max-simulation-errors', str(args.max_simulation_errors),
@@ -144,6 +162,8 @@ def _worker_command(args, out: Path, seed_start: int, games: int, disabled_layer
         command.extend(('--slc-blocker-fix', fix))
     if disabled_layer is not None:
         command.extend(('--slc-disable-layer', disabled_layer))
+        if baseline is not None:
+            command.extend(('--paired-layer-baseline-ledger', str(baseline)))
     return command
 
 
@@ -166,14 +186,20 @@ def _run_arm(args, arm_name: str, partitions: list[tuple[int, int]], disabled_la
     reports = []
     for index, (seed_start, games) in enumerate(partitions, start=1):
         out, ledger, boxes = _worker_paths(arm_dir, index)
-        if _complete_worker(out, ledger, boxes, seed_start, games):
+        baseline = None
+        if disabled_layer is not None:
+            control_out, baseline, control_boxes = _worker_paths(args.out_dir / 'control', index)
+            if not _complete_worker(control_out, baseline, control_boxes, seed_start, games, args=args):
+                raise ValueError(f'control worker {index:02d} is incomplete')
+        if _complete_worker(out, ledger, boxes, seed_start, games, args=args,
+                            baseline=baseline, disabled_layer=disabled_layer):
             print(f'{arm_name}: worker {index:02d} already complete ({games} seeds)', flush=True)
             continue
         if out.exists():
             raise ValueError(f'{out} exists but the shard is incomplete; inspect and resume from its ledger')
         log = arm_dir / f'worker-{index:02d}.log'
         handle = log.open('a', encoding='utf-8')
-        process = subprocess.Popen(_worker_command(args, out, seed_start, games, disabled_layer),
+        process = subprocess.Popen(_worker_command(args, out, seed_start, games, disabled_layer, baseline),
                                    cwd=ROOT, stdout=handle, stderr=subprocess.STDOUT)
         processes.append((index, seed_start, games, process, handle, log))
         print(f'{arm_name}: started worker {index:02d} seed_start={seed_start} games={games} pid={process.pid}',
@@ -190,7 +216,9 @@ def _run_arm(args, arm_name: str, partitions: list[tuple[int, int]], disabled_la
         raise RuntimeError(f'{arm_name} has failed workers; all partial ledgers and logs were retained')
     for index, (seed_start, games) in enumerate(partitions, start=1):
         out, ledger, boxes = _worker_paths(arm_dir, index)
-        if not _complete_worker(out, ledger, boxes, seed_start, games):
+        baseline = _worker_paths(args.out_dir / 'control', index)[1] if disabled_layer is not None else None
+        if not _complete_worker(out, ledger, boxes, seed_start, games, args=args,
+                                baseline=baseline, disabled_layer=disabled_layer):
             raise RuntimeError(f'{arm_name}: worker {index:02d} did not produce a complete shard')
     return reports
 
@@ -451,8 +479,6 @@ def main(argv=None):
     parser.add_argument('--progress-every', type=int, default=250)
     parser.add_argument('--max-simulation-errors', type=int, default=0)
     args = parser.parse_args(argv)
-    parser.error('layer-ablation matrix is unavailable: RNG v2 roots include enabled layers, '
-                 'so control and ablation streams cannot currently be paired')
     args.snapshot_file = args.snapshot_file.resolve()
     args.playcall_artifact = args.playcall_artifact.resolve()
     args.playcall_streak_file = args.playcall_streak_file.resolve()
@@ -473,10 +499,12 @@ def main(argv=None):
     try:
         full = slc_config.resolve_profile('v1_full_stack', artifact_path=str(args.playcall_artifact),
                                            streak_file=str(args.playcall_streak_file), options=options)
+        args.expected_layers = {None: full['enabled_layers']}
         for layer in layers:
             ablated = slc_config.resolve_profile(
                 'v1_full_stack', artifact_path=str(args.playcall_artifact),
                 streak_file=str(args.playcall_streak_file), options=options, disable_layers=(layer,))
+            args.expected_layers[layer] = ablated['enabled_layers']
             if not full['enabled_layers'].get(layer):
                 raise ValueError(f'{layer} is not enabled in the full-stack control')
             changed = {key for key in full['enabled_layers']
@@ -495,6 +523,11 @@ def main(argv=None):
                            check=True, capture_output=True, text=True).stdout.strip()
     if dirty:
         parser.error('tracked worktree changes must be committed before running paired shards')
+    args.source_commit = source
+    snapshot = json.loads(args.snapshot_file.read_text(encoding='utf-8'))
+    args.snapshot_sha256 = snapshot['snapshot_sha256']
+    args.pregame_state_sha256 = rng_protocol.pregame_state_sha256(snapshot)
+    args.artifact_sha256 = json.loads(args.playcall_artifact.read_text(encoding='utf-8'))['sha256']
     spec = {
         'source_commit': source,
         'game_id': json.loads(args.snapshot_file.read_text(encoding='utf-8')).get('schedule', {}).get('game_id'),
@@ -505,7 +538,7 @@ def main(argv=None):
         'seed_start': args.seed_start, 'games': args.games, 'workers': len(partitions),
         'layers': list(layers), 'blocker_fixes': list(args.blocker_fixes),
         'enabled_optional_layers': ['qb_run_role_style'] if args.enable_qb_run_role_style else [],
-        'paired_randomness': True, 'boxscore_export': True,
+        'paired_randomness': True, 'rng_protocol': 'v2', 'boxscore_export': True,
         'progress_every': args.progress_every, 'max_simulation_errors': args.max_simulation_errors,
     }
     _write_or_verify_manifest(args.out_dir, spec)

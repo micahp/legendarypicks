@@ -64,7 +64,11 @@ class RunSpecification(unittest.TestCase):
             blocker_fixes=['run_scramble_backoff'], progress_every=250, max_simulation_errors=0,
             enable_qb_run_role_style=True,
         )
-        command = matrix._worker_command(args, Path('/runs/worker.json'), 101, 20, 'qb_decisions')
+        command = matrix._worker_command(args, Path('/runs/worker.json'), 101, 20, 'qb_decisions',
+                                         Path('/runs/control/worker-01.seeds.jsonl'))
+        self.assertEqual(command[command.index('--rng-protocol') + 1], 'v2')
+        self.assertEqual(command[command.index('--paired-layer-baseline-ledger') + 1],
+                         '/runs/control/worker-01.seeds.jsonl')
         self.assertIn('--paired-randomness', command)
         self.assertIn('--export-boxscores', command)
         self.assertIn('--resume', command)
