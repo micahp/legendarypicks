@@ -19,6 +19,29 @@ def _elapsed(quarter, clock):
     return (quarter - 1) * QUARTER_LENGTH + (QUARTER_LENGTH - clock)
 
 
+def clock_reconciliation(record):
+    """Check that possession plus kickoff time accounts for every elapsed game-clock second.
+
+    Possession is the game-clock time of a team's drives. Kickoff runoff belongs to neither team. In regulation the two
+    must add up to the elapsed game clock exactly; the status is 'reconciled' or 'unreconciled', and never assumed."""
+    drives = record.get('drives') or []
+    if not drives:
+        return {'status': 'unavailable', 'reason': 'record has no drives'}
+    needed = ('quarter_start', 'clock_start', 'end_quarter', 'end_clock', 'offense_team')
+    missing = sorted({key for d in drives for key in needed if key not in d})
+    if missing:
+        return {'status': 'unavailable', 'reason': 'drive records lack ' + ', '.join(missing)}
+    possession = sum(_elapsed(d['end_quarter'], d['end_clock']) - _elapsed(d['quarter_start'], d['clock_start']) for d in drives)
+    kickoff = sum(int(k.get('runoff_seconds') or 0) for k in record.get('kickoffs') or [])
+    last = drives[-1]
+    elapsed = _elapsed(last['end_quarter'], last['end_clock'])
+    gap = elapsed - possession - kickoff
+    regulation = elapsed <= 4 * QUARTER_LENGTH
+    return {'status': 'reconciled' if gap == 0 else 'unreconciled', 'regulation_only': regulation,
+            'possession_seconds_total': possession, 'kickoff_seconds_total': kickoff,
+            'elapsed_game_clock_seconds': elapsed, 'unassigned_seconds': gap}
+
+
 def team_stats(drives, points):
     """Per-team lines: plays, rushing, passing, turnovers, punts, field goals, possession time and points."""
     teams = {}
@@ -232,7 +255,7 @@ def compute(drives, points):
         'player_attribution': attribution,
         'player_note': note,
         'team_stat_semantics': {
-            'possession_seconds': 'Sum of elapsed drive windows; excludes kickoff and free-kick time and is not time of possession.',
+            'possession_seconds': 'Game-clock seconds on this team\'s drives. Kickoff time belongs to neither team; see clock_reconciliation.',
             'try_points': 'Touchdown drive ledger points above six; not a try-attempt count.',
             'other_score_points': 'Non-touchdown, non-safety score-ledger points, including field goals.',
         },

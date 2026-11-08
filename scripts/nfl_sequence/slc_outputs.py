@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 
 import football_assertions
+import game_stats
 
 
 BOX_SCHEMA = 'lp-nfl-slc-boxscore-4'
@@ -459,7 +460,7 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         if 'player_yardage_fallbacks' in stats:
             values['score_components_complete'] = all(values[field] is not None for field in
                 ('score_ledger_points', 'touchdown_points', 'try_points', 'safety_points', 'other_score_points'))
-        values['possession_seconds'] = None
+        values['possession_seconds'] = _int_or_zero(source.get('possession_seconds')) if 'possession_seconds' in source else None
         values['drive_terminals'] = {}
         for drive in (record or {}).get('drives', []):
             if drive.get('offense_team') == side:
@@ -545,7 +546,7 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         'player_yardage_fallbacks': stats.get('player_yardage_fallbacks'),
         'field_semantics': {
             'targets': 'Assigned receivers on pass attempts; throwaways and spikes are not modeled, so targets generally equal attempts.',
-            'possession_seconds': 'Unavailable; drive windows exclude kickoff and free-kick time.',
+            'possession_seconds': 'Game-clock seconds on this team\'s drives; kickoff time belongs to neither team. See clock_reconciliation.',
             'drive_window_seconds': 'Elapsed time between drive start and end; not time of possession.',
             'sack_yards': 'Signed yards, normally negative.',
             'try_points': 'Touchdown drive ledger points above six, not a count of try attempts.',
@@ -558,6 +559,7 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         'realism': {'lineup': (outcome.get('playcall') or {}).get('lineup'),
                     'lineup_semantics': 'Skill-position lineup appearances only; production is selected independently.'},
         'reconciliation': None,
+        'clock_reconciliation': game_stats.clock_reconciliation(record or {}),
         'points_by_period': quarterly['points_by_team'],
         'quarter_scoring_complete': quarterly['scoring_complete'],
         'quarter_by_quarter': quarterly,
