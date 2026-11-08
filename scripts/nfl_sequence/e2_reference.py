@@ -268,7 +268,7 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS, eligible_before=None
     catch are derived as receiving yards minus air yards (labelled `derived` in the record; the curated table has no
     yards_after_catch). With include_player_yardage, passing and rushing yards are also retained for player box scores.
     From the rebuilt play_extras CSV: timeout called (and by which team) and out_of_bounds. A play with no entry in the
-    CSV has timeout 0 and out_of_bounds 0.
+    CSV uses neutral flags and is marked as missing in the pool scope.
     """
     import csv
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
@@ -298,7 +298,8 @@ def load_participants(db=e1.DEFAULT_DB, extras=PLAY_EXTRAS, eligible_before=None
                  'defteam': defteam, 'air_yards': air, 'yards_after_catch': yac, 'play_type': play_type,
                  'lateral_receiver_player_id': lateral_receiver, 'lateral_receiving_yards': lateral_receiving,
                  'lateral_rusher_player_id': lateral_rusher, 'lateral_rushing_yards': lateral_rushing,
-                 'timeout': t, 'timeout_team': t_team, 'out_of_bounds': oob}
+                 'timeout': t, 'timeout_team': t_team, 'out_of_bounds': oob,
+                 'play_extras_missing': (g, int(p)) not in flags}
         if include_player_yardage:
             facts.update(receiving_yards=rec_yds, passing_yards=values[14], rushing_yards=values[15])
         out[(g, int(p))] = facts
@@ -765,9 +766,10 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                                       if overtime_table else (None, None))
     choice_p, choice_sha = (load_overtime_choice_model(eligible_before=eligible_before)
                             if overtime_table else (None, None))
+    participants = load_participants(db, eligible_before=eligible_before,
+                                     include_player_yardage=playcall_player_outcomes)
     reference = gs.Reference(pool, kpool, kicks,
-                             load_participants(db, eligible_before=eligible_before,
-                                               include_player_yardage=playcall_player_outcomes),
+                             participants,
                              load_missed_field_goal_pool(db, eligible_before=eligible_before), blocked,
                              try_policy=try_policy,
                              safety_kick_pool=safety_pool, overtime_pool=overtime_pool, overtime_toss=overtime_toss,
@@ -790,6 +792,14 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     reference.overtime_sha256 = overtime_sha
     reference.position_usage = load_position_usage(db, eligible_before=eligible_before)
     reference.pool_scope = {'regulation_only': regulation_only,
+                            'excluded_from_pool': dict(pool_excluded),
+                            'streak_unknown_pool_rows': (sum(
+                                row.get('streak') is None for cell in pool.values() for _, row, _, _ in cell)
+                                if playcall_streak_league else None),
+                            'play_extras_checked_pool_rows': sum(len(cell) for cell in pool.values()),
+                            'play_extras_missing_pool_rows': sum(
+                                participants.get((row['game_id'], int(row['play_id'])), {}).get('play_extras_missing', True)
+                                for cell in pool.values() for _, row, _, _ in cell),
                             'overtime_rows_excluded_from_pool': pool_excluded.get('overtime rows (regulation-only pool)', 0),
                             'overtime_rows_removed_before_kickoff_pool': len(rows) - len(kick_rows),
                             'kick_table': 'not filtered: the published kick rates include overtime kicks',

@@ -48,6 +48,19 @@ class Shifts(unittest.TestCase):
         self.assertEqual(table['seasons'], [])
         self.assertEqual(sp.shift_for(table, 0, 12), 0.0)
 
+    def test_missing_buckets_are_serialized_distinct_from_zero_shifts(self):
+        import slc_engine
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.point_shifts = {'shift': {}}
+        sampler.streak_shifts = {'shift': {(0, 'W1'): 0.0}}
+        sampler.streak_league = {'shift': {}}
+        sampler.current_streak = {'AAA': 'W1'}
+        sampler.sample(random.Random(1), cell([('run', 'run'), ('pass_complete', 'pass')]), 'A', 'B', state=STATE)
+        counts = slc_engine.summary(sampler.decisions)['fallback_events']
+        self.assertEqual(counts['point_split_missing_bucket'], 1)
+        self.assertEqual(counts['league_streak_split_missing_bucket'], 1)
+        self.assertNotIn('team_streak_split_missing_bucket', counts)
+
     def test_the_sampler_records_the_shift_and_uses_it_for_the_dropback_rate(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
         sampler.point_shifts = {'shift': {(0, pm.score_bucket(-7)): 3.0}}

@@ -140,7 +140,7 @@ def league_priors(frame, games, cutoff_season):
 
 
 def attach(rows, games):
-    """Set row['streak'] to the offense's streak bucket going into the game (NONE when unknown) on each pool row."""
+    """Attach the known pregame streak; missing game or team stays unknown."""
     for row in rows:
-        row['streak'] = games.get(str(row['game_id']), {}).get(row.get('posteam'), 'NONE')
+        row['streak'] = games.get(str(row['game_id']), {}).get(row.get('posteam'))
     return rows

@@ -303,7 +303,8 @@ class PlayCallSampler:
             outcome = (intent_of(sample[0], sample[1]), sample[0])
             by_formation[sample[1].get('formation', UNKNOWN)][outcome] += 1
             by_coverage[sample[1].get('coverage', UNKNOWN)][outcome] += 1
-            by_streak[sample[1].get('streak', 'NONE')][outcome] += 1
+            if sample[1].get('streak') is not None:
+                by_streak[sample[1]['streak']][outcome] += 1
             row_labels = {cat: value for cat, value in (sample[1].get('labels') or {}).items() if value is not None}
             if row_labels:
                 base_labelled[outcome] += 1  # once per row, however many labels it carries
@@ -442,19 +443,32 @@ class PlayCallSampler:
             kick_share = sum(kick_base[k] for k in kick_keys) / total if total else 0.0
         team = self._team(offense)
         p, call_policy_source = self._dropback_probability(entry, state, team)
+        split_fallbacks = []
         point_shift = 0.0
         if self.point_shifts is not None and team in self.layer.team_index:
             bucket = pm.score_bucket(state['score_diff'])
+            if (int(self.layer.team_index[team]), int(bucket)) not in self.point_shifts['shift']:
+                split_fallbacks.append('point_split_missing_bucket')
             point_shift = point_splits.shift_for(self.point_shifts, self.layer.team_index[team], bucket)
             p = point_splits.adjust(p, point_shift)  # the team's score-state deviation, in log-odds
+        elif self.point_shifts is not None:
+            split_fallbacks.append('point_split_unknown_team')
         streak_shift = 0.0
         if self.streak_shifts is not None and team in self.layer.team_index and team in self.current_streak:
+            if (int(self.layer.team_index[team]), self.current_streak[team]) not in self.streak_shifts['shift']:
+                split_fallbacks.append('team_streak_split_missing_bucket')
             streak_shift = streak_splits.shift_for(self.streak_shifts, self.layer.team_index[team], self.current_streak[team])
             p = point_splits.adjust(p, streak_shift)  # the team's win-loss streak deviation, in log-odds
+        elif self.streak_shifts is not None:
+            split_fallbacks.append('team_streak_split_missing_context')
         league_streak_shift = 0.0
         if self.streak_league is not None and team in self.current_streak:
+            if (int(streak_splits.LEAGUE), self.current_streak[team]) not in self.streak_league['shift']:
+                split_fallbacks.append('league_streak_split_missing_bucket')
             league_streak_shift = streak_splits.shift_for(self.streak_league, streak_splits.LEAGUE, self.current_streak[team])
             p = point_splits.adjust(p, league_streak_shift)  # the league's streak tendency, in log-odds
+        elif self.streak_league is not None:
+            split_fallbacks.append('league_streak_split_missing_context')
         if kick_keys and rng.random() < kick_share:
             intent, fallback = KICK_INTENT, ('kick decision: historical share of this situation cell (not yet modelled)'
                                              if fg_rule is None else
@@ -597,7 +611,7 @@ class PlayCallSampler:
             else:
                 coverage_fallback = 'no_source_rows_for_chosen_coverage'
         if use_streak:
-            matched = [c for c in candidates if c[1].get('streak', 'NONE') == streak_bucket]
+            matched = [c for c in candidates if c[1].get('streak') == streak_bucket]
             if matched:
                 candidates = matched
             else:
@@ -659,6 +673,7 @@ class PlayCallSampler:
             'decision_row_filter_applied': bool(use_labels and self.decision_filter),
             'team_outcome_split': self.team_outcomes is not None,
             'team_outcome_fallbacks': list(self._current_team_outcome_fallbacks),
+            'split_fallbacks': split_fallbacks,
             'outcome_weight_fallback': outcome_weight_fallback,
             'point_split_applied': self.point_shifts is not None and team in self.layer.team_index,
             'team_streak_split_applied': self.streak_shifts is not None and team in self.current_streak,
@@ -809,7 +824,10 @@ class PlayCallSampler:
             if team is None:
                 continue
             try:
+                before = getattr(self.team_outcomes, 'fallback_count', 0)
                 weight *= self.team_outcomes.ratio(side, team, cell, event)
+                if getattr(self.team_outcomes, 'fallback_count', 0) > before:
+                    self._current_team_outcome_fallbacks.append(f'no_prior_cell_event:{side}:{team}:{event}')
             except ValueError:  # no prior-season sample for this team
                 self._current_team_outcome_fallbacks.append(
                     f'no_prior_sample:{side}:{team}:{event}'

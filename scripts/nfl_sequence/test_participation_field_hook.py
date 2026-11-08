@@ -113,6 +113,9 @@ class Summary(unittest.TestCase):
         self.assertEqual(sum(summary[team]['player_snaps'].values()),
                          sum(len(d['participants']['lineup']['on_field']) for d in decisions[:-1]))
         self.assertEqual(sum(summary[team]['groups'].values()), 30)
+        expected = sum(d['participants']['lineup']['field_status'].get('call_cell_missing', 0) for d in decisions[:-1])
+        self.assertEqual(summary[team]['field_status'].get('call_cell_missing', 0), expected)
+        self.assertEqual(summary[team]['field_status']['ok'] + summary[team]['field_status'].get('short', 0), 30)
 
     def test_no_lineup_no_summary(self):
         import slc_engine

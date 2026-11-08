@@ -118,6 +118,10 @@ class ParticipantRows(unittest.TestCase):
             cut = er.load_participants(str(db), extras=str(extras), eligible_before=CUTOFF)
             self.assertEqual(set(cut), {('2024_05_KC_DEN', 1)})
             self.assertEqual(cut[('2024_05_KC_DEN', 1)]['timeout'], 1)
+            self.assertFalse(cut[('2024_05_KC_DEN', 1)]['play_extras_missing'])
+            write_csv(extras, EXTRAS_HEADER, [])
+            missing = er.load_participants(str(db), extras=str(extras), eligible_before=CUTOFF)
+            self.assertTrue(missing[('2024_05_KC_DEN', 1)]['play_extras_missing'])
             self.assertEqual(cut[('2024_05_KC_DEN', 1)]['lateral_receiver_player_id'], 'L1')
             self.assertEqual(cut[('2024_05_KC_DEN', 1)]['lateral_receiving_yards'], -4)
             with_player_yardage = er.load_participants(

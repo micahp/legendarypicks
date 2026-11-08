@@ -39,6 +39,16 @@ class PoolScope(unittest.TestCase):
         self.assertTrue(all(q <= 4 for q in sampled))
         self.assertEqual(excluded['overtime rows (regulation-only pool)'], 2)
 
+    def test_invalid_rows_are_counted_in_both_builders(self):
+        source = rows()
+        source[0]['play_type'] = 'kickoff'
+        source[1]['down'] = None
+        pool, excluded = e1.build_pool(source, regulation_only=True)
+        combined, combined_excluded, _ = e1.build_pools(source, regulation_only=True, team_before_season=2023)
+        self.assertEqual(excluded['unsupported play type or invalid down'], 2)
+        self.assertEqual(excluded, combined_excluded)
+        self.assertEqual(pool, combined)
+
     def test_regulation_only_keeps_every_regulation_outcome(self):
         default, _ = e1.build_pool(rows())
         scoped, _ = e1.build_pool(rows(), regulation_only=True)
