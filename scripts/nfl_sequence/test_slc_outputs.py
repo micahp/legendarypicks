@@ -72,6 +72,85 @@ def game_record(home_points=24, away_points=17):
 
 
 class BoxscoreSerialization(unittest.TestCase):
+    def test_integrity_labels_and_lineup_check(self):
+        outcome = {'complete_game': True, 'valid_full_game': False,
+                   'playcall': {'lineup': {'AAA': {'player_snaps': {'GA2': 0}}}}}
+        box = outputs.build_boxscore(1, outcome, game_record(), SNAPSHOT, PROFILE)
+        self.assertEqual(box['status'], 'complete_unverified')
+        self.assertIsNone(box['teams'][0]['stats']['possession_seconds'])
+        self.assertEqual(box['teams'][0]['stats']['drive_window_seconds'], 1300)
+        self.assertIn('player_stats_exceed_snaps', box['reconciliation']['teams'][0]['mismatches'])
+        self.assertEqual(box['teams'][0]['stats']['drive_terminals'], {'touchdown': 1})
+        self.assertIn('throwaways', box['field_semantics']['targets'])
+
+    def test_invalid_qb_rank_rejected(self):
+        roster = copy.deepcopy(SNAPSHOT['rosters']['home'])
+        roster['players'][0]['pos_rank'] = 'unknown'
+        with self.assertRaisesRegex(ValueError, 'invalid QB depth rank'):
+            outputs._depth_chart_qb1(roster)
+
+    def test_missing_touchdown_scorer_rejected(self):
+        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+                 'end_quarter': 1, 'end_clock': 890, 'plays': [],
+                 'terminal': 'touchdown', 'field_goal_made': None}
+        with self.assertRaisesRegex(ValueError, 'touchdown_scored_by'):
+            game_stats.team_stats([drive], {})
+
+    def test_red_zone_missed_kick_is_not_made(self):
+        drive = {'offense_team': 'A', 'terminal': 'field_goal', 'field_goal_made': False,
+                 'plays': [{'state_before': {'yardline_100': 15}}]}
+        zone = outputs._red_zone_diagnostics({'drives': [drive]})['A']
+        self.assertEqual(zone['red_zone_field_goal_attempts'], 1)
+        self.assertEqual(zone['red_zone_field_goals'], 0)
+        self.assertEqual(zone['red_zone_field_goals_made'], 0)
+
+    def test_invalid_clock_is_unknown(self):
+        self.assertIsNone(outputs._play_period_seconds(
+            {'state_before': {'quarter': 1, 'clock_seconds': 'bad'},
+             'state_after': {'quarter': 1, 'clock_seconds': 10}}, 'Q1'))
+        self.assertIsNone(outputs._period_time(1, 901))
+
+    def test_clock_and_score_components(self):
+        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+                 'end_quarter': 1, 'end_clock': 890, 'plays': [],
+                 'terminal': 'touchdown', 'touchdown_scored_by': 'B',
+                 'field_goal_made': None,
+                 'points_scored_on_drive': {'team': 'B', 'points': 8, 'try': {'kind': 'two', 'made': True}}}
+        stats = game_stats.team_stats([drive], {'A': 0, 'B': 8})
+        self.assertEqual(stats['A']['drive_terminal_touchdown'], 1)
+        self.assertEqual(stats['B']['touchdown_points'], 6)
+        self.assertEqual(stats['B']['try_points'], 2)
+        self.assertEqual(stats['B']['score_ledger_points'], 8)
+        self.assertEqual(outputs._period_time(5, 600), 3600)
+        self.assertEqual(outputs._period_time(5, 0), 4200)
+
+    def test_quarter_invalid_end_period_and_clock_marks_incomplete(self):
+        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+                 'end_quarter': 'bad', 'end_clock': 0, 'terminal': 'punt', 'field_goal_made': None,
+                 'plays': [{'event_type': 'punt', 'participants': {},
+                    'outcome': {'yards_gained': 0, 'turnover': False, 'punt': True, 'touchdown': False},
+                    'state_before': {'quarter': 1, 'clock_seconds': 30},
+                    'state_after': {'quarter': 1, 'clock_seconds': 'bad'}}]}
+        quarter = outputs._quarter_by_quarter({'points': {'A': 0, 'B': 0}, 'drives': [drive]}, SNAPSHOT)
+        self.assertFalse(quarter['complete'])
+        self.assertFalse(quarter['play_stats_complete_by_period']['Q1'])
+        self.assertIsNone(quarter['team_stats']['AAA']['Q1']['recorded_play_clock_seconds'])
+
+    def test_missing_role_yardage_is_counted(self):
+        play = {'event_type': 'run', 'participants': {'rusher_id': 'GA3'},
+                'outcome': {'yards_gained': 4, 'touchdown': False, 'turnover': False},
+                'state_before': {'yardline_100': 50}}
+        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+                 'end_quarter': 1, 'end_clock': 890, 'plays': [play],
+                 'terminal': 'punt', 'field_goal_made': None}
+        stats = game_stats.compute([drive], {'A': 0, 'B': 0})
+        self.assertEqual(stats['player_yardage_fallbacks']['rushing_yards'], 1)
+        self.assertEqual(stats['player'][0]['rushing']['yds'], 4)
+        play['participants']['sampled_play_context'] = {'rushing_yards': 3}
+        stats = game_stats.compute([drive], {'A': 0, 'B': 0})
+        self.assertEqual(stats['player_yardage_fallbacks']['rushing_yards'], 0)
+        self.assertEqual(stats['player'][0]['rushing']['yds'], 3)
+
     def test_regular_punt_is_counted_even_when_punt_attempt_flag_is_false(self):
         drive = {
             'offense_team': 'A', 'quarter_start': 1, 'clock_start': 600,
@@ -171,7 +250,8 @@ class BoxscoreSerialization(unittest.TestCase):
         self.assertEqual(quarterly['points_by_team']['AAA']['Q1'], 0)
         self.assertEqual(quarterly['team_stats']['AAA']['Q1']['rush_attempts'], 1)
         self.assertEqual(quarterly['team_stats']['AAA']['Q1']['rushing_yards'], 5)
-        self.assertEqual(quarterly['team_stats']['AAA']['Q1']['possession_seconds'], 5)
+        self.assertIsNone(quarterly['team_stats']['AAA']['Q1']['possession_seconds'])
+        self.assertEqual(quarterly['team_stats']['AAA']['Q1']['recorded_play_clock_seconds'], 5)
         self.assertEqual(quarterly['team_stats']['AAA']['Q2']['completions'], 1)
         self.assertEqual(quarterly['drive_summary_count_semantics']['plays'],
                          'recorded_play_events_including_punts_and_field_goal_attempts')
