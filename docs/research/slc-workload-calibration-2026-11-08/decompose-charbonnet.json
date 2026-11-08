@@ -1,0 +1,25 @@
+{
+ "base_share_prior_season": 0.37678207739307534,
+ "candidate_population_size": 5,
+ "conditional_share_in_group_mean": 0.836362646879531,
+ "conditional_share_in_group_p10": 0.5643582805356505,
+ "conditional_share_in_group_p90": 0.995980544548692,
+ "cutoff": 2026,
+ "floor_weight_used": false,
+ "group": "RB",
+ "group_frequency_real_current_to_cutoff": 0.8648648648648649,
+ "group_frequency_real_prior": 0.8879837067209776,
+ "gsis_id": "00-0039165",
+ "implied_team_share": 0.7233406675714863,
+ "last_week": 8,
+ "lineup_restriction": "not traced: the simulated lineup filter is not exported by this script",
+ "phi_group": 3.072557,
+ "player": "Zach Charbonnet",
+ "population_positions": [
+  "RB"
+ ],
+ "real_player_share_current_to_cutoff": 0.02702702702702703,
+ "real_player_share_prior_season": 0.37678207739307534,
+ "role": "carry",
+ "team": "SEA"
+}

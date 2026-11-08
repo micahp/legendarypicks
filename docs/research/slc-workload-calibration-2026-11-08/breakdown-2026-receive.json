@@ -1,0 +1,146 @@
+{
+ "checks": {
+  "future_game_used": 0,
+  "games_scored": 244
+ },
+ "eligibility": "unknown for all rows",
+ "last_week": null,
+ "phi_c": 24.831331,
+ "role": "receive",
+ "role_change_threshold": 0.1,
+ "season": 2026,
+ "summary": {
+  "C:RB": {
+   "abs_share_error_mean": 0.02036831126013581,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.01181316106820225,
+     "player_rows": 1653
+    },
+    "returning": {
+     "abs_share_error_mean": 0.034546045506230305,
+     "player_rows": 901
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.08548853561894687,
+     "player_rows": 21
+    }
+   },
+   "group_nll_mean": 2.3279728889269413,
+   "interval_80_coverage_group": 0.7827868852459017,
+   "player_rows": 2575,
+   "team_games": 244,
+   "unknown_eligibility_rows": 2575
+  },
+  "C:TE": {
+   "abs_share_error_mean": 0.024781894728893944,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.014014856950072669,
+     "player_rows": 1268
+    },
+    "returning": {
+     "abs_share_error_mean": 0.03659826476751913,
+     "player_rows": 919
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.0868565577966457,
+     "player_rows": 45
+    }
+   },
+   "group_nll_mean": 2.45333961487835,
+   "interval_80_coverage_group": 0.8073770491803278,
+   "player_rows": 2232,
+   "team_games": 244,
+   "unknown_eligibility_rows": 2232
+  },
+  "C:WR": {
+   "abs_share_error_mean": 0.03322369298365142,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.019010329561749004,
+     "player_rows": 2833
+    },
+    "returning": {
+     "abs_share_error_mean": 0.045860671732035514,
+     "player_rows": 1566
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.12587957467722632,
+     "player_rows": 221
+    }
+   },
+   "group_nll_mean": 2.6596183503019306,
+   "interval_80_coverage_group": 0.7049180327868853,
+   "player_rows": 4620,
+   "team_games": 244,
+   "unknown_eligibility_rows": 4620
+  },
+  "D:RB": {
+   "abs_share_error_mean": 0.018519344956229044,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.011590203049345462,
+     "player_rows": 1653
+    },
+    "returning": {
+     "abs_share_error_mean": 0.03046732405356741,
+     "player_rows": 901
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.05131660235511873,
+     "player_rows": 21
+    }
+   },
+   "group_nll_mean": 2.3188058666673346,
+   "interval_80_coverage_group": 0.7704918032786885,
+   "player_rows": 2575,
+   "team_games": 244,
+   "unknown_eligibility_rows": 2575
+  },
+  "D:TE": {
+   "abs_share_error_mean": 0.022359217486496545,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.013135867707722076,
+     "player_rows": 1268
+    },
+    "returning": {
+     "abs_share_error_mean": 0.032896849631245464,
+     "player_rows": 919
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.06705085256342466,
+     "player_rows": 45
+    }
+   },
+   "group_nll_mean": 2.4345138063057354,
+   "interval_80_coverage_group": 0.7991803278688525,
+   "player_rows": 2232,
+   "team_games": 244,
+   "unknown_eligibility_rows": 2232
+  },
+  "D:WR": {
+   "abs_share_error_mean": 0.027944248071423625,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.01696604642346069,
+     "player_rows": 2833
+    },
+    "returning": {
+     "abs_share_error_mean": 0.03982919652351311,
+     "player_rows": 1566
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.08445744260855874,
+     "player_rows": 221
+    }
+   },
+   "group_nll_mean": 2.630964706161346,
+   "interval_80_coverage_group": 0.7336065573770492,
+   "player_rows": 4620,
+   "team_games": 244,
+   "unknown_eligibility_rows": 4620
+  }
+ }
+}

@@ -1,0 +1,102 @@
+{
+ "checks": {
+  "future_game_used": 0,
+  "games_scored": 544
+ },
+ "eligibility": "unknown for all rows",
+ "last_week": null,
+ "phi_c": 7.542234,
+ "role": "carry",
+ "role_change_threshold": 0.1,
+ "season": 2025,
+ "summary": {
+  "C:QB": {
+   "abs_share_error_mean": 0.03098346044237915,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.01909083071547242,
+     "player_rows": 1728
+    },
+    "returning": {
+     "abs_share_error_mean": 0.04136110657201944,
+     "player_rows": 1097
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.10315815622095746,
+     "player_rows": 127
+    }
+   },
+   "group_nll_mean": 2.248128973374588,
+   "interval_80_coverage_group": 0.7959558823529411,
+   "player_rows": 2952,
+   "team_games": 544,
+   "unknown_eligibility_rows": 2952
+  },
+  "C:RB": {
+   "abs_share_error_mean": 0.08063773800113269,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.04872890752851308,
+     "player_rows": 3258
+    },
+    "returning": {
+     "abs_share_error_mean": 0.07290038041447537,
+     "player_rows": 1452
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.22009731777791378,
+     "player_rows": 826
+    }
+   },
+   "group_nll_mean": 2.467396830434483,
+   "interval_80_coverage_group": 0.8235294117647058,
+   "player_rows": 5536,
+   "team_games": 544,
+   "unknown_eligibility_rows": 5536
+  },
+  "D:QB": {
+   "abs_share_error_mean": 0.025685200064096945,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.01859740602535626,
+     "player_rows": 1728
+    },
+    "returning": {
+     "abs_share_error_mean": 0.033537830177952886,
+     "player_rows": 1097
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.054294435214049135,
+     "player_rows": 127
+    }
+   },
+   "group_nll_mean": 2.1922896261850555,
+   "interval_80_coverage_group": 0.8345588235294118,
+   "player_rows": 2952,
+   "team_games": 544,
+   "unknown_eligibility_rows": 2952
+  },
+  "D:RB": {
+   "abs_share_error_mean": 0.057665313155441406,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.03782414823890777,
+     "player_rows": 3258
+    },
+    "returning": {
+     "abs_share_error_mean": 0.06418721290668913,
+     "player_rows": 1452
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.1244603698857742,
+     "player_rows": 826
+    }
+   },
+   "group_nll_mean": 2.4286452492574653,
+   "interval_80_coverage_group": 0.8363970588235294,
+   "player_rows": 5536,
+   "team_games": 544,
+   "unknown_eligibility_rows": 5536
+  }
+ }
+}
