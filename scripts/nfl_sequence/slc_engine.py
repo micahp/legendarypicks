@@ -968,6 +968,15 @@ def summary(decisions, record=None):
                 'current_streak_context': sum(d.get('streak_bucket') is not None for d in decisions),
             },
             'fallback_events': dict(sorted(fallbacks.items()))}
+    selections = [(d.get('participants') or {}).get('participant_selection') for d in decisions]
+    selections = [entry for entry in selections if entry is not None]
+    if selections:
+        selection_counts = Counter((entry['team'], entry['role'], entry['group'], entry['selected'])
+                                   for entry in selections)
+        result['participant_selection_counts'] = [
+            {'team': team, 'role': role, 'group': group, 'player': player, 'count': count}
+            for (team, role, group, player), count in sorted(selection_counts.items())]
+        result['participant_selections'] = selections
     fixes = sorted({fix for decision in decisions for fix in decision.get('blocker_fixes', [])})
     if fixes:
         result['blocker_resolution'] = _blocker_resolution_summary(decisions, fixes, record)

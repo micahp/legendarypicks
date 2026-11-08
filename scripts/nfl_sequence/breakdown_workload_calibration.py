@@ -25,13 +25,33 @@ import share_distributions as sd  # noqa: E402
 
 GROUPS = {'receive': {'WR': ('WR',), 'TE': ('TE',), 'RB': ('RB',)}, 'carry': {'RB': ('RB',), 'QB': ('QB',)}}
 ROLE_CHANGE = 0.10
-INTERVAL_DRAWS = 300
+INTERVAL_DRAWS = 3000
 
 
 def beta_binomial_loglik(k, n, a, b):
     return (math.lgamma(n + 1) - math.lgamma(k + 1) - math.lgamma(n - k + 1)
             + math.lgamma(k + a) + math.lgamma(n - k + b) - math.lgamma(n + a + b)
             + math.lgamma(a + b) - math.lgamma(a) - math.lgamma(b))
+
+
+def predictive_interval(n, a, b, rng):
+    """Equal-tailed posterior predictive interval for finite observed counts."""
+    probabilities = rng.beta(a, b, size=INTERVAL_DRAWS)
+    return np.quantile(rng.binomial(n, probabilities), [0.1, 0.9])
+
+
+def within_group_nll(counts, candidates, group_members, weights, phi, positions, allowed):
+    """Conditional allocation NLL; unseen observed players form an explicit OTHER category."""
+    mass = sum(weights[p] for p in group_members)
+    if mass <= 0:
+        return None
+    unseen = sum(n for p, n in counts.items() if p not in candidates and positions.get(p, '?') in allowed)
+    observed = {p: counts.get(p, 0) for p in group_members}
+    observed['OTHER'] = unseen
+    # The existing harness reserves OTHER_WEIGHT for players absent from the candidate set.
+    alphas = {p: phi * (1 - ev.OTHER_WEIGHT) * weights[p] / mass for p in group_members}
+    alphas['OTHER'] = phi * ev.OTHER_WEIGHT
+    return -ev.dm_loglik(observed, sum(observed.values()), alphas)
 
 
 def player_status(pid, prior_team, prior_total, current_counts, current_total):
@@ -92,8 +112,8 @@ def score(db, season, role, last_week=None, seed=0):
                 a = phi * group_mass
                 b = phi * (1 - group_mass)
                 nll = -beta_binomial_loglik(group_real, total, a, b) if b > 0 and a > 0 else float('nan')
-                rng_draws = rng.beta(max(a, 1e-9), max(b, 1e-9), size=INTERVAL_DRAWS)
-                lo, hi = np.quantile(rng_draws * total, [0.1, 0.9])
+                lo, hi = predictive_interval(total, max(a, 1e-9), max(b, 1e-9), rng)
+                within_nll = within_group_nll(game['counts'], candidates, members, share, phi, positions, allowed)
                 covered = int(lo <= group_real <= hi)
                 for p in members:
                     real_share = game['counts'].get(p, 0) / total
@@ -102,7 +122,7 @@ def score(db, season, role, last_week=None, seed=0):
                                  'team': team, 'player': p, 'status': player_status(
                                      p, prior_team, prior_total, current_counts, current_total),
                                  'unknown_eligibility': 1, 'abs_share_error': abs(real_share - model_share),
-                                 'group_nll': nll, 'group_covered': covered, 'total': total})
+                                 'group_nll': nll, 'within_group_nll': within_nll, 'group_covered': covered, 'total': total})
         earlier[team].append(game)
     return rows, checks, phi_c
 
@@ -120,6 +140,8 @@ def summarise(rows):
             out[key] = {
                 'team_games': len(games_seen), 'player_rows': len(sub),
                 'group_nll_mean': float(np.mean(list(nll_rows.values()))) if nll_rows else None,
+                'within_group_nll_mean': float(np.mean(list({(r['game_id'], r['team']): r['within_group_nll']
+                    for r in sub if r['within_group_nll'] is not None}.values()))),
                 'abs_share_error_mean': float(np.mean([r['abs_share_error'] for r in sub])),
                 'interval_80_coverage_group': float(np.mean(list({(r['game_id'], r['team'], r['group']): r['group_covered']
                                                                   for r in sub}.values()))),
@@ -147,7 +169,10 @@ def main(argv=None):
     summary = summarise(rows)
     Path(args.out).write_text(json.dumps({'season': args.season, 'role': args.role, 'last_week': args.last_week,
                                           'phi_c': phi_c, 'checks': checks, 'summary': summary,
-                                          'role_change_threshold': ROLE_CHANGE, 'eligibility': 'unknown for all rows'},
+                                          'role_change_threshold': ROLE_CHANGE, 'interval_method': 'beta-binomial predictive counts',
+                                          'interval_draws': INTERVAL_DRAWS,
+                                          'within_group_nll': 'conditional on observed group count; unseen players pooled as OTHER',
+                                          'eligibility': 'unknown for all rows'},
                                          indent=1, sort_keys=True) + '\n')
     print(json.dumps({'checks': checks, 'summary': summary}, indent=1, sort_keys=True))
 
