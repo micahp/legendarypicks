@@ -25,6 +25,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 from pathlib import Path
 import shlex
 import sqlite3
@@ -117,6 +118,8 @@ def _reproduction_command(args, seed):
         command.append('--no-safety-table')
     if args.playcall_artifact:
         command.extend(['--playcall-artifact', str(args.playcall_artifact)])
+    if not any(fix != 'restore_sack_mass' for fix in args.slc_blocker_fix):
+        command.append('--no-slc-blocker-fixes')
     for fix in args.slc_blocker_fix:
         if fix == 'restore_sack_mass':
             command.append('--ablation-restore-sack-mass')
@@ -272,6 +275,10 @@ def _baseline_v1(db, snapshot):
             except (TypeError, ValueError):
                 params = {}
             params_status = 'available' if params else 'unavailable_or_malformed'
+            sigma = params.get('sigma')
+            if not isinstance(sigma, (int, float)) or isinstance(sigma, bool) or not math.isfinite(sigma) or sigma <= 0:
+                sigma = None
+                params_status = 'sigma_unavailable_or_invalid'
             lock_is_comparable = cutoff_delta <= 0 and schedule_verified
             if cutoff_delta > 0:
                 lock_status = 'exploratory_later_lock'
@@ -298,7 +305,7 @@ def _baseline_v1(db, snapshot):
                 'projected_home_points': home_points, 'projected_away_points': away_points,
                 'projected_home_minus_away': margin, 'projected_total': total,
                 'home_win_probability': p_home,
-                'win_probability_sigma_points': params.get('sigma'),
+                'win_probability_sigma_points': sigma,
                 'stored_parameters_status': params_status,
             }
 
@@ -699,6 +706,9 @@ def _execution_verification(outcomes, profile_manifest):
             counts[layer] += int(execution.get(field, 0) or 0)
         for name, count in (playcall.get('fallback_events') or {}).items():
             fallback_events[name] += int(count)
+        for lineup in (playcall.get('lineup') or {}).values():
+            for name, count in (lineup.get('field_status') or {}).items():
+                fallback_events[f'participation_field:{name}'] += int(count)
     disabled_applications = {layer: counts.get(layer, 0) for layer, enabled in enabled_layers.items()
                              if not enabled and counts.get(layer, 0)}
     if disabled_applications:

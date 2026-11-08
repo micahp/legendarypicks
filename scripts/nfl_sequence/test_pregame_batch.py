@@ -34,6 +34,11 @@ class BatchAggregation(unittest.TestCase):
             self.assertNotIn('restore_sack_mass', replay)
             self.assertIn('--expected-stream-root-sha256', replay)
             with patch.object(batch, 'run_batch') as run:
+                batch.main(common + ['--no-slc-blocker-fixes', '--ablation-restore-sack-mass',
+                                     '--expected-stream-root-sha256', 'a' * 64])
+            replay = shlex.split(batch._reproduction_command(run.call_args.args[0], 7))
+            self.assertIn('--no-slc-blocker-fixes', replay)
+            with patch.object(batch, 'run_batch') as run:
                 batch.main(common + ['--rng-protocol', 'v1'])
             replay = shlex.split(batch._reproduction_command(run.call_args.args[0], 7))
             self.assertIn('--rng-protocol=v1', replay)
@@ -215,6 +220,19 @@ class BatchAggregation(unittest.TestCase):
             aligned = batch._baseline_v1(str(db), snapshot)
             self.assertEqual(aligned['status'], 'available')
             self.assertTrue(aligned['comparable_at_snapshot_cutoff'])
+            self.assertIsNone(aligned['win_probability_sigma_points'])
+            self.assertEqual(aligned['stored_parameters_status'], 'sigma_unavailable_or_invalid')
+            for malformed in ('not-json', '[]', 'null', '{"sigma": "bad"}', '{"sigma": -1}'):
+                with sqlite3.connect(db) as con:
+                    con.execute('UPDATE model_runs SET params_json=?', (malformed,))
+                result = batch._baseline_v1(str(db), snapshot)
+                self.assertIsNone(result['win_probability_sigma_points'])
+                self.assertEqual(result['projected_home_points'], 21.0)
+
+    def test_participation_fallback_counters_reach_execution_summary(self):
+        result = batch._execution_verification([{'playcall': {'lineup': {
+            'AAA': {'field_status': {'call_cell_missing': 2}}}}}], {'enabled_layers': {}, 'layers': {}})
+        self.assertEqual(result['fallback_events']['participation_field:call_cell_missing'], 2)
 
     def test_enabled_layers_without_runtime_counters_fail_closed(self):
         manifest = {'enabled_layers': {'new_layer': True}, 'layers': {}}
