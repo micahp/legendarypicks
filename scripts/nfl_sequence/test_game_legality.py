@@ -1,5 +1,6 @@
 """The game validator refuses impossible football states: each corruption of a legal game must be rejected by name."""
 import copy
+import gzip
 import json
 import unittest
 from pathlib import Path
@@ -220,6 +221,38 @@ class LateScore(unittest.TestCase):
 
     def test_a_zero_clock_ends_the_game_without_a_kickoff(self):
         self.assertTrue(gl._ends_the_game(self.record, self.drive(end_clock=0), None))
+
+
+class TyingScoreAtRegulationExpiry(unittest.TestCase):
+    """A saved real simulation ties on a touchdown and try as the fourth quarter expires."""
+
+    def setUp(self):
+        path = Path(__file__).resolve().parent / 'legality_fixtures' / '2026_09_ARI_SEA_seed18.failure.json.gz'
+        with gzip.open(path, 'rt', encoding='utf-8') as handle:
+            self.record = json.load(handle)['record']
+
+    def test_saved_complete_game_passes_full_validator(self):
+        import game_state
+        self.assertEqual(len(gl.check(self.record)), 10)
+        self.assertGreaterEqual(len(game_state.validate_game(self.record)), 10)
+
+    def test_overtime_cannot_follow_an_untied_regulation_score(self):
+        last_regulation = _drive(self.record, 27)
+        last_regulation['plays'][-1]['state_after']['away_score'] -= 1
+        with self.assertRaisesRegex(FootballAssertionError, 'ends regulation untied'):
+            gl._possession_and_clock(self.record, self.record['drives'], gl._kicks_after(self.record))
+
+    def test_overtime_cannot_start_before_the_regulation_clock_expires(self):
+        last_regulation = _drive(self.record, 27)
+        last_regulation['end_clock'] = 1
+        last_regulation['plays'][-1]['state_after']['clock_seconds'] = 1
+        with self.assertRaisesRegex(FootballAssertionError, 'does not end regulation'):
+            gl._possession_and_clock(self.record, self.record['drives'], gl._kicks_after(self.record))
+
+    def test_overtime_timeouts_are_checked_after_a_tying_score(self):
+        _drive(self.record, 28)['plays'][0]['state_before']['home_timeouts'] = 3
+        with self.assertRaisesRegex(FootballAssertionError, 'starts overtime with home_timeouts'):
+            gl._possession_and_clock(self.record, self.record['drives'], gl._kicks_after(self.record))
 
 
 class OvertimeReturnTouchdown(unittest.TestCase):
