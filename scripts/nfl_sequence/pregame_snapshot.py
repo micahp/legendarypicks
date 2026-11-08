@@ -28,6 +28,7 @@ REVIEWED_FULL_BUILDER_SHA256 = {
     '90256ed7050aee920b4af299de7c8a529a311602c19daf733c57ba8031fe616b',
     # same builder, dropping depth players who are not on the jersey-week roster and promoting rostered backups
     '3e1721a644a987e0e9d75522b990a44bceecc7eb2416e7236dda8af30ad5eb97',
+    'd425e3b271b072d9436c054125e85bf51611005774f3d8bbe36186a6f357e1fb',
 }
 # Kept as an import-compatible alias; the directional mapping is defined centrally.
 NFLVERSE_TEAM = nfl_team_codes.NFLVERSE_TEAM_CODE_ALIASES
@@ -155,6 +156,8 @@ def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenanc
     for artifact in source_artifacts:
         if not artifact.get('sha256') or len(artifact['sha256']) != 64:
             raise ValueError('nflverse source artifact is missing a SHA-256 pin')
+        if artifact.get('acquired_at_utc') and _utc(artifact['acquired_at_utc'], 'source acquired_at_utc') > cutoff:
+            raise ValueError('nflverse source artifact was acquired after the frozen pregame cutoff')
         if _utc(artifact.get('last_modified_utc'), 'source last_modified_utc') > cutoff:
             raise ValueError('nflverse source artifact was published after the frozen pregame cutoff')
 
