@@ -1,0 +1,16 @@
+{
+  "source_commit": "03fc1ea835b7c2f0a607591e22c83e7d2f50bd21",
+  "source_path": "/tmp/slc-v2-regression-03fc1ea8/ on fast host",
+  "first_and_repeat_seed_rows_identical": true,
+  "rng_stream_root_sha256": "a7234c44d4c24de609f136c541a96a7b7c587bae34fea7006413916275f02c1f",
+  "files_sha256": {
+    "first": "3c4a594f0465673d17a2920ac7c5e36d9da4dca09979591a38b6f84be9b8ce20",
+    "first.boxscores.jsonl": "93c0af8e68f9ccced93271705b2211c27c9522001e4ce8c34bcec154a2e398da",
+    "first.log": "da41ff6bd78e451290975aa51b5d5f7ddcd0fbbf194c498a1c60608525ffb4f4",
+    "first.seeds.jsonl": "41dc92da1186fbb8de907f826451be3d3583caa1f3239bdcfa330c80d4d3c26b",
+    "repeat": "9dd08868ee88ffd35e807d6536717b0689c6773ab5b2c4bd2cc35e3185c9dc28",
+    "repeat.boxscores.jsonl": "93c0af8e68f9ccced93271705b2211c27c9522001e4ce8c34bcec154a2e398da",
+    "repeat.log": "091a92405fa1d755489ea1f212de3fabe63ddd625228481bd2031af5ebc5db82",
+    "repeat.seeds.jsonl": "41dc92da1186fbb8de907f826451be3d3583caa1f3239bdcfa330c80d4d3c26b"
+  }
+}
