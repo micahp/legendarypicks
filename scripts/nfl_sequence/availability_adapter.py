@@ -91,6 +91,9 @@ def apply(snapshot: dict, availability_path: str) -> dict:
     if frozen_at > cutoff:
         raise ValueError('availability snapshot was frozen after the pregame cutoff')
 
+    acquired = avail.get('provenance', {}).get('roster_acquired_at_utc')
+    if acquired and pregame_snapshot.parse_as_of(acquired) > cutoff:
+        raise ValueError('roster source was acquired after the pregame cutoff')
     rows = {(player['team'], player['gsis_id']): player for player in avail['players']}
     unmatched = []
     for side in ('home', 'away'):
@@ -118,6 +121,31 @@ def apply(snapshot: dict, availability_path: str) -> dict:
             if not row['include']:
                 removed.append({'team': team, 'gsis_id': player['gsis_id'], 'player_name': player.get('player_name'),
                                 'decision': row['decision'], 'reason': row['reason'],
+                                'roster_status': row.get('roster_status'),
+                                'eligibility_evidence': row.get('eligibility_evidence'),
+                                'starter_roles': [_role(player)] if player.get('starter') else []})
+                continue
+            evidence = row.get('eligibility_evidence') or {}
+            provenance = avail.get('provenance') or {}
+            supported = (acquired and evidence.get('source') == 'nflverse_weekly_roster'
+                         and evidence.get('season') == schedule['season']
+                         and evidence.get('week') == schedule['week']
+                         and evidence.get('acquired_at_utc') == acquired
+                         and evidence.get('source_sha256') == provenance.get('roster_file_sha256')
+                         and isinstance(evidence.get('source_sha256'), str)
+                         and len(evidence['source_sha256']) == 64)
+            status = row.get('roster_status')
+            active = (status == 'ACT' if supported and status in ('ACT', 'INA', 'RES', 'PUP', 'DEV', 'CUT') else None)
+            player['roster_status'] = status
+            player['active_roster'] = active
+            player['roster_eligible'] = active
+            # This snapshot has no verified official inactive-list source.
+            player['game_day_active'] = None
+            player['eligibility_evidence'] = row.get('eligibility_evidence')
+            if active is False:
+                removed.append({'team': team, 'gsis_id': player['gsis_id'], 'player_name': player.get('player_name'),
+                                'decision': 'exclude_inactive_roster', 'reason': 'verified roster status',
+                                'roster_status': status, 'eligibility_evidence': evidence,
                                 'starter_roles': [_role(player)] if player.get('starter') else []})
                 continue
             player['availability'] = {'decision': row['decision'], 'designation': row['designation'],

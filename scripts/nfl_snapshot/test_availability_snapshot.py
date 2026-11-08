@@ -192,7 +192,7 @@ class AvailabilitySnapshotTests(unittest.TestCase):
         with sqlite3.connect(self.injury_path) as con:
             con.execute("INSERT INTO snapshot_runs VALUES ('ok', 2026, ?)", (AFTER_FREEZE,))
         body, _, _ = self._build()
-        self.assertEqual(body["provenance"]["injury_store_last_run_utc"], BEFORE_FREEZE)
+        self.assertEqual(body["provenance"]["injury_store_last_run_utc"], "2026-10-20T16:30:00+00:00")
         self.assertTrue(body["provenance"]["injury_capture_within_gap"])
 
     def test_trade_week_team_mismatch_does_not_match(self):
@@ -202,6 +202,29 @@ class AvailabilitySnapshotTests(unittest.TestCase):
         self.assertTrue(player["include"])
         self.assertIsNone(player["designation"])
         self.assertEqual(player["decision"], "include_missing_report")
+
+    def test_roster_evidence_is_cutoff_and_week_qualified(self):
+        args = self._args(os.path.join(self.root, 'verified'))
+        args.roster_acquired_at_utc = BEFORE_FREEZE
+        body, _ = build(args)
+        self.assertIs(self._player(body, 'Q')['active_roster'], True)
+        self.assertIs(self._player(body, 'INA_Q')['active_roster'], False)
+        self.assertIsNone(self._player(body, 'Q')['game_day_active'])
+        self.assertEqual(self._player(body, 'Q')['eligibility_evidence']['source_sha256'],
+                         body['provenance']['roster_file_sha256'])
+        args.roster_acquired_at_utc = AFTER_FREEZE
+        with self.assertRaisesRegex(ValueError, 'after the freeze'):
+            build(args)
+
+    def test_unknown_capture_and_future_only_week(self):
+        body, _, _ = self._build()
+        self.assertIsNone(self._player(body, 'Q')['active_roster'])
+        args = self._args(os.path.join(self.root, 'future'))
+        args.week = 7
+        with sqlite3.connect(self.db_path) as con:
+            con.execute('UPDATE nfl_schedule SET week=7')
+        with self.assertRaisesRegex(ValueError, 'no roster week at or before'):
+            build(args)
 
     def test_second_build_at_same_freeze_refuses_to_rewrite(self):
         body, path, store_dir = self._build()

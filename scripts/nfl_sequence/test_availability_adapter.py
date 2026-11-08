@@ -88,6 +88,31 @@ class AvailabilityAdapter(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_cutoff_safe_roster_evidence_is_propagated_and_nonactive_removed(self):
+        players = _avail_players('GB', 'gb') + _avail_players('CAR', 'car')
+        evidence = {'source': 'nflverse_weekly_roster', 'season': 2026, 'week': 8,
+                    'acquired_at_utc': FROZEN, 'source_sha256': 'a' * 64}
+        for row in players:
+            row['eligibility_evidence'] = dict(evidence)
+        players[3]['roster_status'] = 'INA'
+        path = _write_avail(self.store, players)
+        doc = json.loads(Path(path).read_text())
+        doc['provenance'] = {'roster_acquired_at_utc': FROZEN, 'roster_file_sha256': 'a' * 64}
+        body = {k: v for k, v in doc.items() if k not in ('snapshot_id', 'content_sha256')}
+        digest = _sha(body)
+        doc['content_sha256'] = digest
+        doc['snapshot_id'] = doc['snapshot_id'][:-10] + digest[:10]
+        Path(path).write_text(json.dumps(doc))
+        snapshot = _snapshot()
+        block = adapter.apply(snapshot, path)
+        players_after = snapshot['rosters']['home']['players']
+        self.assertFalse(any(p['gsis_id'] == 'gb-003' for p in players_after))
+        qb = next(p for p in players_after if p['gsis_id'] == 'gb-000')
+        self.assertIs(qb['active_roster'], True)
+        self.assertIsNone(qb['game_day_active'])
+        self.assertEqual(qb['eligibility_evidence']['source_sha256'], 'a' * 64)
+        self.assertEqual(block['removed'][0]['decision'], 'exclude_inactive_roster')
+
     def test_removed_starter_gives_role_to_best_backup(self):
         path = _write_avail(self.store, _avail_players('GB', 'gb', {'gb-003': ('exclude_roster_status', None,
                                                                              [], False)}) + _avail_players('CAR', 'car'))
