@@ -1003,6 +1003,7 @@ def run_batch(args):
             'playcall_season_adapt', 'season_adapt_n0', 'participation_field', 'participation_field_sha256',
             'participation_snap_counts', 'participation_snap_counts_sha256', 'playcall_pbv1_package',
             'playcall_fg_kicker', 'playcall_fg_kicker_sha256', 'historical_archive_reconstruction')}
+        settings = {key: str(value) if isinstance(value, Path) else value for key, value in settings.items()}
         settings.update(source_snapshot_sha256=source_snapshot_sha256,
                         source_commit=source_provenance['base_commit'],
                         producer_file_sha256=source_provenance['producer_file_sha256'],
