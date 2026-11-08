@@ -302,6 +302,26 @@ class BlockedKickIsLive(unittest.TestCase):
     def test_a_blocked_kick_touchdown_still_ends_the_drive_through_its_flag(self):
         self.assertTrue(gl._ends_drive_flag({'touchdown': True, 'field_goal_result': 'blocked'}, 'touchdown'))
 
+    def test_a_blocked_kick_hands_over_a_first_down_at_the_spot(self):
+        play = {'state_before': {'down': 4, 'yards_to_go': 6, 'yardline_100': 29},
+                'state_after': {'down': 1, 'yards_to_go': 10, 'yardline_100': 63},
+                'outcome': {'field_goal_attempt': True, 'field_goal_result': 'blocked', 'yards_gained': None}, 'sequence': 1}
+        gl._down_and_distance({'index': 4}, play)
+
+    def test_a_final_blocked_kick_is_checked_through_the_play_chain(self):
+        play = {'state_before': {'down': 4, 'yards_to_go': 6, 'yardline_100': 29},
+                'state_after': {'down': 1, 'yards_to_go': 99, 'yardline_100': 63},
+                'outcome': {'field_goal_attempt': True, 'field_goal_result': 'blocked', 'yards_gained': None}, 'sequence': 1}
+        with self.assertRaises(gl.FootballAssertionError):
+            gl._play_chain({'index': 4}, [play])
+
+    def test_a_blocked_kick_with_impossible_distance_is_refused(self):
+        play = {'state_before': {'down': 4, 'yards_to_go': 6, 'yardline_100': 29},
+                'state_after': {'down': 1, 'yards_to_go': 99, 'yardline_100': 63},
+                'outcome': {'field_goal_attempt': True, 'field_goal_result': 'blocked', 'yards_gained': None}, 'sequence': 1}
+        with self.assertRaises(gl.FootballAssertionError):
+            gl._down_and_distance({'index': 4}, play)
+
 
 class MissedKickAtZero(unittest.TestCase):
     """A missed field goal that expires the fourth quarter with the score untied ends the game."""
