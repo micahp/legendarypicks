@@ -891,14 +891,66 @@ def write_report(result: dict, output_dir: Path, *, force=False):
         _write_csv(output_dir / name, result[key])
 
 
+
+def annotate_smoke_fallbacks(table_path: Path, seed_dir: Path):
+    """Annotate a one-seed-per-game historical CSV from its immutable seed ledgers."""
+    with table_path.open(newline='', encoding='utf-8') as handle:
+        reader = csv.DictReader(handle)
+        columns = list(reader.fieldnames or [])
+        rows = list(reader)
+    extras = ('fallback_event_count', 'fallback_kind_count', 'fallback_events_json')
+    if not rows or 'game_id' not in columns or 'seeds_requested' not in columns:
+        raise ValueError('smoke table must contain game_id, seeds_requested and at least one row')
+    if len({row['game_id'] for row in rows}) != len(rows):
+        raise ValueError('duplicate game_id in smoke table')
+    for row in rows:
+        game_id = row['game_id']
+        if not game_id or any(c not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_' for c in game_id):
+            raise ValueError(f'invalid game_id {game_id!r}')
+        if row['seeds_requested'] != '1':
+            raise ValueError(f'{game_id}: expected exactly one requested seed')
+        path = seed_dir / f'out_{game_id}.seeds.jsonl'
+        records = list(_json_lines(path.read_text(encoding='utf-8')))
+        if (len(records) != 2 or records[0].get('header', {}).get('game_id') != game_id
+                or not isinstance(records[1].get('outcome'), dict)):
+            raise ValueError(f'{game_id}: expected matching header and exactly one outcome')
+        outcome = records[1]['outcome']
+        if records[1].get('seed') != outcome.get('seed') or outcome.get('seed') is None:
+            raise ValueError(f'{game_id}: inconsistent seed identity')
+        events = (outcome.get('playcall') or {}).get('fallback_events')
+        if not isinstance(events, dict) or any(not isinstance(k, str) or type(v) is not int or v < 0
+                                               for k, v in events.items()):
+            raise ValueError(f'{game_id}: missing or invalid fallback events')
+        values = (str(sum(events.values())), str(len(events)), json.dumps(events, sort_keys=True, separators=(',', ':')))
+        for key, value in zip(extras, values):
+            if key in columns and row[key] != value:
+                raise ValueError(f'{game_id}: existing {key} disagrees with seed ledger')
+            row[key] = value
+    with table_path.open('w', newline='', encoding='utf-8') as handle:
+        writer = csv.DictWriter(handle, fieldnames=columns + [name for name in extras if name not in columns],
+                                lineterminator='\n')
+        writer.writeheader()
+        writer.writerows(rows)
+    return len(rows)
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--run', type=Path, action='append', required=True,
+    parser.add_argument('--run', type=Path, action='append',
                         help='run artifact directory, worker JSON/JSONL file, or worker .tar.gz; repeat for multiple runs')
-    parser.add_argument('--output-dir', type=Path, required=True,
+    parser.add_argument('--output-dir', type=Path,
                         help='directory for one generated report subdirectory per run')
     parser.add_argument('--force', action='store_true', help='replace report files that already exist')
+    parser.add_argument('--annotate-smoke-table', type=Path, help='add verified fallback counts to a historical one-seed table')
+    parser.add_argument('--seed-dir', type=Path, help='directory containing out_<game_id>.seeds.jsonl files')
     args = parser.parse_args(argv)
+    if args.annotate_smoke_table:
+        if not args.seed_dir or args.run or args.output_dir:
+            parser.error('--annotate-smoke-table requires --seed-dir and cannot be combined with report options')
+        count = annotate_smoke_fallbacks(args.annotate_smoke_table, args.seed_dir)
+        print(f'Annotated {count} historical smoke rows from archived seed ledgers')
+        return
+    if not args.run or not args.output_dir or args.seed_dir:
+        parser.error('report generation requires --run and --output-dir')
     for run_path in args.run:
         result = analyze_run(run_path)
         run_name = _strip_suffix(run_path.stem, '.tar')

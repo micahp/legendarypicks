@@ -128,6 +128,32 @@ def make_run(root, *, include_periods=True):
     }), encoding='utf-8')
 
 
+
+class SmokeFallbackAnnotation(unittest.TestCase):
+    def test_annotations_are_repeatable_and_reject_missing_trace(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            table = root / 'smoke.csv'
+            table.write_text('game_id,seeds_requested,score\n2026_09_A_B,1,17\n')
+            ledger = root / 'out_2026_09_A_B.seeds.jsonl'
+            write_jsonl(ledger, [{'header': {'game_id': '2026_09_A_B'}},
+                                 {'seed': 1, 'outcome': {'seed': 1, 'playcall': {
+                                     'fallback_events': {'two': 2, 'one': 1}}}}])
+            self.assertEqual(report.annotate_smoke_fallbacks(table, root), 1)
+            before = table.read_bytes()
+            with table.open(newline='') as handle:
+                row = next(csv.DictReader(handle))
+            self.assertEqual((row['score'], row['fallback_event_count'], row['fallback_kind_count']),
+                             ('17', '3', '2'))
+            self.assertEqual(json.loads(row['fallback_events_json']), {'one': 1, 'two': 2})
+            report.annotate_smoke_fallbacks(table, root)
+            self.assertEqual(table.read_bytes(), before)
+            ledger.unlink()
+            with self.assertRaises(FileNotFoundError):
+                report.annotate_smoke_fallbacks(table, root)
+            self.assertEqual(table.read_bytes(), before)
+
+
 class RunReport(unittest.TestCase):
     def test_aggregated_drives_zero_fill_games_and_exclude_unmodeled_ot_sequences(self):
         drives = [

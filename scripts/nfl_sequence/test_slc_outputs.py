@@ -151,6 +151,29 @@ class BoxscoreSerialization(unittest.TestCase):
         self.assertEqual(stats['player_yardage_fallbacks']['rushing_yards'], 0)
         self.assertEqual(stats['player'][0]['rushing']['yds'], 3)
 
+    def test_score_components_are_unknown_when_ledger_is_incomplete(self):
+        record = game_record()
+        record['stats']['player_yardage_fallbacks'] = {}
+        record['stats']['team']['A']['score_ledger_points'] = 7
+        record['stats']['team']['A']['other_score_points'] = 0
+        box = outputs.build_boxscore(1, {'complete_game': True}, record, SNAPSHOT, PROFILE)
+        home = box['teams'][0]['stats']
+        self.assertEqual(home['score_ledger_points'], 7)
+        self.assertIsNone(home['other_score_points'])
+        self.assertIn('including field goals', box['field_semantics']['other_score_points'])
+        self.assertIn('score_ledger_points', box['reconciliation']['teams'][0]['mismatches'])
+
+    def test_raw_clock_semantics_and_player_distribution_attribution(self):
+        stats = game_stats.compute([], {'A': 0, 'B': 0})
+        self.assertIn('not time of possession', stats['team_stat_semantics']['possession_seconds'])
+        box = outputs.build_boxscore(1, {'valid_full_game': True}, game_record(), SNAPSHOT, PROFILE)
+        summary = outputs.aggregate_boxscores([box])
+        player = next(p for p in summary['players'] if p['stable_player_id'] == 'GA1')
+        self.assertEqual(player['attribution_modes'], ['pre_event_selection'])
+        self.assertEqual(set(player['statistics']), {f'{category}.{field}'
+                         for category, fields in outputs.PLAYER_FIELDS.items() for field in fields})
+        self.assertIn('allocations', player['attribution_note'])
+
     def test_regular_punt_is_counted_even_when_punt_attempt_flag_is_false(self):
         drive = {
             'offense_team': 'A', 'quarter_start': 1, 'clock_start': 600,

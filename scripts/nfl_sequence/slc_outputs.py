@@ -450,6 +450,12 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
             for field in ('touchdown_points', 'try_points', 'safety_points', 'other_score_points', 'score_ledger_points', 'other_fumble_scrimmage_plays'):
                 values[field] = None  # Older records did not carry these components.
         values['points'] = (record or {}).get('points', {}).get(side)
+        if 'score_ledger_points' not in source and values['points'] not in (None, 0):
+            values['score_ledger_points'] = None
+        if (values['points'] is None or values['score_ledger_points'] is None
+                or values['score_ledger_points'] != values['points']):
+            for field in ('touchdown_points', 'try_points', 'safety_points', 'other_score_points'):
+                values[field] = None
         values['possession_seconds'] = None
         values['drive_terminals'] = {}
         for drive in (record or {}).get('drives', []):
@@ -539,6 +545,8 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
             'possession_seconds': 'Unavailable; drive windows exclude kickoff and free-kick time.',
             'drive_window_seconds': 'Elapsed time between drive start and end; not time of possession.',
             'sack_yards': 'Signed yards, normally negative.',
+            'try_points': 'Touchdown drive ledger points above six, not a count of try attempts.',
+            'other_score_points': 'Non-touchdown, non-safety score-ledger points, including field goals.',
             'starter': 'Frozen depth-chart role, not evidence of playing time.',
             'lineup_player_snaps': 'Modeled RB/FB/WR/TE lineup appearances only; QB and linemen excluded and production chosen independently.',
             'observed_overtime_touchdowns': 'Offensive touchdowns on observed overtime drives without play or player attribution.',
@@ -722,9 +730,11 @@ def aggregate_boxscores(boxscores, requested_games=None):
         team_stats[team]['red_zone'] = {
             field: _distribution([line['stats']['red_zone'].get(field, 0) for line in lines]) for field in red_fields}
     player_metadata = {}
+    player_attributions = {}
     for box in valid:
         for player in box['players']:
             key = (player['team'], player['stable_player_id'])
+            player_attributions.setdefault(key, set()).add(player.get('attribution') or 'unknown')
             player_metadata.setdefault(key, {field: player.get(field) for field in
                                              ('stable_player_id', 'name', 'team', 'position',
                                               'roster_eligible', 'starter')})
@@ -739,7 +749,9 @@ def aggregate_boxscores(boxscores, requested_games=None):
                     entry['values'].setdefault(f'{category}.{field}', []).append(value)
     players = []
     for (_team, _player_id), entry in sorted(player_values.items()):
-        players.append({**entry['metadata'], 'statistics': {
+        players.append({**entry['metadata'], 'attribution_modes': sorted(player_attributions[(_team, _player_id)]),
+                        'attribution_note': 'See attribution_modes: pregame selections are role allocations; observed-play participants are sampled, not this game\'s lineup or independent performance projections.',
+                        'statistics': {
             key: _distribution(values) for key, values in sorted(entry['values'].items())}})
 
     game_values = {
