@@ -1,0 +1,15 @@
+{
+  "input_sha256": "cec16cb2462ef71eaf0fc5d300ce6729e57c915b114dd8615f8e7d924986a618",
+  "concentrations": {
+    "carry": {
+      "RB": 1.412538,
+      "QB": 1.0
+    },
+    "receive": {
+      "WR": 3.527768,
+      "TE": 2.06538,
+      "RB": 1.513561
+    }
+  },
+  "note": "Exploratory; offline fit reserves OTHER while simulator does not; QB carry hit grid boundary."
+}
