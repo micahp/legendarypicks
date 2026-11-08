@@ -162,6 +162,10 @@ class BoxscoreSerialization(unittest.TestCase):
         self.assertIsNone(home['other_score_points'])
         self.assertIn('including field goals', box['field_semantics']['other_score_points'])
         self.assertIn('score_ledger_points', box['reconciliation']['teams'][0]['mismatches'])
+        del record['stats']['team']['A']['score_ledger_points']
+        box = outputs.build_boxscore(1, {'complete_game': True}, record, SNAPSHOT, PROFILE)
+        self.assertIsNone(box['teams'][0]['stats']['score_ledger_points'])
+        self.assertIn('score_components_unavailable', box['reconciliation']['teams'][0]['mismatches'])
 
     def test_raw_clock_semantics_and_player_distribution_attribution(self):
         stats = game_stats.compute([], {'A': 0, 'B': 0})

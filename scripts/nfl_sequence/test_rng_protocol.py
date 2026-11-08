@@ -62,7 +62,9 @@ class RngProtocol(unittest.TestCase):
 
     def test_v2_root_ignores_code_provenance_and_the_reference_wrapper(self):
         base = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), _description())
-        moved = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), _description(
+        intervention = _ref()
+        intervention.blocker_fixes = frozenset({'restore_sack_mass'})
+        moved = rng_protocol.plan(rng_protocol.V2, PREGAME, intervention, _description(
             integration_code_sha256={'pre_event.py': '0' * 64}, reference_sha256='9' * 64,
             layer_artifact_sha256={'team_offense_defense_outcomes': '1' * 64,
                                    'exact_yardline_outcomes': '8' * 64}))
