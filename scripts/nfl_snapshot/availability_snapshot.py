@@ -104,7 +104,19 @@ def build(args):
                                                         'position', 'status'])
     roster = roster[(roster.season == args.season) & (roster.game_type == 'REG') & roster.gsis_id.notna()].copy()
     published = sorted(int(w) for w in roster.week.unique())
-    roster_week = args.week if args.week in published else max(published)
+    eligible_weeks = [week for week in published if week <= args.week]
+    if not eligible_weeks:
+        raise ValueError(f'no roster week at or before week {args.week}')
+    roster_week = max(eligible_weeks)
+    acquired = getattr(args, 'roster_acquired_at_utc', None)
+    if acquired:
+        acquired_ts = pd.Timestamp(acquired)
+        if acquired_ts.tzinfo is None:
+            raise ValueError('roster acquisition time must be timezone-qualified')
+        if acquired_ts > freeze_ts:
+            raise ValueError('roster was acquired after the freeze time')
+        acquired = acquired_ts.tz_convert('UTC').isoformat()
+    roster_hash = sha256_file(args.roster_file)
     roster = roster[roster.week == roster_week].drop_duplicates(['team', 'gsis_id'])
     roster['team'] = roster.team.replace(DB_TO_NFLVERSE)
 
@@ -141,7 +153,13 @@ def build(args):
         d = depth_by.get((r.team, r.gsis_id))
         players.append({
             'team': r.team, 'gsis_id': r.gsis_id, 'name': r.full_name, 'position': r.position,
-            'roster_status': r.status, 'roster_basis_week': roster_week,
+            'roster_status': r.status if isinstance(r.status, str) else None, 'roster_basis_week': roster_week,
+            'active_roster': (r.status == 'ACT' if acquired and roster_week == args.week
+                              and r.status in ('ACT', 'INA', 'RES', 'PUP', 'DEV', 'CUT') else None),
+            'game_day_active': None,
+            'eligibility_evidence': {'source': 'nflverse_weekly_roster', 'season': args.season,
+                                     'week': roster_week, 'acquired_at_utc': acquired,
+                                     'source_sha256': roster_hash},
             'designation': designation if designation is not None else ('NULL' if inj_row is not None else None),
             'designation_observed_at_utc': observed,
             'official_inactive': 'not_yet_published',
@@ -160,7 +178,7 @@ def build(args):
                   for g in games.itertuples(index=False)],
         'players': players,
         'provenance': {
-            'roster_file': os.path.basename(args.roster_file), 'roster_file_sha256': sha256_file(args.roster_file),
+            'roster_file': os.path.basename(args.roster_file), 'roster_file_sha256': roster_hash, 'roster_acquired_at_utc': acquired,
             'roster_basis_week': roster_week, 'roster_published_weeks': published,
             'roster_target_week_published': args.week in published,
             'injury_store': os.path.basename(args.injury_store), 'injury_store_last_run_utc': last_run,
@@ -202,6 +220,8 @@ def main():
     ap.add_argument('--season', type=int, required=True)
     ap.add_argument('--week', type=int, required=True)
     ap.add_argument('--roster-file', required=True)
+    ap.add_argument('--roster-acquired-at-utc', default=None,
+                    help='recorded acquisition time for the exact roster file; missing means eligibility is unknown')
     ap.add_argument('--injury-store', required=True)
     ap.add_argument('--db', required=True)
     ap.add_argument('--freeze-time', default=None)
