@@ -516,10 +516,17 @@ class ClockReconciliation(unittest.TestCase):
         self.assertEqual(result['elapsed_game_clock_seconds'], 3600)
 
     def test_a_game_with_a_gap_is_reported_unreconciled_not_forced(self):
-        result = game_stats.clock_reconciliation(self.record('2026_09_LV_SF-seed23'))
+        record = self.record('2026_09_LV_SF-seed23')
+        self.assertEqual(game_stats.clock_reconciliation(record)['status'], 'reconciled')
+        record['kickoffs'][1]['clock_after'] = 300  # the 313-second kickoff now charges 13 seconds the drives do not account for
+        result = game_stats.clock_reconciliation(record)
         self.assertEqual(result['status'], 'unreconciled')
         self.assertFalse(result['regulation_only'])
         self.assertNotEqual(result['unassigned_seconds'], 0)
+
+    def test_overtime_is_a_600_second_period_after_regulation(self):
+        self.assertEqual(game_stats._elapsed(5, 600), 3600)
+        self.assertEqual(game_stats._elapsed(5, 0), 4200)
 
     def test_a_record_without_clock_fields_says_what_is_missing(self):
         result = game_stats.clock_reconciliation({'drives': [{'offense_team': 'A'}]})
