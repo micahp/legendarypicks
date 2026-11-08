@@ -1,5 +1,6 @@
 """Fit adaptive within-position concentrations using prior-season, rolling-week predictions."""
 import argparse
+import gzip
 import json
 import sqlite3
 from collections import defaultdict
@@ -11,15 +12,23 @@ import player_shares as ps
 import share_distributions as sd
 
 
-def samples(db, season, role, last_week=None):
-    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True)
-    try:
-        games = ev.load_games(con, season, role, last_week)
-        prior = ev.load_games(con, season - 1, role)
-        pooled = [g for year in range(ps.FIRST_SEASON, season) for g in ev.load_games(con, year, role)]
-    finally:
-        con.close()
-    positions = sd.player_positions(db)
+def samples(db, season, role, last_week=None, frozen=None):
+    if frozen is not None:
+        def load(year):
+            return frozen['games'].get(str(year), {}).get(role, [])
+        games = [game for game in load(season) if last_week is None or game['week'] <= last_week]
+        prior = load(season - 1)
+        pooled = [game for year in range(ps.FIRST_SEASON, season) for game in load(year)]
+        positions = frozen['positions']
+    else:
+        con = sqlite3.connect(f'file:{db}?mode=ro', uri=True)
+        try:
+            games = ev.load_games(con, season, role, last_week)
+            prior = ev.load_games(con, season - 1, role)
+            pooled = [g for year in range(ps.FIRST_SEASON, season) for g in ev.load_games(con, year, role)]
+        finally:
+            con.close()
+        positions = sd.player_positions(db)
     prior_team, pooled_team = ev.team_totals(prior), ev.team_totals(pooled)
     rank = ev.rank_table(prior, positions)
     earlier = defaultdict(list)
@@ -52,7 +61,8 @@ def fit(training):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--db', required=True)
+    parser.add_argument('--db')
+    parser.add_argument('--frozen-input')
     parser.add_argument('--train-season', type=int, required=True)
     parser.add_argument('--test-season', type=int, required=True)
     parser.add_argument('--last-week', type=int)
@@ -61,8 +71,11 @@ def main():
     args = parser.parse_args()
     if args.train_season >= args.test_season:
         raise ValueError('training season must precede test season')
-    fitted = fit(samples(args.db, args.train_season, args.role))
-    heldout = samples(args.db, args.test_season, args.role, args.last_week)
+    if not args.db and not args.frozen_input:
+        parser.error('provide --db or --frozen-input')
+    frozen = json.load(gzip.open(args.frozen_input, 'rt')) if args.frozen_input else None
+    fitted = fit(samples(args.db, args.train_season, args.role, frozen=frozen))
+    heldout = samples(args.db, args.test_season, args.role, args.last_week, frozen=frozen)
     for group, fit_result in fitted.items():
         rows = heldout.get(group, [])
         fit_result['heldout_team_games'] = len(rows)
