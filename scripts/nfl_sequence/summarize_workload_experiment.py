@@ -49,6 +49,10 @@ def summarize(paths):
             baseline = header.get('paired_workload_baseline') or {}
             if baseline.get('baseline_header_sha256') != paired.rng_protocol.canonical_sha256(control_header):
                 raise ValueError(f'{arm} did not bind to this control header')
+            natural = paired.rng_protocol.RngPlan(paired.rng_protocol.V2, root=baseline.get('natural_treatment_root_sha256'))
+            checked, evidence = paired.rng_protocol.pair_workload_plan(natural, header['pairing_identity'], control_header)
+            if checked.root != root or evidence != baseline:
+                raise ValueError(f'{arm} workload pairing evidence differs')
         for seed, outcome in rows.items():
             try:
                 paired.validate_v2_streams(outcome, root, seed, arm)
@@ -110,6 +114,8 @@ def summarize(paths):
         out['arms'][arm] = {'status_counts': dict(statuses),
             'ledger_sha256': hashlib.sha256(Path(paths[arm]).read_bytes()).hexdigest(),
             'workload_identity': header.get('player_share_model_manifest'),
+            'research_workload': header.get('research_workload'),
+            'pairing_identity': header.get('pairing_identity'),
             'group_selections': [{'team': t, 'role': r, 'positions': p, 'decisions': n}
                                  for (t, r, p), n in sorted(selection_groups.items())],
             'players': [{'team': t, 'id': p, 'name': name,
@@ -123,13 +129,14 @@ def summarize(paths):
                          'pre_lineup_weight_by_role': {role: distribution(population_weights[(t, role, p)])
                                                        for role in ('carry', 'receive')}}
                         for (t, p, name), metrics in sorted(players.items())]}
-    for arm in ('D1', 'D2'):
+    for arm, reference in (('D1', 'C'), ('D2', 'C'), ('D2_minus_D1', 'D1')):
+        treatment = 'D2' if arm == 'D2_minus_D1' else arm
         deltas = []
-        for key in sorted(set(player_values['C']) & set(player_values[arm])):
+        for key in sorted(set(player_values[reference]) & set(player_values[treatment])):
             row = {'team': key[0], 'id': key[1], 'name': key[2]}
             for metric in ('carries', 'targets', 'modeled_snaps', 'carry_share', 'target_share'):
-                c = player_values['C'][key].get(metric, [])
-                d = player_values[arm][key].get(metric, [])
+                c = player_values[reference][key].get(metric, [])
+                d = player_values[treatment][key].get(metric, [])
                 row[metric] = distribution([y-x for x, y in zip(c, d)]) if len(c) == len(d) else None
             deltas.append(row)
         out['paired_player_deltas'][arm] = deltas
