@@ -1,0 +1,25 @@
+{
+  "train_season": 2025,
+  "test_season": 2026,
+  "last_week": 8,
+  "role": "carry",
+  "eligibility": "unknown",
+  "groups": {
+    "RB": {
+      "phi": 1.412538,
+      "team_games": 544,
+      "training_nll": 3580.657977366731,
+      "grid_boundary": false,
+      "heldout_team_games": 242,
+      "heldout_mean_nll": 6.985388424612205
+    },
+    "QB": {
+      "phi": 1.0,
+      "team_games": 544,
+      "training_nll": 824.0024332142051,
+      "grid_boundary": true,
+      "heldout_team_games": 242,
+      "heldout_mean_nll": 1.346500628298129
+    }
+  }
+}

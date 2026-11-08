@@ -8,6 +8,7 @@ ROLE_CHANGE between the prior season and the current season to date). Eligibilit
 counted under 'unknown eligibility'. Every prediction is checked to use only games from earlier weeks.
 """
 import argparse
+import gzip
 import json
 import math
 import sqlite3
@@ -64,15 +65,23 @@ def player_status(pid, prior_team, prior_total, current_counts, current_total):
     return 'returning'
 
 
-def score(db, season, role, last_week=None, seed=0):
-    con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
-    try:
-        games = ev.load_games(con, season, role, last_week)
-        prior_games = ev.load_games(con, season - 1, role)
-        pooled_games = [g for s in range(ps.FIRST_SEASON, season) for g in ev.load_games(con, s, role)]
-    finally:
-        con.close()
-    positions = sd.player_positions(db)
+def score(db, season, role, last_week=None, seed=0, frozen=None):
+    if frozen is not None:
+        def load(year):
+            return frozen['games'].get(str(year), {}).get(role, [])
+        games = [game for game in load(season) if last_week is None or game['week'] <= last_week]
+        prior_games = load(season - 1)
+        pooled_games = [game for year in range(ps.FIRST_SEASON, season) for game in load(year)]
+        positions = frozen['positions']
+    else:
+        con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
+        try:
+            games = ev.load_games(con, season, role, last_week)
+            prior_games = ev.load_games(con, season - 1, role)
+            pooled_games = [g for year in range(ps.FIRST_SEASON, season) for g in ev.load_games(con, year, role)]
+        finally:
+            con.close()
+        positions = sd.player_positions(db)
     prior_by_team = ev.team_totals(prior_games)
     pooled_by_team = ev.team_totals(pooled_games)
     phi_c = sd.fit_from_counts(*ev._fit_inputs(prior_games), season - 1)['phi']
@@ -157,18 +166,20 @@ def summarise(rows):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
+    ap.add_argument('--frozen-input', help='gzip file produced by freeze_workload_inputs.py')
     ap.add_argument('--db', default='/root/legendarypicks/backend/data/picks.dev.db')
     ap.add_argument('--season', type=int, required=True)
     ap.add_argument('--role', choices=('receive', 'carry'), required=True)
     ap.add_argument('--last-week', type=int, default=None)
     ap.add_argument('--out', required=True)
     args = ap.parse_args(argv)
-    rows, checks, phi_c = score(args.db, args.season, args.role, args.last_week)
+    frozen = json.load(gzip.open(args.frozen_input, 'rt')) if args.frozen_input else None
+    rows, checks, phi_c = score(args.db, args.season, args.role, args.last_week, frozen=frozen)
     if checks['future_game_used']:
         raise AssertionError(f"{checks['future_game_used']} predictions used a game from the same or a later week")
     summary = summarise(rows)
     Path(args.out).write_text(json.dumps({'season': args.season, 'role': args.role, 'last_week': args.last_week,
-                                          'phi_c': phi_c, 'checks': checks, 'summary': summary,
+                                          'phi_c': phi_c, 'checks': checks, 'summary': summary, 'frozen_input': args.frozen_input,
                                           'role_change_threshold': ROLE_CHANGE, 'interval_method': 'beta-binomial predictive counts',
                                           'interval_draws': INTERVAL_DRAWS,
                                           'within_group_nll': 'conditional on observed group count; unseen players pooled as OTHER',
