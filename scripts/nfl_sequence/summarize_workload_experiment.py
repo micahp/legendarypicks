@@ -1,6 +1,7 @@
 """Summarize paired workload ledgers with independently verified per-seed streams."""
 import argparse
 import collections
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -59,7 +60,9 @@ def summarize(paths):
         rows[seed].get('valid_full_game') is True and
         (rows[seed].get('boxscore', {}).get('reconciliation') or {}).get('status') == 'passed'
         for _, rows in arms.values())]
-    out = {'root_sha256': root, 'requested_seeds': len(seeds), 'paired_valid': len(valid),
+    out = {'root_sha256': root, 'source_snapshot_sha256': control_header.get('source_snapshot_sha256'),
+           'source_commit': control_header.get('source_commit'),
+           'pairing_identity': control_header.get('pairing_identity'), 'requested_seeds': len(seeds), 'paired_valid': len(valid),
            'excluded_seeds': sorted(seeds - set(valid)), 'unverified_streams': unverified_streams,
            'arms': {}, 'paired_player_deltas': {}}
     player_values = {}
@@ -70,6 +73,7 @@ def summarize(paths):
         candidate_weights = collections.defaultdict(list)
         population_weights = collections.defaultdict(list)
         players = collections.defaultdict(lambda: collections.defaultdict(list))
+        eligibility = collections.defaultdict(set)
         statuses = collections.Counter()
         for seed in sorted(rows):
             outcome = rows[seed]
@@ -92,6 +96,7 @@ def summarize(paths):
                 team_totals[team_row['team']] = (team_stats.get('rush_attempts'), team_stats.get('pass_attempts'))
             for player in outcome['boxscore']['players']:
                 key = (player['team'], player['stable_player_id'], player['name'])
+                eligibility[key].add(str(player.get('roster_eligible')))
                 players[key]['carries'].append(player['rushing']['att'])
                 players[key]['targets'].append(player['receiving']['tgt'])
                 rush_total, pass_total = team_totals.get(player['team'], (None, None))
@@ -108,7 +113,9 @@ def summarize(paths):
             'group_selections': [{'team': t, 'role': r, 'positions': p, 'decisions': n}
                                  for (t, r, p), n in sorted(selection_groups.items())],
             'players': [{'team': t, 'id': p, 'name': name,
-                         **{metric: distribution(vals) for metric, vals in metrics.items()},
+                         **{metric: distribution(metrics.get(metric, [])) for metric in
+                            ('carries', 'targets', 'modeled_snaps', 'carry_share', 'target_share')},
+                         'roster_eligibility_values': sorted(eligibility[(t, p, name)]),
                          'selected_by_role': {role: selected[(t, role, p)] for role in ('carry', 'receive')},
                          'candidate_by_role': {role: candidate_presence[(t, role, p)] for role in ('carry', 'receive')},
                          'post_lineup_weight_by_role': {role: distribution(candidate_weights[(t, role, p)])
@@ -133,9 +140,41 @@ def main():
     ap = argparse.ArgumentParser()
     for arm in ('C', 'D1', 'D2'):
         ap.add_argument('--' + arm.lower(), required=True)
+    ap.add_argument('--observed-input', help='frozen workload inputs; observed earlier weeks only')
     ap.add_argument('--out', required=True)
     args = ap.parse_args()
     result = summarize({'C': args.c, 'D1': args.d1, 'D2': args.d2})
+    if args.observed_input:
+        data = json.load(gzip.open(args.observed_input, 'rt'))
+        observed = {}
+        for role in ('carry', 'receive'):
+            teams = {}
+            for game in data['games']['2026'][role]:
+                if game['week'] >= 9 or game['team'] not in ('ARI', 'SEA'):
+                    continue
+                team = teams.setdefault(game['team'], {'games': 0, 'opportunities': 0, 'players': {}})
+                team['games'] += 1
+                team['opportunities'] += sum(game['counts'].values())
+                for player, count in game['counts'].items():
+                    team['players'][player] = team['players'].get(player, 0) + count
+            observed[role] = teams
+        result['observed_before_week_9'] = observed
+        for arm in result['arms'].values():
+            for player in arm['players']:
+                source = {}
+                for role in ('carry', 'receive'):
+                    team = observed[role].get(player['team'])
+                    if team:
+                        count = team['players'].get(player['id'], 0)
+                        source[role] = {'team_games': team['games'], 'opportunities': count,
+                                        'team_opportunities': team['opportunities'],
+                                        'share': count / team['opportunities'] if team['opportunities'] else None,
+                                        'opportunities_per_team_game': count / team['games'] if team['games'] else None}
+                    else:
+                        source[role] = None
+                player['observed_prior_weeks'] = source
+        result['observed_note'] = ('Prior weeks only; player missing from counts is not confirmed inactive. '
+                                   'Counts are database-derived and acquisition-time provenance is unverified.')
     Path(args.out).write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
 
 if __name__ == '__main__':
