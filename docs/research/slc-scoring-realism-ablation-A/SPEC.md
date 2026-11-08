@@ -36,6 +36,12 @@ For each dropback whose drawn outcome is `pass_incomplete`, substitute a sack wi
 
 Other outcomes are unchanged. Restricting the substitution to incomplete passes means no completed pass or run changes yardage, so the substitution does not move ablation C. The switch is `restore_sack_mass`, default off. With the switch off the code takes no extra random draw, so the baseline is unchanged.
 
+## Execution identity
+
+- Run both arms with `--rng-protocol v2`. `--ablation-restore-sack-mass` refuses to run under v1, which keys each seed's stream on the resealed snapshot and the enabled fixes, so the arms would not share draws.
+- Record `stream_root_sha256` for each arm, and assert before the run that the two roots are identical. The root is keyed on the pregame state and model inputs, and excludes the ablation switch.
+- Pin the snapshot file sha256, the playcall artifact sha256, the streak file sha256, the code commit and the patch sha256 in the manifest of each arm.
+
 ## Decision rules
 
 1. **Mechanism.** The engine's sack share on dropbacks moves to within 1.0 percentage point of the observed pooled rate, 6.9%.
@@ -45,7 +51,9 @@ Other outcomes are unchanged. Restricting the substitution to incomplete passes 
 5. **Non-sack outcomes.** The substitution is restricted to incomplete passes, so it cannot change any completion. The gate checks that it did not:
    - completions per dropback change by less than 0.5 percentage points;
    - yards per completion change by less than 1%;
-   - yards per pass attempt, excluding sack yardage, change by less than 1%.
+   - pass yards per dropback, excluding sack yardage, change by less than 1%. The denominator is dropbacks, which
+     include sacks. Dividing by pass attempts that exclude sacks would shrink the denominator by exactly the
+     substituted count and move this gate even when no completion or pass yard changed.
 
    A larger change means the substitution has reached a non-sack outcome, and the result is invalid.
 

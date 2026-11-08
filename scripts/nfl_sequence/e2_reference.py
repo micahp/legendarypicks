@@ -37,11 +37,13 @@ RECEIVER_POSITIONS = ('WR', 'TE', 'RB', 'FB')
 RUNNER_POSITIONS = ('RB', 'FB', 'QB')
 BLOCKER_FIXES = ('run_scramble_backoff', 'long_field_goal_feasibility', 'blocked_kick_source_audit',
                  'blocked_kick_geometry', 'safety_free_kick_boundaries')
+# Ablation switches are not default fixes: they must be requested by name and are never on by default.
+ABLATION_FIXES = ('restore_sack_mass',)
 
 
 def normalize_blocker_fixes(fixes):
     fixes = set(fixes or ())
-    unknown = fixes - set(BLOCKER_FIXES)
+    unknown = fixes - set(BLOCKER_FIXES) - set(ABLATION_FIXES)
     if unknown:
         raise ValueError(f'unknown SLC blocker fix(s): {sorted(unknown)}')
     return frozenset(fixes)
