@@ -118,7 +118,12 @@ def _reproduction_command(args, seed):
     if args.playcall_artifact:
         command.extend(['--playcall-artifact', str(args.playcall_artifact)])
     for fix in args.slc_blocker_fix:
-        command.extend(['--slc-blocker-fix', fix])
+        if fix == 'restore_sack_mass':
+            command.append('--ablation-restore-sack-mass')
+        else:
+            command.extend(['--slc-blocker-fix', fix])
+    if getattr(args, 'expected_stream_root_sha256', None):
+        command.extend(['--expected-stream-root-sha256', args.expected_stream_root_sha256])
     if args.slc_blocker_fix:
         command.extend(['--slc-fg-ordinary-cutoff', str(args.slc_fg_ordinary_cutoff)])
     if args.slc_profile != 'custom':
@@ -143,8 +148,7 @@ def _reproduction_command(args, seed):
                             f"--{sha.replace('_', '-')}", getattr(args, sha)])
     if getattr(args, 'paired_randomness', False):
         command.append('--paired-randomness')
-    if getattr(args, 'rng_protocol', rng_protocol.V1) != rng_protocol.V1:
-        command.append(f"--rng-protocol={args.rng_protocol}")
+    command.append(f"--rng-protocol={getattr(args, 'rng_protocol', rng_protocol.V1)}")
 
     if args.playcall_point_splits_cache:
         command.extend(['--playcall-point-splits-cache', str(args.playcall_point_splits_cache)])
@@ -263,8 +267,11 @@ def _baseline_v1(db, snapshot):
             cutoff_delta = (locked_time - cutoff).total_seconds()
             try:
                 params = json.loads(params_json)
+                if not isinstance(params, dict):
+                    raise ValueError('lock parameters must be an object')
             except (TypeError, ValueError):
                 params = {}
+            params_status = 'available' if params else 'unavailable_or_malformed'
             lock_is_comparable = cutoff_delta <= 0 and schedule_verified
             if cutoff_delta > 0:
                 lock_status = 'exploratory_later_lock'
@@ -291,7 +298,8 @@ def _baseline_v1(db, snapshot):
                 'projected_home_points': home_points, 'projected_away_points': away_points,
                 'projected_home_minus_away': margin, 'projected_total': total,
                 'home_win_probability': p_home,
-                'win_probability_sigma_points': params.get('sigma', V1_CONFIG['sigma']),
+                'win_probability_sigma_points': params.get('sigma'),
+                'stored_parameters_status': params_status,
             }
 
         if not schedule_verified:
@@ -858,7 +866,7 @@ def run_batch(args):
     try_policy = try_policy_module.TryPolicy.from_fixture() if args.try_policy == 'k1' else None
     safety_kick_table = not args.no_safety_table
     # The pregame state before the reference attaches: rosters, availability and schedule, with no code hashes.
-    pregame_state_sha256 = snapshot['snapshot_sha256']
+    pregame_state_sha256 = rng_protocol.pregame_state_sha256(snapshot)
     reference_started = time.monotonic()
     if args.playcall_artifact:
         if args.team_tendency or args.context_mode != 'unconditioned' or args.try_policy != 'unconditional' or args.no_safety_table:
@@ -928,6 +936,10 @@ def run_batch(args):
     pregame_snapshot.reseal(snapshot)
     playcall_description = slc_engine.describe(ref)
     rng_plan = rng_protocol.plan(args.rng_protocol, pregame_state_sha256, ref, playcall_description)
+    if 'restore_sack_mass' in args.slc_blocker_fix and not getattr(args, 'expected_stream_root_sha256', None):
+        raise ValueError('sack ablation requires the baseline --expected-stream-root-sha256')
+    if getattr(args, 'expected_stream_root_sha256', None):
+        rng_plan.require_root(args.expected_stream_root_sha256)
     if slc_engine.is_slc(ref):
         slc_config.validate_engine_layers(resolved_profile, playcall_description)
     elif resolved_profile['profile'] != 's0' and any(resolved_profile['enabled_layers'].values()):
@@ -1194,6 +1206,9 @@ def run_batch(args):
         print(f"registered {entry['run_id']} at {entry['path']}; exploratory={entry['exploratory']}"
               + (f" ({'; '.join(entry['exploratory_reasons'])})" if entry['exploratory_reasons'] else ''))
     print(f"baseline_v1={baseline['status']} reference_sha256={ref.model_inputs['sha256']}")
+    fallbacks = payload['execution_verification']['fallback_events']
+    print(f"fallback_events={sum(fallbacks.values())} fallback_kinds={len(fallbacks)} "
+          f"counts={json.dumps(fallbacks, sort_keys=True)}")
     return payload
 
 
@@ -1367,13 +1382,19 @@ def main(argv=None):
                                                      'selecting from --availability-store'))
     ap.add_argument('--register-dir', help=('write the run read-only under this store and append its index line, '
                                             'so downstream code can find it'))
-    ap.add_argument('--rng-protocol', choices=(rng_protocol.V1, rng_protocol.V2), default=rng_protocol.V1,
-                    help=('per-seed random streams: v1 (legacy, keyed on the resealed snapshot hash, default) or '
-                          'v2 (keyed on stable pregame and model inputs; experiment; SLC layer only)'))
+    ap.add_argument('--rng-protocol', choices=(rng_protocol.V1, rng_protocol.V2), default=None,
+                    help=('per-seed random streams: v2 is the SLC default; '
+                          'v1 explicitly replays legacy snapshot-keyed draws (default without SLC)'))
+    ap.add_argument('--expected-stream-root-sha256',
+                    help='require this baseline v2 stream root before running seeds; mandatory for sack ablation')
     ap.add_argument('--game-info-snapshot', help=('attach this frozen game-information snapshot to the run as '
                                                   'context: venue capacity, kickoff, forecast, referee status and '
                                                   'broadcast. The model does not read it.'))
     args = ap.parse_args(argv)
+    if args.rng_protocol is None:
+        args.rng_protocol = rng_protocol.V2 if args.playcall_artifact else rng_protocol.V1
+    if args.paired_randomness and args.playcall_artifact and args.rng_protocol != rng_protocol.V2:
+        ap.error('paired SLC experiments require --rng-protocol v2')
     if args.no_slc_blocker_fixes and args.slc_blocker_fix:
         ap.error('--no-slc-blocker-fixes cannot be combined with --slc-blocker-fix')
     if args.no_slc_blocker_fixes:
@@ -1385,6 +1406,8 @@ def main(argv=None):
         if args.rng_protocol != rng_protocol.V2:
             # v1 keys each seed's stream on the resealed snapshot and the enabled fixes, so the two arms would not share draws
             ap.error('--ablation-restore-sack-mass (ablation A) requires --rng-protocol v2 for a paired comparison')
+        if not args.expected_stream_root_sha256:
+            ap.error('--ablation-restore-sack-mass requires --expected-stream-root-sha256 from the baseline arm')
         args.slc_blocker_fix = list(args.slc_blocker_fix or []) + ['restore_sack_mass']
     if args.seed_list_file:
         try:

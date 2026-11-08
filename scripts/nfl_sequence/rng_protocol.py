@@ -1,11 +1,11 @@
-"""Random-stream protocols for SLC runs (research, not adopted).
+"""Random-stream protocols for SLC runs.
 
 Two protocols run side by side:
 
-* v1 (legacy, the default). Every pre-event draw is keyed on the resealed snapshot hash. That hash carries the reference
+* v1 (explicit legacy replay; default without SLC). Every pre-event draw is keyed on the resealed snapshot hash. That hash carries the reference
   fingerprint, and the fingerprint carries SHA-256 hashes of the integration code. An edit to those files, or a new
   commit, therefore changes every seed's draws even with every research flag off. Archived runs keep this key.
-* v2 (opt-in, `--rng-protocol v2`). The stream root is keyed on stable inputs only: the pregame state (rosters,
+* v2 (the SLC default, `--rng-protocol v2`). The stream root is keyed on stable inputs only: the pregame state (rosters,
   availability, schedule, captured before the reference attaches) and the model-input identity (the loaded reference
   tables and the layer tables, without code hashes). Code and artifact hashes stay in the provenance manifest and key
   no draw.
@@ -29,6 +29,16 @@ THIS_FILE = Path(__file__).resolve()
 def canonical_sha256(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
                           .encode('utf-8')).hexdigest()
+
+
+def pregame_state_sha256(snapshot):
+    """Hash simulation inputs separately from the snapshot's provenance/content seal.
+
+    The content seal still verifies every byte, including build time. Model-reference
+    tables are covered separately by plan(), after they are loaded.
+    """
+    return canonical_sha256({key: value for key, value in snapshot.items()
+                             if key not in {'snapshot_sha256', 'built_at_utc', 'model_reference'}})
 
 
 def _is_sha256(text):
@@ -87,6 +97,13 @@ class RngPlan:
     def seed_root(self, snapshot):
         """The key for the pre-event draws. None keeps the legacy snapshot key, so v1 runs are unchanged."""
         return None if self.scheme == V1 else self.root
+
+    def require_root(self, expected):
+        """Refuse an unpaired experiment before producing any seed outcomes."""
+        if self.scheme != V2 or not _is_sha256(expected):
+            raise ValueError('paired comparison requires v2 and a valid expected stream root SHA-256')
+        if self.root != expected:
+            raise ValueError(f'paired stream root mismatch: expected {expected}, loaded {self.root}')
 
     def manifest(self):
         provenance = {'rng_protocol_file_sha256': hashlib.sha256(THIS_FILE.read_bytes()).hexdigest()}
