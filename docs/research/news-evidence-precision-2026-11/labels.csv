@@ -257,7 +257,7 @@ index,update_id,gold_codes,borderline,note
 255,645790,none,no,
 256,645789,ID,no,field QUESTIONABLE; concussion is past
 257,645788,none,no,
-258,645787,IO,no,
+258,645787,ID;IO,yes,"PUP-R field; headline says out for Week 9 and coach says will not play against Miami. Both game-week OUT and non-game PUP status; retain borderline for field/text eligibility interpretation."
 259,645786,ID,no,
 260,645785,ID,no,
 261,645784,ID,no,
