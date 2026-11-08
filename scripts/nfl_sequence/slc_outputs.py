@@ -431,6 +431,24 @@ def realism_export(outcome, record):
             'lineup_semantics': 'player_snaps counts modeled RB/FB/WR/TE lineup appearances only, not full player snaps; production is selected independently.'}
 
 
+SKILL_SNAP_POSITIONS = ('RB', 'FB', 'WR', 'TE')
+
+
+def _with_snaps(line, team_stats, lineup_by_team):
+    """Snap count for one player line. Null when the model does not count it, so a missing count is never zero.
+
+    The starting QB is on the field for every scrimmage play of his team; no in-game replacement is modeled. Skill
+    players come from the lineup model, which counts only RB, FB, WR and TE. Linemen and defenders are not modeled."""
+    team_plays = ((team_stats.get(line.get('side')) or {}).get('plays'))
+    if line.get('position') == 'QB' and line.get('starter') is True and team_plays is not None:
+        snaps = team_plays
+    elif line.get('position') in SKILL_SNAP_POSITIONS and lineup_by_team.get(line.get('team')) is not None:
+        snaps = (lineup_by_team[line['team']].get('player_snaps') or {}).get(line.get('stable_player_id'), 0)
+    else:
+        snaps = None
+    return {**line, 'snaps': snaps}
+
+
 def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_validation=None):
     """Create one self-contained game record. SLC participant IDs must belong to the frozen roster."""
     schedule = snapshot['schedule']
@@ -527,6 +545,7 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
                 line[category] = {field: 0 for field in fields}
             actual[player_id] = line
 
+    lineup_by_team = ((outcome.get('playcall') or {}).get('lineup')) or {}
     quarterly = _quarter_by_quarter(record or {}, snapshot)
     boxscore = {
         'schema': BOX_SCHEMA,
@@ -552,6 +571,7 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
             'try_points': 'Touchdown drive ledger points above six, not a count of try attempts.',
             'other_score_points': 'Non-touchdown, non-safety score-ledger points, including field goals.',
             'starter': 'Frozen depth-chart role, not evidence of playing time.',
+            'snaps': 'Starting QB: team scrimmage plays. RB, FB, WR, TE: lineup-model count. Null for linemen and defenders, which are not modeled.',
             'lineup_player_snaps': 'Modeled RB/FB/WR/TE lineup appearances only; QB and linemen excluded and production chosen independently.',
             'observed_overtime_touchdowns': 'Offensive touchdowns on observed overtime drives without play or player attribution.',
             'red_zone_field_goals': 'Made field goals; alias of red_zone_field_goals_made.',
@@ -564,7 +584,7 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         'quarter_scoring_complete': quarterly['scoring_complete'],
         'quarter_by_quarter': quarterly,
         'teams': teams,
-        'players': [actual[key] for key in sorted(actual)],
+        'players': [_with_snaps(actual[key], team_stats, lineup_by_team) for key in sorted(actual)],
     }
     boxscore['reconciliation'] = reconcile_boxscore(boxscore, strict=False)
     # The serialized score comes from the game's points ledger; keep the

@@ -525,3 +525,35 @@ class ClockReconciliation(unittest.TestCase):
         result = game_stats.clock_reconciliation({'drives': [{'offense_team': 'A'}]})
         self.assertEqual(result['status'], 'unavailable')
         self.assertIn('quarter_start', result['reason'])
+
+
+class PlayerSnaps(unittest.TestCase):
+    """A snap count is given only where the model counts one. Unmodeled players get None, never zero."""
+
+    TEAM_STATS = {'A': {'plays': 61}, 'B': {'plays': 58}}
+    LINEUP = {'CIN': {'player_snaps': {'SKILL1': 44}}}
+
+    def line(self, **fields):
+        base = {'side': 'A', 'team': 'CIN', 'stable_player_id': 'X', 'position': 'QB', 'starter': True}
+        base.update(fields)
+        return base
+
+    def test_the_starting_qb_is_on_the_field_for_every_team_scrimmage_play(self):
+        self.assertEqual(outputs._with_snaps(self.line(), self.TEAM_STATS, self.LINEUP)['snaps'], 61)
+
+    def test_a_backup_qb_has_no_snap_count_because_replacement_is_not_modeled(self):
+        self.assertIsNone(outputs._with_snaps(self.line(starter=False), self.TEAM_STATS, self.LINEUP)['snaps'])
+
+    def test_a_skill_player_takes_his_lineup_count_and_zero_when_absent_from_the_lineup(self):
+        wr = self.line(position='WR', stable_player_id='SKILL1', starter=False)
+        self.assertEqual(outputs._with_snaps(wr, self.TEAM_STATS, self.LINEUP)['snaps'], 44)
+        absent = self.line(position='WR', stable_player_id='SKILL2', starter=False)
+        self.assertEqual(outputs._with_snaps(absent, self.TEAM_STATS, self.LINEUP)['snaps'], 0)
+
+    def test_linemen_and_defenders_have_no_snap_count(self):
+        ol = self.line(position='OL', stable_player_id='OL1', starter=True)
+        self.assertIsNone(outputs._with_snaps(ol, self.TEAM_STATS, self.LINEUP)['snaps'])
+
+    def test_skill_players_have_no_count_when_the_lineup_model_did_not_run(self):
+        wr = self.line(position='WR', stable_player_id='SKILL1', starter=False)
+        self.assertIsNone(outputs._with_snaps(wr, self.TEAM_STATS, {})['snaps'])
