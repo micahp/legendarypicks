@@ -16,7 +16,8 @@ class AdaptiveWorkloadTest(unittest.TestCase):
             for role in ('carry', 'receive')}}}
         data = gzip.compress(json.dumps(source).encode())
         table = {'season': 2025, 'base': {r: {('A', 'p'): .8, ('A', 'q'): .2} for r in ('carry', 'receive')},
-                 'phi': {r: {'all': 10., 'RB': 5.} for r in ('carry', 'receive')}}
+                 'phi': {r: {'all': 10., 'RB': 5.} for r in ('carry', 'receive')},
+                 'fit': {r: {'RB': {'phi': 5.}} for r in ('carry', 'receive')}}
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'in.gz'
             path.write_bytes(data)
@@ -24,6 +25,8 @@ class AdaptiveWorkloadTest(unittest.TestCase):
                                         {'carry': {'RB': 2.}})
         self.assertAlmostEqual(result['base']['carry'][('A', 'p')], .66)
         self.assertEqual(result['phi']['carry']['RB'], 2.)
+        self.assertEqual(result['fit']['carry']['RB']['phi'], 2.)
+        self.assertEqual(result['fit']['carry']['RB']['control_phi'], 5.)
         self.assertEqual(result['phi']['receive']['RB'], 5.)
         self.assertEqual(evidence['evidence']['A:carry']['earlier_games'], ['old'])
         self.assertEqual(table['base']['carry'][('A', 'p')], .8)
