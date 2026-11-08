@@ -287,6 +287,10 @@ PLAYER_METRICS = {
     'pass_attempts': ('passing', 'att', 70),
     'passing_yards': ('passing', 'yds', None),
 }
+PLAYER_SHARE_METRICS = {
+    'carry_share': ('rushing', 'att', 'rush_attempts'),
+    'target_share': ('receiving', 'tgt', 'targets'),
+}
 TEAM_METRICS = {
     'points': 'points', 'plays': 'plays', 'pass_attempts': 'pass_attempts',
     'rush_attempts': 'rush_attempts', 'sacks_taken': 'sacks_taken', 'drives': 'drives',
@@ -368,6 +372,10 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
         control_teams, ablation_teams = teams_by_key(control), teams_by_key(ablation)
         if control_teams.keys() != ablation_teams.keys():
             raise ValueError(f'seed {seed}: team identities differ between paired boxscores')
+        control_team_stats = {key[0]: row.get('stats') or {} for key, row in control_teams.items()}
+        ablation_team_stats = {key[0]: row.get('stats') or {} for key, row in ablation_teams.items()}
+        if len(control_team_stats) != len(control_teams) or len(ablation_team_stats) != len(ablation_teams):
+            raise ValueError(f'seed {seed}: duplicate team identity in boxscores')
         for key in sorted(control_teams):
             left = control_teams[key].get('stats') or {}
             right = ablation_teams[key].get('stats') or {}
@@ -377,7 +385,6 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
                 if x is not None and y is not None:
                     values['control'].append(x)
                     values['ablation'].append(y)
-
         def players_by_id(box):
             players = {}
             for player in box.get('players', []):
@@ -413,6 +420,16 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
                 if x is not None and y is not None:
                     values['control'].append(x)
                     values['ablation'].append(y)
+            for metric, (category, field, team_field) in PLAYER_SHARE_METRICS.items():
+                values = player_values.setdefault(
+                    (namespace, player_id, name, left.get('team'), left.get('position'), metric),
+                    {'control': [], 'ablation': []})
+                x, y = _numeric(left.get(category) or {}, field), _numeric(right.get(category) or {}, field)
+                xd = _numeric(control_team_stats.get(left.get('team'), {}), team_field)
+                yd = _numeric(ablation_team_stats.get(right.get('team'), {}), team_field)
+                if x is not None and y is not None and xd is not None and yd is not None and xd > 0 and yd > 0:
+                    values['control'].append(x / xd)
+                    values['ablation'].append(y / yd)
 
     def render(values, *, player=False):
         rows = []
@@ -425,7 +442,7 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
                 namespace, player_id, name, team, position, metric = key
                 row.update({'player_id': player_id, 'identity_namespace': namespace, 'player_name': name, 'team': team,
                             'position': position, 'metric': metric})
-                record = PLAYER_METRICS[metric][2]
+                record = PLAYER_METRICS[metric][2] if metric in PLAYER_METRICS else None
                 row['historical_record_boundary'] = record
                 if record is not None:
                     row['record_exceedances'] = {
@@ -451,6 +468,9 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
         'missing_ablation_seed_ids': missing_ablation,
         'team_metrics': render(team_values),
         'player_metrics': render(player_values, player=True),
+        'player_share_policy': ('Carries divided by team rush attempts and targets divided by team modeled targets; '
+                                'a paired seed is omitted for a share if either denominator is unavailable or zero. '
+                                'Modeled targets equal modeled pass attempts; throwaways and spikes are not modeled.'),
     }
 
 

@@ -175,7 +175,7 @@ class AggregatedComparison(unittest.TestCase):
                         'teams': [
                             {'team': 'AAA', 'home_away': 'home', 'stats': {
                                 'points': 24, 'plays': 30, 'pass_attempts': 20,
-                                'rush_attempts': 10, 'sacks_taken': 1, 'drives': 8}},
+                                'rush_attempts': 10, 'targets': 20, 'sacks_taken': 1, 'drives': 8}},
                             {'team': 'BBB', 'home_away': 'away', 'stats': {
                                 'points': 17, 'plays': 29, 'pass_attempts': 19,
                                 'rush_attempts': 9, 'sacks_taken': 2, 'drives': 7}},
@@ -202,6 +202,12 @@ class AggregatedComparison(unittest.TestCase):
             usage = next(row for row in report['paired_boxscore_summaries']['player_metrics']
                          if row['player_id'] == 'qb-1' and row['metric'] == 'rush_attempts')
             self.assertEqual(usage['paired_delta_ablation_minus_control']['mean'], -1)
+            carry_share = next(row for row in report['paired_boxscore_summaries']['player_metrics']
+                               if row['player_id'] == 'qb-1' and row['metric'] == 'carry_share')
+            self.assertAlmostEqual(carry_share['paired_delta_ablation_minus_control']['mean'], -0.1)
+            target_share = next(row for row in report['paired_boxscore_summaries']['player_metrics']
+                                if row['player_id'] == 'qb-1' and row['metric'] == 'target_share')
+            self.assertEqual(target_share['control']['sample_count'], 2)
             self.assertEqual(report['paired_boxscore_summaries']['complete_boxscore_pair_count'], 2)
             _out, _ledger, missing_box = matrix._worker_paths(ablation_dir, 2)
             missing_box.write_text('{"type":"manifest"}\n', encoding='utf-8')
