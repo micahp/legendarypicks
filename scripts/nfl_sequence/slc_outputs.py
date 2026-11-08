@@ -456,6 +456,9 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
                 or values['score_ledger_points'] != values['points']):
             for field in ('touchdown_points', 'try_points', 'safety_points', 'other_score_points'):
                 values[field] = None
+        if 'player_yardage_fallbacks' in stats:
+            values['score_components_complete'] = all(values[field] is not None for field in
+                ('score_ledger_points', 'touchdown_points', 'try_points', 'safety_points', 'other_score_points'))
         values['possession_seconds'] = None
         values['drive_terminals'] = {}
         for drive in (record or {}).get('drives', []):
@@ -621,6 +624,8 @@ def reconcile_boxscore(boxscore, *, strict):
         mismatches = {key: {'players': sums[key], 'team': team_stats[stat]}
                       for key, stat in checks.items() if sums[key] != team_stats[stat]}
         score = team_stats.get('score_ledger_points')
+        if team_stats.get('score_components_complete') is False:
+            mismatches['score_components_unavailable'] = {'points': team_stats.get('points')}
         if score is not None and team_stats.get('points') is not None and score != team_stats['points']:
             mismatches['score_ledger_points'] = {'ledger': score, 'points': team_stats['points']}
         other = team_stats.get('other_fumble_scrimmage_plays')
