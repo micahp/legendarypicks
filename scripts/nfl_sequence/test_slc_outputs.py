@@ -77,7 +77,7 @@ class BoxscoreSerialization(unittest.TestCase):
                    'playcall': {'lineup': {'AAA': {'player_snaps': {'GA2': 0}}}}}
         box = outputs.build_boxscore(1, outcome, game_record(), SNAPSHOT, PROFILE)
         self.assertEqual(box['status'], 'complete_unverified')
-        self.assertIsNone(box['teams'][0]['stats']['possession_seconds'])
+        self.assertEqual(box['teams'][0]['stats']['possession_seconds'], 1300)
         self.assertEqual(box['teams'][0]['stats']['drive_window_seconds'], 1300)
         self.assertIn('player_stats_exceed_snaps', box['reconciliation']['teams'][0]['mismatches'])
         self.assertEqual(box['teams'][0]['stats']['drive_terminals'], {'touchdown': 1})
@@ -169,7 +169,7 @@ class BoxscoreSerialization(unittest.TestCase):
 
     def test_raw_clock_semantics_and_player_distribution_attribution(self):
         stats = game_stats.compute([], {'A': 0, 'B': 0})
-        self.assertIn('not time of possession', stats['team_stat_semantics']['possession_seconds'])
+        self.assertIn('Kickoff time belongs to neither team', stats['team_stat_semantics']['possession_seconds'])
         box = outputs.build_boxscore(1, {'valid_full_game': True}, game_record(), SNAPSHOT, PROFILE)
         summary = outputs.aggregate_boxscores([box])
         player = next(p for p in summary['players'] if p['stable_player_id'] == 'GA1')
@@ -497,3 +497,31 @@ class RosterEligibilityIsNotAssumed(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ClockReconciliation(unittest.TestCase):
+    """Possession plus kickoff runoff must account for every elapsed game-clock second, or the game says so."""
+
+    RECORDS = Path(__file__).resolve().parents[2] / 'docs/research/slc-sunday-rerun-2026-11-08/refusals-reproduced/refused-records'
+
+    def record(self, name):
+        import gzip
+        import json
+        return json.load(gzip.open(self.RECORDS / f'{name}.json.gz', 'rt'))
+
+    def test_a_regulation_game_reconciles_to_the_clock_exactly(self):
+        result = game_stats.clock_reconciliation(self.record('2026_09_HOU_LAC-seed9'))
+        self.assertEqual(result['status'], 'reconciled')
+        self.assertEqual(result['unassigned_seconds'], 0)
+        self.assertEqual(result['elapsed_game_clock_seconds'], 3600)
+
+    def test_a_game_with_a_gap_is_reported_unreconciled_not_forced(self):
+        result = game_stats.clock_reconciliation(self.record('2026_09_LV_SF-seed23'))
+        self.assertEqual(result['status'], 'unreconciled')
+        self.assertFalse(result['regulation_only'])
+        self.assertNotEqual(result['unassigned_seconds'], 0)
+
+    def test_a_record_without_clock_fields_says_what_is_missing(self):
+        result = game_stats.clock_reconciliation({'drives': [{'offense_team': 'A'}]})
+        self.assertEqual(result['status'], 'unavailable')
+        self.assertIn('quarter_start', result['reason'])
