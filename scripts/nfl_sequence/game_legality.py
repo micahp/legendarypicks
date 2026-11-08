@@ -108,12 +108,21 @@ def _play_chain(drive, plays):
                       f'across a change of ends')
     for prev in plays[:-1]:  # the last play's end state is the next possession, which the drive boundary checks
         _down_and_distance(drive, prev)
+    if plays and plays[-1]['outcome'].get('field_goal_result') == 'blocked':
+        _down_and_distance(drive, plays[-1])  # a blocked kick ends its drive, but its hand-over is still a first down
 
 
 def _down_and_distance(drive, play):
     """A play moves the down, the spot and the distance from its own start to its own end, by its gain."""
     before, after, outcome = play['state_before'], play['state_after'], play['outcome']
-    if outcome.get('penalty') or after['down'] is None or outcome.get('field_goal_result') == 'blocked':
+    if outcome.get('field_goal_result') == 'blocked' and after['down'] is not None:
+        # a blocked kick hands the ball over at a spot no gain describes: the other team's first down there
+        where = f'{_where(drive, play)} state_after'
+        if after['down'] != 1 or after['yards_to_go'] != min(10, after['yardline_100']):
+            _fail(f'{where}: a blocked kick hands over a first down; found down {after["down"]} and '
+                  f'{after["yards_to_go"]} to go at yardline {after["yardline_100"]}')
+        return
+    if outcome.get('penalty') or after['down'] is None:
         return  # a penalty moves the ball by a rule this check does not model; a terminal play has no next down
     where = f'{_where(drive, play)} state_after'
     gain = outcome.get('yards_gained')
