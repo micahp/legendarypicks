@@ -108,8 +108,13 @@ def _play_chain(drive, plays):
                       f'across a change of ends')
     for prev in plays[:-1]:  # the last play's end state is the next possession, which the drive boundary checks
         _down_and_distance(drive, prev)
-    if plays and plays[-1]['outcome'].get('field_goal_result') == 'blocked':
+    if plays and _is_blocked_kick(plays[-1]['outcome']):
         _down_and_distance(drive, plays[-1])  # a blocked kick ends its drive, but its hand-over is still a first down
+
+
+def _is_blocked_kick(outcome):
+    """A blocked field goal or punt: the ball stays live, and the sampled kick record says what happened to it."""
+    return outcome.get('field_goal_result') == 'blocked' or bool((outcome.get('blocked_kick') or {}).get('blocked'))
 
 
 def _down_and_distance(drive, play):
@@ -117,7 +122,7 @@ def _down_and_distance(drive, play):
     before, after, outcome = play['state_before'], play['state_after'], play['outcome']
     if outcome.get('penalty') or after['down'] is None:
         return  # a penalty moves the ball by a rule this check does not model; a terminal play has no next down
-    if outcome.get('field_goal_result') == 'blocked':
+    if _is_blocked_kick(outcome):
         # A blocked kick that changes hands is a first down for the receiving team at the spot. A kicking-team recovery
         # keeps the ball live with the same team, and the observed next snap sets its down and distance, which
         # this check does not model: only the state domain applies to it.
@@ -327,8 +332,10 @@ def _skips_post_score_kick(drive):
 
 
 def _game_ending_kick(kick):
-    """A post-score or post-field-goal kickoff in the fourth quarter whose runoff expires the clock: the game ends on its return."""
-    return kick['kind'] in POST_SCORE_KICKS and kick['quarter'] == 4 and kick['clock_expired_during_kickoff']
+    """A post-score or post-field-goal kickoff in the fourth quarter or overtime whose runoff expires the clock: the game
+    ends on its return, untied in the fourth quarter and possibly tied in overtime."""
+    return (kick['kind'] in POST_SCORE_KICKS and kick['quarter'] in (4, OVERTIME_QUARTER)
+            and kick['clock_expired_during_kickoff'])
 
 
 def _kickoff_clock(drive, kick):

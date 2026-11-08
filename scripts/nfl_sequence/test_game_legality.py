@@ -399,6 +399,36 @@ class BlockedKickIsLive(unittest.TestCase):
             gl._play_chain({'index': 4}, [self.blocked_play('B', togo=99)])
 
 
+class BlockedPuntAndOvertimeKick(unittest.TestCase):
+    """Blocked punts follow the blocked-kick rules, and a clock-expiring post-score kickoff ends an overtime game."""
+
+    def punt_play(self, after_team, down=1, togo=10, yardline=50):
+        before = {'down': 4, 'yards_to_go': 7, 'yardline_100': 63, 'offense_team': 'B'}
+        after = {'down': down, 'yards_to_go': togo, 'yardline_100': yardline, 'offense_team': after_team}
+        outcome = {'punt_attempt': True, 'punt': False, 'yards_gained': None, 'blocked_kick': {'kick_type': 'punt', 'blocked': True}}
+        return {'state_before': before, 'state_after': after, 'outcome': outcome, 'sequence': 1}
+
+    def test_a_blocked_punt_recovered_by_the_kicking_team_keeps_its_observed_next_snap(self):
+        gl._down_and_distance({'index': 9}, self.punt_play('B'))
+
+    def test_a_blocked_punt_that_changes_hands_hands_over_a_first_down(self):
+        gl._down_and_distance({'index': 9}, self.punt_play('A', yardline=30))
+        with self.assertRaises(gl.FootballAssertionError):
+            gl._down_and_distance({'index': 9}, self.punt_play('A', togo=99, yardline=30))
+
+    def test_an_unblocked_punt_is_not_exempt(self):
+        play = self.punt_play('B')
+        play['outcome']['blocked_kick'] = {'kick_type': 'punt', 'blocked': False}
+        with self.assertRaises(gl.FootballAssertionError):
+            gl._down_and_distance({'index': 9}, play)
+
+    def test_a_clock_expiring_post_score_kickoff_ends_an_overtime_game(self):
+        kick = {'kind': 'post_field_goal', 'quarter': gl.OVERTIME_QUARTER, 'clock_expired_during_kickoff': True}
+        self.assertTrue(gl._game_ending_kick(kick))
+        kick['clock_expired_during_kickoff'] = False
+        self.assertFalse(gl._game_ending_kick(kick))
+
+
 class MissedKickAtZero(unittest.TestCase):
     """A missed field goal that expires the fourth quarter with the score untied ends the game."""
 
