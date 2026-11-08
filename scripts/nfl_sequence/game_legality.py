@@ -346,6 +346,12 @@ def _kickoff_clock(drive, kick):
     _fail(f'the kickoff after {_where(drive)} starts at {kick["clock_before"]}, not the drive end {drive["end_clock"]}')
 
 
+def _ends_regulation(drive):
+    """A scoring or change-of-possession play can itself expire the fourth quarter."""
+    return (drive['terminal'] == 'end_of_regulation'
+            or (drive['end_quarter'], drive['end_clock']) == (4, 0))
+
+
 def _possession_and_clock(record, drives, kicks):
     """Each drive picks up the ball and the clock where the previous drive or kickoff left them."""
     opening = kicks.get(0)
@@ -358,7 +364,7 @@ def _possession_and_clock(record, drives, kicks):
             _fail(f'drive numbering breaks at {drive["index"]}: expected {index + 1}')
         nxt = drives[index + 1] if index + 1 < len(drives) else None
         kick = kicks.get(drive['index'])
-        if drive['terminal'] == 'end_of_regulation':
+        if _ends_regulation(drive):
             tied = _score(drive['plays'][-1]['state_after'], 'A') == _score(drive['plays'][-1]['state_after'], 'B')
             if tied and (kick is None or kick['kind'] != 'overtime_start'):
                 _fail(f'{_where(drive)} ends regulation tied but no overtime kickoff follows it')
@@ -386,7 +392,7 @@ def _possession_and_clock(record, drives, kicks):
                 _fail(f'{_where(nxt)} has {nxt["offense_team"]} on offense after {drive["terminal"]} '
                       f'by {drive["offense_team"]}')
         else:
-            if drive['terminal'] != 'end_of_regulation' and not _expects_kickoff(drive):
+            if not _ends_regulation(drive) and not _expects_kickoff(drive):
                 _fail(f'{_where(drive)} ends with {drive["terminal"]} and no kickoff can follow it')
             _kickoff_clock(drive, kick)
             half = kick.get('half_start') if _ends_first_half(kick) else None
@@ -417,7 +423,7 @@ def _possession_and_clock(record, drives, kicks):
                 _fail(f'{_where(nxt)} starts in quarter {nxt["quarter_start"]}, but the kickoff is in quarter {kick["quarter"]}')
             if kick['kind'] == 'half_start' and (drive['end_quarter'], drive['end_clock']) != (2, 0):
                 _fail(f'a second-half kickoff follows {_where(drive)}, which does not end the first half')
-            if kick['kind'] == 'overtime_start' and drive['terminal'] != 'end_of_regulation':
+            if kick['kind'] == 'overtime_start' and not _ends_regulation(drive):
                 _fail(f'an overtime kickoff follows {_where(drive)}, which does not end regulation')
         _check_boundary(drive, nxt, kick_expired_half=kick is not None and _ends_first_half(kick))
 
@@ -438,7 +444,7 @@ def _check_boundary(drive, nxt, kick_expired_half=False):
         for side in ('home_timeouts', 'away_timeouts'):
             if first[side] != TIMEOUTS_PER_HALF:
                 _fail(f'{_where(nxt)} starts the second half with {side} {first[side]}, not {TIMEOUTS_PER_HALF}')
-    elif drive['terminal'] == 'end_of_regulation':
+    elif _ends_regulation(drive):
         if nxt['quarter_start'] != OVERTIME_QUARTER:
             _fail(f'{_where(nxt)} starts in quarter {nxt["quarter_start"]} after regulation')
         for side in ('home_timeouts', 'away_timeouts'):
