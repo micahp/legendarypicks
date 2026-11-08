@@ -2,6 +2,11 @@
 import sys
 import unittest
 import copy
+import gzip
+import hashlib
+import json
+import io
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -19,6 +24,62 @@ def build(record, seed=17):
 
 
 class BoxscoreHardInvariants(unittest.TestCase):
+    def test_failed_validation_preserves_complete_record_and_identities(self):
+        record = game_record()
+        identities = {'source_snapshot_sha256': 'a' * 64, 'observed_reference_sha256': 'b' * 64}
+        plan = batch.rng_protocol.RngPlan(batch.rng_protocol.V2, root='c' * 64)
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(batch.slc_engine, 'is_slc', return_value=False), \
+                patch.object(batch.gs, 'play_game', return_value=record), \
+                patch.object(batch.gs, 'validate_game', side_effect=ValueError('deliberate invalid game')):
+            outcome, contribution = batch._simulate_seed(
+                17, object(), SNAPSHOT, PROFILE, rng_plan=plan, failure_dir=tmp,
+                failure_identities=identities)
+            evidence = outcome['failed_record']
+            path = Path(evidence['path'])
+            self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), evidence['sha256'])
+            with gzip.open(path, 'rt', encoding='utf-8') as handle:
+                saved = json.load(handle)
+            self.assertEqual(saved['record'], record)
+            self.assertEqual(saved['seed'], 17)
+            self.assertIn('deliberate invalid game', saved['error'])
+            self.assertEqual(saved['rng_protocol']['stream_root_sha256'], 'c' * 64)
+            self.assertEqual(saved['input_identities'], identities)
+            self.assertIsNone(contribution)
+            # Repeated capture does not replace the original evidence.
+            again, _ = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, rng_plan=plan,
+                                             failure_dir=tmp, failure_identities=identities)
+            self.assertEqual(again['failed_record'], evidence)
+
+    def test_validator_failure_is_saved_before_later_summary_failure(self):
+        record = game_record()
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(batch.slc_engine, 'is_slc', return_value=True), \
+                patch.object(batch.slc_engine, 'play', return_value=(record, [])), \
+                patch.object(batch.gs, 'validate_game', side_effect=ValueError('invalid game')), \
+                patch.object(batch.slc_engine, 'summary', side_effect=RuntimeError('summary failed')):
+            with self.assertRaisesRegex(RuntimeError, 'summary failed'):
+                batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, failure_dir=tmp)
+            paths = list(Path(tmp).glob('*.json.gz'))
+            self.assertEqual(len(paths), 1)
+            with gzip.open(paths[0], 'rt', encoding='utf-8') as handle:
+                self.assertEqual(json.load(handle)['record'], record)
+
+    def test_seed_ledger_points_to_preserved_record(self):
+        record = game_record()
+        ledger = io.StringIO()
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(batch.slc_engine, 'is_slc', return_value=False), \
+                patch.object(batch.gs, 'play_game', return_value=record), \
+                patch.object(batch.gs, 'validate_game', side_effect=ValueError('invalid game')):
+            outcome, _ = batch._seed_outcome(17, {}, ledger, object(), SNAPSHOT,
+                                             profile_manifest=PROFILE, failure_dir=tmp,
+                                             failure_identities={'observed_reference_sha256': 'b' * 64})
+            row = json.loads(ledger.getvalue())
+            self.assertEqual(row['outcome']['failed_record'], outcome['failed_record'])
+            with gzip.open(outcome['failed_record']['path'], 'rt', encoding='utf-8') as handle:
+                self.assertEqual(json.load(handle)['record'], record)
+
     def test_batch_seed_outcome_preserves_paired_random_stream_provenance(self):
         record = game_record()
         stream_manifest = {'schema': 'lp.nfl.paired-random-streams.v1', 'root_sha256': 'e' * 64,
