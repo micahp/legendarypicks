@@ -1,0 +1,201 @@
+{
+  "source_host_path": "/root/ot-sim-out/sunday-rerun-2026-11-08/",
+  "note": "SHA-256 hashes refer to unchanged original host files; raw ledgers, boxscores, and batch output are not included.",
+  "games": [
+    {
+      "game_id": "2026_09_ARI_SEA",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "349b283557ffc491ff4aedc8ca7a050c71bda1676366a08cdb566cda1d18ad74",
+      "observed_reference_sha256": "df62564827ba47cedfb601f2c8d5edd7d2e74df6fb49acef0b8056f70c45e910",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "aedef8c62104e0dd89b9a97ba1ddbba7f03bf87bd3d1f3af934c7797aa625f46",
+      "boxscores_sha256": "6e3015c4fb97d71eec6bea989db5fed571144de5a749ea2199904a56f6a95f76",
+      "batch_sha256": "0135e26c7f78b4f5ae08b3c8c112b626277de7c99ca07d1ebefbf2b48153750c"
+    },
+    {
+      "game_id": "2026_09_CIN_ATL",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "21a54b69fd144e7575292a13498cdf7e6134d8848ed90bb5f67cb1d6a12b4478",
+      "observed_reference_sha256": "3fa08fc87b17615eb98fcef668bf431ddcdaed410b7ac37b9b873a1d3b6d85c7",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "47af3069f1810368284ee6d918c5e9039282e48ae257a22d85740e1c0a8f1f3d",
+      "boxscores_sha256": "a5e05b67c48f9ae96869077cb3dee20e0db23deec576e423bfa153e52aab0c28",
+      "batch_sha256": "188adfcbe83fcf6a6bceaf2383e63be52f95b874944ace717aa2a0c43d834815"
+    },
+    {
+      "game_id": "2026_09_CLE_NO",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "d1c618a218748cb5f68f2756aaac1d5627a44094fdd8058c843fe0892095f8e4",
+      "observed_reference_sha256": "dc6071f1b7d33409841521c29bc6629b4f281b532d83a235a0551459bc316876",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "cdd325aaa4339f0432be4243cb69d9a7ce414319cabc2a150bd4fa7da2bab5ed",
+      "boxscores_sha256": "b22dddabea3b6108e58bb161cd826aa3577ada534af0e003f2a9154db23ea1d2",
+      "batch_sha256": "a82313edac6090dcddb2caf5774aa54cd38fe3b7150fbf73b6889630cd7c0104"
+    },
+    {
+      "game_id": "2026_09_DAL_IND",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "13d3f377ae7f16dcb0a2205ea140b8934fa9ce29726fb4f2c2dd4d0cb73a40fc",
+      "observed_reference_sha256": "c8ca515e08d81eb47183c46191557260e376bfab415fe92c2c7691a4ee7aeb5d",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "35715afaf3e65a349a9fa1e34da031c96c9c22d444b0fbdddc102bd00ebc8882",
+      "boxscores_sha256": "63553a1ba37fe342c4125faeb5742af1a00d6a022be3e23b2767092b19b8e98f",
+      "batch_sha256": "74b06ec3f71be90d0ffe6311214bc0b49b2d754b1b27c3f41bd23f0dcad534c5"
+    },
+    {
+      "game_id": "2026_09_DEN_CAR",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "6f87fa2fdf6dd8904e41d42750afda3d49d312c34cd64bd2c0f0659c5752a409",
+      "observed_reference_sha256": "4b55a79e8611db45bfc00c4e975e788e08979e769d4aefed76d0cf392a20903c",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "c52f10c00c10806b6219b2ee8ffbdfbf0d6f1669d17de7b0f38912c39d1a07d6",
+      "boxscores_sha256": "fc142e7e52803cca74a6f9b0634e966c2c9ee1fb4238caf365eebfbf0fab995c",
+      "batch_sha256": "544d4db6fb9840b2a85432244eddece4b3baa1fd7895a8a563039c956dee419f"
+    },
+    {
+      "game_id": "2026_09_DET_MIA",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "808e5b92bcaeb8a64f02213432da69066fcd25e8db7875324458d2bceea64df0",
+      "observed_reference_sha256": "2d6f13d46d98fe99754831c953d09dcc0e6e8b56b87dae75f852aa09e0ea8f12",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "40d60aecc3bfd989f4a08c37f41fea7b3a871b7df319df42fa79f77d345ead45",
+      "boxscores_sha256": "5d989f8eafeab3d3784c63ddcbec43e52f794209c72aa61ef07266c9abf2811e",
+      "batch_sha256": "80b71010e71b1242b6053c4d24a7cbae92528859e6ffd7503acb44f0186ad76a"
+    },
+    {
+      "game_id": "2026_09_GB_NE",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "36b7b2a45a390a9728541134801e555264ee902bde1504392934b2324a2db2e9",
+      "observed_reference_sha256": "0f3e8a2ff68aede72792690bf0f30e93ddb8d85aafad15b95729496b6aad68f0",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "6a538bc4c29a9a263c81caa6ee6a3525c0a1c6a543fa4e87b494a47b4f8b8389",
+      "boxscores_sha256": "0dfbc7752f6833c8aa500fcc1bb1a69e77a6bde7d9daee24906012a09bf468e3",
+      "batch_sha256": "49e444e20f808400bf1243c98fab35084454f33befeb8a6af21e52f55fc80569"
+    },
+    {
+      "game_id": "2026_09_HOU_LAC",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "a251f68ba675d7a98323c94ee357b12f662207b16bfd4bc0e0dae737785ba78d",
+      "observed_reference_sha256": "f15eff3b27445c40ad76cd143ec5b794cb16d19afef6fb0126e8f125a576d278",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "014cb02fe4720dd3934f8f59c4ded76a2b07a4e45de6a9c15f40c59303a70808",
+      "boxscores_sha256": "559e682c66b24deec568997140fbb439570e1454d67ccb60dba58d7ef48b3c75",
+      "batch_sha256": "29fbdffb0ba16038197e4e51e7068ae408f5a233b1cc35527bad8836db18bd12"
+    },
+    {
+      "game_id": "2026_09_LA_WAS",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "adb4038c0b9d33f44cbb63223a47c1fc6cbc926991b9477a2eb3324e900a5694",
+      "observed_reference_sha256": "260b92c58be18a445b0d9f563fef5ed15acdfa5ffb83a964c70d7256e5937eb6",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "660a62c78ccafd398d4a74cb388f19d4788f05b16c491c1d51fe6a09151e1eb1",
+      "boxscores_sha256": "6c1c292f7606ac3196dd4a61f21c3ae4cf9be96c3809e2aa07826ca2eba02144",
+      "batch_sha256": "2795e1f539a707f194599e51b0f79476f25b24038824b47a4cab89f6c7e98e7a"
+    },
+    {
+      "game_id": "2026_09_LV_SF",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "5dfe75c832e8a812cde32aa062946c42c032485bdbe3d8a0c8d30d1b76208ab0",
+      "observed_reference_sha256": "767328cf43a8639c747447aba06e469664eac95c8a097121e4ac2c0e8cc9df4e",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "24384be056cadefbc402a41c650be02e0e1a2ea410c5926c989fe6f91ad22011",
+      "boxscores_sha256": "4dccad79f94334d9899c3fe8366ca5530781705bc6e49217f744fe48a56ada19",
+      "batch_sha256": "1b3caae63413e4969636e0efe7e764aa218aab48bab9beac45f072c236ababb2"
+    },
+    {
+      "game_id": "2026_09_NYG_PHI",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "1a88763c7c1f3ace61e6fae895145aaa4e44a3bf2ad5e9af260099184b29ebfe",
+      "observed_reference_sha256": "a8ff117167311fbcb7712e2f35b4505cf1e36c488f0274df81c70c5fdef70e76",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "ae2b710f0e7d03c458e23d5ae8183dcdfa16f5a2b0fed98c13a6210cbf987515",
+      "boxscores_sha256": "590e383e81a53a659b9ed168b20bc0672b74a7385fc207cc085363286ddf2e1f",
+      "batch_sha256": "2983cbe78cca869cebf053ce555fc950351508800ef57a43e948f49b95a6419a"
+    },
+    {
+      "game_id": "2026_09_NYJ_KC",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "238d36c2c35a18fb0469da9150316e6df61f5e970c9eadabcee8eb6afc89bc70",
+      "observed_reference_sha256": "c9044b936813ed0a01b1edf0b147473c01f4ce2bad161ba23a82461d1244285a",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "08f13bf28ba76035a768d9b574aa6527fb3c30e43a1000f04e2fb6a36e2c79d1",
+      "boxscores_sha256": "1b78d87aabf40c1070487b2685a53436411738c3baac2e8f0b57612cb5f3176e",
+      "batch_sha256": "c8b10a510edb86dc916a06e5b791f81d5ff3047c9cbb7ba9a480848702517458"
+    },
+    {
+      "game_id": "2026_09_TB_CHI",
+      "source_commit": "d6caadd329b2d86700fae0342aacabd3f0a6194d",
+      "source_snapshot_sha256": "24493720d99dae4516769e69f19f5cd8bb7d825de44aa351f054b3ad5ffef1bf",
+      "observed_reference_sha256": "4aaddd3626b8dc9f1a7ce06641afde9ef0f716c5e57d494b052d5214dab747e7",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "rng_protocol": {
+        "rng_protocol_file_sha256": "77b984f0bd2ce010efe85f639562753946aa28c8f4b7db5809b4d73a768d3752",
+        "scheme": "v1",
+        "stream_key": "snapshot_sha256 (resealed; carries the reference fingerprint and code hashes)"
+      },
+      "ledger_sha256": "7f27100535ca4e58eb34950f7def589598a01d923dada15fe3fbfb423a8a3a20",
+      "boxscores_sha256": "8ec861edd4041ad0cb62023ceb138c52dc1b04bad5ec64b271fc671e24c1f452",
+      "batch_sha256": "febb05011ea1e2aab183487d842d49e015149032a520b6437e2f31146634a7e9"
+    }
+  ]
+}
