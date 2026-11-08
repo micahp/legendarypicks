@@ -1,3 +1,5 @@
+> **Superseded.** This table comes from the 00:20 ledger. No run today can reproduce that ledger. Use `../slc-sunday-rerun-2026-11-08/` instead.
+
 # Sunday 200-seed matchup table, validated counts, 2026-11-08 slate
 
 Built from the host ledgers `2026_09_<game>-n50.seeds.jsonl` (seeds 1-50) and `-s51-n150.seeds.jsonl` (seeds 51-200), on the executed build in `slc-sunday-smoke-2026-11-08/executed-code.patch`. Built by `summarize_n200.py`, which is copied here.

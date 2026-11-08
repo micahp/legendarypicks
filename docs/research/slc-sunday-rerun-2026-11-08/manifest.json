@@ -197,5 +197,11 @@
       "boxscores_sha256": "8ec861edd4041ad0cb62023ceb138c52dc1b04bad5ec64b271fc671e24c1f452",
       "batch_sha256": "febb05011ea1e2aab183487d842d49e015149032a520b6437e2f31146634a7e9"
     }
-  ]
+  ],
+  "revalidation": {
+    "validator": "scripts/nfl_sequence/game_legality.py at ba945eeb",
+    "rows_rechecked": 15,
+    "records": "refusals-reproduced/refused-records/ (9) and ../slc-sunday-failures-2026-11-08/refused-records/ (6)",
+    "note": "the saved records were checked again; the games were not simulated again"
+  }
 }
