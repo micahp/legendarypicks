@@ -10,19 +10,23 @@ the observed play, not the simulated spot, and a line that said otherwise would 
 from collections import defaultdict
 
 QUARTER_LENGTH = 900
+OVERTIME_LENGTH = 600  # the same value as game_state.OVERTIME_LENGTH: one 10-minute period in the regular season
 ATTRIBUTION = 'sampled_observed_play'
 SCRIMMAGE_EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'interception', 'fumble_lost')
 
 
 def _elapsed(quarter, clock):
-    """Game seconds elapsed at (quarter, clock)."""
+    """Game seconds elapsed at (quarter, clock). Overtime is a 600-second period that starts after 3,600 seconds."""
+    if quarter > 4:
+        return 4 * QUARTER_LENGTH + (quarter - 5) * OVERTIME_LENGTH + (OVERTIME_LENGTH - clock)
     return (quarter - 1) * QUARTER_LENGTH + (QUARTER_LENGTH - clock)
 
 
 def clock_reconciliation(record):
     """Check that possession plus kickoff time accounts for every elapsed game-clock second.
 
-    Possession is the game-clock time of a team's drives. Kickoff runoff belongs to neither team. In regulation the two
+    Possession is the game-clock time of a team's drives. Kickoff time belongs to neither team. It is the clock the kickoff
+    used (clock_before minus clock_after), and not the sampled runoff, which can run past the end of a period. In regulation the two
     must add up to the elapsed game clock exactly; the status is 'reconciled' or 'unreconciled', and never assumed."""
     drives = record.get('drives') or []
     if not drives:
@@ -32,13 +36,19 @@ def clock_reconciliation(record):
     if missing:
         return {'status': 'unavailable', 'reason': 'drive records lack ' + ', '.join(missing)}
     possession = sum(_elapsed(d['end_quarter'], d['end_clock']) - _elapsed(d['quarter_start'], d['clock_start']) for d in drives)
-    kickoff = sum(int(k.get('runoff_seconds') or 0) for k in record.get('kickoffs') or [])
+    kickoffs = record.get('kickoffs') or []
+    kickoff = sum(int(k['clock_before']) - int(k['clock_after']) for k in kickoffs)  # the clock the kickoff actually used
+    sampled = sum(int(k.get('runoff_seconds') or 0) for k in kickoffs)
+    overrun = sum(int(k.get('runoff_overrun_seconds') or 0) for k in kickoffs)
     last = drives[-1]
-    elapsed = _elapsed(last['end_quarter'], last['end_clock'])
+    # the game ends at the later of the last drive's end and the last kickoff's end: a final kickoff can run the clock to zero
+    ends = [_elapsed(last['end_quarter'], last['end_clock'])] + [_elapsed(k['quarter'], k['clock_after']) for k in kickoffs]
+    elapsed = max(ends)
     gap = elapsed - possession - kickoff
     regulation = elapsed <= 4 * QUARTER_LENGTH
     return {'status': 'reconciled' if gap == 0 else 'unreconciled', 'regulation_only': regulation,
             'possession_seconds_total': possession, 'kickoff_seconds_total': kickoff,
+            'kickoff_sampled_runoff_seconds': sampled, 'kickoff_overrun_seconds': overrun,
             'elapsed_game_clock_seconds': elapsed, 'unassigned_seconds': gap}
 
 
