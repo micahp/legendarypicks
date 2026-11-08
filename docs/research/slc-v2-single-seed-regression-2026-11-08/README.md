@@ -2,7 +2,7 @@
 
 At source commit `03fc1ea835b7c2f0a607591e22c83e7d2f50bd21`, the repaired engine ran ARI–SEA seed 1 twice, sequentially, using RNG v2 and the same frozen snapshot and reference inputs on the fast host. Both runs reported a valid completed regulation game, away 27 to home 20. Their entire seed ledger rows and RNG stream roots match; the boxscore exports also have identical file hashes. The boxscore reconciliation passed in both runs.
 
-Both runs recorded 402 fallback events across 21 kinds. All 40 exported players have unknown roster eligibility because the snapshot did not supply it. This is a single-seed determinism and accounting check, not proof of roster eligibility, forecast quality, or general validity. The separate layer-ablation matrix remains disabled because its v2 stream roots differ across layer configurations.
+Both runs recorded 402 fallback events across 21 kinds. All 40 exported players have unknown roster eligibility because the snapshot did not supply it. This is a single-seed determinism and accounting check, not proof of roster eligibility, forecast quality, or general validity. At the time of this run the separate layer-ablation matrix was disabled; a later change added verified control-stream binding.
 
 The [manifest](manifest.json) records hashes of the copied raw batch outputs, seed ledgers, boxscore/realism exports, and logs. Batch-output hashes differ between runs; the matching evidence is the seed row, stream root, and boxscore export, not byte equality of the overall batch files. The source host originals remain at `/tmp/slc-v2-regression-03fc1ea8/`.
 

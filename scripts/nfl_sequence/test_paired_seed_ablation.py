@@ -1,5 +1,6 @@
 """Mutation tests for paired-seed evaluation input and failure retention."""
 import json
+import hashlib
 import sys
 import tempfile
 import unittest
@@ -8,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from paired_random_streams import PairedRandomStreams
 from paired_seed_ablation import PairingError, compare_ledgers, header_sha256
+import rng_protocol
 
 
 def header(snapshot_hash='a' * 64, *, enabled=True, score_clock=True):
@@ -55,22 +57,40 @@ class PairedSeedAblationTests(unittest.TestCase):
 
     def write_v2(self, mutate=None):
         control = header()
-        root = 'd' * 64
-        control['rng_protocol'] = {'scheme': 'v2', 'stream_root_sha256': root}
         control['pairing_identity'] = {
             'pregame_state_sha256': '1' * 64, 'reference_data_sha256': '2' * 64,
             'artifact_sha256': '3' * 64, 'enabled_layers': control['playcall_enabled_layers'].copy(),
-            'layer_artifact_sha256': {'example': '4' * 64}, 'execution_settings': {'mode': 'test'},
+            'layer_artifact_sha256': {key: '4' * 64 for key in control['playcall_enabled_layers']},
+            'execution_settings': {'mode': 'test'},
         }
+        identity = control['pairing_identity']
+        model = rng_protocol.canonical_sha256({'reference_data_sha256': identity['reference_data_sha256'],
+                                               'layer_tables_sha256': rng_protocol.layer_table_sha256(identity)})
+        root = rng_protocol.canonical_sha256({'schema': rng_protocol.SCHEMA_V2,
+                                              'pregame_state_sha256': identity['pregame_state_sha256'],
+                                              'model_input_sha256': model})
+        control['rng_protocol'] = rng_protocol.RngPlan('v2', root=root,
+            pregame_state_sha256=identity['pregame_state_sha256'], model_input_sha256=model).manifest()
+        control['paired_layer_baseline'] = None
         ablation = json.loads(json.dumps(control))
         ablation['playcall_enabled_layers']['formation_personnel_outcomes'] = False
         ablation['pairing_identity']['enabled_layers']['formation_personnel_outcomes'] = False
-        ablation['paired_layer_baseline'] = {
-            'disabled_layer': 'formation_personnel_outcomes', 'baseline_stream_root_sha256': root,
-            'baseline_header_sha256': header_sha256(control),
-        }
+        ablation['pairing_identity']['layer_artifact_sha256']['formation_personnel_outcomes'] = None
+        ai = ablation['pairing_identity']
+        natural_model = rng_protocol.canonical_sha256({'reference_data_sha256': ai['reference_data_sha256'],
+                                                        'layer_tables_sha256': rng_protocol.layer_table_sha256(ai)})
+        natural_root = rng_protocol.canonical_sha256({'schema': rng_protocol.SCHEMA_V2,
+                                                      'pregame_state_sha256': ai['pregame_state_sha256'],
+                                                      'model_input_sha256': natural_model})
+        natural = rng_protocol.RngPlan('v2', root=natural_root, pregame_state_sha256=ai['pregame_state_sha256'],
+                                       model_input_sha256=natural_model)
+        _, ablation['paired_layer_baseline'] = rng_protocol.pair_layer_plan(
+            natural, ai, control, 'formation_personnel_outcomes')
         control_rows = [ledger_row(10, root)]
         ablation_rows = [ledger_row(10, root)]
+        model_seed = int.from_bytes(hashlib.sha256(f'10:{root}'.encode()).digest()[:8], 'big')
+        for rows in (control_rows, ablation_rows):
+            rows[0]['outcome']['paired_random_streams'] = PairedRandomStreams(model_seed, root).manifest()
         if mutate:
             mutate(control, ablation, control_rows, ablation_rows)
         self.write_pair(control_header=control, ablation_header=ablation,
@@ -91,14 +111,22 @@ class PairedSeedAblationTests(unittest.TestCase):
             lambda c, a, cr, ar: ar[0]['outcome'].pop('paired_random_streams'),
             lambda c, a, cr, ar: ar[0]['outcome']['paired_random_streams'].__setitem__('snapshot_sha256', 'f' * 64),
             lambda c, a, cr, ar: ar[0]['outcome']['paired_random_streams'].__setitem__('root_sha256', 'f' * 64),
-            lambda c, a, cr, ar: (ar[0]['outcome'].__setitem__('status', 'simulation_error'),
-                                    ar[0]['outcome'].pop('paired_random_streams')),
         ]
         for mutation in mutations:
             with self.subTest(mutation=mutation):
                 self.write_v2(mutation)
                 with self.assertRaises(PairingError):
                     compare_ledgers(self.control, self.ablation, disabled_layer='formation_personnel_outcomes')
+
+    def test_v2_failed_seed_is_retained_without_claiming_a_paired_game(self):
+        def mutate(c, a, cr, ar):
+            ar[0]['outcome']['status'] = 'simulation_error'
+            ar[0]['outcome']['valid_full_game'] = False
+            ar[0]['outcome'].pop('paired_random_streams')
+        self.write_v2(mutate)
+        report = compare_ledgers(self.control, self.ablation, disabled_layer='formation_personnel_outcomes')
+        self.assertFalse(report['valid_for_complete_game_comparison'])
+        self.assertEqual(report['error_seeds'], [10])
 
     def test_matching_snapshot_seeds_stream_roots_and_single_layer_toggle_pair(self):
         self.write_pair()

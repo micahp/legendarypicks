@@ -134,10 +134,11 @@ def _complete_worker(out: Path, ledger: Path, boxes: Path, seed_start: int, game
             raise ValueError(f'completed worker has incorrect pairing identity: {ledger}')
         _, outcomes, _ = _read_ledger(ledger)
         for seed, outcome in outcomes.items():
-            validate_v2_streams(outcome, root, seed, 'worker')
+            if outcome.get('status') not in ('simulation_error', 'validation_error') or outcome.get('paired_random_streams'):
+                validate_v2_streams(outcome, root, seed, 'worker')
         if baseline is not None:
             compare_ledgers(baseline, ledger, disabled_layer=disabled_layer, expected_games=games)
-        elif 'paired_layer_baseline' in header:
+        elif header.get('paired_layer_baseline'):
             raise ValueError(f'control worker has a baseline binding: {ledger}')
     return True
 
@@ -161,9 +162,10 @@ def _worker_command(args, out: Path, seed_start: int, games: int, disabled_layer
     for fix in args.blocker_fixes:
         command.extend(('--slc-blocker-fix', fix))
     if disabled_layer is not None:
+        if baseline is None:
+            raise ValueError('a disabled-layer worker requires its completed control ledger')
         command.extend(('--slc-disable-layer', disabled_layer))
-        if baseline is not None:
-            command.extend(('--paired-layer-baseline-ledger', str(baseline)))
+        command.extend(('--paired-layer-baseline-ledger', str(baseline)))
     return command
 
 
@@ -177,6 +179,13 @@ def _select_layers(requested_layers: list[str] | None, enable_qb_run_role_style:
     if len(layers) != len(set(layers)):
         raise ValueError('each ablation layer may be selected only once')
     return tuple(layers), enable_style
+
+
+def _expected_engine_layers(resolved):
+    layers = dict(resolved['enabled_layers'])
+    if layers.get('dirichlet_player_target_carry_shares'):
+        layers['fixed_player_target_carry_shares'] = True
+    return layers
 
 
 def _run_arm(args, arm_name: str, partitions: list[tuple[int, int]], disabled_layer: str | None) -> list[dict]:
@@ -499,12 +508,12 @@ def main(argv=None):
     try:
         full = slc_config.resolve_profile('v1_full_stack', artifact_path=str(args.playcall_artifact),
                                            streak_file=str(args.playcall_streak_file), options=options)
-        args.expected_layers = {None: full['enabled_layers']}
+        args.expected_layers = {None: _expected_engine_layers(full)}
         for layer in layers:
             ablated = slc_config.resolve_profile(
                 'v1_full_stack', artifact_path=str(args.playcall_artifact),
                 streak_file=str(args.playcall_streak_file), options=options, disable_layers=(layer,))
-            args.expected_layers[layer] = ablated['enabled_layers']
+            args.expected_layers[layer] = _expected_engine_layers(ablated)
             if not full['enabled_layers'].get(layer):
                 raise ValueError(f'{layer} is not enabled in the full-stack control')
             changed = {key for key in full['enabled_layers']

@@ -36,6 +36,10 @@ class RunSpecification(unittest.TestCase):
             changed = {key for key in full['enabled_layers']
                        if full['enabled_layers'][key] != ablated['enabled_layers'][key]}
             self.assertEqual(changed, {layer})
+        self.assertTrue(matrix._expected_engine_layers(full)['fixed_player_target_carry_shares'])
+        without_dirichlet = slc_config.resolve_profile('v1_full_stack', artifact_path='artifact', streak_file='streak',
+                                                       disable_layers=('dirichlet_player_target_carry_shares',))
+        self.assertFalse(matrix._expected_engine_layers(without_dirichlet)['fixed_player_target_carry_shares'])
 
     def test_opt_in_qb_style_is_enabled_in_the_control_and_disabled_only_in_its_arm(self):
         layers, enable_style = matrix._select_layers(None, True)

@@ -104,10 +104,17 @@ def pair_layer_plan(natural_plan, identity, baseline_header, disabled_layer):
     if not all(isinstance(x, dict) for x in (old, new, old_hashes, new_hashes)) or old.keys() != new.keys():
         raise ValueError('layer pairing requires matching complete layer maps')
     changed = {key for key in old if old[key] != new[key]}
-    if changed != {disabled_layer} or old.get(disabled_layer) is not True or new.get(disabled_layer) is not False:
+    allowed = {disabled_layer}
+    # The fixed-share adapter is loaded to supply players to the Dirichlet layer;
+    # disabling Dirichlet also unloads that adapter when it was not independently requested.
+    if (disabled_layer == 'dirichlet_player_target_carry_shares'
+            and old.get('fixed_player_target_carry_shares') is True
+            and new.get('fixed_player_target_carry_shares') is False):
+        allowed.add('fixed_player_target_carry_shares')
+    if changed != allowed or old.get(disabled_layer) is not True or new.get(disabled_layer) is not False:
         raise ValueError(f'layer pairing requires exactly the selected layer disabled: {sorted(changed)}')
     for key, enabled in old.items():
-        if enabled and key != disabled_layer and key != EXACT_YARDLINE_LAYER:
+        if enabled and key not in allowed and key != EXACT_YARDLINE_LAYER:
             if not old_hashes.get(key) or old_hashes.get(key) != new_hashes.get(key):
                 raise ValueError(f'layer pairing changes another active layer input: {key}')
     baseline_model = canonical_sha256({'reference_data_sha256': baseline['reference_data_sha256'],
