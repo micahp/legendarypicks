@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -46,6 +47,47 @@ def _read_ledger(path):
     return header, rows, duplicates
 
 
+IDENTITY_FIELDS = ('pregame_state_sha256', 'reference_data_sha256', 'artifact_sha256',
+                   'enabled_layers', 'layer_artifact_sha256', 'execution_settings')
+
+
+def header_sha256(header):
+    return hashlib.sha256(json.dumps(header, sort_keys=True, separators=(',', ':'),
+                                     ensure_ascii=False).encode('utf-8')).hexdigest()
+
+
+def validate_v2_header(header):
+    protocol = header.get('rng_protocol')
+    identity = header.get('pairing_identity')
+    if not isinstance(protocol, dict) or protocol.get('scheme') != 'v2':
+        raise PairingError('ledger must use RNG protocol v2')
+    root = protocol.get('stream_root_sha256')
+    if not isinstance(root, str) or len(root) != 64 or any(c not in '0123456789abcdef' for c in root):
+        raise PairingError('invalid v2 stream root')
+    if not isinstance(identity, dict) or any(key not in identity or identity[key] is None for key in IDENTITY_FIELDS):
+        raise PairingError('missing v2 pairing identity')
+    for key in IDENTITY_FIELDS[:3]:
+        value = identity[key]
+        if not isinstance(value, str) or len(value) != 64 or any(c not in '0123456789abcdef' for c in value):
+            raise PairingError(f'invalid pairing identity {key}')
+    if not isinstance(identity['enabled_layers'], dict) or not all(
+            isinstance(key, str) and type(value) is bool for key, value in identity['enabled_layers'].items()):
+        raise PairingError('invalid pairing identity enabled_layers')
+    if not isinstance(identity['layer_artifact_sha256'], dict) or not isinstance(identity['execution_settings'], dict):
+        raise PairingError('invalid pairing identity layer artifacts or execution settings')
+    return root, identity
+
+
+def validate_v2_streams(outcome, root, seed, label):
+    manifest = outcome.get('paired_random_streams')
+    if (not isinstance(manifest, dict) or manifest.get('schema') != 'lp.nfl.paired-random-streams.v1'
+            or manifest.get('snapshot_sha256') != root
+            or not isinstance(manifest.get('root_sha256'), str) or len(manifest['root_sha256']) != 64
+            or any(c not in '0123456789abcdef' for c in manifest['root_sha256'])):
+        raise PairingError(f'seed {seed} has invalid {label} paired-random-stream evidence')
+    return manifest
+
+
 def compare_ledgers(control_path, ablation_path, *, disabled_layer, expected_games=None):
     """Require identical frozen inputs and seeds, then retain every result, including blocked/error seeds."""
     control_header, control_rows, control_duplicates = _read_ledger(control_path)
@@ -56,8 +98,29 @@ def compare_ledgers(control_path, ablation_path, *, disabled_layer, expected_gam
         raise PairingError(f'paired ledgers differ in frozen run inputs: {mismatched}')
     if control_header.get('paired_randomness') is not True:
         raise PairingError('both runs must use --paired-randomness')
-    control_layers = control_header.get('playcall_enabled_layers')
-    ablation_layers = ablation_header.get('playcall_enabled_layers')
+    is_v2 = any(isinstance(h.get('rng_protocol'), dict) and h['rng_protocol'].get('scheme') == 'v2'
+                for h in (control_header, ablation_header)) or any('pairing_identity' in h for h in (control_header, ablation_header))
+    if is_v2:
+        root, control_identity = validate_v2_header(control_header)
+        ablation_root, ablation_identity = validate_v2_header(ablation_header)
+        if root != ablation_root:
+            raise PairingError('v2 header stream roots differ')
+        if 'paired_layer_baseline' in control_header:
+            raise PairingError('control must not have a paired layer baseline')
+        expected_binding = {'disabled_layer': disabled_layer, 'baseline_stream_root_sha256': root,
+                            'baseline_header_sha256': header_sha256(control_header)}
+        if ablation_header.get('paired_layer_baseline') != expected_binding:
+            raise PairingError('invalid paired layer baseline binding')
+        if set(control_identity) != set(ablation_identity) or any(
+                control_identity[key] != ablation_identity[key] for key in control_identity if key != 'enabled_layers'):
+            raise PairingError('paired ledgers differ in pairing identity')
+        control_layers = control_identity['enabled_layers']
+        ablation_layers = ablation_identity['enabled_layers']
+        if set(control_layers) != set(ablation_layers):
+            raise PairingError('pairing identity layer keys differ')
+    else:
+        control_layers = control_header.get('playcall_enabled_layers')
+        ablation_layers = ablation_header.get('playcall_enabled_layers')
     if not isinstance(control_layers, dict) or not isinstance(ablation_layers, dict):
         raise PairingError('both ledgers must record their effective play-call layer maps')
     control_enabled = {key for key, enabled in control_layers.items() if enabled}
@@ -87,7 +150,10 @@ def compare_ledgers(control_path, ablation_path, *, disabled_layer, expected_gam
         ablation_error = ablation.get('status') in ERROR_STATUSES
         if control_error or ablation_error:
             error_seeds.append(seed)
-        else:
+        if is_v2:
+            control_streams = validate_v2_streams(control, root, seed, 'control')
+            ablation_streams = validate_v2_streams(ablation, root, seed, 'ablation')
+        elif not (control_error or ablation_error):
             for label, manifest in (('control', control_streams), ('ablation', ablation_streams)):
                 if (not isinstance(manifest, dict)
                         or manifest.get('schema') != 'lp.nfl.paired-random-streams.v1'
@@ -108,8 +174,9 @@ def compare_ledgers(control_path, ablation_path, *, disabled_layer, expected_gam
                                  if all(type(value) is int for value in (*control_score, *ablation_score)) else None),
             'score_delta_away': (ablation_score[1] - control_score[1]
                                  if all(type(value) is int for value in (*control_score, *ablation_score)) else None),
-            'random_streams_match': (control_streams or {}).get('root_sha256') ==
-                                    (ablation_streams or {}).get('root_sha256'),
+            'random_streams_match': (isinstance(control_streams, dict) and isinstance(ablation_streams, dict)
+                                     and bool(control_streams.get('root_sha256')) and
+                                     control_streams.get('root_sha256') == ablation_streams.get('root_sha256')),
         })
     if stream_mismatches:
         raise PairingError(f'paired random stream roots differ for seeds {stream_mismatches[:20]}')

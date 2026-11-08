@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from paired_random_streams import PairedRandomStreams
-from paired_seed_ablation import PairingError, compare_ledgers
+from paired_seed_ablation import PairingError, compare_ledgers, header_sha256
 
 
 def header(snapshot_hash='a' * 64, *, enabled=True, score_clock=True):
@@ -52,6 +52,53 @@ class PairedSeedAblationTests(unittest.TestCase):
         ):
             path.write_text('\n'.join(json.dumps(row) for row in [{'header': run_header}, *rows]) + '\n',
                              encoding='utf-8')
+
+    def write_v2(self, mutate=None):
+        control = header()
+        root = 'd' * 64
+        control['rng_protocol'] = {'scheme': 'v2', 'stream_root_sha256': root}
+        control['pairing_identity'] = {
+            'pregame_state_sha256': '1' * 64, 'reference_data_sha256': '2' * 64,
+            'artifact_sha256': '3' * 64, 'enabled_layers': control['playcall_enabled_layers'].copy(),
+            'layer_artifact_sha256': {'example': '4' * 64}, 'execution_settings': {'mode': 'test'},
+        }
+        ablation = json.loads(json.dumps(control))
+        ablation['playcall_enabled_layers']['formation_personnel_outcomes'] = False
+        ablation['pairing_identity']['enabled_layers']['formation_personnel_outcomes'] = False
+        ablation['paired_layer_baseline'] = {
+            'disabled_layer': 'formation_personnel_outcomes', 'baseline_stream_root_sha256': root,
+            'baseline_header_sha256': header_sha256(control),
+        }
+        control_rows = [ledger_row(10, root)]
+        ablation_rows = [ledger_row(10, root)]
+        if mutate:
+            mutate(control, ablation, control_rows, ablation_rows)
+        self.write_pair(control_header=control, ablation_header=ablation,
+                        control_rows=control_rows, ablation_rows=ablation_rows)
+
+    def test_v2_pair_succeeds(self):
+        self.write_v2()
+        report = compare_ledgers(self.control, self.ablation, disabled_layer='formation_personnel_outcomes')
+        self.assertTrue(report['valid_for_complete_game_comparison'])
+
+    def test_v2_rejects_missing_or_mutated_evidence(self):
+        mutations = [
+            lambda c, a, cr, ar: a['rng_protocol'].__setitem__('stream_root_sha256', 'e' * 64),
+            lambda c, a, cr, ar: a['paired_layer_baseline'].__setitem__('baseline_header_sha256', 'f' * 64),
+            lambda c, a, cr, ar: a['paired_layer_baseline'].__setitem__('disabled_layer', 'other'),
+            lambda c, a, cr, ar: a['pairing_identity'].__setitem__('reference_data_sha256', 'f' * 64),
+            lambda c, a, cr, ar: a['pairing_identity']['enabled_layers'].__setitem__('qb', False),
+            lambda c, a, cr, ar: ar[0]['outcome'].pop('paired_random_streams'),
+            lambda c, a, cr, ar: ar[0]['outcome']['paired_random_streams'].__setitem__('snapshot_sha256', 'f' * 64),
+            lambda c, a, cr, ar: ar[0]['outcome']['paired_random_streams'].__setitem__('root_sha256', 'f' * 64),
+            lambda c, a, cr, ar: (ar[0]['outcome'].__setitem__('status', 'simulation_error'),
+                                    ar[0]['outcome'].pop('paired_random_streams')),
+        ]
+        for mutation in mutations:
+            with self.subTest(mutation=mutation):
+                self.write_v2(mutation)
+                with self.assertRaises(PairingError):
+                    compare_ledgers(self.control, self.ablation, disabled_layer='formation_personnel_outcomes')
 
     def test_matching_snapshot_seeds_stream_roots_and_single_layer_toggle_pair(self):
         self.write_pair()
