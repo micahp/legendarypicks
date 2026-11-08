@@ -214,7 +214,8 @@ class FootballRealismDistributionEvaluation(unittest.TestCase):
             compact, 'game', 'total_points', 'offensive_touchdowns'), [])
 
     def test_standalone_boxscore_rows_accept_boxscore_schemas_v1_through_v3(self):
-        for schema in ('lp-nfl-slc-boxscore-1', 'lp-nfl-slc-boxscore-2', 'lp-nfl-slc-boxscore-3'):
+        for schema in ('lp-nfl-slc-boxscore-1', 'lp-nfl-slc-boxscore-2', 'lp-nfl-slc-boxscore-3',
+                       'lp-nfl-slc-boxscore-4'):
             row = _boxscore(9, 24)
             row['schema'] = schema
             compact = evaluation._compact_seed_row(row)
