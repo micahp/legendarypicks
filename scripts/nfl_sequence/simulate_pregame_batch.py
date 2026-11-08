@@ -497,7 +497,8 @@ class FinishedSeeds(dict):
 def _preserve_failed_record(directory, seed, record, outcome, snapshot, rng_plan, identities):
     """Save each distinct failure immutably before its outcome is written to the ledger."""
     payload = {'schema': 'lp.nfl.failed-game-record.v1', 'seed': seed,
-               'record': record, 'error': outcome.get('error'),
+               'record': record, 'status': outcome.get('status'), 'blocker': outcome.get('blocker'),
+               'error': outcome.get('error'), 'unresolved_transition': outcome.get('unresolved_transition'),
                'boxscore_error': outcome.get('boxscore_error'),
                'assertion_failure': outcome.get('assertion_failure'),
                'snapshot_sha256': snapshot.get('snapshot_sha256'),
@@ -551,6 +552,8 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
         if record is not None and failure_dir is not None:
             outcome['failed_record'] = _preserve_failed_record(
                 failure_dir, seed, record, outcome, snapshot, rng_plan, failure_identities)
+        elif record is None:
+            outcome['failed_record_unavailable'] = 'simulation failed before a complete record was returned'
     if decisions is not None:
         outcome['playcall'] = slc_engine.summary(decisions, record)
     if record and record.get('blocked_attempt'):
@@ -559,6 +562,10 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
         outcome['unresolved_transition'] = football_assertions.unresolved_transition_envelope(
             record, seed=seed, game_id=(snapshot.get('schedule') or {}).get('game_id', 'unknown'),
             source_artifact_hashes=hashes)
+    if (record is not None and not outcome.get('valid_full_game') and failure_dir is not None
+            and 'failed_record' not in outcome):
+        outcome['failed_record'] = _preserve_failed_record(
+            failure_dir, seed, record, outcome, snapshot, rng_plan, failure_identities)
     require_slc_boxscore_check = (profile_manifest is not None
                                   and profile_manifest.get('profile') != 's0'
                                   and outcome['valid_full_game'])
