@@ -1,0 +1,69 @@
+{
+  "limitations": [
+    "One evaluator authored the candidate systems and scored the smoke; anonymity reduces label anchoring but is not independent human blinding.",
+    "This compares event-only and event-plus-player-facts candidates only. It does not compare the production DeepSeek generator.",
+    "A positive score difference is a screening signal only; it does not satisfy the human-rating adoption gate."
+  ],
+  "means": {
+    "nba": {
+      "combined_with_player_form": {
+        "factual_accuracy_1_to_5": 5.0,
+        "readability_1_to_5": 3.7,
+        "relevance_1_to_5": 4.0,
+        "specificity_1_to_5": 4.0
+      },
+      "event_facts_only": {
+        "factual_accuracy_1_to_5": 5.0,
+        "readability_1_to_5": 4.0,
+        "relevance_1_to_5": 3.0,
+        "specificity_1_to_5": 3.0
+      }
+    },
+    "nfl": {
+      "combined_with_player_form": {
+        "factual_accuracy_1_to_5": 5.0,
+        "readability_1_to_5": 4.0,
+        "relevance_1_to_5": 3.3,
+        "specificity_1_to_5": 3.9
+      },
+      "event_facts_only": {
+        "factual_accuracy_1_to_5": 5.0,
+        "readability_1_to_5": 4.0,
+        "relevance_1_to_5": 3.0,
+        "specificity_1_to_5": 3.0
+      }
+    }
+  },
+  "pairs_per_league": {
+    "nba": 10,
+    "nfl": 10
+  },
+  "pairwise_combined_minus_event_only": {
+    "nba": {
+      "factual_accuracy_1_to_5": 0.0,
+      "readability_1_to_5": -0.3,
+      "relevance_1_to_5": 1.0,
+      "specificity_1_to_5": 1.0
+    },
+    "nfl": {
+      "factual_accuracy_1_to_5": 0.0,
+      "readability_1_to_5": 0.0,
+      "relevance_1_to_5": 0.3,
+      "specificity_1_to_5": 0.9
+    }
+  },
+  "pairwise_style_score_wins": {
+    "nba": {
+      "combined_better": 10,
+      "event_better": 0,
+      "tie": 0
+    },
+    "nfl": {
+      "combined_better": 9,
+      "event_better": 0,
+      "tie": 1
+    }
+  },
+  "review_type": "agent-only blinded-to-source-label screening; not human grading; target/candidate bodies presented under anonymous IDs before reading crosswalk",
+  "scale": "1-5"
+}

@@ -764,3 +764,25 @@ class TestASuspendedGameKeepsTheDayOpen:
         scoreboard_store.save("atp", "2026-10-18", [self._terminal("g1", "Postponed")])
         wanted, reason = scoreboard_store.needs_refresh("atp", "2026-10-18")
         assert not wanted and reason == "every game final", reason
+
+
+def test_scoreboard_ingestion_requests_deterministic_evidence_refresh(monkeypatch):
+    import core_stories
+    import ingest_scoreboards
+
+    games = [{"game_id": "nba-game", "state": "pre",
+              "home": {"abbrev": "BOS"}, "away": {"abbrev": "ATL"}}]
+    kicks = []
+    monkeypatch.setattr(ingest_scoreboards.espn, "games", lambda league, date: games)
+    monkeypatch.setattr(ingest_scoreboards.espn, "scoreboard_raw", lambda league, date: {})
+    monkeypatch.setattr(ingest_scoreboards.scoreboard_store, "save",
+                        lambda league, date, rows, source: len(rows))
+    monkeypatch.setattr(ingest_scoreboards.league_activity, "record_from_payload",
+                        lambda league, payload: True)
+    monkeypatch.setattr(core_stories, "kick_game_stories",
+                        lambda league, rows, **kwargs: kicks.append((league, rows, kwargs)))
+
+    written, error = ingest_scoreboards._refresh("nba", "2026-11-04", verbose=False)
+
+    assert (written, error) == (1, None)
+    assert kicks == [("nba", games, {"refresh_evidence": True})]
