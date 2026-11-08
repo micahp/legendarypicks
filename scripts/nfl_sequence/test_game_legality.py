@@ -100,10 +100,14 @@ class Corruption(unittest.TestCase):
         _drive(self.record, 5)['plays'] = []
         self.assertRefused('has no plays')
 
-    def test_the_game_ends_on_a_punt_before_the_clock_expires(self):
-        last = self.record['drives'][-1]
-        last['terminal'] = 'punt'
-        self.assertRefused('does not end the game')
+    def test_a_punt_that_expires_the_clock_with_the_score_untied_ends_the_game(self):
+        self.record['drives'][-1]['terminal'] = 'punt'  # the regulation ending, with its clock at 0:00 and the score untied
+        self.assertEqual(gl.check(self.record)[0], 'play domain')
+
+    def test_a_punt_with_time_left_does_not_end_the_game(self):
+        drive = {'terminal': 'punt', 'end_quarter': 4, 'end_clock': 12, 'points_scored_on_drive': None,
+                 'plays': [{'state_after': {'home_score': 20, 'away_score': 26}}]}
+        self.assertFalse(gl._ends_the_game({'points': {'A': 20, 'B': 26}}, drive, None))
 
 
 def _play(before, after, runoff=10, penalty=False):
@@ -271,12 +275,42 @@ class FirstHalfExpiry(unittest.TestCase):
                                                                    clock_after=895, expired=False)))
         self.assertEqual(kicks[12]['half_start']['kind'], 'half_start')
 
+    def test_a_safety_free_kick_that_expires_the_half_is_followed_by_the_second_half_kickoff(self):
+        kicks = gl._kicks_after(self.record(self.kick(kind='safety_free_kick'),
+                                            self.kick(kind='half_start', quarter=3, clock_before=900, clock_after=895,
+                                                      expired=False)))
+        self.assertEqual(kicks[12]['half_start']['kind'], 'half_start')
+
     def test_two_kickoffs_without_a_first_half_expiry_are_still_refused(self):
         with self.assertRaisesRegex(FootballAssertionError, 'two kickoffs follow drive 12'):
             gl._kicks_after(self.record(self.kick(expired=False), self.kick(kind='half_start', quarter=3)))
 
     def test_a_first_half_expiry_without_a_second_half_kickoff_is_not_paired(self):
         self.assertNotIn('half_start', gl._kicks_after(self.record(self.kick()))[12])
+
+
+class BlockedKickIsLive(unittest.TestCase):
+    """A blocked field goal sets field_goal_attempt but does not end the drive: the ball stays live."""
+
+    def test_a_blocked_field_goal_does_not_end_the_drive(self):
+        self.assertFalse(gl._ends_drive_flag({'field_goal_attempt': True, 'field_goal_result': 'blocked'}, 'field_goal_attempt'))
+
+    def test_a_made_or_missed_field_goal_still_ends_the_drive(self):
+        self.assertTrue(gl._ends_drive_flag({'field_goal_attempt': True, 'field_goal_result': 'made'}, 'field_goal_attempt'))
+        self.assertTrue(gl._ends_drive_flag({'field_goal_attempt': True, 'field_goal_result': 'missed'}, 'field_goal_attempt'))
+
+    def test_a_blocked_kick_touchdown_still_ends_the_drive_through_its_flag(self):
+        self.assertTrue(gl._ends_drive_flag({'touchdown': True, 'field_goal_result': 'blocked'}, 'touchdown'))
+
+
+class MissedKickAtZero(unittest.TestCase):
+    """A missed field goal that expires the fourth quarter with the score untied ends the game."""
+
+    def test_a_missed_field_goal_at_zero_untied_ends_the_game(self):
+        record = {'points': {'A': 30, 'B': 27}}
+        drive = {'terminal': 'field_goal_attempt', 'end_quarter': 4, 'end_clock': 0, 'points_scored_on_drive': None,
+                 'plays': [{'state_after': {'home_score': 30, 'away_score': 27}}]}
+        self.assertTrue(gl._ends_the_game(record, drive, None))
 
 
 class HalftimeSkip(unittest.TestCase):

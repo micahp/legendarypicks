@@ -74,11 +74,19 @@ def _state_domain(drive, play):
             _fail(f'{where}: yardline_100 {s["yardline_100"]} is outside 1..99')
 
 
+def _ends_drive_flag(outcome, flag):
+    """A blocked kick sets field_goal_attempt but leaves the ball live: the same team may keep it and the drive goes on.
+    It ends the drive only through a touchdown, a turnover or a change of hands, which carry their own flags."""
+    if flag == 'field_goal_attempt' and outcome.get('field_goal_result') == 'blocked':
+        return False
+    return True
+
+
 def _play_chain(drive, plays):
     """Each play starts from the state the previous play left, inside one possession."""
     for prev, nxt in zip(plays, plays[1:]):
         for flag in DRIVE_ENDING_OUTCOMES:
-            if prev['outcome'].get(flag):
+            if _ends_drive_flag(prev['outcome'], flag) and prev['outcome'].get(flag):
                 _fail(f'{_where(drive, prev)} ends the drive ({flag}) but play {nxt["sequence"]} follows it')
         after, before = prev['state_after'], nxt['state_before']
         where = _where(drive, nxt)
@@ -105,7 +113,7 @@ def _play_chain(drive, plays):
 def _down_and_distance(drive, play):
     """A play moves the down, the spot and the distance from its own start to its own end, by its gain."""
     before, after, outcome = play['state_before'], play['state_after'], play['outcome']
-    if outcome.get('penalty') or after['down'] is None:
+    if outcome.get('penalty') or after['down'] is None or outcome.get('field_goal_result') == 'blocked':
         return  # a penalty moves the ball by a rule this check does not model; a terminal play has no next down
     where = f'{_where(drive, play)} state_after'
     gain = outcome.get('yards_gained')
@@ -258,7 +266,8 @@ def _kicks_after(record):
 
 def _ends_first_half(kick):
     """A post-score kickoff in the second quarter whose runoff expires the half: the second-half kickoff follows it."""
-    return (kick['kind'] in POST_SCORE_KICKS and kick['quarter'] == 2 and kick['clock_expired_during_kickoff'])
+    return (kick['kind'] in POST_SCORE_KICKS + ('safety_free_kick',) and kick['quarter'] == 2
+            and kick['clock_expired_during_kickoff'])
 
 
 def _expects_kickoff(drive):
@@ -287,8 +296,10 @@ def _ends_the_game(record, drive, kick):
         return True
     final = drive['plays'][-1]['state_after']
     scored = drive.get('points_scored_on_drive')
-    if not (drive['end_quarter'] == 4 and bool(scored)
-            and _score(final, 'A') != _score(final, 'B') and record['points']['A'] != record['points']['B']):
+    untied = _score(final, 'A') != _score(final, 'B') and record['points']['A'] != record['points']['B']
+    if drive['end_quarter'] == 4 and drive['end_clock'] == 0 and untied:
+        return True  # the fourth quarter expires on this drive with the score untied: a missed or blocked kick ends it too
+    if not (drive['end_quarter'] == 4 and bool(scored) and untied):
         return False
     if drive['end_clock'] == 0:
         return True
