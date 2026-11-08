@@ -99,6 +99,21 @@ class RngProtocol(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'another active layer input: point_splits'):
             rng_protocol.pair_layer_plan(natural, identity, header, 'team_offense_defense_outcomes')
 
+    def test_dirichlet_ablation_may_also_unload_its_fixed_share_adapter(self):
+        before = _description(enabled_layers={'dirichlet_player_target_carry_shares': True,
+                                               'fixed_player_target_carry_shares': True},
+                              layer_artifact_sha256={'dirichlet_player_target_carry_shares': '1' * 64,
+                                                     'fixed_player_target_carry_shares': '2' * 64})
+        after = _description(enabled_layers={key: False for key in before['enabled_layers']},
+                             layer_artifact_sha256={key: None for key in before['layer_artifact_sha256']})
+        control = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), before)
+        natural = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), after)
+        header = {'rng_protocol': control.manifest(),
+                  'pairing_identity': rng_protocol.layer_pairing_identity(PREGAME, _ref(), before, {})}
+        identity = rng_protocol.layer_pairing_identity(PREGAME, _ref(), after, {})
+        paired, _ = rng_protocol.pair_layer_plan(natural, identity, header, 'dirichlet_player_target_carry_shares')
+        self.assertEqual(paired.root, control.root)
+
     def test_v1_keeps_the_legacy_snapshot_key(self):
         plan = rng_protocol.plan(rng_protocol.V1, None, None, None)
         self.assertIsNone(plan.seed_root({'snapshot_sha256': PREGAME}))
