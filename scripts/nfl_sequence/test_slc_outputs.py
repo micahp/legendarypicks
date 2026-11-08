@@ -367,5 +367,26 @@ class DistributionAggregation(unittest.TestCase):
         self.assertEqual(stat['quantiles']['p50'], 5)
 
 
+
+
+class RosterEligibilityIsNotAssumed(unittest.TestCase):
+    """A snapshot that never carried roster_eligible reports unknown, so the legality guard cannot be satisfied by default."""
+
+    def test_a_missing_field_is_unknown_not_eligible(self):
+        snapshot = copy.deepcopy(SNAPSHOT)
+        for side in ('home', 'away'):
+            for player in snapshot['rosters'][side]['players']:
+                player.pop('roster_eligible')
+        index = outputs._roster_index(snapshot)
+        self.assertTrue(index)
+        self.assertTrue(all(entry['roster_eligible'] is None for entry in index.values()))
+
+    def test_an_explicit_false_is_kept_as_false(self):
+        snapshot = copy.deepcopy(SNAPSHOT)
+        snapshot['rosters']['home']['players'][1]['roster_eligible'] = False
+        index = outputs._roster_index(snapshot)
+        self.assertIs(index['GA2']['roster_eligible'], False)
+
+
 if __name__ == '__main__':
     unittest.main()
