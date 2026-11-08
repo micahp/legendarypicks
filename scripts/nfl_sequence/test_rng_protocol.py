@@ -54,6 +54,51 @@ class RngProtocol(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'requires v2'):
             rng_protocol.plan(rng_protocol.V1, None, None, None).require_root(control.root)
 
+    def test_one_layer_ablation_uses_verified_control_stream(self):
+        control_desc = _description()
+        ablated_desc = _description(enabled_layers={'team_offense_defense_outcomes': False},
+                                    layer_artifact_sha256={'team_offense_defense_outcomes': None,
+                                                           'exact_yardline_outcomes': '9' * 64})
+        control = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), control_desc)
+        natural = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), ablated_desc)
+        control_identity = rng_protocol.layer_pairing_identity(PREGAME, _ref(), control_desc, {'fixes': ['a']})
+        ablated_identity = rng_protocol.layer_pairing_identity(PREGAME, _ref(), ablated_desc, {'fixes': ['a']})
+        header = {'rng_protocol': control.manifest(), 'pairing_identity': control_identity}
+        paired, evidence = rng_protocol.pair_layer_plan(natural, ablated_identity, header,
+                                                        'team_offense_defense_outcomes')
+        self.assertNotEqual(natural.root, control.root)
+        self.assertEqual(paired.root, control.root)
+        self.assertEqual(evidence['natural_ablation_stream_root_sha256'], natural.root)
+        self.assertEqual(evidence['baseline_header_sha256'], rng_protocol.canonical_sha256(header))
+        self.assertEqual(paired_random_streams.PairedRandomStreams(7, control.root).key('playcall', 1),
+                         paired_random_streams.PairedRandomStreams(7, paired.root).key('playcall', 1))
+        with self.assertRaisesRegex(ValueError, 'execution_settings'):
+            bad = {**ablated_identity, 'execution_settings': {'fixes': ['other']}}
+            rng_protocol.pair_layer_plan(natural, bad, header, 'team_offense_defense_outcomes')
+        with self.assertRaisesRegex(ValueError, 'reference_data_sha256'):
+            bad = {**ablated_identity, 'reference_data_sha256': 'b' * 64}
+            rng_protocol.pair_layer_plan(natural, bad, header, 'team_offense_defense_outcomes')
+        with self.assertRaisesRegex(ValueError, 'exactly the selected layer'):
+            rng_protocol.pair_layer_plan(natural, control_identity, header, 'team_offense_defense_outcomes')
+        with self.assertRaisesRegex(ValueError, 'root does not match'):
+            bad_header = {**header, 'rng_protocol': {**header['rng_protocol'], 'stream_root_sha256': 'f' * 64}}
+            rng_protocol.pair_layer_plan(natural, ablated_identity, bad_header, 'team_offense_defense_outcomes')
+
+    def test_pairing_refuses_changed_other_active_layer(self):
+        layers = {'team_offense_defense_outcomes': True, 'point_splits': True}
+        hashes = {'team_offense_defense_outcomes': '1' * 64, 'point_splits': '2' * 64}
+        before = _description(enabled_layers=layers, layer_artifact_sha256=hashes)
+        after = _description(enabled_layers={**layers, 'team_offense_defense_outcomes': False},
+                             layer_artifact_sha256={**hashes, 'team_offense_defense_outcomes': None,
+                                                    'point_splits': '3' * 64})
+        control = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), before)
+        natural = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), after)
+        header = {'rng_protocol': control.manifest(),
+                  'pairing_identity': rng_protocol.layer_pairing_identity(PREGAME, _ref(), before, {})}
+        identity = rng_protocol.layer_pairing_identity(PREGAME, _ref(), after, {})
+        with self.assertRaisesRegex(ValueError, 'another active layer input: point_splits'):
+            rng_protocol.pair_layer_plan(natural, identity, header, 'team_offense_defense_outcomes')
+
     def test_v1_keeps_the_legacy_snapshot_key(self):
         plan = rng_protocol.plan(rng_protocol.V1, None, None, None)
         self.assertIsNone(plan.seed_root({'snapshot_sha256': PREGAME}))

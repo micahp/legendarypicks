@@ -128,6 +128,8 @@ def _reproduction_command(args, seed):
             command.extend(['--slc-blocker-fix', fix])
     if getattr(args, 'expected_stream_root_sha256', None):
         command.extend(['--expected-stream-root-sha256', args.expected_stream_root_sha256])
+    if getattr(args, 'paired_layer_baseline_ledger', None):
+        command.extend(['--paired-layer-baseline-ledger', args.paired_layer_baseline_ledger])
     if args.slc_blocker_fix:
         command.extend(['--slc-fg-ordinary-cutoff', str(args.slc_fg_ordinary_cutoff)])
     if args.slc_profile != 'custom':
@@ -984,6 +986,31 @@ def run_batch(args):
     pregame_snapshot.reseal(snapshot)
     playcall_description = slc_engine.describe(ref)
     rng_plan = rng_protocol.plan(args.rng_protocol, pregame_state_sha256, ref, playcall_description)
+    pairing_identity = None
+    paired_layer_baseline = None
+    if args.rng_protocol == rng_protocol.V2 and playcall_description:
+        settings = {key: getattr(args, key, None) for key in (
+            'context_mode', 'context_bandwidth', 'context_min_source_games', 'team_tendency', 'try_policy',
+            'no_safety_table', 'slc_blocker_fix', 'slc_fg_ordinary_cutoff', 'slc_v2',
+            'playcall_season_adapt', 'season_adapt_n0', 'participation_field', 'participation_field_sha256',
+            'participation_snap_counts', 'participation_snap_counts_sha256', 'playcall_pbv1_package',
+            'playcall_fg_kicker', 'playcall_fg_kicker_sha256', 'historical_archive_reconstruction')}
+        settings.update(source_snapshot_sha256=source_snapshot_sha256,
+                        source_commit=source_provenance['base_commit'],
+                        producer_file_sha256=source_provenance['producer_file_sha256'],
+                        additional_producer_sha256={name: hashlib.sha256((HERE / name).read_bytes()).hexdigest()
+                                                    for name in ('rng_protocol.py', 'slc_config.py', 'slc_playcall.py',
+                                                                 'slc_outputs.py', 'game_legality.py')})
+        pairing_identity = rng_protocol.layer_pairing_identity(pregame_state_sha256, ref, playcall_description, settings)
+    if getattr(args, 'paired_layer_baseline_ledger', None):
+        if not pairing_identity or len(args.slc_disable_layer) != 1:
+            raise ValueError('paired layer ablation requires v2 and exactly one --slc-disable-layer')
+        with Path(args.paired_layer_baseline_ledger).open(encoding='utf-8') as handle:
+            baseline_header = json.loads(handle.readline()).get('header')
+        if not isinstance(baseline_header, dict):
+            raise ValueError('paired layer baseline must contain a ledger header')
+        rng_plan, paired_layer_baseline = rng_protocol.pair_layer_plan(
+            rng_plan, pairing_identity, baseline_header, args.slc_disable_layer[0])
     if 'restore_sack_mass' in args.slc_blocker_fix and not getattr(args, 'expected_stream_root_sha256', None):
         raise ValueError('sack ablation requires the baseline --expected-stream-root-sha256')
     if getattr(args, 'expected_stream_root_sha256', None):
@@ -1028,6 +1055,8 @@ def run_batch(args):
         'boxscore_export': bool(args.export_boxscores),
         'paired_randomness': bool(args.paired_randomness),
         'rng_protocol': rng_plan.manifest(),
+        'pairing_identity': pairing_identity,
+        'paired_layer_baseline': paired_layer_baseline,
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
@@ -1439,6 +1468,8 @@ def main(argv=None):
                           'v1 explicitly replays legacy snapshot-keyed draws (default without SLC)'))
     ap.add_argument('--expected-stream-root-sha256',
                     help='require this baseline v2 stream root before running seeds; mandatory for sack ablation')
+    ap.add_argument('--paired-layer-baseline-ledger',
+                    help='verified v2 control ledger for exactly one disabled-layer paired ablation')
     ap.add_argument('--game-info-snapshot', help=('attach this frozen game-information snapshot to the run as '
                                                   'context: venue capacity, kickoff, forecast, referee status and '
                                                   'broadcast. The model does not read it.'))

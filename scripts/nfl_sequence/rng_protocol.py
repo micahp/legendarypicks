@@ -80,6 +80,51 @@ def layer_table_sha256(playcall_description):
     })
 
 
+def layer_pairing_identity(pregame_sha256, ref, description, execution_settings):
+    """Capture the loaded inputs needed to prove a one-layer intervention is isolated."""
+    return {'pregame_state_sha256': pregame_sha256, 'reference_data_sha256': reference_data_sha256(ref),
+            'artifact_sha256': description['artifact_sha256'],
+            'enabled_layers': description['enabled_layers'],
+            'layer_artifact_sha256': description['layer_artifact_sha256'],
+            'execution_settings': execution_settings}
+
+
+def pair_layer_plan(natural_plan, identity, baseline_header, disabled_layer):
+    """Bind an isolated layer ablation to a verified v2 control, before drawing any seeds."""
+    baseline = baseline_header.get('pairing_identity')
+    protocol = baseline_header.get('rng_protocol') or {}
+    if (natural_plan.scheme != V2 or protocol.get('scheme') != V2 or not isinstance(baseline, dict)
+            or baseline_header.get('paired_layer_baseline')):
+        raise ValueError('layer pairing requires an unpaired v2 control with a complete pairing identity')
+    for key in ('pregame_state_sha256', 'reference_data_sha256', 'artifact_sha256', 'execution_settings'):
+        if identity.get(key) != baseline.get(key):
+            raise ValueError(f'layer pairing input differs from control: {key}')
+    old, new = baseline.get('enabled_layers'), identity.get('enabled_layers')
+    old_hashes, new_hashes = baseline.get('layer_artifact_sha256'), identity.get('layer_artifact_sha256')
+    if not all(isinstance(x, dict) for x in (old, new, old_hashes, new_hashes)) or old.keys() != new.keys():
+        raise ValueError('layer pairing requires matching complete layer maps')
+    changed = {key for key in old if old[key] != new[key]}
+    if changed != {disabled_layer} or old.get(disabled_layer) is not True or new.get(disabled_layer) is not False:
+        raise ValueError(f'layer pairing requires exactly the selected layer disabled: {sorted(changed)}')
+    for key, enabled in old.items():
+        if enabled and key != disabled_layer and key != EXACT_YARDLINE_LAYER:
+            if not old_hashes.get(key) or old_hashes.get(key) != new_hashes.get(key):
+                raise ValueError(f'layer pairing changes another active layer input: {key}')
+    baseline_model = canonical_sha256({'reference_data_sha256': baseline['reference_data_sha256'],
+                                       'layer_tables_sha256': layer_table_sha256(baseline)})
+    expected = canonical_sha256({'schema': SCHEMA_V2, 'pregame_state_sha256': baseline['pregame_state_sha256'],
+                                 'model_input_sha256': baseline_model})
+    if protocol.get('stream_root_sha256') != expected or protocol.get('model_input_sha256') != baseline_model:
+        raise ValueError('control v2 stream root does not match its recorded inputs')
+    paired = RngPlan(V2, root=expected, pregame_state_sha256=baseline['pregame_state_sha256'],
+                     model_input_sha256=baseline_model)
+    evidence = {'disabled_layer': disabled_layer, 'baseline_stream_root_sha256': expected,
+                'baseline_header_sha256': canonical_sha256(baseline_header),
+                'natural_ablation_stream_root_sha256': natural_plan.root,
+                'natural_ablation_model_input_sha256': natural_plan.model_input_sha256}
+    return paired, evidence
+
+
 class RngPlan:
     """Which stream protocol a batch uses, and the root every pre-event draw is keyed on."""
 
