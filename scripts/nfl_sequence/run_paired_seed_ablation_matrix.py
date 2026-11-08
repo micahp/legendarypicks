@@ -451,6 +451,8 @@ def main(argv=None):
     parser.add_argument('--progress-every', type=int, default=250)
     parser.add_argument('--max-simulation-errors', type=int, default=0)
     args = parser.parse_args(argv)
+    parser.error('layer-ablation matrix is unavailable: RNG v2 roots include enabled layers, '
+                 'so control and ablation streams cannot currently be paired')
     args.snapshot_file = args.snapshot_file.resolve()
     args.playcall_artifact = args.playcall_artifact.resolve()
     args.playcall_streak_file = args.playcall_streak_file.resolve()

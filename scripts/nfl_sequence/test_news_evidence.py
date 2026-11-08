@@ -455,6 +455,8 @@ class StatusAndDepthChartRegression(unittest.TestCase):
             'The Ravens placed Randall on the practice squad injured list.'), {'injury_status_other'})
         self.assertEqual(self.codes(team='', upcoming_game=None, injury_status='QUESTIONABLE', notes=
             'The Ravens cut Randall from their practice squad injured list.'), set())
+        self.assertEqual(self.codes(notes='Randall could be placed on the practice squad injured list.'), set())
+        self.assertEqual(self.codes(notes='Randall was placed on the practice squad injured list last season.'), set())
 
     def test_designation_must_be_current_and_about_subject(self):
         self.assertEqual(self.codes(notes='Joseph is officially listed as questionable for Thursday.'), set())

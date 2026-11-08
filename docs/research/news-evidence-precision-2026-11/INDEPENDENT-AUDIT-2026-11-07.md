@@ -76,3 +76,9 @@ The no-upcoming-game exceptions matter: 645834 is a free agent after removal fro
 ## Validation
 
 The CSV was parsed and compared with its Git baseline: only update 645787 changed, with row order, row count and all other records preserved. The report tables cover 17 starter cases, 11 status cases and nine development cases. Historical classifier score files remain historical and were not regenerated; this report makes no new classifier-performance claim.
+
+## Implementation follow-up
+
+Commit `7c7fc7a8` fixes the classifier omissions identified by scoring the reconciled labels: unofficial depth-chart starter expectations, explicit upcoming-game designations in text alongside IR/PUP, practice-squad IR, and out-of-scope weekly fields on players without a team/upcoming game. Subject resolution and past-game/hypothetical exclusions remain enforced. The reviewed Joseph label change remains `ID;IO`, borderline yes.
+
+The current implementation has zero code-set disagreements on all 277 precision records (including five borderline records) and all nine current-feed development records. The news suite passes 45 tests, including negative checks for other-player mentions, past weeks, hypothetical placement, released practice-squad players, and unofficial starters. These samples were used during development and are not an untouched holdout or proof of general feed precision. Historical results.txt files remain pinned historical results and were not overwritten.

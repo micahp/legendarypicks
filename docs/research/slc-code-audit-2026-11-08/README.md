@@ -1,5 +1,41 @@
 # SLC code audit, 2026-11-08
 
+## Remediation on research/news-evidence-audit-2026-11-07
+
+The audit below is historical evidence at its stated pin. Its corrections are implemented by commits `57bfbdb8`, `97407a2f`, `df495c4b`, `3edc7a5f`, `a36cde82`, `31d64809`, `0ab1b3b9`, and `76c37f4c` (including integration fixes), subject to the limitations below. This does not regenerate or validate the historical forecast distributions.
+
+| Finding | Implemented correction |
+|---|---|
+| F1 roster eligibility | Missing eligibility is null; only explicit false triggers the eligibility refusal. |
+| Determinism: build timestamp | SLC batches default to RNG v2. The simulation's pregame identity excludes build time, the content seal and the model-reference wrapper. Content seals still include provenance for integrity; legacy v1 replay is explicit. |
+| Determinism: ablation flags | The opt-in sack flag requires the baseline `--expected-stream-root-sha256`. The root is checked before any seed is simulated. Replay commands preserve the dedicated flag, exact ordinary-fix set and explicit RNG version. |
+| F2 invisible fallbacks | Batch stdout prints counts and kinds, run reports include observed counters and coverage, and the 13-row smoke CSV has additive archived-counter annotations with source hashes in its manifest. |
+| F3 tendency cells | Neutral cell/event ratios are counted separately from observed 1.0 ratios and serialized by the tendency/SLC summaries. |
+| F4 participation call cells | Per-decision field-status deltas reach lineup summaries and batch execution fallback counters. |
+| F5 play extras | Missing extras are marked in participant facts; pool scope reports missing rows and its checked denominator. Neutral flags remain an explicit, measured fallback. |
+| F6 role yardage | Stats and box scores carry counts by role for transition-yardage substitutions. |
+| F7 stored lock parameters | Invalid/missing sigma is null with parameter status, rather than an invented configured sigma; stored projected scores remain intact. |
+| F8 touchdown scorer | Missing/invalid scoring side raises; it no longer silently credits the offense. |
+| F9 QB rank | Unparseable or nonpositive eligible-QB depth rank raises with player identity. |
+| F10 point/streak buckets | Missing team/context/bucket fallbacks are separate counted events; observed zero shifts remain distinct. |
+| F11 missing streak | Missing prior history remains unknown and is excluded from known-streak buckets; pool scope reports unknown rows. |
+| F12 clocks | Malformed quarter/clock values yield unknown elapsed time and incomplete period stats; overtime uses its 600-second clock. |
+| F13 exclusions | Both pool builders count unsupported play-type/invalid-down exclusions. |
+| Red-zone alias | `red_zone_field_goals` counts made kicks; attempts and made totals remain separate. |
+| Possession time | Box-score schema 4 exposes `drive_window_seconds`, sets unsupported `possession_seconds` null, and defines the legacy raw counter explicitly. Period play-clock time has its own name. |
+| Snap placeholder/dead check | Full player snaps are not claimed. Skill-lineup appearance semantics are disclosed; lineup data is attached before reconciliation, so production exceeding those appearances is refused. |
+| Play, drive and point accounting | Other fumble scrimmage events, terminal breakdowns and score components are exported and reconciled. Modern missing/mismatched scoring ledgers cannot pass accounting. |
+| Status and attribution | Completed but unverified games have a distinct status. Player exports retain all stat categories, attribution and depth-chart basis. Targets are disclosed as assigned receivers on modeled attempts; signed sack yards and unassigned observed OT scores are defined. |
+
+### Verification and limits
+
+The combined focused command ran 534 tests: 532 passed and two skipped. The skips are the unavailable tracked IND–JAX worker archive and an intentionally excluded holdout snapshot test. A subsequent 35-test RNG/output rerun also passed after the final scoring-ledger/stream-identity assertions. Tests exercise generated fixture games, mutations, malformed/missing inputs, CLI/replay behavior, serialized counters and report exports; no full-slate database-backed regeneration was run.
+
+A direct check on the committed frozen JAX–BAL snapshot confirmed that changing only `built_at_utc` changes its integrity seal but leaves the v2 pregame identity unchanged. All 13 original smoke-table rows preserve every original column value, and added totals reconcile to archived per-kind counts. Those are historical annotations, not simulations run with the repaired code.
+
+The remaining model limitations are explicit rather than fabricated measurements: no modeled throwaways/spikes, no complete player lineup/snap accounting, no true possession-time partition, and some counted neutral/source-yardage fallbacks. Player totals are allocated from sampled play outcomes. New accounting checks can reject a completed game when its independently selected production contradicts the modeled skill lineup. The separate layer-ablation matrix is disabled: its v2 root includes the enabled-layer set, and its ledger comparator also assumes the legacy snapshot key; it cannot currently establish paired layer comparisons. The sack intervention's checked v2 root does not resolve this broader limitation. Neither these tests nor the archived smoke annotations establish forecast skill, live fallback frequencies, or a new accepted ablation result. Historical analyses treating target totals as independent receiver volume, drive windows as possession, or skill-lineup counts as full snaps are withdrawn for those interpretations. Existing raw evidence is preserved.
+
+
 Branch `slc-v2` at `d490757e6`. Three audits, run in parallel over disjoint axes, plus independent verification by the lead of every headline number.
 
 | File | Axis | Findings |
