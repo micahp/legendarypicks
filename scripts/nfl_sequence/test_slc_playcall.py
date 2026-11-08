@@ -1,3 +1,4 @@
+import hashlib
 import random
 import sys
 import unittest
@@ -476,3 +477,30 @@ def synthetic_frame(seed=11, n=4000, score_effect=False):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class SackSubstitutionRate(unittest.TestCase):
+    """Ablation A: q(cell) = max(0, (observed - simulator sack share) / simulator incomplete share)."""
+
+    def entry(self, sacks, incomplete, dropbacks, key=(1, '1-2', '1-9')):
+        base = {('dropback', 'sack'): sacks, ('dropback', 'pass_incomplete'): incomplete,
+                ('dropback', 'pass_complete'): dropbacks - sacks - incomplete}
+        return {'key': key, 'base': base}
+
+    def test_the_rate_fills_the_gap_on_incomplete_passes(self):
+        obs = slc._obs_sack_cells()[str((1, '1-2', '1-9'))]['obs_sack_rate']
+        entry = self.entry(sacks=0, incomplete=400, dropbacks=1000)
+        self.assertAlmostEqual(slc.sack_substitution_rate(entry), obs / 0.4)
+
+    def test_a_cell_already_above_observed_gets_no_substitution(self):
+        obs = slc._obs_sack_cells()[str((1, '1-2', '1-9'))]['obs_sack_rate']
+        entry = self.entry(sacks=int(1000 * (obs + 0.05)), incomplete=400, dropbacks=1000)
+        self.assertEqual(slc.sack_substitution_rate(entry), 0.0)
+
+    def test_a_cell_missing_from_the_observed_file_is_refused(self):
+        with self.assertRaises(ValueError):
+            slc.sack_substitution_rate(self.entry(0, 400, 1000, key=(9, '9-9', '9-9')))
+
+    def test_the_observed_file_is_pinned_by_sha256(self):
+        self.assertEqual(hashlib.sha256(slc.OBS_SACK_CELLS_PATH.read_bytes()).hexdigest(),
+                         slc.OBS_SACK_CELLS_SHA256)

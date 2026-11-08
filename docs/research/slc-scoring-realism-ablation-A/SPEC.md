@@ -12,7 +12,7 @@ Substituting sacks for a share of incomplete passes, with the substitution rate 
 
 ## Measurements (definitions fixed here)
 
-- **Observed sack rate by cell.** Sacks divided by dropbacks in `nfl_pbp`, seasons 2022–2025, regular season (weeks 1–18), quarters 1–4, `play_type = 'pass'`, grouped by `e0_single_play.pool_key(down, ydstogo, yardline_100)`. Stored in `obs_sack_cells.json` with its sha256 and the query. Overall observed rate for reference: 6.9%.
+- **Observed sack rate by cell.** Sacks divided by dropbacks in `nfl_pbp`, seasons 2022–2025, regular season (weeks 1–18), quarters 1–4, `play_type = 'pass'`, grouped by `e0_single_play.pool_key(down, ydstogo, yardline_100)`. Produced by `scripts/nfl_sequence/obs_sack_cells.py` and committed as `obs_sack_cells.json` in this folder, which holds the query and the counts. Pinned sha256: `3010131cc898d1c534a1d023b7d6c31dba6fd94d2506eaf60bb952d61a2a31e8`. Pooled observed rate: 6.91% (5,267 sacks in 76,195 dropbacks). Cells with fewer than 100 dropbacks (40 of 115) take the shrunk rate `(sacks + 100 × pooled) / (dropbacks + 100)`; the rest take the raw rate.
 - **Engine sack rate.** `sacks_taken / (pass_attempts + sacks_taken)` from the team box score, pooled.
 - **Turnovers per team-game (engine-comparable).** 1.098, the figure used throughout the 2025 report. Gated in ablation B, not here. Reported in A as a diagnostic.
 - **Team points share.** Share of team-games scoring at most 3 points, and at most 10 points, per matchup and pooled.
@@ -42,16 +42,25 @@ Other outcomes are unchanged. Restricting the substitution to incomplete passes 
 2. **At most 3 points.** The share of team-games scoring at most 3 points rises by at least 0.3 percentage points, with a 95% interval that excludes zero.
 3. **At most 10 points.** The share of team-games scoring at most 10 points rises by at least 1.0 percentage point, with a 95% interval that excludes zero.
 4. **Mean points.** The absolute change in mean team points against baseline is at most 0.3.
-5. **Yardage.** Yards per team-game change by less than 1%. A larger change means the substitution has reached yardage, and the result is invalid.
+5. **Non-sack outcomes.** The substitution is restricted to incomplete passes, so it cannot change any completion. The gate checks that it did not:
+   - completions per dropback change by less than 0.5 percentage points;
+   - yards per completion change by less than 1%;
+   - yards per pass attempt, excluding sack yardage, change by less than 1%.
+
+   A larger change means the substitution has reached a non-sack outcome, and the result is invalid.
+
+6. **Yardage diagnostic (not a gate).** Yards per team-game change by no more than 4%. Converting the target share of dropbacks from incompletion to sack removes about 11 yards per team-game, roughly 2.9% of scrimmage yards, and that movement is expected. A change beyond 4% means the implementation has done something other than the substitution, and the result is invalid.
+
+The rule 5 gate on team-game yardage (under 1%) is replaced by the non-sack gates above. Under the substitution, team-game yardage falls by about 2.9% by arithmetic, so the old gate could never pass.
 
 The earlier target band of 2.5–3.0% for the at-most-3 share is dropped. It is tighter than the observed interval, so it isn't a useful gate.
 
 ## Outcomes
 
-- **Pass.** Rules 1–5 hold. Ablation B runs next, under its own pre-registration.
+- **Pass.** Rules 1–6 hold. Ablation B runs next, under its own pre-registration.
 - **Partial.** Rule 1 holds, but rule 2 or 3 does not. Sacks are not the dominant mechanism. B is not run on this basis.
 - **Falsified.** Rule 1 holds, and neither the at-most-3 share nor the at-most-10 share moves by its threshold. The sack mechanism is rejected. B and C wait for the mechanism to be revisited.
-- **Invalid.** Rule 1 fails, or rule 5 fails. The test says nothing about the mechanism. Fix the implementation under a new pre-registration.
+- **Invalid.** Rule 1 fails, rule 5 fails, or rule 6 fails. The test says nothing about the mechanism. Fix the implementation under a new pre-registration.
 
 ## Power
 

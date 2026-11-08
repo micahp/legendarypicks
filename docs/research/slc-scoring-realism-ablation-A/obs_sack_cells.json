@@ -1,0 +1,815 @@
+{
+ "cells": {
+  "(1, '1-2', '1-9')": {
+   "dropbacks": 225,
+   "incomplete": 104,
+   "obs_sack_rate": 0.035555555555555556,
+   "sacks": 8,
+   "shrunk": false
+  },
+  "(1, '1-2', '10-19')": {
+   "dropbacks": 1,
+   "incomplete": 0,
+   "obs_sack_rate": 0.06844086206638907,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(1, '10+', '10-19')": {
+   "dropbacks": 1658,
+   "incomplete": 571,
+   "obs_sack_rate": 0.04342581423401689,
+   "sacks": 72,
+   "shrunk": false
+  },
+  "(1, '10+', '20-29')": {
+   "dropbacks": 2132,
+   "incomplete": 646,
+   "obs_sack_rate": 0.0450281425891182,
+   "sacks": 96,
+   "shrunk": false
+  },
+  "(1, '10+', '30-49')": {
+   "dropbacks": 5964,
+   "incomplete": 1803,
+   "obs_sack_rate": 0.05499664654594232,
+   "sacks": 328,
+   "shrunk": false
+  },
+  "(1, '10+', '50-59')": {
+   "dropbacks": 3889,
+   "incomplete": 1175,
+   "obs_sack_rate": 0.05759835433273335,
+   "sacks": 224,
+   "shrunk": false
+  },
+  "(1, '10+', '60-69')": {
+   "dropbacks": 4247,
+   "incomplete": 1180,
+   "obs_sack_rate": 0.05651047798445962,
+   "sacks": 240,
+   "shrunk": false
+  },
+  "(1, '10+', '70-79')": {
+   "dropbacks": 5737,
+   "incomplete": 1466,
+   "obs_sack_rate": 0.05682412410667596,
+   "sacks": 326,
+   "shrunk": false
+  },
+  "(1, '10+', '80-99')": {
+   "dropbacks": 2871,
+   "incomplete": 774,
+   "obs_sack_rate": 0.04144897248345524,
+   "sacks": 119,
+   "shrunk": false
+  },
+  "(1, '3-5', '1-9')": {
+   "dropbacks": 331,
+   "incomplete": 144,
+   "obs_sack_rate": 0.03625377643504532,
+   "sacks": 12,
+   "shrunk": false
+  },
+  "(1, '3-5', '10-19')": {
+   "dropbacks": 10,
+   "incomplete": 5,
+   "obs_sack_rate": 0.06284115517004814,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(1, '3-5', '20-29')": {
+   "dropbacks": 18,
+   "incomplete": 6,
+   "obs_sack_rate": 0.05858073787038386,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(1, '3-5', '30-49')": {
+   "dropbacks": 34,
+   "incomplete": 8,
+   "obs_sack_rate": 0.08889945573660668,
+   "sacks": 5,
+   "shrunk": true
+  },
+  "(1, '3-5', '50-59')": {
+   "dropbacks": 27,
+   "incomplete": 13,
+   "obs_sack_rate": 0.05442934699767949,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(1, '3-5', '60-69')": {
+   "dropbacks": 19,
+   "incomplete": 8,
+   "obs_sack_rate": 0.05808846276222938,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(1, '3-5', '70-79')": {
+   "dropbacks": 24,
+   "incomplete": 3,
+   "obs_sack_rate": 0.06381070216697819,
+   "sacks": 1,
+   "shrunk": true
+  },
+  "(1, '3-5', '80-99')": {
+   "dropbacks": 8,
+   "incomplete": 2,
+   "obs_sack_rate": 0.07326413952504904,
+   "sacks": 1,
+   "shrunk": true
+  },
+  "(1, '6-9', '1-9')": {
+   "dropbacks": 477,
+   "incomplete": 185,
+   "obs_sack_rate": 0.05660377358490566,
+   "sacks": 27,
+   "shrunk": false
+  },
+  "(1, '6-9', '30-49')": {
+   "dropbacks": 1,
+   "incomplete": 0,
+   "obs_sack_rate": 0.06844086206638907,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(1, '6-9', '60-69')": {
+   "dropbacks": 2,
+   "incomplete": 0,
+   "obs_sack_rate": 0.06776987322260093,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(1, '6-9', '70-79')": {
+   "dropbacks": 1,
+   "incomplete": 0,
+   "obs_sack_rate": 0.06844086206638907,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(1, '6-9', '80-99')": {
+   "dropbacks": 1,
+   "incomplete": 0,
+   "obs_sack_rate": 0.06844086206638907,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(2, '1-2', '1-9')": {
+   "dropbacks": 269,
+   "incomplete": 112,
+   "obs_sack_rate": 0.040892193308550186,
+   "sacks": 11,
+   "shrunk": false
+  },
+  "(2, '1-2', '10-19')": {
+   "dropbacks": 103,
+   "incomplete": 35,
+   "obs_sack_rate": 0.038834951456310676,
+   "sacks": 4,
+   "shrunk": false
+  },
+  "(2, '1-2', '20-29')": {
+   "dropbacks": 118,
+   "incomplete": 37,
+   "obs_sack_rate": 0.0423728813559322,
+   "sacks": 5,
+   "shrunk": false
+  },
+  "(2, '1-2', '30-49')": {
+   "dropbacks": 328,
+   "incomplete": 85,
+   "obs_sack_rate": 0.06097560975609756,
+   "sacks": 20,
+   "shrunk": false
+  },
+  "(2, '1-2', '50-59')": {
+   "dropbacks": 223,
+   "incomplete": 57,
+   "obs_sack_rate": 0.07174887892376682,
+   "sacks": 16,
+   "shrunk": false
+  },
+  "(2, '1-2', '60-69')": {
+   "dropbacks": 328,
+   "incomplete": 85,
+   "obs_sack_rate": 0.04878048780487805,
+   "sacks": 16,
+   "shrunk": false
+  },
+  "(2, '1-2', '70-79')": {
+   "dropbacks": 101,
+   "incomplete": 33,
+   "obs_sack_rate": 0.06930693069306931,
+   "sacks": 7,
+   "shrunk": false
+  },
+  "(2, '1-2', '80-99')": {
+   "dropbacks": 38,
+   "incomplete": 12,
+   "obs_sack_rate": 0.0790762831065601,
+   "sacks": 4,
+   "shrunk": true
+  },
+  "(2, '10+', '10-19')": {
+   "dropbacks": 813,
+   "incomplete": 284,
+   "obs_sack_rate": 0.06150061500615006,
+   "sacks": 50,
+   "shrunk": false
+  },
+  "(2, '10+', '20-29')": {
+   "dropbacks": 977,
+   "incomplete": 290,
+   "obs_sack_rate": 0.052200614124872056,
+   "sacks": 51,
+   "shrunk": false
+  },
+  "(2, '10+', '30-49')": {
+   "dropbacks": 2495,
+   "incomplete": 675,
+   "obs_sack_rate": 0.06092184368737475,
+   "sacks": 152,
+   "shrunk": false
+  },
+  "(2, '10+', '50-59')": {
+   "dropbacks": 1558,
+   "incomplete": 413,
+   "obs_sack_rate": 0.06418485237483953,
+   "sacks": 100,
+   "shrunk": false
+  },
+  "(2, '10+', '60-69')": {
+   "dropbacks": 1687,
+   "incomplete": 478,
+   "obs_sack_rate": 0.05512744516893894,
+   "sacks": 93,
+   "shrunk": false
+  },
+  "(2, '10+', '70-79')": {
+   "dropbacks": 2083,
+   "incomplete": 573,
+   "obs_sack_rate": 0.06721075372059529,
+   "sacks": 140,
+   "shrunk": false
+  },
+  "(2, '10+', '80-99')": {
+   "dropbacks": 1382,
+   "incomplete": 411,
+   "obs_sack_rate": 0.04341534008683068,
+   "sacks": 60,
+   "shrunk": false
+  },
+  "(2, '3-5', '1-9')": {
+   "dropbacks": 579,
+   "incomplete": 279,
+   "obs_sack_rate": 0.046632124352331605,
+   "sacks": 27,
+   "shrunk": false
+  },
+  "(2, '3-5', '10-19')": {
+   "dropbacks": 269,
+   "incomplete": 91,
+   "obs_sack_rate": 0.02973977695167286,
+   "sacks": 8,
+   "shrunk": false
+  },
+  "(2, '3-5', '20-29')": {
+   "dropbacks": 330,
+   "incomplete": 106,
+   "obs_sack_rate": 0.06060606060606061,
+   "sacks": 20,
+   "shrunk": false
+  },
+  "(2, '3-5', '30-49')": {
+   "dropbacks": 866,
+   "incomplete": 240,
+   "obs_sack_rate": 0.06581986143187067,
+   "sacks": 57,
+   "shrunk": false
+  },
+  "(2, '3-5', '50-59')": {
+   "dropbacks": 614,
+   "incomplete": 180,
+   "obs_sack_rate": 0.06188925081433225,
+   "sacks": 38,
+   "shrunk": false
+  },
+  "(2, '3-5', '60-69')": {
+   "dropbacks": 777,
+   "incomplete": 201,
+   "obs_sack_rate": 0.055341055341055344,
+   "sacks": 43,
+   "shrunk": false
+  },
+  "(2, '3-5', '70-79')": {
+   "dropbacks": 490,
+   "incomplete": 125,
+   "obs_sack_rate": 0.06938775510204082,
+   "sacks": 34,
+   "shrunk": false
+  },
+  "(2, '3-5', '80-99')": {
+   "dropbacks": 230,
+   "incomplete": 65,
+   "obs_sack_rate": 0.043478260869565216,
+   "sacks": 10,
+   "shrunk": false
+  },
+  "(2, '6-9', '1-9')": {
+   "dropbacks": 590,
+   "incomplete": 235,
+   "obs_sack_rate": 0.059322033898305086,
+   "sacks": 35,
+   "shrunk": false
+  },
+  "(2, '6-9', '10-19')": {
+   "dropbacks": 736,
+   "incomplete": 246,
+   "obs_sack_rate": 0.058423913043478264,
+   "sacks": 43,
+   "shrunk": false
+  },
+  "(2, '6-9', '20-29')": {
+   "dropbacks": 760,
+   "incomplete": 232,
+   "obs_sack_rate": 0.05263157894736842,
+   "sacks": 40,
+   "shrunk": false
+  },
+  "(2, '6-9', '30-49')": {
+   "dropbacks": 1943,
+   "incomplete": 569,
+   "obs_sack_rate": 0.05918682449819866,
+   "sacks": 115,
+   "shrunk": false
+  },
+  "(2, '6-9', '50-59')": {
+   "dropbacks": 1300,
+   "incomplete": 370,
+   "obs_sack_rate": 0.06538461538461539,
+   "sacks": 85,
+   "shrunk": false
+  },
+  "(2, '6-9', '60-69')": {
+   "dropbacks": 1575,
+   "incomplete": 408,
+   "obs_sack_rate": 0.06666666666666667,
+   "sacks": 105,
+   "shrunk": false
+  },
+  "(2, '6-9', '70-79')": {
+   "dropbacks": 1586,
+   "incomplete": 444,
+   "obs_sack_rate": 0.06557377049180328,
+   "sacks": 104,
+   "shrunk": false
+  },
+  "(2, '6-9', '80-99')": {
+   "dropbacks": 786,
+   "incomplete": 217,
+   "obs_sack_rate": 0.043256997455470736,
+   "sacks": 34,
+   "shrunk": false
+  },
+  "(3, '1-2', '1-9')": {
+   "dropbacks": 284,
+   "incomplete": 130,
+   "obs_sack_rate": 0.04929577464788732,
+   "sacks": 14,
+   "shrunk": false
+  },
+  "(3, '1-2', '10-19')": {
+   "dropbacks": 129,
+   "incomplete": 45,
+   "obs_sack_rate": 0.13178294573643412,
+   "sacks": 17,
+   "shrunk": false
+  },
+  "(3, '1-2', '20-29')": {
+   "dropbacks": 162,
+   "incomplete": 49,
+   "obs_sack_rate": 0.04938271604938271,
+   "sacks": 8,
+   "shrunk": false
+  },
+  "(3, '1-2', '30-49')": {
+   "dropbacks": 425,
+   "incomplete": 134,
+   "obs_sack_rate": 0.07058823529411765,
+   "sacks": 30,
+   "shrunk": false
+  },
+  "(3, '1-2', '50-59')": {
+   "dropbacks": 302,
+   "incomplete": 107,
+   "obs_sack_rate": 0.056291390728476824,
+   "sacks": 17,
+   "shrunk": false
+  },
+  "(3, '1-2', '60-69')": {
+   "dropbacks": 473,
+   "incomplete": 146,
+   "obs_sack_rate": 0.0824524312896406,
+   "sacks": 39,
+   "shrunk": false
+  },
+  "(3, '1-2', '70-79')": {
+   "dropbacks": 219,
+   "incomplete": 70,
+   "obs_sack_rate": 0.0547945205479452,
+   "sacks": 12,
+   "shrunk": false
+  },
+  "(3, '1-2', '80-99')": {
+   "dropbacks": 118,
+   "incomplete": 42,
+   "obs_sack_rate": 0.09322033898305085,
+   "sacks": 11,
+   "shrunk": false
+  },
+  "(3, '10+', '10-19')": {
+   "dropbacks": 492,
+   "incomplete": 206,
+   "obs_sack_rate": 0.10772357723577236,
+   "sacks": 53,
+   "shrunk": false
+  },
+  "(3, '10+', '20-29')": {
+   "dropbacks": 550,
+   "incomplete": 183,
+   "obs_sack_rate": 0.09272727272727273,
+   "sacks": 51,
+   "shrunk": false
+  },
+  "(3, '10+', '30-49')": {
+   "dropbacks": 1383,
+   "incomplete": 417,
+   "obs_sack_rate": 0.08821402747650037,
+   "sacks": 122,
+   "shrunk": false
+  },
+  "(3, '10+', '50-59')": {
+   "dropbacks": 822,
+   "incomplete": 256,
+   "obs_sack_rate": 0.09854014598540146,
+   "sacks": 81,
+   "shrunk": false
+  },
+  "(3, '10+', '60-69')": {
+   "dropbacks": 992,
+   "incomplete": 291,
+   "obs_sack_rate": 0.13306451612903225,
+   "sacks": 132,
+   "shrunk": false
+  },
+  "(3, '10+', '70-79')": {
+   "dropbacks": 1161,
+   "incomplete": 311,
+   "obs_sack_rate": 0.14125753660637383,
+   "sacks": 164,
+   "shrunk": false
+  },
+  "(3, '10+', '80-99')": {
+   "dropbacks": 904,
+   "incomplete": 245,
+   "obs_sack_rate": 0.09513274336283185,
+   "sacks": 86,
+   "shrunk": false
+  },
+  "(3, '3-5', '1-9')": {
+   "dropbacks": 636,
+   "incomplete": 269,
+   "obs_sack_rate": 0.1069182389937107,
+   "sacks": 68,
+   "shrunk": false
+  },
+  "(3, '3-5', '10-19')": {
+   "dropbacks": 428,
+   "incomplete": 157,
+   "obs_sack_rate": 0.06542056074766354,
+   "sacks": 28,
+   "shrunk": false
+  },
+  "(3, '3-5', '20-29')": {
+   "dropbacks": 458,
+   "incomplete": 164,
+   "obs_sack_rate": 0.09170305676855896,
+   "sacks": 42,
+   "shrunk": false
+  },
+  "(3, '3-5', '30-49')": {
+   "dropbacks": 1132,
+   "incomplete": 406,
+   "obs_sack_rate": 0.0803886925795053,
+   "sacks": 91,
+   "shrunk": false
+  },
+  "(3, '3-5', '50-59')": {
+   "dropbacks": 798,
+   "incomplete": 282,
+   "obs_sack_rate": 0.11779448621553884,
+   "sacks": 94,
+   "shrunk": false
+  },
+  "(3, '3-5', '60-69')": {
+   "dropbacks": 1114,
+   "incomplete": 361,
+   "obs_sack_rate": 0.10053859964093358,
+   "sacks": 112,
+   "shrunk": false
+  },
+  "(3, '3-5', '70-79')": {
+   "dropbacks": 652,
+   "incomplete": 204,
+   "obs_sack_rate": 0.10429447852760736,
+   "sacks": 68,
+   "shrunk": false
+  },
+  "(3, '3-5', '80-99')": {
+   "dropbacks": 317,
+   "incomplete": 97,
+   "obs_sack_rate": 0.0694006309148265,
+   "sacks": 22,
+   "shrunk": false
+  },
+  "(3, '6-9', '1-9')": {
+   "dropbacks": 412,
+   "incomplete": 190,
+   "obs_sack_rate": 0.08495145631067962,
+   "sacks": 35,
+   "shrunk": false
+  },
+  "(3, '6-9', '10-19')": {
+   "dropbacks": 590,
+   "incomplete": 212,
+   "obs_sack_rate": 0.1135593220338983,
+   "sacks": 67,
+   "shrunk": false
+  },
+  "(3, '6-9', '20-29')": {
+   "dropbacks": 600,
+   "incomplete": 198,
+   "obs_sack_rate": 0.08666666666666667,
+   "sacks": 52,
+   "shrunk": false
+  },
+  "(3, '6-9', '30-49')": {
+   "dropbacks": 1394,
+   "incomplete": 483,
+   "obs_sack_rate": 0.10114777618364419,
+   "sacks": 141,
+   "shrunk": false
+  },
+  "(3, '6-9', '50-59')": {
+   "dropbacks": 978,
+   "incomplete": 335,
+   "obs_sack_rate": 0.1278118609406953,
+   "sacks": 125,
+   "shrunk": false
+  },
+  "(3, '6-9', '60-69')": {
+   "dropbacks": 1083,
+   "incomplete": 372,
+   "obs_sack_rate": 0.12280701754385964,
+   "sacks": 133,
+   "shrunk": false
+  },
+  "(3, '6-9', '70-79')": {
+   "dropbacks": 1104,
+   "incomplete": 386,
+   "obs_sack_rate": 0.1331521739130435,
+   "sacks": 147,
+   "shrunk": false
+  },
+  "(3, '6-9', '80-99')": {
+   "dropbacks": 521,
+   "incomplete": 181,
+   "obs_sack_rate": 0.1343570057581574,
+   "sacks": 70,
+   "shrunk": false
+  },
+  "(4, '1-2', '1-9')": {
+   "dropbacks": 149,
+   "incomplete": 55,
+   "obs_sack_rate": 0.06040268456375839,
+   "sacks": 9,
+   "shrunk": false
+  },
+  "(4, '1-2', '10-19')": {
+   "dropbacks": 66,
+   "incomplete": 18,
+   "obs_sack_rate": 0.04164172932954997,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(4, '1-2', '20-29')": {
+   "dropbacks": 73,
+   "incomplete": 27,
+   "obs_sack_rate": 0.06307819114858552,
+   "sacks": 4,
+   "shrunk": true
+  },
+  "(4, '1-2', '30-49')": {
+   "dropbacks": 236,
+   "incomplete": 72,
+   "obs_sack_rate": 0.05084745762711865,
+   "sacks": 12,
+   "shrunk": false
+  },
+  "(4, '1-2', '50-59')": {
+   "dropbacks": 82,
+   "incomplete": 22,
+   "obs_sack_rate": 0.08193696191596316,
+   "sacks": 8,
+   "shrunk": true
+  },
+  "(4, '1-2', '60-69')": {
+   "dropbacks": 45,
+   "incomplete": 20,
+   "obs_sack_rate": 0.08215535909451928,
+   "sacks": 5,
+   "shrunk": true
+  },
+  "(4, '1-2', '70-79')": {
+   "dropbacks": 13,
+   "incomplete": 3,
+   "obs_sack_rate": 0.07002236343986987,
+   "sacks": 1,
+   "shrunk": true
+  },
+  "(4, '1-2', '80-99')": {
+   "dropbacks": 7,
+   "incomplete": 1,
+   "obs_sack_rate": 0.07394885110939528,
+   "sacks": 1,
+   "shrunk": true
+  },
+  "(4, '10+', '10-19')": {
+   "dropbacks": 34,
+   "incomplete": 19,
+   "obs_sack_rate": 0.07397408260227832,
+   "sacks": 3,
+   "shrunk": true
+  },
+  "(4, '10+', '20-29')": {
+   "dropbacks": 27,
+   "incomplete": 16,
+   "obs_sack_rate": 0.07805139424177397,
+   "sacks": 3,
+   "shrunk": true
+  },
+  "(4, '10+', '30-49')": {
+   "dropbacks": 93,
+   "incomplete": 39,
+   "obs_sack_rate": 0.11353640968241085,
+   "sacks": 15,
+   "shrunk": true
+  },
+  "(4, '10+', '50-59')": {
+   "dropbacks": 55,
+   "incomplete": 21,
+   "obs_sack_rate": 0.12201630366906642,
+   "sacks": 12,
+   "shrunk": true
+  },
+  "(4, '10+', '60-69')": {
+   "dropbacks": 50,
+   "incomplete": 25,
+   "obs_sack_rate": 0.0727501804580353,
+   "sacks": 4,
+   "shrunk": true
+  },
+  "(4, '10+', '70-79')": {
+   "dropbacks": 38,
+   "incomplete": 17,
+   "obs_sack_rate": 0.0645835294833717,
+   "sacks": 2,
+   "shrunk": true
+  },
+  "(4, '10+', '80-99')": {
+   "dropbacks": 24,
+   "incomplete": 10,
+   "obs_sack_rate": 0.07187521829601044,
+   "sacks": 2,
+   "shrunk": true
+  },
+  "(4, '3-5', '1-9')": {
+   "dropbacks": 89,
+   "incomplete": 44,
+   "obs_sack_rate": 0.06832024904076875,
+   "sacks": 6,
+   "shrunk": true
+  },
+  "(4, '3-5', '10-19')": {
+   "dropbacks": 52,
+   "incomplete": 17,
+   "obs_sack_rate": 0.07179294124148221,
+   "sacks": 4,
+   "shrunk": true
+  },
+  "(4, '3-5', '20-29')": {
+   "dropbacks": 63,
+   "incomplete": 24,
+   "obs_sack_rate": 0.06694801882641285,
+   "sacks": 4,
+   "shrunk": true
+  },
+  "(4, '3-5', '30-49')": {
+   "dropbacks": 315,
+   "incomplete": 104,
+   "obs_sack_rate": 0.06349206349206349,
+   "sacks": 20,
+   "shrunk": false
+  },
+  "(4, '3-5', '50-59')": {
+   "dropbacks": 70,
+   "incomplete": 30,
+   "obs_sack_rate": 0.05830898275708997,
+   "sacks": 3,
+   "shrunk": true
+  },
+  "(4, '3-5', '60-69')": {
+   "dropbacks": 45,
+   "incomplete": 16,
+   "obs_sack_rate": 0.07525880737038135,
+   "sacks": 4,
+   "shrunk": true
+  },
+  "(4, '3-5', '70-79')": {
+   "dropbacks": 24,
+   "incomplete": 6,
+   "obs_sack_rate": 0.06381070216697819,
+   "sacks": 1,
+   "shrunk": true
+  },
+  "(4, '3-5', '80-99')": {
+   "dropbacks": 11,
+   "incomplete": 4,
+   "obs_sack_rate": 0.06227501863698465,
+   "sacks": 0,
+   "shrunk": true
+  },
+  "(4, '6-9', '1-9')": {
+   "dropbacks": 32,
+   "incomplete": 15,
+   "obs_sack_rate": 0.08267065961140374,
+   "sacks": 4,
+   "shrunk": true
+  },
+  "(4, '6-9', '10-19')": {
+   "dropbacks": 24,
+   "incomplete": 13,
+   "obs_sack_rate": 0.07187521829601044,
+   "sacks": 2,
+   "shrunk": true
+  },
+  "(4, '6-9', '20-29')": {
+   "dropbacks": 29,
+   "incomplete": 13,
+   "obs_sack_rate": 0.06908935712174646,
+   "sacks": 2,
+   "shrunk": true
+  },
+  "(4, '6-9', '30-49')": {
+   "dropbacks": 110,
+   "incomplete": 48,
+   "obs_sack_rate": 0.07272727272727272,
+   "sacks": 8,
+   "shrunk": false
+  },
+  "(4, '6-9', '50-59')": {
+   "dropbacks": 46,
+   "incomplete": 21,
+   "obs_sack_rate": 0.06789402101852941,
+   "sacks": 3,
+   "shrunk": true
+  },
+  "(4, '6-9', '60-69')": {
+   "dropbacks": 28,
+   "incomplete": 5,
+   "obs_sack_rate": 0.09306661772426011,
+   "sacks": 5,
+   "shrunk": true
+  },
+  "(4, '6-9', '70-79')": {
+   "dropbacks": 19,
+   "incomplete": 8,
+   "obs_sack_rate": 0.074895185451305,
+   "sacks": 2,
+   "shrunk": true
+  },
+  "(4, '6-9', '80-99')": {
+   "dropbacks": 2,
+   "incomplete": 1,
+   "obs_sack_rate": 0.06776987322260093,
+   "sacks": 0,
+   "shrunk": true
+  }
+ },
+ "database": "/root/legendarypicks/backend/data/picks.dev.db",
+ "pooled_dropbacks": 76195,
+ "pooled_sack_rate": 0.06912527068705296,
+ "pooled_sacks": 5267,
+ "pseudo_count": 100,
+ "query": "select down, ydstogo, yardline_100, sack, complete_pass, interception from nfl_pbp\nwhere season between 2022 and 2025 and week between 1 and 18 and qtr between 1 and 4 and play_type='pass'\nand down between 1 and 4 and ydstogo is not null and yardline_100 between 1 and 99"
+}
