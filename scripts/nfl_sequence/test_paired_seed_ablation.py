@@ -55,8 +55,12 @@ class PairedSeedAblationTests(unittest.TestCase):
             path.write_text('\n'.join(json.dumps(row) for row in [{'header': run_header}, *rows]) + '\n',
                              encoding='utf-8')
 
-    def write_v2(self, mutate=None):
+    def write_v2(self, mutate=None, *, dirichlet=False):
         control = header()
+        if dirichlet:
+            control['playcall_enabled_layers'].update(dirichlet_player_target_carry_shares=True,
+                                                       fixed_player_target_carry_shares=True)
+        selected = 'dirichlet_player_target_carry_shares' if dirichlet else 'formation_personnel_outcomes'
         control['pairing_identity'] = {
             'pregame_state_sha256': '1' * 64, 'reference_data_sha256': '2' * 64,
             'artifact_sha256': '3' * 64, 'enabled_layers': control['playcall_enabled_layers'].copy(),
@@ -73,9 +77,10 @@ class PairedSeedAblationTests(unittest.TestCase):
             pregame_state_sha256=identity['pregame_state_sha256'], model_input_sha256=model).manifest()
         control['paired_layer_baseline'] = None
         ablation = json.loads(json.dumps(control))
-        ablation['playcall_enabled_layers']['formation_personnel_outcomes'] = False
-        ablation['pairing_identity']['enabled_layers']['formation_personnel_outcomes'] = False
-        ablation['pairing_identity']['layer_artifact_sha256']['formation_personnel_outcomes'] = None
+        for key in ([selected, 'fixed_player_target_carry_shares'] if dirichlet else [selected]):
+            ablation['playcall_enabled_layers'][key] = False
+            ablation['pairing_identity']['enabled_layers'][key] = False
+            ablation['pairing_identity']['layer_artifact_sha256'][key] = None
         ai = ablation['pairing_identity']
         natural_model = rng_protocol.canonical_sha256({'reference_data_sha256': ai['reference_data_sha256'],
                                                         'layer_tables_sha256': rng_protocol.layer_table_sha256(ai)})
@@ -85,7 +90,7 @@ class PairedSeedAblationTests(unittest.TestCase):
         natural = rng_protocol.RngPlan('v2', root=natural_root, pregame_state_sha256=ai['pregame_state_sha256'],
                                        model_input_sha256=natural_model)
         _, ablation['paired_layer_baseline'] = rng_protocol.pair_layer_plan(
-            natural, ai, control, 'formation_personnel_outcomes')
+            natural, ai, control, selected)
         control_rows = [ledger_row(10, root)]
         ablation_rows = [ledger_row(10, root)]
         model_seed = int.from_bytes(hashlib.sha256(f'10:{root}'.encode()).digest()[:8], 'big')
@@ -100,6 +105,15 @@ class PairedSeedAblationTests(unittest.TestCase):
         self.write_v2()
         report = compare_ledgers(self.control, self.ablation, disabled_layer='formation_personnel_outcomes')
         self.assertTrue(report['valid_for_complete_game_comparison'])
+        self.assertEqual(report['intervention_kind'], 'single_layer')
+
+    def test_dirichlet_and_its_adapter_are_reported_as_combined(self):
+        self.write_v2(dirichlet=True)
+        report = compare_ledgers(self.control, self.ablation,
+                                 disabled_layer='dirichlet_player_target_carry_shares')
+        self.assertEqual(report['intervention_kind'], 'combined_with_dependent_adapter')
+        self.assertEqual(report['disabled_layers'], ['dirichlet_player_target_carry_shares',
+                                                      'fixed_player_target_carry_shares'])
 
     def test_v2_rejects_missing_or_mutated_evidence(self):
         mutations = [
