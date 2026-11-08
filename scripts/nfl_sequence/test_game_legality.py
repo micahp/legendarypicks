@@ -302,25 +302,39 @@ class BlockedKickIsLive(unittest.TestCase):
     def test_a_blocked_kick_touchdown_still_ends_the_drive_through_its_flag(self):
         self.assertTrue(gl._ends_drive_flag({'touchdown': True, 'field_goal_result': 'blocked'}, 'touchdown'))
 
-    def test_a_blocked_kick_hands_over_a_first_down_at_the_spot(self):
-        play = {'state_before': {'down': 4, 'yards_to_go': 6, 'yardline_100': 29},
-                'state_after': {'down': 1, 'yards_to_go': 10, 'yardline_100': 63},
-                'outcome': {'field_goal_attempt': True, 'field_goal_result': 'blocked', 'yards_gained': None}, 'sequence': 1}
-        gl._down_and_distance({'index': 4}, play)
+    def blocked_play(self, after_team, down=1, togo=10, yardline=63, penalty=False):
+        """A blocked field goal from A's 29: `after_team` takes the ball at the spot after the block."""
+        before = {'down': 4, 'yards_to_go': 6, 'yardline_100': 29, 'offense_team': 'A'}
+        after = {'down': down, 'yards_to_go': togo, 'yardline_100': yardline, 'offense_team': after_team}
+        outcome = {'field_goal_attempt': True, 'field_goal_result': 'blocked', 'yards_gained': None}
+        if penalty:
+            outcome['penalty'] = True
+        return {'state_before': before, 'state_after': after, 'outcome': outcome, 'sequence': 1}
+
+    def test_a_blocked_kick_that_changes_hands_hands_over_a_first_down(self):
+        gl._down_and_distance({'index': 4}, self.blocked_play('B'))
+
+    def test_a_blocked_kick_handover_with_impossible_distance_is_refused(self):
+        with self.assertRaises(gl.FootballAssertionError):
+            gl._down_and_distance({'index': 4}, self.blocked_play('B', togo=99))
+
+    def test_a_kicking_team_recovery_keeps_its_observed_next_snap(self):
+        gl._down_and_distance({'index': 4}, self.blocked_play('A', down=2, togo=7, yardline=36))
+
+    def test_a_kicking_team_recovery_is_still_checked_for_the_state_domain(self):
+        play = self.blocked_play('A', down=5, togo=7, yardline=36)
+        for state in (play['state_before'], play['state_after']):
+            state.update({'quarter': 1, 'clock_seconds': 500, 'home_score': 0, 'away_score': 0,
+                          'home_timeouts': 3, 'away_timeouts': 3, 'defense_team': 'B' if state['offense_team'] == 'A' else 'A'})
+        with self.assertRaises(gl.FootballAssertionError):
+            gl._state_domain({'index': 4}, play)
+
+    def test_a_penalty_on_a_blocked_kick_is_exempt_from_the_first_down_rule(self):
+        gl._down_and_distance({'index': 4}, self.blocked_play('B', down=1, togo=5, yardline=44, penalty=True))
 
     def test_a_final_blocked_kick_is_checked_through_the_play_chain(self):
-        play = {'state_before': {'down': 4, 'yards_to_go': 6, 'yardline_100': 29},
-                'state_after': {'down': 1, 'yards_to_go': 99, 'yardline_100': 63},
-                'outcome': {'field_goal_attempt': True, 'field_goal_result': 'blocked', 'yards_gained': None}, 'sequence': 1}
         with self.assertRaises(gl.FootballAssertionError):
-            gl._play_chain({'index': 4}, [play])
-
-    def test_a_blocked_kick_with_impossible_distance_is_refused(self):
-        play = {'state_before': {'down': 4, 'yards_to_go': 6, 'yardline_100': 29},
-                'state_after': {'down': 1, 'yards_to_go': 99, 'yardline_100': 63},
-                'outcome': {'field_goal_attempt': True, 'field_goal_result': 'blocked', 'yards_gained': None}, 'sequence': 1}
-        with self.assertRaises(gl.FootballAssertionError):
-            gl._down_and_distance({'index': 4}, play)
+            gl._play_chain({'index': 4}, [self.blocked_play('B', togo=99)])
 
 
 class MissedKickAtZero(unittest.TestCase):

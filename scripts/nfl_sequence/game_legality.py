@@ -115,15 +115,18 @@ def _play_chain(drive, plays):
 def _down_and_distance(drive, play):
     """A play moves the down, the spot and the distance from its own start to its own end, by its gain."""
     before, after, outcome = play['state_before'], play['state_after'], play['outcome']
-    if outcome.get('field_goal_result') == 'blocked' and after['down'] is not None:
-        # a blocked kick hands the ball over at a spot no gain describes: the other team's first down there
-        where = f'{_where(drive, play)} state_after'
-        if after['down'] != 1 or after['yards_to_go'] != min(10, after['yardline_100']):
-            _fail(f'{where}: a blocked kick hands over a first down; found down {after["down"]} and '
-                  f'{after["yards_to_go"]} to go at yardline {after["yardline_100"]}')
-        return
     if outcome.get('penalty') or after['down'] is None:
         return  # a penalty moves the ball by a rule this check does not model; a terminal play has no next down
+    if outcome.get('field_goal_result') == 'blocked':
+        # A blocked kick that changes hands is a first down for the receiving team at the spot. A kicking-team recovery
+        # keeps the ball live with the same team, and the observed next snap sets its down and distance, which
+        # this check does not model: only the state domain applies to it.
+        if after['offense_team'] != before['offense_team']:
+            where = f'{_where(drive, play)} state_after'
+            if after['down'] != 1 or after['yards_to_go'] != min(10, after['yardline_100']):
+                _fail(f'{where}: a blocked kick hands over a first down; found down {after["down"]} and '
+                      f'{after["yards_to_go"]} to go at yardline {after["yardline_100"]}')
+        return
     where = f'{_where(drive, play)} state_after'
     gain = outcome.get('yards_gained')
     if gain is None:
