@@ -24,6 +24,7 @@ import copy
 from collections import defaultdict
 from datetime import datetime, timezone
 import hashlib
+import gzip
 import json
 import math
 from pathlib import Path
@@ -491,8 +492,33 @@ class FinishedSeeds(dict):
         self.duplicate_rows = 0
 
 
+def _preserve_failed_record(directory, seed, record, outcome, snapshot, rng_plan, identities):
+    """Save each distinct failure immutably before its outcome is written to the ledger."""
+    payload = {'schema': 'lp.nfl.failed-game-record.v1', 'seed': seed,
+               'record': record, 'error': outcome.get('error'),
+               'boxscore_error': outcome.get('boxscore_error'),
+               'assertion_failure': outcome.get('assertion_failure'),
+               'snapshot_sha256': snapshot.get('snapshot_sha256'),
+               'rng_protocol': rng_plan.manifest() if rng_plan else None,
+               'input_identities': identities}
+    raw = json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
+    compressed = gzip.compress(raw, mtime=0)
+    digest = hashlib.sha256(compressed).hexdigest()
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f'seed-{seed}-{digest}.json.gz'
+    try:
+        with path.open('xb') as handle:
+            handle.write(compressed)
+    except FileExistsError:
+        if path.read_bytes() != compressed:
+            raise ValueError(f'failure record already exists with different content: {path}')
+    return {'schema': payload['schema'], 'path': str(path), 'sha256': digest}
+
+
 def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False,
-                   paired_randomness=False, rng_plan=None, export_plays=False):
+                   paired_randomness=False, rng_plan=None, export_plays=False, failure_dir=None,
+                   failure_identities=None):
     record = None
     error = None
     caught_exception = None
@@ -513,8 +539,6 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
     outcome = _record_outcome(seed, record, error, validation_error)
     if record and record.get('paired_random_streams'):
         outcome['paired_random_streams'] = record['paired_random_streams']
-    if decisions is not None:
-        outcome['playcall'] = slc_engine.summary(decisions, record)
     if caught_exception is not None:
         hashes = _artifact_hashes(profile_manifest or {})
         hashes['snapshot.snapshot_sha256'] = snapshot.get('snapshot_sha256', 'unavailable')
@@ -522,6 +546,11 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
             caught_exception, seed=seed,
             game_id=(snapshot.get('schedule') or {}).get('game_id', 'unknown'),
             record=record, decisions=decisions, source_artifact_hashes=hashes)
+        if record is not None and failure_dir is not None:
+            outcome['failed_record'] = _preserve_failed_record(
+                failure_dir, seed, record, outcome, snapshot, rng_plan, failure_identities)
+    if decisions is not None:
+        outcome['playcall'] = slc_engine.summary(decisions, record)
     if record and record.get('blocked_attempt'):
         hashes = _artifact_hashes(profile_manifest or {})
         hashes['snapshot.snapshot_sha256'] = snapshot.get('snapshot_sha256', 'unavailable')
@@ -568,6 +597,9 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
                     'state_after': 'game_end',
                 })
             outcome['assertion_failure'] = accounting_failure
+            if record is not None and failure_dir is not None and 'failed_record' not in outcome:
+                outcome['failed_record'] = _preserve_failed_record(
+                    failure_dir, seed, record, outcome, snapshot, rng_plan, failure_identities)
             if export_boxscores:
                 # Preserve an auditable error line even when strict roster identity or reconciliation fails.
                 minimal = slc_outputs.build_boxscore(seed, outcome, None, snapshot, profile_manifest, archive_validation)
@@ -575,6 +607,10 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
                 if export_plays:
                     minimal['realism'] = slc_outputs.realism_export(outcome, record)
                 outcome['boxscore'] = minimal
+    if (record is not None and outcome['status'] in ERROR_STATUSES and failure_dir is not None
+            and 'failed_record' not in outcome):
+        outcome['failed_record'] = _preserve_failed_record(
+            failure_dir, seed, record, outcome, snapshot, rng_plan, failure_identities)
     contribution = None
     if outcome['valid_full_game'] and record:
         contribution = {
@@ -632,7 +668,8 @@ def _open_seed_ledger(path, header, resume, *, seed_end=None, allowed_seeds=None
 
 
 def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=None, archive_validation=None,
-                  export_boxscores=False, paired_randomness=False, rng_plan=None, export_plays=False):
+                  export_boxscores=False, paired_randomness=False, rng_plan=None, export_plays=False,
+                  failure_dir=None, failure_identities=None):
     """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
     cached = finished.get(seed)
     has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
@@ -642,7 +679,8 @@ def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=Non
         return cached['outcome'], cached['players']
     outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation,
                                            export_boxscores, paired_randomness, rng_plan=rng_plan,
-                                           export_plays=export_plays)
+                                           export_plays=export_plays, failure_dir=failure_dir,
+                                           failure_identities=failure_identities)
     row = {'seed': seed, 'outcome': outcome, 'players': contribution}
     ledger.write(json.dumps(row, sort_keys=True) + '\n')
     ledger.flush()
@@ -1056,7 +1094,11 @@ def run_batch(args):
             outcome, contribution = _seed_outcome(
                 seed, finished, ledger, ref, snapshot, profile_manifest=profile_manifest,
                 archive_validation=archive_validation, export_boxscores=args.export_boxscores,
-                paired_randomness=args.paired_randomness, rng_plan=rng_plan, export_plays=args.export_plays)
+                paired_randomness=args.paired_randomness, rng_plan=rng_plan, export_plays=args.export_plays,
+                failure_dir=Path(args.out).with_suffix('.failures'),
+                failure_identities={key: ledger_header.get(key) for key in (
+                    'game_id', 'source_snapshot_sha256', 'observed_reference_sha256',
+                    'source_commit', 'playcall_artifact_sha256')})
             outcomes.append(outcome)
             if boxscore_handle is not None and seed not in exported_seed_ids and outcome.get('boxscore'):
                 boxscore_handle.write(json.dumps({'type': 'game', **outcome['boxscore']},
