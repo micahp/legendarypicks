@@ -183,6 +183,8 @@ class PairedSeedAblationTests(unittest.TestCase):
         self.assertEqual(report['error_seeds'], [10])
         self.assertEqual(len(report['pairs']), 2)
         self.assertFalse(report['valid_for_complete_game_comparison'])
+        self.assertIsNone(report['pairs'][0]['score_delta_home'])
+        self.assertIsNone(report['pairs'][0]['score_delta_away'])
 
     def test_a_different_enabled_layer_set_is_refused(self):
         altered = header(enabled=False)

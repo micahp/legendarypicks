@@ -187,6 +187,9 @@ def compare_ledgers(control_path, ablation_path, *, disabled_layer, expected_gam
             stream_mismatches.append(seed)
         control_score = (control.get('home_points'), control.get('away_points'))
         ablation_score = (ablation.get('home_points'), ablation.get('away_points'))
+        comparable_scores = (not control_error and not ablation_error
+                             and bool(control.get('valid_full_game')) and bool(ablation.get('valid_full_game'))
+                             and all(type(value) is int for value in (*control_score, *ablation_score)))
         pairs.append({
             'seed': seed,
             'control_status': control.get('status'), 'ablation_status': ablation.get('status'),
@@ -194,9 +197,9 @@ def compare_ledgers(control_path, ablation_path, *, disabled_layer, expected_gam
             'ablation_valid_full_game': bool(ablation.get('valid_full_game')),
             'control_score': list(control_score), 'ablation_score': list(ablation_score),
             'score_delta_home': (ablation_score[0] - control_score[0]
-                                 if all(type(value) is int for value in (*control_score, *ablation_score)) else None),
+                                 if comparable_scores else None),
             'score_delta_away': (ablation_score[1] - control_score[1]
-                                 if all(type(value) is int for value in (*control_score, *ablation_score)) else None),
+                                 if comparable_scores else None),
             'random_streams_match': (isinstance(control_streams, dict) and isinstance(ablation_streams, dict)
                                      and bool(control_streams.get('root_sha256')) and
                                      control_streams.get('root_sha256') == ablation_streams.get('root_sha256')),
