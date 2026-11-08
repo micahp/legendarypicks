@@ -1,0 +1,724 @@
+{
+  "games": [
+    {
+      "game_id": "2026_09_CIN_ATL",
+      "seed_ids": [
+        1,
+        2,
+        17
+      ],
+      "reference_sha256": "4c26206700a1941f9456660523461c672c7f1f9c55a23c099adc9baf472e8697",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "e1221c1d56139e61857149dbf0ed34a9c9bdd3d575a2ec3d3f26bd55c82b94e3",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "9954d5551a17b504f5384796f8b36f0ad787ab4310ec72aedbae87046e1e3c8b"
+      },
+      "ledger_sha256": "ac39344e8c68add74bf8858d7faaeffb944cb9123af8f3f666a97ad1c54eb363",
+      "boxscores_sha256": "ccdbf08d969776f1f97661156c13dafcf1470bfc4d2319935a16a565bf491094",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 20,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 23,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 17,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 31,
+          "home_points": 12,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_DEN_CAR",
+      "seed_ids": [
+        1,
+        2,
+        3
+      ],
+      "reference_sha256": "10ecdf675338a4d3eaaabb15a462515a1881dc204fb0fd314c688417365c360a",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "bf11f492bd824e6fe4ed03179448228981a1b24c8cefd1fae7e6282190d954e1",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "fa663867556414c6f8df8098ab6a3a1aa757e4d680cc6666169315aef4384ece"
+      },
+      "ledger_sha256": "1b3f9ebb6a7998840ed718ae7807c4f9848ee43e6a7da13c088a8e1cdb703963",
+      "boxscores_sha256": "ba3d4e455be58e61c8dcdb6d4e32ad411ddd0ee40fd938824c968e2de7a2d0b6",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 38,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 22,
+          "home_points": 3,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 3,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 34,
+          "home_points": 3,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_DAL_IND",
+      "seed_ids": [
+        1,
+        2,
+        82
+      ],
+      "reference_sha256": "fcad3c464026ce04372f2eab47ca516fa73857996caa60995544d9b7aab83bc4",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "726ba9af2f3e0d340af4026fcbcabcb254579fd4a2549df6c626675e95e0ca59",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "ff817ae3ac3f076d2bdc9fa3715796bd14705f5c77618e71a2de000aa332ea21"
+      },
+      "ledger_sha256": "2bdef44f01242be198e242b212be173e71a4979dd1a1f9e396b8e534e38ebdb5",
+      "boxscores_sha256": "659a116613ba72afbb3d431153108dd5bdc69fcedac47b9a879167e976e4aa9c",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 23,
+          "home_points": 10,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 30,
+          "home_points": 16,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 82,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 28,
+          "home_points": 24,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_NYJ_KC",
+      "seed_ids": [
+        1,
+        2,
+        9
+      ],
+      "reference_sha256": "6a2b895b822e3558ad83676df06461308573d861de282c550a74d6c14ede9184",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "4cc18849374e33e9fd9ede58ff25dbbe79e30f92181fff2b151ce30824d88097",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "7b079fb2016302d169fc459f0a2fb981d492b15492fe5e24fdeb0f48459e299f"
+      },
+      "ledger_sha256": "c999ee551557f3222c353a36f4c2edebb7108c01243ba839105d44a63229067b",
+      "boxscores_sha256": "3659e5035a6d6f434dadebef8e7e62de3aeea5455a6d95dba9a793820a96b974",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 16,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 40,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 9,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 31,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_DET_MIA",
+      "seed_ids": [
+        1,
+        2,
+        177
+      ],
+      "reference_sha256": "cad15379fdaecd7bf1fb88c3688b111cf96f3e45563f2b8c388e90f9b47a6461",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "85410f08ac9f775b321a89a1d6a00b7e06d3502ab942d36de92c83bd37e7e744",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "23b1030cf898400055419dc839052a3498917b0eb3d18a12659f071c217237de"
+      },
+      "ledger_sha256": "75cd7f8375e81205a9c5204b2ed40042a1b0694b6247f0ad7e5eb18c95cdcdeb",
+      "boxscores_sha256": "487ab09e9ff7c8b5572caf1b1fcf1ee8f6fd5bc808e85e0bc8ecd5113f94b4cf",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 38,
+          "home_points": 14,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 48,
+          "home_points": 18,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 177,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 32,
+          "home_points": 10,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_CLE_NO",
+      "seed_ids": [
+        1,
+        2,
+        3
+      ],
+      "reference_sha256": "3f0f699443a254ed503027dfc8e8c9687a7371a13d3d32c28755b39f084706a3",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "a5e8d460b1a0096e0d03607a4ce991a1ad1f42108dc29c4a84c56b956376695b",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "8f8934acf2b2c6a054da3e5a94d72e5f23808a601f687db3a433804c8d5dcee9"
+      },
+      "ledger_sha256": "929c6bc1d587409688ae390a39483a4def0c72bb327aea41b5cf9984ce2f171e",
+      "boxscores_sha256": "b400a8dd4964d6153d4196f26de4e3c0a15bc901a72f0bc8a6c7d79ac9e28086",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 19,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 6,
+          "home_points": 30,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 3,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 12,
+          "home_points": 23,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_NYG_PHI",
+      "seed_ids": [
+        1,
+        2,
+        197
+      ],
+      "reference_sha256": "d63d0350ad49f9c84a9c8cda59d36db233e2c40d72bc6797503d5e42e693155c",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "f7a02b01eec49a938b3ee1e98ce13a9b435262966ef12eee1504c21ad65feb9e",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "2c239854944da6bdb2e2f232c0ffc63b60f438568bc2217ee13e1d29140c8c13"
+      },
+      "ledger_sha256": "0d4a1fe3f552e97f14c756ac1fb3d4df29705325b84355003d404cbbc87eb7a6",
+      "boxscores_sha256": "656fd14fac74330b7922a41231388e5a3fb8b5b23b14347c47fa5819f17bedd8",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 29,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 13,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 197,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 3,
+          "home_points": 37,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_LA_WAS",
+      "seed_ids": [
+        1,
+        2,
+        146
+      ],
+      "reference_sha256": "9b1f22287633bf6071ff7ac4830ac7df22c9917499733b001f5fa7569191211f",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "1ed5e955eefd1d51001923cfb395fe63bd2a26caf8d36f4dff8232b75cdc86ee",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "d8371b5cb50890a24dd3aa5cc7bb6796b049dc41b23f3a6422e418540bbc27de"
+      },
+      "ledger_sha256": "8c08ff59d0f9a2e89a9b6f7b90025dd3ce822ec072f2d4cb1e899f05b981618d",
+      "boxscores_sha256": "8dccd2f2c01171efec1d3f1f208527d113b2091520012ab124ff9a42bafbbbc3",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 15,
+          "home_points": 29,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 19,
+          "home_points": 27,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 146,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 20,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_HOU_LAC",
+      "seed_ids": [
+        1,
+        2,
+        9
+      ],
+      "reference_sha256": "5e8dc9ec96f7d14270423703c05668e9087a79b9e87a1842a39b5067af4dd856",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "7232b4f18c562f60cdbd34fb9d8ec9433f377585978d9a8ee830b0533c69e56d",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "636779b8aaef81bf5598acf44ef45df4465b1f59ab1e8c8d3c60be88586fd6d2"
+      },
+      "ledger_sha256": "551b3cfbdd6ec8e760ec5e94e036e559312d7e044fb3762b5bf7f83be22223a6",
+      "boxscores_sha256": "6454ff9ff3984862a5b0f28f7ebe94da2a2b071ab67dbad388be93a8d5467963",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 17,
+          "home_points": 24,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 16,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 9,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 11,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_LV_SF",
+      "seed_ids": [
+        1,
+        2,
+        23
+      ],
+      "reference_sha256": "5b1ba327fbe9243a0070eed302abb8ab046d590886ac2af2d2384ca9e8906900",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "4ca5d4fb3fe7005a513100a2e0d6fbc6cb20c08ebc1ef767d848825505edbbd4",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "03b4a6d1a30c222a5ffbae4d7c2596dbb5049c378bb27d30fdab0d701fe46eb0"
+      },
+      "ledger_sha256": "604840919268e1da80232f0ed3e6fe6685fc1c56b1e2f0d5be2304fb5a10518e",
+      "boxscores_sha256": "f53a46ce3cf57efd68cf1db1eddc46503e98dd5f57a9997e18e02867c33ee3fe",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_overtime",
+          "valid_full_game": true,
+          "away_points": 20,
+          "home_points": 27,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 16,
+          "home_points": 28,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 23,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 14,
+          "home_points": 27,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_GB_NE",
+      "seed_ids": [
+        1,
+        2,
+        64
+      ],
+      "reference_sha256": "d0ec3404eb0713ac46b3aacee440cc2b65d49a18d6d27d5ae018fe69c850171e",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "b5a1da0dc60e759535c180fca3b1ecda50d4cbf9ad841ef45ca578bfe4f833d3",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "78a0ccb9cdc8059aa2d38e4d47144a41f774187b360f00e9bb9fdc71940909ab"
+      },
+      "ledger_sha256": "42585422df0bb907c7207ee0055958b727f5aefa1a3af752dd228cbe6cf93709",
+      "boxscores_sha256": "3842ddb748babf5406da8d0fa8d32998e777d64e702919862fb06f1f30fa0ec7",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 42,
+          "home_points": 39,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 21,
+          "home_points": 20,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 64,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 13,
+          "home_points": 31,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_ARI_SEA",
+      "seed_ids": [
+        1,
+        2,
+        196
+      ],
+      "reference_sha256": "9537387f37e87ec0e809612d957d06183da21c999f4063d90e05608a962be1b1",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "0f07cf2aa4ca96c9efe448dfce2e15bef0fbfdc331d0d27e68b3dd41a57e5253",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "a7234c44d4c24de609f136c541a96a7b7c587bae34fea7006413916275f02c1f"
+      },
+      "ledger_sha256": "e180e99cc7b2e4372590568afbc3d51b4d0317a45a67457ed182816715f7de53",
+      "boxscores_sha256": "b34fc327771cd3933a4511ce6f4be4cf6bfabcaba10d78ad282b864a648e11d6",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 27,
+          "home_points": 20,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 31,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 196,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 39,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "game_id": "2026_09_TB_CHI",
+      "seed_ids": [
+        1,
+        2,
+        3
+      ],
+      "reference_sha256": "aad4779eb46330bced4d4231d5e2a334b6fc037502a6b9566a6ecb5deb827282",
+      "rng": {
+        "model_input_sha256": "b3296735e271f82558ce70ba7ae546ec38e5b5a349dbd4b44f4a9789312dd38f",
+        "pregame_state_sha256": "9d55bf9030b54f3db098552b02293d3e938482b826a2b5b471df3b3972aa03cd",
+        "rng_protocol_file_sha256": "45cd6236e160b65622d0f87f4a10a9fd8dbd6c4786d210e2e4d611000b107706",
+        "schema": "lp.nfl.slc-rng.v2",
+        "scheme": "v2",
+        "stream_key": "stream_root_sha256 (code and artifact hashes are provenance only)",
+        "stream_root_sha256": "971c9b5d770e252969565236823c358faba75967649107aef21aa8c452179be7"
+      },
+      "ledger_sha256": "a3887c7f2f4a60612e3f8d34a26f50857dcc68c8cd897e42badd1dd95e5f4681",
+      "boxscores_sha256": "57838790214005e019366cd74e561fb8128f3a3510e52e437893d50293a3a140",
+      "rows": [
+        {
+          "seed": 1,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 14,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 2,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 35,
+          "home_points": 26,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        },
+        {
+          "seed": 3,
+          "status": "complete_regulation",
+          "valid_full_game": true,
+          "away_points": 24,
+          "home_points": 13,
+          "reconciliation": "passed",
+          "failure_record": null,
+          "error": null
+        }
+      ]
+    }
+  ],
+  "status_counts": {
+    "complete_regulation": 38,
+    "complete_overtime": 1
+  },
+  "fallback_counts": {
+    "decision_row_missing_category_A": 430,
+    "decision_row_missing_category_B": 46,
+    "decision_row_missing_category_C": 270,
+    "decision_row_missing_category_D": 408,
+    "decision_row_missing_category_E": 925,
+    "decision_row_missing_category_F": 1689,
+    "decision_row_missing_category_G": 573,
+    "decision_row_missing_category_H": 1217,
+    "decision_row_missing_category_I": 977,
+    "decision_row_missing_category_J": 2129,
+    "decision_row_missing_category_K": 1944,
+    "decision_row_missing_category_L": 1485,
+    "decision_row_missing_category_M": 2535,
+    "decision_row_missing_category_N": 1106,
+    "down_distance": 5,
+    "down_field": 48,
+    "field_zone": 6,
+    "kick decision: historical share of this situation cell (not yet modelled)": 406,
+    "no_prior_cell_event:defense:CIN:fumble_lost": 1,
+    "no_prior_cell_event:defense:DEN:fumble_lost": 1,
+    "no_prior_cell_event:defense:NO:fumble_lost": 1,
+    "no_prior_cell_event:defense:NYJ:fumble_lost": 1,
+    "no_prior_cell_event:defense:PHI:fumble_lost": 2,
+    "no_prior_cell_event:defense:SF:fumble_lost": 2,
+    "no_prior_cell_event:offense:ATL:fumble_lost": 1,
+    "no_prior_cell_event:offense:CAR:fumble_lost": 1,
+    "no_prior_cell_event:offense:CLE:fumble_lost": 1,
+    "no_prior_cell_event:offense:KC:fumble_lost": 1,
+    "no_prior_cell_event:offense:LV:fumble_lost": 2,
+    "no_prior_cell_event:offense:NYG:fumble_lost": 2,
+    "no_source_rows_at_exact_yardline": 709,
+    "no_source_rows_for_chosen_coverage": 53,
+    "no_source_rows_for_chosen_formation": 7,
+    "no_source_rows_for_current_streak": 309,
+    "no_target_identity_match_in_event_cell": 361,
+    "player_outcome_no_history_passer": 5,
+    "player_outcome_no_history_receiver": 117,
+    "player_outcome_no_history_rusher": 88
+  }
+}

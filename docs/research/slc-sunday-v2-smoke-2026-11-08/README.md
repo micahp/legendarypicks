@@ -1,0 +1,9 @@
+# Sunday slate v2 smoke, 2026-11-08
+
+The repaired engine at `090a4f05` ran three seeds for each of the 13 Sunday matchups on the fast host. All 39 produced valid completed games—38 in regulation and one in overtime—and every exported box score passed its reconciliation checks. The run used RNG v2, the full-stack profile, frozen matchup snapshots, five ordinary blocker fixes, and the separate current read-only `picks.dev.db`, not the trimmed historical database.
+
+Each matchup used seeds 1 and 2, plus one seed ID that was refused in the prior v1 historical run when available; otherwise it used seed 3. The earlier v1 failure records and the new v2 games have different execution identities, so a successful seed here does not classify or replay its older failure. No seed failed in this smoke run, so the new failure-record capture was not exercised by a naturally failing game; its intentional-failure tests separately verify capture and reload.
+
+Across the 39 games the engine recorded 17,864 fallback events, including 15,734 `decision_row_missing_category_*` events. The category filter ran on 5,044 decisions and each had at least one matched category. Multiple category misses can occur in one decision; these counts do not establish the number of affected plays or quantify accuracy against observed data. All 1,491 exported player rows had unknown roster eligibility, so passing checks do not independently establish eligibility.
+
+[results.json](results.json) retains every matchup, selected seed, status, score, reconciliation status, stream identity, and hashes of the original ledger and box-score export. The full outputs, launch script, selections, and worker logs remain at `/root/ot-sim-out/slate-v2-regression-090a4f05-2026-11-08/` on the fast host. This is a small cross-matchup smoke test, not a full 13 × 200 evaluation, an ablation baseline, or a forecast-skill claim.
