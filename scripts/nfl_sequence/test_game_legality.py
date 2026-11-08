@@ -255,6 +255,35 @@ class TyingScoreAtRegulationExpiry(unittest.TestCase):
             gl._possession_and_clock(self.record, self.record['drives'], gl._kicks_after(self.record))
 
 
+class MissedFieldGoalAtHalftime(unittest.TestCase):
+    """A saved game misses a field goal as the first half expires, then starts the second half."""
+
+    def setUp(self):
+        path = Path(__file__).resolve().parent / 'legality_fixtures' / '2026_09_ARI_SEA_dirichlet_seed31.failure.json.gz'
+        with gzip.open(path, 'rt', encoding='utf-8') as handle:
+            self.record = json.load(handle)['record']
+
+    def test_saved_complete_game_passes_full_validator(self):
+        import game_state
+        self.assertEqual(len(gl.check(self.record)), 10)
+        self.assertGreaterEqual(len(game_state.validate_game(self.record)), 10)
+
+    def test_second_half_kickoff_cannot_follow_a_miss_before_the_half_ends(self):
+        _drive(self.record, 11)['end_clock'] = 1
+        with self.assertRaisesRegex(FootballAssertionError, 'no kickoff can follow'):
+            gl._possession_and_clock(self.record, self.record['drives'], gl._kicks_after(self.record))
+
+    def test_second_half_kickoff_must_start_at_full_period_clock(self):
+        _kick(self.record, 11)['clock_before'] = 899
+        with self.assertRaisesRegex(FootballAssertionError, 'starts at 899, not 900'):
+            gl._possession_and_clock(self.record, self.record['drives'], gl._kicks_after(self.record))
+
+    def test_second_half_timeouts_are_reset(self):
+        _drive(self.record, 12)['plays'][0]['state_before']['home_timeouts'] = 2
+        with self.assertRaisesRegex(FootballAssertionError, 'starts the second half with home_timeouts'):
+            gl._possession_and_clock(self.record, self.record['drives'], gl._kicks_after(self.record))
+
+
 class OvertimeReturnTouchdown(unittest.TestCase):
     """Article 5(a): a return touchdown in overtime is a touchdown terminal scored by the defense, and only when the
     record names that drive as the return touchdown."""
