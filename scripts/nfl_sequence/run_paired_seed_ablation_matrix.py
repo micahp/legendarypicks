@@ -622,6 +622,8 @@ def main(argv=None):
         results[layer] = {
             'status': report['status'],
             'valid_for_complete_game_comparison': report['valid_for_complete_game_comparison'],
+            'disabled_layers': report['disabled_layers'],
+            'intervention_kind': report['intervention_kind'],
             'seed_count': report['seed_count'],
             'error_seeds': report['error_seeds'],
             'report': f'{arm}.comparison.json',
