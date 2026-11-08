@@ -1,0 +1,195 @@
+{
+  "path": "/tmp/picks-dal-phi-simulation-copy.db",
+  "size_bytes": 1362132992,
+  "sha256": "0c95f9cbb19025735aae072980d4ae4b58afcf92155fca022a953f682ad31673",
+  "fingerprinted_at_utc": "2026-11-08T08:00:55.640917+00:00",
+  "format": "SHA-256 of UTF-8 JSON column-name array followed by newline and one JSON row array per newline, sorted by rowid; BLOBs represented as {__blob_hex__: hex}",
+  "tables": {
+    "nfl_adp": {
+      "rows": 11618,
+      "sha256": "210ac31196d00732802eb8e8a03dce419bf2971e9bfbd07585243b62e79d0f2f",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_depth_chart": {
+      "rows": 948,
+      "sha256": "d4b150429f0c28f0ed8187c19e7933e24001d9a2ee4ea84f8fdef626b4ad04a3",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_draft_notes": {
+      "rows": 2,
+      "sha256": "60ba24df6ef2f43e3903ab0b191e3c762560c95c0c0fa8645389f75bf5066327",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_dst_stats": {
+      "rows": 544,
+      "sha256": "2a1da467263be648af8e304316a06f2f7c26841c8ecb1b8ea80bd3f1020aef38",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_elo_538": {
+      "rows": 16810,
+      "sha256": "2d99eb2c4161265a1f3bda3da3dcaa485d9fa1aa0050d2b10c47664c3d24566d",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_hist_depth_charts": {
+      "rows": 552514,
+      "sha256": "156c9de5d74c78b91a6dfd4c88111ce661f672f9163a16ffaf0489462e4adf6f",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_hist_ftn_charting": {
+      "rows": 185215,
+      "sha256": "a381e7e25bbb10736d3507196ec69d8ac3bdecf31b8c7e96b5c88830e3556437",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_hist_injuries": {
+      "rows": 90752,
+      "sha256": "3e126dfd4a942f5b2132c408108f83267410abc840c1df5738e986a7946bece7",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_hist_loads": {
+      "rows": 75,
+      "sha256": "453c8fa6ae61bfad9fc68731bef4ccdc62750cddf038b2390992a0a77eea9ed4",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_hist_participation": {
+      "rows": 478989,
+      "sha256": "c3c38e549d04d5cde8e38554cece06635811b6e5d112f0336ca0c99e1ad508ea",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_hist_player_ids": {
+      "rows": 24853,
+      "sha256": "23ddfe44b4026281d40deb683f8465cf475d9c4f96da13299b8b18972f73e835",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_hist_snap_counts": {
+      "rows": 324612,
+      "sha256": "8c2766ef551a3ba1f8101e755525ecb28db0e27620fb96103f19ae4cae0c16fd",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_line_snapshots": {
+      "rows": 123,
+      "sha256": "ca6947331d4ab6e9d4c5c04135430f58bd7490aba319d68d60dfd31bd22c8cbd",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_mock_draft_picks": {
+      "rows": 2487,
+      "sha256": "eb95277a6e965eee48c9436d57666ce5db66d30da1822c6cb9bc1cff38df4a64",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_mock_drafts": {
+      "rows": 78,
+      "sha256": "3869c82453dba60816cb6cb5636a1cad6ead044821eece84859eea6bd72a5885",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_pbp": {
+      "rows": 755678,
+      "sha256": "fc06e1ebaeeb27e0c9be8136dd6b7c73315a3a33b79fd6fdab1971076466d75a",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_player_birth_dates": {
+      "rows": 24854,
+      "sha256": "80a67d6195ef8182576cced88e2f5ad7f9ee485621a86d10cdb9707c2604a5a8",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_player_projections": {
+      "rows": 11515,
+      "sha256": "869b22303cb069624b1797bc931259e18bc8e5671e126ebcadd460772b0a1476",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_projections_superseded": {
+      "rows": 14,
+      "sha256": "8625747f44a706af56dd02a8a128759ae3337f6e5dd2239ba909c231ce2ef807",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_prop_calibration": {
+      "rows": 4,
+      "sha256": "aa6d823f844a17a655601af4a73534c704551852422325c54fed16416a47c889",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_published_fantasy_points": {
+      "rows": 1180,
+      "sha256": "53645550154f409c0ff22e985e1ed564e43393c8b88aeea7c5f10465d8d24d60",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_schedule": {
+      "rows": 4635,
+      "sha256": "4e50362cfba4159c8fa73abba7c351b8fb65fe6e6fe2eb57f3c37e654ab76cce",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_snap_counts": {
+      "rows": 59341,
+      "sha256": "2ad336ffad87fa250e7ba5eb6b333cf70b26d77a506c05a369fbafc044e2c7ea",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_snap_team_sources": {
+      "rows": 1274,
+      "sha256": "ff26a3a0095f37d0a8498a40e4800aab6a8c3919067c49f96ea2ff95afca2350",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_team_game_totals": {
+      "rows": 756,
+      "sha256": "65d8c4ffff36012b70e97bbd571807672dd6fabf2582dad4455566073970e41e",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_teams": {
+      "rows": 96,
+      "sha256": "930f66784ffb3252c1d6a15d61c32202c900cb46326e589b19fff4be86f5a685",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "nfl_transactions": {
+      "rows": 1830,
+      "sha256": "90be70691479f7abc0743a8e72c6ce06876e8e04d105d7830c329cc180dc6922",
+      "filter": "all rows",
+      "ordering": "rowid"
+    },
+    "players": {
+      "rows": 26400,
+      "sha256": "4146d6f9e48adf6488054821a0178cd5a7ba59cba63b6fe8dc3c9bfe12b12634",
+      "filter": " where lower(trim(league))='nfl'",
+      "ordering": "rowid"
+    },
+    "game_summaries": {
+      "rows": 58,
+      "sha256": "b8da4654b30cdd9b2319b03b1882c80d22c4cca823df0402e0a2a82f64d5c284",
+      "filter": " where lower(trim(league))='nfl'",
+      "ordering": "rowid"
+    },
+    "player_game_logs": {
+      "rows": 294216,
+      "sha256": "aab144c88b99f2dcda93d61752046f101f135bfa9d9d68e6ae808a2643f794f3",
+      "filter": " where lower(trim(league))='nfl'",
+      "ordering": "rowid"
+    },
+    "props": {
+      "rows": 356805,
+      "sha256": "b6fb5947eb86ed321b7da7c6ceffd68ff705eebc2dd0aa7449e34287ef3e4c63",
+      "filter": "NFL game join",
+      "ordering": "rowid"
+    }
+  }
+}
