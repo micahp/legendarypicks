@@ -392,7 +392,9 @@ def _possession_and_clock(record, drives, kicks):
                 _fail(f'{_where(nxt)} has {nxt["offense_team"]} on offense after {drive["terminal"]} '
                       f'by {drive["offense_team"]}')
         else:
-            if not _ends_regulation(drive) and not _expects_kickoff(drive):
+            starts_second_half = (kick['kind'] == 'half_start' and kick['quarter'] == 3
+                                  and (drive['end_quarter'], drive['end_clock']) == (2, 0))
+            if not _ends_regulation(drive) and not starts_second_half and not _expects_kickoff(drive):
                 _fail(f'{_where(drive)} ends with {drive["terminal"]} and no kickoff can follow it')
             _kickoff_clock(drive, kick)
             half = kick.get('half_start') if _ends_first_half(kick) else None
