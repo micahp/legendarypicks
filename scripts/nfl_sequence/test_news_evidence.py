@@ -435,5 +435,38 @@ class NewsEvidenceTests(unittest.TestCase):
             self.assertNotIn('nfl_news', source, name)
 
 
+class StatusAndDepthChartRegression(unittest.TestCase):
+    def item(self, **changes):
+        item = dict(headline='', notes='', analysis='', first_name='Adam', last_name='Randall',
+                    injury_status='', team='BAL', upcoming_game='2026_09_JAX_BAL')
+        item.update(changes)
+        return item
+
+    def codes(self, **changes):
+        return {x['class'] for x in ne.classify(self.item(**changes), {'joseph', 'smith'})}
+
+    def test_roster_and_game_designations_can_coexist(self):
+        self.assertEqual(self.codes(injury_status='IR-R', notes=
+            "Randall is officially listed as questionable for Thursday's game."),
+            {'injury_status_other', 'injury_designation'})
+
+    def test_practice_squad_ir_is_not_a_weekly_out_designation(self):
+        self.assertEqual(self.codes(team='', upcoming_game=None, injury_status='OUT', notes=
+            'The Ravens placed Randall on the practice squad injured list.'), {'injury_status_other'})
+        self.assertEqual(self.codes(team='', upcoming_game=None, injury_status='QUESTIONABLE', notes=
+            'The Ravens cut Randall from their practice squad injured list.'), set())
+
+    def test_designation_must_be_current_and_about_subject(self):
+        self.assertEqual(self.codes(notes='Joseph is officially listed as questionable for Thursday.'), set())
+        self.assertEqual(self.codes(notes='Randall will not play in Week 8.'), set())
+        self.assertEqual(self.codes(notes='Randall was questionable for Thursday last week.'), set())
+        self.assertEqual(self.codes(notes='Randall will not play in Week 9.'), {'injury_designation'})
+
+    def test_unofficial_depth_chart_is_expected_not_named(self):
+        self.assertEqual(self.codes(notes='Randall is listed as a starting receiver on the unofficial depth chart.'),
+                         {'starter_expected'})
+        self.assertEqual(self.codes(notes='Smith is listed as a starting receiver on the unofficial depth chart.'), set())
+
+
 if __name__ == '__main__':
     unittest.main()

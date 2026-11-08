@@ -44,6 +44,15 @@ NOT_CAPTURED = ('team_articles', 'team_injury_reports_as_news', 'fantasy_project
 CLASSES = ('starter_named', 'starter_expected', 'coach_confirmation_reported', 'injury_designation',
            'injury_status_other')
 GAME_DESIGNATIONS = frozenset({'OUT', 'DOUBTFUL', 'QUESTIONABLE', 'PROBABLE'})
+UNOFFICIAL_START = re.compile(
+    r'\blisted as (?:a |the )?starting\b[^.!?;]{0,90}\bunofficial depth chart\b', re.IGNORECASE)
+TEXT_DESIGNATION = re.compile(
+    r'\b(?:is (?:officially )?(?:listed|designated) (?:as )?(?:out|questionable|doubtful|probable)'
+    r'|(?:has been |is )?ruled out|will not play|won\x27t play|remains out)'
+    r'\s+(?:for |in |on )?(?:Week\s+\d+|(?:Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)\b)',
+    re.IGNORECASE)
+PRACTICE_SQUAD_IR = re.compile(
+    r'\bplaced\b[^.!?;]{0,90}\bpractice[- ]squad (?:IR|injured (?:list|reserve))\b', re.IGNORECASE)
 
 SENTENCE_SPLIT = re.compile(r'(?<=[.!?])\s+')
 CLAUSE_SPLIT = re.compile(r'\s+(?:but|however|yet|although|though|whereas)\s+|;\s*', re.IGNORECASE)
@@ -220,6 +229,9 @@ def _claim_matches(clause):
     """Return starter-claim class and source spans, with negation scoped to each claim."""
     expected = list(EXPECTED.finditer(clause))
     matches = []
+    for match in UNOFFICIAL_START.finditer(clause):
+        if not _claim_is_negated(clause, match) and not _claim_is_hypothetical(clause, match):
+            matches.append(('starter_expected', match))
     for match in NAMED.finditer(clause):
         if not _claim_is_negated(clause, match) and not _claim_is_hypothetical(clause, match):
             matches.append(('starter_named', match))
@@ -291,12 +303,29 @@ def classify(item, other_surnames=frozenset()):
     claim, while a claim nearest to another player or an ambiguous pronoun remains excluded.
     """
     found = {}
+    upcoming = bool(item.get('team')) and ('upcoming_game' not in item or bool(item['upcoming_game']))
     own_surnames = _name_tokens(item['last_name'])
     prior_entity = 'subject'  # The feed item is anchored to its Player element; named teammates override this context.
     for index, text in enumerate((item['headline'], item['notes'], item['analysis'])):
         for sentence in SENTENCE_SPLIT.split(text):
             clauses = [part.strip() for part in CLAUSE_SPLIT.split(sentence) if part.strip()]
             for clause in clauses:
+                for name, pattern in (('injury_designation', TEXT_DESIGNATION),
+                                      ('injury_status_other', PRACTICE_SQUAD_IR)):
+                    if name == 'injury_designation' and not upcoming:
+                        continue
+                    for hit in pattern.finditer(clause):
+                        prefix = clause[max(0, hit.start() - 40):hit.start()]
+                        if (re.search(r'\b(?:could|might|would|may|not)\s+(?:be\s+)?$', prefix, re.IGNORECASE)
+                                or re.search(r'\b(?:last|past|previous)\s+(?:week|season|game)\b',
+                                             clause, re.IGNORECASE)):
+                            continue
+                        week = re.search(r'\bWeek\s+(\d+)', hit.group(), re.IGNORECASE)
+                        game = item.get('upcoming_game')
+                        if week and game and int(game.split('_')[1]) != int(week.group(1)):
+                            continue
+                        if _claim_is_subject(clause, hit, own_surnames, other_surnames, prior_entity, index == 0):
+                            found.setdefault(name, sentence.strip()[:300])
                 hits = _claim_matches(clause)
                 for name, hit in hits:
                     if not _claim_is_subject(clause, hit, own_surnames, other_surnames, prior_entity, index == 0):
@@ -307,12 +336,12 @@ def classify(item, other_surnames=frozenset()):
                             and (START.search(clause) or START_ASSIGNMENT.search(clause))):
                         found.setdefault('coach_confirmation_reported', sentence.strip()[:300])
                 prior_entity = _last_mentioned_entity(clause, own_surnames, other_surnames, prior_entity)
-    classes = [{'class': name, 'span': found[name]} for name in CLASSES if name in found]
     if item['injury_status']:
         status = item['injury_status'].upper()
         name = 'injury_designation' if status in GAME_DESIGNATIONS else 'injury_status_other'
-        classes.append({'class': name, 'span': f"Injury Status={item['injury_status']}"})
-    return classes
+        if name != 'injury_designation' or upcoming:
+            found.setdefault(name, f"Injury Status={item['injury_status']}")
+    return [{'class': name, 'span': found[name]} for name in CLASSES if name in found]
 
 
 def _game_kickoffs(con, team, season):
