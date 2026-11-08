@@ -41,7 +41,7 @@ def _depth_chart_qb1(roster):
                 for p in injury_report.get('players', []) if p.get('gsis_id')}
     available = []
     for player in roster.get('players', []):
-        if player.get('pos_abb') != 'QB' or not player.get('roster_eligible', True):
+        if player.get('pos_abb') != 'QB' or player.get('roster_eligible') is False:
             continue
         availability = player.get('availability') or {}
         status = statuses.get(player.get('gsis_id'))
@@ -87,6 +87,10 @@ def _roster_index(snapshot):
                 'position': player.get('pos_abb'),
                 # tri-state like starter: a snapshot that never carried the field reports unknown, not eligible
                 'roster_eligible': None if player.get('roster_eligible') is None else bool(player['roster_eligible']),
+                'roster_status': player.get('roster_status'),
+                'active_roster': player.get('active_roster'),
+                'game_day_active': player.get('game_day_active'),
+                'eligibility_evidence': player.get('eligibility_evidence'),
                 'starter': starter,
                 'starter_basis': starter_basis,
             }
@@ -506,7 +510,7 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
             for category, fields in PLAYER_FIELDS.items() for field in fields
             if field not in ('yds', 'sack_yds')
         )
-        if meta is not None and meta['roster_eligible'] is False and has_opportunity:
+        if meta is not None and (meta['roster_eligible'] is False or meta['game_day_active'] is False) and has_opportunity:
             context = {
                 'game_id': schedule.get('game_id', 'unknown'), 'seed': int(seed), 'play_index': None,
                 'state_before': 'game_start',

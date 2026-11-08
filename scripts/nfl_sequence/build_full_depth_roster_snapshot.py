@@ -16,7 +16,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 DEPTH_GROUPS = {'3WR 1TE', 'Special Teams'}
 DEPTH_COLUMNS = ['dt', 'team', 'player_name', 'gsis_id', 'pos_grp', 'pos_abb', 'pos_rank']
-ROSTER_COLUMNS = ['team', 'week', 'game_type', 'jersey_number', 'gsis_id', 'full_name']
+ROSTER_COLUMNS = ['team', 'week', 'game_type', 'jersey_number', 'gsis_id', 'full_name', 'status']
 
 
 def sha256(path: Path) -> str:
@@ -106,7 +106,7 @@ def build(args) -> tuple[dict, dict]:
             continue
         if roster_table['team'][i] not in target_teams or not gsis_id:
             continue
-        value = (roster_table['team'][i], roster_table['jersey_number'][i])
+        value = (roster_table['team'][i], roster_table['jersey_number'][i], roster_table['status'][i])
         old = jersey_by_id.get(gsis_id)
         if old is not None and old != value:
             raise ValueError(f'conflicting week {jersey_week} roster rows for GSIS id {gsis_id}')
@@ -168,6 +168,11 @@ def build(args) -> tuple[dict, dict]:
                 'unit': 'offense' if group == '3WR 1TE' else 'special_teams' if group == 'Special Teams' else 'defense',
                 'snapshot_at': depth_date, 'source': 'nflverse_depth_charts', 'team': team,
                 'jersey_number': int(roster_entry[1]),
+                'roster_status': roster_entry[2],
+                'eligibility_evidence': {'source': 'nflverse_weekly_roster', 'week': jersey_week,
+                                         'source_sha256': by_name[roster_path.name]['sha256'],
+                                         'acquired_at_utc': by_name[roster_path.name].get('acquired_at_utc')},
+                'active_roster': None, 'game_day_active': None,
                 'starter': (group, pos, rank, gsis_id) in active,
             })
         if sum(player['starter'] for player in players) != 28:

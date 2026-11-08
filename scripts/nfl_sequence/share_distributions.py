@@ -201,7 +201,7 @@ def load(db, cutoff):
 def eligible_players(players, injury_report):
     """Players on the frozen roster who are not listed Out or Doubtful on the injury report."""
     status = {p['gsis_id']: p.get('report_status') for p in (injury_report or {}).get('players', [])}
-    return [p for p in players if p.get('roster_eligible', True)
+    return [p for p in players if p.get('roster_eligible') is not False
             and status.get(p['gsis_id']) not in INELIGIBLE_STATUS]
 
 
