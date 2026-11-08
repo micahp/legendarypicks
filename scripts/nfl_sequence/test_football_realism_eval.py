@@ -133,7 +133,7 @@ class FootballRealismDistributionEvaluation(unittest.TestCase):
     def test_reports_warning_differences_and_latest_retry_seed_with_hash_provenance(self):
         ledger = self.root / 'worker.seeds.jsonl'
         rows = [
-            {'header': {'seed_start': 0}},
+            {'header': {'seed_start': 0, 'metadata': {'game_id': '2026_08_CLE_PIT'}}},
             _outcome(0, status='validation_error'),
             _outcome(0, _boxscore(0, 24), action='pass'),
             _outcome(1, _boxscore(1, 20), action='run'),
@@ -198,6 +198,15 @@ class FootballRealismDistributionEvaluation(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'joint reference hash mismatch'):
             evaluation.evaluate([ledger], reference_dir=self.reference,
                                 joint_reference_dir=self.joint_reference, simulation_season=2026)
+
+    def test_same_seed_number_in_two_games_is_two_seeds_not_a_retry(self):
+        ledger = self.root / 'two-games.seeds.jsonl'
+        rows = [{'seed': 1, 'outcome': {'status': 'valid_complete', 'game_id': game}} for game in ('G1', 'G2')]
+        ledger.write_text(''.join(json.dumps(row) + '\n' for row in rows), encoding='utf-8')
+        latest, rows_read, duplicates, _, _ = evaluation._load_seed_ledgers([ledger])
+        self.assertEqual(2, len(latest))
+        self.assertEqual(2, rows_read)
+        self.assertEqual(0, duplicates)
 
     def test_missing_joint_and_red_zone_stats_are_not_filled_with_zero(self):
         box = _boxscore(9, 24)
