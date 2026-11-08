@@ -20,6 +20,18 @@ def artifact(fit_seasons, reference_season):
 
 
 class Refusals(unittest.TestCase):
+    def test_reference_loader_defaults_to_all_fixes_but_respects_explicit_empty(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'artifact.json'
+            path.write_text(json.dumps(artifact([2025], 2026)))
+            for supplied, expected in ((None, se.er.BLOCKER_FIXES), ((), ())):
+                with self.subTest(supplied=supplied), \
+                        patch.object(se.er, 'normalize_blocker_fixes', side_effect=RuntimeError('stop')) as normalize:
+                    kwargs = {} if supplied is None else {'blocker_fixes': supplied}
+                    with self.assertRaisesRegex(RuntimeError, 'stop'):
+                        se.load_reference('/unused', SNAPSHOT, path, **kwargs)
+                    normalize.assert_called_once_with(expected)
+
     def test_a_game_without_a_snapshot_is_refused(self):
         with self.assertRaises(ValueError):
             se.require_snapshot(None)
@@ -167,7 +179,8 @@ class PlayerShareManifest(unittest.TestCase):
                  patch.object(sd, 'load', return_value=table), \
                  patch.object(se.er, '_reference_fingerprint', return_value={'sha256': 'reference-hash'}):
                 loaded, _excluded = se.load_reference('/read-only.db', SNAPSHOT, artifact_path, dirichlet_shares=True,
-                                                       source_commit='abc123', score_clock_playcalling=False)
+                                                       source_commit='abc123', score_clock_playcalling=False,
+                                                       blocker_fixes=())
         self.assertFalse(load_ref.call_args.kwargs['playcall_player_shares'])
         self.assertIsNone(loaded.contextual_sampler.player_shares)
         self.assertEqual(loaded.contextual_sampler.share_table, table)
@@ -223,7 +236,7 @@ class PlayerOutcomeRoleManifest(unittest.TestCase):
                  patch.object(po, 'load', return_value=table):
                 loaded, _excluded = se.load_reference(
                     '/read-only.db', SNAPSHOT, artifact_path, player_outcomes=True,
-                    player_outcomes_receiver_only=True, source_commit='abc123')
+                    player_outcomes_receiver_only=True, source_commit='abc123', blocker_fixes=())
         self.assertEqual(loaded.contextual_sampler.player_outcome_roles, ('receiver',))
         self.assertEqual(loaded.contextual_sampler.player_outcome_manifest['enabled_roles'], ['receiver'])
 

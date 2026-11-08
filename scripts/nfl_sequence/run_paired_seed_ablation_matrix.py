@@ -19,6 +19,7 @@ ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 import slc_config  # noqa: E402
 import rng_protocol  # noqa: E402
+import e2_reference as er  # noqa: E402
 from paired_seed_ablation import (compare_ledgers, validate_v2_header, validate_v2_streams,
                                   _read_ledger)  # noqa: E402
 
@@ -484,7 +485,7 @@ def _write_immutable_json(path: Path, payload: dict) -> None:
     path.write_text(rendered, encoding='utf-8')
 
 
-def main(argv=None):
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--snapshot-file', required=True, type=Path)
     parser.add_argument('--playcall-artifact', required=True, type=Path)
@@ -498,10 +499,22 @@ def main(argv=None):
                         help='enabled full-stack layer to disable; defaults to the primary workload ablations')
     parser.add_argument('--enable-qb-run-role-style', action='store_true',
                         help='enable the opt-in QB run-style layer in every arm; with no --layer, include its ablation')
-    parser.add_argument('--slc-blocker-fix', dest='blocker_fixes', action='append', default=[])
+    fixes = parser.add_mutually_exclusive_group()
+    fixes.add_argument('--slc-blocker-fix', dest='blocker_fixes', action='append', choices=er.BLOCKER_FIXES,
+                       default=None, help='choose a subset of fixes; defaults to all ordinary fixes')
+    fixes.add_argument('--no-slc-blocker-fixes', action='store_true', help='explicitly disable all ordinary fixes')
     parser.add_argument('--progress-every', type=int, default=250)
     parser.add_argument('--max-simulation-errors', type=int, default=0)
     args = parser.parse_args(argv)
+    if args.no_slc_blocker_fixes:
+        args.blocker_fixes = []
+    elif args.blocker_fixes is None:
+        args.blocker_fixes = list(er.BLOCKER_FIXES)
+    return args
+
+
+def main(argv=None):
+    args = parse_args(argv)
     args.snapshot_file = args.snapshot_file.resolve()
     args.playcall_artifact = args.playcall_artifact.resolve()
     args.playcall_streak_file = args.playcall_streak_file.resolve()

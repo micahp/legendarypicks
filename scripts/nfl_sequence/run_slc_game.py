@@ -70,8 +70,10 @@ def parse_args(argv=None):
                     help='SLC research: QB, receiver and rusher event, yardage and touchdown distributions; outcomes can change team scoring')
     ap.add_argument('--player-outcomes-receiver-only', action='store_true',
                     help='research ablation: apply player-conditioned event and result weights to receivers only; requires --player-outcomes')
-    ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
-                    help='opt-in SLC research blocker fix; repeat to enable multiple fixes')
+    fixes = ap.add_mutually_exclusive_group()
+    fixes.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=None,
+                       help='choose a subset of fixes; defaults to all ordinary fixes')
+    fixes.add_argument('--no-slc-blocker-fixes', action='store_true', help='explicitly disable all ordinary fixes')
     ap.add_argument('--slc-fg-ordinary-cutoff', type=float, default=60.0,
                     help='ordinary field-goal decision maximum in yards when long_field_goal_feasibility is enabled')
     ap.add_argument('--season-adapt', action='store_true',
@@ -82,6 +84,10 @@ def parse_args(argv=None):
     ap.add_argument('--db', default=e1.DEFAULT_DB)
     ap.add_argument('--out', type=Path, required=True)
     args = ap.parse_args(argv)
+    if args.no_slc_blocker_fixes:
+        args.slc_blocker_fix = []
+    elif args.slc_blocker_fix is None:
+        args.slc_blocker_fix = list(er.BLOCKER_FIXES)
     if args.player_outcomes_receiver_only and not args.player_outcomes:
         ap.error('--player-outcomes-receiver-only requires --player-outcomes')
     if args.decision_unfiltered and not args.decision:

@@ -27,6 +27,16 @@ class SeedPartitions(unittest.TestCase):
 
 
 class RunSpecification(unittest.TestCase):
+    def test_matrix_defaults_to_all_fixes_and_allows_explicit_subset_or_none(self):
+        common = ['--snapshot-file', 'snapshot.json', '--playcall-artifact', 'artifact.json',
+                  '--playcall-streak-file', 'streak.json', '--db', 'db.sqlite', '--out-dir', 'out']
+        self.assertEqual(matrix.parse_args(common).blocker_fixes, list(matrix.er.BLOCKER_FIXES))
+        self.assertEqual(matrix.parse_args(common + ['--no-slc-blocker-fixes']).blocker_fixes, [])
+        self.assertEqual(matrix.parse_args(common + ['--slc-blocker-fix', 'blocked_kick_geometry']).blocker_fixes,
+                         ['blocked_kick_geometry'])
+        with self.assertRaises(SystemExit):
+            matrix.parse_args(common + ['--no-slc-blocker-fixes', '--slc-blocker-fix', 'blocked_kick_geometry'])
+
     def test_default_ablation_layers_are_enabled_and_independent_in_v1_full_stack(self):
         full = slc_config.resolve_profile('v1_full_stack', artifact_path='artifact', streak_file='streak')
         self.assertTrue(all(full['enabled_layers'][layer] for layer in matrix.DEFAULT_LAYERS))
