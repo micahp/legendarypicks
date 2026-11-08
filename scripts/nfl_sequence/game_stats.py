@@ -31,12 +31,15 @@ def team_stats(drives, points):
         fg_attempt_recorded = False
         fg_result_recorded = False
         t['drives'] += 1
+        t['drive_terminal_' + str(d.get('terminal') or 'unknown')] += 1
         end = _elapsed(d['end_quarter'], d['end_clock'])
         t['possession_seconds'] += end - _elapsed(d['quarter_start'], d['clock_start'])
         for play in d['plays']:
             ev, out, part = play['event_type'], play['outcome'], play['participants']
             if ev in SCRIMMAGE_EVENTS:
                 t['plays'] += 1
+            if ev == 'fumble_lost' and not part.get('rusher_id'):
+                t['other_fumble_scrimmage_plays'] += 1
             if ev in ('pass_complete', 'pass_incomplete', 'interception') and part.get('receiver_id'):
                 t['pass_tgt'] += 1
             yards = out['yards_gained'] or 0
@@ -89,7 +92,9 @@ def team_stats(drives, points):
             if not fg_result_recorded:
                 t['fg_made'] += int(d['field_goal_made'])
         if d['terminal'] == 'touchdown':
-            scorer = d.get('touchdown_scored_by') or d['offense_team']
+            scorer = d.get('touchdown_scored_by')
+            if scorer not in ('A', 'B'):
+                raise ValueError('touchdown drive missing valid touchdown_scored_by')
             scored = team(scorer)
             scored['touchdowns'] += 1
             last_play = d['plays'][-1] if d['plays'] else None
@@ -103,6 +108,17 @@ def team_stats(drives, points):
             if unassigned_overtime_offensive_td:
                 # No player row exists for this observed OT score, so exclude it from player reconciliation.
                 scored['observed_overtime_touchdowns'] += 1
+        scoring = d.get('points_scored_on_drive') or {}
+        if scoring.get('team') in ('A', 'B'):
+            scored = team(scoring['team'])
+            scored['score_ledger_points'] += int(scoring.get('points') or 0)
+            if d.get('terminal') == 'touchdown':
+                scored['touchdown_points'] += 6
+                scored['try_points'] += int(scoring.get('points') or 0) - 6
+            elif d.get('terminal') == 'safety':
+                scored['safety_points'] += int(scoring.get('points') or 0)
+            else:
+                scored['other_score_points'] += int(scoring.get('points') or 0)
     for name, pts in points.items():
         team(name)['points'] = pts
     return {name: dict(sorted(t.items())) for name, t in sorted(teams.items())}
@@ -215,6 +231,11 @@ def compute(drives, points):
         'player': players,
         'player_attribution': attribution,
         'player_note': note,
+        'player_yardage_fallbacks': {field: sum(1 for d in drives for play in d['plays']
+            if ((field == 'rushing_yards' and (play['event_type'] == 'run' or (play['event_type'] == 'fumble_lost' and play['participants'].get('rusher_id'))))
+                or (field in ('passing_yards', 'receiving_yards') and play['event_type'] == 'pass_complete'))
+            and (play['participants'].get('sampled_play_context') or {}).get(field) is None)
+            for field in ('rushing_yards', 'passing_yards', 'receiving_yards')},
     }
 
 

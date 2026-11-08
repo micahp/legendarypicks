@@ -6,12 +6,16 @@ import math
 import football_assertions
 
 
-BOX_SCHEMA = 'lp-nfl-slc-boxscore-3'
+BOX_SCHEMA = 'lp-nfl-slc-boxscore-4'
 PERIODS = ('Q1', 'Q2', 'Q3', 'Q4', 'OT')
 TEAM_FIELDS = {
     'points': 'points', 'touchdowns': 'touchdowns', 'offensive_touchdowns': 'offensive_touchdowns',
     'observed_overtime_touchdowns': 'observed_overtime_touchdowns',
-    'drives': 'drives', 'possession_seconds': 'possession_seconds', 'plays': 'plays',
+    'drives': 'drives', 'drive_window_seconds': 'possession_seconds', 'plays': 'plays',
+    'other_fumble_scrimmage_plays': 'other_fumble_scrimmage_plays',
+    'touchdown_points': 'touchdown_points', 'try_points': 'try_points',
+    'safety_points': 'safety_points', 'other_score_points': 'other_score_points',
+    'score_ledger_points': 'score_ledger_points',
     'rush_attempts': 'rush_att', 'rushing_yards': 'rush_yds', 'pass_attempts': 'pass_att',
     'completions': 'pass_comp', 'passing_yards': 'pass_yds', 'interceptions': 'interceptions',
     'targets': 'pass_tgt', 'sacks_taken': 'sacks_taken', 'sack_yards': 'sack_yds', 'punts': 'punts',
@@ -44,8 +48,10 @@ def _depth_chart_qb1(roster):
             continue
         try:
             rank = int(player.get('pos_rank'))
-        except (TypeError, ValueError):
-            continue
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"invalid QB depth rank for {player.get('gsis_id')}: {player.get('pos_rank')!r}") from exc
+        if rank <= 0:
+            raise ValueError(f"invalid QB depth rank for {player.get('gsis_id')}: {rank}")
         if rank > 0:
             available.append((rank, str(player.get('gsis_id') or ''), player))
     if not available:
@@ -112,8 +118,8 @@ def _red_zone_diagnostics(record):
             item['red_zone_touchdowns'] += 1
         if drive.get('field_goal_made') is not None:
             item['red_zone_field_goal_attempts'] += 1
-            item['red_zone_field_goals'] += 1
             if drive['field_goal_made']:
+                item['red_zone_field_goals'] += 1
                 item['red_zone_field_goals_made'] += 1
         if offensive_touchdown or drive.get('field_goal_made') is True:
             item['red_zone_scoring_drives'] += 1
@@ -170,7 +176,10 @@ def _period_label(value):
 def _period_time(quarter, clock):
     """Return elapsed game seconds for a quarter/clock pair when both are known."""
     try:
-        return (int(quarter) - 1) * 900 + (900 - int(clock))
+        q, c = int(quarter), int(clock)
+        if q not in (1, 2, 3, 4, 5) or not 0 <= c <= (600 if q == 5 else 900):
+            return None
+        return 3600 + (600 - c) if q == 5 else (q - 1) * 900 + (900 - c)
     except (TypeError, ValueError):
         return None
 
@@ -185,9 +194,9 @@ def _play_period_seconds(play, period):
     except (TypeError, ValueError):
         return 0
     if start is None or end is None or end < start:
-        return 0
+        return None
     period_start = (quarter_number - 1) * 900
-    period_end = quarter_number * 900
+    period_end = 4200 if quarter_number == 5 else quarter_number * 900
     return max(0, min(end, period_end) - max(start, period_start))
 
 
@@ -242,6 +251,8 @@ def _quarter_by_quarter(record, snapshot):
             complete = False
         last_state = ((plays[-1].get('state_after') or {}) if plays else {})
         end_period = _period_label(drive.get('end_quarter', last_state.get('quarter')))
+        if start_period is None or end_period is None:
+            complete = False
         scoring = drive.get('points_scored_on_drive')
         scoring_team = team_by_side.get(scoring.get('team')) if isinstance(scoring, dict) else None
         try:
@@ -316,18 +327,28 @@ def _quarter_by_quarter(record, snapshot):
                 'plays': period_plays,
                 'terminal': drive.get('terminal') if last_is_drive_end else 'period_segment',
                 'field_goal_made': None,
+                'touchdown_scored_by': drive.get('touchdown_scored_by'),
             }
+            # Fragment elapsed time is calculated separately with checked clocks.
+            fragment.update(quarter_start=1, clock_start=900, end_quarter=1, end_clock=900)
             calculated = game_stats.team_stats([fragment], {})
             calculated_side = calculated.get(side, {})
             line = team_stats[offense_team][label]
             # TEAM_FIELDS includes `plays`; the drive summary separately counts
             # all recorded events, including kicks, under its `plays` field.
             for output_name, source_name in TEAM_FIELDS.items():
-                if output_name in ('points', 'drives', 'possession_seconds'):
+                if output_name in ('points', 'drives', 'drive_window_seconds'):
                     continue
                 line[output_name] = line.get(output_name, 0) + int(calculated_side.get(source_name, 0) or 0)
-            line['possession_seconds'] = line.get('possession_seconds', 0) + sum(
-                _play_period_seconds(play, label) for play in period_plays)
+            seconds = [_play_period_seconds(play, label) for play in period_plays]
+            if any(value is None for value in seconds):
+                complete = False
+                line['recorded_play_clock_seconds'] = None
+                play_stats_complete_by_period[label] = False
+                if 'invalid_play_clock' not in play_stats_incomplete_reasons[label]:
+                    play_stats_incomplete_reasons[label].append('invalid_play_clock')
+            elif line.get('recorded_play_clock_seconds', 0) is not None:
+                line['recorded_play_clock_seconds'] = line.get('recorded_play_clock_seconds', 0) + sum(seconds)
             drive_summary[offense_team][label]['plays'] += len(period_plays)
             drive_summary[offense_team][label]['net_yards'] += sum(
                 int((play.get('outcome') or {}).get('yards_gained') or 0) for play in period_plays)
@@ -359,9 +380,14 @@ def _quarter_by_quarter(record, snapshot):
             line = team_stats[team][period]
             for field in TEAM_FIELDS:
                 line.setdefault(field, 0)
+            # Score components are a game ledger, not attributed to fragments here.
+            for field in ('touchdown_points', 'try_points', 'safety_points', 'other_score_points', 'score_ledger_points'):
+                line.pop(field, None)
             line['drives'] = drive_summary[team][period]['drives_started']
             line.setdefault('plays', 0)
-            line.setdefault('possession_seconds', 0)
+            line['possession_seconds'] = None
+            line['drive_window_seconds'] = None
+            line.setdefault('recorded_play_clock_seconds', 0)
             # Period scoring belongs to the team that scored; drive offense and scoring team can differ on returns/safeties.
             line['points'] = points_by_team[team][period]
 
@@ -400,7 +426,8 @@ def realism_export(outcome, record):
     `lineup` is the V2 lineup summary in outcome['playcall'] (team snaps, player snaps, groups, short snaps, cell fallbacks),
     or None when the participation field did not run. Read-only: nothing here feeds back into the simulation."""
     return {'schema': REALISM_SCHEMA, 'flag': '--export-plays', 'plays': play_rows(record),
-            'lineup': (outcome.get('playcall') or {}).get('lineup')}
+            'lineup': (outcome.get('playcall') or {}).get('lineup'),
+            'lineup_semantics': 'player_snaps counts modeled RB/FB/WR/TE lineup appearances only, not full player snaps; production is selected independently.'}
 
 
 def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_validation=None):
@@ -419,7 +446,16 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
     for side, (home_away, team_code) in side_metadata.items():
         source = team_stats.get(side, {})
         values = {field: _int_or_zero(source.get(key)) for field, key in TEAM_FIELDS.items()}
+        if 'player_yardage_fallbacks' not in stats:
+            for field in ('touchdown_points', 'try_points', 'safety_points', 'other_score_points', 'score_ledger_points', 'other_fumble_scrimmage_plays'):
+                values[field] = None  # Older records did not carry these components.
         values['points'] = (record or {}).get('points', {}).get(side)
+        values['possession_seconds'] = None
+        values['drive_terminals'] = {}
+        for drive in (record or {}).get('drives', []):
+            if drive.get('offense_team') == side:
+                terminal = drive.get('terminal') or 'unknown'
+                values['drive_terminals'][terminal] = values['drive_terminals'].get(terminal, 0) + 1
         values['red_zone'] = red_zone.get(side, {'red_zone_trips': 0, 'red_zone_plays': 0,
                                                   'red_zone_touchdowns': 0, 'red_zone_field_goals': 0,
                                                   'red_zone_field_goal_attempts': 0,
@@ -496,6 +532,20 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         'status': _box_status(outcome),
         'exact_layer_configuration': profile_manifest['enabled_layers'],
         'player_attribution_mode': attribution or 'unavailable',
+        'player_note': stats.get('player_note'),
+        'player_yardage_fallbacks': stats.get('player_yardage_fallbacks'),
+        'field_semantics': {
+            'targets': 'Assigned receivers on pass attempts; throwaways and spikes are not modeled, so targets generally equal attempts.',
+            'possession_seconds': 'Unavailable; drive windows exclude kickoff and free-kick time.',
+            'drive_window_seconds': 'Elapsed time between drive start and end; not time of possession.',
+            'sack_yards': 'Signed yards, normally negative.',
+            'starter': 'Frozen depth-chart role, not evidence of playing time.',
+            'lineup_player_snaps': 'Modeled RB/FB/WR/TE lineup appearances only; QB and linemen excluded and production chosen independently.',
+            'observed_overtime_touchdowns': 'Offensive touchdowns on observed overtime drives without play or player attribution.',
+            'red_zone_field_goals': 'Made field goals; alias of red_zone_field_goals_made.',
+        },
+        'realism': {'lineup': (outcome.get('playcall') or {}).get('lineup'),
+                    'lineup_semantics': 'Skill-position lineup appearances only; production is selected independently.'},
         'reconciliation': None,
         'points_by_period': quarterly['points_by_team'],
         'quarter_scoring_complete': quarterly['scoring_complete'],
@@ -525,12 +575,14 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
 def _box_status(outcome):
     if outcome.get('valid_full_game'):
         return 'valid_complete'
-    if outcome.get('tied_at_regulation_end'):
-        return 'regulation_tie'
     if outcome.get('status') in ('simulation_error', 'validation_error'):
         return 'error'
     if outcome.get('blocker'):
         return 'blocked'
+    if outcome.get('complete_game'):
+        return 'complete_unverified'
+    if outcome.get('tied_at_regulation_end'):
+        return 'regulation_tie'
     return 'incomplete'
 
 
@@ -560,6 +612,16 @@ def reconcile_boxscore(boxscore, *, strict):
                   'fumbles_lost': 'fumbles_lost', 'turnovers': 'turnovers'}
         mismatches = {key: {'players': sums[key], 'team': team_stats[stat]}
                       for key, stat in checks.items() if sums[key] != team_stats[stat]}
+        score = team_stats.get('score_ledger_points')
+        if score is not None and team_stats.get('points') is not None and score != team_stats['points']:
+            mismatches['score_ledger_points'] = {'ledger': score, 'points': team_stats['points']}
+        other = team_stats.get('other_fumble_scrimmage_plays')
+        if other is not None:
+            components = team_stats['rush_attempts'] + team_stats['pass_attempts'] + team_stats['sacks_taken'] + other
+            if components != team_stats['plays']:
+                mismatches['scrimmage_play_components'] = {'components': components, 'plays': team_stats['plays']}
+        if sum(team_stats.get('drive_terminals', {}).values()) != team_stats['drives']:
+            mismatches['drive_terminals'] = {'terminals': team_stats.get('drive_terminals'), 'drives': team_stats['drives']}
         if team_stats['completions'] > team_stats['pass_attempts']:
             mismatches['completions_exceed_attempts'] = {
                 'completions': team_stats['completions'], 'attempts': team_stats['pass_attempts']}
@@ -650,7 +712,10 @@ def aggregate_boxscores(boxscores, requested_games=None):
         lines = [line for box in valid for line in box['teams'] if line['team'] == team]
         fields = sorted({field for line in lines for field, value in line['stats'].items()
                          if isinstance(value, (int, float)) and not isinstance(value, bool)})
-        team_stats[team] = {field: _distribution([line['stats'][field] for line in lines]) for field in fields}
+        team_stats[team] = {field: _distribution([line['stats'][field] for line in lines
+                                                  if isinstance(line['stats'].get(field), (int, float))
+                                                  and not isinstance(line['stats'].get(field), bool)])
+                            for field in fields}
         team_stats[team]['scoring_frequency'] = sum(line['stats']['points'] > 0 for line in lines) / len(lines)
         red_fields = ('red_zone_trips', 'red_zone_plays', 'red_zone_touchdowns', 'red_zone_field_goals',
                       'red_zone_field_goal_attempts', 'red_zone_field_goals_made', 'red_zone_scoring_drives')
@@ -699,7 +764,7 @@ def aggregate_boxscores(boxscores, requested_games=None):
         'unique_seeds': len(unique), 'duplicate_ledger_rows': duplicates,
         'valid_complete_games': n_valid, 'coverage': n_valid / requested_games if requested_games else None,
         'status_counts': {status: sum(box['status'] == status for box in unique)
-                          for status in ('valid_complete', 'regulation_tie', 'incomplete', 'blocked', 'error')},
+                          for status in ('valid_complete', 'complete_unverified', 'regulation_tie', 'incomplete', 'blocked', 'error')},
         'game': {key: _distribution(values) for key, values in game_values.items()},
         'winner_probability': {key: count / n_valid if n_valid else None for key, count in winners.items()},
         'scoring_frequency': {key: count / n_valid if n_valid else None for key, count in scoring.items()},

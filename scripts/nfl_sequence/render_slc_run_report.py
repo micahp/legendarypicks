@@ -28,7 +28,7 @@ OUTPUT_FILES = ('summary.json', 'report.md', 'team-stats.csv', 'player-stats.csv
                 'drive-summaries.csv', 'drive-aggregate-summary.csv', 'quarter-drive-summary.csv')
 CSV_DEFAULT_COLUMNS = {
     'team-stats.csv': ('team', 'metric', 'mean', 'median', 'sample_n'),
-    'player-stats.csv': ('team', 'player_id', 'name', 'position', 'starter', 'metric', 'mean', 'median', 'sample_n'),
+    'player-stats.csv': ('team', 'player_id', 'name', 'position', 'starter', 'starter_basis', 'attribution', 'metric', 'mean', 'median', 'sample_n'),
     'quarter-scores.csv': ('team', 'period', 'mean', 'median', 'sample_n'),
     'quarter-team-stats.csv': ('team', 'period', 'metric', 'mean', 'median', 'sample_n'),
     'quarter-player-stats.csv': ('team', 'player_id', 'name', 'position', 'period', 'metric', 'mean', 'median', 'sample_n'),
@@ -158,7 +158,7 @@ def _record_for(records, seed):
 
 
 def _compact_player(player):
-    keep = ('stable_player_id', 'player_id', 'name', 'team', 'position', 'starter')
+    keep = ('stable_player_id', 'player_id', 'name', 'team', 'position', 'starter', 'starter_basis', 'attribution')
     compact = {key: player[key] for key in keep if key in player}
     for category, fields in PLAYER_METRICS.items():
         source = player.get(category)
@@ -217,7 +217,7 @@ def _set_outcome(records, outcome, priority):
     if priority >= row['priorities']['outcome']:
         row['outcome'] = {key: outcome[key] for key in (
             'seed', 'status', 'valid_full_game', 'complete_game', 'blocker', 'error',
-            'boxscore_error', 'final_tie', 'tied', 'home_points', 'away_points') if key in outcome}
+            'boxscore_error', 'final_tie', 'tied', 'home_points', 'away_points', 'playcall') if key in outcome}
         row['priorities']['outcome'] = priority
     box = outcome.get('boxscore')
     if isinstance(box, dict):
@@ -473,6 +473,14 @@ def _analyze(path: Path):
             if outcome.get('final_tie') or outcome.get('tied') or outcome.get('status') == 'complete_overtime_tie':
                 final_ties += 1
 
+    fallback_counts = defaultdict(int)
+    fallback_seeds = 0
+    for row in records.values():
+        playcall = (row.get('outcome') or {}).get('playcall')
+        if isinstance(playcall, dict) and isinstance(playcall.get('fallback_events'), dict):
+            fallback_seeds += 1
+            for name, count in playcall['fallback_events'].items():
+                fallback_counts[name] += int(count)
     status_counts = {key: statuses.get(key, 0) for key in ('success', 'blocked', 'error', 'incomplete')}
     scores_by_team = defaultdict(list)
     team_values = defaultdict(list)
@@ -489,11 +497,17 @@ def _analyze(path: Path):
     quarter_complete_games = 0
     period_play_stats_complete_games = Counter()
 
+    terminal_names = {name for _, box in successful for line in box.get('teams') or []
+                      for name in ((line.get('stats') or {}).get('drive_terminals') or {})}
     for seed, box in successful:
         teams = box.get('teams') or []
         for team_line in teams:
             team = str(team_line.get('team') or team_line.get('team_code') or 'unknown')
-            for metric, value in _numeric_leaves(team_line.get('stats') or {}):
+            stats_for_export = dict(team_line.get('stats') or {})
+            if isinstance(stats_for_export.get('drive_terminals'), dict):
+                stats_for_export['drive_terminals'] = {name: stats_for_export['drive_terminals'].get(name, 0)
+                                                       for name in terminal_names}
+            for metric, value in _numeric_leaves(stats_for_export):
                 if metric.startswith('red_zone.'):
                     metric = 'red_zone_' + metric.split('.', 1)[1]
                 team_values[(team, metric)].append(value)
@@ -513,6 +527,7 @@ def _analyze(path: Path):
             player_meta.setdefault(key, {
                 'player_id': player_id, 'name': player.get('name') or '', 'team': team,
                 'position': player.get('position') or '', 'starter': player.get('starter'),
+                'starter_basis': player.get('starter_basis'), 'attribution': player.get('attribution'),
             })
             values = _player_metric_values(player)
             for metric, value in values.items():
@@ -655,6 +670,7 @@ def _analyze(path: Path):
         'final_tie_count': final_ties, 'boxscore_games': boxscore_count,
         'scored_games': len(successful), 'scores': score_summary,
         'blockers': blocker_rows, 'errors': error_rows,
+        'fallback_events': dict(sorted(fallback_counts.items())), 'fallback_seeds_observed': fallback_seeds,
         'player_stats': player_rows, 'team_stats': team_rows,
         'period_scores': period_score_rows, 'period_score_games': quarter_data_games,
         'quarter_scoring_complete_games': quarter_complete_games,
@@ -740,6 +756,9 @@ def render_markdown(results):
         for label in ('success', 'blocked', 'error', 'incomplete'):
             lines.append(f"| {label.title()} | {result['status_counts'][label]} |")
         lines.append(f"| Final overtime ties | {result['final_tie_count']} |")
+        lines.extend(['', f"Fallback counters available for {result.get('fallback_seeds_observed', 0)} seeds; missing counters are unknown.",
+                      f"Fallback events: {result.get('fallback_events') or {}}",
+                      'Success includes completed games with unverified inputs. Player statistics are sampled allocations; starter is a frozen depth-chart role. Targets assign a receiver to every modeled pass attempt. Lineup appearances cover skill positions only and are not full snaps.'])
         lines.extend(['', '### Scores', '', '| Team | Mean points | Median points | Games |', '|---|---:|---:|---:|'])
         for team, summary in sorted(result['scores'].items()):
             lines.append(f"| {team} | {_format(summary['mean'])} | {_format(summary['median'])} | {summary['sample_n']} |")

@@ -509,7 +509,7 @@ def _build_diagnostic_report(args, phase_dir, candidates, classes, artifact_sha,
             metric_game_deltas.setdefault(f'scoring_frequency:{key}', []).append(delta)
 
         teams = sorted({line['team'] for box in s0_boxes + slc_boxes for line in box['teams']})
-        team_fields = ('points', 'touchdowns', 'drives', 'possession_seconds', 'plays', 'rush_attempts',
+        team_fields = ('points', 'touchdowns', 'drives', 'drive_window_seconds', 'plays', 'rush_attempts',
                        'rushing_yards', 'pass_attempts', 'completions', 'passing_yards', 'interceptions',
                        'targets', 'sacks_taken', 'sack_yards', 'punts', 'field_goal_attempts',
                        'field_goals_made', 'turnovers', 'fumbles_lost', 'turnovers_on_downs',
