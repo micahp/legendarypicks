@@ -127,5 +127,31 @@
    "built_at_utc": "2026-11-07T22:16:59Z",
    "kickoff_utc": "2026-11-09T01:20:00Z"
   }
- ]
+ ],
+ "historical_fallback_annotation": {
+  "note": "Historical annotation of the existing smoke table from archived per-seed playcall traces; no new simulation was run. Original 18 columns retain their recorded values.",
+  "source_table_sha256_before_annotation": "08374752f1ed9bf9ccf3459587f0ea1b26384e87d34e96f4307ae5ab62c949dd",
+  "annotated_table_sha256": "c11486f2b6f842c3b44d551a68410a09df833db694fef9b22f7804c53bb3a93c",
+  "source_seed_sha256": {
+   "smoke-runs/out_2026_09_ARI_SEA.seeds.jsonl": "54758929b0e1b53b44ac5f4f1ddc124b8f076556d5239be952d1797a261954d4",
+   "smoke-runs/out_2026_09_CIN_ATL.seeds.jsonl": "faef5633938f92c9b14e92856839c52cefa8943a12f19ad81bcd50089e55234b",
+   "smoke-runs/out_2026_09_CLE_NO.seeds.jsonl": "076821829ce696cef170441337693493099abd70ee90c2055eda537ad1b4bae8",
+   "smoke-runs/out_2026_09_DAL_IND.seeds.jsonl": "555714745d29def2bb011bc916ee79783be2d993205d4c1baeb6b79760056a63",
+   "smoke-runs/out_2026_09_DEN_CAR.seeds.jsonl": "60c5e15f458b859393656d3965290902fc0cec2ba89ae7055c21fd8bb7f84a5b",
+   "smoke-runs/out_2026_09_DET_MIA.seeds.jsonl": "cd9a5be055267d02c667602ad1f5cf08d9a3e4410873325bab1660e43a20f370",
+   "smoke-runs/out_2026_09_GB_NE.seeds.jsonl": "699b0aa50c99a2508c0aaf918b726acdf810db174a6cacd9c41f8ce683c9279c",
+   "smoke-runs/out_2026_09_HOU_LAC.seeds.jsonl": "2dbade9302c275f25fa30b6c10afe46784dd9332a6d2d2e4d93413eed058b26b",
+   "smoke-runs/out_2026_09_LA_WAS.seeds.jsonl": "ae34d16199eeb1dbe5f221ac9a7a18a07592fd49cc7db9098452a2c5b416d635",
+   "smoke-runs/out_2026_09_LV_SF.seeds.jsonl": "f55e8b36a0ec4c76dbea85618b1465fa736d7d5eeddca751e256dc76ca09a364",
+   "smoke-runs/out_2026_09_NYG_PHI.seeds.jsonl": "5d8d6e2b8de851e0e4b2f3d1014c6d2ebd96efcba451778c5bb3b39fc472f1d0",
+   "smoke-runs/out_2026_09_NYJ_KC.seeds.jsonl": "98526d8ea9584d7502bd76cc250444db89bc3159d1d3c387abf3857c8c7c29f4",
+   "smoke-runs/out_2026_09_TB_CHI.seeds.jsonl": "5c5e1da641e30977d01a06138ef430656c1d9e99bd5eb085b1256142483608ad"
+  },
+  "command": "/root/legendarypicks/backend/venv/bin/python scripts/nfl_sequence/render_slc_run_report.py --annotate-smoke-table docs/research/slc-sunday-smoke-2026-11-08/smoke-table.csv --seed-dir docs/research/slc-sunday-smoke-2026-11-08/smoke-runs",
+  "fields": {
+   "fallback_event_count": "Sum of archived playcall fallback event counts for the sole seed.",
+   "fallback_kind_count": "Number of distinct archived fallback event keys for the sole seed.",
+   "fallback_events_json": "Archived fallback event counts by kind."
+  }
+ }
 }

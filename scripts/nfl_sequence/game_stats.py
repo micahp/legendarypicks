@@ -231,6 +231,11 @@ def compute(drives, points):
         'player': players,
         'player_attribution': attribution,
         'player_note': note,
+        'team_stat_semantics': {
+            'possession_seconds': 'Sum of elapsed drive windows; excludes kickoff and free-kick time and is not time of possession.',
+            'try_points': 'Touchdown drive ledger points above six; not a try-attempt count.',
+            'other_score_points': 'Non-touchdown, non-safety score-ledger points, including field goals.',
+        },
         'player_yardage_fallbacks': {field: sum(1 for d in drives for play in d['plays']
             if ((field == 'rushing_yards' and (play['event_type'] == 'run' or (play['event_type'] == 'fumble_lost' and play['participants'].get('rusher_id'))))
                 or (field in ('passing_yards', 'receiving_yards') and play['event_type'] == 'pass_complete'))

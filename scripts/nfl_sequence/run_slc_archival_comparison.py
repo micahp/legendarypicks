@@ -557,6 +557,9 @@ def _build_diagnostic_report(args, phase_dir, candidates, classes, artifact_sha,
                 'name': (b or a or {}).get('name'), 'position': (b or a or {}).get('position'),
                 's0': a.get('statistics') if a else None, 'slc_v1_full_stack': b.get('statistics') if b else None,
                 'identity_comparable': a is not None and b is not None,
+                'attribution_modes': {'s0': a.get('attribution_modes') if a else None,
+                                      'slc_v1_full_stack': b.get('attribution_modes') if b else None},
+                'attribution_note': 'Player lines are role allocations, not a complete lineup or independent performance projections.',
             })
         snapshot = _read_json(snapshot_pins[game_id]['path'])
         per_game.append({
