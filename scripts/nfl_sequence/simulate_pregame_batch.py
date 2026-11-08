@@ -1330,6 +1330,8 @@ def main(argv=None):
                          'the weeks before the game. Omit for the S0 control')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=None,
                     help='SLC blocker fix; repeat to choose a subset. Default: all of them (see --no-slc-blocker-fixes)')
+    ap.add_argument('--ablation-restore-sack-mass', action='store_true',
+                    help='ablation A: substitute sacks for incomplete passes at the observed cell rate (requires --rng-protocol v2)')
     ap.add_argument('--no-slc-blocker-fixes', action='store_true',
                     help='run without the blocker fixes, to reproduce the runs made before they were the default')
     ap.add_argument('--slc-fg-ordinary-cutoff', type=float, default=60.0,
@@ -1379,6 +1381,11 @@ def main(argv=None):
     elif args.slc_blocker_fix is None:
         # The fixes need the play-call artifact, so a run without one keeps the pre-fix behaviour (no fixes).
         args.slc_blocker_fix = list(er.BLOCKER_FIXES) if args.playcall_artifact else []
+    if args.ablation_restore_sack_mass:
+        if args.rng_protocol != rng_protocol.V2:
+            # v1 keys each seed's stream on the resealed snapshot and the enabled fixes, so the two arms would not share draws
+            ap.error('--ablation-restore-sack-mass (ablation A) requires --rng-protocol v2 for a paired comparison')
+        args.slc_blocker_fix = list(args.slc_blocker_fix or []) + ['restore_sack_mass']
     if args.seed_list_file:
         try:
             selection = seed_selection.load_seed_selection(args.seed_list_file)
