@@ -1,0 +1,83 @@
+{
+ "manifest": {
+  "database": "/root/legendarypicks/backend/data/picks.dev.db",
+  "fit": {
+   "phi_c": 7.542234,
+   "phi_interval": [
+    6.91831,
+    8.081649
+   ],
+   "prior_team_games": 544
+  },
+  "git_commit": "1b14abb60ecc3cd279dc251d5d21364e6983115a",
+  "label": "exploratory: no pregame injury or roster data; players are those with earlier usage for the team",
+  "last_week": null,
+  "parameters": {
+   "BOOTSTRAP": 2000,
+   "FLOOR": 0.01,
+   "INTERVAL_DRAWS": 300,
+   "N0": 4.0,
+   "OTHER_WEIGHT": 0.02,
+   "RANK_CAP": 6,
+   "first_pooled_season": 2022
+  },
+  "role": "carry",
+  "script_sha256": "6836ad668e021a1b1df56f11cc2763788b7fc75f87764ed297f62645958cc788",
+  "season": 2025,
+  "seed": 0
+ },
+ "summary": {
+  "models": {
+   "A": {
+    "interval_80_coverage_all_players": 0.9033546876076324,
+    "interval_80_coverage_main_players": 0.6122082585278277,
+    "mean_abs_share_error": 0.045681165262826944,
+    "mean_nll_per_team_game": 19.124487454288186,
+    "top_player_hit_rate": 0.49816176470588236
+   },
+   "B": {
+    "interval_80_coverage_all_players": 0.8419783701866776,
+    "interval_80_coverage_main_players": 0.17736598279285243,
+    "mean_abs_share_error": 0.0517640598293256,
+    "mean_nll_per_team_game": 51.34860860366808,
+    "top_player_hit_rate": 0.29411764705882354
+   },
+   "C": {
+    "interval_80_coverage_all_players": 0.9064545016187917,
+    "interval_80_coverage_main_players": 0.6904761904761905,
+    "mean_abs_share_error": 0.04248583288547408,
+    "mean_nll_per_team_game": 18.40715426116296,
+    "top_player_hit_rate": 0.49816176470588236
+   },
+   "D": {
+    "interval_80_coverage_all_players": 0.9441344630433285,
+    "interval_80_coverage_main_players": 0.7573474001507159,
+    "mean_abs_share_error": 0.0326242584311925,
+    "mean_nll_per_team_game": 14.12383041068527,
+    "top_player_hit_rate": 0.6893382352941176
+   }
+  },
+  "other_share_of_opportunities": 0.03352112676056338,
+  "paired_nll_vs_C": {
+   "A": {
+    "games": 272,
+    "hi": 0.8039849890305549,
+    "lo": 0.6289083963431338,
+    "mean": 0.717333193125223
+   },
+   "B": {
+    "games": 272,
+    "hi": 35.01064040782125,
+    "lo": 31.012005487815987,
+    "mean": 32.9414543425052
+   },
+   "D": {
+    "games": 272,
+    "hi": -3.915560110851083,
+    "lo": -4.667288000502042,
+    "mean": -4.28332385047769
+   }
+  },
+  "team_games": 544
+ }
+}
