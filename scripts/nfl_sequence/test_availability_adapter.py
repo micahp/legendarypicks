@@ -97,13 +97,16 @@ class AvailabilityAdapter(unittest.TestCase):
         players[3]['roster_status'] = 'INA'
         path = _write_avail(self.store, players)
         doc = json.loads(Path(path).read_text())
-        doc['provenance'] = {'roster_acquired_at_utc': FROZEN, 'roster_file_sha256': 'a' * 64}
+        doc['provenance'] = {'roster_acquired_at_utc': FROZEN, 'roster_file_sha256': 'a' * 64,
+                             'roster_file': 'roster_weekly.parquet'}
         body = {k: v for k, v in doc.items() if k not in ('snapshot_id', 'content_sha256')}
         digest = _sha(body)
         doc['content_sha256'] = digest
         doc['snapshot_id'] = doc['snapshot_id'][:-10] + digest[:10]
         Path(path).write_text(json.dumps(doc))
         snapshot = _snapshot()
+        snapshot['roster_snapshot_source']['provenance']['source_artifacts'] = [
+            {'name': 'roster_weekly.parquet', 'sha256': 'a' * 64, 'acquired_at_utc': FROZEN}]
         block = adapter.apply(snapshot, path)
         players_after = snapshot['rosters']['home']['players']
         self.assertFalse(any(p['gsis_id'] == 'gb-003' for p in players_after))
@@ -112,9 +115,41 @@ class AvailabilityAdapter(unittest.TestCase):
         self.assertIsNone(qb['game_day_active'])
         self.assertEqual(qb['eligibility_evidence']['source_sha256'], 'a' * 64)
         self.assertEqual(block['removed'][0]['decision'], 'exclude_inactive_roster')
+        summary = adapter.coverage(snapshot)
+        self.assertEqual(summary['verified_roster_coverage'], 61)
+        self.assertEqual(summary['unknown_roster_coverage'], 0)
+        self.assertEqual(summary['verified_game_day_coverage'], 0)
+        self.assertEqual(summary['simulation_exclusions_by_reason'], {'exclude_inactive_roster': 1})
+
+    def test_unverified_roster_exclusion_is_not_applied(self):
+        players = _avail_players('GB', 'gb') + _avail_players('CAR', 'car')
+        players[3].update(roster_status='RES', include=False, decision='exclude_roster_status')
+        path = _write_avail(self.store, players)
+        snapshot = _snapshot()
+        adapter.apply(snapshot, path)
+        player = next(p for p in snapshot['rosters']['home']['players'] if p['gsis_id'] == 'gb-003')
+        self.assertIsNone(player['roster_eligible'])
+        self.assertEqual(player['availability']['decision'], 'include_unverified_roster_status')
+        self.assertEqual(adapter.coverage(snapshot)['unknown_roster_coverage'], 62)
+
+    def test_conflicting_pinned_roster_hash_is_refused(self):
+        players = _avail_players('GB', 'gb') + _avail_players('CAR', 'car')
+        path = _write_avail(self.store, players)
+        doc = json.loads(Path(path).read_text())
+        doc['provenance'] = {'roster_file': 'roster_weekly.parquet', 'roster_file_sha256': 'a' * 64}
+        body = {k: v for k, v in doc.items() if k not in ('snapshot_id', 'content_sha256')}
+        digest = _sha(body)
+        doc['content_sha256'] = digest
+        doc['snapshot_id'] = doc['snapshot_id'][:-10] + digest[:10]
+        Path(path).write_text(json.dumps(doc))
+        snapshot = _snapshot()
+        snapshot['roster_snapshot_source']['provenance']['source_artifacts'] = [
+            {'name': 'roster_weekly.parquet', 'sha256': 'b' * 64}]
+        with self.assertRaisesRegex(ValueError, 'hashes differ'):
+            adapter.apply(snapshot, path)
 
     def test_removed_starter_gives_role_to_best_backup(self):
-        path = _write_avail(self.store, _avail_players('GB', 'gb', {'gb-003': ('exclude_roster_status', None,
+        path = _write_avail(self.store, _avail_players('GB', 'gb', {'gb-003': ('exclude_out', 'Out',
                                                                              [], False)}) + _avail_players('CAR', 'car'))
         snapshot = _snapshot()
         block = adapter.apply(snapshot, path)
@@ -129,7 +164,7 @@ class AvailabilityAdapter(unittest.TestCase):
 
     def test_promoted_qb_is_found_as_the_passer(self):
         # QB1 (gb-000) is removed; the QB2 backup (gb-028) must take rank 1 so the simulator finds one passer.
-        path = _write_avail(self.store, _avail_players('GB', 'gb', {'gb-000': ('exclude_roster_status', None, [],
+        path = _write_avail(self.store, _avail_players('GB', 'gb', {'gb-000': ('exclude_out', 'Out', [],
                                                                              False)}) + _avail_players('CAR', 'car'))
         snapshot = _snapshot()
         block = adapter.apply(snapshot, path)
@@ -186,7 +221,7 @@ class AvailabilityAdapter(unittest.TestCase):
             adapter.apply(_snapshot(), path)
 
     def test_applied_snapshot_still_verifies_as_frozen(self):
-        path = _write_avail(self.store, _avail_players('GB', 'gb', {'gb-003': ('exclude_roster_status', None, [],
+        path = _write_avail(self.store, _avail_players('GB', 'gb', {'gb-003': ('exclude_out', 'Out', [],
                                                                              False)}) + _avail_players('CAR', 'car'))
         snapshot = _snapshot()
         adapter.apply(snapshot, path)

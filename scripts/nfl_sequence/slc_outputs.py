@@ -40,7 +40,7 @@ def _depth_chart_qb1(roster):
                 for p in injury_report.get('players', []) if p.get('gsis_id')}
     available = []
     for player in roster.get('players', []):
-        if player.get('pos_abb') != 'QB' or not player.get('roster_eligible', True):
+        if player.get('pos_abb') != 'QB' or player.get('roster_eligible') is False:
             continue
         availability = player.get('availability') or {}
         status = statuses.get(player.get('gsis_id'))

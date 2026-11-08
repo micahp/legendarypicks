@@ -1239,6 +1239,7 @@ def run_batch(args):
         },
         'source': {**source_provenance, 'v1_model_file_sha256': baseline_files},
         'pregame_snapshot': snapshot,
+        'eligibility_coverage': availability_adapter.coverage(snapshot),
         'pregame_context': contextual,
         'contextual_pool_manifest': ref.contextual_pool_manifest,
         'playcall_layer': playcall_description,
