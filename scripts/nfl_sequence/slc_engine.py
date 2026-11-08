@@ -150,7 +150,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    player_outcomes_receiver_only=False, blocker_fixes=None, fg_ordinary_cutoff=60,
                    qb_run_role_style=None, score_clock_playcalling=True, season_adapt=False, season_adapt_n0=4.0,
                    pbv1_table=None, participation_field=None, participation_snap_counts=None, fg_kicker=None,
-                   workload_adaptive=None):
+                   workload_adaptive=None, experimental_workload_estimator=None):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it.
 
@@ -241,17 +241,6 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         ref.contextual_sampler.share_table = table
         ref.contextual_sampler.share_model_manifest = share_distributions.manifest(table, cutoff=season,
                                                                                     git_commit=source_commit)
-    if workload_adaptive:
-        if not dirichlet_shares or season_adapt:
-            raise ValueError('adaptive workload requires Dirichlet shares without full season adaptation')
-        import workload_adaptive as wa
-        table, workload_evidence = wa.apply(ref.contextual_sampler.share_table,
-            workload_adaptive['input'], workload_adaptive['sha256'], season, int(schedule['week']),
-            set(side_teams(snapshot).values()), concentrations=workload_adaptive.get('concentrations'))
-        ref.contextual_sampler.share_table = table
-        ref.contextual_sampler.share_model_manifest = {
-            **share_distributions.manifest(table, cutoff=season, git_commit=source_commit),
-            'research_adaptive_workload': workload_evidence}
     if pbv1_table:  # research flag: PBV1 package codes for the personnel label, refitted on the seasons before the game season
         import pbv1_package
         ref.contextual_sampler.pbv1_model = pbv1_package.load(pbv1_table, pbv1_package.TABLE_SHA256, season)
@@ -313,7 +302,25 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
             current_streaks(streak_file)
         sampler.optional_input_sha256['current_streak_file'] = _file_sha256(streak_file)
     if season_evidence is not None:  # after every table is loaded, so each one is blended once
-        season_layers.apply(ref, db, season_evidence)
+        season_layers.apply(ref, db, season_evidence,
+                            adapt_workload=not bool(workload_adaptive) and experimental_workload_estimator != 'C')
+    if workload_adaptive:
+        if not dirichlet_shares:
+            raise ValueError('adaptive workload requires Dirichlet shares')
+        import workload_adaptive as wa
+        table, workload_evidence = wa.apply(ref.contextual_sampler.share_table,
+            workload_adaptive['input'], workload_adaptive['sha256'], season, int(schedule['week']),
+            set(side_teams(snapshot).values()), concentrations=workload_adaptive.get('concentrations'))
+        ref.contextual_sampler.share_table = table
+        ref.contextual_sampler.share_model_manifest = {
+            **share_distributions.manifest(table, cutoff=season, git_commit=source_commit),
+            'research_adaptive_workload': workload_evidence}
+        if season_evidence is not None:
+            ref.contextual_sampler.season_blend_manifest['workload_override'] = (
+                'independent D1 research input; ordinary season share blend skipped')
+    if experimental_workload_estimator == 'C' and season_evidence is not None:
+        ref.contextual_sampler.season_blend_manifest['workload_override'] = (
+            'historical C research control; ordinary season share blend skipped')
     # Include every enabled model table and manifest in the reference identity. e2 computes an initial fingerprint before
     # these optional adapters are attached, so the final reference must be fingerprinted after all loading is complete.
     ref.model_inputs = er._reference_fingerprint(ref)

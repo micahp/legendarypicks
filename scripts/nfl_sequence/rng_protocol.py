@@ -164,6 +164,42 @@ def pair_workload_plan(natural_plan, identity, baseline_header):
     return RngPlan(V2, root=root, pregame_state_sha256=baseline['pregame_state_sha256'], model_input_sha256=model), evidence
 
 
+def pair_lineup_plan(natural_plan, identity, baseline_header):
+    """Pair a current-season snap-update intervention with its otherwise identical control."""
+    baseline = baseline_header.get('pairing_identity')
+    protocol = baseline_header.get('rng_protocol') or {}
+    if natural_plan.scheme != V2 or protocol.get('scheme') != V2 or not isinstance(baseline, dict):
+        raise ValueError('lineup pairing requires a v2 control identity')
+    if baseline_header.get('paired_lineup_baseline') or baseline_header.get('paired_layer_baseline'):
+        raise ValueError('lineup control must be an unpaired baseline')
+    for key in ('pregame_state_sha256', 'reference_data_sha256', 'artifact_sha256', 'enabled_layers'):
+        if identity.get(key) != baseline.get(key):
+            raise ValueError(f'lineup pairing input differs from control: {key}')
+    before, after = baseline.get('execution_settings'), identity.get('execution_settings')
+    if not isinstance(before, dict) or not isinstance(after, dict) or before.keys() != after.keys():
+        raise ValueError('lineup pairing requires matching settings')
+    keys = {'participation_snap_counts', 'participation_snap_counts_sha256'}
+    if any(before.get(k) is not None for k in keys) or not all(after.get(k) for k in keys):
+        raise ValueError('lineup pairing requires a snap-count update only in the treatment')
+    if any(before[k] != after[k] for k in before if k not in keys):
+        raise ValueError('lineup pairing changes another execution setting')
+    old, new = baseline.get('layer_artifact_sha256'), identity.get('layer_artifact_sha256')
+    if not isinstance(old, dict) or not isinstance(new, dict) or old.keys() != new.keys():
+        raise ValueError('lineup pairing requires matching layer maps')
+    if any(old[k] != new[k] for k in old if k != EXACT_YARDLINE_LAYER):
+        raise ValueError('lineup pairing changes a non-lineup model layer')
+    model = canonical_sha256({'reference_data_sha256': baseline['reference_data_sha256'],
+                              'layer_tables_sha256': layer_table_sha256(baseline)})
+    root = canonical_sha256({'schema': SCHEMA_V2, 'pregame_state_sha256': baseline['pregame_state_sha256'],
+                             'model_input_sha256': model})
+    if protocol.get('stream_root_sha256') != root or protocol.get('model_input_sha256') != model:
+        raise ValueError('lineup control root does not match its inputs')
+    evidence = {'baseline_header_sha256': canonical_sha256(baseline_header), 'baseline_stream_root_sha256': root,
+                'natural_treatment_root_sha256': natural_plan.root,
+                'snap_counts_sha256': after['participation_snap_counts_sha256']}
+    return RngPlan(V2, root=root, pregame_state_sha256=baseline['pregame_state_sha256'], model_input_sha256=model), evidence
+
+
 class RngPlan:
     """Which stream protocol a batch uses, and the root every pre-event draw is keyed on."""
 

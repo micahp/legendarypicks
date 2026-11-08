@@ -25,6 +25,28 @@ class BatchAggregation(unittest.TestCase):
                 batch.main(common + ['--no-slc-blocker-fixes'])
             self.assertEqual(run.call_args.args[0].slc_blocker_fix, [])
 
+    def test_experimental_d1_runs_without_paired_control_and_replays_its_inputs(self):
+        import shlex
+        with tempfile.TemporaryDirectory() as tmp:
+            snapshot, artifact, frozen = (Path(tmp) / name for name in ('snapshot.json', 'artifact.json', 'input.gz'))
+            for path in (snapshot, artifact, frozen):
+                path.write_bytes(b'{}')
+            common = ['--snapshot-file', str(snapshot), '--playcall-artifact', str(artifact), '--out', 'out.json']
+            with patch.object(batch, 'run_batch') as run:
+                batch.main(common + ['--experimental-workload-estimator', 'D1', '--workload-adaptive-input',
+                                     str(frozen), '--workload-adaptive-sha256', 'a' * 64])
+            args = run.call_args.args[0]
+            self.assertIsNone(args.paired_workload_baseline_ledger)
+            self.assertEqual(args.workload_adaptive_config['sha256'], 'a' * 64)
+            replay = shlex.split(batch._reproduction_command(args, 7))
+            self.assertIn('--experimental-workload-estimator', replay)
+            self.assertIn('--workload-adaptive-sha256', replay)
+            with patch.object(batch, 'run_batch') as run:
+                with self.assertRaises(SystemExit):
+                    batch.main(common + ['--experimental-workload-estimator', 'C', '--workload-adaptive-input',
+                                         str(frozen), '--workload-adaptive-sha256', 'a' * 64])
+                run.assert_not_called()
+
     def test_ablation_requires_baseline_root_and_replay_uses_dedicated_flag(self):
         import contextlib
         import io
