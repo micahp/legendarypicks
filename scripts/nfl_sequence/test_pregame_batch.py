@@ -12,6 +12,19 @@ import simulate_pregame_batch as batch  # noqa: E402
 
 
 class BatchAggregation(unittest.TestCase):
+    def test_slc_batch_defaults_to_ordinary_fixes_and_allows_opt_out(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            snapshot, artifact = Path(tmp) / 'snapshot.json', Path(tmp) / 'artifact.json'
+            snapshot.write_text('{}')
+            artifact.write_text('{}')
+            common = ['--snapshot-file', str(snapshot), '--playcall-artifact', str(artifact), '--out', 'out.json']
+            with patch.object(batch, 'run_batch') as run:
+                batch.main(common)
+            self.assertEqual(run.call_args.args[0].slc_blocker_fix, list(batch.er.BLOCKER_FIXES))
+            with patch.object(batch, 'run_batch') as run:
+                batch.main(common + ['--no-slc-blocker-fixes'])
+            self.assertEqual(run.call_args.args[0].slc_blocker_fix, [])
+
     def test_ablation_requires_baseline_root_and_replay_uses_dedicated_flag(self):
         import contextlib
         import io

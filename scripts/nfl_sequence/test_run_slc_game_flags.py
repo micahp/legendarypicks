@@ -14,6 +14,14 @@ REQUIRED = ['--artifact', 'A.json', '--seed', '1', '--out', 'o.json']
 
 
 class Flags(unittest.TestCase):
+    def test_ordinary_fixes_default_on_with_explicit_subset_or_opt_out(self):
+        self.assertEqual(rg.parse_args(REQUIRED).slc_blocker_fix, list(rg.er.BLOCKER_FIXES))
+        self.assertEqual(rg.parse_args(REQUIRED + ['--no-slc-blocker-fixes']).slc_blocker_fix, [])
+        self.assertEqual(rg.parse_args(REQUIRED + ['--slc-blocker-fix', 'blocked_kick_geometry']).slc_blocker_fix,
+                         ['blocked_kick_geometry'])
+        with self.assertRaises(SystemExit):
+            rg.parse_args(REQUIRED + ['--no-slc-blocker-fixes', '--slc-blocker-fix', 'blocked_kick_geometry'])
+
     def test_the_dirichlet_share_flag_is_off_by_default(self):
         args = rg.parse_args(REQUIRED)
         self.assertFalse(args.dirichlet_shares)

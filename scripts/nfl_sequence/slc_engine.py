@@ -147,7 +147,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    exact_yardline=False, coverage=False, point_splits=False, streak=False, streak_file=None,
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
-                   player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
+                   player_outcomes_receiver_only=False, blocker_fixes=None, fg_ordinary_cutoff=60,
                    qb_run_role_style=None, score_clock_playcalling=True, season_adapt=False, season_adapt_n0=4.0,
                    pbv1_table=None, participation_field=None, participation_snap_counts=None, fg_kicker=None):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
@@ -161,7 +161,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     if player_outcomes_receiver_only and not player_outcomes:
         raise ValueError('receiver-only player outcomes require player_outcomes=True')
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
-    fixes = er.normalize_blocker_fixes(blocker_fixes)
+    fixes = er.normalize_blocker_fixes(er.BLOCKER_FIXES if blocker_fixes is None else blocker_fixes)
     run_scramble_backoff = 'run_scramble_backoff' in fixes
     season_evidence = None
     if season_adapt:
