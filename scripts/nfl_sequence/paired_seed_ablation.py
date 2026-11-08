@@ -211,6 +211,8 @@ def compare_ledgers(control_path, ablation_path, *, disabled_layer, expected_gam
         'game_id': control_header.get('game_id'),
         'source_snapshot_sha256': control_header.get('source_snapshot_sha256'),
         'disabled_layer': disabled_layer,
+        'disabled_layers': sorted(expected_disabled),
+        'intervention_kind': 'combined_with_dependent_adapter' if len(expected_disabled) > 1 else 'single_layer',
         'seed_count': len(seeds), 'error_seeds': error_seeds,
         'duplicate_ledger_rows': {'control': control_duplicates, 'ablation': ablation_duplicates},
         'control_enabled_layers': sorted(control_enabled),

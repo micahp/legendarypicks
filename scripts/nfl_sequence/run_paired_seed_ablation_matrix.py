@@ -435,11 +435,16 @@ def _compare_layer(args, layer: str, partitions: list[tuple[int, int]]) -> dict:
     worker_reports = []
     pairs = []
     error_seeds = []
+    intervention = None
     for index, (_seed_start, games) in enumerate(partitions, start=1):
         _control_out, control_ledger, _control_boxes = _worker_paths(control_dir, index)
         _ablation_out, ablation_ledger, _ablation_boxes = _worker_paths(ablation_dir, index)
         comparison = compare_ledgers(control_ledger, ablation_ledger, disabled_layer=layer,
                                      expected_games=games)
+        current = (comparison['disabled_layers'], comparison['intervention_kind'])
+        if intervention is not None and intervention != current:
+            raise ValueError(f'{layer}: worker interventions differ')
+        intervention = current
         worker_reports.append({
             'worker': index, 'seed_count': comparison['seed_count'],
             'duplicate_ledger_rows': comparison['duplicate_ledger_rows'],
@@ -466,6 +471,8 @@ def _compare_layer(args, layer: str, partitions: list[tuple[int, int]]) -> dict:
         'game_id': control_header.get('game_id'),
         'source_snapshot_sha256': control_header.get('source_snapshot_sha256'),
         'disabled_layer': layer,
+        'disabled_layers': intervention[0],
+        'intervention_kind': intervention[1],
         'seed_count': len(pairs), 'error_seeds': sorted(error_seeds),
         'control_enabled_layers': sorted(key for key, enabled in (control[0]['enabled_layers'] or {}).items() if enabled),
         'ablation_enabled_layers': sorted(key for key, enabled in (ablation[0]['enabled_layers'] or {}).items() if enabled),
