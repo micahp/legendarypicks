@@ -1,0 +1,130 @@
+{
+ "built_from_commit": "5faf047f3350ed8305f72ff13b28a8ff62b3dd9f",
+ "cutoff_utc": "2026-11-05T23:45:00Z",
+ "evaluation": {
+  "class": "exploratory_replay",
+  "unverified_inputs": [
+   "schedule: observed_at is a loader import time, not a capture time",
+   "away depth: snapshot_at is the nflverse artifact date, not a capture time",
+   "home depth: snapshot_at is the nflverse artifact date, not a capture time"
+  ],
+  "verified": false
+ },
+ "evidence_sha256": "8090effa9c81ab9897e8607a4d830dc718d858c9a43f3d06f30091f1fcea4305",
+ "files": {
+  "evidence.json": "f65070859a6f50493fb613ae02377fbd51b4ced6b070269552ee9fe1ca5bcfb6",
+  "full_depth_provenance.json": "4e99c667941c0952d9912d57eeee471e451dafa60c2c757590fd9636dc67268b",
+  "full_depth_roster.json": "ea9081e0f50aa41404b1a3ec0b857ff5751692f4942b9c069fb3d678445f1eb8",
+  "inputs/depth_charts_2026.parquet": "4c0119a7c609b3fbdf4e2059d3a1de24d99e2b4a29d0ee7d816d41c5b21d291d",
+  "inputs/roster_weekly_2026.parquet": "e98ea21d7a64511f54304ba8417fc9fe0c48713e87b9b57ee659759e7e629b87",
+  "news-captures/manifest.json": "51aea1aa684f7c0c495672c6acbec740222a81f0d0600f793845d125c1877435",
+  "news-captures/rotowire-nfl-news-20261105T210003Z.xml": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+  "news-captures/rotowire-nfl-news-20261105T211501Z.xml": "b9a7fa827fbc5844faa36369dc0b20bc70d4edafcf34807b7e5620f8037a456c",
+  "news-captures/rotowire-nfl-news-20261105T213003Z.xml": "7111c2ed45de9b45c4f403a986813bfa7ee68e61d2ca51f363db1876ddd94870",
+  "news-captures/rotowire-nfl-news-20261105T214502Z.xml": "486bb761c1717f489fb02ba533108ab4ac24ccfa13cc9ea0328c9c45f565b2bd",
+  "news-captures/rotowire-nfl-news-20261105T220004Z.xml": "da3cc2ba0df1187f706ec315b2ef9cb7818f52aa446b0bccb12bf5293ee26000",
+  "news-captures/rotowire-nfl-news-20261105T221501Z.xml": "557148c27c97102805401fc0300d1da82d12dc15f5e202e842277595be1704fa",
+  "news-captures/rotowire-nfl-news-20261105T223001Z.xml": "8a6f4e12436af7706f1ecc67842b629b73f7dabc0d5ce91d1c470c21e756b8f3",
+  "news-captures/rotowire-nfl-news-20261105T224501Z.xml": "0dad7b63df6918d84325b8224ca8a36ecfeafa372f8a9116974777b385d2adba",
+  "news-captures/rotowire-nfl-news-20261105T230003Z.xml": "86fb8cc688686a054baeae22c72b779e507770f4b06471f7207078af0eb941e5",
+  "news-captures/rotowire-nfl-news-20261105T231501Z.xml": "2fb6bfa66e393f68a534ced9ac6a126a77a24190adb1e88afbd8fe4d1fb737f0",
+  "news-captures/rotowire-nfl-news-20261105T233004Z.xml": "63d4ca518b6d53a42c82ff0fcb0376847aa747aef9534473881361b317c4d9be",
+  "news-captures/rotowire-nfl-news-20261105T234002Z.xml": "2144a1bda2719e76ecdcaeb2343356b11401e6c44d087b4abd02b50dc5688650",
+  "snapshot.json": "abf86069894f494c71713239257fbbcdcf48a8bc01badec4d1de48223a98e72a",
+  "starters.json": "6d03e6b6ef3f32b1f94aee7031b840040ac9ed07e5f721f104514707e620b651",
+  "starters_provenance.json": "abbd55ebebf7f02a7d4bbc5de1966c8310ef7ce3c7e12bb10a02db8be5c005f6",
+  "status.txt": "532788f2f1d56ced9c3316d718e30c621dbc14cd297fb1b50f0f392417133fee",
+  "summary.txt": "fd39e6c46afa1b9c0e3f69ddc8bb29ce20efd0d6533028fbc4fd10c3b72b4bf3"
+ },
+ "game": "2026_09_JAX_BAL",
+ "kickoff_source_url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv",
+ "kickoff_utc": "2026-11-06T01:15:00Z",
+ "news_payloads": [
+  {
+   "acquired_at_utc": "2026-11-05T21:00:03.349712Z",
+   "name": "rotowire-nfl-news-20261105T210003Z.xml",
+   "poll_id": 11,
+   "sha256": "63c0e216104a4c63efb4c795b57b956d4d64b89c2f35332531d10b763a365730",
+   "updates": 301
+  },
+  {
+   "acquired_at_utc": "2026-11-05T21:15:01.212163Z",
+   "name": "rotowire-nfl-news-20261105T211501Z.xml",
+   "poll_id": 12,
+   "sha256": "b9a7fa827fbc5844faa36369dc0b20bc70d4edafcf34807b7e5620f8037a456c",
+   "updates": 306
+  },
+  {
+   "acquired_at_utc": "2026-11-05T21:30:03.716386Z",
+   "name": "rotowire-nfl-news-20261105T213003Z.xml",
+   "poll_id": 13,
+   "sha256": "7111c2ed45de9b45c4f403a986813bfa7ee68e61d2ca51f363db1876ddd94870",
+   "updates": 314
+  },
+  {
+   "acquired_at_utc": "2026-11-05T21:45:02.017274Z",
+   "name": "rotowire-nfl-news-20261105T214502Z.xml",
+   "poll_id": 14,
+   "sha256": "486bb761c1717f489fb02ba533108ab4ac24ccfa13cc9ea0328c9c45f565b2bd",
+   "updates": 318
+  },
+  {
+   "acquired_at_utc": "2026-11-05T22:00:04.002518Z",
+   "name": "rotowire-nfl-news-20261105T220004Z.xml",
+   "poll_id": 15,
+   "sha256": "da3cc2ba0df1187f706ec315b2ef9cb7818f52aa446b0bccb12bf5293ee26000",
+   "updates": 323
+  },
+  {
+   "acquired_at_utc": "2026-11-05T22:15:01.357057Z",
+   "name": "rotowire-nfl-news-20261105T221501Z.xml",
+   "poll_id": 16,
+   "sha256": "557148c27c97102805401fc0300d1da82d12dc15f5e202e842277595be1704fa",
+   "updates": 326
+  },
+  {
+   "acquired_at_utc": "2026-11-05T22:30:01.999769Z",
+   "name": "rotowire-nfl-news-20261105T223001Z.xml",
+   "poll_id": 17,
+   "sha256": "8a6f4e12436af7706f1ecc67842b629b73f7dabc0d5ce91d1c470c21e756b8f3",
+   "updates": 328
+  },
+  {
+   "acquired_at_utc": "2026-11-05T22:45:01.104405Z",
+   "name": "rotowire-nfl-news-20261105T224501Z.xml",
+   "poll_id": 18,
+   "sha256": "0dad7b63df6918d84325b8224ca8a36ecfeafa372f8a9116974777b385d2adba",
+   "updates": 332
+  },
+  {
+   "acquired_at_utc": "2026-11-05T23:00:03.582268Z",
+   "name": "rotowire-nfl-news-20261105T230003Z.xml",
+   "poll_id": 19,
+   "sha256": "86fb8cc688686a054baeae22c72b779e507770f4b06471f7207078af0eb941e5",
+   "updates": 336
+  },
+  {
+   "acquired_at_utc": "2026-11-05T23:15:01.323545Z",
+   "name": "rotowire-nfl-news-20261105T231501Z.xml",
+   "poll_id": 20,
+   "sha256": "2fb6bfa66e393f68a534ced9ac6a126a77a24190adb1e88afbd8fe4d1fb737f0",
+   "updates": 339
+  },
+  {
+   "acquired_at_utc": "2026-11-05T23:30:04.548849Z",
+   "name": "rotowire-nfl-news-20261105T233004Z.xml",
+   "poll_id": 21,
+   "sha256": "63d4ca518b6d53a42c82ff0fcb0376847aa747aef9534473881361b317c4d9be",
+   "updates": 342
+  },
+  {
+   "acquired_at_utc": "2026-11-05T23:40:02.361606Z",
+   "name": "rotowire-nfl-news-20261105T234002Z.xml",
+   "poll_id": 22,
+   "sha256": "2144a1bda2719e76ecdcaeb2343356b11401e6c44d087b4abd02b50dc5688650",
+   "updates": 345
+  }
+ ],
+ "snapshot_sha256": "e7b0183e20af137738f7fc6bff7519f232f5f8c907c91e6c8d8163531f699527",
+ "status": "CUTOFF SNAPSHOT: built at 2026-11-05T23:46:06Z, after the cutoff"
+}
