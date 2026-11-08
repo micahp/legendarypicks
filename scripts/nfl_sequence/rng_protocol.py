@@ -132,6 +132,38 @@ def pair_layer_plan(natural_plan, identity, baseline_header, disabled_layer):
     return paired, evidence
 
 
+def pair_workload_plan(natural_plan, identity, baseline_header):
+    """Use the control root only after verifying that only the workload table changed."""
+    baseline = baseline_header.get('pairing_identity')
+    protocol = baseline_header.get('rng_protocol') or {}
+    if natural_plan.scheme != V2 or protocol.get('scheme') != V2 or not isinstance(baseline, dict):
+        raise ValueError('workload pairing requires a v2 control identity')
+    if baseline_header.get('paired_workload_baseline') or baseline_header.get('paired_layer_baseline'):
+        raise ValueError('workload control must be an unpaired baseline')
+    for key in ('pregame_state_sha256', 'reference_data_sha256', 'artifact_sha256', 'execution_settings', 'enabled_layers'):
+        if identity.get(key) != baseline.get(key):
+            raise ValueError(f'workload pairing input differs from control: {key}')
+    old, new = baseline.get('layer_artifact_sha256'), identity.get('layer_artifact_sha256')
+    if not isinstance(old, dict) or not isinstance(new, dict) or old.keys() != new.keys():
+        raise ValueError('workload pairing requires matching layer maps')
+    layer = 'dirichlet_player_target_carry_shares'
+    if not baseline['enabled_layers'].get(layer) or old.get(layer) == new.get(layer):
+        raise ValueError('workload table must be enabled and changed')
+    for key in old:
+        if key not in (layer, EXACT_YARDLINE_LAYER) and old[key] != new[key]:
+            raise ValueError(f'workload pairing changes another layer: {key}')
+    model = canonical_sha256({'reference_data_sha256': baseline['reference_data_sha256'],
+                              'layer_tables_sha256': layer_table_sha256(baseline)})
+    root = canonical_sha256({'schema': SCHEMA_V2, 'pregame_state_sha256': baseline['pregame_state_sha256'],
+                             'model_input_sha256': model})
+    if protocol.get('stream_root_sha256') != root or protocol.get('model_input_sha256') != model:
+        raise ValueError('workload control root does not match its inputs')
+    evidence = {'baseline_header_sha256': canonical_sha256(baseline_header),
+                'baseline_stream_root_sha256': root, 'natural_treatment_root_sha256': natural_plan.root,
+                'control_workload_sha256': old[layer], 'treatment_workload_sha256': new[layer]}
+    return RngPlan(V2, root=root, pregame_state_sha256=baseline['pregame_state_sha256'], model_input_sha256=model), evidence
+
+
 class RngPlan:
     """Which stream protocol a batch uses, and the root every pre-event draw is keyed on."""
 
