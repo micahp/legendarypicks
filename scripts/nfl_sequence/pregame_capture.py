@@ -134,6 +134,8 @@ def build(db, capture_dir, game_id, cutoff_text, evaluation='prospective_forecas
     snapshot = {
         'schema': ps.SCHEMA,
         'as_of': cutoff.isoformat().replace('+00:00', 'Z'),
+        'roster_finalization_timing': ps.roster_finalization_timing(
+            cutoff.isoformat().replace('+00:00', 'Z'), kickoff.isoformat().replace('+00:00', 'Z')),
         'evaluation': {'class': evaluation, 'verified': True, 'unverified_inputs': []},
         'capture': {'frozen_at_utc': manifest['frozen_at_utc'], 'files': manifest['files'],
                     'kickoff_rule': f'nflverse gametime as {SCHEDULE_TZ}'},

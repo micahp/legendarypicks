@@ -418,6 +418,16 @@ class BoxscoreSerialization(unittest.TestCase):
 
 
 class DistributionAggregation(unittest.TestCase):
+    def test_pre_final_roster_snapshot_remains_in_valid_game_count(self):
+        before = dict(SNAPSHOT, roster_finalization_timing={
+            'status': 'before_roster_finalization', 'before_roster_finalization': True,
+        })
+        box = outputs.build_boxscore(1, {'valid_full_game': True}, game_record(), before, PROFILE)
+        summary = outputs.aggregate_boxscores([box], requested_games=1)
+        self.assertEqual(summary['valid_complete_games'], 1)
+        self.assertEqual(summary['valid_complete_games_by_roster_finalization_timing'][
+            'before_roster_finalization'], 1)
+
     def test_aggregate_uses_valid_unique_seeds_and_reports_player_zeroes(self):
         first = outputs.build_boxscore(1, {'valid_full_game': True}, game_record(24, 17), SNAPSHOT, PROFILE)
         second = outputs.build_boxscore(2, {'valid_full_game': True}, game_record(20, 10), SNAPSHOT, PROFILE)

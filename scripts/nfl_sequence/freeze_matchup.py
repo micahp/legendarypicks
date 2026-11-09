@@ -16,7 +16,8 @@ Refusals, none of which are overridden:
 - nflverse artifacts must have been published at or before the cutoff;
 - an existing frozen output (status CUTOFF) is never overwritten.
 
-Until the cutoff has passed, the output is labelled PREVIEW.
+Before the 90-minute roster point, the output is a valid as-of snapshot with the roster labelled not final. The simulation may
+use it before kickoff; snapshot validity and final roster status are reported separately.
 """
 import argparse
 import hashlib

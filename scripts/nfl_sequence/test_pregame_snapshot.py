@@ -208,6 +208,20 @@ class ScheduleAsOf(unittest.TestCase):
         return path
 
 
+class RosterFinalizationTiming(unittest.TestCase):
+    def test_before_final_roster_window_snapshot_remains_valid(self):
+        timing = snapshot_module.roster_finalization_timing(
+            '2026-11-09T20:28:32Z', '2026-11-10T01:15:00Z')
+        self.assertEqual(timing['status'], 'before_roster_finalization')
+        self.assertTrue(timing['before_roster_finalization'])
+
+    def test_at_final_roster_point_is_classified_separately(self):
+        timing = snapshot_module.roster_finalization_timing(
+            '2026-11-09T23:45:00Z', '2026-11-10T01:15:00Z')
+        self.assertEqual(timing['status'], 'at_or_after_roster_finalization_point')
+        self.assertFalse(timing['before_roster_finalization'])
+
+
 class FrozenSnapshotFile(unittest.TestCase):
     def test_loads_hash_pinned_snapshot_and_game_payload(self):
         with tempfile.TemporaryDirectory() as tmp:
