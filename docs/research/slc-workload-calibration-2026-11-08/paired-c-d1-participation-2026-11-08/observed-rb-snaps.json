@@ -1,0 +1,1084 @@
+{
+  "acquisition_time": "unknown",
+  "canonical_sha256": "03df13b391f45dcad3ca346cc7791eab24d03a50a2a35d5ca1636e0d2fa50878",
+  "row_count": 119,
+  "row_selection": "positive identified RB snap rows for these six teams through week 8; the input does not include zero/missing rows as inactivity evidence",
+  "rows": [
+    {
+      "gsis_id": "00-0037157",
+      "inferred_snap_share": 0.04,
+      "inferred_team_snaps": 75.0,
+      "offensive_snaps": 3.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0037157",
+      "inferred_snap_share": 0.06,
+      "inferred_team_snaps": 50.0,
+      "offensive_snaps": 3.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0037157",
+      "inferred_snap_share": 0.0821917808219178,
+      "inferred_team_snaps": 73.0,
+      "offensive_snaps": 6.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0037157",
+      "inferred_snap_share": 0.4444444444444444,
+      "inferred_team_snaps": 72.0,
+      "offensive_snaps": 32.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0037157",
+      "inferred_snap_share": 0.5308641975308642,
+      "inferred_team_snaps": 81.0,
+      "offensive_snaps": 43.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0037157",
+      "inferred_snap_share": 0.2221865626504388,
+      "inferred_team_snaps": 81.013,
+      "offensive_snaps": 18.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0037263",
+      "inferred_snap_share": 0.5866666666666667,
+      "inferred_team_snaps": 75.0,
+      "offensive_snaps": 44.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0037263",
+      "inferred_snap_share": 0.64,
+      "inferred_team_snaps": 50.0,
+      "offensive_snaps": 32.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0037263",
+      "inferred_snap_share": 0.3563218390804598,
+      "inferred_team_snaps": 87.0,
+      "offensive_snaps": 31.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0037263",
+      "inferred_snap_share": 0.5454545454545454,
+      "inferred_team_snaps": 66.0,
+      "offensive_snaps": 36.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0037263",
+      "inferred_snap_share": 0.4383561643835616,
+      "inferred_team_snaps": 73.0,
+      "offensive_snaps": 32.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0037263",
+      "inferred_snap_share": 0.5555555555555556,
+      "inferred_team_snaps": 72.0,
+      "offensive_snaps": 40.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0037263",
+      "inferred_snap_share": 0.4691358024691358,
+      "inferred_team_snaps": 81.0,
+      "offensive_snaps": 38.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0037263",
+      "inferred_snap_share": 0.5924975004011701,
+      "inferred_team_snaps": 81.013,
+      "offensive_snaps": 48.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0041027",
+      "inferred_snap_share": 0.4266666666666667,
+      "inferred_team_snaps": 75.0,
+      "offensive_snaps": 32.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0041027",
+      "inferred_snap_share": 0.4,
+      "inferred_team_snaps": 50.0,
+      "offensive_snaps": 20.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0041027",
+      "inferred_snap_share": 0.6436781609195402,
+      "inferred_team_snaps": 87.0,
+      "offensive_snaps": 56.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0041027",
+      "inferred_snap_share": 0.45454545454545453,
+      "inferred_team_snaps": 66.0,
+      "offensive_snaps": 30.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0041027",
+      "inferred_snap_share": 0.4931506849315068,
+      "inferred_team_snaps": 73.0,
+      "offensive_snaps": 36.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0041027",
+      "inferred_snap_share": 0.18515546887536566,
+      "inferred_team_snaps": 81.013,
+      "offensive_snaps": 15.0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0036265",
+      "inferred_snap_share": 0.10315811191181455,
+      "inferred_team_snaps": 67.857,
+      "offensive_snaps": 7.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0036265",
+      "inferred_snap_share": 0.06060606060606061,
+      "inferred_team_snaps": 66.0,
+      "offensive_snaps": 4.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0036265",
+      "inferred_snap_share": 0.15584415584415584,
+      "inferred_team_snaps": 77.0,
+      "offensive_snaps": 12.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0036265",
+      "inferred_snap_share": 0.14666666666666667,
+      "inferred_team_snaps": 75.0,
+      "offensive_snaps": 11.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0036555",
+      "inferred_snap_share": 0.7073699102524427,
+      "inferred_team_snaps": 67.857,
+      "offensive_snaps": 48.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0036555",
+      "inferred_snap_share": 0.6515151515151515,
+      "inferred_team_snaps": 66.0,
+      "offensive_snaps": 43.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0036555",
+      "inferred_snap_share": 0.8441558441558441,
+      "inferred_team_snaps": 77.0,
+      "offensive_snaps": 65.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0036555",
+      "inferred_snap_share": 0.84,
+      "inferred_team_snaps": 75.0,
+      "offensive_snaps": 63.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0036555",
+      "inferred_snap_share": 0.9367088607594937,
+      "inferred_team_snaps": 79.0,
+      "offensive_snaps": 74.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0036555",
+      "inferred_snap_share": 0.6075117035342886,
+      "inferred_team_snaps": 55.966,
+      "offensive_snaps": 34.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0036555",
+      "inferred_snap_share": 0.9178082191780822,
+      "inferred_team_snaps": 73.0,
+      "offensive_snaps": 67.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0039344",
+      "inferred_snap_share": 0.19157935069336987,
+      "inferred_team_snaps": 67.857,
+      "offensive_snaps": 13.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0039344",
+      "inferred_snap_share": 0.30303030303030304,
+      "inferred_team_snaps": 66.0,
+      "offensive_snaps": 20.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0040394",
+      "inferred_snap_share": 0.02666666666666667,
+      "inferred_team_snaps": 75.0,
+      "offensive_snaps": 2.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0040394",
+      "inferred_snap_share": 0.02531645569620253,
+      "inferred_team_snaps": 79.0,
+      "offensive_snaps": 2.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0040394",
+      "inferred_snap_share": 0.08933995640210128,
+      "inferred_team_snaps": 55.966,
+      "offensive_snaps": 5.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0040644",
+      "inferred_snap_share": 0.0379746835443038,
+      "inferred_team_snaps": 79.0,
+      "offensive_snaps": 3.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0040644",
+      "inferred_snap_share": 0.3037558517671443,
+      "inferred_team_snaps": 55.966,
+      "offensive_snaps": 17.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0040644",
+      "inferred_snap_share": 0.0684931506849315,
+      "inferred_team_snaps": 73.0,
+      "offensive_snaps": 5.0,
+      "position": "RB",
+      "team": "CAR",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0036997",
+      "inferred_snap_share": 0.7068965517241379,
+      "inferred_team_snaps": 58.0,
+      "offensive_snaps": 41.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0036997",
+      "inferred_snap_share": 0.8,
+      "inferred_team_snaps": 55.0,
+      "offensive_snaps": 44.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0036997",
+      "inferred_snap_share": 0.7567567567567568,
+      "inferred_team_snaps": 74.0,
+      "offensive_snaps": 56.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0036997",
+      "inferred_snap_share": 0.7435897435897436,
+      "inferred_team_snaps": 78.0,
+      "offensive_snaps": 58.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0036997",
+      "inferred_snap_share": 0.85,
+      "inferred_team_snaps": 60.0,
+      "offensive_snaps": 51.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0036997",
+      "inferred_snap_share": 0.7307692307692307,
+      "inferred_team_snaps": 78.0,
+      "offensive_snaps": 57.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0036997",
+      "inferred_snap_share": 0.6470588235294118,
+      "inferred_team_snaps": 68.0,
+      "offensive_snaps": 44.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0036997",
+      "inferred_snap_share": 0.7432432432432432,
+      "inferred_team_snaps": 74.0,
+      "offensive_snaps": 55.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0037120",
+      "inferred_snap_share": 0.14864864864864866,
+      "inferred_team_snaps": 74.0,
+      "offensive_snaps": 11.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0037120",
+      "inferred_snap_share": 0.20512820512820512,
+      "inferred_team_snaps": 78.0,
+      "offensive_snaps": 16.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0037120",
+      "inferred_snap_share": 0.05,
+      "inferred_team_snaps": 60.0,
+      "offensive_snaps": 3.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0037120",
+      "inferred_snap_share": 0.14102564102564102,
+      "inferred_team_snaps": 78.0,
+      "offensive_snaps": 11.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0037120",
+      "inferred_snap_share": 0.20588235294117646,
+      "inferred_team_snaps": 68.0,
+      "offensive_snaps": 14.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0037120",
+      "inferred_snap_share": 0.2702702702702703,
+      "inferred_team_snaps": 74.0,
+      "offensive_snaps": 20.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0038705",
+      "inferred_snap_share": 0.08620689655172414,
+      "inferred_team_snaps": 58.0,
+      "offensive_snaps": 5.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0038705",
+      "inferred_snap_share": 0.16363636363636364,
+      "inferred_team_snaps": 55.0,
+      "offensive_snaps": 9.0,
+      "position": "RB",
+      "team": "DAL",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0036158",
+      "inferred_snap_share": 0.43137254901960786,
+      "inferred_team_snaps": 51.0,
+      "offensive_snaps": 22.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0036158",
+      "inferred_snap_share": 0.3387096774193548,
+      "inferred_team_snaps": 62.0,
+      "offensive_snaps": 21.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0036158",
+      "inferred_snap_share": 0.4925373134328358,
+      "inferred_team_snaps": 67.0,
+      "offensive_snaps": 33.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0036158",
+      "inferred_snap_share": 0.31661314396851964,
+      "inferred_team_snaps": 66.327,
+      "offensive_snaps": 21.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0036158",
+      "inferred_snap_share": 0.5161290322580645,
+      "inferred_team_snaps": 62.0,
+      "offensive_snaps": 32.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0036158",
+      "inferred_snap_share": 0.5166666666666667,
+      "inferred_team_snaps": 60.0,
+      "offensive_snaps": 31.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0036158",
+      "inferred_snap_share": 0.22950819672131148,
+      "inferred_team_snaps": 61.0,
+      "offensive_snaps": 14.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0036158",
+      "inferred_snap_share": 0.20967741935483872,
+      "inferred_team_snaps": 62.0,
+      "offensive_snaps": 13.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0037085",
+      "inferred_snap_share": 0.25806451612903225,
+      "inferred_team_snaps": 62.0,
+      "offensive_snaps": 16.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0037085",
+      "inferred_snap_share": 0.1791044776119403,
+      "inferred_team_snaps": 67.0,
+      "offensive_snaps": 12.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0037085",
+      "inferred_snap_share": 0.1809217965534398,
+      "inferred_team_snaps": 66.327,
+      "offensive_snaps": 12.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0037085",
+      "inferred_snap_share": 0.11290322580645161,
+      "inferred_team_snaps": 62.0,
+      "offensive_snaps": 7.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0037085",
+      "inferred_snap_share": 0.06666666666666667,
+      "inferred_team_snaps": 60.0,
+      "offensive_snaps": 4.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0039703",
+      "inferred_snap_share": 0.03225806451612903,
+      "inferred_team_snaps": 62.0,
+      "offensive_snaps": 2.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0040730",
+      "inferred_snap_share": 0.5098039215686274,
+      "inferred_team_snaps": 51.0,
+      "offensive_snaps": 26.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0040730",
+      "inferred_snap_share": 0.3582089552238806,
+      "inferred_team_snaps": 67.0,
+      "offensive_snaps": 24.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0040730",
+      "inferred_snap_share": 0.4372276750041461,
+      "inferred_team_snaps": 66.327,
+      "offensive_snaps": 29.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0040730",
+      "inferred_snap_share": 0.3709677419354839,
+      "inferred_team_snaps": 62.0,
+      "offensive_snaps": 23.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0040730",
+      "inferred_snap_share": 0.4,
+      "inferred_team_snaps": 60.0,
+      "offensive_snaps": 24.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0040730",
+      "inferred_snap_share": 0.26229508196721313,
+      "inferred_team_snaps": 61.0,
+      "offensive_snaps": 16.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0041496",
+      "inferred_snap_share": 0.058823529411764705,
+      "inferred_team_snaps": 51.0,
+      "offensive_snaps": 3.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0041496",
+      "inferred_snap_share": 0.4032258064516129,
+      "inferred_team_snaps": 62.0,
+      "offensive_snaps": 25.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0041496",
+      "inferred_snap_share": 0.4918032786885246,
+      "inferred_team_snaps": 61.0,
+      "offensive_snaps": 30.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0041496",
+      "inferred_snap_share": 0.6612903225806451,
+      "inferred_team_snaps": 62.0,
+      "offensive_snaps": 41.0,
+      "position": "RB",
+      "team": "DEN",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0036223",
+      "inferred_snap_share": 0.8888888888888888,
+      "inferred_team_snaps": 54.0,
+      "offensive_snaps": 48.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0036223",
+      "inferred_snap_share": 0.9384615384615385,
+      "inferred_team_snaps": 65.0,
+      "offensive_snaps": 61.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0036223",
+      "inferred_snap_share": 0.8450704225352113,
+      "inferred_team_snaps": 71.0,
+      "offensive_snaps": 60.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0036223",
+      "inferred_snap_share": 0.7121212121212122,
+      "inferred_team_snaps": 66.0,
+      "offensive_snaps": 47.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0036223",
+      "inferred_snap_share": 0.7323943661971831,
+      "inferred_team_snaps": 71.0,
+      "offensive_snaps": 52.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0036223",
+      "inferred_snap_share": 0.7831325301204819,
+      "inferred_team_snaps": 83.0,
+      "offensive_snaps": 65.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0036223",
+      "inferred_snap_share": 0.6721311475409836,
+      "inferred_team_snaps": 61.0,
+      "offensive_snaps": 41.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0036223",
+      "inferred_snap_share": 0.6229508196721312,
+      "inferred_team_snaps": 61.0,
+      "offensive_snaps": 38.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0040179",
+      "inferred_snap_share": 0.13114754098360656,
+      "inferred_team_snaps": 61.0,
+      "offensive_snaps": 8.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0041125",
+      "inferred_snap_share": 0.1111111111111111,
+      "inferred_team_snaps": 54.0,
+      "offensive_snaps": 6.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0041125",
+      "inferred_snap_share": 0.06153846153846154,
+      "inferred_team_snaps": 65.0,
+      "offensive_snaps": 4.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0041125",
+      "inferred_snap_share": 0.15492957746478872,
+      "inferred_team_snaps": 71.0,
+      "offensive_snaps": 11.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0041125",
+      "inferred_snap_share": 0.2878787878787879,
+      "inferred_team_snaps": 66.0,
+      "offensive_snaps": 19.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0041125",
+      "inferred_snap_share": 0.2676056338028169,
+      "inferred_team_snaps": 71.0,
+      "offensive_snaps": 19.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0041125",
+      "inferred_snap_share": 0.2289156626506024,
+      "inferred_team_snaps": 83.0,
+      "offensive_snaps": 19.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0041125",
+      "inferred_snap_share": 0.32786885245901637,
+      "inferred_team_snaps": 61.0,
+      "offensive_snaps": 20.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0041125",
+      "inferred_snap_share": 0.2459016393442623,
+      "inferred_team_snaps": 61.0,
+      "offensive_snaps": 15.0,
+      "position": "RB",
+      "team": "IND",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0037745",
+      "inferred_snap_share": 0.03333333333333333,
+      "inferred_team_snaps": 60.0,
+      "offensive_snaps": 2.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0037745",
+      "inferred_snap_share": 0.10588235294117647,
+      "inferred_team_snaps": 85.0,
+      "offensive_snaps": 9.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0037745",
+      "inferred_snap_share": 0.13043478260869565,
+      "inferred_team_snaps": 69.0,
+      "offensive_snaps": 9.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0038797",
+      "inferred_snap_share": 0.06,
+      "inferred_team_snaps": 50.0,
+      "offensive_snaps": 3.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0038797",
+      "inferred_snap_share": 0.4142857142857143,
+      "inferred_team_snaps": 70.0,
+      "offensive_snaps": 29.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0038797",
+      "inferred_snap_share": 0.3582089552238806,
+      "inferred_team_snaps": 67.0,
+      "offensive_snaps": 24.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0038797",
+      "inferred_snap_share": 0.6,
+      "inferred_team_snaps": 60.0,
+      "offensive_snaps": 36.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0038797",
+      "inferred_snap_share": 0.5873015873015873,
+      "inferred_team_snaps": 63.0,
+      "offensive_snaps": 37.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0038797",
+      "inferred_snap_share": 0.3176470588235294,
+      "inferred_team_snaps": 85.0,
+      "offensive_snaps": 27.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0038797",
+      "inferred_snap_share": 0.4782608695652174,
+      "inferred_team_snaps": 69.0,
+      "offensive_snaps": 33.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0039165",
+      "inferred_snap_share": 0.36507936507936506,
+      "inferred_team_snaps": 63.0,
+      "offensive_snaps": 23.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0039299",
+      "inferred_snap_share": 0.46,
+      "inferred_team_snaps": 50.0,
+      "offensive_snaps": 23.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0039299",
+      "inferred_snap_share": 0.2571428571428571,
+      "inferred_team_snaps": 70.0,
+      "offensive_snaps": 18.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0039299",
+      "inferred_snap_share": 0.3582089552238806,
+      "inferred_team_snaps": 67.0,
+      "offensive_snaps": 24.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0039299",
+      "inferred_snap_share": 0.36666666666666664,
+      "inferred_team_snaps": 60.0,
+      "offensive_snaps": 22.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0039299",
+      "inferred_snap_share": 0.4126984126984127,
+      "inferred_team_snaps": 63.0,
+      "offensive_snaps": 26.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0039299",
+      "inferred_snap_share": 0.5764705882352941,
+      "inferred_team_snaps": 85.0,
+      "offensive_snaps": 49.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0039299",
+      "inferred_snap_share": 0.36231884057971014,
+      "inferred_team_snaps": 69.0,
+      "offensive_snaps": 25.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0039299",
+      "inferred_snap_share": 0.1746031746031746,
+      "inferred_team_snaps": 63.0,
+      "offensive_snaps": 11.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0041512",
+      "inferred_snap_share": 0.48,
+      "inferred_team_snaps": 50.0,
+      "offensive_snaps": 24.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0041512",
+      "inferred_snap_share": 0.34285714285714286,
+      "inferred_team_snaps": 70.0,
+      "offensive_snaps": 24.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0041512",
+      "inferred_snap_share": 0.2835820895522388,
+      "inferred_team_snaps": 67.0,
+      "offensive_snaps": 19.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0041512",
+      "inferred_snap_share": 0.47619047619047616,
+      "inferred_team_snaps": 63.0,
+      "offensive_snaps": 30.0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 8
+    }
+  ],
+  "schema": "lp.workload.observed-rb-snaps-from-frozen-input.v1",
+  "share_note": "Shares use inferred team snap totals from the frozen input, derived from rounded source snap percentages.",
+  "source_input": "../lineup-diagnostic-2026-11-08/exploratory-snaps-through-week8.json",
+  "source_input_sha256": "6bc6591a1d42befaa6c67e1fb373ca1486001fdd1d55df235a81cfe244d168eb",
+  "team_game_denominators": 47
+}

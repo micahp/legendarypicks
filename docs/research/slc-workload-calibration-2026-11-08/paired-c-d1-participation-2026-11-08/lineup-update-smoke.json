@@ -1,0 +1,81 @@
+{
+  "SEA_RB": {
+    "baseline": {
+      "Emanuel Wilson": {
+        "carries": 0.333,
+        "snaps": 0.333,
+        "targets": 0.0
+      },
+      "George Holani": {
+        "carries": 6.0,
+        "snaps": 16.333,
+        "targets": 1.0
+      },
+      "Jadarian Price": {
+        "carries": 0.0,
+        "snaps": 0.0,
+        "targets": 0.0
+      },
+      "Velus Jones Jr.": {
+        "carries": 2.333,
+        "snaps": 3.0,
+        "targets": 0.0
+      },
+      "Zach Charbonnet": {
+        "carries": 14.0,
+        "snaps": 39.667,
+        "targets": 2.0
+      }
+    },
+    "snap_updated": {
+      "Emanuel Wilson": {
+        "carries": 6.333,
+        "snaps": 15.333,
+        "targets": 1.667
+      },
+      "George Holani": {
+        "carries": 5.667,
+        "snaps": 19.0,
+        "targets": 1.0
+      },
+      "Jadarian Price": {
+        "carries": 0.667,
+        "snaps": 5.333,
+        "targets": 0.333
+      },
+      "Velus Jones Jr.": {
+        "carries": 0.0,
+        "snaps": 1.0,
+        "targets": 0.0
+      },
+      "Zach Charbonnet": {
+        "carries": 8.333,
+        "snaps": 23.0,
+        "targets": 2.0
+      }
+    }
+  },
+  "estimators": {
+    "baseline": "D1, participation snap update disabled",
+    "snap_updated": "D1, participation snap update enabled"
+  },
+  "game_id": "2026_09_ARI_SEA",
+  "same_root_and_per_seed_stream_evidence": true,
+  "schema": "lp.slc.lineup-snap-update-smoke.v1",
+  "seed_ids": [
+    1,
+    2,
+    3
+  ],
+  "seed_ledger_sha256": {
+    "baseline": "36b860fff02679179d11c678c4bd0b2ca6c38aea80eb3b1cef10b7815d794cee",
+    "snap_updated": "a69c7b792ff99152f1ccfe370a22459806da50f02500cc20e856a0c5cbdd8a6a"
+  },
+  "snap_counts_sha256": "6bc6591a1d42befaa6c67e1fb373ca1486001fdd1d55df235a81cfe244d168eb",
+  "source_commit": "2b63b114",
+  "stream_root_sha256": "033411aa225a16c4936a4b6ee34c99d65fcc99df0de3c1c7150a85c936bd369b",
+  "valid_reconciled": {
+    "baseline": 3,
+    "snap_updated": 3
+  }
+}
