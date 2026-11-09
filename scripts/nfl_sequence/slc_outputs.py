@@ -558,6 +558,9 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         'model_id': profile_manifest['model_id'],
         'configuration_hash': profile_manifest['configuration_hash'],
         'source_cutoff': snapshot['as_of'],
+        'roster_finalization_timing': ((record or {}).get('roster_finalization_timing')
+                                      or snapshot.get('roster_finalization_timing', {'status': 'unknown'})),
+        'snapshot_inputs_verified': snapshot.get('evaluation', {}).get('verified'),
         'evaluation_class': profile_manifest.get('evaluation_class', 'prospective'),
         'historical_classification': (archive_validation or {}).get('classification'),
         'prospective': bool((archive_validation or {}).get('prospective', True)),
@@ -801,11 +804,21 @@ def aggregate_boxscores(boxscores, requested_games=None):
         scoring['both_nonzero'] += int(home > 0 and away > 0)
         scoring['neither_nonzero'] += int(home == 0 and away == 0)
     n_valid = len(valid)
+    roster_timing_counts = {status: sum(
+        (box.get('roster_finalization_timing') or {}).get('status', 'unknown') == status for box in unique)
+        for status in ('before_roster_finalization', 'at_or_after_roster_finalization_point', 'unknown')}
+    valid_games_by_roster_timing = {status: sum(
+        box['status'] == 'valid_complete'
+        and (box.get('roster_finalization_timing') or {}).get('status', 'unknown') == status
+        for box in unique)
+        for status in ('before_roster_finalization', 'at_or_after_roster_finalization_point', 'unknown')}
     return {
         'schema': 'lp-nfl-slc-distribution-summary-1',
         'requested_games': requested_games if requested_games is not None else len(unique),
         'unique_seeds': len(unique), 'duplicate_ledger_rows': duplicates,
         'valid_complete_games': n_valid, 'coverage': n_valid / requested_games if requested_games else None,
+        'roster_finalization_timing_counts': roster_timing_counts,
+        'valid_complete_games_by_roster_finalization_timing': valid_games_by_roster_timing,
         'status_counts': {status: sum(box['status'] == status for box in unique)
                           for status in ('valid_complete', 'complete_unverified', 'regulation_tie', 'incomplete', 'blocked', 'error')},
         'game': {key: _distribution(values) for key, values in game_values.items()},

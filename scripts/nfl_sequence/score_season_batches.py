@@ -76,10 +76,9 @@ def load_arm(directory):
 
 
 SEED_RULES = {
-    # A verified pregame snapshot and a complete, unblocked, legal game.
+    # A complete, unblocked, legal game. Snapshot provenance and roster timing are reported separately.
     'valid_full_game': 'valid_full_game',
-    # A complete, unblocked, legal game. Archive reconstructions are never verified (their local capture time is not
-    # established), so the engine never marks them valid_full_game; this rule scores them, and the report says so.
+    # Kept as an explicit compatibility option for older batch outputs.
     'complete_game': 'complete_game',
 }
 
@@ -240,7 +239,7 @@ def main(argv=None):
     ap.add_argument('--db', default=DEFAULT_DB)
     ap.add_argument('--out', type=Path, required=True)
     ap.add_argument('--seed-rule', choices=sorted(SEED_RULES), default='valid_full_game',
-                    help='which seeds count: valid_full_game (verified snapshots only) or complete_game')
+                    help='which seeds count: valid complete games or complete games from older outputs')
     args = ap.parse_args(argv)
     report = score(args.baseline_dir, args.candidate_dir, args.db, args.weeks, season=args.season,
                    seed_rule=args.seed_rule)

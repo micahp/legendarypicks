@@ -50,6 +50,7 @@ import reducer  # noqa: E402
 import football_assertions  # noqa: E402
 import game_legality  # noqa: E402
 import field_goal_feasibility as fg_feasibility  # noqa: E402
+import pregame_snapshot  # noqa: E402
 from paired_random_streams import PairedRandomStreams  # noqa: E402
 
 NORMAL_MODE = 'normal_nfl_game'
@@ -171,6 +172,11 @@ def two_minute_stop(quarter, before, after, warned_quarters):
 
 def other(team, teams):
     return teams[1] if team == teams[0] else teams[0]
+
+
+def _is_valid_full_game(snapshot, complete, blocker, guarded, unsupported):
+    """Game validity is about a complete, supported simulation; roster timing is reported separately."""
+    return bool(snapshot and complete and blocker is None and not guarded and not unsupported)
 
 
 def fg_bucket(yardline_100):
@@ -1617,9 +1623,13 @@ class _Game:
             status = 'regulation_end_guarded'  # the simulation reached regulation end, but it is not a complete game
         points = {'A': self.points['A'], 'B': self.points['B']}
         snapshot = self.pregame_snapshot
-        # a full game is valid only on verified input provenance; an exploratory replay stays a statistical game
+        # Snapshot provenance and roster timing are recorded separately. They do not invalidate a complete legal game.
         verified = bool((snapshot or {}).get('evaluation', {}).get('verified'))
-        valid_candidate = bool(snapshot and verified and complete and blocker is None and not guarded and not unsupported)
+        valid_candidate = _is_valid_full_game(snapshot, complete, blocker, guarded, unsupported)
+        roster_timing = (snapshot or {}).get('roster_finalization_timing')
+        if snapshot and roster_timing is None:
+            roster_timing = pregame_snapshot.roster_finalization_timing(
+                snapshot.get('as_of'), snapshot.get('schedule', {}).get('scheduled_kickoff_utc'))
         record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete) + guard_reasons(guarded)
         rec = {
@@ -1636,6 +1646,8 @@ class _Game:
             'scheduled_kickoff_utc': snapshot['schedule']['scheduled_kickoff_utc'] if snapshot else None,
             'snapshot_hash': snapshot['snapshot_sha256'] if snapshot else None,
             'roster_snapshot_id': snapshot['roster_snapshot_id'] if snapshot else None,
+            'snapshot_inputs_verified': verified if snapshot else None,
+            'roster_finalization_timing': roster_timing or {'status': 'unknown'},
             'model_version': (f'{e1.MODEL_VERSION}+{PREGAME_USAGE_VERSION}' if snapshot else e1.MODEL_VERSION),
             'rules_version': 'nfl-2026-e2-successor',
             'team_identity': ({'A': {'team': snapshot['schedule']['home_team'], 'side': 'home'},

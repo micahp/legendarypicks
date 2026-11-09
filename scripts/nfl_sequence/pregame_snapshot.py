@@ -11,7 +11,7 @@ import hashlib
 import json
 import sqlite3
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -234,6 +234,20 @@ VERIFIED_CAPTURE_SOURCES = {
     'nflverse_depth_charts_capture': 'captured raw depth charts',
 }
 CAPTURED_SCHEDULE = 'captured_before_cutoff'
+ROSTER_FINALIZATION_WINDOW = timedelta(minutes=90)
+
+
+def roster_finalization_timing(as_of: str, kickoff_utc: str | None) -> dict:
+    """Report whether the snapshot was taken before or after the 90-minute roster point."""
+    if not kickoff_utc:
+        return {'status': 'unknown', 'window_opens_utc': None}
+    window_opens = parse_as_of(kickoff_utc) - ROSTER_FINALIZATION_WINDOW
+    before = parse_as_of(as_of) < window_opens
+    return {
+        'status': 'before_roster_finalization' if before else 'at_or_after_roster_finalization_point',
+        'before_roster_finalization': before,
+        'window_opens_utc': window_opens.strftime('%Y-%m-%dT%H:%M:%SZ'),
+    }
 
 
 def _in_database_by(ingested_at, as_of):
@@ -404,6 +418,9 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
         'evaluation': {'class': evaluation, 'verified': not provenance['unverified'],
                        'unverified_inputs': provenance['unverified']},
         'as_of': cutoff.isoformat().replace('+00:00', 'Z'),
+        'roster_finalization_timing': roster_finalization_timing(
+            cutoff.isoformat().replace('+00:00', 'Z'),
+            scheduled_start.isoformat().replace('+00:00', 'Z') if scheduled_start else None),
         'roster_snapshot_id': f"nfl-depth-chart:{_canonical_hash(rosters)}",
         'schedule': {
             'game_id': game['game_id'], 'season': game['season'], 'game_type': game['game_type'],

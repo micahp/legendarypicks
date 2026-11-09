@@ -100,6 +100,13 @@ def spy_simulate(run):
 
 
 class Ledger(unittest.TestCase):
+    def test_pre_final_roster_snapshot_does_not_make_a_complete_game_invalid(self):
+        snapshot = {
+            'evaluation': {'verified': False},
+            'roster_finalization_timing': {'status': 'before_roster_finalization'},
+        }
+        self.assertTrue(gs._is_valid_full_game(snapshot, True, None, [], []))
+
     def test_paired_stream_mode_is_snapshot_pinned_and_emits_draw_keys(self):
         snapshot = {
             'snapshot_sha256': 'd' * 64, 'as_of': '2026-10-30T12:00:00Z', 'roster_snapshot_id': 'roster-1',

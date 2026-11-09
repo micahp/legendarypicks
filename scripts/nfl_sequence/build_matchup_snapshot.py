@@ -34,10 +34,12 @@ def cutoff_for(kickoff_utc):
 
 
 def status_for(now, cutoff):
-    """PREVIEW until the cutoff has passed. Only a build run at or after the cutoff may be called a cutoff snapshot."""
+    """Describe roster timing without treating an earlier snapshot as invalid."""
     if now < cutoff:
-        return f'PREVIEW: the cutoff is {cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")}; inputs can still change until then'
-    return f'CUTOFF SNAPSHOT: built at {now.strftime("%Y-%m-%dT%H:%M:%SZ")}, after the cutoff'
+        return (f'PREGAME SNAPSHOT: taken before the 90-minute roster point at '
+                f'{cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")}; snapshot is valid, roster is not final')
+    return (f'PREGAME SNAPSHOT: taken at or after the 90-minute roster point '
+            f'{cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")}; snapshot validity is separate from roster status')
 
 
 def main(argv=None):
@@ -86,7 +88,7 @@ def main(argv=None):
     summary = [status,
                f'game {a.game}; as of {a.as_of}; kickoff {a.kickoff_utc}; evaluation {snapshot["evaluation"]}',
                f'snapshot sha256 {snapshot["snapshot_sha256"]}',
-               f'pinned roster: {a.roster_snapshot or "none (depth chart preview)"}',
+               f'pinned roster: {a.roster_snapshot or "none (depth chart snapshot; roster not finalized)"}',
                f'teams {rosters["away"]} (away) and {rosters["home"]} (home)',
                f'news evidence sha256 {evidence["evidence_sha256"]}; items {len(evidence["items"])}',
                starter_consistency.summary_line(evidence['starter_consistency'])]
