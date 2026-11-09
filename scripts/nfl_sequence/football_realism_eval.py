@@ -191,9 +191,12 @@ def _load_seed_ledgers(paths):
                 if type(seed) is not int:
                     continue
                 rows_read += 1
-                if seed in latest:
+                compact = _compact_seed_row(row)
+                file_game = ((headers.get(str(path)) or {}).get('metadata') or {}).get('game_id')
+                key = (compact.get('game_id') or file_game, seed)  # seed numbers repeat across games, so the game is in the key
+                if key in latest:
                     duplicates += 1
-                latest[seed] = _compact_seed_row(row)
+                latest[key] = compact
     if not latest:
         raise ValueError('no seed outcome rows found in the supplied JSONL files')
     return latest, rows_read, duplicates, file_hashes, headers
@@ -539,7 +542,7 @@ def evaluate(seed_ledger_paths, *, reference_dir=DEFAULT_REFERENCE,
     status_counts = Counter(row['status'] for row in latest.values())
     valid_games = []
     missing_boxscores = 0
-    for seed, row in sorted(latest.items()):
+    for (_, seed), row in sorted(latest.items(), key=lambda item: (str(item[0][0]), item[0][1])):
         box = row.get('boxscore')
         if box is None:
             missing_boxscores += 1
