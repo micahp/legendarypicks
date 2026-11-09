@@ -1,0 +1,1944 @@
+{
+  "candidate_sets": {
+    "ARI_SEA": {
+      "C": {
+        "post_candidate_counts": {
+          "0": 57,
+          "1": 803,
+          "2": 100
+        },
+        "post_single": 803,
+        "pre_multi_post_single": 803,
+        "pre_population_counts": {
+          "5": 502,
+          "6": 458
+        },
+        "rb_carry_events": 960,
+        "selected_charbonnet_sole_candidate": 143,
+        "selection_group_counts": {
+          "ARI|carry|QB": 38,
+          "ARI|carry|RB": 455,
+          "ARI|carry|RB,QB,WR,TE": 3,
+          "ARI|carry|WR,TE": 16,
+          "ARI|receive|RB": 152,
+          "ARI|receive|TE": 244,
+          "ARI|receive|WR": 422,
+          "SEA|carry|QB": 25,
+          "SEA|carry|RB": 447,
+          "SEA|carry|RB,QB,WR,TE": 55,
+          "SEA|carry|WR,TE": 23,
+          "SEA|receive|RB": 110,
+          "SEA|receive|TE": 147,
+          "SEA|receive|WR": 466
+        }
+      },
+      "D1": {
+        "post_candidate_counts": {
+          "0": 45,
+          "1": 832,
+          "2": 96
+        },
+        "post_single": 832,
+        "pre_multi_post_single": 832,
+        "pre_population_counts": {
+          "5": 526,
+          "6": 447
+        },
+        "rb_carry_events": 973,
+        "selected_charbonnet_sole_candidate": 175,
+        "selection_group_counts": {
+          "ARI|carry|QB": 38,
+          "ARI|carry|RB": 442,
+          "ARI|carry|RB,QB,WR,TE": 5,
+          "ARI|carry|WR,TE": 18,
+          "ARI|receive|RB": 149,
+          "ARI|receive|TE": 247,
+          "ARI|receive|WR": 436,
+          "SEA|carry|QB": 25,
+          "SEA|carry|RB": 485,
+          "SEA|carry|RB,QB,WR,TE": 41,
+          "SEA|carry|WR,TE": 20,
+          "SEA|receive|RB": 98,
+          "SEA|receive|TE": 149,
+          "SEA|receive|WR": 461
+        }
+      }
+    },
+    "DAL_IND": {
+      "C": {
+        "post_candidate_counts": {
+          "0": 35,
+          "1": 981,
+          "2": 73
+        },
+        "post_single": 981,
+        "pre_multi_post_single": 981,
+        "pre_population_counts": {
+          "3": 1089
+        },
+        "rb_carry_events": 1089,
+        "selected_charbonnet_sole_candidate": 0,
+        "selection_group_counts": {
+          "DAL|carry|QB": 38,
+          "DAL|carry|RB": 562,
+          "DAL|carry|RB,QB,WR,TE": 32,
+          "DAL|carry|WR,TE": 29,
+          "DAL|receive|RB": 87,
+          "DAL|receive|TE": 167,
+          "DAL|receive|WR": 423,
+          "IND|carry|QB": 16,
+          "IND|carry|RB": 490,
+          "IND|carry|RB,QB,WR,TE": 5,
+          "IND|carry|WR,TE": 17,
+          "IND|receive|RB": 117,
+          "IND|receive|TE": 193,
+          "IND|receive|WR": 426
+        }
+      },
+      "D1": {
+        "post_candidate_counts": {
+          "0": 30,
+          "1": 986,
+          "2": 85
+        },
+        "post_single": 986,
+        "pre_multi_post_single": 986,
+        "pre_population_counts": {
+          "3": 1101
+        },
+        "rb_carry_events": 1101,
+        "selected_charbonnet_sole_candidate": 0,
+        "selection_group_counts": {
+          "DAL|carry|QB": 37,
+          "DAL|carry|RB": 561,
+          "DAL|carry|RB,QB,WR,TE": 28,
+          "DAL|carry|WR,TE": 29,
+          "DAL|receive|RB": 79,
+          "DAL|receive|TE": 157,
+          "DAL|receive|WR": 414,
+          "IND|carry|QB": 22,
+          "IND|carry|RB": 508,
+          "IND|carry|RB,QB,WR,TE": 4,
+          "IND|carry|WR,TE": 19,
+          "IND|receive|RB": 115,
+          "IND|receive|TE": 190,
+          "IND|receive|WR": 432
+        }
+      }
+    },
+    "DEN_CAR": {
+      "C": {
+        "post_candidate_counts": {
+          "0": 31,
+          "1": 960,
+          "2": 101
+        },
+        "post_single": 960,
+        "pre_multi_post_single": 960,
+        "pre_population_counts": {
+          "4": 560,
+          "5": 532
+        },
+        "rb_carry_events": 1092,
+        "selected_charbonnet_sole_candidate": 0,
+        "selection_group_counts": {
+          "CAR|carry|QB": 15,
+          "CAR|carry|RB": 528,
+          "CAR|carry|RB,QB,WR,TE": 4,
+          "CAR|carry|WR,TE": 18,
+          "CAR|receive|RB": 122,
+          "CAR|receive|TE": 142,
+          "CAR|receive|WR": 454,
+          "DEN|carry|QB": 42,
+          "DEN|carry|RB": 532,
+          "DEN|carry|RB,QB,WR,TE": 28,
+          "DEN|carry|WR,TE": 33,
+          "DEN|receive|RB": 142,
+          "DEN|receive|TE": 105,
+          "DEN|receive|WR": 445
+        }
+      },
+      "D1": {
+        "post_candidate_counts": {
+          "0": 30,
+          "1": 935,
+          "2": 95
+        },
+        "post_single": 935,
+        "pre_multi_post_single": 935,
+        "pre_population_counts": {
+          "4": 561,
+          "5": 499
+        },
+        "rb_carry_events": 1060,
+        "selected_charbonnet_sole_candidate": 0,
+        "selection_group_counts": {
+          "CAR|carry|QB": 13,
+          "CAR|carry|RB": 497,
+          "CAR|carry|RB,QB,WR,TE": 2,
+          "CAR|carry|WR,TE": 19,
+          "CAR|receive|RB": 122,
+          "CAR|receive|TE": 146,
+          "CAR|receive|WR": 460,
+          "DEN|carry|QB": 49,
+          "DEN|carry|RB": 533,
+          "DEN|carry|RB,QB,WR,TE": 28,
+          "DEN|carry|WR,TE": 34,
+          "DEN|receive|RB": 141,
+          "DEN|receive|TE": 100,
+          "DEN|receive|WR": 446
+        }
+      }
+    }
+  },
+  "eligibility_audit": {
+    "distinct_players": 115,
+    "field_values": {
+      "active_roster": {
+        "None": 4600
+      },
+      "game_day_active": {
+        "None": 4600
+      },
+      "roster_eligible": {
+        "None": 4600
+      },
+      "roster_status": {
+        "None": 4600
+      }
+    },
+    "player_game_rows": 4600
+  },
+  "limitations": [
+    "Roster eligibility and game-day-active fields are unknown for the simulated players; the run does not establish eligibility.",
+    "The weeks 1-8 snap extract is retrospective and has no acquisition timestamp. It is not verified as an official-cutoff capture.",
+    "Missing observed rows do not establish inactivity. Observed percentages are conditional on recorded rows.",
+    "Observed offensive snaps and modeled skill-lineup appearances are not identical definitions; the lineup field excludes QB and offensive-line appearances.",
+    "Twenty seeds per arm across three games are exploratory; this does not justify a production default change."
+  ],
+  "lineup_update_smoke": {
+    "SEA_RB": {
+      "baseline": {
+        "Emanuel Wilson": {
+          "carries": 0.333,
+          "snaps": 0.333,
+          "targets": 0.0
+        },
+        "George Holani": {
+          "carries": 6.0,
+          "snaps": 16.333,
+          "targets": 1.0
+        },
+        "Jadarian Price": {
+          "carries": 0.0,
+          "snaps": 0.0,
+          "targets": 0.0
+        },
+        "Velus Jones Jr.": {
+          "carries": 2.333,
+          "snaps": 3.0,
+          "targets": 0.0
+        },
+        "Zach Charbonnet": {
+          "carries": 14.0,
+          "snaps": 39.667,
+          "targets": 2.0
+        }
+      },
+      "snap_updated": {
+        "Emanuel Wilson": {
+          "carries": 6.333,
+          "snaps": 15.333,
+          "targets": 1.667
+        },
+        "George Holani": {
+          "carries": 5.667,
+          "snaps": 19.0,
+          "targets": 1.0
+        },
+        "Jadarian Price": {
+          "carries": 0.667,
+          "snaps": 5.333,
+          "targets": 0.333
+        },
+        "Velus Jones Jr.": {
+          "carries": 0.0,
+          "snaps": 1.0,
+          "targets": 0.0
+        },
+        "Zach Charbonnet": {
+          "carries": 8.333,
+          "snaps": 23.0,
+          "targets": 2.0
+        }
+      }
+    },
+    "estimators": {
+      "baseline": "D1, participation snap update disabled",
+      "snap_updated": "D1, participation snap update enabled"
+    },
+    "game_id": "2026_09_ARI_SEA",
+    "same_root_and_per_seed_stream_evidence": true,
+    "schema": "lp.slc.lineup-snap-update-smoke.v1",
+    "seed_ids": [
+      1,
+      2,
+      3
+    ],
+    "seed_ledger_sha256": {
+      "baseline": "36b860fff02679179d11c678c4bd0b2ca6c38aea80eb3b1cef10b7815d794cee",
+      "snap_updated": "a69c7b792ff99152f1ccfe370a22459806da50f02500cc20e856a0c5cbdd8a6a"
+    },
+    "snap_counts_sha256": "6bc6591a1d42befaa6c67e1fb373ca1486001fdd1d55df235a81cfe244d168eb",
+    "source_commit": "2b63b114",
+    "stream_root_sha256": "033411aa225a16c4936a4b6ee34c99d65fcc99df0de3c1c7150a85c936bd369b",
+    "valid_reconciled": {
+      "baseline": 3,
+      "snap_updated": 3
+    }
+  },
+  "matchups": {
+    "ARI_SEA": {
+      "artifacts": {
+        "C": {
+          "boxscore_export_sha256": "c3b76c2fee5784a0712d5c7f22e5fd2bdc74951f43d9e20c77f4eafe57e23db2",
+          "seed_ledger_sha256": "27654236fc7a371c0fb6104dbb842bf1b53397e9f6feafbba0ca376bac977911"
+        },
+        "D1": {
+          "boxscore_export_sha256": "47942d6bffb651e0c0eb0ce58264e022d3adda19a94b4e54cbca20e137de84b1",
+          "seed_ledger_sha256": "1edf478b286a276b27af9b77d9133ac539301d71eb523d3474126d58f8130f32"
+        }
+      },
+      "candidate_sets": {
+        "C": {
+          "candidate_count_by_role_positions_and_size": [
+            {
+              "candidates": 1,
+              "events": 63,
+              "positions": "QB",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 803,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 2,
+              "events": 99,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 11,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 5,
+              "events": 44,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 6,
+              "events": 3,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 3,
+              "events": 12,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 27,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 243,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 19,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 263,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 103,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 25,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 63,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 238,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 568,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 4,
+              "events": 19,
+              "positions": "WR",
+              "role": "receive"
+            }
+          ],
+          "charbonnet_selected_on_post_single_candidate_rb_carry_events": 143,
+          "events_by_team_role_positions": [
+            {
+              "events": 38,
+              "positions": "QB",
+              "role": "carry",
+              "team": "ARI"
+            },
+            {
+              "events": 455,
+              "positions": "RB",
+              "role": "carry",
+              "team": "ARI"
+            },
+            {
+              "events": 3,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "ARI"
+            },
+            {
+              "events": 16,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "ARI"
+            },
+            {
+              "events": 152,
+              "positions": "RB",
+              "role": "receive",
+              "team": "ARI"
+            },
+            {
+              "events": 244,
+              "positions": "TE",
+              "role": "receive",
+              "team": "ARI"
+            },
+            {
+              "events": 422,
+              "positions": "WR",
+              "role": "receive",
+              "team": "ARI"
+            },
+            {
+              "events": 25,
+              "positions": "QB",
+              "role": "carry",
+              "team": "SEA"
+            },
+            {
+              "events": 447,
+              "positions": "RB",
+              "role": "carry",
+              "team": "SEA"
+            },
+            {
+              "events": 55,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "SEA"
+            },
+            {
+              "events": 23,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "SEA"
+            },
+            {
+              "events": 110,
+              "positions": "RB",
+              "role": "receive",
+              "team": "SEA"
+            },
+            {
+              "events": 147,
+              "positions": "TE",
+              "role": "receive",
+              "team": "SEA"
+            },
+            {
+              "events": 466,
+              "positions": "WR",
+              "role": "receive",
+              "team": "SEA"
+            }
+          ],
+          "rb_carry_events": 960,
+          "rb_carry_post_single_candidate_events": 803,
+          "rb_post_lineup_candidate_count": {
+            "0": 57,
+            "1": 803,
+            "2": 100
+          },
+          "rb_pre_lineup_population_count": {
+            "5": 502,
+            "6": 458
+          },
+          "rb_pre_multi_post_single_events": 803
+        },
+        "D1": {
+          "candidate_count_by_role_positions_and_size": [
+            {
+              "candidates": 1,
+              "events": 63,
+              "positions": "QB",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 832,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 2,
+              "events": 95,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 8,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 5,
+              "events": 34,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 6,
+              "events": 4,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 3,
+              "events": 9,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 29,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 229,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 18,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 257,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 110,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 29,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 73,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 237,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 572,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 4,
+              "events": 15,
+              "positions": "WR",
+              "role": "receive"
+            }
+          ],
+          "charbonnet_selected_on_post_single_candidate_rb_carry_events": 175,
+          "events_by_team_role_positions": [
+            {
+              "events": 38,
+              "positions": "QB",
+              "role": "carry",
+              "team": "ARI"
+            },
+            {
+              "events": 442,
+              "positions": "RB",
+              "role": "carry",
+              "team": "ARI"
+            },
+            {
+              "events": 5,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "ARI"
+            },
+            {
+              "events": 18,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "ARI"
+            },
+            {
+              "events": 149,
+              "positions": "RB",
+              "role": "receive",
+              "team": "ARI"
+            },
+            {
+              "events": 247,
+              "positions": "TE",
+              "role": "receive",
+              "team": "ARI"
+            },
+            {
+              "events": 436,
+              "positions": "WR",
+              "role": "receive",
+              "team": "ARI"
+            },
+            {
+              "events": 25,
+              "positions": "QB",
+              "role": "carry",
+              "team": "SEA"
+            },
+            {
+              "events": 485,
+              "positions": "RB",
+              "role": "carry",
+              "team": "SEA"
+            },
+            {
+              "events": 41,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "SEA"
+            },
+            {
+              "events": 20,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "SEA"
+            },
+            {
+              "events": 98,
+              "positions": "RB",
+              "role": "receive",
+              "team": "SEA"
+            },
+            {
+              "events": 149,
+              "positions": "TE",
+              "role": "receive",
+              "team": "SEA"
+            },
+            {
+              "events": 461,
+              "positions": "WR",
+              "role": "receive",
+              "team": "SEA"
+            }
+          ],
+          "rb_carry_events": 973,
+          "rb_carry_post_single_candidate_events": 832,
+          "rb_post_lineup_candidate_count": {
+            "0": 45,
+            "1": 832,
+            "2": 96
+          },
+          "rb_pre_lineup_population_count": {
+            "5": 526,
+            "6": 447
+          },
+          "rb_pre_multi_post_single_events": 832
+        }
+      },
+      "code_commit": "59624176d2f089f1d826a7f23e0558c935fe0742",
+      "game_id": "2026_09_ARI_SEA",
+      "lineup_update": {
+        "input": {
+          "group_n0": 8.0,
+          "player_n0": 1.0,
+          "season": 2026,
+          "sha256": "6bc6591a1d42befaa6c67e1fb373ca1486001fdd1d55df235a81cfe244d168eb",
+          "week": 9
+        },
+        "team_lineup_snaps_per_game": {
+          "ARI": {
+            "mean": 69.15,
+            "median": 68.5,
+            "n": 20,
+            "p10": 62.0,
+            "p90": 80.1
+          },
+          "SEA": {
+            "mean": 65.05,
+            "median": 64.5,
+            "n": 20,
+            "p10": 53.9,
+            "p90": 76.1
+          }
+        },
+        "teams": {
+          "ARI": {
+            "earlier_games": 8,
+            "group_lambda": [
+              0.312733,
+              0.351412,
+              0.158246
+            ],
+            "last_week_used": 8,
+            "player_status": {
+              "clipped": 2,
+              "no_earlier_active_game": 4,
+              "weighted": 12
+            }
+          },
+          "SEA": {
+            "earlier_games": 8,
+            "group_lambda": [
+              0.543512,
+              0.045223,
+              -0.040045
+            ],
+            "last_week_used": 8,
+            "player_status": {
+              "clipped": 1,
+              "no_earlier_active_game": 2,
+              "weighted": 14
+            }
+          }
+        }
+      },
+      "paired_streams_equal": true,
+      "requested_seeds": 20,
+      "scores": {
+        "C": {
+          "away_points": {
+            "mean": 23.65,
+            "median": 23.5,
+            "n": 20,
+            "p10": 14.8,
+            "p90": 33.1
+          },
+          "home_points": {
+            "mean": 25.2,
+            "median": 25.0,
+            "n": 20,
+            "p10": 16.0,
+            "p90": 38.0
+          }
+        },
+        "D1": {
+          "away_points": {
+            "mean": 22.75,
+            "median": 22.0,
+            "n": 20,
+            "p10": 12.7,
+            "p90": 33.1
+          },
+          "home_points": {
+            "mean": 25.2,
+            "median": 25.5,
+            "n": 20,
+            "p10": 16.0,
+            "p90": 38.0
+          }
+        }
+      },
+      "snapshot_sha256": "349b283557ffc491ff4aedc8ca7a050c71bda1676366a08cdb566cda1d18ad74",
+      "stream_root_sha256": "a7234c44d4c24de609f136c541a96a7b7c587bae34fea7006413916275f02c1f",
+      "valid_reconciled": {
+        "C": 20,
+        "D1": 20
+      }
+    },
+    "DAL_IND": {
+      "artifacts": {
+        "C": {
+          "boxscore_export_sha256": "9dca24f1bd0f662ad66769703e4eeaf25c8ef172fb5fdbd7db034ec061358f46",
+          "seed_ledger_sha256": "cdae0c1f067b495ba0fae84d75704ec11155c41f10f7bc06ffc090f2406b4c34"
+        },
+        "D1": {
+          "boxscore_export_sha256": "b1143b74e9ebd38cea9c0ca4d801610c2f6c4781d87008c8163ad29846ac9bb5",
+          "seed_ledger_sha256": "d888f7af0fcee4c2687d2c5abf9b6456207b9e37ead1d6b4a37d3f9f6570330c"
+        }
+      },
+      "candidate_sets": {
+        "C": {
+          "candidate_count_by_role_positions_and_size": [
+            {
+              "candidates": 1,
+              "events": 54,
+              "positions": "QB",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 979,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 2,
+              "events": 73,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 1,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 5,
+              "events": 30,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 6,
+              "events": 6,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 2,
+              "events": 1,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 3,
+              "events": 7,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 38,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 202,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 2,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 247,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 96,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 17,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 38,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 198,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 600,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 4,
+              "events": 13,
+              "positions": "WR",
+              "role": "receive"
+            }
+          ],
+          "charbonnet_selected_on_post_single_candidate_rb_carry_events": 0,
+          "events_by_team_role_positions": [
+            {
+              "events": 38,
+              "positions": "QB",
+              "role": "carry",
+              "team": "DAL"
+            },
+            {
+              "events": 562,
+              "positions": "RB",
+              "role": "carry",
+              "team": "DAL"
+            },
+            {
+              "events": 32,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "DAL"
+            },
+            {
+              "events": 29,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "DAL"
+            },
+            {
+              "events": 87,
+              "positions": "RB",
+              "role": "receive",
+              "team": "DAL"
+            },
+            {
+              "events": 167,
+              "positions": "TE",
+              "role": "receive",
+              "team": "DAL"
+            },
+            {
+              "events": 423,
+              "positions": "WR",
+              "role": "receive",
+              "team": "DAL"
+            },
+            {
+              "events": 16,
+              "positions": "QB",
+              "role": "carry",
+              "team": "IND"
+            },
+            {
+              "events": 490,
+              "positions": "RB",
+              "role": "carry",
+              "team": "IND"
+            },
+            {
+              "events": 5,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "IND"
+            },
+            {
+              "events": 17,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "IND"
+            },
+            {
+              "events": 117,
+              "positions": "RB",
+              "role": "receive",
+              "team": "IND"
+            },
+            {
+              "events": 193,
+              "positions": "TE",
+              "role": "receive",
+              "team": "IND"
+            },
+            {
+              "events": 426,
+              "positions": "WR",
+              "role": "receive",
+              "team": "IND"
+            }
+          ],
+          "rb_carry_events": 1089,
+          "rb_carry_post_single_candidate_events": 981,
+          "rb_post_lineup_candidate_count": {
+            "0": 35,
+            "1": 981,
+            "2": 73
+          },
+          "rb_pre_lineup_population_count": {
+            "3": 1089
+          },
+          "rb_pre_multi_post_single_events": 981
+        },
+        "D1": {
+          "candidate_count_by_role_positions_and_size": [
+            {
+              "candidates": 1,
+              "events": 59,
+              "positions": "QB",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 984,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 2,
+              "events": 85,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 1,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 5,
+              "events": 25,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 6,
+              "events": 6,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 2,
+              "events": 1,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 3,
+              "events": 6,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 41,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 193,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 1,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 245,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 87,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 15,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 37,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 197,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 591,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 4,
+              "events": 19,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 5,
+              "events": 2,
+              "positions": "WR",
+              "role": "receive"
+            }
+          ],
+          "charbonnet_selected_on_post_single_candidate_rb_carry_events": 0,
+          "events_by_team_role_positions": [
+            {
+              "events": 37,
+              "positions": "QB",
+              "role": "carry",
+              "team": "DAL"
+            },
+            {
+              "events": 561,
+              "positions": "RB",
+              "role": "carry",
+              "team": "DAL"
+            },
+            {
+              "events": 28,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "DAL"
+            },
+            {
+              "events": 29,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "DAL"
+            },
+            {
+              "events": 79,
+              "positions": "RB",
+              "role": "receive",
+              "team": "DAL"
+            },
+            {
+              "events": 157,
+              "positions": "TE",
+              "role": "receive",
+              "team": "DAL"
+            },
+            {
+              "events": 414,
+              "positions": "WR",
+              "role": "receive",
+              "team": "DAL"
+            },
+            {
+              "events": 22,
+              "positions": "QB",
+              "role": "carry",
+              "team": "IND"
+            },
+            {
+              "events": 508,
+              "positions": "RB",
+              "role": "carry",
+              "team": "IND"
+            },
+            {
+              "events": 4,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "IND"
+            },
+            {
+              "events": 19,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "IND"
+            },
+            {
+              "events": 115,
+              "positions": "RB",
+              "role": "receive",
+              "team": "IND"
+            },
+            {
+              "events": 190,
+              "positions": "TE",
+              "role": "receive",
+              "team": "IND"
+            },
+            {
+              "events": 432,
+              "positions": "WR",
+              "role": "receive",
+              "team": "IND"
+            }
+          ],
+          "rb_carry_events": 1101,
+          "rb_carry_post_single_candidate_events": 986,
+          "rb_post_lineup_candidate_count": {
+            "0": 30,
+            "1": 986,
+            "2": 85
+          },
+          "rb_pre_lineup_population_count": {
+            "3": 1101
+          },
+          "rb_pre_multi_post_single_events": 986
+        }
+      },
+      "code_commit": "59624176d2f089f1d826a7f23e0558c935fe0742",
+      "game_id": "2026_09_DAL_IND",
+      "lineup_update": {
+        "input": {
+          "group_n0": 8.0,
+          "player_n0": 1.0,
+          "season": 2026,
+          "sha256": "6bc6591a1d42befaa6c67e1fb373ca1486001fdd1d55df235a81cfe244d168eb",
+          "week": 9
+        },
+        "team_lineup_snaps_per_game": {
+          "DAL": {
+            "mean": 66.55,
+            "median": 67.0,
+            "n": 20,
+            "p10": 53.800000000000004,
+            "p90": 78.1
+          },
+          "IND": {
+            "mean": 66.05,
+            "median": 66.0,
+            "n": 20,
+            "p10": 58.9,
+            "p90": 73.30000000000001
+          }
+        },
+        "teams": {
+          "DAL": {
+            "earlier_games": 8,
+            "group_lambda": [
+              -0.5774,
+              -0.637004,
+              -0.611544
+            ],
+            "last_week_used": 8,
+            "player_status": {
+              "no_earlier_active_game": 2,
+              "weighted": 12
+            }
+          },
+          "IND": {
+            "earlier_games": 8,
+            "group_lambda": [
+              -0.648511,
+              -0.103641,
+              -0.385084
+            ],
+            "last_week_used": 8,
+            "player_status": {
+              "clipped": 2,
+              "no_earlier_active_game": 2,
+              "weighted": 13
+            }
+          }
+        }
+      },
+      "paired_streams_equal": true,
+      "requested_seeds": 20,
+      "scores": {
+        "C": {
+          "away_points": {
+            "mean": 25.2,
+            "median": 25.0,
+            "n": 20,
+            "p10": 17.6,
+            "p90": 32.60000000000001
+          },
+          "home_points": {
+            "mean": 19.3,
+            "median": 18.5,
+            "n": 20,
+            "p10": 11.4,
+            "p90": 27.0
+          }
+        },
+        "D1": {
+          "away_points": {
+            "mean": 24.5,
+            "median": 23.5,
+            "n": 20,
+            "p10": 16.7,
+            "p90": 32.60000000000001
+          },
+          "home_points": {
+            "mean": 19.8,
+            "median": 18.5,
+            "n": 20,
+            "p10": 12.3,
+            "p90": 28.100000000000016
+          }
+        }
+      },
+      "snapshot_sha256": "13d3f377ae7f16dcb0a2205ea140b8934fa9ce29726fb4f2c2dd4d0cb73a40fc",
+      "stream_root_sha256": "ff817ae3ac3f076d2bdc9fa3715796bd14705f5c77618e71a2de000aa332ea21",
+      "valid_reconciled": {
+        "C": 20,
+        "D1": 20
+      }
+    },
+    "DEN_CAR": {
+      "artifacts": {
+        "C": {
+          "boxscore_export_sha256": "d2559cc67524f6ffe21c2771f529bba926f43df9d6843ca28334340d2f243dd7",
+          "seed_ledger_sha256": "b4c950d85a2872c261f80b182162f5bed54a430b1cd6545f34e099b52333b649"
+        },
+        "D1": {
+          "boxscore_export_sha256": "c1ff34301c9c3288ceeeaab48dd6f3623559a01fdff3aa7c637783506eb89cf0",
+          "seed_ledger_sha256": "429ec208ed0e9f1441c87ca4a3ee7c78059e2d29685f90c763e9b346343fd0f2"
+        }
+      },
+      "candidate_sets": {
+        "C": {
+          "candidate_count_by_role_positions_and_size": [
+            {
+              "candidates": 1,
+              "events": 57,
+              "positions": "QB",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 959,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 2,
+              "events": 101,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 2,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 5,
+              "events": 22,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 6,
+              "events": 8,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 2,
+              "events": 1,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 3,
+              "events": 10,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 40,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 251,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 13,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 181,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 52,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 13,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 4,
+              "events": 1,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 62,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 240,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 577,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 4,
+              "events": 20,
+              "positions": "WR",
+              "role": "receive"
+            }
+          ],
+          "charbonnet_selected_on_post_single_candidate_rb_carry_events": 0,
+          "events_by_team_role_positions": [
+            {
+              "events": 15,
+              "positions": "QB",
+              "role": "carry",
+              "team": "CAR"
+            },
+            {
+              "events": 528,
+              "positions": "RB",
+              "role": "carry",
+              "team": "CAR"
+            },
+            {
+              "events": 4,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "CAR"
+            },
+            {
+              "events": 18,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "CAR"
+            },
+            {
+              "events": 122,
+              "positions": "RB",
+              "role": "receive",
+              "team": "CAR"
+            },
+            {
+              "events": 142,
+              "positions": "TE",
+              "role": "receive",
+              "team": "CAR"
+            },
+            {
+              "events": 454,
+              "positions": "WR",
+              "role": "receive",
+              "team": "CAR"
+            },
+            {
+              "events": 42,
+              "positions": "QB",
+              "role": "carry",
+              "team": "DEN"
+            },
+            {
+              "events": 532,
+              "positions": "RB",
+              "role": "carry",
+              "team": "DEN"
+            },
+            {
+              "events": 28,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "DEN"
+            },
+            {
+              "events": 33,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "DEN"
+            },
+            {
+              "events": 142,
+              "positions": "RB",
+              "role": "receive",
+              "team": "DEN"
+            },
+            {
+              "events": 105,
+              "positions": "TE",
+              "role": "receive",
+              "team": "DEN"
+            },
+            {
+              "events": 445,
+              "positions": "WR",
+              "role": "receive",
+              "team": "DEN"
+            }
+          ],
+          "rb_carry_events": 1092,
+          "rb_carry_post_single_candidate_events": 960,
+          "rb_post_lineup_candidate_count": {
+            "0": 31,
+            "1": 960,
+            "2": 101
+          },
+          "rb_pre_lineup_population_count": {
+            "4": 560,
+            "5": 532
+          },
+          "rb_pre_multi_post_single_events": 960
+        },
+        "D1": {
+          "candidate_count_by_role_positions_and_size": [
+            {
+              "candidates": 1,
+              "events": 62,
+              "positions": "QB",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 935,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 2,
+              "events": 95,
+              "positions": "RB",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 2,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 5,
+              "events": 23,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 6,
+              "events": 5,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 2,
+              "events": 2,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 3,
+              "events": 10,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 4,
+              "events": 41,
+              "positions": "WR,TE",
+              "role": "carry"
+            },
+            {
+              "candidates": 1,
+              "events": 250,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 13,
+              "positions": "RB",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 176,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 55,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 14,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 4,
+              "events": 1,
+              "positions": "TE",
+              "role": "receive"
+            },
+            {
+              "candidates": 1,
+              "events": 67,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 2,
+              "events": 240,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 3,
+              "events": 580,
+              "positions": "WR",
+              "role": "receive"
+            },
+            {
+              "candidates": 4,
+              "events": 19,
+              "positions": "WR",
+              "role": "receive"
+            }
+          ],
+          "charbonnet_selected_on_post_single_candidate_rb_carry_events": 0,
+          "events_by_team_role_positions": [
+            {
+              "events": 13,
+              "positions": "QB",
+              "role": "carry",
+              "team": "CAR"
+            },
+            {
+              "events": 497,
+              "positions": "RB",
+              "role": "carry",
+              "team": "CAR"
+            },
+            {
+              "events": 2,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "CAR"
+            },
+            {
+              "events": 19,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "CAR"
+            },
+            {
+              "events": 122,
+              "positions": "RB",
+              "role": "receive",
+              "team": "CAR"
+            },
+            {
+              "events": 146,
+              "positions": "TE",
+              "role": "receive",
+              "team": "CAR"
+            },
+            {
+              "events": 460,
+              "positions": "WR",
+              "role": "receive",
+              "team": "CAR"
+            },
+            {
+              "events": 49,
+              "positions": "QB",
+              "role": "carry",
+              "team": "DEN"
+            },
+            {
+              "events": 533,
+              "positions": "RB",
+              "role": "carry",
+              "team": "DEN"
+            },
+            {
+              "events": 28,
+              "positions": "RB,QB,WR,TE",
+              "role": "carry",
+              "team": "DEN"
+            },
+            {
+              "events": 34,
+              "positions": "WR,TE",
+              "role": "carry",
+              "team": "DEN"
+            },
+            {
+              "events": 141,
+              "positions": "RB",
+              "role": "receive",
+              "team": "DEN"
+            },
+            {
+              "events": 100,
+              "positions": "TE",
+              "role": "receive",
+              "team": "DEN"
+            },
+            {
+              "events": 446,
+              "positions": "WR",
+              "role": "receive",
+              "team": "DEN"
+            }
+          ],
+          "rb_carry_events": 1060,
+          "rb_carry_post_single_candidate_events": 935,
+          "rb_post_lineup_candidate_count": {
+            "0": 30,
+            "1": 935,
+            "2": 95
+          },
+          "rb_pre_lineup_population_count": {
+            "4": 561,
+            "5": 499
+          },
+          "rb_pre_multi_post_single_events": 935
+        }
+      },
+      "code_commit": "59624176d2f089f1d826a7f23e0558c935fe0742",
+      "game_id": "2026_09_DEN_CAR",
+      "lineup_update": {
+        "input": {
+          "group_n0": 8.0,
+          "player_n0": 1.0,
+          "season": 2026,
+          "sha256": "6bc6591a1d42befaa6c67e1fb373ca1486001fdd1d55df235a81cfe244d168eb",
+          "week": 9
+        },
+        "team_lineup_snaps_per_game": {
+          "CAR": {
+            "mean": 65.1,
+            "median": 65.0,
+            "n": 20,
+            "p10": 54.0,
+            "p90": 73.50000000000001
+          },
+          "DEN": {
+            "mean": 69.1,
+            "median": 68.5,
+            "n": 20,
+            "p10": 58.7,
+            "p90": 80.4
+          }
+        },
+        "teams": {
+          "CAR": {
+            "earlier_games": 7,
+            "group_lambda": [
+              0.015829,
+              0.67405,
+              0.282419
+            ],
+            "last_week_used": 8,
+            "player_status": {
+              "clipped": 1,
+              "no_earlier_active_game": 2,
+              "weighted": 14
+            }
+          },
+          "DEN": {
+            "earlier_games": 8,
+            "group_lambda": [
+              -0.36354,
+              -0.280177,
+              -0.34118
+            ],
+            "last_week_used": 8,
+            "player_status": {
+              "clipped": 1,
+              "no_earlier_active_game": 2,
+              "weighted": 13
+            }
+          }
+        }
+      },
+      "paired_streams_equal": true,
+      "requested_seeds": 20,
+      "scores": {
+        "C": {
+          "away_points": {
+            "mean": 23.8,
+            "median": 22.5,
+            "n": 20,
+            "p10": 13.0,
+            "p90": 35.2
+          },
+          "home_points": {
+            "mean": 20.5,
+            "median": 22.0,
+            "n": 20,
+            "p10": 9.600000000000001,
+            "p90": 31.1
+          }
+        },
+        "D1": {
+          "away_points": {
+            "mean": 24.05,
+            "median": 25.5,
+            "n": 20,
+            "p10": 16.6,
+            "p90": 33.2
+          },
+          "home_points": {
+            "mean": 19.4,
+            "median": 17.5,
+            "n": 20,
+            "p10": 9.600000000000001,
+            "p90": 31.0
+          }
+        }
+      },
+      "snapshot_sha256": "6f87fa2fdf6dd8904e41d42750afda3d49d312c34cd64bd2c0f0659c5752a409",
+      "stream_root_sha256": "fa663867556414c6f8df8098ab6a3a1aa757e4d680cc6666169315aef4384ece",
+      "valid_reconciled": {
+        "C": 20,
+        "D1": 20
+      }
+    }
+  },
+  "observed_rb_source": {
+    "acquisition_time": "unknown",
+    "canonical_sha256": "03df13b391f45dcad3ca346cc7791eab24d03a50a2a35d5ca1636e0d2fa50878",
+    "positive_rows_only": true,
+    "row_count": 119,
+    "source_input": "../lineup-diagnostic-2026-11-08/exploratory-snaps-through-week8.json",
+    "source_input_sha256": "6bc6591a1d42befaa6c67e1fb373ca1486001fdd1d55df235a81cfe244d168eb",
+    "team_game_denominators": 47
+  },
+  "player_rows_count": 115,
+  "schema": "lp.slc.paired-c-d1-participation.v1",
+  "seed_ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+  ],
+  "source_commit": "59624176"
+}
