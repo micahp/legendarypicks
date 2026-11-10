@@ -1,0 +1,3391 @@
+{
+  "database_path": "/root/legendarypicks/backend/data/picks.dev.db",
+  "database_sha256": "1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa",
+  "evaluations": {
+    "2026": {
+      "conditional_event_probabilities": {
+        "defense_only": {
+          "log_loss": 0.5248717934183112,
+          "multiclass_brier": 0.29711840702446146,
+          "n": 15061
+        },
+        "league": {
+          "log_loss": 0.5185450662303489,
+          "multiclass_brier": 0.2948027490599739,
+          "n": 15061
+        },
+        "matchup": {
+          "log_loss": 0.5313185988080229,
+          "multiclass_brier": 0.2998117407906292,
+          "n": 15061
+        },
+        "offense_only": {
+          "log_loss": 0.5248449755343986,
+          "multiclass_brier": 0.2974444208155768,
+          "n": 15061
+        }
+      },
+      "conditional_yardage_crps": {
+        "2026:pass_complete:middle_offense:middle_defense:pass_complete": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 6.613061795049109,
+            "mean_actual_yards": 10.36214953271028,
+            "mean_crps": 4.5680978428519605,
+            "mean_predicted_yards": 10.81961659070975,
+            "n": 1284,
+            "yards_per_play_bias": 0.45746705799946913
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 6.643479630541016,
+            "mean_actual_yards": 10.36214953271028,
+            "mean_crps": 4.596866369344188,
+            "mean_predicted_yards": 10.762836181213073,
+            "n": 1284,
+            "yards_per_play_bias": 0.400686648502793
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 6.6600029169691775,
+            "mean_actual_yards": 10.36214953271028,
+            "mean_crps": 4.57021798838757,
+            "mean_predicted_yards": 10.882417557128308,
+            "n": 1284,
+            "yards_per_play_bias": 0.5202680244180281
+          }
+        },
+        "2026:pass_complete:middle_offense:strong_defense:pass_complete": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 6.80710097407347,
+            "mean_actual_yards": 11.079617834394904,
+            "mean_crps": 4.886345346870968,
+            "mean_predicted_yards": 10.63935420800248,
+            "n": 628,
+            "yards_per_play_bias": -0.4402636263924245
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 6.75852890548509,
+            "mean_actual_yards": 11.079617834394904,
+            "mean_crps": 4.831494261943612,
+            "mean_predicted_yards": 10.797200111118292,
+            "n": 628,
+            "yards_per_play_bias": -0.28241772327661313
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 6.7612068710957,
+            "mean_actual_yards": 11.079617834394904,
+            "mean_crps": 4.804700420886238,
+            "mean_predicted_yards": 10.830433167258496,
+            "n": 628,
+            "yards_per_play_bias": -0.24918466713640822
+          }
+        },
+        "2026:pass_complete:middle_offense:weak_defense:pass_complete": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 6.493627459842989,
+            "mean_actual_yards": 11.034,
+            "mean_crps": 4.6186334576376025,
+            "mean_predicted_yards": 10.96228185946581,
+            "n": 500,
+            "yards_per_play_bias": -0.07171814053419075
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 6.395479025338191,
+            "mean_actual_yards": 11.034,
+            "mean_crps": 4.619212438630526,
+            "mean_predicted_yards": 10.695787534484184,
+            "n": 500,
+            "yards_per_play_bias": -0.33821246551581496
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 6.42865354239036,
+            "mean_actual_yards": 11.034,
+            "mean_crps": 4.59343285149708,
+            "mean_predicted_yards": 10.785700081621217,
+            "n": 500,
+            "yards_per_play_bias": -0.24829991837878332
+          }
+        },
+        "2026:pass_complete:strong_offense:middle_defense:pass_complete": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 6.56870018472406,
+            "mean_actual_yards": 10.996592844974446,
+            "mean_crps": 4.602805066370609,
+            "mean_predicted_yards": 10.595034950366347,
+            "n": 587,
+            "yards_per_play_bias": -0.4015578946080982
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 6.589181015122219,
+            "mean_actual_yards": 10.996592844974446,
+            "mean_crps": 4.585889856641027,
+            "mean_predicted_yards": 10.886758696883716,
+            "n": 587,
+            "yards_per_play_bias": -0.1098341480907314
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 6.534068615931331,
+            "mean_actual_yards": 10.996592844974446,
+            "mean_crps": 4.582556044788607,
+            "mean_predicted_yards": 10.592982167885667,
+            "n": 587,
+            "yards_per_play_bias": -0.4036106770887796
+          }
+        },
+        "2026:pass_complete:strong_offense:strong_defense:pass_complete": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 7.4470674718477925,
+            "mean_actual_yards": 11.601423487544483,
+            "mean_crps": 5.294846772184984,
+            "mean_predicted_yards": 10.670927696898715,
+            "n": 281,
+            "yards_per_play_bias": -0.9304957906457677
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 7.497851328468061,
+            "mean_actual_yards": 11.601423487544483,
+            "mean_crps": 5.30401951524857,
+            "mean_predicted_yards": 11.127359525329846,
+            "n": 281,
+            "yards_per_play_bias": -0.47406396221463815
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 7.419200102977083,
+            "mean_actual_yards": 11.601423487544483,
+            "mean_crps": 5.25337549957639,
+            "mean_predicted_yards": 10.836749661221374,
+            "n": 281,
+            "yards_per_play_bias": -0.7646738263231109
+          }
+        },
+        "2026:pass_complete:strong_offense:weak_defense:pass_complete": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 7.308447652712639,
+            "mean_actual_yards": 11.744897959183673,
+            "mean_crps": 5.295999389025504,
+            "mean_predicted_yards": 11.083308403326804,
+            "n": 392,
+            "yards_per_play_bias": -0.6615895558568702
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 7.421257674377081,
+            "mean_actual_yards": 11.744897959183673,
+            "mean_crps": 5.229365761026919,
+            "mean_predicted_yards": 11.353752435308776,
+            "n": 392,
+            "yards_per_play_bias": -0.39114552387489737
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 7.273360134665439,
+            "mean_actual_yards": 11.744897959183673,
+            "mean_crps": 5.258192623488832,
+            "mean_predicted_yards": 10.907380521433831,
+            "n": 392,
+            "yards_per_play_bias": -0.8375174377498431
+          }
+        },
+        "2026:pass_complete:weak_offense:middle_defense:pass_complete": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 6.593918263763242,
+            "mean_actual_yards": 11.011272141706923,
+            "mean_crps": 4.660934242258244,
+            "mean_predicted_yards": 10.990018219625659,
+            "n": 621,
+            "yards_per_play_bias": -0.02125392208126546
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 6.508012814409418,
+            "mean_actual_yards": 11.011272141706923,
+            "mean_crps": 4.666145444659011,
+            "mean_predicted_yards": 10.730746593750146,
+            "n": 621,
+            "yards_per_play_bias": -0.28052554795677836
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 6.5538586312507165,
+            "mean_actual_yards": 11.011272141706923,
+            "mean_crps": 4.638232152459512,
+            "mean_predicted_yards": 10.998966352615872,
+            "n": 621,
+            "yards_per_play_bias": -0.012305789091052847
+          }
+        },
+        "2026:pass_complete:weak_offense:strong_defense:pass_complete": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 6.511134079909774,
+            "mean_actual_yards": 11.22884012539185,
+            "mean_crps": 4.702689811304887,
+            "mean_predicted_yards": 10.94703794290879,
+            "n": 319,
+            "yards_per_play_bias": -0.28180218248306027
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 6.482885128259375,
+            "mean_actual_yards": 11.22884012539185,
+            "mean_crps": 4.71950530019573,
+            "mean_predicted_yards": 10.844684865403636,
+            "n": 319,
+            "yards_per_play_bias": -0.3841552599882131
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 6.445490661231395,
+            "mean_actual_yards": 11.22884012539185,
+            "mean_crps": 4.62406228789751,
+            "mean_predicted_yards": 11.065835257328926,
+            "n": 319,
+            "yards_per_play_bias": -0.16300486806292377
+          }
+        },
+        "2026:pass_complete:weak_offense:weak_defense:pass_complete": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 6.699368237730012,
+            "mean_actual_yards": 11.01510574018127,
+            "mean_crps": 4.732654613608003,
+            "mean_predicted_yards": 11.161287958062958,
+            "n": 331,
+            "yards_per_play_bias": 0.14618221788168875
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 6.518363764441676,
+            "mean_actual_yards": 11.01510574018127,
+            "mean_crps": 4.667766559344465,
+            "mean_predicted_yards": 10.76046895199761,
+            "n": 331,
+            "yards_per_play_bias": -0.2546367881836584
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 6.552770764375183,
+            "mean_actual_yards": 11.01510574018127,
+            "mean_crps": 4.640351445473796,
+            "mean_predicted_yards": 10.909907641065704,
+            "n": 331,
+            "yards_per_play_bias": -0.10519809911556464
+          }
+        },
+        "2026:run:middle_offense:middle_defense:run": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.31098772029418,
+            "mean_actual_yards": 4.005138086062941,
+            "mean_crps": 2.374635417424467,
+            "mean_predicted_yards": 4.241563883696082,
+            "n": 1557,
+            "yards_per_play_bias": 0.2364257976331406
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.3288360104455923,
+            "mean_actual_yards": 4.005138086062941,
+            "mean_crps": 2.3755972823435743,
+            "mean_predicted_yards": 4.293640075862075,
+            "n": 1557,
+            "yards_per_play_bias": 0.2885019897991335
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.3229048318958467,
+            "mean_actual_yards": 4.005138086062941,
+            "mean_crps": 2.3562571692584258,
+            "mean_predicted_yards": 4.319443083997321,
+            "n": 1557,
+            "yards_per_play_bias": 0.3143049979343791
+          }
+        },
+        "2026:run:middle_offense:strong_defense:run": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.621209081604022,
+            "mean_actual_yards": 4.23680649526387,
+            "mean_crps": 2.621574717628915,
+            "mean_predicted_yards": 4.18258655968346,
+            "n": 739,
+            "yards_per_play_bias": -0.054219935580409814
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.622317971002418,
+            "mean_actual_yards": 4.23680649526387,
+            "mean_crps": 2.613062760416798,
+            "mean_predicted_yards": 4.195462326535695,
+            "n": 739,
+            "yards_per_play_bias": -0.04134416872817501
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.6043437836548162,
+            "mean_actual_yards": 4.23680649526387,
+            "mean_crps": 2.5933684820387217,
+            "mean_predicted_yards": 4.2386156915858155,
+            "n": 739,
+            "yards_per_play_bias": 0.0018091963219455105
+          }
+        },
+        "2026:run:middle_offense:weak_defense:run": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.7613843638473674,
+            "mean_actual_yards": 4.458786936236392,
+            "mean_crps": 2.6975052831949413,
+            "mean_predicted_yards": 4.447719327806483,
+            "n": 643,
+            "yards_per_play_bias": -0.01106760842990927
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.669856469005447,
+            "mean_actual_yards": 4.458786936236392,
+            "mean_crps": 2.6915642307905734,
+            "mean_predicted_yards": 4.1972884974541245,
+            "n": 643,
+            "yards_per_play_bias": -0.26149843878226786
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.699005950321889,
+            "mean_actual_yards": 4.458786936236392,
+            "mean_crps": 2.6908127944544713,
+            "mean_predicted_yards": 4.272588441263888,
+            "n": 643,
+            "yards_per_play_bias": -0.18619849497250346
+          }
+        },
+        "2026:run:strong_offense:middle_defense:run": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.571288807474354,
+            "mean_actual_yards": 4.35248447204969,
+            "mean_crps": 2.6101579043470338,
+            "mean_predicted_yards": 4.111023060455526,
+            "n": 644,
+            "yards_per_play_bias": -0.24146141159416323
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.6168773490173733,
+            "mean_actual_yards": 4.35248447204969,
+            "mean_crps": 2.5917709589697377,
+            "mean_predicted_yards": 4.330141498447811,
+            "n": 644,
+            "yards_per_play_bias": -0.02234297360187806
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.538971034701576,
+            "mean_actual_yards": 4.35248447204969,
+            "mean_crps": 2.5809645417042346,
+            "mean_predicted_yards": 4.119651248904859,
+            "n": 644,
+            "yards_per_play_bias": -0.23283322314483113
+          }
+        },
+        "2026:run:strong_offense:strong_defense:run": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.4809211748022864,
+            "mean_actual_yards": 4.2960725075528705,
+            "mean_crps": 2.5112028911942037,
+            "mean_predicted_yards": 4.137373653784651,
+            "n": 331,
+            "yards_per_play_bias": -0.15869885376821974
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.4833729175133965,
+            "mean_actual_yards": 4.2960725075528705,
+            "mean_crps": 2.5023920797033936,
+            "mean_predicted_yards": 4.446126178319178,
+            "n": 331,
+            "yards_per_play_bias": 0.1500536707663072
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.478312563190781,
+            "mean_actual_yards": 4.2960725075528705,
+            "mean_crps": 2.494067963400819,
+            "mean_predicted_yards": 4.247641403334235,
+            "n": 331,
+            "yards_per_play_bias": -0.0484311042186352
+          }
+        },
+        "2026:run:strong_offense:weak_defense:run": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.4709959361577627,
+            "mean_actual_yards": 3.9146005509641872,
+            "mean_crps": 2.4404645108547514,
+            "mean_predicted_yards": 4.243113635831458,
+            "n": 363,
+            "yards_per_play_bias": 0.32851308486727077
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.4944292705959157,
+            "mean_actual_yards": 3.9146005509641872,
+            "mean_crps": 2.4311654256746507,
+            "mean_predicted_yards": 4.419773473943133,
+            "n": 363,
+            "yards_per_play_bias": 0.5051729229789453
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.4153666231865807,
+            "mean_actual_yards": 3.9146005509641872,
+            "mean_crps": 2.425910701759502,
+            "mean_predicted_yards": 4.1834342139733645,
+            "n": 363,
+            "yards_per_play_bias": 0.2688336630091767
+          }
+        },
+        "2026:run:weak_offense:middle_defense:run": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.3599151545784953,
+            "mean_actual_yards": 3.562300319488818,
+            "mean_crps": 2.32371951544886,
+            "mean_predicted_yards": 4.199286744173994,
+            "n": 626,
+            "yards_per_play_bias": 0.6369864246851767
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.346705878377057,
+            "mean_actual_yards": 3.562300319488818,
+            "mean_crps": 2.313069971856885,
+            "mean_predicted_yards": 4.12565154995122,
+            "n": 626,
+            "yards_per_play_bias": 0.5633512304624021
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.3560905663832408,
+            "mean_actual_yards": 3.562300319488818,
+            "mean_crps": 2.2984356747451065,
+            "mean_predicted_yards": 4.269633286251797,
+            "n": 626,
+            "yards_per_play_bias": 0.7073329667629795
+          }
+        },
+        "2026:run:weak_offense:strong_defense:run": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.5194988316876983,
+            "mean_actual_yards": 3.8553299492385786,
+            "mean_crps": 2.4656991494741733,
+            "mean_predicted_yards": 4.2030116641968105,
+            "n": 394,
+            "yards_per_play_bias": 0.3476817149582315
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.493710957720045,
+            "mean_actual_yards": 3.8553299492385786,
+            "mean_crps": 2.433963757380982,
+            "mean_predicted_yards": 4.187717647161279,
+            "n": 394,
+            "yards_per_play_bias": 0.3323876979227009
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.498863278800331,
+            "mean_actual_yards": 3.8553299492385786,
+            "mean_crps": 2.4421100450712534,
+            "mean_predicted_yards": 4.238548744682606,
+            "n": 394,
+            "yards_per_play_bias": 0.38321879544402776
+          }
+        },
+        "2026:run:weak_offense:weak_defense:run": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.21212229961115,
+            "mean_actual_yards": 4.1310160427807485,
+            "mean_crps": 2.30153761891228,
+            "mean_predicted_yards": 4.325590784348993,
+            "n": 374,
+            "yards_per_play_bias": 0.19457474156824428
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.147136956534427,
+            "mean_actual_yards": 4.1310160427807485,
+            "mean_crps": 2.2846639835369165,
+            "mean_predicted_yards": 4.168429617519583,
+            "n": 374,
+            "yards_per_play_bias": 0.03741357473883428
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.1348830615583894,
+            "mean_actual_yards": 4.1310160427807485,
+            "mean_crps": 2.257500928631543,
+            "mean_predicted_yards": 4.2864124679904565,
+            "n": 374,
+            "yards_per_play_bias": 0.15539642520970762
+          }
+        },
+        "2026:sack:middle_offense:middle_defense:sack": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 2.942889471881572,
+            "mean_actual_yards": -6.492753623188406,
+            "mean_crps": 2.0998143613844067,
+            "mean_predicted_yards": -6.521616714715823,
+            "n": 138,
+            "yards_per_play_bias": -0.028863091527417357
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 2.9297587709638004,
+            "mean_actual_yards": -6.492753623188406,
+            "mean_crps": 2.0858130559747194,
+            "mean_predicted_yards": -6.513195910914692,
+            "n": 138,
+            "yards_per_play_bias": -0.02044228772628596
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 2.9409996547922597,
+            "mean_actual_yards": -6.492753623188406,
+            "mean_crps": 2.093003051745035,
+            "mean_predicted_yards": -6.513289471003607,
+            "n": 138,
+            "yards_per_play_bias": -0.02053584781520161
+          }
+        },
+        "2026:sack:middle_offense:strong_defense:sack": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.0990433021000663,
+            "mean_actual_yards": -6.3283582089552235,
+            "mean_crps": 2.2252843985700244,
+            "mean_predicted_yards": -6.584004902433016,
+            "n": 67,
+            "yards_per_play_bias": -0.25564669347779184
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.0662868449822045,
+            "mean_actual_yards": -6.3283582089552235,
+            "mean_crps": 2.183906533448761,
+            "mean_predicted_yards": -6.547034846649547,
+            "n": 67,
+            "yards_per_play_bias": -0.21867663769432286
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.087333815975858,
+            "mean_actual_yards": -6.3283582089552235,
+            "mean_crps": 2.202206037846911,
+            "mean_predicted_yards": -6.562659526492368,
+            "n": 67,
+            "yards_per_play_bias": -0.23430131753714387
+          }
+        },
+        "2026:sack:middle_offense:weak_defense:sack": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 2.637678778504494,
+            "mean_actual_yards": -6.636363636363637,
+            "mean_crps": 1.8840490715284732,
+            "mean_predicted_yards": -6.459171541213699,
+            "n": 55,
+            "yards_per_play_bias": 0.17719209514993756
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 2.587492126965132,
+            "mean_actual_yards": -6.636363636363637,
+            "mean_crps": 1.8550249972815824,
+            "mean_predicted_yards": -6.467153242728337,
+            "n": 55,
+            "yards_per_play_bias": 0.16921039363529955
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 2.6017101930024027,
+            "mean_actual_yards": -6.636363636363637,
+            "mean_crps": 1.8640205713220686,
+            "mean_predicted_yards": -6.5067794236735494,
+            "n": 55,
+            "yards_per_play_bias": 0.1295842126900869
+          }
+        },
+        "2026:sack:strong_offense:middle_defense:sack": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.108754682297309,
+            "mean_actual_yards": -6.525,
+            "mean_crps": 2.143852850687089,
+            "mean_predicted_yards": -6.433192052583959,
+            "n": 40,
+            "yards_per_play_bias": 0.09180794741604074
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.0929480580158293,
+            "mean_actual_yards": -6.525,
+            "mean_crps": 2.1448475955306634,
+            "mean_predicted_yards": -6.4059615885740495,
+            "n": 40,
+            "yards_per_play_bias": 0.11903841142595013
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.121351171776127,
+            "mean_actual_yards": -6.525,
+            "mean_crps": 2.1433477568314423,
+            "mean_predicted_yards": -6.439106507050269,
+            "n": 40,
+            "yards_per_play_bias": 0.08589349294973089
+          }
+        },
+        "2026:sack:strong_offense:strong_defense:sack": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 2.6108299097130745,
+            "mean_actual_yards": -6.8,
+            "mean_crps": 1.8570681019606183,
+            "mean_predicted_yards": -6.485675065587829,
+            "n": 35,
+            "yards_per_play_bias": 0.31432493441217113
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 2.6713072293873252,
+            "mean_actual_yards": -6.8,
+            "mean_crps": 1.8778723846927565,
+            "mean_predicted_yards": -6.446199226184146,
+            "n": 35,
+            "yards_per_play_bias": 0.3538007738158537
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 2.573944349061927,
+            "mean_actual_yards": -6.8,
+            "mean_crps": 1.8415378045731274,
+            "mean_predicted_yards": -6.451070762701876,
+            "n": 35,
+            "yards_per_play_bias": 0.34892923729812375
+          }
+        },
+        "2026:sack:strong_offense:weak_defense:sack": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 2.698028769125547,
+            "mean_actual_yards": -6.297297297297297,
+            "mean_crps": 1.9135147551729146,
+            "mean_predicted_yards": -6.6423910139838345,
+            "n": 37,
+            "yards_per_play_bias": -0.3450937166865375
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 2.5890758291413776,
+            "mean_actual_yards": -6.297297297297297,
+            "mean_crps": 1.8384911167687128,
+            "mean_predicted_yards": -6.619632899581776,
+            "n": 37,
+            "yards_per_play_bias": -0.3223356022844787
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 2.6901030464121334,
+            "mean_actual_yards": -6.297297297297297,
+            "mean_crps": 1.9136456034610299,
+            "mean_predicted_yards": -6.655535976380028,
+            "n": 37,
+            "yards_per_play_bias": -0.35823867908273027
+          }
+        },
+        "2026:sack:weak_offense:middle_defense:sack": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.1728373316273535,
+            "mean_actual_yards": -5.6891891891891895,
+            "mean_crps": 2.2390030703548343,
+            "mean_predicted_yards": -6.595481854876512,
+            "n": 74,
+            "yards_per_play_bias": -0.9062926656873227
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.191869408592749,
+            "mean_actual_yards": -5.6891891891891895,
+            "mean_crps": 2.2645197620632445,
+            "mean_predicted_yards": -6.631373805401518,
+            "n": 74,
+            "yards_per_play_bias": -0.9421846162123286
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.1513044936261863,
+            "mean_actual_yards": -5.6891891891891895,
+            "mean_crps": 2.2338715414340378,
+            "mean_predicted_yards": -6.592687166900037,
+            "n": 74,
+            "yards_per_play_bias": -0.9034979777108476
+          }
+        },
+        "2026:sack:weak_offense:strong_defense:sack": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.261650748009179,
+            "mean_actual_yards": -7.155555555555556,
+            "mean_crps": 2.1964881244794108,
+            "mean_predicted_yards": -6.648528783196678,
+            "n": 45,
+            "yards_per_play_bias": 0.5070267723588775
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.2328524613915266,
+            "mean_actual_yards": -7.155555555555556,
+            "mean_crps": 2.1720527474531273,
+            "mean_predicted_yards": -6.659595764830628,
+            "n": 45,
+            "yards_per_play_bias": 0.49595979072492785
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.298735942178381,
+            "mean_actual_yards": -7.155555555555556,
+            "mean_crps": 2.22187758733585,
+            "mean_predicted_yards": -6.64597650640862,
+            "n": 45,
+            "yards_per_play_bias": 0.5095790491469352
+          }
+        },
+        "2026:sack:weak_offense:weak_defense:sack": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 2.893338665406449,
+            "mean_actual_yards": -6.285714285714286,
+            "mean_crps": 2.022574226813333,
+            "mean_predicted_yards": -6.575985700237911,
+            "n": 35,
+            "yards_per_play_bias": -0.29027141452362537
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 2.8035708014852103,
+            "mean_actual_yards": -6.285714285714286,
+            "mean_crps": 1.982540543682294,
+            "mean_predicted_yards": -6.527498850730036,
+            "n": 35,
+            "yards_per_play_bias": -0.24178456501575088
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 2.819818136440184,
+            "mean_actual_yards": -6.285714285714286,
+            "mean_crps": 1.9838926311299194,
+            "mean_predicted_yards": -6.563126406542771,
+            "n": 35,
+            "yards_per_play_bias": -0.2774121208284847
+          }
+        },
+        "all:pass_complete": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 6.719719772272932,
+            "mean_actual_yards": 10.95792029132106,
+            "mean_crps": 4.74817244703017,
+            "mean_predicted_yards": 10.849445458207843,
+            "n": 4943,
+            "yards_per_play_bias": -0.10847483311321766
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 6.701051328778791,
+            "mean_actual_yards": 10.95792029132106,
+            "mean_crps": 4.739358382570948,
+            "mean_predicted_yards": 10.8438128181115,
+            "n": 4943,
+            "yards_per_play_bias": -0.1141074732095594
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 6.691944965578892,
+            "mean_actual_yards": 10.95792029132106,
+            "mean_crps": 4.713933436011057,
+            "mean_predicted_yards": 10.859361834151446,
+            "n": 4943,
+            "yards_per_play_bias": -0.09855845716961453
+          }
+        },
+        "all:run": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 3.4655688820245585,
+            "mean_actual_yards": 4.086404514195027,
+            "mean_crps": 2.4782391772551695,
+            "mean_predicted_yards": 4.234643060013467,
+            "n": 5671,
+            "yards_per_play_bias": 0.14823854581843948
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 3.4595205168480194,
+            "mean_actual_yards": 4.086404514195027,
+            "mean_crps": 2.4690296820784465,
+            "mean_predicted_yards": 4.2568803954432894,
+            "n": 5671,
+            "yards_per_play_bias": 0.17047588124826177
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 3.4452374688496867,
+            "mean_actual_yards": 4.086404514195027,
+            "mean_crps": 2.456177928149323,
+            "mean_predicted_yards": 4.254715655033724,
+            "n": 5671,
+            "yards_per_play_bias": 0.16831114083869714
+          }
+        },
+        "all:sack": {
+          "defense_only_k25": {
+            "mae_of_conditional_mean": 2.9604836107560195,
+            "mean_actual_yards": -6.425855513307985,
+            "mean_crps": 2.090039866526819,
+            "mean_predicted_yards": -6.5472806060644935,
+            "n": 526,
+            "yards_per_play_bias": -0.12142509275650885
+          },
+          "offense_only_k25": {
+            "mae_of_conditional_mean": 2.937017399368403,
+            "mean_actual_yards": -6.425855513307985,
+            "mean_crps": 2.0730792357013925,
+            "mean_predicted_yards": -6.537668409350535,
+            "n": 526,
+            "yards_per_play_bias": -0.1118128960425503
+          },
+          "slc_league_cell": {
+            "mae_of_conditional_mean": 2.9479326523841776,
+            "mean_actual_yards": -6.425855513307985,
+            "mean_crps": 2.0810327099741945,
+            "mean_predicted_yards": -6.544959674992696,
+            "n": 526,
+            "yards_per_play_bias": -0.11910416168471116
+          }
+        }
+      },
+      "coverage": {
+        "event_rows_supported": 15061,
+        "event_rows_unsupported": 17,
+        "fourth_rows_supported": 1598,
+        "fourth_rows_unsupported": 0,
+        "games_without_dated_schedule": 0,
+        "target_games": 120,
+        "test_classifiable_plays": 15078,
+        "test_penalty_rows_excluded": 1740,
+        "test_penalty_source_status": {
+          "0": 18634,
+          "1": 1750,
+          "unknown": 634
+        },
+        "test_rows": 21018,
+        "test_unknown_penalty_status_excluded": 634,
+        "third_rows_supported": 2829,
+        "third_rows_unsupported": 0,
+        "yardage_rows_supported": 11140,
+        "yardage_rows_unsupported": 28
+      },
+      "cutoff_adaptations": {
+        "available_games_by_target_summary": {
+          "max": 108,
+          "median": 56.0,
+          "min": 0
+        },
+        "games_without_schedule_time": 0,
+        "target_games": 120,
+        "team_table_sha256_by_game": {
+          "2026_01_ARI_LAC": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_ATL_PIT": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_BAL_IND": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_BUF_HOU": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_CHI_CAR": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_CLE_JAX": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_DAL_NYG": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_DEN_KC": "58fbc4addd33b97fc639ed92cb08089e1f61506752b345ea8d831b5323abcb71",
+          "2026_01_GB_MIN": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_MIA_LV": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_NE_SEA": "ff6fdcd3e2f70367cacfa7dd96c7735a9b4df444d2d4271e3c0b7b030e8fe79f",
+          "2026_01_NO_DET": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_NYJ_TEN": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_SF_LA": "163087403fb1284f607716413f2e7de7e7aee48189248285e58b3e4275cb85f1",
+          "2026_01_TB_CIN": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_01_WAS_PHI": "0b5be4e8cdb94edbc4fd90112a080fc9cbe3bf9456751ac5068e003056ab9f67",
+          "2026_02_CAR_ATL": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_CIN_HOU": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_CLE_TB": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_DET_BUF": "f3f12294af1c026379d01276d0b8079cbce86def3e1e45859f1b700ab1417a4b",
+          "2026_02_GB_NYJ": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_IND_KC": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_JAX_DEN": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_LV_LAC": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_MIA_SF": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_MIN_CHI": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_NO_BAL": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_NYG_LA": "801c5fc2847dbd4ed6e6cc7e72632fbedd4e6fd91a65d26c88303e8cf2162524",
+          "2026_02_PHI_TEN": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_PIT_NE": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_SEA_ARI": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_02_WAS_DAL": "fc86c3d10ab361437eb4ce60c857cac81967565055438a3b70f7b6ca2aa70bae",
+          "2026_03_ARI_SF": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_ATL_GB": "f77e515cea96a732d13aa8e4b52f42383af9a9a0e8fbf5992fb4cb445f752575",
+          "2026_03_BAL_DAL": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_CAR_CLE": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_CIN_PIT": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_HOU_IND": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_KC_MIA": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_LAC_BUF": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_LA_DEN": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_LV_NO": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_MIN_TB": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_NE_JAX": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_NYJ_DET": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_PHI_CHI": "3744836aa372ade0079de9acb696d513ec06626144fb96c7b8a39ccfa328a15f",
+          "2026_03_SEA_WAS": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_03_TEN_NYG": "1db61757486a231f0953f0f2f658f73d6e155cf80e7a3df81886961bdb70a379",
+          "2026_04_ARI_NYG": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_ATL_NO": "fa511eb420b592df3439f2c2bc5bdc027187c77b40d883660225039290f8bf9f",
+          "2026_04_DAL_HOU": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_DEN_SF": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_DET_CAR": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_GB_TB": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_IND_WAS": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_JAX_CIN": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_KC_LV": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_LAC_SEA": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_LA_PHI": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_MIA_MIN": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_NE_BUF": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_NYJ_CHI": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_04_PIT_CLE": "4d6e4f2cce4fe593849b225de2b1ecc2d34b228d8f1e2fe1907055c06e49fee2",
+          "2026_04_TEN_BAL": "4d40b4c6dc493f957dbe60a4c76827057806431b1b504a3b555ab2350c64b546",
+          "2026_05_BAL_ATL": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_BUF_LA": "ee5f1ce96625bb76be662e7732b473472040dee8017855aef7683b678dc3ca50",
+          "2026_05_CHI_GB": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_CIN_MIA": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_CLE_NYJ": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_DEN_LAC": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_DET_ARI": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_HOU_TEN": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_IND_PIT": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_LV_NE": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_MIN_NO": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_NYG_WAS": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_PHI_JAX": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_SF_SEA": "c095462b1a2481a26e5b0e8e4da4bff87e09a48b6d41c95ad931078240b24b00",
+          "2026_05_TB_DAL": "947d4c24febd914690eb6533f292ae9af57dd378c07f924bec362c4425ad3e4e",
+          "2026_06_ARI_LA": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_BAL_CLE": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_BUF_LV": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_CAR_PHI": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_CHI_ATL": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_DAL_GB": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_HOU_JAX": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_LAC_KC": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_NO_NYG": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_NYJ_NE": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_PIT_TB": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_SEA_DEN": "6f1d994a038496caa3441d8eacdf245df3c36a5a12e632ec9bc4e4217c0a520f",
+          "2026_06_TEN_IND": "37034f1ad692373a2c3b5c922b430d54551b64a220a8db6b73b22e9b7e985fb2",
+          "2026_06_WAS_SF": "63417fab113078e65aaa5178a8ec9c806b7c899daf59c53a6eb1606b21597d8d",
+          "2026_07_CIN_BAL": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_CLE_TEN": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_DAL_PHI": "0054278ddf1060a72706ba36ed556bb04c01023cf61e9217abd7989e85514e3c",
+          "2026_07_DEN_ARI": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_GB_DET": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_IND_MIN": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_KC_SEA": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_LA_LV": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_MIA_NYJ": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_NE_CHI": "e9871b2bdfb0023992051726f6f35542319fdeeb3833652aa985422fd3fc8c3a",
+          "2026_07_NYG_HOU": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_PIT_NO": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_SF_ATL": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_07_TB_CAR": "5273f550de76cefc7e20689acfddbdd81de32c9a8c3d3abddbde74336bb80b91",
+          "2026_08_ARI_DAL": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_ATL_TB": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_BAL_BUF": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_CAR_GB": "e2028254641cba5a1d5a2892af4caec26f70239bf473eea3ee6ba89344aefb71",
+          "2026_08_CLE_PIT": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_IND_JAX": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_KC_DEN": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_LAC_LA": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_LV_NYJ": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_MIN_DET": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_NE_MIA": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_PHI_WAS": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7",
+          "2026_08_TEN_CIN": "9a4b6cd31b9b65b32f232d00d0cb3bcdf205000df73f2533cb5a8525644493b7"
+        },
+        "unique_evidence_sets": 24
+      },
+      "fourth_down_actions": {
+        "2026:ARI": {
+          "defense_only_k25": {
+            "log_loss": 0.40286834204120486,
+            "multiclass_brier": 0.23047887680424406,
+            "n": 65
+          },
+          "flat_league": {
+            "log_loss": 0.8267802862142468,
+            "multiclass_brier": 0.5005407483302886,
+            "n": 65
+          },
+          "offense_only_k25": {
+            "log_loss": 0.3980463873476383,
+            "multiclass_brier": 0.23324205884609922,
+            "n": 65
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.3821633047589323,
+            "multiclass_brier": 0.22404986414394393,
+            "n": 65
+          }
+        },
+        "2026:ATL": {
+          "defense_only_k25": {
+            "log_loss": 0.4655447404943203,
+            "multiclass_brier": 0.28083605253666505,
+            "n": 54
+          },
+          "flat_league": {
+            "log_loss": 0.8834356710898545,
+            "multiclass_brier": 0.5478384675186012,
+            "n": 54
+          },
+          "offense_only_k25": {
+            "log_loss": 0.4741030631105365,
+            "multiclass_brier": 0.2880745943018374,
+            "n": 54
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.4596430019423598,
+            "multiclass_brier": 0.27844269022924745,
+            "n": 54
+          }
+        },
+        "2026:BAL": {
+          "defense_only_k25": {
+            "log_loss": 0.30347374989046977,
+            "multiclass_brier": 0.1782956541216635,
+            "n": 52
+          },
+          "flat_league": {
+            "log_loss": 0.7665627718312351,
+            "multiclass_brier": 0.4678225772480796,
+            "n": 52
+          },
+          "offense_only_k25": {
+            "log_loss": 0.2831994770658678,
+            "multiclass_brier": 0.1674027704556285,
+            "n": 52
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.3039892854512329,
+            "multiclass_brier": 0.17655680060728934,
+            "n": 52
+          }
+        },
+        "2026:BUF": {
+          "defense_only_k25": {
+            "log_loss": 0.22023151002988983,
+            "multiclass_brier": 0.09903179135107908,
+            "n": 35
+          },
+          "flat_league": {
+            "log_loss": 0.9629916598488383,
+            "multiclass_brier": 0.6053800590688279,
+            "n": 35
+          },
+          "offense_only_k25": {
+            "log_loss": 0.19698477516891644,
+            "multiclass_brier": 0.09292112073539129,
+            "n": 35
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.2233955007980867,
+            "multiclass_brier": 0.10218725179655136,
+            "n": 35
+          }
+        },
+        "2026:CAR": {
+          "defense_only_k25": {
+            "log_loss": 0.47337618707884355,
+            "multiclass_brier": 0.2973511527840208,
+            "n": 50
+          },
+          "flat_league": {
+            "log_loss": 0.9219240259355879,
+            "multiclass_brier": 0.5735275763686232,
+            "n": 50
+          },
+          "offense_only_k25": {
+            "log_loss": 0.4431317218194665,
+            "multiclass_brier": 0.27634774815843294,
+            "n": 50
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.47914761197360933,
+            "multiclass_brier": 0.29506548144308814,
+            "n": 50
+          }
+        },
+        "2026:CHI": {
+          "defense_only_k25": {
+            "log_loss": 0.5235399540371962,
+            "multiclass_brier": 0.31756953859459236,
+            "n": 50
+          },
+          "flat_league": {
+            "log_loss": 1.0107783677317246,
+            "multiclass_brier": 0.6324381224135608,
+            "n": 50
+          },
+          "offense_only_k25": {
+            "log_loss": 0.48958924938398485,
+            "multiclass_brier": 0.30287880290364483,
+            "n": 50
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.507293077764862,
+            "multiclass_brier": 0.30873201435542685,
+            "n": 50
+          }
+        },
+        "2026:CIN": {
+          "defense_only_k25": {
+            "log_loss": 0.5196807168125175,
+            "multiclass_brier": 0.3388663469816311,
+            "n": 36
+          },
+          "flat_league": {
+            "log_loss": 0.7696885289108913,
+            "multiclass_brier": 0.4669940640962833,
+            "n": 36
+          },
+          "offense_only_k25": {
+            "log_loss": 0.5394776763021122,
+            "multiclass_brier": 0.3485573020987367,
+            "n": 36
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.5595016860275801,
+            "multiclass_brier": 0.36317018631924874,
+            "n": 36
+          }
+        },
+        "2026:CLE": {
+          "defense_only_k25": {
+            "log_loss": 0.4601941591941822,
+            "multiclass_brier": 0.2660086170841885,
+            "n": 62
+          },
+          "flat_league": {
+            "log_loss": 0.7776056523894515,
+            "multiclass_brier": 0.4756084706092909,
+            "n": 62
+          },
+          "offense_only_k25": {
+            "log_loss": 0.45231862523911354,
+            "multiclass_brier": 0.2653741225858195,
+            "n": 62
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.4616904584980458,
+            "multiclass_brier": 0.2695763544998101,
+            "n": 62
+          }
+        },
+        "2026:DAL": {
+          "defense_only_k25": {
+            "log_loss": 1.1011281388359089,
+            "multiclass_brier": 0.3114940852759904,
+            "n": 43
+          },
+          "flat_league": {
+            "log_loss": 1.5333957569800905,
+            "multiclass_brier": 0.6270450860466166,
+            "n": 43
+          },
+          "offense_only_k25": {
+            "log_loss": 1.027269140040274,
+            "multiclass_brier": 0.2621286723474014,
+            "n": 43
+          },
+          "slc_situation_cell": {
+            "log_loss": 1.0649125705483724,
+            "multiclass_brier": 0.29463607569573474,
+            "n": 43
+          }
+        },
+        "2026:DEN": {
+          "defense_only_k25": {
+            "log_loss": 0.3883040844326184,
+            "multiclass_brier": 0.234860684425503,
+            "n": 57
+          },
+          "flat_league": {
+            "log_loss": 0.7150920069352364,
+            "multiclass_brier": 0.4384179154939194,
+            "n": 57
+          },
+          "offense_only_k25": {
+            "log_loss": 0.3684453691215665,
+            "multiclass_brier": 0.2321953327088008,
+            "n": 57
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.368838857787136,
+            "multiclass_brier": 0.22716731327025785,
+            "n": 57
+          }
+        },
+        "2026:DET": {
+          "defense_only_k25": {
+            "log_loss": 0.5308087754568732,
+            "multiclass_brier": 0.3158921979073161,
+            "n": 44
+          },
+          "flat_league": {
+            "log_loss": 0.8383169864090775,
+            "multiclass_brier": 0.5241053939905105,
+            "n": 44
+          },
+          "offense_only_k25": {
+            "log_loss": 0.49276544138234984,
+            "multiclass_brier": 0.29273668900968847,
+            "n": 44
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.5340214886426536,
+            "multiclass_brier": 0.3219790902611198,
+            "n": 44
+          }
+        },
+        "2026:GB": {
+          "defense_only_k25": {
+            "log_loss": 0.40772955558825014,
+            "multiclass_brier": 0.23307668848337706,
+            "n": 56
+          },
+          "flat_league": {
+            "log_loss": 0.8959064348648382,
+            "multiclass_brier": 0.549487087284548,
+            "n": 56
+          },
+          "offense_only_k25": {
+            "log_loss": 0.37998263368398183,
+            "multiclass_brier": 0.21523819822056445,
+            "n": 56
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.40047743766004457,
+            "multiclass_brier": 0.2295959776103374,
+            "n": 56
+          }
+        },
+        "2026:HOU": {
+          "defense_only_k25": {
+            "log_loss": 0.5507494480643759,
+            "multiclass_brier": 0.34163894143593754,
+            "n": 48
+          },
+          "flat_league": {
+            "log_loss": 0.8115783110509983,
+            "multiclass_brier": 0.5047860999805531,
+            "n": 48
+          },
+          "offense_only_k25": {
+            "log_loss": 0.47689086087807014,
+            "multiclass_brier": 0.29876599271958015,
+            "n": 48
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.5144504702980296,
+            "multiclass_brier": 0.32275710641813776,
+            "n": 48
+          }
+        },
+        "2026:IND": {
+          "defense_only_k25": {
+            "log_loss": 0.7177279973897729,
+            "multiclass_brier": 0.4285316993537868,
+            "n": 58
+          },
+          "flat_league": {
+            "log_loss": 0.9470556162357725,
+            "multiclass_brier": 0.6158208867988518,
+            "n": 58
+          },
+          "offense_only_k25": {
+            "log_loss": 0.7446003865627863,
+            "multiclass_brier": 0.4263447772665221,
+            "n": 58
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.6999563470277292,
+            "multiclass_brier": 0.4287859784713542,
+            "n": 58
+          }
+        },
+        "2026:JAX": {
+          "defense_only_k25": {
+            "log_loss": 1.1880476517983514,
+            "multiclass_brier": 0.3031859125496932,
+            "n": 36
+          },
+          "flat_league": {
+            "log_loss": 0.7979918769772205,
+            "multiclass_brier": 0.47733635424062626,
+            "n": 36
+          },
+          "offense_only_k25": {
+            "log_loss": 1.2007024232231194,
+            "multiclass_brier": 0.3128443001229861,
+            "n": 36
+          },
+          "slc_situation_cell": {
+            "log_loss": 1.1905604188538899,
+            "multiclass_brier": 0.30441748754958525,
+            "n": 36
+          }
+        },
+        "2026:KC": {
+          "defense_only_k25": {
+            "log_loss": 0.5609536522759702,
+            "multiclass_brier": 0.3417129691896781,
+            "n": 47
+          },
+          "flat_league": {
+            "log_loss": 0.8801523383866189,
+            "multiclass_brier": 0.5695428281230361,
+            "n": 47
+          },
+          "offense_only_k25": {
+            "log_loss": 0.5323056707192517,
+            "multiclass_brier": 0.32397092162299246,
+            "n": 47
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.5276029423295113,
+            "multiclass_brier": 0.32702734196337724,
+            "n": 47
+          }
+        },
+        "2026:LAC": {
+          "defense_only_k25": {
+            "log_loss": 0.6666250299147409,
+            "multiclass_brier": 0.37909983037656125,
+            "n": 52
+          },
+          "flat_league": {
+            "log_loss": 0.7739160929032773,
+            "multiclass_brier": 0.4899555786958772,
+            "n": 52
+          },
+          "offense_only_k25": {
+            "log_loss": 0.6544703889468662,
+            "multiclass_brier": 0.37732750870717374,
+            "n": 52
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.6521383989333559,
+            "multiclass_brier": 0.38463014932918643,
+            "n": 52
+          }
+        },
+        "2026:LAR": {
+          "defense_only_k25": {
+            "log_loss": 0.39277468022572143,
+            "multiclass_brier": 0.23027619427695664,
+            "n": 46
+          },
+          "flat_league": {
+            "log_loss": 0.7877823915159717,
+            "multiclass_brier": 0.4832546028342831,
+            "n": 46
+          },
+          "offense_only_k25": {
+            "log_loss": 0.40117837722625976,
+            "multiclass_brier": 0.2365679733441618,
+            "n": 46
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.395748051285775,
+            "multiclass_brier": 0.2339517462236529,
+            "n": 46
+          }
+        },
+        "2026:LV": {
+          "defense_only_k25": {
+            "log_loss": 0.5774024028975911,
+            "multiclass_brier": 0.3661704068854047,
+            "n": 53
+          },
+          "flat_league": {
+            "log_loss": 0.9155825536310501,
+            "multiclass_brier": 0.5936445089902812,
+            "n": 53
+          },
+          "offense_only_k25": {
+            "log_loss": 0.5853664308511407,
+            "multiclass_brier": 0.3755427198615554,
+            "n": 53
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.6034045493909532,
+            "multiclass_brier": 0.3795466221607923,
+            "n": 53
+          }
+        },
+        "2026:MIA": {
+          "defense_only_k25": {
+            "log_loss": 0.32743181967340473,
+            "multiclass_brier": 0.17720502411111888,
+            "n": 43
+          },
+          "flat_league": {
+            "log_loss": 0.8360852489984463,
+            "multiclass_brier": 0.5253359393375397,
+            "n": 43
+          },
+          "offense_only_k25": {
+            "log_loss": 0.33304938856919597,
+            "multiclass_brier": 0.18224532194492304,
+            "n": 43
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.33831993142913486,
+            "multiclass_brier": 0.18597692370436328,
+            "n": 43
+          }
+        },
+        "2026:MIN": {
+          "defense_only_k25": {
+            "log_loss": 0.29377572859960976,
+            "multiclass_brier": 0.16258657661400217,
+            "n": 55
+          },
+          "flat_league": {
+            "log_loss": 0.7884260585127887,
+            "multiclass_brier": 0.4802207610763775,
+            "n": 55
+          },
+          "offense_only_k25": {
+            "log_loss": 0.27236338958675427,
+            "multiclass_brier": 0.14509183332977546,
+            "n": 55
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.2949705486839033,
+            "multiclass_brier": 0.16474290286470689,
+            "n": 55
+          }
+        },
+        "2026:NE": {
+          "defense_only_k25": {
+            "log_loss": 0.4242767692646087,
+            "multiclass_brier": 0.2631958770105883,
+            "n": 49
+          },
+          "flat_league": {
+            "log_loss": 0.8437736399708821,
+            "multiclass_brier": 0.5317210645295671,
+            "n": 49
+          },
+          "offense_only_k25": {
+            "log_loss": 0.405489271029511,
+            "multiclass_brier": 0.2461166956339534,
+            "n": 49
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.4087804394120488,
+            "multiclass_brier": 0.24828691872454045,
+            "n": 49
+          }
+        },
+        "2026:NO": {
+          "defense_only_k25": {
+            "log_loss": 0.5245292084604897,
+            "multiclass_brier": 0.3095407638610062,
+            "n": 48
+          },
+          "flat_league": {
+            "log_loss": 0.8728026983288873,
+            "multiclass_brier": 0.5490776020548228,
+            "n": 48
+          },
+          "offense_only_k25": {
+            "log_loss": 0.5374414797563459,
+            "multiclass_brier": 0.31434875239617704,
+            "n": 48
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.5309791323772689,
+            "multiclass_brier": 0.3101249460037931,
+            "n": 48
+          }
+        },
+        "2026:NYG": {
+          "defense_only_k25": {
+            "log_loss": 0.44625648369314946,
+            "multiclass_brier": 0.24947405802048506,
+            "n": 48
+          },
+          "flat_league": {
+            "log_loss": 0.8653478376613527,
+            "multiclass_brier": 0.5336625095779423,
+            "n": 48
+          },
+          "offense_only_k25": {
+            "log_loss": 0.46840891354450265,
+            "multiclass_brier": 0.2700472017853766,
+            "n": 48
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.44275153334116957,
+            "multiclass_brier": 0.2523741479862606,
+            "n": 48
+          }
+        },
+        "2026:NYJ": {
+          "defense_only_k25": {
+            "log_loss": 0.32082516418793505,
+            "multiclass_brier": 0.1862565876626513,
+            "n": 52
+          },
+          "flat_league": {
+            "log_loss": 0.863474075932258,
+            "multiclass_brier": 0.5335364036107916,
+            "n": 52
+          },
+          "offense_only_k25": {
+            "log_loss": 0.35688297624211585,
+            "multiclass_brier": 0.2081759367624088,
+            "n": 52
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.3329659800882314,
+            "multiclass_brier": 0.19142168564083129,
+            "n": 52
+          }
+        },
+        "2026:PHI": {
+          "defense_only_k25": {
+            "log_loss": 0.559607891733966,
+            "multiclass_brier": 0.2955133561487912,
+            "n": 59
+          },
+          "flat_league": {
+            "log_loss": 0.7294951797357226,
+            "multiclass_brier": 0.46068179920294194,
+            "n": 59
+          },
+          "offense_only_k25": {
+            "log_loss": 0.5532063871387924,
+            "multiclass_brier": 0.2876155497429484,
+            "n": 59
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.543413991272332,
+            "multiclass_brier": 0.28731341489254075,
+            "n": 59
+          }
+        },
+        "2026:PIT": {
+          "defense_only_k25": {
+            "log_loss": 0.42631375587479425,
+            "multiclass_brier": 0.26160615285595035,
+            "n": 53
+          },
+          "flat_league": {
+            "log_loss": 0.8250061309546638,
+            "multiclass_brier": 0.519843987179761,
+            "n": 53
+          },
+          "offense_only_k25": {
+            "log_loss": 0.41201089956665055,
+            "multiclass_brier": 0.2582401943569203,
+            "n": 53
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.4337028749716066,
+            "multiclass_brier": 0.2662824454844223,
+            "n": 53
+          }
+        },
+        "2026:SEA": {
+          "defense_only_k25": {
+            "log_loss": 0.30269500119853804,
+            "multiclass_brier": 0.15647377214766117,
+            "n": 46
+          },
+          "flat_league": {
+            "log_loss": 0.8266956995668207,
+            "multiclass_brier": 0.5041855414473616,
+            "n": 46
+          },
+          "offense_only_k25": {
+            "log_loss": 0.28768093541325096,
+            "multiclass_brier": 0.14735705983195438,
+            "n": 46
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.3046494253423674,
+            "multiclass_brier": 0.1570498842069917,
+            "n": 46
+          }
+        },
+        "2026:SF": {
+          "defense_only_k25": {
+            "log_loss": 0.5073398658202437,
+            "multiclass_brier": 0.3000138159802137,
+            "n": 35
+          },
+          "flat_league": {
+            "log_loss": 0.8155563963393244,
+            "multiclass_brier": 0.49304191479053094,
+            "n": 35
+          },
+          "offense_only_k25": {
+            "log_loss": 0.48412645180161373,
+            "multiclass_brier": 0.2867767708452414,
+            "n": 35
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.5007088436962317,
+            "multiclass_brier": 0.2976127330083298,
+            "n": 35
+          }
+        },
+        "2026:TB": {
+          "defense_only_k25": {
+            "log_loss": 0.39992147899306396,
+            "multiclass_brier": 0.23107595529956151,
+            "n": 58
+          },
+          "flat_league": {
+            "log_loss": 0.7949691044303624,
+            "multiclass_brier": 0.49978212357813045,
+            "n": 58
+          },
+          "offense_only_k25": {
+            "log_loss": 0.37566789459685807,
+            "multiclass_brier": 0.22226344190379646,
+            "n": 58
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.39511446301065944,
+            "multiclass_brier": 0.23105250016329168,
+            "n": 58
+          }
+        },
+        "2026:TEN": {
+          "defense_only_k25": {
+            "log_loss": 0.4371697347875892,
+            "multiclass_brier": 0.24990484892848353,
+            "n": 53
+          },
+          "flat_league": {
+            "log_loss": 0.783554730015234,
+            "multiclass_brier": 0.4722075553329256,
+            "n": 53
+          },
+          "offense_only_k25": {
+            "log_loss": 0.4170243205417751,
+            "multiclass_brier": 0.24691663409975012,
+            "n": 53
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.4374362455546755,
+            "multiclass_brier": 0.2548399013136099,
+            "n": 53
+          }
+        },
+        "2026:WSH": {
+          "defense_only_k25": {
+            "log_loss": 0.4059662353679743,
+            "multiclass_brier": 0.24223358727371946,
+            "n": 55
+          },
+          "flat_league": {
+            "log_loss": 0.8351550637731922,
+            "multiclass_brier": 0.5134835666490047,
+            "n": 55
+          },
+          "offense_only_k25": {
+            "log_loss": 0.4272403761233285,
+            "multiclass_brier": 0.24672338829334353,
+            "n": 55
+          },
+          "slc_situation_cell": {
+            "log_loss": 0.3983423806626818,
+            "multiclass_brier": 0.23292246169550504,
+            "n": 55
+          }
+        }
+      },
+      "fourth_down_observed_action_counts": {
+        "ARI:field_goal": 17,
+        "ARI:go": 13,
+        "ARI:punt": 35,
+        "ATL:field_goal": 16,
+        "ATL:go": 12,
+        "ATL:punt": 26,
+        "BAL:field_goal": 14,
+        "BAL:go": 8,
+        "BAL:punt": 30,
+        "BUF:field_goal": 14,
+        "BUF:go": 8,
+        "BUF:punt": 13,
+        "CAR:field_goal": 13,
+        "CAR:go": 15,
+        "CAR:punt": 22,
+        "CHI:field_goal": 15,
+        "CHI:go": 17,
+        "CHI:punt": 18,
+        "CIN:field_goal": 10,
+        "CIN:go": 5,
+        "CIN:punt": 21,
+        "CLE:field_goal": 15,
+        "CLE:go": 11,
+        "CLE:punt": 36,
+        "DAL:field_goal": 17,
+        "DAL:go": 10,
+        "DAL:punt": 16,
+        "DEN:field_goal": 16,
+        "DEN:go": 6,
+        "DEN:punt": 35,
+        "DET:field_goal": 9,
+        "DET:go": 12,
+        "DET:punt": 23,
+        "GB:field_goal": 14,
+        "GB:go": 15,
+        "GB:punt": 27,
+        "HOU:field_goal": 15,
+        "HOU:go": 8,
+        "HOU:punt": 25,
+        "IND:field_goal": 19,
+        "IND:go": 17,
+        "IND:punt": 22,
+        "JAX:field_goal": 10,
+        "JAX:go": 5,
+        "JAX:punt": 21,
+        "KC:field_goal": 14,
+        "KC:go": 12,
+        "KC:punt": 21,
+        "LAC:field_goal": 12,
+        "LAC:go": 11,
+        "LAC:punt": 29,
+        "LAR:field_goal": 8,
+        "LAR:go": 11,
+        "LAR:punt": 27,
+        "LV:field_goal": 17,
+        "LV:go": 14,
+        "LV:punt": 22,
+        "MIA:field_goal": 11,
+        "MIA:go": 10,
+        "MIA:punt": 22,
+        "MIN:field_goal": 19,
+        "MIN:go": 6,
+        "MIN:punt": 30,
+        "NE:field_goal": 12,
+        "NE:go": 12,
+        "NE:punt": 25,
+        "NO:field_goal": 10,
+        "NO:go": 14,
+        "NO:punt": 24,
+        "NYG:field_goal": 16,
+        "NYG:go": 8,
+        "NYG:punt": 24,
+        "NYJ:field_goal": 18,
+        "NYJ:go": 9,
+        "NYJ:punt": 25,
+        "PHI:field_goal": 7,
+        "PHI:go": 15,
+        "PHI:punt": 37,
+        "PIT:field_goal": 21,
+        "PIT:go": 6,
+        "PIT:punt": 26,
+        "SEA:field_goal": 14,
+        "SEA:go": 8,
+        "SEA:punt": 24,
+        "SF:field_goal": 7,
+        "SF:go": 8,
+        "SF:punt": 20,
+        "TB:field_goal": 19,
+        "TB:go": 8,
+        "TB:punt": 31,
+        "TEN:field_goal": 13,
+        "TEN:go": 9,
+        "TEN:punt": 31,
+        "WSH:field_goal": 17,
+        "WSH:go": 10,
+        "WSH:punt": 28
+      },
+      "fourth_down_observed_situation_counts": {
+        "ARI:clock:late_q2_q4:field_goal": 4,
+        "ARI:clock:late_q2_q4:go": 2,
+        "ARI:clock:late_q2_q4:punt": 3,
+        "ARI:clock:other:field_goal": 13,
+        "ARI:clock:other:go": 11,
+        "ARI:clock:other:punt": 32,
+        "ARI:distance:1-2:field_goal": 1,
+        "ARI:distance:1-2:go": 9,
+        "ARI:distance:1-2:punt": 4,
+        "ARI:distance:10+:field_goal": 7,
+        "ARI:distance:10+:go": 1,
+        "ARI:distance:10+:punt": 13,
+        "ARI:distance:3-5:field_goal": 3,
+        "ARI:distance:3-5:go": 2,
+        "ARI:distance:3-5:punt": 7,
+        "ARI:distance:6-9:field_goal": 6,
+        "ARI:distance:6-9:go": 1,
+        "ARI:distance:6-9:punt": 11,
+        "ARI:field:1-9:field_goal": 5,
+        "ARI:field:1-9:go": 6,
+        "ARI:field:10-19:field_goal": 6,
+        "ARI:field:10-19:go": 2,
+        "ARI:field:20-29:field_goal": 3,
+        "ARI:field:20-29:go": 2,
+        "ARI:field:30-49:field_goal": 3,
+        "ARI:field:30-49:go": 3,
+        "ARI:field:30-49:punt": 6,
+        "ARI:field:50-59:punt": 6,
+        "ARI:field:60-69:punt": 11,
+        "ARI:field:70-79:punt": 7,
+        "ARI:field:80-99:punt": 5,
+        "ARI:score:leading:field_goal": 3,
+        "ARI:score:leading:punt": 9,
+        "ARI:score:tied:field_goal": 4,
+        "ARI:score:tied:go": 2,
+        "ARI:score:tied:punt": 6,
+        "ARI:score:trailing:field_goal": 10,
+        "ARI:score:trailing:go": 11,
+        "ARI:score:trailing:punt": 20,
+        "ATL:clock:late_q2_q4:field_goal": 3,
+        "ATL:clock:late_q2_q4:go": 2,
+        "ATL:clock:late_q2_q4:punt": 2,
+        "ATL:clock:other:field_goal": 13,
+        "ATL:clock:other:go": 10,
+        "ATL:clock:other:punt": 24,
+        "ATL:distance:1-2:field_goal": 3,
+        "ATL:distance:1-2:go": 6,
+        "ATL:distance:1-2:punt": 3,
+        "ATL:distance:10+:field_goal": 3,
+        "ATL:distance:10+:go": 1,
+        "ATL:distance:10+:punt": 11,
+        "ATL:distance:3-5:field_goal": 4,
+        "ATL:distance:3-5:go": 3,
+        "ATL:distance:3-5:punt": 4,
+        "ATL:distance:6-9:field_goal": 6,
+        "ATL:distance:6-9:go": 2,
+        "ATL:distance:6-9:punt": 8,
+        "ATL:field:1-9:field_goal": 1,
+        "ATL:field:10-19:field_goal": 5,
+        "ATL:field:10-19:go": 1,
+        "ATL:field:20-29:field_goal": 5,
+        "ATL:field:20-29:go": 1,
+        "ATL:field:30-49:field_goal": 5,
+        "ATL:field:30-49:go": 8,
+        "ATL:field:30-49:punt": 5,
+        "ATL:field:50-59:go": 1,
+        "ATL:field:50-59:punt": 3,
+        "ATL:field:60-69:go": 1,
+        "ATL:field:60-69:punt": 8,
+        "ATL:field:70-79:punt": 3,
+        "ATL:field:80-99:punt": 7,
+        "ATL:score:leading:field_goal": 6,
+        "ATL:score:leading:go": 1,
+        "ATL:score:leading:punt": 6,
+        "ATL:score:tied:field_goal": 2,
+        "ATL:score:tied:go": 1,
+        "ATL:score:tied:punt": 4,
+        "ATL:score:trailing:field_goal": 8,
+        "ATL:score:trailing:go": 10,
+        "ATL:score:trailing:punt": 16,
+        "BAL:clock:late_q2_q4:field_goal": 2,
+        "BAL:clock:late_q2_q4:punt": 4,
+        "BAL:clock:other:field_goal": 12,
+        "BAL:clock:other:go": 8,
+        "BAL:clock:other:punt": 26,
+        "BAL:distance:1-2:go": 6,
+        "BAL:distance:1-2:punt": 1,
+        "BAL:distance:10+:field_goal": 5,
+        "BAL:distance:10+:punt": 10,
+        "BAL:distance:3-5:field_goal": 4,
+        "BAL:distance:3-5:go": 2,
+        "BAL:distance:3-5:punt": 11,
+        "BAL:distance:6-9:field_goal": 5,
+        "BAL:distance:6-9:punt": 8,
+        "BAL:field:1-9:field_goal": 4,
+        "BAL:field:1-9:go": 4,
+        "BAL:field:10-19:field_goal": 3,
+        "BAL:field:10-19:go": 1,
+        "BAL:field:20-29:field_goal": 2,
+        "BAL:field:30-49:field_goal": 5,
+        "BAL:field:30-49:go": 1,
+        "BAL:field:30-49:punt": 2,
+        "BAL:field:50-59:go": 1,
+        "BAL:field:50-59:punt": 6,
+        "BAL:field:60-69:punt": 10,
+        "BAL:field:70-79:go": 1,
+        "BAL:field:70-79:punt": 10,
+        "BAL:field:80-99:punt": 2,
+        "BAL:score:leading:field_goal": 9,
+        "BAL:score:leading:go": 2,
+        "BAL:score:leading:punt": 16,
+        "BAL:score:tied:field_goal": 1,
+        "BAL:score:tied:go": 2,
+        "BAL:score:tied:punt": 5,
+        "BAL:score:trailing:field_goal": 4,
+        "BAL:score:trailing:go": 4,
+        "BAL:score:trailing:punt": 9,
+        "BUF:clock:late_q2_q4:field_goal": 2,
+        "BUF:clock:late_q2_q4:punt": 2,
+        "BUF:clock:other:field_goal": 12,
+        "BUF:clock:other:go": 8,
+        "BUF:clock:other:punt": 11,
+        "BUF:distance:1-2:go": 7,
+        "BUF:distance:10+:field_goal": 6,
+        "BUF:distance:10+:punt": 7,
+        "BUF:distance:3-5:field_goal": 3,
+        "BUF:distance:3-5:go": 1,
+        "BUF:distance:3-5:punt": 4,
+        "BUF:distance:6-9:field_goal": 5,
+        "BUF:distance:6-9:punt": 2,
+        "BUF:field:1-9:field_goal": 2,
+        "BUF:field:1-9:go": 1,
+        "BUF:field:10-19:field_goal": 4,
+        "BUF:field:10-19:go": 1,
+        "BUF:field:20-29:field_goal": 5,
+        "BUF:field:30-49:field_goal": 3,
+        "BUF:field:30-49:go": 4,
+        "BUF:field:50-59:go": 2,
+        "BUF:field:50-59:punt": 2,
+        "BUF:field:60-69:punt": 7,
+        "BUF:field:70-79:punt": 2,
+        "BUF:field:80-99:punt": 2,
+        "BUF:score:leading:field_goal": 6,
+        "BUF:score:leading:go": 4,
+        "BUF:score:leading:punt": 7,
+        "BUF:score:tied:field_goal": 4,
+        "BUF:score:tied:go": 2,
+        "BUF:score:tied:punt": 2,
+        "BUF:score:trailing:field_goal": 4,
+        "BUF:score:trailing:go": 2,
+        "BUF:score:trailing:punt": 4,
+        "CAR:clock:late_q2_q4:field_goal": 2,
+        "CAR:clock:late_q2_q4:go": 2,
+        "CAR:clock:late_q2_q4:punt": 1,
+        "CAR:clock:other:field_goal": 11,
+        "CAR:clock:other:go": 13,
+        "CAR:clock:other:punt": 21,
+        "CAR:distance:1-2:field_goal": 1,
+        "CAR:distance:1-2:go": 6,
+        "CAR:distance:1-2:punt": 2,
+        "CAR:distance:10+:field_goal": 8,
+        "CAR:distance:10+:go": 1,
+        "CAR:distance:10+:punt": 12,
+        "CAR:distance:3-5:field_goal": 1,
+        "CAR:distance:3-5:go": 7,
+        "CAR:distance:3-5:punt": 1,
+        "CAR:distance:6-9:field_goal": 3,
+        "CAR:distance:6-9:go": 1,
+        "CAR:distance:6-9:punt": 7,
+        "CAR:field:1-9:field_goal": 1,
+        "CAR:field:1-9:go": 4,
+        "CAR:field:10-19:field_goal": 4,
+        "CAR:field:20-29:field_goal": 5,
+        "CAR:field:20-29:go": 1,
+        "CAR:field:30-49:field_goal": 3,
+        "CAR:field:30-49:go": 6,
+        "CAR:field:30-49:punt": 2,
+        "CAR:field:50-59:go": 2,
+        "CAR:field:50-59:punt": 6,
+        "CAR:field:60-69:go": 1,
+        "CAR:field:60-69:punt": 7,
+        "CAR:field:70-79:punt": 2,
+        "CAR:field:80-99:go": 1,
+        "CAR:field:80-99:punt": 5,
+        "CAR:score:leading:field_goal": 4,
+        "CAR:score:leading:go": 4,
+        "CAR:score:leading:punt": 13,
+        "CAR:score:tied:field_goal": 3,
+        "CAR:score:tied:go": 2,
+        "CAR:score:tied:punt": 2,
+        "CAR:score:trailing:field_goal": 6,
+        "CAR:score:trailing:go": 9,
+        "CAR:score:trailing:punt": 7,
+        "CHI:clock:late_q2_q4:field_goal": 3,
+        "CHI:clock:late_q2_q4:go": 4,
+        "CHI:clock:late_q2_q4:punt": 3,
+        "CHI:clock:other:field_goal": 12,
+        "CHI:clock:other:go": 13,
+        "CHI:clock:other:punt": 15,
+        "CHI:distance:1-2:field_goal": 1,
+        "CHI:distance:1-2:go": 11,
+        "CHI:distance:1-2:punt": 1,
+        "CHI:distance:10+:field_goal": 5,
+        "CHI:distance:10+:go": 1,
+        "CHI:distance:10+:punt": 7,
+        "CHI:distance:3-5:field_goal": 4,
+        "CHI:distance:3-5:go": 4,
+        "CHI:distance:3-5:punt": 3,
+        "CHI:distance:6-9:field_goal": 5,
+        "CHI:distance:6-9:go": 1,
+        "CHI:distance:6-9:punt": 7,
+        "CHI:field:1-9:field_goal": 2,
+        "CHI:field:1-9:go": 6,
+        "CHI:field:10-19:field_goal": 4,
+        "CHI:field:10-19:go": 1,
+        "CHI:field:20-29:field_goal": 3,
+        "CHI:field:20-29:go": 2,
+        "CHI:field:30-49:field_goal": 6,
+        "CHI:field:30-49:go": 5,
+        "CHI:field:30-49:punt": 3,
+        "CHI:field:50-59:punt": 3,
+        "CHI:field:60-69:go": 1,
+        "CHI:field:60-69:punt": 3,
+        "CHI:field:70-79:go": 2,
+        "CHI:field:70-79:punt": 6,
+        "CHI:field:80-99:punt": 3,
+        "CHI:score:leading:field_goal": 10,
+        "CHI:score:leading:go": 5,
+        "CHI:score:leading:punt": 9,
+        "CHI:score:tied:field_goal": 2,
+        "CHI:score:tied:go": 4,
+        "CHI:score:tied:punt": 3,
+        "CHI:score:trailing:field_goal": 3,
+        "CHI:score:trailing:go": 8,
+        "CHI:score:trailing:punt": 6,
+        "CIN:clock:late_q2_q4:field_goal": 1,
+        "CIN:clock:late_q2_q4:go": 2,
+        "CIN:clock:late_q2_q4:punt": 1,
+        "CIN:clock:other:field_goal": 9,
+        "CIN:clock:other:go": 3,
+        "CIN:clock:other:punt": 20,
+        "CIN:distance:1-2:field_goal": 2,
+        "CIN:distance:1-2:go": 3,
+        "CIN:distance:1-2:punt": 3,
+        "CIN:distance:10+:field_goal": 1,
+        "CIN:distance:10+:go": 1,
+        "CIN:distance:10+:punt": 6,
+        "CIN:distance:3-5:field_goal": 2,
+        "CIN:distance:3-5:go": 1,
+        "CIN:distance:3-5:punt": 6,
+        "CIN:distance:6-9:field_goal": 5,
+        "CIN:distance:6-9:punt": 6,
+        "CIN:field:1-9:field_goal": 2,
+        "CIN:field:1-9:go": 1,
+        "CIN:field:10-19:field_goal": 2,
+        "CIN:field:20-29:field_goal": 1,
+        "CIN:field:20-29:go": 2,
+        "CIN:field:30-49:field_goal": 5,
+        "CIN:field:30-49:go": 1,
+        "CIN:field:30-49:punt": 4,
+        "CIN:field:50-59:go": 1,
+        "CIN:field:50-59:punt": 7,
+        "CIN:field:60-69:punt": 5,
+        "CIN:field:70-79:punt": 5,
+        "CIN:score:leading:field_goal": 7,
+        "CIN:score:leading:punt": 6,
+        "CIN:score:tied:field_goal": 1,
+        "CIN:score:tied:go": 1,
+        "CIN:score:tied:punt": 8,
+        "CIN:score:trailing:field_goal": 2,
+        "CIN:score:trailing:go": 4,
+        "CIN:score:trailing:punt": 7,
+        "CLE:clock:late_q2_q4:field_goal": 2,
+        "CLE:clock:late_q2_q4:go": 3,
+        "CLE:clock:late_q2_q4:punt": 2,
+        "CLE:clock:other:field_goal": 13,
+        "CLE:clock:other:go": 8,
+        "CLE:clock:other:punt": 34,
+        "CLE:distance:1-2:field_goal": 1,
+        "CLE:distance:1-2:go": 4,
+        "CLE:distance:1-2:punt": 3,
+        "CLE:distance:10+:field_goal": 2,
+        "CLE:distance:10+:go": 3,
+        "CLE:distance:10+:punt": 16,
+        "CLE:distance:3-5:field_goal": 4,
+        "CLE:distance:3-5:go": 3,
+        "CLE:distance:3-5:punt": 6,
+        "CLE:distance:6-9:field_goal": 8,
+        "CLE:distance:6-9:go": 1,
+        "CLE:distance:6-9:punt": 11,
+        "CLE:field:1-9:field_goal": 2,
+        "CLE:field:1-9:go": 2,
+        "CLE:field:10-19:field_goal": 3,
+        "CLE:field:10-19:go": 2,
+        "CLE:field:20-29:field_goal": 6,
+        "CLE:field:20-29:go": 1,
+        "CLE:field:30-49:field_goal": 4,
+        "CLE:field:30-49:go": 3,
+        "CLE:field:30-49:punt": 5,
+        "CLE:field:50-59:punt": 6,
+        "CLE:field:60-69:go": 2,
+        "CLE:field:60-69:punt": 8,
+        "CLE:field:70-79:punt": 8,
+        "CLE:field:80-99:go": 1,
+        "CLE:field:80-99:punt": 9,
+        "CLE:score:leading:field_goal": 2,
+        "CLE:score:leading:go": 3,
+        "CLE:score:leading:punt": 7,
+        "CLE:score:tied:field_goal": 3,
+        "CLE:score:tied:go": 2,
+        "CLE:score:tied:punt": 6,
+        "CLE:score:trailing:field_goal": 10,
+        "CLE:score:trailing:go": 6,
+        "CLE:score:trailing:punt": 23,
+        "DAL:clock:late_q2_q4:field_goal": 5,
+        "DAL:clock:late_q2_q4:go": 1,
+        "DAL:clock:late_q2_q4:punt": 1,
+        "DAL:clock:other:field_goal": 12,
+        "DAL:clock:other:go": 9,
+        "DAL:clock:other:punt": 15,
+        "DAL:distance:1-2:go": 6,
+        "DAL:distance:10+:field_goal": 5,
+        "DAL:distance:10+:go": 1,
+        "DAL:distance:10+:punt": 8,
+        "DAL:distance:3-5:field_goal": 7,
+        "DAL:distance:3-5:go": 3,
+        "DAL:distance:3-5:punt": 3,
+        "DAL:distance:6-9:field_goal": 5,
+        "DAL:distance:6-9:punt": 5,
+        "DAL:field:1-9:field_goal": 3,
+        "DAL:field:10-19:field_goal": 3,
+        "DAL:field:10-19:go": 1,
+        "DAL:field:20-29:field_goal": 5,
+        "DAL:field:30-49:field_goal": 6,
+        "DAL:field:30-49:go": 3,
+        "DAL:field:30-49:punt": 2,
+        "DAL:field:50-59:go": 4,
+        "DAL:field:50-59:punt": 5,
+        "DAL:field:60-69:go": 2,
+        "DAL:field:60-69:punt": 5,
+        "DAL:field:70-79:punt": 3,
+        "DAL:field:80-99:punt": 1,
+        "DAL:score:leading:field_goal": 7,
+        "DAL:score:leading:go": 1,
+        "DAL:score:leading:punt": 7,
+        "DAL:score:tied:field_goal": 3,
+        "DAL:score:tied:go": 1,
+        "DAL:score:tied:punt": 5,
+        "DAL:score:trailing:field_goal": 7,
+        "DAL:score:trailing:go": 8,
+        "DAL:score:trailing:punt": 4,
+        "DEN:clock:late_q2_q4:field_goal": 3,
+        "DEN:clock:late_q2_q4:go": 2,
+        "DEN:clock:late_q2_q4:punt": 5,
+        "DEN:clock:other:field_goal": 13,
+        "DEN:clock:other:go": 4,
+        "DEN:clock:other:punt": 30,
+        "DEN:distance:1-2:field_goal": 3,
+        "DEN:distance:1-2:go": 3,
+        "DEN:distance:1-2:punt": 8,
+        "DEN:distance:10+:field_goal": 5,
+        "DEN:distance:10+:punt": 9,
+        "DEN:distance:3-5:field_goal": 3,
+        "DEN:distance:3-5:go": 2,
+        "DEN:distance:3-5:punt": 5,
+        "DEN:distance:6-9:field_goal": 5,
+        "DEN:distance:6-9:go": 1,
+        "DEN:distance:6-9:punt": 13,
+        "DEN:field:1-9:field_goal": 2,
+        "DEN:field:1-9:go": 2,
+        "DEN:field:10-19:field_goal": 4,
+        "DEN:field:20-29:field_goal": 7,
+        "DEN:field:30-49:field_goal": 3,
+        "DEN:field:30-49:go": 1,
+        "DEN:field:30-49:punt": 3,
+        "DEN:field:50-59:go": 2,
+        "DEN:field:50-59:punt": 6,
+        "DEN:field:60-69:punt": 13,
+        "DEN:field:70-79:go": 1,
+        "DEN:field:70-79:punt": 6,
+        "DEN:field:80-99:punt": 7,
+        "DEN:score:leading:field_goal": 4,
+        "DEN:score:leading:go": 1,
+        "DEN:score:leading:punt": 13,
+        "DEN:score:tied:field_goal": 4,
+        "DEN:score:tied:punt": 13,
+        "DEN:score:trailing:field_goal": 8,
+        "DEN:score:trailing:go": 5,
+        "DEN:score:trailing:punt": 9,
+        "DET:clock:late_q2_q4:field_goal": 1,
+        "DET:clock:late_q2_q4:go": 2,
+        "DET:clock:late_q2_q4:punt": 3,
+        "DET:clock:other:field_goal": 8,
+        "DET:clock:other:go": 10,
+        "DET:clock:other:punt": 20,
+        "DET:distance:1-2:go": 5,
+        "DET:distance:1-2:punt": 1,
+        "DET:distance:10+:field_goal": 1,
+        "DET:distance:10+:go": 3,
+        "DET:distance:10+:punt": 12,
+        "DET:distance:3-5:field_goal": 3,
+        "DET:distance:3-5:go": 4,
+        "DET:distance:3-5:punt": 6,
+        "DET:distance:6-9:field_goal": 5,
+        "DET:distance:6-9:punt": 4,
+        "DET:field:1-9:field_goal": 3,
+        "DET:field:1-9:go": 4,
+        "DET:field:10-19:field_goal": 1,
+        "DET:field:10-19:go": 1,
+        "DET:field:20-29:field_goal": 4,
+        "DET:field:20-29:go": 1,
+        "DET:field:30-49:field_goal": 1,
+        "DET:field:30-49:go": 3,
+        "DET:field:30-49:punt": 3,
+        "DET:field:50-59:punt": 6,
+        "DET:field:60-69:punt": 7,
+        "DET:field:70-79:go": 2,
+        "DET:field:70-79:punt": 6,
+        "DET:field:80-99:go": 1,
+        "DET:field:80-99:punt": 1,
+        "DET:score:leading:field_goal": 2,
+        "DET:score:leading:go": 4,
+        "DET:score:leading:punt": 9,
+        "DET:score:tied:field_goal": 4,
+        "DET:score:tied:go": 2,
+        "DET:score:tied:punt": 6,
+        "DET:score:trailing:field_goal": 3,
+        "DET:score:trailing:go": 6,
+        "DET:score:trailing:punt": 8,
+        "GB:clock:late_q2_q4:go": 3,
+        "GB:clock:late_q2_q4:punt": 3,
+        "GB:clock:other:field_goal": 14,
+        "GB:clock:other:go": 12,
+        "GB:clock:other:punt": 24,
+        "GB:distance:1-2:go": 8,
+        "GB:distance:1-2:punt": 4,
+        "GB:distance:10+:field_goal": 2,
+        "GB:distance:10+:go": 1,
+        "GB:distance:10+:punt": 11,
+        "GB:distance:3-5:field_goal": 3,
+        "GB:distance:3-5:go": 4,
+        "GB:distance:3-5:punt": 6,
+        "GB:distance:6-9:field_goal": 9,
+        "GB:distance:6-9:go": 2,
+        "GB:distance:6-9:punt": 6,
+        "GB:field:1-9:field_goal": 3,
+        "GB:field:1-9:go": 4,
+        "GB:field:10-19:field_goal": 4,
+        "GB:field:10-19:go": 2,
+        "GB:field:20-29:field_goal": 6,
+        "GB:field:20-29:go": 2,
+        "GB:field:30-49:field_goal": 1,
+        "GB:field:30-49:go": 6,
+        "GB:field:30-49:punt": 3,
+        "GB:field:50-59:go": 1,
+        "GB:field:50-59:punt": 7,
+        "GB:field:60-69:punt": 9,
+        "GB:field:70-79:punt": 4,
+        "GB:field:80-99:punt": 4,
+        "GB:score:leading:field_goal": 8,
+        "GB:score:leading:go": 3,
+        "GB:score:leading:punt": 14,
+        "GB:score:tied:field_goal": 3,
+        "GB:score:tied:go": 5,
+        "GB:score:tied:punt": 7,
+        "GB:score:trailing:field_goal": 3,
+        "GB:score:trailing:go": 7,
+        "GB:score:trailing:punt": 6,
+        "HOU:clock:late_q2_q4:field_goal": 4,
+        "HOU:clock:late_q2_q4:go": 1,
+        "HOU:clock:late_q2_q4:punt": 1,
+        "HOU:clock:other:field_goal": 11,
+        "HOU:clock:other:go": 7,
+        "HOU:clock:other:punt": 24,
+        "HOU:distance:1-2:field_goal": 5,
+        "HOU:distance:1-2:go": 6,
+        "HOU:distance:1-2:punt": 4,
+        "HOU:distance:10+:field_goal": 3,
+        "HOU:distance:10+:go": 1,
+        "HOU:distance:10+:punt": 8,
+        "HOU:distance:3-5:field_goal": 4,
+        "HOU:distance:3-5:go": 1,
+        "HOU:distance:3-5:punt": 6,
+        "HOU:distance:6-9:field_goal": 3,
+        "HOU:distance:6-9:punt": 7,
+        "HOU:field:1-9:field_goal": 3,
+        "HOU:field:10-19:field_goal": 2,
+        "HOU:field:10-19:go": 3,
+        "HOU:field:20-29:field_goal": 2,
+        "HOU:field:20-29:go": 1,
+        "HOU:field:30-49:field_goal": 8,
+        "HOU:field:30-49:go": 1,
+        "HOU:field:30-49:punt": 1,
+        "HOU:field:50-59:go": 2,
+        "HOU:field:50-59:punt": 3,
+        "HOU:field:60-69:go": 1,
+        "HOU:field:60-69:punt": 9,
+        "HOU:field:70-79:punt": 5,
+        "HOU:field:80-99:punt": 7,
+        "HOU:score:leading:field_goal": 5,
+        "HOU:score:leading:punt": 7,
+        "HOU:score:tied:field_goal": 4,
+        "HOU:score:tied:go": 4,
+        "HOU:score:tied:punt": 6,
+        "HOU:score:trailing:field_goal": 6,
+        "HOU:score:trailing:go": 4,
+        "HOU:score:trailing:punt": 12,
+        "IND:clock:late_q2_q4:field_goal": 4,
+        "IND:clock:late_q2_q4:go": 2,
+        "IND:clock:late_q2_q4:punt": 2,
+        "IND:clock:other:field_goal": 15,
+        "IND:clock:other:go": 15,
+        "IND:clock:other:punt": 20,
+        "IND:distance:1-2:field_goal": 6,
+        "IND:distance:1-2:go": 9,
+        "IND:distance:1-2:punt": 2,
+        "IND:distance:10+:field_goal": 5,
+        "IND:distance:10+:go": 5,
+        "IND:distance:10+:punt": 11,
+        "IND:distance:3-5:field_goal": 4,
+        "IND:distance:3-5:go": 2,
+        "IND:distance:3-5:punt": 5,
+        "IND:distance:6-9:field_goal": 4,
+        "IND:distance:6-9:go": 1,
+        "IND:distance:6-9:punt": 4,
+        "IND:field:1-9:field_goal": 2,
+        "IND:field:1-9:go": 1,
+        "IND:field:10-19:field_goal": 2,
+        "IND:field:10-19:go": 1,
+        "IND:field:20-29:field_goal": 5,
+        "IND:field:20-29:go": 2,
+        "IND:field:30-49:field_goal": 10,
+        "IND:field:30-49:go": 7,
+        "IND:field:30-49:punt": 1,
+        "IND:field:50-59:go": 3,
+        "IND:field:50-59:punt": 5,
+        "IND:field:60-69:go": 3,
+        "IND:field:60-69:punt": 6,
+        "IND:field:70-79:punt": 4,
+        "IND:field:80-99:punt": 6,
+        "IND:score:leading:field_goal": 8,
+        "IND:score:leading:go": 3,
+        "IND:score:leading:punt": 6,
+        "IND:score:tied:field_goal": 3,
+        "IND:score:tied:go": 1,
+        "IND:score:tied:punt": 2,
+        "IND:score:trailing:field_goal": 8,
+        "IND:score:trailing:go": 13,
+        "IND:score:trailing:punt": 14,
+        "JAX:clock:late_q2_q4:field_goal": 2,
+        "JAX:clock:late_q2_q4:go": 2,
+        "JAX:clock:late_q2_q4:punt": 4,
+        "JAX:clock:other:field_goal": 8,
+        "JAX:clock:other:go": 3,
+        "JAX:clock:other:punt": 17,
+        "JAX:distance:1-2:field_goal": 1,
+        "JAX:distance:1-2:go": 2,
+        "JAX:distance:1-2:punt": 4,
+        "JAX:distance:10+:field_goal": 3,
+        "JAX:distance:10+:punt": 7,
+        "JAX:distance:3-5:field_goal": 3,
+        "JAX:distance:3-5:go": 3,
+        "JAX:distance:3-5:punt": 4,
+        "JAX:distance:6-9:field_goal": 3,
+        "JAX:distance:6-9:punt": 6,
+        "JAX:field:1-9:field_goal": 1,
+        "JAX:field:1-9:go": 2,
+        "JAX:field:10-19:field_goal": 2,
+        "JAX:field:10-19:go": 1,
+        "JAX:field:20-29:field_goal": 2,
+        "JAX:field:20-29:go": 1,
+        "JAX:field:30-49:field_goal": 4,
+        "JAX:field:30-49:go": 1,
+        "JAX:field:30-49:punt": 3,
+        "JAX:field:50-59:field_goal": 1,
+        "JAX:field:50-59:punt": 5,
+        "JAX:field:60-69:punt": 5,
+        "JAX:field:70-79:punt": 6,
+        "JAX:field:80-99:punt": 2,
+        "JAX:score:leading:field_goal": 5,
+        "JAX:score:leading:punt": 13,
+        "JAX:score:tied:field_goal": 3,
+        "JAX:score:tied:go": 1,
+        "JAX:score:tied:punt": 7,
+        "JAX:score:trailing:field_goal": 2,
+        "JAX:score:trailing:go": 4,
+        "JAX:score:trailing:punt": 1,
+        "KC:clock:late_q2_q4:field_goal": 3,
+        "KC:clock:late_q2_q4:go": 1,
+        "KC:clock:late_q2_q4:punt": 3,
+        "KC:clock:other:field_goal": 11,
+        "KC:clock:other:go": 11,
+        "KC:clock:other:punt": 18,
+        "KC:distance:1-2:field_goal": 3,
+        "KC:distance:1-2:go": 9,
+        "KC:distance:1-2:punt": 3,
+        "KC:distance:10+:field_goal": 3,
+        "KC:distance:10+:go": 1,
+        "KC:distance:10+:punt": 5,
+        "KC:distance:3-5:field_goal": 2,
+        "KC:distance:3-5:punt": 5,
+        "KC:distance:6-9:field_goal": 6,
+        "KC:distance:6-9:go": 2,
+        "KC:distance:6-9:punt": 8,
+        "KC:field:1-9:field_goal": 1,
+        "KC:field:1-9:go": 3,
+        "KC:field:10-19:field_goal": 4,
+        "KC:field:10-19:go": 1,
+        "KC:field:20-29:field_goal": 4,
+        "KC:field:30-49:field_goal": 5,
+        "KC:field:30-49:go": 3,
+        "KC:field:30-49:punt": 3,
+        "KC:field:50-59:go": 3,
+        "KC:field:50-59:punt": 6,
+        "KC:field:60-69:go": 1,
+        "KC:field:60-69:punt": 9,
+        "KC:field:70-79:go": 1,
+        "KC:field:70-79:punt": 1,
+        "KC:field:80-99:punt": 2,
+        "KC:score:leading:field_goal": 8,
+        "KC:score:leading:go": 3,
+        "KC:score:leading:punt": 9,
+        "KC:score:tied:field_goal": 2,
+        "KC:score:tied:go": 3,
+        "KC:score:tied:punt": 8,
+        "KC:score:trailing:field_goal": 4,
+        "KC:score:trailing:go": 6,
+        "KC:score:trailing:punt": 4,
+        "LAC:clock:late_q2_q4:field_goal": 2,
+        "LAC:clock:late_q2_q4:go": 3,
+        "LAC:clock:late_q2_q4:punt": 3,
+        "LAC:clock:other:field_goal": 10,
+        "LAC:clock:other:go": 8,
+        "LAC:clock:other:punt": 26,
+        "LAC:distance:1-2:field_goal": 1,
+        "LAC:distance:1-2:go": 1,
+        "LAC:distance:1-2:punt": 5,
+        "LAC:distance:10+:field_goal": 2,
+        "LAC:distance:10+:go": 2,
+        "LAC:distance:10+:punt": 14,
+        "LAC:distance:3-5:field_goal": 8,
+        "LAC:distance:3-5:go": 3,
+        "LAC:distance:3-5:punt": 5,
+        "LAC:distance:6-9:field_goal": 1,
+        "LAC:distance:6-9:go": 5,
+        "LAC:distance:6-9:punt": 5,
+        "LAC:field:1-9:field_goal": 2,
+        "LAC:field:1-9:go": 2,
+        "LAC:field:10-19:field_goal": 4,
+        "LAC:field:10-19:go": 1,
+        "LAC:field:20-29:field_goal": 5,
+        "LAC:field:20-29:go": 1,
+        "LAC:field:30-49:field_goal": 1,
+        "LAC:field:30-49:go": 1,
+        "LAC:field:30-49:punt": 1,
+        "LAC:field:50-59:go": 2,
+        "LAC:field:50-59:punt": 6,
+        "LAC:field:60-69:go": 2,
+        "LAC:field:60-69:punt": 6,
+        "LAC:field:70-79:go": 1,
+        "LAC:field:70-79:punt": 9,
+        "LAC:field:80-99:go": 1,
+        "LAC:field:80-99:punt": 7,
+        "LAC:score:leading:field_goal": 3,
+        "LAC:score:leading:go": 1,
+        "LAC:score:leading:punt": 4,
+        "LAC:score:tied:field_goal": 4,
+        "LAC:score:tied:punt": 6,
+        "LAC:score:trailing:field_goal": 5,
+        "LAC:score:trailing:go": 10,
+        "LAC:score:trailing:punt": 19,
+        "LAR:clock:late_q2_q4:go": 2,
+        "LAR:clock:late_q2_q4:punt": 1,
+        "LAR:clock:other:field_goal": 8,
+        "LAR:clock:other:go": 9,
+        "LAR:clock:other:punt": 26,
+        "LAR:distance:1-2:field_goal": 1,
+        "LAR:distance:1-2:go": 6,
+        "LAR:distance:1-2:punt": 5,
+        "LAR:distance:10+:field_goal": 5,
+        "LAR:distance:10+:punt": 13,
+        "LAR:distance:3-5:field_goal": 1,
+        "LAR:distance:3-5:go": 2,
+        "LAR:distance:3-5:punt": 3,
+        "LAR:distance:6-9:field_goal": 1,
+        "LAR:distance:6-9:go": 3,
+        "LAR:distance:6-9:punt": 6,
+        "LAR:field:1-9:go": 1,
+        "LAR:field:10-19:field_goal": 3,
+        "LAR:field:20-29:field_goal": 3,
+        "LAR:field:20-29:go": 1,
+        "LAR:field:30-49:field_goal": 2,
+        "LAR:field:30-49:go": 8,
+        "LAR:field:30-49:punt": 4,
+        "LAR:field:50-59:go": 1,
+        "LAR:field:50-59:punt": 3,
+        "LAR:field:60-69:punt": 8,
+        "LAR:field:70-79:punt": 4,
+        "LAR:field:80-99:punt": 8,
+        "LAR:score:leading:field_goal": 2,
+        "LAR:score:leading:go": 1,
+        "LAR:score:leading:punt": 10,
+        "LAR:score:tied:field_goal": 3,
+        "LAR:score:tied:go": 1,
+        "LAR:score:tied:punt": 9,
+        "LAR:score:trailing:field_goal": 3,
+        "LAR:score:trailing:go": 9,
+        "LAR:score:trailing:punt": 8,
+        "LV:clock:late_q2_q4:field_goal": 4,
+        "LV:clock:late_q2_q4:go": 2,
+        "LV:clock:late_q2_q4:punt": 2,
+        "LV:clock:other:field_goal": 13,
+        "LV:clock:other:go": 12,
+        "LV:clock:other:punt": 20,
+        "LV:distance:1-2:field_goal": 3,
+        "LV:distance:1-2:go": 7,
+        "LV:distance:1-2:punt": 3,
+        "LV:distance:10+:field_goal": 7,
+        "LV:distance:10+:go": 2,
+        "LV:distance:10+:punt": 11,
+        "LV:distance:3-5:field_goal": 4,
+        "LV:distance:3-5:go": 5,
+        "LV:distance:3-5:punt": 4,
+        "LV:distance:6-9:field_goal": 3,
+        "LV:distance:6-9:punt": 4,
+        "LV:field:1-9:field_goal": 1,
+        "LV:field:1-9:go": 1,
+        "LV:field:10-19:field_goal": 7,
+        "LV:field:10-19:go": 3,
+        "LV:field:20-29:field_goal": 4,
+        "LV:field:20-29:go": 1,
+        "LV:field:30-49:field_goal": 5,
+        "LV:field:30-49:go": 3,
+        "LV:field:30-49:punt": 3,
+        "LV:field:50-59:go": 1,
+        "LV:field:50-59:punt": 4,
+        "LV:field:60-69:go": 3,
+        "LV:field:60-69:punt": 9,
+        "LV:field:70-79:go": 1,
+        "LV:field:70-79:punt": 4,
+        "LV:field:80-99:go": 1,
+        "LV:field:80-99:punt": 2,
+        "LV:score:leading:field_goal": 3,
+        "LV:score:leading:go": 1,
+        "LV:score:leading:punt": 13,
+        "LV:score:tied:field_goal": 4,
+        "LV:score:tied:go": 3,
+        "LV:score:tied:punt": 6,
+        "LV:score:trailing:field_goal": 10,
+        "LV:score:trailing:go": 10,
+        "LV:score:trailing:punt": 3,
+        "MIA:clock:late_q2_q4:field_goal": 1,
+        "MIA:clock:late_q2_q4:go": 2,
+        "MIA:clock:late_q2_q4:punt": 1,
+        "MIA:clock:other:field_goal": 10,
+        "MIA:clock:other:go": 8,
+        "MIA:clock:other:punt": 21,
+        "MIA:distance:1-2:field_goal": 1,
+        "MIA:distance:1-2:go": 6,
+        "MIA:distance:1-2:punt": 1,
+        "MIA:distance:10+:field_goal": 6,
+        "MIA:distance:10+:go": 2,
+        "MIA:distance:10+:punt": 8,
+        "MIA:distance:3-5:field_goal": 2,
+        "MIA:distance:3-5:go": 2,
+        "MIA:distance:3-5:punt": 4,
+        "MIA:distance:6-9:field_goal": 2,
+        "MIA:distance:6-9:punt": 9,
+        "MIA:field:1-9:field_goal": 2,
+        "MIA:field:1-9:go": 1,
+        "MIA:field:10-19:field_goal": 4,
+        "MIA:field:20-29:field_goal": 3,
+        "MIA:field:30-49:field_goal": 2,
+        "MIA:field:30-49:go": 6,
+        "MIA:field:30-49:punt": 2,
+        "MIA:field:50-59:go": 2,
+        "MIA:field:50-59:punt": 4,
+        "MIA:field:60-69:go": 1,
+        "MIA:field:60-69:punt": 6,
+        "MIA:field:70-79:punt": 8,
+        "MIA:field:80-99:punt": 2,
+        "MIA:score:leading:go": 2,
+        "MIA:score:leading:punt": 6,
+        "MIA:score:tied:field_goal": 2,
+        "MIA:score:tied:go": 1,
+        "MIA:score:tied:punt": 4,
+        "MIA:score:trailing:field_goal": 9,
+        "MIA:score:trailing:go": 7,
+        "MIA:score:trailing:punt": 12,
+        "MIN:clock:late_q2_q4:field_goal": 4,
+        "MIN:clock:late_q2_q4:punt": 2,
+        "MIN:clock:other:field_goal": 15,
+        "MIN:clock:other:go": 6,
+        "MIN:clock:other:punt": 28,
+        "MIN:distance:1-2:go": 5,
+        "MIN:distance:1-2:punt": 3,
+        "MIN:distance:10+:field_goal": 6,
+        "MIN:distance:10+:punt": 11,
+        "MIN:distance:3-5:field_goal": 2,
+        "MIN:distance:3-5:go": 1,
+        "MIN:distance:3-5:punt": 7,
+        "MIN:distance:6-9:field_goal": 11,
+        "MIN:distance:6-9:punt": 9,
+        "MIN:field:10-19:field_goal": 3,
+        "MIN:field:20-29:field_goal": 7,
+        "MIN:field:20-29:go": 1,
+        "MIN:field:30-49:field_goal": 9,
+        "MIN:field:30-49:go": 4,
+        "MIN:field:30-49:punt": 3,
+        "MIN:field:50-59:go": 1,
+        "MIN:field:50-59:punt": 8,
+        "MIN:field:60-69:punt": 5,
+        "MIN:field:70-79:punt": 9,
+        "MIN:field:80-99:punt": 5,
+        "MIN:score:leading:field_goal": 9,
+        "MIN:score:leading:go": 2,
+        "MIN:score:leading:punt": 19,
+        "MIN:score:tied:field_goal": 6,
+        "MIN:score:tied:go": 2,
+        "MIN:score:tied:punt": 3,
+        "MIN:score:trailing:field_goal": 4,
+        "MIN:score:trailing:go": 2,
+        "MIN:score:trailing:punt": 8,
+        "NE:clock:late_q2_q4:field_goal": 2,
+        "NE:clock:late_q2_q4:go": 1,
+        "NE:clock:late_q2_q4:punt": 3,
+        "NE:clock:other:field_goal": 10,
+        "NE:clock:other:go": 11,
+        "NE:clock:other:punt": 22,
+        "NE:distance:1-2:go": 5,
+        "NE:distance:1-2:punt": 2,
+        "NE:distance:10+:field_goal": 2,
+        "NE:distance:10+:punt": 6,
+        "NE:distance:3-5:field_goal": 5,
+        "NE:distance:3-5:go": 5,
+        "NE:distance:3-5:punt": 7,
+        "NE:distance:6-9:field_goal": 5,
+        "NE:distance:6-9:go": 2,
+        "NE:distance:6-9:punt": 10,
+        "NE:field:1-9:field_goal": 2,
+        "NE:field:1-9:go": 1,
+        "NE:field:10-19:field_goal": 4,
+        "NE:field:10-19:go": 1,
+        "NE:field:20-29:field_goal": 5,
+        "NE:field:20-29:go": 3,
+        "NE:field:30-49:field_goal": 1,
+        "NE:field:30-49:go": 5,
+        "NE:field:30-49:punt": 4,
+        "NE:field:50-59:go": 1,
+        "NE:field:50-59:punt": 9,
+        "NE:field:60-69:go": 1,
+        "NE:field:60-69:punt": 8,
+        "NE:field:70-79:punt": 1,
+        "NE:field:80-99:punt": 3,
+        "NE:score:leading:field_goal": 7,
+        "NE:score:leading:go": 2,
+        "NE:score:leading:punt": 13,
+        "NE:score:tied:field_goal": 1,
+        "NE:score:tied:go": 4,
+        "NE:score:tied:punt": 5,
+        "NE:score:trailing:field_goal": 4,
+        "NE:score:trailing:go": 6,
+        "NE:score:trailing:punt": 7,
+        "NO:clock:late_q2_q4:field_goal": 1,
+        "NO:clock:late_q2_q4:go": 4,
+        "NO:clock:late_q2_q4:punt": 3,
+        "NO:clock:other:field_goal": 9,
+        "NO:clock:other:go": 10,
+        "NO:clock:other:punt": 21,
+        "NO:distance:1-2:go": 9,
+        "NO:distance:1-2:punt": 2,
+        "NO:distance:10+:field_goal": 3,
+        "NO:distance:10+:go": 2,
+        "NO:distance:10+:punt": 12,
+        "NO:distance:3-5:field_goal": 5,
+        "NO:distance:3-5:punt": 1,
+        "NO:distance:6-9:field_goal": 2,
+        "NO:distance:6-9:go": 3,
+        "NO:distance:6-9:punt": 9,
+        "NO:field:1-9:field_goal": 2,
+        "NO:field:1-9:go": 3,
+        "NO:field:10-19:field_goal": 1,
+        "NO:field:10-19:go": 1,
+        "NO:field:20-29:field_goal": 1,
+        "NO:field:20-29:go": 2,
+        "NO:field:30-49:field_goal": 6,
+        "NO:field:30-49:go": 5,
+        "NO:field:30-49:punt": 5,
+        "NO:field:50-59:go": 1,
+        "NO:field:50-59:punt": 2,
+        "NO:field:60-69:punt": 7,
+        "NO:field:70-79:go": 2,
+        "NO:field:70-79:punt": 4,
+        "NO:field:80-99:punt": 6,
+        "NO:score:leading:field_goal": 1,
+        "NO:score:leading:punt": 5,
+        "NO:score:tied:go": 2,
+        "NO:score:tied:punt": 5,
+        "NO:score:trailing:field_goal": 9,
+        "NO:score:trailing:go": 12,
+        "NO:score:trailing:punt": 14,
+        "NYG:clock:late_q2_q4:field_goal": 3,
+        "NYG:clock:late_q2_q4:go": 1,
+        "NYG:clock:late_q2_q4:punt": 1,
+        "NYG:clock:other:field_goal": 13,
+        "NYG:clock:other:go": 7,
+        "NYG:clock:other:punt": 23,
+        "NYG:distance:1-2:field_goal": 1,
+        "NYG:distance:1-2:go": 5,
+        "NYG:distance:1-2:punt": 1,
+        "NYG:distance:10+:field_goal": 6,
+        "NYG:distance:10+:go": 1,
+        "NYG:distance:10+:punt": 12,
+        "NYG:distance:3-5:field_goal": 4,
+        "NYG:distance:3-5:go": 1,
+        "NYG:distance:3-5:punt": 3,
+        "NYG:distance:6-9:field_goal": 5,
+        "NYG:distance:6-9:go": 1,
+        "NYG:distance:6-9:punt": 8,
+        "NYG:field:1-9:field_goal": 2,
+        "NYG:field:10-19:field_goal": 2,
+        "NYG:field:10-19:go": 2,
+        "NYG:field:20-29:field_goal": 4,
+        "NYG:field:20-29:go": 1,
+        "NYG:field:30-49:field_goal": 8,
+        "NYG:field:30-49:go": 5,
+        "NYG:field:30-49:punt": 4,
+        "NYG:field:50-59:punt": 2,
+        "NYG:field:60-69:punt": 8,
+        "NYG:field:70-79:punt": 4,
+        "NYG:field:80-99:punt": 6,
+        "NYG:score:leading:field_goal": 5,
+        "NYG:score:leading:punt": 8,
+        "NYG:score:tied:field_goal": 2,
+        "NYG:score:tied:go": 2,
+        "NYG:score:tied:punt": 6,
+        "NYG:score:trailing:field_goal": 9,
+        "NYG:score:trailing:go": 6,
+        "NYG:score:trailing:punt": 10,
+        "NYJ:clock:late_q2_q4:field_goal": 1,
+        "NYJ:clock:late_q2_q4:go": 1,
+        "NYJ:clock:late_q2_q4:punt": 4,
+        "NYJ:clock:other:field_goal": 17,
+        "NYJ:clock:other:go": 8,
+        "NYJ:clock:other:punt": 21,
+        "NYJ:distance:1-2:field_goal": 1,
+        "NYJ:distance:1-2:go": 7,
+        "NYJ:distance:1-2:punt": 3,
+        "NYJ:distance:10+:field_goal": 8,
+        "NYJ:distance:10+:punt": 9,
+        "NYJ:distance:3-5:field_goal": 4,
+        "NYJ:distance:3-5:go": 1,
+        "NYJ:distance:3-5:punt": 8,
+        "NYJ:distance:6-9:field_goal": 5,
+        "NYJ:distance:6-9:go": 1,
+        "NYJ:distance:6-9:punt": 5,
+        "NYJ:field:1-9:field_goal": 1,
+        "NYJ:field:10-19:field_goal": 8,
+        "NYJ:field:10-19:go": 1,
+        "NYJ:field:20-29:field_goal": 5,
+        "NYJ:field:20-29:go": 3,
+        "NYJ:field:30-49:field_goal": 4,
+        "NYJ:field:30-49:go": 3,
+        "NYJ:field:30-49:punt": 4,
+        "NYJ:field:50-59:go": 2,
+        "NYJ:field:50-59:punt": 4,
+        "NYJ:field:60-69:punt": 5,
+        "NYJ:field:70-79:punt": 7,
+        "NYJ:field:80-99:punt": 5,
+        "NYJ:score:leading:field_goal": 7,
+        "NYJ:score:leading:go": 2,
+        "NYJ:score:leading:punt": 11,
+        "NYJ:score:tied:field_goal": 2,
+        "NYJ:score:tied:go": 1,
+        "NYJ:score:tied:punt": 6,
+        "NYJ:score:trailing:field_goal": 9,
+        "NYJ:score:trailing:go": 6,
+        "NYJ:score:trailing:punt": 8,
+        "PHI:clock:late_q2_q4:field_goal": 1,
+        "PHI:clock:late_q2_q4:go": 3,
+        "PHI:clock:late_q2_q4:punt": 4,
+        "PHI:clock:other:field_goal": 6,
+        "PHI:clock:other:go": 12,
+        "PHI:clock:other:punt": 33,
+        "PHI:distance:1-2:go": 6,
+        "PHI:distance:1-2:punt": 4,
+        "PHI:distance:10+:field_goal": 3,
+        "PHI:distance:10+:go": 4,
+        "PHI:distance:10+:punt": 16,
+        "PHI:distance:3-5:field_goal": 1,
+        "PHI:distance:3-5:go": 3,
+        "PHI:distance:3-5:punt": 4,
+        "PHI:distance:6-9:field_goal": 3,
+        "PHI:distance:6-9:go": 2,
+        "PHI:distance:6-9:punt": 13,
+        "PHI:field:1-9:go": 1,
+        "PHI:field:10-19:field_goal": 2,
+        "PHI:field:20-29:field_goal": 2,
+        "PHI:field:30-49:field_goal": 3,
+        "PHI:field:30-49:go": 9,
+        "PHI:field:30-49:punt": 4,
+        "PHI:field:50-59:punt": 10,
+        "PHI:field:60-69:go": 1,
+        "PHI:field:60-69:punt": 8,
+        "PHI:field:70-79:go": 2,
+        "PHI:field:70-79:punt": 11,
+        "PHI:field:80-99:go": 2,
+        "PHI:field:80-99:punt": 4,
+        "PHI:score:leading:field_goal": 2,
+        "PHI:score:leading:go": 3,
+        "PHI:score:leading:punt": 15,
+        "PHI:score:tied:field_goal": 3,
+        "PHI:score:tied:go": 3,
+        "PHI:score:tied:punt": 5,
+        "PHI:score:trailing:field_goal": 2,
+        "PHI:score:trailing:go": 9,
+        "PHI:score:trailing:punt": 17,
+        "PIT:clock:late_q2_q4:field_goal": 5,
+        "PIT:clock:late_q2_q4:go": 1,
+        "PIT:clock:late_q2_q4:punt": 3,
+        "PIT:clock:other:field_goal": 16,
+        "PIT:clock:other:go": 5,
+        "PIT:clock:other:punt": 23,
+        "PIT:distance:1-2:field_goal": 3,
+        "PIT:distance:1-2:go": 3,
+        "PIT:distance:1-2:punt": 2,
+        "PIT:distance:10+:field_goal": 10,
+        "PIT:distance:10+:go": 1,
+        "PIT:distance:10+:punt": 8,
+        "PIT:distance:3-5:field_goal": 4,
+        "PIT:distance:3-5:go": 2,
+        "PIT:distance:3-5:punt": 5,
+        "PIT:distance:6-9:field_goal": 4,
+        "PIT:distance:6-9:punt": 11,
+        "PIT:field:1-9:field_goal": 2,
+        "PIT:field:10-19:field_goal": 6,
+        "PIT:field:20-29:field_goal": 5,
+        "PIT:field:20-29:go": 1,
+        "PIT:field:30-49:field_goal": 8,
+        "PIT:field:30-49:go": 3,
+        "PIT:field:30-49:punt": 4,
+        "PIT:field:50-59:go": 1,
+        "PIT:field:50-59:punt": 6,
+        "PIT:field:60-69:go": 1,
+        "PIT:field:60-69:punt": 7,
+        "PIT:field:70-79:punt": 4,
+        "PIT:field:80-99:punt": 5,
+        "PIT:score:leading:field_goal": 7,
+        "PIT:score:leading:go": 4,
+        "PIT:score:leading:punt": 9,
+        "PIT:score:tied:field_goal": 6,
+        "PIT:score:tied:punt": 5,
+        "PIT:score:trailing:field_goal": 8,
+        "PIT:score:trailing:go": 2,
+        "PIT:score:trailing:punt": 12,
+        "SEA:clock:late_q2_q4:field_goal": 2,
+        "SEA:clock:late_q2_q4:go": 6,
+        "SEA:clock:late_q2_q4:punt": 3,
+        "SEA:clock:other:field_goal": 12,
+        "SEA:clock:other:go": 2,
+        "SEA:clock:other:punt": 21,
+        "SEA:distance:1-2:go": 6,
+        "SEA:distance:1-2:punt": 4,
+        "SEA:distance:10+:field_goal": 6,
+        "SEA:distance:10+:go": 1,
+        "SEA:distance:10+:punt": 9,
+        "SEA:distance:3-5:field_goal": 3,
+        "SEA:distance:3-5:go": 1,
+        "SEA:distance:3-5:punt": 6,
+        "SEA:distance:6-9:field_goal": 5,
+        "SEA:distance:6-9:punt": 5,
+        "SEA:field:1-9:field_goal": 2,
+        "SEA:field:1-9:go": 3,
+        "SEA:field:10-19:field_goal": 4,
+        "SEA:field:20-29:field_goal": 3,
+        "SEA:field:20-29:go": 1,
+        "SEA:field:30-49:field_goal": 5,
+        "SEA:field:30-49:go": 3,
+        "SEA:field:30-49:punt": 4,
+        "SEA:field:50-59:go": 1,
+        "SEA:field:50-59:punt": 8,
+        "SEA:field:60-69:punt": 4,
+        "SEA:field:70-79:punt": 5,
+        "SEA:field:80-99:punt": 3,
+        "SEA:score:leading:field_goal": 4,
+        "SEA:score:leading:go": 2,
+        "SEA:score:leading:punt": 7,
+        "SEA:score:tied:field_goal": 4,
+        "SEA:score:tied:go": 2,
+        "SEA:score:tied:punt": 8,
+        "SEA:score:trailing:field_goal": 6,
+        "SEA:score:trailing:go": 4,
+        "SEA:score:trailing:punt": 9,
+        "SF:clock:late_q2_q4:field_goal": 2,
+        "SF:clock:late_q2_q4:go": 2,
+        "SF:clock:late_q2_q4:punt": 3,
+        "SF:clock:other:field_goal": 5,
+        "SF:clock:other:go": 6,
+        "SF:clock:other:punt": 17,
+        "SF:distance:1-2:field_goal": 2,
+        "SF:distance:1-2:go": 5,
+        "SF:distance:1-2:punt": 3,
+        "SF:distance:10+:go": 1,
+        "SF:distance:10+:punt": 8,
+        "SF:distance:3-5:field_goal": 5,
+        "SF:distance:3-5:go": 1,
+        "SF:distance:3-5:punt": 5,
+        "SF:distance:6-9:go": 1,
+        "SF:distance:6-9:punt": 4,
+        "SF:field:1-9:field_goal": 2,
+        "SF:field:1-9:go": 2,
+        "SF:field:10-19:field_goal": 1,
+        "SF:field:10-19:go": 2,
+        "SF:field:20-29:field_goal": 1,
+        "SF:field:20-29:go": 1,
+        "SF:field:30-49:field_goal": 3,
+        "SF:field:30-49:go": 2,
+        "SF:field:30-49:punt": 3,
+        "SF:field:50-59:go": 1,
+        "SF:field:50-59:punt": 4,
+        "SF:field:60-69:punt": 6,
+        "SF:field:70-79:punt": 4,
+        "SF:field:80-99:punt": 3,
+        "SF:score:leading:field_goal": 4,
+        "SF:score:leading:go": 2,
+        "SF:score:leading:punt": 12,
+        "SF:score:tied:field_goal": 2,
+        "SF:score:tied:go": 2,
+        "SF:score:tied:punt": 6,
+        "SF:score:trailing:field_goal": 1,
+        "SF:score:trailing:go": 4,
+        "SF:score:trailing:punt": 2,
+        "TB:clock:late_q2_q4:field_goal": 2,
+        "TB:clock:late_q2_q4:go": 5,
+        "TB:clock:late_q2_q4:punt": 5,
+        "TB:clock:other:field_goal": 17,
+        "TB:clock:other:go": 3,
+        "TB:clock:other:punt": 26,
+        "TB:distance:1-2:field_goal": 2,
+        "TB:distance:1-2:go": 5,
+        "TB:distance:1-2:punt": 2,
+        "TB:distance:10+:field_goal": 6,
+        "TB:distance:10+:go": 3,
+        "TB:distance:10+:punt": 10,
+        "TB:distance:3-5:field_goal": 7,
+        "TB:distance:3-5:punt": 8,
+        "TB:distance:6-9:field_goal": 4,
+        "TB:distance:6-9:punt": 11,
+        "TB:field:1-9:field_goal": 1,
+        "TB:field:1-9:go": 1,
+        "TB:field:10-19:field_goal": 6,
+        "TB:field:10-19:go": 1,
+        "TB:field:20-29:field_goal": 8,
+        "TB:field:20-29:go": 1,
+        "TB:field:30-49:field_goal": 4,
+        "TB:field:30-49:go": 2,
+        "TB:field:30-49:punt": 3,
+        "TB:field:50-59:go": 1,
+        "TB:field:50-59:punt": 7,
+        "TB:field:60-69:go": 2,
+        "TB:field:60-69:punt": 9,
+        "TB:field:70-79:punt": 8,
+        "TB:field:80-99:punt": 4,
+        "TB:score:leading:field_goal": 7,
+        "TB:score:leading:go": 2,
+        "TB:score:leading:punt": 13,
+        "TB:score:tied:field_goal": 7,
+        "TB:score:tied:go": 1,
+        "TB:score:tied:punt": 7,
+        "TB:score:trailing:field_goal": 5,
+        "TB:score:trailing:go": 5,
+        "TB:score:trailing:punt": 11,
+        "TEN:clock:late_q2_q4:field_goal": 4,
+        "TEN:clock:late_q2_q4:go": 2,
+        "TEN:clock:late_q2_q4:punt": 5,
+        "TEN:clock:other:field_goal": 9,
+        "TEN:clock:other:go": 7,
+        "TEN:clock:other:punt": 26,
+        "TEN:distance:1-2:go": 4,
+        "TEN:distance:1-2:punt": 2,
+        "TEN:distance:10+:field_goal": 3,
+        "TEN:distance:10+:go": 3,
+        "TEN:distance:10+:punt": 9,
+        "TEN:distance:3-5:field_goal": 6,
+        "TEN:distance:3-5:go": 1,
+        "TEN:distance:3-5:punt": 11,
+        "TEN:distance:6-9:field_goal": 4,
+        "TEN:distance:6-9:go": 1,
+        "TEN:distance:6-9:punt": 9,
+        "TEN:field:1-9:go": 4,
+        "TEN:field:10-19:field_goal": 7,
+        "TEN:field:20-29:field_goal": 3,
+        "TEN:field:30-49:field_goal": 3,
+        "TEN:field:30-49:go": 3,
+        "TEN:field:30-49:punt": 5,
+        "TEN:field:50-59:go": 2,
+        "TEN:field:50-59:punt": 8,
+        "TEN:field:60-69:punt": 5,
+        "TEN:field:70-79:punt": 6,
+        "TEN:field:80-99:punt": 7,
+        "TEN:score:leading:field_goal": 2,
+        "TEN:score:leading:go": 1,
+        "TEN:score:leading:punt": 1,
+        "TEN:score:tied:field_goal": 4,
+        "TEN:score:tied:go": 2,
+        "TEN:score:tied:punt": 10,
+        "TEN:score:trailing:field_goal": 7,
+        "TEN:score:trailing:go": 6,
+        "TEN:score:trailing:punt": 20,
+        "WSH:clock:late_q2_q4:field_goal": 3,
+        "WSH:clock:late_q2_q4:go": 2,
+        "WSH:clock:late_q2_q4:punt": 4,
+        "WSH:clock:other:field_goal": 14,
+        "WSH:clock:other:go": 8,
+        "WSH:clock:other:punt": 24,
+        "WSH:distance:1-2:field_goal": 3,
+        "WSH:distance:1-2:go": 7,
+        "WSH:distance:1-2:punt": 4,
+        "WSH:distance:10+:field_goal": 3,
+        "WSH:distance:10+:go": 1,
+        "WSH:distance:10+:punt": 14,
+        "WSH:distance:3-5:field_goal": 4,
+        "WSH:distance:3-5:go": 2,
+        "WSH:distance:3-5:punt": 5,
+        "WSH:distance:6-9:field_goal": 7,
+        "WSH:distance:6-9:punt": 5,
+        "WSH:field:1-9:field_goal": 3,
+        "WSH:field:10-19:field_goal": 3,
+        "WSH:field:10-19:go": 3,
+        "WSH:field:20-29:field_goal": 4,
+        "WSH:field:30-49:field_goal": 7,
+        "WSH:field:30-49:go": 5,
+        "WSH:field:50-59:go": 2,
+        "WSH:field:50-59:punt": 7,
+        "WSH:field:60-69:punt": 7,
+        "WSH:field:70-79:punt": 3,
+        "WSH:field:80-99:punt": 11,
+        "WSH:score:leading:field_goal": 6,
+        "WSH:score:leading:go": 1,
+        "WSH:score:leading:punt": 14,
+        "WSH:score:tied:field_goal": 5,
+        "WSH:score:tied:go": 1,
+        "WSH:score:tied:punt": 5,
+        "WSH:score:trailing:field_goal": 6,
+        "WSH:score:trailing:go": 8,
+        "WSH:score:trailing:punt": 9
+      },
+      "penalty_overlay": {
+        "adaptation_input": {
+          "available_db_rows": 230575,
+          "known_penalty_status_rows_used_as_input": 223606,
+          "penalty_tagged_rows_excluded_by_model": 19531,
+          "unknown_penalty_status_excluded": 6969
+        },
+        "db_rows_status_counts": {
+          "0": 18634,
+          "1": 1750,
+          "unknown": 634
+        },
+        "source_only_rows_not_in_simulation_db": 173,
+        "source_overlay_rows": 21191,
+        "test_unknown_status_excluded": 634
+      },
+      "pregame_strength_ratings": {
+        "defense_category": {
+          "ARI": "weak",
+          "ATL": "weak",
+          "BAL": "strong",
+          "BUF": "strong",
+          "CAR": "weak",
+          "CHI": "weak",
+          "CIN": "weak",
+          "CLE": "strong",
+          "DAL": "middle",
+          "DEN": "strong",
+          "DET": "middle",
+          "GB": "middle",
+          "HOU": "strong",
+          "IND": "middle",
+          "JAX": "middle",
+          "KC": "middle",
+          "LAC": "middle",
+          "LAR": "middle",
+          "LV": "middle",
+          "MIA": "middle",
+          "MIN": "strong",
+          "NE": "middle",
+          "NO": "strong",
+          "NYG": "weak",
+          "NYJ": "middle",
+          "PHI": "strong",
+          "PIT": "middle",
+          "SEA": "middle",
+          "SF": "middle",
+          "TB": "middle",
+          "TEN": "weak",
+          "WSH": "weak"
+        },
+        "defense_epa_allowed_per_play": {
+          "ARI": 0.060396357085925355,
+          "ATL": 0.010717242879075679,
+          "BAL": -0.04688135213867794,
+          "BUF": -0.04193542448444497,
+          "CAR": 0.06308234034246356,
+          "CHI": 0.02209618472197326,
+          "CIN": 0.03900390877048957,
+          "CLE": -0.0623658163423931,
+          "DAL": -0.0008091926180220458,
+          "DEN": -0.06985962417964957,
+          "DET": -0.016899489263360355,
+          "GB": -0.007916804077974671,
+          "HOU": -0.06285585532368221,
+          "IND": -0.01918776189891461,
+          "JAX": -0.005291030379896137,
+          "KC": -0.031890248430827585,
+          "LAC": -0.04097105479766996,
+          "LAR": -0.007649945716800706,
+          "LV": 0.002892575735928266,
+          "MIA": 0.002477338217028659,
+          "MIN": -0.051247138139050324,
+          "NE": -0.038107804480185574,
+          "NO": -0.0502579327887533,
+          "NYG": 0.038691908489384405,
+          "NYJ": -0.015102371779170325,
+          "PHI": -0.04955051667666611,
+          "PIT": -0.014772339652395671,
+          "SEA": -0.025911791563247737,
+          "SF": -0.020386597989817342,
+          "TB": -0.009109884834685679,
+          "TEN": 0.02443774685716777,
+          "WSH": 0.04457780353306556
+        },
+        "offense_category": {
+          "ARI": "middle",
+          "ATL": "middle",
+          "BAL": "strong",
+          "BUF": "strong",
+          "CAR": "weak",
+          "CHI": "middle",
+          "CIN": "strong",
+          "CLE": "weak",
+          "DAL": "middle",
+          "DEN": "middle",
+          "DET": "strong",
+          "GB": "strong",
+          "HOU": "weak",
+          "IND": "weak",
+          "JAX": "middle",
+          "KC": "strong",
+          "LAC": "middle",
+          "LAR": "middle",
+          "LV": "weak",
+          "MIA": "middle",
+          "MIN": "middle",
+          "NE": "middle",
+          "NO": "middle",
+          "NYG": "weak",
+          "NYJ": "weak",
+          "PHI": "strong",
+          "PIT": "middle",
+          "SEA": "middle",
+          "SF": "strong",
+          "TB": "middle",
+          "TEN": "weak",
+          "WSH": "middle"
+        },
+        "offense_epa_per_play": {
+          "ARI": -0.02237353866450665,
+          "ATL": -0.02491331155578044,
+          "BAL": 0.08083438635383208,
+          "BUF": 0.13105375006793218,
+          "CAR": -0.08719587295044563,
+          "CHI": -0.0227334141531994,
+          "CIN": 0.035577524771735876,
+          "CLE": -0.13307032855714784,
+          "DAL": 0.021002057732241338,
+          "DEN": -0.03265203513852819,
+          "DET": 0.08306789824224248,
+          "GB": 0.055609373461207964,
+          "HOU": -0.0702183065936139,
+          "IND": -0.05730032354656236,
+          "JAX": -0.007370490941794598,
+          "KC": 0.07088696793791761,
+          "LAC": -0.027436048052696057,
+          "LAR": 0.02661034126335964,
+          "LV": -0.11948509627779111,
+          "MIA": 0.015235784037446947,
+          "MIN": -0.04933174518645393,
+          "NE": -0.04876247253113345,
+          "NO": -0.05294186154568909,
+          "NYG": -0.06590413684167576,
+          "NYJ": -0.12091654830777956,
+          "PHI": 0.06541720055348146,
+          "PIT": -0.02692795802132301,
+          "SEA": 0.002814050946073072,
+          "SF": 0.10347892996732638,
+          "TB": 0.012070132606328205,
+          "TEN": -0.10336699974360129,
+          "WSH": -0.01843362577028562
+        }
+      },
+      "same_cohort_penalty_ingestion_comparison": {
+        "corrected_overlay": {
+          "defense_only": {
+            "log_loss": 0.5248717934183112,
+            "multiclass_brier": 0.29711840702446146,
+            "n": 15061
+          },
+          "league": {
+            "log_loss": 0.5185450662303489,
+            "multiclass_brier": 0.2948027490599739,
+            "n": 15061
+          },
+          "matchup": {
+            "log_loss": 0.5313185988080229,
+            "multiclass_brier": 0.2998117407906292,
+            "n": 15061
+          },
+          "offense_only": {
+            "log_loss": 0.5248449755343986,
+            "multiclass_brier": 0.2974444208155768,
+            "n": 15061
+          }
+        },
+        "legacy_null_status_input": {
+          "defense_only": {
+            "log_loss": 0.5248397656333151,
+            "multiclass_brier": 0.2971217368526961,
+            "n": 15061
+          },
+          "league": {
+            "log_loss": 0.5185450662303489,
+            "multiclass_brier": 0.2948027490599739,
+            "n": 15061
+          },
+          "matchup": {
+            "log_loss": 0.5313401495005549,
+            "multiclass_brier": 0.2998756009965572,
+            "n": 15061
+          },
+          "offense_only": {
+            "log_loss": 0.5248990778344628,
+            "multiclass_brier": 0.297502236375142,
+            "n": 15061
+          }
+        },
+        "scoring_population": "identical test rows with source penalty=0; source penalty=1 and null rows excluded"
+      },
+      "source_pool": {
+        "e1_exclusions": {
+          "negative derived clock runoff": 52,
+          "no same-quarter next snap for clock runoff": 27,
+          "overtime rows (regulation-only pool)": 1214,
+          "penalty (not modelled)": 2656,
+          "punt without a clean receiving-team snap": 962,
+          "qb_scramble (not in E1 vocabulary)": 3857,
+          "turnover that is a touchdown (not modelled)": 202,
+          "turnover without a clean new-offense snap": 363,
+          "unsupported play type or invalid down": 41576
+        },
+        "eligible_rows_before_filters": 137373,
+        "event_counts_before_source_filters": {
+          "field_goal_attempt": 4259,
+          "fumble_lost": 721,
+          "interception": 1181,
+          "pass_complete": 45037,
+          "pass_incomplete": 23097,
+          "punt": 6739,
+          "run": 51431,
+          "sack": 4908
+        },
+        "final_training_pool_plays": 137322,
+        "history_tendency_sha256": "ff6fdcd3e2f70367cacfa7dd96c7735a9b4df444d2d4271e3c0b7b030e8fe79f",
+        "yardage_source_filters": {
+          "lateral_rows_excluded": 50,
+          "mismatched_completion_rows_excluded": 1
+        }
+      },
+      "third_down_distance_counts": {
+        "1-2": 625,
+        "10+": 779,
+        "3-5": 690,
+        "6-9": 735
+      },
+      "third_down_line_to_gain_proxy": {
+        "1-2": {
+          "defense_only": {
+            "brier": 0.2275018731222916,
+            "log_loss": 0.6466150253287073,
+            "mean_predicted_probability": 0.6464848525294655,
+            "n": 625,
+            "observed_rate": 0.6272
+          },
+          "league": {
+            "brier": 0.22671842787410015,
+            "log_loss": 0.6449644592017969,
+            "mean_predicted_probability": 0.6471954675784883,
+            "n": 625,
+            "observed_rate": 0.6272
+          },
+          "matchup": {
+            "brier": 0.22913821675038099,
+            "log_loss": 0.6502401953936338,
+            "mean_predicted_probability": 0.6473845420774417,
+            "n": 625,
+            "observed_rate": 0.6272
+          },
+          "offense_only": {
+            "brier": 0.22835228546925282,
+            "log_loss": 0.6483556584860346,
+            "mean_predicted_probability": 0.6482850511403975,
+            "n": 625,
+            "observed_rate": 0.6272
+          }
+        },
+        "10+": {
+          "defense_only": {
+            "brier": 0.154566807117264,
+            "log_loss": 0.4787857122108075,
+            "mean_predicted_probability": 0.20325032785793012,
+            "n": 779,
+            "observed_rate": 0.20154043645699615
+          },
+          "league": {
+            "brier": 0.15355580819791664,
+            "log_loss": 0.4763190217356129,
+            "mean_predicted_probability": 0.20395787842134444,
+            "n": 779,
+            "observed_rate": 0.20154043645699615
+          },
+          "matchup": {
+            "brier": 0.15408485657290263,
+            "log_loss": 0.477449480735363,
+            "mean_predicted_probability": 0.2035485941163825,
+            "n": 779,
+            "observed_rate": 0.20154043645699615
+          },
+          "offense_only": {
+            "brier": 0.15316439964885806,
+            "log_loss": 0.47528232564863737,
+            "mean_predicted_probability": 0.20416797417488328,
+            "n": 779,
+            "observed_rate": 0.20154043645699615
+          }
+        },
+        "3-5": {
+          "defense_only": {
+            "brier": 0.2452922079876117,
+            "log_loss": 0.6836428954520553,
+            "mean_predicted_probability": 0.46492453790268473,
+            "n": 690,
+            "observed_rate": 0.45362318840579713
+          },
+          "league": {
+            "brier": 0.2446812926565242,
+            "log_loss": 0.6824111559030981,
+            "mean_predicted_probability": 0.4645189071194279,
+            "n": 690,
+            "observed_rate": 0.45362318840579713
+          },
+          "matchup": {
+            "brier": 0.24619417729498888,
+            "log_loss": 0.6855276085040193,
+            "mean_predicted_probability": 0.46436731608789744,
+            "n": 690,
+            "observed_rate": 0.45362318840579713
+          },
+          "offense_only": {
+            "brier": 0.24565959551445446,
+            "log_loss": 0.6843862706574567,
+            "mean_predicted_probability": 0.46388489093549706,
+            "n": 690,
+            "observed_rate": 0.45362318840579713
+          }
+        },
+        "6-9": {
+          "defense_only": {
+            "brier": 0.22724398169827623,
+            "log_loss": 0.6466836740767546,
+            "mean_predicted_probability": 0.3550285271054469,
+            "n": 735,
+            "observed_rate": 0.35374149659863946
+          },
+          "league": {
+            "brier": 0.22658496430759448,
+            "log_loss": 0.6452970845250299,
+            "mean_predicted_probability": 0.35491745490116516,
+            "n": 735,
+            "observed_rate": 0.35374149659863946
+          },
+          "matchup": {
+            "brier": 0.22807093455618377,
+            "log_loss": 0.6487685277351896,
+            "mean_predicted_probability": 0.3549444406338938,
+            "n": 735,
+            "observed_rate": 0.35374149659863946
+          },
+          "offense_only": {
+            "brier": 0.22721245491210001,
+            "log_loss": 0.6468894811999428,
+            "mean_predicted_probability": 0.354929112356636,
+            "n": 735,
+            "observed_rate": 0.35374149659863946
+          }
+        }
+      }
+    }
+  },
+  "model_rebuild_check": {},
+  "notes": [
+    "Outcome probabilities are conditional on the observed run/dropback intent; other SLC-v2 modifiers are isolated out so this audit specifically scores the team offense/defense outcome layer.",
+    "Yardage CRPS: SLC source is empirical exact-cell/event yardage. Offense-only and defense-only yardage baselines mix team-specific exact-cell/event rows with the league cell at K=25.",
+    "Fourth-down action scores use the historical exact-cell policy, with 60-yard ordinary FG limit and <=70-yard period-end/desperation allowance; team baselines are K=25 exact-cell shrinkage.",
+    "Third-down metric is conditional on observed run/dropback intent and uses yards-to-go or offensive touchdown; it is a line-to-gain proxy, not official series conversion."
+  ],
+  "training_seasons_by_test": {
+    "2026": [
+      2022,
+      2023,
+      2024,
+      2025
+    ]
+  }
+}

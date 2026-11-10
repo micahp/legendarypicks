@@ -1,0 +1,876 @@
+{
+  "2026_reconciliation": {
+    "database_bytes": 3631009792,
+    "database_first_down_penalty_column_exists": false,
+    "database_only_keys": 0,
+    "database_path": "/root/legendarypicks/backend/data/picks.dev.db",
+    "database_penalty_column_exists": true,
+    "database_penalty_null_rows": 21018,
+    "database_rows": 21018,
+    "database_sha256": "1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa",
+    "database_unique_keys": 21018,
+    "matched_penalty_status": {
+      "0": 18634,
+      "1": 1750,
+      "unknown": 634
+    },
+    "matched_rows": 21018,
+    "season_week_mismatches": 0,
+    "source_only_keys": 173,
+    "source_rows": 21191,
+    "source_unique_keys": 21191
+  },
+  "columns": [
+    "season",
+    "week",
+    "game_id",
+    "play_id",
+    "play_type",
+    "posteam",
+    "defteam",
+    "qtr",
+    "down",
+    "ydstogo",
+    "yardline_100",
+    "game_seconds_remaining",
+    "play_deleted",
+    "aborted_play",
+    "special_teams_play",
+    "penalty",
+    "first_down_penalty",
+    "penalty_type",
+    "penalty_team",
+    "penalty_player_id",
+    "penalty_yards"
+  ],
+  "dataset": "nflverse-pbp-penalty-opportunity-plays",
+  "generator": "scripts/nfl_sequence/build_penalty_opportunity_extract.py",
+  "outputs": {
+    "penalty-opportunity-plays-1999-2026.csv.gz": {
+      "bytes": 14421507,
+      "sha256": "ac9a72c876fda2197ca85a1e560530cda355ab6aacbeaa7b7c59d3182f23356e"
+    },
+    "penalty-source-overlay-2026.csv.gz": {
+      "bytes": 239393,
+      "sha256": "0af09583a74a8dd1578b2d6cebb1d259a989a41a85352cda94c1e2dacab4b7de"
+    }
+  },
+  "penalty_label_semantics": "0 and 1 are published values; null is unknown and is preserved. The extract does not infer acceptance, decline, enforcement, or a zero from null.",
+  "seasons": {
+    "1999": {
+      "first_down_penalty_status": {
+        "0": 43597,
+        "1": 800,
+        "unknown": 1739
+      },
+      "penalty_status": {
+        "0": 41014,
+        "1": 3383,
+        "unknown": 1739
+      },
+      "play_type_rows": {
+        "extra_point": 1088,
+        "field_goal": 994,
+        "kickoff": 2476,
+        "no_play": 2653,
+        "pass": 18476,
+        "punt": 2688,
+        "qb_kneel": 300,
+        "qb_spike": 58,
+        "run": 13658,
+        "unknown": 3745
+      },
+      "rows": 46136,
+      "source_bytes": 13364401,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_1999.parquet",
+      "source_sha256": "dcf640fd18e4cdea03dba14c733bbcbd89796f100c509249b6ba5e3cff9e904c",
+      "unique_keys": 46136
+    },
+    "2000": {
+      "first_down_penalty_status": {
+        "0": 42785,
+        "1": 801,
+        "unknown": 1905
+      },
+      "penalty_status": {
+        "0": 40341,
+        "1": 3245,
+        "unknown": 1905
+      },
+      "play_type_rows": {
+        "extra_point": 1077,
+        "field_goal": 944,
+        "kickoff": 2413,
+        "no_play": 2463,
+        "pass": 17974,
+        "punt": 2579,
+        "qb_kneel": 26,
+        "qb_spike": 12,
+        "run": 13991,
+        "unknown": 4012
+      },
+      "rows": 45491,
+      "source_bytes": 13404971,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2000.parquet",
+      "source_sha256": "595c3b0eefeb91afd6f08c629669823b31e63c34304c98faed09adf4fbd54706",
+      "unique_keys": 45491
+    },
+    "2001": {
+      "first_down_penalty_status": {
+        "0": 42839,
+        "1": 728,
+        "unknown": 1402
+      },
+      "penalty_status": {
+        "0": 40592,
+        "1": 2975,
+        "unknown": 1402
+      },
+      "play_type_rows": {
+        "": 9,
+        "extra_point": 1081,
+        "field_goal": 1005,
+        "kickoff": 2453,
+        "no_play": 3972,
+        "pass": 18204,
+        "punt": 2590,
+        "qb_kneel": 26,
+        "qb_spike": 17,
+        "run": 14253,
+        "unknown": 1359
+      },
+      "rows": 44969,
+      "source_bytes": 14007738,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2001.parquet",
+      "source_sha256": "43f0eea9f76de070a09382a5f3438b0ddb509c9ca48ac98dee77639e35724bca",
+      "unique_keys": 44969
+    },
+    "2002": {
+      "first_down_penalty_status": {
+        "0": 44995,
+        "1": 871,
+        "unknown": 1489
+      },
+      "penalty_status": {
+        "0": 42413,
+        "1": 3453,
+        "unknown": 1489
+      },
+      "play_type_rows": {
+        "": 18,
+        "extra_point": 1234,
+        "field_goal": 998,
+        "kickoff": 2671,
+        "no_play": 4327,
+        "pass": 19403,
+        "punt": 2542,
+        "qb_kneel": 242,
+        "qb_spike": 14,
+        "run": 14476,
+        "unknown": 1430
+      },
+      "rows": 47355,
+      "source_bytes": 14742308,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2002.parquet",
+      "source_sha256": "4930befb7ce6597fa149d53e56565eb1377bad778a04fec1e6c21b0537c4aa17",
+      "unique_keys": 47355
+    },
+    "2003": {
+      "first_down_penalty_status": {
+        "0": 44528,
+        "1": 828,
+        "unknown": 1455
+      },
+      "penalty_status": {
+        "0": 41870,
+        "1": 3486,
+        "unknown": 1455
+      },
+      "play_type_rows": {
+        "extra_point": 1157,
+        "field_goal": 1000,
+        "kickoff": 2547,
+        "no_play": 4470,
+        "pass": 18351,
+        "punt": 2637,
+        "qb_kneel": 288,
+        "qb_spike": 86,
+        "run": 14851,
+        "unknown": 1424
+      },
+      "rows": 46811,
+      "source_bytes": 14620361,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2003.parquet",
+      "source_sha256": "a5bc20c69eee0c18364bea7fa1d3c2817941c8d9026058c694ab1ee73a2d279d",
+      "unique_keys": 46811
+    },
+    "2004": {
+      "first_down_penalty_status": {
+        "0": 44300,
+        "1": 927,
+        "unknown": 1478
+      },
+      "penalty_status": {
+        "0": 41548,
+        "1": 3679,
+        "unknown": 1478
+      },
+      "play_type_rows": {
+        "extra_point": 1241,
+        "field_goal": 902,
+        "kickoff": 2564,
+        "no_play": 4536,
+        "pass": 18302,
+        "punt": 2610,
+        "qb_kneel": 360,
+        "qb_spike": 82,
+        "run": 14693,
+        "unknown": 1415
+      },
+      "rows": 46705,
+      "source_bytes": 14568240,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2004.parquet",
+      "source_sha256": "94658bc15788eda63a8cdba0d8f1c8aa9253fb5baa9c0d07b9c2e35e75ae6a03",
+      "unique_keys": 46705
+    },
+    "2005": {
+      "first_down_penalty_status": {
+        "0": 44429,
+        "1": 927,
+        "unknown": 1467
+      },
+      "penalty_status": {
+        "0": 41521,
+        "1": 3835,
+        "unknown": 1467
+      },
+      "play_type_rows": {
+        "extra_point": 1164,
+        "field_goal": 999,
+        "kickoff": 2534,
+        "no_play": 4681,
+        "pass": 18349,
+        "punt": 2621,
+        "qb_kneel": 381,
+        "qb_spike": 69,
+        "run": 14618,
+        "unknown": 1407
+      },
+      "rows": 46823,
+      "source_bytes": 14612857,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2005.parquet",
+      "source_sha256": "1b93d868e286fc556192e642ec09ff76b29880b441674dcb0f3b51fb0064df92",
+      "unique_keys": 46823
+    },
+    "2006": {
+      "first_down_penalty_status": {
+        "0": 44083,
+        "1": 779,
+        "unknown": 1437
+      },
+      "penalty_status": {
+        "0": 41713,
+        "1": 3149,
+        "unknown": 1437
+      },
+      "play_type_rows": {
+        "extra_point": 1186,
+        "field_goal": 992,
+        "kickoff": 2547,
+        "no_play": 4101,
+        "pass": 18290,
+        "punt": 2598,
+        "qb_kneel": 397,
+        "qb_spike": 95,
+        "run": 14696,
+        "unknown": 1397
+      },
+      "rows": 46299,
+      "source_bytes": 18555685,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2006.parquet",
+      "source_sha256": "f3d45c8cf41fa860ec22519490781eb19a00cf04cbf039b28af671bfcb11c2b4",
+      "unique_keys": 46299
+    },
+    "2007": {
+      "first_down_penalty_status": {
+        "0": 44131,
+        "1": 688,
+        "unknown": 1447
+      },
+      "penalty_status": {
+        "0": 41780,
+        "1": 3039,
+        "unknown": 1447
+      },
+      "play_type_rows": {
+        "extra_point": 1237,
+        "field_goal": 993,
+        "kickoff": 2619,
+        "no_play": 4008,
+        "pass": 18856,
+        "punt": 2445,
+        "qb_kneel": 363,
+        "qb_spike": 108,
+        "run": 14218,
+        "unknown": 1419
+      },
+      "rows": 46266,
+      "source_bytes": 18716524,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2007.parquet",
+      "source_sha256": "bcfded2ff41b221617e38e48cbc56fd797f336363436ed5b5da17659caede9a9",
+      "unique_keys": 46266
+    },
+    "2008": {
+      "first_down_penalty_status": {
+        "0": 43792,
+        "1": 685,
+        "unknown": 1440
+      },
+      "penalty_status": {
+        "0": 41462,
+        "1": 3015,
+        "unknown": 1440
+      },
+      "play_type_rows": {
+        "extra_point": 1230,
+        "field_goal": 1038,
+        "kickoff": 2685,
+        "no_play": 4017,
+        "pass": 18324,
+        "punt": 2415,
+        "qb_kneel": 395,
+        "qb_spike": 95,
+        "run": 14312,
+        "unknown": 1406
+      },
+      "rows": 45917,
+      "source_bytes": 18565820,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2008.parquet",
+      "source_sha256": "f625e836a0117698feaad1a6e84f4ab341ff03197c1904313836ef7313af0f07",
+      "unique_keys": 45917
+    },
+    "2009": {
+      "first_down_penalty_status": {
+        "0": 44271,
+        "1": 787,
+        "unknown": 1461
+      },
+      "penalty_status": {
+        "0": 41896,
+        "1": 3162,
+        "unknown": 1461
+      },
+      "play_type_rows": {
+        "extra_point": 1250,
+        "field_goal": 968,
+        "kickoff": 2594,
+        "no_play": 4084,
+        "pass": 18873,
+        "punt": 2550,
+        "qb_kneel": 383,
+        "qb_spike": 95,
+        "run": 14304,
+        "unknown": 1418
+      },
+      "rows": 46519,
+      "source_bytes": 18905386,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2009.parquet",
+      "source_sha256": "17ba96f594a7b84c86060a99a3082158ebab206672d6c16036a069829d77dee7",
+      "unique_keys": 46519
+    },
+    "2010": {
+      "first_down_penalty_status": {
+        "0": 44644,
+        "1": 780,
+        "unknown": 1468
+      },
+      "penalty_status": {
+        "0": 42207,
+        "1": 3217,
+        "unknown": 1468
+      },
+      "play_type_rows": {
+        "extra_point": 1281,
+        "field_goal": 994,
+        "kickoff": 2651,
+        "no_play": 4230,
+        "pass": 19159,
+        "punt": 2562,
+        "qb_kneel": 372,
+        "qb_spike": 76,
+        "run": 14148,
+        "unknown": 1419
+      },
+      "rows": 46892,
+      "source_bytes": 19059048,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2010.parquet",
+      "source_sha256": "d2ef9c407319719910ad8de8c4c1b88f0ea945ffb3f78f48ef32fa3ed3a7573b",
+      "unique_keys": 46892
+    },
+    "2011": {
+      "first_down_penalty_status": {
+        "0": 45097,
+        "1": 900,
+        "unknown": 1451
+      },
+      "penalty_status": {
+        "0": 42620,
+        "1": 3377,
+        "unknown": 1451
+      },
+      "play_type_rows": {
+        "extra_point": 1262,
+        "field_goal": 1052,
+        "kickoff": 2686,
+        "no_play": 4339,
+        "pass": 19441,
+        "punt": 2595,
+        "qb_kneel": 376,
+        "qb_spike": 83,
+        "run": 14209,
+        "unknown": 1405
+      },
+      "rows": 47448,
+      "source_bytes": 19117830,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2011.parquet",
+      "source_sha256": "c54753b8137b88dab260489b1462cbf1309c3d11741eb8d10e5f1b0a9b8795b1",
+      "unique_keys": 47448
+    },
+    "2012": {
+      "first_down_penalty_status": {
+        "0": 45416,
+        "1": 962,
+        "unknown": 1456
+      },
+      "penalty_status": {
+        "0": 43060,
+        "1": 3318,
+        "unknown": 1456
+      },
+      "play_type_rows": {
+        "extra_point": 1301,
+        "field_goal": 1052,
+        "kickoff": 2737,
+        "no_play": 4347,
+        "pass": 19744,
+        "punt": 2563,
+        "qb_kneel": 378,
+        "qb_spike": 83,
+        "run": 14214,
+        "unknown": 1415
+      },
+      "rows": 47834,
+      "source_bytes": 19322039,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2012.parquet",
+      "source_sha256": "447b90789104aac70427ec9d3b51df7247234029d0ecabd269279369b1cc6278",
+      "unique_keys": 47834
+    },
+    "2013": {
+      "first_down_penalty_status": {
+        "0": 45729,
+        "1": 971,
+        "unknown": 1458
+      },
+      "penalty_status": {
+        "0": 43459,
+        "1": 3241,
+        "unknown": 1458
+      },
+      "play_type_rows": {
+        "extra_point": 1321,
+        "field_goal": 1042,
+        "kickoff": 2800,
+        "no_play": 4221,
+        "pass": 20195,
+        "punt": 2597,
+        "qb_kneel": 404,
+        "qb_spike": 61,
+        "run": 14103,
+        "unknown": 1414
+      },
+      "rows": 48158,
+      "source_bytes": 19521610,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2013.parquet",
+      "source_sha256": "f454605a1983b3946baf0ffadf3a0b9f5e04735c4b84732e0483f2049a780d00",
+      "unique_keys": 48158
+    },
+    "2014": {
+      "first_down_penalty_status": {
+        "0": 45104,
+        "1": 1046,
+        "unknown": 1479
+      },
+      "penalty_status": {
+        "0": 42628,
+        "1": 3522,
+        "unknown": 1479
+      },
+      "play_type_rows": {
+        "extra_point": 1288,
+        "field_goal": 1023,
+        "kickoff": 2721,
+        "no_play": 4465,
+        "pass": 19897,
+        "punt": 2484,
+        "qb_kneel": 403,
+        "qb_spike": 73,
+        "run": 13867,
+        "unknown": 1408
+      },
+      "rows": 47629,
+      "source_bytes": 19360792,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2014.parquet",
+      "source_sha256": "54c01408d8f0ff9e013a4ea51428b91d610101f72545d082e932f5710e2fb4f7",
+      "unique_keys": 47629
+    },
+    "2015": {
+      "first_down_penalty_status": {
+        "0": 45613,
+        "1": 1044,
+        "unknown": 1465
+      },
+      "penalty_status": {
+        "0": 42994,
+        "1": 3663,
+        "unknown": 1465
+      },
+      "play_type_rows": {
+        "extra_point": 1255,
+        "field_goal": 1033,
+        "kickoff": 2738,
+        "no_play": 4624,
+        "pass": 20376,
+        "punt": 2551,
+        "qb_kneel": 444,
+        "qb_spike": 53,
+        "run": 13638,
+        "unknown": 1410
+      },
+      "rows": 48122,
+      "source_bytes": 19545842,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2015.parquet",
+      "source_sha256": "01b5ae7d06633a2e66b418404461a3d4ff055ad2f3a87d453cebcc8d3fda7ed9",
+      "unique_keys": 48122
+    },
+    "2016": {
+      "first_down_penalty_status": {
+        "0": 45206,
+        "1": 1006,
+        "unknown": 1439
+      },
+      "penalty_status": {
+        "0": 42667,
+        "1": 3545,
+        "unknown": 1439
+      },
+      "play_type_rows": {
+        "extra_point": 1248,
+        "field_goal": 1050,
+        "kickoff": 2755,
+        "no_play": 4524,
+        "pass": 20294,
+        "punt": 2429,
+        "qb_kneel": 393,
+        "qb_spike": 71,
+        "run": 13496,
+        "unknown": 1391
+      },
+      "rows": 47651,
+      "source_bytes": 19344382,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2016.parquet",
+      "source_sha256": "95eba04e2145e3c1c8ca502f2a3a76cfb0a5990680c3fb480f02a74a45f54a3b",
+      "unique_keys": 47651
+    },
+    "2017": {
+      "first_down_penalty_status": {
+        "0": 44759,
+        "1": 1055,
+        "unknown": 1431
+      },
+      "penalty_status": {
+        "0": 42294,
+        "1": 3520,
+        "unknown": 1431
+      },
+      "play_type_rows": {
+        "extra_point": 1192,
+        "field_goal": 1065,
+        "kickoff": 2663,
+        "no_play": 4414,
+        "pass": 19584,
+        "punt": 2539,
+        "qb_kneel": 420,
+        "qb_spike": 57,
+        "run": 13922,
+        "unknown": 1389
+      },
+      "rows": 47245,
+      "source_bytes": 19050401,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2017.parquet",
+      "source_sha256": "84eacd963c1fdd45965f6222c62e9329a7f3412f029d92c1ac5e34a1bb4d3710",
+      "unique_keys": 47245
+    },
+    "2018": {
+      "first_down_penalty_status": {
+        "0": 44630,
+        "1": 1020,
+        "unknown": 1459
+      },
+      "penalty_status": {
+        "0": 42085,
+        "1": 3565,
+        "unknown": 1459
+      },
+      "play_type_rows": {
+        "extra_point": 1280,
+        "field_goal": 989,
+        "kickoff": 2741,
+        "no_play": 4592,
+        "pass": 19828,
+        "punt": 2320,
+        "qb_kneel": 412,
+        "qb_spike": 81,
+        "run": 13464,
+        "unknown": 1402
+      },
+      "rows": 47109,
+      "source_bytes": 19072097,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2018.parquet",
+      "source_sha256": "2e6f2dce7c7ebd46e985cabe0c17eb72b39a77f98cb4478409294f50b5820150",
+      "unique_keys": 47109
+    },
+    "2019": {
+      "first_down_penalty_status": {
+        "0": 44708,
+        "1": 1086,
+        "unknown": 1466
+      },
+      "penalty_status": {
+        "0": 42226,
+        "1": 3568,
+        "unknown": 1466
+      },
+      "play_type_rows": {
+        "extra_point": 1265,
+        "field_goal": 1018,
+        "kickoff": 2716,
+        "no_play": 4598,
+        "pass": 19905,
+        "punt": 2244,
+        "qb_kneel": 421,
+        "qb_spike": 78,
+        "run": 13608,
+        "unknown": 1407
+      },
+      "rows": 47260,
+      "source_bytes": 19119729,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2019.parquet",
+      "source_sha256": "60c3067017db2d28a78f66a79b657268be8578d9a5288e6a827efdcd7fe42540",
+      "unique_keys": 47260
+    },
+    "2020": {
+      "first_down_penalty_status": {
+        "0": 45258,
+        "1": 1039,
+        "unknown": 1408
+      },
+      "penalty_status": {
+        "0": 43311,
+        "1": 2986,
+        "unknown": 1408
+      },
+      "play_type_rows": {
+        "extra_point": 1404,
+        "field_goal": 1015,
+        "kickoff": 2898,
+        "no_play": 4261,
+        "pass": 20185,
+        "punt": 1993,
+        "qb_kneel": 448,
+        "qb_spike": 86,
+        "run": 14056,
+        "unknown": 1359
+      },
+      "rows": 47705,
+      "source_bytes": 19286459,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2020.parquet",
+      "source_sha256": "8889f5d8782b5c5dce3c3644acdc0322b228a7e9cb13fa36cbac250e260e9f60",
+      "unique_keys": 47705
+    },
+    "2021": {
+      "first_down_penalty_status": {
+        "0": 47405,
+        "1": 1015,
+        "unknown": 1502
+      },
+      "penalty_status": {
+        "0": 45084,
+        "1": 3336,
+        "unknown": 1502
+      },
+      "play_type_rows": {
+        "extra_point": 1321,
+        "field_goal": 1076,
+        "kickoff": 2912,
+        "no_play": 4717,
+        "pass": 21010,
+        "punt": 2187,
+        "qb_kneel": 408,
+        "qb_spike": 74,
+        "run": 14756,
+        "unknown": 1461
+      },
+      "rows": 49922,
+      "source_bytes": 20249925,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2021.parquet",
+      "source_sha256": "333ad34378e5339d5172717cc83378e908daf02c8699416ab3e17c2ec10f78d8",
+      "unique_keys": 49922
+    },
+    "2022": {
+      "first_down_penalty_status": {
+        "0": 47007,
+        "1": 934,
+        "unknown": 1493
+      },
+      "penalty_status": {
+        "0": 44788,
+        "1": 3153,
+        "unknown": 1493
+      },
+      "play_type_rows": {
+        "extra_point": 1253,
+        "field_goal": 1105,
+        "kickoff": 2835,
+        "no_play": 4563,
+        "pass": 20393,
+        "punt": 2294,
+        "qb_kneel": 442,
+        "qb_spike": 63,
+        "run": 15037,
+        "unknown": 1449
+      },
+      "rows": 49434,
+      "source_bytes": 20426548,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2022.parquet",
+      "source_sha256": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+      "unique_keys": 49434
+    },
+    "2023": {
+      "first_down_penalty_status": {
+        "0": 47194,
+        "1": 983,
+        "unknown": 1488
+      },
+      "penalty_status": {
+        "0": 44948,
+        "1": 3229,
+        "unknown": 1488
+      },
+      "play_type_rows": {
+        "extra_point": 1238,
+        "field_goal": 1107,
+        "kickoff": 2838,
+        "no_play": 4555,
+        "pass": 20723,
+        "punt": 2352,
+        "qb_kneel": 454,
+        "qb_spike": 69,
+        "run": 14877,
+        "unknown": 1452
+      },
+      "rows": 49665,
+      "source_bytes": 20534088,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2023.parquet",
+      "source_sha256": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+      "unique_keys": 49665
+    },
+    "2024": {
+      "first_down_penalty_status": {
+        "0": 46992,
+        "1": 983,
+        "unknown": 1517
+      },
+      "penalty_status": {
+        "0": 44334,
+        "1": 3641,
+        "unknown": 1517
+      },
+      "play_type_rows": {
+        "extra_point": 1308,
+        "field_goal": 1166,
+        "kickoff": 2955,
+        "no_play": 4936,
+        "pass": 20007,
+        "punt": 2119,
+        "qb_kneel": 437,
+        "qb_spike": 75,
+        "run": 15043,
+        "unknown": 1446
+      },
+      "rows": 49492,
+      "source_bytes": 20597560,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2024.parquet",
+      "source_sha256": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+      "unique_keys": 49492
+    },
+    "2025": {
+      "first_down_penalty_status": {
+        "0": 46255,
+        "1": 1005,
+        "unknown": 1511
+      },
+      "penalty_status": {
+        "0": 43701,
+        "1": 3559,
+        "unknown": 1511
+      },
+      "play_type_rows": {
+        "extra_point": 1330,
+        "field_goal": 1140,
+        "kickoff": 2927,
+        "no_play": 4723,
+        "pass": 19737,
+        "punt": 2042,
+        "qb_kneel": 452,
+        "qb_spike": 80,
+        "run": 14895,
+        "unknown": 1445
+      },
+      "rows": 48771,
+      "source_bytes": 20337029,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2025.parquet",
+      "source_sha256": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29",
+      "unique_keys": 48771
+    },
+    "2026": {
+      "first_down_penalty_status": {
+        "0": 20066,
+        "1": 486,
+        "unknown": 639
+      },
+      "penalty_status": {
+        "0": 18787,
+        "1": 1765,
+        "unknown": 639
+      },
+      "play_type_rows": {
+        "extra_point": 558,
+        "field_goal": 504,
+        "kickoff": 1248,
+        "no_play": 2213,
+        "pass": 8576,
+        "punt": 913,
+        "qb_kneel": 181,
+        "qb_spike": 45,
+        "run": 6334,
+        "unknown": 619
+      },
+      "rows": 21191,
+      "source_bytes": 9035079,
+      "source_path": "/root/lp-snapshots/nfl-backfill-2026-11-03/raw/pbp/play_by_play_2026.parquet",
+      "source_sha256": "5edd7c42ed3f116f7e8914594c536088c337052fa53552ba7947499ba0f9f1b5",
+      "unique_keys": 21191
+    }
+  },
+  "source_rows_definition": "All published play-by-play rows with keyed season/week/game/play fields; deleted, aborted, null-play-type, special-team, penalty-tagged, and unknown-label rows are retained."
+}

@@ -1,0 +1,34 @@
+{
+  "1e494482914fc512f59222df08171b27cce8fc63536bc63dce6e246c11e6414d": {
+    "dropbacks": {
+      "BUF": 39430,
+      "MIN": 39963
+    },
+    "games": 1000,
+    "nonvalid_records": 0,
+    "pass_attempts": {
+      "BUF": 38733,
+      "MIN": 38409
+    },
+    "sacks": {
+      "BUF": 697,
+      "MIN": 1554
+    }
+  },
+  "91118658947b650fafe0eaf271db9b21c8dcd86c930a672b99c5a7ce6b611962": {
+    "dropbacks": {
+      "BUF": 359766,
+      "MIN": 362097
+    },
+    "games": 8991,
+    "nonvalid_records": 9,
+    "pass_attempts": {
+      "BUF": 353260,
+      "MIN": 348907
+    },
+    "sacks": {
+      "BUF": 6506,
+      "MIN": 13190
+    }
+  }
+}
