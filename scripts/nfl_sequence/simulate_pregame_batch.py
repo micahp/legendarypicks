@@ -1045,8 +1045,9 @@ def run_batch(args):
         rng_plan, paired_lineup_baseline = rng_protocol.pair_lineup_plan(rng_plan, pairing_identity, baseline_header)
     paired_workload_baseline = None
     if getattr(args, 'paired_workload_baseline_ledger', None):
-        if not pairing_identity or not getattr(args, 'workload_adaptive_config', None):
-            raise ValueError('paired workload intervention requires a v2 control and adaptive table')
+        estimator = getattr(args, 'experimental_workload_estimator', None)
+        if not pairing_identity or estimator not in ('C', 'D1'):
+            raise ValueError('paired workload intervention requires a v2 control and C or D1 workload estimator')
         with Path(args.paired_workload_baseline_ledger).open(encoding='utf-8') as handle:
             baseline_header = json.loads(handle.readline()).get('header')
         if not isinstance(baseline_header, dict):
@@ -1572,7 +1573,8 @@ def main(argv=None):
             config['concentrations'] = doc['concentrations']
             config['concentrations_sha256'] = hashlib.sha256(Path(args.workload_concentrations).read_bytes()).hexdigest()
         args.workload_adaptive_config = config
-    elif args.paired_workload_baseline_ledger or args.workload_concentrations:
+    elif args.workload_concentrations or (args.paired_workload_baseline_ledger
+                                           and args.experimental_workload_estimator != 'C'):
         ap.error('workload pairing and concentrations require adaptive workload input')
     if args.rng_protocol is None:
         args.rng_protocol = rng_protocol.V2 if args.playcall_artifact else rng_protocol.V1

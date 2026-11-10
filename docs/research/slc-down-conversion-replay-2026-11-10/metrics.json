@@ -1,0 +1,1090 @@
+{
+  "ARI_SEA_C:ARI": {
+    "down_success_rates": {
+      "1": 0.5444839857651246,
+      "2": 0.4954545454545455,
+      "3": 0.5073529411764706,
+      "4": 0.5555555555555556
+    },
+    "first_down_sources": {
+      "other": 0,
+      "pass": 121,
+      "penalty": 0,
+      "run": 62
+    },
+    "first_downs_per_game": 18.3,
+    "first_downs_total": 183,
+    "fourth_down_attempts": 18,
+    "fourth_down_attempts_per_game": 1.8,
+    "fourth_down_conversions": 10,
+    "fourth_down_rate": 0.5555555555555556,
+    "games": 10,
+    "penalty_first_downs": 0,
+    "per_game": [
+      {
+        "first_downs": 17,
+        "fourth_attempts": 2,
+        "fourth_conversions": 1,
+        "points": 20,
+        "third_attempts": 12,
+        "third_conversions": 4
+      },
+      {
+        "first_downs": 21,
+        "fourth_attempts": 2,
+        "fourth_conversions": 0,
+        "points": 27,
+        "third_attempts": 11,
+        "third_conversions": 7
+      },
+      {
+        "first_downs": 18,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 16,
+        "third_attempts": 13,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 13,
+        "fourth_attempts": 2,
+        "fourth_conversions": 0,
+        "points": 17,
+        "third_attempts": 13,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 15,
+        "fourth_attempts": 4,
+        "fourth_conversions": 1,
+        "points": 13,
+        "third_attempts": 13,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 20,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 39,
+        "third_attempts": 12,
+        "third_conversions": 7
+      },
+      {
+        "first_downs": 26,
+        "fourth_attempts": 2,
+        "fourth_conversions": 2,
+        "points": 27,
+        "third_attempts": 18,
+        "third_conversions": 12
+      },
+      {
+        "first_downs": 14,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 18,
+        "third_attempts": 14,
+        "third_conversions": 7
+      },
+      {
+        "first_downs": 20,
+        "fourth_attempts": 2,
+        "fourth_conversions": 2,
+        "points": 30,
+        "third_attempts": 13,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 24,
+        "third_attempts": 17,
+        "third_conversions": 10
+      }
+    ],
+    "third_down_attempts": 136,
+    "third_down_attempts_per_game": 13.6,
+    "third_down_by_yards_to_go": {
+      "1-3": {
+        "attempts": 41,
+        "conversions": 29,
+        "rate": 0.7073170731707317
+      },
+      "11+": {
+        "attempts": 6,
+        "conversions": 2,
+        "rate": 0.3333333333333333
+      },
+      "4-6": {
+        "attempts": 53,
+        "conversions": 24,
+        "rate": 0.4528301886792453
+      },
+      "7-10": {
+        "attempts": 36,
+        "conversions": 14,
+        "rate": 0.3888888888888889
+      }
+    },
+    "third_down_conversions": 69,
+    "third_down_rate": 0.5073529411764706,
+    "third_down_rate_game_p10_median_p90": [
+      0.3794871794871795,
+      0.4807692307692308,
+      0.6393939393939394
+    ],
+    "zero_conversion_games": 0
+  },
+  "ARI_SEA_C:SEA": {
+    "down_success_rates": {
+      "1": 0.5406360424028268,
+      "2": 0.4976958525345622,
+      "3": 0.47794117647058826,
+      "4": 0.6666666666666666
+    },
+    "first_down_sources": {
+      "other": 0,
+      "pass": 120,
+      "penalty": 0,
+      "run": 69
+    },
+    "first_downs_per_game": 18.9,
+    "first_downs_total": 189,
+    "fourth_down_attempts": 21,
+    "fourth_down_attempts_per_game": 2.1,
+    "fourth_down_conversions": 14,
+    "fourth_down_rate": 0.6666666666666666,
+    "games": 10,
+    "penalty_first_downs": 0,
+    "per_game": [
+      {
+        "first_downs": 19,
+        "fourth_attempts": 4,
+        "fourth_conversions": 2,
+        "points": 30,
+        "third_attempts": 13,
+        "third_conversions": 4
+      },
+      {
+        "first_downs": 17,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 20,
+        "third_attempts": 13,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 19,
+        "third_attempts": 12,
+        "third_conversions": 3
+      },
+      {
+        "first_downs": 18,
+        "fourth_attempts": 2,
+        "fourth_conversions": 1,
+        "points": 27,
+        "third_attempts": 14,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 25,
+        "fourth_attempts": 3,
+        "fourth_conversions": 2,
+        "points": 24,
+        "third_attempts": 17,
+        "third_conversions": 13
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 2,
+        "fourth_conversions": 1,
+        "points": 13,
+        "third_attempts": 12,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 14,
+        "fourth_attempts": 3,
+        "fourth_conversions": 1,
+        "points": 13,
+        "third_attempts": 14,
+        "third_conversions": 7
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 3,
+        "fourth_conversions": 3,
+        "points": 20,
+        "third_attempts": 14,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 16,
+        "fourth_attempts": 0,
+        "fourth_conversions": 0,
+        "points": 24,
+        "third_attempts": 14,
+        "third_conversions": 8
+      },
+      {
+        "first_downs": 23,
+        "fourth_attempts": 2,
+        "fourth_conversions": 2,
+        "points": 33,
+        "third_attempts": 13,
+        "third_conversions": 6
+      }
+    ],
+    "third_down_attempts": 136,
+    "third_down_attempts_per_game": 13.6,
+    "third_down_by_yards_to_go": {
+      "1-3": {
+        "attempts": 52,
+        "conversions": 35,
+        "rate": 0.6730769230769231
+      },
+      "11+": {
+        "attempts": 16,
+        "conversions": 2,
+        "rate": 0.125
+      },
+      "4-6": {
+        "attempts": 32,
+        "conversions": 14,
+        "rate": 0.4375
+      },
+      "7-10": {
+        "attempts": 36,
+        "conversions": 14,
+        "rate": 0.3888888888888889
+      }
+    },
+    "third_down_conversions": 65,
+    "third_down_rate": 0.47794117647058826,
+    "third_down_rate_game_p10_median_p90": [
+      0.30192307692307696,
+      0.46153846153846156,
+      0.5907563025210083
+    ],
+    "zero_conversion_games": 0
+  },
+  "ARI_SEA_D1:ARI": {
+    "down_success_rates": {
+      "1": 0.5331010452961672,
+      "2": 0.49122807017543857,
+      "3": 0.4676258992805755,
+      "4": 0.5555555555555556
+    },
+    "first_down_sources": {
+      "other": 0,
+      "pass": 128,
+      "penalty": 0,
+      "run": 56
+    },
+    "first_downs_per_game": 18.4,
+    "first_downs_total": 184,
+    "fourth_down_attempts": 18,
+    "fourth_down_attempts_per_game": 1.8,
+    "fourth_down_conversions": 10,
+    "fourth_down_rate": 0.5555555555555556,
+    "games": 10,
+    "penalty_first_downs": 0,
+    "per_game": [
+      {
+        "first_downs": 19,
+        "fourth_attempts": 2,
+        "fourth_conversions": 1,
+        "points": 27,
+        "third_attempts": 11,
+        "third_conversions": 4
+      },
+      {
+        "first_downs": 17,
+        "fourth_attempts": 1,
+        "fourth_conversions": 0,
+        "points": 9,
+        "third_attempts": 16,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 18,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 16,
+        "third_attempts": 13,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 3,
+        "fourth_conversions": 1,
+        "points": 24,
+        "third_attempts": 13,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 15,
+        "fourth_attempts": 4,
+        "fourth_conversions": 1,
+        "points": 13,
+        "third_attempts": 13,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 20,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 39,
+        "third_attempts": 12,
+        "third_conversions": 7
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 17,
+        "third_attempts": 15,
+        "third_conversions": 9
+      },
+      {
+        "first_downs": 18,
+        "fourth_attempts": 2,
+        "fourth_conversions": 1,
+        "points": 15,
+        "third_attempts": 16,
+        "third_conversions": 8
+      },
+      {
+        "first_downs": 20,
+        "fourth_attempts": 2,
+        "fourth_conversions": 2,
+        "points": 30,
+        "third_attempts": 13,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 24,
+        "third_attempts": 17,
+        "third_conversions": 10
+      }
+    ],
+    "third_down_attempts": 139,
+    "third_down_attempts_per_game": 13.9,
+    "third_down_by_yards_to_go": {
+      "1-3": {
+        "attempts": 44,
+        "conversions": 28,
+        "rate": 0.6363636363636364
+      },
+      "11+": {
+        "attempts": 7,
+        "conversions": 2,
+        "rate": 0.2857142857142857
+      },
+      "4-6": {
+        "attempts": 48,
+        "conversions": 19,
+        "rate": 0.3958333333333333
+      },
+      "7-10": {
+        "attempts": 40,
+        "conversions": 16,
+        "rate": 0.4
+      }
+    },
+    "third_down_conversions": 65,
+    "third_down_rate": 0.4676258992805755,
+    "third_down_rate_game_p10_median_p90": [
+      0.37386363636363634,
+      0.42307692307692313,
+      0.5894117647058824
+    ],
+    "zero_conversion_games": 0
+  },
+  "ARI_SEA_D1:SEA": {
+    "down_success_rates": {
+      "1": 0.57,
+      "2": 0.5111111111111111,
+      "3": 0.4714285714285714,
+      "4": 0.5833333333333334
+    },
+    "first_down_sources": {
+      "other": 0,
+      "pass": 124,
+      "penalty": 0,
+      "run": 79
+    },
+    "first_downs_per_game": 20.3,
+    "first_downs_total": 203,
+    "fourth_down_attempts": 24,
+    "fourth_down_attempts_per_game": 2.4,
+    "fourth_down_conversions": 14,
+    "fourth_down_rate": 0.5833333333333334,
+    "games": 10,
+    "penalty_first_downs": 0,
+    "per_game": [
+      {
+        "first_downs": 18,
+        "fourth_attempts": 4,
+        "fourth_conversions": 2,
+        "points": 26,
+        "third_attempts": 13,
+        "third_conversions": 4
+      },
+      {
+        "first_downs": 18,
+        "fourth_attempts": 0,
+        "fourth_conversions": 0,
+        "points": 13,
+        "third_attempts": 15,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 19,
+        "third_attempts": 12,
+        "third_conversions": 3
+      },
+      {
+        "first_downs": 26,
+        "fourth_attempts": 4,
+        "fourth_conversions": 1,
+        "points": 32,
+        "third_attempts": 15,
+        "third_conversions": 8
+      },
+      {
+        "first_downs": 25,
+        "fourth_attempts": 3,
+        "fourth_conversions": 2,
+        "points": 24,
+        "third_attempts": 17,
+        "third_conversions": 13
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 2,
+        "fourth_conversions": 1,
+        "points": 13,
+        "third_attempts": 12,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 22,
+        "fourth_attempts": 4,
+        "fourth_conversions": 3,
+        "points": 27,
+        "third_attempts": 15,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 17,
+        "fourth_attempts": 4,
+        "fourth_conversions": 2,
+        "points": 10,
+        "third_attempts": 14,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 16,
+        "fourth_attempts": 0,
+        "fourth_conversions": 0,
+        "points": 24,
+        "third_attempts": 14,
+        "third_conversions": 8
+      },
+      {
+        "first_downs": 23,
+        "fourth_attempts": 2,
+        "fourth_conversions": 2,
+        "points": 33,
+        "third_attempts": 13,
+        "third_conversions": 6
+      }
+    ],
+    "third_down_attempts": 140,
+    "third_down_attempts_per_game": 14.0,
+    "third_down_by_yards_to_go": {
+      "1-3": {
+        "attempts": 57,
+        "conversions": 36,
+        "rate": 0.631578947368421
+      },
+      "11+": {
+        "attempts": 15,
+        "conversions": 2,
+        "rate": 0.13333333333333333
+      },
+      "4-6": {
+        "attempts": 30,
+        "conversions": 14,
+        "rate": 0.4666666666666667
+      },
+      "7-10": {
+        "attempts": 38,
+        "conversions": 14,
+        "rate": 0.3684210526315789
+      }
+    },
+    "third_down_conversions": 66,
+    "third_down_rate": 0.4714285714285714,
+    "third_down_rate_game_p10_median_p90": [
+      0.30192307692307696,
+      0.44505494505494503,
+      0.5907563025210083
+    ],
+    "zero_conversion_games": 0
+  },
+  "ARI_SEA_default:ARI": {
+    "down_success_rates": {
+      "1": 0.5331010452961672,
+      "2": 0.49122807017543857,
+      "3": 0.4676258992805755,
+      "4": 0.5555555555555556
+    },
+    "first_down_sources": {
+      "other": 0,
+      "pass": 128,
+      "penalty": 0,
+      "run": 56
+    },
+    "first_downs_per_game": 18.4,
+    "first_downs_total": 184,
+    "fourth_down_attempts": 18,
+    "fourth_down_attempts_per_game": 1.8,
+    "fourth_down_conversions": 10,
+    "fourth_down_rate": 0.5555555555555556,
+    "games": 10,
+    "penalty_first_downs": 0,
+    "per_game": [
+      {
+        "first_downs": 19,
+        "fourth_attempts": 2,
+        "fourth_conversions": 1,
+        "points": 27,
+        "third_attempts": 11,
+        "third_conversions": 4
+      },
+      {
+        "first_downs": 17,
+        "fourth_attempts": 1,
+        "fourth_conversions": 0,
+        "points": 9,
+        "third_attempts": 16,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 18,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 16,
+        "third_attempts": 13,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 3,
+        "fourth_conversions": 1,
+        "points": 24,
+        "third_attempts": 13,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 15,
+        "fourth_attempts": 4,
+        "fourth_conversions": 1,
+        "points": 13,
+        "third_attempts": 13,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 20,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 39,
+        "third_attempts": 12,
+        "third_conversions": 7
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 17,
+        "third_attempts": 15,
+        "third_conversions": 9
+      },
+      {
+        "first_downs": 18,
+        "fourth_attempts": 2,
+        "fourth_conversions": 1,
+        "points": 15,
+        "third_attempts": 16,
+        "third_conversions": 8
+      },
+      {
+        "first_downs": 20,
+        "fourth_attempts": 2,
+        "fourth_conversions": 2,
+        "points": 30,
+        "third_attempts": 13,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 24,
+        "third_attempts": 17,
+        "third_conversions": 10
+      }
+    ],
+    "third_down_attempts": 139,
+    "third_down_attempts_per_game": 13.9,
+    "third_down_by_yards_to_go": {
+      "1-3": {
+        "attempts": 44,
+        "conversions": 28,
+        "rate": 0.6363636363636364
+      },
+      "11+": {
+        "attempts": 7,
+        "conversions": 2,
+        "rate": 0.2857142857142857
+      },
+      "4-6": {
+        "attempts": 48,
+        "conversions": 19,
+        "rate": 0.3958333333333333
+      },
+      "7-10": {
+        "attempts": 40,
+        "conversions": 16,
+        "rate": 0.4
+      }
+    },
+    "third_down_conversions": 65,
+    "third_down_rate": 0.4676258992805755,
+    "third_down_rate_game_p10_median_p90": [
+      0.37386363636363634,
+      0.42307692307692313,
+      0.5894117647058824
+    ],
+    "zero_conversion_games": 0
+  },
+  "ARI_SEA_default:SEA": {
+    "down_success_rates": {
+      "1": 0.57,
+      "2": 0.5111111111111111,
+      "3": 0.4714285714285714,
+      "4": 0.5833333333333334
+    },
+    "first_down_sources": {
+      "other": 0,
+      "pass": 124,
+      "penalty": 0,
+      "run": 79
+    },
+    "first_downs_per_game": 20.3,
+    "first_downs_total": 203,
+    "fourth_down_attempts": 24,
+    "fourth_down_attempts_per_game": 2.4,
+    "fourth_down_conversions": 14,
+    "fourth_down_rate": 0.5833333333333334,
+    "games": 10,
+    "penalty_first_downs": 0,
+    "per_game": [
+      {
+        "first_downs": 18,
+        "fourth_attempts": 4,
+        "fourth_conversions": 2,
+        "points": 26,
+        "third_attempts": 13,
+        "third_conversions": 4
+      },
+      {
+        "first_downs": 18,
+        "fourth_attempts": 0,
+        "fourth_conversions": 0,
+        "points": 13,
+        "third_attempts": 15,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 1,
+        "fourth_conversions": 1,
+        "points": 19,
+        "third_attempts": 12,
+        "third_conversions": 3
+      },
+      {
+        "first_downs": 26,
+        "fourth_attempts": 4,
+        "fourth_conversions": 1,
+        "points": 32,
+        "third_attempts": 15,
+        "third_conversions": 8
+      },
+      {
+        "first_downs": 25,
+        "fourth_attempts": 3,
+        "fourth_conversions": 2,
+        "points": 24,
+        "third_attempts": 17,
+        "third_conversions": 13
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 2,
+        "fourth_conversions": 1,
+        "points": 13,
+        "third_attempts": 12,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 22,
+        "fourth_attempts": 4,
+        "fourth_conversions": 3,
+        "points": 27,
+        "third_attempts": 15,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 17,
+        "fourth_attempts": 4,
+        "fourth_conversions": 2,
+        "points": 10,
+        "third_attempts": 14,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 16,
+        "fourth_attempts": 0,
+        "fourth_conversions": 0,
+        "points": 24,
+        "third_attempts": 14,
+        "third_conversions": 8
+      },
+      {
+        "first_downs": 23,
+        "fourth_attempts": 2,
+        "fourth_conversions": 2,
+        "points": 33,
+        "third_attempts": 13,
+        "third_conversions": 6
+      }
+    ],
+    "third_down_attempts": 140,
+    "third_down_attempts_per_game": 14.0,
+    "third_down_by_yards_to_go": {
+      "1-3": {
+        "attempts": 57,
+        "conversions": 36,
+        "rate": 0.631578947368421
+      },
+      "11+": {
+        "attempts": 15,
+        "conversions": 2,
+        "rate": 0.13333333333333333
+      },
+      "4-6": {
+        "attempts": 30,
+        "conversions": 14,
+        "rate": 0.4666666666666667
+      },
+      "7-10": {
+        "attempts": 38,
+        "conversions": 14,
+        "rate": 0.3684210526315789
+      }
+    },
+    "third_down_conversions": 66,
+    "third_down_rate": 0.4714285714285714,
+    "third_down_rate_game_p10_median_p90": [
+      0.30192307692307696,
+      0.44505494505494503,
+      0.5907563025210083
+    ],
+    "zero_conversion_games": 0
+  },
+  "BUF_MIN_D1:BUF": {
+    "down_success_rates": {
+      "1": 0.5667752442996743,
+      "2": 0.5683760683760684,
+      "3": 0.5,
+      "4": 0.52
+    },
+    "first_down_sources": {
+      "other": 0,
+      "pass": 133,
+      "penalty": 0,
+      "run": 73
+    },
+    "first_downs_per_game": 20.6,
+    "first_downs_total": 206,
+    "fourth_down_attempts": 25,
+    "fourth_down_attempts_per_game": 2.5,
+    "fourth_down_conversions": 13,
+    "fourth_down_rate": 0.52,
+    "games": 10,
+    "penalty_first_downs": 0,
+    "per_game": [
+      {
+        "first_downs": 20,
+        "fourth_attempts": 0,
+        "fourth_conversions": 0,
+        "points": 31,
+        "third_attempts": 18,
+        "third_conversions": 12
+      },
+      {
+        "first_downs": 24,
+        "fourth_attempts": 1,
+        "fourth_conversions": 0,
+        "points": 27,
+        "third_attempts": 12,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 12,
+        "fourth_attempts": 3,
+        "fourth_conversions": 3,
+        "points": 21,
+        "third_attempts": 12,
+        "third_conversions": 4
+      },
+      {
+        "first_downs": 23,
+        "fourth_attempts": 5,
+        "fourth_conversions": 2,
+        "points": 24,
+        "third_attempts": 17,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 30,
+        "fourth_attempts": 3,
+        "fourth_conversions": 1,
+        "points": 24,
+        "third_attempts": 17,
+        "third_conversions": 12
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 5,
+        "fourth_conversions": 2,
+        "points": 20,
+        "third_attempts": 16,
+        "third_conversions": 10
+      },
+      {
+        "first_downs": 16,
+        "fourth_attempts": 3,
+        "fourth_conversions": 2,
+        "points": 9,
+        "third_attempts": 14,
+        "third_conversions": 3
+      },
+      {
+        "first_downs": 20,
+        "fourth_attempts": 2,
+        "fourth_conversions": 1,
+        "points": 27,
+        "third_attempts": 11,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 21,
+        "fourth_attempts": 0,
+        "fourth_conversions": 0,
+        "points": 31,
+        "third_attempts": 13,
+        "third_conversions": 8
+      },
+      {
+        "first_downs": 21,
+        "fourth_attempts": 3,
+        "fourth_conversions": 2,
+        "points": 34,
+        "third_attempts": 10,
+        "third_conversions": 3
+      }
+    ],
+    "third_down_attempts": 140,
+    "third_down_attempts_per_game": 14.0,
+    "third_down_by_yards_to_go": {
+      "1-3": {
+        "attempts": 59,
+        "conversions": 39,
+        "rate": 0.6610169491525424
+      },
+      "11+": {
+        "attempts": 8,
+        "conversions": 2,
+        "rate": 0.25
+      },
+      "4-6": {
+        "attempts": 32,
+        "conversions": 17,
+        "rate": 0.53125
+      },
+      "7-10": {
+        "attempts": 41,
+        "conversions": 12,
+        "rate": 0.2926829268292683
+      }
+    },
+    "third_down_conversions": 70,
+    "third_down_rate": 0.5,
+    "third_down_rate_game_p10_median_p90": [
+      0.2914285714285714,
+      0.5227272727272727,
+      0.6705882352941176
+    ],
+    "zero_conversion_games": 0
+  },
+  "BUF_MIN_D1:MIN": {
+    "down_success_rates": {
+      "1": 0.5342960288808665,
+      "2": 0.5048076923076923,
+      "3": 0.42748091603053434,
+      "4": 0.47619047619047616
+    },
+    "first_down_sources": {
+      "other": 0,
+      "pass": 118,
+      "penalty": 0,
+      "run": 60
+    },
+    "first_downs_per_game": 17.8,
+    "first_downs_total": 178,
+    "fourth_down_attempts": 21,
+    "fourth_down_attempts_per_game": 2.1,
+    "fourth_down_conversions": 10,
+    "fourth_down_rate": 0.47619047619047616,
+    "games": 10,
+    "penalty_first_downs": 0,
+    "per_game": [
+      {
+        "first_downs": 19,
+        "fourth_attempts": 2,
+        "fourth_conversions": 0,
+        "points": 23,
+        "third_attempts": 14,
+        "third_conversions": 8
+      },
+      {
+        "first_downs": 15,
+        "fourth_attempts": 0,
+        "fourth_conversions": 0,
+        "points": 25,
+        "third_attempts": 10,
+        "third_conversions": 4
+      },
+      {
+        "first_downs": 21,
+        "fourth_attempts": 4,
+        "fourth_conversions": 3,
+        "points": 24,
+        "third_attempts": 17,
+        "third_conversions": 9
+      },
+      {
+        "first_downs": 12,
+        "fourth_attempts": 1,
+        "fourth_conversions": 0,
+        "points": 16,
+        "third_attempts": 12,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 13,
+        "fourth_attempts": 3,
+        "fourth_conversions": 1,
+        "points": 3,
+        "third_attempts": 14,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 18,
+        "fourth_attempts": 2,
+        "fourth_conversions": 2,
+        "points": 12,
+        "third_attempts": 12,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 17,
+        "fourth_attempts": 4,
+        "fourth_conversions": 3,
+        "points": 26,
+        "third_attempts": 15,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 23,
+        "fourth_attempts": 1,
+        "fourth_conversions": 0,
+        "points": 24,
+        "third_attempts": 12,
+        "third_conversions": 6
+      },
+      {
+        "first_downs": 21,
+        "fourth_attempts": 0,
+        "fourth_conversions": 0,
+        "points": 33,
+        "third_attempts": 11,
+        "third_conversions": 5
+      },
+      {
+        "first_downs": 19,
+        "fourth_attempts": 4,
+        "fourth_conversions": 1,
+        "points": 19,
+        "third_attempts": 14,
+        "third_conversions": 4
+      }
+    ],
+    "third_down_attempts": 131,
+    "third_down_attempts_per_game": 13.1,
+    "third_down_by_yards_to_go": {
+      "1-3": {
+        "attempts": 38,
+        "conversions": 19,
+        "rate": 0.5
+      },
+      "11+": {
+        "attempts": 12,
+        "conversions": 2,
+        "rate": 0.16666666666666666
+      },
+      "4-6": {
+        "attempts": 41,
+        "conversions": 21,
+        "rate": 0.5121951219512195
+      },
+      "7-10": {
+        "attempts": 40,
+        "conversions": 14,
+        "rate": 0.35
+      }
+    },
+    "third_down_conversions": 56,
+    "third_down_rate": 0.42748091603053434,
+    "third_down_rate_game_p10_median_p90": [
+      0.32857142857142857,
+      0.4166666666666667,
+      0.5336134453781513
+    ],
+    "zero_conversion_games": 0
+  }
+}
