@@ -1,0 +1,1238 @@
+{
+  "adaptive_workload_input_sha256": "cec16cb2462ef71eaf0fc5d300ce6729e57c915b114dd8615f8e7d924986a618",
+  "blocker_fixes": [
+    "run_scramble_backoff",
+    "long_field_goal_feasibility",
+    "blocked_kick_source_audit",
+    "blocked_kick_geometry",
+    "safety_free_kick_boundaries"
+  ],
+  "completed_at_utc": "2026-11-10T08:12:16Z",
+  "completed_games": 10000,
+  "database_sha256": "1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa",
+  "failures": [],
+  "game_id": "2026_09_BUF_MIN",
+  "input_provenance_note": "Snap-count file acquisition followed the game snapshot; this is separate from valid pre-final-roster snapshot status.",
+  "participation_snap_counts_sha256": "36f28e18af3080df9f160d42dd5e3e59c37cfacf0dd24772ea51cfd41cadcfca",
+  "playcall_artifact_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+  "requested_games": 10000,
+  "rng_protocol": "v2",
+  "roster_finalization_timing": {
+    "status": "before_roster_finalization"
+  },
+  "seed_end": 210000,
+  "seed_start": 200001,
+  "slc_profile": "v1_full_stack+slc-v2",
+  "snapshot_as_of": "2026-11-09T20:28:32Z",
+  "snapshot_sha256": "1d00a1030a63fe1f9dd500a49c5207db5b7d8002a1af84fd6498ba40845accd9",
+  "snapshot_validity": "valid_before_roster_finalization",
+  "source_commit": "8a5d809ffaec720b3d7b8ddb487f33c55e5d0d0e",
+  "source_status": "",
+  "started_at_utc": "2026-11-10T04:48:02Z",
+  "status": "complete",
+  "streak_file_sha256": "50490140dac78836c135226096b9101fc4f1a44e22837aba04174d921a065c78",
+  "workers": [
+    {
+      "artifacts": {
+        "seed-200001-200250.boxscores.jsonl": {
+          "bytes": 17172513,
+          "gzip": "seed-200001-200250.boxscores.jsonl.gz",
+          "gzip_bytes": 2024823,
+          "gzip_sha256": "9c7651c2cf433b9c13c5e47fa8e9044aebf5d2d89b99b42a73b47785ae773994",
+          "sha256": "51216d69a5c23a15a7bc59c4500278fb74dc58bf847a2886caedb7a9fa364d75"
+        },
+        "seed-200001-200250.json": {
+          "bytes": 58995350,
+          "gzip": "seed-200001-200250.json.gz",
+          "gzip_bytes": 5108955,
+          "gzip_sha256": "6db4a5e3dc4e4f6d0731c843549079bece7de4ea19cdd5f55e808f0f9562f532",
+          "sha256": "1d4f5b6cd186fb56a484b772e1b55ce9cd37fc0ab331873ea167597c7183d6fe"
+        },
+        "seed-200001-200250.seeds.jsonl": {
+          "bytes": 41059664,
+          "gzip": "seed-200001-200250.seeds.jsonl.gz",
+          "gzip_bytes": 4273325,
+          "gzip_sha256": "526cde61e9d1363ede18d12e67b1c082bed48eacf57fcfabf70f2d7436e1a201",
+          "sha256": "a903d7ef3f77ab1d77f65924d0c61737bc9c29e3110b6c3ff796eadee8a1f1d2"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-200001-200250.log",
+      "seed_end": 200250,
+      "seed_start": 200001,
+      "worker": "seed-200001-200250"
+    },
+    {
+      "artifacts": {
+        "seed-200751-201000.boxscores.jsonl": {
+          "bytes": 17161386,
+          "gzip": "seed-200751-201000.boxscores.jsonl.gz",
+          "gzip_bytes": 2028831,
+          "gzip_sha256": "e2c03d6b817f96deff5c0fc30f3ab5d218444aa0a585171e1abb07174090e673",
+          "sha256": "513d114918949388fd62f7a81babfe5643cb145732d10d81a4798f7a37b22fe2"
+        },
+        "seed-200751-201000.json": {
+          "bytes": 59081330,
+          "gzip": "seed-200751-201000.json.gz",
+          "gzip_bytes": 5110522,
+          "gzip_sha256": "d308bea7fa2a08d4c2110d7af330de026f6809dd54856644de88e18a26f1fbfd",
+          "sha256": "ca6cdcae23b5c89ac8008e1da4d8290c8e840807531646f6af1bde149e0173de"
+        },
+        "seed-200751-201000.seeds.jsonl": {
+          "bytes": 41125361,
+          "gzip": "seed-200751-201000.seeds.jsonl.gz",
+          "gzip_bytes": 4270037,
+          "gzip_sha256": "dee52c1d4f9b53128d71c9d8dd2f34b3043a4512e735451f45308f2a6e2e1283",
+          "sha256": "15201c1725187468eb3a08db0efe2946c1009b83ccdaac1dd43cfcbc8ed10d35"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-200751-201000.log",
+      "seed_end": 201000,
+      "seed_start": 200751,
+      "worker": "seed-200751-201000"
+    },
+    {
+      "artifacts": {
+        "seed-200251-200500.boxscores.jsonl": {
+          "bytes": 17202454,
+          "gzip": "seed-200251-200500.boxscores.jsonl.gz",
+          "gzip_bytes": 2029814,
+          "gzip_sha256": "4398fd640ae6f24302ea5e6049326aeb554526d291e41563ccaf6dd98ac0046f",
+          "sha256": "e40c10cd77d1ca650cef71db93eb32e0fd97553a54ffc95afc464a92545c086b"
+        },
+        "seed-200251-200500.json": {
+          "bytes": 59132183,
+          "gzip": "seed-200251-200500.json.gz",
+          "gzip_bytes": 5116844,
+          "gzip_sha256": "e9799a39c72303e10bda12d4b35a5fb6a61f7adee686b62314d1058268b13b90",
+          "sha256": "68f0370975bdddf86514727e3dc22c2e1b4ab1f27ddc448cc2afa4a08f78dea4"
+        },
+        "seed-200251-200500.seeds.jsonl": {
+          "bytes": 41156312,
+          "gzip": "seed-200251-200500.seeds.jsonl.gz",
+          "gzip_bytes": 4273727,
+          "gzip_sha256": "fbec37aec0f6e5211381e4fb88eaac1fb86995ebad37aefc2c68cbc2fe2e017f",
+          "sha256": "3891038341004206424577235e4f207b6c0e66e4f2eceb990ca7af57578ad706"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-200251-200500.log",
+      "seed_end": 200500,
+      "seed_start": 200251,
+      "worker": "seed-200251-200500"
+    },
+    {
+      "artifacts": {
+        "seed-200501-200750.boxscores.jsonl": {
+          "bytes": 17152181,
+          "gzip": "seed-200501-200750.boxscores.jsonl.gz",
+          "gzip_bytes": 2033952,
+          "gzip_sha256": "1dd6dee5e5c713701858cf37eead77fed0437d787092aa7ef0cadea99aa30801",
+          "sha256": "d3f8ef3ca580cd455a4674bab0ab0df6b1175babad3803693cd8aefb1d26fe1f"
+        },
+        "seed-200501-200750.json": {
+          "bytes": 59152769,
+          "gzip": "seed-200501-200750.json.gz",
+          "gzip_bytes": 5132179,
+          "gzip_sha256": "62c2a18b7ce1901132373d25466e344092583b1b4bcc7c010f1c9c6ac3b790cc",
+          "sha256": "c1753ef1a26c9ad33bcdea8eb1ebb283a024bdab893433dac1946ffe3ac937d1"
+        },
+        "seed-200501-200750.seeds.jsonl": {
+          "bytes": 41173072,
+          "gzip": "seed-200501-200750.seeds.jsonl.gz",
+          "gzip_bytes": 4291770,
+          "gzip_sha256": "28e3aa3ef8a9a8da088d96bd5b9cfb25812774fa08b570585030a93b305bd3dd",
+          "sha256": "b97471e1c0e5a2bb4c7e0126a7f6b41878480bd1cc2429e92e842f2ff17798bd"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-200501-200750.log",
+      "seed_end": 200750,
+      "seed_start": 200501,
+      "worker": "seed-200501-200750"
+    },
+    {
+      "artifacts": {
+        "seed-201251-201500.boxscores.jsonl": {
+          "bytes": 17165908,
+          "gzip": "seed-201251-201500.boxscores.jsonl.gz",
+          "gzip_bytes": 2029926,
+          "gzip_sha256": "ddd693f315bb6728a0f16cce18f7d78145826c03e3100382e7a0ca69f7e9aa94",
+          "sha256": "1d8c6408c5ecefc0c2a0d979532dfde4cd00aa5fd829b676e0ee576b7396a60b"
+        },
+        "seed-201251-201500.json": {
+          "bytes": 59102109,
+          "gzip": "seed-201251-201500.json.gz",
+          "gzip_bytes": 5123182,
+          "gzip_sha256": "6919b648ffd8d06c6cc7f5cfc1e7a9d6e97cd0877cd0fef0a1979b00550bf946",
+          "sha256": "db6c94b4fc30dfde417067115696f573b7fa9387b4c38ae739c38130f4e3adae"
+        },
+        "seed-201251-201500.seeds.jsonl": {
+          "bytes": 41118491,
+          "gzip": "seed-201251-201500.seeds.jsonl.gz",
+          "gzip_bytes": 4281109,
+          "gzip_sha256": "e60456a92a49cbf7939bf59b158c15d8076070adce17f593fe192f3562262af1",
+          "sha256": "f34a088907471590facee3a4695a8da129489a8e228953e88fed408771b7cb49"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-201251-201500.log",
+      "seed_end": 201500,
+      "seed_start": 201251,
+      "worker": "seed-201251-201500"
+    },
+    {
+      "artifacts": {
+        "seed-201501-201750.boxscores.jsonl": {
+          "bytes": 17218693,
+          "gzip": "seed-201501-201750.boxscores.jsonl.gz",
+          "gzip_bytes": 2034464,
+          "gzip_sha256": "3672fc8e78751ab1106c9797b10f8321a96b9016b9260b5f237a90de9b9be3cb",
+          "sha256": "832165060b4fb5d053c5792729cedbe630370ad4dcf68a31676158df3a60f986"
+        },
+        "seed-201501-201750.json": {
+          "bytes": 59258338,
+          "gzip": "seed-201501-201750.json.gz",
+          "gzip_bytes": 5120267,
+          "gzip_sha256": "4fa0ee5433b1887c171e70cdf8e6fdea10d6281ce6c619fda73761282b0d2027",
+          "sha256": "73d8d20836cafd6dc88b923a82f4d8b84f69da78417f1622d0943dd67e9d41aa"
+        },
+        "seed-201501-201750.seeds.jsonl": {
+          "bytes": 41243497,
+          "gzip": "seed-201501-201750.seeds.jsonl.gz",
+          "gzip_bytes": 4282624,
+          "gzip_sha256": "e4c4e52b7ec04f748a11f3378e360f9c0870d2fd26d2aa67a2ae10d0b126c127",
+          "sha256": "a7068cba211f778ebec5ec5772784a2cf56782c87729d92f053bce0cfabd1906"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-201501-201750.log",
+      "seed_end": 201750,
+      "seed_start": 201501,
+      "worker": "seed-201501-201750"
+    },
+    {
+      "artifacts": {
+        "seed-201751-202000.boxscores.jsonl": {
+          "bytes": 17186821,
+          "gzip": "seed-201751-202000.boxscores.jsonl.gz",
+          "gzip_bytes": 2029752,
+          "gzip_sha256": "e2ccb6e5b5eab965357717bbebf54c4cfca331235fc36736bb5cf18f673be80a",
+          "sha256": "b0999e8ea3dae72bf40bf272372f44ca7c5b31ece101645b6e5aa2bd744c79ab"
+        },
+        "seed-201751-202000.json": {
+          "bytes": 59400976,
+          "gzip": "seed-201751-202000.json.gz",
+          "gzip_bytes": 5138558,
+          "gzip_sha256": "7080a5564fe9f13ba6774b481fdef3bb169a34c1909f7fca0827d37c2c0a5d60",
+          "sha256": "193aa67e10bf5212c2e3cae53053b3c928d547d6a7e402dfc3304940fa3237fa"
+        },
+        "seed-201751-202000.seeds.jsonl": {
+          "bytes": 41339972,
+          "gzip": "seed-201751-202000.seeds.jsonl.gz",
+          "gzip_bytes": 4290442,
+          "gzip_sha256": "ffadf5e00ce79ee67d772705809507a33e23f12ceaab038200c779bb610d0f8d",
+          "sha256": "3f22c374834572ce8a42e0a455b1180a58f6447732a9a44209eabdaf502448c8"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-201751-202000.log",
+      "seed_end": 202000,
+      "seed_start": 201751,
+      "worker": "seed-201751-202000"
+    },
+    {
+      "artifacts": {
+        "seed-201001-201250.boxscores.jsonl": {
+          "bytes": 17183598,
+          "gzip": "seed-201001-201250.boxscores.jsonl.gz",
+          "gzip_bytes": 2029768,
+          "gzip_sha256": "a6934b873d7e82401208015c47a72ce20dfd44ce1516f9a38c60c12c1df9dec8",
+          "sha256": "86b91da7c4f392b6af503e8ab3e73627f09c0f0fc11e79194eacb16bdde80697"
+        },
+        "seed-201001-201250.json": {
+          "bytes": 59231293,
+          "gzip": "seed-201001-201250.json.gz",
+          "gzip_bytes": 5122658,
+          "gzip_sha256": "090d3806ab4422e0d8cb1300c1e4be5cab7986515f068aa857a682ae8002ca09",
+          "sha256": "5c1d3f4027c5db3421491b00f07335bf4f8c3cea78453a9fc35e4a4ce3b31801"
+        },
+        "seed-201001-201250.seeds.jsonl": {
+          "bytes": 41215252,
+          "gzip": "seed-201001-201250.seeds.jsonl.gz",
+          "gzip_bytes": 4276416,
+          "gzip_sha256": "8c1801c6579c6afe4658996dff319bddc5a2e7c3a286f89fc126688b9736740f",
+          "sha256": "a003b39417ec7dd386a411bee20371cc36cb9b3cee016b6de1d64372bb005e79"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-201001-201250.log",
+      "seed_end": 201250,
+      "seed_start": 201001,
+      "worker": "seed-201001-201250"
+    },
+    {
+      "artifacts": {
+        "seed-202001-202250.boxscores.jsonl": {
+          "bytes": 17187255,
+          "gzip": "seed-202001-202250.boxscores.jsonl.gz",
+          "gzip_bytes": 2031196,
+          "gzip_sha256": "7559a1400420c1b1e25e59efc732d641140dbcfd6699fa997b42ad248e00c0ab",
+          "sha256": "2599e8a86a6fbbaae2b150738376009c3e6b9ea2576217f7d93f9eb10a9b8345"
+        },
+        "seed-202001-202250.json": {
+          "bytes": 59158489,
+          "gzip": "seed-202001-202250.json.gz",
+          "gzip_bytes": 5133880,
+          "gzip_sha256": "2d40408a4a267daf4ace53b1f88f2165b30a2fb6bf488245aca5f90ca2fd8b0f",
+          "sha256": "85f854684f9a8869dd0a56e2a4264b37f98dbad7f75000c11807b892a0324387"
+        },
+        "seed-202001-202250.seeds.jsonl": {
+          "bytes": 41179599,
+          "gzip": "seed-202001-202250.seeds.jsonl.gz",
+          "gzip_bytes": 4291859,
+          "gzip_sha256": "bff3c5cadf6e5fd6824e271728414cf1f0b7b88c30f91ffe2113b60d9589b36e",
+          "sha256": "963429af99dcc70680ad92ac16b197e862f1190d9e9ed11d0f683df0f9ea3ec7"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-202001-202250.log",
+      "seed_end": 202250,
+      "seed_start": 202001,
+      "worker": "seed-202001-202250"
+    },
+    {
+      "artifacts": {
+        "seed-202751-203000.boxscores.jsonl": {
+          "bytes": 17208894,
+          "gzip": "seed-202751-203000.boxscores.jsonl.gz",
+          "gzip_bytes": 2034060,
+          "gzip_sha256": "f671f2e7bac33b061313c70d12edfd54e22b209ed58949d0d1d8fc0ab942f540",
+          "sha256": "37b72aadb6c67fa7cde08d3777427f3cd27a724532d1a4cba3ef3e18180fa2d5"
+        },
+        "seed-202751-203000.json": {
+          "bytes": 59484830,
+          "gzip": "seed-202751-203000.json.gz",
+          "gzip_bytes": 5142233,
+          "gzip_sha256": "1c64248ec9ed19a4a5d100ff507884919c2b1a487d97676efd8855c309bc0a57",
+          "sha256": "c9bd0d596477671d06b4a4e40b391a4d82621a197205338c69f9052110d19d43"
+        },
+        "seed-202751-203000.seeds.jsonl": {
+          "bytes": 41416340,
+          "gzip": "seed-202751-203000.seeds.jsonl.gz",
+          "gzip_bytes": 4299681,
+          "gzip_sha256": "d1dcf608609995b815749b959a3a7facd0307f28a60f672fcdd7c2ec5b5bf0c7",
+          "sha256": "e8af077c58c93a7c0b99fa991717b494bd41ca884e48df479a8e5f6400cead3a"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-202751-203000.log",
+      "seed_end": 203000,
+      "seed_start": 202751,
+      "worker": "seed-202751-203000"
+    },
+    {
+      "artifacts": {
+        "seed-202501-202750.boxscores.jsonl": {
+          "bytes": 17245458,
+          "gzip": "seed-202501-202750.boxscores.jsonl.gz",
+          "gzip_bytes": 2034464,
+          "gzip_sha256": "a9ce8257024b66103abb5ac78fd949760c94d41627ef355377463adf312588de",
+          "sha256": "bfaf89ec485750a6dd4191f8741e9b630da499b07e1cdda0e08aaf1d1d692c52"
+        },
+        "seed-202501-202750.json": {
+          "bytes": 59514839,
+          "gzip": "seed-202501-202750.json.gz",
+          "gzip_bytes": 5149615,
+          "gzip_sha256": "280f2902978a2548a43c6599a76d4a0338cc01e0d01b85c5c7be39e7ad8b3b6d",
+          "sha256": "174699aae630a7a680e56518b2daa1de75d25f1caf5da5349f40037ad85c4058"
+        },
+        "seed-202501-202750.seeds.jsonl": {
+          "bytes": 41427416,
+          "gzip": "seed-202501-202750.seeds.jsonl.gz",
+          "gzip_bytes": 4304309,
+          "gzip_sha256": "985c2e8fb3fa6f8e82ac5361da3a2e7b2d35ec27502b0e311687a8595177d930",
+          "sha256": "f31d58b17eba550df6dfc8eb487d0ff37b5ffe4c1f67174b820a09e430d93690"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-202501-202750.log",
+      "seed_end": 202750,
+      "seed_start": 202501,
+      "worker": "seed-202501-202750"
+    },
+    {
+      "artifacts": {
+        "seed-202251-202500.boxscores.jsonl": {
+          "bytes": 17207402,
+          "gzip": "seed-202251-202500.boxscores.jsonl.gz",
+          "gzip_bytes": 2033773,
+          "gzip_sha256": "bb1177c1bc4fc981d86f618a491f1445d1e982c283b6e564ad5e762ce01ebac0",
+          "sha256": "78c13f6f5fbd2ecab830d36f26c9616f9380be9c6c42bf81c8d596a39ffa6571"
+        },
+        "seed-202251-202500.json": {
+          "bytes": 59279547,
+          "gzip": "seed-202251-202500.json.gz",
+          "gzip_bytes": 5121724,
+          "gzip_sha256": "9f57dbb6998e5bcf7ca14912d4cc355a705bd2ff4df4ed60f2a6b8b74f7f29a1",
+          "sha256": "22e2289a5ed24710b849f00689d9c306bf4779fa877b93f0d93fc9ec1b5b033f"
+        },
+        "seed-202251-202500.seeds.jsonl": {
+          "bytes": 41255426,
+          "gzip": "seed-202251-202500.seeds.jsonl.gz",
+          "gzip_bytes": 4276737,
+          "gzip_sha256": "c761051dac74ff637f91fdaeb59b5629b05f5a7fd36757a79be1bd2b8fbef7ba",
+          "sha256": "e73413ac56c0bf868035fd6708bb0c983d2a9f471d2789b23cac92c18f43aa81"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-202251-202500.log",
+      "seed_end": 202500,
+      "seed_start": 202251,
+      "worker": "seed-202251-202500"
+    },
+    {
+      "artifacts": {
+        "seed-203751-204000.boxscores.jsonl": {
+          "bytes": 17194790,
+          "gzip": "seed-203751-204000.boxscores.jsonl.gz",
+          "gzip_bytes": 2032693,
+          "gzip_sha256": "9ccb204d1631cbfef0d68e69c55351bafc4e4b429e9afcc7bbe5231520e2e561",
+          "sha256": "bf8fee77855e0bdc716aaa3ca152b5c37ddc282fb81a353f747bae8e1f4ac18a"
+        },
+        "seed-203751-204000.json": {
+          "bytes": 59250773,
+          "gzip": "seed-203751-204000.json.gz",
+          "gzip_bytes": 5132632,
+          "gzip_sha256": "b951f925e66cbf564f43dd971f6dfd57464415d7a31c91cc41513698775e1866",
+          "sha256": "ccfa5b66f12a1d3cc2957748bfbf66fbc4422de5741dd074afd3d5702e1041d6"
+        },
+        "seed-203751-204000.seeds.jsonl": {
+          "bytes": 41240474,
+          "gzip": "seed-203751-204000.seeds.jsonl.gz",
+          "gzip_bytes": 4291058,
+          "gzip_sha256": "ffe862c989086808cff193b07eba76f9170c3ff6ff36c9f8ad31020e1758f730",
+          "sha256": "6a1f68ec09dbbc8c64728de6131d82a3a6344aaee340f306954c2802b5540844"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-203751-204000.log",
+      "seed_end": 204000,
+      "seed_start": 203751,
+      "worker": "seed-203751-204000"
+    },
+    {
+      "artifacts": {
+        "seed-203251-203500.boxscores.jsonl": {
+          "bytes": 17239700,
+          "gzip": "seed-203251-203500.boxscores.jsonl.gz",
+          "gzip_bytes": 2035597,
+          "gzip_sha256": "898169ada61546429376922ec032ea3ca8b6c77d8cd5e76aaa766b2adb9b2a91",
+          "sha256": "70f1366aa00fd07dc286b3457540de366c53143b2e6540c3c36c36ae401d9430"
+        },
+        "seed-203251-203500.json": {
+          "bytes": 59332044,
+          "gzip": "seed-203251-203500.json.gz",
+          "gzip_bytes": 5134858,
+          "gzip_sha256": "fda7f323f937f7435376429374c995657f047a975ee8f9e47f9441f2f6550915",
+          "sha256": "bba00a75ece912008759b350f26027dbefedf6cc57334032e66661dbbc813e45"
+        },
+        "seed-203251-203500.seeds.jsonl": {
+          "bytes": 41301235,
+          "gzip": "seed-203251-203500.seeds.jsonl.gz",
+          "gzip_bytes": 4286225,
+          "gzip_sha256": "5296d37b71bc1d9e526ce2375489b818a5f6b02e20831d1d7f0f3f434554b834",
+          "sha256": "7d580e4cae43bfc77200f31764c9a7edff52ba6d4d2f029e0a5a9dfa24ced571"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-203251-203500.log",
+      "seed_end": 203500,
+      "seed_start": 203251,
+      "worker": "seed-203251-203500"
+    },
+    {
+      "artifacts": {
+        "seed-203501-203750.boxscores.jsonl": {
+          "bytes": 17204090,
+          "gzip": "seed-203501-203750.boxscores.jsonl.gz",
+          "gzip_bytes": 2031352,
+          "gzip_sha256": "52e2d7a980b66cf7c776a68250129115405513d64febe3fa04ee044992d8821e",
+          "sha256": "ef596e6d8fe7a95ff1bd44ef350ee623dbf1c08672932c41160b0afbbd26fcf4"
+        },
+        "seed-203501-203750.json": {
+          "bytes": 59234461,
+          "gzip": "seed-203501-203750.json.gz",
+          "gzip_bytes": 5133991,
+          "gzip_sha256": "85963a90d3db5bd95bc19ffcb8165736b1f58cea7eab8f79608f7f4204cadff1",
+          "sha256": "5b3dff26506b3b978862789f46daabd33cd6a317c6e8fca4a9e97c1ae09133b5"
+        },
+        "seed-203501-203750.seeds.jsonl": {
+          "bytes": 41215031,
+          "gzip": "seed-203501-203750.seeds.jsonl.gz",
+          "gzip_bytes": 4293714,
+          "gzip_sha256": "7c57c94abf97f89e5f8ea8051356e87b07d8917fca3d779654685112be9c10cc",
+          "sha256": "cc58cbe68f51d9bb8b5f7be03b0c9740c84dd98f00b8cd66b0e21c23a0536a51"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-203501-203750.log",
+      "seed_end": 203750,
+      "seed_start": 203501,
+      "worker": "seed-203501-203750"
+    },
+    {
+      "artifacts": {
+        "seed-203001-203250.boxscores.jsonl": {
+          "bytes": 17250565,
+          "gzip": "seed-203001-203250.boxscores.jsonl.gz",
+          "gzip_bytes": 2033531,
+          "gzip_sha256": "4203039945dfef5b5a953583730fe5c5caa42a552764884e10a715d76bd2b872",
+          "sha256": "733c01371f6be65b65cbaaa8b9c03f57613018a52fd8aeb24731c23b47d136c2"
+        },
+        "seed-203001-203250.json": {
+          "bytes": 59575279,
+          "gzip": "seed-203001-203250.json.gz",
+          "gzip_bytes": 5149410,
+          "gzip_sha256": "da341b7c52f1b45ca741621c31d24ed804b037d78ca4be8a7265b30d034887cb",
+          "sha256": "efe2bee462acf29b4a257ac5eeef091fe2ae8259030cd9865b5d82cb6077c596"
+        },
+        "seed-203001-203250.seeds.jsonl": {
+          "bytes": 41449876,
+          "gzip": "seed-203001-203250.seeds.jsonl.gz",
+          "gzip_bytes": 4300564,
+          "gzip_sha256": "83855140f21800ec8df185e643f09d3b5d49ad0b027232e3a8a8275a6119252a",
+          "sha256": "8b2c66ba4904edf4b770d0be194f502b8cff937056eda49bce182657e21d5cd9"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-203001-203250.log",
+      "seed_end": 203250,
+      "seed_start": 203001,
+      "worker": "seed-203001-203250"
+    },
+    {
+      "artifacts": {
+        "seed-204001-204250.boxscores.jsonl": {
+          "bytes": 17216253,
+          "gzip": "seed-204001-204250.boxscores.jsonl.gz",
+          "gzip_bytes": 2034503,
+          "gzip_sha256": "0e57e833b48799022c745380320e1713ad53d8667cf9f06af02978b39ef9bbfd",
+          "sha256": "9eda3b448443a5d4deb7ceb14573751498cdb9971a3d57db7ffe9fa7c90e9eef"
+        },
+        "seed-204001-204250.json": {
+          "bytes": 59433378,
+          "gzip": "seed-204001-204250.json.gz",
+          "gzip_bytes": 5130755,
+          "gzip_sha256": "415cfc24205abe1275559cd73944a14b0756d046f3e158de1446b48529b7c1c7",
+          "sha256": "da19beddd71fcfba525c47bf95b6668db76658c572337f128e8195b605d1a3d9"
+        },
+        "seed-204001-204250.seeds.jsonl": {
+          "bytes": 41367227,
+          "gzip": "seed-204001-204250.seeds.jsonl.gz",
+          "gzip_bytes": 4287049,
+          "gzip_sha256": "10e3efb2f1faf7ef86b6dc4091e3ffd10f04aa1d3ac96edc7a6cdc9fc98759f0",
+          "sha256": "5c3f45e5bf9f4a2dfea2c854e17e0ac7b22e61ee9b44874948384a31041ed719"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-204001-204250.log",
+      "seed_end": 204250,
+      "seed_start": 204001,
+      "worker": "seed-204001-204250"
+    },
+    {
+      "artifacts": {
+        "seed-204501-204750.boxscores.jsonl": {
+          "bytes": 17167331,
+          "gzip": "seed-204501-204750.boxscores.jsonl.gz",
+          "gzip_bytes": 2030266,
+          "gzip_sha256": "cfd63d4a9910b8fbd54bb2d08f6751ff8022b55545d1ecaab8c3e0632c91117d",
+          "sha256": "5f644d19e8beeecb1d2ae3300ec466c6fe9f31a0a41ef57b19da117624a4890a"
+        },
+        "seed-204501-204750.json": {
+          "bytes": 59060952,
+          "gzip": "seed-204501-204750.json.gz",
+          "gzip_bytes": 5113880,
+          "gzip_sha256": "03db638f436140e425a3882bd25619edba3b27e3bb82a20ea48f9345385bcd82",
+          "sha256": "efa2e57a725bde97bff0762179a6cdede91f60346fbb40e182a56a96d7d13762"
+        },
+        "seed-204501-204750.seeds.jsonl": {
+          "bytes": 41092637,
+          "gzip": "seed-204501-204750.seeds.jsonl.gz",
+          "gzip_bytes": 4271243,
+          "gzip_sha256": "d0bf1be026365130f586d0b01313c77b77b6fb002b5a0674221208a029a440ce",
+          "sha256": "d2f31b1c1de407f1227b79e36d07b4269e6bc08d5a8183f79905dfcb76e38e85"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-204501-204750.log",
+      "seed_end": 204750,
+      "seed_start": 204501,
+      "worker": "seed-204501-204750"
+    },
+    {
+      "artifacts": {
+        "seed-204751-205000.boxscores.jsonl": {
+          "bytes": 17223769,
+          "gzip": "seed-204751-205000.boxscores.jsonl.gz",
+          "gzip_bytes": 2033449,
+          "gzip_sha256": "d4d68e14bf8dfdb331d2ce6bcc3b88e871aa03861a7a8f9cfc03a200392eb74a",
+          "sha256": "27fb0a8e63fe5c136f795ce2e3f87914ea40cea49d9f86144fcd931d8b7c7096"
+        },
+        "seed-204751-205000.json": {
+          "bytes": 59302216,
+          "gzip": "seed-204751-205000.json.gz",
+          "gzip_bytes": 5131605,
+          "gzip_sha256": "058647ba15bfd5cb1b3e7723c278353fa18db9a33bb73b4f3c3abe3748270901",
+          "sha256": "80072d72a4ddd3c7366d8eb6453f3e8cf86f13f2166b6d313657b7cfad41d36b"
+        },
+        "seed-204751-205000.seeds.jsonl": {
+          "bytes": 41274749,
+          "gzip": "seed-204751-205000.seeds.jsonl.gz",
+          "gzip_bytes": 4290192,
+          "gzip_sha256": "d6e34c8c3ebd0ad8d8d0f75c2628fd8e48060fd87cb14aa7ebc5bc8c26b0f276",
+          "sha256": "45a0b328546212611b1a1ba620922802fcaae3241329620a3e3e14bbf7936b66"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-204751-205000.log",
+      "seed_end": 205000,
+      "seed_start": 204751,
+      "worker": "seed-204751-205000"
+    },
+    {
+      "artifacts": {
+        "seed-204251-204500.boxscores.jsonl": {
+          "bytes": 17257939,
+          "gzip": "seed-204251-204500.boxscores.jsonl.gz",
+          "gzip_bytes": 2038803,
+          "gzip_sha256": "a20526f46f18017ba9c254c155a37ecfb921743dc336134ee46c2afce3f179ff",
+          "sha256": "9a76999518d24a6f7c0f3f3eb52b5037e4cfe0b9067fc0a6eeab1de1b084a02d"
+        },
+        "seed-204251-204500.json": {
+          "bytes": 59410748,
+          "gzip": "seed-204251-204500.json.gz",
+          "gzip_bytes": 5141481,
+          "gzip_sha256": "1a2a153d1f50dae6e44c526a8b65064c5cb1849c6f3d64ebd85a199df26f71a8",
+          "sha256": "396894985f96f5d7676aa0434709acb4897a1c29dc73821ec9369af7fc76435a"
+        },
+        "seed-204251-204500.seeds.jsonl": {
+          "bytes": 41349356,
+          "gzip": "seed-204251-204500.seeds.jsonl.gz",
+          "gzip_bytes": 4300534,
+          "gzip_sha256": "ffb504b6e7d92a87132b9bb48008011401fba6cf31a620ebc7dbbb0e9413c9b0",
+          "sha256": "659fb9cba0b257218d26354e6e4afb5d42b5a6293782edd9b39509f3c79ee98f"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-204251-204500.log",
+      "seed_end": 204500,
+      "seed_start": 204251,
+      "worker": "seed-204251-204500"
+    },
+    {
+      "artifacts": {
+        "seed-205251-205500.boxscores.jsonl": {
+          "bytes": 17221614,
+          "gzip": "seed-205251-205500.boxscores.jsonl.gz",
+          "gzip_bytes": 2032905,
+          "gzip_sha256": "1d4debd0dfe54d451dd1cbca162a056d6969e6e8993b846986ea39edd6f177a5",
+          "sha256": "6691319f7c87973ee3321756a42acb98574d156c96b93bd09cc70dcc3a18f544"
+        },
+        "seed-205251-205500.json": {
+          "bytes": 59311686,
+          "gzip": "seed-205251-205500.json.gz",
+          "gzip_bytes": 5131676,
+          "gzip_sha256": "7dc9123a0d4b32f32f21af80b24e38dac3ffe2aea721706ec594dbfa354ef744",
+          "sha256": "8d8ca8b22bb08a19bb4a1766291dcc4ce5a5dbddf9aec73def7284010a393bdb"
+        },
+        "seed-205251-205500.seeds.jsonl": {
+          "bytes": 41270316,
+          "gzip": "seed-205251-205500.seeds.jsonl.gz",
+          "gzip_bytes": 4287128,
+          "gzip_sha256": "4dc5d097ac091a1299896300558fff25f8494d5d8998b6600e8b23d0aa1e7fc1",
+          "sha256": "d673058a7de14b73c7f37309ba74ebc82f1de4bf1d5f6c7fbb25dbba87eec15d"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-205251-205500.log",
+      "seed_end": 205500,
+      "seed_start": 205251,
+      "worker": "seed-205251-205500"
+    },
+    {
+      "artifacts": {
+        "seed-205751-206000.boxscores.jsonl": {
+          "bytes": 17285715,
+          "gzip": "seed-205751-206000.boxscores.jsonl.gz",
+          "gzip_bytes": 2040725,
+          "gzip_sha256": "bf00791f7874350a5bf759fb68302f65eb7883abd4bfe45e378f7c2f0d4457fa",
+          "sha256": "e240dfbfb278618af65c457e59ff21d624e03e062cbe701eb383718f9c2525f1"
+        },
+        "seed-205751-206000.json": {
+          "bytes": 59626567,
+          "gzip": "seed-205751-206000.json.gz",
+          "gzip_bytes": 5163047,
+          "gzip_sha256": "1125be2b4b435e86eefeec582f7b782e25da44a1cb81e04613fe4196b1212466",
+          "sha256": "366dfc21b221ace64418dc0fafc5775f35ecb6eddc8f2455aa70ad073a1d2358"
+        },
+        "seed-205751-206000.seeds.jsonl": {
+          "bytes": 41492093,
+          "gzip": "seed-205751-206000.seeds.jsonl.gz",
+          "gzip_bytes": 4313769,
+          "gzip_sha256": "bc13ed67cd6340e8d71a617d0fe1c6ad052441dcf0a4960b597e2cb0fff58bc2",
+          "sha256": "f1598ff62ad7c3e7c68cae45ba53517ecefb8b656e657033e796e283ea450177"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-205751-206000.log",
+      "seed_end": 206000,
+      "seed_start": 205751,
+      "worker": "seed-205751-206000"
+    },
+    {
+      "artifacts": {
+        "seed-205501-205750.boxscores.jsonl": {
+          "bytes": 17206253,
+          "gzip": "seed-205501-205750.boxscores.jsonl.gz",
+          "gzip_bytes": 2033129,
+          "gzip_sha256": "af43071a78cec8f120302c8f6546cd1a06dce0e015c59c917c0648f7c671dafc",
+          "sha256": "652ef81ad51bce2a2b7d694227674018b79a3014ea2e09ab7a19a4a489752415"
+        },
+        "seed-205501-205750.json": {
+          "bytes": 59307658,
+          "gzip": "seed-205501-205750.json.gz",
+          "gzip_bytes": 5140836,
+          "gzip_sha256": "8431e3cc82db6038a65c7c1c0ab07315431386a4774fa26094c10d31422b5368",
+          "sha256": "102e246bccd418b8c3ac8186620ff88ab0092b1bd64cbd41a4b35fc691b1e333"
+        },
+        "seed-205501-205750.seeds.jsonl": {
+          "bytes": 41285027,
+          "gzip": "seed-205501-205750.seeds.jsonl.gz",
+          "gzip_bytes": 4296526,
+          "gzip_sha256": "7de8c3cdac24eb8a3d585abc7b4518b7f741d465d7d0dfc5fde454ef937fd166",
+          "sha256": "dc1dd66f81c123cb9810bbee04dfcd52813b4761825c150972e49a8ca9af18f4"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-205501-205750.log",
+      "seed_end": 205750,
+      "seed_start": 205501,
+      "worker": "seed-205501-205750"
+    },
+    {
+      "artifacts": {
+        "seed-205001-205250.boxscores.jsonl": {
+          "bytes": 17207671,
+          "gzip": "seed-205001-205250.boxscores.jsonl.gz",
+          "gzip_bytes": 2034633,
+          "gzip_sha256": "beaf10c3f4c63d4492086a960a1cf877e6884d45684d0a4b2cc904c03dee47b9",
+          "sha256": "ede2347b1ff67990f8bbe2e68a19fe9b421f914cd6a2b6d301724387512bcbff"
+        },
+        "seed-205001-205250.json": {
+          "bytes": 59294665,
+          "gzip": "seed-205001-205250.json.gz",
+          "gzip_bytes": 5136853,
+          "gzip_sha256": "03ba45a5ef623f8e22b0b0b75a79772602bd59e08d598c1de5c098d9fe9d8708",
+          "sha256": "a09b9f379717df8d3f7c2ae72b2984504231113b0d093a38d2ca47f7c1577de8"
+        },
+        "seed-205001-205250.seeds.jsonl": {
+          "bytes": 41268110,
+          "gzip": "seed-205001-205250.seeds.jsonl.gz",
+          "gzip_bytes": 4292118,
+          "gzip_sha256": "6f3584ccd3bd21dd9bb83bc39153d38aefc32df7672768b5251faf8e599381d7",
+          "sha256": "cc54d11f41aaa4e9a49ad5f8363e321bfd7e87ccf4889808b3d97bafe5f877c9"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-205001-205250.log",
+      "seed_end": 205250,
+      "seed_start": 205001,
+      "worker": "seed-205001-205250"
+    },
+    {
+      "artifacts": {
+        "seed-206251-206500.boxscores.jsonl": {
+          "bytes": 17166916,
+          "gzip": "seed-206251-206500.boxscores.jsonl.gz",
+          "gzip_bytes": 2031086,
+          "gzip_sha256": "fea49283cfb0f782019bbcf63709595c79e321176a5132d72bb5fb3d76a2c79c",
+          "sha256": "4d25bb99a33edfb167b1d2d2f481ea299630b8d27ebccb824337cfec3764b999"
+        },
+        "seed-206251-206500.json": {
+          "bytes": 59262822,
+          "gzip": "seed-206251-206500.json.gz",
+          "gzip_bytes": 5127621,
+          "gzip_sha256": "42f84ca92096f34e36189d77c312b57f79355bc25e01a18156f0754880cb4b84",
+          "sha256": "6930343cc1dc38dc85eacebe2940905c1578b4b59e6378fd1a4171fb601efb66"
+        },
+        "seed-206251-206500.seeds.jsonl": {
+          "bytes": 41247375,
+          "gzip": "seed-206251-206500.seeds.jsonl.gz",
+          "gzip_bytes": 4282885,
+          "gzip_sha256": "1d78684b84a43734158c878e2f680fda79db68b9b359d6475c86e98a80a95238",
+          "sha256": "e61d3aec750ba77abd6f92e7a9ca6a90787f721cf2c7c6e9486c1161dd771345"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-206251-206500.log",
+      "seed_end": 206500,
+      "seed_start": 206251,
+      "worker": "seed-206251-206500"
+    },
+    {
+      "artifacts": {
+        "seed-206001-206250.boxscores.jsonl": {
+          "bytes": 17190755,
+          "gzip": "seed-206001-206250.boxscores.jsonl.gz",
+          "gzip_bytes": 2031436,
+          "gzip_sha256": "97a6740d14b97b094e322dcde0ecbcf5b05a04cc3380ebc59ffd14073c8d8341",
+          "sha256": "b4969077f23cd67b8b3c7dbc225284d99d5e562624a2cc42f2bdba527c5e61b7"
+        },
+        "seed-206001-206250.json": {
+          "bytes": 59267449,
+          "gzip": "seed-206001-206250.json.gz",
+          "gzip_bytes": 5133206,
+          "gzip_sha256": "aa7ebbc70664015876da6b768d9c6e347b72a1c262f3ebe2cce63194d3585227",
+          "sha256": "c0ceaa9705ace5d85f5bf5d8635e26e7fdc7c60d4a91967d19b09677483ccaee"
+        },
+        "seed-206001-206250.seeds.jsonl": {
+          "bytes": 41241364,
+          "gzip": "seed-206001-206250.seeds.jsonl.gz",
+          "gzip_bytes": 4288900,
+          "gzip_sha256": "a6de1fbab3fcb0c89db4e10fa11a2ba0ec07de17a79ec35b11fac9cb0cdef971",
+          "sha256": "e2c0292c9667028a7727ff00f459915d20b15525192798f66e28c75553ff78ac"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-206001-206250.log",
+      "seed_end": 206250,
+      "seed_start": 206001,
+      "worker": "seed-206001-206250"
+    },
+    {
+      "artifacts": {
+        "seed-206751-207000.boxscores.jsonl": {
+          "bytes": 17241636,
+          "gzip": "seed-206751-207000.boxscores.jsonl.gz",
+          "gzip_bytes": 2041994,
+          "gzip_sha256": "8990977fa041ea0c47dbb8a289f257d022df3213e3ffe3ef17292085eee986c3",
+          "sha256": "afc7544dd1dd20b4b3f03b7407b329427f72754594bd9af134d80f83cc73c09c"
+        },
+        "seed-206751-207000.json": {
+          "bytes": 59389457,
+          "gzip": "seed-206751-207000.json.gz",
+          "gzip_bytes": 5141144,
+          "gzip_sha256": "989a5331490527fcb235bcc6e169b05f48d6753602709f542ab8eb58d52e6a01",
+          "sha256": "28faa21c88cb0b6ae581c6789d34e8258c7474708ce2d2af72cac92a15313122"
+        },
+        "seed-206751-207000.seeds.jsonl": {
+          "bytes": 41327424,
+          "gzip": "seed-206751-207000.seeds.jsonl.gz",
+          "gzip_bytes": 4293947,
+          "gzip_sha256": "f4ed555f2c3a9390e397b4ae2bfd07b9e189656ed65e0a6d3871a80280c8151f",
+          "sha256": "f4fb1a944b14f0182062b71a51586184c5c205877253eb7ab981a024c65fb1f0"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-206751-207000.log",
+      "seed_end": 207000,
+      "seed_start": 206751,
+      "worker": "seed-206751-207000"
+    },
+    {
+      "artifacts": {
+        "seed-206501-206750.boxscores.jsonl": {
+          "bytes": 17311868,
+          "gzip": "seed-206501-206750.boxscores.jsonl.gz",
+          "gzip_bytes": 2039024,
+          "gzip_sha256": "91f756bf8a88bed06001ab5809d159d31695af1f9aded82a08ce0207c7381d8a",
+          "sha256": "b1c499440ccef8b649ec01f610430437030ce4e60ac9e08db5f20c49c5ce585f"
+        },
+        "seed-206501-206750.json": {
+          "bytes": 59647491,
+          "gzip": "seed-206501-206750.json.gz",
+          "gzip_bytes": 5171217,
+          "gzip_sha256": "bcd4d3fd0c6f75f133c87e9e9c4cf2c7156de91de99aed2b61197cfc96b0aec2",
+          "sha256": "c998e5b2fa9e7ccc962192c9ef9ab7cf744c65507952dabaee58c47b8766043a"
+        },
+        "seed-206501-206750.seeds.jsonl": {
+          "bytes": 41512087,
+          "gzip": "seed-206501-206750.seeds.jsonl.gz",
+          "gzip_bytes": 4322557,
+          "gzip_sha256": "1f7c27da8eb524bfcff5d07fa8bb77893ca285e23c25ac68838e3c4bec62d492",
+          "sha256": "7183ae127d0a7d624dbd20454932303c3852db5c9693b3a6c788b58e16f9b6ad"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-206501-206750.log",
+      "seed_end": 206750,
+      "seed_start": 206501,
+      "worker": "seed-206501-206750"
+    },
+    {
+      "artifacts": {
+        "seed-207751-208000.boxscores.jsonl": {
+          "bytes": 17221176,
+          "gzip": "seed-207751-208000.boxscores.jsonl.gz",
+          "gzip_bytes": 2037037,
+          "gzip_sha256": "91965941093b3805ac3a5f826dcacc355e94c47465d8e60803a1f04f80109a81",
+          "sha256": "0d0487347fb96258dd7c922012d2a6a426a1e5a54cac5bf8ee021bb6586fa0cb"
+        },
+        "seed-207751-208000.json": {
+          "bytes": 59261751,
+          "gzip": "seed-207751-208000.json.gz",
+          "gzip_bytes": 5136717,
+          "gzip_sha256": "f63e9b6f2e29fcb3ffd6f870d84f4d145b2831c5830606cabbba7e44f38f6cb8",
+          "sha256": "ea5feb53153f81045375dc296959f4eb7f113033c777cb56fae83ea973f19854"
+        },
+        "seed-207751-208000.seeds.jsonl": {
+          "bytes": 41256428,
+          "gzip": "seed-207751-208000.seeds.jsonl.gz",
+          "gzip_bytes": 4296660,
+          "gzip_sha256": "41ca2b8644c48a4572981a7fca0e22729233bec873a9841a1caea412afb845f7",
+          "sha256": "c87f8631d3061bed8eed670ce417507e37b0d2b5b88ba458fc8f224cbe11c919"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-207751-208000.log",
+      "seed_end": 208000,
+      "seed_start": 207751,
+      "worker": "seed-207751-208000"
+    },
+    {
+      "artifacts": {
+        "seed-207501-207750.boxscores.jsonl": {
+          "bytes": 17290770,
+          "gzip": "seed-207501-207750.boxscores.jsonl.gz",
+          "gzip_bytes": 2040951,
+          "gzip_sha256": "7290878e79f7e4b2cd9a61aa4bc835cd25db448193ee01c1633180e4065bf745",
+          "sha256": "0ec88e9c4fbac5b5b51f0eb400e69acd7fe062d58a0c726b601ec0157a6ca9dc"
+        },
+        "seed-207501-207750.json": {
+          "bytes": 59519172,
+          "gzip": "seed-207501-207750.json.gz",
+          "gzip_bytes": 5171130,
+          "gzip_sha256": "8698c876d16d0857d6bcbca4f73723c636c254f1f7a69ae1324eb76fa03dc119",
+          "sha256": "0eea6b9fcd8db1bdd31d4baecf92fadfc89c8ca5e7b60848841a4caeee5f9d57"
+        },
+        "seed-207501-207750.seeds.jsonl": {
+          "bytes": 41422068,
+          "gzip": "seed-207501-207750.seeds.jsonl.gz",
+          "gzip_bytes": 4317415,
+          "gzip_sha256": "8ab6bf48f88770efb33f1ecdb137dd0fe08b0b1c01c4a0a94a018a05cb20803e",
+          "sha256": "3855b72632cc3adec916f3419321a9d20bc6da039bdd02b644c92a99646f7037"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-207501-207750.log",
+      "seed_end": 207750,
+      "seed_start": 207501,
+      "worker": "seed-207501-207750"
+    },
+    {
+      "artifacts": {
+        "seed-207001-207250.boxscores.jsonl": {
+          "bytes": 17277152,
+          "gzip": "seed-207001-207250.boxscores.jsonl.gz",
+          "gzip_bytes": 2037067,
+          "gzip_sha256": "af6c6029837db2b4513431a5562489db0c665fc8654b172bccf9d364b4ca5dc9",
+          "sha256": "2cc94089bdbd6788bf6ebe2d76515548eb6c3b941dcd6cc487646104dee2ca68"
+        },
+        "seed-207001-207250.json": {
+          "bytes": 59435756,
+          "gzip": "seed-207001-207250.json.gz",
+          "gzip_bytes": 5149050,
+          "gzip_sha256": "1c32d0be6d12349e539f5871bcf8316d08475ba2c0a3b33f7712a4fc6c905b0a",
+          "sha256": "50da8d222288a77e0008d1f910543c6b74f00ffd1c956f3fc6ed757b6b626118"
+        },
+        "seed-207001-207250.seeds.jsonl": {
+          "bytes": 41366212,
+          "gzip": "seed-207001-207250.seeds.jsonl.gz",
+          "gzip_bytes": 4307262,
+          "gzip_sha256": "a3c5913bb6aa3174fc42b45dfae505bcf983cc5ba3c3501a682fe75393c58363",
+          "sha256": "c92d5590d2918fd58316256990e11fde4d13672b94903dd185bd3ed5d66e66bb"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-207001-207250.log",
+      "seed_end": 207250,
+      "seed_start": 207001,
+      "worker": "seed-207001-207250"
+    },
+    {
+      "artifacts": {
+        "seed-207251-207500.boxscores.jsonl": {
+          "bytes": 17211527,
+          "gzip": "seed-207251-207500.boxscores.jsonl.gz",
+          "gzip_bytes": 2032184,
+          "gzip_sha256": "cde743fa2b67ecf4b75c6652a9ec30f00f3344f0c88aa7b862a8ddceff3bbee3",
+          "sha256": "961dce30d5cd11fe2c9737854aa2874a193bba2230e1890fa42527c48f17115a"
+        },
+        "seed-207251-207500.json": {
+          "bytes": 59312955,
+          "gzip": "seed-207251-207500.json.gz",
+          "gzip_bytes": 5127275,
+          "gzip_sha256": "0cedd0dab606ae673aa1b20af028efc17a124e9a4ae243f808b169bad7d03cba",
+          "sha256": "ab9754dc90f1713ef0c34516ca10cf82db2400a4f73ea49a5cdafb0331659b54"
+        },
+        "seed-207251-207500.seeds.jsonl": {
+          "bytes": 41269644,
+          "gzip": "seed-207251-207500.seeds.jsonl.gz",
+          "gzip_bytes": 4288087,
+          "gzip_sha256": "273fb92548354784c924732e08d57871e34a32e1ef54304e93e5b48b0dfba9aa",
+          "sha256": "4c0fe2395e51b4ae5c7f8dfa1bb904e084d0cf969c67fe734d0976ecc400eb79"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-207251-207500.log",
+      "seed_end": 207500,
+      "seed_start": 207251,
+      "worker": "seed-207251-207500"
+    },
+    {
+      "artifacts": {
+        "seed-208251-208500.boxscores.jsonl": {
+          "bytes": 17153269,
+          "gzip": "seed-208251-208500.boxscores.jsonl.gz",
+          "gzip_bytes": 2028719,
+          "gzip_sha256": "590388264cdd0ea3a5f7abff65b7ac2220e8849376f00bc397c517fa737d99d2",
+          "sha256": "8d062b994ea452d46039a9831a176da77385c54df0c7deb34380819d69472969"
+        },
+        "seed-208251-208500.json": {
+          "bytes": 59118769,
+          "gzip": "seed-208251-208500.json.gz",
+          "gzip_bytes": 5125935,
+          "gzip_sha256": "bb3b917eb49a2e8081b188cef522ac107371b04770ff4d18bea7a97cbee9ad6a",
+          "sha256": "35906c8077dd9bf030721685f71bb756027de108a33806a7f4ab49fedec39989"
+        },
+        "seed-208251-208500.seeds.jsonl": {
+          "bytes": 41152082,
+          "gzip": "seed-208251-208500.seeds.jsonl.gz",
+          "gzip_bytes": 4284646,
+          "gzip_sha256": "a91c03f9d30cd848fb50020a3a560d1beb4a9e9b3a86d61aba23fd5d2f970f73",
+          "sha256": "a04df6bf7ed4920e7480a0d887977c36f6e57c482917e71449ea053fd2fb4c70"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-208251-208500.log",
+      "seed_end": 208500,
+      "seed_start": 208251,
+      "worker": "seed-208251-208500"
+    },
+    {
+      "artifacts": {
+        "seed-208001-208250.boxscores.jsonl": {
+          "bytes": 17225712,
+          "gzip": "seed-208001-208250.boxscores.jsonl.gz",
+          "gzip_bytes": 2036865,
+          "gzip_sha256": "cfed14f70ae0ddc4504c32f665ec18b83e502ff16183a19e2fb5939b3a17275f",
+          "sha256": "b4371ecefd8ebc99512183247fa6ee142db4e110028406f4e2e2f11a85fd1d3f"
+        },
+        "seed-208001-208250.json": {
+          "bytes": 59354703,
+          "gzip": "seed-208001-208250.json.gz",
+          "gzip_bytes": 5136576,
+          "gzip_sha256": "99e7ee7ab6615b223fc284f229570abc727212bec435280adc1f8f47b14fa7b4",
+          "sha256": "8e7d4fa6f4763c3e62183961a93873e385e253efc3e59443d8034b7adda256c1"
+        },
+        "seed-208001-208250.seeds.jsonl": {
+          "bytes": 41314419,
+          "gzip": "seed-208001-208250.seeds.jsonl.gz",
+          "gzip_bytes": 4291746,
+          "gzip_sha256": "9e8b4c65981d79abb018c8e9ef716e8d8973d8df243fd88c536911fc5d5a207d",
+          "sha256": "f5a0d07d15bf44b8e54ed399d6b0adf0576c6a3cb862226454507d3342ec7f4a"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-208001-208250.log",
+      "seed_end": 208250,
+      "seed_start": 208001,
+      "worker": "seed-208001-208250"
+    },
+    {
+      "artifacts": {
+        "seed-208751-209000.boxscores.jsonl": {
+          "bytes": 17214148,
+          "gzip": "seed-208751-209000.boxscores.jsonl.gz",
+          "gzip_bytes": 2032859,
+          "gzip_sha256": "33677a3a005588d0ead1b6b476860954fc53441ce658e6f1b125d73ddb3b1584",
+          "sha256": "ef6a264c42f5223e9a15a935fbc2e789a42816588d580c681169c7c79932ccd2"
+        },
+        "seed-208751-209000.json": {
+          "bytes": 59240283,
+          "gzip": "seed-208751-209000.json.gz",
+          "gzip_bytes": 5137311,
+          "gzip_sha256": "095fcd026854afaa05e6ec2f03f6456295e60e980ea7387c181e623923dcb16d",
+          "sha256": "f9e0add289d76e3ad14426e2a502eaa012a52f7b62b7e82daa1c8071ff9e878d"
+        },
+        "seed-208751-209000.seeds.jsonl": {
+          "bytes": 41236131,
+          "gzip": "seed-208751-209000.seeds.jsonl.gz",
+          "gzip_bytes": 4294046,
+          "gzip_sha256": "4e599f06e38763e36d2e449633d778e94436fd7e58140cfa7f60178b9cd090cd",
+          "sha256": "15346a5d3e2a636437765330dffc751bcd4eccd430297be64e3d137b48f710de"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-208751-209000.log",
+      "seed_end": 209000,
+      "seed_start": 208751,
+      "worker": "seed-208751-209000"
+    },
+    {
+      "artifacts": {
+        "seed-208501-208750.boxscores.jsonl": {
+          "bytes": 17263823,
+          "gzip": "seed-208501-208750.boxscores.jsonl.gz",
+          "gzip_bytes": 2035462,
+          "gzip_sha256": "b1b0047cc23ec143ad9eaf4c31fd3063514425d4eab67faf444df43315436748",
+          "sha256": "eab7bf8e32a7893dc2b16cb6fc1144a66e5df8ff9c80cd8d31451014fafc3d21"
+        },
+        "seed-208501-208750.json": {
+          "bytes": 59458690,
+          "gzip": "seed-208501-208750.json.gz",
+          "gzip_bytes": 5143671,
+          "gzip_sha256": "05996575fb7bc7a47aaaba89c92c7c00fb8cb600c6c61db03666135bb67a7292",
+          "sha256": "baae836146a4f70b8371acb94fefddf8dae4479120f16aca66602df87466b185"
+        },
+        "seed-208501-208750.seeds.jsonl": {
+          "bytes": 41379103,
+          "gzip": "seed-208501-208750.seeds.jsonl.gz",
+          "gzip_bytes": 4299438,
+          "gzip_sha256": "d518ae49ebc3bf5fb406752fe54db2ab8f0060162e69603b4339583bd690f303",
+          "sha256": "8718e16721c7acbee4732cb56f90f629a73c822cba0fe10937b701cac5ae89a1"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-208501-208750.log",
+      "seed_end": 208750,
+      "seed_start": 208501,
+      "worker": "seed-208501-208750"
+    },
+    {
+      "artifacts": {
+        "seed-209751-210000.boxscores.jsonl": {
+          "bytes": 17275108,
+          "gzip": "seed-209751-210000.boxscores.jsonl.gz",
+          "gzip_bytes": 2038115,
+          "gzip_sha256": "f2d866c5602359faa3eb37b92b3062168561a22c2bf8470b47ad8e34da4f5b18",
+          "sha256": "469d40b644f66c6f8cd5068bb01ccbe773707c2103cfee662173261c7147f31d"
+        },
+        "seed-209751-210000.json": {
+          "bytes": 59552144,
+          "gzip": "seed-209751-210000.json.gz",
+          "gzip_bytes": 5156188,
+          "gzip_sha256": "5d3391f244179deeb11ef68a393c095a910f7846147310cf13eb5eb8f5095469",
+          "sha256": "d0c16d1ec62e500743e088403416c01cdd4f47b7184427460e9d5a3ee9033090"
+        },
+        "seed-209751-210000.seeds.jsonl": {
+          "bytes": 41444283,
+          "gzip": "seed-209751-210000.seeds.jsonl.gz",
+          "gzip_bytes": 4307065,
+          "gzip_sha256": "a5df6f02cec19ec05cb68ca8de8a8d16b8e4f0433e4aa75f5ea2684ff081e4ed",
+          "sha256": "677a15a151bc6d2a05cc7a2b62c8a8bc848ed57dd81d18576091d4c981a34053"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-209751-210000.log",
+      "seed_end": 210000,
+      "seed_start": 209751,
+      "worker": "seed-209751-210000"
+    },
+    {
+      "artifacts": {
+        "seed-209251-209500.boxscores.jsonl": {
+          "bytes": 17237054,
+          "gzip": "seed-209251-209500.boxscores.jsonl.gz",
+          "gzip_bytes": 2034796,
+          "gzip_sha256": "8ee9720873c47830b95db0ef7d5573eb1a248ccf7f812decfacd9ed093e952d6",
+          "sha256": "94917898f7c41176f405f69413bf610166848ec3b6847c7d7a2d60a15b27db60"
+        },
+        "seed-209251-209500.json": {
+          "bytes": 59500885,
+          "gzip": "seed-209251-209500.json.gz",
+          "gzip_bytes": 5139504,
+          "gzip_sha256": "da30fb11742a97d252a11f33a63d9ebed08bb699ee543f700729ae74a9434aec",
+          "sha256": "93be76447f438ccc423c01b31510615f8302b4f39734dc2d14c312519aaf2fbd"
+        },
+        "seed-209251-209500.seeds.jsonl": {
+          "bytes": 41402944,
+          "gzip": "seed-209251-209500.seeds.jsonl.gz",
+          "gzip_bytes": 4292780,
+          "gzip_sha256": "08bc2330c0a05a12463356de9126d1b4fe31b6b303da29657c93357fb74fcdb2",
+          "sha256": "b443ce09a2683e0b93fcd85340235c8e64ff16f93566fc1ade60847d9fe4b95e"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-209251-209500.log",
+      "seed_end": 209500,
+      "seed_start": 209251,
+      "worker": "seed-209251-209500"
+    },
+    {
+      "artifacts": {
+        "seed-209001-209250.boxscores.jsonl": {
+          "bytes": 17244903,
+          "gzip": "seed-209001-209250.boxscores.jsonl.gz",
+          "gzip_bytes": 2034655,
+          "gzip_sha256": "cefa9bd894b430cd91abf440704cb1d247f96896dc347166564f00e2e79c7647",
+          "sha256": "a5f7452796bf390f40d1ba72b2bc55b72dae70654fab05912df6acf12fb133c4"
+        },
+        "seed-209001-209250.json": {
+          "bytes": 59435638,
+          "gzip": "seed-209001-209250.json.gz",
+          "gzip_bytes": 5154823,
+          "gzip_sha256": "00f1827d2eac0c399e624a4b2cb4fb19742b538e64175847a690248f0250ff28",
+          "sha256": "9be103f0682449c769fd581637d47a33a8c27b26c22bddafb1582f347869d545"
+        },
+        "seed-209001-209250.seeds.jsonl": {
+          "bytes": 41361811,
+          "gzip": "seed-209001-209250.seeds.jsonl.gz",
+          "gzip_bytes": 4304187,
+          "gzip_sha256": "82d1fe98d349a9a6871c4443d6cc571fa12d71c1c9c2c91b11cb84b701691b57",
+          "sha256": "05b2bead61541c27a30310ec07d38d19ed47c207a4c986b2f7895c636f1356c8"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-209001-209250.log",
+      "seed_end": 209250,
+      "seed_start": 209001,
+      "worker": "seed-209001-209250"
+    },
+    {
+      "artifacts": {
+        "seed-209501-209750.boxscores.jsonl": {
+          "bytes": 17294356,
+          "gzip": "seed-209501-209750.boxscores.jsonl.gz",
+          "gzip_bytes": 2039478,
+          "gzip_sha256": "8fedbfda331f58c39d9f3c6d58f2de29d99cf21d70b73e476ff51f118d5244ba",
+          "sha256": "674220b9e16ae4a2c0238b8b2bb1546f8365ec81b77e3d057939a21d5cb3dc2d"
+        },
+        "seed-209501-209750.json": {
+          "bytes": 59566949,
+          "gzip": "seed-209501-209750.json.gz",
+          "gzip_bytes": 5140403,
+          "gzip_sha256": "fb520f1c6cac61047fef26d743c7e90cba8f3d3a8dae7c766cc5efa7e8337aed",
+          "sha256": "14355072d9bab840f6e7d2fe0e9cc391e09dd39a33cd8100250b5bc06b72039e"
+        },
+        "seed-209501-209750.seeds.jsonl": {
+          "bytes": 41463139,
+          "gzip": "seed-209501-209750.seeds.jsonl.gz",
+          "gzip_bytes": 4299839,
+          "gzip_sha256": "046b0921d82f9d8b2af060da035cb69493c6021e1654738cce2f91d8512ea661",
+          "sha256": "eef792492597676f0cff8f294de73db9108782a425e3eb8428bf0dc9be38e29d"
+        }
+      },
+      "games": 250,
+      "log": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers/seed-209501-209750.log",
+      "seed_end": 209750,
+      "seed_start": 209501,
+      "worker": "seed-209501-209750"
+    }
+  ],
+  "workers_directory": "/root/ot-sim-out/slc-v2-model-d1-10k-2026-11-10/workers",
+  "workload_estimator": "D1"
+}
