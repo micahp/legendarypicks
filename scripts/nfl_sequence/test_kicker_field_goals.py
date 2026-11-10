@@ -121,6 +121,14 @@ class MakeProbability(unittest.TestCase):
 
 
 class Table(unittest.TestCase):
+    def test_v2_pinned_table_has_week_9_kickers(self):
+        import simulate_pregame_batch as batch
+        repo = HERE.parents[1]
+        path, sha = batch.SLC_V2_TABLES['playcall_fg_kicker']
+        table = kfg.KickerTable.load(repo / path, sha)
+        self.assertTrue(table.kicker(2026, 9, 'BUF'))
+        self.assertTrue(table.kicker(2026, 9, 'MIN'))
+
     def test_a_team_without_an_active_kicker_is_refused(self):
         table = kfg.KickerTable(TABLE, 'test')
         self.assertEqual(table.kicker(2026, 8, 'KC'), 'K_GOOD')
