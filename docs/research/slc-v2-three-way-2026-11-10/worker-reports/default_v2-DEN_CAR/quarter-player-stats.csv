@@ -1,0 +1,2926 @@
+player_id,name,team,position,period,metric,mean,median,sample_n
+00-0031610,Darren Waller,CAR,TE,Q1,completions,0.0030120481927710845,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,fumbles_lost,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,interceptions,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,pass_attempts,0.0030120481927710845,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,passing_touchdowns,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,passing_yards,0.006024096385542169,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,receiving_yards,1.3072289156626506,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,receptions,0.1566265060240964,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,rush_attempts,0.012048192771084338,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,rushing_touchdowns,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,rushing_yards,0.05120481927710843,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,sack_yards,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,sacks,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q1,targets,0.2469879518072289,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,completions,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,fumbles_lost,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,interceptions,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,pass_attempts,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,passing_touchdowns,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,passing_yards,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,receiving_yards,1.033132530120482,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,receptions,0.09337349397590361,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,rush_attempts,0.030120481927710843,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,rushing_yards,0.09337349397590361,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,sack_yards,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,sacks,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q2,targets,0.18072289156626506,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,completions,0.0030120481927710845,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,fumbles_lost,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,interceptions,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,pass_attempts,0.0030120481927710845,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,passing_touchdowns,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,passing_yards,0.02710843373493976,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,receiving_yards,1.0030120481927711,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,receptions,0.10240963855421686,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,rush_attempts,0.03313253012048193,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,rushing_touchdowns,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,rushing_yards,0.12048192771084337,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,sack_yards,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,sacks,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q3,targets,0.16265060240963855,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,completions,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,fumbles_lost,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,interceptions,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,pass_attempts,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,passing_touchdowns,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,passing_yards,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,receiving_yards,1.108433734939759,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,receptions,0.12048192771084337,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,rush_attempts,0.015060240963855422,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,rushing_touchdowns,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,rushing_yards,0.1355421686746988,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,sack_yards,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,sacks,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,Q4,targets,0.22590361445783133,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,completions,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,fumbles_lost,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,interceptions,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,pass_attempts,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,passing_touchdowns,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,passing_yards,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,receiving_touchdowns,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,receiving_yards,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,receptions,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,rush_attempts,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,rushing_touchdowns,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,rushing_yards,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,sack_yards,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,sacks,0.0,0.0,332
+00-0031610,Darren Waller,CAR,TE,OT,targets,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,completions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,interceptions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,pass_attempts,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,passing_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,receiving_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,receiving_yards,0.02710843373493976,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,receptions,0.006024096385542169,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,rush_attempts,0.006024096385542169,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,rushing_yards,0.03313253012048193,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,sack_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,sacks,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q1,targets,0.015060240963855422,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,completions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,interceptions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,pass_attempts,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,passing_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,receiving_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,receiving_yards,0.4036144578313253,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,receptions,0.018072289156626505,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,rush_attempts,0.0030120481927710845,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,rushing_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,rushing_yards,0.012048192771084338,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,sack_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,sacks,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q2,targets,0.04216867469879518,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,completions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,interceptions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,pass_attempts,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,passing_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,receiving_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,receiving_yards,0.1355421686746988,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,receptions,0.012048192771084338,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,rush_attempts,0.009036144578313253,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,rushing_yards,0.06927710843373494,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,sack_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,sacks,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q3,targets,0.02108433734939759,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,completions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,interceptions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,pass_attempts,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,passing_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,receiving_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,receiving_yards,0.012048192771084338,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,receptions,0.0030120481927710845,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,rush_attempts,0.0030120481927710845,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,rushing_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,rushing_yards,0.012048192771084338,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,sack_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,sacks,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,Q4,targets,0.02710843373493976,0.0,332
+00-0033589,David Moore,CAR,WR,OT,completions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,fumbles_lost,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,interceptions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,pass_attempts,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,passing_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,receiving_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,receptions,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,rush_attempts,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,rushing_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,sack_yards,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,sacks,0.0,0.0,332
+00-0033589,David Moore,CAR,WR,OT,targets,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,completions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,fumbles_lost,0.0030120481927710845,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,interceptions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,pass_attempts,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,passing_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,passing_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,receiving_yards,0.25,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,receptions,0.02710843373493976,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,rush_attempts,0.4246987951807229,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,rushing_touchdowns,0.012048192771084338,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,rushing_yards,1.6385542168674698,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,sack_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,sacks,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q1,targets,0.0391566265060241,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,completions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,fumbles_lost,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,interceptions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,pass_attempts,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,passing_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,passing_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,receiving_yards,0.2319277108433735,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,receptions,0.030120481927710843,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,rush_attempts,0.25,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,rushing_yards,1.144578313253012,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,sack_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,sacks,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q2,targets,0.0391566265060241,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,completions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,fumbles_lost,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,interceptions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,pass_attempts,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,passing_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,passing_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,receiving_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,receiving_yards,0.05421686746987952,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,receptions,0.006024096385542169,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,rush_attempts,0.14457831325301204,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,rushing_yards,0.5783132530120482,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,sack_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,sacks,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q3,targets,0.009036144578313253,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,completions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,fumbles_lost,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,interceptions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,pass_attempts,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,passing_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,passing_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,receiving_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,receiving_yards,0.03313253012048193,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,receptions,0.006024096385542169,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,rush_attempts,0.2319277108433735,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,rushing_touchdowns,0.009036144578313253,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,rushing_yards,0.9186746987951807,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,sack_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,sacks,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,Q4,targets,0.018072289156626505,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,completions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,fumbles_lost,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,interceptions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,pass_attempts,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,passing_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,passing_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,receiving_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,receiving_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,receptions,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,rush_attempts,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,rushing_touchdowns,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,rushing_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,sack_yards,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,sacks,0.0,0.0,332
+00-0036265,AJ Dillon,CAR,RB,OT,targets,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,completions,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,fumbles_lost,0.009036144578313253,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,interceptions,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,pass_attempts,0.0030120481927710845,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,passing_touchdowns,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,passing_yards,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,receiving_yards,5.3102409638554215,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,receptions,0.6234939759036144,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,rush_attempts,6.319277108433735,6.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,rushing_touchdowns,0.1566265060240964,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,rushing_yards,28.370481927710845,25.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,sack_yards,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,sacks,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q1,targets,0.9397590361445783,1.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,completions,0.0030120481927710845,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,fumbles_lost,0.006024096385542169,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,interceptions,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,pass_attempts,0.0030120481927710845,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,passing_touchdowns,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,passing_yards,0.05421686746987952,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,receiving_touchdowns,0.03614457831325301,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,receiving_yards,5.713855421686747,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,receptions,0.7891566265060241,1.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,rush_attempts,5.963855421686747,6.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,rushing_touchdowns,0.14759036144578314,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,rushing_yards,25.75,23.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,sack_yards,-0.030120481927710843,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,sacks,0.0030120481927710845,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q2,targets,1.1656626506024097,1.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,completions,0.0030120481927710845,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,fumbles_lost,0.0030120481927710845,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,interceptions,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,pass_attempts,0.009036144578313253,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,passing_touchdowns,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,passing_yards,0.1566265060240964,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,receiving_touchdowns,0.024096385542168676,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,receiving_yards,5.0602409638554215,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,receptions,0.6475903614457831,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,rush_attempts,6.442771084337349,6.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,rushing_touchdowns,0.1536144578313253,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,rushing_yards,29.94277108433735,27.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,sack_yards,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,sacks,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q3,targets,0.9728915662650602,1.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,completions,0.0030120481927710845,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,fumbles_lost,0.009036144578313253,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,interceptions,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,pass_attempts,0.0030120481927710845,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,passing_touchdowns,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,passing_yards,0.03614457831325301,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,receiving_touchdowns,0.024096385542168676,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,receiving_yards,5.9397590361445785,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,receptions,0.7530120481927711,1.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,rush_attempts,5.978915662650603,5.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,rushing_touchdowns,0.1897590361445783,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,rushing_yards,26.64457831325301,20.5,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,sack_yards,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,sacks,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,Q4,targets,1.1355421686746987,1.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,completions,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,fumbles_lost,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,interceptions,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,pass_attempts,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,passing_touchdowns,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,passing_yards,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,receiving_touchdowns,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,receiving_yards,0.09337349397590361,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,receptions,0.012048192771084338,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,rush_attempts,0.12650602409638553,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,rushing_yards,0.6475903614457831,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,sack_yards,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,sacks,0.0,0.0,332
+00-0036555,Chuba Hubbard,CAR,RB,OT,targets,0.015060240963855422,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,completions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,fumbles_lost,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,interceptions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,pass_attempts,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,passing_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,passing_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,receiving_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,receiving_yards,0.04819277108433735,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,receptions,0.006024096385542169,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,rush_attempts,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,rushing_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,rushing_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,sack_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,sacks,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q1,targets,0.006024096385542169,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,completions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,fumbles_lost,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,interceptions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,pass_attempts,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,passing_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,passing_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,receiving_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,receiving_yards,0.006024096385542169,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,receptions,0.006024096385542169,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,rush_attempts,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,rushing_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,rushing_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,sack_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,sacks,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q2,targets,0.015060240963855422,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,completions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,fumbles_lost,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,interceptions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,pass_attempts,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,passing_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,passing_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,receiving_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,receiving_yards,0.0963855421686747,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,receptions,0.009036144578313253,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,rush_attempts,0.006024096385542169,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,rushing_yards,0.024096385542168676,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,sack_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,sacks,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q3,targets,0.015060240963855422,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,completions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,fumbles_lost,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,interceptions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,pass_attempts,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,passing_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,passing_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,receiving_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,receiving_yards,0.06626506024096386,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,receptions,0.006024096385542169,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,rush_attempts,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,rushing_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,rushing_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,sack_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,sacks,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,Q4,targets,0.015060240963855422,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,completions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,fumbles_lost,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,interceptions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,pass_attempts,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,passing_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,passing_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,receiving_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,receiving_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,receptions,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,rush_attempts,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,rushing_touchdowns,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,rushing_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,sack_yards,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,sacks,0.0,0.0,332
+00-0036825,Feleipe Franks,CAR,TE,OT,targets,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,completions,0.0030120481927710845,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,fumbles_lost,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,interceptions,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,pass_attempts,0.0030120481927710845,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,passing_touchdowns,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,passing_yards,0.006024096385542169,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,receiving_touchdowns,0.015060240963855422,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,receiving_yards,3.7951807228915664,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,receptions,0.45180722891566266,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,rush_attempts,0.02108433734939759,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,rushing_touchdowns,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,rushing_yards,0.21385542168674698,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,sack_yards,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,sacks,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q1,targets,0.7439759036144579,1.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,completions,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,fumbles_lost,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,interceptions,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,pass_attempts,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,passing_touchdowns,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,passing_yards,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,receiving_touchdowns,0.018072289156626505,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,receiving_yards,5.033132530120482,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,receptions,0.572289156626506,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,rush_attempts,0.03313253012048193,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,rushing_yards,0.16566265060240964,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,sack_yards,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,sacks,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q2,targets,0.9156626506024096,1.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,completions,0.006024096385542169,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,fumbles_lost,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,interceptions,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,pass_attempts,0.006024096385542169,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,passing_touchdowns,0.0030120481927710845,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,passing_yards,0.030120481927710843,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,receiving_touchdowns,0.02108433734939759,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,receiving_yards,5.2379518072289155,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,receptions,0.5301204819277109,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,rush_attempts,0.03313253012048193,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,rushing_touchdowns,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,rushing_yards,0.12951807228915663,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,sack_yards,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,sacks,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q3,targets,0.8704819277108434,1.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,completions,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,fumbles_lost,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,interceptions,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,pass_attempts,0.0030120481927710845,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,passing_touchdowns,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,passing_yards,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,receiving_touchdowns,0.024096385542168676,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,receiving_yards,5.680722891566265,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,receptions,0.6024096385542169,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,rush_attempts,0.03614457831325301,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,rushing_touchdowns,0.009036144578313253,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,rushing_yards,0.22289156626506024,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,sack_yards,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,sacks,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,Q4,targets,0.9759036144578314,1.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,completions,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,fumbles_lost,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,interceptions,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,pass_attempts,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,passing_touchdowns,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,passing_yards,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,receiving_touchdowns,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,receiving_yards,0.1927710843373494,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,receptions,0.024096385542168676,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,rush_attempts,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,rushing_touchdowns,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,rushing_yards,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,sack_yards,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,sacks,0.0,0.0,332
+00-0037005,Tommy Tremble,CAR,TE,OT,targets,0.0391566265060241,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,completions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,interceptions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,pass_attempts,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,passing_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,receiving_yards,1.6927710843373494,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,receptions,0.09939759036144578,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,rush_attempts,0.006024096385542169,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,rushing_yards,0.0391566265060241,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,sack_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,sacks,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q1,targets,0.18072289156626506,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,completions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,interceptions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,pass_attempts,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,passing_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,receiving_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,receiving_yards,0.8614457831325302,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,receptions,0.07530120481927711,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,rush_attempts,0.006024096385542169,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,rushing_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,rushing_yards,0.009036144578313253,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,sack_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,sacks,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q2,targets,0.12951807228915663,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,completions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,interceptions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,pass_attempts,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,passing_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,receiving_yards,0.858433734939759,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,receptions,0.07228915662650602,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,rush_attempts,0.006024096385542169,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,rushing_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,rushing_yards,0.02108433734939759,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,sack_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,sacks,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q3,targets,0.14457831325301204,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,completions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,interceptions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,pass_attempts,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,passing_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,receiving_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,receiving_yards,0.9698795180722891,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,receptions,0.0963855421686747,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,rush_attempts,0.006024096385542169,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,rushing_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,rushing_yards,-0.009036144578313253,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,sack_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,sacks,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,Q4,targets,0.16265060240963855,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,completions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,fumbles_lost,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,interceptions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,pass_attempts,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,passing_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,receiving_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,receptions,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,rush_attempts,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,rushing_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,sack_yards,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,sacks,0.0,0.0,332
+00-0037614,John Metchie III,CAR,WR,OT,targets,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,completions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,fumbles_lost,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,interceptions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,pass_attempts,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,passing_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,passing_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,receiving_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,receptions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,rush_attempts,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,rushing_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,rushing_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,sack_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,sacks,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q1,targets,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,completions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,fumbles_lost,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,interceptions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,pass_attempts,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,passing_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,passing_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,receiving_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,receptions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,rush_attempts,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,rushing_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,rushing_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,sack_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,sacks,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q2,targets,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,completions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,fumbles_lost,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,interceptions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,pass_attempts,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,passing_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,passing_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,receiving_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,receiving_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,receptions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,rush_attempts,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,rushing_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,rushing_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,sack_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,sacks,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q3,targets,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,completions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,fumbles_lost,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,interceptions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,pass_attempts,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,passing_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,passing_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,receiving_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,receiving_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,receptions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,rush_attempts,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,rushing_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,rushing_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,sack_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,sacks,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,Q4,targets,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,completions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,fumbles_lost,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,interceptions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,pass_attempts,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,passing_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,passing_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,receiving_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,receiving_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,receptions,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,rush_attempts,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,rushing_touchdowns,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,rushing_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,sack_yards,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,sacks,0.0,0.0,332
+00-0038102,Kenny Pickett,CAR,QB,OT,targets,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,completions,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,interceptions,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,pass_attempts,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,passing_yards,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,receiving_yards,2.4036144578313254,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,receptions,0.19879518072289157,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,rush_attempts,0.02108433734939759,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,rushing_yards,0.08132530120481928,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,sack_yards,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,sacks,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q1,targets,0.31626506024096385,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,completions,0.0030120481927710845,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,interceptions,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,pass_attempts,0.0030120481927710845,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,passing_yards,0.0030120481927710845,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,receiving_touchdowns,0.018072289156626505,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,receiving_yards,2.7078313253012047,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,receptions,0.23795180722891565,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,rush_attempts,0.02108433734939759,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,rushing_touchdowns,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,rushing_yards,0.07530120481927711,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,sack_yards,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,sacks,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q2,targets,0.3704819277108434,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,completions,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,interceptions,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,pass_attempts,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,passing_yards,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,receiving_yards,2.5150602409638556,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,receptions,0.25903614457831325,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,rush_attempts,0.018072289156626505,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,rushing_touchdowns,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,rushing_yards,0.08132530120481928,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,sack_yards,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,sacks,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q3,targets,0.39457831325301207,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,completions,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,interceptions,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,pass_attempts,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,passing_yards,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,receiving_touchdowns,0.015060240963855422,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,receiving_yards,2.174698795180723,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,receptions,0.1897590361445783,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,rush_attempts,0.030120481927710843,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,rushing_yards,0.19879518072289157,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,sack_yards,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,sacks,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,Q4,targets,0.2921686746987952,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,completions,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,fumbles_lost,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,interceptions,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,pass_attempts,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,passing_yards,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,receiving_yards,0.12951807228915663,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,receptions,0.012048192771084338,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,rush_attempts,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,rushing_yards,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,sack_yards,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,sacks,0.0,0.0,332
+00-0038840,Brycen Tremayne,CAR,WR,OT,targets,0.02108433734939759,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,completions,4.436746987951807,4.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,fumbles_lost,0.02710843373493976,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,interceptions,0.06927710843373494,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,pass_attempts,7.475903614457831,7.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,passing_touchdowns,0.14156626506024098,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,passing_yards,48.21686746987952,46.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,receiving_yards,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,receptions,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,rush_attempts,0.463855421686747,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,rushing_touchdowns,0.0572289156626506,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,rushing_yards,2.5210843373493974,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,sack_yards,-1.463855421686747,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,sacks,0.22289156626506024,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q1,targets,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,completions,5.069277108433735,5.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,fumbles_lost,0.0391566265060241,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,interceptions,0.1144578313253012,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,pass_attempts,8.563253012048193,8.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,passing_touchdowns,0.20180722891566266,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,passing_yards,50.97289156626506,48.5,332
+00-0039150,Bryce Young,CAR,QB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,receiving_yards,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,receptions,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,rush_attempts,0.5301204819277109,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,rushing_touchdowns,0.045180722891566265,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,rushing_yards,2.9759036144578315,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,sack_yards,-1.9126506024096386,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,sacks,0.3072289156626506,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q2,targets,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,completions,4.5,4.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,fumbles_lost,0.030120481927710843,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,interceptions,0.09939759036144578,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,pass_attempts,7.740963855421687,7.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,passing_touchdowns,0.16265060240963855,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,passing_yards,46.55120481927711,44.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,receiving_touchdowns,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,receiving_yards,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,receptions,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,rush_attempts,0.5210843373493976,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,rushing_touchdowns,0.03614457831325301,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,rushing_yards,2.8644578313253013,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,sack_yards,-1.5903614457831325,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,sacks,0.24397590361445784,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q3,targets,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,completions,5.036144578313253,5.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,fumbles_lost,0.0391566265060241,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,interceptions,0.09036144578313253,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,pass_attempts,8.403614457831326,8.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,passing_touchdowns,0.20783132530120482,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,passing_yards,51.903614457831324,50.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,receiving_touchdowns,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,receiving_yards,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,receptions,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,rush_attempts,0.6355421686746988,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,rushing_touchdowns,0.06325301204819277,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,rushing_yards,3.4909638554216866,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,sack_yards,-1.6536144578313252,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,sacks,0.25903614457831325,0.0,332
+00-0039150,Bryce Young,CAR,QB,Q4,targets,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,completions,0.11144578313253012,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,fumbles_lost,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,interceptions,0.0030120481927710845,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,pass_attempts,0.1897590361445783,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,passing_touchdowns,0.009036144578313253,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,passing_yards,1.0783132530120483,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,receiving_touchdowns,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,receiving_yards,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,receptions,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,rush_attempts,0.018072289156626505,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,rushing_touchdowns,0.0,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,rushing_yards,0.09036144578313253,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,sack_yards,-0.0391566265060241,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,sacks,0.006024096385542169,0.0,332
+00-0039150,Bryce Young,CAR,QB,OT,targets,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,completions,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,interceptions,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,pass_attempts,0.0030120481927710845,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,passing_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,receiving_yards,3.5090361445783134,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,receptions,0.2680722891566265,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,rush_attempts,0.015060240963855422,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,rushing_yards,0.18072289156626506,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,sack_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,sacks,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q1,targets,0.5391566265060241,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,completions,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,interceptions,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,pass_attempts,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,passing_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,receiving_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,receiving_yards,3.36144578313253,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,receptions,0.3102409638554217,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,rush_attempts,0.02710843373493976,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,rushing_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,rushing_yards,0.15060240963855423,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,sack_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,sacks,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q2,targets,0.5813253012048193,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,completions,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,interceptions,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,pass_attempts,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,passing_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,receiving_touchdowns,0.02108433734939759,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,receiving_yards,2.6927710843373496,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,receptions,0.21987951807228914,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,rush_attempts,0.009036144578313253,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,rushing_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,rushing_yards,0.024096385542168676,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,sack_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,sacks,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q3,targets,0.5030120481927711,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,completions,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,fumbles_lost,0.0030120481927710845,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,interceptions,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,pass_attempts,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,passing_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,receiving_yards,3.713855421686747,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,receptions,0.32831325301204817,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,rush_attempts,0.015060240963855422,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,rushing_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,rushing_yards,0.03614457831325301,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,sack_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,sacks,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,Q4,targets,0.6204819277108434,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,completions,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,fumbles_lost,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,interceptions,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,pass_attempts,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,passing_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,receiving_yards,0.0391566265060241,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,receptions,0.0030120481927710845,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,rush_attempts,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,rushing_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,sack_yards,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,sacks,0.0,0.0,332
+00-0039342,Xavier Legette,CAR,WR,OT,targets,0.009036144578313253,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,completions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,fumbles_lost,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,interceptions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,pass_attempts,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,passing_touchdowns,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,passing_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,receiving_yards,0.786144578313253,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,receptions,0.06927710843373494,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,rush_attempts,0.7228915662650602,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,rushing_touchdowns,0.009036144578313253,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,rushing_yards,2.7078313253012047,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,sack_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,sacks,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q1,targets,0.08734939759036145,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,completions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,fumbles_lost,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,interceptions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,pass_attempts,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,passing_touchdowns,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,passing_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,receiving_yards,0.6114457831325302,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,receptions,0.060240963855421686,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,rush_attempts,0.5542168674698795,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,rushing_touchdowns,0.018072289156626505,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,rushing_yards,2.2349397590361444,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,sack_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,sacks,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q2,targets,0.09036144578313253,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,completions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,fumbles_lost,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,interceptions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,pass_attempts,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,passing_touchdowns,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,passing_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,receiving_yards,0.14759036144578314,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,receptions,0.03313253012048193,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,rush_attempts,0.5843373493975904,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,rushing_touchdowns,0.009036144578313253,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,rushing_yards,2.177710843373494,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,sack_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,sacks,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q3,targets,0.08132530120481928,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,completions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,fumbles_lost,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,interceptions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,pass_attempts,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,passing_touchdowns,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,passing_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,receiving_yards,0.46686746987951805,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,receptions,0.045180722891566265,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,rush_attempts,0.5060240963855421,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,rushing_touchdowns,0.012048192771084338,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,rushing_yards,2.105421686746988,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,sack_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,sacks,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,Q4,targets,0.06927710843373494,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,completions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,fumbles_lost,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,interceptions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,pass_attempts,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,passing_touchdowns,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,passing_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,receiving_touchdowns,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,receiving_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,receptions,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,rush_attempts,0.018072289156626505,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,rushing_touchdowns,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,rushing_yards,0.08734939759036145,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,sack_yards,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,sacks,0.0,0.0,332
+00-0039344,Jonathon Brooks,CAR,RB,OT,targets,0.0030120481927710845,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,completions,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,fumbles_lost,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,interceptions,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,pass_attempts,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,passing_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,passing_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,receiving_yards,0.9457831325301205,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,receptions,0.09036144578313253,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,rush_attempts,0.009036144578313253,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,rushing_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,rushing_yards,0.030120481927710843,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,sack_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,sacks,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q1,targets,0.14759036144578314,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,completions,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,fumbles_lost,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,interceptions,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,pass_attempts,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,passing_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,passing_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,receiving_yards,1.3855421686746987,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,receptions,0.14759036144578314,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,rush_attempts,0.006024096385542169,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,rushing_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,rushing_yards,0.024096385542168676,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,sack_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,sacks,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q2,targets,0.2319277108433735,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,completions,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,fumbles_lost,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,interceptions,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,pass_attempts,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,passing_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,passing_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,receiving_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,receiving_yards,1.2530120481927711,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,receptions,0.14156626506024098,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,rush_attempts,0.009036144578313253,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,rushing_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,rushing_yards,0.08433734939759036,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,sack_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,sacks,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q3,targets,0.2319277108433735,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,completions,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,fumbles_lost,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,interceptions,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,pass_attempts,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,passing_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,passing_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,receiving_yards,1.5873493975903614,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,receptions,0.1686746987951807,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,rush_attempts,0.009036144578313253,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,rushing_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,rushing_yards,0.06626506024096386,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,sack_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,sacks,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,Q4,targets,0.2620481927710843,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,completions,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,fumbles_lost,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,interceptions,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,pass_attempts,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,passing_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,passing_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,receiving_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,receiving_yards,0.11746987951807229,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,receptions,0.006024096385542169,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,rush_attempts,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,rushing_touchdowns,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,rushing_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,sack_yards,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,sacks,0.0,0.0,332
+00-0039356,Ja'Tavion Sanders,CAR,TE,OT,targets,0.009036144578313253,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,completions,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,interceptions,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,pass_attempts,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,passing_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,receiving_touchdowns,0.030120481927710843,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,receiving_yards,7.783132530120482,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,receptions,0.6867469879518072,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,rush_attempts,0.024096385542168676,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,rushing_yards,0.06325301204819277,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,sack_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,sacks,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q1,targets,1.216867469879518,1.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,completions,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,interceptions,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,pass_attempts,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,passing_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,receiving_touchdowns,0.03614457831325301,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,receiving_yards,8.153614457831326,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,receptions,0.7349397590361446,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,rush_attempts,0.030120481927710843,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,rushing_touchdowns,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,rushing_yards,0.12951807228915663,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,sack_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,sacks,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q2,targets,1.2951807228915662,1.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,completions,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,interceptions,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,pass_attempts,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,passing_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,receiving_yards,7.632530120481928,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,receptions,0.6746987951807228,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,rush_attempts,0.03614457831325301,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,rushing_yards,0.29819277108433734,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,sack_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,sacks,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q3,targets,1.2018072289156627,1.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,completions,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,interceptions,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,pass_attempts,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,passing_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,receiving_touchdowns,0.024096385542168676,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,receiving_yards,8.271084337349398,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,receptions,0.7560240963855421,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,rush_attempts,0.030120481927710843,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,rushing_touchdowns,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,rushing_yards,0.16566265060240964,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,sack_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,sacks,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,Q4,targets,1.2409638554216869,1.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,completions,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,fumbles_lost,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,interceptions,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,pass_attempts,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,passing_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,receiving_yards,0.060240963855421686,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,receptions,0.009036144578313253,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,rush_attempts,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,rushing_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,sack_yards,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,sacks,0.0,0.0,332
+00-0039491,Jalen Coker,CAR,WR,OT,targets,0.015060240963855422,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,completions,0.0030120481927710845,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,interceptions,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,pass_attempts,0.0030120481927710845,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,passing_yards,0.03614457831325301,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,receiving_touchdowns,0.05120481927710843,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,receiving_yards,18.05421686746988,13.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,receptions,1.5120481927710843,1.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,rush_attempts,0.024096385542168676,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,rushing_yards,0.03313253012048193,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,sack_yards,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,sacks,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q1,targets,2.61144578313253,2.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,completions,0.006024096385542169,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,interceptions,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,pass_attempts,0.006024096385542169,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,passing_yards,0.06325301204819277,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,receiving_touchdowns,0.07228915662650602,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,receiving_yards,18.33132530120482,11.5,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,receptions,1.6325301204819278,1.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,rush_attempts,0.03313253012048193,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,rushing_yards,0.3253012048192771,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,sack_yards,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,sacks,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q2,targets,2.960843373493976,3.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,completions,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,interceptions,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,pass_attempts,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,passing_yards,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,receiving_touchdowns,0.060240963855421686,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,receiving_yards,17.849397590361445,12.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,receptions,1.533132530120482,1.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,rush_attempts,0.04216867469879518,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,rushing_yards,0.25301204819277107,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,sack_yards,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,sacks,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q3,targets,2.6927710843373496,2.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,completions,0.006024096385542169,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,interceptions,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,pass_attempts,0.009036144578313253,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,passing_yards,0.045180722891566265,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,receiving_touchdowns,0.08433734939759036,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,receiving_yards,18.906626506024097,12.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,receptions,1.6656626506024097,1.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,rush_attempts,0.02710843373493976,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,rushing_touchdowns,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,rushing_yards,0.0030120481927710845,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,sack_yards,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,sacks,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,Q4,targets,2.8855421686746987,2.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,completions,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,fumbles_lost,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,interceptions,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,pass_attempts,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,passing_yards,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,receiving_yards,0.4036144578313253,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,receptions,0.03614457831325301,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,rush_attempts,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,rushing_yards,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,sack_yards,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,sacks,0.0,0.0,332
+00-0040124,Tetairoa McMillan,CAR,WR,OT,targets,0.06626506024096386,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,completions,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,fumbles_lost,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,interceptions,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,pass_attempts,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,passing_touchdowns,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,passing_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,receiving_yards,2.2409638554216866,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,receptions,0.22289156626506024,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,rush_attempts,0.02108433734939759,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,rushing_yards,0.03313253012048193,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,sack_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,sacks,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q1,targets,0.3493975903614458,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,completions,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,fumbles_lost,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,interceptions,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,pass_attempts,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,passing_touchdowns,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,passing_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,receiving_yards,2.5873493975903616,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,receptions,0.3102409638554217,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,rush_attempts,0.030120481927710843,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,rushing_touchdowns,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,rushing_yards,0.1536144578313253,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,sack_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,sacks,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q2,targets,0.46686746987951805,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,completions,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,fumbles_lost,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,interceptions,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,pass_attempts,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,passing_touchdowns,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,passing_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,receiving_yards,1.9909638554216869,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,receptions,0.2289156626506024,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,rush_attempts,0.018072289156626505,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,rushing_touchdowns,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,rushing_yards,0.045180722891566265,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,sack_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,sacks,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q3,targets,0.39156626506024095,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,completions,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,fumbles_lost,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,interceptions,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,pass_attempts,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,passing_touchdowns,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,passing_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,receiving_yards,2.8825301204819276,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,receptions,0.28012048192771083,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,rush_attempts,0.012048192771084338,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,rushing_touchdowns,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,rushing_yards,0.05120481927710843,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,sack_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,sacks,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,Q4,targets,0.4367469879518072,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,completions,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,fumbles_lost,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,interceptions,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,pass_attempts,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,passing_touchdowns,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,passing_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,receiving_touchdowns,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,receiving_yards,0.04216867469879518,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,receptions,0.009036144578313253,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,rush_attempts,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,rushing_touchdowns,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,rushing_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,sack_yards,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,sacks,0.0,0.0,332
+00-0040187,Mitchell Evans,CAR,TE,OT,targets,0.012048192771084338,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,completions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,fumbles_lost,0.0030120481927710845,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,interceptions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,pass_attempts,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,passing_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,passing_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,receiving_yards,0.0391566265060241,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,receptions,0.0030120481927710845,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,rush_attempts,0.08734939759036145,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,rushing_yards,0.28313253012048195,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,sack_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,sacks,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q1,targets,0.0030120481927710845,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,completions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,fumbles_lost,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,interceptions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,pass_attempts,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,passing_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,passing_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,receiving_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,receptions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,rush_attempts,0.04819277108433735,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,rushing_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,rushing_yards,0.25301204819277107,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,sack_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,sacks,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q2,targets,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,completions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,fumbles_lost,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,interceptions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,pass_attempts,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,passing_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,passing_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,receiving_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,receiving_yards,0.060240963855421686,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,receptions,0.006024096385542169,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,rush_attempts,0.06927710843373494,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,rushing_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,rushing_yards,0.4578313253012048,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,sack_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,sacks,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q3,targets,0.006024096385542169,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,completions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,fumbles_lost,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,interceptions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,pass_attempts,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,passing_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,passing_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,receiving_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,receiving_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,receptions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,rush_attempts,0.05120481927710843,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,rushing_yards,0.1355421686746988,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,sack_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,sacks,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,Q4,targets,0.006024096385542169,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,completions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,fumbles_lost,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,interceptions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,pass_attempts,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,passing_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,passing_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,receiving_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,receiving_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,receptions,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,rush_attempts,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,rushing_touchdowns,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,rushing_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,sack_yards,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,sacks,0.0,0.0,332
+00-0040394,Anthony Tyus III,CAR,RB,OT,targets,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,completions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,fumbles_lost,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,interceptions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,pass_attempts,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,passing_touchdowns,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,passing_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,receiving_yards,0.07228915662650602,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,receptions,0.024096385542168676,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,rush_attempts,0.463855421686747,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,rushing_touchdowns,0.009036144578313253,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,rushing_yards,2.0210843373493974,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,sack_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,sacks,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q1,targets,0.04819277108433735,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,completions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,fumbles_lost,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,interceptions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,pass_attempts,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,passing_touchdowns,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,passing_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,receiving_yards,0.6716867469879518,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,receptions,0.06325301204819277,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,rush_attempts,0.3463855421686747,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,rushing_touchdowns,0.012048192771084338,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,rushing_yards,1.466867469879518,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,sack_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,sacks,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q2,targets,0.09036144578313253,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,completions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,fumbles_lost,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,interceptions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,pass_attempts,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,passing_touchdowns,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,passing_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,receiving_touchdowns,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,receiving_yards,0.17771084337349397,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,receptions,0.03614457831325301,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,rush_attempts,0.39759036144578314,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,rushing_touchdowns,0.018072289156626505,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,rushing_yards,2.13855421686747,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,sack_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,sacks,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q3,targets,0.060240963855421686,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,completions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,fumbles_lost,0.0030120481927710845,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,interceptions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,pass_attempts,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,passing_touchdowns,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,passing_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,receiving_yards,0.1716867469879518,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,receptions,0.024096385542168676,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,rush_attempts,0.3463855421686747,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,rushing_touchdowns,0.015060240963855422,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,rushing_yards,1.7891566265060241,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,sack_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,sacks,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,Q4,targets,0.045180722891566265,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,completions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,fumbles_lost,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,interceptions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,pass_attempts,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,passing_touchdowns,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,passing_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,receiving_touchdowns,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,receiving_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,receptions,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,rush_attempts,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,rushing_touchdowns,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,rushing_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,sack_yards,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,sacks,0.0,0.0,332
+00-0040644,Trevor Etienne,CAR,RB,OT,targets,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,completions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,interceptions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,pass_attempts,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,passing_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,receiving_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,receiving_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,receptions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,rush_attempts,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,rushing_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,sack_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,sacks,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q1,targets,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,completions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,interceptions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,pass_attempts,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,passing_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,receiving_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,receiving_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,receptions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,rush_attempts,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,rushing_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,rushing_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,sack_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,sacks,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q2,targets,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,completions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,interceptions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,pass_attempts,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,passing_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,receiving_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,receiving_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,receptions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,rush_attempts,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,rushing_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,rushing_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,sack_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,sacks,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q3,targets,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,completions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,interceptions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,pass_attempts,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,passing_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,receiving_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,receiving_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,receptions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,rush_attempts,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,rushing_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,rushing_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,sack_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,sacks,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,Q4,targets,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,completions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,fumbles_lost,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,interceptions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,pass_attempts,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,passing_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,receiving_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,receptions,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,rush_attempts,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,rushing_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,sack_yards,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,sacks,0.0,0.0,332
+00-0041047,Chris Brazzell II,CAR,WR,OT,targets,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,completions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,fumbles_lost,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,interceptions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,pass_attempts,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,passing_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,passing_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,receiving_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,receptions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,rush_attempts,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,rushing_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,rushing_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,sack_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,sacks,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q1,targets,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,completions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,fumbles_lost,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,interceptions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,pass_attempts,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,passing_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,passing_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,receiving_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,receptions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,rush_attempts,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,rushing_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,rushing_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,sack_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,sacks,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q2,targets,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,completions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,fumbles_lost,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,interceptions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,pass_attempts,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,passing_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,passing_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,receiving_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,receiving_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,receptions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,rush_attempts,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,rushing_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,rushing_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,sack_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,sacks,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q3,targets,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,completions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,fumbles_lost,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,interceptions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,pass_attempts,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,passing_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,passing_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,receiving_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,receiving_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,receptions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,rush_attempts,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,rushing_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,rushing_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,sack_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,sacks,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,Q4,targets,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,completions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,fumbles_lost,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,interceptions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,pass_attempts,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,passing_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,passing_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,receiving_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,receiving_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,receptions,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,rush_attempts,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,rushing_touchdowns,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,rushing_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,sack_yards,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,sacks,0.0,0.0,332
+00-0041149,Haynes King,CAR,QB,OT,targets,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,completions,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,fumbles_lost,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,interceptions,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,pass_attempts,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,passing_touchdowns,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,passing_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,receiving_touchdowns,0.018072289156626505,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,receiving_yards,4.349397590361446,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,receptions,0.46686746987951805,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,rush_attempts,0.04819277108433735,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,rushing_touchdowns,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,rushing_yards,0.24397590361445784,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,sack_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,sacks,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q1,targets,0.7560240963855421,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,completions,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,fumbles_lost,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,interceptions,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,pass_attempts,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,passing_touchdowns,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,passing_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,receiving_touchdowns,0.02108433734939759,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,receiving_yards,4.644578313253012,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,receptions,0.43373493975903615,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,rush_attempts,0.03614457831325301,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,rushing_yards,0.1686746987951807,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,sack_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,sacks,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q2,targets,0.7439759036144579,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,completions,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,fumbles_lost,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,interceptions,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,pass_attempts,0.0030120481927710845,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,passing_touchdowns,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,passing_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,receiving_touchdowns,0.018072289156626505,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,receiving_yards,3.789156626506024,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,receptions,0.3825301204819277,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,rush_attempts,0.06626506024096386,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,rushing_yards,0.2560240963855422,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,sack_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,sacks,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q3,targets,0.6746987951807228,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,completions,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,fumbles_lost,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,interceptions,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,pass_attempts,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,passing_touchdowns,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,passing_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,receiving_touchdowns,0.04216867469879518,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,receiving_yards,4.286144578313253,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,receptions,0.4367469879518072,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,rush_attempts,0.05120481927710843,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,rushing_touchdowns,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,rushing_yards,0.20180722891566266,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,sack_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,sacks,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,Q4,targets,0.7409638554216867,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,completions,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,fumbles_lost,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,interceptions,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,pass_attempts,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,passing_touchdowns,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,passing_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,receiving_touchdowns,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,receiving_yards,0.19879518072289157,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,receptions,0.024096385542168676,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,rush_attempts,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,rushing_touchdowns,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,rushing_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,sack_yards,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,sacks,0.0,0.0,332
+00-0033881,Evan Engram,DEN,TE,OT,targets,0.030120481927710843,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,completions,0.006024096385542169,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,interceptions,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,pass_attempts,0.006024096385542169,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,passing_yards,0.09337349397590361,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,receiving_touchdowns,0.0572289156626506,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,receiving_yards,18.731927710843372,14.5,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,receptions,1.644578313253012,1.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,rush_attempts,0.04216867469879518,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,rushing_yards,0.21686746987951808,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,sack_yards,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,sacks,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q1,targets,2.8493975903614457,3.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,completions,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,interceptions,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,pass_attempts,0.0030120481927710845,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,passing_yards,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,receiving_touchdowns,0.06927710843373494,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,receiving_yards,18.150602409638555,13.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,receptions,1.7319277108433735,1.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,rush_attempts,0.08734939759036145,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,rushing_touchdowns,0.006024096385542169,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,rushing_yards,0.3825301204819277,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,sack_yards,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,sacks,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q2,targets,3.1566265060240966,3.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,completions,0.0030120481927710845,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,interceptions,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,pass_attempts,0.0030120481927710845,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,passing_yards,-0.006024096385542169,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,receiving_touchdowns,0.05421686746987952,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,receiving_yards,16.906626506024097,12.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,receptions,1.605421686746988,1.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,rush_attempts,0.08132530120481928,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,rushing_touchdowns,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,rushing_yards,0.28012048192771083,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,sack_yards,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,sacks,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q3,targets,2.852409638554217,2.5,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,completions,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,fumbles_lost,0.0030120481927710845,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,interceptions,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,pass_attempts,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,passing_yards,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,receiving_touchdowns,0.0963855421686747,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,receiving_yards,17.53614457831325,13.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,receptions,1.5903614457831325,1.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,rush_attempts,0.08433734939759036,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,rushing_touchdowns,0.006024096385542169,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,rushing_yards,0.3433734939759036,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,sack_yards,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,sacks,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,Q4,targets,2.7198795180722892,2.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,completions,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,fumbles_lost,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,interceptions,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,pass_attempts,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,passing_yards,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,receiving_yards,0.7198795180722891,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,receptions,0.06626506024096386,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,rush_attempts,0.0030120481927710845,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,rushing_yards,0.012048192771084338,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,sack_yards,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,sacks,0.0,0.0,332
+00-0034348,Courtland Sutton,DEN,WR,OT,targets,0.11746987951807229,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,completions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,fumbles_lost,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,interceptions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,pass_attempts,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,passing_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,passing_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,receiving_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,receptions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,rush_attempts,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,rushing_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,rushing_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,sack_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,sacks,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q1,targets,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,completions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,fumbles_lost,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,interceptions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,pass_attempts,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,passing_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,passing_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,receiving_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,receptions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,rush_attempts,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,rushing_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,rushing_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,sack_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,sacks,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q2,targets,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,completions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,fumbles_lost,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,interceptions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,pass_attempts,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,passing_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,passing_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,receiving_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,receiving_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,receptions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,rush_attempts,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,rushing_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,rushing_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,sack_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,sacks,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q3,targets,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,completions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,fumbles_lost,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,interceptions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,pass_attempts,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,passing_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,passing_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,receiving_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,receiving_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,receptions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,rush_attempts,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,rushing_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,rushing_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,sack_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,sacks,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,Q4,targets,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,completions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,fumbles_lost,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,interceptions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,pass_attempts,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,passing_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,passing_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,receiving_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,receiving_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,receptions,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,rush_attempts,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,rushing_touchdowns,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,rushing_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,sack_yards,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,sacks,0.0,0.0,332
+00-0035264,Jarrett Stidham,DEN,QB,OT,targets,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,completions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,interceptions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,pass_attempts,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,passing_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,receiving_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,receiving_yards,0.9969879518072289,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,receptions,0.08433734939759036,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,rush_attempts,0.030120481927710843,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,rushing_yards,0.15060240963855423,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,sack_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,sacks,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q1,targets,0.1536144578313253,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,completions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,interceptions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,pass_attempts,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,passing_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,receiving_yards,0.9307228915662651,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,receptions,0.08433734939759036,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,rush_attempts,0.030120481927710843,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,rushing_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,rushing_yards,0.25,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,sack_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,sacks,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q2,targets,0.16265060240963855,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,completions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,interceptions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,pass_attempts,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,passing_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,receiving_yards,0.8945783132530121,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,receptions,0.08433734939759036,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,rush_attempts,0.009036144578313253,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,rushing_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,rushing_yards,0.02710843373493976,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,sack_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,sacks,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q3,targets,0.1355421686746988,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,completions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,interceptions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,pass_attempts,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,passing_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,receiving_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,receiving_yards,0.8644578313253012,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,receptions,0.07530120481927711,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,rush_attempts,0.018072289156626505,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,rushing_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,rushing_yards,0.05421686746987952,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,sack_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,sacks,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,Q4,targets,0.14457831325301204,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,completions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,fumbles_lost,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,interceptions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,pass_attempts,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,passing_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,receiving_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,receptions,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,rush_attempts,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,rushing_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,sack_yards,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,sacks,0.0,0.0,332
+00-0035406,Lil'Jordan Humphrey,DEN,WR,OT,targets,0.006024096385542169,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,completions,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,fumbles_lost,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,interceptions,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,pass_attempts,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,passing_touchdowns,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,passing_yards,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,receiving_touchdowns,0.02710843373493976,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,receiving_yards,3.460843373493976,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,receptions,0.4457831325301205,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,rush_attempts,2.141566265060241,2.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,rushing_touchdowns,0.05120481927710843,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,rushing_yards,8.593373493975903,4.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,sack_yards,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,sacks,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q1,targets,0.6445783132530121,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,completions,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,fumbles_lost,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,interceptions,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,pass_attempts,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,passing_touchdowns,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,passing_yards,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,receiving_touchdowns,0.02108433734939759,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,receiving_yards,4.319277108433735,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,receptions,0.5120481927710844,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,rush_attempts,2.1626506024096384,2.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,rushing_touchdowns,0.07228915662650602,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,rushing_yards,9.135542168674698,5.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,sack_yards,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,sacks,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q2,targets,0.7710843373493976,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,completions,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,fumbles_lost,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,interceptions,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,pass_attempts,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,passing_touchdowns,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,passing_yards,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,receiving_touchdowns,0.012048192771084338,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,receiving_yards,3.966867469879518,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,receptions,0.4578313253012048,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,rush_attempts,2.325301204819277,2.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,rushing_touchdowns,0.04216867469879518,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,rushing_yards,9.587349397590362,5.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,sack_yards,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,sacks,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q3,targets,0.6596385542168675,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,completions,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,fumbles_lost,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,interceptions,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,pass_attempts,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,passing_touchdowns,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,passing_yards,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,receiving_touchdowns,0.018072289156626505,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,receiving_yards,3.8734939759036147,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,receptions,0.49698795180722893,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,rush_attempts,2.4819277108433737,2.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,rushing_touchdowns,0.07530120481927711,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,rushing_yards,10.521084337349398,6.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,sack_yards,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,sacks,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,Q4,targets,0.7349397590361446,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,completions,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,fumbles_lost,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,interceptions,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,pass_attempts,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,passing_touchdowns,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,passing_yards,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,receiving_touchdowns,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,receiving_yards,0.2319277108433735,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,receptions,0.024096385542168676,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,rush_attempts,0.08734939759036145,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,rushing_touchdowns,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,rushing_yards,0.32831325301204817,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,sack_yards,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,sacks,0.0,0.0,332
+00-0036158,J.K. Dobbins,DEN,RB,OT,targets,0.02710843373493976,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,completions,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,fumbles_lost,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,interceptions,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,pass_attempts,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,passing_touchdowns,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,passing_yards,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,receiving_touchdowns,0.02108433734939759,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,receiving_yards,3.9216867469879517,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,receptions,0.41566265060240964,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,rush_attempts,0.045180722891566265,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,rushing_touchdowns,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,rushing_yards,0.17771084337349397,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,sack_yards,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,sacks,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q1,targets,0.6746987951807228,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,completions,0.0030120481927710845,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,fumbles_lost,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,interceptions,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,pass_attempts,0.0030120481927710845,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,passing_touchdowns,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,passing_yards,0.03313253012048193,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,receiving_touchdowns,0.03313253012048193,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,receiving_yards,3.894578313253012,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,receptions,0.4397590361445783,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,rush_attempts,0.0572289156626506,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,rushing_touchdowns,0.006024096385542169,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,rushing_yards,0.4307228915662651,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,sack_yards,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,sacks,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q2,targets,0.6987951807228916,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,completions,0.0030120481927710845,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,fumbles_lost,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,interceptions,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,pass_attempts,0.0030120481927710845,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,passing_touchdowns,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,passing_yards,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,receiving_touchdowns,0.018072289156626505,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,receiving_yards,3.4156626506024095,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,receptions,0.3463855421686747,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,rush_attempts,0.060240963855421686,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,rushing_touchdowns,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,rushing_yards,0.3313253012048193,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,sack_yards,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,sacks,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q3,targets,0.6265060240963856,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,completions,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,fumbles_lost,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,interceptions,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,pass_attempts,0.006024096385542169,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,passing_touchdowns,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,passing_yards,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,receiving_touchdowns,0.04216867469879518,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,receiving_yards,3.4216867469879517,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,receptions,0.3433734939759036,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,rush_attempts,0.060240963855421686,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,rushing_touchdowns,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,rushing_yards,0.3102409638554217,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,sack_yards,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,sacks,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,Q4,targets,0.5783132530120482,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,completions,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,fumbles_lost,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,interceptions,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,pass_attempts,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,passing_touchdowns,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,passing_yards,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,receiving_touchdowns,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,receiving_yards,0.20783132530120482,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,receptions,0.018072289156626505,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,rush_attempts,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,rushing_touchdowns,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,rushing_yards,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,sack_yards,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,sacks,0.0,0.0,332
+00-0036422,Adam Trautman,DEN,TE,OT,targets,0.02108433734939759,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,completions,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,interceptions,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,pass_attempts,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,passing_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,receiving_touchdowns,0.012048192771084338,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,receiving_yards,2.6716867469879517,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,receptions,0.25903614457831325,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,rush_attempts,0.009036144578313253,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,rushing_yards,0.018072289156626505,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,sack_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,sacks,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q1,targets,0.4307228915662651,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,completions,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,interceptions,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,pass_attempts,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,passing_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,receiving_yards,2.2740963855421685,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,receptions,0.20481927710843373,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,rush_attempts,0.018072289156626505,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,rushing_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,rushing_yards,0.04819277108433735,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,sack_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,sacks,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q2,targets,0.39759036144578314,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,completions,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,interceptions,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,pass_attempts,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,passing_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,receiving_touchdowns,0.012048192771084338,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,receiving_yards,2.466867469879518,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,receptions,0.21987951807228914,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,rush_attempts,0.009036144578313253,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,rushing_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,rushing_yards,0.0391566265060241,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,sack_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,sacks,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q3,targets,0.3704819277108434,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,completions,0.0030120481927710845,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,interceptions,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,pass_attempts,0.0030120481927710845,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,passing_yards,0.03313253012048193,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,receiving_yards,2.8132530120481927,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,receptions,0.2560240963855422,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,rush_attempts,0.030120481927710843,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,rushing_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,rushing_yards,0.10542168674698796,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,sack_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,sacks,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,Q4,targets,0.46686746987951805,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,completions,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,fumbles_lost,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,interceptions,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,pass_attempts,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,passing_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,receiving_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,receptions,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,rush_attempts,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,rushing_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,sack_yards,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,sacks,0.0,0.0,332
+00-0036613,Jaylen Waddle,DEN,WR,OT,targets,0.0030120481927710845,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,completions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,fumbles_lost,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,interceptions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,pass_attempts,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,passing_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,passing_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,receiving_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,receptions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,rush_attempts,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,rushing_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,rushing_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,sack_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,sacks,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q1,targets,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,completions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,fumbles_lost,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,interceptions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,pass_attempts,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,passing_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,passing_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,receiving_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,receptions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,rush_attempts,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,rushing_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,rushing_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,sack_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,sacks,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q2,targets,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,completions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,fumbles_lost,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,interceptions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,pass_attempts,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,passing_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,passing_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,receiving_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,receiving_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,receptions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,rush_attempts,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,rushing_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,rushing_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,sack_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,sacks,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q3,targets,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,completions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,fumbles_lost,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,interceptions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,pass_attempts,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,passing_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,passing_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,receiving_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,receiving_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,receptions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,rush_attempts,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,rushing_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,rushing_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,sack_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,sacks,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,Q4,targets,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,completions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,fumbles_lost,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,interceptions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,pass_attempts,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,passing_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,passing_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,receiving_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,receiving_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,receptions,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,rush_attempts,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,rushing_touchdowns,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,rushing_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,sack_yards,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,sacks,0.0,0.0,332
+00-0036727,Adam Prentice,DEN,FB,OT,targets,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,completions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,fumbles_lost,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,interceptions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,pass_attempts,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,passing_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,passing_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,receiving_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,receptions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,rush_attempts,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,rushing_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,rushing_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,sack_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,sacks,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q1,targets,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,completions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,fumbles_lost,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,interceptions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,pass_attempts,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,passing_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,passing_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,receiving_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,receptions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,rush_attempts,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,rushing_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,rushing_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,sack_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,sacks,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q2,targets,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,completions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,fumbles_lost,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,interceptions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,pass_attempts,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,passing_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,passing_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,receiving_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,receiving_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,receptions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,rush_attempts,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,rushing_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,rushing_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,sack_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,sacks,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q3,targets,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,completions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,fumbles_lost,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,interceptions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,pass_attempts,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,passing_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,passing_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,receiving_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,receiving_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,receptions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,rush_attempts,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,rushing_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,rushing_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,sack_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,sacks,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,Q4,targets,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,completions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,fumbles_lost,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,interceptions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,pass_attempts,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,passing_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,passing_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,receiving_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,receiving_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,receptions,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,rush_attempts,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,rushing_touchdowns,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,rushing_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,sack_yards,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,sacks,0.0,0.0,332
+00-0036879,Sam Ehlinger,DEN,QB,OT,targets,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,completions,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,fumbles_lost,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,interceptions,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,pass_attempts,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,passing_touchdowns,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,passing_yards,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,receiving_yards,1.1385542168674698,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,receptions,0.15060240963855423,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,rush_attempts,0.6867469879518072,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,rushing_touchdowns,0.015060240963855422,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,rushing_yards,3.1506024096385543,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,sack_yards,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,sacks,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q1,targets,0.2289156626506024,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,completions,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,fumbles_lost,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,interceptions,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,pass_attempts,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,passing_touchdowns,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,passing_yards,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,receiving_yards,1.9487951807228916,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,receptions,0.20481927710843373,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,rush_attempts,0.6174698795180723,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,rushing_touchdowns,0.02710843373493976,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,rushing_yards,2.608433734939759,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,sack_yards,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,sacks,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q2,targets,0.30120481927710846,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,completions,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,fumbles_lost,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,interceptions,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,pass_attempts,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,passing_touchdowns,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,passing_yards,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,receiving_yards,1.5120481927710843,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,receptions,0.16265060240963855,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,rush_attempts,0.6626506024096386,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,rushing_touchdowns,0.015060240963855422,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,rushing_yards,2.7740963855421685,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,sack_yards,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,sacks,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q3,targets,0.24096385542168675,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,completions,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,fumbles_lost,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,interceptions,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,pass_attempts,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,passing_touchdowns,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,passing_yards,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,receiving_yards,0.9126506024096386,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,receptions,0.12349397590361445,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,rush_attempts,0.7259036144578314,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,rushing_touchdowns,0.03313253012048193,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,rushing_yards,2.7710843373493974,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,sack_yards,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,sacks,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,Q4,targets,0.20180722891566266,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,completions,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,fumbles_lost,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,interceptions,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,pass_attempts,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,passing_touchdowns,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,passing_yards,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,receiving_touchdowns,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,receiving_yards,0.0030120481927710845,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,receptions,0.0030120481927710845,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,rush_attempts,0.015060240963855422,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,rushing_touchdowns,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,rushing_yards,0.06927710843373494,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,sack_yards,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,sacks,0.0,0.0,332
+00-0037085,Tyler Badie,DEN,RB,OT,targets,0.012048192771084338,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,completions,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,fumbles_lost,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,interceptions,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,pass_attempts,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,passing_touchdowns,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,passing_yards,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,receiving_yards,1.8704819277108433,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,receptions,0.19578313253012047,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,rush_attempts,0.045180722891566265,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,rushing_touchdowns,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,rushing_yards,0.1144578313253012,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,sack_yards,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,sacks,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q1,targets,0.2921686746987952,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,completions,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,fumbles_lost,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,interceptions,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,pass_attempts,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,passing_touchdowns,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,passing_yards,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,receiving_touchdowns,0.015060240963855422,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,receiving_yards,1.319277108433735,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,receptions,0.1566265060240964,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,rush_attempts,0.02710843373493976,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,rushing_touchdowns,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,rushing_yards,0.10843373493975904,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,sack_yards,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,sacks,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q2,targets,0.26506024096385544,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,completions,0.0030120481927710845,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,fumbles_lost,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,interceptions,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,pass_attempts,0.0030120481927710845,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,passing_touchdowns,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,passing_yards,0.030120481927710843,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,receiving_touchdowns,0.015060240963855422,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,receiving_yards,1.1837349397590362,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,receptions,0.1536144578313253,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,rush_attempts,0.02108433734939759,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,rushing_yards,0.06927710843373494,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,sack_yards,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,sacks,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q3,targets,0.2560240963855422,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,completions,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,fumbles_lost,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,interceptions,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,pass_attempts,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,passing_touchdowns,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,passing_yards,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,receiving_yards,1.7951807228915662,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,receptions,0.1897590361445783,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,rush_attempts,0.0572289156626506,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,rushing_yards,0.20783132530120482,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,sack_yards,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,sacks,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,Q4,targets,0.2740963855421687,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,completions,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,fumbles_lost,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,interceptions,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,pass_attempts,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,passing_touchdowns,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,passing_yards,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,receiving_touchdowns,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,receiving_yards,-0.0030120481927710845,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,receptions,0.0030120481927710845,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,rush_attempts,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,rushing_touchdowns,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,rushing_yards,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,sack_yards,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,sacks,0.0,0.0,332
+00-0038783,Nate Adkins,DEN,TE,OT,targets,0.006024096385542169,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,completions,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,interceptions,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,pass_attempts,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,passing_yards,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,receiving_yards,2.6987951807228914,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,receptions,0.24096385542168675,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,rush_attempts,0.04819277108433735,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,rushing_yards,0.16265060240963855,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,sack_yards,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,sacks,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q1,targets,0.42168674698795183,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,completions,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,interceptions,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,pass_attempts,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,passing_yards,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,receiving_touchdowns,0.018072289156626505,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,receiving_yards,3.397590361445783,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,receptions,0.2921686746987952,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,rush_attempts,0.0572289156626506,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,rushing_yards,0.35240963855421686,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,sack_yards,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,sacks,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q2,targets,0.4759036144578313,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,completions,0.0030120481927710845,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,interceptions,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,pass_attempts,0.0030120481927710845,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,passing_yards,0.045180722891566265,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,receiving_yards,3.496987951807229,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,receptions,0.32228915662650603,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,rush_attempts,0.04819277108433735,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,rushing_touchdowns,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,rushing_yards,0.22590361445783133,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,sack_yards,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,sacks,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q3,targets,0.5572289156626506,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,completions,0.006024096385542169,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,interceptions,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,pass_attempts,0.006024096385542169,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,passing_yards,0.07530120481927711,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,receiving_touchdowns,0.012048192771084338,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,receiving_yards,2.855421686746988,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,receptions,0.24397590361445784,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,rush_attempts,0.060240963855421686,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,rushing_yards,0.1927710843373494,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,sack_yards,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,sacks,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,Q4,targets,0.42168674698795183,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,completions,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,fumbles_lost,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,interceptions,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,pass_attempts,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,passing_yards,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,receiving_yards,0.04216867469879518,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,receptions,0.009036144578313253,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,rush_attempts,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,rushing_yards,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,sack_yards,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,sacks,0.0,0.0,332
+00-0038976,Marvin Mims Jr.,DEN,WR,OT,targets,0.024096385542168676,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,completions,5.551204819277109,5.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,fumbles_lost,0.015060240963855422,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,interceptions,0.09036144578313253,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,pass_attempts,9.015060240963855,9.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,passing_touchdowns,0.22590361445783133,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,passing_yards,56.66265060240964,54.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,receiving_touchdowns,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,receiving_yards,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,receptions,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,rush_attempts,1.1385542168674698,1.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,rushing_touchdowns,0.045180722891566265,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,rushing_yards,5.5,2.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,sack_yards,-0.8253012048192772,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,sacks,0.11746987951807229,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q1,targets,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,completions,6.009036144578313,6.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,fumbles_lost,0.030120481927710843,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,interceptions,0.12650602409638553,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,pass_attempts,10.069277108433734,10.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,passing_touchdowns,0.2680722891566265,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,passing_yards,58.713855421686745,55.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,receiving_touchdowns,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,receiving_yards,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,receptions,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,rush_attempts,1.1355421686746987,1.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,rushing_touchdowns,0.07228915662650602,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,rushing_yards,6.105421686746988,3.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,sack_yards,-0.7740963855421686,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,sacks,0.12048192771084337,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q2,targets,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,completions,5.358433734939759,5.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,fumbles_lost,0.018072289156626505,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,interceptions,0.09036144578313253,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,pass_attempts,9.021084337349398,9.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,passing_touchdowns,0.19879518072289157,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,passing_yards,52.49698795180723,50.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,receiving_touchdowns,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,receiving_yards,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,receptions,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,rush_attempts,1.2319277108433735,1.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,rushing_touchdowns,0.05421686746987952,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,rushing_yards,5.828313253012048,2.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,sack_yards,-0.7078313253012049,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,sacks,0.09939759036144578,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q3,targets,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,completions,5.307228915662651,5.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,fumbles_lost,0.012048192771084338,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,interceptions,0.09939759036144578,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,pass_attempts,8.743975903614459,9.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,passing_touchdowns,0.27710843373493976,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,passing_yards,54.036144578313255,51.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,receiving_touchdowns,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,receiving_yards,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,receptions,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,rush_attempts,1.3012048192771084,1.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,rushing_touchdowns,0.060240963855421686,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,rushing_yards,6.816265060240964,3.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,sack_yards,-0.608433734939759,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,sacks,0.09036144578313253,0.0,332
+00-0039732,Bo Nix,DEN,QB,Q4,targets,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,completions,0.19879518072289157,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,fumbles_lost,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,interceptions,0.0030120481927710845,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,pass_attempts,0.32831325301204817,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,passing_touchdowns,0.006024096385542169,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,passing_yards,2.0120481927710845,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,receiving_touchdowns,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,receiving_yards,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,receptions,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,rush_attempts,0.04819277108433735,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,rushing_touchdowns,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,rushing_yards,0.28012048192771083,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,sack_yards,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,sacks,0.0,0.0,332
+00-0039732,Bo Nix,DEN,QB,OT,targets,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,completions,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,interceptions,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,pass_attempts,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,passing_yards,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,receiving_touchdowns,0.018072289156626505,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,receiving_yards,5.451807228915663,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,receptions,0.4759036144578313,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,rush_attempts,0.045180722891566265,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,rushing_yards,0.24397590361445784,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,sack_yards,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,sacks,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q1,targets,0.8734939759036144,1.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,completions,0.0030120481927710845,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,interceptions,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,pass_attempts,0.0030120481927710845,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,passing_yards,0.018072289156626505,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,receiving_touchdowns,0.030120481927710843,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,receiving_yards,5.984939759036145,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,receptions,0.5783132530120482,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,rush_attempts,0.030120481927710843,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,rushing_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,rushing_yards,0.1927710843373494,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,sack_yards,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,sacks,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q2,targets,1.0632530120481927,1.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,completions,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,interceptions,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,pass_attempts,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,passing_yards,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,receiving_touchdowns,0.02710843373493976,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,receiving_yards,6.617469879518072,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,receptions,0.6174698795180723,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,rush_attempts,0.05120481927710843,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,rushing_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,rushing_yards,0.2319277108433735,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,sack_yards,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,sacks,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q3,targets,1.1174698795180722,1.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,completions,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,interceptions,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,pass_attempts,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,passing_yards,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,receiving_touchdowns,0.015060240963855422,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,receiving_yards,5.548192771084337,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,receptions,0.5120481927710844,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,rush_attempts,0.045180722891566265,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,rushing_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,rushing_yards,0.11746987951807229,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,sack_yards,-0.0572289156626506,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,sacks,0.0030120481927710845,0.0,332
+00-0039868,Troy Franklin,DEN,WR,Q4,targets,0.8795180722891566,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,completions,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,fumbles_lost,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,interceptions,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,pass_attempts,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,passing_yards,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,receiving_yards,0.24096385542168675,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,receptions,0.018072289156626505,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,rush_attempts,0.006024096385542169,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,rushing_yards,0.015060240963855422,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,sack_yards,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,sacks,0.0,0.0,332
+00-0039868,Troy Franklin,DEN,WR,OT,targets,0.030120481927710843,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,completions,0.0030120481927710845,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,fumbles_lost,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,interceptions,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,pass_attempts,0.0030120481927710845,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,passing_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,passing_yards,0.03614457831325301,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,receiving_touchdowns,0.012048192771084338,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,receiving_yards,5.743975903614458,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,receptions,0.49096385542168675,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,rush_attempts,0.02710843373493976,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,rushing_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,rushing_yards,0.11746987951807229,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,sack_yards,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,sacks,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q1,targets,0.7560240963855421,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,completions,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,fumbles_lost,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,interceptions,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,pass_attempts,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,passing_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,passing_yards,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,receiving_touchdowns,0.018072289156626505,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,receiving_yards,5.006024096385542,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,receptions,0.5210843373493976,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,rush_attempts,0.0391566265060241,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,rushing_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,rushing_yards,0.25,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,sack_yards,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,sacks,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q2,targets,0.9066265060240963,1.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,completions,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,fumbles_lost,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,interceptions,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,pass_attempts,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,passing_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,passing_yards,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,receiving_touchdowns,0.012048192771084338,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,receiving_yards,4.168674698795181,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,receptions,0.42168674698795183,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,rush_attempts,0.04216867469879518,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,rushing_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,rushing_yards,0.09036144578313253,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,sack_yards,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,sacks,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q3,targets,0.6656626506024096,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,completions,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,fumbles_lost,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,interceptions,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,pass_attempts,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,passing_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,passing_yards,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,receiving_touchdowns,0.018072289156626505,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,receiving_yards,4.789156626506024,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,receptions,0.42168674698795183,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,rush_attempts,0.03313253012048193,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,rushing_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,rushing_yards,0.1746987951807229,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,sack_yards,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,sacks,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,Q4,targets,0.6837349397590361,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,completions,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,fumbles_lost,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,interceptions,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,pass_attempts,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,passing_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,passing_yards,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,receiving_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,receiving_yards,0.25,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,receptions,0.012048192771084338,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,rush_attempts,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,rushing_touchdowns,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,rushing_yards,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,sack_yards,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,sacks,0.0,0.0,332
+00-0040134,Pat Bryant,DEN,WR,OT,targets,0.02108433734939759,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,completions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,fumbles_lost,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,interceptions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,pass_attempts,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,passing_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,passing_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,receiving_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,receiving_yards,0.012048192771084338,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,receptions,0.0030120481927710845,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,rush_attempts,0.0030120481927710845,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,rushing_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,rushing_yards,0.03313253012048193,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,sack_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,sacks,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q1,targets,0.006024096385542169,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,completions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,fumbles_lost,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,interceptions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,pass_attempts,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,passing_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,passing_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,receiving_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,receiving_yards,0.03313253012048193,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,receptions,0.006024096385542169,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,rush_attempts,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,rushing_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,rushing_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,sack_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,sacks,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q2,targets,0.009036144578313253,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,completions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,fumbles_lost,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,interceptions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,pass_attempts,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,passing_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,passing_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,receiving_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,receiving_yards,0.04819277108433735,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,receptions,0.009036144578313253,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,rush_attempts,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,rushing_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,rushing_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,sack_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,sacks,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q3,targets,0.012048192771084338,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,completions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,fumbles_lost,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,interceptions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,pass_attempts,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,passing_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,passing_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,receiving_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,receiving_yards,0.012048192771084338,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,receptions,0.0030120481927710845,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,rush_attempts,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,rushing_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,rushing_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,sack_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,sacks,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,Q4,targets,0.0030120481927710845,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,completions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,fumbles_lost,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,interceptions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,pass_attempts,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,passing_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,passing_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,receiving_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,receiving_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,receptions,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,rush_attempts,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,rushing_touchdowns,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,rushing_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,sack_yards,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,sacks,0.0,0.0,332
+00-0040240,Caleb Lohner,DEN,TE,OT,targets,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,completions,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,fumbles_lost,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,interceptions,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,pass_attempts,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,passing_touchdowns,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,passing_yards,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,receiving_touchdowns,0.03614457831325301,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,receiving_yards,4.849397590361446,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,receptions,0.5933734939759037,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,rush_attempts,2.4728915662650603,2.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,rushing_touchdowns,0.06626506024096386,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,rushing_yards,10.228915662650602,6.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,sack_yards,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,sacks,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q1,targets,0.7740963855421686,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,completions,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,fumbles_lost,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,interceptions,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,pass_attempts,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,passing_touchdowns,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,passing_yards,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,receiving_touchdowns,0.024096385542168676,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,receiving_yards,5.156626506024097,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,receptions,0.6325301204819277,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,rush_attempts,2.075301204819277,1.5,332
+00-0040730,RJ Harvey,DEN,RB,Q2,rushing_touchdowns,0.045180722891566265,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,rushing_yards,8.177710843373495,4.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,sack_yards,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,sacks,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q2,targets,0.8162650602409639,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,completions,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,fumbles_lost,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,interceptions,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,pass_attempts,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,passing_touchdowns,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,passing_yards,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,receiving_yards,3.3102409638554215,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,receptions,0.4608433734939759,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,rush_attempts,2.4578313253012047,2.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,rushing_touchdowns,0.06927710843373494,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,rushing_yards,9.855421686746988,5.5,332
+00-0040730,RJ Harvey,DEN,RB,Q3,sack_yards,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,sacks,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q3,targets,0.6807228915662651,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,completions,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,fumbles_lost,0.0030120481927710845,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,interceptions,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,pass_attempts,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,passing_touchdowns,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,passing_yards,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,receiving_touchdowns,0.009036144578313253,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,receiving_yards,4.093373493975903,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,receptions,0.4819277108433735,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,rush_attempts,2.5873493975903616,2.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,rushing_touchdowns,0.0783132530120482,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,rushing_yards,11.060240963855422,5.5,332
+00-0040730,RJ Harvey,DEN,RB,Q4,sack_yards,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,sacks,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,Q4,targets,0.713855421686747,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,completions,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,fumbles_lost,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,interceptions,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,pass_attempts,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,passing_touchdowns,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,passing_yards,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,receiving_yards,0.10240963855421686,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,receptions,0.018072289156626505,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,rush_attempts,0.04819277108433735,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,rushing_touchdowns,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,rushing_yards,0.21084337349397592,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,sack_yards,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,sacks,0.0,0.0,332
+00-0040730,RJ Harvey,DEN,RB,OT,targets,0.02710843373493976,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,completions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,fumbles_lost,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,interceptions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,pass_attempts,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,passing_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,passing_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,receiving_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,receiving_yards,0.018072289156626505,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,receptions,0.0030120481927710845,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,rush_attempts,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,rushing_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,rushing_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,sack_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,sacks,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q1,targets,0.0030120481927710845,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,completions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,fumbles_lost,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,interceptions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,pass_attempts,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,passing_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,passing_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,receiving_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,receiving_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,receptions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,rush_attempts,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,rushing_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,rushing_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,sack_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,sacks,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q2,targets,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,completions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,fumbles_lost,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,interceptions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,pass_attempts,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,passing_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,passing_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,receiving_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,receiving_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,receptions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,rush_attempts,0.006024096385542169,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,rushing_yards,0.03614457831325301,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,sack_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,sacks,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q3,targets,0.0030120481927710845,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,completions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,fumbles_lost,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,interceptions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,pass_attempts,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,passing_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,passing_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,receiving_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,receiving_yards,0.09939759036144578,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,receptions,0.006024096385542169,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,rush_attempts,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,rushing_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,rushing_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,sack_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,sacks,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,Q4,targets,0.009036144578313253,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,completions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,fumbles_lost,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,interceptions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,pass_attempts,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,passing_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,passing_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,receiving_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,receiving_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,receptions,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,rush_attempts,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,rushing_touchdowns,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,rushing_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,sack_yards,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,sacks,0.0,0.0,332
+00-0041133,Dallen Bentley,DEN,TE,OT,targets,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,completions,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,fumbles_lost,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,interceptions,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,pass_attempts,0.0030120481927710845,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,passing_touchdowns,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,passing_yards,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,receiving_yards,0.8765060240963856,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,receptions,0.09036144578313253,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,rush_attempts,0.8765060240963856,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,rushing_touchdowns,0.030120481927710843,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,rushing_yards,3.6144578313253013,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,sack_yards,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,sacks,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q1,targets,0.16265060240963855,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,completions,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,fumbles_lost,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,interceptions,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,pass_attempts,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,passing_touchdowns,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,passing_yards,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,receiving_yards,1.7048192771084338,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,receptions,0.21686746987951808,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,rush_attempts,0.9518072289156626,1.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,rushing_touchdowns,0.015060240963855422,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,rushing_yards,3.0813253012048194,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,sack_yards,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,sacks,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q2,targets,0.3102409638554217,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,completions,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,fumbles_lost,0.0030120481927710845,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,interceptions,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,pass_attempts,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,passing_touchdowns,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,passing_yards,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,receiving_yards,0.7891566265060241,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,receptions,0.12650602409638553,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,rush_attempts,0.7439759036144579,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,rushing_touchdowns,0.03313253012048193,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,rushing_yards,3.0813253012048194,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,sack_yards,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,sacks,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q3,targets,0.18373493975903615,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,completions,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,fumbles_lost,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,interceptions,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,pass_attempts,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,passing_touchdowns,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,passing_yards,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,receiving_touchdowns,0.006024096385542169,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,receiving_yards,1.2439759036144578,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,receptions,0.1355421686746988,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,rush_attempts,0.9307228915662651,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,rushing_touchdowns,0.0391566265060241,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,rushing_yards,3.713855421686747,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,sack_yards,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,sacks,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,Q4,targets,0.18674698795180722,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,completions,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,fumbles_lost,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,interceptions,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,pass_attempts,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,passing_touchdowns,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,passing_yards,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,receiving_touchdowns,0.0030120481927710845,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,receiving_yards,0.018072289156626505,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,receptions,0.0030120481927710845,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,rush_attempts,0.030120481927710843,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,rushing_touchdowns,0.0030120481927710845,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,rushing_yards,0.12048192771084337,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,sack_yards,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,sacks,0.0,0.0,332
+00-0041496,Jonah Coleman,DEN,RB,OT,targets,0.0030120481927710845,0.0,332

@@ -1,0 +1,362 @@
+{
+  "adaptive_workload_input_sha256": "cec16cb2462ef71eaf0fc5d300ce6729e57c915b114dd8615f8e7d924986a618",
+  "arms": {
+    "C": [
+      {
+        "arm": "C",
+        "artifacts": {
+          "c-ARI_SEA-300001-300334.boxscores.jsonl": {
+            "bytes": 24722910,
+            "gzip": "c-ARI_SEA-300001-300334.boxscores.jsonl.gz",
+            "gzip_bytes": 2859884,
+            "gzip_sha256": "e580f8f93dfee45d8ba43cbbfd4faba351e0b3495b47cb5a0861f257715ec6ca",
+            "sha256": "a08222dfa236427ef1771e455dc12f7954c7efdf646cde33cff5d16c0e6cc472"
+          },
+          "c-ARI_SEA-300001-300334.json": {
+            "bytes": 85552470,
+            "gzip": "c-ARI_SEA-300001-300334.json.gz",
+            "gzip_bytes": 7517245,
+            "gzip_sha256": "1b24589b93e8d43b870b976b3e912732207ac1621a788dcfc861500fa168dcff",
+            "sha256": "2224640c840f0a13d3731ca03d65589435de0fe06b3f04443efedd09a003713e"
+          },
+          "c-ARI_SEA-300001-300334.seeds.jsonl": {
+            "bytes": 60134295,
+            "gzip": "c-ARI_SEA-300001-300334.seeds.jsonl.gz",
+            "gzip_bytes": 6364078,
+            "gzip_sha256": "697125aebf07756a03488ab5fb4f18a430b046510f976630c62b0742e308d02b",
+            "sha256": "86b5e776581bb49092f29eb4872ee358c3bc93192baabca2b53b6e0400d91672"
+          }
+        },
+        "control_ledger": null,
+        "games": 334,
+        "log": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/c-ARI_SEA-300001-300334.log",
+        "matchup": "ARI_SEA",
+        "seed_end": 300334,
+        "seed_start": 300001
+      },
+      {
+        "arm": "C",
+        "artifacts": {
+          "c-DAL_IND-300335-300667.boxscores.jsonl": {
+            "bytes": 22863359,
+            "gzip": "c-DAL_IND-300335-300667.boxscores.jsonl.gz",
+            "gzip_bytes": 2706386,
+            "gzip_sha256": "eef286ca66471f7c98b44834a75a3910aa97133bd24c3123d7fece8c402e3582",
+            "sha256": "c6409461f64624b77b2202fc0ca46ffa452c8925cf6dd064be182e7cddf5dfb9"
+          },
+          "c-DAL_IND-300335-300667.json": {
+            "bytes": 80388251,
+            "gzip": "c-DAL_IND-300335-300667.json.gz",
+            "gzip_bytes": 7036096,
+            "gzip_sha256": "b767e720dd5e73589cc10b8fba8886ed37cf7fe8379a6846c341bbc8d7a21c3a",
+            "sha256": "7913486cbf3964ef756a498120ebff457e9bf39d57c9eef3017bec4618d4434b"
+          },
+          "c-DAL_IND-300335-300667.seeds.jsonl": {
+            "bytes": 56312629,
+            "gzip": "c-DAL_IND-300335-300667.seeds.jsonl.gz",
+            "gzip_bytes": 5926534,
+            "gzip_sha256": "60d315b77cdb53da13a6e87742823531b590a67f93d7dee924cf960e4b69e475",
+            "sha256": "c78fc47fdc8b9a958f2a27cfd0a2dc92bc84e3306cc66990d660e46507512194"
+          }
+        },
+        "control_ledger": null,
+        "games": 333,
+        "log": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/c-DAL_IND-300335-300667.log",
+        "matchup": "DAL_IND",
+        "seed_end": 300667,
+        "seed_start": 300335
+      },
+      {
+        "arm": "C",
+        "artifacts": {
+          "c-DEN_CAR-300668-301000.boxscores.jsonl": {
+            "bytes": 24449309,
+            "gzip": "c-DEN_CAR-300668-301000.boxscores.jsonl.gz",
+            "gzip_bytes": 2831061,
+            "gzip_sha256": "3c97c6de4de8526064fcacfbeb7df8ccccf13fbc3db8d9a3008be153effb5a25",
+            "sha256": "3a2a11149fe229dc409417b2ab8eed88256e8c19477e292ad7ea780999f1bd8d"
+          },
+          "c-DEN_CAR-300668-301000.json": {
+            "bytes": 84244643,
+            "gzip": "c-DEN_CAR-300668-301000.json.gz",
+            "gzip_bytes": 7342343,
+            "gzip_sha256": "6cd8c29804ff61f0a6a032dc3a32b40dec86e23fd18762719ef7c7a26ee94d65",
+            "sha256": "1366f71dc4e39b9e535d7f34e14b8fd5a64c0f523b1cae5e4e08d863398d136c"
+          },
+          "c-DEN_CAR-300668-301000.seeds.jsonl": {
+            "bytes": 59183404,
+            "gzip": "c-DEN_CAR-300668-301000.seeds.jsonl.gz",
+            "gzip_bytes": 6216034,
+            "gzip_sha256": "1cadeaa45e8e08d07eeb4a4d4d569d69a3e273feacac86484e6c8d9db51bb4e0",
+            "sha256": "1f2966f2c04e678ac45ca798ff217223a2c74130c5d43aff4fde1e6bab796fd9"
+          }
+        },
+        "control_ledger": null,
+        "games": 333,
+        "log": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/c-DEN_CAR-300668-301000.log",
+        "matchup": "DEN_CAR",
+        "seed_end": 301000,
+        "seed_start": 300668
+      }
+    ],
+    "D1": [
+      {
+        "arm": "D1",
+        "artifacts": {
+          "d1-ARI_SEA-300001-300334.boxscores.jsonl": {
+            "bytes": 25139109,
+            "gzip": "d1-ARI_SEA-300001-300334.boxscores.jsonl.gz",
+            "gzip_bytes": 2886442,
+            "gzip_sha256": "8338edf7eb2f41c3b38dee16d155f1ce21534a5fdda52676a3b5cde455acf878",
+            "sha256": "0cf64a3a2258545ff7509e80b053bb9278f455debe183a3c9f57dfeca96c3bab"
+          },
+          "d1-ARI_SEA-300001-300334.json": {
+            "bytes": 86381811,
+            "gzip": "d1-ARI_SEA-300001-300334.json.gz",
+            "gzip_bytes": 7558457,
+            "gzip_sha256": "43d79e44ff882086e116d7835a807c8b7eef3cde57d14bed35aa793ba12d8de3",
+            "sha256": "9307405e91e3534148069720a0f1c68dc28aa5422fb4945f02ae8fcf3dbbd9d6"
+          },
+          "d1-ARI_SEA-300001-300334.seeds.jsonl": {
+            "bytes": 60712484,
+            "gzip": "d1-ARI_SEA-300001-300334.seeds.jsonl.gz",
+            "gzip_bytes": 6404662,
+            "gzip_sha256": "8f090e7c73fd0b016dc0fbe53c4273f703c8605685647bfa91f456fddb997506",
+            "sha256": "6b200c35e2a4b8fb95e1b80976218397cf6614d98195a5b503c3eb2507ba52a4"
+          }
+        },
+        "control_ledger": null,
+        "games": 334,
+        "log": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/d1-ARI_SEA-300001-300334.log",
+        "matchup": "ARI_SEA",
+        "seed_end": 300334,
+        "seed_start": 300001
+      },
+      {
+        "arm": "D1",
+        "artifacts": {
+          "d1-DAL_IND-300335-300667.boxscores.jsonl": {
+            "bytes": 22973157,
+            "gzip": "d1-DAL_IND-300335-300667.boxscores.jsonl.gz",
+            "gzip_bytes": 2716393,
+            "gzip_sha256": "09a84e8852366a22a76701a34a4d46b54ffc6df5b7695cd6756ea1b79b77e9b1",
+            "sha256": "3babd8bfe99a041d1b91ee9b9373ed3bd71d3d1a7ad9024347b889c759e18821"
+          },
+          "d1-DAL_IND-300335-300667.json": {
+            "bytes": 80561901,
+            "gzip": "d1-DAL_IND-300335-300667.json.gz",
+            "gzip_bytes": 7051114,
+            "gzip_sha256": "c3637336568c3eced7a5a0bf24478ae1c714bfffd16ff1b3529658ef8900308b",
+            "sha256": "03bda24cd98a8fd03d1dd92e50b37ac3d6c2b5095359b0435e439f0397d2317c"
+          },
+          "d1-DAL_IND-300335-300667.seeds.jsonl": {
+            "bytes": 56425912,
+            "gzip": "d1-DAL_IND-300335-300667.seeds.jsonl.gz",
+            "gzip_bytes": 5943248,
+            "gzip_sha256": "6f76ce8381e37783f09226668bfaa48c6965112a747206bdb0f31ac8deba68cd",
+            "sha256": "d3355508150dc502ed31316f7a0c90eceef3a1ceb846b8aeef1d48ef092af607"
+          }
+        },
+        "control_ledger": null,
+        "games": 333,
+        "log": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/d1-DAL_IND-300335-300667.log",
+        "matchup": "DAL_IND",
+        "seed_end": 300667,
+        "seed_start": 300335
+      },
+      {
+        "arm": "D1",
+        "artifacts": {
+          "d1-DEN_CAR-300668-301000.boxscores.jsonl": {
+            "bytes": 24602248,
+            "gzip": "d1-DEN_CAR-300668-301000.boxscores.jsonl.gz",
+            "gzip_bytes": 2842955,
+            "gzip_sha256": "8dc4fcc5cc38734366de6276133cec6f9781e93da74253fb189d2c8fdf52a687",
+            "sha256": "bcf3419db8a29a6c856f04e2b4e2116166d36b3188af9a554fdbc2a821528998"
+          },
+          "d1-DEN_CAR-300668-301000.json": {
+            "bytes": 84699131,
+            "gzip": "d1-DEN_CAR-300668-301000.json.gz",
+            "gzip_bytes": 7376019,
+            "gzip_sha256": "66e66ce42a66cc3365e308977eb523ccea22ab34e63b6fd7e556c787b3e215b3",
+            "sha256": "e08c6df7314ccb573a4c9e399c96c3c4afedb0fb02373a361a28937e18ee8c3f"
+          },
+          "d1-DEN_CAR-300668-301000.seeds.jsonl": {
+            "bytes": 59528046,
+            "gzip": "d1-DEN_CAR-300668-301000.seeds.jsonl.gz",
+            "gzip_bytes": 6253870,
+            "gzip_sha256": "43048526d8013456c79aaa376ae6536af6afdbc278c01bf4c5479d470bd5c11c",
+            "sha256": "bdc8957cdee5209a48f2d9b2b27478fae2054e1dee40284b1ebd92041e72257a"
+          }
+        },
+        "control_ledger": null,
+        "games": 333,
+        "log": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/d1-DEN_CAR-300668-301000.log",
+        "matchup": "DEN_CAR",
+        "seed_end": 301000,
+        "seed_start": 300668
+      }
+    ],
+    "default_v2": [
+      {
+        "arm": "default_v2",
+        "artifacts": {
+          "default_v2-ARI_SEA-300001-300334.boxscores.jsonl": {
+            "bytes": 25159860,
+            "gzip": "default_v2-ARI_SEA-300001-300334.boxscores.jsonl.gz",
+            "gzip_bytes": 2885856,
+            "gzip_sha256": "1da359698e2d41684f1a36acd55a3476f4c9c0a8c6a32be76d48b94ac6d3616f",
+            "sha256": "753e14b117ce924c0907f2b9fa9614fca09a5b9b03bcc2759b49a00eafb47fd4"
+          },
+          "default_v2-ARI_SEA-300001-300334.json": {
+            "bytes": 86410936,
+            "gzip": "default_v2-ARI_SEA-300001-300334.json.gz",
+            "gzip_bytes": 7558833,
+            "gzip_sha256": "518ebb11875f7c5499b16de494112802b589299db5677d2ec06d7f02877a67f6",
+            "sha256": "09d708440ab4f503b02f4c3181922534173baad5656e62b7765a2f39ef01c448"
+          },
+          "default_v2-ARI_SEA-300001-300334.seeds.jsonl": {
+            "bytes": 60728673,
+            "gzip": "default_v2-ARI_SEA-300001-300334.seeds.jsonl.gz",
+            "gzip_bytes": 6406452,
+            "gzip_sha256": "9c7a8ee35a112f87d936801ad932aeec8bf44819dd870ea9fe3686ee4bfa8e97",
+            "sha256": "d593b1dffbf3286cc0320aaf40785b5cefe6b35bfcb20fce17564bf4ee1c10db"
+          }
+        },
+        "control_ledger": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/default_v2-ARI_SEA-300001-300334.seeds.jsonl",
+        "games": 334,
+        "log": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/default_v2-ARI_SEA-300001-300334.log",
+        "matchup": "ARI_SEA",
+        "seed_end": 300334,
+        "seed_start": 300001
+      },
+      {
+        "arm": "default_v2",
+        "artifacts": {
+          "default_v2-DAL_IND-300335-300667.boxscores.jsonl": {
+            "bytes": 22973157,
+            "gzip": "default_v2-DAL_IND-300335-300667.boxscores.jsonl.gz",
+            "gzip_bytes": 2717218,
+            "gzip_sha256": "c9318f8d9ce2a3e624eb283224b654ef689df3f1e7608be4be49d0a99f1d5a21",
+            "sha256": "8228ecf5496d1faae22e402454ad17bf0a49a8fb96fe7c88059aea6855f79539"
+          },
+          "default_v2-DAL_IND-300335-300667.json": {
+            "bytes": 80558284,
+            "gzip": "default_v2-DAL_IND-300335-300667.json.gz",
+            "gzip_bytes": 7051809,
+            "gzip_sha256": "02247a6d65ef6fa2e217f17dc30df824c1670e546d38398001fe3f5c1a7b620d",
+            "sha256": "8bc6c29251615ae957c5c3ccf9815f3266b03ba70ea078bfa73542631c394436"
+          },
+          "default_v2-DAL_IND-300335-300667.seeds.jsonl": {
+            "bytes": 56422858,
+            "gzip": "default_v2-DAL_IND-300335-300667.seeds.jsonl.gz",
+            "gzip_bytes": 5946281,
+            "gzip_sha256": "f8806eabf52d46811f5a1ed16f7a721ea152fd178c02fe4ab09ac9f7f05b4919",
+            "sha256": "dd019ef24f559703fdab82099e429fb00b459170794bea4e55b29d9316bdbfa9"
+          }
+        },
+        "control_ledger": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/default_v2-DAL_IND-300335-300667.seeds.jsonl",
+        "games": 333,
+        "log": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/default_v2-DAL_IND-300335-300667.log",
+        "matchup": "DAL_IND",
+        "seed_end": 300667,
+        "seed_start": 300335
+      },
+      {
+        "arm": "default_v2",
+        "artifacts": {
+          "default_v2-DEN_CAR-300668-301000.boxscores.jsonl": {
+            "bytes": 24602248,
+            "gzip": "default_v2-DEN_CAR-300668-301000.boxscores.jsonl.gz",
+            "gzip_bytes": 2842052,
+            "gzip_sha256": "608b9661761ac09acc2f93add1e2ff2e5ab942df7b989ab44bd6d3c85ada099b",
+            "sha256": "595f99fe9eb3bc09845ff7d342b42f5c689a54d271540489553fe2aac26f92a7"
+          },
+          "default_v2-DEN_CAR-300668-301000.json": {
+            "bytes": 84695178,
+            "gzip": "default_v2-DEN_CAR-300668-301000.json.gz",
+            "gzip_bytes": 7375711,
+            "gzip_sha256": "2fdc7119354fbc32692191ef35539e361a552b3b3096b4730f7ba919056cf5f9",
+            "sha256": "c3b876aee522ce17006b8f5663b5863883d1baa9796767dd9ef0209f111bde25"
+          },
+          "default_v2-DEN_CAR-300668-301000.seeds.jsonl": {
+            "bytes": 59524622,
+            "gzip": "default_v2-DEN_CAR-300668-301000.seeds.jsonl.gz",
+            "gzip_bytes": 6252968,
+            "gzip_sha256": "faea2911d0fb03d598c5a70c69bd93ff050f2e9875029b4480b981b36f14f4c0",
+            "sha256": "31f5761d8370ef72b018f509be529a5c2c36f124125b164c78582494e46d27ca"
+          }
+        },
+        "control_ledger": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/default_v2-DEN_CAR-300668-301000.seeds.jsonl",
+        "games": 333,
+        "log": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/workers/default_v2-DEN_CAR-300668-301000.log",
+        "matchup": "DEN_CAR",
+        "seed_end": 301000,
+        "seed_start": 300668
+      }
+    ]
+  },
+  "blocker_fixes": [
+    "run_scramble_backoff",
+    "long_field_goal_feasibility",
+    "blocked_kick_source_audit",
+    "blocked_kick_geometry",
+    "safety_free_kick_boundaries"
+  ],
+  "completed_at_utc": "2026-11-10T07:13:54Z",
+  "completed_per_arm": {
+    "C": 1000,
+    "D1": 1000,
+    "default_v2": 1000
+  },
+  "database_sha256": "1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa",
+  "failures": [],
+  "matchups": {
+    "ARI_SEA": {
+      "as_of": "2026-11-07T22:16:59Z",
+      "game_id": "2026_09_ARI_SEA",
+      "path": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/snapshots/2026_09_ARI_SEA.json",
+      "sha256": "cc44c5e0f0e3216a6785d2b79af65174a27b95133e8600da07d412237338e475"
+    },
+    "DAL_IND": {
+      "as_of": "2026-11-07T22:16:59Z",
+      "game_id": "2026_09_DAL_IND",
+      "path": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/snapshots/2026_09_DAL_IND.json",
+      "sha256": "82744967a803bcc4a7bb72e7da2b409aed6e9bac7e204483e3eae9cdbe0a2d4a"
+    },
+    "DEN_CAR": {
+      "as_of": "2026-11-07T22:16:59Z",
+      "game_id": "2026_09_DEN_CAR",
+      "path": "/root/ot-sim-out/slc-v2-three-way-2026-11-10/snapshots/2026_09_DEN_CAR.json",
+      "sha256": "8ccb71f7cf292f6c1d3f51a18acea49e065bc10f6444c958dbf23172a9cf7c6e"
+    }
+  },
+  "pairing": "Default V2 is the control ledger. C and D1 are separately paired to its per-matchup RNG-v2 root.",
+  "participation_snap_counts_sha256": "36f28e18af3080df9f160d42dd5e3e59c37cfacf0dd24772ea51cfd41cadcfca",
+  "playcall_artifact_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+  "requested_per_arm": 1000,
+  "seed_ranges": {
+    "ARI_SEA": {
+      "count": 334,
+      "end": 300334,
+      "start": 300001
+    },
+    "DAL_IND": {
+      "count": 333,
+      "end": 300667,
+      "start": 300335
+    },
+    "DEN_CAR": {
+      "count": 333,
+      "end": 301000,
+      "start": 300668
+    }
+  },
+  "snapshot_validity": "preserved from each frozen input; pre-final roster timing does not invalidate a game snapshot",
+  "source_commit": "8a5d809ffaec720b3d7b8ddb487f33c55e5d0d0e",
+  "source_status": "M scripts/nfl_sequence/simulate_pregame_batch.py\n M scripts/nfl_sequence/test_pregame_batch.py",
+  "started_at_utc": "2026-11-10T05:15:20Z",
+  "status": "complete",
+  "streak_file_sha256": "50490140dac78836c135226096b9101fc4f1a44e22837aba04174d921a065c78",
+  "workers": 2
+}
