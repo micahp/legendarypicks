@@ -1,0 +1,609 @@
+{
+  "as_of": "2026-11-09T20:28:32Z",
+  "built_at_utc": "2026-11-09T20:31:13Z",
+  "evaluation": {
+    "class": "exploratory_replay",
+    "unverified_inputs": [
+      "pre-cutoff preview; not the 90-minute official cutoff snapshot",
+      "active-roster and game-day inactive eligibility are unknown"
+    ],
+    "verified": false
+  },
+  "input_ingests": [
+    {
+      "game_id": "2026_09_BUF_MIN",
+      "ingested_at": "2026-11-03 01:58:17",
+      "input": "schedule"
+    },
+    {
+      "ingested_at": "2026-11-09T20:28:31Z",
+      "input": "depth:away",
+      "snapshot_at": "2026-11-09T17:24:57Z",
+      "team": "BUF"
+    },
+    {
+      "ingested_at": "2026-11-09T20:28:31Z",
+      "input": "depth:home",
+      "snapshot_at": "2026-11-09T17:24:57Z",
+      "team": "MIN"
+    }
+  ],
+  "model_reference": {
+    "participant_assignment_version": "pregame-role-usage-v1",
+    "play_pool": "nfl_pbp seasons 2022-2025, weeks 1-18; empirical E1 cell sampler",
+    "rule_version": "NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix"
+  },
+  "preview_capture": {
+    "captured_at_utc": "2026-11-09T20:28:32Z",
+    "scheduled_official_cutoff_utc": "2026-11-09T23:45:00Z",
+    "sources": {
+      "depth_charts": {
+        "bytes": 3312452,
+        "fetched_at_utc": "2026-11-09T20:28:31Z",
+        "sha256": "995ff3d246890d6dc41e2a91efc36655eb3a580dc5b2c523c6ad34f6007c023a",
+        "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+      },
+      "injuries": {
+        "bytes": 61371,
+        "fetched_at_utc": "2026-11-09T20:28:31Z",
+        "sha256": "89a62530b253a4c034487f650f7b5c347d30298b28665ba89dec19344c863be7",
+        "url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+      },
+      "roster": {
+        "bytes": 566094,
+        "fetched_at_utc": "2026-11-09T20:28:31Z",
+        "sha256": "a03385c478e20d84b3904c374d21fd779b68febb1f6d64166a8fe085ab744219",
+        "url": "https://github.com/nflverse/nflverse-data/releases/download/rosters/roster_2026.parquet"
+      }
+    },
+    "status": "PRE-CUTOFF PREVIEW"
+  },
+  "roster_snapshot_id": "nfl-depth-chart:62c7edf8a59faaf9a841a13fe70262b59f2ac2ea0ae74c714f5940d0983efebe",
+  "rosters": {
+    "away": {
+      "injury_report": {
+        "available": true,
+        "players": [
+          {
+            "gsis_id": "00-0033904",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0034827",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0034832",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0035230",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0035537",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0035667",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0036037",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0036976",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0036988",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": "Out"
+          },
+          {
+            "gsis_id": "00-0037034",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0037254",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0037261",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0037428",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0038679",
+            "practice_status": "Full Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0038933",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0039763",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0039901",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0040192",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0040710",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0040724",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0041036",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0041128",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          }
+        ],
+        "rows": 22
+      },
+      "players": [
+        {
+          "gsis_id": "00-0034827",
+          "player_id": 15759,
+          "player_name": "DJ Moore",
+          "pos_abb": "WR",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0034857",
+          "player_id": 469,
+          "player_name": "Josh Allen",
+          "pos_abb": "QB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0038933",
+          "player_id": 12606,
+          "player_name": "Dalton Kincaid",
+          "pos_abb": "TE",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0037248",
+          "player_id": 4653,
+          "player_name": "James Cook III",
+          "pos_abb": "RB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0037261",
+          "player_id": 19987,
+          "player_name": "Khalil Shakir",
+          "pos_abb": "WR",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0034577",
+          "player_id": 475,
+          "player_name": "Kyle Allen",
+          "pos_abb": "QB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0035689",
+          "player_id": 12785,
+          "player_name": "Dawson Knox",
+          "pos_abb": "TE",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0035537",
+          "player_id": 11801,
+          "player_name": "Ty Johnson",
+          "pos_abb": "RB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0039901",
+          "player_id": 4440,
+          "player_name": "Keon Coleman",
+          "pos_abb": "WR",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0040194",
+          "player_id": 9552,
+          "player_name": "Jackson Hawes",
+          "pos_abb": "TE",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0039875",
+          "player_id": 5456,
+          "player_name": "Ray Davis",
+          "pos_abb": "RB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0036988",
+          "player_id": 17096,
+          "player_name": "Joshua Palmer",
+          "pos_abb": "WR",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0040363",
+          "player_id": 13187,
+          "player_name": "Keleki Latu",
+          "pos_abb": "TE",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0035500",
+          "player_id": 6017,
+          "player_name": "Greg Dortch",
+          "pos_abb": "WR",
+          "pos_rank": 5,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0041443",
+          "player_id": 1634,
+          "player_name": "Skyler Bell",
+          "pos_abb": "WR",
+          "pos_rank": 6,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        },
+        {
+          "gsis_id": "00-0038679",
+          "player_id": 20017,
+          "player_name": "Tyrell Shavers",
+          "pos_abb": "WR",
+          "pos_rank": 7,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "BUF"
+        }
+      ],
+      "snapshot_at": "2026-11-09T17:24:57Z",
+      "source": "nflverse_depth_charts_preview_capture",
+      "team": "BUF"
+    },
+    "home": {
+      "injury_report": {
+        "available": true,
+        "players": [
+          {
+            "gsis_id": "00-0029606",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0035228",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": "Out"
+          },
+          {
+            "gsis_id": "00-0035272",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0036222",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0036259",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": "Out"
+          },
+          {
+            "gsis_id": "00-0036616",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": null
+          },
+          {
+            "gsis_id": "00-0037301",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0038578",
+            "practice_status": "Limited Participation in Practice",
+            "report_status": "Questionable"
+          },
+          {
+            "gsis_id": "00-0041104",
+            "practice_status": "Did Not Participate In Practice",
+            "report_status": "Out"
+          },
+          {
+            "gsis_id": "00-0041495",
+            "practice_status": "Full Participation in Practice",
+            "report_status": null
+          }
+        ],
+        "rows": 10
+      },
+      "players": [
+        {
+          "gsis_id": "00-0036322",
+          "player_id": 11274,
+          "player_name": "Justin Jefferson",
+          "pos_abb": "WR",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0035228",
+          "player_id": 16181,
+          "player_name": "Kyler Murray",
+          "pos_abb": "QB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0035229",
+          "player_id": 10160,
+          "player_name": "T.J. Hockenson",
+          "pos_abb": "TE",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0037525",
+          "player_id": 14363,
+          "player_name": "Jordan Mason",
+          "pos_abb": "RB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0041081",
+          "player_id": 2506,
+          "player_name": "Max Bredeson",
+          "pos_abb": "FB",
+          "pos_rank": 1,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0038994",
+          "player_id": 242,
+          "player_name": "Jordan Addison",
+          "pos_abb": "WR",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0032950",
+          "player_id": 23649,
+          "player_name": "Carson Wentz",
+          "pos_abb": "QB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0040215",
+          "player_id": 1348,
+          "player_name": "Gavin Bartholomew",
+          "pos_abb": "TE",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0033293",
+          "player_id": 11851,
+          "player_name": "Aaron Jones Sr.",
+          "pos_abb": "RB",
+          "pos_rank": 2,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0036259",
+          "player_id": 11356,
+          "player_name": "Jauan Jennings",
+          "pos_abb": "WR",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0040494",
+          "player_id": 2707,
+          "player_name": "Max Brosmer",
+          "pos_abb": "QB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0040509",
+          "player_id": 25045,
+          "player_name": "Ben Yurosek",
+          "pos_abb": "TE",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0036425",
+          "player_id": 5186,
+          "player_name": "DeeJay Dallas",
+          "pos_abb": "RB",
+          "pos_rank": 3,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0040154",
+          "player_id": 6979,
+          "player_name": "Tai Felton",
+          "pos_abb": "WR",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0035249",
+          "player_id": 16861,
+          "player_name": "Josh Oliver",
+          "pos_abb": "TE",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0041104",
+          "player_id": 4116,
+          "player_name": "Demond Claiborne",
+          "pos_abb": "RB",
+          "pos_rank": 4,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0040506",
+          "player_id": 18010,
+          "player_name": "Myles Price",
+          "pos_abb": "WR",
+          "pos_rank": 5,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        },
+        {
+          "gsis_id": "00-0031235",
+          "player_id": 1534,
+          "player_name": "Odell Beckham Jr.",
+          "pos_abb": "WR",
+          "pos_rank": 6,
+          "snapshot_at": "2026-11-09T17:24:57Z",
+          "source": "nflverse_depth_charts_preview_capture",
+          "team": "MIN"
+        }
+      ],
+      "snapshot_at": "2026-11-09T17:24:57Z",
+      "source": "nflverse_depth_charts_preview_capture",
+      "team": "MIN"
+    }
+  },
+  "schedule": {
+    "availability_classification": "versioned_as_of",
+    "away_team": "BUF",
+    "game_id": "2026_09_BUF_MIN",
+    "game_type": "REG",
+    "gameday": "2026-11-09",
+    "gametime": "20:15",
+    "gametime_timezone": null,
+    "home_team": "MIN",
+    "ingested_at": "2026-11-03 01:58:17",
+    "kickoff_source_url": "https://www.vikings.com/schedule/",
+    "scheduled_kickoff_utc": "2026-11-10T01:15:00Z",
+    "season": 2026,
+    "source": "nflverse_games",
+    "week": 9
+  },
+  "schema": "lp-nfl-pregame-snapshot-1",
+  "snapshot_date_utc": "2026-11-02T22:55:03Z",
+  "snapshot_sha256": "c427bff666058c7c72997e3cdb3ef6d7f6bc668d9e515b1780f919a220ac11d7"
+}

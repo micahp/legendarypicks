@@ -1,0 +1,174 @@
+{
+  "blockers": [],
+  "errors": [
+    {
+      "count": 1,
+      "reason": "FootballAssertionError: ILLEGAL_STATE: drive 13 play 87 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 26; context={'violated_assertion': 'drive 13 play 87 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 26'}",
+      "seeds": [
+        201350
+      ]
+    },
+    {
+      "count": 1,
+      "reason": "FootballAssertionError: ILLEGAL_STATE: drive 14 play 101 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 25; context={'violated_assertion': 'drive 14 play 101 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 25'}",
+      "seeds": [
+        209786
+      ]
+    },
+    {
+      "count": 1,
+      "reason": "FootballAssertionError: ILLEGAL_STATE: drive 14 play 118 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 7; context={'violated_assertion': 'drive 14 play 118 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 7'}",
+      "seeds": [
+        209397
+      ]
+    },
+    {
+      "count": 1,
+      "reason": "FootballAssertionError: ILLEGAL_STATE: drive 16 play 98 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 2; context={'violated_assertion': 'drive 16 play 98 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 2'}",
+      "seeds": [
+        205907
+      ]
+    },
+    {
+      "count": 1,
+      "reason": "FootballAssertionError: ILLEGAL_STATE: drive 20 play 133 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 37; context={'violated_assertion': 'drive 20 play 133 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 37'}",
+      "seeds": [
+        207565
+      ]
+    },
+    {
+      "count": 1,
+      "reason": "FootballAssertionError: ILLEGAL_STATE: drive 3 play 17 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 16; context={'violated_assertion': 'drive 3 play 17 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 16'}",
+      "seeds": [
+        208590
+      ]
+    },
+    {
+      "count": 1,
+      "reason": "FootballAssertionError: ILLEGAL_STATE: drive 4 play 30 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 12; context={'violated_assertion': 'drive 4 play 30 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 12'}",
+      "seeds": [
+        209208
+      ]
+    },
+    {
+      "count": 1,
+      "reason": "FootballAssertionError: ILLEGAL_STATE: drive 6 play 51 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 9; context={'violated_assertion': 'drive 6 play 51 state_after: a blocked kick hands over a first down; found down 1 and 1 to go at yardline 9'}",
+      "seeds": [
+        203096
+      ]
+    },
+    {
+      "count": 1,
+      "reason": "FootballAssertionError: ILLEGAL_STATE: two kickoffs follow drive 19; context={'violated_assertion': 'two kickoffs follow drive 19'}",
+      "seeds": [
+        207558
+      ]
+    }
+  ],
+  "fallback_event_count": 5143725,
+  "fallback_kinds": {
+    "decision_row_missing_category_A": 138407,
+    "decision_row_missing_category_B": 15863,
+    "decision_row_missing_category_C": 59689,
+    "decision_row_missing_category_D": 121117,
+    "decision_row_missing_category_E": 272714,
+    "decision_row_missing_category_F": 542984,
+    "decision_row_missing_category_G": 197095,
+    "decision_row_missing_category_H": 331949,
+    "decision_row_missing_category_I": 279346,
+    "decision_row_missing_category_J": 608007,
+    "decision_row_missing_category_K": 537285,
+    "decision_row_missing_category_L": 459121,
+    "decision_row_missing_category_M": 701545,
+    "decision_row_missing_category_N": 315906,
+    "down_distance": 1621,
+    "down_field": 12658,
+    "field_zone": 675,
+    "kick decision: historical share of this cell weighted by yard line": 105791,
+    "no_prior_cell_event:defense:BUF:fumble_lost": 304,
+    "no_prior_cell_event:defense:BUF:interception": 33,
+    "no_prior_cell_event:defense:BUF:run": 83,
+    "no_prior_cell_event:defense:BUF:sack": 8,
+    "no_prior_cell_event:defense:MIN:fumble_lost": 252,
+    "no_prior_cell_event:defense:MIN:interception": 38,
+    "no_prior_cell_event:defense:MIN:run": 48,
+    "no_prior_cell_event:defense:MIN:sack": 9,
+    "no_prior_cell_event:offense:BUF:fumble_lost": 252,
+    "no_prior_cell_event:offense:BUF:interception": 38,
+    "no_prior_cell_event:offense:BUF:pass_complete": 29,
+    "no_prior_cell_event:offense:BUF:pass_incomplete": 29,
+    "no_prior_cell_event:offense:BUF:punt": 535,
+    "no_prior_cell_event:offense:BUF:run": 102,
+    "no_prior_cell_event:offense:BUF:sack": 38,
+    "no_prior_cell_event:offense:MIN:fumble_lost": 304,
+    "no_prior_cell_event:offense:MIN:interception": 33,
+    "no_prior_cell_event:offense:MIN:run": 83,
+    "no_prior_cell_event:offense:MIN:sack": 8,
+    "no_source_rows_at_exact_yardline": 195575,
+    "no_source_rows_for_chosen_coverage": 18655,
+    "no_source_rows_for_chosen_formation": 1027,
+    "no_source_rows_for_current_streak": 101471,
+    "no_target_identity_match_in_event_cell": 115471,
+    "playbook_missing_category_C": 45,
+    "player_outcome_no_history_passer": 1485,
+    "player_outcome_no_history_rusher": 5997
+  },
+  "rendered_counts": {
+    "boxscore_games": 10000,
+    "final_tie_count": 41,
+    "processed_seed_count": 10000,
+    "requested_seed_count": 10000,
+    "scored_games": 9991,
+    "status_counts": {
+      "blocked": 0,
+      "error": 9,
+      "incomplete": 0,
+      "success": 9991
+    },
+    "unreported_seed_count": 0
+  },
+  "run": {
+    "adaptive_workload_input_sha256": "cec16cb2462ef71eaf0fc5d300ce6729e57c915b114dd8615f8e7d924986a618",
+    "completed_at_utc": "2026-11-10T08:12:16Z",
+    "completed_games": 10000,
+    "database_sha256": "1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa",
+    "game_id": "2026_09_BUF_MIN",
+    "input_provenance_note": "Snap-count file acquisition followed the game snapshot; this is separate from valid pre-final-roster snapshot status.",
+    "participation_snap_counts_sha256": "36f28e18af3080df9f160d42dd5e3e59c37cfacf0dd24772ea51cfd41cadcfca",
+    "playcall_artifact_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+    "requested_games": 10000,
+    "rng_protocol": "v2",
+    "roster_finalization_timing": {
+      "status": "before_roster_finalization"
+    },
+    "seed_end": 210000,
+    "seed_start": 200001,
+    "slc_profile": "v1_full_stack+slc-v2",
+    "snapshot_as_of": "2026-11-09T20:28:32Z",
+    "snapshot_sha256": "1d00a1030a63fe1f9dd500a49c5207db5b7d8002a1af84fd6498ba40845accd9",
+    "snapshot_validity": "valid_before_roster_finalization",
+    "source_commit": "8a5d809ffaec720b3d7b8ddb487f33c55e5d0d0e",
+    "source_status": "",
+    "started_at_utc": "2026-11-10T04:48:02Z",
+    "status": "complete",
+    "streak_file_sha256": "50490140dac78836c135226096b9101fc4f1a44e22837aba04174d921a065c78",
+    "workload_estimator": "D1"
+  },
+  "score_distributions": {
+    "BUF": {
+      "mean": 27.949254328896007,
+      "median": 28,
+      "sample_n": 9991
+    },
+    "MIN": {
+      "mean": 22.178360524472026,
+      "median": 22,
+      "sample_n": 9991
+    },
+    "total": {
+      "mean": 50.12761485336803,
+      "median": 50,
+      "sample_n": 9991
+    }
+  }
+}
