@@ -38,8 +38,8 @@ HERE = Path(__file__).resolve().parent
 SLC_V2_TABLES = {
     'participation_field': ('docs/research/participation-model-2026-11-02/outputs/field_v4_decay075_2020_2025.json',
                             '9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41'),
-    'playcall_fg_kicker': ('docs/research/fg-kicker-2026-11-04/kicker_table_through_2025_assign_2026.json',
-                           'f1535cf8fa563c961ef04cdfb08c626ad08fe7da64d540fc33a381021400764e'),
+    'playcall_fg_kicker': ('docs/research/fg-kicker-2026-11-04/kicker_table_through_2025_assign_2026_w09.json',
+                           '4d21b4de6e0ccbced271cd2cd81ded42528a6ad928319fa6e2157f47bacd9caf'),
 }
 REPO = HERE.parents[1]
 BACKEND = REPO / 'backend'
