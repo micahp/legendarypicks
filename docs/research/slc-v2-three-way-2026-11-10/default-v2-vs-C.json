@@ -1,41 +1,251 @@
 {
  "accounting": {
   "arm_games": 3,
-  "excluded": {
-   "2026_09_ARI_SEA": "no final score in nfl_schedule for the requested weeks",
-   "2026_09_DAL_IND": "no final score in nfl_schedule for the requested weeks",
-   "2026_09_DEN_CAR": "no final score in nfl_schedule for the requested weeks"
-  },
-  "results_in_weeks": 0,
-  "unscored_in_weeks": [
-   "2026_09_ARI_SEA",
-   "2026_09_BUF_MIN",
-   "2026_09_CIN_ATL",
-   "2026_09_CLE_NO",
-   "2026_09_DAL_IND",
-   "2026_09_DEN_CAR",
-   "2026_09_DET_MIA",
-   "2026_09_GB_NE",
-   "2026_09_HOU_LAC",
-   "2026_09_JAX_BAL",
-   "2026_09_LA_WAS",
-   "2026_09_LV_SF",
-   "2026_09_NYG_PHI",
-   "2026_09_NYJ_KC",
-   "2026_09_TB_CHI"
-  ]
+  "excluded": {},
+  "results_in_weeks": 3,
+  "unscored_in_weeks": []
  },
  "advance_rule": {
   "advance": false,
-  "reason": "no final score in nfl_schedule for the requested weeks",
   "rule": "advance only if mean log loss and mean Brier are both lower than baseline and the 95% interval for the log-loss difference is below zero",
-  "verdict": "NOT SCORED"
+  "verdict": "FAIL"
  },
- "baseline": null,
- "candidate": null,
- "games_scored": 0,
+ "baseline": {
+  "by_week": {
+   "9": {
+    "brier": 0.19429793960880884,
+    "crps_away_points": 7.452105547843492,
+    "crps_home_points": 3.012787958634357,
+    "games": 3,
+    "log_loss": 0.5776396196339917
+   }
+  },
+  "calibration": [
+   {
+    "bin": [
+     0.0,
+     0.1
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.1,
+     0.2
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.2,
+     0.3
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.3,
+     0.4
+    ],
+    "games": 1,
+    "mean_forecast": 0.32228915662650603,
+    "observed_home_win_rate": 0.0
+   },
+   {
+    "bin": [
+     0.4,
+     0.5
+    ],
+    "games": 2,
+    "mean_forecast": 0.45077269564580513,
+    "observed_home_win_rate": 0.5
+   },
+   {
+    "bin": [
+     0.5,
+     0.6
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.6,
+     0.7
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.7,
+     0.8
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.8,
+     0.9
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.9,
+     1.0
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   }
+  ],
+  "season": {
+   "brier": 0.19429793960880884,
+   "crps_away_points": 7.452105547843492,
+   "crps_home_points": 3.012787958634357,
+   "games": 3,
+   "log_loss": 0.5776396196339917
+  }
+ },
+ "candidate": {
+  "by_week": {
+   "9": {
+    "brier": 0.17792505846662285,
+    "crps_away_points": 7.360126018113164,
+    "crps_home_points": 3.1876177363423834,
+    "games": 3,
+    "log_loss": 0.5441544691437841
+   }
+  },
+  "calibration": [
+   {
+    "bin": [
+     0.0,
+     0.1
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.1,
+     0.2
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.2,
+     0.3
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.3,
+     0.4
+    ],
+    "games": 1,
+    "mean_forecast": 0.3102409638554217,
+    "observed_home_win_rate": 0.0
+   },
+   {
+    "bin": [
+     0.4,
+     0.5
+    ],
+    "games": 1,
+    "mean_forecast": 0.45151515151515154,
+    "observed_home_win_rate": 0.0
+   },
+   {
+    "bin": [
+     0.5,
+     0.6
+    ],
+    "games": 1,
+    "mean_forecast": 0.5166163141993958,
+    "observed_home_win_rate": 1.0
+   },
+   {
+    "bin": [
+     0.6,
+     0.7
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.7,
+     0.8
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.8,
+     0.9
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   },
+   {
+    "bin": [
+     0.9,
+     1.0
+    ],
+    "games": 0,
+    "mean_forecast": null,
+    "observed_home_win_rate": null
+   }
+  ],
+  "season": {
+   "brier": 0.17792505846662285,
+   "crps_away_points": 7.360126018113164,
+   "crps_home_points": 3.1876177363423834,
+   "games": 3,
+   "log_loss": 0.5441544691437841
+  }
+ },
+ "games_scored": 3,
  "label": "prospective (weeks 9 onward are prospective)",
- "paired": null,
+ "paired": {
+  "bootstrap_reps": 10000,
+  "bootstrap_seed": 20260103,
+  "brier_difference_95ci": [
+   -0.05379122115651863,
+   0.012293422555044148
+  ],
+  "log_loss_difference_95ci": [
+   -0.10772754762845638,
+   0.024893697507653023
+  ],
+  "mean_brier_difference": -0.01637288114218598,
+  "mean_log_loss_difference": -0.033485150490207595
+ },
  "seed_rule": "valid_full_game",
  "weeks": [
   9
