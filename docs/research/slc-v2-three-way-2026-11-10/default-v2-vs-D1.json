@@ -1,0 +1,43 @@
+{
+ "accounting": {
+  "arm_games": 3,
+  "excluded": {
+   "2026_09_ARI_SEA": "no final score in nfl_schedule for the requested weeks",
+   "2026_09_DAL_IND": "no final score in nfl_schedule for the requested weeks",
+   "2026_09_DEN_CAR": "no final score in nfl_schedule for the requested weeks"
+  },
+  "results_in_weeks": 0,
+  "unscored_in_weeks": [
+   "2026_09_ARI_SEA",
+   "2026_09_BUF_MIN",
+   "2026_09_CIN_ATL",
+   "2026_09_CLE_NO",
+   "2026_09_DAL_IND",
+   "2026_09_DEN_CAR",
+   "2026_09_DET_MIA",
+   "2026_09_GB_NE",
+   "2026_09_HOU_LAC",
+   "2026_09_JAX_BAL",
+   "2026_09_LA_WAS",
+   "2026_09_LV_SF",
+   "2026_09_NYG_PHI",
+   "2026_09_NYJ_KC",
+   "2026_09_TB_CHI"
+  ]
+ },
+ "advance_rule": {
+  "advance": false,
+  "reason": "no final score in nfl_schedule for the requested weeks",
+  "rule": "advance only if mean log loss and mean Brier are both lower than baseline and the 95% interval for the log-loss difference is below zero",
+  "verdict": "NOT SCORED"
+ },
+ "baseline": null,
+ "candidate": null,
+ "games_scored": 0,
+ "label": "prospective (weeks 9 onward are prospective)",
+ "paired": null,
+ "seed_rule": "valid_full_game",
+ "weeks": [
+  9
+ ]
+}
