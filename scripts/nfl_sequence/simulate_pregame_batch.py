@@ -177,6 +177,7 @@ def _reproduction_command(args, seed):
 
     for flag, enabled in (
         ('--playcall-team-outcomes', args.playcall_team_outcomes),
+        ('--playcall-transition-strength', args.playcall_transition_strength),
         ('--playcall-formation', args.playcall_formation),
         ('--playcall-coverage', args.playcall_coverage),
         ('--playcall-player-shares', args.playcall_player_shares),
@@ -735,6 +736,7 @@ def _execution_verification(outcomes, profile_manifest):
     fields = {
         'score_clock_playcalling': 'score_clock_playcalling',
         'team_offense_defense_outcomes': 'team_offense_defense_outcomes',
+        'team_offense_defense_transitions': 'team_offense_defense_transitions',
         'formation_personnel_outcomes': 'formation_personnel_outcomes',
         'defensive_coverage_outcomes': 'defensive_coverage_outcomes',
         'fixed_player_target_carry_shares': 'fixed_player_target_carry_shares',
@@ -944,6 +946,7 @@ def run_batch(args):
                              'safety option')
         ref, excluded_kickoffs = slc_engine.load_reference(args.db, snapshot, args.playcall_artifact,
                                                            team_outcomes=args.playcall_team_outcomes,
+                                                           transition_strength=args.playcall_transition_strength,
                                                            formation=args.playcall_formation,
                                                            player_shares=args.playcall_player_shares or args.playcall_dirichlet_shares,
                                                            exact_yardline=args.playcall_exact_yardline,
@@ -1112,7 +1115,9 @@ def run_batch(args):
         'paired_lineup_baseline': paired_lineup_baseline,
         'research_workload': getattr(args, 'workload_adaptive_config', None),
         'experimental_workload_estimator': getattr(args, 'experimental_workload_estimator', None),
-        'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
+        'playcall_team_outcomes': bool(args.playcall_team_outcomes),
+        'playcall_transition_strength': bool(args.playcall_transition_strength),
+        'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
         'playcall_decision': bool(args.playcall_decision), 'playcall_dirichlet_shares': bool(args.playcall_dirichlet_shares),
@@ -1483,6 +1488,10 @@ def main(argv=None):
     ap.add_argument('--playcall-team-outcomes', action='store_true',
                     help='SLC v1 research: reweight which historical outcome is drawn by prior-season team event splits '
                          '(offense and defense), within the play-call intent. Needs --playcall-artifact')
+    ap.add_argument('--playcall-transition-strength', action='store_true',
+                    help='research: replace event-only team splits with joint offense/defense event and yardage-bucket '
+                         'strengths; opt-in only. With v1_full_stack also pass '
+                         '--slc-disable-layer team_offense_defense_outcomes')
     ap.add_argument('--slc-v2', action='store_true',
                     help='SLC v2: the V1.5 stack (needs --slc-profile v1_full_stack) with every v2 layer on by default: '
                          'the season update (--playcall-season-adapt), lineup groupings and substitutions with the '
@@ -1492,7 +1501,7 @@ def main(argv=None):
                          'RNG protocol v2. A table named explicitly replaces the pinned default.')
     ap.add_argument('--playcall-season-adapt', action='store_true',
                     help='SLC V1.5 research: blend the target season\'s results available at the cutoff into the team '
-                         'splits. Needs --playcall-team-outcomes')
+                         'splits. Needs --playcall-team-outcomes or --playcall-transition-strength')
     ap.add_argument('--season-adapt-n0', type=float, default=4.0,
                     help='prior weight N0 of the historical team splits in the season blend (predeclared 4)')
     ap.add_argument('--playcall-artifact',

@@ -143,7 +143,8 @@ def check_artifact_cutoff(artifact, season):
                          f"that ends before {season}")
 
 
-def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=False, player_shares=False,
+def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_strength=False,
+                   formation=False, player_shares=False,
                    exact_yardline=False, coverage=False, point_splits=False, streak=False, streak_file=None,
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
@@ -161,6 +162,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     season = int(schedule['season'])
     if player_outcomes_receiver_only and not player_outcomes:
         raise ValueError('receiver-only player outcomes require player_outcomes=True')
+    if team_outcomes and transition_strength:
+        raise ValueError('event-only team outcomes and joint team transitions are alternatives; enable one')
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
     fixes = er.normalize_blocker_fixes(er.BLOCKER_FIXES if blocker_fixes is None else blocker_fixes)
     run_scramble_backoff = 'run_scramble_backoff' in fixes
@@ -171,6 +174,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         season_evidence = season_layers.Evidence.for_target(db, season, schedule['game_id'], kickoff, n0=season_adapt_n0)
     ref, excluded = er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
+                   playcall_transition_strength=transition_strength,
                    playcall_formation=formation, playcall_player_shares=player_shares,
                    playcall_target_roles=target_roles, playcall_decision=decision,
                    playcall_exact_yardline=exact_yardline, playcall_coverage=coverage,
@@ -923,6 +927,8 @@ def summary(decisions, record=None):
             fallbacks[f'decision_row_missing_category_{category}'] += 1
         for fallback in decision.get('team_outcome_fallbacks', []) + decision.get('split_fallbacks', []):
             fallbacks[str(fallback)] += 1
+        for fallback in decision.get('team_transition_fallbacks', []):
+            fallbacks[str(fallback)] += 1
         for category in (decision.get('participants') or {}).get('playbook_fallback', []):
             fallbacks[f'playbook_missing_category_{category}'] += 1
         for role, support in (decision.get('player_outcome_support') or {}).items():
@@ -958,6 +964,7 @@ def summary(decisions, record=None):
                 'score_clock_cell_baseline_draws': sum(
                     not d.get('score_clock_playcalling_applied', True) for d in decisions),
                 'team_offense_defense_outcomes': sum(bool(d.get('team_outcome_split')) for d in decisions),
+                'team_offense_defense_transitions': sum(bool(d.get('team_transition_split')) for d in decisions),
                 'formation_personnel_outcomes': sum(bool(d.get('formation_conditioned')) for d in decisions),
                 'defensive_coverage_outcomes': sum(bool(d.get('coverage_conditioned')) for d in decisions),
                 'fixed_player_target_carry_shares': sum(
@@ -1125,6 +1132,7 @@ def _describe_layer(ref):
     enabled_layers = {
         'score_clock_playcalling': score_clock_enabled,
         'team_offense_defense_outcomes': sampler.team_outcomes is not None,
+        'team_offense_defense_transitions': sampler.transition_strength is not None,
         'formation_personnel_outcomes': bool(sampler.formation_outcomes),
         'defensive_coverage_outcomes': bool(sampler.coverage_outcomes),
         'fixed_player_target_carry_shares': sampler.player_shares is not None,
@@ -1150,6 +1158,8 @@ def _describe_layer(ref):
         'score_clock_playcalling': ({'artifact_sha256': artifact['sha256']}
                                     if score_clock_enabled else None),
         'team_offense_defense_outcomes': sampler.team_outcomes,
+        'team_offense_defense_transitions': (sampler.transition_strength.manifest
+                                              if sampler.transition_strength is not None else None),
         'formation_personnel_outcomes': {'priors': sampler.formation_priors,
                                         'outcomes_enabled': sampler.formation_outcomes},
         'defensive_coverage_outcomes': {'priors': sampler.defense_priors,
@@ -1192,6 +1202,8 @@ def _describe_layer(ref):
                    'score_clock_fallback_policy': ('historical_down_distance_field_cell_rate; independent point and streak '
                                                    'layers remain separately switchable'),
                    'optional_input_sha256': dict(sorted(getattr(sampler, 'optional_input_sha256', {}).items()))}
+    if sampler.transition_strength is not None:
+        description['team_offense_defense_transitions'] = sampler.transition_strength.manifest
     if sampler.blocker_fixes:
         description['blocker_resolution'] = {
                        'enabled_fixes': sorted(sampler.blocker_fixes),
@@ -1226,7 +1238,7 @@ def _describe_layer(ref):
     integration_files = ('clock_d.py', 'e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
                          'source_preflight.py', '../nfl_team_codes.py',
                          'playcall_model.py',
-                         'team_tendency.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
+                         'team_tendency.py', 'transition_strength.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
                          'streak_splits.py', 'target_roles.py', 'decision_layer.py', 'player_shares.py',
                          'share_distributions.py', 'fit_cache.py', 'qb_decisions.py', 'player_outcomes.py', 'playbook_prior.py',
                          'paired_random_streams.py', 'run_slc_game.py', 'simulate_pregame_batch.py',

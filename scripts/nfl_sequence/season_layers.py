@@ -377,8 +377,8 @@ UNCHANGED = {
     'formation_personnel_outcomes': 'no current-season participation release (nflverse pbp_participation ends at 2025 in the '
                                     '2026-10-27 backfill), so the formation and personnel priors stay historical',
     'defensive_coverage_outcomes': 'coverage comes from the same participation release, so the coverage priors stay historical',
-    'outcome_pool_and_kicks': 'the drawn outcome rows, kick tables and participant lookups stay the historical pool; the team '
-                              'outcome splits move which outcome type is drawn toward the current season',
+    'outcome_pool_and_kicks': 'the drawn outcome rows, kick tables and participant lookups stay the historical pool; the selected '
+                              'team event or joint-transition table can adapt from cutoff-safe current-season plays',
     'current_streak_context': 'already the current season: each team\'s streak entering the game',
 }
 
@@ -394,12 +394,22 @@ def apply(ref, db, evidence, adapt_workload=True):
                 'layers': layers, 'unchanged': dict(UNCHANGED)}
     if evidence.game_ids:
         games_of_player = player_games(db, evidence)
-        if sampler.team_outcomes is not None:
+        if sampler.team_outcomes is not None or sampler.transition_strength is not None:
             rows = tsa.load_plays(db, evidence.season, list(evidence.game_ids), evidence.cutoff)
-            sampler.team_outcomes, diagnostics = tsa.adapt(sampler.team_outcomes, rows, n0=evidence.n0,
-                                                           team_games=evidence.team_games)
-            layers['team_offense_defense_outcomes'] = {k: diagnostics[k] for k in
-                                                       ('plays', 'cells_blended', 'plays_without_history_cell')}
+            if sampler.team_outcomes is not None:
+                sampler.team_outcomes, diagnostics = tsa.adapt(sampler.team_outcomes, rows, n0=evidence.n0,
+                                                               team_games=evidence.team_games)
+                layers['team_offense_defense_outcomes'] = {k: diagnostics[k] for k in
+                                                           ('plays', 'cells_blended', 'plays_without_history_cell')}
+            if sampler.transition_strength is not None:
+                import transition_strength as ts
+                sampler.transition_strength = ts.adapt(sampler.transition_strength, rows, n0=evidence.n0,
+                                                       team_games=evidence.team_games)
+                layers['team_offense_defense_transitions'] = {
+                    key: sampler.transition_strength.manifest[key]
+                    for key in ('plays', 'cells_blended', 'cells_without_history', 'n0',
+                                'rows_excluded_unknown_penalty_status')
+                    if key in sampler.transition_strength.manifest}
         if sampler.role_table is not None:
             sampler.role_table, layers['target_role_priors'] = adapt_target_roles(sampler.role_table, db, evidence)
         season_decision = None
@@ -445,7 +455,9 @@ def apply(ref, db, evidence, adapt_workload=True):
             if sampler.score_clock_playcalling_enabled:
                 sampler.season_team_down = score_clock_offsets(sampler.layer, frame, evidence)
                 layers['score_clock_playcalling'] = {'team_down_offsets': len(sampler.season_team_down)}
-    for name, table in (('team_offense_defense_outcomes', sampler.team_outcomes), ('target_role_priors', sampler.role_table),
+    for name, table in (('team_offense_defense_outcomes', sampler.team_outcomes),
+                        ('team_offense_defense_transitions', sampler.transition_strength),
+                        ('target_role_priors', sampler.role_table),
                         ('decision_labels', sampler.decision_table), ('playbook_priors', sampler.playbook_table),
                         ('qb_decisions', sampler.qb_decision_table),
                         ('player_conditioned_outcomes', sampler.player_outcome_table),
