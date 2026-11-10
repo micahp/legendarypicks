@@ -84,6 +84,40 @@ class RngProtocol(unittest.TestCase):
             bad_header = {**header, 'rng_protocol': {**header['rng_protocol'], 'stream_root_sha256': 'f' * 64}}
             rng_protocol.pair_layer_plan(natural, ablated_identity, bad_header, 'team_offense_defense_outcomes')
 
+    def test_lineup_pairing_only_allows_snap_input_change(self):
+        before = _description()
+        control = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), before)
+        settings = {'participation_field': 'field', 'participation_snap_counts': None,
+                    'participation_snap_counts_sha256': None, 'ordinary_fixes': ['a']}
+        identity = rng_protocol.layer_pairing_identity(PREGAME, _ref(), before, settings)
+        header = {'rng_protocol': control.manifest(), 'pairing_identity': identity}
+        changed = {**identity, 'execution_settings': {**settings, 'participation_snap_counts': 'snaps',
+                                                       'participation_snap_counts_sha256': 'c' * 64}}
+        paired, evidence = rng_protocol.pair_lineup_plan(control, changed, header)
+        self.assertEqual(paired.root, control.root)
+        self.assertEqual(evidence['snap_counts_sha256'], 'c' * 64)
+        changed['execution_settings']['ordinary_fixes'] = []
+        with self.assertRaisesRegex(ValueError, 'another execution setting'):
+            rng_protocol.pair_lineup_plan(control, changed, header)
+
+    def test_workload_pairing_requires_only_workload_table_to_change(self):
+        layers = {'dirichlet_player_target_carry_shares': True, 'point_splits': True}
+        before = _description(enabled_layers=layers, layer_artifact_sha256={
+            'dirichlet_player_target_carry_shares': '1' * 64, 'point_splits': '2' * 64})
+        after = _description(enabled_layers=layers, layer_artifact_sha256={
+            'dirichlet_player_target_carry_shares': '3' * 64, 'point_splits': '2' * 64})
+        control = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), before)
+        natural = rng_protocol.plan(rng_protocol.V2, PREGAME, _ref(), after)
+        header = {'rng_protocol': control.manifest(),
+                  'pairing_identity': rng_protocol.layer_pairing_identity(PREGAME, _ref(), before, {})}
+        identity = rng_protocol.layer_pairing_identity(PREGAME, _ref(), after, {})
+        paired, evidence = rng_protocol.pair_workload_plan(natural, identity, header)
+        self.assertEqual(paired.root, control.root)
+        self.assertNotEqual(evidence['natural_treatment_root_sha256'], paired.root)
+        identity['layer_artifact_sha256']['point_splits'] = '4' * 64
+        with self.assertRaisesRegex(ValueError, 'another layer'):
+            rng_protocol.pair_workload_plan(natural, identity, header)
+
     def test_pairing_refuses_changed_other_active_layer(self):
         layers = {'team_offense_defense_outcomes': True, 'point_splits': True}
         hashes = {'team_offense_defense_outcomes': '1' * 64, 'point_splits': '2' * 64}

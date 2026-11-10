@@ -1,0 +1,619 @@
+{
+  "ledger_sha256": "e12ff4b350b74f2123ed7dbab16f666d2a1047c031be8d92a540115b6662fdc2",
+  "limits": [
+    "database rows have no source acquisition time",
+    "missing rows do not establish inactivity",
+    "observed and simulated snaps do not cover identical play types",
+    "observed weeks are not the week 9 outcome"
+  ],
+  "observed_rows": [
+    {
+      "gsis_id": "00-0037157",
+      "name": "Bam Knight",
+      "off_pct": 0.04,
+      "off_snaps": 3,
+      "position": "RB",
+      "team": "ARI",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0037157",
+      "name": "Bam Knight",
+      "off_pct": 0.06,
+      "off_snaps": 3,
+      "position": "RB",
+      "team": "ARI",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0037157",
+      "name": "Bam Knight",
+      "off_pct": 0.0,
+      "off_snaps": 0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0037157",
+      "name": "Bam Knight",
+      "off_pct": 0.0,
+      "off_snaps": 0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0037157",
+      "name": "Bam Knight",
+      "off_pct": 0.08,
+      "off_snaps": 6,
+      "position": "RB",
+      "team": "ARI",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0037157",
+      "name": "Bam Knight",
+      "off_pct": 0.44,
+      "off_snaps": 32,
+      "position": "RB",
+      "team": "ARI",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0037157",
+      "name": "Bam Knight",
+      "off_pct": 0.53,
+      "off_snaps": 43,
+      "position": "RB",
+      "team": "ARI",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0037157",
+      "name": "Bam Knight",
+      "off_pct": 0.22,
+      "off_snaps": 18,
+      "position": "RB",
+      "team": "ARI",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0037263",
+      "name": "Tyler Allgeier",
+      "off_pct": 0.59,
+      "off_snaps": 44,
+      "position": "RB",
+      "team": "ARI",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0037263",
+      "name": "Tyler Allgeier",
+      "off_pct": 0.64,
+      "off_snaps": 32,
+      "position": "RB",
+      "team": "ARI",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0037263",
+      "name": "Tyler Allgeier",
+      "off_pct": 0.36,
+      "off_snaps": 31,
+      "position": "RB",
+      "team": "ARI",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0037263",
+      "name": "Tyler Allgeier",
+      "off_pct": 0.55,
+      "off_snaps": 36,
+      "position": "RB",
+      "team": "ARI",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0037263",
+      "name": "Tyler Allgeier",
+      "off_pct": 0.44,
+      "off_snaps": 32,
+      "position": "RB",
+      "team": "ARI",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0037263",
+      "name": "Tyler Allgeier",
+      "off_pct": 0.56,
+      "off_snaps": 40,
+      "position": "RB",
+      "team": "ARI",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0037263",
+      "name": "Tyler Allgeier",
+      "off_pct": 0.47,
+      "off_snaps": 38,
+      "position": "RB",
+      "team": "ARI",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0037263",
+      "name": "Tyler Allgeier",
+      "off_pct": 0.59,
+      "off_snaps": 48,
+      "position": "RB",
+      "team": "ARI",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0038397",
+      "name": "Evan Hull",
+      "off_pct": 0.0,
+      "off_snaps": 0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0038397",
+      "name": "Evan Hull",
+      "off_pct": 0.0,
+      "off_snaps": 0,
+      "position": "RB",
+      "team": "ARI",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0041027",
+      "name": "Jeremiyah Love",
+      "off_pct": 0.43,
+      "off_snaps": 32,
+      "position": "RB",
+      "team": "ARI",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0041027",
+      "name": "Jeremiyah Love",
+      "off_pct": 0.4,
+      "off_snaps": 20,
+      "position": "RB",
+      "team": "ARI",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0041027",
+      "name": "Jeremiyah Love",
+      "off_pct": 0.64,
+      "off_snaps": 56,
+      "position": "RB",
+      "team": "ARI",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0041027",
+      "name": "Jeremiyah Love",
+      "off_pct": 0.45,
+      "off_snaps": 30,
+      "position": "RB",
+      "team": "ARI",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0041027",
+      "name": "Jeremiyah Love",
+      "off_pct": 0.49,
+      "off_snaps": 36,
+      "position": "RB",
+      "team": "ARI",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0041027",
+      "name": "Jeremiyah Love",
+      "off_pct": 0.19,
+      "off_snaps": 15,
+      "position": "RB",
+      "team": "ARI",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0038797",
+      "name": "Emanuel Wilson",
+      "off_pct": 0.06,
+      "off_snaps": 3,
+      "position": "RB",
+      "team": "SEA",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0038797",
+      "name": "Emanuel Wilson",
+      "off_pct": 0.41,
+      "off_snaps": 29,
+      "position": "RB",
+      "team": "SEA",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0038797",
+      "name": "Emanuel Wilson",
+      "off_pct": 0.36,
+      "off_snaps": 24,
+      "position": "RB",
+      "team": "SEA",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0038797",
+      "name": "Emanuel Wilson",
+      "off_pct": 0.6,
+      "off_snaps": 36,
+      "position": "RB",
+      "team": "SEA",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0038797",
+      "name": "Emanuel Wilson",
+      "off_pct": 0.59,
+      "off_snaps": 37,
+      "position": "RB",
+      "team": "SEA",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0038797",
+      "name": "Emanuel Wilson",
+      "off_pct": 0.32,
+      "off_snaps": 27,
+      "position": "RB",
+      "team": "SEA",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0038797",
+      "name": "Emanuel Wilson",
+      "off_pct": 0.48,
+      "off_snaps": 33,
+      "position": "RB",
+      "team": "SEA",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0038797",
+      "name": "Emanuel Wilson",
+      "off_pct": 0.0,
+      "off_snaps": 0,
+      "position": "RB",
+      "team": "SEA",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0039165",
+      "name": "Zach Charbonnet",
+      "off_pct": 0.37,
+      "off_snaps": 23,
+      "position": "RB",
+      "team": "SEA",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0039299",
+      "name": "George Holani",
+      "off_pct": 0.46,
+      "off_snaps": 23,
+      "position": "RB",
+      "team": "SEA",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0039299",
+      "name": "George Holani",
+      "off_pct": 0.26,
+      "off_snaps": 18,
+      "position": "RB",
+      "team": "SEA",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0039299",
+      "name": "George Holani",
+      "off_pct": 0.36,
+      "off_snaps": 24,
+      "position": "RB",
+      "team": "SEA",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0039299",
+      "name": "George Holani",
+      "off_pct": 0.37,
+      "off_snaps": 22,
+      "position": "RB",
+      "team": "SEA",
+      "week": 4
+    },
+    {
+      "gsis_id": "00-0039299",
+      "name": "George Holani",
+      "off_pct": 0.41,
+      "off_snaps": 26,
+      "position": "RB",
+      "team": "SEA",
+      "week": 5
+    },
+    {
+      "gsis_id": "00-0039299",
+      "name": "George Holani",
+      "off_pct": 0.58,
+      "off_snaps": 49,
+      "position": "RB",
+      "team": "SEA",
+      "week": 6
+    },
+    {
+      "gsis_id": "00-0039299",
+      "name": "George Holani",
+      "off_pct": 0.36,
+      "off_snaps": 25,
+      "position": "RB",
+      "team": "SEA",
+      "week": 7
+    },
+    {
+      "gsis_id": "00-0039299",
+      "name": "George Holani",
+      "off_pct": 0.17,
+      "off_snaps": 11,
+      "position": "RB",
+      "team": "SEA",
+      "week": 8
+    },
+    {
+      "gsis_id": "00-0041512",
+      "name": "Jadarian Price",
+      "off_pct": 0.48,
+      "off_snaps": 24,
+      "position": "RB",
+      "team": "SEA",
+      "week": 1
+    },
+    {
+      "gsis_id": "00-0041512",
+      "name": "Jadarian Price",
+      "off_pct": 0.34,
+      "off_snaps": 24,
+      "position": "RB",
+      "team": "SEA",
+      "week": 2
+    },
+    {
+      "gsis_id": "00-0041512",
+      "name": "Jadarian Price",
+      "off_pct": 0.28,
+      "off_snaps": 19,
+      "position": "RB",
+      "team": "SEA",
+      "week": 3
+    },
+    {
+      "gsis_id": "00-0041512",
+      "name": "Jadarian Price",
+      "off_pct": 0.48,
+      "off_snaps": 30,
+      "position": "RB",
+      "team": "SEA",
+      "week": 8
+    }
+  ],
+  "observed_rows_sha256": "fb0c6cead312029c34a9f2f164d79fa16bade22196156af15e297ccae2f82f9f",
+  "observed_source": "/root/legendarypicks/backend/data/picks.dev.db",
+  "players": [
+    {
+      "gsis_id": "00-0033553",
+      "name": "James Conner",
+      "observed_mean_snap_share_when_row_present": null,
+      "observed_rows": 0,
+      "observed_snaps": null,
+      "observed_weeks": [],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.6047940028050927,
+      "simulated_mean_snaps": 40.93,
+      "team": "ARI"
+    },
+    {
+      "gsis_id": "00-0037157",
+      "name": "Bam Knight",
+      "observed_mean_snap_share_when_row_present": 0.17124999999999999,
+      "observed_rows": 8,
+      "observed_snaps": 105,
+      "observed_weeks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.19793522311816608,
+      "simulated_mean_snaps": 13.32,
+      "team": "ARI"
+    },
+    {
+      "gsis_id": "00-0037263",
+      "name": "Tyler Allgeier",
+      "observed_mean_snap_share_when_row_present": 0.5249999999999999,
+      "observed_rows": 8,
+      "observed_snaps": 301,
+      "observed_weeks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.026593670299226466,
+      "simulated_mean_snaps": 1.84,
+      "team": "ARI"
+    },
+    {
+      "gsis_id": "00-0038397",
+      "name": "Evan Hull",
+      "observed_mean_snap_share_when_row_present": 0.0,
+      "observed_rows": 2,
+      "observed_snaps": 0,
+      "observed_weeks": [
+        6,
+        7
+      ],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.02271066817951311,
+      "simulated_mean_snaps": 1.55,
+      "team": "ARI"
+    },
+    {
+      "gsis_id": "00-0039921",
+      "name": "Trey Benson",
+      "observed_mean_snap_share_when_row_present": null,
+      "observed_rows": 0,
+      "observed_snaps": null,
+      "observed_weeks": [],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.1807288114118767,
+      "simulated_mean_snaps": 12.04,
+      "team": "ARI"
+    },
+    {
+      "gsis_id": "00-0041027",
+      "name": "Jeremiyah Love",
+      "observed_mean_snap_share_when_row_present": 0.43333333333333335,
+      "observed_rows": 6,
+      "observed_snaps": 189,
+      "observed_weeks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        8
+      ],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.030392888962505374,
+      "simulated_mean_snaps": 2.1,
+      "team": "ARI"
+    },
+    {
+      "gsis_id": "00-0037745",
+      "name": "Velus Jones Jr.",
+      "observed_mean_snap_share_when_row_present": null,
+      "observed_rows": 0,
+      "observed_snaps": null,
+      "observed_weeks": [],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.040595511282353634,
+      "simulated_mean_snaps": 2.76,
+      "team": "SEA"
+    },
+    {
+      "gsis_id": "00-0038797",
+      "name": "Emanuel Wilson",
+      "observed_mean_snap_share_when_row_present": 0.3525,
+      "observed_rows": 8,
+      "observed_snaps": 189,
+      "observed_weeks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.01693077771034556,
+      "simulated_mean_snaps": 1.16,
+      "team": "SEA"
+    },
+    {
+      "gsis_id": "00-0039165",
+      "name": "Zach Charbonnet",
+      "observed_mean_snap_share_when_row_present": 0.37,
+      "observed_rows": 1,
+      "observed_snaps": 23,
+      "observed_weeks": [
+        8
+      ],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.6092079292313831,
+      "simulated_mean_snaps": 40.82,
+      "team": "SEA"
+    },
+    {
+      "gsis_id": "00-0039299",
+      "name": "George Holani",
+      "observed_mean_snap_share_when_row_present": 0.37124999999999997,
+      "observed_rows": 8,
+      "observed_snaps": 198,
+      "observed_weeks": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.20512211426845908,
+      "simulated_mean_snaps": 13.58,
+      "team": "SEA"
+    },
+    {
+      "gsis_id": "00-0041512",
+      "name": "Jadarian Price",
+      "observed_mean_snap_share_when_row_present": 0.395,
+      "observed_rows": 4,
+      "observed_snaps": 97,
+      "observed_weeks": [
+        1,
+        2,
+        3,
+        8
+      ],
+      "simulated_games": 100,
+      "simulated_mean_snap_share": 0.021994335235920596,
+      "simulated_mean_snaps": 1.46,
+      "team": "SEA"
+    }
+  ],
+  "query": "SELECT s.team,s.week,p.nfl_gsis_id,p.name,p.position,s.off_snaps,s.off_pct FROM nfl_snap_counts s JOIN players p ON p.id=s.player_id WHERE s.season=? AND s.week<=? AND s.team IN (?,?) AND p.position=? ORDER BY s.team,p.nfl_gsis_id,s.week",
+  "query_parameters": [
+    2026,
+    8,
+    "ARI",
+    "SEA",
+    "RB"
+  ],
+  "schema": "lp.workload.snap-comparison.v1",
+  "season": 2026,
+  "snapshot_identity": "349b283557ffc491ff4aedc8ca7a050c71bda1676366a08cdb566cda1d18ad74",
+  "source_commit": "1c1afaa07b72b05350ecc3957118b190a89f5781",
+  "through_week": 8,
+  "valid_seeds": 100
+}

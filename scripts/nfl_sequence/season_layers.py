@@ -383,7 +383,7 @@ UNCHANGED = {
 }
 
 
-def apply(ref, db, evidence):
+def apply(ref, db, evidence, adapt_workload=True):
     """Blend every loaded layer of `ref` that has a current-season source toward the current season, in place, and record
     what was done on the sampler (season_blend_manifest, which the reference fingerprint and the layer manifest include)."""
     import point_splits as sp
@@ -418,7 +418,7 @@ def apply(ref, db, evidence):
         if sampler.player_outcome_table is not None:
             sampler.player_outcome_table, layers['player_conditioned_outcomes'] = adapt_player_outcomes(
                 sampler.player_outcome_table, db, evidence, games_of_player)
-        if sampler.share_table is not None:
+        if sampler.share_table is not None and adapt_workload:
             sampler.share_table, layers['dirichlet_player_target_carry_shares'] = adapt_shares(sampler.share_table, db, evidence)
         frame_layers = (sampler.point_shifts, sampler.streak_shifts, sampler.streak_league)
         if any(table is not None for table in frame_layers) or sampler.score_clock_playcalling_enabled:

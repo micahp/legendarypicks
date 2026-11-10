@@ -1,0 +1,193 @@
+{
+  "ARI_SEA": {
+    "C": {
+      "post_candidate_counts": {
+        "0": 57,
+        "1": 803,
+        "2": 100
+      },
+      "post_single": 803,
+      "pre_multi_post_single": 803,
+      "pre_population_counts": {
+        "5": 502,
+        "6": 458
+      },
+      "rb_carry_events": 960,
+      "selected_charbonnet_sole_candidate": 143,
+      "selection_group_counts": {
+        "ARI|carry|QB": 38,
+        "ARI|carry|RB": 455,
+        "ARI|carry|RB,QB,WR,TE": 3,
+        "ARI|carry|WR,TE": 16,
+        "ARI|receive|RB": 152,
+        "ARI|receive|TE": 244,
+        "ARI|receive|WR": 422,
+        "SEA|carry|QB": 25,
+        "SEA|carry|RB": 447,
+        "SEA|carry|RB,QB,WR,TE": 55,
+        "SEA|carry|WR,TE": 23,
+        "SEA|receive|RB": 110,
+        "SEA|receive|TE": 147,
+        "SEA|receive|WR": 466
+      }
+    },
+    "D1": {
+      "post_candidate_counts": {
+        "0": 45,
+        "1": 832,
+        "2": 96
+      },
+      "post_single": 832,
+      "pre_multi_post_single": 832,
+      "pre_population_counts": {
+        "5": 526,
+        "6": 447
+      },
+      "rb_carry_events": 973,
+      "selected_charbonnet_sole_candidate": 175,
+      "selection_group_counts": {
+        "ARI|carry|QB": 38,
+        "ARI|carry|RB": 442,
+        "ARI|carry|RB,QB,WR,TE": 5,
+        "ARI|carry|WR,TE": 18,
+        "ARI|receive|RB": 149,
+        "ARI|receive|TE": 247,
+        "ARI|receive|WR": 436,
+        "SEA|carry|QB": 25,
+        "SEA|carry|RB": 485,
+        "SEA|carry|RB,QB,WR,TE": 41,
+        "SEA|carry|WR,TE": 20,
+        "SEA|receive|RB": 98,
+        "SEA|receive|TE": 149,
+        "SEA|receive|WR": 461
+      }
+    }
+  },
+  "DAL_IND": {
+    "C": {
+      "post_candidate_counts": {
+        "0": 35,
+        "1": 981,
+        "2": 73
+      },
+      "post_single": 981,
+      "pre_multi_post_single": 981,
+      "pre_population_counts": {
+        "3": 1089
+      },
+      "rb_carry_events": 1089,
+      "selected_charbonnet_sole_candidate": 0,
+      "selection_group_counts": {
+        "DAL|carry|QB": 38,
+        "DAL|carry|RB": 562,
+        "DAL|carry|RB,QB,WR,TE": 32,
+        "DAL|carry|WR,TE": 29,
+        "DAL|receive|RB": 87,
+        "DAL|receive|TE": 167,
+        "DAL|receive|WR": 423,
+        "IND|carry|QB": 16,
+        "IND|carry|RB": 490,
+        "IND|carry|RB,QB,WR,TE": 5,
+        "IND|carry|WR,TE": 17,
+        "IND|receive|RB": 117,
+        "IND|receive|TE": 193,
+        "IND|receive|WR": 426
+      }
+    },
+    "D1": {
+      "post_candidate_counts": {
+        "0": 30,
+        "1": 986,
+        "2": 85
+      },
+      "post_single": 986,
+      "pre_multi_post_single": 986,
+      "pre_population_counts": {
+        "3": 1101
+      },
+      "rb_carry_events": 1101,
+      "selected_charbonnet_sole_candidate": 0,
+      "selection_group_counts": {
+        "DAL|carry|QB": 37,
+        "DAL|carry|RB": 561,
+        "DAL|carry|RB,QB,WR,TE": 28,
+        "DAL|carry|WR,TE": 29,
+        "DAL|receive|RB": 79,
+        "DAL|receive|TE": 157,
+        "DAL|receive|WR": 414,
+        "IND|carry|QB": 22,
+        "IND|carry|RB": 508,
+        "IND|carry|RB,QB,WR,TE": 4,
+        "IND|carry|WR,TE": 19,
+        "IND|receive|RB": 115,
+        "IND|receive|TE": 190,
+        "IND|receive|WR": 432
+      }
+    }
+  },
+  "DEN_CAR": {
+    "C": {
+      "post_candidate_counts": {
+        "0": 31,
+        "1": 960,
+        "2": 101
+      },
+      "post_single": 960,
+      "pre_multi_post_single": 960,
+      "pre_population_counts": {
+        "4": 560,
+        "5": 532
+      },
+      "rb_carry_events": 1092,
+      "selected_charbonnet_sole_candidate": 0,
+      "selection_group_counts": {
+        "CAR|carry|QB": 15,
+        "CAR|carry|RB": 528,
+        "CAR|carry|RB,QB,WR,TE": 4,
+        "CAR|carry|WR,TE": 18,
+        "CAR|receive|RB": 122,
+        "CAR|receive|TE": 142,
+        "CAR|receive|WR": 454,
+        "DEN|carry|QB": 42,
+        "DEN|carry|RB": 532,
+        "DEN|carry|RB,QB,WR,TE": 28,
+        "DEN|carry|WR,TE": 33,
+        "DEN|receive|RB": 142,
+        "DEN|receive|TE": 105,
+        "DEN|receive|WR": 445
+      }
+    },
+    "D1": {
+      "post_candidate_counts": {
+        "0": 30,
+        "1": 935,
+        "2": 95
+      },
+      "post_single": 935,
+      "pre_multi_post_single": 935,
+      "pre_population_counts": {
+        "4": 561,
+        "5": 499
+      },
+      "rb_carry_events": 1060,
+      "selected_charbonnet_sole_candidate": 0,
+      "selection_group_counts": {
+        "CAR|carry|QB": 13,
+        "CAR|carry|RB": 497,
+        "CAR|carry|RB,QB,WR,TE": 2,
+        "CAR|carry|WR,TE": 19,
+        "CAR|receive|RB": 122,
+        "CAR|receive|TE": 146,
+        "CAR|receive|WR": 460,
+        "DEN|carry|QB": 49,
+        "DEN|carry|RB": 533,
+        "DEN|carry|RB,QB,WR,TE": 28,
+        "DEN|carry|WR,TE": 34,
+        "DEN|receive|RB": 141,
+        "DEN|receive|TE": 100,
+        "DEN|receive|WR": 446
+      }
+    }
+  },
+  "players_unique": 115
+}

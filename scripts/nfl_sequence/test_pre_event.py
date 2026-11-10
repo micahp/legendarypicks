@@ -268,12 +268,12 @@ class DirichletPopulationInvariants(unittest.TestCase):
             return real(table, team, game_id, eligible, role, seed_text, group=group)
 
         def recording_candidates(candidates, table, team, role, game_id, seed_text, draw,
-                                 cache=None, population=None, group='all'):
+                                 cache=None, population=None, group='all', trace=None, positions=None):
             if role == 'receive':
                 receiver_candidates.append(tuple(sorted(p['gsis_id'] for p in candidates)))
                 play_populations.append(tuple(sorted(p['gsis_id'] for p in population)))
             return real_choose(candidates, table, team, role, game_id, seed_text, draw,
-                               cache=cache, population=population, group=group)
+                               cache=cache, population=population, group=group, trace=trace, positions=positions)
 
         players = SNAPSHOT['rosters']['home']['players']
         receivers = [p for p in players if p['pos_abb'] in pe.player_shares_positions('receive')]

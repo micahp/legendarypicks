@@ -1,0 +1,155 @@
+{
+ "checks": {
+  "future_game_used": 0,
+  "games_scored": 242
+ },
+ "eligibility": "unknown for all rows",
+ "interval_draws": 3000,
+ "interval_method": "beta-binomial predictive counts",
+ "last_week": 8,
+ "phi_c": 24.831331,
+ "role": "receive",
+ "role_change_threshold": 0.1,
+ "season": 2026,
+ "summary": {
+  "C:RB": {
+   "abs_share_error_mean": 0.0203101443560043,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.011801353964330973,
+     "player_rows": 1642
+    },
+    "returning": {
+     "abs_share_error_mean": 0.03442289643507015,
+     "player_rows": 893
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.08548853561894687,
+     "player_rows": 21
+    }
+   },
+   "group_nll_mean": 2.332470594930344,
+   "interval_80_coverage_group": 0.9421487603305785,
+   "player_rows": 2556,
+   "team_games": 242,
+   "unknown_eligibility_rows": 2556,
+   "within_group_nll_mean": 6.668470419010018
+  },
+  "C:TE": {
+   "abs_share_error_mean": 0.024743583902041174,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.013853090373952305,
+     "player_rows": 1257
+    },
+    "returning": {
+     "abs_share_error_mean": 0.03670216407717894,
+     "player_rows": 911
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.0868565577966457,
+     "player_rows": 45
+    }
+   },
+   "group_nll_mean": 2.456918923729219,
+   "interval_80_coverage_group": 0.9297520661157025,
+   "player_rows": 2213,
+   "team_games": 242,
+   "unknown_eligibility_rows": 2213,
+   "within_group_nll_mean": 6.733967943454578
+  },
+  "C:WR": {
+   "abs_share_error_mean": 0.03325189582176974,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.019079515137300985,
+     "player_rows": 2809
+    },
+    "returning": {
+     "abs_share_error_mean": 0.045704890229765115,
+     "player_rows": 1553
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.12587957467722632,
+     "player_rows": 221
+    }
+   },
+   "group_nll_mean": 2.6643729580326614,
+   "interval_80_coverage_group": 0.9173553719008265,
+   "player_rows": 4583,
+   "team_games": 242,
+   "unknown_eligibility_rows": 4583,
+   "within_group_nll_mean": 18.639585608300553
+  },
+  "D:RB": {
+   "abs_share_error_mean": 0.01847430190472976,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.011575259520237285,
+     "player_rows": 1642
+    },
+    "returning": {
+     "abs_share_error_mean": 0.030387559783653015,
+     "player_rows": 893
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.05131660235511873,
+     "player_rows": 21
+    }
+   },
+   "group_nll_mean": 2.3232522182264552,
+   "interval_80_coverage_group": 0.9504132231404959,
+   "player_rows": 2556,
+   "team_games": 242,
+   "unknown_eligibility_rows": 2556,
+   "within_group_nll_mean": 5.772315788454412
+  },
+  "D:TE": {
+   "abs_share_error_mean": 0.022320141284125766,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.012964051216776221,
+     "player_rows": 1257
+    },
+    "returning": {
+     "abs_share_error_mean": 0.03302016675842864,
+     "player_rows": 911
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.06705085256342466,
+     "player_rows": 45
+    }
+   },
+   "group_nll_mean": 2.438369953866116,
+   "interval_80_coverage_group": 0.9380165289256198,
+   "player_rows": 2213,
+   "team_games": 242,
+   "unknown_eligibility_rows": 2213,
+   "within_group_nll_mean": 5.710070073772319
+  },
+  "D:WR": {
+   "abs_share_error_mean": 0.027979234250323556,
+   "by_status": {
+    "new": {
+     "abs_share_error_mean": 0.017014774608480502,
+     "player_rows": 2809
+    },
+    "returning": {
+     "abs_share_error_mean": 0.039774136431113744,
+     "player_rows": 1553
+    },
+    "role_changed": {
+     "abs_share_error_mean": 0.08445744260855874,
+     "player_rows": 221
+    }
+   },
+   "group_nll_mean": 2.635633320992429,
+   "interval_80_coverage_group": 0.9338842975206612,
+   "player_rows": 4583,
+   "team_games": 242,
+   "unknown_eligibility_rows": 4583,
+   "within_group_nll_mean": 14.701398945349952
+  }
+ },
+ "within_group_nll": "conditional on observed group count; unseen players pooled as OTHER"
+}
