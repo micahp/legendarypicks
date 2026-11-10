@@ -30,12 +30,15 @@ def _elapsed(quarter, clock):
     return (quarter - 1) * QUARTER_LENGTH + (QUARTER_LENGTH - clock)
 
 
-def first_down_result(play):
-    """Return the earned first-down source from the play's recorded transition, or None.
+def first_down_results(play):
+    """Return first-down sources earned on this transition.
 
     A first down requires the same offense to retain possession and the next state to
     begin at down one. Touchdowns do not count as first downs. This intentionally uses
     state_after rather than the next play, so the result remains available at drive ends.
+    An accepted penalty can award a first down by itself. If the retained scrimmage play
+    also independently earned one, the penalty record must mark `scrimmage_first_down`;
+    both statistical first downs are then returned.
     """
     before = play.get('state_before') or {}
     after = play.get('state_after') or {}
@@ -43,17 +46,45 @@ def first_down_result(play):
     if (before.get('offense_team') not in ('A', 'B')
             or before.get('offense_team') != after.get('offense_team')
             or after.get('down') != 1 or outcome.get('touchdown') or outcome.get('safety')):
-        return None
+        return []
     penalty = outcome.get('penalty')
-    if penalty:
-        return 'penalty'
+    penalty_accepted = (penalty.get('accepted') is True if isinstance(penalty, dict)
+                        else bool(penalty))
     event = play.get('event_type')
     participants = play.get('participants') or {}
     if event == 'run' or (event == 'fumble_lost' and participants.get('rusher_id')):
-        return 'run'
-    if event in ('pass_complete', 'pass_incomplete', 'interception', 'sack'):
-        return 'pass'
-    return 'other'
+        scrimmage_source = 'run'
+    elif event in ('pass_complete', 'pass_incomplete', 'interception', 'sack'):
+        scrimmage_source = 'pass'
+    else:
+        scrimmage_source = 'other'
+    if penalty_accepted:
+        if isinstance(penalty, dict) and penalty.get('scrimmage_first_down') is True:
+            return [scrimmage_source, 'penalty']
+        return ['penalty']
+    return [scrimmage_source]
+
+
+def first_down_result(play):
+    """Return the primary first-down source for compatibility, or None."""
+    results = first_down_results(play)
+    return results[0] if results else None
+
+
+def down_attempt(play):
+    """Whether this play is credited as a third/fourth-down scrimmage attempt.
+
+    An accepted penalty can nullify the scrimmage action. The penalty record must mark
+    `scrimmage_play_counted` when NFL scoring credits that action as an attempt.
+    """
+    if play.get('event_type') not in SCRIMMAGE_EVENTS:
+        return False
+    penalty = (play.get('outcome') or {}).get('penalty')
+    if isinstance(penalty, dict) and penalty.get('accepted') is True:
+        return penalty.get('scrimmage_play_counted') is True
+    if penalty is True:
+        return False
+    return True
 
 
 def is_offensive_touchdown(play):
@@ -72,8 +103,12 @@ def is_offensive_touchdown(play):
 
 
 def down_conversion(play):
-    """A new first down or an offensive touchdown; touchdowns are not first downs."""
-    return first_down_result(play) is not None or is_offensive_touchdown(play)
+    """A scrimmage-earned first down or offensive touchdown; penalty-only awards do not convert."""
+    if not down_attempt(play):
+        return False
+    first_downs = first_down_results(play)
+    return (any(first_down in ('run', 'pass', 'other') for first_down in first_downs)
+            or is_offensive_touchdown(play))
 
 
 def _is_successful_play(play):
@@ -84,7 +119,10 @@ def _is_successful_play(play):
     """
     before = play.get('state_before') or {}
     outcome = play.get('outcome') or {}
-    if outcome.get('penalty'):
+    penalty = outcome.get('penalty')
+    penalty_accepted = (penalty.get('accepted') is True if isinstance(penalty, dict)
+                        else bool(penalty))
+    if penalty_accepted and not down_conversion(play):
         return False
     if outcome.get('touchdown'):
         return is_offensive_touchdown(play)
@@ -223,14 +261,15 @@ def team_stats(drives, points):
                 if down in (1, 2, 3, 4):
                     t[f'down_{down}_plays'] += 1
                     t[f'down_{down}_successful_plays'] += int(_is_successful_play(play))
-                if down in (3, 4):
+                if down in (3, 4) and down_attempt(play):
                     t[f'down_{down}_attempts'] += 1
                     t[f'down_{down}_conversions'] += int(down_conversion(play))
-            first_down = first_down_result(play)
-            if first_down:
-                drive_first_downs += 1
-                t['first_downs'] += 1
-                t[f'first_downs_{first_down}'] += 1
+            first_downs = first_down_results(play)
+            if first_downs:
+                drive_first_downs += len(first_downs)
+                t['first_downs'] += len(first_downs)
+                for first_down in first_downs:
+                    t[f'first_downs_{first_down}'] += 1
             if ev in SCRIMMAGE_EVENTS:
                 t['plays'] += 1
             if ev == 'fumble_lost' and not part.get('rusher_id'):
@@ -482,8 +521,8 @@ def compute(drives, points):
             'drive_window_seconds': 'Sum of elapsed clock intervals from each drive start state to its end state.',
             'first_downs': 'Earned when the post-play state begins a new first down for the same offense; touchdowns are excluded. Penalty first downs are classified separately when modeled.',
             'first_downs_run/pass/penalty/other': 'Source breakdowns of earned first downs; the components sum to first_downs.',
-            'third_down_conversions': 'Third-down scrimmage plays followed by a new first down or an offensive touchdown; defensive return touchdowns do not convert.',
-            'fourth_down_conversions': 'Fourth-down scrimmage plays followed by a new first down or an offensive touchdown; punts and field goals are excluded.',
+            'third_down_conversions': 'Credited third-down scrimmage attempts followed by a scrimmage first down or offensive touchdown; penalty-only awards and defensive return touchdowns do not convert.',
+            'fourth_down_conversions': 'Credited fourth-down scrimmage attempts followed by a scrimmage first down or offensive touchdown; penalty-only awards, punts, and field goals are excluded.',
             'offensive_success_rate': 'A successful play gains at least 40% of yards-to-go on first down, 60% on second down, or earns a new first down on third/fourth; touchdowns count as successful plays.',
             'try_points': 'Touchdown drive ledger points above six; not a try-attempt count.',
             'other_score_points': 'Non-touchdown, non-safety score-ledger points, including field goals.',
