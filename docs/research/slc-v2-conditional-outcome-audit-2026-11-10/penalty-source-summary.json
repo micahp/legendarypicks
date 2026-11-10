@@ -1,0 +1,20 @@
+{
+  "2025": {
+    "plays": 46452,
+    "penalty_tagged": 3461,
+    "first_down_penalty_flag": 973,
+    "late_down_failed_series_association_proxy": 370,
+    "database_penalty_null_rows": null,
+    "parquet_sha256": "c6ecedd6d678cc37ed31623b84efee1ec6abb69c514bb11868a7ebd5a367df29"
+  },
+  "2026_weeks_1_8": {
+    "plays": 21191,
+    "penalty_tagged": 1765,
+    "first_down_penalty_flag": 486,
+    "late_down_failed_series_association_proxy": 193,
+    "database_penalty_null_rows": 21018,
+    "parquet_sha256": "5edd7c42ed3f116f7e8914594c536088c337052fa53552ba7947499ba0f9f1b5"
+  },
+  "database_sha256": "1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa",
+  "interpretation": "The late-down count is an association proxy, not causal attribution. All 21,018 2026 database penalty fields are NULL although the frozen source parquet has penalty flags. Treat 2026 audit metrics as sensitivity only; penalty-tagged plays could enter adaptation and evaluation."
+}

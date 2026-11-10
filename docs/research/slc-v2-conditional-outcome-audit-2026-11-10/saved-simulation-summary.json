@@ -1,0 +1,143 @@
+{
+  "source_run": "docs/research/slc-v2-model-d1-10k-2026-11-10/",
+  "source_commit": "8a5d809ffaec720b3d7b8ddb487f33c55e5d0d0e",
+  "seed_ids": "200001-210000",
+  "valid_games": 9991,
+  "errors": 9,
+  "note": "Read-only analysis of saved per-seed summaries and box scores. No seeds rerun; original run artifacts untouched. Saved summaries contain down/action counts but not ordered play transitions.",
+  "simulated": {
+    "MIN": {
+      "sacks_per_game": 1.475728,
+      "sack_rate_per_dropback": 0.036671,
+      "pass_attempts_per_game": 38.7665,
+      "interceptions_per_game": 0.48734,
+      "interception_rate_per_attempt": 0.012571,
+      "turnovers_per_game": 0.63908,
+      "fumbles_lost_per_game": 0.15174,
+      "three_plus_turnover_games": 284,
+      "fourth_down_go_per_game": 1.8847,
+      "punts_per_game": 3.5966,
+      "field_goals_per_game": 1.942
+    },
+    "BUF": {
+      "sacks_per_game": 0.720949,
+      "sack_rate_per_dropback": 0.018044,
+      "pass_attempts_per_game": 39.2346,
+      "interceptions_per_game": 0.52017,
+      "interception_rate_per_attempt": 0.013258,
+      "turnovers_per_game": 0.67951,
+      "fumbles_lost_per_game": 0.15934,
+      "four_plus_sack_games": 64,
+      "fourth_down_go_per_game": 1.9365,
+      "punts_per_game": 2.7342,
+      "field_goals_per_game": 1.9277
+    }
+  },
+  "pregame_2026_weeks_1_8": {
+    "MIN": {
+      "team_games": 7,
+      "fourth_down_go_per_game": 0.857,
+      "punts_per_game": 4.286,
+      "field_goals_per_game": 2.714,
+      "offense_dropbacks": 233,
+      "sacks_taken": 21,
+      "pass_attempts": 216,
+      "interceptions_thrown": 3,
+      "sack_rate_per_dropback": 0.0901,
+      "interception_rate_per_attempt": 0.0139,
+      "defense_opponent_dropbacks": 235,
+      "sacks_forced": 25,
+      "defense_sack_rate": 0.1064,
+      "opponent_pass_attempts": 228,
+      "interceptions_forced": 8,
+      "defense_interception_rate": 0.0351
+    },
+    "BUF": {
+      "team_games": 7,
+      "fourth_down_go_per_game": 1.143,
+      "punts_per_game": 1.857,
+      "field_goals_per_game": 2.0,
+      "offense_dropbacks": 241,
+      "sacks_taken": 13,
+      "pass_attempts": 222,
+      "interceptions_thrown": 5,
+      "sack_rate_per_dropback": 0.0539,
+      "interception_rate_per_attempt": 0.0225,
+      "defense_opponent_dropbacks": 295,
+      "sacks_forced": 15,
+      "defense_sack_rate": 0.0508,
+      "opponent_pass_attempts": 285,
+      "interceptions_forced": 4,
+      "defense_interception_rate": 0.014
+    }
+  },
+  "fourth_down_situation_mix": {
+    "MIN_sim_decisions_per_game": 7.42,
+    "MIN_actual_decisions_per_game": 7.86,
+    "distance_buckets_simulated": {
+      "1-2": {
+        "decisions_per_game": 1.786,
+        "go_per_game": 1.1
+      },
+      "3-4": {
+        "decisions_per_game": 1.547,
+        "go_total": 3489
+      },
+      "5-6": {
+        "decisions_per_game": 1.331,
+        "go_total": 2171
+      },
+      "7-9": {
+        "decisions_per_game": 1.292,
+        "go_total": 1133
+      },
+      "10-14": {
+        "decisions_per_game": 1.056,
+        "go_total": 755
+      },
+      "15+": {
+        "decisions_per_game": 0.411,
+        "go_total": 295
+      }
+    },
+    "MIN_actual_by_distance": {
+      "1-2": {
+        "go": 5,
+        "punt": 3
+      },
+      "3-4": {
+        "punt": 4
+      },
+      "5-6": {
+        "go": 1,
+        "field_goal": 6,
+        "punt": 4
+      },
+      "7-9": {
+        "field_goal": 7,
+        "punt": 8
+      },
+      "10-14": {
+        "field_goal": 4,
+        "punt": 7
+      },
+      "15+": {
+        "field_goal": 2,
+        "punt": 4
+      }
+    },
+    "interpretation": "The simulated go-for-it excess is partly associated with a different fourth-down distance mix; seven actual games are too few to establish causality."
+  },
+  "restore_sack_mass": {
+    "enabled_in_10k_run": false,
+    "enabled_when": "blocker_fix supplied",
+    "method": "Moves incomplete-pass probability to sack probability using observed cell sack rate minus simulated cell sack share, divided by simulated incomplete share.",
+    "frozen_cells": 115,
+    "shrunk_cells": 40,
+    "pooled_dropbacks": 76195,
+    "pooled_sacks": 5267,
+    "overall_sack_rate": 0.069125,
+    "pseudo_count": 100,
+    "caveat": "Cell support is uneven; some cells have support 1 or 8."
+  }
+}
