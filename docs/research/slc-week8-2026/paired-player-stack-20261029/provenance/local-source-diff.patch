@@ -1,0 +1,63 @@
+diff --git a/scripts/nfl_sequence/pre_event.py b/scripts/nfl_sequence/pre_event.py
+index 54a1ade7..6c73873d 100644
+--- a/scripts/nfl_sequence/pre_event.py
++++ b/scripts/nfl_sequence/pre_event.py
+@@ -184,9 +184,10 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
+                 if share_table is not None:  # the game's Dirichlet target shares over the eligible players, then this play's draw
+                     import share_distributions
+                     population = share_distributions.eligible_players(
+-                        [p for p in receivers if p['pos_abb'] in player_shares_positions('receive')],
++                        [p for p in qbd_players if p['pos_abb'] in player_shares_positions('receive')],
+                         roster.get('injury_report'))
+-                    eligible = [p for p in population if p['pos_abb'] in positions]
++                    eligible = [p for p in population
++                                if p['pos_abb'] in positions and p['gsis_id'] != chosen['passer']['gsis_id']]
+                     if not eligible:  # fail loudly: the adapter below does not know about injuries
+                         raise ValueError(f'no eligible receivers for {team} after the injury report')
+                     chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), snapshot['snapshot_sha256'],
+diff --git a/scripts/nfl_sequence/test_pre_event.py b/scripts/nfl_sequence/test_pre_event.py
+index a7068764..31bc0fe0 100644
+--- a/scripts/nfl_sequence/test_pre_event.py
++++ b/scripts/nfl_sequence/test_pre_event.py
+@@ -2,6 +2,7 @@ import random
+ import sys
+ import types
+ import unittest
++from unittest import mock
+ from collections import Counter
+ from pathlib import Path
+
+@@ -9,6 +10,7 @@ HERE = Path(__file__).resolve().parent
+ sys.path.insert(0, str(HERE))
+ import game_state as gs  # noqa: E402
+ import pre_event as pe  # noqa: E402
++import share_distributions  # noqa: E402
+ import qb_decisions as qbd  # noqa: E402
+ import slc_playcall as slc  # noqa: E402
+ from test_slc_playcall import STATE, blank_artifact, cell  # noqa: E402
+@@ -43,6 +45,25 @@ class Choice(unittest.TestCase):
+         self.assertIn(chosen['receiver']['pos_abb'], {'WR', 'TE', 'RB'})
+         self.assertEqual((chosen['side'], chosen['team']), ('home', 'AAA'))
+
++    def test_dirichlet_receiver_population_is_stable_across_trick_passers(self):
++        choose = pe.chooser(SNAPSHOT, seed=7, player_shares={}, share_table={})
++        by_id = {p['gsis_id']: p for p in SNAPSHOT['rosters']['home']['players']}
++        passers = iter(('AWR1', 'AWR2'))
++
++        def trick_passer(*args, **kwargs):
++            return by_id[next(passers)]
++
++        def equal_shares(table, team, game_id, population_ids, role, seed_text):
++            return dict.fromkeys(population_ids, 1.0)
++
++        with mock.patch.object(pe, '_passer', side_effect=trick_passer), \
++             mock.patch.object(share_distributions, 'game_shares', side_effect=equal_shares):
++            first = choose('dropback', 'A', STATE)
++            second = choose('dropback', 'A', STATE)
++
++        self.assertNotEqual(first['receiver']['gsis_id'], 'AWR1')
++        self.assertNotEqual(second['receiver']['gsis_id'], 'AWR2')
++
+     def test_the_same_inputs_give_the_same_players(self):
+         first = pe.choose(SNAPSHOT, 'away', 'dropback', seed=7, index=3)
+         again = pe.choose(SNAPSHOT, 'away', 'dropback', seed=7, index=3)

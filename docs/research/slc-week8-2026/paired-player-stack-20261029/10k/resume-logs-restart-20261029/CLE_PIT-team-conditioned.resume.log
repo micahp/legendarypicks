@@ -1,0 +1,39 @@
+progress 1000/10000; errors 0; elapsed 330s; ETA 2971s
+Traceback (most recent call last):
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/simulate_pregame_batch.py", line 736, in <module>
+    main()
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/simulate_pregame_batch.py", line 732, in main
+    run_batch(args)
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/simulate_pregame_batch.py", line 520, in run_batch
+    outcome, contribution = _seed_outcome(seed, finished, ledger, ref, snapshot)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/simulate_pregame_batch.py", line 388, in _seed_outcome
+    outcome, contribution = _simulate_seed(seed, ref, snapshot)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/simulate_pregame_batch.py", line 336, in _simulate_seed
+    record, decisions = slc_engine.play(seed, ref, snapshot)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/slc_engine.py", line 132, in play
+    record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/game_state.py", line 1406, in play_game
+    return _Game(seed, ref, ledger, rng, pregame_snapshot, model_seed).run(max_drives).record()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/game_state.py", line 1225, in run
+    self._drive()
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/game_state.py", line 769, in _drive
+    self._drive_body()
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/game_state.py", line 1104, in _drive_body
+    plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/e1_drive.py", line 220, in simulate
+    shares = Counter(ev for ev, _, _, _ in cell)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/collections/__init__.py", line 607, in __init__
+    self.update(iterable, **kwds)
+  File "/usr/lib/python3.12/collections/__init__.py", line 699, in update
+    _count_elements(self, iterable)
+  File "/tmp/lp-slc-week8-10k-20261029/scripts/nfl_sequence/e1_drive.py", line 220, in <genexpr>
+    shares = Counter(ev for ev, _, _, _ in cell)
+                     ^^
+KeyboardInterrupt
