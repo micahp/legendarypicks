@@ -474,11 +474,11 @@ def play_rows(record):
              'third_down_attempt': (play.get('state_before') or {}).get('down') == 3
                                    and play.get('event_type') in game_stats.SCRIMMAGE_EVENTS,
              'third_down_conversion': (play.get('state_before') or {}).get('down') == 3
-                                      and game_stats.first_down_result(play) is not None,
+                                      and game_stats.down_conversion(play),
              'fourth_down_attempt': (play.get('state_before') or {}).get('down') == 4
                                     and play.get('event_type') in game_stats.SCRIMMAGE_EVENTS,
              'fourth_down_conversion': (play.get('state_before') or {}).get('down') == 4
-                                       and game_stats.first_down_result(play) is not None}
+                                       and game_stats.down_conversion(play)}
             for drive in (record or {}).get('drives', []) for play in drive.get('plays', [])]
 
 
