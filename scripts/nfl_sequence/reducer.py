@@ -262,9 +262,14 @@ def project_blocked_kick_next_snap(outcome, st):
     projected = dict(outcome)
     source_togo = outcome.get('next_snap_ydstogo')
     if type(source_togo) is int:
-        # The line to gain cannot extend beyond the goal line. A source 1st-and-10
-        # projected inside ten yards becomes goal-to-go at the projected spot.
-        projected['next_snap_ydstogo'] = min(source_togo, yardline)
+        if role == 'receiving_team':
+            # A change of possession starts a NEW series. Do not carry over the
+            # source game's goal-to-go distance when its spot is reprojected:
+            # source 1st-and-goal at the 1 may become 1st-and-goal at the 3.
+            projected['next_snap_ydstogo'] = min(10, yardline)
+        else:
+            # A kicking-team recovery retains the historical series information.
+            projected['next_snap_ydstogo'] = min(source_togo, yardline)
     projected.update(next_snap_yardline_100=yardline, geometry_projected=True,
                      projected_from_source_yardline_100=outcome.get('yardline_100'),
                      projected_kick_yardline_100=int(st['yl']))

@@ -111,5 +111,72 @@ class BlockedKickStates(unittest.TestCase):
         self.assertFalse(flags['turnover'])
 
 
+
+class BlockedKickProjection(unittest.TestCase):
+    """A projected possession change must establish its own line to gain."""
+
+    def test_den_car_seed_300786_blocked_punt_becomes_first_and_goal_at_three(self):
+        # Source: 2023_15_PIT_IND, blocked punt at source yardline_100=75,
+        # PIT's next snap at IND 1 (first-and-1). The SLC-v2 DEN-CAR kick
+        # occurs at yardline_100=73, so the same -24-yard displacement
+        # yields first-and-goal at the 3, NOT first-and-1.
+        state = {'offense': 'DEN', 'defense': 'CAR', 'down': 4, 'togo': 8, 'yl': 73}
+        source = {
+            'kick_type': 'punt',
+            'classification_status': 'classified_next_snap',
+            'possession_after_role': 'receiving_team',
+            'yardline_100': 75, 'next_snap_yardline_100': 1,
+            'next_snap_yards_from_los': -24,
+            'next_snap_down': 1, 'next_snap_ydstogo': 1,
+        }
+        projected = reducer.project_blocked_kick_next_snap(source, state)
+        self.assertEqual((projected['next_snap_yardline_100'],
+                          projected['next_snap_down'], projected['next_snap_ydstogo']), (3, 1, 3))
+        self.assertEqual(source['next_snap_ydstogo'], 1)  # preserve original evidence
+        after, terminal, flags = reducer.apply_blocked_kick(state, 'blocked_punt', projected)
+        self.assertEqual(after, {'offense': 'CAR', 'defense': 'DEN',
+                                 'down': 1, 'togo': 3, 'yl': 3})
+        self.assertEqual(terminal, 'turnover')
+        self.assertTrue(flags['turnover'])
+
+        # Assert the same invariant that rejected the preserved full record.
+        import game_legality as gl
+        gl._down_and_distance({'index': 12}, {
+            'sequence': 102,
+            'state_before': {'offense_team': 'B', 'down': 4,
+                             'yards_to_go': 8, 'yardline_100': 73},
+            'state_after': {'offense_team': 'A', 'down': 1,
+                            'yards_to_go': 3, 'yardline_100': 3},
+            'outcome': {'blocked_kick': {'blocked': True}, 'turnover': True},
+        })
+
+    def test_receivers_new_series_resets_to_first_and_ten_outside_red_zone(self):
+        state = {'offense': 'DEN', 'defense': 'CAR', 'down': 4, 'togo': 8, 'yl': 60}
+        source = {'possession_after_role': 'receiving_team',
+                  'next_snap_yards_from_los': 10, 'next_snap_down': 1,
+                  'next_snap_ydstogo': 1}
+        projected = reducer.project_blocked_kick_next_snap(source, state)
+        self.assertEqual((projected['next_snap_yardline_100'],
+                          projected['next_snap_ydstogo']), (50, 10))
+
+    def test_receivers_first_and_ten_becomes_goal_to_go_inside_ten(self):
+        state = {'offense': 'DEN', 'defense': 'CAR', 'down': 4, 'togo': 8, 'yl': 73}
+        source = {'possession_after_role': 'receiving_team',
+                  'next_snap_yards_from_los': -24, 'next_snap_down': 1,
+                  'next_snap_ydstogo': 10}
+        projected = reducer.project_blocked_kick_next_snap(source, state)
+        self.assertEqual((projected['next_snap_yardline_100'],
+                          projected['next_snap_ydstogo']), (3, 3))
+
+    def test_kicking_team_recovery_does_not_reset_its_existing_series(self):
+        state = {'offense': 'DEN', 'defense': 'CAR', 'down': 4, 'togo': 8, 'yl': 73}
+        source = {'possession_after_role': 'kicking_team',
+                  'next_snap_yards_from_los': -12, 'next_snap_down': 2,
+                  'next_snap_ydstogo': 4}
+        projected = reducer.project_blocked_kick_next_snap(source, state)
+        self.assertEqual((projected['next_snap_yardline_100'],
+                          projected['next_snap_down'], projected['next_snap_ydstogo']), (85, 2, 4))
+
+
 if __name__ == '__main__':
     unittest.main()
