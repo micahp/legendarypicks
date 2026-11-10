@@ -1,0 +1,5377 @@
+{
+  "database_sha256": "1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa",
+  "evaluations": {
+    "2025": {
+      "coverage": {
+        "supported_dropbacks": 18139,
+        "unsupported": 15
+      },
+      "cutoff_games": 272,
+      "earliest_cutoff": "2025-09-04T22:50:00+00:00",
+      "latest_cutoff": "2026-01-04T19:55:00+00:00",
+      "sack_rate_by_context": {
+        "all": {
+          "defense_only": {
+            "brier": 0.06157831244629047,
+            "log_loss": 0.24982957314959414,
+            "mean_predicted_probability": 0.06574296026886034,
+            "n": 18139,
+            "observed_rate": 0.06593527757869784
+          },
+          "league": {
+            "brier": 0.06120919585268086,
+            "log_loss": 0.24665074518154428,
+            "mean_predicted_probability": 0.06544018273145961,
+            "n": 18139,
+            "observed_rate": 0.06593527757869784
+          },
+          "matchup": {
+            "brier": 0.06203115007809185,
+            "log_loss": 0.25254223831486455,
+            "mean_predicted_probability": 0.06580089497159504,
+            "n": 18139,
+            "observed_rate": 0.06593527757869784
+          },
+          "offense_only": {
+            "brier": 0.06157967771254555,
+            "log_loss": 0.24921015541173838,
+            "mean_predicted_probability": 0.06545272886549432,
+            "n": 18139,
+            "observed_rate": 0.06593527757869784
+          }
+        },
+        "defense:ARI": {
+          "defense_only": {
+            "brier": 0.042927329296551936,
+            "log_loss": 0.18475942706306814,
+            "mean_predicted_probability": 0.05896337264928883,
+            "n": 584,
+            "observed_rate": 0.046232876712328765
+          },
+          "league": {
+            "brier": 0.044033403474565656,
+            "log_loss": 0.186664668567041,
+            "mean_predicted_probability": 0.06314432782673317,
+            "n": 584,
+            "observed_rate": 0.046232876712328765
+          },
+          "matchup": {
+            "brier": 0.0429686526201936,
+            "log_loss": 0.1859921592630506,
+            "mean_predicted_probability": 0.055396167413513935,
+            "n": 584,
+            "observed_rate": 0.046232876712328765
+          },
+          "offense_only": {
+            "brier": 0.04412601602508642,
+            "log_loss": 0.18706102161014357,
+            "mean_predicted_probability": 0.059195321931442245,
+            "n": 584,
+            "observed_rate": 0.046232876712328765
+          }
+        },
+        "defense:ATL": {
+          "defense_only": {
+            "brier": 0.08603580340032561,
+            "log_loss": 0.31900396342932325,
+            "mean_predicted_probability": 0.06720334063926996,
+            "n": 574,
+            "observed_rate": 0.09407665505226481
+          },
+          "league": {
+            "brier": 0.08595339167985773,
+            "log_loss": 0.319117759509859,
+            "mean_predicted_probability": 0.06496479087719585,
+            "n": 574,
+            "observed_rate": 0.09407665505226481
+          },
+          "matchup": {
+            "brier": 0.08615263353716131,
+            "log_loss": 0.32399015384401003,
+            "mean_predicted_probability": 0.06528855516097994,
+            "n": 574,
+            "observed_rate": 0.09407665505226481
+          },
+          "offense_only": {
+            "brier": 0.0860858506952038,
+            "log_loss": 0.32388353922006,
+            "mean_predicted_probability": 0.06271773331578297,
+            "n": 574,
+            "observed_rate": 0.09407665505226481
+          }
+        },
+        "defense:BAL": {
+          "defense_only": {
+            "brier": 0.04127357178969334,
+            "log_loss": 0.17971706801859347,
+            "mean_predicted_probability": 0.06463884510219457,
+            "n": 636,
+            "observed_rate": 0.04245283018867924
+          },
+          "league": {
+            "brier": 0.04048555274051552,
+            "log_loss": 0.17460515616931094,
+            "mean_predicted_probability": 0.06506339741655245,
+            "n": 636,
+            "observed_rate": 0.04245283018867924
+          },
+          "matchup": {
+            "brier": 0.04229320682368607,
+            "log_loss": 0.1865265089481783,
+            "mean_predicted_probability": 0.06415913278800604,
+            "n": 636,
+            "observed_rate": 0.04245283018867924
+          },
+          "offense_only": {
+            "brier": 0.041545418931675564,
+            "log_loss": 0.18199024389127894,
+            "mean_predicted_probability": 0.06509482291639783,
+            "n": 636,
+            "observed_rate": 0.04245283018867924
+          }
+        },
+        "defense:BUF": {
+          "defense_only": {
+            "brier": 0.06311766937451342,
+            "log_loss": 0.24665172410613256,
+            "mean_predicted_probability": 0.07017092651093702,
+            "n": 486,
+            "observed_rate": 0.06790123456790123
+          },
+          "league": {
+            "brier": 0.06228982726655268,
+            "log_loss": 0.2412970696333592,
+            "mean_predicted_probability": 0.06884691075775652,
+            "n": 486,
+            "observed_rate": 0.06790123456790123
+          },
+          "matchup": {
+            "brier": 0.06400795450962811,
+            "log_loss": 0.24917584397874804,
+            "mean_predicted_probability": 0.06929099629695899,
+            "n": 486,
+            "observed_rate": 0.06790123456790123
+          },
+          "offense_only": {
+            "brier": 0.06291804116151471,
+            "log_loss": 0.24350138019698458,
+            "mean_predicted_probability": 0.0676477622130601,
+            "n": 486,
+            "observed_rate": 0.06790123456790123
+          }
+        },
+        "defense:CAR": {
+          "defense_only": {
+            "brier": 0.05125221387121801,
+            "log_loss": 0.21307283404978006,
+            "mean_predicted_probability": 0.05671049558509634,
+            "n": 522,
+            "observed_rate": 0.05363984674329502
+          },
+          "league": {
+            "brier": 0.05110853780313173,
+            "log_loss": 0.20966415951511652,
+            "mean_predicted_probability": 0.06585603267160763,
+            "n": 522,
+            "observed_rate": 0.05363984674329502
+          },
+          "matchup": {
+            "brier": 0.05103072734907078,
+            "log_loss": 0.21072301880067631,
+            "mean_predicted_probability": 0.053788797946617284,
+            "n": 522,
+            "observed_rate": 0.05363984674329502
+          },
+          "offense_only": {
+            "brier": 0.05083699019814265,
+            "log_loss": 0.20687076655262845,
+            "mean_predicted_probability": 0.0625049678059646,
+            "n": 522,
+            "observed_rate": 0.05363984674329502
+          }
+        },
+        "defense:CHI": {
+          "defense_only": {
+            "brier": 0.05349018277627232,
+            "log_loss": 0.21563984630224603,
+            "mean_predicted_probability": 0.060628912047323104,
+            "n": 548,
+            "observed_rate": 0.05656934306569343
+          },
+          "league": {
+            "brier": 0.053274713898162074,
+            "log_loss": 0.2146453464994276,
+            "mean_predicted_probability": 0.06476593081510906,
+            "n": 548,
+            "observed_rate": 0.05656934306569343
+          },
+          "matchup": {
+            "brier": 0.053759511835032095,
+            "log_loss": 0.21886305846334358,
+            "mean_predicted_probability": 0.059811215947466294,
+            "n": 548,
+            "observed_rate": 0.05656934306569343
+          },
+          "offense_only": {
+            "brier": 0.053656348744106706,
+            "log_loss": 0.21799352588935247,
+            "mean_predicted_probability": 0.06422993014964441,
+            "n": 548,
+            "observed_rate": 0.05656934306569343
+          }
+        },
+        "defense:CIN": {
+          "defense_only": {
+            "brier": 0.05196666024023118,
+            "log_loss": 0.20783920441398612,
+            "mean_predicted_probability": 0.0575700659591687,
+            "n": 556,
+            "observed_rate": 0.05575539568345324
+          },
+          "league": {
+            "brier": 0.052134768287586016,
+            "log_loss": 0.21041593745137369,
+            "mean_predicted_probability": 0.06359635999609599,
+            "n": 556,
+            "observed_rate": 0.05575539568345324
+          },
+          "matchup": {
+            "brier": 0.05289896620187029,
+            "log_loss": 0.21426942112108643,
+            "mean_predicted_probability": 0.05787182644753446,
+            "n": 556,
+            "observed_rate": 0.05575539568345324
+          },
+          "offense_only": {
+            "brier": 0.05303510761393387,
+            "log_loss": 0.21633032313565223,
+            "mean_predicted_probability": 0.06354133182774274,
+            "n": 556,
+            "observed_rate": 0.05575539568345324
+          }
+        },
+        "defense:CLE": {
+          "defense_only": {
+            "brier": 0.08842347169588485,
+            "log_loss": 0.32269896961151845,
+            "mean_predicted_probability": 0.0731105690692578,
+            "n": 529,
+            "observed_rate": 0.09829867674858223
+          },
+          "league": {
+            "brier": 0.08921513471688895,
+            "log_loss": 0.3261605866212028,
+            "mean_predicted_probability": 0.0667510922579013,
+            "n": 529,
+            "observed_rate": 0.09829867674858223
+          },
+          "matchup": {
+            "brier": 0.08920550645148165,
+            "log_loss": 0.3299604590967013,
+            "mean_predicted_probability": 0.07474584543360599,
+            "n": 529,
+            "observed_rate": 0.09829867674858223
+          },
+          "offense_only": {
+            "brier": 0.08962707192176934,
+            "log_loss": 0.3328622861076322,
+            "mean_predicted_probability": 0.06796836243214845,
+            "n": 529,
+            "observed_rate": 0.09829867674858223
+          }
+        },
+        "defense:DAL": {
+          "defense_only": {
+            "brier": 0.053132568617260734,
+            "log_loss": 0.22129086315888608,
+            "mean_predicted_probability": 0.06789062716551553,
+            "n": 564,
+            "observed_rate": 0.0549645390070922
+          },
+          "league": {
+            "brier": 0.052436836936353086,
+            "log_loss": 0.2156890627037236,
+            "mean_predicted_probability": 0.06411241761622388,
+            "n": 564,
+            "observed_rate": 0.0549645390070922
+          },
+          "matchup": {
+            "brier": 0.05359948555176984,
+            "log_loss": 0.2228568389730115,
+            "mean_predicted_probability": 0.07299626263732051,
+            "n": 564,
+            "observed_rate": 0.0549645390070922
+          },
+          "offense_only": {
+            "brier": 0.05265872271061492,
+            "log_loss": 0.21639405847065885,
+            "mean_predicted_probability": 0.06859895186450712,
+            "n": 564,
+            "observed_rate": 0.0549645390070922
+          }
+        },
+        "defense:DEN": {
+          "defense_only": {
+            "brier": 0.09424049615801905,
+            "log_loss": 0.3424129396979887,
+            "mean_predicted_probability": 0.07930108361011122,
+            "n": 631,
+            "observed_rate": 0.1045958795562599
+          },
+          "league": {
+            "brier": 0.09369347264702181,
+            "log_loss": 0.33898749971035075,
+            "mean_predicted_probability": 0.06821096316140397,
+            "n": 631,
+            "observed_rate": 0.1045958795562599
+          },
+          "matchup": {
+            "brier": 0.09556211124448777,
+            "log_loss": 0.35231513724146807,
+            "mean_predicted_probability": 0.08264114513471785,
+            "n": 631,
+            "observed_rate": 0.1045958795562599
+          },
+          "offense_only": {
+            "brier": 0.0946615189573502,
+            "log_loss": 0.348749395779944,
+            "mean_predicted_probability": 0.0715846147751216,
+            "n": 631,
+            "observed_rate": 0.1045958795562599
+          }
+        },
+        "defense:DET": {
+          "defense_only": {
+            "brier": 0.0744442011215261,
+            "log_loss": 0.2876637738441548,
+            "mean_predicted_probability": 0.06702534148687232,
+            "n": 588,
+            "observed_rate": 0.07993197278911565
+          },
+          "league": {
+            "brier": 0.07409063035426448,
+            "log_loss": 0.2835783382074426,
+            "mean_predicted_probability": 0.06475046278637199,
+            "n": 588,
+            "observed_rate": 0.07993197278911565
+          },
+          "matchup": {
+            "brier": 0.07552940788188024,
+            "log_loss": 0.2946764724988447,
+            "mean_predicted_probability": 0.06743442718578127,
+            "n": 588,
+            "observed_rate": 0.07993197278911565
+          },
+          "offense_only": {
+            "brier": 0.07491199272814124,
+            "log_loss": 0.2898712374779366,
+            "mean_predicted_probability": 0.06478781249955734,
+            "n": 588,
+            "observed_rate": 0.07993197278911565
+          }
+        },
+        "defense:GB": {
+          "defense_only": {
+            "brier": 0.05374283186878161,
+            "log_loss": 0.26238481478360587,
+            "mean_predicted_probability": 0.0652362037942696,
+            "n": 562,
+            "observed_rate": 0.05693950177935943
+          },
+          "league": {
+            "brier": 0.053969947693539695,
+            "log_loss": 0.2618706764261244,
+            "mean_predicted_probability": 0.06447314895690101,
+            "n": 562,
+            "observed_rate": 0.05693950177935943
+          },
+          "matchup": {
+            "brier": 0.054375059098062305,
+            "log_loss": 0.26796669143448865,
+            "mean_predicted_probability": 0.06734087004740652,
+            "n": 562,
+            "observed_rate": 0.05693950177935943
+          },
+          "offense_only": {
+            "brier": 0.0544433377426976,
+            "log_loss": 0.2669731029405042,
+            "mean_predicted_probability": 0.06640650153797692,
+            "n": 562,
+            "observed_rate": 0.05693950177935943
+          }
+        },
+        "defense:HOU": {
+          "defense_only": {
+            "brier": 0.06932537232172901,
+            "log_loss": 0.26416243567480036,
+            "mean_predicted_probability": 0.06867548259704555,
+            "n": 570,
+            "observed_rate": 0.07543859649122807
+          },
+          "league": {
+            "brier": 0.06948196641477775,
+            "log_loss": 0.2647480100118252,
+            "mean_predicted_probability": 0.06817614892373858,
+            "n": 570,
+            "observed_rate": 0.07543859649122807
+          },
+          "matchup": {
+            "brier": 0.06960313060183214,
+            "log_loss": 0.2655287799121207,
+            "mean_predicted_probability": 0.06836702700348883,
+            "n": 570,
+            "observed_rate": 0.07543859649122807
+          },
+          "offense_only": {
+            "brier": 0.06986201311539328,
+            "log_loss": 0.26610168764133724,
+            "mean_predicted_probability": 0.0679513585990731,
+            "n": 570,
+            "observed_rate": 0.07543859649122807
+          }
+        },
+        "defense:IND": {
+          "defense_only": {
+            "brier": 0.053376255486751324,
+            "log_loss": 0.2209228547398824,
+            "mean_predicted_probability": 0.06317079695860635,
+            "n": 644,
+            "observed_rate": 0.055900621118012424
+          },
+          "league": {
+            "brier": 0.05265686376112876,
+            "log_loss": 0.21448226517531446,
+            "mean_predicted_probability": 0.0642232180149023,
+            "n": 644,
+            "observed_rate": 0.055900621118012424
+          },
+          "matchup": {
+            "brier": 0.053452682110954816,
+            "log_loss": 0.22210717562455343,
+            "mean_predicted_probability": 0.06181466584690689,
+            "n": 644,
+            "observed_rate": 0.055900621118012424
+          },
+          "offense_only": {
+            "brier": 0.052810948674066535,
+            "log_loss": 0.215574470085016,
+            "mean_predicted_probability": 0.06290283606395032,
+            "n": 644,
+            "observed_rate": 0.055900621118012424
+          }
+        },
+        "defense:JAX": {
+          "defense_only": {
+            "brier": 0.04460045139652379,
+            "log_loss": 0.19150999684370876,
+            "mean_predicted_probability": 0.05660688915787585,
+            "n": 632,
+            "observed_rate": 0.04588607594936709
+          },
+          "league": {
+            "brier": 0.04430119884618066,
+            "log_loss": 0.1883336069530996,
+            "mean_predicted_probability": 0.0642318579973867,
+            "n": 632,
+            "observed_rate": 0.04588607594936709
+          },
+          "matchup": {
+            "brier": 0.04451363359209019,
+            "log_loss": 0.19199436855109236,
+            "mean_predicted_probability": 0.05740543435771149,
+            "n": 632,
+            "observed_rate": 0.04588607594936709
+          },
+          "offense_only": {
+            "brier": 0.04443949753561942,
+            "log_loss": 0.18905393070022386,
+            "mean_predicted_probability": 0.06506234826725604,
+            "n": 632,
+            "observed_rate": 0.04588607594936709
+          }
+        },
+        "defense:KC": {
+          "defense_only": {
+            "brier": 0.05980892378219691,
+            "log_loss": 0.23513065787628057,
+            "mean_predicted_probability": 0.06787898283605447,
+            "n": 532,
+            "observed_rate": 0.06390977443609022
+          },
+          "league": {
+            "brier": 0.0590927285183011,
+            "log_loss": 0.23142551667787084,
+            "mean_predicted_probability": 0.06605026266524192,
+            "n": 532,
+            "observed_rate": 0.06390977443609022
+          },
+          "matchup": {
+            "brier": 0.06097771327380283,
+            "log_loss": 0.24110504668084812,
+            "mean_predicted_probability": 0.06841102807327838,
+            "n": 532,
+            "observed_rate": 0.06390977443609022
+          },
+          "offense_only": {
+            "brier": 0.05985670909451731,
+            "log_loss": 0.2376411662529843,
+            "mean_predicted_probability": 0.0667518166801038,
+            "n": 532,
+            "observed_rate": 0.06390977443609022
+          }
+        },
+        "defense:LAC": {
+          "defense_only": {
+            "brier": 0.07816376825591986,
+            "log_loss": 0.29259878721909055,
+            "mean_predicted_probability": 0.07104137589180129,
+            "n": 531,
+            "observed_rate": 0.0847457627118644
+          },
+          "league": {
+            "brier": 0.07723776942610677,
+            "log_loss": 0.2882980787405901,
+            "mean_predicted_probability": 0.06724801169958887,
+            "n": 531,
+            "observed_rate": 0.0847457627118644
+          },
+          "matchup": {
+            "brier": 0.07909214472822619,
+            "log_loss": 0.2955187239387172,
+            "mean_predicted_probability": 0.0713885265215456,
+            "n": 531,
+            "observed_rate": 0.0847457627118644
+          },
+          "offense_only": {
+            "brier": 0.07771830659824011,
+            "log_loss": 0.29042894113380546,
+            "mean_predicted_probability": 0.06773310233944227,
+            "n": 531,
+            "observed_rate": 0.0847457627118644
+          }
+        },
+        "defense:LAR": {
+          "defense_only": {
+            "brier": 0.06739220469450014,
+            "log_loss": 0.38792953384622536,
+            "mean_predicted_probability": 0.06523242146874825,
+            "n": 609,
+            "observed_rate": 0.07060755336617405
+          },
+          "league": {
+            "brier": 0.06669281003870388,
+            "log_loss": 0.3813849681576597,
+            "mean_predicted_probability": 0.06454449531885065,
+            "n": 609,
+            "observed_rate": 0.07060755336617405
+          },
+          "matchup": {
+            "brier": 0.06851300777107613,
+            "log_loss": 0.3949336090356221,
+            "mean_predicted_probability": 0.06412754856509185,
+            "n": 609,
+            "observed_rate": 0.07060755336617405
+          },
+          "offense_only": {
+            "brier": 0.06758160681093484,
+            "log_loss": 0.3881147563652964,
+            "mean_predicted_probability": 0.06308251207079955,
+            "n": 609,
+            "observed_rate": 0.07060755336617405
+          }
+        },
+        "defense:LV": {
+          "defense_only": {
+            "brier": 0.05769910076399353,
+            "log_loss": 0.23560655028632893,
+            "mean_predicted_probability": 0.06288999110165276,
+            "n": 545,
+            "observed_rate": 0.060550458715596334
+          },
+          "league": {
+            "brier": 0.057685686026408285,
+            "log_loss": 0.23417776118194653,
+            "mean_predicted_probability": 0.06480444569619047,
+            "n": 545,
+            "observed_rate": 0.060550458715596334
+          },
+          "matchup": {
+            "brier": 0.05854537233153654,
+            "log_loss": 0.2419665246543045,
+            "mean_predicted_probability": 0.06491476237758237,
+            "n": 545,
+            "observed_rate": 0.060550458715596334
+          },
+          "offense_only": {
+            "brier": 0.05846012314212197,
+            "log_loss": 0.2411195187411801,
+            "mean_predicted_probability": 0.06732749079909046,
+            "n": 545,
+            "observed_rate": 0.060550458715596334
+          }
+        },
+        "defense:MIA": {
+          "defense_only": {
+            "brier": 0.05746132532020738,
+            "log_loss": 0.2297864743233885,
+            "mean_predicted_probability": 0.06320763811815902,
+            "n": 540,
+            "observed_rate": 0.06111111111111111
+          },
+          "league": {
+            "brier": 0.05678199958393069,
+            "log_loss": 0.22399347476196518,
+            "mean_predicted_probability": 0.0654427275103846,
+            "n": 540,
+            "observed_rate": 0.06111111111111111
+          },
+          "matchup": {
+            "brier": 0.057062459312075,
+            "log_loss": 0.22607654450472014,
+            "mean_predicted_probability": 0.06347055014852375,
+            "n": 540,
+            "observed_rate": 0.06111111111111111
+          },
+          "offense_only": {
+            "brier": 0.05660105162812996,
+            "log_loss": 0.22122807036952913,
+            "mean_predicted_probability": 0.06642800602353283,
+            "n": 540,
+            "observed_rate": 0.06111111111111111
+          }
+        },
+        "defense:MIN": {
+          "defense_only": {
+            "brier": 0.08874391347386625,
+            "log_loss": 0.3820813481416878,
+            "mean_predicted_probability": 0.06904238949124382,
+            "n": 486,
+            "observed_rate": 0.09670781893004116
+          },
+          "league": {
+            "brier": 0.08783247807012788,
+            "log_loss": 0.3742488540378852,
+            "mean_predicted_probability": 0.06569672657484707,
+            "n": 486,
+            "observed_rate": 0.09670781893004116
+          },
+          "matchup": {
+            "brier": 0.08847471312102899,
+            "log_loss": 0.3780560817012697,
+            "mean_predicted_probability": 0.0702851005958192,
+            "n": 486,
+            "observed_rate": 0.09670781893004116
+          },
+          "offense_only": {
+            "brier": 0.08748543091141994,
+            "log_loss": 0.36998906615672145,
+            "mean_predicted_probability": 0.06684822088172405,
+            "n": 486,
+            "observed_rate": 0.09670781893004116
+          }
+        },
+        "defense:NE": {
+          "defense_only": {
+            "brier": 0.0574428770404329,
+            "log_loss": 0.2246696055749475,
+            "mean_predicted_probability": 0.06474130179373623,
+            "n": 547,
+            "observed_rate": 0.062157221206581355
+          },
+          "league": {
+            "brier": 0.057185035263482155,
+            "log_loss": 0.2243588275784255,
+            "mean_predicted_probability": 0.06695868971693122,
+            "n": 547,
+            "observed_rate": 0.062157221206581355
+          },
+          "matchup": {
+            "brier": 0.05863843404201692,
+            "log_loss": 0.22860650443616604,
+            "mean_predicted_probability": 0.0654795463350737,
+            "n": 547,
+            "observed_rate": 0.062157221206581355
+          },
+          "offense_only": {
+            "brier": 0.05835763431731847,
+            "log_loss": 0.22801320950172654,
+            "mean_predicted_probability": 0.0675508700565159,
+            "n": 547,
+            "observed_rate": 0.062157221206581355
+          }
+        },
+        "defense:NO": {
+          "defense_only": {
+            "brier": 0.06941075160641721,
+            "log_loss": 0.26105727082226593,
+            "mean_predicted_probability": 0.06632411925043913,
+            "n": 521,
+            "observed_rate": 0.07677543186180422
+          },
+          "league": {
+            "brier": 0.06985045617685659,
+            "log_loss": 0.26262676672705487,
+            "mean_predicted_probability": 0.06639980866373064,
+            "n": 521,
+            "observed_rate": 0.07677543186180422
+          },
+          "matchup": {
+            "brier": 0.06949859703433202,
+            "log_loss": 0.2649388626385438,
+            "mean_predicted_probability": 0.06750682832394446,
+            "n": 521,
+            "observed_rate": 0.07677543186180422
+          },
+          "offense_only": {
+            "brier": 0.06996994630832766,
+            "log_loss": 0.26559375871878627,
+            "mean_predicted_probability": 0.06702059284182608,
+            "n": 521,
+            "observed_rate": 0.07677543186180422
+          }
+        },
+        "defense:NYG": {
+          "defense_only": {
+            "brier": 0.057377185006110276,
+            "log_loss": 0.23087071466009726,
+            "mean_predicted_probability": 0.0650843842060548,
+            "n": 568,
+            "observed_rate": 0.061619718309859156
+          },
+          "league": {
+            "brier": 0.056831866230068986,
+            "log_loss": 0.2251144169904019,
+            "mean_predicted_probability": 0.06461503455855405,
+            "n": 568,
+            "observed_rate": 0.061619718309859156
+          },
+          "matchup": {
+            "brier": 0.057817239149920416,
+            "log_loss": 0.23307062955560498,
+            "mean_predicted_probability": 0.06424872370045083,
+            "n": 568,
+            "observed_rate": 0.061619718309859156
+          },
+          "offense_only": {
+            "brier": 0.05732628196377037,
+            "log_loss": 0.22766093716005387,
+            "mean_predicted_probability": 0.06412300489863876,
+            "n": 568,
+            "observed_rate": 0.061619718309859156
+          }
+        },
+        "defense:NYJ": {
+          "defense_only": {
+            "brier": 0.04647353300345107,
+            "log_loss": 0.1935534304855942,
+            "mean_predicted_probability": 0.06701254966743095,
+            "n": 530,
+            "observed_rate": 0.04905660377358491
+          },
+          "league": {
+            "brier": 0.045605835302554944,
+            "log_loss": 0.18963379150396673,
+            "mean_predicted_probability": 0.06618468430370163,
+            "n": 530,
+            "observed_rate": 0.04905660377358491
+          },
+          "matchup": {
+            "brier": 0.04694667718729045,
+            "log_loss": 0.1950738083365812,
+            "mean_predicted_probability": 0.06530671328440175,
+            "n": 530,
+            "observed_rate": 0.04905660377358491
+          },
+          "offense_only": {
+            "brier": 0.04618976721236408,
+            "log_loss": 0.19147363671088402,
+            "mean_predicted_probability": 0.06477498658948322,
+            "n": 530,
+            "observed_rate": 0.04905660377358491
+          }
+        },
+        "defense:PHI": {
+          "defense_only": {
+            "brier": 0.06245391974729052,
+            "log_loss": 0.24409567382596564,
+            "mean_predicted_probability": 0.06639170213084936,
+            "n": 565,
+            "observed_rate": 0.06725663716814159
+          },
+          "league": {
+            "brier": 0.062223548485219486,
+            "log_loss": 0.24224372677198364,
+            "mean_predicted_probability": 0.06560853809955074,
+            "n": 565,
+            "observed_rate": 0.06725663716814159
+          },
+          "matchup": {
+            "brier": 0.06248173297005272,
+            "log_loss": 0.243287206638545,
+            "mean_predicted_probability": 0.06588964243370915,
+            "n": 565,
+            "observed_rate": 0.06725663716814159
+          },
+          "offense_only": {
+            "brier": 0.062202563244582044,
+            "log_loss": 0.24119510663895716,
+            "mean_predicted_probability": 0.0650061876922909,
+            "n": 565,
+            "observed_rate": 0.06725663716814159
+          }
+        },
+        "defense:PIT": {
+          "defense_only": {
+            "brier": 0.06460163146739864,
+            "log_loss": 0.25429805839466446,
+            "mean_predicted_probability": 0.06745765903652369,
+            "n": 640,
+            "observed_rate": 0.06875
+          },
+          "league": {
+            "brier": 0.06352815949459525,
+            "log_loss": 0.24573703095034144,
+            "mean_predicted_probability": 0.06564530772552765,
+            "n": 640,
+            "observed_rate": 0.06875
+          },
+          "matchup": {
+            "brier": 0.06540951137345476,
+            "log_loss": 0.2575406278850375,
+            "mean_predicted_probability": 0.06700001381552928,
+            "n": 640,
+            "observed_rate": 0.06875
+          },
+          "offense_only": {
+            "brier": 0.06413873753736452,
+            "log_loss": 0.24906591236380987,
+            "mean_predicted_probability": 0.065352629179755,
+            "n": 640,
+            "observed_rate": 0.06875
+          }
+        },
+        "defense:SEA": {
+          "defense_only": {
+            "brier": 0.06615946595517683,
+            "log_loss": 0.2573563142623592,
+            "mean_predicted_probability": 0.0716176838821801,
+            "n": 622,
+            "observed_rate": 0.0707395498392283
+          },
+          "league": {
+            "brier": 0.0655261307027901,
+            "log_loss": 0.25381956373915265,
+            "mean_predicted_probability": 0.06609425902861585,
+            "n": 622,
+            "observed_rate": 0.0707395498392283
+          },
+          "matchup": {
+            "brier": 0.0665622298956683,
+            "log_loss": 0.2599393385246789,
+            "mean_predicted_probability": 0.07209429813135958,
+            "n": 622,
+            "observed_rate": 0.0707395498392283
+          },
+          "offense_only": {
+            "brier": 0.06586787632707665,
+            "log_loss": 0.2559378599892585,
+            "mean_predicted_probability": 0.06635400129197914,
+            "n": 622,
+            "observed_rate": 0.0707395498392283
+          }
+        },
+        "defense:SF": {
+          "defense_only": {
+            "brier": 0.03200581367739214,
+            "log_loss": 0.1515443185167984,
+            "mean_predicted_probability": 0.056759655009245735,
+            "n": 577,
+            "observed_rate": 0.03119584055459272
+          },
+          "league": {
+            "brier": 0.03184784907732675,
+            "log_loss": 0.15155489607765812,
+            "mean_predicted_probability": 0.06355030417549376,
+            "n": 577,
+            "observed_rate": 0.03119584055459272
+          },
+          "matchup": {
+            "brier": 0.0321213811134521,
+            "log_loss": 0.15067310948989168,
+            "mean_predicted_probability": 0.056114399746016015,
+            "n": 577,
+            "observed_rate": 0.03119584055459272
+          },
+          "offense_only": {
+            "brier": 0.03212315348455952,
+            "log_loss": 0.15108528118777767,
+            "mean_predicted_probability": 0.06308123139924228,
+            "n": 577,
+            "observed_rate": 0.03119584055459272
+          }
+        },
+        "defense:TB": {
+          "defense_only": {
+            "brier": 0.05664233647396815,
+            "log_loss": 0.2305915121592688,
+            "mean_predicted_probability": 0.06843161698654483,
+            "n": 587,
+            "observed_rate": 0.059625212947189095
+          },
+          "league": {
+            "brier": 0.05602023613206018,
+            "log_loss": 0.22498800952832415,
+            "mean_predicted_probability": 0.06549447303568225,
+            "n": 587,
+            "observed_rate": 0.059625212947189095
+          },
+          "matchup": {
+            "brier": 0.05715019173008157,
+            "log_loss": 0.23530315898533724,
+            "mean_predicted_probability": 0.06798006709919052,
+            "n": 587,
+            "observed_rate": 0.059625212947189095
+          },
+          "offense_only": {
+            "brier": 0.05632325540675608,
+            "log_loss": 0.22890244761582035,
+            "mean_predicted_probability": 0.06455459674848903,
+            "n": 587,
+            "observed_rate": 0.059625212947189095
+          }
+        },
+        "defense:TEN": {
+          "defense_only": {
+            "brier": 0.06761846949729754,
+            "log_loss": 0.26002239653399,
+            "mean_predicted_probability": 0.06463926698178529,
+            "n": 543,
+            "observed_rate": 0.07366482504604052
+          },
+          "league": {
+            "brier": 0.06694135897126793,
+            "log_loss": 0.2545020602844904,
+            "mean_predicted_probability": 0.0652345470103818,
+            "n": 543,
+            "observed_rate": 0.07366482504604052
+          },
+          "matchup": {
+            "brier": 0.0674101752618069,
+            "log_loss": 0.2568697590948079,
+            "mean_predicted_probability": 0.06503714199396168,
+            "n": 543,
+            "observed_rate": 0.07366482504604052
+          },
+          "offense_only": {
+            "brier": 0.06655367073267567,
+            "log_loss": 0.25137297224526245,
+            "mean_predicted_probability": 0.06565324966669299,
+            "n": 543,
+            "observed_rate": 0.07366482504604052
+          }
+        },
+        "defense:WSH": {
+          "defense_only": {
+            "brier": 0.06557244730640445,
+            "log_loss": 0.2582708832854862,
+            "mean_predicted_probability": 0.06937948461921416,
+            "n": 570,
+            "observed_rate": 0.07017543859649122
+          },
+          "league": {
+            "brier": 0.06470174556568807,
+            "log_loss": 0.2504953268434219,
+            "mean_predicted_probability": 0.06435429356059925,
+            "n": 570,
+            "observed_rate": 0.07017543859649122
+          },
+          "matchup": {
+            "brier": 0.06502246265631381,
+            "log_loss": 0.25364167533954823,
+            "mean_predicted_probability": 0.0684260152011531,
+            "n": 570,
+            "observed_rate": 0.07017543859649122
+          },
+          "offense_only": {
+            "brier": 0.0639408487260122,
+            "log_loss": 0.24614153195530503,
+            "mean_predicted_probability": 0.06371412204722568,
+            "n": 570,
+            "observed_rate": 0.07017543859649122
+          }
+        },
+        "distance:1-2": {
+          "defense_only": {
+            "brier": 0.052779354530429284,
+            "log_loss": 0.21557882927663802,
+            "mean_predicted_probability": 0.05773113074688823,
+            "n": 1025,
+            "observed_rate": 0.055609756097560976
+          },
+          "league": {
+            "brier": 0.05223694926250086,
+            "log_loss": 0.2119000886809942,
+            "mean_predicted_probability": 0.058670219151403795,
+            "n": 1025,
+            "observed_rate": 0.055609756097560976
+          },
+          "matchup": {
+            "brier": 0.05302699131916487,
+            "log_loss": 0.21678809937895394,
+            "mean_predicted_probability": 0.05741327950224623,
+            "n": 1025,
+            "observed_rate": 0.055609756097560976
+          },
+          "offense_only": {
+            "brier": 0.05241298868650012,
+            "log_loss": 0.2131516065729047,
+            "mean_predicted_probability": 0.058542376289365754,
+            "n": 1025,
+            "observed_rate": 0.055609756097560976
+          }
+        },
+        "distance:10+": {
+          "defense_only": {
+            "brier": 0.05582866501097784,
+            "log_loss": 0.2259794059903037,
+            "mean_predicted_probability": 0.06007539695790922,
+            "n": 10447,
+            "observed_rate": 0.05934718100890208
+          },
+          "league": {
+            "brier": 0.055563342463620005,
+            "log_loss": 0.2228190790197586,
+            "mean_predicted_probability": 0.05965645455389431,
+            "n": 10447,
+            "observed_rate": 0.05934718100890208
+          },
+          "matchup": {
+            "brier": 0.056219111553892795,
+            "log_loss": 0.22855645518141712,
+            "mean_predicted_probability": 0.06043803538556836,
+            "n": 10447,
+            "observed_rate": 0.05934718100890208
+          },
+          "offense_only": {
+            "brier": 0.05584821353618146,
+            "log_loss": 0.2251671614901043,
+            "mean_predicted_probability": 0.05989065754058096,
+            "n": 10447,
+            "observed_rate": 0.05934718100890208
+          }
+        },
+        "distance:3-5": {
+          "defense_only": {
+            "brier": 0.07696758518176938,
+            "log_loss": 0.3296660302013959,
+            "mean_predicted_probability": 0.07065901787570597,
+            "n": 2584,
+            "observed_rate": 0.08320433436532508
+          },
+          "league": {
+            "brier": 0.07642577943930523,
+            "log_loss": 0.32565800343801266,
+            "mean_predicted_probability": 0.06942687104505241,
+            "n": 2584,
+            "observed_rate": 0.08320433436532508
+          },
+          "matchup": {
+            "brier": 0.07733075057670928,
+            "log_loss": 0.33215155600054536,
+            "mean_predicted_probability": 0.07062592884330719,
+            "n": 2584,
+            "observed_rate": 0.08320433436532508
+          },
+          "offense_only": {
+            "brier": 0.07686012163431274,
+            "log_loss": 0.3283165644473369,
+            "mean_predicted_probability": 0.06958855423404693,
+            "n": 2584,
+            "observed_rate": 0.08320433436532508
+          }
+        },
+        "distance:6-9": {
+          "defense_only": {
+            "brier": 0.06875921322316834,
+            "log_loss": 0.26892639013736375,
+            "mean_predicted_probability": 0.07914439703433572,
+            "n": 4083,
+            "observed_rate": 0.07445505755571884
+          },
+          "league": {
+            "brier": 0.06827731515775763,
+            "log_loss": 0.26635049633769425,
+            "mean_predicted_probability": 0.07941525457527936,
+            "n": 4083,
+            "observed_rate": 0.07445505755571884
+          },
+          "matchup": {
+            "brier": 0.06947995279711859,
+            "log_loss": 0.2725072130649728,
+            "mean_predicted_probability": 0.07857464281063542,
+            "n": 4083,
+            "observed_rate": 0.07445505755571884
+          },
+          "offense_only": {
+            "brier": 0.06887524357302291,
+            "log_loss": 0.2697162071166438,
+            "mean_predicted_probability": 0.07880151597535326,
+            "n": 4083,
+            "observed_rate": 0.07445505755571884
+          }
+        },
+        "down:1.0": {
+          "defense_only": {
+            "brier": 0.04688555741245808,
+            "log_loss": 0.1991785107222015,
+            "mean_predicted_probability": 0.05037987811770365,
+            "n": 6551,
+            "observed_rate": 0.04884750419783239
+          },
+          "league": {
+            "brier": 0.046442263193811534,
+            "log_loss": 0.1946586195901556,
+            "mean_predicted_probability": 0.04979297715957665,
+            "n": 6551,
+            "observed_rate": 0.04884750419783239
+          },
+          "matchup": {
+            "brier": 0.04727461179173442,
+            "log_loss": 0.20147398746083203,
+            "mean_predicted_probability": 0.05066985825045769,
+            "n": 6551,
+            "observed_rate": 0.04884750419783239
+          },
+          "offense_only": {
+            "brier": 0.04665896643124631,
+            "log_loss": 0.19663228294745555,
+            "mean_predicted_probability": 0.049899150311343766,
+            "n": 6551,
+            "observed_rate": 0.04884750419783239
+          }
+        },
+        "down:2.0": {
+          "defense_only": {
+            "brier": 0.05458231795331578,
+            "log_loss": 0.2242386473639478,
+            "mean_predicted_probability": 0.055437481964194145,
+            "n": 6193,
+            "observed_rate": 0.05748425641853706
+          },
+          "league": {
+            "brier": 0.054282076877980756,
+            "log_loss": 0.22130677567130683,
+            "mean_predicted_probability": 0.054908010917084894,
+            "n": 6193,
+            "observed_rate": 0.05748425641853706
+          },
+          "matchup": {
+            "brier": 0.05501308353608873,
+            "log_loss": 0.22740645682307342,
+            "mean_predicted_probability": 0.055611696435831304,
+            "n": 6193,
+            "observed_rate": 0.05748425641853706
+          },
+          "offense_only": {
+            "brier": 0.054648003796472104,
+            "log_loss": 0.22442653797923975,
+            "mean_predicted_probability": 0.05508017602025752,
+            "n": 6193,
+            "observed_rate": 0.05748425641853706
+          }
+        },
+        "down:3.0": {
+          "defense_only": {
+            "brier": 0.08867086626361895,
+            "log_loss": 0.32181605532195406,
+            "mean_predicted_probability": 0.0995317216879034,
+            "n": 4870,
+            "observed_rate": 0.09794661190965093
+          },
+          "league": {
+            "brier": 0.0881486562875169,
+            "log_loss": 0.3191774009538914,
+            "mean_predicted_probability": 0.10011836846704969,
+            "n": 4870,
+            "observed_rate": 0.09794661190965093
+          },
+          "matchup": {
+            "brier": 0.08923608172308843,
+            "log_loss": 0.32444407918232004,
+            "mean_predicted_probability": 0.0991172294829149,
+            "n": 4870,
+            "observed_rate": 0.09794661190965093
+          },
+          "offense_only": {
+            "brier": 0.088676948389727,
+            "log_loss": 0.3217092220009182,
+            "mean_predicted_probability": 0.0997009757094549,
+            "n": 4870,
+            "observed_rate": 0.09794661190965093
+          }
+        },
+        "down:4.0": {
+          "defense_only": {
+            "brier": 0.07612630298198315,
+            "log_loss": 0.515973468717197,
+            "mean_predicted_probability": 0.06557936065414875,
+            "n": 525,
+            "observed_rate": 0.08190476190476191
+          },
+          "league": {
+            "brier": 0.07729043650201287,
+            "log_loss": 0.521604658162173,
+            "mean_predicted_probability": 0.0632455526659183,
+            "n": 525,
+            "observed_rate": 0.08190476190476191
+          },
+          "matchup": {
+            "brier": 0.07659296207318635,
+            "log_loss": 0.5193080308843605,
+            "mean_predicted_probability": 0.06575247406116881,
+            "n": 525,
+            "observed_rate": 0.08190476190476191
+          },
+          "offense_only": {
+            "brier": 0.07816963574714389,
+            "log_loss": 0.5251189763330675,
+            "mean_predicted_probability": 0.0641951112439678,
+            "n": 525,
+            "observed_rate": 0.08190476190476191
+          }
+        },
+        "down_distance:1.0:1-2": {
+          "defense_only": {
+            "brier": 0.0169036750250599,
+            "log_loss": 0.09398592964427227,
+            "mean_predicted_probability": 0.03397846696046612,
+            "n": 61,
+            "observed_rate": 0.01639344262295082
+          },
+          "league": {
+            "brier": 0.016600946136211422,
+            "log_loss": 0.09184335160857829,
+            "mean_predicted_probability": 0.03821656050955414,
+            "n": 61,
+            "observed_rate": 0.01639344262295082
+          },
+          "matchup": {
+            "brier": 0.01688030663730062,
+            "log_loss": 0.09416172512326211,
+            "mean_predicted_probability": 0.029621376945020483,
+            "n": 61,
+            "observed_rate": 0.01639344262295082
+          },
+          "offense_only": {
+            "brier": 0.016762490160167485,
+            "log_loss": 0.09190018948337637,
+            "mean_predicted_probability": 0.033362320401798574,
+            "n": 61,
+            "observed_rate": 0.01639344262295082
+          }
+        },
+        "down_distance:1.0:10+": {
+          "defense_only": {
+            "brier": 0.0475495222139602,
+            "log_loss": 0.20148776597762472,
+            "mean_predicted_probability": 0.050547113246125874,
+            "n": 6265,
+            "observed_rate": 0.04964086193136472
+          },
+          "league": {
+            "brier": 0.04714461891477429,
+            "log_loss": 0.19709263225704088,
+            "mean_predicted_probability": 0.049916887432997256,
+            "n": 6265,
+            "observed_rate": 0.04964086193136472
+          },
+          "matchup": {
+            "brier": 0.047916910011682634,
+            "log_loss": 0.20380067263096044,
+            "mean_predicted_probability": 0.05092819943327291,
+            "n": 6265,
+            "observed_rate": 0.04964086193136472
+          },
+          "offense_only": {
+            "brier": 0.04736662842710058,
+            "log_loss": 0.19917917582875952,
+            "mean_predicted_probability": 0.05018289736784978,
+            "n": 6265,
+            "observed_rate": 0.04964086193136472
+          }
+        },
+        "down_distance:1.0:3-5": {
+          "defense_only": {
+            "brier": 0.019843087682799295,
+            "log_loss": 0.10411069723433398,
+            "mean_predicted_probability": 0.03765295528877299,
+            "n": 112,
+            "observed_rate": 0.017857142857142856
+          },
+          "league": {
+            "brier": 0.01950007659707232,
+            "log_loss": 0.10116733982817537,
+            "mean_predicted_probability": 0.03972121760108943,
+            "n": 112,
+            "observed_rate": 0.017857142857142856
+          },
+          "matchup": {
+            "brier": 0.020421800751649972,
+            "log_loss": 0.11009958687059007,
+            "mean_predicted_probability": 0.035540047771176,
+            "n": 112,
+            "observed_rate": 0.017857142857142856
+          },
+          "offense_only": {
+            "brier": 0.019956260820678796,
+            "log_loss": 0.10587074768779983,
+            "mean_predicted_probability": 0.03644926113442502,
+            "n": 112,
+            "observed_rate": 0.017857142857142856
+          }
+        },
+        "down_distance:1.0:6-9": {
+          "defense_only": {
+            "brier": 0.05306176939424411,
+            "log_loss": 0.22215955834313605,
+            "mean_predicted_probability": 0.0625761025236012,
+            "n": 113,
+            "observed_rate": 0.05309734513274336
+          },
+          "league": {
+            "brier": 0.05031471140190261,
+            "log_loss": 0.20787689677764987,
+            "mean_predicted_probability": 0.059154929577464904,
+            "n": 113,
+            "observed_rate": 0.05309734513274336
+          },
+          "matchup": {
+            "brier": 0.054686727746896244,
+            "log_loss": 0.22097220230901665,
+            "mean_predicted_probability": 0.06270515579889957,
+            "n": 113,
+            "observed_rate": 0.05309734513274336
+          },
+          "offense_only": {
+            "brier": 0.05002963613826072,
+            "log_loss": 0.20192136037242275,
+            "mean_predicted_probability": 0.056425335296175404,
+            "n": 113,
+            "observed_rate": 0.05309734513274336
+          }
+        },
+        "down_distance:2.0:1-2": {
+          "defense_only": {
+            "brier": 0.05279119071035035,
+            "log_loss": 0.2160420692007918,
+            "mean_predicted_probability": 0.048719677407620746,
+            "n": 322,
+            "observed_rate": 0.055900621118012424
+          },
+          "league": {
+            "brier": 0.052707999555552554,
+            "log_loss": 0.2153005662952575,
+            "mean_predicted_probability": 0.049114986549731135,
+            "n": 322,
+            "observed_rate": 0.055900621118012424
+          },
+          "matchup": {
+            "brier": 0.05266161719047582,
+            "log_loss": 0.2174457444580153,
+            "mean_predicted_probability": 0.05006275968723104,
+            "n": 322,
+            "observed_rate": 0.055900621118012424
+          },
+          "offense_only": {
+            "brier": 0.052520733225657576,
+            "log_loss": 0.21634007007653092,
+            "mean_predicted_probability": 0.04999248184312323,
+            "n": 322,
+            "observed_rate": 0.055900621118012424
+          }
+        },
+        "down_distance:2.0:10+": {
+          "defense_only": {
+            "brier": 0.05418111892260849,
+            "log_loss": 0.2222264611026369,
+            "mean_predicted_probability": 0.05526954271393036,
+            "n": 2629,
+            "observed_rate": 0.05705591479650057
+          },
+          "league": {
+            "brier": 0.053833011581950856,
+            "log_loss": 0.21918998320980296,
+            "mean_predicted_probability": 0.05475163601434338,
+            "n": 2629,
+            "observed_rate": 0.05705591479650057
+          },
+          "matchup": {
+            "brier": 0.05478286274552966,
+            "log_loss": 0.2263136633478957,
+            "mean_predicted_probability": 0.056343486348219715,
+            "n": 2629,
+            "observed_rate": 0.05705591479650057
+          },
+          "offense_only": {
+            "brier": 0.054274871562158156,
+            "log_loss": 0.22292865741879278,
+            "mean_predicted_probability": 0.055565968746250284,
+            "n": 2629,
+            "observed_rate": 0.05705591479650057
+          }
+        },
+        "down_distance:2.0:3-5": {
+          "defense_only": {
+            "brier": 0.06873410157284658,
+            "log_loss": 0.2736357322559984,
+            "mean_predicted_probability": 0.05117419393328171,
+            "n": 968,
+            "observed_rate": 0.07334710743801653
+          },
+          "league": {
+            "brier": 0.06862922557838015,
+            "log_loss": 0.2704217755481892,
+            "mean_predicted_probability": 0.04838060755382562,
+            "n": 968,
+            "observed_rate": 0.07334710743801653
+          },
+          "matchup": {
+            "brier": 0.0689297864761415,
+            "log_loss": 0.2756187776869987,
+            "mean_predicted_probability": 0.0513339655980443,
+            "n": 968,
+            "observed_rate": 0.07334710743801653
+          },
+          "offense_only": {
+            "brier": 0.06889967191989434,
+            "log_loss": 0.2730563943303111,
+            "mean_predicted_probability": 0.04915100925871791,
+            "n": 968,
+            "observed_rate": 0.07334710743801653
+          }
+        },
+        "down_distance:2.0:6-9": {
+          "defense_only": {
+            "brier": 0.049275619923526005,
+            "log_loss": 0.20669817140704835,
+            "mean_predicted_probability": 0.05839768784373814,
+            "n": 2274,
+            "observed_rate": 0.051451187335092345
+          },
+          "league": {
+            "brier": 0.048916819894294125,
+            "log_loss": 0.20369715690242174,
+            "mean_predicted_probability": 0.058687689862217694,
+            "n": 2274,
+            "observed_rate": 0.051451187335092345
+          },
+          "matchup": {
+            "brier": 0.049688129347740286,
+            "log_loss": 0.20955719421599717,
+            "mean_predicted_probability": 0.05737234964794978,
+            "n": 2274,
+            "observed_rate": 0.051451187335092345
+          },
+          "offense_only": {
+            "brier": 0.049313936524853656,
+            "log_loss": 0.2066024701297457,
+            "mean_predicted_probability": 0.057762903317343524,
+            "n": 2274,
+            "observed_rate": 0.051451187335092345
+          }
+        },
+        "down_distance:3.0:1-2": {
+          "defense_only": {
+            "brier": 0.05589063704374306,
+            "log_loss": 0.22916935612064673,
+            "mean_predicted_probability": 0.0682255901097427,
+            "n": 464,
+            "observed_rate": 0.05818965517241379
+          },
+          "league": {
+            "brier": 0.0547788341512626,
+            "log_loss": 0.22214407364905084,
+            "mean_predicted_probability": 0.06913048706453324,
+            "n": 464,
+            "observed_rate": 0.05818965517241379
+          },
+          "matchup": {
+            "brier": 0.056105321300796,
+            "log_loss": 0.22943809109570498,
+            "mean_predicted_probability": 0.06769305840512818,
+            "n": 464,
+            "observed_rate": 0.05818965517241379
+          },
+          "offense_only": {
+            "brier": 0.05477237396854731,
+            "log_loss": 0.22279068624000814,
+            "mean_predicted_probability": 0.06915775297653286,
+            "n": 464,
+            "observed_rate": 0.05818965517241379
+          }
+        },
+        "down_distance:3.0:10+": {
+          "defense_only": {
+            "brier": 0.09029408759055031,
+            "log_loss": 0.3258019528892189,
+            "mean_predicted_probability": 0.1061750774009563,
+            "n": 1479,
+            "observed_rate": 0.10006761325219743
+          },
+          "league": {
+            "brier": 0.09009386925823372,
+            "log_loss": 0.32525860626589526,
+            "mean_predicted_probability": 0.10725485592222705,
+            "n": 1479,
+            "observed_rate": 0.10006761325219743
+          },
+          "matchup": {
+            "brier": 0.09055432669946015,
+            "log_loss": 0.32645892168876023,
+            "mean_predicted_probability": 0.10437355708554504,
+            "n": 1479,
+            "observed_rate": 0.10006761325219743
+          },
+          "offense_only": {
+            "brier": 0.09029914165640633,
+            "log_loss": 0.325799863796061,
+            "mean_predicted_probability": 0.10541079961416465,
+            "n": 1479,
+            "observed_rate": 0.10006761325219743
+          }
+        },
+        "down_distance:3.0:3-5": {
+          "defense_only": {
+            "brier": 0.0882902914132561,
+            "log_loss": 0.3216991383206344,
+            "mean_predicted_probability": 0.09076628560262877,
+            "n": 1307,
+            "observed_rate": 0.0971690895179801
+          },
+          "league": {
+            "brier": 0.0875241512927631,
+            "log_loss": 0.31746046274306,
+            "mean_predicted_probability": 0.0903436805219638,
+            "n": 1307,
+            "observed_rate": 0.0971690895179801
+          },
+          "matchup": {
+            "brier": 0.08889773938463216,
+            "log_loss": 0.32518683857841524,
+            "mean_predicted_probability": 0.09111599468446163,
+            "n": 1307,
+            "observed_rate": 0.0971690895179801
+          },
+          "offense_only": {
+            "brier": 0.08818393455074855,
+            "log_loss": 0.32085383190946876,
+            "mean_predicted_probability": 0.09068738035521054,
+            "n": 1307,
+            "observed_rate": 0.0971690895179801
+          }
+        },
+        "down_distance:3.0:6-9": {
+          "defense_only": {
+            "brier": 0.09688487450122174,
+            "log_loss": 0.34480725066031787,
+            "mean_predicted_probability": 0.10950514571019626,
+            "n": 1620,
+            "observed_rate": 0.10802469135802469
+          },
+          "league": {
+            "brier": 0.09643436956880236,
+            "log_loss": 0.34280295617273165,
+            "mean_predicted_probability": 0.11036468276876363,
+            "n": 1620,
+            "observed_rate": 0.10802469135802469
+          },
+          "matchup": {
+            "brier": 0.09779484836028005,
+            "log_loss": 0.3492169433023635,
+            "mean_predicted_probability": 0.10977421759240956,
+            "n": 1620,
+            "observed_rate": 0.10802469135802469
+          },
+          "offense_only": {
+            "brier": 0.09730464454871059,
+            "log_loss": 0.3469969604129958,
+            "mean_predicted_probability": 0.11050837998168306,
+            "n": 1620,
+            "observed_rate": 0.10802469135802469
+          }
+        },
+        "down_distance:4.0:1-2": {
+          "defense_only": {
+            "brier": 0.056942107978267764,
+            "log_loss": 0.2209833189753832,
+            "mean_predicted_probability": 0.05481636289212094,
+            "n": 178,
+            "observed_rate": 0.06179775280898876
+          },
+          "league": {
+            "brier": 0.05697112571168977,
+            "log_loss": 0.22018828050372738,
+            "mean_predicted_probability": 0.055697712203086426,
+            "n": 178,
+            "observed_rate": 0.06179775280898876
+          },
+          "matchup": {
+            "brier": 0.058050885271719414,
+            "log_loss": 0.22464681262371228,
+            "mean_predicted_probability": 0.05343775155555246,
+            "n": 178,
+            "observed_rate": 0.06179775280898876
+          },
+          "offense_only": {
+            "brier": 0.058285077999015264,
+            "log_loss": 0.22380957415019426,
+            "mean_predicted_probability": 0.05496661582861379,
+            "n": 178,
+            "observed_rate": 0.06179775280898876
+          }
+        },
+        "down_distance:4.0:10+": {
+          "defense_only": {
+            "brier": 0.12644850682787326,
+            "log_loss": 0.4377235941741195,
+            "mean_predicted_probability": 0.11612757109936803,
+            "n": 74,
+            "observed_rate": 0.14864864864864866
+          },
+          "league": {
+            "brier": 0.13964028560093822,
+            "log_loss": 0.482400444638405,
+            "mean_predicted_probability": 0.10715808062355371,
+            "n": 74,
+            "observed_rate": 0.14864864864864866
+          },
+          "matchup": {
+            "brier": 0.12388678153816161,
+            "log_loss": 0.447387934162333,
+            "mean_predicted_probability": 0.1329117524943515,
+            "n": 74,
+            "observed_rate": 0.14864864864864866
+          },
+          "offense_only": {
+            "brier": 0.1412607009454568,
+            "log_loss": 0.4935994677240517,
+            "mean_predicted_probability": 0.12562625477881795,
+            "n": 74,
+            "observed_rate": 0.14864864864864866
+          }
+        },
+        "down_distance:4.0:3-5": {
+          "defense_only": {
+            "brier": 0.0747806755816129,
+            "log_loss": 0.7860734078237883,
+            "mean_predicted_probability": 0.05176454917984566,
+            "n": 197,
+            "observed_rate": 0.07614213197969544
+          },
+          "league": {
+            "brier": 0.07346725580091207,
+            "log_loss": 0.7790885039961164,
+            "mean_predicted_probability": 0.05095756271463912,
+            "n": 197,
+            "observed_rate": 0.07614213197969544
+          },
+          "matchup": {
+            "brier": 0.0742235488396576,
+            "log_loss": 0.7823872698116684,
+            "mean_predicted_probability": 0.04942655344789737,
+            "n": 197,
+            "observed_rate": 0.07614213197969544
+          },
+          "offense_only": {
+            "brier": 0.07319882342569398,
+            "log_loss": 0.7758270597637971,
+            "mean_predicted_probability": 0.04887270968031911,
+            "n": 197,
+            "observed_rate": 0.07614213197969544
+          }
+        },
+        "down_distance:4.0:6-9": {
+          "defense_only": {
+            "brier": 0.07554777961275144,
+            "log_loss": 0.5829346445886712,
+            "mean_predicted_probability": 0.07737888551115497,
+            "n": 76,
+            "observed_rate": 0.07894736842105263
+          },
+          "league": {
+            "brier": 0.07408142446877385,
+            "log_loss": 0.5983008344079073,
+            "mean_predicted_probability": 0.07001821784909065,
+            "n": 76,
+            "observed_rate": 0.07894736842105263
+          },
+          "matchup": {
+            "brier": 0.08011298098447754,
+            "log_loss": 0.5975340037678524,
+            "mean_predicted_probability": 0.0715214262027305,
+            "n": 76,
+            "observed_rate": 0.07894736842105263
+          },
+          "offense_only": {
+            "brier": 0.07619545787631934,
+            "log_loss": 0.611645618303655,
+            "mean_predicted_probability": 0.06571196217019094,
+            "n": 76,
+            "observed_rate": 0.07894736842105263
+          }
+        },
+        "offense:ARI": {
+          "defense_only": {
+            "brier": 0.07331996677795716,
+            "log_loss": 0.31503902224148156,
+            "mean_predicted_probability": 0.06252541631007527,
+            "n": 683,
+            "observed_rate": 0.07906295754026355
+          },
+          "league": {
+            "brier": 0.07283009798608393,
+            "log_loss": 0.3114532512875167,
+            "mean_predicted_probability": 0.06383293540796195,
+            "n": 683,
+            "observed_rate": 0.07906295754026355
+          },
+          "matchup": {
+            "brier": 0.07360738670442972,
+            "log_loss": 0.3174231256054486,
+            "mean_predicted_probability": 0.06678674772939099,
+            "n": 683,
+            "observed_rate": 0.07906295754026355
+          },
+          "offense_only": {
+            "brier": 0.07305716854805674,
+            "log_loss": 0.3135799475085063,
+            "mean_predicted_probability": 0.06815910396936915,
+            "n": 683,
+            "observed_rate": 0.07906295754026355
+          }
+        },
+        "offense:ATL": {
+          "defense_only": {
+            "brier": 0.041225849156946485,
+            "log_loss": 0.179309576382747,
+            "mean_predicted_probability": 0.06526171889376191,
+            "n": 550,
+            "observed_rate": 0.04181818181818182
+          },
+          "league": {
+            "brier": 0.041049660803726906,
+            "log_loss": 0.17822048922119638,
+            "mean_predicted_probability": 0.06771992899324084,
+            "n": 550,
+            "observed_rate": 0.04181818181818182
+          },
+          "matchup": {
+            "brier": 0.04163884907008042,
+            "log_loss": 0.18111854919878909,
+            "mean_predicted_probability": 0.06181910880709194,
+            "n": 550,
+            "observed_rate": 0.04181818181818182
+          },
+          "offense_only": {
+            "brier": 0.04145980536467521,
+            "log_loss": 0.17956241389728325,
+            "mean_predicted_probability": 0.06378691701802043,
+            "n": 550,
+            "observed_rate": 0.04181818181818182
+          }
+        },
+        "offense:BAL": {
+          "defense_only": {
+            "brier": 0.0853211900780617,
+            "log_loss": 0.32411511921742525,
+            "mean_predicted_probability": 0.06718064618650543,
+            "n": 454,
+            "observed_rate": 0.09251101321585903
+          },
+          "league": {
+            "brier": 0.08442547604090384,
+            "log_loss": 0.31319618637847774,
+            "mean_predicted_probability": 0.06694990875706269,
+            "n": 454,
+            "observed_rate": 0.09251101321585903
+          },
+          "matchup": {
+            "brier": 0.08545632200763371,
+            "log_loss": 0.325994239456201,
+            "mean_predicted_probability": 0.0708320742753658,
+            "n": 454,
+            "observed_rate": 0.09251101321585903
+          },
+          "offense_only": {
+            "brier": 0.08449906013076365,
+            "log_loss": 0.3146737740091884,
+            "mean_predicted_probability": 0.07024127408499937,
+            "n": 454,
+            "observed_rate": 0.09251101321585903
+          }
+        },
+        "offense:BUF": {
+          "defense_only": {
+            "brier": 0.06452556581505028,
+            "log_loss": 0.24376377467561444,
+            "mean_predicted_probability": 0.06590761502233947,
+            "n": 521,
+            "observed_rate": 0.0710172744721689
+          },
+          "league": {
+            "brier": 0.0644356761418077,
+            "log_loss": 0.2437797037903086,
+            "mean_predicted_probability": 0.06492684666979287,
+            "n": 521,
+            "observed_rate": 0.0710172744721689
+          },
+          "matchup": {
+            "brier": 0.06486246403322744,
+            "log_loss": 0.24766881617526687,
+            "mean_predicted_probability": 0.05681532845463956,
+            "n": 521,
+            "observed_rate": 0.0710172744721689
+          },
+          "offense_only": {
+            "brier": 0.06493648597812443,
+            "log_loss": 0.24858459885022072,
+            "mean_predicted_probability": 0.056375078129237276,
+            "n": 521,
+            "observed_rate": 0.0710172744721689
+          }
+        },
+        "offense:CAR": {
+          "defense_only": {
+            "brier": 0.05563747448465684,
+            "log_loss": 0.22567935393868363,
+            "mean_predicted_probability": 0.06433446268623715,
+            "n": 536,
+            "observed_rate": 0.05970149253731343
+          },
+          "league": {
+            "brier": 0.05571526045348695,
+            "log_loss": 0.22345907830572598,
+            "mean_predicted_probability": 0.06456533486585761,
+            "n": 536,
+            "observed_rate": 0.05970149253731343
+          },
+          "matchup": {
+            "brier": 0.05588516107676968,
+            "log_loss": 0.23059715002015221,
+            "mean_predicted_probability": 0.06406189240709032,
+            "n": 536,
+            "observed_rate": 0.05970149253731343
+          },
+          "offense_only": {
+            "brier": 0.056180276946894245,
+            "log_loss": 0.22744115528820727,
+            "mean_predicted_probability": 0.06395207333948563,
+            "n": 536,
+            "observed_rate": 0.05970149253731343
+          }
+        },
+        "offense:CHI": {
+          "defense_only": {
+            "brier": 0.03814118303900015,
+            "log_loss": 0.16580921574889745,
+            "mean_predicted_probability": 0.0666586927004867,
+            "n": 582,
+            "observed_rate": 0.03951890034364261
+          },
+          "league": {
+            "brier": 0.03814548001160987,
+            "log_loss": 0.16688704400305499,
+            "mean_predicted_probability": 0.06480324457728348,
+            "n": 582,
+            "observed_rate": 0.03951890034364261
+          },
+          "matchup": {
+            "brier": 0.03961967651832817,
+            "log_loss": 0.17184285878090247,
+            "mean_predicted_probability": 0.07611571441072487,
+            "n": 582,
+            "observed_rate": 0.03951890034364261
+          },
+          "offense_only": {
+            "brier": 0.038925961758666534,
+            "log_loss": 0.17082091312169664,
+            "mean_predicted_probability": 0.07268528612040684,
+            "n": 582,
+            "observed_rate": 0.03951890034364261
+          }
+        },
+        "offense:CIN": {
+          "defense_only": {
+            "brier": 0.051020344730707934,
+            "log_loss": 0.2107405277205976,
+            "mean_predicted_probability": 0.06512127224388257,
+            "n": 656,
+            "observed_rate": 0.053353658536585365
+          },
+          "league": {
+            "brier": 0.050341989082009694,
+            "log_loss": 0.2066091740646247,
+            "mean_predicted_probability": 0.06419678904317556,
+            "n": 656,
+            "observed_rate": 0.053353658536585365
+          },
+          "matchup": {
+            "brier": 0.0511690218492477,
+            "log_loss": 0.21506219097975696,
+            "mean_predicted_probability": 0.0631448725446604,
+            "n": 656,
+            "observed_rate": 0.053353658536585365
+          },
+          "offense_only": {
+            "brier": 0.05050622233836011,
+            "log_loss": 0.21123556222561138,
+            "mean_predicted_probability": 0.06247469972961575,
+            "n": 656,
+            "observed_rate": 0.053353658536585365
+          }
+        },
+        "offense:CLE": {
+          "defense_only": {
+            "brier": 0.07568892722492086,
+            "log_loss": 0.2887186698271455,
+            "mean_predicted_probability": 0.06819253337146097,
+            "n": 590,
+            "observed_rate": 0.08135593220338982
+          },
+          "league": {
+            "brier": 0.07427321030959377,
+            "log_loss": 0.27803485645457804,
+            "mean_predicted_probability": 0.06842195468587124,
+            "n": 590,
+            "observed_rate": 0.08135593220338982
+          },
+          "matchup": {
+            "brier": 0.07665469497347593,
+            "log_loss": 0.2954935731696493,
+            "mean_predicted_probability": 0.06963128423104657,
+            "n": 590,
+            "observed_rate": 0.08135593220338982
+          },
+          "offense_only": {
+            "brier": 0.075052843326293,
+            "log_loss": 0.2843588395051363,
+            "mean_predicted_probability": 0.0694687894709536,
+            "n": 590,
+            "observed_rate": 0.08135593220338982
+          }
+        },
+        "offense:DAL": {
+          "defense_only": {
+            "brier": 0.0432897020167983,
+            "log_loss": 0.18857858469774275,
+            "mean_predicted_probability": 0.06610745850894745,
+            "n": 623,
+            "observed_rate": 0.04333868378812199
+          },
+          "league": {
+            "brier": 0.04217700888914674,
+            "log_loss": 0.1825015870462066,
+            "mean_predicted_probability": 0.06419171528794372,
+            "n": 623,
+            "observed_rate": 0.04333868378812199
+          },
+          "matchup": {
+            "brier": 0.042889678010351484,
+            "log_loss": 0.1871051715541652,
+            "mean_predicted_probability": 0.05849857747583331,
+            "n": 623,
+            "observed_rate": 0.04333868378812199
+          },
+          "offense_only": {
+            "brier": 0.04195095368338355,
+            "log_loss": 0.18159380646454198,
+            "mean_predicted_probability": 0.057115291491575196,
+            "n": 623,
+            "observed_rate": 0.04333868378812199
+          }
+        },
+        "offense:DEN": {
+          "defense_only": {
+            "brier": 0.0361071165513864,
+            "log_loss": 0.16334292384776136,
+            "mean_predicted_probability": 0.06719251516660991,
+            "n": 618,
+            "observed_rate": 0.03559870550161812
+          },
+          "league": {
+            "brier": 0.03593160743101707,
+            "log_loss": 0.1642942552034683,
+            "mean_predicted_probability": 0.06651076715065957,
+            "n": 618,
+            "observed_rate": 0.03559870550161812
+          },
+          "matchup": {
+            "brier": 0.03647175926188688,
+            "log_loss": 0.16450687485767598,
+            "mean_predicted_probability": 0.06441137586259249,
+            "n": 618,
+            "observed_rate": 0.03559870550161812
+          },
+          "offense_only": {
+            "brier": 0.03623621229795943,
+            "log_loss": 0.16538430078263963,
+            "mean_predicted_probability": 0.06364929140754626,
+            "n": 618,
+            "observed_rate": 0.03559870550161812
+          }
+        },
+        "offense:DET": {
+          "defense_only": {
+            "brier": 0.05511342967333897,
+            "log_loss": 0.2240533748119396,
+            "mean_predicted_probability": 0.0649106414013732,
+            "n": 609,
+            "observed_rate": 0.059113300492610835
+          },
+          "league": {
+            "brier": 0.05490283572905568,
+            "log_loss": 0.21938762989828425,
+            "mean_predicted_probability": 0.06447795421923307,
+            "n": 609,
+            "observed_rate": 0.059113300492610835
+          },
+          "matchup": {
+            "brier": 0.0557004337401852,
+            "log_loss": 0.22823569345655348,
+            "mean_predicted_probability": 0.05813056419165987,
+            "n": 609,
+            "observed_rate": 0.059113300492610835
+          },
+          "offense_only": {
+            "brier": 0.0553716042150032,
+            "log_loss": 0.22346033966965673,
+            "mean_predicted_probability": 0.057676761715039285,
+            "n": 609,
+            "observed_rate": 0.059113300492610835
+          }
+        },
+        "offense:GB": {
+          "defense_only": {
+            "brier": 0.04910714937351976,
+            "log_loss": 0.2012496633293387,
+            "mean_predicted_probability": 0.0661917580390273,
+            "n": 496,
+            "observed_rate": 0.05241935483870968
+          },
+          "league": {
+            "brier": 0.04903311093864439,
+            "log_loss": 0.20023340028324574,
+            "mean_predicted_probability": 0.06399671605419549,
+            "n": 496,
+            "observed_rate": 0.05241935483870968
+          },
+          "matchup": {
+            "brier": 0.049779023714728865,
+            "log_loss": 0.2052255393133542,
+            "mean_predicted_probability": 0.0545233763591272,
+            "n": 496,
+            "observed_rate": 0.05241935483870968
+          },
+          "offense_only": {
+            "brier": 0.04986820170418951,
+            "log_loss": 0.20557042538219675,
+            "mean_predicted_probability": 0.0534057654486191,
+            "n": 496,
+            "observed_rate": 0.05241935483870968
+          }
+        },
+        "offense:HOU": {
+          "defense_only": {
+            "brier": 0.04970007369612952,
+            "log_loss": 0.20704911193929315,
+            "mean_predicted_probability": 0.06548782595806803,
+            "n": 601,
+            "observed_rate": 0.051580698835274545
+          },
+          "league": {
+            "brier": 0.04934617282291491,
+            "log_loss": 0.20510761335257707,
+            "mean_predicted_probability": 0.06540127719218801,
+            "n": 601,
+            "observed_rate": 0.051580698835274545
+          },
+          "matchup": {
+            "brier": 0.04947306825258006,
+            "log_loss": 0.20468315089841088,
+            "mean_predicted_probability": 0.06442284881027194,
+            "n": 601,
+            "observed_rate": 0.051580698835274545
+          },
+          "offense_only": {
+            "brier": 0.049085638012987126,
+            "log_loss": 0.20339499370256364,
+            "mean_predicted_probability": 0.06481900331470951,
+            "n": 601,
+            "observed_rate": 0.051580698835274545
+          }
+        },
+        "offense:IND": {
+          "defense_only": {
+            "brier": 0.0450164958945776,
+            "log_loss": 0.20043805985741853,
+            "mean_predicted_probability": 0.06376286065770809,
+            "n": 560,
+            "observed_rate": 0.044642857142857144
+          },
+          "league": {
+            "brier": 0.04417265575892958,
+            "log_loss": 0.19244950752039688,
+            "mean_predicted_probability": 0.06448810199941181,
+            "n": 560,
+            "observed_rate": 0.044642857142857144
+          },
+          "matchup": {
+            "brier": 0.045667607531019686,
+            "log_loss": 0.20725729520457314,
+            "mean_predicted_probability": 0.06108024708798786,
+            "n": 560,
+            "observed_rate": 0.044642857142857144
+          },
+          "offense_only": {
+            "brier": 0.04490001834706288,
+            "log_loss": 0.19909594429704877,
+            "mean_predicted_probability": 0.061506509836027866,
+            "n": 560,
+            "observed_rate": 0.044642857142857144
+          }
+        },
+        "offense:JAX": {
+          "defense_only": {
+            "brier": 0.061528067001945075,
+            "log_loss": 0.24007464790607527,
+            "mean_predicted_probability": 0.06471799579734284,
+            "n": 583,
+            "observed_rate": 0.06689536878216124
+          },
+          "league": {
+            "brier": 0.061415795801628745,
+            "log_loss": 0.23878217540038205,
+            "mean_predicted_probability": 0.06411384846731809,
+            "n": 583,
+            "observed_rate": 0.06689536878216124
+          },
+          "matchup": {
+            "brier": 0.06118244876796939,
+            "log_loss": 0.23567764234232344,
+            "mean_predicted_probability": 0.058232334462677435,
+            "n": 583,
+            "observed_rate": 0.06689536878216124
+          },
+          "offense_only": {
+            "brier": 0.06123901789389381,
+            "log_loss": 0.23476351041113444,
+            "mean_predicted_probability": 0.05783499135198839,
+            "n": 583,
+            "observed_rate": 0.06689536878216124
+          }
+        },
+        "offense:KC": {
+          "defense_only": {
+            "brier": 0.06768989292291341,
+            "log_loss": 0.2599511612352624,
+            "mean_predicted_probability": 0.06581003231902624,
+            "n": 610,
+            "observed_rate": 0.07377049180327869
+          },
+          "league": {
+            "brier": 0.0673611391347324,
+            "log_loss": 0.2568341663008865,
+            "mean_predicted_probability": 0.06347608279418321,
+            "n": 610,
+            "observed_rate": 0.07377049180327869
+          },
+          "matchup": {
+            "brier": 0.06829492580154228,
+            "log_loss": 0.26606035742056733,
+            "mean_predicted_probability": 0.0602860538629976,
+            "n": 610,
+            "observed_rate": 0.07377049180327869
+          },
+          "offense_only": {
+            "brier": 0.06788981665716841,
+            "log_loss": 0.2630055641576717,
+            "mean_predicted_probability": 0.05797152783197517,
+            "n": 610,
+            "observed_rate": 0.07377049180327869
+          }
+        },
+        "offense:LAC": {
+          "defense_only": {
+            "brier": 0.0871205318436887,
+            "log_loss": 0.3224211845862602,
+            "mean_predicted_probability": 0.06911103309027641,
+            "n": 609,
+            "observed_rate": 0.09523809523809523
+          },
+          "league": {
+            "brier": 0.0869691046868444,
+            "log_loss": 0.32139660443468987,
+            "mean_predicted_probability": 0.06620766084955969,
+            "n": 609,
+            "observed_rate": 0.09523809523809523
+          },
+          "matchup": {
+            "brier": 0.08747365234675984,
+            "log_loss": 0.3240997917045881,
+            "mean_predicted_probability": 0.07344845302846564,
+            "n": 609,
+            "observed_rate": 0.09523809523809523
+          },
+          "offense_only": {
+            "brier": 0.08707681467904853,
+            "log_loss": 0.3230026392475921,
+            "mean_predicted_probability": 0.07046143306639714,
+            "n": 609,
+            "observed_rate": 0.09523809523809523
+          }
+        },
+        "offense:LAR": {
+          "defense_only": {
+            "brier": 0.036347054608629296,
+            "log_loss": 0.16906414049254265,
+            "mean_predicted_probability": 0.0606154856648898,
+            "n": 593,
+            "observed_rate": 0.03541315345699832
+          },
+          "league": {
+            "brier": 0.03558651252048736,
+            "log_loss": 0.16437221760485726,
+            "mean_predicted_probability": 0.0618658135545639,
+            "n": 593,
+            "observed_rate": 0.03541315345699832
+          },
+          "matchup": {
+            "brier": 0.03620789846232253,
+            "log_loss": 0.16586168114267097,
+            "mean_predicted_probability": 0.055838663824922294,
+            "n": 593,
+            "observed_rate": 0.03541315345699832
+          },
+          "offense_only": {
+            "brier": 0.03554320892100494,
+            "log_loss": 0.16215193028646668,
+            "mean_predicted_probability": 0.05787663160840044,
+            "n": 593,
+            "observed_rate": 0.03541315345699832
+          }
+        },
+        "offense:LV": {
+          "defense_only": {
+            "brier": 0.09767962532502678,
+            "log_loss": 0.35905998375494774,
+            "mean_predicted_probability": 0.0693038134766436,
+            "n": 556,
+            "observed_rate": 0.1079136690647482
+          },
+          "league": {
+            "brier": 0.0971488711302596,
+            "log_loss": 0.35144676266506103,
+            "mean_predicted_probability": 0.06690298911556872,
+            "n": 556,
+            "observed_rate": 0.1079136690647482
+          },
+          "matchup": {
+            "brier": 0.09891665567620454,
+            "log_loss": 0.36604613118217444,
+            "mean_predicted_probability": 0.0736698182146197,
+            "n": 556,
+            "observed_rate": 0.1079136690647482
+          },
+          "offense_only": {
+            "brier": 0.09789130784554732,
+            "log_loss": 0.35753738190359985,
+            "mean_predicted_probability": 0.07102452283101207,
+            "n": 556,
+            "observed_rate": 0.1079136690647482
+          }
+        },
+        "offense:MIA": {
+          "defense_only": {
+            "brier": 0.06461472471036797,
+            "log_loss": 0.23807236833894782,
+            "mean_predicted_probability": 0.06762842304524268,
+            "n": 504,
+            "observed_rate": 0.07341269841269842
+          },
+          "league": {
+            "brier": 0.0643983388184779,
+            "log_loss": 0.23741100877581392,
+            "mean_predicted_probability": 0.0673911794708527,
+            "n": 504,
+            "observed_rate": 0.07341269841269842
+          },
+          "matchup": {
+            "brier": 0.06583910076871961,
+            "log_loss": 0.2454567223641155,
+            "mean_predicted_probability": 0.062446748440083515,
+            "n": 504,
+            "observed_rate": 0.07341269841269842
+          },
+          "offense_only": {
+            "brier": 0.06562351466980065,
+            "log_loss": 0.24455017124567016,
+            "mean_predicted_probability": 0.06209614419987653,
+            "n": 504,
+            "observed_rate": 0.07341269841269842
+          }
+        },
+        "offense:MIN": {
+          "defense_only": {
+            "brier": 0.09753414829895479,
+            "log_loss": 0.3519576910936664,
+            "mean_predicted_probability": 0.06434175945992379,
+            "n": 525,
+            "observed_rate": 0.10857142857142857
+          },
+          "league": {
+            "brier": 0.0966309037379429,
+            "log_loss": 0.34384282561236273,
+            "mean_predicted_probability": 0.06533979278183956,
+            "n": 525,
+            "observed_rate": 0.10857142857142857
+          },
+          "matchup": {
+            "brier": 0.09809062747706984,
+            "log_loss": 0.35677031863726,
+            "mean_predicted_probability": 0.0707784886356124,
+            "n": 525,
+            "observed_rate": 0.10857142857142857
+          },
+          "offense_only": {
+            "brier": 0.09689072315163419,
+            "log_loss": 0.34828330495388743,
+            "mean_predicted_probability": 0.07181557664634083,
+            "n": 525,
+            "observed_rate": 0.10857142857142857
+          }
+        },
+        "offense:NE": {
+          "defense_only": {
+            "brier": 0.07728768857434112,
+            "log_loss": 0.30172970615989886,
+            "mean_predicted_probability": 0.06264237526529322,
+            "n": 544,
+            "observed_rate": 0.08272058823529412
+          },
+          "league": {
+            "brier": 0.07643530154175851,
+            "log_loss": 0.29413641459102635,
+            "mean_predicted_probability": 0.06489118313060564,
+            "n": 544,
+            "observed_rate": 0.08272058823529412
+          },
+          "matchup": {
+            "brier": 0.07813355618586805,
+            "log_loss": 0.30419513666976145,
+            "mean_predicted_probability": 0.0709641357861177,
+            "n": 544,
+            "observed_rate": 0.08272058823529412
+          },
+          "offense_only": {
+            "brier": 0.07705701420074391,
+            "log_loss": 0.2966961680041183,
+            "mean_predicted_probability": 0.07350576135950936,
+            "n": 544,
+            "observed_rate": 0.08272058823529412
+          }
+        },
+        "offense:NO": {
+          "defense_only": {
+            "brier": 0.06881252652197778,
+            "log_loss": 0.26684350939144535,
+            "mean_predicted_probability": 0.06429709063865385,
+            "n": 622,
+            "observed_rate": 0.07395498392282958
+          },
+          "league": {
+            "brier": 0.06804626361510069,
+            "log_loss": 0.260752995886069,
+            "mean_predicted_probability": 0.06530725253229235,
+            "n": 622,
+            "observed_rate": 0.07395498392282958
+          },
+          "matchup": {
+            "brier": 0.06916433422524604,
+            "log_loss": 0.2702072310831163,
+            "mean_predicted_probability": 0.06174092181807534,
+            "n": 622,
+            "observed_rate": 0.07395498392282958
+          },
+          "offense_only": {
+            "brier": 0.06845095511698511,
+            "log_loss": 0.26429405118850724,
+            "mean_predicted_probability": 0.06311179268011256,
+            "n": 622,
+            "observed_rate": 0.07395498392282958
+          }
+        },
+        "offense:NYG": {
+          "defense_only": {
+            "brier": 0.07623048167866339,
+            "log_loss": 0.38551380395481294,
+            "mean_predicted_probability": 0.06867090815082999,
+            "n": 545,
+            "observed_rate": 0.08073394495412844
+          },
+          "league": {
+            "brier": 0.07620807702606609,
+            "log_loss": 0.3833866047721873,
+            "mean_predicted_probability": 0.06693516273941401,
+            "n": 545,
+            "observed_rate": 0.08073394495412844
+          },
+          "matchup": {
+            "brier": 0.07700243821730914,
+            "log_loss": 0.3863074905155587,
+            "mean_predicted_probability": 0.08433624337794014,
+            "n": 545,
+            "observed_rate": 0.08073394495412844
+          },
+          "offense_only": {
+            "brier": 0.07635296335628751,
+            "log_loss": 0.382732184188999,
+            "mean_predicted_probability": 0.08187287838931505,
+            "n": 545,
+            "observed_rate": 0.08073394495412844
+          }
+        },
+        "offense:NYJ": {
+          "defense_only": {
+            "brier": 0.09538292581731468,
+            "log_loss": 0.34818570129233445,
+            "mean_predicted_probability": 0.06677954244800953,
+            "n": 537,
+            "observed_rate": 0.10614525139664804
+          },
+          "league": {
+            "brier": 0.09523320567332245,
+            "log_loss": 0.3441555848251029,
+            "mean_predicted_probability": 0.06772796900983868,
+            "n": 537,
+            "observed_rate": 0.10614525139664804
+          },
+          "matchup": {
+            "brier": 0.09566912798363876,
+            "log_loss": 0.3483369388896149,
+            "mean_predicted_probability": 0.07520204482525308,
+            "n": 537,
+            "observed_rate": 0.10614525139664804
+          },
+          "offense_only": {
+            "brier": 0.09529543836821348,
+            "log_loss": 0.34487952749169815,
+            "mean_predicted_probability": 0.07673419699098254,
+            "n": 537,
+            "observed_rate": 0.10614525139664804
+          }
+        },
+        "offense:PHI": {
+          "defense_only": {
+            "brier": 0.0609781641208477,
+            "log_loss": 0.24066499686988235,
+            "mean_predicted_probability": 0.07053814333541564,
+            "n": 517,
+            "observed_rate": 0.06576402321083172
+          },
+          "league": {
+            "brier": 0.06044372832389165,
+            "log_loss": 0.2352540281954853,
+            "mean_predicted_probability": 0.06671563069509473,
+            "n": 517,
+            "observed_rate": 0.06576402321083172
+          },
+          "matchup": {
+            "brier": 0.062054387069572364,
+            "log_loss": 0.24634870130360048,
+            "mean_predicted_probability": 0.0740098118176253,
+            "n": 517,
+            "observed_rate": 0.06576402321083172
+          },
+          "offense_only": {
+            "brier": 0.06120586961484817,
+            "log_loss": 0.24030249101697695,
+            "mean_predicted_probability": 0.0697913120601434,
+            "n": 517,
+            "observed_rate": 0.06576402321083172
+          }
+        },
+        "offense:PIT": {
+          "defense_only": {
+            "brier": 0.047907826891027995,
+            "log_loss": 0.19520864791541362,
+            "mean_predicted_probability": 0.06800755789304772,
+            "n": 570,
+            "observed_rate": 0.05087719298245614
+          },
+          "league": {
+            "brier": 0.047868432632646195,
+            "log_loss": 0.1986505162205853,
+            "mean_predicted_probability": 0.06648085615122686,
+            "n": 570,
+            "observed_rate": 0.05087719298245614
+          },
+          "matchup": {
+            "brier": 0.047808716375295025,
+            "log_loss": 0.193802406367632,
+            "mean_predicted_probability": 0.0695460944923755,
+            "n": 570,
+            "observed_rate": 0.05087719298245614
+          },
+          "offense_only": {
+            "brier": 0.048012867993456124,
+            "log_loss": 0.196728751746015,
+            "mean_predicted_probability": 0.06755907654194426,
+            "n": 570,
+            "observed_rate": 0.05087719298245614
+          }
+        },
+        "offense:SEA": {
+          "defense_only": {
+            "brier": 0.043981960517999866,
+            "log_loss": 0.18964982630076635,
+            "mean_predicted_probability": 0.06233715734098882,
+            "n": 487,
+            "observed_rate": 0.045174537987679675
+          },
+          "league": {
+            "brier": 0.04397182319293193,
+            "log_loss": 0.1888752613741034,
+            "mean_predicted_probability": 0.06390276485435091,
+            "n": 487,
+            "observed_rate": 0.045174537987679675
+          },
+          "matchup": {
+            "brier": 0.04428607256582563,
+            "log_loss": 0.19015002562427064,
+            "mean_predicted_probability": 0.05963233819560637,
+            "n": 487,
+            "observed_rate": 0.045174537987679675
+          },
+          "offense_only": {
+            "brier": 0.04423857448933257,
+            "log_loss": 0.18974368150156443,
+            "mean_predicted_probability": 0.061530131833464355,
+            "n": 487,
+            "observed_rate": 0.045174537987679675
+          }
+        },
+        "offense:SF": {
+          "defense_only": {
+            "brier": 0.03788222936602594,
+            "log_loss": 0.17024591097786557,
+            "mean_predicted_probability": 0.06402078546046658,
+            "n": 584,
+            "observed_rate": 0.03767123287671233
+          },
+          "league": {
+            "brier": 0.037696482834921975,
+            "log_loss": 0.170028569965978,
+            "mean_predicted_probability": 0.06516345440844952,
+            "n": 584,
+            "observed_rate": 0.03767123287671233
+          },
+          "matchup": {
+            "brier": 0.038118208423578104,
+            "log_loss": 0.1720806639349091,
+            "mean_predicted_probability": 0.061467846368490425,
+            "n": 584,
+            "observed_rate": 0.03767123287671233
+          },
+          "offense_only": {
+            "brier": 0.03788407883572958,
+            "log_loss": 0.17135144409864633,
+            "mean_predicted_probability": 0.06224853628655291,
+            "n": 584,
+            "observed_rate": 0.03767123287671233
+          }
+        },
+        "offense:TB": {
+          "defense_only": {
+            "brier": 0.0563427345095217,
+            "log_loss": 0.3068809929991589,
+            "mean_predicted_probability": 0.06410998860753019,
+            "n": 582,
+            "observed_rate": 0.06013745704467354
+          },
+          "league": {
+            "brier": 0.055573971169300206,
+            "log_loss": 0.3028217383750194,
+            "mean_predicted_probability": 0.0648693904652347,
+            "n": 582,
+            "observed_rate": 0.06013745704467354
+          },
+          "matchup": {
+            "brier": 0.05642509195300614,
+            "log_loss": 0.3044224060882764,
+            "mean_predicted_probability": 0.05482552649798504,
+            "n": 582,
+            "observed_rate": 0.06013745704467354
+          },
+          "offense_only": {
+            "brier": 0.055714273173888745,
+            "log_loss": 0.2997777896568761,
+            "mean_predicted_probability": 0.05529636488377242,
+            "n": 582,
+            "observed_rate": 0.06013745704467354
+          }
+        },
+        "offense:TEN": {
+          "defense_only": {
+            "brier": 0.07180283628047708,
+            "log_loss": 0.2693556267158022,
+            "mean_predicted_probability": 0.06725504429953762,
+            "n": 612,
+            "observed_rate": 0.08006535947712418
+          },
+          "league": {
+            "brier": 0.07331023039332452,
+            "log_loss": 0.27588451685027865,
+            "mean_predicted_probability": 0.0680884030543341,
+            "n": 612,
+            "observed_rate": 0.08006535947712418
+          },
+          "matchup": {
+            "brier": 0.07262350701538761,
+            "log_loss": 0.27628155858998144,
+            "mean_predicted_probability": 0.0766363328629033,
+            "n": 612,
+            "observed_rate": 0.08006535947712418
+          },
+          "offense_only": {
+            "brier": 0.07390184631340072,
+            "log_loss": 0.28219396784784123,
+            "mean_predicted_probability": 0.07692409100557811,
+            "n": 612,
+            "observed_rate": 0.08006535947712418
+          }
+        },
+        "offense:WSH": {
+          "defense_only": {
+            "brier": 0.06845516265648972,
+            "log_loss": 0.26793881025719435,
+            "mean_predicted_probability": 0.06581925843109211,
+            "n": 480,
+            "observed_rate": 0.07291666666666667
+          },
+          "league": {
+            "brier": 0.06790329410052048,
+            "log_loss": 0.2636334415560701,
+            "mean_predicted_probability": 0.06519756738860787,
+            "n": 480,
+            "observed_rate": 0.07291666666666667
+          },
+          "matchup": {
+            "brier": 0.06952083846340645,
+            "log_loss": 0.2749619518392781,
+            "mean_predicted_probability": 0.07554545994882686,
+            "n": 480,
+            "observed_rate": 0.07291666666666667
+          },
+          "offense_only": {
+            "brier": 0.06892044086617681,
+            "log_loss": 0.2701254813480264,
+            "mean_predicted_probability": 0.07463913651115496,
+            "n": 480,
+            "observed_rate": 0.07291666666666667
+          }
+        }
+      },
+      "training_history_sha256": "02111fafa494467807f43cdbdd3e74abc265ef18e46e056afb07739ecebfb4b5",
+      "unique_evidence_sets": 57
+    },
+    "2026": {
+      "coverage": {
+        "supported_dropbacks": 8200,
+        "tagged_test_penalties_excluded": 291,
+        "unsupported": 2
+      },
+      "cutoff_games": 120,
+      "earliest_cutoff": "2026-09-09T22:50:00+00:00",
+      "latest_cutoff": "2026-11-01T16:30:00+00:00",
+      "sack_rate_by_context": {
+        "all": {
+          "defense_only": {
+            "brier": 0.062146109161900276,
+            "log_loss": 0.25829381210057634,
+            "mean_predicted_probability": 0.06557337335322452,
+            "n": 8200,
+            "observed_rate": 0.06621951219512195
+          },
+          "league": {
+            "brier": 0.06157068375980835,
+            "log_loss": 0.2533229581583987,
+            "mean_predicted_probability": 0.0655465702083245,
+            "n": 8200,
+            "observed_rate": 0.06621951219512195
+          },
+          "matchup": {
+            "brier": 0.06264428681805145,
+            "log_loss": 0.2624587907664771,
+            "mean_predicted_probability": 0.06527470307857074,
+            "n": 8200,
+            "observed_rate": 0.06621951219512195
+          },
+          "offense_only": {
+            "brier": 0.06204047785424227,
+            "log_loss": 0.25753483272475225,
+            "mean_predicted_probability": 0.06534891616978178,
+            "n": 8200,
+            "observed_rate": 0.06621951219512195
+          }
+        },
+        "defense:ARI": {
+          "defense_only": {
+            "brier": 0.07070587024483434,
+            "log_loss": 0.28577631615264165,
+            "mean_predicted_probability": 0.06252358004630035,
+            "n": 243,
+            "observed_rate": 0.07407407407407407
+          },
+          "league": {
+            "brier": 0.07005415313637238,
+            "log_loss": 0.27488189818399633,
+            "mean_predicted_probability": 0.06318034632281384,
+            "n": 243,
+            "observed_rate": 0.07407407407407407
+          },
+          "matchup": {
+            "brier": 0.07056803415840741,
+            "log_loss": 0.2835902030661483,
+            "mean_predicted_probability": 0.057089762217420244,
+            "n": 243,
+            "observed_rate": 0.07407407407407407
+          },
+          "offense_only": {
+            "brier": 0.0700337866754862,
+            "log_loss": 0.2739170133112844,
+            "mean_predicted_probability": 0.05880426018713967,
+            "n": 243,
+            "observed_rate": 0.07407407407407407
+          }
+        },
+        "defense:ATL": {
+          "defense_only": {
+            "brier": 0.05844275907919926,
+            "log_loss": 0.3169833355572951,
+            "mean_predicted_probability": 0.06439880741911258,
+            "n": 296,
+            "observed_rate": 0.060810810810810814
+          },
+          "league": {
+            "brier": 0.05761908310111441,
+            "log_loss": 0.31256649351131754,
+            "mean_predicted_probability": 0.06453765541976782,
+            "n": 296,
+            "observed_rate": 0.060810810810810814
+          },
+          "matchup": {
+            "brier": 0.05844339789731795,
+            "log_loss": 0.31345742741452975,
+            "mean_predicted_probability": 0.06265912506600958,
+            "n": 296,
+            "observed_rate": 0.060810810810810814
+          },
+          "offense_only": {
+            "brier": 0.05728966903526497,
+            "log_loss": 0.30831810852804853,
+            "mean_predicted_probability": 0.06258587153773364,
+            "n": 296,
+            "observed_rate": 0.060810810810810814
+          }
+        },
+        "defense:BAL": {
+          "defense_only": {
+            "brier": 0.059821918243395236,
+            "log_loss": 0.23955714161086683,
+            "mean_predicted_probability": 0.06919232253704546,
+            "n": 272,
+            "observed_rate": 0.0625
+          },
+          "league": {
+            "brier": 0.05911693832091888,
+            "log_loss": 0.23674113601330693,
+            "mean_predicted_probability": 0.06646398913804868,
+            "n": 272,
+            "observed_rate": 0.0625
+          },
+          "matchup": {
+            "brier": 0.06031669060106431,
+            "log_loss": 0.24399923533806844,
+            "mean_predicted_probability": 0.07061972538598599,
+            "n": 272,
+            "observed_rate": 0.0625
+          },
+          "offense_only": {
+            "brier": 0.05986832490523398,
+            "log_loss": 0.240714287040811,
+            "mean_predicted_probability": 0.06766777532825961,
+            "n": 272,
+            "observed_rate": 0.0625
+          }
+        },
+        "defense:BUF": {
+          "defense_only": {
+            "brier": 0.05138148134162106,
+            "log_loss": 0.21005334549361332,
+            "mean_predicted_probability": 0.06138731389947589,
+            "n": 275,
+            "observed_rate": 0.05454545454545454
+          },
+          "league": {
+            "brier": 0.05058862094338761,
+            "log_loss": 0.20361975507400315,
+            "mean_predicted_probability": 0.06513158823849927,
+            "n": 275,
+            "observed_rate": 0.05454545454545454
+          },
+          "matchup": {
+            "brier": 0.051386388107706356,
+            "log_loss": 0.21082987129843725,
+            "mean_predicted_probability": 0.06256716498598044,
+            "n": 275,
+            "observed_rate": 0.05454545454545454
+          },
+          "offense_only": {
+            "brier": 0.05024058534048653,
+            "log_loss": 0.20492655714687974,
+            "mean_predicted_probability": 0.06683297367181004,
+            "n": 275,
+            "observed_rate": 0.05454545454545454
+          }
+        },
+        "defense:CAR": {
+          "defense_only": {
+            "brier": 0.04436879403520042,
+            "log_loss": 0.1964378717186117,
+            "mean_predicted_probability": 0.059737929512297824,
+            "n": 246,
+            "observed_rate": 0.044715447154471545
+          },
+          "league": {
+            "brier": 0.043540818015519116,
+            "log_loss": 0.18891617653646278,
+            "mean_predicted_probability": 0.0655173900711713,
+            "n": 246,
+            "observed_rate": 0.044715447154471545
+          },
+          "matchup": {
+            "brier": 0.04534754222940925,
+            "log_loss": 0.20576504611738755,
+            "mean_predicted_probability": 0.0612788624205578,
+            "n": 246,
+            "observed_rate": 0.044715447154471545
+          },
+          "offense_only": {
+            "brier": 0.044365394587223786,
+            "log_loss": 0.19779835669177656,
+            "mean_predicted_probability": 0.06684492249838414,
+            "n": 246,
+            "observed_rate": 0.044715447154471545
+          }
+        },
+        "defense:CHI": {
+          "defense_only": {
+            "brier": 0.08275908222218573,
+            "log_loss": 0.30745748340710227,
+            "mean_predicted_probability": 0.06050443787279246,
+            "n": 208,
+            "observed_rate": 0.09134615384615384
+          },
+          "league": {
+            "brier": 0.08145928721400571,
+            "log_loss": 0.29603753893302404,
+            "mean_predicted_probability": 0.06624044965823468,
+            "n": 208,
+            "observed_rate": 0.09134615384615384
+          },
+          "matchup": {
+            "brier": 0.08256072237810708,
+            "log_loss": 0.3090056795978616,
+            "mean_predicted_probability": 0.06171439972496414,
+            "n": 208,
+            "observed_rate": 0.09134615384615384
+          },
+          "offense_only": {
+            "brier": 0.08155417170642379,
+            "log_loss": 0.2978720997797988,
+            "mean_predicted_probability": 0.06767183594827769,
+            "n": 208,
+            "observed_rate": 0.09134615384615384
+          }
+        },
+        "defense:CIN": {
+          "defense_only": {
+            "brier": 0.08269500503952548,
+            "log_loss": 0.31082555928252703,
+            "mean_predicted_probability": 0.0605966986188349,
+            "n": 255,
+            "observed_rate": 0.09019607843137255
+          },
+          "league": {
+            "brier": 0.08207450095345967,
+            "log_loss": 0.30431475367296684,
+            "mean_predicted_probability": 0.06536076132428112,
+            "n": 255,
+            "observed_rate": 0.09019607843137255
+          },
+          "matchup": {
+            "brier": 0.08482958493760594,
+            "log_loss": 0.3386896637041791,
+            "mean_predicted_probability": 0.059014214710488455,
+            "n": 255,
+            "observed_rate": 0.09019607843137255
+          },
+          "offense_only": {
+            "brier": 0.08428405628790207,
+            "log_loss": 0.3311790639931163,
+            "mean_predicted_probability": 0.06309123401819061,
+            "n": 255,
+            "observed_rate": 0.09019607843137255
+          }
+        },
+        "defense:CLE": {
+          "defense_only": {
+            "brier": 0.06984210962566757,
+            "log_loss": 0.2613721340267698,
+            "mean_predicted_probability": 0.0685617543960925,
+            "n": 272,
+            "observed_rate": 0.07720588235294118
+          },
+          "league": {
+            "brier": 0.07028450673132146,
+            "log_loss": 0.2657213021746366,
+            "mean_predicted_probability": 0.06716311539536773,
+            "n": 272,
+            "observed_rate": 0.07720588235294118
+          },
+          "matchup": {
+            "brier": 0.07002302151990766,
+            "log_loss": 0.2627306290324234,
+            "mean_predicted_probability": 0.06583890721260388,
+            "n": 272,
+            "observed_rate": 0.07720588235294118
+          },
+          "offense_only": {
+            "brier": 0.07057337683425072,
+            "log_loss": 0.2679979463981396,
+            "mean_predicted_probability": 0.064996526750722,
+            "n": 272,
+            "observed_rate": 0.07720588235294118
+          }
+        },
+        "defense:DAL": {
+          "defense_only": {
+            "brier": 0.0512565050358497,
+            "log_loss": 0.21528268506015277,
+            "mean_predicted_probability": 0.06733361864149875,
+            "n": 265,
+            "observed_rate": 0.052830188679245285
+          },
+          "league": {
+            "brier": 0.050739054784821234,
+            "log_loss": 0.2114503960093129,
+            "mean_predicted_probability": 0.06456393583624734,
+            "n": 265,
+            "observed_rate": 0.052830188679245285
+          },
+          "matchup": {
+            "brier": 0.05211578785510404,
+            "log_loss": 0.22001766874292988,
+            "mean_predicted_probability": 0.06919810659361163,
+            "n": 265,
+            "observed_rate": 0.052830188679245285
+          },
+          "offense_only": {
+            "brier": 0.05159801009085435,
+            "log_loss": 0.21567241587394986,
+            "mean_predicted_probability": 0.06585725522972191,
+            "n": 265,
+            "observed_rate": 0.052830188679245285
+          }
+        },
+        "defense:DEN": {
+          "defense_only": {
+            "brier": 0.06802758789454602,
+            "log_loss": 0.258020566374795,
+            "mean_predicted_probability": 0.07406893543391521,
+            "n": 312,
+            "observed_rate": 0.07371794871794872
+          },
+          "league": {
+            "brier": 0.06689673367728131,
+            "log_loss": 0.2516212189022345,
+            "mean_predicted_probability": 0.06575101081706002,
+            "n": 312,
+            "observed_rate": 0.07371794871794872
+          },
+          "matchup": {
+            "brier": 0.0688233827143756,
+            "log_loss": 0.2658461414466944,
+            "mean_predicted_probability": 0.06884075635013888,
+            "n": 312,
+            "observed_rate": 0.07371794871794872
+          },
+          "offense_only": {
+            "brier": 0.06784723759987808,
+            "log_loss": 0.26070836184864915,
+            "mean_predicted_probability": 0.06142320607662829,
+            "n": 312,
+            "observed_rate": 0.07371794871794872
+          }
+        },
+        "defense:DET": {
+          "defense_only": {
+            "brier": 0.07155816351557748,
+            "log_loss": 0.3573512989813554,
+            "mean_predicted_probability": 0.06758075006370172,
+            "n": 299,
+            "observed_rate": 0.07692307692307693
+          },
+          "league": {
+            "brier": 0.07122882099855979,
+            "log_loss": 0.35213375010317977,
+            "mean_predicted_probability": 0.065779047759755,
+            "n": 299,
+            "observed_rate": 0.07692307692307693
+          },
+          "matchup": {
+            "brier": 0.07174980082512332,
+            "log_loss": 0.3625935467340685,
+            "mean_predicted_probability": 0.06388734107856849,
+            "n": 299,
+            "observed_rate": 0.07692307692307693
+          },
+          "offense_only": {
+            "brier": 0.07145942188400138,
+            "log_loss": 0.3578144892996542,
+            "mean_predicted_probability": 0.06254792623484914,
+            "n": 299,
+            "observed_rate": 0.07692307692307693
+          }
+        },
+        "defense:GB": {
+          "defense_only": {
+            "brier": 0.06506319986762514,
+            "log_loss": 0.2592270657847857,
+            "mean_predicted_probability": 0.06465275180474986,
+            "n": 291,
+            "observed_rate": 0.06872852233676977
+          },
+          "league": {
+            "brier": 0.06486756648068234,
+            "log_loss": 0.25607223942010066,
+            "mean_predicted_probability": 0.06602342606272348,
+            "n": 291,
+            "observed_rate": 0.06872852233676977
+          },
+          "matchup": {
+            "brier": 0.06580366749405582,
+            "log_loss": 0.2672757000053527,
+            "mean_predicted_probability": 0.06367547404362703,
+            "n": 291,
+            "observed_rate": 0.06872852233676977
+          },
+          "offense_only": {
+            "brier": 0.06572644059752435,
+            "log_loss": 0.2638828116900547,
+            "mean_predicted_probability": 0.06473836699929691,
+            "n": 291,
+            "observed_rate": 0.06872852233676977
+          }
+        },
+        "defense:HOU": {
+          "defense_only": {
+            "brier": 0.07329654541634868,
+            "log_loss": 0.2773262593349088,
+            "mean_predicted_probability": 0.06892773534768781,
+            "n": 261,
+            "observed_rate": 0.08045977011494253
+          },
+          "league": {
+            "brier": 0.07198157734760204,
+            "log_loss": 0.2686576630400646,
+            "mean_predicted_probability": 0.06584980016809586,
+            "n": 261,
+            "observed_rate": 0.08045977011494253
+          },
+          "matchup": {
+            "brier": 0.07367259777891086,
+            "log_loss": 0.28106239833487584,
+            "mean_predicted_probability": 0.06643407666200289,
+            "n": 261,
+            "observed_rate": 0.08045977011494253
+          },
+          "offense_only": {
+            "brier": 0.07254747927943077,
+            "log_loss": 0.27262266456712103,
+            "mean_predicted_probability": 0.06338028748110867,
+            "n": 261,
+            "observed_rate": 0.08045977011494253
+          }
+        },
+        "defense:IND": {
+          "defense_only": {
+            "brier": 0.058816991110493246,
+            "log_loss": 0.3361683300615967,
+            "mean_predicted_probability": 0.06398011303782117,
+            "n": 237,
+            "observed_rate": 0.06329113924050633
+          },
+          "league": {
+            "brier": 0.059101154226453616,
+            "log_loss": 0.3364233972956461,
+            "mean_predicted_probability": 0.06633453825258132,
+            "n": 237,
+            "observed_rate": 0.06329113924050633
+          },
+          "matchup": {
+            "brier": 0.059181042925683595,
+            "log_loss": 0.33328644596622303,
+            "mean_predicted_probability": 0.06326254858864146,
+            "n": 237,
+            "observed_rate": 0.06329113924050633
+          },
+          "offense_only": {
+            "brier": 0.05934831948321038,
+            "log_loss": 0.33471579904795795,
+            "mean_predicted_probability": 0.06654867768276672,
+            "n": 237,
+            "observed_rate": 0.06329113924050633
+          }
+        },
+        "defense:JAX": {
+          "defense_only": {
+            "brier": 0.05829587794347211,
+            "log_loss": 0.24233529443168836,
+            "mean_predicted_probability": 0.061639262220737005,
+            "n": 251,
+            "observed_rate": 0.05976095617529881
+          },
+          "league": {
+            "brier": 0.05722079773990887,
+            "log_loss": 0.23282191416729994,
+            "mean_predicted_probability": 0.06521614355236602,
+            "n": 251,
+            "observed_rate": 0.05976095617529881
+          },
+          "matchup": {
+            "brier": 0.059048547843890825,
+            "log_loss": 0.24748413155709734,
+            "mean_predicted_probability": 0.0633860935137478,
+            "n": 251,
+            "observed_rate": 0.05976095617529881
+          },
+          "offense_only": {
+            "brier": 0.058204753732128224,
+            "log_loss": 0.23880148647442928,
+            "mean_predicted_probability": 0.0677300615918517,
+            "n": 251,
+            "observed_rate": 0.05976095617529881
+          }
+        },
+        "defense:KC": {
+          "defense_only": {
+            "brier": 0.03842698124244809,
+            "log_loss": 0.17645531737663106,
+            "mean_predicted_probability": 0.07050047445028547,
+            "n": 243,
+            "observed_rate": 0.037037037037037035
+          },
+          "league": {
+            "brier": 0.0377475061216687,
+            "log_loss": 0.17366757465572766,
+            "mean_predicted_probability": 0.06755683320537414,
+            "n": 243,
+            "observed_rate": 0.037037037037037035
+          },
+          "matchup": {
+            "brier": 0.03908835630623315,
+            "log_loss": 0.17850611488247578,
+            "mean_predicted_probability": 0.07208927681203275,
+            "n": 243,
+            "observed_rate": 0.037037037037037035
+          },
+          "offense_only": {
+            "brier": 0.03812255504523806,
+            "log_loss": 0.17422912538742588,
+            "mean_predicted_probability": 0.06820491494888438,
+            "n": 243,
+            "observed_rate": 0.037037037037037035
+          }
+        },
+        "defense:LAC": {
+          "defense_only": {
+            "brier": 0.051469163814174844,
+            "log_loss": 0.21264782077278135,
+            "mean_predicted_probability": 0.07108488654862101,
+            "n": 200,
+            "observed_rate": 0.055
+          },
+          "league": {
+            "brier": 0.05107708494571494,
+            "log_loss": 0.20654968457603926,
+            "mean_predicted_probability": 0.06691579589118998,
+            "n": 200,
+            "observed_rate": 0.055
+          },
+          "matchup": {
+            "brier": 0.05185769121553891,
+            "log_loss": 0.2128041777846276,
+            "mean_predicted_probability": 0.06838266659836983,
+            "n": 200,
+            "observed_rate": 0.055
+          },
+          "offense_only": {
+            "brier": 0.05129635460404968,
+            "log_loss": 0.206038543592565,
+            "mean_predicted_probability": 0.06446356176909042,
+            "n": 200,
+            "observed_rate": 0.055
+          }
+        },
+        "defense:LAR": {
+          "defense_only": {
+            "brier": 0.045317269209711714,
+            "log_loss": 0.19215548300701468,
+            "mean_predicted_probability": 0.06446374033487563,
+            "n": 261,
+            "observed_rate": 0.04597701149425287
+          },
+          "league": {
+            "brier": 0.0448020536290228,
+            "log_loss": 0.19132541523164331,
+            "mean_predicted_probability": 0.0668117125379555,
+            "n": 261,
+            "observed_rate": 0.04597701149425287
+          },
+          "matchup": {
+            "brier": 0.04541000732939891,
+            "log_loss": 0.19005227708923605,
+            "mean_predicted_probability": 0.06778913076543079,
+            "n": 261,
+            "observed_rate": 0.04597701149425287
+          },
+          "offense_only": {
+            "brier": 0.044915566624996586,
+            "log_loss": 0.18969508780488312,
+            "mean_predicted_probability": 0.07051279914461414,
+            "n": 261,
+            "observed_rate": 0.04597701149425287
+          }
+        },
+        "defense:LV": {
+          "defense_only": {
+            "brier": 0.0629569796910109,
+            "log_loss": 0.24928440788917614,
+            "mean_predicted_probability": 0.06276718055179019,
+            "n": 268,
+            "observed_rate": 0.06716417910447761
+          },
+          "league": {
+            "brier": 0.06201886931191066,
+            "log_loss": 0.24124964523486386,
+            "mean_predicted_probability": 0.06609031863755195,
+            "n": 268,
+            "observed_rate": 0.06716417910447761
+          },
+          "matchup": {
+            "brier": 0.06324136867653128,
+            "log_loss": 0.24989579494116912,
+            "mean_predicted_probability": 0.06336523576657133,
+            "n": 268,
+            "observed_rate": 0.06716417910447761
+          },
+          "offense_only": {
+            "brier": 0.062198054316401796,
+            "log_loss": 0.24123669370747022,
+            "mean_predicted_probability": 0.06639001554831926,
+            "n": 268,
+            "observed_rate": 0.06716417910447761
+          }
+        },
+        "defense:MIA": {
+          "defense_only": {
+            "brier": 0.04364960187740097,
+            "log_loss": 0.18635164993702483,
+            "mean_predicted_probability": 0.06441896726068118,
+            "n": 199,
+            "observed_rate": 0.04522613065326633
+          },
+          "league": {
+            "brier": 0.04266303856811454,
+            "log_loss": 0.18059095060823538,
+            "mean_predicted_probability": 0.06494365940091171,
+            "n": 199,
+            "observed_rate": 0.04522613065326633
+          },
+          "matchup": {
+            "brier": 0.04337592879263678,
+            "log_loss": 0.18360603638524445,
+            "mean_predicted_probability": 0.06474869238807295,
+            "n": 199,
+            "observed_rate": 0.04522613065326633
+          },
+          "offense_only": {
+            "brier": 0.0423752267559584,
+            "log_loss": 0.17763989223381038,
+            "mean_predicted_probability": 0.06496913963345405,
+            "n": 199,
+            "observed_rate": 0.04522613065326633
+          }
+        },
+        "defense:MIN": {
+          "defense_only": {
+            "brier": 0.10587362940402083,
+            "log_loss": 0.5024537911838955,
+            "mean_predicted_probability": 0.07313836681521732,
+            "n": 219,
+            "observed_rate": 0.1141552511415525
+          },
+          "league": {
+            "brier": 0.10473120133710981,
+            "log_loss": 0.4900034563001503,
+            "mean_predicted_probability": 0.06657759922789908,
+            "n": 219,
+            "observed_rate": 0.1141552511415525
+          },
+          "matchup": {
+            "brier": 0.10924696550985268,
+            "log_loss": 0.5404040909803487,
+            "mean_predicted_probability": 0.06890678734138726,
+            "n": 219,
+            "observed_rate": 0.1141552511415525
+          },
+          "offense_only": {
+            "brier": 0.10821319514722987,
+            "log_loss": 0.5284529298751162,
+            "mean_predicted_probability": 0.06304650832621544,
+            "n": 219,
+            "observed_rate": 0.1141552511415525
+          }
+        },
+        "defense:NE": {
+          "defense_only": {
+            "brier": 0.075806670360663,
+            "log_loss": 0.29294061159074036,
+            "mean_predicted_probability": 0.06332871334310464,
+            "n": 273,
+            "observed_rate": 0.08058608058608059
+          },
+          "league": {
+            "brier": 0.07465025717960497,
+            "log_loss": 0.2836947277025848,
+            "mean_predicted_probability": 0.06489860642286277,
+            "n": 273,
+            "observed_rate": 0.08058608058608059
+          },
+          "matchup": {
+            "brier": 0.07650165817575039,
+            "log_loss": 0.29334440494825786,
+            "mean_predicted_probability": 0.0653751788464044,
+            "n": 273,
+            "observed_rate": 0.08058608058608059
+          },
+          "offense_only": {
+            "brier": 0.07507171149298826,
+            "log_loss": 0.283884175905805,
+            "mean_predicted_probability": 0.06691114545302566,
+            "n": 273,
+            "observed_rate": 0.08058608058608059
+          }
+        },
+        "defense:NO": {
+          "defense_only": {
+            "brier": 0.06964642743910056,
+            "log_loss": 0.26423854539628194,
+            "mean_predicted_probability": 0.06486977348518333,
+            "n": 233,
+            "observed_rate": 0.07725321888412018
+          },
+          "league": {
+            "brier": 0.0693902058337924,
+            "log_loss": 0.259747409977521,
+            "mean_predicted_probability": 0.06350417485939241,
+            "n": 233,
+            "observed_rate": 0.07725321888412018
+          },
+          "matchup": {
+            "brier": 0.06986877713276562,
+            "log_loss": 0.26307913904287317,
+            "mean_predicted_probability": 0.06876385150924472,
+            "n": 233,
+            "observed_rate": 0.07725321888412018
+          },
+          "offense_only": {
+            "brier": 0.069669379058777,
+            "log_loss": 0.2580375323909015,
+            "mean_predicted_probability": 0.06671634934208395,
+            "n": 233,
+            "observed_rate": 0.07725321888412018
+          }
+        },
+        "defense:NYG": {
+          "defense_only": {
+            "brier": 0.03641369230730238,
+            "log_loss": 0.1600845844303284,
+            "mean_predicted_probability": 0.06508574992057434,
+            "n": 213,
+            "observed_rate": 0.03755868544600939
+          },
+          "league": {
+            "brier": 0.036181599903166196,
+            "log_loss": 0.16062483041245368,
+            "mean_predicted_probability": 0.06725104996716773,
+            "n": 213,
+            "observed_rate": 0.03755868544600939
+          },
+          "matchup": {
+            "brier": 0.036986205712691164,
+            "log_loss": 0.1643221494386846,
+            "mean_predicted_probability": 0.06473230048440291,
+            "n": 213,
+            "observed_rate": 0.03755868544600939
+          },
+          "offense_only": {
+            "brier": 0.036762606146348,
+            "log_loss": 0.16514513491475247,
+            "mean_predicted_probability": 0.06699178423682202,
+            "n": 213,
+            "observed_rate": 0.03755868544600939
+          }
+        },
+        "defense:NYJ": {
+          "defense_only": {
+            "brier": 0.07298415834356645,
+            "log_loss": 0.2783557370287547,
+            "mean_predicted_probability": 0.0705722773420431,
+            "n": 252,
+            "observed_rate": 0.07936507936507936
+          },
+          "league": {
+            "brier": 0.07217379622481192,
+            "log_loss": 0.2737419381820532,
+            "mean_predicted_probability": 0.06549436091030615,
+            "n": 252,
+            "observed_rate": 0.07936507936507936
+          },
+          "matchup": {
+            "brier": 0.07334295341305003,
+            "log_loss": 0.28520328647847115,
+            "mean_predicted_probability": 0.07174810816486865,
+            "n": 252,
+            "observed_rate": 0.07936507936507936
+          },
+          "offense_only": {
+            "brier": 0.07213396596402051,
+            "log_loss": 0.2813486534358479,
+            "mean_predicted_probability": 0.06767396622391726,
+            "n": 252,
+            "observed_rate": 0.07936507936507936
+          }
+        },
+        "defense:PHI": {
+          "defense_only": {
+            "brier": 0.036978897573669844,
+            "log_loss": 0.17386051339105504,
+            "mean_predicted_probability": 0.06466279806077331,
+            "n": 278,
+            "observed_rate": 0.03597122302158273
+          },
+          "league": {
+            "brier": 0.036203560866049506,
+            "log_loss": 0.1659952806945008,
+            "mean_predicted_probability": 0.0641934946857203,
+            "n": 278,
+            "observed_rate": 0.03597122302158273
+          },
+          "matchup": {
+            "brier": 0.03696096088404889,
+            "log_loss": 0.17542822167947883,
+            "mean_predicted_probability": 0.06469167962347351,
+            "n": 278,
+            "observed_rate": 0.03597122302158273
+          },
+          "offense_only": {
+            "brier": 0.036402370747658855,
+            "log_loss": 0.16842940844300539,
+            "mean_predicted_probability": 0.06496327999985335,
+            "n": 278,
+            "observed_rate": 0.03597122302158273
+          }
+        },
+        "defense:PIT": {
+          "defense_only": {
+            "brier": 0.07906796913279916,
+            "log_loss": 0.29986199815343995,
+            "mean_predicted_probability": 0.06556508289203979,
+            "n": 292,
+            "observed_rate": 0.08561643835616438
+          },
+          "league": {
+            "brier": 0.07878749212295637,
+            "log_loss": 0.29688111873212264,
+            "mean_predicted_probability": 0.06471624294900948,
+            "n": 292,
+            "observed_rate": 0.08561643835616438
+          },
+          "matchup": {
+            "brier": 0.07853865579660332,
+            "log_loss": 0.29416604141901387,
+            "mean_predicted_probability": 0.06634681399929016,
+            "n": 292,
+            "observed_rate": 0.08561643835616438
+          },
+          "offense_only": {
+            "brier": 0.07792400170259607,
+            "log_loss": 0.29129048048026146,
+            "mean_predicted_probability": 0.0659350369972945,
+            "n": 292,
+            "observed_rate": 0.08561643835616438
+          }
+        },
+        "defense:SEA": {
+          "defense_only": {
+            "brier": 0.06649596458930969,
+            "log_loss": 0.25883518163565783,
+            "mean_predicted_probability": 0.07264355138746588,
+            "n": 222,
+            "observed_rate": 0.07207207207207207
+          },
+          "league": {
+            "brier": 0.06623808475475214,
+            "log_loss": 0.25458030554860595,
+            "mean_predicted_probability": 0.06931980129521408,
+            "n": 222,
+            "observed_rate": 0.07207207207207207
+          },
+          "matchup": {
+            "brier": 0.06883000001988175,
+            "log_loss": 0.2740550689025552,
+            "mean_predicted_probability": 0.07255396165996758,
+            "n": 222,
+            "observed_rate": 0.07207207207207207
+          },
+          "offense_only": {
+            "brier": 0.0679134919861695,
+            "log_loss": 0.2695460004040641,
+            "mean_predicted_probability": 0.06881594139810485,
+            "n": 222,
+            "observed_rate": 0.07207207207207207
+          }
+        },
+        "defense:SF": {
+          "defense_only": {
+            "brier": 0.05610980845422895,
+            "log_loss": 0.23087029512491272,
+            "mean_predicted_probability": 0.06025655075078628,
+            "n": 254,
+            "observed_rate": 0.05905511811023622
+          },
+          "league": {
+            "brier": 0.05569954527029405,
+            "log_loss": 0.2251067219405499,
+            "mean_predicted_probability": 0.06504686557127151,
+            "n": 254,
+            "observed_rate": 0.05905511811023622
+          },
+          "matchup": {
+            "brier": 0.056673096758845666,
+            "log_loss": 0.241201835951092,
+            "mean_predicted_probability": 0.058015906181692514,
+            "n": 254,
+            "observed_rate": 0.05905511811023622
+          },
+          "offense_only": {
+            "brier": 0.05639945640753997,
+            "log_loss": 0.23477960995597483,
+            "mean_predicted_probability": 0.062278185410414334,
+            "n": 254,
+            "observed_rate": 0.05905511811023622
+          }
+        },
+        "defense:TB": {
+          "defense_only": {
+            "brier": 0.05477017235878308,
+            "log_loss": 0.2214022849407739,
+            "mean_predicted_probability": 0.06191384207851809,
+            "n": 272,
+            "observed_rate": 0.058823529411764705
+          },
+          "league": {
+            "brier": 0.0543894026313097,
+            "log_loss": 0.21699009991574317,
+            "mean_predicted_probability": 0.0640566812379306,
+            "n": 272,
+            "observed_rate": 0.058823529411764705
+          },
+          "matchup": {
+            "brier": 0.05485102004853188,
+            "log_loss": 0.21955349691977527,
+            "mean_predicted_probability": 0.060300307173964104,
+            "n": 272,
+            "observed_rate": 0.058823529411764705
+          },
+          "offense_only": {
+            "brier": 0.054570392635788424,
+            "log_loss": 0.21546950361753459,
+            "mean_predicted_probability": 0.0626592904487294,
+            "n": 272,
+            "observed_rate": 0.058823529411764705
+          }
+        },
+        "defense:TEN": {
+          "defense_only": {
+            "brier": 0.06380265714140405,
+            "log_loss": 0.2451330850815378,
+            "mean_predicted_probability": 0.061577552955115564,
+            "n": 285,
+            "observed_rate": 0.07017543859649122
+          },
+          "league": {
+            "brier": 0.06439375974869938,
+            "log_loss": 0.24763047167281899,
+            "mean_predicted_probability": 0.0639339509422867,
+            "n": 285,
+            "observed_rate": 0.07017543859649122
+          },
+          "matchup": {
+            "brier": 0.06395882303549377,
+            "log_loss": 0.2455827728743172,
+            "mean_predicted_probability": 0.06397437126792357,
+            "n": 285,
+            "observed_rate": 0.07017543859649122
+          },
+          "offense_only": {
+            "brier": 0.06465699807209695,
+            "log_loss": 0.2476504312365218,
+            "mean_predicted_probability": 0.0659358816475387,
+            "n": 285,
+            "observed_rate": 0.07017543859649122
+          }
+        },
+        "defense:WSH": {
+          "defense_only": {
+            "brier": 0.058993480674110914,
+            "log_loss": 0.23365981873516523,
+            "mean_predicted_probability": 0.06695064592645332,
+            "n": 253,
+            "observed_rate": 0.06324110671936758
+          },
+          "league": {
+            "brier": 0.05858026077365208,
+            "log_loss": 0.23059290988424827,
+            "mean_predicted_probability": 0.06454121648860474,
+            "n": 253,
+            "observed_rate": 0.06324110671936758
+          },
+          "matchup": {
+            "brier": 0.059080625114231726,
+            "log_loss": 0.23463085693870314,
+            "mean_predicted_probability": 0.0689426230017066,
+            "n": 253,
+            "observed_rate": 0.06324110671936758
+          },
+          "offense_only": {
+            "brier": 0.058565841562249,
+            "log_loss": 0.23102574101792264,
+            "mean_predicted_probability": 0.0661101503078095,
+            "n": 253,
+            "observed_rate": 0.06324110671936758
+          }
+        },
+        "distance:1-2": {
+          "defense_only": {
+            "brier": 0.06447918605359206,
+            "log_loss": 0.3508053300932467,
+            "mean_predicted_probability": 0.05783881884428271,
+            "n": 504,
+            "observed_rate": 0.06746031746031746
+          },
+          "league": {
+            "brier": 0.06365294356454149,
+            "log_loss": 0.3452471680453567,
+            "mean_predicted_probability": 0.058153778961327326,
+            "n": 504,
+            "observed_rate": 0.06746031746031746
+          },
+          "matchup": {
+            "brier": 0.0659600677702498,
+            "log_loss": 0.3612459911410264,
+            "mean_predicted_probability": 0.05787874513013893,
+            "n": 504,
+            "observed_rate": 0.06746031746031746
+          },
+          "offense_only": {
+            "brier": 0.06441569117100031,
+            "log_loss": 0.35437066073859463,
+            "mean_predicted_probability": 0.05772844890188603,
+            "n": 504,
+            "observed_rate": 0.06746031746031746
+          }
+        },
+        "distance:10+": {
+          "defense_only": {
+            "brier": 0.0581448413351201,
+            "log_loss": 0.23426301371747998,
+            "mean_predicted_probability": 0.06055023234781935,
+            "n": 4871,
+            "observed_rate": 0.06179429275302813
+          },
+          "league": {
+            "brier": 0.0576252164305591,
+            "log_loss": 0.22964732252676398,
+            "mean_predicted_probability": 0.060122910883341325,
+            "n": 4871,
+            "observed_rate": 0.06179429275302813
+          },
+          "matchup": {
+            "brier": 0.05853477177099747,
+            "log_loss": 0.23720886187710116,
+            "mean_predicted_probability": 0.0605333308342502,
+            "n": 4871,
+            "observed_rate": 0.06179429275302813
+          },
+          "offense_only": {
+            "brier": 0.05802968297803277,
+            "log_loss": 0.23279392619728131,
+            "mean_predicted_probability": 0.06029534315848466,
+            "n": 4871,
+            "observed_rate": 0.06179429275302813
+          }
+        },
+        "distance:3-5": {
+          "defense_only": {
+            "brier": 0.06905784636382895,
+            "log_loss": 0.3110601444811433,
+            "mean_predicted_probability": 0.07254016455566402,
+            "n": 1085,
+            "observed_rate": 0.07465437788018434
+          },
+          "league": {
+            "brier": 0.06874809260154918,
+            "log_loss": 0.3067047523596294,
+            "mean_predicted_probability": 0.073411632314889,
+            "n": 1085,
+            "observed_rate": 0.07465437788018434
+          },
+          "matchup": {
+            "brier": 0.07018860403047616,
+            "log_loss": 0.32068438506251173,
+            "mean_predicted_probability": 0.07197185689532748,
+            "n": 1085,
+            "observed_rate": 0.07465437788018434
+          },
+          "offense_only": {
+            "brier": 0.0698260761002236,
+            "log_loss": 0.31605552566902617,
+            "mean_predicted_probability": 0.07259674848827491,
+            "n": 1085,
+            "observed_rate": 0.07465437788018434
+          }
+        },
+        "distance:6-9": {
+          "defense_only": {
+            "brier": 0.06836166661405112,
+            "log_loss": 0.26586665303323886,
+            "mean_predicted_probability": 0.07753140028149394,
+            "n": 1740,
+            "observed_rate": 0.07298850574712644
+          },
+          "league": {
+            "brier": 0.06753701929192944,
+            "log_loss": 0.2596878849804323,
+            "mean_predicted_probability": 0.07796669605594624,
+            "n": 1740,
+            "observed_rate": 0.07298850574712644
+          },
+          "matchup": {
+            "brier": 0.06848377533460766,
+            "log_loss": 0.2682225176746238,
+            "mean_predicted_probability": 0.07651399912277423,
+            "n": 1740,
+            "observed_rate": 0.07298850574712644
+          },
+          "offense_only": {
+            "brier": 0.06772559293095505,
+            "log_loss": 0.26225480199590323,
+            "mean_predicted_probability": 0.07718384236258777,
+            "n": 1740,
+            "observed_rate": 0.07298850574712644
+          }
+        },
+        "down:1.0": {
+          "defense_only": {
+            "brier": 0.051119563083912856,
+            "log_loss": 0.22961548789615585,
+            "mean_predicted_probability": 0.05017555130466802,
+            "n": 3009,
+            "observed_rate": 0.053506148222000664
+          },
+          "league": {
+            "brier": 0.050741566847673295,
+            "log_loss": 0.22531729854036397,
+            "mean_predicted_probability": 0.04956729355801983,
+            "n": 3009,
+            "observed_rate": 0.053506148222000664
+          },
+          "matchup": {
+            "brier": 0.05128596402920062,
+            "log_loss": 0.23170926367800262,
+            "mean_predicted_probability": 0.05021884745439059,
+            "n": 3009,
+            "observed_rate": 0.053506148222000664
+          },
+          "offense_only": {
+            "brier": 0.050950058660537416,
+            "log_loss": 0.22761517347511714,
+            "mean_predicted_probability": 0.04978395731067446,
+            "n": 3009,
+            "observed_rate": 0.053506148222000664
+          }
+        },
+        "down:2.0": {
+          "defense_only": {
+            "brier": 0.05463482958731841,
+            "log_loss": 0.22526870527205942,
+            "mean_predicted_probability": 0.055627535840938235,
+            "n": 2761,
+            "observed_rate": 0.0572256428830134
+          },
+          "league": {
+            "brier": 0.05389822998998671,
+            "log_loss": 0.21860774287255588,
+            "mean_predicted_probability": 0.055593102188571164,
+            "n": 2761,
+            "observed_rate": 0.0572256428830134
+          },
+          "matchup": {
+            "brier": 0.05518724384764518,
+            "log_loss": 0.23124626130086,
+            "mean_predicted_probability": 0.05522886580788087,
+            "n": 2761,
+            "observed_rate": 0.0572256428830134
+          },
+          "offense_only": {
+            "brier": 0.054450313746729775,
+            "log_loss": 0.2245334732221659,
+            "mean_predicted_probability": 0.05525288690443536,
+            "n": 2761,
+            "observed_rate": 0.0572256428830134
+          }
+        },
+        "down:3.0": {
+          "defense_only": {
+            "brier": 0.08418818596420978,
+            "log_loss": 0.31138589051812493,
+            "mean_predicted_probability": 0.09870631816240445,
+            "n": 2229,
+            "observed_rate": 0.09196949304620906
+          },
+          "league": {
+            "brier": 0.08362382075746792,
+            "log_loss": 0.30770515896706074,
+            "mean_predicted_probability": 0.09899660395661908,
+            "n": 2229,
+            "observed_rate": 0.09196949304620906
+          },
+          "matchup": {
+            "brier": 0.08495124086405526,
+            "log_loss": 0.3159963698333013,
+            "mean_predicted_probability": 0.09797008871437314,
+            "n": 2229,
+            "observed_rate": 0.09196949304620906
+          },
+          "offense_only": {
+            "brier": 0.08431943107470254,
+            "log_loss": 0.3124069807184364,
+            "mean_predicted_probability": 0.09839764518043721,
+            "n": 2229,
+            "observed_rate": 0.09196949304620906
+          }
+        },
+        "down:4.0": {
+          "defense_only": {
+            "brier": 0.08595571543920595,
+            "log_loss": 0.5524886115628502,
+            "mean_predicted_probability": 0.06527073621823379,
+            "n": 201,
+            "observed_rate": 0.0945273631840796
+          },
+          "league": {
+            "brier": 0.08451603340804444,
+            "log_loss": 0.5463568566279423,
+            "mean_predicted_probability": 0.07053683597133052,
+            "n": 201,
+            "observed_rate": 0.0945273631840796
+          },
+          "matchup": {
+            "brier": 0.08773825868072818,
+            "log_loss": 0.5578212640193626,
+            "mean_predicted_probability": 0.06607874136378815,
+            "n": 201,
+            "observed_rate": 0.0945273631840796
+          },
+          "offense_only": {
+            "brier": 0.08526300385569384,
+            "log_loss": 0.5502462277042335,
+            "mean_predicted_probability": 0.07054533927388724,
+            "n": 201,
+            "observed_rate": 0.0945273631840796
+          }
+        },
+        "down_distance:1.0:1-2": {
+          "defense_only": {
+            "brier": 0.03247633135834159,
+            "log_loss": 0.14815779950595956,
+            "mean_predicted_probability": 0.023996765189851544,
+            "n": 30,
+            "observed_rate": 0.03333333333333333
+          },
+          "league": {
+            "brier": 0.03222371854221025,
+            "log_loss": 0.1461685287937142,
+            "mean_predicted_probability": 0.03211009174311929,
+            "n": 30,
+            "observed_rate": 0.03333333333333333
+          },
+          "matchup": {
+            "brier": 0.033016802489005605,
+            "log_loss": 0.16197134680697658,
+            "mean_predicted_probability": 0.02342326688985894,
+            "n": 30,
+            "observed_rate": 0.03333333333333333
+          },
+          "offense_only": {
+            "brier": 0.03362118631169461,
+            "log_loss": 0.16351620168745537,
+            "mean_predicted_probability": 0.034464983085376856,
+            "n": 30,
+            "observed_rate": 0.03333333333333333
+          }
+        },
+        "down_distance:1.0:10+": {
+          "defense_only": {
+            "brier": 0.050824680230184556,
+            "log_loss": 0.2123859647615352,
+            "mean_predicted_probability": 0.050659931920901964,
+            "n": 2872,
+            "observed_rate": 0.05327298050139276
+          },
+          "league": {
+            "brier": 0.050476481720741526,
+            "log_loss": 0.2085348295784588,
+            "mean_predicted_probability": 0.04997062849852821,
+            "n": 2872,
+            "observed_rate": 0.05327298050139276
+          },
+          "matchup": {
+            "brier": 0.05094501288977233,
+            "log_loss": 0.2141185127367921,
+            "mean_predicted_probability": 0.0506386031370618,
+            "n": 2872,
+            "observed_rate": 0.05327298050139276
+          },
+          "offense_only": {
+            "brier": 0.05065017579706635,
+            "log_loss": 0.21049593373813547,
+            "mean_predicted_probability": 0.05014352826194919,
+            "n": 2872,
+            "observed_rate": 0.05327298050139276
+          }
+        },
+        "down_distance:1.0:3-5": {
+          "defense_only": {
+            "brier": 0.05564532633941804,
+            "log_loss": 1.1089930476492205,
+            "mean_predicted_probability": 0.02789072700423744,
+            "n": 55,
+            "observed_rate": 0.05454545454545454
+          },
+          "league": {
+            "brier": 0.05517580227042458,
+            "log_loss": 1.0985420907737697,
+            "mean_predicted_probability": 0.030346154836638783,
+            "n": 55,
+            "observed_rate": 0.05454545454545454
+          },
+          "matchup": {
+            "brier": 0.05633570922697928,
+            "log_loss": 1.0990519377999184,
+            "mean_predicted_probability": 0.03348905084421211,
+            "n": 55,
+            "observed_rate": 0.05454545454545454
+          },
+          "offense_only": {
+            "brier": 0.054332639244201016,
+            "log_loss": 1.0859660318283177,
+            "mean_predicted_probability": 0.03398559371105266,
+            "n": 55,
+            "observed_rate": 0.05454545454545454
+          }
+        },
+        "down_distance:1.0:6-9": {
+          "defense_only": {
+            "brier": 0.07337501555741316,
+            "log_loss": 0.2980992438176596,
+            "mean_predicted_probability": 0.06209647034590396,
+            "n": 52,
+            "observed_rate": 0.07692307692307693
+          },
+          "league": {
+            "brier": 0.07137573964497052,
+            "log_loss": 0.27428557504330164,
+            "mean_predicted_probability": 0.05769230769230763,
+            "n": 52,
+            "observed_rate": 0.07692307692307693
+          },
+          "matchup": {
+            "brier": 0.07531578196700882,
+            "log_loss": 0.32611170853535676,
+            "mean_predicted_probability": 0.06018938418254382,
+            "n": 52,
+            "observed_rate": 0.07692307692307693
+          },
+          "offense_only": {
+            "brier": 0.07393251678078018,
+            "log_loss": 0.30223302864457985,
+            "mean_predicted_probability": 0.055472254477540235,
+            "n": 52,
+            "observed_rate": 0.07692307692307693
+          }
+        },
+        "down_distance:2.0:1-2": {
+          "defense_only": {
+            "brier": 0.0400930278571121,
+            "log_loss": 0.17549812328887063,
+            "mean_predicted_probability": 0.05214337666478828,
+            "n": 172,
+            "observed_rate": 0.040697674418604654
+          },
+          "league": {
+            "brier": 0.039301611549971915,
+            "log_loss": 0.17132580487724894,
+            "mean_predicted_probability": 0.05099172916482874,
+            "n": 172,
+            "observed_rate": 0.040697674418604654
+          },
+          "matchup": {
+            "brier": 0.041980604657512556,
+            "log_loss": 0.1835328422691728,
+            "mean_predicted_probability": 0.051197530964685115,
+            "n": 172,
+            "observed_rate": 0.040697674418604654
+          },
+          "offense_only": {
+            "brier": 0.04004049191278982,
+            "log_loss": 0.17691000439452667,
+            "mean_predicted_probability": 0.04865180749139346,
+            "n": 172,
+            "observed_rate": 0.040697674418604654
+          }
+        },
+        "down_distance:2.0:10+": {
+          "defense_only": {
+            "brier": 0.05839438935857961,
+            "log_loss": 0.23718034378757902,
+            "mean_predicted_probability": 0.05589980862356494,
+            "n": 1234,
+            "observed_rate": 0.06158833063209076
+          },
+          "league": {
+            "brier": 0.05778520958390573,
+            "log_loss": 0.2311890038413657,
+            "mean_predicted_probability": 0.05527065718026684,
+            "n": 1234,
+            "observed_rate": 0.06158833063209076
+          },
+          "matchup": {
+            "brier": 0.05897292468631435,
+            "log_loss": 0.24194724624014996,
+            "mean_predicted_probability": 0.05585802165305592,
+            "n": 1234,
+            "observed_rate": 0.06158833063209076
+          },
+          "offense_only": {
+            "brier": 0.05830053432510674,
+            "log_loss": 0.2360206424586186,
+            "mean_predicted_probability": 0.0553610801082604,
+            "n": 1234,
+            "observed_rate": 0.06158833063209076
+          }
+        },
+        "down_distance:2.0:3-5": {
+          "defense_only": {
+            "brier": 0.04511134616114673,
+            "log_loss": 0.19997833188393266,
+            "mean_predicted_probability": 0.054121397328146775,
+            "n": 373,
+            "observed_rate": 0.045576407506702415
+          },
+          "league": {
+            "brier": 0.043686415115254215,
+            "log_loss": 0.18681066191399703,
+            "mean_predicted_probability": 0.05483978221063472,
+            "n": 373,
+            "observed_rate": 0.045576407506702415
+          },
+          "matchup": {
+            "brier": 0.04615430621178555,
+            "log_loss": 0.21719790019874108,
+            "mean_predicted_probability": 0.05299486354751787,
+            "n": 373,
+            "observed_rate": 0.045576407506702415
+          },
+          "offense_only": {
+            "brier": 0.045061238855862516,
+            "log_loss": 0.20331623884618286,
+            "mean_predicted_probability": 0.053344081492025415,
+            "n": 373,
+            "observed_rate": 0.045576407506702415
+          }
+        },
+        "down_distance:2.0:6-9": {
+          "defense_only": {
+            "brier": 0.05607490337328665,
+            "log_loss": 0.22862398780436916,
+            "mean_predicted_probability": 0.0564677399446116,
+            "n": 982,
+            "observed_rate": 0.059063136456211814
+          },
+          "league": {
+            "brier": 0.055449240683529966,
+            "log_loss": 0.22315716089417018,
+            "mean_predicted_probability": 0.05709037474672095,
+            "n": 982,
+            "observed_rate": 0.059063136456211814
+          },
+          "matchup": {
+            "brier": 0.05617430853599598,
+            "log_loss": 0.23149242357118435,
+            "mean_predicted_probability": 0.05599291277651541,
+            "n": 982,
+            "observed_rate": 0.059063136456211814
+          },
+          "offense_only": {
+            "brier": 0.055702291441244965,
+            "log_loss": 0.22649895002747505,
+            "mean_predicted_probability": 0.05699816151171838,
+            "n": 982,
+            "observed_rate": 0.059063136456211814
+          }
+        },
+        "down_distance:3.0:1-2": {
+          "defense_only": {
+            "brier": 0.08420765344270477,
+            "log_loss": 0.3198687054379369,
+            "mean_predicted_probability": 0.06928493779230722,
+            "n": 234,
+            "observed_rate": 0.08974358974358974
+          },
+          "league": {
+            "brier": 0.08318429554131662,
+            "log_loss": 0.3114533068366153,
+            "mean_predicted_probability": 0.06889600920492925,
+            "n": 234,
+            "observed_rate": 0.08974358974358974
+          },
+          "matchup": {
+            "brier": 0.08577350809284874,
+            "log_loss": 0.3364994788887924,
+            "mean_predicted_probability": 0.06886610973891859,
+            "n": 234,
+            "observed_rate": 0.08974358974358974
+          },
+          "offense_only": {
+            "brier": 0.08434165004935727,
+            "log_loss": 0.32746287214390485,
+            "mean_predicted_probability": 0.06845066816209214,
+            "n": 234,
+            "observed_rate": 0.08974358974358974
+          }
+        },
+        "down_distance:3.0:10+": {
+          "defense_only": {
+            "brier": 0.0817160681740777,
+            "log_loss": 0.30195495100807335,
+            "mean_predicted_probability": 0.1052181504358432,
+            "n": 725,
+            "observed_rate": 0.0896551724137931
+          },
+          "league": {
+            "brier": 0.0811053373756329,
+            "log_loss": 0.2988187251393734,
+            "mean_predicted_probability": 0.10527661958072188,
+            "n": 725,
+            "observed_rate": 0.0896551724137931
+          },
+          "matchup": {
+            "brier": 0.0827777362756449,
+            "log_loss": 0.30673083881210106,
+            "mean_predicted_probability": 0.10477978504822882,
+            "n": 725,
+            "observed_rate": 0.0896551724137931
+          },
+          "offense_only": {
+            "brier": 0.08221398341353076,
+            "log_loss": 0.3040821183679931,
+            "mean_predicted_probability": 0.10512783888598447,
+            "n": 725,
+            "observed_rate": 0.0896551724137931
+          }
+        },
+        "down_distance:3.0:3-5": {
+          "defense_only": {
+            "brier": 0.0856267707623901,
+            "log_loss": 0.3126899594285323,
+            "mean_predicted_probability": 0.09008360504135958,
+            "n": 590,
+            "observed_rate": 0.09491525423728814
+          },
+          "league": {
+            "brier": 0.08580485309135716,
+            "log_loss": 0.31315842302715624,
+            "mean_predicted_probability": 0.090829530585555,
+            "n": 590,
+            "observed_rate": 0.09491525423728814
+          },
+          "matchup": {
+            "brier": 0.08651203323823214,
+            "log_loss": 0.3176616652727829,
+            "mean_predicted_probability": 0.08960543418750974,
+            "n": 590,
+            "observed_rate": 0.09491525423728814
+          },
+          "offense_only": {
+            "brier": 0.08668976249323708,
+            "log_loss": 0.3183510616449439,
+            "mean_predicted_probability": 0.09048916943586248,
+            "n": 590,
+            "observed_rate": 0.09491525423728814
+          }
+        },
+        "down_distance:3.0:6-9": {
+          "defense_only": {
+            "brier": 0.08556901681266728,
+            "log_loss": 0.3173903784540217,
+            "mean_predicted_probability": 0.10936944367678123,
+            "n": 680,
+            "observed_rate": 0.09264705882352942
+          },
+          "league": {
+            "brier": 0.0845678505742561,
+            "log_loss": 0.31115835327314595,
+            "mean_predicted_probability": 0.10974528209389649,
+            "n": 680,
+            "observed_rate": 0.09264705882352942
+          },
+          "matchup": {
+            "brier": 0.08563140673801906,
+            "log_loss": 0.31737469065990886,
+            "mean_predicted_probability": 0.107982511374756,
+            "n": 680,
+            "observed_rate": 0.09264705882352942
+          },
+          "offense_only": {
+            "brier": 0.08449995280609279,
+            "log_loss": 0.31094439081236763,
+            "mean_predicted_probability": 0.1083891199967169,
+            "n": 680,
+            "observed_rate": 0.09264705882352942
+          }
+        },
+        "down_distance:4.0:1-2": {
+          "defense_only": {
+            "brier": 0.07239159019476378,
+            "log_loss": 0.990091148583158,
+            "mean_predicted_probability": 0.0477871398835215,
+            "n": 68,
+            "observed_rate": 0.07352941176470588
+          },
+          "league": {
+            "brier": 0.07190249495587164,
+            "log_loss": 0.9892853616528432,
+            "mean_predicted_probability": 0.05079350402810882,
+            "n": 68,
+            "observed_rate": 0.07352941176470588
+          },
+          "matchup": {
+            "brier": 0.07296625274583748,
+            "log_loss": 0.9838281205969506,
+            "mean_predicted_probability": 0.05216977255972689,
+            "n": 68,
+            "observed_rate": 0.07352941176470588
+          },
+          "offense_only": {
+            "brier": 0.07108767706299861,
+            "log_loss": 0.9800366782955237,
+            "mean_predicted_probability": 0.0540532575814712,
+            "n": 68,
+            "observed_rate": 0.07352941176470588
+          }
+        },
+        "down_distance:4.0:10+": {
+          "defense_only": {
+            "brier": 0.14880536568965097,
+            "log_loss": 0.4881191326998957,
+            "mean_predicted_probability": 0.10453335954829204,
+            "n": 40,
+            "observed_rate": 0.175
+          },
+          "league": {
+            "brier": 0.14039138768508636,
+            "log_loss": 0.4442317753059647,
+            "mean_predicted_probability": 0.12033784271284276,
+            "n": 40,
+            "observed_rate": 0.175
+          },
+          "matchup": {
+            "brier": 0.15055871035869212,
+            "log_loss": 0.48883094060437926,
+            "mean_predicted_probability": 0.11324108510383837,
+            "n": 40,
+            "observed_rate": 0.175
+          },
+          "offense_only": {
+            "brier": 0.1411820891207507,
+            "log_loss": 0.4421471050074771,
+            "mean_predicted_probability": 0.1288286827682374,
+            "n": 40,
+            "observed_rate": 0.175
+          }
+        },
+        "down_distance:4.0:3-5": {
+          "defense_only": {
+            "brier": 0.06747676848012625,
+            "log_loss": 0.26009918337002613,
+            "mean_predicted_probability": 0.05724597581882843,
+            "n": 67,
+            "observed_rate": 0.07462686567164178
+          },
+          "league": {
+            "brier": 0.06921067441667136,
+            "log_loss": 0.26732828115966195,
+            "mean_predicted_probability": 0.05877493635216651,
+            "n": 67,
+            "observed_rate": 0.07462686567164178
+          },
+          "matchup": {
+            "brier": 0.07161963489596827,
+            "log_loss": 0.28447017804115415,
+            "mean_predicted_probability": 0.05392950240513083,
+            "n": 67,
+            "observed_rate": 0.07462686567164178
+          },
+          "offense_only": {
+            "brier": 0.07191336486664304,
+            "log_loss": 0.29146313642078786,
+            "mean_predicted_probability": 0.053915105850539706,
+            "n": 67,
+            "observed_rate": 0.07462686567164178
+          }
+        },
+        "down_distance:4.0:6-9": {
+          "defense_only": {
+            "brier": 0.07235817516469122,
+            "log_loss": 0.26048470102655974,
+            "mean_predicted_probability": 0.07127221946124371,
+            "n": 26,
+            "observed_rate": 0.07692307692307693
+          },
+          "league": {
+            "brier": 0.07098393710373928,
+            "log_loss": 0.2640791438418187,
+            "mean_predicted_probability": 0.07586581970066136,
+            "n": 26,
+            "observed_rate": 0.07692307692307693
+          },
+          "matchup": {
+            "brier": 0.07126234060507122,
+            "log_loss": 0.25419316593718233,
+            "mean_predicted_probability": 0.06120624672164203,
+            "n": 26,
+            "observed_rate": 0.07692307692307693
+          },
+          "offense_only": {
+            "brier": 0.07070856630059393,
+            "log_loss": 0.2593493578447502,
+            "mean_predicted_probability": 0.06686662599214012,
+            "n": 26,
+            "observed_rate": 0.07692307692307693
+          }
+        },
+        "offense:ARI": {
+          "defense_only": {
+            "brier": 0.05482392478064865,
+            "log_loss": 0.29654147693783,
+            "mean_predicted_probability": 0.06542016490110052,
+            "n": 335,
+            "observed_rate": 0.056716417910447764
+          },
+          "league": {
+            "brier": 0.054371907560843646,
+            "log_loss": 0.2939278755350316,
+            "mean_predicted_probability": 0.06633297824527774,
+            "n": 335,
+            "observed_rate": 0.056716417910447764
+          },
+          "matchup": {
+            "brier": 0.0559534039075719,
+            "log_loss": 0.3023687015942674,
+            "mean_predicted_probability": 0.06410004396047704,
+            "n": 335,
+            "observed_rate": 0.056716417910447764
+          },
+          "offense_only": {
+            "brier": 0.05538913420228051,
+            "log_loss": 0.3001055720799672,
+            "mean_predicted_probability": 0.06533239581535376,
+            "n": 335,
+            "observed_rate": 0.056716417910447764
+          }
+        },
+        "offense:ATL": {
+          "defense_only": {
+            "brier": 0.06187649775112281,
+            "log_loss": 0.2356220067308491,
+            "mean_predicted_probability": 0.0624573329822758,
+            "n": 232,
+            "observed_rate": 0.06896551724137931
+          },
+          "league": {
+            "brier": 0.06337790699463226,
+            "log_loss": 0.24448108909117963,
+            "mean_predicted_probability": 0.06553478029138513,
+            "n": 232,
+            "observed_rate": 0.06896551724137931
+          },
+          "matchup": {
+            "brier": 0.061953107725822694,
+            "log_loss": 0.23492897390508974,
+            "mean_predicted_probability": 0.05909248016234195,
+            "n": 232,
+            "observed_rate": 0.06896551724137931
+          },
+          "offense_only": {
+            "brier": 0.06347426742870527,
+            "log_loss": 0.24460475090860187,
+            "mean_predicted_probability": 0.06276289749188671,
+            "n": 232,
+            "observed_rate": 0.06896551724137931
+          }
+        },
+        "offense:BAL": {
+          "defense_only": {
+            "brier": 0.08325255082021786,
+            "log_loss": 0.4068090732221847,
+            "mean_predicted_probability": 0.06688294838146566,
+            "n": 240,
+            "observed_rate": 0.09166666666666666
+          },
+          "league": {
+            "brier": 0.08399694646252266,
+            "log_loss": 0.41241268027825634,
+            "mean_predicted_probability": 0.06702576171111671,
+            "n": 240,
+            "observed_rate": 0.09166666666666666
+          },
+          "matchup": {
+            "brier": 0.08324681841693381,
+            "log_loss": 0.4081906996231989,
+            "mean_predicted_probability": 0.06808313944257746,
+            "n": 240,
+            "observed_rate": 0.09166666666666666
+          },
+          "offense_only": {
+            "brier": 0.08430894831753952,
+            "log_loss": 0.41439486047925744,
+            "mean_predicted_probability": 0.06842953467102682,
+            "n": 240,
+            "observed_rate": 0.09166666666666666
+          }
+        },
+        "offense:BUF": {
+          "defense_only": {
+            "brier": 0.056220607482043654,
+            "log_loss": 0.2224558268121342,
+            "mean_predicted_probability": 0.06663598878124644,
+            "n": 214,
+            "observed_rate": 0.06074766355140187
+          },
+          "league": {
+            "brier": 0.056095866988150445,
+            "log_loss": 0.22209989225943297,
+            "mean_predicted_probability": 0.06544240806441735,
+            "n": 214,
+            "observed_rate": 0.06074766355140187
+          },
+          "matchup": {
+            "brier": 0.05667173412818138,
+            "log_loss": 0.22598149950350116,
+            "mean_predicted_probability": 0.06024965311226397,
+            "n": 214,
+            "observed_rate": 0.06074766355140187
+          },
+          "offense_only": {
+            "brier": 0.05645575007372249,
+            "log_loss": 0.22474808984850075,
+            "mean_predicted_probability": 0.05828055217532415,
+            "n": 214,
+            "observed_rate": 0.06074766355140187
+          }
+        },
+        "offense:CAR": {
+          "defense_only": {
+            "brier": 0.07339908020029338,
+            "log_loss": 0.2784079524521415,
+            "mean_predicted_probability": 0.06606308958941595,
+            "n": 286,
+            "observed_rate": 0.08041958041958042
+          },
+          "league": {
+            "brier": 0.07273399690041603,
+            "log_loss": 0.27336159381954256,
+            "mean_predicted_probability": 0.06376139610365229,
+            "n": 286,
+            "observed_rate": 0.08041958041958042
+          },
+          "matchup": {
+            "brier": 0.07406246795535877,
+            "log_loss": 0.27846029830185015,
+            "mean_predicted_probability": 0.06602536367342086,
+            "n": 286,
+            "observed_rate": 0.08041958041958042
+          },
+          "offense_only": {
+            "brier": 0.07289986086908497,
+            "log_loss": 0.27355898360267733,
+            "mean_predicted_probability": 0.06397409874097809,
+            "n": 286,
+            "observed_rate": 0.08041958041958042
+          }
+        },
+        "offense:CHI": {
+          "defense_only": {
+            "brier": 0.06981604723476005,
+            "log_loss": 0.3797657180940825,
+            "mean_predicted_probability": 0.06297973446456565,
+            "n": 252,
+            "observed_rate": 0.07142857142857142
+          },
+          "league": {
+            "brier": 0.06807899750797998,
+            "log_loss": 0.36535843186578515,
+            "mean_predicted_probability": 0.06417394990086409,
+            "n": 252,
+            "observed_rate": 0.07142857142857142
+          },
+          "matchup": {
+            "brier": 0.07157320268437802,
+            "log_loss": 0.3953743101822757,
+            "mean_predicted_probability": 0.07134360221142086,
+            "n": 252,
+            "observed_rate": 0.07142857142857142
+          },
+          "offense_only": {
+            "brier": 0.06968652292464526,
+            "log_loss": 0.3806891352473721,
+            "mean_predicted_probability": 0.07243481782495223,
+            "n": 252,
+            "observed_rate": 0.07142857142857142
+          }
+        },
+        "offense:CIN": {
+          "defense_only": {
+            "brier": 0.04632989464937156,
+            "log_loss": 0.19684105683527078,
+            "mean_predicted_probability": 0.0632829524967163,
+            "n": 274,
+            "observed_rate": 0.04744525547445255
+          },
+          "league": {
+            "brier": 0.04590677850029748,
+            "log_loss": 0.19421522687193646,
+            "mean_predicted_probability": 0.06331346802623697,
+            "n": 274,
+            "observed_rate": 0.04744525547445255
+          },
+          "matchup": {
+            "brier": 0.046599562198279494,
+            "log_loss": 0.19775383908061886,
+            "mean_predicted_probability": 0.06157062150052884,
+            "n": 274,
+            "observed_rate": 0.04744525547445255
+          },
+          "offense_only": {
+            "brier": 0.04644069315866968,
+            "log_loss": 0.1954793488186324,
+            "mean_predicted_probability": 0.06178096657884981,
+            "n": 274,
+            "observed_rate": 0.04744525547445255
+          }
+        },
+        "offense:CLE": {
+          "defense_only": {
+            "brier": 0.10513971595600614,
+            "log_loss": 0.3764936860860365,
+            "mean_predicted_probability": 0.06724758617312225,
+            "n": 282,
+            "observed_rate": 0.11702127659574468
+          },
+          "league": {
+            "brier": 0.10528263266070495,
+            "log_loss": 0.3752907958480033,
+            "mean_predicted_probability": 0.06634778637682726,
+            "n": 282,
+            "observed_rate": 0.11702127659574468
+          },
+          "matchup": {
+            "brier": 0.10576035605023756,
+            "log_loss": 0.38784148383678546,
+            "mean_predicted_probability": 0.07401971143187851,
+            "n": 282,
+            "observed_rate": 0.11702127659574468
+          },
+          "offense_only": {
+            "brier": 0.1057929090931464,
+            "log_loss": 0.38714541148829323,
+            "mean_predicted_probability": 0.07375469070127583,
+            "n": 282,
+            "observed_rate": 0.11702127659574468
+          }
+        },
+        "offense:DAL": {
+          "defense_only": {
+            "brier": 0.034445607409730225,
+            "log_loss": 0.16422953141041371,
+            "mean_predicted_probability": 0.062328629757973444,
+            "n": 299,
+            "observed_rate": 0.033444816053511704
+          },
+          "league": {
+            "brier": 0.033773745009570845,
+            "log_loss": 0.15804324979555,
+            "mean_predicted_probability": 0.06245004400138093,
+            "n": 299,
+            "observed_rate": 0.033444816053511704
+          },
+          "matchup": {
+            "brier": 0.03363149062101177,
+            "log_loss": 0.15858908523195642,
+            "mean_predicted_probability": 0.05300618489086947,
+            "n": 299,
+            "observed_rate": 0.033444816053511704
+          },
+          "offense_only": {
+            "brier": 0.033210965526332015,
+            "log_loss": 0.15246438217184133,
+            "mean_predicted_probability": 0.053346694392785735,
+            "n": 299,
+            "observed_rate": 0.033444816053511704
+          }
+        },
+        "offense:DEN": {
+          "defense_only": {
+            "brier": 0.03836040422091709,
+            "log_loss": 0.16633394598443216,
+            "mean_predicted_probability": 0.06713263936057459,
+            "n": 253,
+            "observed_rate": 0.039525691699604744
+          },
+          "league": {
+            "brier": 0.038913635816683105,
+            "log_loss": 0.17290608278235076,
+            "mean_predicted_probability": 0.06716929160099637,
+            "n": 253,
+            "observed_rate": 0.039525691699604744
+          },
+          "matchup": {
+            "brier": 0.03846366410841325,
+            "log_loss": 0.16674800281612168,
+            "mean_predicted_probability": 0.06531584341190845,
+            "n": 253,
+            "observed_rate": 0.039525691699604744
+          },
+          "offense_only": {
+            "brier": 0.039325554045157855,
+            "log_loss": 0.17310318910748232,
+            "mean_predicted_probability": 0.06526662674265865,
+            "n": 253,
+            "observed_rate": 0.039525691699604744
+          }
+        },
+        "offense:DET": {
+          "defense_only": {
+            "brier": 0.059907384357331776,
+            "log_loss": 0.23908208641779036,
+            "mean_predicted_probability": 0.06471469091288223,
+            "n": 252,
+            "observed_rate": 0.06349206349206349
+          },
+          "league": {
+            "brier": 0.05904140594003996,
+            "log_loss": 0.23296543014696158,
+            "mean_predicted_probability": 0.06324326071830438,
+            "n": 252,
+            "observed_rate": 0.06349206349206349
+          },
+          "matchup": {
+            "brier": 0.05898218757743886,
+            "log_loss": 0.2336783931890914,
+            "mean_predicted_probability": 0.055198659597004776,
+            "n": 252,
+            "observed_rate": 0.06349206349206349
+          },
+          "offense_only": {
+            "brier": 0.058053799752052285,
+            "log_loss": 0.22797056012035374,
+            "mean_predicted_probability": 0.05418676819136542,
+            "n": 252,
+            "observed_rate": 0.06349206349206349
+          }
+        },
+        "offense:GB": {
+          "defense_only": {
+            "brier": 0.042638758544369895,
+            "log_loss": 0.18402605157261917,
+            "mean_predicted_probability": 0.0648924388175456,
+            "n": 318,
+            "observed_rate": 0.0440251572327044
+          },
+          "league": {
+            "brier": 0.042275765569336585,
+            "log_loss": 0.18327335015381707,
+            "mean_predicted_probability": 0.06523581134883195,
+            "n": 318,
+            "observed_rate": 0.0440251572327044
+          },
+          "matchup": {
+            "brier": 0.04375549241201853,
+            "log_loss": 0.19580844441828732,
+            "mean_predicted_probability": 0.05899229281095168,
+            "n": 318,
+            "observed_rate": 0.0440251572327044
+          },
+          "offense_only": {
+            "brier": 0.04338908124400592,
+            "log_loss": 0.1951637949662506,
+            "mean_predicted_probability": 0.059599972346240274,
+            "n": 318,
+            "observed_rate": 0.0440251572327044
+          }
+        },
+        "offense:HOU": {
+          "defense_only": {
+            "brier": 0.05493534767542217,
+            "log_loss": 0.3123028858204519,
+            "mean_predicted_probability": 0.06078925603006197,
+            "n": 252,
+            "observed_rate": 0.05952380952380952
+          },
+          "league": {
+            "brier": 0.054152524794232076,
+            "log_loss": 0.30773759478795043,
+            "mean_predicted_probability": 0.06451524949668078,
+            "n": 252,
+            "observed_rate": 0.05952380952380952
+          },
+          "matchup": {
+            "brier": 0.05559212939018339,
+            "log_loss": 0.31734189500927124,
+            "mean_predicted_probability": 0.05905625961214638,
+            "n": 252,
+            "observed_rate": 0.05952380952380952
+          },
+          "offense_only": {
+            "brier": 0.054572102241896805,
+            "log_loss": 0.3121760556920647,
+            "mean_predicted_probability": 0.06219361508789941,
+            "n": 252,
+            "observed_rate": 0.05952380952380952
+          }
+        },
+        "offense:IND": {
+          "defense_only": {
+            "brier": 0.07529197977949671,
+            "log_loss": 0.29240176285793096,
+            "mean_predicted_probability": 0.06832773031499065,
+            "n": 286,
+            "observed_rate": 0.08041958041958042
+          },
+          "league": {
+            "brier": 0.07437324168015845,
+            "log_loss": 0.28383401796917085,
+            "mean_predicted_probability": 0.06635096271640067,
+            "n": 286,
+            "observed_rate": 0.08041958041958042
+          },
+          "matchup": {
+            "brier": 0.07593725256327111,
+            "log_loss": 0.2959079883285959,
+            "mean_predicted_probability": 0.06683378300879603,
+            "n": 286,
+            "observed_rate": 0.08041958041958042
+          },
+          "offense_only": {
+            "brier": 0.07513908660781551,
+            "log_loss": 0.2871192898942263,
+            "mean_predicted_probability": 0.06490782159549094,
+            "n": 286,
+            "observed_rate": 0.08041958041958042
+          }
+        },
+        "offense:JAX": {
+          "defense_only": {
+            "brier": 0.059937057801072766,
+            "log_loss": 0.24741448947248737,
+            "mean_predicted_probability": 0.06621264971044892,
+            "n": 209,
+            "observed_rate": 0.06220095693779904
+          },
+          "league": {
+            "brier": 0.05905582536022347,
+            "log_loss": 0.238191500151806,
+            "mean_predicted_probability": 0.0650035286053841,
+            "n": 209,
+            "observed_rate": 0.06220095693779904
+          },
+          "matchup": {
+            "brier": 0.06048368988854067,
+            "log_loss": 0.2579126449066665,
+            "mean_predicted_probability": 0.056890880077340944,
+            "n": 209,
+            "observed_rate": 0.06220095693779904
+          },
+          "offense_only": {
+            "brier": 0.05980158990748887,
+            "log_loss": 0.24863510127167368,
+            "mean_predicted_probability": 0.05574335553307381,
+            "n": 209,
+            "observed_rate": 0.06220095693779904
+          }
+        },
+        "offense:KC": {
+          "defense_only": {
+            "brier": 0.034589622062025635,
+            "log_loss": 0.15563580952997638,
+            "mean_predicted_probability": 0.06823558660963377,
+            "n": 227,
+            "observed_rate": 0.03524229074889868
+          },
+          "league": {
+            "brier": 0.03435485750282821,
+            "log_loss": 0.15383057802030373,
+            "mean_predicted_probability": 0.06429191874445296,
+            "n": 227,
+            "observed_rate": 0.03524229074889868
+          },
+          "matchup": {
+            "brier": 0.034469616311982226,
+            "log_loss": 0.15268709016692375,
+            "mean_predicted_probability": 0.05813046355713095,
+            "n": 227,
+            "observed_rate": 0.03524229074889868
+          },
+          "offense_only": {
+            "brier": 0.03422561523631738,
+            "log_loss": 0.15184955945291184,
+            "mean_predicted_probability": 0.05507910065281978,
+            "n": 227,
+            "observed_rate": 0.03524229074889868
+          }
+        },
+        "offense:LAC": {
+          "defense_only": {
+            "brier": 0.09012597655041199,
+            "log_loss": 0.3447148416258504,
+            "mean_predicted_probability": 0.0707642191518426,
+            "n": 228,
+            "observed_rate": 0.09649122807017543
+          },
+          "league": {
+            "brier": 0.0889533402244916,
+            "log_loss": 0.3309195772811346,
+            "mean_predicted_probability": 0.07099244394505248,
+            "n": 228,
+            "observed_rate": 0.09649122807017543
+          },
+          "matchup": {
+            "brier": 0.09212371863468267,
+            "log_loss": 0.3581816062730008,
+            "mean_predicted_probability": 0.07643165359946968,
+            "n": 228,
+            "observed_rate": 0.09649122807017543
+          },
+          "offense_only": {
+            "brier": 0.09029170495915272,
+            "log_loss": 0.3435808177184794,
+            "mean_predicted_probability": 0.0759169057744629,
+            "n": 228,
+            "observed_rate": 0.09649122807017543
+          }
+        },
+        "offense:LAR": {
+          "defense_only": {
+            "brier": 0.03835205337587788,
+            "log_loss": 0.16833092244494444,
+            "mean_predicted_probability": 0.0644449659644286,
+            "n": 307,
+            "observed_rate": 0.03908794788273615
+          },
+          "league": {
+            "brier": 0.038285514848874685,
+            "log_loss": 0.1697031875219297,
+            "mean_predicted_probability": 0.06221947694424369,
+            "n": 307,
+            "observed_rate": 0.03908794788273615
+          },
+          "matchup": {
+            "brier": 0.038415258029572026,
+            "log_loss": 0.16848540806391776,
+            "mean_predicted_probability": 0.05871771049723088,
+            "n": 307,
+            "observed_rate": 0.03908794788273615
+          },
+          "offense_only": {
+            "brier": 0.03850832658912946,
+            "log_loss": 0.17064594572285527,
+            "mean_predicted_probability": 0.057103487118653776,
+            "n": 307,
+            "observed_rate": 0.03908794788273615
+          }
+        },
+        "offense:LV": {
+          "defense_only": {
+            "brier": 0.03698781687192701,
+            "log_loss": 0.1656739331706762,
+            "mean_predicted_probability": 0.0635580174715382,
+            "n": 294,
+            "observed_rate": 0.03741496598639456
+          },
+          "league": {
+            "brier": 0.03683425702182368,
+            "log_loss": 0.16466699037333496,
+            "mean_predicted_probability": 0.06495317494923748,
+            "n": 294,
+            "observed_rate": 0.03741496598639456
+          },
+          "matchup": {
+            "brier": 0.037386285725393896,
+            "log_loss": 0.16707005733324054,
+            "mean_predicted_probability": 0.0653952318121923,
+            "n": 294,
+            "observed_rate": 0.03741496598639456
+          },
+          "offense_only": {
+            "brier": 0.03704251992464862,
+            "log_loss": 0.16548145116564456,
+            "mean_predicted_probability": 0.0664129985966634,
+            "n": 294,
+            "observed_rate": 0.03741496598639456
+          }
+        },
+        "offense:MIA": {
+          "defense_only": {
+            "brier": 0.09892059212726691,
+            "log_loss": 0.37533599290097464,
+            "mean_predicted_probability": 0.0709660422309058,
+            "n": 199,
+            "observed_rate": 0.10552763819095477
+          },
+          "league": {
+            "brier": 0.09609620982822674,
+            "log_loss": 0.3503222907040386,
+            "mean_predicted_probability": 0.06691959177312307,
+            "n": 199,
+            "observed_rate": 0.10552763819095477
+          },
+          "matchup": {
+            "brier": 0.09965478604198784,
+            "log_loss": 0.3897421841379687,
+            "mean_predicted_probability": 0.0671269468773474,
+            "n": 199,
+            "observed_rate": 0.10552763819095477
+          },
+          "offense_only": {
+            "brier": 0.09727874474894593,
+            "log_loss": 0.3656952580975052,
+            "mean_predicted_probability": 0.06403223737821459,
+            "n": 199,
+            "observed_rate": 0.10552763819095477
+          }
+        },
+        "offense:MIN": {
+          "defense_only": {
+            "brier": 0.09278569538514507,
+            "log_loss": 0.35190343309475236,
+            "mean_predicted_probability": 0.06698689301948561,
+            "n": 211,
+            "observed_rate": 0.0995260663507109
+          },
+          "league": {
+            "brier": 0.09123351731089643,
+            "log_loss": 0.33851173178517996,
+            "mean_predicted_probability": 0.0687570069896999,
+            "n": 211,
+            "observed_rate": 0.0995260663507109
+          },
+          "matchup": {
+            "brier": 0.09207714073529075,
+            "log_loss": 0.3504284065910247,
+            "mean_predicted_probability": 0.07509625231985816,
+            "n": 211,
+            "observed_rate": 0.0995260663507109
+          },
+          "offense_only": {
+            "brier": 0.09035347726454122,
+            "log_loss": 0.33736743137453257,
+            "mean_predicted_probability": 0.07745674453641431,
+            "n": 211,
+            "observed_rate": 0.0995260663507109
+          }
+        },
+        "offense:NE": {
+          "defense_only": {
+            "brier": 0.06300155524993963,
+            "log_loss": 0.25930377459301884,
+            "mean_predicted_probability": 0.06612958617929425,
+            "n": 246,
+            "observed_rate": 0.06504065040650407
+          },
+          "league": {
+            "brier": 0.06163520347252048,
+            "log_loss": 0.24748390016913138,
+            "mean_predicted_probability": 0.06473839208395958,
+            "n": 246,
+            "observed_rate": 0.06504065040650407
+          },
+          "matchup": {
+            "brier": 0.06412060275424541,
+            "log_loss": 0.26116145668766855,
+            "mean_predicted_probability": 0.07212559923772552,
+            "n": 246,
+            "observed_rate": 0.06504065040650407
+          },
+          "offense_only": {
+            "brier": 0.06218470803209451,
+            "log_loss": 0.25011254811864997,
+            "mean_predicted_probability": 0.0710771418233749,
+            "n": 246,
+            "observed_rate": 0.06504065040650407
+          }
+        },
+        "offense:NO": {
+          "defense_only": {
+            "brier": 0.04959270841152827,
+            "log_loss": 0.21021545753065798,
+            "mean_predicted_probability": 0.06555162801593278,
+            "n": 275,
+            "observed_rate": 0.05090909090909091
+          },
+          "league": {
+            "brier": 0.04843595831938213,
+            "log_loss": 0.20151164938294816,
+            "mean_predicted_probability": 0.06602811683783588,
+            "n": 275,
+            "observed_rate": 0.05090909090909091
+          },
+          "matchup": {
+            "brier": 0.04938364718104158,
+            "log_loss": 0.21098134924838555,
+            "mean_predicted_probability": 0.06325101786189183,
+            "n": 275,
+            "observed_rate": 0.05090909090909091
+          },
+          "offense_only": {
+            "brier": 0.048497003106586584,
+            "log_loss": 0.20271827855165414,
+            "mean_predicted_probability": 0.06401361195947813,
+            "n": 275,
+            "observed_rate": 0.05090909090909091
+          }
+        },
+        "offense:NYG": {
+          "defense_only": {
+            "brier": 0.0775228388399526,
+            "log_loss": 0.28851788467809436,
+            "mean_predicted_probability": 0.06650517676010477,
+            "n": 244,
+            "observed_rate": 0.0860655737704918
+          },
+          "league": {
+            "brier": 0.07754125574002987,
+            "log_loss": 0.28666173772071907,
+            "mean_predicted_probability": 0.06627162287703743,
+            "n": 244,
+            "observed_rate": 0.0860655737704918
+          },
+          "matchup": {
+            "brier": 0.07773668744636957,
+            "log_loss": 0.28879453427376695,
+            "mean_predicted_probability": 0.08237080963108673,
+            "n": 244,
+            "observed_rate": 0.0860655737704918
+          },
+          "offense_only": {
+            "brier": 0.07776775919736262,
+            "log_loss": 0.2863007679617686,
+            "mean_predicted_probability": 0.08160867937417081,
+            "n": 244,
+            "observed_rate": 0.0860655737704918
+          }
+        },
+        "offense:NYJ": {
+          "defense_only": {
+            "brier": 0.0758925333896892,
+            "log_loss": 0.28475541010451155,
+            "mean_predicted_probability": 0.06404947567124807,
+            "n": 252,
+            "observed_rate": 0.08333333333333333
+          },
+          "league": {
+            "brier": 0.07534688867350789,
+            "log_loss": 0.27948787751416776,
+            "mean_predicted_probability": 0.06639843432408261,
+            "n": 252,
+            "observed_rate": 0.08333333333333333
+          },
+          "matchup": {
+            "brier": 0.07572916878449203,
+            "log_loss": 0.2857611289874427,
+            "mean_predicted_probability": 0.06727359338237125,
+            "n": 252,
+            "observed_rate": 0.08333333333333333
+          },
+          "offense_only": {
+            "brier": 0.07547873820027871,
+            "log_loss": 0.2817108204059756,
+            "mean_predicted_probability": 0.07056572930424511,
+            "n": 252,
+            "observed_rate": 0.08333333333333333
+          }
+        },
+        "offense:PHI": {
+          "defense_only": {
+            "brier": 0.07622660254626945,
+            "log_loss": 0.29888155518302456,
+            "mean_predicted_probability": 0.06872335010178256,
+            "n": 285,
+            "observed_rate": 0.08070175438596491
+          },
+          "league": {
+            "brier": 0.07504410572584493,
+            "log_loss": 0.28695711905643173,
+            "mean_predicted_probability": 0.06942219379092657,
+            "n": 285,
+            "observed_rate": 0.08070175438596491
+          },
+          "matchup": {
+            "brier": 0.07728540456358014,
+            "log_loss": 0.30586107144122,
+            "mean_predicted_probability": 0.0738119932097105,
+            "n": 285,
+            "observed_rate": 0.08070175438596491
+          },
+          "offense_only": {
+            "brier": 0.07614276774191035,
+            "log_loss": 0.2940532412524769,
+            "mean_predicted_probability": 0.0746227535008593,
+            "n": 285,
+            "observed_rate": 0.08070175438596491
+          }
+        },
+        "offense:PIT": {
+          "defense_only": {
+            "brier": 0.06989516271928095,
+            "log_loss": 0.26082935546482716,
+            "mean_predicted_probability": 0.061346028776993036,
+            "n": 296,
+            "observed_rate": 0.0777027027027027
+          },
+          "league": {
+            "brier": 0.06971529956217318,
+            "log_loss": 0.2587531087094281,
+            "mean_predicted_probability": 0.06405178646466392,
+            "n": 296,
+            "observed_rate": 0.0777027027027027
+          },
+          "matchup": {
+            "brier": 0.07044016712824104,
+            "log_loss": 0.260041174531459,
+            "mean_predicted_probability": 0.061474525550239946,
+            "n": 296,
+            "observed_rate": 0.0777027027027027
+          },
+          "offense_only": {
+            "brier": 0.0697151338464314,
+            "log_loss": 0.2569019338652054,
+            "mean_predicted_probability": 0.06334357134374383,
+            "n": 296,
+            "observed_rate": 0.0777027027027027
+          }
+        },
+        "offense:SEA": {
+          "defense_only": {
+            "brier": 0.061809366543060656,
+            "log_loss": 0.2530805881545415,
+            "mean_predicted_probability": 0.06707757696073767,
+            "n": 230,
+            "observed_rate": 0.06521739130434782
+          },
+          "league": {
+            "brier": 0.061072774738497884,
+            "log_loss": 0.24062477545302843,
+            "mean_predicted_probability": 0.06545456825688409,
+            "n": 230,
+            "observed_rate": 0.06521739130434782
+          },
+          "matchup": {
+            "brier": 0.06357740106828474,
+            "log_loss": 0.26984412733155116,
+            "mean_predicted_probability": 0.06864985063680343,
+            "n": 230,
+            "observed_rate": 0.06521739130434782
+          },
+          "offense_only": {
+            "brier": 0.06271501838952792,
+            "log_loss": 0.25556629402032194,
+            "mean_predicted_probability": 0.06595045999834251,
+            "n": 230,
+            "observed_rate": 0.06521739130434782
+          }
+        },
+        "offense:SF": {
+          "defense_only": {
+            "brier": 0.03375020985036832,
+            "log_loss": 0.15534559044978097,
+            "mean_predicted_probability": 0.06331541574651486,
+            "n": 211,
+            "observed_rate": 0.03317535545023697
+          },
+          "league": {
+            "brier": 0.032940269701853556,
+            "log_loss": 0.15199396558963504,
+            "mean_predicted_probability": 0.06180337260198176,
+            "n": 211,
+            "observed_rate": 0.03317535545023697
+          },
+          "matchup": {
+            "brier": 0.033664003606814194,
+            "log_loss": 0.15622420969747902,
+            "mean_predicted_probability": 0.05689224000816438,
+            "n": 211,
+            "observed_rate": 0.03317535545023697
+          },
+          "offense_only": {
+            "brier": 0.03309546666158124,
+            "log_loss": 0.15238609518056231,
+            "mean_predicted_probability": 0.055066333213362566,
+            "n": 211,
+            "observed_rate": 0.03317535545023697
+          }
+        },
+        "offense:TB": {
+          "defense_only": {
+            "brier": 0.09057829392334256,
+            "log_loss": 0.33124003534786073,
+            "mean_predicted_probability": 0.06672868436980382,
+            "n": 221,
+            "observed_rate": 0.09954751131221719
+          },
+          "league": {
+            "brier": 0.08978465524669117,
+            "log_loss": 0.3268486049359164,
+            "mean_predicted_probability": 0.06905780725657193,
+            "n": 221,
+            "observed_rate": 0.09954751131221719
+          },
+          "matchup": {
+            "brier": 0.09208377838600258,
+            "log_loss": 0.3494751683491213,
+            "mean_predicted_probability": 0.060987909711388996,
+            "n": 221,
+            "observed_rate": 0.09954751131221719
+          },
+          "offense_only": {
+            "brier": 0.090909402961158,
+            "log_loss": 0.3443231302066968,
+            "mean_predicted_probability": 0.06339193464507026,
+            "n": 221,
+            "observed_rate": 0.09954751131221719
+          }
+        },
+        "offense:TEN": {
+          "defense_only": {
+            "brier": 0.04908058769051417,
+            "log_loss": 0.20895185759855628,
+            "mean_predicted_probability": 0.0666325698022583,
+            "n": 255,
+            "observed_rate": 0.050980392156862744
+          },
+          "league": {
+            "brier": 0.04808462708680309,
+            "log_loss": 0.20129988717695377,
+            "mean_predicted_probability": 0.06666920822544403,
+            "n": 255,
+            "observed_rate": 0.050980392156862744
+          },
+          "matchup": {
+            "brier": 0.05018396773448451,
+            "log_loss": 0.21654102255362506,
+            "mean_predicted_probability": 0.07329341638814271,
+            "n": 255,
+            "observed_rate": 0.050980392156862744
+          },
+          "offense_only": {
+            "brier": 0.04926505994878112,
+            "log_loss": 0.20899900357368603,
+            "mean_predicted_probability": 0.07333798995292207,
+            "n": 255,
+            "observed_rate": 0.050980392156862744
+          }
+        },
+        "offense:WSH": {
+          "defense_only": {
+            "brier": 0.05786302191459169,
+            "log_loss": 0.22328249919285123,
+            "mean_predicted_probability": 0.06539677913053873,
+            "n": 235,
+            "observed_rate": 0.06382978723404255
+          },
+          "league": {
+            "brier": 0.05742885930640348,
+            "log_loss": 0.2200522485739559,
+            "mean_predicted_probability": 0.0657026387951959,
+            "n": 235,
+            "observed_rate": 0.06382978723404255
+          },
+          "matchup": {
+            "brier": 0.058235395497430086,
+            "log_loss": 0.22516189380970814,
+            "mean_predicted_probability": 0.07165539646137865,
+            "n": 235,
+            "observed_rate": 0.06382978723404255
+          },
+          "offense_only": {
+            "brier": 0.0578722032835563,
+            "log_loss": 0.22256008776442704,
+            "mean_predicted_probability": 0.07247030443638774,
+            "n": 235,
+            "observed_rate": 0.06382978723404255
+          }
+        }
+      },
+      "training_history_sha256": "ff6fdcd3e2f70367cacfa7dd96c7735a9b4df444d2d4271e3c0b7b030e8fe79f",
+      "unique_evidence_sets": 24
+    }
+  },
+  "notes": [
+    "Sack probability is scored only on observed dropbacks, conditioning on the observed pre-play down, distance, field cell, offense, and defense.",
+    "The 2026 test rows tagged as penalties in the pinned raw PBP parquet are excluded from scoring. The frozen 2026 adaptation still reflects the database as supplied to the run; its penalty column is null, so that adaptation can include tagged plays.",
+    "2025 is the clean primary holdout. 2026 is a sensitivity result because its adaptation database omits penalty flags."
+  ]
+}

@@ -1,0 +1,8 @@
+81831de37c6224054315d320235833cbbeea36307b165369b1f73a8f1d7f5a60  ./README.md
+e0b3d0e99b7949b26961f97db79da64ba7c63cec507b61aa8c77d0376d995ce5  ./audit.py
+4c286b34b8be40755d1c9917a288b8ffd56bcf5ef68d106838a592d20f9d6d29  ./conditional-outcome-audit.json
+e97fd323725b47ec98f6268c6d845d147b8abf2c588191e90fe984c0a8ec1ed3  ./penalty-source-summary.json
+4aa2cdfba06e7bff0335b540dd6436d081b553a237ed9bf31cbde15800a9cded  ./sack-context-audit.json
+c10f25327a36a41c3cb8cb38112e3bb88bf639f4bb7019994f5a600dc321fe65  ./sack-context-audit.py
+acd654ac48b24c0efb1fc1a0d17b81560c843fcbad2e292cb3f0dcdd1b65d4da  ./saved-simulation-summary.json
+a623d462643cf276add112e039d7f3c25a6122e2fc7a1bba1cebcf35fafe8ff0  ./sim-fourth-down-histogram.json
