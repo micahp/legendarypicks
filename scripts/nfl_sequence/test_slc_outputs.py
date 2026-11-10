@@ -684,9 +684,43 @@ class DownAndClockAccounting(unittest.TestCase):
         self.assertIsNone(row['first_down_source'])
 
 
-    def test_penalty_awarded_first_down_is_classified_separately(self):
+    def test_penalty_only_first_down_does_not_count_as_a_down_conversion(self):
         play = self.play('pass_incomplete', 3, 10, 0, 1, penalty={'accepted': True})
         self.assertEqual(game_stats.first_down_result(play), 'penalty')
+        self.assertFalse(game_stats.down_conversion(play))
+        stats = game_stats.team_stats([{
+            'offense_team': 'A', 'quarter_start': 1, 'clock_start': 870,
+            'end_quarter': 1, 'end_clock': 860, 'terminal': 'field_goal_missed',
+            'field_goal_made': None, 'plays': [play],
+        }], {'A': 0, 'B': 0})['A']
+        self.assertEqual(stats['first_downs'], 1)
+        self.assertEqual(stats['first_downs_penalty'], 1)
+        self.assertEqual(stats['down_3_attempts'], 0)
+        self.assertEqual(stats['down_3_conversions'], 0)
+
+    def test_scrimmage_conversion_and_separate_penalty_first_down_both_count(self):
+        play = self.play('run', 3, 2, 2, 1, penalty={
+            'accepted': True, 'scrimmage_play_counted': True, 'scrimmage_first_down': True,
+        })
+        self.assertEqual(game_stats.first_down_results(play), ['run', 'penalty'])
+        self.assertTrue(game_stats.down_conversion(play))
+        stats = game_stats.team_stats([{
+            'offense_team': 'A', 'quarter_start': 1, 'clock_start': 870,
+            'end_quarter': 1, 'end_clock': 860, 'terminal': 'field_goal_missed',
+            'field_goal_made': None, 'plays': [play],
+        }], {'A': 0, 'B': 0})['A']
+        self.assertEqual(stats['first_downs'], 2)
+        self.assertEqual(stats['first_downs_run'], 1)
+        self.assertEqual(stats['first_downs_penalty'], 1)
+        self.assertEqual(stats['down_3_attempts'], 1)
+        self.assertEqual(stats['down_3_conversions'], 1)
+
+    def test_realism_export_excludes_penalty_only_down_attempt(self):
+        play = self.play('pass_incomplete', 3, 10, 0, 1, penalty={'accepted': True})
+        row = outputs.play_rows({'drives': [{'index': 1, 'plays': [play]}]})[0]
+        self.assertFalse(row['third_down_attempt'])
+        self.assertFalse(row['third_down_conversion'])
+        self.assertEqual(row['first_down_sources'], ['penalty'])
 
     def test_realism_play_row_exports_post_play_state_and_conversion(self):
         play = self.play('run', 3, 2, 2, 1)

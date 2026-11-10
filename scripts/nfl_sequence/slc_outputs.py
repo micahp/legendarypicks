@@ -460,7 +460,7 @@ def _quarter_by_quarter(record, snapshot):
     }
 
 
-REALISM_SCHEMA = 'lp-nfl-slc-realism-export-2'
+REALISM_SCHEMA = 'lp-nfl-slc-realism-export-3'
 
 
 def play_rows(record):
@@ -471,12 +471,13 @@ def play_rows(record):
              'yards_gained': (play.get('outcome') or {}).get('yards_gained'),
              'state_before': play.get('state_before'), 'state_after': play.get('state_after'),
              'first_down_source': game_stats.first_down_result(play),
+             'first_down_sources': game_stats.first_down_results(play),
              'third_down_attempt': (play.get('state_before') or {}).get('down') == 3
-                                   and play.get('event_type') in game_stats.SCRIMMAGE_EVENTS,
+                                   and game_stats.down_attempt(play),
              'third_down_conversion': (play.get('state_before') or {}).get('down') == 3
                                       and game_stats.down_conversion(play),
              'fourth_down_attempt': (play.get('state_before') or {}).get('down') == 4
-                                    and play.get('event_type') in game_stats.SCRIMMAGE_EVENTS,
+                                    and game_stats.down_attempt(play),
              'fourth_down_conversion': (play.get('state_before') or {}).get('down') == 4
                                        and game_stats.down_conversion(play)}
             for drive in (record or {}).get('drives', []) for play in drive.get('plays', [])]
