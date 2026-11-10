@@ -56,6 +56,26 @@ def first_down_result(play):
     return 'other'
 
 
+def is_offensive_touchdown(play):
+    """Whether this play scores a touchdown for the offense that began it."""
+    before = play.get('state_before') or {}
+    outcome = play.get('outcome') or {}
+    offense = before.get('offense_team')
+    if offense not in ('A', 'B') or not outcome.get('touchdown'):
+        return False
+    scorer = outcome.get('scoring_team')
+    if scorer is not None:
+        return scorer == offense
+    # Supported scrimmage touchdowns default to the offense. Return scores need
+    # an explicit scoring_team, so an unassigned defensive return cannot convert.
+    return play.get('event_type') in ('run', 'pass_complete')
+
+
+def down_conversion(play):
+    """A new first down or an offensive touchdown; touchdowns are not first downs."""
+    return first_down_result(play) is not None or is_offensive_touchdown(play)
+
+
 def _is_successful_play(play):
     """Conventional down-based success: 40% on first, 60% on second, chains on 3rd/4th.
 
@@ -67,7 +87,7 @@ def _is_successful_play(play):
     if outcome.get('penalty'):
         return False
     if outcome.get('touchdown'):
-        return True
+        return is_offensive_touchdown(play)
     try:
         down = int(before.get('down'))
         to_go = max(0, int(before.get('yards_to_go')))
@@ -79,7 +99,7 @@ def _is_successful_play(play):
     if down == 2:
         return yards >= 0.6 * to_go
     if down in (3, 4):
-        return first_down_result(play) is not None
+        return down_conversion(play)
     return False
 
 
@@ -205,7 +225,7 @@ def team_stats(drives, points):
                     t[f'down_{down}_successful_plays'] += int(_is_successful_play(play))
                 if down in (3, 4):
                     t[f'down_{down}_attempts'] += 1
-                    t[f'down_{down}_conversions'] += int(first_down_result(play) is not None)
+                    t[f'down_{down}_conversions'] += int(down_conversion(play))
             first_down = first_down_result(play)
             if first_down:
                 drive_first_downs += 1
@@ -462,8 +482,8 @@ def compute(drives, points):
             'drive_window_seconds': 'Sum of elapsed clock intervals from each drive start state to its end state.',
             'first_downs': 'Earned when the post-play state begins a new first down for the same offense; touchdowns are excluded. Penalty first downs are classified separately when modeled.',
             'first_downs_run/pass/penalty/other': 'Source breakdowns of earned first downs; the components sum to first_downs.',
-            'third_down_conversions': 'Third-down scrimmage plays followed by a new first down for the same offense; touchdowns are not counted as first downs.',
-            'fourth_down_conversions': 'Fourth-down go-for-it scrimmage plays followed by a new first down for the same offense; punts and field goals are excluded.',
+            'third_down_conversions': 'Third-down scrimmage plays followed by a new first down or an offensive touchdown; defensive return touchdowns do not convert.',
+            'fourth_down_conversions': 'Fourth-down scrimmage plays followed by a new first down or an offensive touchdown; punts and field goals are excluded.',
             'offensive_success_rate': 'A successful play gains at least 40% of yards-to-go on first down, 60% on second down, or earns a new first down on third/fourth; touchdowns count as successful plays.',
             'try_points': 'Touchdown drive ledger points above six; not a try-attempt count.',
             'other_score_points': 'Non-touchdown, non-safety score-ledger points, including field goals.',

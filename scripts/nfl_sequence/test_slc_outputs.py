@@ -519,10 +519,6 @@ class RosterEligibilityIsNotAssumed(unittest.TestCase):
         self.assertIs(index['GA2']['roster_eligible'], False)
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 class ClockReconciliation(unittest.TestCase):
     """Possession plus kickoff runoff must account for every elapsed game-clock second, or the game says so."""
 
@@ -597,7 +593,7 @@ class DownAndClockAccounting(unittest.TestCase):
         return {
             'event_type': event,
             'state_before': {'offense_team': 'A', 'quarter': 1, 'clock_seconds': before_clock,
-                             'down': down, 'yards_to_go': to_go},
+                             'down': down, 'yards_to_go': to_go, 'yardline_100': 50},
             'state_after': {'offense_team': after_team, 'quarter': 1, 'clock_seconds': before_clock - 10,
                             'down': after_down, 'yards_to_go': 10},
             'outcome': {'yards_gained': yards, 'touchdown': False, 'safety': False,
@@ -616,6 +612,7 @@ class DownAndClockAccounting(unittest.TestCase):
         ]
         drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
                  'end_quarter': 1, 'end_clock': 800, 'terminal': 'turnover_on_downs',
+                 'field_goal_made': None,
                  'plays': plays}
 
         stats = game_stats.team_stats([drive], {'A': 0, 'B': 0})['A']
@@ -630,6 +627,63 @@ class DownAndClockAccounting(unittest.TestCase):
         self.assertEqual(stats['third_down_conversion_rate'], 1.0)
         self.assertEqual(stats['fourth_down_conversion_rate'], 0.0)
 
+    def test_third_and_fourth_down_offensive_touchdowns_convert_without_earning_a_first_down(self):
+        third_down_td = self.play('run', 3, 1, 1, 1)
+        third_down_td['state_before']['yardline_100'] = 1
+        third_down_td['outcome'].update(touchdown=True, scoring_team='A')
+        fourth_down_td = self.play('run', 4, 1, 1, 1)
+        fourth_down_td['state_before']['yardline_100'] = 1
+        fourth_down_td['outcome'].update(touchdown=True, scoring_team='A')
+
+        def touchdown_drive(play, quarter_start=1):
+            clock = play['state_before']['clock_seconds']
+            return {'offense_team': 'A', 'quarter_start': quarter_start, 'clock_start': clock,
+                    'end_quarter': quarter_start, 'end_clock': clock - 10, 'terminal': 'touchdown',
+                    'touchdown_scored_by': 'A', 'field_goal_made': None,
+                    'points_scored_on_drive': {'team': 'A', 'points': 7}, 'plays': [play]}
+
+        stats = game_stats.team_stats(
+            [touchdown_drive(third_down_td), touchdown_drive(fourth_down_td)], {'A': 14, 'B': 0})['A']
+        self.assertEqual(stats['first_downs'], 0)
+        self.assertEqual(stats['down_3_conversions'], 1)
+        self.assertEqual(stats['down_4_conversions'], 1)
+        self.assertEqual(stats['down_3_successful_plays'], 1)
+        self.assertEqual(stats['down_4_successful_plays'], 1)
+        self.assertIsNone(game_stats.first_down_result(third_down_td))
+        self.assertIsNone(game_stats.first_down_result(fourth_down_td))
+
+    def test_defensive_touchdown_and_turnover_on_downs_are_not_offensive_conversions(self):
+        interception = self.play('interception', 3, 8, 0, 1, after_team='B')
+        interception['outcome'].update(turnover=True, touchdown=True, scoring_team='B')
+        turnover_on_downs = self.play('run', 4, 2, 0, 1, after_team='B')
+        turnover_on_downs['outcome'].update(turnover=True, turnover_on_downs=True)
+        drives = [
+            {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 870,
+             'end_quarter': 1, 'end_clock': 860, 'terminal': 'touchdown',
+             'touchdown_scored_by': 'B', 'field_goal_made': None,
+             'points_scored_on_drive': {'team': 'B', 'points': 6}, 'plays': [interception]},
+            {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 860,
+             'end_quarter': 1, 'end_clock': 850, 'terminal': 'turnover_on_downs',
+             'touchdown_scored_by': None, 'field_goal_made': None,
+             'points_scored_on_drive': {'team': None, 'points': 0}, 'plays': [turnover_on_downs]},
+        ]
+
+        stats = game_stats.team_stats(drives, {'A': 0, 'B': 6})['A']
+        self.assertEqual(stats['down_3_attempts'], 1)
+        self.assertEqual(stats['down_3_conversions'], 0)
+        self.assertEqual(stats['down_4_attempts'], 1)
+        self.assertEqual(stats['down_4_conversions'], 0)
+        self.assertFalse(game_stats._is_successful_play(interception))
+
+    def test_touchdown_conversion_flags_keep_first_down_source_empty(self):
+        play = self.play('run', 3, 1, 1, 1)
+        play['outcome'].update(touchdown=True, scoring_team='A')
+        row = outputs.play_rows({'drives': [{'index': 1, 'plays': [play]}]})[0]
+        self.assertTrue(row['third_down_attempt'])
+        self.assertTrue(row['third_down_conversion'])
+        self.assertIsNone(row['first_down_source'])
+
+
     def test_penalty_awarded_first_down_is_classified_separately(self):
         play = self.play('pass_incomplete', 3, 10, 0, 1, penalty={'accepted': True})
         self.assertEqual(game_stats.first_down_result(play), 'penalty')
@@ -641,3 +695,7 @@ class DownAndClockAccounting(unittest.TestCase):
         self.assertTrue(row['third_down_attempt'])
         self.assertTrue(row['third_down_conversion'])
         self.assertEqual(row['first_down_source'], 'run')
+
+
+if __name__ == '__main__':
+    unittest.main()
