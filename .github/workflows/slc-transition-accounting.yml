@@ -4,6 +4,11 @@ on:
   push:
     branches: [slc-v2, main]
     paths:
+      - 'scripts/nfl_sequence/game_state.py'
+      - 'scripts/nfl_sequence/e1_drive.py'
+      - 'scripts/nfl_sequence/slc_engine.py'
+      - 'scripts/nfl_sequence/slc_outputs.py'
+      - 'scripts/nfl_sequence/pre_event.py'
       - 'scripts/nfl_sequence/reducer.py'
       - 'scripts/nfl_sequence/game_legality.py'
       - 'scripts/nfl_sequence/test_transition_accounting.py'
@@ -13,6 +18,11 @@ on:
   pull_request:
     branches: [slc-v2, main]
     paths:
+      - 'scripts/nfl_sequence/game_state.py'
+      - 'scripts/nfl_sequence/e1_drive.py'
+      - 'scripts/nfl_sequence/slc_engine.py'
+      - 'scripts/nfl_sequence/slc_outputs.py'
+      - 'scripts/nfl_sequence/pre_event.py'
       - 'scripts/nfl_sequence/reducer.py'
       - 'scripts/nfl_sequence/game_legality.py'
       - 'scripts/nfl_sequence/test_transition_accounting.py'
