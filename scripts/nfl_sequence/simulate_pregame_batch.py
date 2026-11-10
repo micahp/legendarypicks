@@ -130,6 +130,11 @@ def _reproduction_command(args, seed):
         command.extend(['--expected-stream-root-sha256', args.expected_stream_root_sha256])
     if getattr(args, 'paired_layer_baseline_ledger', None):
         command.extend(['--paired-layer-baseline-ledger', args.paired_layer_baseline_ledger])
+    for flag in ('experimental_workload_estimator', 'workload_adaptive_input', 'workload_adaptive_sha256',
+                 'workload_concentrations', 'paired_workload_baseline_ledger', 'paired_lineup_baseline_ledger'):
+        value = getattr(args, flag, None)
+        if value is not None:
+            command.extend(['--' + flag.replace('_', '-'), str(value)])
     if args.slc_blocker_fix:
         command.extend(['--slc-fg-ordinary-cutoff', str(args.slc_fg_ordinary_cutoff)])
     if args.slc_profile != 'custom':
@@ -895,6 +900,8 @@ def run_batch(args):
     elif retrospective_marker:
         raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
     resolved_profile = slc_config.apply_profile_to_args(args)
+    if (getattr(args, 'experimental_workload_estimator', None) or getattr(args, 'workload_adaptive_config', None)) and not args.playcall_dirichlet_shares:
+        raise ValueError('experimental workload estimator requires the Dirichlet workload layer')
     source_preflight.validate_model_sources(args, snapshot)
     if args.slc_profile == 'v1_full_stack' and not args.historical_archive_reconstruction:
         # Prospective snapshots continue through the existing capture checks; archival inputs use the separate mode above.
@@ -966,7 +973,9 @@ def run_batch(args):
                                                            score_clock_playcalling=resolved_profile['enabled_layers'].get(
                                                                'score_clock_playcalling', True),
                                                            season_adapt=args.playcall_season_adapt,
-                                                           season_adapt_n0=args.season_adapt_n0)
+                                                           season_adapt_n0=args.season_adapt_n0,
+                                                           workload_adaptive=getattr(args, 'workload_adaptive_config', None),
+                                                           experimental_workload_estimator=getattr(args, 'experimental_workload_estimator', None))
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
@@ -1002,6 +1011,7 @@ def run_batch(args):
             'playcall_season_adapt', 'season_adapt_n0', 'participation_field', 'participation_field_sha256',
             'participation_snap_counts', 'participation_snap_counts_sha256', 'playcall_pbv1_package',
             'playcall_fg_kicker', 'playcall_fg_kicker_sha256', 'historical_archive_reconstruction')}
+        settings = {key: str(value) if isinstance(value, Path) else value for key, value in settings.items()}
         settings.update(source_snapshot_sha256=source_snapshot_sha256,
                         source_commit=source_provenance['base_commit'],
                         producer_file_sha256=source_provenance['producer_file_sha256'],
@@ -1018,6 +1028,24 @@ def run_batch(args):
             raise ValueError('paired layer baseline must contain a ledger header')
         rng_plan, paired_layer_baseline = rng_protocol.pair_layer_plan(
             rng_plan, pairing_identity, baseline_header, args.slc_disable_layer[0])
+    paired_lineup_baseline = None
+    if getattr(args, 'paired_lineup_baseline_ledger', None):
+        if not pairing_identity or not getattr(args, 'participation_snap_counts', None):
+            raise ValueError('paired lineup intervention requires v2 and a snap-count input')
+        with Path(args.paired_lineup_baseline_ledger).open(encoding='utf-8') as handle:
+            baseline_header = json.loads(handle.readline()).get('header')
+        if not isinstance(baseline_header, dict):
+            raise ValueError('paired lineup control must contain a ledger header')
+        rng_plan, paired_lineup_baseline = rng_protocol.pair_lineup_plan(rng_plan, pairing_identity, baseline_header)
+    paired_workload_baseline = None
+    if getattr(args, 'paired_workload_baseline_ledger', None):
+        if not pairing_identity or not getattr(args, 'workload_adaptive_config', None):
+            raise ValueError('paired workload intervention requires a v2 control and adaptive table')
+        with Path(args.paired_workload_baseline_ledger).open(encoding='utf-8') as handle:
+            baseline_header = json.loads(handle.readline()).get('header')
+        if not isinstance(baseline_header, dict):
+            raise ValueError('paired workload control must contain a ledger header')
+        rng_plan, paired_workload_baseline = rng_protocol.pair_workload_plan(rng_plan, pairing_identity, baseline_header)
     if 'restore_sack_mass' in args.slc_blocker_fix and not getattr(args, 'expected_stream_root_sha256', None):
         raise ValueError('sack ablation requires the baseline --expected-stream-root-sha256')
     if getattr(args, 'expected_stream_root_sha256', None):
@@ -1064,6 +1092,10 @@ def run_batch(args):
         'rng_protocol': rng_plan.manifest(),
         'pairing_identity': pairing_identity,
         'paired_layer_baseline': paired_layer_baseline,
+        'paired_workload_baseline': paired_workload_baseline,
+        'paired_lineup_baseline': paired_lineup_baseline,
+        'research_workload': getattr(args, 'workload_adaptive_config', None),
+        'experimental_workload_estimator': getattr(args, 'experimental_workload_estimator', None),
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
@@ -1478,10 +1510,35 @@ def main(argv=None):
                     help='require this baseline v2 stream root before running seeds; mandatory for sack ablation')
     ap.add_argument('--paired-layer-baseline-ledger',
                     help='verified v2 control ledger for exactly one disabled-layer paired ablation')
+    ap.add_argument('--experimental-workload-estimator', choices=('C', 'D1'), default=None,
+                    help='research setting: D1 is preferred; C selects the historical-share control')
+    ap.add_argument('--workload-adaptive-input', help='experimental frozen workload inputs for D1')
+    ap.add_argument('--workload-adaptive-sha256', help='SHA-256 of experimental workload inputs')
+    ap.add_argument('--workload-concentrations', help='experimental fitted workload concentrations JSON')
+    ap.add_argument('--paired-workload-baseline-ledger', help='control ledger for paired workload-only intervention')
+    ap.add_argument('--paired-lineup-baseline-ledger', help='control ledger for the snap-count lineup intervention')
     ap.add_argument('--game-info-snapshot', help=('attach this frozen game-information snapshot to the run as '
                                                   'context: venue capacity, kickoff, forecast, referee status and '
                                                   'broadcast. The model does not read it.'))
     args = ap.parse_args(argv)
+    args.workload_adaptive_config = None
+    if bool(args.workload_adaptive_input) != bool(args.workload_adaptive_sha256):
+        ap.error('adaptive workload input and SHA-256 are both required')
+    if args.experimental_workload_estimator == 'D1' and not args.workload_adaptive_input:
+        ap.error('D1 requires frozen workload inputs and their SHA-256')
+    if args.experimental_workload_estimator == 'C' and args.workload_adaptive_input:
+        ap.error('C control cannot use adaptive workload inputs')
+    if args.workload_adaptive_input:
+        config = {'input': args.workload_adaptive_input, 'sha256': args.workload_adaptive_sha256}
+        if args.workload_concentrations:
+            doc = json.loads(Path(args.workload_concentrations).read_text())
+            if doc.get('input_sha256') != args.workload_adaptive_sha256:
+                ap.error('workload concentrations must reference the frozen input SHA-256')
+            config['concentrations'] = doc['concentrations']
+            config['concentrations_sha256'] = hashlib.sha256(Path(args.workload_concentrations).read_bytes()).hexdigest()
+        args.workload_adaptive_config = config
+    elif args.paired_workload_baseline_ledger or args.workload_concentrations:
+        ap.error('workload pairing and concentrations require adaptive workload input')
     if args.rng_protocol is None:
         args.rng_protocol = rng_protocol.V2 if args.playcall_artifact else rng_protocol.V1
     if args.paired_randomness and args.playcall_artifact and args.rng_protocol != rng_protocol.V2:

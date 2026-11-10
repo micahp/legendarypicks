@@ -1,0 +1,33 @@
+{
+  "train_season": 2025,
+  "test_season": 2026,
+  "last_week": 8,
+  "role": "receive",
+  "eligibility": "unknown",
+  "groups": {
+    "WR": {
+      "phi": 3.527768,
+      "team_games": 544,
+      "training_nll": 6248.6171385240905,
+      "grid_boundary": false,
+      "heldout_team_games": 242,
+      "heldout_mean_nll": 12.122334736532409
+    },
+    "TE": {
+      "phi": 2.06538,
+      "team_games": 544,
+      "training_nll": 2387.364655787623,
+      "grid_boundary": false,
+      "heldout_team_games": 242,
+      "heldout_mean_nll": 4.726611292960758
+    },
+    "RB": {
+      "phi": 1.513561,
+      "team_games": 544,
+      "training_nll": 2190.1049219764823,
+      "grid_boundary": false,
+      "heldout_team_games": 242,
+      "heldout_mean_nll": 4.488590171717338
+    }
+  }
+}

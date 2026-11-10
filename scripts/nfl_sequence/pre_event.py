@@ -321,7 +321,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                         if share_distributions.conditional_role_shares(share_table) else 'all')
                     chosen['receiver'] = _by_game_share(eligible, share_table, team, 'receive', str(seed), root,
                                                         _draw(f'{base}:receiver:dirichlet'), share_cache, population=share_group,
-                                                        group=share_group_name)
+                                                        group=share_group_name, trace=chosen, positions=positions)
                 else:
                     chosen['receiver'] = _by_player_share(receivers, player_shares, team, 'receive', positions,
                                                           _draw(f'{base}:receiver:player'))
@@ -352,7 +352,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                     if share_distributions.conditional_role_shares(share_table) else 'all')
                 chosen['rusher'] = _by_game_share(eligible, share_table, team, 'carry', str(seed), root,
                                                   _draw(f'{base}:rusher:dirichlet'), share_cache, population=share_group,
-                                                  group=share_group_name)
+                                                  group=share_group_name, trace=chosen, positions=positions)
             else:
                 chosen['rusher'] = _by_player_share(run_players, player_shares, team, 'carry', positions,
                                                     _draw(f'{base}:rusher:player'))
@@ -373,7 +373,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     return chosen
 
 
-def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw, cache=None, population=None, group='all'):
+def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw, cache=None, population=None, group='all', trace=None, positions=None):
     """Choose from a game-level Dirichlet draw, reusing its eligible population and candidate group from the cache."""
     import share_distributions
     population = candidates if population is None else population
@@ -390,7 +390,17 @@ def _by_game_share(candidates, share_table, team, role, game_id, seed_text, draw
         shares = share_distributions.game_shares(share_table, team, game_id, population_ids, role, seed_text, group=group)
         if cache is not None:
             cache[key] = (population_ids, shares)
-    return draw.choices(candidates, weights=[shares[p['gsis_id']] for p in candidates], k=1)[0]
+    selected = draw.choices(candidates, weights=[shares[p['gsis_id']] for p in candidates], k=1)[0]
+    if trace is not None:
+        weight_sum = sum(shares[p['gsis_id']] for p in candidates)
+        trace['participant_selection'] = {
+            'team': team, 'role': role, 'group': group, 'selected_positions': list(positions or []),
+            'population_weights': dict(sorted(shares.items())),
+            'candidates': sorted(candidate_ids),
+            'candidate_weights': {p: shares[p] / weight_sum for p in sorted(candidate_ids)},
+            'selected': selected['gsis_id'],
+        }
+    return selected
 
 
 def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_priors=None, role_table=None, decision_table=None,
@@ -455,7 +465,7 @@ def ids(pre):
     if pre.get('target_role') is not None:  # the decision model's category, not a player: kept so the record shows it
         out['target_role'] = pre['target_role']
     for key in ('participant_share_model', 'target_role_prior_used', 'target_role_prior_combined',
-                'playbook_used', 'playbook_fallback', 'qb_run_role_style', 'lineup'):
+                'playbook_used', 'playbook_fallback', 'qb_run_role_style', 'lineup', 'participant_selection'):
         if pre.get(key) is not None:
             out[key] = pre[key]
     if pre.get('labels') is not None:  # the drawn decision labels, for the record
