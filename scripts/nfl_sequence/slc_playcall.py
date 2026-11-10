@@ -211,6 +211,8 @@ class PlayCallSampler:
         self.participant_chooser = None  # set per game by slc_engine: chooses the rusher or target before the outcome is drawn
         # a team_tendency.TeamTendencies from prior seasons: reweights the outcome drawn within the intent (None: no split)
         self.team_outcomes = None
+        # Joint event and yardage strength model. Replaces team_outcomes when enabled.
+        self.transition_strength = None
         # formation-conditioned outcome draws, on when the engine has formation labels and priors (formation_layer)
         self.formation_outcomes = False
         self.formation_priors = None
@@ -249,6 +251,7 @@ class PlayCallSampler:
         self.season_team_down = None
         self.season_blend_manifest = None
         self._current_team_outcome_fallbacks = []
+        self._current_transition_fallbacks = []
 
     def _team(self, label):
         if self.side_teams is None:
@@ -418,6 +421,7 @@ class PlayCallSampler:
         source_row_filter = state.get('_source_row_filter')
         entry = self._entry(cell, cache=not state.get('_source_cell_filtered', False))
         self._current_team_outcome_fallbacks = []
+        self._current_transition_fallbacks = []
         # the kick decision's counts: the whole cell, or with the flag the cell's rows weighted by yard line near the snap
         kick_base = entry['base'] if fg_rule is None else kicker_field_goals.kernel_counts(entry, int(state['yl']))
         total = sum(kick_base.values())
@@ -495,6 +499,7 @@ class PlayCallSampler:
         target = e0.pool_key(int(state['down']), state['togo'], state['yl'])
         exact_outcome_rows = None
         backoff_candidates, outcome_fallback = (None, None)
+        backoff_transition_groups = None
         backoff_ess = None
         outcome_weight_fallback = None
         if self.outcome_backoff_enabled and called_intent in SCRIMMAGE_INTENTS:
@@ -509,6 +514,15 @@ class PlayCallSampler:
             if self.team_outcomes is not None:
                 weights = [weight * self._outcome_weight(key[1], offense, defense, entry['key'] or target)
                            for weight, key in zip(weights, keys)]
+            if self.transition_strength is not None:
+                backoff_transition_groups = {
+                    key[1]: self._group_transition_rows(
+                        [sample for sample in backoff_candidates if sample[0] == key[1]], key[1])
+                    for key in keys
+                }
+                weights = [self._transition_group_weight(
+                    backoff_transition_groups[key[1]], key[1], offense, defense)
+                    for key in keys]
             if use_player_outcomes:
                 import player_outcomes
                 weights = [weight * player_outcomes.event_weight(self.player_outcome_table, key[1], pre_event,
@@ -567,6 +581,10 @@ class PlayCallSampler:
                                                              for c, v in labels.items() if v is not None])
                 if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
                     weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
+                if self.transition_strength is not None:
+                    groups = self._entry_transition_groups(entry, k)
+                    transition_total = self._transition_group_weight(groups, k[1], offense, defense)
+                    weight *= transition_total / len(entry['by_key'][k])
                 if use_player_outcomes:
                     import player_outcomes
                     weight *= player_outcomes.event_weight(self.player_outcome_table, k[1], pre_event,
@@ -577,7 +595,7 @@ class PlayCallSampler:
                 # outcomes, but it must not make a legal, already-chosen intent impossible to sample.
                 weights = baseline_weights
                 outcome_weight_fallback = 'all_conditioned_weights_zero_within_selected_intent'
-        if (self.team_outcomes is None and not use_formation and not use_coverage and not use_streak and not use_labels
+        if (self.team_outcomes is None and self.transition_strength is None and not use_formation and not use_coverage and not use_streak and not use_labels
                 and not use_player_outcomes):
             if fallback_by_key is None:
                 key = rng.choices(keys, weights=[choice_base[k] for k in keys])[0]  # the unchanged baseline draw
@@ -589,6 +607,12 @@ class PlayCallSampler:
             # ablation A: an incomplete pass becomes a sack at the cell's q, so the cell's sack rate reaches its observed rate
             key = (outcome_intent, 'sack')
         candidates = fallback_by_key[key] if fallback_by_key is not None else entry['by_key'][key]
+        candidate_source = candidates
+        if self.transition_strength is not None:
+            if fallback_transition_groups is not None:
+                candidate_transition_groups = backoff_transition_groups[key[1]]
+            else:
+                candidate_transition_groups = self._entry_transition_groups(entry, key)
         if self.qb_decision_table is not None:
             if scramble and fallback_by_key is None:
                 candidates = [c for c in candidates if c[1].get('qb_scramble') == 1]
@@ -649,11 +673,32 @@ class PlayCallSampler:
                 exact_yardline_conditioned = True
             else:
                 exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
+        row_weights = None
         if use_player_outcomes:
             import player_outcomes
-            row_weights = [player_outcomes.row_weight(self.player_outcome_table, key[1], c[1], pre_event, state,
-                                                      enabled_roles=self.player_outcome_roles)
-                           for c in candidates]
+            row_weights = [player_outcomes.row_weight(
+                self.player_outcome_table, key[1], candidate[1], pre_event, state,
+                enabled_roles=self.player_outcome_roles) for candidate in candidates]
+        if self.transition_strength is not None:
+            if candidates is not candidate_source:
+                candidate_transition_groups = self._group_transition_rows(candidates, key[1])
+            transition_keys = list(candidate_transition_groups)
+            transition_weights = self._transition_group_weights(
+                candidate_transition_groups, key[1], offense, defense)
+            if row_weights is not None:
+                weights_by_identity = {id(candidate): weight for candidate, weight in zip(candidates, row_weights)}
+                transition_weights = [weight * sum(weights_by_identity[id(candidate)] for candidate in
+                                                   candidate_transition_groups[transition]) /
+                                      len(candidate_transition_groups[transition])
+                                      for transition, weight in zip(transition_keys, transition_weights)]
+            chosen_transition = rng.choices(transition_keys, weights=transition_weights, k=1)[0]
+            eligible = candidate_transition_groups[chosen_transition]
+            if row_weights is not None:
+                event, row, runoff, spot = rng.choices(
+                    eligible, weights=[weights_by_identity[id(candidate)] for candidate in eligible], k=1)[0]
+            else:
+                event, row, runoff, spot = rng.choice(eligible)
+        elif row_weights is not None:
             event, row, runoff, spot = rng.choices(candidates, weights=row_weights, k=1)[0]
         else:
             event, row, runoff, spot = rng.choice(candidates)
@@ -673,6 +718,8 @@ class PlayCallSampler:
             'decision_row_filter_applied': bool(use_labels and self.decision_filter),
             'team_outcome_split': self.team_outcomes is not None,
             'team_outcome_fallbacks': list(self._current_team_outcome_fallbacks),
+            'team_transition_split': self.transition_strength is not None,
+            'team_transition_fallbacks': sorted(set(self._current_transition_fallbacks)),
             'split_fallbacks': split_fallbacks,
             'outcome_weight_fallback': outcome_weight_fallback,
             'point_split_applied': self.point_shifts is not None and team in self.layer.team_index,
@@ -834,6 +881,44 @@ class PlayCallSampler:
                 )
                 continue
         return weight
+
+    def _group_transition_rows(self, candidates, event):
+        import transition_strength as ts
+        groups = defaultdict(list)
+        for candidate in candidates:
+            row = candidate[1]
+            cell = e0.pool_key(int(row['down']), row['ydstogo'], row['yardline_100'])
+            groups[(cell, ts.transition_key(event, row))].append(candidate)
+        return dict(groups)
+
+    def _entry_transition_groups(self, entry, key):
+        cache = entry.setdefault('_team_transition_groups', {})
+        if key not in cache:
+            cache[key] = self._group_transition_rows(entry['by_key'][key], key[1])
+        return cache[key]
+
+    def _transition_group_weights(self, groups, event, offense, defense):
+        weights = []
+        for (cell, transition), candidates in groups.items():
+            weight = len(candidates)
+            for side, label in (('offense', offense), ('defense', defense)):
+                team = self._team(label)
+                if team is None:
+                    continue
+                before = self.transition_strength.fallback_count
+                try:
+                    weight *= self.transition_strength.ratio_key(side, team, cell, transition)
+                except ValueError:
+                    self._current_transition_fallbacks.append(f'no_prior_sample:{side}:{team}')
+                    continue
+                if self.transition_strength.fallback_count > before:
+                    self._current_transition_fallbacks.append(
+                        f'no_prior_transition:{side}:{team}:{event}')
+            weights.append(weight)
+        return weights
+
+    def _transition_group_weight(self, groups, event, offense, defense):
+        return sum(self._transition_group_weights(groups, event, offense, defense))
 
     def describe(self):
         out = {'component': ARTIFACT_ID, 'artifact_sha256': self.layer.artifact['sha256'],

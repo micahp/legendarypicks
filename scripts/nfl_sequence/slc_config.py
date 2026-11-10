@@ -8,6 +8,7 @@ from pathlib import Path
 
 V1_OPTIONS = {
     'playcall_team_outcomes': True,
+    'playcall_transition_strength': False,
     'playcall_formation': True,
     'playcall_coverage': True,
     'playcall_player_shares': False,
@@ -26,6 +27,7 @@ V1_OPTIONS = {
 
 OPTION_TO_LAYER = {
     'playcall_team_outcomes': 'team_offense_defense_outcomes',
+    'playcall_transition_strength': 'team_offense_defense_transitions',
     'playcall_formation': 'formation_personnel_outcomes',
     'playcall_coverage': 'defensive_coverage_outcomes',
     'playcall_player_shares': 'fixed_player_target_carry_shares',
@@ -45,6 +47,8 @@ OPTION_TO_LAYER = {
 LAYER_CODE_FILES = {
     'score_clock_playcalling': ('slc_playcall.py', 'playcall_model.py'),
     'team_offense_defense_outcomes': ('team_tendency.py',),
+    'team_offense_defense_transitions': ('transition_strength.py', 'slc_playcall.py',
+                                         'e2_reference.py', 'season_layers.py'),
     'formation_personnel_outcomes': ('formation_layer.py',),
     'defensive_coverage_outcomes': ('defense_layer.py',),
     'fixed_player_target_carry_shares': ('player_shares.py',),
@@ -66,6 +70,7 @@ LAYER_CODE_FILES = {
 ENGINE_LAYER_KEYS = (
     'score_clock_playcalling',
     'team_offense_defense_outcomes',
+    'team_offense_defense_transitions',
     'formation_personnel_outcomes',
     'defensive_coverage_outcomes',
     'fixed_player_target_carry_shares',
@@ -105,6 +110,7 @@ def options_from_args(args):
     """Return the explicit feature flags supplied to the legacy/manual runner."""
     return {
         'playcall_team_outcomes': bool(args.playcall_team_outcomes),
+        'playcall_transition_strength': bool(args.playcall_transition_strength),
         'playcall_formation': bool(args.playcall_formation),
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares),
@@ -177,6 +183,7 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
             raise ValueError('v1_full_stack requires the decision row filter; disable it with --slc-disable-layer')
         resolved_options = dict(V1_OPTIONS)
         resolved_options['playcall_qb_run_role_style'] = supplied.get('playcall_qb_run_role_style', False)
+        resolved_options['playcall_transition_strength'] = supplied.get('playcall_transition_strength', False)
         resolved_filter = True
         resolved_streak_file = streak_file
         for layer in disabled:
@@ -199,6 +206,8 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
             raise ValueError('QB run-role style requires the QB decision model')
         if resolved_options['playcall_qb_run_role_style'] and not resolved_options['playcall_decision']:
             raise ValueError('QB run-role style requires decision labels')
+        if resolved_options['playcall_team_outcomes'] and resolved_options['playcall_transition_strength']:
+            raise ValueError('event-only team outcomes and joint team transitions are alternatives; disable team_offense_defense_outcomes')
         needs_streak = (resolved_options['playcall_streak_splits'] or
                         resolved_options['playcall_streak_league'] or 'current_streak_context' not in disabled)
         if needs_streak and not resolved_streak_file:
@@ -217,6 +226,8 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
         else:
             model_id = ('SLC_v1_full_stack_qb_run_role_style'
                         if resolved_options['playcall_qb_run_role_style'] else 'SLC_v1_full_stack')
+        if resolved_options['playcall_transition_strength']:
+            model_id += '_joint_transition_strength'
         return {
             'profile': profile,
             'model_id': model_id,
@@ -252,8 +263,12 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
         raise ValueError('QB run-role style requires the QB decision model')
     if layers['qb_run_role_style'] and not layers['decision_labels']:
         raise ValueError('QB run-role style requires decision labels')
+    if layers['team_offense_defense_outcomes'] and layers['team_offense_defense_transitions']:
+        raise ValueError('event-only team outcomes and joint team transitions are alternatives; enable one')
     disabled_names = sorted(disabled)
     model_id = 'SLC_custom' if any(layers.values()) else 'S0'
+    if layers['team_offense_defense_transitions']:
+        model_id += '_joint_transition_strength'
     if disabled_names:
         model_id += '_ablation_' + '_'.join(disabled_names)
     return {'profile': profile, 'model_id': model_id,
@@ -302,6 +317,7 @@ def build_manifest(resolved, description, snapshot, input_provenance):
     model_hashes = {
         'score_clock_playcalling': layer_hashes.get('score_clock_playcalling', artifact_sha),
         'team_offense_defense_outcomes': layer_hashes.get('team_offense_defense_outcomes'),
+        'team_offense_defense_transitions': layer_hashes.get('team_offense_defense_transitions'),
         'formation_personnel_outcomes': layer_hashes.get('formation_personnel_outcomes'),
         'defensive_coverage_outcomes': layer_hashes.get('defensive_coverage_outcomes'),
         'fixed_player_target_carry_shares': None,
@@ -325,6 +341,7 @@ def build_manifest(resolved, description, snapshot, input_provenance):
                        else desc.get('score_clock_fallback_policy')),
             'artifact_id': desc.get('artifact_id'), 'source_cutoff': desc.get('source_cutoff')},
         'team_offense_defense_outcomes': {'fit_seasons': desc.get('fit_seasons')},
+        'team_offense_defense_transitions': desc.get('team_offense_defense_transitions'),
         'formation_personnel_outcomes': {'fit_seasons': desc.get('fit_seasons')},
         'defensive_coverage_outcomes': {'fit_seasons': desc.get('fit_seasons')},
         'fixed_player_target_carry_shares': {'adapter': 'fixed share adapter'},

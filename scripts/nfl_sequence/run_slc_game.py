@@ -47,6 +47,8 @@ def parse_args(argv=None):
     ap.add_argument('--roster-provenance')
     ap.add_argument('--team-outcomes', action='store_true',
                     help='SLC v1 research: prior-season team event splits within the play-call intent')
+    ap.add_argument('--transition-strength', action='store_true',
+                    help='opt-in research replacement: joint offense/defense event, yardage, conversion and touchdown strengths')
     ap.add_argument('--formation', action='store_true', help='SLC v1 research: pre-event formation and personnel, outcomes conditioned on formation')
     ap.add_argument('--coverage', action='store_true', help='SLC v1 research: defensive coverage priors and coverage-conditioned outcomes')
     ap.add_argument('--player-shares', action='store_true', help='SLC v1 research: prior-season player target and carry shares')
@@ -145,6 +147,7 @@ def main():
 
     supplied = {
         'playcall_team_outcomes': bool(args.team_outcomes), 'playcall_formation': bool(args.formation),
+        'playcall_transition_strength': bool(args.transition_strength),
         'playcall_coverage': bool(args.coverage), 'playcall_player_shares': bool(args.player_shares),
         'playcall_dirichlet_shares': bool(args.dirichlet_shares), 'playcall_qb_decisions': bool(args.qb_decisions),
         'playcall_qb_run_role_style': bool(args.qb_run_role_style),
@@ -173,6 +176,7 @@ def main():
         pregame_snapshot.apply_full_depth_roster_snapshot(snapshot, args.roster_snapshot, args.roster_provenance)
 
     ref, excluded = slc_engine.load_reference(args.db, snapshot, args.artifact, team_outcomes=args.team_outcomes,
+                                                transition_strength=args.transition_strength,
                                                 formation=args.formation, player_shares=player_shares_for(args),
                                                 exact_yardline=args.exact_yardline, coverage=args.coverage,
                                                 point_splits=args.point_splits, streak=args.streak_splits,
@@ -211,6 +215,7 @@ def main():
     feature_labels = {
         'score_clock_playcalling': 'score-clock play calling',
         'team_offense_defense_outcomes': 'team offense/defense outcomes',
+        'team_offense_defense_transitions': 'joint offense/defense play transitions',
         'formation_personnel_outcomes': 'formation/personnel outcomes',
         'defensive_coverage_outcomes': 'defensive coverage outcomes',
         'fixed_player_target_carry_shares': 'fixed player target/carry shares',
@@ -236,7 +241,8 @@ def main():
         'components_connected': connected,
         'components_not_connected': not_connected,
         'source': source_provenance,
-        'seed': args.seed, 'team_outcomes': bool(args.team_outcomes), 'formation': bool(args.formation),
+        'seed': args.seed, 'team_outcomes': bool(args.team_outcomes),
+        'transition_strength': bool(args.transition_strength), 'formation': bool(args.formation),
         'coverage': bool(args.coverage), 'player_shares': player_shares_for(args),
         'dirichlet_shares': bool(args.dirichlet_shares), 'exact_yardline': bool(args.exact_yardline),
         'point_splits': bool(args.point_splits), 'streak_splits': bool(args.streak_splits),

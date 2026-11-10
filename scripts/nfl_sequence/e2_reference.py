@@ -571,7 +571,8 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          overtime_toss=None, overtime_choice=None, kickoff_regime_season=None, kickoff_before=None,
          eligible_before=None, contextual_context=None, contextual_mode=None, contextual_bandwidth=1.0,
          contextual_min_effective_games=10.0, team_tendency=False, team_tendency_teams=None,
-         playcall_artifact=None, playcall_teams=None, playcall_team_outcomes=False, playcall_formation=False,
+         playcall_artifact=None, playcall_teams=None, playcall_team_outcomes=False,
+         playcall_transition_strength=False, playcall_formation=False,
          playcall_player_shares=False, playcall_exact_yardline=False, playcall_coverage=False,
          playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False, playcall_target_roles=False,
          playcall_decision=False, playcall_qb_decisions=False, playcall_player_outcomes=False,
@@ -580,6 +581,10 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
 
     `playcall_season_adapt` (SLC V1.5, research): {'game_id', 'kickoff', 'n0'} for one target game. It blends that game's
     available current-season plays into the team outcome splits (team_season_adapt.py). None leaves V1 unchanged.
+
+    `playcall_transition_strength` (opt-in, research): replaces event-only team splits with separate offense and defense
+    ratios over joint event, yardage, line-to-gain, and touchdown outcomes. Penalties remain excluded because their source
+    labels are not reliable in the current pool. It cannot be combined with `playcall_team_outcomes`.
 
     `regulation_only` (the successor default): the E1 pool and the kickoff pool draw from quarters 1-4 only. The 1,214 overtime
     rows of 2022-2025 are excluded and counted on the reference as `pool_scope`. False reproduces the accepted E2 artifacts,
@@ -617,8 +622,11 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
         raise ValueError('team tendencies require an eligible-before cutoff')
     if team_tendency and not team_tendency_teams:
         raise ValueError('team tendencies need the side map {"A": home, "B": away} from the frozen schedule')
+    if playcall_team_outcomes and playcall_transition_strength:
+        raise ValueError('event-only team outcomes and joint team transitions are alternatives; enable one')
     rows = e1.load(db, eligible_before=eligible_before)
-    team_before = int(eligible_before[0]) if playcall_team_outcomes and eligible_before is not None else None
+    team_before = (int(eligible_before[0]) if (playcall_team_outcomes or playcall_transition_strength)
+                   and eligible_before is not None else None)
     pool, pool_excluded, team_pool = e1.build_pools(rows, regulation_only=regulation_only,
                                                     include_qb_scrambles=playcall_qb_decisions, team_before_season=team_before)
     contextual_sampler = None
@@ -658,6 +666,13 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                 contextual_sampler.team_outcomes, contextual_sampler.season_adapt = tsa.build_for_target(
                     db, cutoff_season, playcall_season_adapt['game_id'], playcall_season_adapt['kickoff'],
                     contextual_sampler.team_outcomes, n0=playcall_season_adapt['n0'], focus_teams=focus)
+        if playcall_transition_strength:
+            if eligible_before is None:
+                raise ValueError('team transition strengths need an eligible-before cutoff')
+            import transition_strength as ts
+            cutoff_season = int(eligible_before[0])
+            contextual_sampler.transition_strength = ts.build_from_pool(
+                team_pool, cutoff_season, cutoff=(cutoff_season, 1))
         if playcall_formation:  # pre-event formation and personnel from the seasons before the cutoff; outcomes conditioned on it
             if eligible_before is None:
                 raise ValueError('formation priors need an eligible-before cutoff')
