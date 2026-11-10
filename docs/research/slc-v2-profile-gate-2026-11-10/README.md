@@ -32,9 +32,13 @@ The 10 failed seeds are:
 
 All 10 failed seeds have preserved error records. Their box-score reconciliation passed, but the game validator failed, so they remain invalid.
 
-## Input and evidence limits
+## Snapshot validity and input provenance
 
-The Week 1–8 snap-count file has SHA-256 `36f28e18af3080df9f160d42dd5e3e59c37cfacf0dd24772ea51cfd41cadcfca`. Its source files were downloaded at `2026-11-10T00:13:56Z`, after the forecast snapshot and roster-finalization point. The source publication time is unknown. Game-day player eligibility also remains unknown. Treat the paired smoke run as exploratory.
+The BUF–MIN snapshot taken at `2026-11-09T20:28:32Z` is valid. It was taken before the 90-minute roster-finalization point, so its roster status is `before_roster_finalization`. That expected status does not invalidate the snapshot or a completed game that passes validation.
+
+The Week 1–8 snap-count input is a separate file with SHA-256 `36f28e18af3080df9f160d42dd5e3e59c37cfacf0dd24772ea51cfd41cadcfca`. Its source files were downloaded at `2026-11-10T00:13:56Z`, after the snapshot. Their publication times are unknown, so this run cannot prove those inputs were available at the snapshot time. This is an input-provenance limit; it does not change snapshot or game validity. Game-day player eligibility also remains unknown.
+
+The C/D1 outputs are valid completed games and all passed box-score reconciliation. Ten paired seeds per arm are an integration smoke only; this sample is too small to establish release readiness.
 
 The Week 9 kicker table is pinned at SHA-256 `4d21b4de6e0ccbced271cd2cd81ded42528a6ad928319fa6e2157f47bacd9caf`. The SLC-v2 default now uses this table, which includes the BUF and MIN Week 9 kicker assignments. The previous default lacked Week 9 assignments and stopped before simulation.
 
