@@ -39,6 +39,28 @@ def _validate_state(st):
         raise ValueError(f'play state distance must be 1 through the distance to goal (got {togo!r})')
 
 
+def _validate_transition_output(before, after, event):
+    """Fail at the producer when a result has impossible possession/first-down accounting.
+
+    The record validator independently checks the emitted play; this catches errors
+    before the game continues (and during blocked-kick candidate screening).
+    """
+    if after is None:  # scoring / end-of-period transitions have no next-snap state
+        return
+    _validate_state(after)
+    if {after['offense'], after['defense']} != {before['offense'], before['defense']}:
+        raise ValueError(f'{event}: a transition cannot introduce a different team')
+    if after['offense'] != before['offense']:
+        if after['offense'] != before['defense'] or after['defense'] != before['offense']:
+            raise ValueError(f'{event}: possession must swap offense and defense')
+        if after['down'] != 1 or after['togo'] != min(10, after['yl']):
+            raise ValueError(f'{event}: possession change must be first-and-10 or first-and-goal '
+                             f'at {after["yl"]}, got down {after["down"]} to go {after["togo"]}')
+    elif after['down'] == 1 and after['togo'] != min(10, after['yl']):
+        raise ValueError(f'{event}: new first down must be first-and-10 or first-and-goal '
+                         f'at {after["yl"]}, got {after["togo"]} to go')
+
+
 BLOCKED_KICK_STATUSES = ('classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety', 'classified_next_snap',
                          'period_expired')
 
@@ -53,7 +75,7 @@ class UnmodelledOutcome(ValueError):
         self.reason = reason
 
 
-def apply_play(st, event, yards, spot=None, kick_outcome=None):
+def _apply_play_unchecked(st, event, yards, spot=None, kick_outcome=None):
     """Apply one sampled play. Returns (after, terminal, flags).
 
     `after` is the state at the next snap, or None when the drive ends with no next snap (touchdown, safety,
@@ -115,7 +137,21 @@ def apply_play(st, event, yards, spot=None, kick_outcome=None):
             'togo': st['togo'] - yards, 'yl': new_yl}, None, flags
 
 
+def apply_play(st, event, yards, spot=None, kick_outcome=None):
+    """Apply one play and refuse impossible outgoing state immediately."""
+    result = _apply_play_unchecked(st, event, yards, spot=spot, kick_outcome=kick_outcome)
+    _validate_transition_output(st, result[0], event)
+    return result
+
+
 def apply_blocked_kick(st, event, outcome):
+    """Validate each resolved blocked-kick state, including sampler preflight."""
+    result = _apply_blocked_kick_unchecked(st, event, outcome)
+    _validate_transition_output(st, result[0], event)
+    return result
+
+
+def _apply_blocked_kick_unchecked(st, event, outcome):
     """Resolve a sampled blocked scrimmage kick under Rule 9 using an observed transition record.
 
     Yardlines in `outcome` are from the relevant team's offensive perspective. The reducer owns possession, downs, and
@@ -262,13 +298,13 @@ def project_blocked_kick_next_snap(outcome, st):
     projected = dict(outcome)
     source_togo = outcome.get('next_snap_ydstogo')
     if type(source_togo) is int:
-        if role == 'receiving_team':
-            # A change of possession starts a NEW series. Do not carry over the
-            # source game's goal-to-go distance when its spot is reprojected:
-            # source 1st-and-goal at the 1 may become 1st-and-goal at the 3.
+        if role == 'receiving_team' or outcome.get('next_snap_down') == 1:
+            # A projected new series gets its OWN line to gain. This includes
+            # a kicking-team recovery that earns a first down, not just a handover.
             projected['next_snap_ydstogo'] = min(10, yardline)
         else:
-            # A kicking-team recovery retains the historical series information.
+            # A same-team recovery without a first down retains the source
+            # series distance; the projected spot may put it goal-to-go.
             projected['next_snap_ydstogo'] = min(source_togo, yardline)
     projected.update(next_snap_yardline_100=yardline, geometry_projected=True,
                      projected_from_source_yardline_100=outcome.get('yardline_100'),
