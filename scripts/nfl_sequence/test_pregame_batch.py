@@ -78,6 +78,21 @@ class BatchAggregation(unittest.TestCase):
                                          str(frozen), '--workload-adaptive-sha256', 'a' * 64])
                 run.assert_not_called()
 
+    def test_c_can_pair_against_a_v2_workload_control_without_adaptive_input(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            snapshot, artifact = Path(tmp) / 'snapshot.json', Path(tmp) / 'artifact.json'
+            snapshot.write_text('{}')
+            artifact.write_text('{}')
+            ledger = Path(tmp) / 'default-v2.seeds.jsonl'
+            ledger.write_text('{}\n')
+            common = ['--snapshot-file', str(snapshot), '--playcall-artifact', str(artifact), '--out', 'out.json']
+            with patch.object(batch, 'run_batch') as run:
+                batch.main(common + ['--experimental-workload-estimator', 'C',
+                                     '--paired-workload-baseline-ledger', str(ledger)])
+            args = run.call_args.args[0]
+            self.assertEqual(args.experimental_workload_estimator, 'C')
+            self.assertEqual(args.paired_workload_baseline_ledger, str(ledger))
+
     def test_ablation_requires_baseline_root_and_replay_uses_dedicated_flag(self):
         import contextlib
         import io
