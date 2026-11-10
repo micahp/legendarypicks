@@ -2,6 +2,8 @@
 
 **Date:** 2026-11-10  
 **Status:** Pre-implementation research protocol; no model promotion authorized  
+**Sequencing update (2026-11-10, owner decision):** PENALTY GENERATION AND FITTING ARE DEFERRED UNTIL AFTER THE STRENGTH-MODEL GATE. The controlling execution order and isolated experiment design are in [Strength-first mechanism gates](SLC-V2-STRENGTH-FIRST-MECHANISM-GATES-2026-11-10.md). This document remains the design reference for later penalty work. The historical penalty-source extract is retained as read-only research; explicit penalty simulations stay OFF during strength tests. Corrected penalty labels may be used only for consistent clean-play eligibility in BOTH controls and candidates.  
+
 **Target branch:** `slc-v2`  
 **Scope:** historical NFL PBP audit, conditional football-mechanism tests, penalty simulation, and controlled evaluation of Default V2, V2+C, and V2+D1  
 **Owner decision:** team-level offensive/defensive penalties are required; player-to-team transfer effects are a separately gated bonus; QB substitutions are out of scope for this phase.
