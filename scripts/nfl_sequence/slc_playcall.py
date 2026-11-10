@@ -609,7 +609,7 @@ class PlayCallSampler:
         candidates = fallback_by_key[key] if fallback_by_key is not None else entry['by_key'][key]
         candidate_source = candidates
         if self.transition_strength is not None:
-            if fallback_transition_groups is not None:
+            if backoff_transition_groups is not None:
                 candidate_transition_groups = backoff_transition_groups[key[1]]
             else:
                 candidate_transition_groups = self._entry_transition_groups(entry, key)

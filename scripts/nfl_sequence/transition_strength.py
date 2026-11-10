@@ -80,7 +80,6 @@ class TransitionStrength:
         if team not in self.ratios[side]:
             raise ValueError(f'no {side} transition strength for team {team!r}')
         cname = cell_name(cell)
-        key = transition_key(event, row)
         ratio = self.ratios[side][team].get(cname, {}).get(key)
         if ratio is None:
             self.fallbacks[(side, team, cname, key)] += 1
