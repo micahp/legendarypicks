@@ -1,32 +1,28 @@
-# SLC-v2 three-arm comparison: output and grading
+# SLC-v2 three-arm comparison: Week 9 grading update
 
-Run date: 2026-11-10. This archive records the completed paired comparison of Default V2, C, and D1.
+Grading update date: 2026-11-10. The original grading attempt used the fast-host local database, which had no final Week 9 scores. This update uses the completed Week 9 scores returned by Legendary Picks at the source URL recorded in live-score-mapping.json. The exact API payload is preserved in live-schedule-week9.json.
 
-## Run and output summary
+## Observed scores used
 
-- All three arms completed 1,000 requested seeds over ARI–SEA (334), DAL–IND (333), and DEN–CAR (333).
-- The run used `--slc-profile v1_full_stack --slc-v2` with RNG-v2. The manifest pins each snapshot and model input hash.
-- The output renderer produced one report and its CSV/JSON summaries for each of the nine arm/matchup combinations under `worker-reports/`.
-- The compressed worker JSON, seed ledgers, box-score exports, and logs are archived under `worker-artifacts/`. Their gzip hashes match the run manifest.
+| Game | Final score |
+| --- | --- |
+| ARI at SEA | 3–17 |
+| DAL at IND | 27–23 |
+| DEN at CAR | 21–26 |
 
-| Arm | ARI–SEA | DAL–IND | DEN–CAR | Total |
-| --- | --- | --- | --- | ---: |
-| Default V2 | 334 success, 0 error | 333 success, 0 error | 332 success, 1 error | 1,000 |
-| C | 334 success, 0 error | 333 success, 0 error | 332 success, 1 error | 1,000 |
-| D1 | 334 success, 0 error | 333 success, 0 error | 332 success, 1 error | 1,000 |
+The scoring script is score_season_batches.py, run with --weeks 9-9 --season 2026 --seed-rule valid_full_game. It received a temporary SQLite table built only from the three completed API results. The persistent simulator database was not changed.
 
-Each arm has one simulation error at seed 300786 in DEN–CAR. The full arm-specific failure records are in `failure-records/`. All three have the same blocked-kick `ILLEGAL_STATE` assertion; the Default V2 record is also included in the earlier failure-evidence archive.
+The arms contain the same requested seed IDs (1,000 per arm across three games), including one failed seed per arm in DEN–CAR. The scorer excludes invalid games through the valid_full_game rule and uses all valid seeds for each game. See the two grader JSON files for paired metrics and the advance-rule verdicts.
 
-## Outcome grading
+The first attempt is preserved under initial-local-db-check/; it is NOT SCORED because that local DB had no final Week 9 scores.
 
-`score_season_batches.py` was run for Week 9 with `valid_full_game` seeds, comparing Default V2 against C and D1. The grader returned **NOT SCORED** for both comparisons: the local grading database has no final scores for any Week 9 game in `nfl_schedule` (`results_in_weeks: 0`). It excluded all three matchups. This is missing observed-score input, not a model pass or fail.
+## Grading results
 
-- `default-v2-vs-C.json`
-- `default-v2-vs-D1.json`
+Each arm requested 1,000 seeds. Seed 300786 failed in DEN–CAR in all three arms, so the scorer used 999 valid full games per arm across the three matchups.
 
-## Reproduction and provenance
+| Comparison | Candidate Brier (default) | Candidate log loss (default) | Paired Brier difference (95% CI) | Paired log-loss difference (95% CI) | Advance rule |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Default V2 vs C | 0.17793 vs 0.19430 | 0.54415 vs 0.57764 | −0.01637 [−0.05379, +0.01229] | −0.03349 [−0.10773, +0.02489] | Fail |
+| Default V2 vs D1 | 0.19865 vs 0.19430 | 0.58641 vs 0.57764 | +0.00435 [0.00000, +0.01306] | +0.00877 [0.00000, +0.02632] | Fail |
 
-- The exact run manifest and launcher are in `provenance/runner-manifest.json` and `provenance/run_three_way.py`.
-- The run source commit was `8a5d809ffaec720b3d7b8ddb487f33c55e5d0d0e`. The original run tree had local edits to the batch runner and its test; the exact patch is retained in `provenance/source-local-diff.patch`.
-- The renderer and grader were `scripts/nfl_sequence/render_slc_run_report.py` and `scripts/nfl_sequence/score_season_batches.py` from that source checkout. The Week 9 grading command used `--weeks 9-9 --season 2026`; the scorer defaulted to `valid_full_game`.
-- `SHA256SUMS` covers all files in this archive except itself.
+C is directionally better than Default V2 on this three-game sample, but both paired intervals include zero. D1 is slightly worse on both mean metrics. Neither comparison passes the stated advance rule. Treat these as a small prospective comparison, not a release decision.

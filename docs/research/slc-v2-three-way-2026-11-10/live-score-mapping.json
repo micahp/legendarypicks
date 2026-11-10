@@ -1,0 +1,43 @@
+{
+  "source_url": "https://legendarypicks.xyz/api/nfl/schedule-week?season=2026&season_type=2&week=9",
+  "retrieved_at_utc": "2026-11-10T07:44:28.722215+00:00",
+  "api_payload_sha256": "0e2e990c85f4b1506ea082b70aee532a0095628e8319dc6fba624c7643830017",
+  "matches": [
+    {
+      "simulation_game_id": "2026_09_ARI_SEA",
+      "api_game_id": "401873048",
+      "week": 9,
+      "away_team": "ARI",
+      "away_score": 3,
+      "home_team": "SEA",
+      "home_score": 17,
+      "status": "Final",
+      "completed": true,
+      "date_utc": "2026-11-08T21:25Z"
+    },
+    {
+      "simulation_game_id": "2026_09_DAL_IND",
+      "api_game_id": "401873040",
+      "week": 9,
+      "away_team": "DAL",
+      "away_score": 27,
+      "home_team": "IND",
+      "home_score": 23,
+      "status": "Final",
+      "completed": true,
+      "date_utc": "2026-11-08T18:00Z"
+    },
+    {
+      "simulation_game_id": "2026_09_DEN_CAR",
+      "api_game_id": "401873041",
+      "week": 9,
+      "away_team": "DEN",
+      "away_score": 26,
+      "home_team": "CAR",
+      "home_score": 21,
+      "status": "Final",
+      "completed": true,
+      "date_utc": "2026-11-08T18:00Z"
+    }
+  ]
+}

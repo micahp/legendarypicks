@@ -1,9 +1,13 @@
-90443db9a8cc2637c639836f3e60901699856afafa33f373ebb03d45391eee35  ./README.md
-7b9000a9dae6a1a877522cbaffb56e135e17a93ca1c26cb5a78db5ab2ec0ef84  ./default-v2-vs-C.json
-7b9000a9dae6a1a877522cbaffb56e135e17a93ca1c26cb5a78db5ab2ec0ef84  ./default-v2-vs-D1.json
+2b3e7abbb60e8281fdefcd4214307c3e11bf64304720e3545aff8369193489f1  ./README.md
+ac1eb5222d9681b7957098bae674b84a547efdc3f4f7ce8d31906521f5a662ef  ./default-v2-vs-C.json
+d843d2aeb059bc9d41882a841d7d06fc2ec06eecbec45bb34d1fd9d0d753a85a  ./default-v2-vs-D1.json
 22c265992382f56cc1f8d082c681c7d2ec1193d3242ed75560d6bf35e33e1961  ./failure-records/c-seed-300786.json.gz
 533052f88d6ec14c6b03eb814f761f6274d50cb8c2d425e62ef86d66ddf1ed4b  ./failure-records/d1-seed-300786.json.gz
 6e7531d0e5e828f7a43348142056423be66a4cb61f26b437cd8a6702d54e765c  ./failure-records/default_v2-seed-300786.json.gz
+7b9000a9dae6a1a877522cbaffb56e135e17a93ca1c26cb5a78db5ab2ec0ef84  ./initial-local-db-check/default-v2-vs-C.json
+7b9000a9dae6a1a877522cbaffb56e135e17a93ca1c26cb5a78db5ab2ec0ef84  ./initial-local-db-check/default-v2-vs-D1.json
+0e2e990c85f4b1506ea082b70aee532a0095628e8319dc6fba624c7643830017  ./live-schedule-week9.json
+65b6f9d7449e79e5724d5f559ec3dbb9e7bbd6a56e0196e09abbdd89b4351cac  ./live-score-mapping.json
 23cadd11a4e8e2fa97202c49dc96b7e5f59971d94b0222a085c74c4392e0331b  ./provenance/run_three_way.py
 9e61002f91d73f5b2af1806f44578ab7d2d3c9c894fd659214fad4a2bf125dd0  ./provenance/runner-manifest.json
 371d253eec2b4fbb0a554cc8338727d6b895ef28ec3bea0e8d8e83b2ec568f94  ./provenance/source-local-diff.patch
