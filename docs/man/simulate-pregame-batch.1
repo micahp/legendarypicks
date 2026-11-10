@@ -1,0 +1,328 @@
+.TH SIMULATE-PREGAME-BATCH 1 "November 2026" "Legendary Picks" "User Commands"
+.SH NAME
+simulate-pregame-batch \- run reproducible NFL full-game simulations
+.SH SYNOPSIS
+.B python3 scripts/nfl_sequence/simulate_pregame_batch.py
+.RI [ options ]
+.SH DESCRIPTION
+Runs a batch of NFL game simulations from a frozen pregame snapshot and pinned model inputs. The output reports score
+and win distributions and retains a result for each requested seed. Forecast score distributions use valid, untied,
+complete games. The output also records invalid and incomplete seeds and their reasons.
+.PP
+Supply either a published schedule game and a timezone-qualified cutoff, or a hash-pinned snapshot file. A normal
+SLC-v2 run also needs its season snap-count input and SHA-256. The
+.B --slc-v2
+flag enables the SLC-v2 model layers; it does not select an older SLC version.
+.PP
+Box-score sidecars and ordered play rows are both enabled by default. Play rows are stored in the box-score sidecar,
+with before/after game state and play outcomes. This can use substantial disk space for large runs. Use the explicit
+.B --no-export-plays
+option to omit ordered plays. Use
+.B --no-export-boxscores
+with
+.B --no-export-plays
+to omit both outputs.
+.PP
+Resume reuses saved seeds. It refuses to rerun a completed seed when the saved result lacks an export requested by the
+current command. Disable the missing export or choose a new output path to run a new simulation.
+.SH OUTPUTS
+.TP
+.B --out FILE
+Required. Main batch JSON output. The seed ledger is stored beside it with the ".seeds.jsonl" suffix. The default
+box-score sidecar uses the ".boxscores.jsonl" suffix.
+.TP
+.B Box-score sidecar
+One versioned per-seed box score per game, plus a manifest row. By default, each game row also contains a realism block
+with ordered play rows and the lineup summary when the participation model ran.
+.TP
+.B Seed ledger
+One row per seed, including status, result, and player totals. A resume must use the same pinned input identities.
+.SH OPTIONS
+.TP
+.B -h, --help
+Show all command-line options and exit.
+.SS Game and snapshot inputs
+.TP
+.BI \-\-game-id " ID"
+Published nfl_schedule game ID. Required unless --snapshot-file is used.
+.TP
+.BI \-\-as-of " TIME"
+Timezone-qualified ISO-8601 information cutoff. Required unless --snapshot-file is used.
+.TP
+.BI \-\-kickoff-utc " TIME"
+Explicit kickoff time in UTC when schedule data does not provide the needed value.
+.TP
+.BI \-\-kickoff-source-url " URL"
+Source URL supporting an explicit kickoff time.
+.TP
+.B --allow-unverified-current-schedule-exploratory
+Allow use of the current schedule row when a cutoff-versioned row is unavailable. The run is marked exploratory and
+retains the row's actual ingestion time.
+.TP
+.BI \-\-snapshot-file " FILE"
+Hash-pinned pregame snapshot JSON, or a game payload containing one. Replaces schedule lookup inputs.
+.TP
+.BI \-\-db " FILE"
+SQLite database path. Opened read-only. Default: the simulator's configured NFL database.
+.TP
+.BI \-\-roster-snapshot " FILE"
+Optional pinned full-depth roster JSON with starter flags and jersey numbers.
+.TP
+.BI \-\-roster-provenance " FILE"
+Source and checksum manifest for --roster-snapshot.
+.TP
+.BI \-\-availability-store " DIR"
+Use the newest availability snapshot frozen by --as-of. Requires --roster-snapshot.
+.TP
+.BI \-\-availability-snapshot " FILE"
+Use this availability snapshot instead of selecting one from --availability-store. Requires --roster-snapshot and
+roster provenance.
+.TP
+.BI \-\-news-evidence-dir " DIR"
+Read captured RotoWire evidence bound to the frozen snapshot. Evidence does not change roster, availability, or workload
+inputs. Incompatible with --availability-store and --availability-snapshot.
+.TP
+.BI \-\-game-info-snapshot " FILE"
+Attach frozen venue, kickoff, forecast, referee, and broadcast context. The model does not read this context.
+.SS Model and research configuration
+.TP
+.BI \-\-slc-profile " PROFILE"
+Named layer configuration: custom, s0, or v1_full_stack. Default: custom. Custom preserves manual feature flags.
+.TP
+.B --slc-v2
+Enable the SLC-v2 configuration on v1_full_stack, including V1.5 season adaptation, V2 layers, and RNG protocol v2.
+Requires --participation-snap-counts and its SHA-256. Explicit input tables replace pinned defaults.
+.TP
+.BI \-\-slc-disable-layer " NAME"
+Disable one optional SLC layer. Repeat to disable multiple layers.
+.TP
+.BI \-\-playcall-artifact " FILE"
+Frozen SLC play-call artifact. Its source pool is restricted to seasons before the game season.
+.TP
+.B --playcall-season-adapt
+Blend cutoff-safe current-season team outcomes into team splits. Requires --playcall-team-outcomes.
+.TP
+.BI \-\-season-adapt-n0 " N"
+Historical prior weight for season adaptation. Default: 4.
+.TP
+.B --playcall-team-outcomes
+Reweight sampled outcome classes using team offense and defense splits within the selected play-call intent.
+.TP
+.B --playcall-point-splits
+Use prior-season team score-state shifts to adjust dropback rate.
+.TP
+.BI \-\-playcall-point-splits-cache " FILE"
+Use this frame cache for point splits instead of rebuilding it from the database.
+.TP
+.B --playcall-streak-splits
+Use prior-season team win/loss streak splits. Requires --playcall-streak-file.
+.TP
+.B --playcall-streak-league
+Use league-wide streak splits for dropback rate and outcome mix.
+.TP
+.BI \-\-playcall-streak-file " FILE"
+Verified team win/loss streak records in the wl-streaks JSON format.
+.TP
+.BI \-\-playcall-streak-cache " FILE"
+Frame cache for streak splits.
+.TP
+.B --playcall-target-roles
+Use team-by-situation target-role priors before selecting the play outcome.
+.TP
+.B --playcall-playbook
+Use team playbook priors for pass depth, pass location, and run gap. Requires --playcall-decision.
+.TP
+.B --playcall-dirichlet-shares
+Use prior-season per-game Dirichlet player target and carry shares. Implies --playcall-player-shares.
+.TP
+.B --playcall-player-shares
+Draw pre-event receivers and carriers using prior-season player shares.
+.TP
+.B --playcall-player-outcomes
+Condition QB, receiver, and rusher outcomes on the selected player.
+.TP
+.B --playcall-player-outcomes-receiver-only
+Condition player outcome draws on the receiver only. Requires --playcall-player-outcomes.
+.TP
+.B --playcall-qb-decisions
+Use QB-specific target-role and scramble decisions from prior seasons.
+.TP
+.B --playcall-qb-run-role-style
+Adjust QB run-role selection using the named QB's prior non-scramble run tendency. Requires --playcall-qb-decisions.
+.TP
+.B --playcall-decision
+Use decision categories A through N as pre-event draws and condition outcomes on them.
+.TP
+.B --playcall-decision-unfiltered
+With --playcall-decision, apply outcome lifts but draw the row from the whole situation cell.
+.TP
+.B --playcall-coverage
+Condition dropback outcomes on prior-season defensive coverage shares.
+.TP
+.B --playcall-formation
+Use prior-season formation and personnel and condition outcomes on them. Requires --playcall-artifact.
+.TP
+.B --playcall-exact-yardline
+Inside the 20, draw outcomes from source plays at the exact yard line.
+.TP
+.B --playcall-pbv1-package FILE
+Use the PBV1 RB-only package sampler for personnel labels. Off by default.
+.TP
+.BI \-\-participation-field " FILE"
+Use the skill-position lineup transition model. Requires its SHA-256 and RNG protocol v2. Incompatible with
+--playcall-pbv1-package.
+.TP
+.BI \-\-participation-field-sha256 " SHA256"
+Expected SHA-256 of --participation-field.
+.TP
+.BI \-\-participation-snap-counts " FILE"
+Cutoff-safe current-season snap-count update for the lineup table. Requires --participation-field and its own SHA-256.
+.TP
+.BI \-\-participation-snap-counts-sha256 " SHA256"
+Expected SHA-256 of --participation-snap-counts.
+.TP
+.BI \-\-playcall-fg-kicker " FILE"
+Kicker-specific field-goal model table. Requires its SHA-256, --playcall-artifact, and the
+long_field_goal_feasibility blocker fix.
+.TP
+.BI \-\-playcall-fg-kicker-sha256 " SHA256"
+Expected SHA-256 of --playcall-fg-kicker.
+.TP
+.B --experimental-workload-estimator {C,D1}
+Select the historical-share C control or adaptive-share D1 workload estimator. D1 is the preferred research estimator.
+.TP
+.BI \-\-workload-adaptive-input " FILE"
+Frozen workload adaptation input for D1.
+.TP
+.BI \-\-workload-adaptive-sha256 " SHA256"
+Expected SHA-256 for --workload-adaptive-input. Required with that input.
+.TP
+.BI \-\-workload-concentrations " FILE"
+Experimental fitted workload concentrations.
+.SS Simulation size, seeds, and execution
+.TP
+.BI \-\-games " N"
+Number of seeds to run. Default: 10000.
+.TP
+.BI \-\-seed-start " N"
+First seed ID for a contiguous run. Default: 1.
+.TP
+.BI \-\-seed-list-file " FILE"
+JSON object with a seeds array. Runs exactly those unique, non-negative seed IDs.
+.TP
+.B --resume
+Resume the seed ledger beside --out. Refuses changed input identities and refuses to rerun completed seeds whose saved
+records lack requested box-score or play exports.
+.TP
+.BI \-\-progress-every " N"
+Print progress every N games. Default: 1000. Set to 0 to disable.
+.TP
+.BI \-\-max-simulation-errors " N"
+Stop once errors exceed N. Default: 0, which stops on the first simulation error. Finished seeds remain in the ledger.
+.TP
+.BI \-\-rng-protocol " {v1,v2}"
+Random stream protocol. SLC uses v2 by default; without SLC the default is v1. Explicit v1 replays legacy draws.
+.TP
+.B --paired-randomness
+Isolate random draws by game snapshot, drive, play, and semantic event for matched-seed experiments.
+.TP
+.BI \-\-expected-stream-root-sha256 " SHA256"
+Require this baseline v2 stream root before running seeds. Required for sack ablation.
+.SS Blocker and scoring controls
+.TP
+.BI \-\-slc-blocker-fix " FIX"
+Enable one blocker fix; repeat to select several. Choices: run_scramble_backoff, long_field_goal_feasibility,
+blocked_kick_source_audit, blocked_kick_geometry, safety_free_kick_boundaries. With a play-call artifact, all are on by
+default. Use --no-slc-blocker-fixes to disable them.
+.TP
+.B --no-slc-blocker-fixes
+Disable ordinary blocker fixes.
+.TP
+.BI \-\-slc-fg-ordinary-cutoff " YARDS"
+Maximum ordinary field-goal decision distance when long_field_goal_feasibility is enabled. Default: 60.
+.TP
+.B --ablation-restore-sack-mass
+Paired ablation that substitutes sacks for incomplete passes at the observed cell rate. Requires RNG v2 and
+--expected-stream-root-sha256.
+.TP
+.B --try-policy {unconditional,k1}
+Try-policy setting. Default: unconditional.
+.TP
+.B --no-safety-table
+Disable observed safety free kicks and retain the old safety blocker.
+.SS Historical and context controls
+.TP
+.B --historical-archive-reconstruction
+Admit pinned historical inputs as retrospective. Does not relax prospective capture checks.
+.TP
+.BI \-\-readiness-matrix " FILE"
+Per-game readiness matrix required for historical archive reconstruction.
+.TP
+.BI \-\-archive-manifest " FILE"
+Dated source release hashes and publication times required for historical reconstruction.
+.TP
+.BI \-\-archive-root " DIR"
+Archived source files. Each is rehashed against both archive manifests.
+.TP
+.BI \-\-historical-streak-file " FILE"
+Optional explicit path for the archive-reconstructed pregame streak file.
+.TP
+.B --context-mode {unconditioned,cutoff_unconditioned,offense,defense,both}
+Contextual source-pool mode. Default: unconditioned. Offense/defense modes are research ablations.
+.TP
+.BI \-\-context-bandwidth " N"
+Gaussian kernel bandwidth in source team-rating standard deviations. Default: 1.
+.TP
+.BI \-\-context-min-source-games " N"
+Minimum effective source games for a sampled contextual pool cell. Default: 10.
+.TP
+.B --team-tendency
+Drive policy from prior-season team tendencies. Requires --context-mode cutoff_unconditioned.
+.TP
+.BI \-\-home-market-margin " POINTS"
+Optional expected-margin line for the home team. Positive means the home team is favored.
+.TP
+.BI \-\-market-total " POINTS"
+Optional over/under total line.
+.SS Output and run registration
+.TP
+.BI \-\-out " FILE"
+Required output JSON path.
+.TP
+.B --export-boxscores
+Write per-seed box-score sidecar and valid-game distributions. Default: on.
+.TP
+.B --no-export-boxscores
+Disable the box-score sidecar. Also requires --no-export-plays.
+.TP
+.B --export-plays
+Include ordered realized play rows, before/after states, outcomes, and lineup summary in each box-score row. Default: on.
+.TP
+.B --no-export-plays
+Omit ordered play rows from box-score rows.
+.TP
+.BI \-\-register-dir " DIR"
+Register the run read-only in this store and append its index line.
+.TP
+.BI \-\-paired-layer-baseline-ledger " FILE"
+Verified v2 control ledger for one disabled-layer paired ablation.
+.TP
+.BI \-\-paired-workload-baseline-ledger " FILE"
+Control ledger for a paired workload-only experiment.
+.TP
+.BI \-\-paired-lineup-baseline-ledger " FILE"
+Control ledger for a paired snap-count lineup experiment.
+.SH EXAMPLES
+Run 10,000 SLC-v2 seeds from a frozen game snapshot and retain box scores with all play rows:
+.PP
+.nf
+python3 scripts/nfl_sequence/simulate_pregame_batch.py \
+  --snapshot-file game-snapshot.json \
+  --playcall-artifact playcall-model.json \
+  --slc-profile v1_full_stack --slc-v2 \
+  --participation-snap-counts snap-counts.json \
+  --participation-snap-counts-sha256 SHA256 \
+  --games 10000 --seed-start 1 --out tonight.json
+.fi
+.SH SEE ALSO
+.BR simulate_pregame_batch.py --help

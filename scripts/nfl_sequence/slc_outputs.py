@@ -7,7 +7,7 @@ import football_assertions
 import game_stats
 
 
-BOX_SCHEMA = 'lp-nfl-slc-boxscore-5'
+BOX_SCHEMA = 'lp-nfl-slc-boxscore-6'
 PERIODS = ('Q1', 'Q2', 'Q3', 'Q4', 'OT')
 TEAM_FIELDS = {
     'points': 'points', 'touchdowns': 'touchdowns', 'offensive_touchdowns': 'offensive_touchdowns',
@@ -28,6 +28,7 @@ TEAM_FIELDS = {
     'first_downs': 'first_downs', 'first_downs_run': 'first_downs_run',
     'first_downs_pass': 'first_downs_pass', 'first_downs_penalty': 'first_downs_penalty',
     'first_downs_other': 'first_downs_other',
+    'drives_with_first_down': 'drives_with_first_down',
     'down_1_plays': 'down_1_plays', 'down_1_successful_plays': 'down_1_successful_plays',
     'down_2_plays': 'down_2_plays', 'down_2_successful_plays': 'down_2_successful_plays',
     'down_3_plays': 'down_3_plays', 'down_3_successful_plays': 'down_3_successful_plays',
@@ -482,7 +483,7 @@ def play_rows(record):
 
 
 def realism_export(outcome, record):
-    """The opt-in realism block of a box-score line (--export-plays). `plays` is every realized play with the state before it.
+    """The realism block of a box-score line (--export-plays, on by default). `plays` is every realized play with the state before it.
     `lineup` is the V2 lineup summary in outcome['playcall'] (team snaps, player snaps, groups, short snaps, cell fallbacks),
     or None when the participation field did not run. Read-only: nothing here feeds back into the simulation."""
     return {'schema': REALISM_SCHEMA, 'flag': '--export-plays', 'plays': play_rows(record),
@@ -648,13 +649,17 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
                     'lineup_semantics': 'Skill-position lineup appearances only; production is selected independently.'},
         'reconciliation': None,
         'clock_reconciliation': game_stats.clock_reconciliation(record or {}),
+        'play_metric_coverage': game_stats.play_metric_coverage((record or {}).get('drives') or []),
         'points_by_period': quarterly['points_by_team'],
         'quarter_scoring_complete': quarterly['scoring_complete'],
         'quarter_by_quarter': quarterly,
         'teams': teams,
         'players': [_with_snaps(actual[key], team_stats, lineup_by_team) for key in sorted(actual)],
     }
-    boxscore['reconciliation'] = reconcile_boxscore(boxscore, strict=False)
+    require_play_metrics = bool((profile_manifest.get('output_contract') or {}).get(
+        'require_play_metrics'))
+    boxscore['reconciliation'] = reconcile_boxscore(
+        boxscore, strict=require_play_metrics and bool((record or {}).get('valid_full_game')))
     # The serialized score comes from the game's points ledger; keep the
     # independently computed team line in agreement before this becomes a
     # per-seed box score.
@@ -688,6 +693,16 @@ def _box_status(outcome):
 
 
 def reconcile_boxscore(boxscore, *, strict):
+    required_counts = (
+        'first_downs', 'first_downs_run', 'first_downs_pass', 'first_downs_penalty', 'first_downs_other',
+        'down_1_plays', 'down_1_successful_plays', 'down_2_plays', 'down_2_successful_plays',
+        'down_3_plays', 'down_3_successful_plays', 'down_4_plays', 'down_4_successful_plays',
+        'third_down_attempts', 'third_down_conversions', 'fourth_down_attempts', 'fourth_down_conversions',
+        'drives_without_first_down', 'drives_with_first_down', 'three_and_outs', 'turnover_drives',
+        'scoring_drives', 'offense_points', 'possession_seconds', 'drive_window_seconds',
+    )
+    clock = boxscore.get('clock_reconciliation') or {}
+    coverage = boxscore.get('play_metric_coverage') or {}
     results = []
     for team in boxscore['teams']:
         side, team_stats = team['side'], team['stats']
@@ -740,6 +755,80 @@ def reconcile_boxscore(boxscore, *, strict):
                 'receptions': sums['receptions'], 'targets': sums['targets']}
         if sums['receptions'] != team_stats['completions']:
             mismatches['receptions'] = {'players': sums['receptions'], 'team': team_stats['completions']}
+        if strict:
+            missing = [field for field in required_counts
+                       if field not in team_stats or team_stats.get(field) is None]
+            if missing:
+                mismatches['required_play_metrics_missing'] = missing
+            if coverage.get('status') != 'complete':
+                mismatches['play_metric_coverage'] = coverage
+            if clock.get('status') != 'reconciled':
+                mismatches['clock_reconciliation'] = clock
+            components = sum(team_stats.get(f'first_downs_{kind}', 0) or 0
+                             for kind in ('run', 'pass', 'penalty', 'other'))
+            if components != team_stats.get('first_downs'):
+                mismatches['first_down_components'] = {
+                    'components': components, 'first_downs': team_stats.get('first_downs')}
+            for down in (1, 2, 3, 4):
+                attempts = team_stats.get(f'down_{down}_plays', 0) or 0
+                successful = team_stats.get(f'down_{down}_successful_plays', 0) or 0
+                if successful > attempts:
+                    mismatches[f'down_{down}_success_count'] = {
+                        'successful': successful, 'plays': attempts}
+            down_play_count = sum(team_stats.get(f'down_{down}_plays', 0) or 0 for down in (1, 2, 3, 4))
+            if down_play_count != team_stats['plays']:
+                mismatches['down_play_count'] = {
+                    'by_down': down_play_count, 'scrimmage_plays': team_stats['plays']}
+            for down, label in ((3, 'third'), (4, 'fourth')):
+                attempts = team_stats.get(f'{label}_down_attempts', 0) or 0
+                conversions = team_stats.get(f'{label}_down_conversions', 0) or 0
+                if attempts != team_stats.get(f'down_{down}_plays', 0):
+                    mismatches[f'{label}_down_attempt_count'] = {
+                        'attempts': attempts, 'down_plays': team_stats.get(f'down_{down}_plays', 0)}
+                if conversions > attempts:
+                    mismatches[f'{label}_down_conversions'] = {
+                        'conversions': conversions, 'attempts': attempts}
+            if (team_stats.get('drives_with_first_down', 0)
+                    + team_stats.get('drives_without_first_down', 0) != team_stats['drives']):
+                mismatches['drive_first_down_counts'] = {
+                    'with_first_down': team_stats.get('drives_with_first_down'),
+                    'without_first_down': team_stats.get('drives_without_first_down'),
+                    'drives': team_stats['drives']}
+            if team_stats.get('three_and_outs', 0) > team_stats.get('drives_without_first_down', 0):
+                mismatches['three_and_outs'] = {
+                    'three_and_outs': team_stats.get('three_and_outs'),
+                    'drives_without_first_down': team_stats.get('drives_without_first_down')}
+            for label, numerator, denominator, rate_field in (
+                    ('third_down_rate', 'third_down_conversions', 'third_down_attempts', 'third_down_conversion_rate'),
+                    ('fourth_down_rate', 'fourth_down_conversions', 'fourth_down_attempts', 'fourth_down_conversion_rate')):
+                expected = team_stats[numerator] / team_stats[denominator] if team_stats[denominator] else None
+                observed = team_stats.get(rate_field)
+                if expected is None:
+                    if observed is not None:
+                        mismatches[label] = {'expected': None, 'observed': observed}
+                elif observed is None or not math.isclose(float(observed), expected, rel_tol=1e-9, abs_tol=1e-9):
+                    mismatches[label] = {'expected': expected, 'observed': observed}
+            successful = sum(team_stats.get(f'down_{down}_successful_plays', 0) or 0
+                             for down in (1, 2, 3, 4))
+            expected_success_rate = successful / team_stats['plays'] if team_stats['plays'] else None
+            observed_success_rate = team_stats.get('offensive_success_rate')
+            if expected_success_rate is None:
+                if observed_success_rate is not None:
+                    mismatches['offensive_success_rate'] = {'expected': None, 'observed': observed_success_rate}
+            elif (observed_success_rate is None or not math.isclose(
+                    float(observed_success_rate), expected_success_rate, rel_tol=1e-9, abs_tol=1e-9)):
+                mismatches['offensive_success_rate'] = {
+                    'expected': expected_success_rate, 'observed': observed_success_rate}
+            for down in (1, 2, 3, 4):
+                attempts = team_stats[f'down_{down}_plays']
+                expected = team_stats[f'down_{down}_successful_plays'] / attempts if attempts else None
+                observed = team_stats.get(f'down_{down}_success_rate')
+                if expected is None:
+                    if observed is not None:
+                        mismatches[f'down_{down}_success_rate'] = {'expected': None, 'observed': observed}
+                elif observed is None or not math.isclose(
+                        float(observed), expected, rel_tol=1e-9, abs_tol=1e-9):
+                    mismatches[f'down_{down}_success_rate'] = {'expected': expected, 'observed': observed}
         # A passing touchdown is a passer credit on the same play that gives the
         # scorer a receiving touchdown. Count scorers once via rushing/receiving.
         player_offensive_tds = sum(p['rushing']['td'] + p['receiving']['td'] for p in players)

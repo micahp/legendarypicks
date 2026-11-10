@@ -149,6 +149,9 @@ def _reproduction_command(args, seed):
             command.extend(['--historical-streak-file', str(args.historical_streak_file)])
     if args.export_boxscores:
         command.append('--export-boxscores')
+    else:
+        command.append('--no-export-boxscores')
+    command.append('--export-plays' if args.export_plays else '--no-export-plays')
     if getattr(args, 'slc_v2', False):
         command.append('--slc-v2')
     for flag, sha in (('participation_field', 'participation_field_sha256'),
@@ -688,8 +691,11 @@ def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=Non
     cached = finished.get(seed)
     has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
     has_plays = has_boxscore and 'realism' in cached['outcome']['boxscore']
-    if (cached is not None and cached['outcome']['status'] not in ERROR_STATUSES
-            and (not export_boxscores or has_boxscore) and (not export_plays or has_plays)):
+    if cached is not None and cached['outcome']['status'] not in ERROR_STATUSES:
+        if export_boxscores and not has_boxscore:
+            raise ValueError(f'resume refused: completed seed {seed} has no saved box score; refusing to rerun it')
+        if export_plays and not has_plays:
+            raise ValueError(f'resume refused: completed seed {seed} has no saved play rows; refusing to rerun it')
         return cached['outcome'], cached['players']
     outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation,
                                            export_boxscores, paired_randomness, rng_plan=rng_plan,
@@ -1062,6 +1068,15 @@ def run_batch(args):
         'archive_validation': archive_validation,
     }
     profile_manifest = slc_config.build_manifest(resolved_profile, playcall_description, snapshot, input_provenance)
+    if args.slc_v2:
+        profile_manifest['output_contract'] = {
+            'require_play_metrics': True,
+            'required_metrics': [
+                'first_downs_run_pass_penalty_other', 'third_and_fourth_down_attempts_conversions',
+                'down_success', 'drives_with_and_without_first_down', 'three_and_outs',
+                'turnover_and_scoring_drives', 'possession_and_drive_clock',
+            ],
+        }
 
     baseline_files = {name: hashlib.sha256((REPO / name).read_bytes()).hexdigest() for name in V1_FILES}
     baseline_started = time.monotonic()
@@ -1148,6 +1163,24 @@ def run_batch(args):
     finished, ledger = _open_seed_ledger(ledger_path, ledger_header, args.resume,
                                          seed_end=seed_end_exclusive,
                                          allowed_seeds=set(seed_values) if seed_selection_manifest else None)
+    if args.resume:
+        missing_exports = []
+        for seed in seed_values:
+            cached = finished.get(seed)
+            if cached is None or cached.get('outcome', {}).get('status') in ERROR_STATUSES:
+                continue
+            saved_outcome = cached.get('outcome') or {}
+            saved_boxscore = saved_outcome.get('boxscore') or {}
+            if args.export_boxscores and not saved_outcome.get('boxscore'):
+                missing_exports.append((seed, 'box score'))
+            elif args.export_plays and 'realism' not in saved_boxscore:
+                missing_exports.append((seed, 'play rows'))
+        if missing_exports:
+            examples = ', '.join(f'{seed} ({artifact})' for seed, artifact in missing_exports[:8])
+            raise ValueError(
+                f'resume refused: {len(missing_exports)} completed seeds lack requested exports: {examples}. '
+                'Completed seeds will not be rerun. Use a new --out path for a new simulation, or disable '
+                'the missing export flags to reuse the saved ledger.')
     boxscore_handle = None
     exported_seed_ids = set()
     boxscore_path = Path(args.out).with_suffix('.boxscores.jsonl')
@@ -1480,10 +1513,12 @@ def main(argv=None):
                     help='write a versioned per-seed box-score JSONL sidecar and valid-game distributions (default on)')
     ap.add_argument('--no-export-boxscores', dest='export_boxscores', action='store_false',
                     help='do not write the box-score sidecar')
-    ap.add_argument('--export-plays', action='store_true',
+    ap.add_argument('--export-plays', dest='export_plays', action='store_true', default=True,
                     help='with --export-boxscores: add a realism block to each box-score line (schema lp-nfl-slc-realism-'
-                         'export-1): every realized play with the state before it, and the V2 lineup summary when '
-                         '--participation-field ran; the simulation itself is unchanged')
+                         'export-1): every realized play with before/after state and model outcome, plus the V2 lineup '
+                         'summary when --participation-field ran; default on')
+    ap.add_argument('--no-export-plays', dest='export_plays', action='store_false',
+                    help='omit ordered play rows from the box-score sidecar')
     ap.add_argument('--paired-randomness', action='store_true',
                     help='research evaluation mode: isolate random draws by game snapshot, drive, play and semantic event '
                          'so matched-seed ablations do not shift unrelated random streams')

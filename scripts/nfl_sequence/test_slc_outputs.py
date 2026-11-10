@@ -236,6 +236,17 @@ class BoxscoreSerialization(unittest.TestCase):
         self.assertEqual(len(box['players']), 5)
         self.assertIn('quarter_by_quarter', box)
 
+    def test_v2_output_contract_rejects_valid_game_without_play_metrics(self):
+        v2_profile = dict(PROFILE, output_contract={'require_play_metrics': True})
+        box = outputs.build_boxscore(
+            1, {'seed': 1, 'status': 'complete', 'valid_full_game': True},
+            game_record(), SNAPSHOT, v2_profile)
+        self.assertEqual(box['reconciliation']['status'], 'failed')
+        self.assertTrue(box['reconciliation']['strict'])
+        mismatches = box['reconciliation']['teams'][0]['mismatches']
+        self.assertIn('clock_reconciliation', mismatches)
+        self.assertIn('down_play_count', mismatches)
+
     def test_quarter_boxscore_attributes_cross_period_drive_stats_and_points(self):
         def play(event, quarter, yards, *, touchdown=False, rusher=None, passer=None, receiver=None):
             participants = {

@@ -182,7 +182,8 @@ def _compact_player(player):
 
 def _compact_boxscore(boxscore):
     keep = ('schema', 'seed', 'game_id', 'status', 'home_team', 'away_team',
-            'points_by_period', 'quarter_scoring_complete')
+            'points_by_period', 'quarter_scoring_complete', 'clock_reconciliation',
+            'play_metric_coverage')
     compact = {key: boxscore[key] for key in keep if key in boxscore}
     compact['teams'] = [
         {key: team[key] for key in ('team', 'team_code', 'home_away', 'stats') if key in team}

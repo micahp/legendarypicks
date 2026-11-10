@@ -1,6 +1,7 @@
 import sys
 import sqlite3
 import tempfile
+from io import StringIO
 import unittest
 from unittest.mock import patch
 from pathlib import Path
@@ -12,6 +13,36 @@ import simulate_pregame_batch as batch  # noqa: E402
 
 
 class BatchAggregation(unittest.TestCase):
+    def test_boxscores_and_play_rows_default_on_and_replay_flags_are_explicit(self):
+        import shlex
+        with tempfile.TemporaryDirectory() as tmp:
+            snapshot = Path(tmp) / 'snapshot.json'
+            snapshot.write_text('{}')
+            with patch.object(batch, 'run_batch') as run:
+                batch.main(['--snapshot-file', str(snapshot), '--out', 'out.json'])
+            args = run.call_args.args[0]
+            self.assertTrue(args.export_boxscores)
+            self.assertTrue(args.export_plays)
+            replay = shlex.split(batch._reproduction_command(args, 7))
+            self.assertIn('--export-boxscores', replay)
+            self.assertIn('--export-plays', replay)
+
+            with patch.object(batch, 'run_batch') as run:
+                batch.main(['--snapshot-file', str(snapshot), '--out', 'out.json',
+                            '--no-export-boxscores', '--no-export-plays'])
+            args = run.call_args.args[0]
+            self.assertFalse(args.export_boxscores)
+            self.assertFalse(args.export_plays)
+            replay = shlex.split(batch._reproduction_command(args, 7))
+            self.assertIn('--no-export-boxscores', replay)
+            self.assertIn('--no-export-plays', replay)
+
+    def test_resume_refuses_to_rerun_completed_seed_for_missing_play_export(self):
+        finished = {7: {'outcome': {'status': 'complete'}, 'players': []}}
+        with self.assertRaisesRegex(ValueError, 'completed seed 7 has no saved box score'):
+            batch._seed_outcome(7, finished, StringIO(), ref=None, profile_manifest={}, snapshot={},
+                                export_boxscores=True, export_plays=True)
+
     def test_slc_batch_defaults_to_ordinary_fixes_and_allows_opt_out(self):
         with tempfile.TemporaryDirectory() as tmp:
             snapshot, artifact = Path(tmp) / 'snapshot.json', Path(tmp) / 'artifact.json'
