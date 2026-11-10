@@ -1,6 +1,6 @@
 # SLC Run Review
 
-## C-DEN_CAR.json
+## DEN_CAR
 
 Game: 2026_09_DEN_CAR
 Requested: 333 · Processed: 333 · Unreported: 0 · Boxscores: 333

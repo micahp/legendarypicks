@@ -1,6 +1,6 @@
 # SLC Run Review
 
-## C-DAL_IND.json
+## DAL_IND
 
 Game: 2026_09_DAL_IND
 Requested: 333 · Processed: 333 · Unreported: 0 · Boxscores: 333

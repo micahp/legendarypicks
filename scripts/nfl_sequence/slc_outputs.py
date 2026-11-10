@@ -7,12 +7,13 @@ import football_assertions
 import game_stats
 
 
-BOX_SCHEMA = 'lp-nfl-slc-boxscore-4'
+BOX_SCHEMA = 'lp-nfl-slc-boxscore-5'
 PERIODS = ('Q1', 'Q2', 'Q3', 'Q4', 'OT')
 TEAM_FIELDS = {
     'points': 'points', 'touchdowns': 'touchdowns', 'offensive_touchdowns': 'offensive_touchdowns',
     'observed_overtime_touchdowns': 'observed_overtime_touchdowns',
-    'drives': 'drives', 'drive_window_seconds': 'possession_seconds', 'plays': 'plays',
+    'drives': 'drives', 'drive_window_seconds': 'drive_window_seconds',
+    'possession_seconds': 'possession_seconds', 'plays': 'plays',
     'other_fumble_scrimmage_plays': 'other_fumble_scrimmage_plays',
     'touchdown_points': 'touchdown_points', 'try_points': 'try_points',
     'safety_points': 'safety_points', 'other_score_points': 'other_score_points',
@@ -22,7 +23,27 @@ TEAM_FIELDS = {
     'targets': 'pass_tgt', 'sacks_taken': 'sacks_taken', 'sack_yards': 'sack_yds', 'punts': 'punts',
     'field_goal_attempts': 'fg_att', 'field_goals_made': 'fg_made', 'turnovers': 'turnovers',
     'fumbles_lost': 'fumbles_lost', 'turnovers_on_downs': 'turnovers_on_downs',
+    'offense_points': 'offense_points', 'scoring_drives': 'scoring_drives',
+    'turnover_drives': 'turnover_drives',
+    'first_downs': 'first_downs', 'first_downs_run': 'first_downs_run',
+    'first_downs_pass': 'first_downs_pass', 'first_downs_penalty': 'first_downs_penalty',
+    'first_downs_other': 'first_downs_other',
+    'down_1_plays': 'down_1_plays', 'down_1_successful_plays': 'down_1_successful_plays',
+    'down_2_plays': 'down_2_plays', 'down_2_successful_plays': 'down_2_successful_plays',
+    'down_3_plays': 'down_3_plays', 'down_3_successful_plays': 'down_3_successful_plays',
+    'down_4_plays': 'down_4_plays', 'down_4_successful_plays': 'down_4_successful_plays',
+    'third_down_attempts': 'down_3_attempts', 'third_down_conversions': 'down_3_conversions',
+    'fourth_down_attempts': 'down_4_attempts', 'fourth_down_conversions': 'down_4_conversions',
+    'drives_without_first_down': 'drives_without_first_down', 'three_and_outs': 'three_and_outs',
 }
+TEAM_RATE_FIELDS = (
+    'plays_per_drive', 'drive_window_seconds_per_drive', 'points_per_drive', 'scoring_drive_rate',
+    'completion_percentage', 'yards_per_attempt', 'sack_rate', 'turnovers_per_drive',
+    'turnover_drive_rate', 'turnovers_per_dropback', 'third_down_conversion_rate',
+    'fourth_down_conversion_rate', 'offensive_success_rate',
+    'down_1_success_rate', 'down_2_success_rate',
+    'down_3_success_rate', 'down_4_success_rate',
+)
 PLAYER_FIELDS = {
     'passing': ('att', 'comp', 'yds', 'td', 'int', 'sacked', 'sack_yds'),
     'rushing': ('att', 'yds', 'td'),
@@ -205,6 +226,21 @@ def _play_period_seconds(play, period):
     return max(0, min(end, period_end) - max(start, period_start))
 
 
+def _drive_period_seconds(drive, period):
+    """Split the elapsed drive window across periods using its recorded start/end clocks."""
+    start = _period_time(drive.get('quarter_start'), drive.get('clock_start'))
+    end = _period_time(drive.get('end_quarter'), drive.get('end_clock'))
+    try:
+        quarter_number = 5 if period == 'OT' else int(period[1:])
+    except (TypeError, ValueError):
+        return 0
+    if start is None or end is None or end < start:
+        return 0
+    period_start = (quarter_number - 1) * 900
+    period_end = 4200 if quarter_number == 5 else quarter_number * 900
+    return max(0, min(end, period_end) - max(start, period_start))
+
+
 def _quarter_by_quarter(record, snapshot):
     """Build period-level boxscore lines and drive summaries from the recorded plays."""
     import game_stats
@@ -220,7 +256,7 @@ def _quarter_by_quarter(record, snapshot):
     drive_summary = {team: {period: {
         'drives_started': 0, 'drives_ended': 0, 'scoring_drives': 0,
         'points_scored': 0, 'points_allowed': 0, 'plays': 0, 'net_yards': 0,
-        'turnovers': 0,
+        'turnovers': 0, 'drive_window_seconds': 0,
     } for period in PERIODS} for team in team_by_side.values()}
     player_stats = {period: {} for period in PERIODS}
     drive_summaries = []
@@ -300,6 +336,9 @@ def _quarter_by_quarter(record, snapshot):
             entry = drive_summary[offense_team][scoring_period]
             entry['scoring_drives'] += 1
             entry['points_scored' if scoring_team == offense_team else 'points_allowed'] += drive_points
+
+        for period in PERIODS:
+            drive_summary[offense_team][period]['drive_window_seconds'] += _drive_period_seconds(drive, period)
 
         if not plays and end_period:
             line = team_stats[offense_team][end_period]
@@ -389,15 +428,21 @@ def _quarter_by_quarter(record, snapshot):
             for field in ('touchdown_points', 'try_points', 'safety_points', 'other_score_points', 'score_ledger_points'):
                 line.pop(field, None)
             line['drives'] = drive_summary[team][period]['drives_started']
+            line['drive_window_seconds'] = drive_summary[team][period]['drive_window_seconds']
+            line['scoring_drives'] = drive_summary[team][period]['scoring_drives']
+            line['offense_points'] = drive_summary[team][period]['points_scored']
             line.setdefault('plays', 0)
-            line['possession_seconds'] = None
-            line['drive_window_seconds'] = None
+            line.setdefault('possession_seconds', 0)
             line.setdefault('recorded_play_clock_seconds', 0)
             # Period scoring belongs to the team that scored; drive offense and scoring team can differ on returns/safeties.
             line['points'] = points_by_team[team][period]
+            game_stats.derive_team_rates(line)
+            for field in ('plays_per_drive', 'drive_window_seconds_per_drive', 'points_per_drive',
+                          'scoring_drive_rate', 'turnovers_per_drive', 'turnover_drive_rate'):
+                line[field] = None  # Drive-level rates are not allocated to quarter fragments.
 
     return {
-        'schema': 'lp-nfl-slc-quarter-boxscore-2',
+        'schema': 'lp-nfl-slc-quarter-boxscore-3',
         'periods': list(PERIODS), 'complete': complete, 'scoring_complete': scoring_complete,
         'play_stats_complete_by_period': play_stats_complete_by_period,
         'play_stats_incomplete_reasons': play_stats_incomplete_reasons,
@@ -414,15 +459,25 @@ def _quarter_by_quarter(record, snapshot):
     }
 
 
-REALISM_SCHEMA = 'lp-nfl-slc-realism-export-1'
+REALISM_SCHEMA = 'lp-nfl-slc-realism-export-2'
 
 
 def play_rows(record):
-    """Each realized play in game order: its drive, sequence, event type, decision type, yards and the state before the play.
+    """Each realized play in game order, with both states and a first-down classification.
     The realism gate's situation metric reads these from the sidecar. Read-only: nothing here feeds back into the simulation."""
     return [{'drive': drive.get('index'), 'sequence': play.get('sequence'), 'event_type': play.get('event_type'),
              'decision_type': (play.get('decision') or {}).get('type'),
-             'yards_gained': (play.get('outcome') or {}).get('yards_gained'), 'state_before': play.get('state_before')}
+             'yards_gained': (play.get('outcome') or {}).get('yards_gained'),
+             'state_before': play.get('state_before'), 'state_after': play.get('state_after'),
+             'first_down_source': game_stats.first_down_result(play),
+             'third_down_attempt': (play.get('state_before') or {}).get('down') == 3
+                                   and play.get('event_type') in game_stats.SCRIMMAGE_EVENTS,
+             'third_down_conversion': (play.get('state_before') or {}).get('down') == 3
+                                      and game_stats.first_down_result(play) is not None,
+             'fourth_down_attempt': (play.get('state_before') or {}).get('down') == 4
+                                    and play.get('event_type') in game_stats.SCRIMMAGE_EVENTS,
+             'fourth_down_conversion': (play.get('state_before') or {}).get('down') == 4
+                                       and game_stats.first_down_result(play) is not None}
             for drive in (record or {}).get('drives', []) for play in drive.get('plays', [])]
 
 
@@ -469,6 +524,8 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
     for side, (home_away, team_code) in side_metadata.items():
         source = team_stats.get(side, {})
         values = {field: _int_or_zero(source.get(key)) for field, key in TEAM_FIELDS.items()}
+        values.update({field: source.get(field) for field in TEAM_RATE_FIELDS})
+        game_stats.derive_team_rates(values)
         if 'player_yardage_fallbacks' not in stats:
             for field in ('touchdown_points', 'try_points', 'safety_points', 'other_score_points', 'score_ledger_points', 'other_fumble_scrimmage_plays'):
                 values[field] = None  # Older records did not carry these components.
@@ -482,7 +539,8 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         if 'player_yardage_fallbacks' in stats:
             values['score_components_complete'] = all(values[field] is not None for field in
                 ('score_ledger_points', 'touchdown_points', 'try_points', 'safety_points', 'other_score_points'))
-        values['possession_seconds'] = _int_or_zero(source.get('possession_seconds')) if 'possession_seconds' in source else None
+        possession = source.get('possession_seconds')
+        values['possession_seconds'] = _int_or_zero(possession) if possession is not None else None
         values['drive_terminals'] = {}
         for drive in (record or {}).get('drives', []):
             if drive.get('offense_team') == side:
@@ -572,8 +630,11 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
         'player_yardage_fallbacks': stats.get('player_yardage_fallbacks'),
         'field_semantics': {
             'targets': 'Assigned receivers on pass attempts; throwaways and spikes are not modeled, so targets generally equal attempts.',
-            'possession_seconds': 'Game-clock seconds on this team\'s drives; kickoff time belongs to neither team. See clock_reconciliation.',
-            'drive_window_seconds': 'Elapsed time between drive start and end; not time of possession.',
+            'possession_seconds': 'Sum of recorded per-play game-clock intervals while this team had possession; reconciled separately with drive windows and kickoff clock time.',
+            'drive_window_seconds': 'Elapsed time from each drive start state to its end state; separately reported from summed per-play possession clock.',
+            'third_down_attempts': 'Scrimmage plays that began on third down; conversions require a same-possession transition to a new first down.',
+            'fourth_down_attempts': 'Scrimmage plays that began on fourth down; punts and field-goal attempts are excluded from go-for-it attempts.',
+            'offensive_success_rate': 'Down-based success: at least 40% of yards-to-go on first down, 60% on second, chains on third/fourth; touchdowns count as successful plays.',
             'sack_yards': 'Signed yards, normally negative.',
             'try_points': 'Touchdown drive ledger points above six, not a count of try attempts.',
             'other_score_points': 'Non-touchdown, non-safety score-ledger points, including field goals.',

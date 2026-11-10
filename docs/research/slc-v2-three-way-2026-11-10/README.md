@@ -26,3 +26,9 @@ Each arm requested 1,000 seeds. Seed 300786 failed in DEN–CAR in all three arm
 | Default V2 vs D1 | 0.19865 vs 0.19430 | 0.58641 vs 0.57764 | +0.00435 [0.00000, +0.01306] | +0.00877 [0.00000, +0.02632] | Fail |
 
 C is directionally better than Default V2 on this three-game sample, but both paired intervals include zero. D1 is slightly worse on both mean metrics. Neither comparison passes the stated advance rule. Treat these as a small prospective comparison, not a release decision.
+
+## Per-arm simulation reports
+
+The `worker-reports/` directory was regenerated from the checksummed compressed worker artifacts. Each report covers one arm and matchup. Team, player, and quarter CSVs include mean, median, and central 10th/90th percentile summaries.
+
+The archived boxscore artifacts use schema 4. Their `realism` block contains lineup summaries but no ordered play rows. They therefore cannot provide first-down sources, third- or fourth-down conversion counts, or a new play-clock reconciliation. The reported historical possession and drive-window totals remain the archived values. The updated simulator exporter can produce these play-derived metrics in future runs; this rerender does not reconstruct them for this run.
