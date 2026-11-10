@@ -13,6 +13,14 @@ QUARTER_LENGTH = 900
 OVERTIME_LENGTH = 600  # the same value as game_state.OVERTIME_LENGTH: one 10-minute period in the regular season
 ATTRIBUTION = 'sampled_observed_play'
 SCRIMMAGE_EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'interception', 'fumble_lost')
+TEAM_COUNT_FIELDS = (
+    'first_downs', 'first_downs_run', 'first_downs_pass', 'first_downs_penalty', 'first_downs_other',
+    'down_1_plays', 'down_1_successful_plays', 'down_2_plays', 'down_2_successful_plays',
+    'down_3_plays', 'down_3_successful_plays', 'down_4_plays', 'down_4_successful_plays',
+    'down_3_attempts', 'down_3_conversions', 'down_4_attempts', 'down_4_conversions',
+    'drives_without_first_down', 'drives_with_first_down', 'three_and_outs',
+    'turnover_drives', 'scoring_drives', 'offense_points',
+)
 
 
 def _elapsed(quarter, clock):
@@ -127,6 +135,29 @@ def clock_reconciliation(record):
             'play_clock_complete': not missing_play_clock}
 
 
+def play_metric_coverage(drives):
+    """Check that every scrimmage play has the state and gain fields needed for down metrics."""
+    scrimmage_plays = 0
+    missing = []
+    for drive in drives or []:
+        for index, play in enumerate(drive.get('plays') or [], 1):
+            if play.get('event_type') not in SCRIMMAGE_EVENTS:
+                continue
+            scrimmage_plays += 1
+            before = play.get('state_before') or {}
+            after = play.get('state_after') or {}
+            outcome = play.get('outcome') or {}
+            absent = ([f'state_before.{key}' for key in ('offense_team', 'down', 'yards_to_go') if key not in before]
+                      + [f'state_after.{key}' for key in ('offense_team', 'down') if key not in after]
+                      + (['outcome.yards_gained'] if 'yards_gained' not in outcome else []))
+            if absent:
+                missing.append({'drive': drive.get('index'), 'play': play.get('sequence', index),
+                                'fields': absent})
+    return {'status': 'complete' if not missing else 'incomplete',
+            'scrimmage_plays': scrimmage_plays, 'plays_with_missing_metric_fields': len(missing),
+            'examples': missing[:10]}
+
+
 def team_stats(drives, points):
     """Per-team counts and rates derived from recorded play states and drive outcomes."""
     teams = {}
@@ -234,6 +265,8 @@ def team_stats(drives, points):
             t['turnover_drives'] += 1
         if drive_first_downs == 0:
             t['drives_without_first_down'] += 1
+        else:
+            t['drives_with_first_down'] += 1
         if d.get('terminal') == 'punt' and drive_scrimmage_plays == 3 and drive_first_downs == 0:
             t['three_and_outs'] += 1
         scoring = d.get('points_scored_on_drive') or {}
@@ -279,6 +312,9 @@ def team_stats(drives, points):
     for name, complete in possession_clock_complete.items():
         if not complete:
             teams[name]['possession_seconds'] = None
+    for stats in teams.values():
+        for field in TEAM_COUNT_FIELDS:
+            stats.setdefault(field, 0)
     return {name: derive_team_rates(dict(sorted(t.items()))) for name, t in sorted(teams.items())}
 
 
@@ -425,6 +461,7 @@ def compute(drives, points):
             'possession_seconds': 'Sum of per-play game-clock intervals for this offense; separately reconciled against drive windows, kickoffs, and elapsed game time.',
             'drive_window_seconds': 'Sum of elapsed clock intervals from each drive start state to its end state.',
             'first_downs': 'Earned when the post-play state begins a new first down for the same offense; touchdowns are excluded. Penalty first downs are classified separately when modeled.',
+            'first_downs_run/pass/penalty/other': 'Source breakdowns of earned first downs; the components sum to first_downs.',
             'third_down_conversions': 'Third-down scrimmage plays followed by a new first down for the same offense; touchdowns are not counted as first downs.',
             'fourth_down_conversions': 'Fourth-down go-for-it scrimmage plays followed by a new first down for the same offense; punts and field goals are excluded.',
             'offensive_success_rate': 'A successful play gains at least 40% of yards-to-go on first down, 60% on second down, or earns a new first down on third/fourth; touchdowns count as successful plays.',
