@@ -3,6 +3,7 @@
 Date: 2026-11-10  
 Branch: `slc-v2`  
 Research integration: `f288679f`
+Week 9 kicker default fix: `a755592c`
 
 ## Paired SLC-v2 smoke run
 
@@ -36,6 +37,8 @@ All 10 failed seeds have preserved error records. Their box-score reconciliation
 The Week 1–8 snap-count file has SHA-256 `36f28e18af3080df9f160d42dd5e3e59c37cfacf0dd24772ea51cfd41cadcfca`. Its source files were downloaded at `2026-11-10T00:13:56Z`, after the forecast snapshot and roster-finalization point. The source publication time is unknown. Game-day player eligibility also remains unknown. Treat the paired smoke run as exploratory.
 
 The Week 9 kicker table is pinned at SHA-256 `4d21b4de6e0ccbced271cd2cd81ded42528a6ad928319fa6e2157f47bacd9caf`. The SLC-v2 default now uses this table, which includes the BUF and MIN Week 9 kicker assignments. The previous default lacked Week 9 assignments and stopped before simulation.
+
+After the default changed, a fresh `--slc-v2` run with no kicker-table override completed seed 100011: 1/1 valid game. This verifies that the default profile loads the Week 9 table.
 
 ## Fast-host artifacts
 
