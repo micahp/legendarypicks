@@ -4,6 +4,7 @@ import tarfile
 import tempfile
 import unittest
 import csv
+import gzip
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -327,7 +328,7 @@ class RunReport(unittest.TestCase):
             output = Path(temp) / 'legacy-report'
             report.write_report(result, output)
             with (output / 'quarter-scores.csv').open(encoding='utf-8', newline='') as handle:
-                self.assertEqual(next(csv.reader(handle)), ['team', 'period', 'mean', 'median', 'sample_n'])
+                self.assertEqual(next(csv.reader(handle)), ['team', 'period', 'mean', 'median', 'p10', 'p90', 'sample_n'])
 
     def test_reads_a_preexisting_week8_worker_archive(self):
         archive = (REPO / 'docs/research/slc-week8-player-workload-10k-2026-10-30'
@@ -356,6 +357,25 @@ class RunReport(unittest.TestCase):
                     archive.add(source / name, arcname=name)
 
             result = report.analyze_run(outputs)
+
+            self.assertEqual(result['requested_seed_count'], 4)
+            self.assertEqual(result['processed_seed_count'], 4)
+            self.assertEqual(result['status_counts']['blocked'], 1)
+
+    def test_run_directory_discovers_gzip_arm_artifacts(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / 'source'
+            source.mkdir()
+            make_run(source)
+            artifacts = root / 'worker-artifacts' / 'C' / 'ARI_SEA'
+            artifacts.mkdir(parents=True)
+            for suffix in ('.json', '.seeds.jsonl', '.boxscores.jsonl'):
+                raw = (source / f'worker-01{suffix}').read_bytes()
+                with gzip.open(artifacts / f'c-ARI_SEA-1-4{suffix}.gz', 'wb') as handle:
+                    handle.write(raw)
+
+            result = report.analyze_run(artifacts)
 
             self.assertEqual(result['requested_seed_count'], 4)
             self.assertEqual(result['processed_seed_count'], 4)

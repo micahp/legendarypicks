@@ -22,12 +22,61 @@ def _elapsed(quarter, clock):
     return (quarter - 1) * QUARTER_LENGTH + (QUARTER_LENGTH - clock)
 
 
-def clock_reconciliation(record):
-    """Check that possession plus kickoff time accounts for every elapsed game-clock second.
+def first_down_result(play):
+    """Return the earned first-down source from the play's recorded transition, or None.
 
-    Possession is the game-clock time of a team's drives. Kickoff time belongs to neither team. It is the clock the kickoff
-    used (clock_before minus clock_after), and not the sampled runoff, which can run past the end of a period. In regulation the two
-    must add up to the elapsed game clock exactly; the status is 'reconciled' or 'unreconciled', and never assumed."""
+    A first down requires the same offense to retain possession and the next state to
+    begin at down one. Touchdowns do not count as first downs. This intentionally uses
+    state_after rather than the next play, so the result remains available at drive ends.
+    """
+    before = play.get('state_before') or {}
+    after = play.get('state_after') or {}
+    outcome = play.get('outcome') or {}
+    if (before.get('offense_team') not in ('A', 'B')
+            or before.get('offense_team') != after.get('offense_team')
+            or after.get('down') != 1 or outcome.get('touchdown') or outcome.get('safety')):
+        return None
+    penalty = outcome.get('penalty')
+    if penalty:
+        return 'penalty'
+    event = play.get('event_type')
+    participants = play.get('participants') or {}
+    if event == 'run' or (event == 'fumble_lost' and participants.get('rusher_id')):
+        return 'run'
+    if event in ('pass_complete', 'pass_incomplete', 'interception', 'sack'):
+        return 'pass'
+    return 'other'
+
+
+def _is_successful_play(play):
+    """Conventional down-based success: 40% on first, 60% on second, chains on 3rd/4th.
+
+    A touchdown is successful on any down. Penalty-only events are excluded until
+    penalty enforcement is modeled as an explicit state transition.
+    """
+    before = play.get('state_before') or {}
+    outcome = play.get('outcome') or {}
+    if outcome.get('penalty'):
+        return False
+    if outcome.get('touchdown'):
+        return True
+    try:
+        down = int(before.get('down'))
+        to_go = max(0, int(before.get('yards_to_go')))
+        yards = int(outcome.get('yards_gained') or 0)
+    except (TypeError, ValueError):
+        return False
+    if down == 1:
+        return yards >= 0.4 * to_go
+    if down == 2:
+        return yards >= 0.6 * to_go
+    if down in (3, 4):
+        return first_down_result(play) is not None
+    return False
+
+
+def clock_reconciliation(record):
+    """Reconcile play-clock possession, drive windows, and kickoff time with elapsed game time."""
     drives = record.get('drives') or []
     if not drives:
         return {'status': 'unavailable', 'reason': 'record has no drives'}
@@ -35,7 +84,27 @@ def clock_reconciliation(record):
     missing = sorted({key for d in drives for key in needed if key not in d})
     if missing:
         return {'status': 'unavailable', 'reason': 'drive records lack ' + ', '.join(missing)}
-    possession = sum(_elapsed(d['end_quarter'], d['end_clock']) - _elapsed(d['quarter_start'], d['clock_start']) for d in drives)
+    drive_windows = sum(_elapsed(d['end_quarter'], d['end_clock']) -
+                        _elapsed(d['quarter_start'], d['clock_start']) for d in drives)
+    possession = 0
+    missing_play_clock = False
+    for drive in drives:
+        plays = drive.get('plays') or []
+        if not plays and _elapsed(drive['end_quarter'], drive['end_clock']) > _elapsed(
+                drive['quarter_start'], drive['clock_start']):
+            missing_play_clock = True
+        for play in plays:
+            before, after = play.get('state_before') or {}, play.get('state_after') or {}
+            if not all(key in before for key in ('quarter', 'clock_seconds')) or not all(
+                    key in after for key in ('quarter', 'clock_seconds')):
+                missing_play_clock = True
+                continue
+            seconds = _elapsed(after['quarter'], after['clock_seconds']) - _elapsed(
+                before['quarter'], before['clock_seconds'])
+            if seconds < 0:
+                missing_play_clock = True
+                continue
+            possession += seconds
     kickoffs = record.get('kickoffs') or []
     kickoff = sum(int(k['clock_before']) - int(k['clock_after']) for k in kickoffs)  # the clock the kickoff actually used
     sampled = sum(int(k.get('runoff_seconds') or 0) for k in kickoffs)
@@ -45,30 +114,72 @@ def clock_reconciliation(record):
     ends = [_elapsed(last['end_quarter'], last['end_clock'])] + [_elapsed(k['quarter'], k['clock_after']) for k in kickoffs]
     elapsed = max(ends)
     gap = elapsed - possession - kickoff
+    drive_gap = elapsed - drive_windows - kickoff
     regulation = elapsed <= 4 * QUARTER_LENGTH
-    return {'status': 'reconciled' if gap == 0 else 'unreconciled', 'regulation_only': regulation,
+    reconciled = gap == 0 and drive_gap == 0 and not missing_play_clock
+    return {'status': 'reconciled' if reconciled else 'unreconciled', 'regulation_only': regulation,
             'possession_seconds_total': possession, 'kickoff_seconds_total': kickoff,
+            'drive_window_seconds_total': drive_windows,
             'kickoff_sampled_runoff_seconds': sampled, 'kickoff_overrun_seconds': overrun,
-            'elapsed_game_clock_seconds': elapsed, 'unassigned_seconds': gap}
+            'elapsed_game_clock_seconds': elapsed, 'unassigned_seconds': gap,
+            'drive_window_unassigned_seconds': drive_gap,
+            'possession_matches_drive_windows': possession == drive_windows,
+            'play_clock_complete': not missing_play_clock}
 
 
 def team_stats(drives, points):
-    """Per-team lines: plays, rushing, passing, turnovers, punts, field goals, possession time and points."""
+    """Per-team counts and rates derived from recorded play states and drive outcomes."""
     teams = {}
+    possession_clock_complete = {}
 
     def team(name):
         return teams.setdefault(name, defaultdict(int))
 
     for d in drives:
         t = team(d['offense_team'])
+        possession_clock_complete.setdefault(d['offense_team'], True)
         fg_attempt_recorded = False
         fg_result_recorded = False
         t['drives'] += 1
         t['drive_terminal_' + str(d.get('terminal') or 'unknown')] += 1
         end = _elapsed(d['end_quarter'], d['end_clock'])
-        t['possession_seconds'] += end - _elapsed(d['quarter_start'], d['clock_start'])
+        t['drive_window_seconds'] += end - _elapsed(d['quarter_start'], d['clock_start'])
+        drive_first_downs = 0
+        drive_scrimmage_plays = 0
+        drive_turnovers = 0
         for play in d['plays']:
             ev, out, part = play['event_type'], play['outcome'], play['participants']
+            before = play.get('state_before') or {}
+            after = play.get('state_after') or {}
+            play_seconds = None
+            if (all(key in before for key in ('quarter', 'clock_seconds'))
+                    and all(key in after for key in ('quarter', 'clock_seconds'))):
+                try:
+                    play_seconds = _elapsed(after['quarter'], after['clock_seconds']) - _elapsed(
+                        before['quarter'], before['clock_seconds'])
+                except (TypeError, ValueError):
+                    pass
+            if play_seconds is not None and play_seconds >= 0:
+                t['possession_seconds'] += play_seconds
+            else:
+                possession_clock_complete[d['offense_team']] = False
+            if ev in SCRIMMAGE_EVENTS:
+                drive_scrimmage_plays += 1
+                try:
+                    down = int(before.get('down'))
+                except (TypeError, ValueError):
+                    down = None
+                if down in (1, 2, 3, 4):
+                    t[f'down_{down}_plays'] += 1
+                    t[f'down_{down}_successful_plays'] += int(_is_successful_play(play))
+                if down in (3, 4):
+                    t[f'down_{down}_attempts'] += 1
+                    t[f'down_{down}_conversions'] += int(first_down_result(play) is not None)
+            first_down = first_down_result(play)
+            if first_down:
+                drive_first_downs += 1
+                t['first_downs'] += 1
+                t[f'first_downs_{first_down}'] += 1
             if ev in SCRIMMAGE_EVENTS:
                 t['plays'] += 1
             if ev == 'fumble_lost' and not part.get('rusher_id'):
@@ -92,6 +203,7 @@ def team_stats(drives, points):
                             t['receiving_yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
             if out['turnover'] and ev in ('interception', 'fumble_lost'):
                 t['turnovers'] += 1
+                drive_turnovers += 1
             if ev == 'interception':
                 t['interceptions'] += 1
             if ev == 'fumble_lost':
@@ -118,6 +230,17 @@ def team_stats(drives, points):
                     returned['blocked_kick_return_yards'] += blocked['return_yards']
         if d['terminal'] == 'turnover_on_downs':
             t['turnovers_on_downs'] += 1
+        if drive_turnovers:
+            t['turnover_drives'] += 1
+        if drive_first_downs == 0:
+            t['drives_without_first_down'] += 1
+        if d.get('terminal') == 'punt' and drive_scrimmage_plays == 3 and drive_first_downs == 0:
+            t['three_and_outs'] += 1
+        scoring = d.get('points_scored_on_drive') or {}
+        if scoring.get('team') == d['offense_team'] and int(scoring.get('points') or 0) > 0:
+            t['scoring_drives'] += 1
+        if scoring.get('team') == d['offense_team']:
+            t['offense_points'] += int(scoring.get('points') or 0)
         if d['field_goal_made'] is not None:
             if not fg_attempt_recorded:
                 # Compatibility with records that keep the kick result only on the drive.
@@ -141,7 +264,6 @@ def team_stats(drives, points):
             if unassigned_overtime_offensive_td:
                 # No player row exists for this observed OT score, so exclude it from player reconciliation.
                 scored['observed_overtime_touchdowns'] += 1
-        scoring = d.get('points_scored_on_drive') or {}
         if scoring.get('team') in ('A', 'B'):
             scored = team(scoring['team'])
             scored['score_ledger_points'] += int(scoring.get('points') or 0)
@@ -154,7 +276,42 @@ def team_stats(drives, points):
                 scored['other_score_points'] += int(scoring.get('points') or 0)
     for name, pts in points.items():
         team(name)['points'] = pts
-    return {name: dict(sorted(t.items())) for name, t in sorted(teams.items())}
+    for name, complete in possession_clock_complete.items():
+        if not complete:
+            teams[name]['possession_seconds'] = None
+    return {name: derive_team_rates(dict(sorted(t.items()))) for name, t in sorted(teams.items())}
+
+
+def derive_team_rates(stats):
+    """Add explicitly defined per-game rates to a team count line."""
+    def ratio(numerator, denominator):
+        return numerator / denominator if denominator else None
+
+    drives = stats.get('drives', 0)
+    pass_attempts = stats.get('pass_att', 0)
+    dropbacks = pass_attempts + stats.get('sacks_taken', 0)
+    stats['plays_per_drive'] = ratio(stats.get('plays', 0), drives)
+    stats['drive_window_seconds_per_drive'] = ratio(stats.get('drive_window_seconds', 0), drives)
+    stats['points_per_drive'] = ratio(stats.get('offense_points', 0), drives)
+    stats['scoring_drive_rate'] = ratio(stats.get('scoring_drives', 0), drives)
+    stats['completion_percentage'] = ratio(stats.get('pass_comp', 0), pass_attempts)
+    stats['yards_per_attempt'] = ratio(stats.get('pass_yds', 0), pass_attempts)
+    stats['sack_rate'] = ratio(stats.get('sacks_taken', 0), dropbacks)
+    stats['turnovers_per_drive'] = ratio(stats.get('turnovers', 0), drives)
+    stats['turnover_drive_rate'] = ratio(stats.get('turnover_drives', 0), drives)
+    stats['turnovers_per_dropback'] = ratio(stats.get('turnovers', 0), dropbacks)
+    stats['third_down_conversion_rate'] = ratio(
+        stats.get('down_3_conversions', stats.get('third_down_conversions', 0)),
+        stats.get('down_3_attempts', stats.get('third_down_attempts', 0)))
+    stats['fourth_down_conversion_rate'] = ratio(
+        stats.get('down_4_conversions', stats.get('fourth_down_conversions', 0)),
+        stats.get('down_4_attempts', stats.get('fourth_down_attempts', 0)))
+    successful = sum(stats.get(f'down_{down}_successful_plays', 0) for down in (1, 2, 3, 4))
+    stats['offensive_success_rate'] = ratio(successful, stats.get('plays', 0))
+    for down in (1, 2, 3, 4):
+        stats[f'down_{down}_success_rate'] = ratio(stats.get(f'down_{down}_successful_plays', 0),
+                                                   stats.get(f'down_{down}_plays', 0))
+    return stats
 
 
 def _credited(play, yards):
@@ -265,7 +422,12 @@ def compute(drives, points):
         'player_attribution': attribution,
         'player_note': note,
         'team_stat_semantics': {
-            'possession_seconds': 'Game-clock seconds on this team\'s drives. Kickoff time belongs to neither team; see clock_reconciliation.',
+            'possession_seconds': 'Sum of per-play game-clock intervals for this offense; separately reconciled against drive windows, kickoffs, and elapsed game time.',
+            'drive_window_seconds': 'Sum of elapsed clock intervals from each drive start state to its end state.',
+            'first_downs': 'Earned when the post-play state begins a new first down for the same offense; touchdowns are excluded. Penalty first downs are classified separately when modeled.',
+            'third_down_conversions': 'Third-down scrimmage plays followed by a new first down for the same offense; touchdowns are not counted as first downs.',
+            'fourth_down_conversions': 'Fourth-down go-for-it scrimmage plays followed by a new first down for the same offense; punts and field goals are excluded.',
+            'offensive_success_rate': 'A successful play gains at least 40% of yards-to-go on first down, 60% on second down, or earns a new first down on third/fourth; touchdowns count as successful plays.',
             'try_points': 'Touchdown drive ledger points above six; not a try-attempt count.',
             'other_score_points': 'Non-touchdown, non-safety score-ledger points, including field goals.',
         },

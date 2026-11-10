@@ -1,6 +1,6 @@
 # SLC Run Review
 
-## D1-ARI_SEA.json
+## ARI_SEA
 
 Game: 2026_09_ARI_SEA
 Requested: 334 · Processed: 334 · Unreported: 0 · Boxscores: 334

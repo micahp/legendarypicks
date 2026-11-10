@@ -46,14 +46,16 @@ def game_record(home_points=24, away_points=17):
             'team': {
                 'A': {'points': home_points, 'touchdowns': 1, 'offensive_touchdowns': 1,
                       'observed_overtime_touchdowns': 0, 'drives': 1,
-                      'possession_seconds': 1300, 'plays': 1, 'rush_att': 0, 'rush_yds': 0,
+                      'possession_seconds': 1300, 'drive_window_seconds': 1300,
+                      'plays': 1, 'rush_att': 0, 'rush_yds': 0,
                       'pass_att': 1, 'pass_comp': 1, 'pass_yds': 10, 'interceptions': 0,
                       'pass_tgt': 1, 'sacks_taken': 0, 'sack_yds': 0, 'punts': 0,
                       'fg_att': 0, 'fg_made': 0, 'turnovers': 0, 'fumbles_lost': 0,
                       'turnovers_on_downs': 0},
                 'B': {'points': away_points, 'touchdowns': 0, 'offensive_touchdowns': 0,
                       'observed_overtime_touchdowns': 0, 'drives': 1,
-                      'possession_seconds': 1200, 'plays': 0, 'rush_att': 0, 'rush_yds': 0,
+                      'possession_seconds': 1200, 'drive_window_seconds': 1200,
+                      'plays': 0, 'rush_att': 0, 'rush_yds': 0,
                       'pass_att': 0, 'pass_comp': 0, 'pass_yds': 0, 'interceptions': 0,
                       'pass_tgt': 0, 'sacks_taken': 0, 'sack_yds': 0, 'punts': 1,
                       'fg_att': 0, 'fg_made': 0, 'turnovers': 0, 'fumbles_lost': 0,
@@ -169,7 +171,7 @@ class BoxscoreSerialization(unittest.TestCase):
 
     def test_raw_clock_semantics_and_player_distribution_attribution(self):
         stats = game_stats.compute([], {'A': 0, 'B': 0})
-        self.assertIn('Kickoff time belongs to neither team', stats['team_stat_semantics']['possession_seconds'])
+        self.assertIn('kickoffs', stats['team_stat_semantics']['possession_seconds'])
         box = outputs.build_boxscore(1, {'valid_full_game': True}, game_record(), SNAPSHOT, PROFILE)
         summary = outputs.aggregate_boxscores([box])
         player = next(p for p in summary['players'] if p['stable_player_id'] == 'GA1')
@@ -271,13 +273,14 @@ class BoxscoreSerialization(unittest.TestCase):
 
         quarterly = outputs._quarter_by_quarter(record, SNAPSHOT)
 
-        self.assertEqual(quarterly['schema'], 'lp-nfl-slc-quarter-boxscore-2')
+        self.assertEqual(quarterly['schema'], 'lp-nfl-slc-quarter-boxscore-3')
         self.assertTrue(quarterly['complete'])
         self.assertEqual(quarterly['points_by_team']['AAA']['Q2'], 7)
         self.assertEqual(quarterly['points_by_team']['AAA']['Q1'], 0)
         self.assertEqual(quarterly['team_stats']['AAA']['Q1']['rush_attempts'], 1)
         self.assertEqual(quarterly['team_stats']['AAA']['Q1']['rushing_yards'], 5)
-        self.assertIsNone(quarterly['team_stats']['AAA']['Q1']['possession_seconds'])
+        self.assertEqual(quarterly['team_stats']['AAA']['Q1']['possession_seconds'], 5)
+        self.assertEqual(quarterly['team_stats']['AAA']['Q1']['drive_window_seconds'], 40)
         self.assertEqual(quarterly['team_stats']['AAA']['Q1']['recorded_play_clock_seconds'], 5)
         self.assertEqual(quarterly['team_stats']['AAA']['Q2']['completions'], 1)
         self.assertEqual(quarterly['drive_summary_count_semantics']['plays'],
@@ -574,3 +577,56 @@ class PlayerSnaps(unittest.TestCase):
     def test_skill_players_have_no_count_when_the_lineup_model_did_not_run(self):
         wr = self.line(position='WR', stable_player_id='SKILL1', starter=False)
         self.assertIsNone(outputs._with_snaps(wr, self.TEAM_STATS, {})['snaps'])
+
+
+class DownAndClockAccounting(unittest.TestCase):
+    @staticmethod
+    def play(event, down, to_go, yards, after_down, after_team='A', penalty=None):
+        before_clock = 900 - (down * 10)
+        return {
+            'event_type': event,
+            'state_before': {'offense_team': 'A', 'quarter': 1, 'clock_seconds': before_clock,
+                             'down': down, 'yards_to_go': to_go},
+            'state_after': {'offense_team': after_team, 'quarter': 1, 'clock_seconds': before_clock - 10,
+                            'down': after_down, 'yards_to_go': 10},
+            'outcome': {'yards_gained': yards, 'touchdown': False, 'safety': False,
+                        'turnover': False, 'punt': False, 'penalty': penalty},
+            'participants': {'rusher_id': 'RB1'} if event == 'run' else
+                           {'passer_id': 'QB1', 'receiver_id': 'WR1'},
+        }
+
+    def test_first_downs_and_third_fourth_down_rates_come_from_the_state_transition(self):
+        plays = [
+            self.play('run', 1, 10, 10, 1),
+            self.play('pass_complete', 1, 10, 4, 2),
+            self.play('pass_complete', 2, 6, 6, 1),
+            self.play('run', 3, 2, 2, 1),
+            self.play('run', 4, 1, 0, 1, after_team='B'),
+        ]
+        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+                 'end_quarter': 1, 'end_clock': 800, 'terminal': 'turnover_on_downs',
+                 'plays': plays}
+
+        stats = game_stats.team_stats([drive], {'A': 0, 'B': 0})['A']
+
+        self.assertEqual(stats['first_downs'], 3)
+        self.assertEqual(stats['first_downs_run'], 2)
+        self.assertEqual(stats['first_downs_pass'], 1)
+        self.assertEqual(stats['down_3_attempts'], 1)
+        self.assertEqual(stats['down_3_conversions'], 1)
+        self.assertEqual(stats['down_4_attempts'], 1)
+        self.assertEqual(stats['down_4_conversions'], 0)
+        self.assertEqual(stats['third_down_conversion_rate'], 1.0)
+        self.assertEqual(stats['fourth_down_conversion_rate'], 0.0)
+
+    def test_penalty_awarded_first_down_is_classified_separately(self):
+        play = self.play('pass_incomplete', 3, 10, 0, 1, penalty={'accepted': True})
+        self.assertEqual(game_stats.first_down_result(play), 'penalty')
+
+    def test_realism_play_row_exports_post_play_state_and_conversion(self):
+        play = self.play('run', 3, 2, 2, 1)
+        row = outputs.play_rows({'drives': [{'index': 1, 'plays': [play]}]})[0]
+        self.assertEqual(row['state_after']['down'], 1)
+        self.assertTrue(row['third_down_attempt'])
+        self.assertTrue(row['third_down_conversion'])
+        self.assertEqual(row['first_down_source'], 'run')

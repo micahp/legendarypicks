@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gzip
 import hashlib
 import json
 import math
@@ -27,11 +28,11 @@ OUTPUT_FILES = ('summary.json', 'report.md', 'team-stats.csv', 'player-stats.csv
                 'quarter-scores.csv', 'quarter-team-stats.csv', 'quarter-player-stats.csv',
                 'drive-summaries.csv', 'drive-aggregate-summary.csv', 'quarter-drive-summary.csv')
 CSV_DEFAULT_COLUMNS = {
-    'team-stats.csv': ('team', 'metric', 'mean', 'median', 'sample_n'),
-    'player-stats.csv': ('team', 'player_id', 'name', 'position', 'starter', 'starter_basis', 'attribution', 'metric', 'mean', 'median', 'sample_n'),
-    'quarter-scores.csv': ('team', 'period', 'mean', 'median', 'sample_n'),
-    'quarter-team-stats.csv': ('team', 'period', 'metric', 'mean', 'median', 'sample_n'),
-    'quarter-player-stats.csv': ('team', 'player_id', 'name', 'position', 'period', 'metric', 'mean', 'median', 'sample_n'),
+    'team-stats.csv': ('team', 'metric', 'mean', 'median', 'p10', 'p90', 'sample_n'),
+    'player-stats.csv': ('team', 'player_id', 'name', 'position', 'starter', 'starter_basis', 'attribution', 'metric', 'mean', 'median', 'p10', 'p90', 'sample_n'),
+    'quarter-scores.csv': ('team', 'period', 'mean', 'median', 'p10', 'p90', 'sample_n'),
+    'quarter-team-stats.csv': ('team', 'period', 'metric', 'mean', 'median', 'p10', 'p90', 'sample_n'),
+    'quarter-player-stats.csv': ('team', 'player_id', 'name', 'position', 'period', 'metric', 'mean', 'median', 'p10', 'p90', 'sample_n'),
     'drive-summaries.csv': ('seed', 'game_id', 'drive_index', 'offense_team', 'start_period', 'end_period',
                             'scoring_period', 'terminal', 'play_sequence_status', 'play_count', 'net_yards', 'turnovers',
                             'scoring_team', 'points'),
@@ -79,12 +80,19 @@ def _artifact_files(path: Path):
         yield from _archive_files(path)
         return
     if path.is_file():
-        yield path.name, path.read_bytes(), _sha256_file(path)
+        data = path.read_bytes()
+        name = path.name
+        if name.endswith('.gz'):
+            data = gzip.decompress(data)
+            name = _strip_suffix(name, '.gz')
+        yield name, data, _sha256_file(path)
         return
     if not path.is_dir():
         raise FileNotFoundError(path)
-    candidates = sorted({*path.rglob('worker-*.json'), *path.rglob('worker-*.seeds.jsonl'),
-                         *path.rglob('worker-*.boxscores.jsonl'), *path.rglob('worker-*.tar.gz')})
+    suffixes = ('.json', '.seeds.jsonl', '.boxscores.jsonl', '.json.gz',
+                '.seeds.jsonl.gz', '.boxscores.jsonl.gz', '.tar.gz')
+    candidates = sorted({candidate for candidate in path.rglob('*') if candidate.is_file()
+                         and candidate.name.endswith(suffixes)})
     if not candidates:
         raise ValueError(f'no worker JSON, seed ledger, or boxscore sidecar found under {path}')
     for candidate in candidates:
@@ -95,7 +103,12 @@ def _artifact_files(path: Path):
             yield from _archive_files(candidate)
             continue
         data = candidate.read_bytes()
-        yield str(candidate.relative_to(path)), data, _sha256_bytes(data)
+        name = str(candidate.relative_to(path))
+        digest = _sha256_bytes(data)
+        if candidate.name.endswith('.gz'):
+            data = gzip.decompress(data)
+            name = _strip_suffix(name, '.gz')
+        yield name, data, digest
 
 
 def _strip_suffix(text, suffix):
@@ -285,8 +298,10 @@ def _read_artifacts(path: Path):
 
 def _mean_median(values):
     if not values:
-        return {'mean': None, 'median': None, 'sample_n': 0}
-    return {'mean': sum(values) / len(values), 'median': statistics.median(values), 'sample_n': len(values)}
+        return {'mean': None, 'median': None, 'p10': None, 'p90': None, 'sample_n': 0}
+    return {'mean': sum(values) / len(values), 'median': statistics.median(values),
+            'p10': _nearest_rank(values, 0.10), 'p90': _nearest_rank(values, 0.90),
+            'sample_n': len(values)}
 
 
 def _nearest_rank(values, percentile):
@@ -954,6 +969,9 @@ def main(argv=None):
     for run_path in args.run:
         result = analyze_run(run_path)
         run_name = _strip_suffix(run_path.stem, '.tar')
+        if (run_path.is_dir() and run_path.parent.parent.name == 'worker-artifacts'
+                and run_path.parent.name in ('C', 'D1', 'default_v2')):
+            run_name = f'{run_path.parent.name}-{run_path.name}'
         destination = args.output_dir / run_name
         write_report(result, destination, force=args.force)
         print(f"{result['game_ids'] or ['unknown']} {result['status_counts']} -> {destination}")
