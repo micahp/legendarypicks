@@ -54,6 +54,13 @@ OUTCOME_BACKOFF_MIN_SUPPORT = {
 }
 
 
+def _event_probability_stage(name, keys, weights):
+    total = float(sum(weights))
+    return {'stage': name, 'probabilities': {
+        str(key[1]): round(float(weight) / total, 8) for key, weight in zip(keys, weights)
+    } if total > 0 else {}, 'weight_total': round(total, 8)}
+
+
 def _sha(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
@@ -195,6 +202,7 @@ class PlayCallSampler:
         self.score_clock_playcalling_enabled = True
         self.side_teams = dict(side_teams) if side_teams is not None else None
         self.decisions = []
+        self.trace_outcome_probabilities = False
         self._cells = {}
         self.source_pool = None  # cutoff-filtered pool, supplied by e2_reference only for opted-in backoff
         self._backoff_index = None
@@ -502,6 +510,7 @@ class PlayCallSampler:
         backoff_transition_groups = None
         backoff_ess = None
         outcome_weight_fallback = None
+        probability_trace = []
         if self.outcome_backoff_enabled and called_intent in SCRIMMAGE_INTENTS:
             exact_outcome_rows = self._outcome_rows(cell, called_intent, scramble, state)
             if len(exact_outcome_rows) < OUTCOME_BACKOFF_MIN_SUPPORT['exact_cell']:
@@ -511,9 +520,13 @@ class PlayCallSampler:
             counts = Counter(sample[0] for sample in backoff_candidates)
             keys = sorted((outcome_intent, event) for event in counts)
             weights = [counts[key[1]] for key in keys]
+            if self.trace_outcome_probabilities:
+                probability_trace.append(_event_probability_stage('base_sparse_backoff', keys, weights))
             if self.team_outcomes is not None:
                 weights = [weight * self._outcome_weight(key[1], offense, defense, entry['key'] or target)
                            for weight, key in zip(weights, keys)]
+                if self.trace_outcome_probabilities:
+                    probability_trace.append(_event_probability_stage('team_event_weights', keys, weights))
             if self.transition_strength is not None:
                 backoff_transition_groups = {
                     key[1]: self._group_transition_rows(
@@ -523,22 +536,30 @@ class PlayCallSampler:
                 weights = [self._transition_group_weight(
                     backoff_transition_groups[key[1]], key[1], offense, defense)
                     for key in keys]
+                if self.trace_outcome_probabilities:
+                    probability_trace.append(_event_probability_stage('transition_strength', keys, weights))
             if use_player_outcomes:
                 import player_outcomes
                 weights = [weight * player_outcomes.event_weight(self.player_outcome_table, key[1], pre_event,
                                                                   enabled_roles=self.player_outcome_roles)
                            for weight, key in zip(weights, keys)]
+                if self.trace_outcome_probabilities:
+                    probability_trace.append(_event_probability_stage('player_event_weights', keys, weights))
             if not any(weight > 0 for weight in weights):
                 # These are modifiers within an already-selected play intent. If every modifier rejects
                 # its outcomes, retain that intent and fall back to the supported backoff distribution.
                 weights = [counts[key[1]] for key in keys]
                 outcome_weight_fallback = 'all_conditioned_weights_zero_within_selected_intent'
+                if self.trace_outcome_probabilities:
+                    probability_trace.append(_event_probability_stage('all_zero_weights_fallback', keys, weights))
             weight_total = sum(weights)
             if weight_total > 0:
                 backoff_ess = 1.0 / sum(
                     count * ((weight / weight_total) / count) ** 2
                     for weight, key in zip(weights, keys)
                     for count in (counts[key[1]],) if count)
+            if self.trace_outcome_probabilities:
+                probability_trace.append(_event_probability_stage('final_event_draw', keys, weights))
             key = rng.choices(keys, weights=weights)[0]
             fallback_by_key = defaultdict(list)
             for sample in backoff_candidates:
@@ -566,41 +587,83 @@ class PlayCallSampler:
         baseline_weights = []
         choice_base = kick_base if outcome_intent == KICK_INTENT else entry['base']  # kick_base is entry['base'] flag off
         if fallback_by_key is None:
+            stage_values = defaultdict(list)
             for k in keys:
                 base_weight = (exact_counts[k[1]] if exact_outcome_rows is not None else choice_base[k])
                 baseline_weights.append(base_weight)
                 weight = base_weight
                 if use_formation:  # lifts multiply: formation and coverage are treated as independent given the outcome
                     weight *= self._lift(entry, k, formation, 'by_formation')
+                stage_values['formation'].append(weight)
                 if use_coverage:
                     weight *= self._lift(entry, k, coverage, 'by_coverage')
+                stage_values['coverage'].append(weight)
                 if use_streak:  # the league's outcome mix for this streak state, relative to the cell
                     weight *= self._lift(entry, k, streak_bucket, 'by_streak')
+                stage_values['league_streak'].append(weight)
                 if use_labels:  # the drawn labels' lifts, averaged in log space: the categories overlap, so they do not compound
                     weight *= decision_layer.geometric_mean([self._label_lift(entry, k, decision_layer.label_key(c, v))
                                                              for c, v in labels.items() if v is not None])
+                stage_values['decision_labels'].append(weight)
                 if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
                     weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
+                stage_values['team_event_weights'].append(weight)
                 if self.transition_strength is not None:
                     groups = self._entry_transition_groups(entry, k)
                     transition_total = self._transition_group_weight(groups, k[1], offense, defense)
                     weight *= transition_total / len(entry['by_key'][k])
+                stage_values['transition_strength'].append(weight)
                 if use_player_outcomes:
                     import player_outcomes
                     weight *= player_outcomes.event_weight(self.player_outcome_table, k[1], pre_event,
                                                            enabled_roles=self.player_outcome_roles)
+                stage_values['player_event_weights'].append(weight)
                 weights.append(weight)
+            if self.trace_outcome_probabilities:
+                base = baseline_weights
+                probability_trace.append(_event_probability_stage(
+                    'base_exact_cell' if exact_outcome_rows is None else 'base_exact_outcome_rows', keys, base))
+                for stage_name in ('formation', 'coverage', 'league_streak', 'decision_labels',
+                                   'team_event_weights', 'transition_strength', 'player_event_weights'):
+                    active = ((stage_name == 'formation' and use_formation)
+                              or (stage_name == 'coverage' and use_coverage)
+                              or (stage_name == 'league_streak' and use_streak)
+                              or (stage_name == 'decision_labels' and use_labels)
+                              or (stage_name == 'team_event_weights' and self.team_outcomes is not None)
+                              or (stage_name == 'transition_strength' and self.transition_strength is not None)
+                              or (stage_name == 'player_event_weights' and use_player_outcomes))
+                    if active:
+                        probability_trace.append(_event_probability_stage(
+                            stage_name, keys, stage_values[stage_name]))
             if weights and not any(weight > 0 for weight in weights):
                 # Team/label/player outcome evidence may be sparse or conflicting. It may adjust
                 # outcomes, but it must not make a legal, already-chosen intent impossible to sample.
                 weights = baseline_weights
                 outcome_weight_fallback = 'all_conditioned_weights_zero_within_selected_intent'
+                if self.trace_outcome_probabilities:
+                    probability_trace.append(_event_probability_stage('all_zero_weights_fallback', keys, weights))
         if (self.team_outcomes is None and self.transition_strength is None and not use_formation and not use_coverage and not use_streak and not use_labels
                 and not use_player_outcomes):
             if fallback_by_key is None:
                 key = rng.choices(keys, weights=[choice_base[k] for k in keys])[0]  # the unchanged baseline draw
         elif fallback_by_key is None:
             key = rng.choices(keys, weights=weights)[0]
+        if self.trace_outcome_probabilities and fallback_by_key is None:
+            probability_trace.append(_event_probability_stage(
+                'pre_postdraw_adjustment_event_draw', keys, weights if weights else baseline_weights))
+            if 'restore_sack_mass' in self.blocker_fixes:
+                total = float(sum(weights))
+                before = {str(k[1]): (float(w) / total if total else 0.0)
+                          for k, w in zip(keys, weights)}
+                q = sack_substitution_rate(entry)
+                incomplete = before.get('pass_incomplete', 0.0)
+                before['sack'] = before.get('sack', 0.0) + incomplete * q
+                before['pass_incomplete'] = incomplete * (1.0 - q)
+                probability_trace.append({'stage': 'restore_sack_mass', 'substitution_probability': round(q, 8),
+                                          'probabilities': {k: round(v, 8) for k, v in before.items()}})
+            else:
+                probability_trace.append(_event_probability_stage(
+                    'final_event_draw', keys, weights if weights else baseline_weights))
         if ('restore_sack_mass' in self.blocker_fixes and key == (outcome_intent, 'pass_incomplete') and not scramble
                 and fallback_by_key is None and (outcome_intent, 'sack') in entry['by_key']
                 and rng.random() < sack_substitution_rate(entry)):
@@ -760,6 +823,34 @@ class PlayCallSampler:
         }
         if self.blocker_fixes:
             decision_record['blocker_fixes'] = sorted(self.blocker_fixes)
+        if self.trace_outcome_probabilities:
+            decision_record['outcome_probability_trace'] = {
+                'path': 'sparse_backoff' if backoff_candidates is not None else 'exact_cell',
+                'intent': called_intent, 'outcome_intent': outcome_intent,
+                'call_policy_source': call_policy_source, 'p_dropback': round(p, 8),
+                'kick_share': round(kick_share, 8),
+                'qb_action': qb_decision.get('action') if qb_decision else None,
+                'qb_scramble_probability': qb_decision.get('scramble_probability') if qb_decision else None,
+                'qb_scramble_fallback': qb_decision.get('scramble_fallback') if qb_decision else None,
+                'formation': formation, 'coverage': coverage, 'participants': pe.ids(pre_event),
+                'source_fallback': outcome_fallback, 'zero_weight_fallback': outcome_weight_fallback,
+                'event_selected': event, 'event_before_restore_sack_mass': key[1],
+                'stages': probability_trace,
+                'not_applied_on_path': ([
+                    {'layer': name, 'reason': 'sparse_backoff event normalization omits this exact-cell lift'}
+                    for name, active in (('formation', use_formation), ('coverage', use_coverage),
+                                         ('league_streak', use_streak), ('decision_labels', use_labels))
+                    if backoff_candidates is not None and active]),
+                'row_filters_after_event_draw': {
+                    'formation': formation_fallback, 'coverage': coverage_fallback,
+                    'streak': streak_fallback, 'labels_matched': labels_matched,
+                    'labels_unmatched': labels_unmatched,
+                    'qb_target_role': qb_target_role_conditioned,
+                    'qb_target_role_fallback': qb_target_role_fallback,
+                    'exact_yardline': exact_yardline_conditioned,
+                    'exact_yardline_fallback': exact_yardline_fallback,
+                    'description': 'These filter source rows after event selection; they do not change event-class probabilities.'},
+            }
         if self.outcome_backoff_enabled:
             decision_record.update(
                 outcome_class='qb_scramble' if scramble else called_intent,
