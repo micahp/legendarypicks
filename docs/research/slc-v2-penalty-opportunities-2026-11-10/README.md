@@ -24,6 +24,10 @@ These are **text-marker counts**, not verified foul or adjudication totals. A de
 
 The script also triages descriptions containing exactly one penalty mention and exactly one disposition marker: 88,429 have an `enforced` marker, 10,774 have a `declined` marker, and 3 have an `offsetting` marker. It leaves multiple mentions, conflicting markers, and missing markers ambiguous. These counts cover all source rows, not just rows with `penalty=1`; they are candidates for manual and official-record validation, not training labels or proof that all fouls have been captured.
 
+`audit_ordered_states.py` checks whether a flagged row has a unique within-game `order_sequence` and a following source row with team, down, distance, field position, period and clock present. Across all years, 85,878 of 92,626 flagged rows are in games with unambiguous recorded ordering and have a following source row; 81,225 also have all those fields on that following row. Eleven games contain duplicate order values and are excluded from these counts. In 2025, the counts are 3,559 and 3,371 of 3,559 flagged rows; in 2026, 1,765 and 1,694 of 1,765. Results and source hashes are in `penalty-adjacent-state-coverage.json`.
+
+These are **adjacent-row coverage checks**, not reconstructed or validated enforcement transitions. The next source row can be administrative, begin a different possession, or follow a period boundary. The check does not establish whether a play counted, whether a first down was awarded, or which clock rule applied. Those cases need adjudication and independent validation before the model can use them as legal state transitions.
+
 ## 2026 penalty-field repair
 
 The original database remains byte-for-byte unchanged: `picks.dev.db` SHA-256 `1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa`. Its 2026 `penalty` value is null on all 21,018 rows, and it has no `first_down_penalty` column.
