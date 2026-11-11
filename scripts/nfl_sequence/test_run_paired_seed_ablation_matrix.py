@@ -200,10 +200,11 @@ class AggregatedComparison(unittest.TestCase):
                         'teams': [
                             {'team': 'AAA', 'home_away': 'home', 'stats': {
                                 'points': 24, 'plays': 30, 'pass_attempts': 20,
-                                'rush_attempts': 10, 'targets': 20, 'sacks_taken': 1, 'drives': 8}},
+                                'rush_attempts': 10, 'targets': 20, 'sacks_taken': 1,
+                                'turnovers': 0, 'drives': 8}},
                             {'team': 'BBB', 'home_away': 'away', 'stats': {
                                 'points': 17, 'plays': 29, 'pass_attempts': 19,
-                                'rush_attempts': 9, 'sacks_taken': 2, 'drives': 7}},
+                                'rush_attempts': 9, 'sacks_taken': 2, 'turnovers': 1, 'drives': 7}},
                         ],
                         'players': [{
                             'stable_player_id': 'qb-1', 'identity_namespace': 'nfl_gsis_id',
@@ -225,6 +226,10 @@ class AggregatedComparison(unittest.TestCase):
             self.assertTrue(report['valid_for_complete_game_comparison'])
             self.assertEqual(len(report['control_artifacts']), 2)
             self.assertTrue(all(row['seed_ledger']['sha256'] for row in report['ablation_artifacts']))
+            turnover = next(row for row in report['paired_boxscore_summaries']['team_metrics']
+                            if row['team'] == 'AAA' and row['metric'] == 'turnovers')
+            self.assertEqual(turnover['control']['mean'], 0)
+            self.assertEqual(turnover['ablation']['mean'], 0)
             usage = next(row for row in report['paired_boxscore_summaries']['player_metrics']
                          if row['player_id'] == 'qb-1' and row['metric'] == 'rush_attempts')
             self.assertEqual(usage['paired_delta_ablation_minus_control']['mean'], -1)
