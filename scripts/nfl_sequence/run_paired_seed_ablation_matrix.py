@@ -410,7 +410,7 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
             raise ValueError(f'seed {seed}: roster identities differ between paired boxscores')
         for namespace, player_id in sorted(control_players):
             left, right = control_players[(namespace, player_id)], ablation_players[(namespace, player_id)]
-            identity = ('team', 'position')
+            identity = ('team',)
             if any(left.get(field) != right.get(field) for field in identity):
                 raise ValueError(f'seed {seed}: player metadata differs for {player_id}')
             name = left.get('name', left.get('player_name'))
@@ -418,8 +418,11 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
                 raise ValueError(f'seed {seed}: player metadata differs for {player_id}')
             for metric, (category, field, _record) in PLAYER_METRICS.items():
                 values = player_values.setdefault(
-                    (namespace, player_id, name, left.get('team'), left.get('position'), metric),
-                    {'control': [], 'ablation': []})
+                    (namespace, player_id, name, left.get('team'), metric),
+                    {'control': [], 'ablation': [], 'control_positions': set(), 'ablation_positions': set()})
+                for arm, player in (('control', left), ('ablation', right)):
+                    if player.get('position'):
+                        values[arm + '_positions'].add(player['position'])
                 x = _numeric(left.get(category) or {}, field)
                 y = _numeric(right.get(category) or {}, field)
                 if x is not None and y is not None:
@@ -427,8 +430,11 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
                     values['ablation'].append(y)
             for metric, (category, field, team_field) in PLAYER_SHARE_METRICS.items():
                 values = player_values.setdefault(
-                    (namespace, player_id, name, left.get('team'), left.get('position'), metric),
-                    {'control': [], 'ablation': []})
+                    (namespace, player_id, name, left.get('team'), metric),
+                    {'control': [], 'ablation': [], 'control_positions': set(), 'ablation_positions': set()})
+                for arm, player in (('control', left), ('ablation', right)):
+                    if player.get('position'):
+                        values[arm + '_positions'].add(player['position'])
                 x, y = _numeric(left.get(category) or {}, field), _numeric(right.get(category) or {}, field)
                 xd = _numeric(control_team_stats.get(left.get('team'), {}), team_field)
                 yd = _numeric(ablation_team_stats.get(right.get('team'), {}), team_field)
@@ -444,9 +450,12 @@ def _paired_boxscore_summaries(control_dir: Path, ablation_dir: Path,
             row = {'control': _distribution(control), 'ablation': _distribution(ablation),
                    'paired_delta_ablation_minus_control': _distribution(delta)}
             if player:
-                namespace, player_id, name, team, position, metric = key
+                namespace, player_id, name, team, metric = key
+                positions = pair['control_positions'] | pair['ablation_positions']
                 row.update({'player_id': player_id, 'identity_namespace': namespace, 'player_name': name, 'team': team,
-                            'position': position, 'metric': metric})
+                            'position': next(iter(positions)) if len(positions) == 1 else None,
+                            'observed_positions': {'control': sorted(pair['control_positions']),
+                                                   'ablation': sorted(pair['ablation_positions'])}, 'metric': metric})
                 record = PLAYER_METRICS[metric][2] if metric in PLAYER_METRICS else None
                 row['historical_record_boundary'] = record
                 if record is not None:
