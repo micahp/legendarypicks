@@ -40,7 +40,41 @@ def cell(events_and_types):
 STATE = {'quarter': 2, 'clock': 500, 'down': 1, 'togo': 10, 'yl': 50, 'score_diff': 0}
 
 
+class FixedChoiceRng:
+    def __init__(self, value):
+        self.value = value
+
+    def choices(self, population, weights, k=1):
+        cutoff = self.value * sum(weights)
+        for item, weight in zip(population, weights):
+            cutoff -= weight
+            if cutoff < 0:
+                return [item]
+        return [population[-1]]
+
+
 class Layer(unittest.TestCase):
+    def test_two_stage_pass_labels_cannot_change_sack_probability(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact([0.0] * 4)))
+        keys = [('dropback', 'pass_complete'), ('dropback', 'pass_incomplete'), ('dropback', 'sack')]
+        weights = [2.0, 2.0, 6.0]
+        labels = {'A': 'WR', 'D': 'deep', 'E': 'left'}
+        for label_lift in (0.01, 1.0, 100.0):
+            with patch.object(sampler, '_label_lift', return_value=label_lift):
+                picked = sampler._draw_two_stage_pass_event(FixedChoiceRng(0.8), keys, weights, {}, labels)
+            self.assertEqual(picked[1], 'sack')
+
+    def test_two_stage_pass_labels_can_change_only_conditional_pass_event(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact([0.0] * 4)))
+        keys = [('dropback', 'pass_complete'), ('dropback', 'pass_incomplete'), ('dropback', 'sack')]
+        weights = [2.0, 2.0, 1.0]
+        labels = {'A': 'WR', 'D': 'deep', 'E': 'left'}
+        with patch.object(sampler, '_label_lift', side_effect=lambda *_: 10.0):
+            picked = sampler._draw_two_stage_pass_event(FixedChoiceRng(0.1), keys, weights, {}, labels)
+        self.assertEqual(picked[1], 'pass_complete')
+        # The same labels leave the pre-pass group weights unchanged; the second-stage draw stays inside pass outcomes.
+        self.assertIn(picked[1], {'pass_complete', 'pass_incomplete', 'interception', 'fumble_lost'})
+
     def test_a_tampered_artifact_is_refused(self):
         artifact = blank_artifact(0.0)
         artifact['intercept'] = 5.0

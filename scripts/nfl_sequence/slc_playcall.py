@@ -244,6 +244,10 @@ class PlayCallSampler:
         self.decision_table = None
         self.decision_outcomes = False
         self.decision_filter = True  # False: the lifts shape the outcome, but the row is drawn from the whole cell (an experiment)
+        # Research-only alternative to the historical pre-event use of pass-dependent A/D/E labels.
+        # legacy preserves V2; off excludes those lifts from event probabilities; two_stage preserves their
+        # effect only within the already-selected passing-attempt outcome group.
+        self.pass_label_mode = 'legacy'
         # per-game Dirichlet target and carry shares (share_distributions), None when off: the receiver and rusher are drawn from them
         self.share_table = None
         # the playbook files as the pre-event prior for pass depth, pass location and run gap (playbook_prior), None when off
@@ -602,8 +606,11 @@ class PlayCallSampler:
                     weight *= self._lift(entry, k, streak_bucket, 'by_streak')
                 stage_values['league_streak'].append(weight)
                 if use_labels:  # the drawn labels' lifts, averaged in log space: the categories overlap, so they do not compound
+                    active_labels = [(c, v) for c, v in labels.items() if v is not None]
+                    if self.pass_label_mode in ('off', 'two_stage'):
+                        active_labels = [(c, v) for c, v in active_labels if c not in ('A', 'D', 'E')]
                     weight *= decision_layer.geometric_mean([self._label_lift(entry, k, decision_layer.label_key(c, v))
-                                                             for c, v in labels.items() if v is not None])
+                                                             for c, v in active_labels])
                 stage_values['decision_labels'].append(weight)
                 if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
                     weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
@@ -647,7 +654,24 @@ class PlayCallSampler:
             if fallback_by_key is None:
                 key = rng.choices(keys, weights=[choice_base[k] for k in keys])[0]  # the unchanged baseline draw
         elif fallback_by_key is None:
-            key = rng.choices(keys, weights=weights)[0]
+            if (use_labels and self.pass_label_mode == 'two_stage'
+                    and called_intent == 'dropback' and not scramble):
+                key = self._draw_two_stage_pass_event(rng, keys, weights, entry, labels)
+                if self.trace_outcome_probabilities:
+                    pass_events = {'pass_complete', 'pass_incomplete', 'interception', 'fumble_lost'}
+                    pass_mass = sum(w for k, w in zip(keys, weights) if k[1] in pass_events)
+                    total_mass = sum(weights)
+                    probability_trace.append({'stage': 'two_stage_pre_pass_group',
+                                              'pass_attempt_probability': round(pass_mass / total_mass, 8)
+                                              if total_mass else None,
+                                              'sack_probability': round(sum(w for k, w in zip(keys, weights)
+                                                                            if k[1] == 'sack') / total_mass, 8)
+                                              if total_mass else None})
+                    probability_trace.append({'stage': 'two_stage_conditional_pass_outcome',
+                                              'labels': {c: labels.get(c) for c in ('A', 'D', 'E')},
+                                              'selected_event': key[1]})
+            else:
+                key = rng.choices(keys, weights=weights)[0]
         event_before_restore_sack_mass = key[1] if fallback_by_key is None else None
         if self.trace_outcome_probabilities and fallback_by_key is None:
             probability_trace.append(_event_probability_stage(
@@ -780,6 +804,7 @@ class PlayCallSampler:
             'labels': labels, 'labels_conditioned': bool(use_labels), 'labels_matched': labels_matched,
             'labels_unmatched': labels_unmatched,
             'decision_row_filter_applied': bool(use_labels and self.decision_filter),
+            'pass_label_mode': self.pass_label_mode,
             'team_outcome_split': self.team_outcomes is not None,
             'team_outcome_fallbacks': list(self._current_team_outcome_fallbacks),
             'team_transition_split': self.transition_strength is not None,
@@ -946,6 +971,31 @@ class PlayCallSampler:
         n_value = sum(counts.values())
         conditional = (counts[key] + formation_layer.PRIOR_STRENGTH * base_share) / (n_value + formation_layer.PRIOR_STRENGTH)
         return conditional / base_share
+
+    def _draw_two_stage_pass_event(self, rng, keys, weights, entry, labels):
+        """Draw a non-pass-vs-pass event first, then apply A/D/E only within pass outcomes.
+
+        The first draw's pass-group mass is computed without receiver/depth/location. Those labels
+        can change the conditional event mix after a pass is selected, but cannot change sack odds.
+        """
+        pass_events = {'pass_complete', 'pass_incomplete', 'interception', 'fumble_lost'}
+        pass_ix = [i for i, key in enumerate(keys) if key[1] in pass_events]
+        other_ix = [i for i in range(len(keys)) if i not in set(pass_ix)]
+        groups = [('pass', pass_ix), ('other', other_ix)]
+        groups = [(name, ix) for name, ix in groups if ix and sum(weights[i] for i in ix) > 0]
+        if len(groups) < 2:
+            chosen_group = groups[0][0]
+        else:
+            chosen_group = rng.choices([name for name, _ in groups],
+                                       weights=[sum(weights[i] for i in ix) for _, ix in groups])[0]
+        ix = pass_ix if chosen_group == 'pass' else other_ix
+        conditional_weights = [weights[i] for i in ix]
+        if chosen_group == 'pass':
+            applicable = [(cat, labels.get(cat)) for cat in ('A', 'D', 'E') if labels.get(cat) is not None]
+            conditional_weights = [weight * decision_layer.geometric_mean([
+                self._label_lift(entry, keys[i], decision_layer.label_key(cat, value))
+                for cat, value in applicable]) for weight, i in zip(conditional_weights, ix)]
+        return keys[rng.choices(ix, weights=conditional_weights)[0]]
 
     def _lift(self, entry, key, value, table):
         """P(outcome type | value) divided by the cell's own share, for this cell, shrunk to the cell with the layer's strength."""

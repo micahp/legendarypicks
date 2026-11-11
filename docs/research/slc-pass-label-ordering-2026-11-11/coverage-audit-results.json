@@ -1,0 +1,139 @@
+{
+  "cohort": {
+    "excluded": {
+      "unknown_coverage": 15
+    },
+    "known_coverage_plays_scored": 18261
+  },
+  "database_sha256": "1c657408f639a78e1e744bb883abf944b6296ed7bf42710e629456129dd736db",
+  "heldout_season": 2025,
+  "models": {
+    "coverage_conditioned": {
+      "actual_rate": {
+        "fumble_lost": 0.006899950714637753,
+        "interception": 0.019604621871748534,
+        "pass_complete": 0.5982147746563715,
+        "pass_incomplete": 0.3098406439954,
+        "sack": 0.06544000876184218
+      },
+      "mean_predicted_rate": {
+        "fumble_lost": 0.00661359587245438,
+        "interception": 0.021560203065071344,
+        "pass_complete": 0.6224791992361614,
+        "pass_incomplete": 0.3046826968044103,
+        "sack": 0.04466430502199738
+      },
+      "multiclass_brier": 0.5352726621015765,
+      "multiclass_log_loss": 0.9576864857532248,
+      "plays": 18261
+    },
+    "situation_cell": {
+      "actual_rate": {
+        "fumble_lost": 0.006899950714637753,
+        "interception": 0.019604621871748534,
+        "pass_complete": 0.5982147746563715,
+        "pass_incomplete": 0.3098406439954,
+        "sack": 0.06544000876184218
+      },
+      "mean_predicted_rate": {
+        "fumble_lost": 0.007941372176501505,
+        "interception": 0.020990594352101363,
+        "pass_complete": 0.5985323585790335,
+        "pass_incomplete": 0.3073601555013339,
+        "sack": 0.06517551939093981
+      },
+      "multiclass_brier": 0.5375909745655976,
+      "multiclass_log_loss": 0.9535759310827276,
+      "plays": 18261
+    }
+  },
+  "observed_coverage_rates_by_outcome": {
+    "fumble_lost": {
+      "coverage_frequency": {
+        "2_MAN": 0.007936507936507936,
+        "COMBO": 0.007936507936507936,
+        "COVER_0": 0.015873015873015872,
+        "COVER_1": 0.20634920634920634,
+        "COVER_2": 0.25396825396825395,
+        "COVER_3": 0.29365079365079366,
+        "COVER_4": 0.0873015873015873,
+        "COVER_6": 0.09523809523809523,
+        "COVER_9": 0.031746031746031744
+      },
+      "n": 126
+    },
+    "interception": {
+      "coverage_frequency": {
+        "2_MAN": 0.036312849162011177,
+        "COMBO": 0.00558659217877095,
+        "COVER_0": 0.05307262569832402,
+        "COVER_1": 0.19553072625698323,
+        "COVER_2": 0.21508379888268156,
+        "COVER_3": 0.30446927374301674,
+        "COVER_4": 0.09776536312849161,
+        "COVER_6": 0.06424581005586592,
+        "COVER_9": 0.027932960893854747
+      },
+      "n": 358
+    },
+    "pass_complete": {
+      "coverage_frequency": {
+        "2_MAN": 0.040735994141340166,
+        "BLOWN": 0.0020139143170999634,
+        "COMBO": 0.0032954961552544857,
+        "COVER_0": 0.033412669351885756,
+        "COVER_1": 0.1965397290369828,
+        "COVER_2": 0.24899304284145002,
+        "COVER_3": 0.29448919809593554,
+        "COVER_4": 0.10353350421091176,
+        "COVER_6": 0.05327718784328085,
+        "COVER_9": 0.02370926400585866
+      },
+      "n": 10924
+    },
+    "pass_incomplete": {
+      "coverage_frequency": {
+        "2_MAN": 0.0544361965358784,
+        "COMBO": 0.00335807705903146,
+        "COVER_0": 0.05019441498762814,
+        "COVER_1": 0.2764227642276423,
+        "COVER_2": 0.19229409685401203,
+        "COVER_3": 0.24814422057264052,
+        "COVER_4": 0.09614704842700601,
+        "COVER_6": 0.05160834217037823,
+        "COVER_9": 0.02739483916578296
+      },
+      "n": 5658
+    },
+    "sack": {
+      "coverage_frequency": {
+        "2_MAN": 0.06108786610878661,
+        "COMBO": 0.0041841004184100415,
+        "COVER_0": 0.03096234309623431,
+        "COVER_1": 0.22845188284518828,
+        "COVER_2": 0.21841004184100418,
+        "COVER_3": 0.2719665271966527,
+        "COVER_4": 0.09790794979079498,
+        "COVER_6": 0.06610878661087866,
+        "COVER_9": 0.02092050209205021
+      },
+      "n": 1195
+    }
+  },
+  "paired_game_cluster_bootstrap_95pct_delta_coverage_minus_situation": {
+    "brier": [
+      -0.0036188150239119254,
+      -0.0008087816794244418
+    ],
+    "log_loss": [
+      0.0014288021446731136,
+      0.00691509492674669
+    ]
+  },
+  "scope": "2025 observed pre-play coverage label; 2022-2024 exact situation-cell event frequencies and coverage-conditioned lifts. Known-coverage plays only; no full-game or prospective coverage-choice evaluation.",
+  "training_seasons": [
+    2022,
+    2023,
+    2024
+  ]
+}
