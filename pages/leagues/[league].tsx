@@ -7,7 +7,7 @@ import StatsTab from '../../components/Leagues/StatsTab'
 import UfcRankingsTab from '../../components/Leagues/UfcRankingsTab'
 import PredictTab from '../../components/Leagues/PredictTab'
 import UfcOptimizerTab from '../../components/Leagues/UfcOptimizerTab'
-import NflCampHero from '../../components/Leagues/NflCampHero'
+import NflPixelHQ from '../../components/Leagues/NflPixelHQ'
 import NflOffseasonMovers from '../../components/Leagues/NflOffseasonMovers'
 import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
 import NflDraftBoardSurface from '../../components/Leagues/NflDraftBoardSurface'
@@ -45,7 +45,7 @@ import { useLeagueReadiness } from '../../components/Leagues/hooks/useLeagueRead
 import type { HubTab } from '../../components/Leagues/types'
 
 const TAB_LABELS: Record<HubTab, string> = {
-  camp: 'Home',
+  camp: 'NFL HQ',
   standings: 'Standings',
   stats: 'Stats',
   schedule: 'Schedule',
@@ -186,21 +186,26 @@ export default function LeagueHubPage() {
           labels={TAB_LABELS}
         />
 
-        {/* ── NFL Camp-mode default ── */}
+        {/* ── NFL HQ tab ── */}
         {route.activeTab === 'camp' && (
-          <div className="space-y-6">
-            <NflCampHero
+          <div className="space-y-4">
+            <NflPixelHQ
               data={seasonContext.data}
               loading={seasonContext.loading}
               error={seasonContext.error}
             />
-            <NflMockDraftCard />
-            <NflOffseasonMovers
-              data={transactions.data}
-              loading={transactions.loading}
-              error={transactions.error}
-            />
-            <NflDraftBoardSurface />
+            <details className="lp-hq-more-research">
+              <summary>More NFL research</summary>
+              <div className="mt-4 space-y-4">
+                <NflMockDraftCard />
+                <NflOffseasonMovers
+                  data={transactions.data}
+                  loading={transactions.loading}
+                  error={transactions.error}
+                />
+                <NflDraftBoardSurface />
+              </div>
+            </details>
           </div>
         )}
 
@@ -387,9 +392,11 @@ function HubTabs({
   onSelect: (tab: HubTab) => void
   labels: Record<HubTab, string>
 }) {
-  const orderedTabs: HubTab[] = tabs.includes('model')
-    ? ['model', ...tabs.filter(tab => tab !== 'model')]
-    : tabs
+  const orderedTabs: HubTab[] = tabs.includes('camp')
+    ? ['camp', ...tabs.filter(tab => tab !== 'camp')]
+    : tabs.includes('model')
+      ? ['model', ...tabs.filter(tab => tab !== 'model')]
+      : tabs
 
   return (
     // `overflow-x-auto` alone makes the box scrollable on BOTH axes, and the buttons'

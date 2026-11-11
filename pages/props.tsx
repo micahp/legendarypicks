@@ -1038,6 +1038,15 @@ export default function PropsPage() {
     if (t && TABS.some(x => x.key === t)) setTab(t as Tab)
   }, [])
 
+  useEffect(() => {
+    const requestedLeague = new URLSearchParams(window.location.search).get('league')?.toLowerCase()
+    if (!requestedLeague || navigationLoading) return
+    const group = sportGroups.find(item => item.competitions.some(entry => entry.league === requestedLeague))
+    if (!group) return
+    setSportKey(group.key)
+    setCompetition(requestedLeague)
+  }, [navigationLoading, sportGroups])
+
   // Land each league on today when it has props, otherwise its nearest upcoming slate. Re-run when
   // the league pill changes so a future WC/UFC slate is not hidden behind another league's date.
   // Explicit ?date= deep links always win.

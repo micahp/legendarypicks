@@ -10,7 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             Legendary Picks
           </Link>
           <div className="flex items-center justify-between gap-3 min-w-0">
-            <nav className="flex items-center gap-3 sm:gap-4 text-sm overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <nav className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-4 text-sm">
               <Link href="/scores" className="hover:text-emerald-400 whitespace-nowrap">Scores</Link>
               <Link href="/props" className="hover:text-emerald-400 whitespace-nowrap">Props</Link>
               <Link href="/leagues" className="hover:text-emerald-400 whitespace-nowrap">Leagues</Link>

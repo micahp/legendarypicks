@@ -137,6 +137,8 @@ class LeagueFilterIsTheCompetition(unittest.TestCase):
         advertised = games[0].get("prop_count")
         listed = len(games[0].get("players") or games[0].get("props") or [])
         self.assertTrue(listed > 0, "the fixture expanded to nothing")
+        line = games[0]["players"][0]["props"][0]
+        self.assertEqual(line["captured_at"], "2026-08-26T12:00:00Z")
         if advertised is not None:
             self.assertEqual(advertised, 2)
 

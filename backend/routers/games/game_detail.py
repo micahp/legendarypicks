@@ -2,7 +2,9 @@
 from fastapi import HTTPException, Query
 from typing import Optional
 from _core import *
+import arcade_store
 from team_stats_contract import build_team_aggregates
+from pixel_red_zone import normalize_summary
 from . import router
 
 
@@ -495,7 +497,23 @@ def get_game_playbyplay(league: str, game_id: str):
         return {"available": True, "events": events}
 
     # ── US team sports ──
+    # ESPN's NFL /summary response puts plays under drives.previous[*].plays
+    # (and may publish an in-progress drive under drives.current). Other
+    # league summaries can still provide a flat top-level plays list.
     plays_raw = sm.get("plays")
+    if not isinstance(plays_raw, list):
+        plays_raw = []
+        drives = sm.get("drives") or {}
+        if isinstance(drives, dict):
+            for key in ("previous", "current"):
+                container = drives.get(key)
+                if isinstance(container, dict):
+                    container = [container]
+                for drive in container if isinstance(container, list) else []:
+                    if isinstance(drive, dict):
+                        drive_plays = drive.get("plays") or []
+                        if isinstance(drive_plays, list):
+                            plays_raw.extend(drive_plays)
     if not plays_raw:
         return {"available": False}
 
@@ -513,22 +531,70 @@ def get_game_playbyplay(league: str, game_id: str):
             if current_period is not None:
                 periods.append({"label": current_label, "plays": current_plays})
             current_period = pd_num
-            current_label = pd_label
+            current_label = pd_label or (f"Q{pd_num}" if pd_num else "")
             current_plays = []
 
         clock = (p.get("clock") or {}).get("displayValue", "")
+        raw_type = p.get("type") or {}
+        raw_review = p.get("review") or {}
         current_plays.append({
+            "playId": p.get("id"),
+            "sequenceNumber": p.get("sequenceNumber"),
+            "period": pd_num,
             "clock": clock,
             "text": p.get("text", ""),
+            "type": raw_type.get("text"),
+            "scoringType": (p.get("scoringType") or {}).get("name"),
             "scoreAway": p.get("awayScore"),
             "scoreHome": p.get("homeScore"),
             "scoringPlay": bool(p.get("scoringPlay", False)),
+            "isTurnover": p.get("isTurnover"),
+            "start": p.get("start"),
+            "end": p.get("end"),
+            "pointAfterAttempt": p.get("pointAfterAttempt"),
+            "review": ({
+                "type": raw_review.get("type"),
+                "upheld": raw_review.get("upheld"),
+            } if raw_review else None),
+            "wallclock": p.get("wallclock"),
+            "modified": p.get("modified"),
         })
 
     if current_period is not None:
         periods.append({"label": current_label, "plays": current_plays})
 
-    return {"available": True, "periods": periods}
+    result = {
+        "available": True,
+        "publisher": "ESPN",
+        "eventId": (sm.get("header") or {}).get("id") or game_id,
+        "publisherUpdatedAt": (sm.get("meta") or {}).get("lastUpdatedAt"),
+        "periods": periods,
+    }
+    if lg == "nfl":
+        observed_at = dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+        try:
+            normalized = normalize_summary(sm, game_id=game_id,
+                                           observed_at_utc=observed_at, mode="live")
+            # Arcade challenge capture is optional: a missing Arcade migration or
+            # storage outage must never make the established play-by-play fail.
+            try:
+                arcade_store.cache_live_events(normalized)
+            except Exception:
+                pass
+            # Keep the response compact; the existing period list remains the
+            # compatibility surface, while this block carries canonical fields.
+            for event in normalized["events"]:
+                event.pop("raw_play", None)
+                event.pop("raw_start", None)
+                event.pop("raw_end", None)
+            result["pixel_red_zone"] = normalized
+        except (TypeError, ValueError):
+            result["pixel_red_zone"] = {
+                "available": False,
+                "observed_at_utc": observed_at,
+                "reason": "publisher_summary_shape_unavailable",
+            }
+    return result
 
 
 @router.get("/api/{league}/game/{game_id}/gameinfo")
