@@ -103,10 +103,24 @@ def grade(run_root: Path, db: Path, *, allow_partial: bool = False):
     team_game_rows = []
     valid_pairs = 0
     for game in game_ids:
+        manifest = json.loads((run_root / game / 'matrix-manifest.json').read_text(encoding='utf-8'))
+        spec = manifest.get('spec') or {}
+        required = {
+            'season_adapt': True, 'season_adapt_n0': 4.0, 'rng_protocol': 'v2',
+            'paired_randomness': True, 'seed_start': progress.get('seed_start'),
+            'games': progress.get('seeds_per_game'), 'layers': [LAYER],
+            'enabled_optional_layers': [],
+        }
+        if any(spec.get(key) != value for key, value in required.items()):
+            raise ValueError(f'{game}: matrix manifest does not match the paired V1.5 spec')
         report_path = run_root / game / f'without-{LAYER}.comparison.json'
         report = json.loads(report_path.read_text(encoding='utf-8'))
         if report.get('valid_for_complete_game_comparison') is not True:
             raise ValueError(f'{game}: comparison report is not valid for full-game grading')
+        control_layers = set(report.get('control_enabled_layers') or [])
+        ablation_layers = set(report.get('ablation_enabled_layers') or [])
+        if control_layers - ablation_layers != {LAYER} or ablation_layers - control_layers:
+            raise ValueError(f'{game}: ablation changed layers beyond {LAYER}')
         valid_pairs += int(report['paired_boxscore_summaries']['complete_boxscore_pair_count'])
 
         boxes = {}
