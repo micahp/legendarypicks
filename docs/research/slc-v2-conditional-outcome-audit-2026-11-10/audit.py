@@ -113,8 +113,7 @@ def row_intent(ev,row):
     if ev in e1.KICK_EVENTS:return 'kick'
     return 'run' if row['play_type']=='run' else 'dropback'
 
-def conditional_probs(samples,intent,offense,defense,cell,table):
-    c=collections.Counter(ev for ev,row,_,_ in samples if row_intent(ev,row)==intent)
+def conditional_probs(c,offense,defense,cell,table):
     if sum(c.values())<10:return None,c
     def weighted(use_o,use_d):
         w={ev:float(n) for ev,n in c.items()}
@@ -130,9 +129,10 @@ def conditional_probs(samples,intent,offense,defense,cell,table):
 
 def team_strengths(db,year):
     con=sqlite3.connect(f'file:{db}?mode=ro',uri=True)
-    rows=con.execute("SELECT posteam,defteam,epa FROM nfl_pbp WHERE season>=2022 AND season<? AND week<=18 AND qtr BETWEEN 1 AND 4 AND play_type IN ('pass','run') AND down BETWEEN 1 AND 4 AND penalty IS NOT 1 AND posteam IS NOT NULL AND defteam IS NOT NULL AND epa IS NOT NULL",(year,)).fetchall();con.close()
+    rows=con.execute("SELECT posteam,defteam,epa FROM nfl_pbp WHERE season>=2022 AND season<? AND week<=18 AND qtr BETWEEN 1 AND 4 AND play_type IN ('pass','run') AND down BETWEEN 1 AND 4 AND penalty IS NOT 1 AND posteam IS NOT NULL AND defteam IS NOT NULL AND epa IS NOT NULL",(year,))
     oc=collections.Counter();os=collections.Counter();dc=collections.Counter();ds=collections.Counter()
     for o,d,epa in rows:oc[o]+=1;os[o]+=float(epa);dc[d]+=1;ds[d]+=float(epa)
+    con.close()
     off={t:os[t]/oc[t] for t in oc}; deff={t:ds[t]/dc[t] for t in dc}
     # High offensive EPA is strong; low opponent EPA is strong defense.
     rankoff=sorted(off,key=lambda t:off[t]);rankdef=sorted(deff,key=lambda t:deff[t])
@@ -144,7 +144,7 @@ def team_strengths(db,year):
 def source_fact_map(db, seasons):
     con=sqlite3.connect(f'file:{db}?mode=ro',uri=True)
     lo,hi=min(seasons),max(seasons)
-    rows=con.execute("SELECT game_id,play_id,passing_yards,receiving_yards,lateral_receiver_player_id,lateral_receiving_yards,lateral_rusher_player_id,lateral_rushing_yards FROM nfl_pbp WHERE season BETWEEN ? AND ?",(lo,hi)).fetchall();con.close()
+    rows=con.execute("SELECT game_id,play_id,passing_yards,receiving_yards,lateral_receiver_player_id,lateral_receiving_yards,lateral_rusher_player_id,lateral_rushing_yards FROM nfl_pbp WHERE season BETWEEN ? AND ?",(lo,hi))
     out={}
     for g,p,py,ry,lr,ly,lr2,ly2 in rows:
         lateral=False
@@ -155,7 +155,8 @@ def source_fact_map(db, seasons):
             except (ValueError,TypeError):pass
             if x!=0:lateral=True
         mismatch=(py is not None and ry is not None and float(py)!=float(ry))
-        out[(g,int(float(p)))]=(lateral,mismatch)
+        if lateral or mismatch:out[(g,int(float(p)))]=(lateral,mismatch)
+    con.close()
     return out
 
 def freeze_base(year):
@@ -172,7 +173,7 @@ def freeze_base(year):
             if ev=='pass_complete' and mismatch:yardcounts['mismatched_completion_rows_excluded']+=1;continue
             keep.append((ev,row,runoff,spot))
         if keep:filtered[cell]=keep
-    return rows,filtered,hist,excluded,rawcounts,yardcounts
+    return sorted({int(r['season']) for r in rows}),filtered,hist,excluded,rawcounts,yardcounts
 
 def model_probs_by_action(cell_samples, offense, defense, cell, table, fg_allowed):
     action_counts=collections.Counter()
@@ -198,11 +199,71 @@ def team_action_probs(cell_samples,team,which,base_probs,fg_allowed):
 def score_action(metrics,probs,actual):
     for name,p in probs.items():acc_multi(metrics[name],p,actual)
 
+
+def index_pool(pool):
+    events=collections.defaultdict(collections.Counter)
+    conversions=collections.defaultdict(lambda: [[],0])
+    yards=collections.defaultdict(list)
+    actions=collections.defaultdict(collections.Counter)
+    teams=collections.defaultdict(collections.Counter)
+    for cell,samples in pool.items():
+        for ev,row,_,_ in samples:
+            intent=row_intent(ev,row)
+            events[cell,intent][ev]+=1
+            value=row.get('yards_gained')
+            if value is not None:
+                if ev in ('run','pass_complete'):
+                    item=conversions[cell,intent,ev]
+                    if row.get('touchdown')==1:item[1]+=1
+                    else:item[0].append(int(value))
+                if ev in EVENT_YARDS:
+                    yards[cell,ev].append(value)
+                    yards[cell,ev,'offense',row.get('posteam')].append(value)
+                    yards[cell,ev,'defense',row.get('defteam')].append(value)
+            if cell[0]==4:
+                action='punt' if ev=='punt' else 'field_goal' if ev=='field_goal_attempt' else 'go'
+                actions[cell][action]+=1
+                teams[cell,'offense',row.get('posteam')][action]+=1
+                teams[cell,'defense',row.get('defteam')][action]+=1
+    for vals,_ in conversions.values():vals.sort()
+    return events,conversions,yards,actions,teams
+
+def action_probability(counts,fg_allowed):
+    total=sum(v for k,v in counts.items() if fg_allowed or k!='field_goal')
+    return {k:v/total for k,v in counts.items() if fg_allowed or k!='field_goal'} if total else None
+
+def team_action_probability(counts,base,fg_allowed):
+    n=sum(v for k,v in counts.items() if fg_allowed or k!='field_goal')
+    return {k:((counts.get(k,0) if fg_allowed or k!='field_goal' else 0)+K*base.get(k,0.0))/(n+K) for k in ('go','punt','field_goal')}
+
+def mean_absolute(dist,y):
+    return yard_crps(dist,y)+dist['pairhalf']
+
+def make_mixture_distribution(league,team):
+    if not team:return {'mean':league['mean'],'league':league,'team':None,'weight':0.0,'pairhalf':league['pairhalf']}
+    td=make_yard_distribution(team)
+    n=len(team);w=n/(n+K)
+    # Cross-distance is computed once and only a scalar is retained.
+    cross=sum(mean_absolute(league,x) for x in td['xs'])/n
+    pairhalf=(1-w)**2*league['pairhalf']+w*(1-w)*cross+w*w*td['pairhalf']
+    return {'mean':(1-w)*league['mean']+w*td['mean'],'league':league,'team':td,'weight':w,'pairhalf':pairhalf}
+
+def mixture_distribution_crps(dist,y):
+    w=dist['weight']
+    term=(1-w)*mean_absolute(dist['league'],y)
+    if w:term+=w*mean_absolute(dist['team'],y)
+    return term-dist['pairhalf']
+
 def main():
-    result={'database_path':DB,'database_sha256':'1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa',
+    digest=hashlib.sha256()
+    with open(DB,'rb') as f:
+        for chunk in iter(lambda:f.read(1024*1024),b''):digest.update(chunk)
+    result={'database_path':DB,'database_sha256':digest.hexdigest(),
             'training_seasons_by_test':{},'evaluations':{},'model_rebuild_check':{},'notes':[]}
     for year in (2025,2026):
-        train_rows,pool,hist,excluded,rawcounts,yardcounts=freeze_base(year)
+        raw_extra=load_raw_extra(year)
+        train_seasons,pool,hist,excluded,rawcounts,yardcounts=freeze_base(year)
+        event_counts,conversion_yards,yard_values,action_counts,team_actions=index_pool(pool)
         gcounts=collections.Counter()
         for ckey,ss in pool.items():
             if ckey[0]!=4:continue
@@ -243,6 +304,7 @@ def main():
                 'fourth_rows_supported':0,'fourth_rows_unsupported':0,'third_rows_supported':0,'third_rows_unsupported':0}
         hash_targets={}
         for avail_ids,target_list in targets_by_available.items():
+            probability_cache={}
             current=[r for gid in avail_ids for r in current_by_game.get(gid,())]
             team_games=avail_manifest[avail_ids]['team_games']
             adapted,diag=tsa.adapt(hist,current,n0=4.0,team_games=team_games) if current else (hist,{})
@@ -255,7 +317,10 @@ def main():
                     samples=pool.get(cell,[])
                     if not samples:continue
                     intent=row_intent(ev,row)
-                    probs,icount=conditional_probs(samples,intent,row['posteam'],row['defteam'],cell,adapted)
+                    probkey=(cell,intent,row['posteam'],row['defteam'])
+                    if probkey not in probability_cache:
+                        probability_cache[probkey]=conditional_probs(event_counts.get((cell,intent),{}),row['posteam'],row['defteam'],cell,adapted)[0]
+                    probs=probability_cache[probkey]
                     if probs is None:
                         counts['event_rows_unsupported']+=1
                     else:
@@ -269,23 +334,19 @@ def main():
                             togo=int(row['ydstogo']); dkey=e0.pool_key(3,togo,row['yardline_100'])[1]
                             third_dist[dkey]+=1
                             pconv={m:0.0 for m in probs}
-                            for cls,p_ev in probs['league'].items():
-                                pass
-                            # Per-arm conversion probability; the conditional yardage within each class remains the historical cell.
                             for m in probs:
                                 for cls,p_ev in probs[m].items():
                                     if cls not in ('run','pass_complete'):continue
-                                    vals=[s[1]['yards_gained'] for s in samples if s[0]==cls and row_intent(s[0],s[1])==intent and s[1].get('yards_gained') is not None]
-                                    if vals:
-                                        successes=sum(1 for s in samples if s[0]==cls and row_intent(s[0],s[1])==intent and s[1].get('yards_gained') is not None and (int(s[1]['yards_gained'])>=togo or s[1].get('touchdown')==1))
-                                        pconv[m]+=p_ev*successes/len(vals)
+                                    vals,td=conversion_yards.get((cell,intent,cls),([],0))
+                                    n=len(vals)+td
+                                    if n:pconv[m]+=p_ev*(td+len(vals)-bisect_left(vals,togo))/n
                             actual_conv=int(ev in ('run','pass_complete') and row.get('yards_gained') is not None and (int(row['yards_gained'])>=togo or row.get('touchdown')==1))
                             for m in probs:acc_bin(third[dkey][m],actual_conv,pconv[m])
                             counts['third_rows_supported']+=1
                     if ev in EVENT_YARDS and row.get('yards_gained') is not None:
                         cache_key=(cell,ev,'league')
                         if cache_key not in yard_dist_cache:
-                            lv=[s[1]['yards_gained'] for s in samples if s[0]==ev and s[1].get('yards_gained') is not None]
+                            lv=yard_values.get((cell,ev),())
                             yard_dist_cache[cache_key]=make_yard_distribution(lv)
                         ld=yard_dist_cache[cache_key]
                         if ld is None or len(ld['xs'])<10:
@@ -297,10 +358,10 @@ def main():
                             for side,team in (('offense',row['posteam']),('defense',row['defteam'])):
                                 dkey=(cell,ev,side,team)
                                 if dkey not in yard_dist_cache:
-                                    tv=[s[1]['yards_gained'] for s in samples if s[0]==ev and s[1].get(side=='offense' and 'posteam' or 'defteam')==team and s[1].get('yards_gained') is not None]
-                                    yard_dist_cache[dkey]=make_yard_distribution([s[1]['yards_gained'] for s in samples if s[0]==ev and s[1].get('yards_gained') is not None],tv)
+                                    tv=yard_values.get((cell,ev,side,team),())
+                                    yard_dist_cache[dkey]=make_mixture_distribution(ld,tv)
                                 td=yard_dist_cache[dkey]
-                                pred=td['mean']; crps=yard_crps(td,y)
+                                pred=td['mean']; crps=mixture_distribution_crps(td,y)
                                 acc_y(yard[f'{name}:{ev}'][f'{side}_only_k25'],y,pred,crps)
                         counts['yardage_rows_supported']+=1
                 # independent 4th-down action scoring, with situation-specific league action share.
@@ -324,11 +385,11 @@ def main():
                     sd=raw.get('score_differential')
                     exception=(q in (2,4) and clock<=60) or (q==4 and clock<=300 and sd is not None and float(sd)<=-8)
                     fg_allowed=dist<=fgmax and (dist<=60 or exception)
-                    base,ac=model_probs_by_action(samples,row['posteam'],row['defteam'],cell,adapted,fg_allowed)
+                    base=action_probability(action_counts.get(cell,{}),fg_allowed)
                     if not base:counts['fourth_rows_unsupported']+=1;continue
                     keys=('go','punt','field_goal');base={k:base.get(k,0.0) for k in keys}
-                    teamo=team_action_probs(samples,row['posteam'],'offense',base,fg_allowed)
-                    teamd=team_action_probs(samples,row['defteam'],'defense',base,fg_allowed)
+                    teamo=team_action_probability(team_actions.get((cell,'offense',row['posteam']),{}),base,fg_allowed)
+                    teamd=team_action_probability(team_actions.get((cell,'defense',row['defteam']),{}),base,fg_allowed)
                     # Flat prior over all historical fourth-down decisions in the fitted pool.
                     flat=global_fourth_probs
                     if not fg_allowed:
@@ -343,7 +404,7 @@ def main():
                     fourth_situations[(row['posteam'],'clock',clockb,action)]+=1
                     fourth_situations[(row['posteam'],'distance',e0.pool_key(4,row['ydstogo'],row['yardline_100'])[1],action)]+=1
                     fourth_situations[(row['posteam'],'field',e0.pool_key(4,row['ydstogo'],row['yardline_100'])[2],action)]+=1
-        result['training_seasons_by_test'][str(year)]=sorted({int(r['season']) for r in train_rows})
+        result['training_seasons_by_test'][str(year)]=train_seasons
         result['evaluations'][str(year)]={
           'source_pool':{'eligible_rows_before_filters':sum(rawcounts.values()),'event_counts_before_source_filters':dict(rawcounts),
                          'final_training_pool_plays':sum(len(v) for v in pool.values()),'e1_exclusions':dict(excluded),
@@ -374,18 +435,13 @@ def main():
       'outcomes':result['evaluations'][str(y)]['conditional_event_probabilities'],
       'rebuild':result['model_rebuild_check']} for y in (2025,2026)}},sort_keys=True))
 
-# Load score and clock records from the same nflverse PBP source release pinned by the 10K run.
-try:
- import pyarrow.parquet as pq
- raw_extra={}
- for yr in (2025,2026):
-  path=PBP_RELEASE.format(season=yr)
-  cols=['game_id','play_id','game_seconds_remaining','score_differential','qtr','posteam','defteam','down','ydstogo','yardline_100','play_type','epa','penalty','penalty_yards','penalty_type','first_down_penalty']
-  tab=pq.read_table(path,columns=cols).to_pydict()
-  for i,(g,p) in enumerate(zip(tab['game_id'],tab['play_id'])):
-   if p is None:continue
-   raw_extra[(g,int(p))]={c:tab[c][i] for c in cols if c not in ('game_id','play_id')}
-except Exception as exc:
- print('parquet join failed',repr(exc));raw_extra={}
+# Load only the fourth-down fields used by the decision audit.
+def load_raw_extra(year):
+    import pyarrow.parquet as pq
+    tab=pq.read_table(PBP_RELEASE.format(season=year),
+        columns=['game_id','play_id','down','game_seconds_remaining','score_differential'],
+        filters=[('down','=',4)]).to_pydict()
+    return {(g,int(p)):{'game_seconds_remaining':clock,'score_differential':score}
+            for g,p,clock,score in zip(tab['game_id'],tab['play_id'],tab['game_seconds_remaining'],tab['score_differential']) if p is not None}
 
 if __name__=='__main__':main()
