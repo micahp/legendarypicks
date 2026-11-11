@@ -298,7 +298,8 @@ PLAYER_SHARE_METRICS = {
 }
 TEAM_METRICS = {
     'points': 'points', 'plays': 'plays', 'pass_attempts': 'pass_attempts',
-    'rush_attempts': 'rush_attempts', 'sacks_taken': 'sacks_taken', 'drives': 'drives',
+    'rush_attempts': 'rush_attempts', 'sacks_taken': 'sacks_taken', 'turnovers': 'turnovers',
+    'drives': 'drives',
 }
 
 
