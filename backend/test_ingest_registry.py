@@ -77,6 +77,13 @@ class TheShippedRegistryIsValid(unittest.TestCase):
         self.assertEqual(job["steps"], [["home_prop_refresh.py", "--apply"]])
         self.assertEqual(job["freshness"][0]["table"], "home_prop_cache")
 
+    def test_nba_schedule_refresh_runs_on_both_databases(self):
+        job = next(j for j in ingest_registry.JOBS if j["id"] == "nba_schedule")
+        self.assertEqual(job["databases"], ["dev", "prod"])
+        self.assertEqual(job["cadence_min"], 30)
+        self.assertEqual(job["host_lock"], "nba_com")
+        self.assertEqual(job["steps"], [["ingest_nba_schedule.py", "--open", "--apply"]])
+
     def test_nba_recent_player_logs_run_on_the_ingest_timer(self):
         job = next(j for j in ingest_registry.JOBS if j["id"] == "nba_player_logs")
         self.assertEqual(job["databases"], ["dev", "prod"])
@@ -176,7 +183,7 @@ class OneEngineNotTwo(unittest.TestCase):
 
 
 class DatabaseScopedJobs(unittest.TestCase):
-    def test_prod_database_does_not_select_the_nba_jobs_or_list_them_as_runnable(self):
+    def test_prod_selects_nba_schedule_but_not_sportsdataverse(self):
         import contextlib
         import io
 
@@ -189,17 +196,20 @@ class DatabaseScopedJobs(unittest.TestCase):
                 )
                 selected_ids = {job["id"] for job in selected}
                 excluded_ids = {job["id"] for job in excluded}
-                nba_ids = {"nba_schedule", "nba_sportsdataverse_logs"}
+                nba_ids = {"nba_sportsdataverse_logs"}
                 self.assertTrue(nba_ids.isdisjoint(selected_ids))
                 self.assertTrue(nba_ids.issubset(excluded_ids))
+                self.assertIn("nba_schedule", selected_ids)
+                self.assertIn("nba_player_logs", selected_ids)
 
                 output = io.StringIO()
                 with contextlib.redirect_stdout(output):
                     self.assertEqual(run_ingest_jobs.main(["--list"]), 0)
                 listing = output.getvalue()
-                self.assertNotIn("nba_player_logs", listing)
+                self.assertIn("nba_schedule", listing)
+                self.assertIn("nba_player_logs", listing)
                 self.assertNotIn("nba_sportsdataverse_logs", listing)
-                self.assertIn("skipped_scope=2 (database=prod)", listing)
+                self.assertIn("skipped_scope=1 (database=prod)", listing)
 
                 for job_id in sorted(nba_ids):
                     output = io.StringIO()

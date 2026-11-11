@@ -124,7 +124,7 @@ JOBS: List[Dict[str, object]] = [
     },
     {
         "id": "nba_schedule",
-        "databases": ["dev"],
+        "databases": ["dev", "prod"],
         # nba.com's own game pages carry the score the moment a game is final, and they cost no
         # ESPN request. This re-reads only the stored games that are not final yet and fall
         # within a week back or three days ahead: one page each, a few a night. The full season
