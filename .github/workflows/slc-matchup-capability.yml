@@ -1,0 +1,26 @@
+name: SLC opponent-adjusted capability research
+
+on:
+  push:
+    branches: [research/slc-opponent-adjusted-mechanisms-2026-11-11]
+    paths:
+      - 'scripts/nfl_sequence/matchup_capability.py'
+      - 'scripts/nfl_sequence/test_matchup_capability.py'
+      - '.github/workflows/slc-matchup-capability.yml'
+  pull_request:
+    branches: [slc-v2, main]
+    paths:
+      - 'scripts/nfl_sequence/matchup_capability.py'
+      - 'scripts/nfl_sequence/test_matchup_capability.py'
+      - '.github/workflows/slc-matchup-capability.yml'
+
+jobs:
+  synthetic-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Conditional probability, opponent effect, shrinkage and cutoff tests
+        run: python3 -m unittest discover -s scripts/nfl_sequence -p 'test_matchup_capability.py' -v
