@@ -28,6 +28,12 @@ The script also triages descriptions containing exactly one penalty mention and 
 
 These are **adjacent-row coverage checks**, not reconstructed or validated enforcement transitions. The next source row can be administrative, begin a different possession, or follow a period boundary. The check does not establish whether a play counted, whether a first down was awarded, or which clock rule applied. Those cases need adjudication and independent validation before the model can use them as legal state transitions.
 
+### False-start state consistency
+
+`audit_false_start_states.py` checks a restricted case against the immediately following source row: a single explicitly enforced offensive false start, five yards, no play, away from the half-distance region. It excludes duplicate ordering, missing state, changes of possession, period or score, and multiple or declined fouls. For comparable rows, it checks that the down remains the same, yards to go and distance to the goal increase by five, and the clock does not move backward. The pinned 2025 data has 614 candidates, of which 578 have a complete comparable next row; all 578 match. The pinned 2026 data has 291 candidates, of which 269 have a complete comparable next row; all 269 match. The remaining rows are not classified as failures. Full counts and source hashes are in `false-start-state-audit-2025-2026.json`.
+
+This is a source-internal consistency check, not independent verification of the official record, nor proof of correct clock enforcement. It does not establish legal outcomes for other foul types or for excluded false starts. The sources are current retrospective files, not proof of historical availability at kickoff.
+
 ## 2026 penalty-field repair
 
 The original database remains byte-for-byte unchanged: `picks.dev.db` SHA-256 `1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa`. Its 2026 `penalty` value is null on all 21,018 rows, and it has no `first_down_penalty` column.
