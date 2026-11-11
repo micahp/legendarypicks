@@ -1,0 +1,86 @@
+{
+  "baseline": {
+    "brier": 0.4759477703095773,
+    "log_loss": 0.7648175317664538
+  },
+  "code_sha256": {
+    "decision_layer.py": "ffab0e69f2400d3d8c1ce36457a72ddb8120098a9f2dcb3bcbfa5c80fdb23a0e",
+    "evaluate_pass_label_outcomes.py": "2abc3d6c25bac50149681416b4c6ccd395cfc7758571a8dec471c03783fae8d4",
+    "pass_label_outcomes.py": "6e2a18dfc757012e1c37ac86c2bf20dd47faf8bc8a5870317f2e819b21329120",
+    "slc_playcall.py": "722d929ceeb135d7cb22bbddd8cde8bffa668103ded4ab75f77fde85234176bd"
+  },
+  "cohort": {
+    "games": 272,
+    "pass_outcomes": 17079
+  },
+  "conditional": {
+    "brier": 0.43500321920682444,
+    "log_loss": 0.714769755460499
+  },
+  "database_sha256": "6141d95e17f9958aa1ec8d7b4d56c3ef249c435867e42230efd12ee4c48473ff",
+  "fit_seasons": [
+    2022,
+    2023,
+    2024
+  ],
+  "limitations": [
+    "The 2025 historical cohort is development-exposed.",
+    "Scores are conditional on observed A/D/E labels; this is not a full-game validation.",
+    "Sacks are excluded from the conditional pass-outcome stage and retain the separate first-stage probability."
+  ],
+  "model_manifest": {
+    "base_prior": 20.0,
+    "contexts": 115,
+    "features": [
+      "A=RB",
+      "A=WR",
+      "A=TE",
+      "A=Other",
+      "D=short",
+      "D=deep",
+      "E=left",
+      "E=middle",
+      "E=right"
+    ],
+    "fit_seasons": [
+      2022,
+      2023,
+      2024
+    ],
+    "iterations": 22,
+    "model": "slc-pass-label-conditional-outcomes-v1-research",
+    "outcomes": [
+      "pass_complete",
+      "pass_incomplete",
+      "interception",
+      "fumble_lost"
+    ],
+    "ridge": 0.01,
+    "rows": 52978,
+    "sha256": "62ac5dac8bc090a402ccb8b7eb1575df34437657038587a466bc24e9850b6e78",
+    "source_code_sha256": "6e2a18dfc757012e1c37ac86c2bf20dd47faf8bc8a5870317f2e819b21329120"
+  },
+  "paired_game_bootstrap_delta_conditional_minus_baseline_95ci": {
+    "brier": [
+      -0.043859191065888196,
+      -0.037996716153823454
+    ],
+    "log_loss": [
+      -0.05362905132776517,
+      -0.04652565776853555
+    ]
+  },
+  "source_sha256": {
+    "ftn_2022": "2846ef9bcc5f7298a5c783fb9a5edc85b3820c0b4943bf60a1217398e412985b",
+    "ftn_2023": "162f0f48a8fca23f86a334c78e27f8daa7443e6b383beada0416b65c593b2c0e",
+    "ftn_2024": "9396c95effac1a81cc30efcf9c4c87ab89855548ae605404318ae949d4356119",
+    "ftn_2025": "2ee4b11962f4c91d426e0edeca5bbded078616ce0efab0710aa2b40b4cfad898",
+    "pbp_2022": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+    "pbp_2023": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+    "pbp_2024": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+    "pbp_2025": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29",
+    "players": "44867006413eac856c5f4529e0d263ce44a6dbcfe6d8166e8e353bfb680bd630"
+  },
+  "status": "research_conditional_pass_outcome_evaluation",
+  "test_season": 2025
+}
