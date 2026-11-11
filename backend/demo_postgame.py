@@ -84,7 +84,8 @@ def main():
                          'sources': facts['sources'], 'claims': recap['claims'], 'candidates': recap['candidates'],
                          'selected': recap['selected'], 'audit': recap['audit'], 'rubric': rubric})
         if recap['gate'] in ('eligible', 'eligible_score_only'):
-            rundown.append({'game_id': game['game_id'], 'segment': recap['headline'], 'script': recap['lede'], 'type': 'text_only'})
+            rundown.append({'game_id': game['game_id'], 'segment': recap['headline'],
+                            'script': ' '.join([recap['lede']] + recap['paragraphs']), 'type': 'text_only'})
     if not games:
         raise SystemExit('No fixtures found')
     latest = max((g['facts']['as_of_utc'] for g in games), key=timestamp)

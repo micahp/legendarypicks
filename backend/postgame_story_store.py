@@ -44,7 +44,7 @@ def save_generation(path, bundle, recap):
         CREATE TRIGGER IF NOT EXISTS postgame_history_no_update BEFORE UPDATE ON game_story_postgame_history BEGIN SELECT RAISE(ABORT,'append only'); END;
         CREATE TRIGGER IF NOT EXISTS postgame_history_no_delete BEFORE DELETE ON game_story_postgame_history BEGIN SELECT RAISE(ABORT,'append only'); END;
         ''')
-        payload = json.dumps({'recap': result, 'rubric': grade, 'sources': bundle.get('sources', [])}, sort_keys=True, ensure_ascii=False)
+        payload = json.dumps({'recap': result, 'rubric': grade, 'input_facts': bundle}, sort_keys=True, ensure_ascii=False)
         c.execute('INSERT OR IGNORE INTO game_story_postgame_history(league,game_id,input_sha256,renderer_version,as_of_utc,payload) VALUES(?,?,?,?,?,?)',
                   (game['league'], game['game_id'], digest, recap['engine_version'], timestamp(bundle['as_of_utc']).astimezone(timezone.utc).isoformat(), payload))
         row = c.execute('SELECT id FROM game_story_postgame_history WHERE league=? AND game_id=? AND input_sha256=? AND renderer_version=?',

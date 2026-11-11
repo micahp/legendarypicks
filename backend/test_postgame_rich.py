@@ -69,6 +69,8 @@ class RichStoryTests(unittest.TestCase):
         self.assertIsNone(graded['dimensions']['sequence']['score'])
         bad = copy.deepcopy(result); bad['audit']['final_status'] = False
         self.assertEqual(grade_postgame(b, bad)['status'], 'blocked')
+        bad = copy.deepcopy(result); bad['headline'] = 'Wrong winner'
+        self.assertEqual(grade_postgame(b, bad)['status'], 'blocked')
 
     def test_score_tampering_fails_even_when_claims_unchanged(self):
         b = nba_fixture(); result = generate_recap(b)
@@ -89,6 +91,7 @@ class RichStoryTests(unittest.TestCase):
         b = nba_fixture(); result = generate_recap(b)
         posts = build_feed(b, result)
         self.assertTrue(any(p['kind'] == 'player_spotlight' for p in posts))
+        self.assertTrue(any(p['kind'] == 'game_recap' for p in posts))
         self.assertTrue(all(p['source_ids'] for p in posts))
         self.assertTrue(any(p['kind'] == 'chart' and p['graphic_spec']['unit'] == 'points' for p in posts))
         result['audit']['claims_recomputed'] = False
@@ -135,6 +138,19 @@ class RichStoryTests(unittest.TestCase):
         self.assertTrue(any(p['kind'] == 'player_spotlight' for p in build_feed(b, result)))
         bad = copy.deepcopy(result); bad['paragraphs'][0] = 'Alex Example threw for 243 yards and 1 touchdown.'
         self.assertFalse(audit(b, bad)['claims_recomputed'])
+
+    def test_nfl_standout_rushing_and_receiving_yards(self):
+        for stat, verb in [('rushing_yards', 'runs for'), ('receiving_yards', 'has')]:
+            b = fixture(); b['teams'][0]['publisher_team_id'] = '30'; b['teams'][1]['publisher_team_id'] = '33'
+            b['sources'].append({'id': 'box:g1', 'source_event_id': 'g1', 'captured_at': '2026-11-01T21:30:00Z',
+                                 'kind': 'final_boxscore', 'status': 'final', 'teams': {'30': 33, '33': 10}})
+            b['players'] = [{'id': 'p1', 'name': 'Alex Example', 'team_id': 'JAX', 'publisher_team_id': '30',
+                             'game_id': 'g1', 'source_id': 'box:g1', 'stats': {stat: 145}}]
+            result = generate_recap(b)
+            self.assertEqual(result['gate'], 'eligible')
+            self.assertIn(verb, result['headline'])
+            self.assertIn('145', result['lede'])
+            self.assertTrue(result['audit']['claims_recomputed'])
 
 
 if __name__ == '__main__':

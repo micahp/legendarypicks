@@ -451,5 +451,215 @@
         "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909960"
       }
     ]
+  },
+  {
+    "as_of_utc": "2026-11-11T06:08:35+00:00",
+    "audit": {
+      "claims_recomputed": true,
+      "cutoff_safe_sources": true,
+      "final_status": true,
+      "no_unsupported_hook": true,
+      "result_and_margin_recomputed": true,
+      "valid_scores_and_teams": true
+    },
+    "candidates": [
+      {
+        "angle_id": "scoring_run:401909961447",
+        "candidate_type": "game_swung",
+        "data_quality": "complete_pbp",
+        "entities": [
+          "BOS",
+          "PHI"
+        ],
+        "evidence_ids": [
+          "pbp:401909961"
+        ],
+        "facts": {
+          "end_event_id": "401909961504",
+          "end_period": 4,
+          "loser_id": "PHI",
+          "points": 17,
+          "source_id": "pbp:401909961",
+          "start_event_id": "401909961447",
+          "start_period": 3,
+          "type": "scoring_run",
+          "winner_id": "BOS"
+        },
+        "priority": 50,
+        "reason": "Unanswered scoring run of at least 10 points",
+        "template_key": "scoring_run"
+      },
+      {
+        "angle_id": "player:4251",
+        "candidate_type": "standout_player",
+        "data_quality": "final_boxscore",
+        "entities": [
+          "4251",
+          "BOS"
+        ],
+        "evidence_ids": [
+          "boxscore:401909961"
+        ],
+        "facts": {
+          "points": 36
+        },
+        "priority": 30,
+        "reason": "30 or more points in a win",
+        "template_key": "nba_points"
+      },
+      {
+        "angle_id": "final_result",
+        "candidate_type": "fallback",
+        "data_quality": "score_only",
+        "entities": [
+          "BOS",
+          "PHI"
+        ],
+        "evidence_ids": [
+          "scoreboard:401909961"
+        ],
+        "priority": 0,
+        "reason": "Final score",
+        "template_key": "result"
+      }
+    ],
+    "claims": [
+      {
+        "source_ids": [
+          "scoreboard:401909961"
+        ],
+        "teams": [
+          {
+            "id": "BOS",
+            "score": 123
+          },
+          {
+            "id": "PHI",
+            "score": 101
+          }
+        ],
+        "type": "result"
+      },
+      {
+        "end_event_id": "401909961504",
+        "end_period": 4,
+        "loser_id": "PHI",
+        "points": 17,
+        "source_id": "pbp:401909961",
+        "start_event_id": "401909961447",
+        "start_period": 3,
+        "type": "scoring_run",
+        "winner_id": "BOS"
+      },
+      {
+        "game_id": "401909961",
+        "player_id": "4251",
+        "points": 36,
+        "rebounds": null,
+        "source_id": "boxscore:401909961",
+        "team_id": "BOS",
+        "type": "supporting_nba_line"
+      },
+      {
+        "leader_id": "BOS",
+        "leader_score": 62,
+        "source_id": "boxscore:401909961",
+        "trailing_id": "PHI",
+        "trailing_score": 51,
+        "type": "halftime_score"
+      }
+    ],
+    "fixture_sha256": "9304f2015d12cec4a66149a22d5322ab40c8617c10f71f99a83cfb49983ae563",
+    "game_id": "401909961",
+    "input_sha256": "ce537d1cdb0f44907c26f1107e101315b16c95c0fec08408e1c747a533f5c536",
+    "rubric": {
+      "dimensions": {
+        "clarity": {
+          "applicable": true,
+          "color": "#F4C7D7",
+          "score": 70,
+          "weight": 10
+        },
+        "facts": {
+          "applicable": true,
+          "color": "#CBB8F2",
+          "score": 100,
+          "weight": 30
+        },
+        "hook": {
+          "applicable": true,
+          "color": "#FFD0B2",
+          "score": 70,
+          "weight": 20
+        },
+        "sequence": {
+          "applicable": true,
+          "color": "#F4E5A7",
+          "score": 100,
+          "weight": 10
+        },
+        "specificity": {
+          "applicable": true,
+          "color": "#B9E6D3",
+          "score": 70,
+          "weight": 15
+        },
+        "voice": {
+          "applicable": true,
+          "color": "#BFDDF6",
+          "score": 75,
+          "weight": 15
+        }
+      },
+      "interpretation": "Automated editorial proxy, not a human rating.",
+      "overall": 83,
+      "status": "eligible",
+      "version": "postgame-rubric-v0.1"
+    },
+    "selected": "scoring_run:401909961447",
+    "sources": [
+      {
+        "captured_at": "2026-11-11T06:08:20+00:00",
+        "id": "scoreboard:401909961",
+        "payload_sha256": "9f4f2a373ba78b8d0bf243877bf3020ed7f4b6852141f0155da3ab7c8558d52d",
+        "source": "espn",
+        "source_event_id": "401909961",
+        "url": "https://www.espn.com/nba/game/_/gameId/401909961"
+      },
+      {
+        "capture_note": "Summary and core endpoint agree on count, ordered IDs, scores, period, clock; all pages captured.",
+        "captured_at": "2026-11-11T06:08:35+00:00",
+        "coverage": "complete",
+        "crosscheck_raw_response_sha256": "988f105cd329737604e1ab4f0d11281f98c5edd077f04728704fc5c10e2ca554",
+        "crosscheck_url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/events/401909961/competitions/401909961/plays?limit=500",
+        "event_count": 437,
+        "events_sha256": "7744d202e29b668615d0bae7cde06a873025911070778c107716e438b06ce811",
+        "id": "pbp:401909961",
+        "kind": "final_pbp",
+        "raw_response_sha256": "a96823588300e21cf809f475f7fdc753002948c5e2ae44c0de7c4b9297fc622d",
+        "source": "espn",
+        "source_event_id": "401909961",
+        "status": "final",
+        "teams": {
+          "2": 123,
+          "20": 101
+        },
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909961"
+      },
+      {
+        "captured_at": "2026-11-11T06:08:35+00:00",
+        "id": "boxscore:401909961",
+        "kind": "final_boxscore",
+        "raw_response_sha256": "a96823588300e21cf809f475f7fdc753002948c5e2ae44c0de7c4b9297fc622d",
+        "source": "espn",
+        "source_event_id": "401909961",
+        "status": "final",
+        "teams": {
+          "2": 123,
+          "20": 101
+        },
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909961"
+      }
+    ]
   }
 ]
