@@ -1,0 +1,776 @@
+{
+  "arms": {
+    "ARI_SEA_C": {
+      "dropbacks": 725,
+      "games": 10,
+      "generated_situation_cells": 81,
+      "historical_base_expected_rate_on_supported_generated_contexts": {
+        "fumble_lost": 0.005735494150833359,
+        "interception": 0.015698262261250037,
+        "pass_complete": 0.5979542676169539,
+        "pass_incomplete": 0.31615687049843966,
+        "sack": 0.06445510547252299
+      },
+      "historical_cell_supported_dropbacks": 725,
+      "simulated_event_rate": {
+        "fumble_lost": 0.001379310344827586,
+        "interception": 0.020689655172413793,
+        "pass_complete": 0.6551724137931034,
+        "pass_incomplete": 0.3020689655172414,
+        "sack": 0.020689655172413793
+      },
+      "unsupported_context_dropbacks": 0
+    },
+    "ARI_SEA_D1": {
+      "dropbacks": 750,
+      "games": 10,
+      "generated_situation_cells": 84,
+      "historical_base_expected_rate_on_supported_generated_contexts": {
+        "fumble_lost": 0.005723458931672893,
+        "interception": 0.015704271742370685,
+        "pass_complete": 0.5974385349035307,
+        "pass_incomplete": 0.3163438215954842,
+        "sack": 0.06478991282694171
+      },
+      "historical_cell_supported_dropbacks": 750,
+      "simulated_event_rate": {
+        "fumble_lost": 0.0013333333333333333,
+        "interception": 0.02,
+        "pass_complete": 0.6493333333333333,
+        "pass_incomplete": 0.30933333333333335,
+        "sack": 0.02
+      },
+      "unsupported_context_dropbacks": 0
+    },
+    "ARI_SEA_default": {
+      "dropbacks": 750,
+      "games": 10,
+      "generated_situation_cells": 84,
+      "historical_base_expected_rate_on_supported_generated_contexts": {
+        "fumble_lost": 0.005723458931672893,
+        "interception": 0.015704271742370685,
+        "pass_complete": 0.5974385349035307,
+        "pass_incomplete": 0.3163438215954842,
+        "sack": 0.06478991282694171
+      },
+      "historical_cell_supported_dropbacks": 750,
+      "simulated_event_rate": {
+        "fumble_lost": 0.0013333333333333333,
+        "interception": 0.02,
+        "pass_complete": 0.6493333333333333,
+        "pass_incomplete": 0.30933333333333335,
+        "sack": 0.02
+      },
+      "unsupported_context_dropbacks": 0
+    },
+    "BUF_MIN_D1": {
+      "dropbacks": 778,
+      "games": 10,
+      "generated_situation_cells": 80,
+      "historical_base_expected_rate_on_supported_generated_contexts": {
+        "fumble_lost": 0.00567634546181707,
+        "interception": 0.015343599917031513,
+        "pass_complete": 0.6003917837858527,
+        "pass_incomplete": 0.31452837025482533,
+        "sack": 0.06405990058047337
+      },
+      "historical_cell_supported_dropbacks": 778,
+      "simulated_event_rate": {
+        "fumble_lost": 0.0,
+        "interception": 0.011568123393316195,
+        "pass_complete": 0.6478149100257069,
+        "pass_incomplete": 0.30719794344473006,
+        "sack": 0.033419023136246784
+      },
+      "unsupported_context_dropbacks": 0
+    }
+  },
+  "audit": "generated SLC state distribution vs clean historical base exact-cell event rates",
+  "events": [
+    "sack",
+    "interception",
+    "fumble_lost",
+    "pass_incomplete",
+    "pass_complete"
+  ],
+  "minimum_historical_cell_support": 10,
+  "replay_games": 40,
+  "replay_manifest": {
+    "BUF_MIN_score_source": "docs/research/slc-v2-model-d1-10k-2026-11-10/seed-results.csv.gz",
+    "BUF_MIN_score_source_sha256": "906e8ec7215d8375883469afff4f9772e488d3e42bbaaa79c59db270f26b23ea",
+    "archived_score_source_sha256": {
+      "ARI_SEA_C": "e580f8f93dfee45d8ba43cbbfd4faba351e0b3495b47cb5a0861f257715ec6ca",
+      "ARI_SEA_D1": "8338edf7eb2f41c3b38dee16d155f1ce21534a5fdda52676a3b5cde455acf878",
+      "ARI_SEA_default": "1da359698e2d41684f1a36acd55a3476f4c9c0a8c6a32be76d48b94ac6d3616f"
+    },
+    "ari_sea_rng_v2_roots_match_all_arms": [
+      {
+        "all_arms_match": true,
+        "root_sha256": "fbc071f8b04891d8ce9a975ea8843b2345ca9095297512e6d5db806550febe5d",
+        "seed": 300001,
+        "snapshot_sha256": "f530697df9b19c9076beaea10d4d4aa68f26074bdd3bd228d918fee53eb4bac5"
+      },
+      {
+        "all_arms_match": true,
+        "root_sha256": "23218a74a9df0bcc8e397f7b5c61c42efe2d5f5be551ca6a8ce55ef79e26f756",
+        "seed": 300002,
+        "snapshot_sha256": "f530697df9b19c9076beaea10d4d4aa68f26074bdd3bd228d918fee53eb4bac5"
+      },
+      {
+        "all_arms_match": true,
+        "root_sha256": "030531c90823cf1e81b30750fdc0a70a16b183bac763e6e64adc09699c906563",
+        "seed": 300003,
+        "snapshot_sha256": "f530697df9b19c9076beaea10d4d4aa68f26074bdd3bd228d918fee53eb4bac5"
+      },
+      {
+        "all_arms_match": true,
+        "root_sha256": "afc8963359d2da06a93e5ecaf9b0f82afaec1c41503c9f2482e139e3c0725728",
+        "seed": 300004,
+        "snapshot_sha256": "f530697df9b19c9076beaea10d4d4aa68f26074bdd3bd228d918fee53eb4bac5"
+      },
+      {
+        "all_arms_match": true,
+        "root_sha256": "8a84a64d08c1b0b9108aae0e1e410b8fd11792842c2317675312a29abe4706e2",
+        "seed": 300005,
+        "snapshot_sha256": "f530697df9b19c9076beaea10d4d4aa68f26074bdd3bd228d918fee53eb4bac5"
+      },
+      {
+        "all_arms_match": true,
+        "root_sha256": "91fc91eda72d8a7eda1f10000e276f598e2d11c7f38f5a605c1131077c61fcb2",
+        "seed": 300006,
+        "snapshot_sha256": "f530697df9b19c9076beaea10d4d4aa68f26074bdd3bd228d918fee53eb4bac5"
+      },
+      {
+        "all_arms_match": true,
+        "root_sha256": "a7203fd3532086f33bec126954c28524a9b98367e614f50ca482c89a3f021529",
+        "seed": 300007,
+        "snapshot_sha256": "f530697df9b19c9076beaea10d4d4aa68f26074bdd3bd228d918fee53eb4bac5"
+      },
+      {
+        "all_arms_match": true,
+        "root_sha256": "b7de3c04c1dccacfbed9deca68dd425688041475a0093a697700f272e09b9c5e",
+        "seed": 300008,
+        "snapshot_sha256": "f530697df9b19c9076beaea10d4d4aa68f26074bdd3bd228d918fee53eb4bac5"
+      },
+      {
+        "all_arms_match": true,
+        "root_sha256": "cc692642377652f2928ac1b7be5ad586fab18d9ff6b0b1dde1823bb98a89d45b",
+        "seed": 300009,
+        "snapshot_sha256": "f530697df9b19c9076beaea10d4d4aa68f26074bdd3bd228d918fee53eb4bac5"
+      },
+      {
+        "all_arms_match": true,
+        "root_sha256": "8ca8381d91cb08061a90af6c1f50fc2673a8ef3c2fc169ed3f5c7dda1958f707",
+        "seed": 300010,
+        "snapshot_sha256": "f530697df9b19c9076beaea10d4d4aa68f26074bdd3bd228d918fee53eb4bac5"
+      }
+    ],
+    "base_commit": "09a794f075947ed88973268e9535af6ad85c79d1",
+    "branch": "slc-v2",
+    "execution": "--slc-profile v1_full_stack --slc-v2 --rng-protocol v2; all five ordinary blocker fixes; --export-boxscores --export-plays",
+    "games_validated": 40,
+    "input_identities": {
+      "ARI_SEA_snapshot_sha256": "cc44c5e0f0e3216a6785d2b79af65174a27b95133e8600da07d412237338e475",
+      "BUF_MIN_snapshot_sha256": "1d00a1030a63fe1f9dd500a49c5207db5b7d8002a1af84fd6498ba40845accd9",
+      "D1_adaptive_table_sha256": "cec16cb2462ef71eaf0fc5d300ce6729e57c915b114dd8615f8e7d924986a618",
+      "playcall_artifact_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+      "simulation_database_sha256": "1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa",
+      "snap_counts_sha256": "36f28e18af3080df9f160d42dd5e3e59c37cfacf0dd24772ea51cfd41cadcfca",
+      "streaks_sha256": "50490140dac78836c135226096b9101fc4f1a44e22837aba04174d921a065c78"
+    },
+    "penalty_rule": "Penalty-only first downs are first downs but not third/fourth-down conversions. Scrimmage-earned first downs and offensive touchdowns convert. No penalties occurred in these replay samples.",
+    "replay_code_note": "C pairing CLI support was a local two-file patch to the base commit; that patch is included in this branch commit.",
+    "replay_sidecar_sha256": {
+      "ARI_SEA_C": "95ce8d5e19c611e36d5dba0f24efe14f4f86a6adb248ca0a29fddef42f0aa4ed",
+      "ARI_SEA_D1": "dc94d6870cef026f0003354676c89db2bfee821bcf2e440671bdb22090015ace",
+      "ARI_SEA_default": "94357959f83bb7f89e4c472dd867790c0f7f154bf43d78ae8c49a9b18b6cdaae",
+      "BUF_MIN_D1": "65dca65aab1ca37e3dfb17609976eed13322d1f6f21d085f305ad729d46c0c06"
+    },
+    "report_date": "2026-11-10",
+    "score_checks": {
+      "ARI_SEA_C": [
+        {
+          "match": true,
+          "original": {
+            "ARI": 20,
+            "SEA": 30
+          },
+          "replay": {
+            "ARI": 20,
+            "SEA": 30
+          },
+          "seed": 300001
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 27,
+            "SEA": 20
+          },
+          "replay": {
+            "ARI": 27,
+            "SEA": 20
+          },
+          "seed": 300002
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 16,
+            "SEA": 19
+          },
+          "replay": {
+            "ARI": 16,
+            "SEA": 19
+          },
+          "seed": 300003
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 17,
+            "SEA": 27
+          },
+          "replay": {
+            "ARI": 17,
+            "SEA": 27
+          },
+          "seed": 300004
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 13,
+            "SEA": 24
+          },
+          "replay": {
+            "ARI": 13,
+            "SEA": 24
+          },
+          "seed": 300005
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 39,
+            "SEA": 13
+          },
+          "replay": {
+            "ARI": 39,
+            "SEA": 13
+          },
+          "seed": 300006
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 27,
+            "SEA": 13
+          },
+          "replay": {
+            "ARI": 27,
+            "SEA": 13
+          },
+          "seed": 300007
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 18,
+            "SEA": 20
+          },
+          "replay": {
+            "ARI": 18,
+            "SEA": 20
+          },
+          "seed": 300008
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 30,
+            "SEA": 24
+          },
+          "replay": {
+            "ARI": 30,
+            "SEA": 24
+          },
+          "seed": 300009
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 24,
+            "SEA": 33
+          },
+          "replay": {
+            "ARI": 24,
+            "SEA": 33
+          },
+          "seed": 300010
+        }
+      ],
+      "ARI_SEA_D1": [
+        {
+          "match": true,
+          "original": {
+            "ARI": 27,
+            "SEA": 26
+          },
+          "replay": {
+            "ARI": 27,
+            "SEA": 26
+          },
+          "seed": 300001
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 9,
+            "SEA": 13
+          },
+          "replay": {
+            "ARI": 9,
+            "SEA": 13
+          },
+          "seed": 300002
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 16,
+            "SEA": 19
+          },
+          "replay": {
+            "ARI": 16,
+            "SEA": 19
+          },
+          "seed": 300003
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 24,
+            "SEA": 32
+          },
+          "replay": {
+            "ARI": 24,
+            "SEA": 32
+          },
+          "seed": 300004
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 13,
+            "SEA": 24
+          },
+          "replay": {
+            "ARI": 13,
+            "SEA": 24
+          },
+          "seed": 300005
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 39,
+            "SEA": 13
+          },
+          "replay": {
+            "ARI": 39,
+            "SEA": 13
+          },
+          "seed": 300006
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 17,
+            "SEA": 27
+          },
+          "replay": {
+            "ARI": 17,
+            "SEA": 27
+          },
+          "seed": 300007
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 15,
+            "SEA": 10
+          },
+          "replay": {
+            "ARI": 15,
+            "SEA": 10
+          },
+          "seed": 300008
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 30,
+            "SEA": 24
+          },
+          "replay": {
+            "ARI": 30,
+            "SEA": 24
+          },
+          "seed": 300009
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 24,
+            "SEA": 33
+          },
+          "replay": {
+            "ARI": 24,
+            "SEA": 33
+          },
+          "seed": 300010
+        }
+      ],
+      "ARI_SEA_default": [
+        {
+          "match": true,
+          "original": {
+            "ARI": 27,
+            "SEA": 26
+          },
+          "replay": {
+            "ARI": 27,
+            "SEA": 26
+          },
+          "seed": 300001
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 9,
+            "SEA": 13
+          },
+          "replay": {
+            "ARI": 9,
+            "SEA": 13
+          },
+          "seed": 300002
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 16,
+            "SEA": 19
+          },
+          "replay": {
+            "ARI": 16,
+            "SEA": 19
+          },
+          "seed": 300003
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 24,
+            "SEA": 32
+          },
+          "replay": {
+            "ARI": 24,
+            "SEA": 32
+          },
+          "seed": 300004
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 13,
+            "SEA": 24
+          },
+          "replay": {
+            "ARI": 13,
+            "SEA": 24
+          },
+          "seed": 300005
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 39,
+            "SEA": 13
+          },
+          "replay": {
+            "ARI": 39,
+            "SEA": 13
+          },
+          "seed": 300006
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 17,
+            "SEA": 27
+          },
+          "replay": {
+            "ARI": 17,
+            "SEA": 27
+          },
+          "seed": 300007
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 15,
+            "SEA": 10
+          },
+          "replay": {
+            "ARI": 15,
+            "SEA": 10
+          },
+          "seed": 300008
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 30,
+            "SEA": 24
+          },
+          "replay": {
+            "ARI": 30,
+            "SEA": 24
+          },
+          "seed": 300009
+        },
+        {
+          "match": true,
+          "original": {
+            "ARI": 24,
+            "SEA": 33
+          },
+          "replay": {
+            "ARI": 24,
+            "SEA": 33
+          },
+          "seed": 300010
+        }
+      ],
+      "BUF_MIN_D1": [
+        {
+          "match": true,
+          "original": {
+            "BUF": 31,
+            "MIN": 23
+          },
+          "replay": {
+            "BUF": 31,
+            "MIN": 23
+          },
+          "seed": 200001
+        },
+        {
+          "match": true,
+          "original": {
+            "BUF": 27,
+            "MIN": 25
+          },
+          "replay": {
+            "BUF": 27,
+            "MIN": 25
+          },
+          "seed": 200002
+        },
+        {
+          "match": true,
+          "original": {
+            "BUF": 21,
+            "MIN": 24
+          },
+          "replay": {
+            "BUF": 21,
+            "MIN": 24
+          },
+          "seed": 200003
+        },
+        {
+          "match": true,
+          "original": {
+            "BUF": 24,
+            "MIN": 16
+          },
+          "replay": {
+            "BUF": 24,
+            "MIN": 16
+          },
+          "seed": 200004
+        },
+        {
+          "match": true,
+          "original": {
+            "BUF": 24,
+            "MIN": 3
+          },
+          "replay": {
+            "BUF": 24,
+            "MIN": 3
+          },
+          "seed": 200005
+        },
+        {
+          "match": true,
+          "original": {
+            "BUF": 20,
+            "MIN": 12
+          },
+          "replay": {
+            "BUF": 20,
+            "MIN": 12
+          },
+          "seed": 200006
+        },
+        {
+          "match": true,
+          "original": {
+            "BUF": 9,
+            "MIN": 26
+          },
+          "replay": {
+            "BUF": 9,
+            "MIN": 26
+          },
+          "seed": 200007
+        },
+        {
+          "match": true,
+          "original": {
+            "BUF": 27,
+            "MIN": 24
+          },
+          "replay": {
+            "BUF": 27,
+            "MIN": 24
+          },
+          "seed": 200008
+        },
+        {
+          "match": true,
+          "original": {
+            "BUF": 31,
+            "MIN": 33
+          },
+          "replay": {
+            "BUF": 31,
+            "MIN": 33
+          },
+          "seed": 200009
+        },
+        {
+          "match": true,
+          "original": {
+            "BUF": 34,
+            "MIN": 19
+          },
+          "replay": {
+            "BUF": 34,
+            "MIN": 19
+          },
+          "seed": 200010
+        }
+      ]
+    },
+    "score_matches": 40,
+    "seed_ledger_sha256": {
+      "C": "83175f11ab99433e1d2ad7a6131795d95cfe6852a6ffc19adc6495b0885044d0",
+      "D1": "8ed35113b544e9d8d1182d7a06c07ada37d93eab69768e5576db507405137c50",
+      "default": "f4874cdaa75da7a73bcc0dc2e4db16cbe64f794cc4a8517a3b32ad1e47f23f5b"
+    },
+    "seed_ranges": {
+      "ARI_SEA_default_v2_C_D1": [
+        300001,
+        300010
+      ],
+      "BUF_MIN_D1": [
+        200001,
+        200010
+      ]
+    },
+    "simulation_errors": 0,
+    "snapshot_roster_timing": {
+      "ARI_SEA": {
+        "relation": "snapshot_before_finalization",
+        "roster_finalization_window_opens_utc": "2026-11-08T19:55:00Z",
+        "snapshot_as_of_utc": "2026-11-07T22:16:59Z"
+      },
+      "BUF_MIN": {
+        "relation": "snapshot_before_finalization",
+        "roster_finalization_window_opens_utc": "2026-11-09T23:45:00Z",
+        "snapshot_as_of_utc": "2026-11-09T20:28:32Z"
+      },
+      "interpretation": "Pre-finalized roster snapshots are valid frozen inputs for these completed simulations. They are not finalized-roster snapshots."
+    }
+  },
+  "replay_manifest_sha256": "f246f2566c35ba0d0910fec93b98bb356574aceeebce4b7a14ad36399b4549cd",
+  "replay_sha256": "ba4414825ec83b0aa32f1fa047f17c9757c259a8295401c3c2bd7954dbf34ebe",
+  "scope": "descriptive only; no sampler-stage probabilities were preserved in the replay export",
+  "seasons_for_base_rates": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "source_exclusions": {
+    "missing_situation": 354,
+    "negative derived clock runoff": 34,
+    "no same-quarter next snap for clock runoff": 15,
+    "overtime_or_unknown_quarter": 470,
+    "turnover that is a touchdown (not modelled)": 186,
+    "turnover without a clean new-offense snap": 317
+  },
+  "source_files_sha256": {
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+    "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+  },
+  "source_penalty_overlays": {
+    "2022": {
+      "path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2022.parquet",
+      "penalty_status": {
+        "clean": 44788,
+        "penalty": 3153,
+        "unknown": 1493
+      },
+      "rows": 49434,
+      "sha256": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09"
+    },
+    "2023": {
+      "path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2023.parquet",
+      "penalty_status": {
+        "clean": 44948,
+        "penalty": 3229,
+        "unknown": 1488
+      },
+      "rows": 49665,
+      "sha256": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776"
+    },
+    "2024": {
+      "path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2024.parquet",
+      "penalty_status": {
+        "clean": 44334,
+        "penalty": 3641,
+        "unknown": 1517
+      },
+      "rows": 49492,
+      "sha256": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b"
+    },
+    "2025": {
+      "path": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp/play_by_play_2025.parquet",
+      "penalty_status": {
+        "clean": 43701,
+        "penalty": 3559,
+        "unknown": 1511
+      },
+      "rows": 48771,
+      "sha256": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+    }
+  }
+}
