@@ -1,0 +1,2232 @@
+{
+  "automated_acceptance": {
+    "all_outputs_two_to_three_sentences": true,
+    "dallas_sacramento_players_present": true,
+    "jsn_prominent_four_100_yard_games": true,
+    "memphis_undefeated_story_leads": true,
+    "portland_denver_substantive": true,
+    "sacramento_winless_and_dead_last": true,
+    "san_antonio_rematch_supported": true,
+    "selected_sources_cutoff_safe": true
+  },
+  "editorial_review": {
+    "baseline_reference": "Saved core_stories.py LLM preview text is included verbatim per matchup. This is a six-example editorial comparison, not a blinded human preference study.",
+    "headline_choice": "For all six complete-record fixtures, team stories were fixed before player stats: record form, undefeated, winless/last place, top four, or streak clash.",
+    "human_ratings": 0,
+    "remaining_gaps": [
+      "Templates have only been reviewed on six matchups.",
+      "Playoff races, rivalries, and rematches without a source-backed result need fixtures.",
+      "The player thresholds can still choose a different star than the LLM baseline; review Houston and Portland.",
+      "Historical NFL standings need an archived cutoff-safe snapshot for database-only replay at this cutoff.",
+      "Production integration remains untouched pending editorial review."
+    ]
+  },
+  "engine": {
+    "database_writes": 0,
+    "mode": "deterministic CPU",
+    "model_calls": 0,
+    "module": "backend/story_engine.py",
+    "network_calls": 0
+  },
+  "inputs": {
+    "cutoff": "2026-11-03T00:32:27Z",
+    "nba_full_league_snapshot": "docs/research/narrative-event-knowledge-2026-11-03/deterministic-engine/nba_standings_2026-11-02.json",
+    "nba_standings_coverage": {
+      "only_undefeated": [
+        "MEM"
+      ],
+      "scored_games": 92,
+      "teams": 30
+    },
+    "nfl_record_cutoff_note": "Chicago and Seattle records use frozen, independently recomputed facts from the comparison packet with conservative game-date-plus-one-day availability. Current nfl_schedule ingested_at values postdate this retrospective cutoff, so current table rows were not replayed as historical data.",
+    "saved_llm_comparisons": "docs/research/narrative-event-knowledge-2026-11-03/relevance-ranking/examples.jsonl",
+    "swift_log_coverage": {
+      "logs": 7,
+      "rush_touchdowns": 7,
+      "rush_yards": 476
+    },
+    "swift_season_logs": "docs/research/narrative-event-knowledge-2026-11-03/deterministic-engine/swift_2026_logs.json"
+  },
+  "matchups": [
+    {
+      "angle": "records",
+      "as_of": "2026-11-03T00:32:27Z",
+      "away": "CHI",
+      "baseline_players_retained": [
+        "Jaxon Smith-Njigba",
+        "D'Andre Swift"
+      ],
+      "game_id": "2026_08_CHI_SEA",
+      "generated_story": "The 5-2 Bears bring a two-game winning streak to Seattle, where the Seahawks sit at 4-3. Jaxon Smith-Njigba has been on a tear for Seattle, topping 100 receiving yards in four of his last five games, while Chicago counters with D'Andre Swift, who has rushed for 476 yards and seven touchdowns.",
+      "home": "SEA",
+      "kickoff_utc": "2026-11-03T01:15:00Z",
+      "league": "nfl",
+      "omitted_player_facts": [
+        {
+          "fact_id": "player_form:Caleb Williams",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Luther Burden III",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Sam Darnold",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Emanuel Wilson",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        }
+      ],
+      "omitted_secondary_facts": [
+        "Caleb Williams' uneven PPR sequence and both teams' quality-rank labels."
+      ],
+      "saved_llm_baseline": "Chicago (5-2, ranked #8) brings a two-game win streak to Seattle, where the 4-3 Seahawks sit at #15. Jaxon Smith-Njigba has been Seattle's engine, topping 100 receiving yards in four of his last five (150, 134, 102, 76, 128). Caleb Williams has been uneven lately — 37.26, 7.72, 16.5 and 22.12 PPR points over his last four — while D'Andre Swift's 476 rushing yards and 7 touchdowns pace Chicago's ground game.",
+      "selected_facts": [
+        {
+          "description": "Chicago Bears record 5-2",
+          "evidence_availability": [
+            {
+              "available_at": "2026-09-14T12:00:00Z",
+              "date": "2026-09-13",
+              "id": "2026_01_CHI_CAR"
+            },
+            {
+              "available_at": "2026-09-21T12:00:00Z",
+              "date": "2026-09-20",
+              "id": "2026_02_MIN_CHI"
+            },
+            {
+              "available_at": "2026-09-29T12:00:00Z",
+              "date": "2026-09-28",
+              "id": "2026_03_PHI_CHI"
+            },
+            {
+              "available_at": "2026-10-05T12:00:00Z",
+              "date": "2026-10-04",
+              "id": "2026_04_NYJ_CHI"
+            },
+            {
+              "available_at": "2026-10-12T12:00:00Z",
+              "date": "2026-10-11",
+              "id": "2026_05_CHI_GB"
+            },
+            {
+              "available_at": "2026-10-19T12:00:00Z",
+              "date": "2026-10-18",
+              "id": "2026_06_CHI_ATL"
+            },
+            {
+              "available_at": "2026-10-23T12:00:00Z",
+              "date": "2026-10-22",
+              "id": "2026_07_NE_CHI"
+            }
+          ],
+          "evidence_available_from": "2026-09-14T12:00:00Z",
+          "evidence_available_through": "2026-10-23T12:00:00Z",
+          "evidence_ids": [
+            "2026_01_CHI_CAR",
+            "2026_02_MIN_CHI",
+            "2026_03_PHI_CHI",
+            "2026_04_NYJ_CHI",
+            "2026_05_CHI_GB",
+            "2026_06_CHI_ATL",
+            "2026_07_NE_CHI"
+          ],
+          "evidence_row_count": 7,
+          "fact_id": "record:CHI",
+          "kind": "record",
+          "player": null,
+          "team": "CHI"
+        },
+        {
+          "description": "Seattle Seahawks record 4-3",
+          "evidence_availability": [
+            {
+              "available_at": "2026-09-10T12:00:00Z",
+              "date": "2026-09-09",
+              "id": "2026_01_NE_SEA"
+            },
+            {
+              "available_at": "2026-09-21T12:00:00Z",
+              "date": "2026-09-20",
+              "id": "2026_02_SEA_ARI"
+            },
+            {
+              "available_at": "2026-09-28T12:00:00Z",
+              "date": "2026-09-27",
+              "id": "2026_03_SEA_WAS"
+            },
+            {
+              "available_at": "2026-10-05T12:00:00Z",
+              "date": "2026-10-04",
+              "id": "2026_04_LAC_SEA"
+            },
+            {
+              "available_at": "2026-10-12T12:00:00Z",
+              "date": "2026-10-11",
+              "id": "2026_05_SF_SEA"
+            },
+            {
+              "available_at": "2026-10-16T12:00:00Z",
+              "date": "2026-10-15",
+              "id": "2026_06_SEA_DEN"
+            },
+            {
+              "available_at": "2026-10-26T12:00:00Z",
+              "date": "2026-10-25",
+              "id": "2026_07_KC_SEA"
+            }
+          ],
+          "evidence_available_from": "2026-09-10T12:00:00Z",
+          "evidence_available_through": "2026-10-26T12:00:00Z",
+          "evidence_ids": [
+            "2026_01_NE_SEA",
+            "2026_02_SEA_ARI",
+            "2026_03_SEA_WAS",
+            "2026_04_LAC_SEA",
+            "2026_05_SF_SEA",
+            "2026_06_SEA_DEN",
+            "2026_07_KC_SEA"
+          ],
+          "evidence_row_count": 7,
+          "fact_id": "record:SEA",
+          "kind": "record",
+          "player": null,
+          "team": "SEA"
+        },
+        {
+          "description": "Chicago Bears 2-game winning streak",
+          "evidence_availability": [
+            {
+              "available_at": "2026-09-14T12:00:00Z",
+              "date": "2026-09-13",
+              "id": "2026_01_CHI_CAR"
+            },
+            {
+              "available_at": "2026-09-21T12:00:00Z",
+              "date": "2026-09-20",
+              "id": "2026_02_MIN_CHI"
+            },
+            {
+              "available_at": "2026-09-29T12:00:00Z",
+              "date": "2026-09-28",
+              "id": "2026_03_PHI_CHI"
+            },
+            {
+              "available_at": "2026-10-05T12:00:00Z",
+              "date": "2026-10-04",
+              "id": "2026_04_NYJ_CHI"
+            },
+            {
+              "available_at": "2026-10-12T12:00:00Z",
+              "date": "2026-10-11",
+              "id": "2026_05_CHI_GB"
+            },
+            {
+              "available_at": "2026-10-19T12:00:00Z",
+              "date": "2026-10-18",
+              "id": "2026_06_CHI_ATL"
+            },
+            {
+              "available_at": "2026-10-23T12:00:00Z",
+              "date": "2026-10-22",
+              "id": "2026_07_NE_CHI"
+            }
+          ],
+          "evidence_available_from": "2026-09-14T12:00:00Z",
+          "evidence_available_through": "2026-10-23T12:00:00Z",
+          "evidence_ids": [
+            "2026_01_CHI_CAR",
+            "2026_02_MIN_CHI",
+            "2026_03_PHI_CHI",
+            "2026_04_NYJ_CHI",
+            "2026_05_CHI_GB",
+            "2026_06_CHI_ATL",
+            "2026_07_NE_CHI"
+          ],
+          "evidence_row_count": 7,
+          "fact_id": "streak:CHI",
+          "kind": "streak",
+          "player": null,
+          "team": "CHI"
+        },
+        {
+          "description": "Jaxon Smith-Njigba recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-26T09:10:10Z",
+              "date": "2026-10-25",
+              "game_id": "2026_07_KC_SEA",
+              "id": "1432055"
+            },
+            {
+              "available_at": "2026-10-16T09:10:11Z",
+              "date": "2026-10-15",
+              "game_id": "2026_06_SEA_DEN",
+              "id": "1064146"
+            },
+            {
+              "available_at": "2026-10-12T09:10:11Z",
+              "date": "2026-10-11",
+              "game_id": "2026_05_SF_SEA",
+              "id": "999086"
+            },
+            {
+              "available_at": "2026-10-05T12:00:00Z",
+              "date": "2026-10-04",
+              "game_id": "2026_04_LAC_SEA",
+              "id": "883431"
+            },
+            {
+              "available_at": "2026-09-28T12:00:00Z",
+              "date": "2026-09-27",
+              "game_id": "2026_03_SEA_WAS",
+              "id": "882377"
+            }
+          ],
+          "evidence_available_from": "2026-09-28T12:00:00Z",
+          "evidence_available_through": "2026-10-26T09:10:10Z",
+          "evidence_ids": [
+            "1064146",
+            "1432055",
+            "882377",
+            "883431",
+            "999086"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "player_form:Jaxon Smith-Njigba",
+          "kind": "player_form",
+          "player": "Jaxon Smith-Njigba",
+          "team": "SEA"
+        },
+        {
+          "description": "D'Andre Swift recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-23T09:10:12Z",
+              "date": "2026-10-22",
+              "game_id": "2026_07_NE_CHI",
+              "id": "1390445"
+            },
+            {
+              "available_at": "2026-10-19T09:10:09Z",
+              "date": "2026-10-18",
+              "game_id": "2026_06_CHI_ATL",
+              "id": "1342409"
+            },
+            {
+              "available_at": "2026-10-12T09:10:11Z",
+              "date": "2026-10-11",
+              "game_id": "2026_05_CHI_GB",
+              "id": "998839"
+            },
+            {
+              "available_at": "2026-10-06T03:20:48Z",
+              "date": "2026-10-04",
+              "game_id": "2026_04_NYJ_CHI",
+              "id": "883173"
+            },
+            {
+              "available_at": "2026-10-06T03:20:48Z",
+              "date": "2026-09-28",
+              "game_id": "2026_03_PHI_CHI",
+              "id": "882090"
+            },
+            {
+              "available_at": "2026-10-06T03:20:48Z",
+              "date": "2026-09-20",
+              "game_id": "2026_02_MIN_CHI",
+              "id": "880987"
+            },
+            {
+              "available_at": "2026-10-06T03:20:47Z",
+              "date": "2026-09-13",
+              "game_id": "2026_01_CHI_CAR",
+              "id": "879872"
+            }
+          ],
+          "evidence_available_from": "2026-10-06T03:20:47Z",
+          "evidence_available_through": "2026-10-23T09:10:12Z",
+          "evidence_ids": [
+            "1342409",
+            "1390445",
+            "879872",
+            "880987",
+            "882090",
+            "883173",
+            "998839"
+          ],
+          "evidence_row_count": 7,
+          "fact_id": "player_form:D'Andre Swift",
+          "kind": "player_form",
+          "player": "D'Andre Swift",
+          "team": "CHI"
+        }
+      ],
+      "sentence_count": 2,
+      "source_record_checks": [
+        {
+          "availability_basis": [
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 7,
+          "record": "5-2",
+          "source_game_count": 7,
+          "source_recomputation": "pass",
+          "team": "CHI"
+        },
+        {
+          "availability_basis": [
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 7,
+          "record": "4-3",
+          "source_game_count": 7,
+          "source_recomputation": "pass",
+          "team": "SEA"
+        }
+      ],
+      "word_count": 51
+    },
+    {
+      "angle": "winless_last",
+      "as_of": "2026-11-03T00:32:27Z",
+      "away": "SAC",
+      "baseline_players_retained": [
+        "Cooper Flagg",
+        "Darius Acuff Jr."
+      ],
+      "game_id": "0022600164",
+      "generated_story": "Dallas has won three straight entering its matchup with the winless Kings, who sit dead last in the NBA at 0-6. Cooper Flagg is averaging 26.8 points and 6.6 assists over his last five for Dallas, while Sacramento's Darius Acuff Jr. has scored 38 and 34 in his last two.",
+      "home": "DAL",
+      "kickoff_utc": "2026-11-03T01:00:00Z",
+      "league": "nba",
+      "omitted_player_facts": [
+        {
+          "fact_id": "player_form:Zach LaVine",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Domantas Sabonis",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Kyrie Irving",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:P.J. Washington",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        }
+      ],
+      "omitted_secondary_facts": [
+        "The Kings' minus-19.0 point differential and Dallas' 120-96 result against Oklahoma City."
+      ],
+      "saved_llm_baseline": "The 0-6 Kings, ranked dead last in the league, visit a Dallas team riding a three-game win streak and sitting at 4-2. Sacramento rookie Darius Acuff Jr. has scored 38 and 34 in his last two games, but the Kings have been outscored by 19.0 points per game during their six-game skid. Dallas has won three straight, including a 120-96 rout of Oklahoma City, and Cooper Flagg leads the Mavericks in both points (26.8) and assists (6.6).",
+      "selected_facts": [
+        {
+          "description": "Dallas Mavericks 3-game winning streak",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-22T12:00:00Z",
+              "date": "2026-10-21",
+              "id": "0022600091"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600095"
+            },
+            {
+              "available_at": "2026-10-25T12:00:00Z",
+              "date": "2026-10-24",
+              "id": "0022600109"
+            },
+            {
+              "available_at": "2026-10-27T02:55:38Z",
+              "date": "2026-10-26",
+              "id": "0022600122"
+            },
+            {
+              "available_at": "2026-10-29T04:34:51Z",
+              "date": "2026-10-28",
+              "id": "0022600142"
+            },
+            {
+              "available_at": "2026-10-31T02:56:30Z",
+              "date": "2026-10-30",
+              "id": "0022600021"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T12:00:00Z",
+          "evidence_available_through": "2026-10-31T02:56:30Z",
+          "evidence_ids": [
+            "0022600021",
+            "0022600091",
+            "0022600095",
+            "0022600109",
+            "0022600122",
+            "0022600142"
+          ],
+          "evidence_row_count": 6,
+          "fact_id": "streak:DAL",
+          "kind": "streak",
+          "player": null,
+          "team": "DAL"
+        },
+        {
+          "description": "Sacramento Kings record 0-6",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-22T12:00:00Z",
+              "date": "2026-10-21",
+              "id": "0022600093"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600103"
+            },
+            {
+              "available_at": "2026-10-26T17:40:39Z",
+              "date": "2026-10-25",
+              "id": "0022600118"
+            },
+            {
+              "available_at": "2026-10-28T03:06:58Z",
+              "date": "2026-10-27",
+              "id": "0022600130"
+            },
+            {
+              "available_at": "2026-10-30T02:41:49Z",
+              "date": "2026-10-29",
+              "id": "0022600145"
+            },
+            {
+              "available_at": "2026-11-01T03:04:38Z",
+              "date": "2026-10-31",
+              "id": "0022600150"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T12:00:00Z",
+          "evidence_available_through": "2026-11-01T03:04:38Z",
+          "evidence_ids": [
+            "0022600093",
+            "0022600103",
+            "0022600118",
+            "0022600130",
+            "0022600145",
+            "0022600150"
+          ],
+          "evidence_row_count": 6,
+          "fact_id": "record:SAC",
+          "kind": "record",
+          "player": null,
+          "team": "SAC"
+        },
+        {
+          "description": "Sacramento ranks 30 of 30",
+          "evidence_availability": [
+            {
+              "available_at": "2026-11-02T04:59:16.482175+00:00",
+              "id": "nba-standings:2027:2026-11-03",
+              "team_count": 30
+            }
+          ],
+          "evidence_available_from": "2026-11-02T04:59:16.482175+00:00",
+          "evidence_available_through": "2026-11-02T04:59:16.482175+00:00",
+          "evidence_ids": [
+            "0022600001",
+            "0022600002",
+            "0022600003",
+            "0022600004",
+            "0022600005",
+            "0022600006",
+            "0022600007",
+            "0022600008",
+            "0022600009",
+            "0022600015",
+            "0022600016",
+            "0022600017",
+            "0022600018",
+            "0022600019",
+            "0022600020",
+            "0022600021",
+            "0022600022",
+            "0022600023",
+            "0022600024",
+            "0022600085",
+            "0022600086",
+            "0022600087",
+            "0022600088",
+            "0022600089",
+            "0022600090",
+            "0022600091",
+            "0022600092",
+            "0022600093",
+            "0022600094",
+            "0022600095",
+            "0022600096",
+            "0022600097",
+            "0022600098",
+            "0022600099",
+            "0022600100",
+            "0022600101",
+            "0022600102",
+            "0022600103",
+            "0022600104",
+            "0022600105",
+            "0022600106",
+            "0022600107",
+            "0022600108",
+            "0022600109",
+            "0022600110",
+            "0022600111",
+            "0022600112",
+            "0022600113",
+            "0022600114",
+            "0022600115",
+            "0022600116",
+            "0022600117",
+            "0022600118",
+            "0022600119",
+            "0022600120",
+            "0022600121",
+            "0022600122",
+            "0022600123",
+            "0022600124",
+            "0022600125",
+            "0022600126",
+            "0022600127",
+            "0022600128",
+            "0022600129",
+            "0022600130",
+            "0022600131",
+            "0022600132",
+            "0022600133",
+            "0022600134",
+            "0022600135",
+            "0022600136",
+            "0022600137",
+            "0022600138",
+            "0022600139",
+            "0022600140",
+            "0022600141",
+            "0022600142",
+            "0022600143",
+            "0022600144",
+            "0022600145",
+            "0022600146",
+            "0022600147",
+            "0022600148",
+            "0022600149",
+            "0022600150",
+            "0022600151",
+            "0022600152",
+            "0022600153",
+            "0022600154",
+            "0022600155",
+            "0022600156",
+            "0022600157",
+            "nba-standings:2027:2026-11-03"
+          ],
+          "evidence_row_count": 1,
+          "fact_id": "league_rank:SAC",
+          "kind": "league_rank",
+          "player": null,
+          "team": "SAC"
+        },
+        {
+          "description": "Cooper Flagg recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-31T06:30:04Z",
+              "date": "2026-10-30",
+              "game_id": "401909283",
+              "id": "1507447"
+            },
+            {
+              "available_at": "2026-10-29T05:39:51Z",
+              "date": "2026-10-28",
+              "game_id": "401909891",
+              "id": "1478136"
+            },
+            {
+              "available_at": "2026-10-27T07:29:33Z",
+              "date": "2026-10-26",
+              "game_id": "401909871",
+              "id": "1440506"
+            },
+            {
+              "available_at": "2026-10-24T05:25:52Z",
+              "date": "2026-10-23",
+              "game_id": "401909844",
+              "id": "1397472"
+            },
+            {
+              "available_at": "2026-10-22T03:29:29Z",
+              "date": "2026-10-21",
+              "game_id": "401909840",
+              "id": "1370288"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T03:29:29Z",
+          "evidence_available_through": "2026-10-31T06:30:04Z",
+          "evidence_ids": [
+            "1370288",
+            "1397472",
+            "1440506",
+            "1478136",
+            "1507447"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "player_form:Cooper Flagg",
+          "kind": "player_form",
+          "player": "Cooper Flagg",
+          "team": "DAL"
+        },
+        {
+          "description": "Darius Acuff Jr. recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-11-01T05:43:27Z",
+              "date": "2026-10-31",
+              "game_id": "401909899",
+              "id": "1557704"
+            },
+            {
+              "available_at": "2026-10-30T05:30:21Z",
+              "date": "2026-10-29",
+              "game_id": "401909894",
+              "id": "1491990"
+            },
+            {
+              "available_at": "2026-10-28T08:29:07Z",
+              "date": "2026-10-27",
+              "game_id": "401909879",
+              "id": "1463871"
+            },
+            {
+              "available_at": "2026-10-26T06:10:26Z",
+              "date": "2026-10-25",
+              "game_id": "401909867",
+              "id": "1425118"
+            },
+            {
+              "available_at": "2026-10-24T05:25:52Z",
+              "date": "2026-10-23",
+              "game_id": "401909852",
+              "id": "1397707"
+            }
+          ],
+          "evidence_available_from": "2026-10-24T05:25:52Z",
+          "evidence_available_through": "2026-11-01T05:43:27Z",
+          "evidence_ids": [
+            "1397707",
+            "1425118",
+            "1463871",
+            "1491990",
+            "1557704"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "player_form:Darius Acuff Jr.",
+          "kind": "player_form",
+          "player": "Darius Acuff Jr.",
+          "team": "SAC"
+        }
+      ],
+      "sentence_count": 2,
+      "source_record_checks": [
+        {
+          "availability_basis": [
+            "schedule.ingested_at_near_game_date",
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 6,
+          "record": "0-6",
+          "source_game_count": 6,
+          "source_recomputation": "pass",
+          "team": "SAC"
+        },
+        {
+          "availability_basis": [
+            "schedule.ingested_at_near_game_date",
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 6,
+          "record": "4-2",
+          "source_game_count": 6,
+          "source_recomputation": "pass",
+          "team": "DAL"
+        }
+      ],
+      "word_count": 50
+    },
+    {
+      "angle": "undefeated",
+      "as_of": "2026-11-03T00:32:27Z",
+      "away": "NO",
+      "baseline_players_retained": [
+        "Ty Jerome"
+      ],
+      "game_id": "0022600165",
+      "generated_story": "Memphis puts its undefeated 6-0 start on the line against New Orleans, which has won two straight and sits at 2-4. Ty Jerome has powered the Grizzlies' hot start, averaging 25.8 points and 5.8 assists over his last five games, including a 45-point outing.",
+      "home": "MEM",
+      "kickoff_utc": "2026-11-03T01:00:00Z",
+      "league": "nba",
+      "omitted_player_facts": [
+        {
+          "fact_id": "player_form:Zion Williamson",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Saddiq Bey",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Cameron Boozer",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Cedric Coward",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Trey Murphy III",
+          "reason": "available stats did not fit a natural preview sentence"
+        }
+      ],
+      "omitted_secondary_facts": [
+        "Zion Williamson's uneven recent scoring and the event-only draft's points-allowed statistic."
+      ],
+      "saved_llm_baseline": "Memphis puts the NBA’s only perfect record and its No. 1 quality rank on the line against a New Orleans team that has won two straight but sits just 2-4. Ty Jerome has powered the 6-0 Grizzlies, averaging 25.8 points and 5.8 assists, including a 45-point outburst in his last five games. Zion Williamson leads New Orleans at 20.7 points per game, though his recent scoring has been uneven.",
+      "selected_facts": [
+        {
+          "description": "Memphis Grizzlies record 6-0",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-22T12:00:00Z",
+              "date": "2026-10-21",
+              "id": "0022600089"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600101"
+            },
+            {
+              "available_at": "2026-10-26T17:40:39Z",
+              "date": "2026-10-25",
+              "id": "0022600118"
+            },
+            {
+              "available_at": "2026-10-27T03:55:41Z",
+              "date": "2026-10-26",
+              "id": "0022600126"
+            },
+            {
+              "available_at": "2026-10-30T04:28:35Z",
+              "date": "2026-10-29",
+              "id": "0022600146"
+            },
+            {
+              "available_at": "2026-11-01T03:04:38Z",
+              "date": "2026-10-31",
+              "id": "0022600150"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T12:00:00Z",
+          "evidence_available_through": "2026-11-01T03:04:38Z",
+          "evidence_ids": [
+            "0022600089",
+            "0022600101",
+            "0022600118",
+            "0022600126",
+            "0022600146",
+            "0022600150"
+          ],
+          "evidence_row_count": 6,
+          "fact_id": "record:MEM",
+          "kind": "record",
+          "player": null,
+          "team": "MEM"
+        },
+        {
+          "description": "New Orleans Pelicans record 2-4",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-22T12:00:00Z",
+              "date": "2026-10-21",
+              "id": "0022600090"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600100"
+            },
+            {
+              "available_at": "2026-10-25T12:00:00Z",
+              "date": "2026-10-24",
+              "id": "0022600110"
+            },
+            {
+              "available_at": "2026-10-29T02:36:20Z",
+              "date": "2026-10-28",
+              "id": "0022600140"
+            },
+            {
+              "available_at": "2026-10-30T02:41:49Z",
+              "date": "2026-10-29",
+              "id": "0022600145"
+            },
+            {
+              "available_at": "2026-11-01T02:04:03Z",
+              "date": "2026-10-31",
+              "id": "0022600149"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T12:00:00Z",
+          "evidence_available_through": "2026-11-01T02:04:03Z",
+          "evidence_ids": [
+            "0022600090",
+            "0022600100",
+            "0022600110",
+            "0022600140",
+            "0022600145",
+            "0022600149"
+          ],
+          "evidence_row_count": 6,
+          "fact_id": "record:NO",
+          "kind": "record",
+          "player": null,
+          "team": "NO"
+        },
+        {
+          "description": "New Orleans Pelicans 2-game winning streak",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-22T12:00:00Z",
+              "date": "2026-10-21",
+              "id": "0022600090"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600100"
+            },
+            {
+              "available_at": "2026-10-25T12:00:00Z",
+              "date": "2026-10-24",
+              "id": "0022600110"
+            },
+            {
+              "available_at": "2026-10-29T02:36:20Z",
+              "date": "2026-10-28",
+              "id": "0022600140"
+            },
+            {
+              "available_at": "2026-10-30T02:41:49Z",
+              "date": "2026-10-29",
+              "id": "0022600145"
+            },
+            {
+              "available_at": "2026-11-01T02:04:03Z",
+              "date": "2026-10-31",
+              "id": "0022600149"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T12:00:00Z",
+          "evidence_available_through": "2026-11-01T02:04:03Z",
+          "evidence_ids": [
+            "0022600090",
+            "0022600100",
+            "0022600110",
+            "0022600140",
+            "0022600145",
+            "0022600149"
+          ],
+          "evidence_row_count": 6,
+          "fact_id": "streak:NO",
+          "kind": "streak",
+          "player": null,
+          "team": "NO"
+        },
+        {
+          "description": "Ty Jerome recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-30T05:30:21Z",
+              "date": "2026-10-29",
+              "game_id": "401909895",
+              "id": "1492015"
+            },
+            {
+              "available_at": "2026-10-27T07:29:33Z",
+              "date": "2026-10-26",
+              "game_id": "401909875",
+              "id": "1440618"
+            },
+            {
+              "available_at": "2026-10-26T06:10:26Z",
+              "date": "2026-10-25",
+              "game_id": "401909867",
+              "id": "1425104"
+            },
+            {
+              "available_at": "2026-10-24T05:25:52Z",
+              "date": "2026-10-23",
+              "game_id": "401909850",
+              "id": "1397638"
+            },
+            {
+              "available_at": "2026-10-22T03:29:29Z",
+              "date": "2026-10-21",
+              "game_id": "401909838",
+              "id": "1370247"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T03:29:29Z",
+          "evidence_available_through": "2026-10-30T05:30:21Z",
+          "evidence_ids": [
+            "1370247",
+            "1397638",
+            "1425104",
+            "1440618",
+            "1492015"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "player_form:Ty Jerome",
+          "kind": "player_form",
+          "player": "Ty Jerome",
+          "team": "MEM"
+        }
+      ],
+      "sentence_count": 2,
+      "source_record_checks": [
+        {
+          "availability_basis": [
+            "schedule.ingested_at_near_game_date",
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 6,
+          "record": "2-4",
+          "source_game_count": 6,
+          "source_recomputation": "pass",
+          "team": "NO"
+        },
+        {
+          "availability_basis": [
+            "schedule.ingested_at_near_game_date",
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 6,
+          "record": "6-0",
+          "source_game_count": 6,
+          "source_recomputation": "pass",
+          "team": "MEM"
+        }
+      ],
+      "word_count": 44
+    },
+    {
+      "angle": "top_four",
+      "as_of": "2026-11-03T00:32:27Z",
+      "away": "BOS",
+      "baseline_players_retained": [
+        "Jabari Smith Jr.",
+        "Jayson Tatum"
+      ],
+      "game_id": "0022600167",
+      "generated_story": "Two of the NBA's top four teams meet in Houston, where the 6-1 Rockets host the 5-1 Celtics. Houston's Jabari Smith Jr. has scored 30 and 22 in his last two, while Boston's Jayson Tatum has scored at least 23 in each of his last five, including a 40-point night.",
+      "home": "HOU",
+      "kickoff_utc": "2026-11-03T01:30:00Z",
+      "league": "nba",
+      "omitted_player_facts": [
+        {
+          "fact_id": "player_form:Paul George",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Payton Pritchard",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Kevin Durant",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Amen Thompson",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        }
+      ],
+      "omitted_secondary_facts": [
+        "The teams' run-differential comparison and Alperen Sengun's season averages."
+      ],
+      "saved_llm_baseline": "Two of the league's top four teams meet in Houston, where the 6-1 Rockets (No. 2) host the 5-1 Celtics (No. 4) with the NBA's two best run differentials on the line — Houston at plus-12.43, Boston at plus-9.5. Jayson Tatum has carried Boston's five-game win streak at 27.6 points and 7.8 assists per game, scoring 32, 26, 40, 23 and 36 across his last five. Houston counters with Alperen Sengun (22.8 points, 7.4 assists) and Jabari Smith Jr., who has scored 30 and 22 in his last two.",
+      "selected_facts": [
+        {
+          "description": "Boston Celtics record 5-1",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-21T12:00:00Z",
+              "date": "2026-10-20",
+              "id": "0022600001"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600008"
+            },
+            {
+              "available_at": "2026-10-27T02:55:38Z",
+              "date": "2026-10-26",
+              "id": "0022600121"
+            },
+            {
+              "available_at": "2026-10-28T03:06:58Z",
+              "date": "2026-10-27",
+              "id": "0022600128"
+            },
+            {
+              "available_at": "2026-10-31T02:56:30Z",
+              "date": "2026-10-30",
+              "id": "0022600016"
+            },
+            {
+              "available_at": "2026-11-01T23:26:25Z",
+              "date": "2026-11-01",
+              "id": "0022600154"
+            }
+          ],
+          "evidence_available_from": "2026-10-21T12:00:00Z",
+          "evidence_available_through": "2026-11-01T23:26:25Z",
+          "evidence_ids": [
+            "0022600001",
+            "0022600008",
+            "0022600016",
+            "0022600121",
+            "0022600128",
+            "0022600154"
+          ],
+          "evidence_row_count": 6,
+          "fact_id": "record:BOS",
+          "kind": "record",
+          "player": null,
+          "team": "BOS"
+        },
+        {
+          "description": "Houston Rockets record 6-1",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-22T12:00:00Z",
+              "date": "2026-10-21",
+              "id": "0022600091"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600009"
+            },
+            {
+              "available_at": "2026-10-25T12:00:00Z",
+              "date": "2026-10-24",
+              "id": "0022600107"
+            },
+            {
+              "available_at": "2026-10-27T03:55:41Z",
+              "date": "2026-10-26",
+              "id": "0022600125"
+            },
+            {
+              "available_at": "2026-10-29T02:36:20Z",
+              "date": "2026-10-28",
+              "id": "0022600138"
+            },
+            {
+              "available_at": "2026-10-31T02:56:30Z",
+              "date": "2026-10-30",
+              "id": "0022600021"
+            },
+            {
+              "available_at": "2026-11-01T03:04:38Z",
+              "date": "2026-10-31",
+              "id": "0022600153"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T12:00:00Z",
+          "evidence_available_through": "2026-11-01T03:04:38Z",
+          "evidence_ids": [
+            "0022600009",
+            "0022600021",
+            "0022600091",
+            "0022600107",
+            "0022600125",
+            "0022600138",
+            "0022600153"
+          ],
+          "evidence_row_count": 7,
+          "fact_id": "record:HOU",
+          "kind": "record",
+          "player": null,
+          "team": "HOU"
+        },
+        {
+          "description": "Boston ranks 4 of 30",
+          "evidence_availability": [
+            {
+              "available_at": "2026-11-02T04:59:16.482175+00:00",
+              "id": "nba-standings:2027:2026-11-03",
+              "team_count": 30
+            }
+          ],
+          "evidence_available_from": "2026-11-02T04:59:16.482175+00:00",
+          "evidence_available_through": "2026-11-02T04:59:16.482175+00:00",
+          "evidence_ids": [
+            "0022600001",
+            "0022600002",
+            "0022600003",
+            "0022600004",
+            "0022600005",
+            "0022600006",
+            "0022600007",
+            "0022600008",
+            "0022600009",
+            "0022600015",
+            "0022600016",
+            "0022600017",
+            "0022600018",
+            "0022600019",
+            "0022600020",
+            "0022600021",
+            "0022600022",
+            "0022600023",
+            "0022600024",
+            "0022600085",
+            "0022600086",
+            "0022600087",
+            "0022600088",
+            "0022600089",
+            "0022600090",
+            "0022600091",
+            "0022600092",
+            "0022600093",
+            "0022600094",
+            "0022600095",
+            "0022600096",
+            "0022600097",
+            "0022600098",
+            "0022600099",
+            "0022600100",
+            "0022600101",
+            "0022600102",
+            "0022600103",
+            "0022600104",
+            "0022600105",
+            "0022600106",
+            "0022600107",
+            "0022600108",
+            "0022600109",
+            "0022600110",
+            "0022600111",
+            "0022600112",
+            "0022600113",
+            "0022600114",
+            "0022600115",
+            "0022600116",
+            "0022600117",
+            "0022600118",
+            "0022600119",
+            "0022600120",
+            "0022600121",
+            "0022600122",
+            "0022600123",
+            "0022600124",
+            "0022600125",
+            "0022600126",
+            "0022600127",
+            "0022600128",
+            "0022600129",
+            "0022600130",
+            "0022600131",
+            "0022600132",
+            "0022600133",
+            "0022600134",
+            "0022600135",
+            "0022600136",
+            "0022600137",
+            "0022600138",
+            "0022600139",
+            "0022600140",
+            "0022600141",
+            "0022600142",
+            "0022600143",
+            "0022600144",
+            "0022600145",
+            "0022600146",
+            "0022600147",
+            "0022600148",
+            "0022600149",
+            "0022600150",
+            "0022600151",
+            "0022600152",
+            "0022600153",
+            "0022600154",
+            "0022600155",
+            "0022600156",
+            "0022600157",
+            "nba-standings:2027:2026-11-03"
+          ],
+          "evidence_row_count": 1,
+          "fact_id": "league_rank:BOS",
+          "kind": "league_rank",
+          "player": null,
+          "team": "BOS"
+        },
+        {
+          "description": "Houston ranks 2 of 30",
+          "evidence_availability": [
+            {
+              "available_at": "2026-11-02T04:59:16.482175+00:00",
+              "id": "nba-standings:2027:2026-11-03",
+              "team_count": 30
+            }
+          ],
+          "evidence_available_from": "2026-11-02T04:59:16.482175+00:00",
+          "evidence_available_through": "2026-11-02T04:59:16.482175+00:00",
+          "evidence_ids": [
+            "0022600001",
+            "0022600002",
+            "0022600003",
+            "0022600004",
+            "0022600005",
+            "0022600006",
+            "0022600007",
+            "0022600008",
+            "0022600009",
+            "0022600015",
+            "0022600016",
+            "0022600017",
+            "0022600018",
+            "0022600019",
+            "0022600020",
+            "0022600021",
+            "0022600022",
+            "0022600023",
+            "0022600024",
+            "0022600085",
+            "0022600086",
+            "0022600087",
+            "0022600088",
+            "0022600089",
+            "0022600090",
+            "0022600091",
+            "0022600092",
+            "0022600093",
+            "0022600094",
+            "0022600095",
+            "0022600096",
+            "0022600097",
+            "0022600098",
+            "0022600099",
+            "0022600100",
+            "0022600101",
+            "0022600102",
+            "0022600103",
+            "0022600104",
+            "0022600105",
+            "0022600106",
+            "0022600107",
+            "0022600108",
+            "0022600109",
+            "0022600110",
+            "0022600111",
+            "0022600112",
+            "0022600113",
+            "0022600114",
+            "0022600115",
+            "0022600116",
+            "0022600117",
+            "0022600118",
+            "0022600119",
+            "0022600120",
+            "0022600121",
+            "0022600122",
+            "0022600123",
+            "0022600124",
+            "0022600125",
+            "0022600126",
+            "0022600127",
+            "0022600128",
+            "0022600129",
+            "0022600130",
+            "0022600131",
+            "0022600132",
+            "0022600133",
+            "0022600134",
+            "0022600135",
+            "0022600136",
+            "0022600137",
+            "0022600138",
+            "0022600139",
+            "0022600140",
+            "0022600141",
+            "0022600142",
+            "0022600143",
+            "0022600144",
+            "0022600145",
+            "0022600146",
+            "0022600147",
+            "0022600148",
+            "0022600149",
+            "0022600150",
+            "0022600151",
+            "0022600152",
+            "0022600153",
+            "0022600154",
+            "0022600155",
+            "0022600156",
+            "0022600157",
+            "nba-standings:2027:2026-11-03"
+          ],
+          "evidence_row_count": 1,
+          "fact_id": "league_rank:HOU",
+          "kind": "league_rank",
+          "player": null,
+          "team": "HOU"
+        },
+        {
+          "description": "Jabari Smith Jr. recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-11-01T05:43:27Z",
+              "date": "2026-10-31",
+              "game_id": "401909902",
+              "id": "1557792"
+            },
+            {
+              "available_at": "2026-10-31T06:30:04Z",
+              "date": "2026-10-30",
+              "game_id": "401909283",
+              "id": "1507432"
+            },
+            {
+              "available_at": "2026-10-29T05:39:51Z",
+              "date": "2026-10-28",
+              "game_id": "401909887",
+              "id": "1478016"
+            },
+            {
+              "available_at": "2026-10-27T07:29:33Z",
+              "date": "2026-10-26",
+              "game_id": "401909874",
+              "id": "1440602"
+            },
+            {
+              "available_at": "2026-10-25T05:11:34Z",
+              "date": "2026-10-24",
+              "game_id": "401909856",
+              "id": "1410415"
+            }
+          ],
+          "evidence_available_from": "2026-10-25T05:11:34Z",
+          "evidence_available_through": "2026-11-01T05:43:27Z",
+          "evidence_ids": [
+            "1410415",
+            "1440602",
+            "1478016",
+            "1507432",
+            "1557792"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "player_form:Jabari Smith Jr.",
+          "kind": "player_form",
+          "player": "Jabari Smith Jr.",
+          "team": "HOU"
+        },
+        {
+          "description": "Jayson Tatum recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-11-02T05:27:02Z",
+              "date": "2026-11-01",
+              "game_id": "401909903",
+              "id": "1650401"
+            },
+            {
+              "available_at": "2026-10-31T06:30:04Z",
+              "date": "2026-10-30",
+              "game_id": "401909278",
+              "id": "1507311"
+            },
+            {
+              "available_at": "2026-10-28T08:29:07Z",
+              "date": "2026-10-27",
+              "game_id": "401909877",
+              "id": "1463825"
+            },
+            {
+              "available_at": "2026-10-27T07:29:33Z",
+              "date": "2026-10-26",
+              "game_id": "401909870",
+              "id": "1440491"
+            },
+            {
+              "available_at": "2026-10-24T05:25:52Z",
+              "date": "2026-10-23",
+              "game_id": "401909095",
+              "id": "1397431"
+            }
+          ],
+          "evidence_available_from": "2026-10-24T05:25:52Z",
+          "evidence_available_through": "2026-11-02T05:27:02Z",
+          "evidence_ids": [
+            "1397431",
+            "1440491",
+            "1463825",
+            "1507311",
+            "1650401"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "player_form:Jayson Tatum",
+          "kind": "player_form",
+          "player": "Jayson Tatum",
+          "team": "BOS"
+        }
+      ],
+      "sentence_count": 2,
+      "source_record_checks": [
+        {
+          "availability_basis": [
+            "schedule.ingested_at_near_game_date",
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 6,
+          "record": "5-1",
+          "source_game_count": 6,
+          "source_recomputation": "pass",
+          "team": "BOS"
+        },
+        {
+          "availability_basis": [
+            "schedule.ingested_at_near_game_date",
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 7,
+          "record": "6-1",
+          "source_game_count": 7,
+          "source_recomputation": "pass",
+          "team": "HOU"
+        }
+      ],
+      "word_count": 50
+    },
+    {
+      "angle": "streak_clash",
+      "as_of": "2026-11-03T00:32:27Z",
+      "away": "UTAH",
+      "baseline_players_retained": [
+        "Victor Wembanyama",
+        "Keyonte George"
+      ],
+      "game_id": "0022600168",
+      "generated_story": "San Antonio has won four straight at 4-2 and already beat Utah 117-111 on Oct. 28; the 1-5 visitors have lost four in a row. San Antonio's Victor Wembanyama has scored 43 and 36 in his last two, while Utah's Keyonte George has scored 20 or more in three of his last four, including 31, 26, 24.",
+      "home": "SA",
+      "kickoff_utc": "2026-11-03T01:30:00Z",
+      "league": "nba",
+      "omitted_player_facts": [
+        {
+          "fact_id": "player_form:Jaren Jackson Jr.",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Lauri Markkanen",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Dylan Harper",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:De'Aaron Fox",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        }
+      ],
+      "omitted_secondary_facts": [
+        "The No. 27 and No. 8 quality-rank comparison."
+      ],
+      "saved_llm_baseline": "San Antonio has won four straight and sits at 4-2, while Utah arrives at 1-5 having dropped four in a row, including a 117-111 overtime loss to these same Spurs on Oct. 28. Victor Wembanyama is on a tear, scoring 43 and 36 in his last two games and averaging 28.0 on the season. Keyonte George has been Utah's lone consistent threat, putting up 31, 26 and 24 in three of his last four, but the Jazz own the No. 27 quality rank against San Antonio's No. 8.",
+      "selected_facts": [
+        {
+          "description": "Utah Jazz record 1-5",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-22T12:00:00Z",
+              "date": "2026-10-21",
+              "id": "0022600089"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600100"
+            },
+            {
+              "available_at": "2026-10-26T17:40:39Z",
+              "date": "2026-10-25",
+              "id": "0022600112"
+            },
+            {
+              "available_at": "2026-10-27T03:55:41Z",
+              "date": "2026-10-26",
+              "id": "0022600126"
+            },
+            {
+              "available_at": "2026-10-29T04:04:17Z",
+              "date": "2026-10-28",
+              "id": "0022600141"
+            },
+            {
+              "available_at": "2026-10-31T22:14:21Z",
+              "date": "2026-10-31",
+              "id": "0022600147"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T12:00:00Z",
+          "evidence_available_through": "2026-10-31T22:14:21Z",
+          "evidence_ids": [
+            "0022600089",
+            "0022600100",
+            "0022600112",
+            "0022600126",
+            "0022600141",
+            "0022600147"
+          ],
+          "evidence_row_count": 6,
+          "fact_id": "record:UTAH",
+          "kind": "record",
+          "player": null,
+          "team": "UTAH"
+        },
+        {
+          "description": "San Antonio Spurs record 4-2",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-21T12:00:00Z",
+              "date": "2026-10-20",
+              "id": "0022600003"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600009"
+            },
+            {
+              "available_at": "2026-10-25T12:00:00Z",
+              "date": "2026-10-24",
+              "id": "0022600109"
+            },
+            {
+              "available_at": "2026-10-28T03:06:58Z",
+              "date": "2026-10-27",
+              "id": "0022600130"
+            },
+            {
+              "available_at": "2026-10-29T04:04:17Z",
+              "date": "2026-10-28",
+              "id": "0022600141"
+            },
+            {
+              "available_at": "2026-11-01T03:04:38Z",
+              "date": "2026-10-31",
+              "id": "0022600152"
+            }
+          ],
+          "evidence_available_from": "2026-10-21T12:00:00Z",
+          "evidence_available_through": "2026-11-01T03:04:38Z",
+          "evidence_ids": [
+            "0022600003",
+            "0022600009",
+            "0022600109",
+            "0022600130",
+            "0022600141",
+            "0022600152"
+          ],
+          "evidence_row_count": 6,
+          "fact_id": "record:SA",
+          "kind": "record",
+          "player": null,
+          "team": "SA"
+        },
+        {
+          "description": "Utah Jazz 4-game losing streak",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-22T12:00:00Z",
+              "date": "2026-10-21",
+              "id": "0022600089"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600100"
+            },
+            {
+              "available_at": "2026-10-26T17:40:39Z",
+              "date": "2026-10-25",
+              "id": "0022600112"
+            },
+            {
+              "available_at": "2026-10-27T03:55:41Z",
+              "date": "2026-10-26",
+              "id": "0022600126"
+            },
+            {
+              "available_at": "2026-10-29T04:04:17Z",
+              "date": "2026-10-28",
+              "id": "0022600141"
+            },
+            {
+              "available_at": "2026-10-31T22:14:21Z",
+              "date": "2026-10-31",
+              "id": "0022600147"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T12:00:00Z",
+          "evidence_available_through": "2026-10-31T22:14:21Z",
+          "evidence_ids": [
+            "0022600089",
+            "0022600100",
+            "0022600112",
+            "0022600126",
+            "0022600141",
+            "0022600147"
+          ],
+          "evidence_row_count": 6,
+          "fact_id": "streak:UTAH",
+          "kind": "streak",
+          "player": null,
+          "team": "UTAH"
+        },
+        {
+          "description": "San Antonio Spurs 4-game winning streak",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-21T12:00:00Z",
+              "date": "2026-10-20",
+              "id": "0022600003"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600009"
+            },
+            {
+              "available_at": "2026-10-25T12:00:00Z",
+              "date": "2026-10-24",
+              "id": "0022600109"
+            },
+            {
+              "available_at": "2026-10-28T03:06:58Z",
+              "date": "2026-10-27",
+              "id": "0022600130"
+            },
+            {
+              "available_at": "2026-10-29T04:04:17Z",
+              "date": "2026-10-28",
+              "id": "0022600141"
+            },
+            {
+              "available_at": "2026-11-01T03:04:38Z",
+              "date": "2026-10-31",
+              "id": "0022600152"
+            }
+          ],
+          "evidence_available_from": "2026-10-21T12:00:00Z",
+          "evidence_available_through": "2026-11-01T03:04:38Z",
+          "evidence_ids": [
+            "0022600003",
+            "0022600009",
+            "0022600109",
+            "0022600130",
+            "0022600141",
+            "0022600152"
+          ],
+          "evidence_row_count": 6,
+          "fact_id": "streak:SA",
+          "kind": "streak",
+          "player": null,
+          "team": "SA"
+        },
+        {
+          "description": "prior meeting result",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-29T04:04:17Z",
+              "date": "2026-10-28",
+              "id": "0022600141"
+            },
+            {
+              "available_at": "2026-10-29T04:04:17Z",
+              "date": "2026-10-28",
+              "id": "0022600141"
+            }
+          ],
+          "evidence_available_from": "2026-10-29T04:04:17Z",
+          "evidence_available_through": "2026-10-29T04:04:17Z",
+          "evidence_ids": [
+            "0022600141"
+          ],
+          "evidence_row_count": 2,
+          "fact_id": "head_to_head:0022600141",
+          "kind": "head_to_head",
+          "player": null,
+          "team": null
+        },
+        {
+          "description": "Victor Wembanyama recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-11-01T05:43:27Z",
+              "date": "2026-10-31",
+              "game_id": "401909901",
+              "id": "1557767"
+            },
+            {
+              "available_at": "2026-10-29T05:39:51Z",
+              "date": "2026-10-28",
+              "game_id": "401909890",
+              "id": "1478097"
+            },
+            {
+              "available_at": "2026-10-28T08:29:07Z",
+              "date": "2026-10-27",
+              "game_id": "401909879",
+              "id": "1463880"
+            },
+            {
+              "available_at": "2026-10-25T05:11:34Z",
+              "date": "2026-10-24",
+              "game_id": "401909858",
+              "id": "1410389"
+            },
+            {
+              "available_at": "2026-10-24T05:25:52Z",
+              "date": "2026-10-23",
+              "game_id": "401909096",
+              "id": "1397592"
+            }
+          ],
+          "evidence_available_from": "2026-10-24T05:25:52Z",
+          "evidence_available_through": "2026-11-01T05:43:27Z",
+          "evidence_ids": [
+            "1397592",
+            "1410389",
+            "1463880",
+            "1478097",
+            "1557767"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "player_form:Victor Wembanyama",
+          "kind": "player_form",
+          "player": "Victor Wembanyama",
+          "team": "SA"
+        },
+        {
+          "description": "Keyonte George recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-11-01T05:43:27Z",
+              "date": "2026-10-31",
+              "game_id": "401909896",
+              "id": "1557639"
+            },
+            {
+              "available_at": "2026-10-29T05:39:51Z",
+              "date": "2026-10-28",
+              "game_id": "401909890",
+              "id": "1478112"
+            },
+            {
+              "available_at": "2026-10-27T07:29:33Z",
+              "date": "2026-10-26",
+              "game_id": "401909875",
+              "id": "1440631"
+            },
+            {
+              "available_at": "2026-10-26T00:00:21Z",
+              "date": "2026-10-25",
+              "game_id": "401909861",
+              "id": "1423067"
+            },
+            {
+              "available_at": "2026-10-24T05:25:52Z",
+              "date": "2026-10-23",
+              "game_id": "401909849",
+              "id": "1397621"
+            }
+          ],
+          "evidence_available_from": "2026-10-24T05:25:52Z",
+          "evidence_available_through": "2026-11-01T05:43:27Z",
+          "evidence_ids": [
+            "1397621",
+            "1423067",
+            "1440631",
+            "1478112",
+            "1557639"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "player_form:Keyonte George",
+          "kind": "player_form",
+          "player": "Keyonte George",
+          "team": "UTAH"
+        }
+      ],
+      "sentence_count": 2,
+      "source_record_checks": [
+        {
+          "availability_basis": [
+            "schedule.ingested_at_near_game_date",
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 6,
+          "record": "1-5",
+          "source_game_count": 6,
+          "source_recomputation": "pass",
+          "team": "UTAH"
+        },
+        {
+          "availability_basis": [
+            "schedule.ingested_at_near_game_date",
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 6,
+          "record": "4-2",
+          "source_game_count": 6,
+          "source_recomputation": "pass",
+          "team": "SA"
+        }
+      ],
+      "word_count": 57
+    },
+    {
+      "angle": "records",
+      "as_of": "2026-11-03T00:32:27Z",
+      "away": "POR",
+      "baseline_players_retained": [
+        "Jamal Murray",
+        "Deni Avdija"
+      ],
+      "game_id": "0022600169",
+      "generated_story": "The 4-1 Blazers visit Denver, where the 3-2 Nuggets are riding a two-game winning streak. Denver's Jamal Murray has put up 39 and 42 in two of his last five, while Portland's Deni Avdija has scored at least 23 in four of his last five.",
+      "home": "DEN",
+      "kickoff_utc": "2026-11-03T02:00:00Z",
+      "league": "nba",
+      "omitted_player_facts": [
+        {
+          "fact_id": "player_form:Damian Lillard",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Ja Morant",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Nikola Jokic",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        },
+        {
+          "fact_id": "player_form:Christian Braun",
+          "reason": "recent production did not clear the story's player-performance threshold"
+        }
+      ],
+      "omitted_secondary_facts": [
+        "Portland's quality rank and Denver's minus-1.2 run differential."
+      ],
+      "saved_llm_baseline": "Portland brings a 4-1 record and the league's No. 6 quality rank into Denver, where the Nuggets have won two straight but sit at 3-2 with a minus-1.2 run differential. Deni Avdija has scored 23 or more in four of his last five (24, 24, 23, 26, 18) while leading the Blazers in both points (23.0) and assists (5.6). Jamal Murray counters as Denver's scoring leader at 25.8, coming off 39 and 42-point nights in two of his last five.",
+      "selected_facts": [
+        {
+          "description": "Portland Trail Blazers record 4-1",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-22T12:00:00Z",
+              "date": "2026-10-21",
+              "id": "0022600092"
+            },
+            {
+              "available_at": "2026-10-24T12:00:00Z",
+              "date": "2026-10-23",
+              "id": "0022600103"
+            },
+            {
+              "available_at": "2026-10-28T06:26:42Z",
+              "date": "2026-10-27",
+              "id": "0022600131"
+            },
+            {
+              "available_at": "2026-10-30T04:28:35Z",
+              "date": "2026-10-29",
+              "id": "0022600146"
+            },
+            {
+              "available_at": "2026-10-31T22:14:21Z",
+              "date": "2026-10-31",
+              "id": "0022600147"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T12:00:00Z",
+          "evidence_available_through": "2026-10-31T22:14:21Z",
+          "evidence_ids": [
+            "0022600092",
+            "0022600103",
+            "0022600131",
+            "0022600146",
+            "0022600147"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "record:POR",
+          "kind": "record",
+          "player": null,
+          "team": "POR"
+        },
+        {
+          "description": "Denver Nuggets record 3-2",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-23T12:00:00Z",
+              "date": "2026-10-22",
+              "id": "0022600007"
+            },
+            {
+              "available_at": "2026-10-25T12:00:00Z",
+              "date": "2026-10-24",
+              "id": "0022600110"
+            },
+            {
+              "available_at": "2026-10-27T04:54:38Z",
+              "date": "2026-10-26",
+              "id": "0022600127"
+            },
+            {
+              "available_at": "2026-10-29T02:36:20Z",
+              "date": "2026-10-28",
+              "id": "0022600140"
+            },
+            {
+              "available_at": "2026-10-31T04:52:31Z",
+              "date": "2026-10-30",
+              "id": "0022600024"
+            }
+          ],
+          "evidence_available_from": "2026-10-23T12:00:00Z",
+          "evidence_available_through": "2026-10-31T04:52:31Z",
+          "evidence_ids": [
+            "0022600007",
+            "0022600024",
+            "0022600110",
+            "0022600127",
+            "0022600140"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "record:DEN",
+          "kind": "record",
+          "player": null,
+          "team": "DEN"
+        },
+        {
+          "description": "Denver Nuggets 2-game winning streak",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-23T12:00:00Z",
+              "date": "2026-10-22",
+              "id": "0022600007"
+            },
+            {
+              "available_at": "2026-10-25T12:00:00Z",
+              "date": "2026-10-24",
+              "id": "0022600110"
+            },
+            {
+              "available_at": "2026-10-27T04:54:38Z",
+              "date": "2026-10-26",
+              "id": "0022600127"
+            },
+            {
+              "available_at": "2026-10-29T02:36:20Z",
+              "date": "2026-10-28",
+              "id": "0022600140"
+            },
+            {
+              "available_at": "2026-10-31T04:52:31Z",
+              "date": "2026-10-30",
+              "id": "0022600024"
+            }
+          ],
+          "evidence_available_from": "2026-10-23T12:00:00Z",
+          "evidence_available_through": "2026-10-31T04:52:31Z",
+          "evidence_ids": [
+            "0022600007",
+            "0022600024",
+            "0022600110",
+            "0022600127",
+            "0022600140"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "streak:DEN",
+          "kind": "streak",
+          "player": null,
+          "team": "DEN"
+        },
+        {
+          "description": "Jamal Murray recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-10-31T06:30:04Z",
+              "date": "2026-10-30",
+              "game_id": "401909286",
+              "id": "1507516"
+            },
+            {
+              "available_at": "2026-10-29T05:39:51Z",
+              "date": "2026-10-28",
+              "game_id": "401909889",
+              "id": "1478072"
+            },
+            {
+              "available_at": "2026-10-27T07:29:33Z",
+              "date": "2026-10-26",
+              "game_id": "401909876",
+              "id": "1440659"
+            },
+            {
+              "available_at": "2026-10-25T05:11:34Z",
+              "date": "2026-10-24",
+              "game_id": "401909859",
+              "id": "1410458"
+            },
+            {
+              "available_at": "2026-10-23T05:08:13Z",
+              "date": "2026-10-22",
+              "game_id": "401909094",
+              "id": "1383924"
+            }
+          ],
+          "evidence_available_from": "2026-10-23T05:08:13Z",
+          "evidence_available_through": "2026-10-31T06:30:04Z",
+          "evidence_ids": [
+            "1383924",
+            "1410458",
+            "1440659",
+            "1478072",
+            "1507516"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "player_form:Jamal Murray",
+          "kind": "player_form",
+          "player": "Jamal Murray",
+          "team": "DEN"
+        },
+        {
+          "description": "Deni Avdija recent form",
+          "evidence_availability": [
+            {
+              "available_at": "2026-11-01T05:43:27Z",
+              "date": "2026-10-31",
+              "game_id": "401909896",
+              "id": "1557625"
+            },
+            {
+              "available_at": "2026-10-30T05:30:21Z",
+              "date": "2026-10-29",
+              "game_id": "401909895",
+              "id": "1492027"
+            },
+            {
+              "available_at": "2026-10-28T08:29:07Z",
+              "date": "2026-10-27",
+              "game_id": "401909880",
+              "id": "1463893"
+            },
+            {
+              "available_at": "2026-10-24T05:25:52Z",
+              "date": "2026-10-23",
+              "game_id": "401909852",
+              "id": "1397691"
+            },
+            {
+              "available_at": "2026-10-22T09:23:48Z",
+              "date": "2026-10-21",
+              "game_id": "401909841",
+              "id": "1378546"
+            }
+          ],
+          "evidence_available_from": "2026-10-22T09:23:48Z",
+          "evidence_available_through": "2026-11-01T05:43:27Z",
+          "evidence_ids": [
+            "1378546",
+            "1397691",
+            "1463893",
+            "1492027",
+            "1557625"
+          ],
+          "evidence_row_count": 5,
+          "fact_id": "player_form:Deni Avdija",
+          "kind": "player_form",
+          "player": "Deni Avdija",
+          "team": "POR"
+        }
+      ],
+      "sentence_count": 2,
+      "source_record_checks": [
+        {
+          "availability_basis": [
+            "schedule.ingested_at_near_game_date",
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 5,
+          "record": "4-1",
+          "source_game_count": 5,
+          "source_recomputation": "pass",
+          "team": "POR"
+        },
+        {
+          "availability_basis": [
+            "schedule.ingested_at_near_game_date",
+            "schedule_game_date_plus_one_day_12_utc_conservative"
+          ],
+          "games": 5,
+          "record": "3-2",
+          "source_game_count": 5,
+          "source_recomputation": "pass",
+          "team": "DEN"
+        }
+      ],
+      "word_count": 45
+    }
+  ],
+  "runtime": {
+    "db_smoke": {
+      "future_team_evidence_rows": 0,
+      "game_id": "0022600167",
+      "generated_story": "Two of the NBA's top four teams meet in Houston, where the 6-1 Rockets host the 5-1 Celtics. Houston's Jabari Smith Jr. has scored 30 and 22 in his last two, while Boston's Jayson Tatum has scored at least 23 in each of his last five, including a 40-point night.",
+      "league": "nba",
+      "league_team_count": 30,
+      "players_considered": 36,
+      "team_records": {
+        "BOS": "5-1",
+        "HOU": "6-1"
+      }
+    },
+    "external_inference_cost": "zero",
+    "readonly_sqlite_fact_collection_plus_render_median_ms": 34.657,
+    "renderer_max_ms_per_story_over_30_six_story_rounds": 3.925,
+    "renderer_median_ms_per_story": 2.229
+  },
+  "schema_version": 1,
+  "status": "research only; core_stories.py unchanged",
+  "tests": {
+    "command": "python -m unittest test_story_engine -v",
+    "result": "19 passed"
+  },
+  "title": "CPU-only deterministic Legendary Picks story engine evaluation"
+}

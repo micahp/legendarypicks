@@ -1,0 +1,532 @@
+{
+  "sample_results_sha256": "3c5de57dd0be7b2446d698c745c46220ed905de69735a4683763a6a6a1d307d6",
+  "generation_summary_sha256": "f83d85d386fbc4352c60f77d71f18fc8c8deb39dfdd29ca6d6e83d0c0938933c",
+  "post_audit_script_sha256": "2c0e79cd187341b9aa99e0d8163ebde57b4f80fefb927233f9474fbf982bad9a",
+  "generation_renderer_sha256": "2791cd0fd723de721859b5d64dacd50646b6b6aed7697d5dedc24b1fa1924e92",
+  "generation_evaluator_sha256": "a0f034c77207565e9627c61c5f34393ba3d1505a607a7381e20e1175d975c2d9",
+  "preview_count": 100,
+  "headline_appropriate": 100,
+  "player_facts_relevant": 96,
+  "no_player_fact_available": 4,
+  "factual_claims_supported": 100,
+  "fan_language_natural": 79,
+  "fan_language_borderline_for_repeated_player_facts": 21,
+  "player_attribution_errors": 0,
+  "cutoff_violations": 0,
+  "rendered_record_claim_failures": 0,
+  "rendered_streak_or_last_result_claim_failures": 0,
+  "previews_reusing_a_normalized_pattern": 14,
+  "unique_normalized_patterns": 93,
+  "max_pattern_frequency": 2,
+  "previews_with_repeated_player_sentence_shapes": 21,
+  "empty_previews": 0,
+  "model_calls": 0,
+  "network_calls": 0,
+  "database_writes": 0,
+  "mechanical_audit_failures": [],
+  "per_game_review_file": "heldout_final_review.jsonl",
+  "per_game_prose_check_results": [
+    {
+      "target_game_id": "2026_10_JAX_TEN",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_15_CLE_NYG",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_15_JAX_HOU",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_16_NE_NYJ",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_16_JAX_DAL",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_12_NO_CIN",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_10_SF_DAL",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_13_GB_NO",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_10_NE_DET",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_11_NO_CHI",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_10_HOU_CLE",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_17_WAS_JAX",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_14_LA_SF",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_11_JAX_NYG",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_15_CIN_CAR",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_11_NYJ_LAC",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_18_PHI_NYG",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_18_ATL_CAR",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_12_NYG_IND",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_17_BUF_MIA",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_09_GB_NE",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_12_LV_CLE",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_11_ARI_KC",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_16_CIN_IND",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_10_WAS_NYG",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_17_MIN_NYJ",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_14_DEN_NYJ",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_10_LA_ARI",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_15_SF_LAC",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_18_SF_ARI",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_14_TB_BAL",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_09_LA_WAS",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_17_SEA_CAR",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_14_NO_CAR",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_16_SF_KC",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_09_CIN_ATL",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_18_NYJ_BUF",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_14_NYG_SEA",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_10_MIA_IND",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_16_WAS_MIN",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_12_SEA_SF",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_10_LAC_BAL",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_11_LV_DEN",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_11_TEN_DAL",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_16_CAR_PIT",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_14_HOU_WAS",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_13_CIN_CLE",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_18_CHI_MIN",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_10_BUF_NYJ",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "2026_12_TEN_JAX",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600882",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600758",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600394",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601132",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600940",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600442",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601135",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600900",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600847",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600785",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600816",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600309",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600249",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600794",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600841",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600914",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600537",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601060",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601044",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601073",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600962",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600803",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600755",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600198",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600790",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600955",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600711",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600225",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600251",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600385",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600258",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600775",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600036",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600264",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600751",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600228",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601138",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600568",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600269",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601164",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600463",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601102",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600853",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601189",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600390",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601030",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600550",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600573",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022600745",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    },
+    {
+      "target_game_id": "0022601109",
+      "rendered_record_claims_match_evidence": true,
+      "rendered_streak_and_last_result_claims_match_evidence": true
+    }
+  ],
+  "human_fan_ratings": 0,
+  "review_note": "Editorial labels are Codex judgments from reading all 100 generated previews, not fan-panel ratings. Repetition is reported separately from sentence-level naturalness."
+}

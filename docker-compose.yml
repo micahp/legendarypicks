@@ -3,10 +3,11 @@ services:
     build: ./backend
     environment:
       PORT: "8000"
-      # AI game previews (DeepSeek). Passed from the host shell at `docker compose up`
-      # time so the key never lives in the repo; without it _deepseek_key() finds no
-      # key in-container (it can't read the host's /root/.hermes/.env) and stories no-op.
+      # AI previews use OpenRouter first, with Nous as a fallback if configured.
+      # Keys come from the host environment or .env, not the repository.
       DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      LP_LLM_PROVIDERS: "openrouter,nous"
       # Esports slate sources (v0.3.0). Same host-shell pass-through as the DeepSeek key —
       # without these the esports board silently degrades: no PandaScore truth layer, no
       # GRID live scores, no YouTube stream resolution. Source /root/.hermes/.env before up.

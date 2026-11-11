@@ -34,14 +34,20 @@ PAGE = 50
 MIN_INTERVAL = 3.0
 HOST_BUDGET = 40
 MODEL_VERSION = "espn-weekly"
-OUR_STAT = {"tgt": STAT_IDS["targets"], "rec": STAT_IDS["receptions"],
+SLOTS = [0, 2, 4, 6]  # ESPN lineup slots: QB, RB, WR, TE
+OUR_STAT = {"att": STAT_IDS["pass_att"], "cmp": STAT_IDS["pass_cmp"], "pass_yds": STAT_IDS["pass_yds"],
+            "pass_td": STAT_IDS["pass_td"], "rush_att": STAT_IDS["rush_att"], "rush_yds": STAT_IDS["rush_yds"],
+            "rush_td": STAT_IDS["rush_td"], "tgt": STAT_IDS["targets"], "rec": STAT_IDS["receptions"],
             "rec_yds": STAT_IDS["rec_yds"], "rec_td": STAT_IDS["rec_td"]}
 
 
 def fetch_pages(season, pages, cache_dir):
+    # The disk cache keys on the URL alone and the slot filter travels in a header, so each slot set gets its own
+    # folder. Without it a rerun after a change of SLOTS would be answered from the previous filter's pages.
+    cache_dir = os.path.join(cache_dir, "slots-" + "-".join(map(str, SLOTS)))
     out = []
     for i in range(pages):
-        flt = {"players": {"filterSlotIds": {"value": [2, 4, 6]}, "limit": PAGE, "offset": i * PAGE,
+        flt = {"players": {"filterSlotIds": {"value": SLOTS}, "limit": PAGE, "offset": i * PAGE,
                            "sortPercOwned": {"sortPriority": 1, "sortAsc": False}}}
         fetch = paced_http.Fetcher(min_interval=MIN_INTERVAL, retry_waits=(), timeout=60, cache_dir=cache_dir,
                                    host_budget=HOST_BUDGET, on_exhausted="refuse",
@@ -89,8 +95,7 @@ def store(con, season, weeks, players, as_of):
             unmatched += 1
             continue
         pid, team = who
-        # nfl_schedule stores the canonical codes (LAR, WSH). This line used to respell them LA and WAS, so every Rams
-        # and Washington player found no game and was counted as a bye: 0 of their rows in dev and prod (2026-11-04).
+        # The players and nfl_schedule tables use canonical LAR/WSH, not LA/WAS.
         team = team_codes.normalize("nfl", team)
         for week, stats in projections(e, weeks).items():
             gid = game_for(con, season, week, team)

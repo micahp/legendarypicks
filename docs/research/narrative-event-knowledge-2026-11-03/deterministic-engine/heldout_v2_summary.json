@@ -1,0 +1,473 @@
+{
+  "as_of": "2026-11-03T03:00:53Z",
+  "seed": 20261104,
+  "sample_counts": {
+    "nfl": 50,
+    "nba": 50
+  },
+  "eligible_population_counts": {
+    "nfl": 100,
+    "nba": 1042
+  },
+  "renderer_sha256": "e4e938202b2f3d663e56f6b409e544be18133538a4b23b94c452437769284614",
+  "evaluator_sha256": "63e1bbf4546912a1c189aae7c43e8e060162950ebb8d0bb2004d5c7ef1286e86",
+  "python_version": "3.14.7",
+  "total_previews": 100,
+  "empty_previews": 0,
+  "unsupported_evidence_links": 0,
+  "record_or_streak_recompute_failures": 0,
+  "cutoff_violations": 0,
+  "target_game_leakage": 0,
+  "player_team_code_mismatches": 0,
+  "unique_normalized_lead_patterns": 88,
+  "previews_using_repeated_lead_patterns": 22,
+  "lead_patterns": [
+    {
+      "pattern": "the winless [entity] sit dead last in the nfl at # # and visit [entity] where the [entity] are # # [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 3,
+      "example_game_id": "2026_09_HOU_LAC"
+    },
+    {
+      "pattern": "the winless [entity] sit dead last in the nba at # # and visit [entity] where the [entity] are # # [entity] s [entity] has scored # and # in his last two while [entity] s [entity] has scored # and # in his last two",
+      "count": 3,
+      "example_game_id": "0022600647"
+    },
+    {
+      "pattern": "[entity] brings a four game winning streak into its matchup with [entity] which is # # [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 2,
+      "example_game_id": "2026_17_DEN_NE"
+    },
+    {
+      "pattern": "[entity] brings a three game winning streak into its matchup with [entity] which is # # [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] counters with [entity] who has rushed for # yards and seven touchdowns",
+      "count": 2,
+      "example_game_id": "2026_12_CHI_DET"
+    },
+    {
+      "pattern": "[entity] brings a three game winning streak into its matchup with [entity] which is # # [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 2,
+      "example_game_id": "2026_11_MIA_BUF"
+    },
+    {
+      "pattern": "[entity] brings a four game winning streak into its matchup with [entity] which is # # [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 2,
+      "example_game_id": "2026_09_DEN_CAR"
+    },
+    {
+      "pattern": "[entity] has dropped four straight at # # entering its matchup with [entity] which is # # [entity] counters with [entity] who has rushed for # yards and eight touchdowns while [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 2,
+      "example_game_id": "2026_17_IND_CLE"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # #",
+      "count": 2,
+      "example_game_id": "0022601108"
+    },
+    {
+      "pattern": "[entity] brings a four game winning streak into its matchup with [entity] which is # # [entity] s [entity] has scored # and # in his last two",
+      "count": 2,
+      "example_game_id": "0022601011"
+    },
+    {
+      "pattern": "[entity] has dropped five straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has put up # and # in two of his last five",
+      "count": 2,
+      "example_game_id": "0022600419"
+    },
+    {
+      "pattern": "[entity] brings a # # record into [entity] where the # # [entity] look to protect home turf [entity] s [entity] has thrown for # yards in two of his last five games while [entity] counters with [entity] who has rushed for # yards and four touchdowns",
+      "count": 1,
+      "example_game_id": "2026_14_ATL_CLE"
+    },
+    {
+      "pattern": "[entity] has dropped six straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_12_PHI_DAL"
+    },
+    {
+      "pattern": "[entity] has dropped six straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has found the end zone in three of his last five games",
+      "count": 1,
+      "example_game_id": "2026_13_PHI_ARI"
+    },
+    {
+      "pattern": "[entity] brings a three game winning streak into its matchup with [entity] which is # # # [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] has been on a tear for [entity] topping # receiving yards in four of his last five games",
+      "count": 1,
+      "example_game_id": "2026_16_NYG_DET"
+    },
+    {
+      "pattern": "[entity] has dropped six straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_16_HOU_PHI"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] are riding a two game winning streak [entity] counters with [entity] who has rushed for # yards and seven touchdowns while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_13_JAX_CHI"
+    },
+    {
+      "pattern": "[entity] has dropped three straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_09_NYJ_KC"
+    },
+    {
+      "pattern": "[entity] brings a # # record into [entity] where the # # [entity] look to protect home turf [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_17_HOU_GB"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] counters with [entity] who has rushed for # yards and four touchdowns while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_16_TB_ATL"
+    },
+    {
+      "pattern": "[entity] brings a three game winning streak into its matchup with [entity] which is # # [entity] s [entity] has thrown for # yards in two of his last five games while [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_18_CLE_CIN"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] have dropped two straight [entity] s [entity] has topped # rushing yards in o[entity] of his last four games while [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_15_NE_KC"
+    },
+    {
+      "pattern": "[entity] has dropped three straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_12_BAL_HOU"
+    },
+    {
+      "pattern": "[entity] brings a # # record into [entity] where the # # [entity] look to protect home turf [entity] counters with [entity] who has rushed for # yards and eight touchdowns while [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_09_LV_SF"
+    },
+    {
+      "pattern": "[entity] brings a # # record into [entity] where the # # [entity] look to protect home turf",
+      "count": 1,
+      "example_game_id": "2026_15_MIA_GB"
+    },
+    {
+      "pattern": "[entity] brings a # # # record into [entity] where the # # [entity] look to protect home turf [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] has been on a tear for [entity] topping # receiving yards in four of his last five games",
+      "count": 1,
+      "example_game_id": "2026_17_NYG_DAL"
+    },
+    {
+      "pattern": "the # # [entity] have dropped two straight entering [entity] where the [entity] sit at # # [entity] s [entity] has thrown for # yards in two of his last five games while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_16_TEN_LV"
+    },
+    {
+      "pattern": "[entity] has dropped three straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_12_NYJ_MIA"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] have dropped two straight [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_18_LV_KC"
+    },
+    {
+      "pattern": "[entity] brings a # # record into [entity] where the # # [entity] look to protect home turf [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] counters with [entity] who has rushed for # yards and four touchdowns",
+      "count": 1,
+      "example_game_id": "2026_12_ATL_MIN"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_18_TB_NO"
+    },
+    {
+      "pattern": "[entity] brings a # # record into [entity] where the # # [entity] look to protect home turf [entity] has been on a tear for [entity] topping # receiving yards in four of his last five games while [entity] s [entity] has found the end zone in three of his last five games",
+      "count": 1,
+      "example_game_id": "2026_09_ARI_SEA"
+    },
+    {
+      "pattern": "the # # [entity] have dropped two straight entering [entity] where the [entity] sit at # # [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_13_CAR_MIN"
+    },
+    {
+      "pattern": "[entity] brings a # # record into [entity] where the # # [entity] look to protect home turf [entity] counters with [entity] who has rushed for # yards and four touchdowns",
+      "count": 1,
+      "example_game_id": "2026_17_NO_ATL"
+    },
+    {
+      "pattern": "two of the nfl s top four teams meet in [entity] where the # # [entity] host the # # [entity] [entity] counters with [entity] who has rushed for # yards and eight touchdowns while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_11_MIN_SF"
+    },
+    {
+      "pattern": "[entity] has dropped six straight at # # entering its matchup with [entity] which is # # [entity] counters with [entity] who has rushed for # yards and eight touchdowns",
+      "count": 1,
+      "example_game_id": "2026_14_IND_PHI"
+    },
+    {
+      "pattern": "the winless [entity] sit dead last in the nfl at # # and visit [entity] where the [entity] are # #",
+      "count": 1,
+      "example_game_id": "2026_16_LAC_MIA"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] are riding a two game winning streak [entity] counters with [entity] who has rushed for # yards and six touchdowns while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_15_DAL_LA"
+    },
+    {
+      "pattern": "[entity] brings a three game winning streak into its matchup with [entity] which is # # [entity] s [entity] has topped # rushing yards in o[entity] of his last four games while [entity] s [entity] has thrown for # yards in two of his last five games",
+      "count": 1,
+      "example_game_id": "2026_13_BUF_NE"
+    },
+    {
+      "pattern": "[entity] brings a four game winning streak into its matchup with [entity] which is # #",
+      "count": 1,
+      "example_game_id": "2026_13_MIA_DEN"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] are riding a two game winning streak [entity] counters with [entity] who has rushed for # yards and six touchdowns while [entity] has been on a tear for [entity] topping # receiving yards in four of his last five games",
+      "count": 1,
+      "example_game_id": "2026_18_SEA_LA"
+    },
+    {
+      "pattern": "the # # # [entity] visit [entity] where the # # [entity] have dropped two straight [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_13_WAS_TEN"
+    },
+    {
+      "pattern": "[entity] brings a four game winning streak into its matchup with [entity] which is # # [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_17_PIT_TEN"
+    },
+    {
+      "pattern": "[entity] brings a three game winning streak into its matchup with [entity] which is # # [entity] s [entity] has thrown for # yards in two of his last five games while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_14_KC_CIN"
+    },
+    {
+      "pattern": "[entity] brings a three game winning streak into its matchup with [entity] which is # # [entity] s [entity] has topped # rushing yards in one of his last four games while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_15_DET_MIN"
+    },
+    {
+      "pattern": "[entity] has won three straight at # # and already beat [entity] # # on oct # the # # visitors have lost three in a row [entity] s [entity] has thrown for # yards in two of his last five games while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_17_BAL_CIN"
+    },
+    {
+      "pattern": "[entity] brings a three game winning streak into its matchup with [entity] which is # # # [entity] s [entity] has thrown for # yards in two of his last five games while [entity] s [entity] has topped # rushing yards in one of his last four games",
+      "count": 1,
+      "example_game_id": "2026_11_CIN_WAS"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] are riding a two game winning streak [entity] counters with [entity] who has rushed for # yards and seven touchdowns",
+      "count": 1,
+      "example_game_id": "2026_16_GB_CHI"
+    },
+    {
+      "pattern": "the # # [entity] have dropped two straight entering [entity] where the [entity] sit at # # [entity] is averaging # points and # assists over his last five for [entity] while [entity] s [entity] has scored at least # in four of his last five",
+      "count": 1,
+      "example_game_id": "0022600898"
+    },
+    {
+      "pattern": "[entity] has won two straight entering its matchup with the winless [entity] who sit dead last in the nba at # # [entity] s [entity] has scored # and # in his last two while [entity] s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600708"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] have dropped two straight [entity] s [entity] has scored # or more in three of his last four including # # # while [entity] is averaging # points and # assists over his last five for [entity]",
+      "count": 1,
+      "example_game_id": "0022600485"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] are riding a two game winning streak [entity] s [entity] has scored # or more in three of his last four including # # # #",
+      "count": 1,
+      "example_game_id": "0022600433"
+    },
+    {
+      "pattern": "[entity] brings a four game winning streak into its matchup with [entity] which is # # [entity] s [entity] has scored # and # in his last two while [entity] is averaging # points and # assists over his last five for [entity]",
+      "count": 1,
+      "example_game_id": "0022600083"
+    },
+    {
+      "pattern": "[entity] has won five straight entering its matchup with the winless [entity] who sit dead last in the nba at # # [entity] s [entity] has scored at least # in each of his last five including a # point night while [entity] s [entity] has scored # and # in his last two",
+      "count": 1,
+      "example_game_id": "0022600279"
+    },
+    {
+      "pattern": "[entity] brings a five game winning streak into its matchup with [entity] which is # # [entity] s [entity] has scored at least # in each of his last five including a # point night while [entity] s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600778"
+    },
+    {
+      "pattern": "[entity] puts its undefeated # # start on the line against [entity] which lost two straight and sits at # # [entity] star [entity] is averaging # points and # assists over his last five games including a # point outing while [entity] s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600504"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] s [entity] has scored at least # in four of his last five while [entity] s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600950"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600574"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] have dropped two straight [entity] s [entity] has scored at least # in four of his last five while [entity] is averaging # points and # assists over his last five for [entity]",
+      "count": 1,
+      "example_game_id": "0022600241"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] s [entity] has put up # and # in two of his last five while [entity] s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600981"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] s [entity] has scored at least # in four of his last five while [entity] s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600472"
+    },
+    {
+      "pattern": "[entity] has dropped four straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has scored # or more in three of his last four including # # # while [entity] s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600920"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] is averaging # points and # assists over his last five for [entity]",
+      "count": 1,
+      "example_game_id": "0022600665"
+    },
+    {
+      "pattern": "[entity] has won five straight at # # and already beat [entity] # # on oct # [entity] has dropped four in a row [entity] s [entity] has scored # or more in three of his last four including # # # while [entity] s [entity] has scored at least # in each of his last five including a # point night",
+      "count": 1,
+      "example_game_id": "0022600941"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] are riding a two game winning streak [entity] s [entity] has scored # and # in his last two",
+      "count": 1,
+      "example_game_id": "0022600332"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600892"
+    },
+    {
+      "pattern": "[entity] has dropped four straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has scored # or more in three of his last four including # # # while [entity] s [entity] has scored at least # in four of his last five",
+      "count": 1,
+      "example_game_id": "0022601083"
+    },
+    {
+      "pattern": "[entity] has dropped three straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has scored at least # in four of his last five while [entity] s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600230"
+    },
+    {
+      "pattern": "[entity] has dropped four straight at # # entering its matchup with [entity] which is # # [entity] s [entity] is averaging # assists over his last five while [entity] s [entity] has scored at least # in four of his last five",
+      "count": 1,
+      "example_game_id": "0022601147"
+    },
+    {
+      "pattern": "[entity] brings a # # record into [entity] where the # # [entity] look to protect home court [entity] s [entity] has scored # and # in his last two",
+      "count": 1,
+      "example_game_id": "0022600507"
+    },
+    {
+      "pattern": "the winless [entity] sit dead last in the nba at # # and visit [entity] where the [entity] are # # [entity] s [entity] has scored # and # in his last two while [entity] s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600311"
+    },
+    {
+      "pattern": "[entity] brings a three game winning streak into its matchup with [entity] which is # # [entity] is averaging # points and # assists over his last five for [entity] while [entity] s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600835"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] s [entity] is averaging # assists over his last five while [entity] s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600762"
+    },
+    {
+      "pattern": "[entity] has dropped three straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has scored at least # in four of his last five while [entity] s [entity] has scored # or more in three of his last four including # # # #",
+      "count": 1,
+      "example_game_id": "0022600993"
+    },
+    {
+      "pattern": "[entity] has dropped four straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has scored # or more in three of his last four including # # # while [entity] s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600364"
+    },
+    {
+      "pattern": "[entity] brings a five game winning streak into its matchup with [entity] which is # # [entity] s [entity] has scored at least # in each of his last five including a # point night while [entity] s [entity] has scored at least # in four of his last five",
+      "count": 1,
+      "example_game_id": "0022600662"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] s [entity] has scored # or more in three of his last four including # # # while [entity] s [entity] has put up # and # in two of his last five",
+      "count": 1,
+      "example_game_id": "0022600313"
+    },
+    {
+      "pattern": "[entity] has won four straight and sits at # # while [entity] has dropped four in a row at # # [entity] s [entity] has scored # and # in his last two while [entity] s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600084"
+    },
+    {
+      "pattern": "[entity] brin[entity] a four game winning streak into its matchup with [entity] which is # # [entity] s [entity] has scored # and # in his last two while [entity] s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600617"
+    },
+    {
+      "pattern": "the # # [entity] bring a two game winning streak to [entity] where the [entity] sit at # # [entity] s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600855"
+    },
+    {
+      "pattern": "[entity] brin[entity] a four game winning streak into its matchup with [entity] which is # # [entity] s [entity] has scored # and # in his last two while [entity] is averaging # points and # assists over his last five for [entity]",
+      "count": 1,
+      "example_game_id": "0022600188"
+    },
+    {
+      "pattern": "the winless [entity] sit dead last in the nba at # # and visit [entity] where the [entity] are # # [entity] s [entity] has scored # and # in his last two while [entity] is averaging # points and # assists over his last five for [entity]",
+      "count": 1,
+      "example_game_id": "0022600999"
+    },
+    {
+      "pattern": "[entity] has dropped four straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has scored # or more in three of his last four including # # # while [entity] s [entity] has scored # or more in three of his last four including # # #",
+      "count": 1,
+      "example_game_id": "0022600562"
+    },
+    {
+      "pattern": "[entity] brin[entity] a four game winning streak into its matchup with [entity] which is # # [entity] s [entity] has scored # and # in his last two while [entity] s [entity] has scored at least # in four of his last five",
+      "count": 1,
+      "example_game_id": "0022600685"
+    },
+    {
+      "pattern": "[entity] has dropped three straight at # # entering its matchup with [entity] which is # # [entity] s [entity] has scored at least # in four of his last five while [entity] s [entity] has scored at least # in four of his last five",
+      "count": 1,
+      "example_game_id": "0022600766"
+    },
+    {
+      "pattern": "[entity] brings a three game winning streak into its matchup with [entity] which is # # [entity] s [entity] has scored at least # in each of his last five including a # point night while [entity] is averaging # points and # assists over his last five for [entity]",
+      "count": 1,
+      "example_game_id": "0022600870"
+    },
+    {
+      "pattern": "[entity] has dropped four straight at # # entering its matchup with [entity] which is # # [entity] s [entity] is averaging # assists over his last five while [entity] s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600732"
+    },
+    {
+      "pattern": "the # # [entity] visit [entity] where the # # [entity] are riding a two game winning streak [entity] is averaging # points and # assists over his last five for [entity] while [entity] s [entity] has scored # and # in his last two",
+      "count": 1,
+      "example_game_id": "0022601045"
+    },
+    {
+      "pattern": "[entity] puts its undefeated # # start on the line against [entity] which lost four straight and sits at # # [entity] star [entity] is averaging # points and # assists over his last five games including a # point outing while [entity] s [entity] is averaging # assists over his last five",
+      "count": 1,
+      "example_game_id": "0022600178"
+    }
+  ],
+  "collection_ms_median": 105.583,
+  "render_ms_median": 8.979,
+  "model_calls": 0,
+  "network_calls": 0,
+  "database_writes": 0,
+  "evidence_preserved_in": "heldout_v2_results.jsonl",
+  "status": "generated; editorial ratings are recorded separately"
+}
