@@ -14,6 +14,16 @@ The source files contain 92,626 rows with `penalty=1`, 1,167,343 with `penalty=0
 
 Among run, pass and `no_play` rows with both teams, a valid down, distance, field position, and game clock, 988,198 of 989,457 have a known 0/1 penalty flag. This is a **candidate source-row cohort**, not yet a validated count of independent offensive opportunities; special-teams opportunities, multiple fouls, repeated administrative rows, and next-state reconstruction require separate handling. The extract does not contain play descriptions, acceptance/decline, enforcement details, or historical acquisition timestamps. Those must come from additional evidence before building or grading a legal enforcement model; missing fields must remain unknown. The 1999–2000 source remains exploratory as specified in the protocol.
 
+### Description evidence in the full source
+
+The full pinned parquet files include descriptions and `order_sequence`, unlike the compact extract. `audit_source_descriptions.py` checks every annual file against the original manifest hash and counts literal text markers in all rows, including rows whose penalty flag is zero or missing. The resulting per-season counts are in `penalty-description-coverage.json`.
+
+Across 1999–2026, descriptions in 12,762 rows contain “declined”: 10,735 have `penalty=0`, 256 have an unknown penalty flag, and 1,771 have `penalty=1`. Descriptions in 1,705 rows contain an offsetting marker: 423 have `penalty=0`, 1,269 have unknown penalty status, and 13 have `penalty=1`. Thus a corpus selected only by `penalty=1` omits most descriptions with these markers. In 2025, 524 descriptions contain “declined,” including 437 with `penalty=0` and 10 with unknown status.
+
+These are **text-marker counts**, not verified foul or adjudication totals. A description can discuss multiple fouls with different dispositions: 4,075 flagged rows mention a penalty more than once, and enforced and declined markers can coexist. All 92,626 flagged rows have a description, while 85,998 have a non-null `order_sequence`. Neither word matching nor the presence of an ordering field proves a legal enforcement spot, an official statistical result, or a reconstructed next state. Exact foul segmentation and independent validation against the official record remain necessary. The source files also do not establish when their contents were first available historically.
+
+The script also triages descriptions containing exactly one penalty mention and exactly one disposition marker: 88,429 have an `enforced` marker, 10,774 have a `declined` marker, and 3 have an `offsetting` marker. It leaves multiple mentions, conflicting markers, and missing markers ambiguous. These counts cover all source rows, not just rows with `penalty=1`; they are candidates for manual and official-record validation, not training labels or proof that all fouls have been captured.
+
 ## 2026 penalty-field repair
 
 The original database remains byte-for-byte unchanged: `picks.dev.db` SHA-256 `1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa`. Its 2026 `penalty` value is null on all 21,018 rows, and it has no `first_down_penalty` column.
