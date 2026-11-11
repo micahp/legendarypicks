@@ -1,0 +1,174 @@
+{
+  "interpretation": "Retrospective source rows and literal text markers; not adjudicated fouls, independent opportunities, or cutoff-safe source vintages.",
+  "seasons": {
+    "1999": {
+      "file": "penalty-source-rows-1999.parquet",
+      "rows": 46136,
+      "sha256": "291afc373dcc65604c633f053d1f0746be06b4531c9877b5617312ec226e9242",
+      "source_sha256": "dcf640fd18e4cdea03dba14c733bbcbd89796f100c509249b6ba5e3cff9e904c"
+    },
+    "2000": {
+      "file": "penalty-source-rows-2000.parquet",
+      "rows": 45491,
+      "sha256": "2d2bf12cbc28662e30b3f619abc02c19618a02f402b8ed5743ee92dee5d9a1e0",
+      "source_sha256": "595c3b0eefeb91afd6f08c629669823b31e63c34304c98faed09adf4fbd54706"
+    },
+    "2001": {
+      "file": "penalty-source-rows-2001.parquet",
+      "rows": 44969,
+      "sha256": "754333cae4946d3119b446626e3c75d9d70a553be838c97a65353967e904e4f3",
+      "source_sha256": "43f0eea9f76de070a09382a5f3438b0ddb509c9ca48ac98dee77639e35724bca"
+    },
+    "2002": {
+      "file": "penalty-source-rows-2002.parquet",
+      "rows": 47355,
+      "sha256": "c3a301d72e7336d908fa58f04810b2085ab075fa083b8731655bf659229835f4",
+      "source_sha256": "4930befb7ce6597fa149d53e56565eb1377bad778a04fec1e6c21b0537c4aa17"
+    },
+    "2003": {
+      "file": "penalty-source-rows-2003.parquet",
+      "rows": 46811,
+      "sha256": "121a0f723f6b0e11cda0c55ec611348ecc858e3c4483333f1d61adf16b0d0ec2",
+      "source_sha256": "a5bc20c69eee0c18364bea7fa1d3c2817941c8d9026058c694ab1ee73a2d279d"
+    },
+    "2004": {
+      "file": "penalty-source-rows-2004.parquet",
+      "rows": 46705,
+      "sha256": "32944c01ae7591c9070fd4f5f7c2f1ff07e85bb36509074029319b9c035c9a19",
+      "source_sha256": "94658bc15788eda63a8cdba0d8f1c8aa9253fb5baa9c0d07b9c2e35e75ae6a03"
+    },
+    "2005": {
+      "file": "penalty-source-rows-2005.parquet",
+      "rows": 46823,
+      "sha256": "0abc81dfc5b90f00f04b12b2e51a7a2d851ae399810990b806b6d55e9d821d5c",
+      "source_sha256": "1b93d868e286fc556192e642ec09ff76b29880b441674dcb0f3b51fb0064df92"
+    },
+    "2006": {
+      "file": "penalty-source-rows-2006.parquet",
+      "rows": 46299,
+      "sha256": "42aa5703c6a959f3ca4423659eeb3192ab0aaf1e03fdd9126e0be6d3144948d4",
+      "source_sha256": "f3d45c8cf41fa860ec22519490781eb19a00cf04cbf039b28af671bfcb11c2b4"
+    },
+    "2007": {
+      "file": "penalty-source-rows-2007.parquet",
+      "rows": 46266,
+      "sha256": "cb8ff6b3d9f67d9687bdcc16c66a09bee3c4314327b18c785c9d0e73d78ca482",
+      "source_sha256": "bcfded2ff41b221617e38e48cbc56fd797f336363436ed5b5da17659caede9a9"
+    },
+    "2008": {
+      "file": "penalty-source-rows-2008.parquet",
+      "rows": 45917,
+      "sha256": "30e77d2a6bb98b662ef54e142f8805377fced6cb27bdcd0658d3ccfa3df33b73",
+      "source_sha256": "f625e836a0117698feaad1a6e84f4ab341ff03197c1904313836ef7313af0f07"
+    },
+    "2009": {
+      "file": "penalty-source-rows-2009.parquet",
+      "rows": 46519,
+      "sha256": "5b48905da394f43fd915753e502b420d7cc0c02c45d38087abc06f606fc79508",
+      "source_sha256": "17ba96f594a7b84c86060a99a3082158ebab206672d6c16036a069829d77dee7"
+    },
+    "2010": {
+      "file": "penalty-source-rows-2010.parquet",
+      "rows": 46892,
+      "sha256": "a7e5c1570790c2742135e97ff3c7e465ed02a1c8509420c1cb7d91b3c0570844",
+      "source_sha256": "d2ef9c407319719910ad8de8c4c1b88f0ea945ffb3f78f48ef32fa3ed3a7573b"
+    },
+    "2011": {
+      "file": "penalty-source-rows-2011.parquet",
+      "rows": 47448,
+      "sha256": "5f03da0a41fc0e2dd2fafa805952e3efe5c59257dff73978f6b86926a5578fd5",
+      "source_sha256": "c54753b8137b88dab260489b1462cbf1309c3d11741eb8d10e5f1b0a9b8795b1"
+    },
+    "2012": {
+      "file": "penalty-source-rows-2012.parquet",
+      "rows": 47834,
+      "sha256": "9000dbe889a65f30f1e387bb24ae496976a2db745afe89d312c37add53f97518",
+      "source_sha256": "447b90789104aac70427ec9d3b51df7247234029d0ecabd269279369b1cc6278"
+    },
+    "2013": {
+      "file": "penalty-source-rows-2013.parquet",
+      "rows": 48158,
+      "sha256": "2472a227ac71aaf51c23573e88c79f6b70f281ee6746f4047d9baa83618c8c94",
+      "source_sha256": "f454605a1983b3946baf0ffadf3a0b9f5e04735c4b84732e0483f2049a780d00"
+    },
+    "2014": {
+      "file": "penalty-source-rows-2014.parquet",
+      "rows": 47629,
+      "sha256": "ebae8913f3c28dd638f7c41f36fd3313a01c31549e1a1ace22186f13ddddfca9",
+      "source_sha256": "54c01408d8f0ff9e013a4ea51428b91d610101f72545d082e932f5710e2fb4f7"
+    },
+    "2015": {
+      "file": "penalty-source-rows-2015.parquet",
+      "rows": 48122,
+      "sha256": "11921017178c61dc830db75a118739bf3596c0a0fbfdb995f5c516430a44b8f8",
+      "source_sha256": "01b5ae7d06633a2e66b418404461a3d4ff055ad2f3a87d453cebcc8d3fda7ed9"
+    },
+    "2016": {
+      "file": "penalty-source-rows-2016.parquet",
+      "rows": 47651,
+      "sha256": "057534364e73300143117c7ab9216e193fa3646f3fc62df129e37f5bddaffef7",
+      "source_sha256": "95eba04e2145e3c1c8ca502f2a3a76cfb0a5990680c3fb480f02a74a45f54a3b"
+    },
+    "2017": {
+      "file": "penalty-source-rows-2017.parquet",
+      "rows": 47245,
+      "sha256": "d3a58a285070c3e6b60f79116cb74d58e2b18bafe6f422c340a8653d80803c90",
+      "source_sha256": "84eacd963c1fdd45965f6222c62e9329a7f3412f029d92c1ac5e34a1bb4d3710"
+    },
+    "2018": {
+      "file": "penalty-source-rows-2018.parquet",
+      "rows": 47109,
+      "sha256": "48e219eebbb795c9e62e3e09c651796cc3ee6111a8d3494eb6a8504c784f06fc",
+      "source_sha256": "2e6f2dce7c7ebd46e985cabe0c17eb72b39a77f98cb4478409294f50b5820150"
+    },
+    "2019": {
+      "file": "penalty-source-rows-2019.parquet",
+      "rows": 47260,
+      "sha256": "488626870ee8a84d3cb401beee0194244dc88d454b408cf14a9bcb4dafc64ee2",
+      "source_sha256": "60c3067017db2d28a78f66a79b657268be8578d9a5288e6a827efdcd7fe42540"
+    },
+    "2020": {
+      "file": "penalty-source-rows-2020.parquet",
+      "rows": 47705,
+      "sha256": "10483d6f7a1e7ec561d499651ea4c16b78551be707f08b95623453e0fd46d0ad",
+      "source_sha256": "8889f5d8782b5c5dce3c3644acdc0322b228a7e9cb13fa36cbac250e260e9f60"
+    },
+    "2021": {
+      "file": "penalty-source-rows-2021.parquet",
+      "rows": 49922,
+      "sha256": "6c3fc805e50611f4d56cda0956ede42bac9989227b08d7f43f38fceecc8949c6",
+      "source_sha256": "333ad34378e5339d5172717cc83378e908daf02c8699416ab3e17c2ec10f78d8"
+    },
+    "2022": {
+      "file": "penalty-source-rows-2022.parquet",
+      "rows": 49434,
+      "sha256": "c2763399c874624c39d364557a264b3b71e41c4d80ad50174b34217b4ff15cfd",
+      "source_sha256": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09"
+    },
+    "2023": {
+      "file": "penalty-source-rows-2023.parquet",
+      "rows": 49665,
+      "sha256": "f5288726f88956d2c9d23476b3090d138b68210dc0c78c13916bfe1bc8c50d7b",
+      "source_sha256": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776"
+    },
+    "2024": {
+      "file": "penalty-source-rows-2024.parquet",
+      "rows": 49492,
+      "sha256": "b63ba6d441c1ce9ec0c9025c8a6aee04da4beace922f1bc6ea6a541b2e62822c",
+      "source_sha256": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b"
+    },
+    "2025": {
+      "file": "penalty-source-rows-2025.parquet",
+      "rows": 48771,
+      "sha256": "af9b3c5505176df34114496530f783c5e87f38329a099b92d574775ed374e5be",
+      "source_sha256": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+    },
+    "2026": {
+      "file": "penalty-source-rows-2026.parquet",
+      "rows": 21191,
+      "sha256": "c05f36ecb294b3c4abd89d11094ea24020ecacdfcde0b79c9583f55562767daa",
+      "source_sha256": "5edd7c42ed3f116f7e8914594c536088c337052fa53552ba7947499ba0f9f1b5"
+    }
+  },
+  "source_manifest_sha256": "c4b4a1a5eaec359e8cbb7d52a266093b4b6992474f8cc8da12e6b17ed8c4ff46"
+}

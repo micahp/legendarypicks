@@ -126,3 +126,17 @@ The earlier 2025 holdout audit found 6.544% observed versus 6.580% matchup-predi
 - `saved-10k-configuration-groups.json`: saved-run configuration identity split and per-group sack rates.
 - `saved-10k-sacks-by-config.json`: extracted sack totals by configuration group.
 - `saved-10k-layer-manifest.json`, `saved-10k-run-manifest.json`, and `saved-10k-run-summary.json`: saved run identities, enabled layers, and aggregate counters.
+
+### Source-faithful research rows
+
+`scripts/nfl_sequence/penalty_corpus.py` builds a separate, compressed Parquet dataset from the manifest-pinned annual sources. It retains every source row, including administrative and special-teams rows and declined-penalty text on rows with `penalty=0`. It carries the original description, game state, penalty fields, play outcomes, and literal disposition markers. A single marker is text evidence only; mixed or multiple fouls remain unresolved. Rows are not yet independently verified opportunities or adjudicated fouls, and the extract does not assert historical acquisition time or reconstruct the post-enforcement state.
+
+A local run processed all 28 seasons, 1999–2026, preserving 1,300,819 rows in 43 MB. The output is at `/tmp/slc-penalty-corpus-20261110/` on this host; it is temporary and is not committed. `penalty-source-rows-manifest.json` records each source and resulting file hash. To reproduce it in a new directory:
+
+```bash
+backend/venv/bin/python scripts/nfl_sequence/penalty_corpus.py \
+  --manifest docs/research/slc-v2-penalty-opportunities-2026-11-10/manifest.json \
+  --output /path/to/new-directory --seasons $(seq 1999 2026)
+```
+
+The builder checks every source hash before creating the output directory, reads one bounded batch at a time, and refuses an existing output directory. These rows are a foundation for the remaining official-record validation, opportunity and foul classification, enforcement reconstruction, and held-out model tests; they do not enable penalties in the simulator.
