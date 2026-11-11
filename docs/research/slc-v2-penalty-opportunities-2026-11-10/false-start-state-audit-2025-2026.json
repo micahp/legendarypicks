@@ -1,0 +1,24 @@
+{
+  "limitations": "Immediate next source row only; no independent official record validation. Clock check permits elapsed time and does not validate a clock rule. Half-distance, multiple fouls, possession changes and period changes are excluded.",
+  "seasons": {
+    "2025": {
+      "complete_same_team_period_score_next_rows": 578,
+      "duplicate_order_games_excluded": 0,
+      "matching_expected_state": 578,
+      "nonmatching_examples": [],
+      "nonmatching_expected_state": 0,
+      "simple_false_start_candidates": 614,
+      "source_sha256": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+    },
+    "2026": {
+      "complete_same_team_period_score_next_rows": 269,
+      "duplicate_order_games_excluded": 0,
+      "matching_expected_state": 269,
+      "nonmatching_examples": [],
+      "nonmatching_expected_state": 0,
+      "simple_false_start_candidates": 291,
+      "source_sha256": "5edd7c42ed3f116f7e8914594c536088c337052fa53552ba7947499ba0f9f1b5"
+    }
+  },
+  "source_manifest_sha256": "c4b4a1a5eaec359e8cbb7d52a266093b4b6992474f8cc8da12e6b17ed8c4ff46"
+}
