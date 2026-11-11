@@ -648,6 +648,7 @@ class PlayCallSampler:
                 key = rng.choices(keys, weights=[choice_base[k] for k in keys])[0]  # the unchanged baseline draw
         elif fallback_by_key is None:
             key = rng.choices(keys, weights=weights)[0]
+        event_before_restore_sack_mass = key[1] if fallback_by_key is None else None
         if self.trace_outcome_probabilities and fallback_by_key is None:
             probability_trace.append(_event_probability_stage(
                 'pre_postdraw_adjustment_event_draw', keys, weights if weights else baseline_weights))
@@ -834,7 +835,7 @@ class PlayCallSampler:
                 'qb_scramble_fallback': qb_decision.get('scramble_fallback') if qb_decision else None,
                 'formation': formation, 'coverage': coverage, 'participants': pe.ids(pre_event),
                 'source_fallback': outcome_fallback, 'zero_weight_fallback': outcome_weight_fallback,
-                'event_selected': event, 'event_before_restore_sack_mass': key[1],
+                'event_selected': event, 'event_before_restore_sack_mass': event_before_restore_sack_mass,
                 'stages': probability_trace,
                 'not_applied_on_path': ([
                     {'layer': name, 'reason': 'sparse_backoff event normalization omits this exact-cell lift'}

@@ -2,6 +2,7 @@ import hashlib
 import random
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import numpy as np
@@ -174,6 +175,20 @@ class Sampler(unittest.TestCase):
 
         self.assertEqual(plain_result, traced_result)
         self.assertEqual(plain_rng.getstate(), traced_rng.getstate())
+
+    def test_probability_trace_keeps_pre_substitution_event_for_restore_sack_mass(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.trace_outcome_probabilities = True
+        sampler.blocker_fixes = frozenset({'restore_sack_mass'})
+        pool = cell([('pass_incomplete', 'pass')] * 99 + [('sack', 'pass')])
+
+        with patch.object(slc, 'sack_substitution_rate', return_value=1.0):
+            sampler.sample(random.Random(10), pool, 'A', 'B', state=STATE)
+
+        trace = sampler.decisions[-1]['outcome_probability_trace']
+        self.assertEqual(trace['event_before_restore_sack_mass'], 'pass_incomplete')
+        self.assertEqual(trace['event_selected'], 'sack')
 
     def test_pregame_player_sampling_excludes_unmodeled_lateral_rows(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)),
