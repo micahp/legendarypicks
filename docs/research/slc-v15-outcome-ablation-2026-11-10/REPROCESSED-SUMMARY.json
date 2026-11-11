@@ -1,0 +1,30 @@
+{
+  "grading_code_commit": "b67ce23b",
+  "runs": [
+    {
+      "directory": "min-no-20",
+      "error_seeds": [],
+      "report": "MIN-NO.json",
+      "seed_count": 20,
+      "status": "paired",
+      "valid_for_complete_game_comparison": true
+    },
+    {
+      "directory": "2026_06_SEA_DEN",
+      "error_seeds": [],
+      "report": "SEA-DEN.json",
+      "seed_count": 20,
+      "status": "paired",
+      "valid_for_complete_game_comparison": true
+    },
+    {
+      "directory": "2026_07_DEN_ARI",
+      "error_seeds": [],
+      "report": "DEN-ARI.json",
+      "seed_count": 20,
+      "status": "paired",
+      "valid_for_complete_game_comparison": true
+    }
+  ],
+  "simulation_source_commit": "67d3f552"
+}
