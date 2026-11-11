@@ -8,6 +8,7 @@ import e1_drive as e1
 import team_tendency as tt
 import team_season_adapt as tsa
 import season_layers as sl
+from audit_cell_cache import index_pool
 
 DB='/root/legendarypicks/backend/data/picks.dev.db'
 PBP_RELEASE='/root/lp-snapshots/nfl-backfill-2026-11-03/raw/pbp/play_by_play_{season}.parquet'
@@ -113,8 +114,8 @@ def row_intent(ev,row):
     if ev in e1.KICK_EVENTS:return 'kick'
     return 'run' if row['play_type']=='run' else 'dropback'
 
-def conditional_probs(samples,intent,offense,defense,cell,table):
-    c=collections.Counter(ev for ev,row,_,_ in samples if row_intent(ev,row)==intent)
+def conditional_probs(cache,intent,offense,defense,cell,table):
+    c=cache.intent_events.get(intent,collections.Counter())
     if sum(c.values())<10:return None,c
     def weighted(use_o,use_d):
         w={ev:float(n) for ev,n in c.items()}
@@ -174,23 +175,13 @@ def freeze_base(year):
         if keep:filtered[cell]=keep
     return rows,filtered,hist,excluded,rawcounts,yardcounts
 
-def model_probs_by_action(cell_samples, offense, defense, cell, table, fg_allowed):
-    action_counts=collections.Counter()
-    for ev,row,_,_ in cell_samples:
-        if ev=='field_goal_attempt' and not fg_allowed:continue
-        if ev=='punt':action_counts['punt']+=1
-        elif ev=='field_goal_attempt':action_counts['field_goal']+=1
-        else:action_counts['go']+=1
+def model_probs_by_action(cache, fg_allowed):
+    action_counts=cache.action_counts(fg_allowed=fg_allowed)
     z=sum(action_counts.values())
     return ({k:v/z for k,v in action_counts.items()} if z else None),action_counts
 
-def team_action_probs(cell_samples,team,which,base_probs,fg_allowed):
-    counts=collections.Counter()
-    for ev,row,_,_ in cell_samples:
-        if ev=='field_goal_attempt' and not fg_allowed:continue
-        if (row['posteam'] if which=='offense' else row['defteam'])!=team:continue
-        action='punt' if ev=='punt' else 'field_goal' if ev=='field_goal_attempt' else 'go'
-        counts[action]+=1
+def team_action_probs(cache,team,which,base_probs,fg_allowed):
+    counts=cache.action_counts(side=which,team=team,fg_allowed=fg_allowed)
     n=sum(counts.values()); den=n+K
     keys=('go','punt','field_goal')
     return {k:(counts[k]+K*base_probs.get(k,0.0))/den if den else base_probs.get(k,0.0) for k in keys}
@@ -208,6 +199,8 @@ def main():
             if ckey[0]!=4:continue
             for ev,rr,_,_ in ss:gcounts['punt' if ev=='punt' else 'field_goal' if ev=='field_goal_attempt' else 'go']+=1
         gz=sum(gcounts.values());global_fourth_probs={k:v/gz for k,v in gcounts.items()} if gz else {'go':1.0}
+        # One historical-pool pass; per-play queries use counters or sorted gain tails.
+        cell_cache=index_pool(pool,row_intent)
         off_epa,def_epa,offcat,defcat=team_strengths(DB,year)
         con=sqlite3.connect(f'file:{DB}?mode=ro',uri=True,timeout=30)
         test_rows=[dict(zip(e1.COLUMNS,r)) for r in con.execute(f"SELECT {', '.join(e1.COLUMNS)} FROM nfl_pbp WHERE season=? AND week<=18 ORDER BY game_id,play_id",(year,))]
@@ -216,7 +209,11 @@ def main():
         con.close()
         bygame,eval_excluded=classify_test_rows(test_rows)
         all_ids=set(bygame); current_by_game=collections.defaultdict(list)
-        for r in test_rows:current_by_game[r['game_id']].append(r)
+        fourth_by_game=collections.defaultdict(list)
+        for r in test_rows:
+            current_by_game[r['game_id']].append(r)
+            if r.get('down')==4 and r.get('qtr') is not None and int(r['qtr'])<=4:
+                fourth_by_game[r['game_id']].append(r)
         schedule_by_id={r['game_id']:r for r in sched}
         targets_by_available=collections.defaultdict(list); avail_manifest={}
         undated=[]
@@ -255,7 +252,8 @@ def main():
                     samples=pool.get(cell,[])
                     if not samples:continue
                     intent=row_intent(ev,row)
-                    probs,icount=conditional_probs(samples,intent,row['posteam'],row['defteam'],cell,adapted)
+                    stats=cell_cache[cell]
+                    probs,icount=conditional_probs(stats,intent,row['posteam'],row['defteam'],cell,adapted)
                     if probs is None:
                         counts['event_rows_unsupported']+=1
                     else:
@@ -268,49 +266,41 @@ def main():
                         if int(row['down'])==3 and intent in ('run','dropback'):
                             togo=int(row['ydstogo']); dkey=e0.pool_key(3,togo,row['yardline_100'])[1]
                             third_dist[dkey]+=1
-                            pconv={m:0.0 for m in probs}
-                            for cls,p_ev in probs['league'].items():
-                                pass
-                            # Per-arm conversion probability; the conditional yardage within each class remains the historical cell.
-                            for m in probs:
-                                for cls,p_ev in probs[m].items():
-                                    if cls not in ('run','pass_complete'):continue
-                                    vals=[s[1]['yards_gained'] for s in samples if s[0]==cls and row_intent(s[0],s[1])==intent and s[1].get('yards_gained') is not None]
-                                    if vals:
-                                        successes=sum(1 for s in samples if s[0]==cls and row_intent(s[0],s[1])==intent and s[1].get('yards_gained') is not None and (int(s[1]['yards_gained'])>=togo or s[1].get('touchdown')==1))
-                                        pconv[m]+=p_ev*successes/len(vals)
+                            # Sorted historical gain tails avoid repeated scans per play and arm.
+                            gain_rates={cls:stats.gain_probability(cls,togo) for cls in ('run','pass_complete')}
+                            pconv={m:sum(p_ev*gain_rates[cls] for cls,p_ev in pm.items()
+                                         if cls in gain_rates and gain_rates[cls] is not None)
+                                   for m,pm in probs.items()}
                             actual_conv=int(ev in ('run','pass_complete') and row.get('yards_gained') is not None and (int(row['yards_gained'])>=togo or row.get('touchdown')==1))
                             for m in probs:acc_bin(third[dkey][m],actual_conv,pconv[m])
                             counts['third_rows_supported']+=1
                     if ev in EVENT_YARDS and row.get('yards_gained') is not None:
                         cache_key=(cell,ev,'league')
                         if cache_key not in yard_dist_cache:
-                            lv=[s[1]['yards_gained'] for s in samples if s[0]==ev and s[1].get('yards_gained') is not None]
-                            yard_dist_cache[cache_key]=make_yard_distribution(lv)
+                            yard_dist_cache[cache_key]=make_yard_distribution(stats.yards(ev))
                         ld=yard_dist_cache[cache_key]
                         if ld is None or len(ld['xs'])<10:
                             counts['yardage_rows_unsupported']+=1;continue
                         y=float(row['yards_gained']); key=f"{year}:{ev}:{offcat.get(row['posteam'],'unknown')}_offense:{defcat.get(row['defteam'],'unknown')}_defense"
                         slcmean=ld['mean'];slcc=yard_crps(ld,y)
+                        scores={'slc_league_cell':(slcmean,slcc)}
+                        for side,team in (('offense',row['posteam']),('defense',row['defteam'])):
+                            dkey=(cell,ev,side,team)
+                            if dkey not in yard_dist_cache:
+                                yard_dist_cache[dkey]=make_yard_distribution(
+                                    stats.yards(ev),stats.yards(ev,side=side,team=team))
+                            td=yard_dist_cache[dkey]
+                            scores[f'{side}_only_k25']=(td['mean'],yard_crps(td,y))
                         for name in ('all',key):
-                            acc_y(yard[f'{name}:{ev}']['slc_league_cell'],y,slcmean,slcc)
-                            for side,team in (('offense',row['posteam']),('defense',row['defteam'])):
-                                dkey=(cell,ev,side,team)
-                                if dkey not in yard_dist_cache:
-                                    tv=[s[1]['yards_gained'] for s in samples if s[0]==ev and s[1].get(side=='offense' and 'posteam' or 'defteam')==team and s[1].get('yards_gained') is not None]
-                                    yard_dist_cache[dkey]=make_yard_distribution([s[1]['yards_gained'] for s in samples if s[0]==ev and s[1].get('yards_gained') is not None],tv)
-                                td=yard_dist_cache[dkey]
-                                pred=td['mean']; crps=yard_crps(td,y)
-                                acc_y(yard[f'{name}:{ev}'][f'{side}_only_k25'],y,pred,crps)
+                            dst=yard[f'{name}:{ev}']
+                            for model,(pred,score) in scores.items():
+                                acc_y(dst[model],y,pred,score)
                         counts['yardage_rows_supported']+=1
                 # independent 4th-down action scoring, with situation-specific league action share.
                 # Condition on historical source cell; FG feasibility is exactly the normal 60-yard rule + observed max.
                 fgmax=70.0
-                # `current_by_game` is built once above. Iterating all season rows
-                # here for every target game made this section O(games * plays).
-                # Restricting it to the current game makes the full pass O(plays).
-                for row in current_by_game.get(gid,()):
-                    if row.get('down')!=4 or row.get('qtr') is None or int(row['qtr'])>4:continue
+                # The fourth-down opportunities were indexed once, outside the target loop.
+                for row in fourth_by_game.get(gid,()):
                     if row.get('penalty')==1:continue
                     action={'run':'go','pass':'go','punt':'punt','field_goal':'field_goal'}.get(row.get('play_type'))
                     if action is None:continue
@@ -324,11 +314,11 @@ def main():
                     sd=raw.get('score_differential')
                     exception=(q in (2,4) and clock<=60) or (q==4 and clock<=300 and sd is not None and float(sd)<=-8)
                     fg_allowed=dist<=fgmax and (dist<=60 or exception)
-                    base,ac=model_probs_by_action(samples,row['posteam'],row['defteam'],cell,adapted,fg_allowed)
+                    base,ac=model_probs_by_action(cell_cache[cell],fg_allowed)
                     if not base:counts['fourth_rows_unsupported']+=1;continue
                     keys=('go','punt','field_goal');base={k:base.get(k,0.0) for k in keys}
-                    teamo=team_action_probs(samples,row['posteam'],'offense',base,fg_allowed)
-                    teamd=team_action_probs(samples,row['defteam'],'defense',base,fg_allowed)
+                    teamo=team_action_probs(cell_cache[cell],row['posteam'],'offense',base,fg_allowed)
+                    teamd=team_action_probs(cell_cache[cell],row['defteam'],'defense',base,fg_allowed)
                     # Flat prior over all historical fourth-down decisions in the fitted pool.
                     flat=global_fourth_probs
                     if not fg_allowed:
