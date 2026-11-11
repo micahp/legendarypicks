@@ -2,6 +2,8 @@
 
 Regraded on 2026-11-11 from the completed fast-host worker artifacts. No simulations were rerun.
 
+See [EVALUATION-SUMMARY.md](EVALUATION-SUMMARY.md) for observed game results, winner probabilities and scores, points distributions, sack and turnover errors, and player workload comparisons.
+
 ## Results
 
 Each matchup has 20 paired seeds, with the `team_offense_defense_outcomes` layer disabled in the ablation arm. All 20 pairs in each matchup passed full-game validation and box-score reconciliation. There were no seed errors.
@@ -16,7 +18,7 @@ These are small exploratory samples. They do not establish a general scoring eff
 
 ## Provenance
 
-- Simulation code commit recorded in each run manifest: `67d3f552` (`Support paired V1.5 historical outcome ablations`).
+- Simulation code commit recorded in each run manifest: [`67d3f552`](https://github.com/micahp/legendarypicks/commit/67d3f5522da13d20f79389cfac2f7495386c4d10) (`Support paired V1.5 historical outcome ablations`), now published on the `research/slc-v15-outcome-ablation-source-2026-11-10` branch.
 - Report grader: commit `b67ce23b` (`Preserve player role variation in paired reports`), cherry-picked onto the current `slc-v2` branch.
 - RNG protocol: v2; same paired seed roots within each control/ablation comparison.
 - Seeds: 2–21 for each matchup.
