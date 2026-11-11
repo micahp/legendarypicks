@@ -96,7 +96,8 @@ def grade(run_root: Path, db: Path, *, allow_partial: bool = False):
     actual_results, _unscored = season_score.load_results(db, 2026, list(range(1, 9)))
     player_rows = []
     player_errors = defaultdict(lambda: {'control': [], 'ablation': []})
-    player_missing = defaultdict(int)
+    actual_positive = defaultdict(int)
+    matched_positive = defaultdict(int)
     team_values = defaultdict(lambda: {'control': [], 'ablation': []})
     team_errors = defaultdict(lambda: {'control': [], 'ablation': []})
     team_game_rows = []
@@ -161,6 +162,13 @@ def grade(run_root: Path, db: Path, *, allow_partial: bool = False):
                         team_errors[metric][arm].append((game, abs(sum(pred[arm]) / len(pred[arm]) - observed)))
 
         report_players = report['paired_boxscore_summaries']['player_metrics']
+        for (actual_game, _actual_team, _player_id), stats in actual_players.items():
+            if actual_game != game:
+                continue
+            for metric, field in (('rush_attempts', 'carries'), ('targets', 'targets')):
+                value = stats.get(field)
+                if isinstance(value, (int, float)) and value > 0:
+                    actual_positive[metric] += 1
         for row in report_players:
             metric = row.get('metric')
             if metric not in ('rush_attempts', 'targets'):
@@ -173,8 +181,8 @@ def grade(run_root: Path, db: Path, *, allow_partial: bool = False):
             control = row['control'].get('mean')
             ablation = row['ablation'].get('mean')
             if control is None or ablation is None:
-                player_missing[metric] += 1
                 continue
+            matched_positive[metric] += 1
             item = {'game_id': game, 'team': club, 'player_id': player_id,
                     'player_name': row.get('player_name'), 'metric': metric,
                     'observed_positive_touches': observed, 'control_mean': control,
@@ -220,9 +228,10 @@ def grade(run_root: Path, db: Path, *, allow_partial: bool = False):
                         sum(values['control']) / len(values['control'])]
                  for game, values in by_game.items() if values['control'] and values['ablation']}
         workload[metric] = {
-            'positive_observed_player_game_rows': sum(1 for r in player_rows if r['metric'] == metric),
+            'positive_observed_player_game_rows': actual_positive[metric],
+            'matched_prediction_rows': matched_positive[metric],
             'games_with_scored_rows': len(diffs),
-            'missing_prediction_rows': player_missing[metric],
+            'missing_prediction_rows': actual_positive[metric] - matched_positive[metric],
             'control_mae': sum(e for _, e in player_errors[metric]['control']) /
                            max(1, len(player_errors[metric]['control'])),
             'ablation_mae': sum(e for _, e in player_errors[metric]['ablation']) /
