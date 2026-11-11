@@ -464,5 +464,41 @@ class Domain(unittest.TestCase):
             gl.check(record)
 
 
+class SafetyKickEndOfRegulation(unittest.TestCase):
+    """Validate regulation expiry on a safety free kick, never another terminal."""
+
+    @staticmethod
+    def last_safety():
+        return ({'points': {'A': 25, 'B': 13}},
+                {'terminal': 'safety', 'end_quarter': 4, 'end_clock': 6,
+                 'points_scored_on_drive': {'team': 'A', 'points': 2},
+                 'plays': [{'state_after': {'home_score': 25, 'away_score': 13}}]})
+
+    def test_expired_safety_kick_ends_untied_regulation(self):
+        record, drive = self.last_safety()
+        kick = {'kind': 'safety_free_kick', 'quarter': 4, 'clock_expired_during_kickoff': True}
+        self.assertTrue(gl._game_ending_kick(kick))
+        self.assertTrue(gl._ends_the_game(record, drive, kick))
+
+    def test_nonexpired_safety_kick_does_not_end_game(self):
+        record, drive = self.last_safety()
+        kick = {'kind': 'safety_free_kick', 'quarter': 4, 'clock_expired_during_kickoff': False}
+        self.assertFalse(gl._game_ending_kick(kick))
+        self.assertFalse(gl._ends_the_game(record, drive, kick))
+
+    def test_safety_kick_cannot_end_q3_or_overtime(self):
+        for quarter in (3, gl.OVERTIME_QUARTER):
+            self.assertFalse(gl._game_ending_kick({
+                'kind': 'safety_free_kick', 'quarter': quarter, 'clock_expired_during_kickoff': True,
+            }))
+
+    def test_kick_does_not_end_game_without_scoring(self):
+        record, drive = self.last_safety()
+        drive['points_scored_on_drive'] = None
+        self.assertFalse(gl._ends_the_game(record, drive, {
+            'kind': 'safety_free_kick', 'quarter': 4, 'clock_expired_during_kickoff': True,
+        }))
+
+
 if __name__ == '__main__':
     unittest.main()

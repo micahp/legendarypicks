@@ -445,8 +445,18 @@ def load_safety_kick_pool(path=SAFETY_KICKS, eligible_before=None):
     if len(rows) != manifest['record_count']:
         raise ValueError(f'safety-kick fixture row count mismatch: {path}')
     pool = []
+    # The frozen fixture predates the onside audit. Six labeled "usable"
+    # rows describe onside kicks, including CLE-NE's fictitious 48-second
+    # interval after the kicking team recovered. Preserve its original hash
+    # for prior run provenance, but exclude these rows on new model loads.
+    legacy_onside_usable = sum(
+        row['status'] == 'usable' and 'onside' in (row.get('kick_desc') or '').lower()
+        for row in rows
+    )
     for row in rows:
         if row['status'] != 'usable':
+            continue
+        if 'onside' in (row.get('kick_desc') or '').lower():
             continue
         if not _before_cutoff(row['season'], row['week'], eligible_before):
             continue
@@ -457,8 +467,8 @@ def load_safety_kick_pool(path=SAFETY_KICKS, eligible_before=None):
                      'play_id': int(float(row['receiving_snap_play_id'])),
                      'safety_play_id': int(float(row['safety_play_id'])), 'kick_play_id': int(float(row['kick_play_id'])),
                      'kick_type': row['kick_type'], 'season': int(row['season'])})
-    if eligible_before is None and len(pool) != manifest['usable_count']:
-        raise ValueError('safety-kick usable rows disagree with the manifest')
+    if eligible_before is None and len(pool) + legacy_onside_usable != manifest['usable_count']:
+        raise ValueError('safety-kick usable rows disagree with the manifest after onside exclusion')
     return pool, source_hash
 
 
