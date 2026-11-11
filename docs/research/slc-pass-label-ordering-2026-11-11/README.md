@@ -26,9 +26,10 @@ The batch CLI now has `--playcall-pass-label-mode`:
 
 - `legacy` preserves the existing V2 sampler.
 - `off` removes A/D/E event lifts while retaining post-event row filtering and other model layers.
-- `two_stage` selects the non-pass versus pass-outcome group without A/D/E, then uses those labels only to choose among pass outcomes. Its first-stage pass mass and sack probability are therefore independent of A/D/E. The existing QB scramble decision remains its own earlier decision.
+- `two_stage` selects the non-pass versus pass-outcome group without A/D/E, then applies the old marginal label lifts only among pass outcomes. Its first-stage pass mass and sack probability are therefore independent of A/D/E. This was the ordering-only experiment; its held-out scores were slightly worse than the no-lift baseline.
+- `conditional` uses the fitted, regularized pass-outcome model described in [conditional-model-results.md](conditional-model-results.md). It applies A/D/E after the pass attempt is selected and excludes sacks from that model. Its label effects are calibrated to preserve the baseline pass-event mix under the configured label priors.
 
-The default remains `legacy`. These modes require decision labels. Focused sampler tests verify that changing A/D/E lifts cannot change the first-stage sack draw and can only change the conditional pass outcome.
+The default is `auto`: it selects `conditional` when decision labels are enabled and `legacy` when they are disabled. Set `legacy` explicitly to reproduce previous runs. The conditional historical evaluation and its machine-readable output are [here](conditional-model-results.md) and [here](conditional-model-evaluation.json). Focused sampler tests verify that changing A/D/E cannot change first-stage sack probability and can only change the conditional pass outcome.
 
 All three V2/D1 arms completed on the same paired RNG-v2 stream root and seeds 1–3. All 9 games validated, and all 9 strict box-score reconciliations passed. The corrected two-stage arm was regenerated after fixing an unnecessary RNG draw on the called-run path. The first two-stage attempt is preserved with `initial-superseded` in its filename and excluded from these results. The correction is isolated to two-stage execution; legacy and no-lift results were not rerun.
 
@@ -40,7 +41,7 @@ All three V2/D1 arms completed on the same paired RNG-v2 stream root and seeds 1
 
 The historical 2025 held-out rates were 6.55% sacks, 1.96% interceptions, 59.82% completions and 2.65% turnovers per dropback. In this small full-game sample, corrected two-stage produced a 7.52% sack rate, 2.21% interception rate and 56.64% completion rate. These are noisy three-seed observations, not evidence of general calibration improvement. Two-stage had two team scores at or below 10 and no games at 60+; the mean game total was 33.7. These scoring tails are also inconclusive at this size.
 
-The corrected two-stage scores were 3–36, 10–16 and 16–20. Legacy and no-lift retain their recorded outcomes. Do not claim that this fixes scoring tails. The updated pass sampler did not cause invalid games or reconciliation failures.
+The corrected ordering-only two-stage scores were 3–36, 10–16 and 16–20. Legacy and no-lift retain their recorded outcomes. Do not treat these three games as a validation of the newly fitted conditional model or claim that it fixes scoring tails. The updated pass sampler did not cause invalid games or reconciliation failures in this ordering smoke test.
 
 The corrected arm's run spent about 275 seconds building context and reference data and 16 seconds generating games (334.7 seconds total before writing the report). This cost is primarily per-run setup, not the three game simulations themselves.
 

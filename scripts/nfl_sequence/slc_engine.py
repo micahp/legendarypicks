@@ -151,7 +151,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
                    player_outcomes_receiver_only=False, blocker_fixes=None, fg_ordinary_cutoff=60,
                    qb_run_role_style=None, score_clock_playcalling=True, season_adapt=False, season_adapt_n0=4.0,
                    pbv1_table=None, participation_field=None, participation_snap_counts=None, fg_kicker=None,
-                   workload_adaptive=None, experimental_workload_estimator=None, pass_label_mode='legacy'):
+                   workload_adaptive=None, experimental_workload_estimator=None, pass_label_mode='auto'):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it.
 
@@ -189,11 +189,16 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
     ref.pool_scope['unmodeled_lateral_source_filter'] = lateral_source_filter
     ref.pool_scope['inconsistent_completion_yardage_filter'] = pass_yardage_source_filter
     sampler = ref.contextual_sampler
-    if pass_label_mode not in ('legacy', 'off', 'two_stage'):
+    if pass_label_mode not in ('auto', 'legacy', 'off', 'two_stage', 'conditional'):
         raise ValueError(f'unknown pass-dependent label mode: {pass_label_mode!r}')
+    if pass_label_mode == 'auto':
+        pass_label_mode = 'conditional' if decision else 'legacy'
     if pass_label_mode != 'legacy' and not decision:
         raise ValueError('pass-dependent label experiments require decision labels')
     sampler.pass_label_mode = pass_label_mode
+    if pass_label_mode == 'conditional':
+        import pass_label_outcomes
+        sampler.pass_label_outcome_model = pass_label_outcomes.PassLabelOutcomeModel.fit(ref.pool)
     sampler.qb_run_role_style_enabled = bool(qb_run_role_style)
     sampler.source_cutoff = {'eligible_before': [season, 1]}
     sampler.optional_input_sha256 = {}
@@ -1178,6 +1183,9 @@ def _describe_layer(ref):
                                         'roles': sampler.player_outcome_roles},
         'target_role_priors': sampler.role_table,
         'decision_labels': {'table': sampler.decision_table, 'enabled': sampler.decision_outcomes,
+                            'pass_label_mode': sampler.pass_label_mode,
+                            'pass_outcome_model': (None if sampler.pass_label_outcome_model is None else
+                                                   sampler.pass_label_outcome_model.manifest),
                             'source_files': {key: value for key, value in sampler.optional_input_sha256.items()
                                              if key.startswith('decision_source:')}},
         'decision_row_filter': {'artifact_sha256': artifact['sha256'], 'enabled': bool(sampler.decision_filter)},

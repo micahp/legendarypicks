@@ -1483,9 +1483,11 @@ def main(argv=None):
     ap.add_argument('--playcall-decision', action='store_true',
                     help='SLC v1 research: decision model categories A to N as pre-event draws (team priors from the prior season) '
                          'and outcomes conditioned on them')
-    ap.add_argument('--playcall-pass-label-mode', choices=('legacy', 'off', 'two_stage'), default='legacy',
-                    help='research-only A/D/E pass-dependent label handling: legacy V2; off removes their event lifts; '
-                         'two_stage applies them only after a pass outcome group is selected')
+    ap.add_argument('--playcall-pass-label-mode', choices=('auto', 'legacy', 'off', 'two_stage', 'conditional'),
+                    default='auto', help='A/D/E pass-dependent labels: auto uses the conditional model when decision labels '
+                         'are enabled and legacy otherwise; legacy preserves old runs; off removes event lifts but keeps '
+                         'row filtering; two_stage uses marginal pass-only lifts; conditional uses a regularized pass-outcome '
+                         'model with sacks excluded and calibrated label effects')
     ap.add_argument('--playcall-streak-league', action='store_true',
                     help='SLC v1 research: league-wide streak splits (dropback shift and outcome mix by streak state)')
     ap.add_argument('--playcall-streak-file', type=Path, default=None,
@@ -1582,6 +1584,8 @@ def main(argv=None):
                                                   'context: venue capacity, kickoff, forecast, referee status and '
                                                   'broadcast. The model does not read it.'))
     args = ap.parse_args(argv)
+    if args.playcall_pass_label_mode == 'auto':
+        args.playcall_pass_label_mode = 'conditional' if args.playcall_decision else 'legacy'
     args.workload_adaptive_config = None
     if bool(args.workload_adaptive_input) != bool(args.workload_adaptive_sha256):
         ap.error('adaptive workload input and SHA-256 are both required')

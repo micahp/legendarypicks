@@ -244,9 +244,8 @@ class PlayCallSampler:
         self.decision_table = None
         self.decision_outcomes = False
         self.decision_filter = True  # False: the lifts shape the outcome, but the row is drawn from the whole cell (an experiment)
-        # Research-only alternative to the historical pre-event use of pass-dependent A/D/E labels.
-        # legacy preserves V2; off excludes those lifts from event probabilities; two_stage preserves their
-        # effect only within the already-selected passing-attempt outcome group.
+        self.pass_label_outcome_model = None
+        # Research-only alternatives to the historical pre-event use of pass-dependent A/D/E labels.
         self.pass_label_mode = 'legacy'
         # per-game Dirichlet target and carry shares (share_distributions), None when off: the receiver and rusher are drawn from them
         self.share_table = None
@@ -607,7 +606,7 @@ class PlayCallSampler:
                 stage_values['league_streak'].append(weight)
                 if use_labels:  # the drawn labels' lifts, averaged in log space: the categories overlap, so they do not compound
                     active_labels = [(c, v) for c, v in labels.items() if v is not None]
-                    if self.pass_label_mode in ('off', 'two_stage'):
+                    if self.pass_label_mode in ('off', 'two_stage', 'conditional'):
                         active_labels = [(c, v) for c, v in active_labels if c not in ('A', 'D', 'E')]
                     weight *= decision_layer.geometric_mean([self._label_lift(entry, k, decision_layer.label_key(c, v))
                                                              for c, v in active_labels])
@@ -654,9 +653,10 @@ class PlayCallSampler:
             if fallback_by_key is None:
                 key = rng.choices(keys, weights=[choice_base[k] for k in keys])[0]  # the unchanged baseline draw
         elif fallback_by_key is None:
-            if (use_labels and self.pass_label_mode == 'two_stage'
+            if (use_labels and self.pass_label_mode in ('two_stage', 'conditional')
                     and called_intent == 'dropback' and not scramble):
-                key = self._draw_two_stage_pass_event(rng, keys, weights, entry, labels)
+                key = self._draw_two_stage_pass_event(rng, keys, weights, entry, labels,
+                                                      offense=offense, state=state)
                 if self.trace_outcome_probabilities:
                     pass_events = {'pass_complete', 'pass_incomplete', 'interception', 'fumble_lost'}
                     pass_mass = sum(w for k, w in zip(keys, weights) if k[1] in pass_events)
@@ -972,7 +972,7 @@ class PlayCallSampler:
         conditional = (counts[key] + formation_layer.PRIOR_STRENGTH * base_share) / (n_value + formation_layer.PRIOR_STRENGTH)
         return conditional / base_share
 
-    def _draw_two_stage_pass_event(self, rng, keys, weights, entry, labels):
+    def _draw_two_stage_pass_event(self, rng, keys, weights, entry, labels, *, offense=None, state=None):
         """Draw a non-pass-vs-pass event first, then apply A/D/E only within pass outcomes.
 
         The first draw's pass-group mass is computed without receiver/depth/location. Those labels
@@ -991,10 +991,29 @@ class PlayCallSampler:
         ix = pass_ix if chosen_group == 'pass' else other_ix
         conditional_weights = [weights[i] for i in ix]
         if chosen_group == 'pass':
-            applicable = [(cat, labels.get(cat)) for cat in ('A', 'D', 'E') if labels.get(cat) is not None]
-            conditional_weights = [weight * decision_layer.geometric_mean([
-                self._label_lift(entry, keys[i], decision_layer.label_key(cat, value))
-                for cat, value in applicable]) for weight, i in zip(conditional_weights, ix)]
+            if self.pass_label_mode == 'conditional':
+                model = self.pass_label_outcome_model
+                if model is None or state is None:
+                    raise e1.SamplingUnavailable('conditional_pass_label_model_missing')
+                context = e0.pool_key(int(state['down']), state['togo'], state['yl'])
+                team = self._team(offense)
+                label_cell = decision_layer.cell_of(state['down'], state['togo'], state['yl'])
+                label_prior = {}
+                for category in ('A', 'D', 'E'):
+                    if self.decision_table['league'][category].get(label_cell):
+                        label_prior[category] = decision_layer.distribution(
+                            self.decision_table, team, label_cell, category)
+                    else:
+                        label_prior[category] = {None: 1.0}
+                conditional_weights = [weight * model.ratio(
+                    context, labels, keys[i][1], label_prior=label_prior,
+                    calibration_key=(team, label_cell))
+                                       for weight, i in zip(conditional_weights, ix)]
+            elif self.pass_label_mode == 'two_stage':
+                applicable = [(cat, labels.get(cat)) for cat in ('A', 'D', 'E') if labels.get(cat) is not None]
+                conditional_weights = [weight * decision_layer.geometric_mean([
+                    self._label_lift(entry, keys[i], decision_layer.label_key(cat, value))
+                    for cat, value in applicable]) for weight, i in zip(conditional_weights, ix)]
         return keys[rng.choices(ix, weights=conditional_weights)[0]]
 
     def _lift(self, entry, key, value, table):
@@ -1065,7 +1084,10 @@ class PlayCallSampler:
     def describe(self):
         out = {'component': ARTIFACT_ID, 'artifact_sha256': self.layer.artifact['sha256'],
                'frame_sha256': self.layer.artifact['frame_sha256'], 'side_teams': self.side_teams,
-               'reference_season': self.layer.artifact['reference_season']}
+               'reference_season': self.layer.artifact['reference_season'],
+               'pass_label_mode': self.pass_label_mode}
+        if self.pass_label_outcome_model is not None:
+            out['pass_label_outcome_model'] = self.pass_label_outcome_model.manifest
         if self.blocker_fixes:
             out['blocker_resolution'] = {
                 'enabled_fixes': sorted(self.blocker_fixes),
@@ -1086,9 +1108,11 @@ class PlayCallSampler:
             out['player_share_distribution'] = self.share_model_manifest
         if getattr(self, 'season_blend_manifest', None) is not None:
             out['season_blend'] = self.season_blend_manifest
-        if getattr(self, 'qb_decision_manifest', None) is not None or getattr(self, 'player_outcome_manifest', None) is not None:
+        if (getattr(self, 'qb_decision_manifest', None) is not None
+                or getattr(self, 'player_outcome_manifest', None) is not None
+                or self.pass_label_outcome_model is not None):
             integration_files = ('clock_d.py', 'e1_drive.py', 'e2_reference.py', 'game_state.py', 'game_stats.py', 'pre_event.py',
-                                 'qb_decisions.py', 'player_outcomes.py', 'run_slc_game.py',
+                                 'qb_decisions.py', 'player_outcomes.py', 'pass_label_outcomes.py', 'run_slc_game.py',
                                  'paired_random_streams.py', 'simulate_pregame_batch.py',
                                  'slc_engine.py', 'slc_playcall.py')
             out['integration_code_sha256'] = {
