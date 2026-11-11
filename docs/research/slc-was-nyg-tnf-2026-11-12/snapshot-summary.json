@@ -1,0 +1,49 @@
+{
+  "as_of_utc": "2026-11-11T23:31:47Z",
+  "away": "WAS",
+  "database_sha256": "ca06fd85aa45f157f88d1d9d27cc5fbc53700977880a3579e24533ef0209bcb9",
+  "depth_dates": {
+    "away": "2026-11-11T07:02:21Z",
+    "home": "2026-11-11T07:02:21Z"
+  },
+  "evaluation": {
+    "class": "prospective_forecast",
+    "unverified_inputs": [],
+    "verified": true
+  },
+  "full_depth_provenance_sha256": "9b9307e66ea32c0d9256fae05728d6ebf6f9e9f80cf0a11d3fc7ccb69233e7d6",
+  "full_depth_roster_sha256": "8e1907324f1d98c4cd46dc1511b09cf69979a4e59e009202d74ffef63ac910b4",
+  "game_id": "2026_10_WAS_NYG",
+  "home": "NYG",
+  "jersey_weeks": {
+    "away": 10,
+    "home": 10
+  },
+  "kickoff_utc": "2026-11-13T01:15:00Z",
+  "participation_field_sha256": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41",
+  "participation_snap_counts_sha256": "4e35e2b6d6da0f43edd971ee18b0887c55531564f763e8a17692c1425ca25d98",
+  "participation_snap_counts_through_week": 9,
+  "roster_finalization_timing": {
+    "before_roster_finalization": true,
+    "status": "before_roster_finalization",
+    "window_opens_utc": "2026-11-12T23:45:00Z"
+  },
+  "roster_role_rows": {
+    "away": 75,
+    "home": 75
+  },
+  "roster_snapshot_id": "nflverse-full-depth:519b4c7c91c59914777a5dfd4cb23e296b92df00e4323a0d11571934178c4b43",
+  "snapshot_sha256": "8e54a85057107437c1aedf26cce6d78a62483f8aa60795a4752c4a2efd552d2d",
+  "source_sha256": {
+    "depth_charts_2026.parquet": "82b047a2700367869c1a5facdb002d2976b2d469c442c3ff49d1f9cb2c106dbf",
+    "games.parquet": "0435d8a047db1b52d514490499773f01a22e701a164148297228c74b9c4a6596",
+    "injuries_2026.parquet": "91fd27378ada8a48362d51570da4d599b5183b486f8baaea5c01ee5a7e1bae70",
+    "roster_weekly_2026.parquet": "ad5aaeefbae79632fa53f8f96e18ef6f7a696d93fd3ce78270ae74195b1528da",
+    "snap_counts_2026.parquet": "78c013d97bde36622c435c878cacf48e1c8b3f58d02967c9e0ed2fc884f449e9"
+  },
+  "starter_roles": {
+    "away": 28,
+    "home": 28
+  },
+  "week": 10
+}

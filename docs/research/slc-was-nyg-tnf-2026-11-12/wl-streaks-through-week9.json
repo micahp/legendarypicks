@@ -1,0 +1,104 @@
+{
+  "as_of_utc": "2026-11-11T23:31:47Z",
+  "source": "nflverse games capture; completed 2026 regular-season games through Week 9",
+  "source_file": "capture/games.parquet",
+  "source_sha256": "0435d8a047db1b52d514490499773f01a22e701a164148297228c74b9c4a6596",
+  "teams": {
+    "ARI": {
+      "streak": "L1"
+    },
+    "ATL": {
+      "streak": "L2"
+    },
+    "BAL": {
+      "streak": "L4"
+    },
+    "BUF": {
+      "streak": "W4"
+    },
+    "CAR": {
+      "streak": "L3"
+    },
+    "CHI": {
+      "streak": "W4"
+    },
+    "CIN": {
+      "streak": "W4"
+    },
+    "CLE": {
+      "streak": "L2"
+    },
+    "DAL": {
+      "streak": "W1"
+    },
+    "DEN": {
+      "streak": "W5"
+    },
+    "DET": {
+      "streak": "W4"
+    },
+    "GB": {
+      "streak": "W2"
+    },
+    "HOU": {
+      "streak": "W1"
+    },
+    "IND": {
+      "streak": "L5"
+    },
+    "JAX": {
+      "streak": "W2"
+    },
+    "KC": {
+      "streak": "W1"
+    },
+    "LA": {
+      "streak": "W3"
+    },
+    "LAC": {
+      "streak": "L8"
+    },
+    "LV": {
+      "streak": "L1"
+    },
+    "MIA": {
+      "streak": "L2"
+    },
+    "MIN": {
+      "streak": "L2"
+    },
+    "NE": {
+      "streak": "L1"
+    },
+    "NO": {
+      "streak": "W1"
+    },
+    "NYG": {
+      "streak": "W2"
+    },
+    "NYJ": {
+      "streak": "L4"
+    },
+    "PHI": {
+      "streak": "L7"
+    },
+    "PIT": {
+      "streak": "W4"
+    },
+    "SEA": {
+      "streak": "W1"
+    },
+    "SF": {
+      "streak": "W1"
+    },
+    "TB": {
+      "streak": "L1"
+    },
+    "TEN": {
+      "streak": "L2"
+    },
+    "WAS": {
+      "streak": "L1"
+    }
+  }
+}
