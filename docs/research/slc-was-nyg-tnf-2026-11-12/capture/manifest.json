@@ -1,0 +1,47 @@
+{
+  "files": [
+    {
+      "acquired_at_utc": "2026-11-11T23:28:06Z",
+      "bytes": 523757,
+      "last_modified_utc": "2026-11-11T23:16:42Z",
+      "name": "games.parquet",
+      "sha256": "0435d8a047db1b52d514490499773f01a22e701a164148297228c74b9c4a6596",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet"
+    },
+    {
+      "acquired_at_utc": "2026-11-11T23:28:06Z",
+      "bytes": 3475983,
+      "last_modified_utc": "2026-11-11T07:02:31Z",
+      "name": "depth_charts_2026.parquet",
+      "sha256": "82b047a2700367869c1a5facdb002d2976b2d469c442c3ff49d1f9cb2c106dbf",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+    },
+    {
+      "acquired_at_utc": "2026-11-11T23:28:06Z",
+      "bytes": 61590,
+      "last_modified_utc": "2026-11-11T07:01:35Z",
+      "name": "injuries_2026.parquet",
+      "sha256": "91fd27378ada8a48362d51570da4d599b5183b486f8baaea5c01ee5a7e1bae70",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+    },
+    {
+      "acquired_at_utc": "2026-11-11T23:28:06Z",
+      "bytes": 821492,
+      "last_modified_utc": "2026-11-11T07:04:34Z",
+      "name": "roster_weekly_2026.parquet",
+      "sha256": "ad5aaeefbae79632fa53f8f96e18ef6f7a696d93fd3ce78270ae74195b1528da",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_2026.parquet"
+    },
+    {
+      "acquired_at_utc": "2026-11-11T23:31:47Z",
+      "bytes": 134114,
+      "last_modified_utc": "2026-11-10T12:27:36Z",
+      "name": "snap_counts_2026.parquet",
+      "role": "snap_counts",
+      "sha256": "78c013d97bde36622c435c878cacf48e1c8b3f58d02967c9e0ed2fc884f449e9",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/snap_counts/snap_counts_2026.parquet"
+    }
+  ],
+  "frozen_at_utc": "2026-11-11T23:31:47Z",
+  "schema": "slc-tnf-current-source-capture-1"
+}
