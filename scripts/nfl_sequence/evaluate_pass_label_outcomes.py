@@ -29,17 +29,25 @@ def sha256(path):
 
 
 def event_of(row):
+    if row['sack'] == 1:
+        return 'sack_fumble_lost' if row['fumble_lost'] == 1 else 'sack'
     if row['interception'] == 1:
         return 'interception'
     if row['fumble_lost'] == 1:
         return 'fumble_lost'
-    if row['sack'] == 1:
-        return 'sack'
     if row['complete_pass'] == 1:
         return 'pass_complete'
     if row['pass_attempt'] == 1:
         return 'pass_incomplete'
     return None
+
+
+def is_conditional_pass_outcome(event):
+    return event in OUTCOMES
+
+
+def is_turnover_event(event):
+    return event in ('interception', 'fumble_lost', 'sack_fumble_lost')
 
 
 def score(probabilities, actual):
@@ -50,13 +58,20 @@ def score(probabilities, actual):
 def load_plays(database, first_season, test_season):
     connection = sqlite3.connect(f'file:{Path(database).resolve()}?mode=ro', uri=True, timeout=30)
     try:
+        eligibility = connection.execute(
+            """SELECT season, penalty, count(*)
+               FROM nfl_pbp
+               WHERE season BETWEEN ? AND ? AND week BETWEEN 1 AND 18 AND qtr BETWEEN 1 AND 4
+                 AND play_type='pass' AND posteam IS NOT NULL AND down BETWEEN 1 AND 4
+                 AND ydstogo IS NOT NULL AND yardline_100 IS NOT NULL
+               GROUP BY season, penalty ORDER BY season, penalty""", (first_season, test_season)).fetchall()
         rows = connection.execute(
             """SELECT game_id,play_id,season,posteam,down,ydstogo,yardline_100,
                       sack,complete_pass,interception,fumble_lost,pass_attempt
                FROM nfl_pbp
                WHERE season BETWEEN ? AND ? AND week BETWEEN 1 AND 18 AND qtr BETWEEN 1 AND 4
                  AND play_type='pass' AND posteam IS NOT NULL AND down BETWEEN 1 AND 4
-                 AND ydstogo IS NOT NULL AND yardline_100 IS NOT NULL AND penalty IS NOT 1
+                 AND ydstogo IS NOT NULL AND yardline_100 IS NOT NULL AND penalty=0
                ORDER BY game_id,play_id""", (first_season, test_season)).fetchall()
     finally:
         connection.close()
@@ -69,20 +84,39 @@ def load_plays(database, first_season, test_season):
             output.append({'game_id': str(game_id), 'play_id': int(play_id), 'season': int(season),
                            'team': team, 'context': e0.pool_key(down, togo, yardline),
                            'label_cell': decision_layer.cell_of(down, togo, yardline), 'event': event})
-    return output
+    status_by_season = defaultdict(lambda: {'known_clean': 0, 'penalty_tagged': 0,
+                                             'unknown': 0, 'other': 0})
+    for season, penalty, count in eligibility:
+        key = ('unknown' if penalty is None else 'known_clean' if penalty == 0
+               else 'penalty_tagged' if penalty == 1 else 'other')
+        status_by_season[str(int(season))][key] += int(count)
+    eligibility_summary = {
+        'policy': 'Only rows with penalty=0 are included; NULL and unrecognized penalty status are excluded.',
+        'by_season': {season: counts for season, counts in sorted(status_by_season.items())},
+        'included_known_clean_rows': sum(counts['known_clean'] for counts in status_by_season.values()),
+        'excluded_penalty_tagged_rows': sum(counts['penalty_tagged'] for counts in status_by_season.values()),
+        'excluded_unknown_penalty_status_rows': sum(counts['unknown'] for counts in status_by_season.values()),
+        'excluded_other_penalty_status_rows': sum(counts['other'] for counts in status_by_season.values()),
+    }
+    return output, eligibility_summary
 
 
 def evaluate(database, test_season, bootstrap_reps, bootstrap_seed):
     first_season = decision_layer.FIRST_CHARTED_SEASON
     labelled = decision_layer.load_rows(str(database), range(first_season, test_season + 1))
     labels = {(row['game_id'], int(row['play_id'])): row for row in labelled}
-    plays = load_plays(database, first_season, test_season)
+    plays, penalty_eligibility = load_plays(database, first_season, test_season)
     training_pool = defaultdict(list)
     test_rows = []
+    test_event_counts = Counter()
+    test_turnover_count = 0
     for play in plays:
-        if play['season'] == test_season and play['event'] != 'sack':
-            label_row = labels.get((play['game_id'], play['play_id']))
-            test_rows.append((play, {} if label_row is None else label_row['labels']))
+        if play['season'] == test_season:
+            test_event_counts[play['event']] += 1
+            test_turnover_count += int(is_turnover_event(play['event']))
+            if is_conditional_pass_outcome(play['event']):
+                label_row = labels.get((play['game_id'], play['play_id']))
+                test_rows.append((play, {} if label_row is None else label_row['labels']))
         elif play['season'] < test_season:
             label_row = labels.get((play['game_id'], play['play_id']))
             row = {'season': play['season'], 'labels': {} if label_row is None else label_row['labels']}
@@ -133,6 +167,9 @@ def evaluate(database, test_season, bootstrap_reps, bootstrap_seed):
         'fit_seasons': list(range(first_season, test_season)),
         'test_season': test_season,
         'cohort': {'pass_outcomes': totals['baseline']['n'], 'games': len(games)},
+        'test_event_counts': dict(sorted(test_event_counts.items())),
+        'test_turnover_event_count': test_turnover_count,
+        'penalty_eligibility': penalty_eligibility,
         'baseline': {metric: totals['baseline'][metric] / totals['baseline']['n']
                      for metric in ('log_loss', 'brier')},
         'conditional': {metric: totals['conditional'][metric] / totals['conditional']['n']
@@ -178,6 +215,7 @@ def main(argv=None):
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
     print(json.dumps({'output': str(args.output), 'cohort': result['cohort'],
+                      'penalty_eligibility': result['penalty_eligibility'],
                       'baseline': result['baseline'], 'conditional': result['conditional'],
                       'paired_ci': result['paired_game_bootstrap_delta_conditional_minus_baseline_95ci']},
                      sort_keys=True))
