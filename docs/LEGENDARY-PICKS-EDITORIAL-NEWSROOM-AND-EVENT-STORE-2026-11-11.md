@@ -1,6 +1,6 @@
 # Legendary Picks Editorial Newsroom & Editorial Event Store
 
-**Status:** Approved direction / implementation plan; not built by this document  
+**Status:** Proposed implementation plan; not built by this document  
 **Date:** 2026-11-11  
 **Owner and Editor-in-Chief:** Legendary Picks founder  
 **Repository:** `micahp/legendarypicks`  
@@ -206,7 +206,7 @@ Prioritize a **story** rather than the largest number. A 24-team playoff format 
 
 Ranking requirements:
 - Do not conflate AP poll rank, CFP committee rank and LP-projected playoff seed.
-- Do not confl ate a projected CFP bracket with a confirmed format change; include `effective_season`.
+- Do not conflate a projected CFP bracket with a confirmed format change; include `effective_season`.
 - Rank stories across leagues without forcing a quota or generating fluff.
 - Show the EIC why a lead was chosen and which stronger alternatives were rejected.
 - Detect topic overlap across a trade-deadline roundup and separate deal-specific articles. Link them rather than publishing duplicate paragraphs.
