@@ -1,0 +1,258 @@
+{
+  "limitations": "The next source row is not necessarily the post-enforcement state or the next football opportunity. Administrative rows, period boundaries, possession changes, and missing rows require review. Complete fields and unique order do not prove legality or source acquisition before a historical kickoff.",
+  "seasons": {
+    "1999": {
+      "flagged_in_unambiguous_ordered_games": 0,
+      "flagged_rows": 3383,
+      "flagged_with_complete_following_row_fields": 0,
+      "flagged_with_following_source_row": 0,
+      "flagged_with_order": 0,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "dcf640fd18e4cdea03dba14c733bbcbd89796f100c509249b6ba5e3cff9e904c"
+    },
+    "2000": {
+      "flagged_in_unambiguous_ordered_games": 0,
+      "flagged_rows": 3245,
+      "flagged_with_complete_following_row_fields": 0,
+      "flagged_with_following_source_row": 0,
+      "flagged_with_order": 0,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "595c3b0eefeb91afd6f08c629669823b31e63c34304c98faed09adf4fbd54706"
+    },
+    "2001": {
+      "flagged_in_unambiguous_ordered_games": 2975,
+      "flagged_rows": 2975,
+      "flagged_with_complete_following_row_fields": 2814,
+      "flagged_with_following_source_row": 2975,
+      "flagged_with_order": 2975,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "43f0eea9f76de070a09382a5f3438b0ddb509c9ca48ac98dee77639e35724bca"
+    },
+    "2002": {
+      "flagged_in_unambiguous_ordered_games": 3453,
+      "flagged_rows": 3453,
+      "flagged_with_complete_following_row_fields": 3246,
+      "flagged_with_following_source_row": 3453,
+      "flagged_with_order": 3453,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "4930befb7ce6597fa149d53e56565eb1377bad778a04fec1e6c21b0537c4aa17"
+    },
+    "2003": {
+      "flagged_in_unambiguous_ordered_games": 3486,
+      "flagged_rows": 3486,
+      "flagged_with_complete_following_row_fields": 3298,
+      "flagged_with_following_source_row": 3486,
+      "flagged_with_order": 3486,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "a5bc20c69eee0c18364bea7fa1d3c2817941c8d9026058c694ab1ee73a2d279d"
+    },
+    "2004": {
+      "flagged_in_unambiguous_ordered_games": 3679,
+      "flagged_rows": 3679,
+      "flagged_with_complete_following_row_fields": 3501,
+      "flagged_with_following_source_row": 3679,
+      "flagged_with_order": 3679,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "94658bc15788eda63a8cdba0d8f1c8aa9253fb5baa9c0d07b9c2e35e75ae6a03"
+    },
+    "2005": {
+      "flagged_in_unambiguous_ordered_games": 3825,
+      "flagged_rows": 3835,
+      "flagged_with_complete_following_row_fields": 3641,
+      "flagged_with_following_source_row": 3825,
+      "flagged_with_order": 3835,
+      "games_with_duplicate_order": 1,
+      "source_sha256": "1b93d868e286fc556192e642ec09ff76b29880b441674dcb0f3b51fb0064df92"
+    },
+    "2006": {
+      "flagged_in_unambiguous_ordered_games": 3131,
+      "flagged_rows": 3149,
+      "flagged_with_complete_following_row_fields": 2965,
+      "flagged_with_following_source_row": 3131,
+      "flagged_with_order": 3149,
+      "games_with_duplicate_order": 1,
+      "source_sha256": "f3d45c8cf41fa860ec22519490781eb19a00cf04cbf039b28af671bfcb11c2b4"
+    },
+    "2007": {
+      "flagged_in_unambiguous_ordered_games": 3026,
+      "flagged_rows": 3039,
+      "flagged_with_complete_following_row_fields": 2864,
+      "flagged_with_following_source_row": 3026,
+      "flagged_with_order": 3039,
+      "games_with_duplicate_order": 1,
+      "source_sha256": "bcfded2ff41b221617e38e48cbc56fd797f336363436ed5b5da17659caede9a9"
+    },
+    "2008": {
+      "flagged_in_unambiguous_ordered_games": 3015,
+      "flagged_rows": 3015,
+      "flagged_with_complete_following_row_fields": 2821,
+      "flagged_with_following_source_row": 3015,
+      "flagged_with_order": 3015,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "f625e836a0117698feaad1a6e84f4ab341ff03197c1904313836ef7313af0f07"
+    },
+    "2009": {
+      "flagged_in_unambiguous_ordered_games": 3162,
+      "flagged_rows": 3162,
+      "flagged_with_complete_following_row_fields": 3009,
+      "flagged_with_following_source_row": 3162,
+      "flagged_with_order": 3162,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "17ba96f594a7b84c86060a99a3082158ebab206672d6c16036a069829d77dee7"
+    },
+    "2010": {
+      "flagged_in_unambiguous_ordered_games": 3217,
+      "flagged_rows": 3217,
+      "flagged_with_complete_following_row_fields": 3021,
+      "flagged_with_following_source_row": 3217,
+      "flagged_with_order": 3217,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "d2ef9c407319719910ad8de8c4c1b88f0ea945ffb3f78f48ef32fa3ed3a7573b"
+    },
+    "2011": {
+      "flagged_in_unambiguous_ordered_games": 3344,
+      "flagged_rows": 3377,
+      "flagged_with_complete_following_row_fields": 3156,
+      "flagged_with_following_source_row": 3344,
+      "flagged_with_order": 3377,
+      "games_with_duplicate_order": 3,
+      "source_sha256": "c54753b8137b88dab260489b1462cbf1309c3d11741eb8d10e5f1b0a9b8795b1"
+    },
+    "2012": {
+      "flagged_in_unambiguous_ordered_games": 3298,
+      "flagged_rows": 3318,
+      "flagged_with_complete_following_row_fields": 3149,
+      "flagged_with_following_source_row": 3298,
+      "flagged_with_order": 3318,
+      "games_with_duplicate_order": 2,
+      "source_sha256": "447b90789104aac70427ec9d3b51df7247234029d0ecabd269279369b1cc6278"
+    },
+    "2013": {
+      "flagged_in_unambiguous_ordered_games": 3241,
+      "flagged_rows": 3241,
+      "flagged_with_complete_following_row_fields": 3077,
+      "flagged_with_following_source_row": 3241,
+      "flagged_with_order": 3241,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "f454605a1983b3946baf0ffadf3a0b9f5e04735c4b84732e0483f2049a780d00"
+    },
+    "2014": {
+      "flagged_in_unambiguous_ordered_games": 3522,
+      "flagged_rows": 3522,
+      "flagged_with_complete_following_row_fields": 3320,
+      "flagged_with_following_source_row": 3522,
+      "flagged_with_order": 3522,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "54c01408d8f0ff9e013a4ea51428b91d610101f72545d082e932f5710e2fb4f7"
+    },
+    "2015": {
+      "flagged_in_unambiguous_ordered_games": 3663,
+      "flagged_rows": 3663,
+      "flagged_with_complete_following_row_fields": 3461,
+      "flagged_with_following_source_row": 3663,
+      "flagged_with_order": 3663,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "01b5ae7d06633a2e66b418404461a3d4ff055ad2f3a87d453cebcc8d3fda7ed9"
+    },
+    "2016": {
+      "flagged_in_unambiguous_ordered_games": 3545,
+      "flagged_rows": 3545,
+      "flagged_with_complete_following_row_fields": 3345,
+      "flagged_with_following_source_row": 3545,
+      "flagged_with_order": 3545,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "95eba04e2145e3c1c8ca502f2a3a76cfb0a5990680c3fb480f02a74a45f54a3b"
+    },
+    "2017": {
+      "flagged_in_unambiguous_ordered_games": 3520,
+      "flagged_rows": 3520,
+      "flagged_with_complete_following_row_fields": 3303,
+      "flagged_with_following_source_row": 3520,
+      "flagged_with_order": 3520,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "84eacd963c1fdd45965f6222c62e9329a7f3412f029d92c1ac5e34a1bb4d3710"
+    },
+    "2018": {
+      "flagged_in_unambiguous_ordered_games": 3556,
+      "flagged_rows": 3565,
+      "flagged_with_complete_following_row_fields": 3350,
+      "flagged_with_following_source_row": 3556,
+      "flagged_with_order": 3565,
+      "games_with_duplicate_order": 1,
+      "source_sha256": "2e6f2dce7c7ebd46e985cabe0c17eb72b39a77f98cb4478409294f50b5820150"
+    },
+    "2019": {
+      "flagged_in_unambiguous_ordered_games": 3568,
+      "flagged_rows": 3568,
+      "flagged_with_complete_following_row_fields": 3396,
+      "flagged_with_following_source_row": 3568,
+      "flagged_with_order": 3568,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "60c3067017db2d28a78f66a79b657268be8578d9a5288e6a827efdcd7fe42540"
+    },
+    "2020": {
+      "flagged_in_unambiguous_ordered_games": 2986,
+      "flagged_rows": 2986,
+      "flagged_with_complete_following_row_fields": 2845,
+      "flagged_with_following_source_row": 2986,
+      "flagged_with_order": 2986,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "8889f5d8782b5c5dce3c3644acdc0322b228a7e9cb13fa36cbac250e260e9f60"
+    },
+    "2021": {
+      "flagged_in_unambiguous_ordered_games": 3319,
+      "flagged_rows": 3336,
+      "flagged_with_complete_following_row_fields": 3124,
+      "flagged_with_following_source_row": 3319,
+      "flagged_with_order": 3336,
+      "games_with_duplicate_order": 2,
+      "source_sha256": "333ad34378e5339d5172717cc83378e908daf02c8699416ab3e17c2ec10f78d8"
+    },
+    "2022": {
+      "flagged_in_unambiguous_ordered_games": 3153,
+      "flagged_rows": 3153,
+      "flagged_with_complete_following_row_fields": 2974,
+      "flagged_with_following_source_row": 3153,
+      "flagged_with_order": 3153,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09"
+    },
+    "2023": {
+      "flagged_in_unambiguous_ordered_games": 3229,
+      "flagged_rows": 3229,
+      "flagged_with_complete_following_row_fields": 3038,
+      "flagged_with_following_source_row": 3229,
+      "flagged_with_order": 3229,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776"
+    },
+    "2024": {
+      "flagged_in_unambiguous_ordered_games": 3641,
+      "flagged_rows": 3641,
+      "flagged_with_complete_following_row_fields": 3442,
+      "flagged_with_following_source_row": 3641,
+      "flagged_with_order": 3641,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b"
+    },
+    "2025": {
+      "flagged_in_unambiguous_ordered_games": 3559,
+      "flagged_rows": 3559,
+      "flagged_with_complete_following_row_fields": 3371,
+      "flagged_with_following_source_row": 3559,
+      "flagged_with_order": 3559,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+    },
+    "2026": {
+      "flagged_in_unambiguous_ordered_games": 1765,
+      "flagged_rows": 1765,
+      "flagged_with_complete_following_row_fields": 1694,
+      "flagged_with_following_source_row": 1765,
+      "flagged_with_order": 1765,
+      "games_with_duplicate_order": 0,
+      "source_sha256": "5edd7c42ed3f116f7e8914594c536088c337052fa53552ba7947499ba0f9f1b5"
+    }
+  },
+  "source_manifest_sha256": "c4b4a1a5eaec359e8cbb7d52a266093b4b6992474f8cc8da12e6b17ed8c4ff46"
+}
