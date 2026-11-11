@@ -161,6 +161,11 @@ def _worker_command(args, out: Path, seed_start: int, games: int, disabled_layer
     ]
     if getattr(args, 'enable_qb_run_role_style', False):
         command.append('--playcall-qb-run-role-style')
+    if getattr(args, 'season_adapt', False):
+        command.extend(('--playcall-season-adapt', '--season-adapt-n0', str(args.season_adapt_n0)))
+    if getattr(args, 'historical_archive_reconstruction', False):
+        command.extend(('--historical-archive-reconstruction', '--readiness-matrix', str(args.readiness_matrix),
+                        '--archive-manifest', str(args.archive_manifest), '--archive-root', str(args.archive_root)))
     if not args.blocker_fixes:
         command.append('--no-slc-blocker-fixes')
     for fix in args.blocker_fixes:
@@ -553,6 +558,13 @@ def parse_args(argv=None):
                         help='enabled full-stack layer to disable; defaults to the primary workload ablations')
     parser.add_argument('--enable-qb-run-role-style', action='store_true',
                         help='enable the opt-in QB run-style layer in every arm; with no --layer, include its ablation')
+    parser.add_argument('--season-adapt', action='store_true',
+                        help='enable V1.5 current-season adaptation in every arm')
+    parser.add_argument('--season-adapt-n0', type=float, default=4.0)
+    parser.add_argument('--historical-archive-reconstruction', action='store_true')
+    parser.add_argument('--readiness-matrix', type=Path)
+    parser.add_argument('--archive-manifest', type=Path)
+    parser.add_argument('--archive-root', type=Path)
     fixes = parser.add_mutually_exclusive_group()
     fixes.add_argument('--slc-blocker-fix', dest='blocker_fixes', action='append', choices=er.BLOCKER_FIXES,
                        default=None, help='choose a subset of fixes; defaults to all ordinary fixes')
@@ -560,6 +572,9 @@ def parse_args(argv=None):
     parser.add_argument('--progress-every', type=int, default=250)
     parser.add_argument('--max-simulation-errors', type=int, default=0)
     args = parser.parse_args(argv)
+    archive_inputs = (args.readiness_matrix, args.archive_manifest, args.archive_root)
+    if args.historical_archive_reconstruction != all(archive_inputs) or (any(archive_inputs) and not all(archive_inputs)):
+        parser.error('historical archive reconstruction requires its readiness matrix, manifest, and archive root')
     if args.no_slc_blocker_fixes:
         args.blocker_fixes = []
     elif args.blocker_fixes is None:
@@ -581,6 +596,8 @@ def main(argv=None):
         parser.error('--progress-every must be non-negative')
     if args.max_simulation_errors < 0:
         parser.error('--max-simulation-errors must be non-negative')
+    if args.season_adapt_n0 <= 0:
+        parser.error('--season-adapt-n0 must be positive')
     try:
         layers, args.enable_qb_run_role_style = _select_layers(args.layers, args.enable_qb_run_role_style)
     except ValueError as exc:
@@ -629,6 +646,11 @@ def main(argv=None):
         'layers': list(layers), 'blocker_fixes': list(args.blocker_fixes),
         'enabled_optional_layers': ['qb_run_role_style'] if args.enable_qb_run_role_style else [],
         'paired_randomness': True, 'rng_protocol': 'v2', 'boxscore_export': True,
+        'season_adapt': args.season_adapt, 'season_adapt_n0': args.season_adapt_n0,
+        'historical_archive_reconstruction': args.historical_archive_reconstruction,
+        'readiness_matrix_sha256': sha256_file(args.readiness_matrix) if args.readiness_matrix else None,
+        'archive_manifest_sha256': sha256_file(args.archive_manifest) if args.archive_manifest else None,
+        'archive_root': str(args.archive_root.resolve()) if args.archive_root else None,
         'progress_every': args.progress_every, 'max_simulation_errors': args.max_simulation_errors,
     }
     _write_or_verify_manifest(args.out_dir, spec)
