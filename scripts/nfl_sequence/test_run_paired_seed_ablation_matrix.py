@@ -95,6 +95,31 @@ class RunSpecification(unittest.TestCase):
         command = matrix._worker_command(args, Path('/runs/control.json'), 101, 20, None)
         self.assertIn('--no-slc-blocker-fixes', command)
 
+    def test_v15_adaptation_is_identical_in_control_and_ablation(self):
+        args = Namespace(snapshot_file=Path('/data/snapshot.json'), playcall_artifact=Path('/data/artifact.json'),
+                         playcall_streak_file=Path('/data/streak.json'), db=Path('/data/db'), blocker_fixes=[],
+                         progress_every=0, max_simulation_errors=0, season_adapt=True, season_adapt_n0=4.0)
+        control = matrix._worker_command(args, Path('/run/control'), 1, 2, None)
+        ablated = matrix._worker_command(args, Path('/run/ablated'), 1, 2,
+                                         'team_offense_defense_outcomes', Path('/run/control.ledger'))
+        for command in (control, ablated):
+            self.assertIn('--playcall-season-adapt', command)
+            self.assertEqual(command[command.index('--season-adapt-n0') + 1], '4.0')
+        self.assertEqual(ablated[ablated.index('--slc-disable-layer') + 1], 'team_offense_defense_outcomes')
+
+    def test_archive_inputs_are_required_and_forwarded_to_each_arm(self):
+        common = ['--snapshot-file', 'snapshot', '--playcall-artifact', 'artifact', '--playcall-streak-file', 'streak',
+                  '--db', 'db', '--out-dir', 'out']
+        with self.assertRaises(SystemExit):
+            matrix.parse_args(common + ['--historical-archive-reconstruction'])
+        args = matrix.parse_args(common + ['--historical-archive-reconstruction', '--readiness-matrix', 'readiness',
+                                          '--archive-manifest', 'manifest', '--archive-root', 'archive'])
+        for layer in (None, 'team_offense_defense_outcomes'):
+            command = matrix._worker_command(args, Path('/run/out'), 1, 2, layer,
+                                             Path('/run/control') if layer else None)
+            self.assertIn('--historical-archive-reconstruction', command)
+            self.assertEqual(command[command.index('--archive-manifest') + 1], 'manifest')
+
     def test_matrix_manifest_is_immutable_and_rejects_a_different_run_spec(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
