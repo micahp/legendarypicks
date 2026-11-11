@@ -20,11 +20,16 @@ CLAUSE = re.compile(
     r'\bpenalt(?:y|ies)\s+on\s+'
     r'(?P<team>[A-Z]{2,3})(?:-(?P<player>[^,;]+))?,\s*'
     r'(?P<type>[^,;]+),\s*(?P<tail>[^.;]*)', re.I)
+SIMPLE_DISPOSITION_CLAUSE = re.compile(
+    r'\bpenalt(?:y|ies)\s+on\s+(?P<team>[A-Z]{2,3})'
+    r'(?:-(?P<player>[^,;]+))?,\s*'
+    r'(?P<status>declined|offsetting|enforced)\b(?P<tail>[^.;]*)', re.I)
 STATUS_MARKERS = {
     'declined_text': re.compile(r'\bdeclined\b', re.I),
     'offsetting_text': re.compile(r'\boffsetting\b', re.I),
     'enforced_text': re.compile(r'\benforced\b', re.I),
     'placed_text': re.compile(r'\bplaced at\b', re.I),
+    'superseded_text': re.compile(r'\bsuperseded\b', re.I),
 }
 BATCH_SIZE = 32768
 COLUMNS = ('penalty', 'penalty_type', 'penalty_team', 'desc')
@@ -39,21 +44,65 @@ def sha256(path: Path) -> str:
 
 
 def parse_clauses(description: str | None) -> list[dict]:
-    """Extract explicit foul clauses and literal evidence fields from a row."""
+    """Extract foul clauses and classify only their local literal disposition text."""
+    text = description or ''
+    matches = []
+    spans = []
+    for match in CLAUSE.finditer(text):
+        matches.append((match.start(), match.end(), match.group('team'),
+                        match.group('type'), match.group('tail'), match.group(0)))
+        spans.append(match.span())
+    for match in SIMPLE_DISPOSITION_CLAUSE.finditer(text):
+        if any(start < match.end() and match.start() < end for start, end in spans):
+            continue
+        tail = (match.group('status') + match.group('tail')).strip()
+        matches.append((match.start(), match.end(), match.group('team'), None,
+                        tail, match.group(0)))
+
     clauses = []
-    for match in CLAUSE.finditer(description or ''):
-        tail = match.group('tail').strip()
+    for _, _, team, foul_type, raw_tail, raw_clause in sorted(matches):
+        tail = raw_tail.strip()
         markers = [name for name, pattern in STATUS_MARKERS.items()
                    if pattern.search(tail)]
-        clauses.append({'team_text': match.group('team').upper(),
-                        'type_text': match.group('type').strip(),
+        disposition_markers = set(markers) & {
+            'declined_text', 'offsetting_text', 'enforced_text',
+            'placed_text', 'superseded_text'}
+        if 'offsetting_text' in disposition_markers and not (
+                'declined_text' in disposition_markers or 'superseded_text' in disposition_markers):
+            disposition = 'offsetting'
+            basis = 'explicit_offsetting_text'
+        elif 'declined_text' in disposition_markers and len(disposition_markers) == 1:
+            disposition = 'declined'
+            basis = 'explicit_declined_text'
+        elif 'superseded_text' in disposition_markers and len(disposition_markers) == 1:
+            disposition = 'superseded'
+            basis = 'explicit_superseded_text'
+        elif disposition_markers == {'enforced_text'}:
+            disposition = 'accepted'
+            basis = 'explicit_enforced_text'
+        elif disposition_markers == {'placed_text'}:
+            disposition = 'accepted'
+            basis = 'explicit_placement_text'
+        elif disposition_markers:
+            disposition = 'ambiguous'
+            basis = 'conflicting_disposition_text'
+        else:
+            disposition = 'unknown'
+            basis = 'no_local_disposition_text'
+        clauses.append({'team_text': team.upper(),
+                        'type_text': foul_type.strip() if foul_type else None,
+                        'tail_text': tail,
+                        'clause_text': raw_clause.strip(),
                         'text_markers': markers,
-                        'unclassified_text': not markers})
+                        'disposition': disposition,
+                        'disposition_basis': basis,
+                        'unclassified_text': disposition in ('unknown', 'ambiguous', 'superseded')})
     return clauses
 
 
 def _scalar_match(row: dict, clause: dict) -> bool:
     if (row['penalty_type'] is None or row['penalty_team'] is None
+            or clause['type_text'] is None
             or row['penalty_type'].strip().casefold() != clause['type_text'].casefold()
             or row['penalty_team'].upper() != clause['team_text']):
         return False

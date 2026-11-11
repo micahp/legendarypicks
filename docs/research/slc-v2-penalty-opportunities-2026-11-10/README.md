@@ -129,7 +129,25 @@ The earlier 2025 holdout audit found 6.544% observed versus 6.580% matchup-predi
 
 1. Run `scripts/nfl_sequence/build_penalty_opportunity_extract.py` with the pinned archive, 2026 source, read-only database, and a new output directory. It refuses changed pinned inputs and refuses to overwrite existing outputs.
 2. The offline audits use the code pin recorded in the original conditional outcome report, the unchanged database SHA above, and the generated 2026 overlay. They do not change the original 2025 audit or saved 10K artifacts.
-3. The extract covers published PBP rows. It does not yet classify every row into an NFL-statistical penalty opportunity, accepted/declined penalty, first down awarded by penalty, or enforcement result. The missing 173 database rows and 634 matched null penalty statuses remain explicit coverage limits.
+3. `classify_penalty_dispositions.py` creates a clause-level text-evidence dataset from the source-faithful corpus. Of **109,380 parsed foul clauses**, it labels **92,860 accepted/enforced**, **12,961 declined**, **3,485 offsetting**, and keeps **74 superseded** clauses separate. It does not infer disposition from `penalty=1`. It parses clauses on 105,321 rows, including simple “Penalty on TEAM, declined” wording without a foul type. The **82 rows with a penalty mention but no parsed clause** remain unclassified. These are retrospective text labels, not official adjudications or a complete NFL-statistical opportunity/foul ledger. The missing 173 database rows and 634 matched null penalty statuses remain explicit limits for the separate database-backed 2026 cohort.
+
+### Foul disposition labels
+
+`penalty-disposition-clauses-1999-2026.parquet` contains one row per parsed foul clause, with its source game/play key, clause text, source penalty fields, local disposition markers, and label basis. Multiple fouls on one play receive separate rows, so a clause marked enforced and a second clause marked declined do not collapse into one play-level label. Twenty-eight clauses have a clear disposition but no parsed foul type; their `foul_type_text` is null.
+
+The classifier maps clause-local `enforced` and `placed at` wording to **accepted/enforced**, `declined` to **declined**, and `offsetting` to **offsetting**. When `enforced at` appears with `offsetting`, the disposition is offsetting; the enforcement phrase records the spot. `superseded` is retained as its own state. Conflicting markers are `ambiguous`, and clauses with no local marker are `unknown`. Neither the source `penalty` flag nor scalar team/type matching decides the label; those fields are retained for comparison only.
+
+This closes the text-evidence classification for the parsed clauses. It does **not** establish official disposition for every foul: the descriptions are retrospective provider text, clause parsing misses 82 penalty-mentioned rows, and no full-corpus official-gamebook adjudication or post-enforcement state reconstruction has been done. The per-season counts and hashes are in `penalty-disposition-summary-1999-2026.json`.
+
+Rebuild the classification into new output paths with:
+
+```bash
+backend/venv/bin/python docs/research/slc-v2-penalty-opportunities-2026-11-10/classify_penalty_dispositions.py \
+  --corpus-dir /path/to/penalty-source-corpus \
+  --source-manifest docs/research/slc-v2-penalty-opportunities-2026-11-10/manifest.json \
+  --output /tmp/penalty-disposition-clauses.parquet \
+  --summary /tmp/penalty-disposition-summary.json
+```
 
 ## Files
 
@@ -138,6 +156,8 @@ The earlier 2025 holdout audit found 6.544% observed versus 6.580% matchup-predi
 - `manifest.json`: source and output hashes, per-season status counts, and 2026 reconciliation.
 - `audit_official_sample.py` and `official-sample-validation-2016-2025.json`: ten pinned manual GSIS gamebook cross-checks.
 - `audit_penalty_clauses.py` and `penalty-clause-coverage.json`: per-season literal clause parsing and scalar-field alignment audit.
+- `classify_penalty_dispositions.py`, `penalty-disposition-clauses-1999-2026.parquet`, and `penalty-disposition-summary-1999-2026.json`: per-foul-clause disposition labels, evidence basis, coverage, and hashes.
+- `test_penalty_clause_audit.py`: clause-level disposition and mixed-foul regression checks.
 - `conditional-audit-2026-overlay.json`: corrected walk-forward outcomes and common-cohort comparison.
 - `sack_context_2026_penalty_overlay.json`: corrected sack rates by team and context, plus same-cohort ingestion comparison.
 - `audit_2026_penalty_overlay.py`: corrected 2026 conditional audit.
@@ -150,7 +170,7 @@ The earlier 2025 holdout audit found 6.544% observed versus 6.580% matchup-predi
 
 ### Source-faithful research rows
 
-`scripts/nfl_sequence/penalty_corpus.py` builds a separate, compressed Parquet dataset from the manifest-pinned annual sources. It retains every source row, including administrative and special-teams rows and declined-penalty text on rows with `penalty=0`. It carries the original description, game state, penalty fields, play outcomes, and literal disposition markers. A single marker is text evidence only; mixed or multiple fouls remain unresolved. Rows are not yet independently verified opportunities or adjudicated fouls, and the extract does not assert historical acquisition time or reconstruct the post-enforcement state.
+`scripts/nfl_sequence/penalty_corpus.py` builds a separate, compressed Parquet dataset from the manifest-pinned annual sources. It retains every source row, including administrative and special-teams rows and declined-penalty text on rows with `penalty=0`. It carries the original description, game state, penalty fields, play outcomes, and literal disposition markers. The clause-level classifier now separates parseable multiple fouls and their local text dispositions. Rows are not independently verified opportunities or official adjudications, and the extract does not assert historical acquisition time or reconstruct every post-enforcement state.
 
 A local run processed all 28 seasons, 1999–2026, preserving 1,300,819 rows in 43 MB. The output is at `/tmp/slc-penalty-corpus-20261110/` on this host; it is temporary and is not committed. `penalty-source-rows-manifest.json` records each source and resulting file hash. To reproduce it in a new directory:
 
