@@ -207,7 +207,8 @@ class AggregatedComparison(unittest.TestCase):
                         ],
                         'players': [{
                             'stable_player_id': 'qb-1', 'identity_namespace': 'nfl_gsis_id',
-                            'name': 'QB One', 'team': 'AAA', 'position': 'QB',
+                            'name': 'QB One', 'team': 'AAA',
+                            'position': 'PR' if arm_dir == ablation_dir and seed == 2 else 'QB',
                             'rushing': {'att': rushing_attempts, 'yds': 8},
                             'receiving': {'tgt': 0, 'rec': 0, 'yds': 0},
                             'passing': {'att': 20, 'yds': 200},
@@ -227,6 +228,8 @@ class AggregatedComparison(unittest.TestCase):
             usage = next(row for row in report['paired_boxscore_summaries']['player_metrics']
                          if row['player_id'] == 'qb-1' and row['metric'] == 'rush_attempts')
             self.assertEqual(usage['paired_delta_ablation_minus_control']['mean'], -1)
+            self.assertIsNone(usage['position'])
+            self.assertEqual(usage['observed_positions'], {'control': ['QB'], 'ablation': ['PR', 'QB']})
             carry_share = next(row for row in report['paired_boxscore_summaries']['player_metrics']
                                if row['player_id'] == 'qb-1' and row['metric'] == 'carry_share')
             self.assertAlmostEqual(carry_share['paired_delta_ablation_minus_control']['mean'], -0.1)
