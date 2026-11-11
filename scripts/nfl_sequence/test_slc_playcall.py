@@ -56,6 +56,7 @@ class FixedChoiceRng:
 class Layer(unittest.TestCase):
     def test_two_stage_pass_labels_cannot_change_sack_probability(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact([0.0] * 4)))
+        sampler.pass_label_mode = 'two_stage'
         keys = [('dropback', 'pass_complete'), ('dropback', 'pass_incomplete'), ('dropback', 'sack')]
         weights = [2.0, 2.0, 6.0]
         labels = {'A': 'WR', 'D': 'deep', 'E': 'left'}
@@ -66,6 +67,7 @@ class Layer(unittest.TestCase):
 
     def test_two_stage_pass_labels_can_change_only_conditional_pass_event(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact([0.0] * 4)))
+        sampler.pass_label_mode = 'two_stage'
         keys = [('dropback', 'pass_complete'), ('dropback', 'pass_incomplete'), ('dropback', 'sack')]
         weights = [2.0, 2.0, 1.0]
         labels = {'A': 'WR', 'D': 'deep', 'E': 'left'}
@@ -74,6 +76,42 @@ class Layer(unittest.TestCase):
         self.assertEqual(picked[1], 'pass_complete')
         # The same labels leave the pre-pass group weights unchanged; the second-stage draw stays inside pass outcomes.
         self.assertIn(picked[1], {'pass_complete', 'pass_incomplete', 'interception', 'fumble_lost'})
+
+    def test_conditional_pass_label_model_does_not_change_sack_group_mass(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact([0.0] * 4)))
+        sampler.pass_label_mode = 'conditional'
+        sampler.pass_label_outcome_model = type('Model', (), {
+            'ratio': lambda _self, _context, _labels, event, **_kwargs: 100.0 if event == 'pass_complete' else 0.01
+        })()
+        sampler.decision_table = {'league': {category: {'1|short|other': {'test': 1}}
+                                             for category in ('A', 'D', 'E')}}
+        keys = [('dropback', 'pass_complete'), ('dropback', 'pass_incomplete'), ('dropback', 'sack')]
+        weights = [2.0, 2.0, 6.0]
+        labels = {'A': 'WR', 'D': 'deep', 'E': 'left'}
+        state = {'down': 1, 'togo': 10, 'yl': 50}
+        with patch.object(slc.decision_layer, 'distribution', return_value={'WR': 1.0}):
+            picked = sampler._draw_two_stage_pass_event(
+                FixedChoiceRng(0.8), keys, weights, {'key': (1, '6-9', '50-79')}, labels,
+                offense='A', state=state)
+        self.assertEqual(picked[1], 'sack')
+
+    def test_conditional_pass_label_model_changes_only_pass_outcome_mix(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact([0.0] * 4)))
+        sampler.pass_label_mode = 'conditional'
+        sampler.pass_label_outcome_model = type('Model', (), {
+            'ratio': lambda _self, _context, _labels, event, **_kwargs: 100.0 if event == 'pass_complete' else 0.01
+        })()
+        sampler.decision_table = {'league': {category: {'1|short|other': {'test': 1}}
+                                             for category in ('A', 'D', 'E')}}
+        keys = [('dropback', 'pass_complete'), ('dropback', 'pass_incomplete'), ('dropback', 'sack')]
+        weights = [2.0, 2.0, 1.0]
+        labels = {'A': 'WR', 'D': 'deep', 'E': 'left'}
+        state = {'down': 1, 'togo': 10, 'yl': 50}
+        with patch.object(slc.decision_layer, 'distribution', return_value={'WR': 1.0}):
+            picked = sampler._draw_two_stage_pass_event(
+                FixedChoiceRng(0.1), keys, weights, {'key': (1, '6-9', '50-79')}, labels,
+                offense='A', state=state)
+        self.assertEqual(picked[1], 'pass_complete')
 
     def test_a_tampered_artifact_is_refused(self):
         artifact = blank_artifact(0.0)

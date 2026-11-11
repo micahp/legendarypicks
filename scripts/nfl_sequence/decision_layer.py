@@ -6,8 +6,9 @@ This module makes those labels SLC's pre-event decisions:
 
 - Before the outcome, each category that applies to the intent is drawn from the offense's prior for the play's situation cell
   (dropbacks: A, D, E, G, I, N; runs: B, C; both: F, H, J, K, L, M).
-- The outcome pool is conditioned on the drawn labels. Each label multiplies the outcome weights by its lift, averaged over the labels
-  in log space so the overlapping categories do not compound, and the drawn row is taken from the rows that carry the same labels.
+- The sampled historical row is filtered by the drawn labels when matching source rows is supported. A, D, and E describe an intended
+  pass (target role, depth, location); they must not change sack probability. The SLC conditional mode models their effect on pass
+  outcomes only after the pass-attempt stage. The legacy marginal lifts remain available only to reproduce older runs.
 
 The prior is built from the most recent season before the cutoff, as the decision model's own prior is (2025 for a 2026 forecast).
 Charting categories (G to N) exist from 2022 on, so a cutoff before 2023 has no prior and fails loudly. Pass length comes from the
