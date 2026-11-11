@@ -1,5 +1,7 @@
 # AGENTS.md: read this before editing legendarypicks
 
+**Model-work scoreboard (2026-11-10):** Before training, evaluating, or changing any sports prediction model, read [the canonical model benchmark reference](docs/MODEL-BENCHMARK-REFERENCE.md). It identifies the metric and comparator for winners, point distributions, props, play mechanisms and leagues; distinguishes game versus multiclass Brier and historical research versus certified forecasts. Recheck the underlying source and preserve old scores when updating the benchmark. This is a benchmark *index*, not permission to promote a model.
+
 These are the rules, short. Each comes from a real incident; the incident, the measurements and
 the examples are in [docs/AGENTS-REFERENCE.md](docs/AGENTS-REFERENCE.md) (the full previous text,
 section numbers unchanged). Read the matching section there when a rule touches your task.
