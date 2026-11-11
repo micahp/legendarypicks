@@ -332,10 +332,15 @@ def _skips_post_score_kick(drive):
 
 
 def _game_ending_kick(kick):
-    """A post-score or post-field-goal kickoff in the fourth quarter or overtime whose runoff expires the clock: the game
-    ends on its return, untied in the fourth quarter and possibly tied in overtime."""
-    return (kick['kind'] in POST_SCORE_KICKS and kick['quarter'] in (4, OVERTIME_QUARTER)
-            and kick['clock_expired_during_kickoff'])
+    """A Q4 safety free kick can expire regulation, as can ordinary Q4/OT post-score kicks.
+
+    Overtime safeties end on the score; they do not require another free kick.
+    """
+    if not kick['clock_expired_during_kickoff']:
+        return False
+    if kick['kind'] == 'safety_free_kick':
+        return kick['quarter'] == 4
+    return kick['kind'] in POST_SCORE_KICKS and kick['quarter'] in (4, OVERTIME_QUARTER)
 
 
 def _kickoff_clock(drive, kick):
@@ -391,6 +396,13 @@ def _possession_and_clock(record, drives, kicks):
                       f'at {drive["end_clock"]}, which does not end the game')
             if kick is not None and not _game_ending_kick(kick):
                 _fail('a kickoff follows the last drive')
+            if kick is not None and kick['kind'] == 'safety_free_kick':
+                if drive['terminal'] != 'safety':
+                    _fail('a safety free kick follows a drive that did not end in a safety')
+                if (kick['kicking_team'] != drive['offense_team']
+                        or kick['receiving_team'] != _other(drive['offense_team'])):
+                    _fail('the final safety free kick has the wrong kicking or receiving team')
+                _kickoff_clock(drive, kick)
             continue
         if kick is None:
             if _expects_kickoff(drive):

@@ -79,13 +79,19 @@ def _find_kick(plays, index):
 
 
 def _snap_after(plays, kick_index, kick, receiver):
-    """The receiving team's first run or pass after the kick, in the kick's quarter."""
+    """Accept the first post-kick scrimmage snap ONLY if the receiver possesses it.
+
+    The old search skipped the kicking team's subsequent drive and borrowed a
+    later receiving-team snap, incorrectly charging a full drive to the kick.
+    """
     for j in range(kick_index + 1, min(kick_index + 1 + SNAP_SCAN, len(plays))):
         q = plays[j]
         if q['qtr'] != kick['qtr']:
             return None
-        if q['posteam'] == receiver and q['play_type'] in SCRIMMAGE:
-            return q
+        if q.get('kickoff_attempt') == 1 or q.get('punt_attempt') == 1:
+            return None
+        if q['play_type'] in SCRIMMAGE:
+            return q if q['posteam'] == receiver else None
     return None
 
 
@@ -123,6 +129,10 @@ def build_record(plays, index, source_file, source_hash):
         return refuse('kick_team_inconsistent', f'{kick_type} row posteam {kick["posteam"]} is not {expected_team}')
     if kick['qtr'] != safety['qtr']:
         return refuse('kick_in_later_quarter', 'the free kick is in a later quarter than the safety')
+    # No onside recovery rule exists in this ordinary receiving-possession
+    # table; these kicks must not lend their next receiver snap to this kick.
+    if 'onside' in (kick.get('desc') or '').lower():
+        return refuse('onside_kick_not_modelled', 'onside safety free kick requires a separate recovery model')
     snap = _snap_after(plays, kick_index, kick, receiver)
     if snap is None:
         return refuse('no_receiving_snap_same_quarter', 'no receiving-team run or pass before the quarter ends')
