@@ -1,0 +1,377 @@
+{
+  "arms": {
+    "legacy": {
+      "dropback_events": {
+        "interception": 2,
+        "pass_complete": 139,
+        "pass_incomplete": 63,
+        "sack": 7
+      },
+      "dropback_rates": {
+        "fumble_lost": 0.0,
+        "interception": 0.009478672985781991,
+        "pass_complete": 0.6587677725118484,
+        "pass_incomplete": 0.2985781990521327,
+        "sack": 0.03317535545023697
+      },
+      "dropbacks": 211,
+      "game_count": 3,
+      "mean_game_total": 46.333333333333336,
+      "mean_points_per_team": 23.166666666666668,
+      "mean_two_stage_first_stage_sack_probability": 0.0,
+      "mode": "legacy",
+      "producer_sha256": {
+        "game_legality.py": "0a79f22d20bb233abca97900e81d00a922a785f727932b31f26f4f031e2567eb",
+        "rng_protocol.py": "32bbe6523479607b206d4db2522ac54ac585430cc6583fb701161de85d560a6f",
+        "slc_config.py": "864d25e5d50d9917e759401f74fe82f8c9cf2135245d2ff10a9ccd6ae798c939",
+        "slc_outputs.py": "1960ff7709810158deb05cb8db50e8c6d33e944b801047136d81fd75228efc5c",
+        "slc_playcall.py": "76270b6724b753e25ff233024bb8a8afed79577e5b16b4e4ae86b2ee9a6930e5"
+      },
+      "score_tails": {
+        "games_total_ge_60": 1,
+        "team_scores_le_10": 0
+      },
+      "scores": [
+        {
+          "away": 19,
+          "home": 18,
+          "seed": 1,
+          "valid_full_game": true
+        },
+        {
+          "away": 24,
+          "home": 17,
+          "seed": 2,
+          "valid_full_game": true
+        },
+        {
+          "away": 41,
+          "home": 20,
+          "seed": 3,
+          "valid_full_game": true
+        }
+      ],
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "source_commit": "db83ace63b68c1be6c629eabbdebd62d6e2ad76f",
+      "source_file_sha256": {
+        "scripts/nfl_sequence/build_blocked_kick_outcomes.py": "9b92c7c96147ddfe1f6370518982178795f8303c4841a9ae0494b33827e2f6bd",
+        "scripts/nfl_sequence/clock_d.py": "093d410cd199c77d6d791a72271c4fc9c4e27383e15eeb344acf5726ecbbb5c6",
+        "scripts/nfl_sequence/contextual_pool.py": "9d0af355e0c62d23014bf5387af69c555f8e1e4276d37fed1b4bd65f2c2f8104",
+        "scripts/nfl_sequence/decision_layer.py": "1d269a4b332eb8ec95c7968709353ae3c8afe68a8485596d53eeddd06c8e24d9",
+        "scripts/nfl_sequence/e1_drive.py": "4129bc60a18cf056f0319281fc52bc15e88bd630c8ec41ef955fa25ccd3da0ab",
+        "scripts/nfl_sequence/e2_reference.py": "fc56befb650cfa387d467391e7f0c4ced02b06fba42b8344f8a0d8722fdc42b7",
+        "scripts/nfl_sequence/game_state.py": "cd80cac2c0fb78195ab651cae4d175a4bd4b8e85d346e8add1f2d9dc35bb18b0",
+        "scripts/nfl_sequence/game_stats.py": "9823a9f1fbb6275d90be3ba1ba0b5fb98fe8ee35146856b8f75984792fcfd306",
+        "scripts/nfl_sequence/measure_kick_outcomes.py": "7dfb2dd93d67ef700d16e70016ea7b23bb5ce9f84347665781a7cc862dc776c3",
+        "scripts/nfl_sequence/paired_random_streams.py": "812d5db06156d7adf73e93b2d4e8ba4ffd58c4966f3618e2822fb362575fd8b5",
+        "scripts/nfl_sequence/playbook_prior.py": "c632cd84c99ba13d144de03d7f8548f494e10032f19475d9bfe1ce10c5ddb72b",
+        "scripts/nfl_sequence/player_shares.py": "2dbb494fb2099f2b28ee21aae12a61394b914ef26e2253d557a8ebbae3c093a2",
+        "scripts/nfl_sequence/pre_event.py": "4fa86c14aa4efb162687ccc71a36549fd29a8e060fb885e65e60c9a5b2f307fb",
+        "scripts/nfl_sequence/pregame_batch.py": "94d606e9b604a84f149aa387e539243deb8d85ee30ce85cc33ef114d25e1272c",
+        "scripts/nfl_sequence/pregame_context.py": "1e3ff4126dcb2a52a1020f347639df021997ab7ce19fb2d990e3a3b398bd9f9a",
+        "scripts/nfl_sequence/pregame_snapshot.py": "5564b0df6d41e02d96d9debab603ea83627106713ae95c1cd8990e7108d4500a",
+        "scripts/nfl_sequence/reducer.py": "ca77469f6ebc1ccd6cdc4cff953fa368f7443b0531f67522c1deb0027f400a41",
+        "scripts/nfl_sequence/run_slc_game.py": "0e0a32d5b71c724f385c17138244e414d6e400b69864d3c0e8db05eab6561090",
+        "scripts/nfl_sequence/share_distributions.py": "36be0889061675fec672cfcdc4ab8b1714a6fe8086b71b809d642b0c5ba1cef6",
+        "scripts/nfl_sequence/simulate_pregame_batch.py": "c12ad3d165342df4642499a4e865c476b05ccef4df67d535e5ffce4cbe05c577",
+        "scripts/nfl_sequence/simulate_pregame_game.py": "60a90269ce6a4588e2547aeaee336cc4ca260051520932a07caf095b0637b132",
+        "scripts/nfl_sequence/slc_engine.py": "f0e32b5a5f1b008165f3bd9a9dfc9a10f23cd322fe4ca41c2345516b4b2411de",
+        "scripts/nfl_sequence/source_preflight.py": "5daafd61b66d1e3b3407e90c02601029f7bb4d432b052ab417f29d5193e3b2ae",
+        "scripts/nfl_sequence/try_policy.py": "1fdb35d692c2fa52622598d69e6d47fbe93b427e666b7ecc16fe3f4b719fd9ef",
+        "scripts/nfl_team_codes.py": "3533636e2f9679210a6292cc594aa8ace7584896bc82f0cdcb44e245c43d5f91"
+      },
+      "stream_root_sha256": "866322a4c7799bc06dab196d5c60df50a99615be4724792ba2f4bd470b349d71",
+      "strict_boxscore_reconciliation": {
+        "passed": 3
+      },
+      "summed_team_boxscore_stats": {
+        "completions": 139,
+        "first_downs": 121,
+        "fumbles_lost": 0,
+        "interceptions": 2,
+        "pass_attempts": 204,
+        "plays": 408,
+        "points": 139,
+        "sacks_taken": 7,
+        "turnovers": 2
+      },
+      "two_stage_first_stage_draws": 0,
+      "valid_games": 3
+    },
+    "off": {
+      "dropback_events": {
+        "interception": 2,
+        "pass_complete": 136,
+        "pass_incomplete": 61,
+        "sack": 10
+      },
+      "dropback_rates": {
+        "fumble_lost": 0.0,
+        "interception": 0.009569377990430622,
+        "pass_complete": 0.6507177033492823,
+        "pass_incomplete": 0.291866028708134,
+        "sack": 0.04784688995215311
+      },
+      "dropbacks": 209,
+      "game_count": 3,
+      "mean_game_total": 49.333333333333336,
+      "mean_points_per_team": 24.666666666666668,
+      "mean_two_stage_first_stage_sack_probability": 0.0,
+      "mode": "off",
+      "producer_sha256": {
+        "game_legality.py": "0a79f22d20bb233abca97900e81d00a922a785f727932b31f26f4f031e2567eb",
+        "rng_protocol.py": "32bbe6523479607b206d4db2522ac54ac585430cc6583fb701161de85d560a6f",
+        "slc_config.py": "864d25e5d50d9917e759401f74fe82f8c9cf2135245d2ff10a9ccd6ae798c939",
+        "slc_outputs.py": "1960ff7709810158deb05cb8db50e8c6d33e944b801047136d81fd75228efc5c",
+        "slc_playcall.py": "76270b6724b753e25ff233024bb8a8afed79577e5b16b4e4ae86b2ee9a6930e5"
+      },
+      "score_tails": {
+        "games_total_ge_60": 1,
+        "team_scores_le_10": 0
+      },
+      "scores": [
+        {
+          "away": 19,
+          "home": 18,
+          "seed": 1,
+          "valid_full_game": true
+        },
+        {
+          "away": 15,
+          "home": 17,
+          "seed": 2,
+          "valid_full_game": true
+        },
+        {
+          "away": 47,
+          "home": 32,
+          "seed": 3,
+          "valid_full_game": true
+        }
+      ],
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "source_commit": "db83ace63b68c1be6c629eabbdebd62d6e2ad76f",
+      "source_file_sha256": {
+        "scripts/nfl_sequence/build_blocked_kick_outcomes.py": "9b92c7c96147ddfe1f6370518982178795f8303c4841a9ae0494b33827e2f6bd",
+        "scripts/nfl_sequence/clock_d.py": "093d410cd199c77d6d791a72271c4fc9c4e27383e15eeb344acf5726ecbbb5c6",
+        "scripts/nfl_sequence/contextual_pool.py": "9d0af355e0c62d23014bf5387af69c555f8e1e4276d37fed1b4bd65f2c2f8104",
+        "scripts/nfl_sequence/decision_layer.py": "1d269a4b332eb8ec95c7968709353ae3c8afe68a8485596d53eeddd06c8e24d9",
+        "scripts/nfl_sequence/e1_drive.py": "4129bc60a18cf056f0319281fc52bc15e88bd630c8ec41ef955fa25ccd3da0ab",
+        "scripts/nfl_sequence/e2_reference.py": "fc56befb650cfa387d467391e7f0c4ced02b06fba42b8344f8a0d8722fdc42b7",
+        "scripts/nfl_sequence/game_state.py": "cd80cac2c0fb78195ab651cae4d175a4bd4b8e85d346e8add1f2d9dc35bb18b0",
+        "scripts/nfl_sequence/game_stats.py": "9823a9f1fbb6275d90be3ba1ba0b5fb98fe8ee35146856b8f75984792fcfd306",
+        "scripts/nfl_sequence/measure_kick_outcomes.py": "7dfb2dd93d67ef700d16e70016ea7b23bb5ce9f84347665781a7cc862dc776c3",
+        "scripts/nfl_sequence/paired_random_streams.py": "812d5db06156d7adf73e93b2d4e8ba4ffd58c4966f3618e2822fb362575fd8b5",
+        "scripts/nfl_sequence/playbook_prior.py": "c632cd84c99ba13d144de03d7f8548f494e10032f19475d9bfe1ce10c5ddb72b",
+        "scripts/nfl_sequence/player_shares.py": "2dbb494fb2099f2b28ee21aae12a61394b914ef26e2253d557a8ebbae3c093a2",
+        "scripts/nfl_sequence/pre_event.py": "4fa86c14aa4efb162687ccc71a36549fd29a8e060fb885e65e60c9a5b2f307fb",
+        "scripts/nfl_sequence/pregame_batch.py": "94d606e9b604a84f149aa387e539243deb8d85ee30ce85cc33ef114d25e1272c",
+        "scripts/nfl_sequence/pregame_context.py": "1e3ff4126dcb2a52a1020f347639df021997ab7ce19fb2d990e3a3b398bd9f9a",
+        "scripts/nfl_sequence/pregame_snapshot.py": "5564b0df6d41e02d96d9debab603ea83627106713ae95c1cd8990e7108d4500a",
+        "scripts/nfl_sequence/reducer.py": "ca77469f6ebc1ccd6cdc4cff953fa368f7443b0531f67522c1deb0027f400a41",
+        "scripts/nfl_sequence/run_slc_game.py": "0e0a32d5b71c724f385c17138244e414d6e400b69864d3c0e8db05eab6561090",
+        "scripts/nfl_sequence/share_distributions.py": "36be0889061675fec672cfcdc4ab8b1714a6fe8086b71b809d642b0c5ba1cef6",
+        "scripts/nfl_sequence/simulate_pregame_batch.py": "c12ad3d165342df4642499a4e865c476b05ccef4df67d535e5ffce4cbe05c577",
+        "scripts/nfl_sequence/simulate_pregame_game.py": "60a90269ce6a4588e2547aeaee336cc4ca260051520932a07caf095b0637b132",
+        "scripts/nfl_sequence/slc_engine.py": "f0e32b5a5f1b008165f3bd9a9dfc9a10f23cd322fe4ca41c2345516b4b2411de",
+        "scripts/nfl_sequence/source_preflight.py": "5daafd61b66d1e3b3407e90c02601029f7bb4d432b052ab417f29d5193e3b2ae",
+        "scripts/nfl_sequence/try_policy.py": "1fdb35d692c2fa52622598d69e6d47fbe93b427e666b7ecc16fe3f4b719fd9ef",
+        "scripts/nfl_team_codes.py": "3533636e2f9679210a6292cc594aa8ace7584896bc82f0cdcb44e245c43d5f91"
+      },
+      "stream_root_sha256": "866322a4c7799bc06dab196d5c60df50a99615be4724792ba2f4bd470b349d71",
+      "strict_boxscore_reconciliation": {
+        "passed": 3
+      },
+      "summed_team_boxscore_stats": {
+        "completions": 136,
+        "first_downs": 103,
+        "fumbles_lost": 1,
+        "interceptions": 2,
+        "pass_attempts": 199,
+        "plays": 393,
+        "points": 148,
+        "sacks_taken": 10,
+        "turnovers": 3
+      },
+      "two_stage_first_stage_draws": 0,
+      "valid_games": 3
+    },
+    "two-stage": {
+      "dropback_events": {
+        "interception": 5,
+        "pass_complete": 128,
+        "pass_incomplete": 76,
+        "sack": 17
+      },
+      "dropback_rates": {
+        "fumble_lost": 0.0,
+        "interception": 0.022123893805309734,
+        "pass_complete": 0.5663716814159292,
+        "pass_incomplete": 0.336283185840708,
+        "sack": 0.0752212389380531
+      },
+      "dropbacks": 226,
+      "game_count": 3,
+      "mean_game_total": 33.666666666666664,
+      "mean_points_per_team": 16.833333333333332,
+      "mean_two_stage_first_stage_sack_probability": 0.05390167013274336,
+      "mode": "two_stage",
+      "producer_sha256": {
+        "game_legality.py": "0a79f22d20bb233abca97900e81d00a922a785f727932b31f26f4f031e2567eb",
+        "rng_protocol.py": "32bbe6523479607b206d4db2522ac54ac585430cc6583fb701161de85d560a6f",
+        "slc_config.py": "864d25e5d50d9917e759401f74fe82f8c9cf2135245d2ff10a9ccd6ae798c939",
+        "slc_outputs.py": "1960ff7709810158deb05cb8db50e8c6d33e944b801047136d81fd75228efc5c",
+        "slc_playcall.py": "ed6e2e0d24aac846b943a9f50a4424cd1a3909bd73f1c8e22304a56059aae494"
+      },
+      "score_tails": {
+        "games_total_ge_60": 0,
+        "team_scores_le_10": 2
+      },
+      "scores": [
+        {
+          "away": 36,
+          "home": 3,
+          "seed": 1,
+          "valid_full_game": true
+        },
+        {
+          "away": 16,
+          "home": 10,
+          "seed": 2,
+          "valid_full_game": true
+        },
+        {
+          "away": 20,
+          "home": 16,
+          "seed": 3,
+          "valid_full_game": true
+        }
+      ],
+      "seeds": [
+        1,
+        2,
+        3
+      ],
+      "source_commit": "db83ace63b68c1be6c629eabbdebd62d6e2ad76f",
+      "source_file_sha256": {
+        "scripts/nfl_sequence/build_blocked_kick_outcomes.py": "9b92c7c96147ddfe1f6370518982178795f8303c4841a9ae0494b33827e2f6bd",
+        "scripts/nfl_sequence/clock_d.py": "093d410cd199c77d6d791a72271c4fc9c4e27383e15eeb344acf5726ecbbb5c6",
+        "scripts/nfl_sequence/contextual_pool.py": "9d0af355e0c62d23014bf5387af69c555f8e1e4276d37fed1b4bd65f2c2f8104",
+        "scripts/nfl_sequence/decision_layer.py": "1d269a4b332eb8ec95c7968709353ae3c8afe68a8485596d53eeddd06c8e24d9",
+        "scripts/nfl_sequence/e1_drive.py": "4129bc60a18cf056f0319281fc52bc15e88bd630c8ec41ef955fa25ccd3da0ab",
+        "scripts/nfl_sequence/e2_reference.py": "fc56befb650cfa387d467391e7f0c4ced02b06fba42b8344f8a0d8722fdc42b7",
+        "scripts/nfl_sequence/game_state.py": "cd80cac2c0fb78195ab651cae4d175a4bd4b8e85d346e8add1f2d9dc35bb18b0",
+        "scripts/nfl_sequence/game_stats.py": "9823a9f1fbb6275d90be3ba1ba0b5fb98fe8ee35146856b8f75984792fcfd306",
+        "scripts/nfl_sequence/measure_kick_outcomes.py": "7dfb2dd93d67ef700d16e70016ea7b23bb5ce9f84347665781a7cc862dc776c3",
+        "scripts/nfl_sequence/paired_random_streams.py": "812d5db06156d7adf73e93b2d4e8ba4ffd58c4966f3618e2822fb362575fd8b5",
+        "scripts/nfl_sequence/playbook_prior.py": "c632cd84c99ba13d144de03d7f8548f494e10032f19475d9bfe1ce10c5ddb72b",
+        "scripts/nfl_sequence/player_shares.py": "2dbb494fb2099f2b28ee21aae12a61394b914ef26e2253d557a8ebbae3c093a2",
+        "scripts/nfl_sequence/pre_event.py": "4fa86c14aa4efb162687ccc71a36549fd29a8e060fb885e65e60c9a5b2f307fb",
+        "scripts/nfl_sequence/pregame_batch.py": "94d606e9b604a84f149aa387e539243deb8d85ee30ce85cc33ef114d25e1272c",
+        "scripts/nfl_sequence/pregame_context.py": "1e3ff4126dcb2a52a1020f347639df021997ab7ce19fb2d990e3a3b398bd9f9a",
+        "scripts/nfl_sequence/pregame_snapshot.py": "5564b0df6d41e02d96d9debab603ea83627106713ae95c1cd8990e7108d4500a",
+        "scripts/nfl_sequence/reducer.py": "ca77469f6ebc1ccd6cdc4cff953fa368f7443b0531f67522c1deb0027f400a41",
+        "scripts/nfl_sequence/run_slc_game.py": "0e0a32d5b71c724f385c17138244e414d6e400b69864d3c0e8db05eab6561090",
+        "scripts/nfl_sequence/share_distributions.py": "36be0889061675fec672cfcdc4ab8b1714a6fe8086b71b809d642b0c5ba1cef6",
+        "scripts/nfl_sequence/simulate_pregame_batch.py": "c12ad3d165342df4642499a4e865c476b05ccef4df67d535e5ffce4cbe05c577",
+        "scripts/nfl_sequence/simulate_pregame_game.py": "60a90269ce6a4588e2547aeaee336cc4ca260051520932a07caf095b0637b132",
+        "scripts/nfl_sequence/slc_engine.py": "f0e32b5a5f1b008165f3bd9a9dfc9a10f23cd322fe4ca41c2345516b4b2411de",
+        "scripts/nfl_sequence/source_preflight.py": "5daafd61b66d1e3b3407e90c02601029f7bb4d432b052ab417f29d5193e3b2ae",
+        "scripts/nfl_sequence/try_policy.py": "1fdb35d692c2fa52622598d69e6d47fbe93b427e666b7ecc16fe3f4b719fd9ef",
+        "scripts/nfl_team_codes.py": "3533636e2f9679210a6292cc594aa8ace7584896bc82f0cdcb44e245c43d5f91"
+      },
+      "stream_root_sha256": "866322a4c7799bc06dab196d5c60df50a99615be4724792ba2f4bd470b349d71",
+      "strict_boxscore_reconciliation": {
+        "passed": 3
+      },
+      "summed_team_boxscore_stats": {
+        "completions": 128,
+        "first_downs": 98,
+        "fumbles_lost": 1,
+        "interceptions": 5,
+        "pass_attempts": 209,
+        "plays": 405,
+        "points": 101,
+        "sacks_taken": 17,
+        "turnovers": 6
+      },
+      "two_stage_first_stage_draws": 226,
+      "valid_games": 3
+    }
+  },
+  "compressed_artifacts": {
+    "legacy.boxscores.jsonl.gz": {
+      "bytes": 40346,
+      "sha256": "b17c989921783e37eac90ef249a119c50ef9b85a11f55c82c07de6132d69f215"
+    },
+    "legacy.json.gz": {
+      "bytes": 313200,
+      "sha256": "36cd044dd03e9051aca42ae8ac1f6f8cf19c6571a80e7fed05da264e5628096f"
+    },
+    "legacy.seeds.jsonl.gz": {
+      "bytes": 248658,
+      "sha256": "0f3f095386706ccad75fe35d44657f59c227638d7495a224752b7d3f90ecd765"
+    },
+    "off.boxscores.jsonl.gz": {
+      "bytes": 40622,
+      "sha256": "7fe5c49234dc4a20edb888859f91d1eef2780298a2a38bfd2d3ebc9bc049e80a"
+    },
+    "off.json.gz": {
+      "bytes": 310920,
+      "sha256": "9ab36a8503653e4e850c8e93fd5b798d75de1d3d03f47f860e0098be33931f04"
+    },
+    "off.seeds.jsonl.gz": {
+      "bytes": 245738,
+      "sha256": "167a588d11ecdc7d2e6feb19644d18cf1c166243e06a3851446c9643f4ad11df"
+    },
+    "two-stage-initial-superseded.boxscores.jsonl.gz": {
+      "bytes": 41207,
+      "sha256": "a62c6abfef3da1a3d15717f2960febc99449452bcc8f6161855db167e2d46fcf"
+    },
+    "two-stage-initial-superseded.json.gz": {
+      "bytes": 335154,
+      "sha256": "54fa47d4485404ec97bbad4bb03ca2adaec8d5f33d4b3dd0b0aa6aba6b1ec084"
+    },
+    "two-stage-initial-superseded.seeds.jsonl.gz": {
+      "bytes": 267890,
+      "sha256": "cfc80fd0bd0dcc3d47c4c71d40a3b4607a29d390a5c5c05a92edfb2c04fc5fad"
+    },
+    "two-stage.boxscores.jsonl.gz": {
+      "bytes": 40655,
+      "sha256": "8b28d95afe931ef01d8eb312e54e2ea77c82a75582f93c8d474842b6933a01b4"
+    },
+    "two-stage.json.gz": {
+      "bytes": 327086,
+      "sha256": "63f7780b3761bd170e6cb62571d7ee2c8e4dbd532aeae15a925bd2bf0f274ca4"
+    },
+    "two-stage.seeds.jsonl.gz": {
+      "bytes": 259105,
+      "sha256": "b8aa13f4b9686523246a6cf539a2a7b91230bda7ab7d2d3a5426e00d93171231"
+    }
+  },
+  "input_identity": {
+    "database_sha256": "1c657408f639a78e1e744bb883abf944b6296ed7bf42710e629456129dd736db",
+    "participation_field_sha256": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41",
+    "pbp_2026_sha256": "5030e8fc1739ea8f93ce67b461f76d3ae89b2f952d430ddbfa5b7f7f07d44b18",
+    "playcall_artifact_sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+    "snap_counts_sha256": "36f28e18af3080df9f160d42dd5e3e59c37cfacf0dd24772ea51cfd41cadcfca",
+    "snapshot_sha256": "cc44c5e0f0e3216a6785d2b79af65174a27b95133e8600da07d412237338e475",
+    "workload_D1_sha256": "cec16cb2462ef71eaf0fc5d300ce6729e57c915b114dd8615f8e7d924986a618"
+  },
+  "paired_seed_ids": [
+    1,
+    2,
+    3
+  ],
+  "paired_stream_root_sha256": "866322a4c7799bc06dab196d5c60df50a99615be4724792ba2f4bd470b349d71",
+  "schema": "slc-pass-label-ordering-simulation-summary-v1",
+  "scope": "Three paired ARI-SEA V2/D1 seeds per arm. Full-game smoke check only; not a scoring calibration study."
+}

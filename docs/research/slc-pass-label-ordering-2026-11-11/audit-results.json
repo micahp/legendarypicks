@@ -1,0 +1,371 @@
+{
+  "cohort": {
+    "candidate_pass_rows": 18276,
+    "excluded": {},
+    "scored": 18276
+  },
+  "database_sha256": "1c657408f639a78e1e744bb883abf944b6296ed7bf42710e629456129dd736db",
+  "heldout_season": 2025,
+  "label_presence_by_outcome": {
+    "fumble_lost": {
+      "A": 0.42063492063492064,
+      "D": 0.42063492063492064,
+      "E": 0.42063492063492064,
+      "plays": 126
+    },
+    "interception": {
+      "A": 0.9860335195530726,
+      "D": 1.0,
+      "E": 1.0,
+      "plays": 358
+    },
+    "pass_complete": {
+      "A": 1.0,
+      "D": 1.0,
+      "E": 1.0,
+      "plays": 10933
+    },
+    "pass_incomplete": {
+      "A": 0.8791946308724832,
+      "D": 1.0,
+      "E": 1.0,
+      "plays": 5662
+    },
+    "sack": {
+      "A": 0.0,
+      "D": 0.0,
+      "E": 0.0,
+      "plays": 1197
+    }
+  },
+  "models": {
+    "A_only": {
+      "actual_rate": {
+        "fumble_lost": 0.006894287590282338,
+        "interception": 0.019588531407310133,
+        "pass_complete": 0.5982162398774349,
+        "pass_incomplete": 0.3098052090172904,
+        "sack": 0.06549573210768221
+      },
+      "binary": {
+        "completion": {
+          "brier": 0.2424180411023881,
+          "log_loss": 0.6787323392321127,
+          "mean_predicted_probability": 0.6645939298927399,
+          "observed_rate": 0.5982162398774349
+        },
+        "interception": {
+          "brier": 0.019210431597953485,
+          "log_loss": 0.09654880920315449,
+          "mean_predicted_probability": 0.023200754337312418,
+          "observed_rate": 0.019588531407310133
+        },
+        "sack": {
+          "brier": 0.06526183310666703,
+          "log_loss": 0.46552854837850455,
+          "mean_predicted_probability": 0.0015974377175684193,
+          "observed_rate": 0.06549573210768221
+        },
+        "turnover": {
+          "brier": 0.025777902074401532,
+          "log_loss": 0.12228536820218755,
+          "mean_predicted_probability": 0.027304749169606776,
+          "observed_rate": 0.026482818997592472
+        }
+      },
+      "mean_predicted_rate": {
+        "fumble_lost": 0.0041039948322952715,
+        "interception": 0.023200754337312418,
+        "pass_complete": 0.6645939298927399,
+        "pass_incomplete": 0.306503883220084,
+        "sack": 0.0015974377175684193
+      },
+      "multiclass_brier": 0.5468794645411811,
+      "multiclass_log_loss": 1.18307443629406,
+      "plays": 18276
+    },
+    "D_only": {
+      "actual_rate": {
+        "fumble_lost": 0.006894287590282338,
+        "interception": 0.019588531407310133,
+        "pass_complete": 0.5982162398774349,
+        "pass_incomplete": 0.3098052090172904,
+        "sack": 0.06549573210768221
+      },
+      "binary": {
+        "completion": {
+          "brier": 0.24002322869361803,
+          "log_loss": 0.6733050646090853,
+          "mean_predicted_probability": 0.6412321224982037,
+          "observed_rate": 0.5982162398774349
+        },
+        "interception": {
+          "brier": 0.01919775552942636,
+          "log_loss": 0.09633352188340095,
+          "mean_predicted_probability": 0.02271151216028871,
+          "observed_rate": 0.019588531407310133
+        },
+        "sack": {
+          "brier": 0.06534638186476353,
+          "log_loss": 0.4953555627655055,
+          "mean_predicted_probability": 0.0010036543865262766,
+          "observed_rate": 0.06549573210768221
+        },
+        "turnover": {
+          "brier": 0.025764034772964083,
+          "log_loss": 0.12209163943586233,
+          "mean_predicted_probability": 0.02664174279225153,
+          "observed_rate": 0.026482818997592472
+        }
+      },
+      "mean_predicted_rate": {
+        "fumble_lost": 0.00393023063196256,
+        "interception": 0.02271151216028871,
+        "pass_complete": 0.6412321224982037,
+        "pass_incomplete": 0.3311224803230489,
+        "sack": 0.0010036543865262766
+      },
+      "multiclass_brier": 0.5451351413376961,
+      "multiclass_log_loss": 1.21173736756805,
+      "plays": 18276
+    },
+    "E_only": {
+      "actual_rate": {
+        "fumble_lost": 0.006894287590282338,
+        "interception": 0.019588531407310133,
+        "pass_complete": 0.5982162398774349,
+        "pass_incomplete": 0.3098052090172904,
+        "sack": 0.06549573210768221
+      },
+      "binary": {
+        "completion": {
+          "brier": 0.23991277597578853,
+          "log_loss": 0.6730317913228321,
+          "mean_predicted_probability": 0.6417339161161961,
+          "observed_rate": 0.5982162398774349
+        },
+        "interception": {
+          "brier": 0.019200602140301108,
+          "log_loss": 0.0963416614785624,
+          "mean_predicted_probability": 0.022699771492060393,
+          "observed_rate": 0.019588531407310133
+        },
+        "sack": {
+          "brier": 0.065270523140028,
+          "log_loss": 0.46860552611833023,
+          "mean_predicted_probability": 0.0015554844372196697,
+          "observed_rate": 0.06549573210768221
+        },
+        "turnover": {
+          "brier": 0.025768604772192075,
+          "log_loss": 0.1221108971895971,
+          "mean_predicted_probability": 0.0266934430638336,
+          "observed_rate": 0.026482818997592472
+        }
+      },
+      "mean_predicted_rate": {
+        "fumble_lost": 0.003993671571773185,
+        "interception": 0.022699771492060393,
+        "pass_complete": 0.6417339161161961,
+        "pass_incomplete": 0.3300171563827519,
+        "sack": 0.0015554844372196697
+      },
+      "multiclass_brier": 0.5446700397423557,
+      "multiclass_log_loss": 1.1844509898007782,
+      "plays": 18276
+    },
+    "legacy": {
+      "actual_rate": {
+        "fumble_lost": 0.006894287590282338,
+        "interception": 0.019588531407310133,
+        "pass_complete": 0.5982162398774349,
+        "pass_incomplete": 0.3098052090172904,
+        "sack": 0.06549573210768221
+      },
+      "binary": {
+        "completion": {
+          "brier": 0.24085079568289933,
+          "log_loss": 0.6751426516732378,
+          "mean_predicted_probability": 0.6514387718273645,
+          "observed_rate": 0.5982162398774349
+        },
+        "interception": {
+          "brier": 0.019193082460153003,
+          "log_loss": 0.09623624059543298,
+          "mean_predicted_probability": 0.021671352202745485,
+          "observed_rate": 0.019588531407310133
+        },
+        "sack": {
+          "brier": 0.0653128643166922,
+          "log_loss": 0.4819367992530696,
+          "mean_predicted_probability": 0.001243982463115664,
+          "observed_rate": 0.06549573210768221
+        },
+        "turnover": {
+          "brier": 0.025768275062538246,
+          "log_loss": 0.12217033605129944,
+          "mean_predicted_probability": 0.02554496746100007,
+          "observed_rate": 0.026482818997592472
+        }
+      },
+      "mean_predicted_rate": {
+        "fumble_lost": 0.0038736152582544894,
+        "interception": 0.021671352202745485,
+        "pass_complete": 0.6514387718273645,
+        "pass_incomplete": 0.32177227824850013,
+        "sack": 0.001243982463115664
+      },
+      "multiclass_brier": 0.5454747718068168,
+      "multiclass_log_loss": 1.1982110759376443,
+      "plays": 18276
+    },
+    "off": {
+      "actual_rate": {
+        "fumble_lost": 0.006894287590282338,
+        "interception": 0.019588531407310133,
+        "pass_complete": 0.5982162398774349,
+        "pass_incomplete": 0.3098052090172904,
+        "sack": 0.06549573210768221
+      },
+      "binary": {
+        "completion": {
+          "brier": 0.23784696650240084,
+          "log_loss": 0.6685759059832405,
+          "mean_predicted_probability": 0.5985078181409571,
+          "observed_rate": 0.5982162398774349
+        },
+        "interception": {
+          "brier": 0.0191869330947815,
+          "log_loss": 0.09614977738481845,
+          "mean_predicted_probability": 0.020996570879800957,
+          "observed_rate": 0.019588531407310133
+        },
+        "sack": {
+          "brier": 0.060803645114046505,
+          "log_loss": 0.23874258276730106,
+          "mean_predicted_probability": 0.0651723867868054,
+          "observed_rate": 0.06549573210768221
+        },
+        "turnover": {
+          "brier": 0.0257727821449033,
+          "log_loss": 0.12219056746863564,
+          "mean_predicted_probability": 0.028938575925594668,
+          "observed_rate": 0.026482818997592472
+        }
+      },
+      "mean_predicted_rate": {
+        "fumble_lost": 0.007942005045790505,
+        "interception": 0.020996570879800957,
+        "pass_complete": 0.5985078181409571,
+        "pass_incomplete": 0.3073812191465561,
+        "sack": 0.0651723867868054
+      },
+      "multiclass_brier": 0.5375665164689704,
+      "multiclass_log_loss": 0.9535571810532802,
+      "plays": 18276
+    },
+    "two_stage": {
+      "actual_rate": {
+        "fumble_lost": 0.006894287590282338,
+        "interception": 0.019588531407310133,
+        "pass_complete": 0.5982162398774349,
+        "pass_incomplete": 0.3098052090172904,
+        "sack": 0.06549573210768221
+      },
+      "binary": {
+        "completion": {
+          "brier": 0.23804471873390182,
+          "log_loss": 0.6690098720521799,
+          "mean_predicted_probability": 0.6103001616786355,
+          "observed_rate": 0.5982162398774349
+        },
+        "interception": {
+          "brier": 0.019187666122918216,
+          "log_loss": 0.09614540466747319,
+          "mean_predicted_probability": 0.020212268647489304,
+          "observed_rate": 0.019588531407310133
+        },
+        "sack": {
+          "brier": 0.060803645114046505,
+          "log_loss": 0.23874258276730106,
+          "mean_predicted_probability": 0.0651723867868054,
+          "observed_rate": 0.06549573210768221
+        },
+        "turnover": {
+          "brier": 0.025773212685705035,
+          "log_loss": 0.12230292657878271,
+          "mean_predicted_probability": 0.023849934621508535,
+          "observed_rate": 0.026482818997592472
+        }
+      },
+      "mean_predicted_rate": {
+        "fumble_lost": 0.003637665974020267,
+        "interception": 0.020212268647489304,
+        "pass_complete": 0.6103001616786355,
+        "pass_incomplete": 0.300677516913054,
+        "sack": 0.0651723867868054
+      },
+      "multiclass_brier": 0.5379064659789905,
+      "multiclass_log_loss": 0.9550165643404481,
+      "plays": 18276
+    }
+  },
+  "paired_game_cluster_bootstrap_95pct_delta_vs_off": {
+    "A_only": {
+      "brier": [
+        0.007983910460027444,
+        0.010820274657353801
+      ],
+      "logloss": [
+        0.21157113141901007,
+        0.24908417852747444
+      ]
+    },
+    "D_only": {
+      "brier": [
+        0.00653402164204242,
+        0.008751218312072706
+      ],
+      "logloss": [
+        0.23811126135289684,
+        0.2801386373274808
+      ]
+    },
+    "E_only": {
+      "brier": [
+        0.00616740846383157,
+        0.008134935245340258
+      ],
+      "logloss": [
+        0.21219392381872626,
+        0.2509614090823582
+      ]
+    },
+    "legacy": {
+      "brier": [
+        0.006820060048214671,
+        0.009164401184667437
+      ],
+      "logloss": [
+        0.22543426282697943,
+        0.2657118975903121
+      ]
+    },
+    "two_stage": {
+      "brier": [
+        2.1506750649713524e-05,
+        0.00067096189940552
+      ],
+      "logloss": [
+        0.00032383000415880936,
+        0.002513221527982834
+      ]
+    }
+  },
+  "scope": "Observed 2025 dropback situations; prior-season situation-cell event rates with A/D/E only. No coverage, strength, player, scramble, or full drive/game effects. Historical tiers only.",
+  "training_seasons": [
+    2022,
+    2023,
+    2024
+  ]
+}

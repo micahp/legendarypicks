@@ -195,6 +195,8 @@ def _reproduction_command(args, seed):
     ):
         if enabled:
             command.append(flag)
+    if getattr(args, 'playcall_pass_label_mode', 'legacy') != 'legacy':
+        command.extend(['--playcall-pass-label-mode', args.playcall_pass_label_mode])
     return shlex.join(command)
 
 
@@ -988,6 +990,7 @@ def run_batch(args):
                                                            score_clock_playcalling=resolved_profile['enabled_layers'].get(
                                                                'score_clock_playcalling', True),
                                                            season_adapt=args.playcall_season_adapt,
+                                                           pass_label_mode=args.playcall_pass_label_mode,
                                                            season_adapt_n0=args.season_adapt_n0,
                                                            workload_adaptive=getattr(args, 'workload_adaptive_config', None),
                                                            experimental_workload_estimator=getattr(args, 'experimental_workload_estimator', None))
@@ -1141,6 +1144,7 @@ def run_batch(args):
         'playcall_streak_league': bool(args.playcall_streak_league),
         'playcall_target_roles': bool(args.playcall_target_roles),
         'playcall_decision_filter_enabled': (not args.playcall_decision_unfiltered if args.playcall_decision else None),
+        'playcall_pass_label_mode': args.playcall_pass_label_mode,
     }
     if news_evidence is not None:
         ledger_header['news_evidence'] = {'evidence_sha256': news_evidence['evidence_sha256'],
@@ -1479,6 +1483,9 @@ def main(argv=None):
     ap.add_argument('--playcall-decision', action='store_true',
                     help='SLC v1 research: decision model categories A to N as pre-event draws (team priors from the prior season) '
                          'and outcomes conditioned on them')
+    ap.add_argument('--playcall-pass-label-mode', choices=('legacy', 'off', 'two_stage'), default='legacy',
+                    help='research-only A/D/E pass-dependent label handling: legacy V2; off removes their event lifts; '
+                         'two_stage applies them only after a pass outcome group is selected')
     ap.add_argument('--playcall-streak-league', action='store_true',
                     help='SLC v1 research: league-wide streak splits (dropback shift and outcome mix by streak state)')
     ap.add_argument('--playcall-streak-file', type=Path, default=None,
