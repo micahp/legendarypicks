@@ -31,6 +31,8 @@ python3 scripts/nfl_sequence/evaluate_matchup_capability.py \
 
 The evaluator reads only source Parquet from **2022–2024** (training) and **2025** (unseen test). It refuses training on target season, duplicate game/play keys, missing required PBP columns, overwritten outputs, and penalty/unknown-status rows. Evaluation uses 2025 observed *pre-play* contexts. The model does not use 2025 EPA tiers or observations as features. Fixed constants, before seeing 2025: 40 pseudo-observations per situation, L2 penalty 60, minimum situation support 20, 16 coordinate sweeps. These are starting values, not empirically optimized hyperparameters.
 
+**Evaluation caveat:** 2025 is a chronological holdout *relative to this new model's fit*, not a pristine family-wide holdout. Prior SLC experiments have already inspected 2025 football outcomes. Treat it as development-exposed research and retain future games/2026 as separate time-safe confirmation. No score is claimed until the command runs and the output is inspected.
+
 Per intent and group, it writes:
 - League situation baseline, offense-only, defense-only, and joint model on **identical plays** with multiclass log loss and multiclass Brier.
 - Binary Brier/log loss for sack, INT, fumbles lost, turnovers, chain-advance, and explosive event categories.

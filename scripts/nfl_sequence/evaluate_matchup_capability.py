@@ -327,6 +327,7 @@ def main():
     outcomes, strength_bins = evaluate(all_train, test, all_epa)
     result = {
         "status": "UNVALIDATED_RESEARCH_CANDIDATE",
+        "evaluation_status": "2025 retrospective chronological test; development-exposed, not pristine",
         "model": MODEL_ID,
         "split": {"fit_seasons": list(TRAIN_SEASONS), "holdout_season": TEST_SEASON,
                   "rules": "REG weeks 1-18, Q1-Q4, source penalty=0 only, no target-season data in fit"},
