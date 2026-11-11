@@ -1,0 +1,39 @@
+{
+  "as_of_utc": "2026-11-06T04:06:46+00:00",
+  "event_sequence": "unavailable",
+  "events": [],
+  "game": {
+    "end_utc": null,
+    "game_id": "401873037",
+    "league": "nfl",
+    "period": 4,
+    "start_utc": "2026-11-06T01:15:00+00:00",
+    "status": "final",
+    "status_detail": "Final"
+  },
+  "players": [],
+  "pregame_model_locks": [],
+  "sources": [
+    {
+      "captured_at": "2026-11-06T04:06:46+00:00",
+      "id": "scoreboard:401873037",
+      "source": "espn",
+      "source_event_id": "401873037",
+      "url": "https://www.espn.com/nfl/game/_/gameId/401873037"
+    }
+  ],
+  "teams": [
+    {
+      "id": "JAX",
+      "name": "Jacksonville Jaguars",
+      "score": 33,
+      "side": "away"
+    },
+    {
+      "id": "BAL",
+      "name": "Baltimore Ravens",
+      "score": 10,
+      "side": "home"
+    }
+  ]
+}

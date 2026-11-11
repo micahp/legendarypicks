@@ -1,0 +1,39 @@
+{
+  "as_of_utc": "2026-11-11T04:27:21+00:00",
+  "event_sequence": "unavailable",
+  "events": [],
+  "game": {
+    "end_utc": null,
+    "game_id": "401909960",
+    "league": "nba",
+    "period": 4,
+    "start_utc": "2026-11-11T00:30:00+00:00",
+    "status": "final",
+    "status_detail": "Final"
+  },
+  "players": [],
+  "pregame_model_locks": [],
+  "sources": [
+    {
+      "captured_at": "2026-11-11T04:27:21+00:00",
+      "id": "scoreboard:401909960",
+      "source": "espn",
+      "source_event_id": "401909960",
+      "url": "https://www.espn.com/nba/game/_/gameId/401909960"
+    }
+  ],
+  "teams": [
+    {
+      "id": "MIL",
+      "name": "Milwaukee Bucks",
+      "score": 85,
+      "side": "away"
+    },
+    {
+      "id": "NY",
+      "name": "New York Knicks",
+      "score": 117,
+      "side": "home"
+    }
+  ]
+}

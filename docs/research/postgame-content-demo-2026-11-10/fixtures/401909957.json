@@ -1,0 +1,39 @@
+{
+  "as_of_utc": "2026-11-10T05:23:20+00:00",
+  "event_sequence": "unavailable",
+  "events": [],
+  "game": {
+    "end_utc": null,
+    "game_id": "401909957",
+    "league": "nba",
+    "period": 4,
+    "start_utc": "2026-11-10T01:30:00+00:00",
+    "status": "final",
+    "status_detail": "Final"
+  },
+  "players": [],
+  "pregame_model_locks": [],
+  "sources": [
+    {
+      "captured_at": "2026-11-10T05:23:20+00:00",
+      "id": "scoreboard:401909957",
+      "source": "espn",
+      "source_event_id": "401909957",
+      "url": "https://www.espn.com/nba/game/_/gameId/401909957"
+    }
+  ],
+  "teams": [
+    {
+      "id": "DEN",
+      "name": "Denver Nuggets",
+      "score": 100,
+      "side": "away"
+    },
+    {
+      "id": "HOU",
+      "name": "Houston Rockets",
+      "score": 110,
+      "side": "home"
+    }
+  ]
+}
