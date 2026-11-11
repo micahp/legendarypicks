@@ -8,6 +8,12 @@ Date: 2026-11-10. This is an offline data and model audit. It did not modify the
 
 The source files contain 92,626 rows with `penalty=1`, 1,167,343 with `penalty=0`, and 40,850 with a null penalty field. `first_down_penalty=1` appears on 25,136 rows; 40,850 rows have a null first-down-penalty field. These counts describe the pinned PBP rows, not accepted penalties or unique enforcement events. Per-season counts and all source hashes are in `manifest.json`.
 
+### Field coverage for team-level research
+
+`penalty-field-coverage.json`, produced by `audit_coverage.py` in bounded chunks, reports every season separately and records the compressed input hash. Across the extract, all 92,626 flagged rows have a committing team matching one of the recorded sides, 92,451 have a penalty type, and 88,126 have a player ID. These are field-presence checks, not verification that the foul was accepted or enforced correctly. There are 117,634 `no_play` rows, of which 67,522 carry a penalty flag; removing all no-play rows would discard those flagged records. `no_play` alone does not identify the timing or acceptance of a foul.
+
+Among run, pass and `no_play` rows with both teams, a valid down, distance, field position, and game clock, 988,198 of 989,457 have a known 0/1 penalty flag. This is a **candidate source-row cohort**, not yet a validated count of independent offensive opportunities; special-teams opportunities, multiple fouls, repeated administrative rows, and next-state reconstruction require separate handling. The extract does not contain play descriptions, acceptance/decline, enforcement details, or historical acquisition timestamps. Those must come from additional evidence before building or grading a legal enforcement model; missing fields must remain unknown. The 1999–2000 source remains exploratory as specified in the protocol.
+
 ## 2026 penalty-field repair
 
 The original database remains byte-for-byte unchanged: `picks.dev.db` SHA-256 `1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa`. Its 2026 `penalty` value is null on all 21,018 rows, and it has no `first_down_penalty` column.
