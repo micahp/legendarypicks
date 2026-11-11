@@ -1,0 +1,145 @@
+{
+  "evaluations": {
+    "2025": {
+      "diagnostics": {
+        "cached_contexts": 20523,
+        "candidate_sha256": "fdf90c237cdca2a8b7de5b8d6f2272f20d5da3b4840206bfe13316399a7743de",
+        "candidate_training_plays": 109434,
+        "fallback_counts": {},
+        "scored_plays": 32732
+      },
+      "input": {
+        "clean_pool_plays": 35506,
+        "e1_exclusions": {
+          "negative derived clock runoff": 6,
+          "no same-quarter next snap for clock runoff": 3,
+          "penalty (not modelled)": 708,
+          "penalty status unknown": 1511,
+          "punt without a clean receiving-team snap": 228,
+          "qb_scramble (not in E1 vocabulary)": 1092,
+          "turnover that is a touchdown (not modelled)": 47,
+          "turnover without a clean new-offense snap": 94,
+          "unsupported play type or invalid down": 11087
+        },
+        "source_rows": 48771,
+        "unknown_penalty_rows": 1511,
+        "unrecognized_penalty_rows": 0
+      },
+      "scores": {
+        "event_team": {
+          "mean_log_loss": 2.015177444578204,
+          "mean_multiclass_brier": 0.8182857998069868,
+          "n": 32732
+        },
+        "joint_transition": {
+          "mean_log_loss": 2.0576354189622075,
+          "mean_multiclass_brier": 0.825393637254541,
+          "n": 32732
+        },
+        "league_cell": {
+          "mean_log_loss": 1.9920051149357765,
+          "mean_multiclass_brier": 0.8134743468168788,
+          "n": 32732
+        }
+      }
+    },
+    "2026": {
+      "diagnostics": {
+        "cached_contexts": 8525,
+        "candidate_sha256": "8b2a804f16947832451ee831e48e2cb501c54645a4c9829df84f8665294106a4",
+        "candidate_training_plays": 144940,
+        "fallback_counts": {},
+        "scored_plays": 12478
+      },
+      "input": {
+        "clean_pool_plays": 13553,
+        "e1_exclusions": {
+          "negative derived clock runoff": 8,
+          "no same-quarter next snap for clock runoff": 4,
+          "penalty (not modelled)": 291,
+          "penalty status unknown": 565,
+          "punt without a clean receiving-team snap": 92,
+          "qb_scramble (not in E1 vocabulary)": 376,
+          "turnover that is a touchdown (not modelled)": 11,
+          "turnover without a clean new-offense snap": 42,
+          "unsupported play type or invalid down": 4361
+        },
+        "source_rows": 18738,
+        "unknown_penalty_rows": 565,
+        "unrecognized_penalty_rows": 0
+      },
+      "scores": {
+        "event_team": {
+          "mean_log_loss": 2.008672818675458,
+          "mean_multiclass_brier": 0.8155685649372562,
+          "n": 12478
+        },
+        "joint_transition": {
+          "mean_log_loss": 2.0449927488016413,
+          "mean_multiclass_brier": 0.8216982228094534,
+          "n": 12478
+        },
+        "league_cell": {
+          "mean_log_loss": 1.9811032616775368,
+          "mean_multiclass_brier": 0.8103034022766107,
+          "n": 12478
+        }
+      }
+    }
+  },
+  "policy": "All seasons are read from the pinned 2026-10-27 Parquet snapshot. Fits include penalty==0 plays only; NULL/unrecognized penalty labels and confirmed penalties are excluded after ordered-sequence classification. No simulations run.",
+  "source_root": "/root/lp-snapshots/nfl-backfill-2026-10-27/raw/pbp",
+  "training": {
+    "2022": {
+      "clean_pool_plays": 36713,
+      "e1_exclusions": {
+        "negative derived clock runoff": 21,
+        "no same-quarter next snap for clock runoff": 10,
+        "penalty (not modelled)": 654,
+        "penalty status unknown": 1493,
+        "punt without a clean receiving-team snap": 248,
+        "qb_scramble (not in E1 vocabulary)": 908,
+        "turnover that is a touchdown (not modelled)": 63,
+        "turnover without a clean new-offense snap": 86,
+        "unsupported play type or invalid down": 10731
+      },
+      "source_rows": 49434,
+      "unknown_penalty_rows": 1493,
+      "unrecognized_penalty_rows": 0
+    },
+    "2023": {
+      "clean_pool_plays": 36745,
+      "e1_exclusions": {
+        "negative derived clock runoff": 15,
+        "no same-quarter next snap for clock runoff": 7,
+        "penalty (not modelled)": 685,
+        "penalty status unknown": 1488,
+        "punt without a clean receiving-team snap": 272,
+        "qb_scramble (not in E1 vocabulary)": 1041,
+        "turnover that is a touchdown (not modelled)": 63,
+        "turnover without a clean new-offense snap": 105,
+        "unsupported play type or invalid down": 10732
+      },
+      "source_rows": 49665,
+      "unknown_penalty_rows": 1488,
+      "unrecognized_penalty_rows": 0
+    },
+    "2024": {
+      "clean_pool_plays": 35976,
+      "e1_exclusions": {
+        "negative derived clock runoff": 13,
+        "no same-quarter next snap for clock runoff": 7,
+        "penalty (not modelled)": 719,
+        "penalty status unknown": 1517,
+        "punt without a clean receiving-team snap": 258,
+        "qb_scramble (not in E1 vocabulary)": 1079,
+        "turnover that is a touchdown (not modelled)": 45,
+        "turnover without a clean new-offense snap": 90,
+        "unsupported play type or invalid down": 11305
+      },
+      "source_rows": 49492,
+      "unknown_penalty_rows": 1517,
+      "unrecognized_penalty_rows": 0
+    }
+  }
+}
