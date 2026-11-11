@@ -215,6 +215,19 @@ class DescribeMemo(unittest.TestCase):
             self.assertEqual(se.describe(ref)['reference_sha256'], 'second')
             self.assertEqual(layer.call_count, 2)
 
+    def test_pass_label_model_code_is_in_the_layer_implementation_manifest(self):
+        sampler = se.slc.PlayCallSampler(SimpleNamespace(artifact={
+            'sha256': 'artifact-hash', 'artifact_id': 'artifact',
+            'frame_sha256': 'frame-hash',
+            'fit_seasons': [2022, 2023, 2024, 2025], 'reference_season': 2026,
+        }))
+        sampler.optional_input_sha256 = {}
+        ref = SimpleNamespace(contextual_sampler=sampler, pool_scope={})
+
+        description = se._describe_layer(ref)
+
+        self.assertEqual(len(description['integration_code_sha256']['pass_label_outcomes.py']), 64)
+
 
 class PlayerOutcomeRoleManifest(unittest.TestCase):
     def test_receiver_only_role_scope_is_recorded_in_the_model_manifest(self):
