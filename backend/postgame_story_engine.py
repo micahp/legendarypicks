@@ -1,28 +1,137 @@
-"""Research score-only postgame renderer. No I/O or model inference."""
+"""Deterministic postgame candidate selection and rendering; no I/O."""
 import hashlib
 import json
-from postgame_story_audit import audit
+from postgame_story_audit import audit, timestamp
 
-VERSION='postgame-score-v0.1'
+VERSION = 'postgame-v0.2'
+
+
+def _players(bundle):
+    """Return usable final-box-score facts, ordered independently of input order."""
+    game = bundle.get('game', {})
+    cutoff = timestamp(bundle.get('as_of_utc'))
+    team_ids = {t.get('id') for t in bundle.get('teams', [])}
+    team_map = {t.get('id'): t for t in bundle.get('teams', [])}
+    sources = {s.get('id'): s for s in bundle.get('sources', [])}
+    usable = []
+    for p in bundle.get('players', []):
+        source = sources.get(p.get('source_id'), {})
+        captured = timestamp(source.get('captured_at'))
+        points = p.get('stats', {}).get('points')
+        if (game.get('league') == 'nba' and p.get('game_id') == game.get('game_id')
+                and p.get('team_id') in team_ids and p.get('id') and p.get('name')
+                and p.get('publisher_team_id') and p.get('publisher_team_id') == team_map[p['team_id']].get('publisher_team_id')
+                and source.get('teams') == {str(t.get('publisher_team_id')): t.get('score') for t in bundle.get('teams', [])}
+                and source.get('kind') == 'final_boxscore' and source.get('status') == 'final'
+                and str(source.get('source_event_id')) == str(game.get('game_id'))
+                and cutoff and captured and timestamp(game.get('start_utc')) and timestamp(game.get('start_utc')) <= captured <= cutoff
+                and type(points) is int and 0 <= points <= 100):
+            usable.append(p)
+    return sorted(usable, key=lambda p: (-p['stats']['points'], str(p['id'])))
+
 
 def generate_recap(bundle):
-    material=json.dumps(bundle,sort_keys=True,separators=(',',':'),ensure_ascii=False)
-    digest=hashlib.sha256(material.encode()).hexdigest()
-    teams=bundle.get('teams',[])
-    out={'engine_version':VERSION,'input_sha256':digest,'headline':'','lede':'','paragraphs':[],
-         'candidates':[],'selected':None,'gate':'blocked'}
-    if len(teams)==2 and all(type(t.get('score')) is int and t['score']>=0 and t.get('name') for t in teams):
-        a,b=teams
-        if a['score']==b['score']:
-            out['headline']=f"{a['name']} and {b['name']} tie {a['score']}-{b['score']}"
-            out['lede']=f"{a['name']} and {b['name']} finished level at {a['score']}-{b['score']}."
+    material = json.dumps(bundle, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+    digest = hashlib.sha256(material.encode()).hexdigest()
+    teams = bundle.get('teams', [])
+    out = {'engine_version': VERSION, 'input_sha256': digest, 'headline': '', 'lede': '',
+           'paragraphs': [], 'candidates': [], 'claims': [], 'selected': None, 'gate': 'blocked'}
+    if len(teams) == 2 and all(type(t.get('score')) is int and t['score'] >= 0 and t.get('name') for t in teams):
+        a, b = teams
+        ids = [s.get('id') for s in bundle.get('sources', []) if s.get('id', '').startswith('scoreboard:')]
+        # Older fixture consumers may supply a differently named source.
+        if not ids:
+            ids = [s.get('id') for s in bundle.get('sources', []) if s.get('kind') != 'final_boxscore']
+        out['claims'].append({'type': 'result', 'teams': [{'id': t.get('id'), 'score': t['score']} for t in teams], 'source_ids': ids})
+        fallback = {'angle_id': 'final_result', 'candidate_type': 'fallback', 'priority': 0,
+                    'data_quality': 'score_only', 'evidence_ids': ids, 'reason': 'Final score',
+                    'entities': [a.get('id'), b.get('id')], 'template_key': 'result'}
+        out['candidates'].append(fallback)
+        out['selected'] = 'final_result'
+        if a['score'] == b['score']:
+            out['headline'] = f"{a['name']} and {b['name']} tie {a['score']}-{b['score']}"
+            out['lede'] = f"{a['name']} and {b['name']} finished level at {a['score']}-{b['score']}."
         else:
-            winner,loser=sorted(teams,key=lambda t:t['score'],reverse=True)
-            score=f"{winner['score']}-{loser['score']}"; margin=winner['score']-loser['score']
-            out['headline']=f"{winner['name']} beats {loser['name']}, {score}"
-            out['lede']=f"{winner['name']} beat {loser['name']} {score}, a {margin}-point margin."
-        out['candidates']=[{'angle_id':'final_result','candidate_type':'fallback','priority':0,'data_quality':'score_only','evidence_ids':[s.get('id') for s in bundle.get('sources',[])]}]
-        out['selected']='final_result'
-    out['audit']=audit(bundle,out)
-    if all(out['audit'].values()): out['gate']='eligible_score_only'
+            winner, loser = sorted(teams, key=lambda t: t['score'], reverse=True)
+            score = f"{winner['score']}-{loser['score']}"
+            margin = winner['score'] - loser['score']
+            out['headline'] = f"{winner['name']} defeat {loser['name']}, {score}"
+            out['lede'] = f"{winner['name']} defeated {loser['name']} {score}, a {margin}-point margin."
+            for player in _players(bundle):
+                points = player['stats']['points']
+                # A headline needs a notable performance from the winning team.
+                rebounds = player['stats'].get('rebounds')
+                double_double = type(rebounds) is int and rebounds >= 10 and 20 <= points < 30
+                if (points < 30 and not double_double) or player['team_id'] != winner['id']:
+                    continue
+                candidate = {'angle_id': 'player:' + str(player['id']), 'candidate_type': 'standout_player',
+                             'priority': 30, 'data_quality': 'final_boxscore',
+                             'evidence_ids': [player['source_id']], 'entities': [player['id'], player['team_id']],
+                             'facts': {'points': points, **({'rebounds': rebounds} if double_double else {})},
+                             'reason': '20 points and 10 rebounds' if double_double else '30 or more points in a win',
+                             'template_key': 'nba_double_double' if double_double else 'nba_points'}
+                out['candidates'].append(candidate)
+                if out['selected'] == 'final_result':
+                    out['selected'] = candidate['angle_id']
+                    if double_double:
+                        out['headline'] = f"{player['name']} posts a double-double as {winner['name']} beat {loser['name']}"
+                        out['lede'] = f"{player['name']} had {points} points and {rebounds} rebounds as {winner['name']} defeated {loser['name']} {score}, a {margin}-point margin."
+                    else:
+                        out['headline'] = f"{player['name']} scores {points} as {winner['name']} beat {loser['name']}"
+                        out['lede'] = f"{player['name']} scored {points} points as {winner['name']} defeated {loser['name']} {score}, a {margin}-point margin."
+                    out['claims'].append({'type': 'player_stat', 'player_id': player['id'], 'team_id': player['team_id'],
+                                          'game_id': player['game_id'], 'stat': 'points', 'value': points,
+                                          'source_id': player['source_id']})
+                    if double_double:
+                        out['claims'].append({'type': 'player_stat', 'player_id': player['id'], 'team_id': player['team_id'],
+                                              'game_id': player['game_id'], 'stat': 'rebounds', 'value': rebounds,
+                                              'source_id': player['source_id']})
+        if bundle.get('game', {}).get('league') == 'nfl' and a['score'] != b['score']:
+            winner = max(teams, key=lambda t: t['score'])
+            for player in sorted(bundle.get('players', []), key=lambda x: str(x.get('id', ''))):
+                src = next((x for x in bundle.get('sources', []) if x.get('id') == player.get('source_id')), {})
+                captured = timestamp(src.get('captured_at')); cutoff = timestamp(bundle.get('as_of_utc'))
+                yards = player.get('stats', {}).get('passing_yards'); touchdowns = player.get('stats', {}).get('passing_touchdowns')
+                if (player.get('id') and player.get('name') and player.get('team_id') == winner['id']
+                        and player.get('publisher_team_id') == winner.get('publisher_team_id') and player.get('publisher_team_id')
+                        and player.get('game_id') == bundle['game']['game_id']
+                        and src.get('kind') == 'final_boxscore' and src.get('status') == 'final'
+                        and str(src.get('source_event_id')) == str(bundle['game']['game_id'])
+                        and src.get('teams') == {str(t.get('publisher_team_id')): t['score'] for t in teams}
+                        and cutoff and captured and timestamp(bundle['game'].get('start_utc')) and timestamp(bundle['game'].get('start_utc')) <= captured <= cutoff and type(yards) is int and yards >= 200
+                        and type(touchdowns) is int and touchdowns >= 1):
+                    suffix = '' if touchdowns == 1 else 's'
+                    out['paragraphs'].append(f"{player['name']} threw for {yards} yards and {touchdowns} touchdown{suffix}.")
+                    out['claims'].append({'type': 'passing_line', 'player_id': player['id'], 'team_id': player['team_id'],
+                                          'game_id': player['game_id'], 'yards': yards, 'touchdowns': touchdowns,
+                                          'source_id': player['source_id']})
+                    out['candidates'].append({'angle_id': 'passing:' + str(player['id']),
+                                              'candidate_type': 'supporting_player', 'priority': -1,
+                                              'data_quality': 'final_boxscore', 'entities': [player['id'], player['team_id']],
+                                              'facts': {'yards': yards, 'touchdowns': touchdowns},
+                                              'evidence_ids': [player['source_id']], 'reason': 'Passing line supports the result',
+                                              'template_key': 'nfl_passing'})
+                    break
+        segments = bundle.get('segments', {})
+        period_scores = segments.get('period_scores', {})
+        source = next((x for x in bundle.get('sources', []) if x.get('id') == segments.get('source_id')), {})
+        cutoff = timestamp(bundle.get('as_of_utc')); captured = timestamp(source.get('captured_at'))
+        if (bundle.get('game', {}).get('league') == 'nba' and source.get('kind') == 'final_boxscore'
+                and source.get('status') == 'final' and str(source.get('source_event_id')) == str(bundle['game']['game_id'])
+                and cutoff and captured and timestamp(bundle['game'].get('start_utc')) and timestamp(bundle['game'].get('start_utc')) <= captured <= cutoff
+                and source.get('teams') == {str(t.get('publisher_team_id')): t['score'] for t in teams}
+                and all(t.get('publisher_team_id') in period_scores and len(period_scores[t['publisher_team_id']]) >= 4
+                        and all(type(n) is int and n >= 0 for n in period_scores[t['publisher_team_id']])
+                        and sum(period_scores[t['publisher_team_id']]) == t['score'] for t in teams)):
+            halves = {t['id']: sum(period_scores[t['publisher_team_id']][:2]) for t in teams}
+            if halves[a['id']] != halves[b['id']]:
+                leader, trailing = sorted(teams, key=lambda t: halves[t['id']], reverse=True)
+                out['paragraphs'].append(f"{leader['name']} led {halves[leader['id']]}-{halves[trailing['id']]} at halftime.")
+                out['claims'].append({'type': 'halftime_score', 'leader_id': leader['id'], 'trailing_id': trailing['id'],
+                                      'leader_score': halves[leader['id']], 'trailing_score': halves[trailing['id']],
+                                      'source_id': segments['source_id']})
+        out['candidates'].sort(key=lambda c: (-c['priority'], c['angle_id']))
+    out['audit'] = audit(bundle, out)
+    if all(out['audit'].values()):
+        out['gate'] = 'eligible' if len(out['claims']) > 1 else 'eligible_score_only'
     return out

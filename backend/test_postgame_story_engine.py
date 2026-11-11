@@ -22,6 +22,7 @@ class PostgameTests(unittest.TestCase):
     def test_score_only(self):
         out=generate_recap(fixture()); self.assertEqual(out['gate'],'eligible_score_only')
         self.assertIn('33-10',out['headline']); self.assertIn('23',out['lede'])
+        self.assertIn('Jaguars defeat', out['headline'])
         self.assertNotIn('comeback',json.dumps(out).lower())
     def test_nonfinal_and_bad_scores_block(self):
         for status in ('in','suspended','postponed','retired'):
@@ -30,6 +31,9 @@ class PostgameTests(unittest.TestCase):
             b=fixture();b['teams'][0]['score']=score;self.assertEqual(generate_recap(b)['gate'],'blocked')
     def test_future_capture_blocked(self):
         b=fixture();b['sources'][0]['captured_at']='2027-01-01T00:00:00Z';self.assertEqual(generate_recap(b)['gate'],'blocked')
+    def test_capture_before_kickoff_cannot_prove_final(self):
+        b=fixture();b['sources'][0]['captured_at']='2026-11-01T16:00:00Z'
+        self.assertEqual(generate_recap(b)['gate'],'blocked')
     def test_tie_does_not_invent_winner(self):
         b=fixture();b['teams'][0]['score']=10;out=generate_recap(b)
         self.assertNotIn('beats',out['headline']);self.assertIn('tie',out['headline'].lower())

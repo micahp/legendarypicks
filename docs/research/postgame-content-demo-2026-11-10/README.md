@@ -1,39 +1,42 @@
-# Postgame content demo: score-only prototype
+# Postgame content demo
 
-Status: **incomplete research draft; not suitable for deployment or publication**. The demo is standalone and does not modify the app, database, flags, routes, or cached articles. It reuses the existing pregame system's evidence, cutoff, independent-audit, and separate-storage concepts. The existing pregame audit and rubric cannot certify postgame claims and are not called here. This first slice supports only verified scoreboard results and derived score margins; it does not implement the requested substantive postgame engine.
+Status: **research draft, incomplete, not approved for publication or deployment**. Fixture replay is CPU-only and uses no database, model, GPU or network. It does not change production routes, stories, flags, or data. The existing pregame engine and its timing-specific audit remain unchanged. The postgame grader reuses its pastel palette and jargon detection but applies separate dimensions and postgame timing rules.
 
 ## Replay
 
-From `backend/`:
+From `backend/` using the existing project environment:
 
 ```sh
-python demo_postgame.py
-python -m unittest test_postgame_story_engine test_story_engine test_story_engine_runtime test_recap_fallback
+/root/legendarypicks/backend/venv/bin/python demo_postgame.py
+/root/legendarypicks/backend/venv/bin/python -m pytest -q test_postgame_story_engine.py test_postgame_rich.py test_postgame_facts.py test_postgame_store.py test_postgame_demo.py test_story_engine.py test_story_engine_runtime.py test_recap_fallback.py
 ```
 
-The replay opens only the pinned JSON fixture files, writes artifacts in this research directory, and uses no model, GPU, database or network. Open `demo.html` directly in a browser. Three finalists produce nine preliminary cards: three final summaries, three score comparisons and three margin cards. These are intentionally repetitive score-only scaffolding, not a demonstration of editorial diversity. The comparison cards contain structured data; the static page does not yet draw charts.
+Open `demo.html` directly. It has four daypart views, three local-only polls, favorite team and league controls, charts, 1:1 and 9:16 layouts, a text rundown, per-game candidate and claim evidence, and an automated six-dimension rubric. The live tab is explicitly empty. No clips or public poll totals are invented. The `show_rundowns.jsonl`, `feed_posts.jsonl`, `recaps.jsonl`, and `evidence_manifest.json` files are replay outputs. Scores are mechanical editorial proxies, not human preference ratings.
 
-## Provenance
+The optional scoreboard adapter opens SQLite with `mode=ro` and `query_only=ON`; it only collects the selected row and cannot establish final-box-score player facts. It requires a separate output directory:
 
-The fixtures contain normalized fields copied from the `scoreboard_snapshots` table in the production `picks.db`, opened with SQLite `mode=ro`. The recorded ESPN source event IDs, local capture timestamps, teams and final scores are in each file. These are local captures of ESPN scoreboard data, not independently reconciled publisher snapshots. Fixture SHA-256 (raw bytes):
+```sh
+/root/legendarypicks/backend/venv/bin/python demo_postgame.py --db /path/to/picks.db --league nba --game-id EVENT_ID --output /tmp/lp-postgame-output
+```
+
+An opt-in store API is provided for isolated demo history. It accepts only resolved paths under `/tmp` or this research directory. It independently checks the result, input hash and rubric before saving, deduplicates accepted versions, and does not replace the latest accepted pointer with an older capture. Fixture replay never opens or creates this store.
+
+## Captures
+
+The original final scoreboard fixtures came from read-only `scoreboard_snapshots` rows in the local production database. Later ESPN game-summary captures established publisher team IDs, final status and matching scores. The Houston fixture also archives the final player box-score fields and period scores from an ESPN summary captured at 2026-11-11 05:44:59 UTC. Both teams' player-point sums and period sums reconcile to their final scores. The replay uses these later facts only at or after that capture, not at the earlier scoreboard timestamp. The fixture includes the capture time, endpoint, source ID and raw-response hash; the raw publisher response is not stored.
 
 | ESPN event | Fixture SHA-256 |
 |---|---|
-| 401873037, JAX at BAL | `5b828f677e6d3122151fa421e045991c4131552ff1a66f33affda52b0a4153ab` |
-| 401909957, DEN at HOU | `ab0f856764b9d9558c5f28ddb4fcd67323b32c475419525220a44e97cbd8e86b` |
-| 401909960, MIL at NY | `6d31313b0e50bce875ae971277c49f58dd850a0e051df3ee805c7054356fd849` |
+| 401873037, JAX at BAL | `55ce14248c84521a80e0d37d94a259776ab460f07bd1b60178baaef54525b9f0` |
+| 401909957, DEN at HOU | `0c2af8db37f667370fee669b8d1d01df16dd2a14f41c6f58c07dca540f342259` |
+| 401909960, MIL at NY | `c0c247fbd52c14092ae297eba8b46d2ac7b517042fdae35c322570a62b3d2e4a` |
 
-The fixtures do not establish exact end times, complete play-by-play, final-box-score player facts, pregame model locks or rights-cleared video. They intentionally contain none of those details.
+The selected ESPN play sequences inspected for both NBA games contained sequence numbers that were not monotonic in response order. The Jacksonville drive sequence includes a score regression from 33-3 to 32-3 after a touchdown. No complete reconciled PBP has been established, so no turning-point or game-winning-play claim is made. The halftime score is independently recomputed from the captured period scores, not inferred from an incomplete play sequence. The Jacksonville fixture also includes final passing lines captured at 2026-11-11 05:50:32 UTC. NY remains a score-only example; missing data is not represented as zero.
 
-## Limited held-out check
+## Evaluation and remaining work
 
-`evaluate_postgame_score_only.py` samples 50 captured NFL and 50 NBA `state=post` scoreboard rows using SHA-256 seed `20261110-postgame-v1`, excluding the three demo IDs. It reads a specified SQLite DB via `mode=ro`; it does not call external APIs. The measured run is in `evaluation.json` and `heldout_results.jsonl`. All 100 passed the current narrow score-only checks. They contain no narrative beyond the score. This is neither an independent source reconciliation nor a human editorial evaluation. Timings measure only the in-memory renderer, not collection or UI. No human ratings were collected. The files do not archive the held-out input snapshots, so this measurement is not yet independently replayable from committed fixtures.
+`evaluation.json` and `heldout_results.jsonl` are the prior score-only v0.1 experiment. They are **not** a held-out evaluation of the current engine. Their input snapshots were not archived and the samples are now exposed development examples. A new fixed-seed held-out sample must exclude those games and the coached examples, archive its input facts, and be evaluated only after the rules are frozen. No human preference ratings have been collected.
 
-## Remaining work before acceptance
+The engine can select an NBA 30-point game or a 20-point, 10-rebound game for a winning team, verify its source and canonical identity, and add a supported halftime score. It also supports sourced NFL passing lines. It cannot yet select NFL rushing or receiving facts, richer stakes, or validated event hooks. Full multi-paragraph recaps, robust source reconciliation across publishers, game-specific pregame-lock receipts, more diverse supporting facts, a verified event sequence and the complete specified held-out editorial evaluation remain unfinished. The current score cards and two player cards remain repetitive. The rubric is a simple rule-based proxy; a high score does not prove editorial quality.
 
-- Implement and validate canonical player box scores, complete ordered play data and genuine substantiated hooks, plus reconciliation against a second source.
-- Implement ranked, selected and rejected narrative candidates, full recaps, independent per-claim checks and the requested postgame-specific six-dimension rubric.
-- Implement non-score-only varied cards, source-backed charts, model-lock receipts or explicit unavailable state, clip placeholder, local polls, runnable rundown and the four-state UI.
-- Add durable append-only history for an isolated demo store and an accepted-story pointer, with no writes to live DBs. This prototype has no storage API.
-- Complete the specified adversarial and responsive browser tests, immutable fixture capture for the held-out sample, blind human comparison, and an actual game-event example.
-- The static HTML has not been tested in a browser at the requested viewport widths. No preference or production-readiness claim is supported.
+Five viewport widths were checked in headless Chromium for page overflow, local poll selection, and JavaScript errors. These checks do not establish every possible clipping or accessibility condition. No production feature flag or deployment was changed.
