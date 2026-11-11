@@ -1086,7 +1086,8 @@ def _describe_layer(ref):
                          'playcall_model.py',
                          'team_tendency.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
                          'streak_splits.py', 'target_roles.py', 'decision_layer.py', 'player_shares.py',
-                         'share_distributions.py', 'fit_cache.py', 'qb_decisions.py', 'player_outcomes.py', 'playbook_prior.py',
+                         'pass_label_outcomes.py', 'share_distributions.py', 'fit_cache.py', 'qb_decisions.py',
+                         'player_outcomes.py', 'playbook_prior.py',
                          'paired_random_streams.py', 'run_slc_game.py', 'simulate_pregame_batch.py',
                          'slc_engine.py', 'slc_playcall.py')
     description['integration_code_sha256'] = {
