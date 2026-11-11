@@ -1,0 +1,165 @@
+{
+  "conclusion": "Within this 211-dropback, exact-cell sample, coverage lowered mean sack probability, decision-label weighting produced the largest additional reduction, and team/player weighting slightly raised it. No sparse-backoff dropbacks occurred; this is diagnostic evidence, not a calibrated population estimate.",
+  "dropback_paths": {
+    "exact_cell": 211
+  },
+  "dropback_traces": 211,
+  "game_id": "2026_09_ARI_SEA",
+  "outputs": {
+    "ari-sea-new-inputs.boxscores.jsonl": {
+      "bytes": 595521,
+      "sha256": "a49bce984802729fcd71d40d0e6157708b7679650a9cf6bf7b8d17bcaeef686a"
+    },
+    "ari-sea-new-inputs.json": {
+      "bytes": 4158335,
+      "sha256": "549d4c2b22822358a9f671ea81fc95930a8fc45defaa4c8a33a9e8d44bc94b0c"
+    },
+    "ari-sea-new-inputs.seeds.jsonl": {
+      "bytes": 2641593,
+      "sha256": "12c846349a2250116cb6e9d8add2a6e84af52d2897421ce26b3cf9fa028bf6bd"
+    }
+  },
+  "restore_sack_mass_enabled": false,
+  "runtime_seconds": {
+    "context_and_reference_build": 260.0204,
+    "game_generation": 17.6653,
+    "snapshot_load": 8.0713,
+    "total_before_report_write": 321.3953,
+    "v1_baseline_lookup_or_fit": 0.0
+  },
+  "scores_away_home": {
+    "1": [
+      19,
+      18
+    ],
+    "2": [
+      24,
+      17
+    ],
+    "3": [
+      41,
+      20
+    ]
+  },
+  "seeds": [
+    1,
+    2,
+    3
+  ],
+  "selected_dropback_events": {
+    "interception": 2,
+    "pass_complete": 139,
+    "pass_incomplete": 63,
+    "sack": 7
+  },
+  "stage_mean_probabilities": [
+    {
+      "fumble_lost_mean_probability": 0.00596977,
+      "fumble_lost_n": 197,
+      "interception_mean_probability": 0.01585736,
+      "interception_n": 208,
+      "pass_complete_mean_probability": 0.59682444,
+      "pass_complete_n": 211,
+      "path": "exact_cell",
+      "sack_mean_probability": 0.06486483,
+      "sack_n": 210,
+      "stage": "base_exact_outcome_rows",
+      "trace_count": 211
+    },
+    {
+      "fumble_lost_mean_probability": 0.00588424,
+      "fumble_lost_n": 197,
+      "interception_mean_probability": 0.01563459,
+      "interception_n": 208,
+      "pass_complete_mean_probability": 0.59829632,
+      "pass_complete_n": 211,
+      "path": "exact_cell",
+      "sack_mean_probability": 0.06351114,
+      "sack_n": 210,
+      "stage": "formation",
+      "trace_count": 211
+    },
+    {
+      "fumble_lost_mean_probability": 0.00527283,
+      "fumble_lost_n": 197,
+      "interception_mean_probability": 0.01605883,
+      "interception_n": 208,
+      "pass_complete_mean_probability": 0.61207679,
+      "pass_complete_n": 211,
+      "path": "exact_cell",
+      "sack_mean_probability": 0.04838306,
+      "sack_n": 210,
+      "stage": "coverage",
+      "trace_count": 211
+    },
+    {
+      "fumble_lost_mean_probability": 0.00451128,
+      "fumble_lost_n": 197,
+      "interception_mean_probability": 0.01533569,
+      "interception_n": 208,
+      "pass_complete_mean_probability": 0.6126726,
+      "pass_complete_n": 211,
+      "path": "exact_cell",
+      "sack_mean_probability": 0.04817203,
+      "sack_n": 210,
+      "stage": "league_streak",
+      "trace_count": 211
+    },
+    {
+      "fumble_lost_mean_probability": 0.00322676,
+      "fumble_lost_n": 197,
+      "interception_mean_probability": 0.01510238,
+      "interception_n": 208,
+      "pass_complete_mean_probability": 0.63382009,
+      "pass_complete_n": 211,
+      "path": "exact_cell",
+      "sack_mean_probability": 0.02076913,
+      "sack_n": 210,
+      "stage": "decision_labels",
+      "trace_count": 211
+    },
+    {
+      "fumble_lost_mean_probability": 0.00168159,
+      "fumble_lost_n": 197,
+      "interception_mean_probability": 0.01744439,
+      "interception_n": 208,
+      "pass_complete_mean_probability": 0.63888696,
+      "pass_complete_n": 211,
+      "path": "exact_cell",
+      "sack_mean_probability": 0.02165853,
+      "sack_n": 210,
+      "stage": "team_event_weights",
+      "trace_count": 211
+    },
+    {
+      "fumble_lost_mean_probability": 0.00169061,
+      "fumble_lost_n": 197,
+      "interception_mean_probability": 0.02101581,
+      "interception_n": 208,
+      "pass_complete_mean_probability": 0.64424327,
+      "pass_complete_n": 211,
+      "path": "exact_cell",
+      "sack_mean_probability": 0.02247491,
+      "sack_n": 210,
+      "stage": "player_event_weights",
+      "trace_count": 211
+    },
+    {
+      "fumble_lost_mean_probability": 0.00169061,
+      "fumble_lost_n": 197,
+      "interception_mean_probability": 0.02101581,
+      "interception_n": 208,
+      "pass_complete_mean_probability": 0.64424327,
+      "pass_complete_n": 211,
+      "path": "exact_cell",
+      "sack_mean_probability": 0.02247491,
+      "sack_n": 210,
+      "stage": "final_event_draw",
+      "trace_count": 211
+    }
+  ],
+  "status": "complete",
+  "strict_reconciliations_passed": 3,
+  "traces_total": 436,
+  "valid_games": 3
+}

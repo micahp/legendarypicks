@@ -1,0 +1,36 @@
+{
+  "all_nontrace_outcome_fields_equal": true,
+  "all_scores_equal": true,
+  "all_seed_roots_equal": true,
+  "seed_comparisons": [
+    {
+      "all_nontrace_outcome_fields_equal": true,
+      "off_trace_count": 0,
+      "same_rng_root": true,
+      "same_score": true,
+      "seed": 1,
+      "trace_count": 135
+    },
+    {
+      "all_nontrace_outcome_fields_equal": true,
+      "off_trace_count": 0,
+      "same_rng_root": true,
+      "same_score": true,
+      "seed": 2,
+      "trace_count": 142
+    },
+    {
+      "all_nontrace_outcome_fields_equal": true,
+      "off_trace_count": 0,
+      "same_rng_root": true,
+      "same_score": true,
+      "seed": 3,
+      "trace_count": 159
+    }
+  ],
+  "status": "complete",
+  "trace_off_boxscores_sha256": "a49bce984802729fcd71d40d0e6157708b7679650a9cf6bf7b8d17bcaeef686a",
+  "trace_off_seed_ledger_sha256": "08a4d18aa03c2e7045c8624c7b16141e47dee403193c0f98c2b961bf3649831d",
+  "trace_on_boxscores_sha256": "a49bce984802729fcd71d40d0e6157708b7679650a9cf6bf7b8d17bcaeef686a",
+  "trace_on_seed_ledger_sha256": "12c846349a2250116cb6e9d8add2a6e84af52d2897421ce26b3cf9fa028bf6bd"
+}

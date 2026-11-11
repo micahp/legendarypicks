@@ -1,0 +1,145 @@
+{
+  "blocker_fixes": [
+    "run_scramble_backoff",
+    "long_field_goal_feasibility",
+    "blocked_kick_source_audit",
+    "blocked_kick_geometry",
+    "safety_free_kick_boundaries"
+  ],
+  "code_commit": "97c3359645c58519d7ddb07625204bf9b0790ee2",
+  "database": {
+    "included": false,
+    "path": "/root/legendarypicks/backend/data/picks.dev.db",
+    "sha256": "5d75378aa7fd35948a8dc73d7f22eae1f6837cc0dbe97e4c46747bd982ed14dd"
+  },
+  "experiment": "fresh-input C2 diagnostic, not archived replay",
+  "game_id": "2026_09_ARI_SEA",
+  "limitations": [
+    "one matchup and three paired seeds; descriptive, not population calibration",
+    "no sparse-backoff path reached",
+    "trace objects omit down, distance, field position, score state and source play id",
+    "database was identified by SHA but is not included"
+  ],
+  "other_input_hashes": {
+    "PBP_2026": "5030e8fc1739ea8f93ce67b461f76d3ae89b2f952d430ddbfa5b7f7f07d44b18",
+    "database": "5d75378aa7fd35948a8dc73d7f22eae1f6837cc0dbe97e4c46747bd982ed14dd"
+  },
+  "outputs": {
+    "README.md": {
+      "bytes": 4308,
+      "sha256": "d28e375a4645debc73f9bc42286100da5e97ba35ed58ccbba11378ab0deef948"
+    },
+    "run_trace.py": {
+      "bytes": 668,
+      "sha256": "ba2fb5d9fdc0b8da72d743e7438e76f288df9c1c189b6a0a08b94b8dd67af23c"
+    },
+    "snapshot.json": {
+      "bytes": 11377,
+      "sha256": "cc44c5e0f0e3216a6785d2b79af65174a27b95133e8600da07d412237338e475"
+    },
+    "stage-analysis.json": {
+      "bytes": 4840,
+      "sha256": "f44cd6f10a4df2fc3789ef6c6b4b3eb6cac4997aedb252c05ee3963293045dad"
+    },
+    "trace-off-seeds.jsonl.gz": {
+      "bytes": 80686,
+      "sha256": "843eb29da98d656c4757a2416a29d2904a2a4ddc7f357a580576c4acc436d4b9"
+    },
+    "trace-on-seeds.jsonl.gz": {
+      "bytes": 248627,
+      "sha256": "3bf1492abb548dab41a456d1e3939d135ca291a737af307f52e250d6df8c7b01"
+    },
+    "trace-parity.json": {
+      "bytes": 1123,
+      "sha256": "05c3e1bcb56d80594fe78f964060315494f251876b5071ab09e41ef63574c099"
+    }
+  },
+  "pbp_release": {
+    "sha256": "5030e8fc1739ea8f93ce67b461f76d3ae89b2f952d430ddbfa5b7f7f07d44b18",
+    "url": "https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_2026.parquet"
+  },
+  "profile": "v1_full_stack+slc-v2",
+  "restore_sack_mass": false,
+  "results": {
+    "dropbacks_traced": 211,
+    "exact_cell": 211,
+    "sampled_events": {
+      "interception": 2,
+      "pass_complete": 139,
+      "pass_incomplete": 63,
+      "sack": 7
+    },
+    "sparse_backoff": 0,
+    "strict_reconciliations_passed": 3,
+    "valid_games": 3
+  },
+  "rng_protocol": "v2",
+  "runtime_seconds": {
+    "trace_off_model_context_build": 236.2831,
+    "trace_off_simulation": 16.7451,
+    "trace_off_total": 291.8362,
+    "trace_on_model_context_build": 260.0204,
+    "trace_on_simulation": 17.6653,
+    "trace_on_total": 321.3953
+  },
+  "schema": "slc-c2-probability-trace-run-v1",
+  "season_frame_check": {
+    "cutoff_utc": "2026-11-08T19:55:00+00:00",
+    "eligible_games": 122,
+    "eligible_pbp_rows": 21347,
+    "frame_games": 122,
+    "frame_plays": 14960,
+    "null_score_relevant_plays": 0,
+    "unmatched_relevant_plays": 0
+  },
+  "seed_ids": [
+    1,
+    2,
+    3
+  ],
+  "snapshot": {
+    "as_of": "2026-11-07T22:16:59Z",
+    "path": "snapshot.json",
+    "sha256": "cc44c5e0f0e3216a6785d2b79af65174a27b95133e8600da07d412237338e475",
+    "status": "valid_before_roster_finalization"
+  },
+  "source_inputs": {
+    "participation_field": {
+      "bytes": 3348137,
+      "path": "docs/research/slc-v2-model-d1-10k-2026-11-10/inputs/participation-field-v4.json",
+      "sha256": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41"
+    },
+    "playcall_artifact": {
+      "bytes": 9062,
+      "path": "docs/research/slc-v2-model-d1-10k-2026-11-10/inputs/SLC-PLAYCALL-ARTIFACT-v1.json",
+      "sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5"
+    },
+    "snap_counts": {
+      "bytes": 301322,
+      "path": "docs/research/slc-v2-model-d1-10k-2026-11-10/inputs/snap-counts-through-week-8.json",
+      "sha256": "36f28e18af3080df9f160d42dd5e3e59c37cfacf0dd24772ea51cfd41cadcfca"
+    },
+    "snapshot": {
+      "bytes": 11377,
+      "path": "docs/research/slc-c2-probability-trace-2026-11-11/snapshot.json",
+      "sha256": "cc44c5e0f0e3216a6785d2b79af65174a27b95133e8600da07d412237338e475"
+    },
+    "streaks": {
+      "bytes": 3177,
+      "path": "docs/research/slc-v2-model-d1-10k-2026-11-10/inputs/wl-streaks-2026-11-07.json",
+      "sha256": "50490140dac78836c135226096b9101fc4f1a44e22837aba04174d921a065c78"
+    },
+    "workload_D1": {
+      "bytes": 203597,
+      "path": "docs/research/slc-v2-model-d1-10k-2026-11-10/inputs/adaptive-workload-D1-inputs.json.gz",
+      "sha256": "cec16cb2462ef71eaf0fc5d300ce6729e57c915b114dd8615f8e7d924986a618"
+    }
+  },
+  "status": "complete",
+  "test_module_sha256": "19e8213bf1f7e4073a36735e34d8b6560a4e11a8f91b873d5a9590b2dd167e53",
+  "trace_flag_on_run": true,
+  "trace_module_sha256": "fe93b605074da3844a9bd24a1adfc9a76fa461e4f81c28f6c7f8f61e8a5b278f",
+  "trace_off_execution": "code_commit",
+  "trace_on_execution": "HEAD 085c5991099aa96141706f3d08281523d3af250f plus working patch committed verbatim as code_commit",
+  "workload_estimator": "D1"
+}
