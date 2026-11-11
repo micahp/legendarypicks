@@ -18,11 +18,30 @@ Among run, pass and `no_play` rows with both teams, a valid down, distance, fiel
 
 The full pinned parquet files include descriptions and `order_sequence`, unlike the compact extract. `audit_source_descriptions.py` checks every annual file against the original manifest hash and counts literal text markers in all rows, including rows whose penalty flag is zero or missing. The resulting per-season counts are in `penalty-description-coverage.json`.
 
+The audit processes 32,768-row Arrow batches and uses vectorized Arrow string and count kernels, so memory stays bounded by one batch instead of the full 1.3-million-row corpus. Hash verification remains enabled. The optimized script reproduces the checked-in counts exactly; on this host, a full scan took 5.18 seconds and peaked at 165,428 KiB RSS.
+
 Across 1999–2026, descriptions in 12,762 rows contain “declined”: 10,735 have `penalty=0`, 256 have an unknown penalty flag, and 1,771 have `penalty=1`. Descriptions in 1,705 rows contain an offsetting marker: 423 have `penalty=0`, 1,269 have unknown penalty status, and 13 have `penalty=1`. Thus a corpus selected only by `penalty=1` omits most descriptions with these markers. In 2025, 524 descriptions contain “declined,” including 437 with `penalty=0` and 10 with unknown status.
 
 These are **text-marker counts**, not verified foul or adjudication totals. A description can discuss multiple fouls with different dispositions: 4,075 flagged rows mention a penalty more than once, and enforced and declined markers can coexist. All 92,626 flagged rows have a description, while 85,998 have a non-null `order_sequence`. Neither word matching nor the presence of an ordering field proves a legal enforcement spot, an official statistical result, or a reconstructed next state. Exact foul segmentation and independent validation against the official record remain necessary. The source files also do not establish when their contents were first available historically.
 
 The script also triages descriptions containing exactly one penalty mention and exactly one disposition marker: 88,429 have an `enforced` marker, 10,774 have a `declined` marker, and 3 have an `offsetting` marker. It leaves multiple mentions, conflicting markers, and missing markers ambiguous. These counts cover all source rows, not just rows with `penalty=1`; they are candidates for manual and official-record validation, not training labels or proof that all fouls have been captured.
+
+### Manual official-record cross-check
+
+`official-sample-validation-2016-2025.json` checks ten plays against official GSIS gamebooks: [CAR–DEN in 2016](https://www.nflgsis.com/2016/REG/01/56901/Gamebook.pdf) and [TB–DET in 2025](https://www.nflgsis.com/2025/REG/07/59949/Gamebook.pdf). The sample contains twelve foul events: seven accepted, three declined, and two offsetting. It confirms three data issues that matter for labels: one play contains two fouls with different dispositions while scalar fields encode only one; declined-only fouls appear in descriptions with `penalty=0` and null scalar fields; and an offsetting-foul row has a null penalty flag. Selected accepted no-play rows have `play_deleted=0`, so that field cannot stand in for play status. The following effective source state agrees with the official sequence in all ten sampled cases, including first downs awarded on third and fourth down, a repeated false-start down, a nullified offensive pass-interference play, offsetting fouls, and enforcement after a punt.
+
+This is a small manual sample from two games. It validates those source-row mappings and transitions, not field meaning or completeness across seasons. Do not use it as a representative training set. Reproduce the pinned-source check with:
+
+```bash
+backend/venv/bin/python docs/research/slc-v2-penalty-opportunities-2026-11-10/audit_official_sample.py \
+  --manifest docs/research/slc-v2-penalty-opportunities-2026-11-10/manifest.json \
+  --schedule /root/lp-snapshots/nfl-backfill-2026-10-27/raw/schedules/games.parquet \
+  --output /tmp/official-sample-validation-2016-2025.json
+```
+
+The all-season `penalty-clause-coverage.json` audit separately parses literal foul clauses. It found 105,308 rows with at least one parseable clause and 109,352 clauses across 1999–2026. There were 3,864 rows with multiple parsed clauses and 95 penalty-word rows with no parsed clause. In 2025, scalar `penalty_team`/`penalty_type` fields match at least one parsed text clause on all 3,559 `penalty=1` rows; five match a later clause rather than the first text clause. In 2026, 1,764 of 1,765 flagged rows match some parsed clause. Across all years, 3,043 flagged rows do not match a parsed clause; most are in older sources where penalty type or team identity is incomplete or uses a different team code.
+
+Do not compare `penalty_yards` with a foul's stated enforcement distance: the [nflfastR data dictionary](https://cloud.r-project.org/web/packages/nflfastR/refman/nflfastR.html) defines it as yards gained or lost by the offense from the penalty, while `penalty_type` is described as the first penalty in the play. These source fields do not encode every foul in a multi-foul play. The clause audit is source-internal and exploratory; it does not turn text into official training labels.
 
 `audit_ordered_states.py` checks whether a flagged row has a unique within-game `order_sequence` and a following source row with team, down, distance, field position, period and clock present. Across all years, 85,878 of 92,626 flagged rows are in games with unambiguous recorded ordering and have a following source row; 81,225 also have all those fields on that following row. Eleven games contain duplicate order values and are excluded from these counts. In 2025, the counts are 3,559 and 3,371 of 3,559 flagged rows; in 2026, 1,765 and 1,694 of 1,765. Results and source hashes are in `penalty-adjacent-state-coverage.json`.
 
@@ -117,6 +136,8 @@ The earlier 2025 holdout audit found 6.544% observed versus 6.580% matchup-predi
 - `penalty-opportunity-plays-1999-2026.csv.gz`: compressed row-level historical extract.
 - `penalty-source-overlay-2026.csv.gz`: separate 2026 source overlay.
 - `manifest.json`: source and output hashes, per-season status counts, and 2026 reconciliation.
+- `audit_official_sample.py` and `official-sample-validation-2016-2025.json`: ten pinned manual GSIS gamebook cross-checks.
+- `audit_penalty_clauses.py` and `penalty-clause-coverage.json`: per-season literal clause parsing and scalar-field alignment audit.
 - `conditional-audit-2026-overlay.json`: corrected walk-forward outcomes and common-cohort comparison.
 - `sack_context_2026_penalty_overlay.json`: corrected sack rates by team and context, plus same-cohort ingestion comparison.
 - `audit_2026_penalty_overlay.py`: corrected 2026 conditional audit.
@@ -139,4 +160,4 @@ backend/venv/bin/python scripts/nfl_sequence/penalty_corpus.py \
   --output /path/to/new-directory --seasons $(seq 1999 2026)
 ```
 
-The builder checks every source hash before creating the output directory, reads one bounded batch at a time, and refuses an existing output directory. These rows are a foundation for the remaining official-record validation, opportunity and foul classification, enforcement reconstruction, and held-out model tests; they do not enable penalties in the simulator.
+The builder checks every source hash before creating the output directory, reads one bounded batch at a time, and refuses an existing output directory. These rows are a foundation for corpus-wide official-record validation, opportunity and foul classification, enforcement reconstruction, and held-out model tests; they do not enable penalties in the simulator.

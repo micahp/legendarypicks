@@ -6,10 +6,15 @@ import json
 from pathlib import Path
 import re
 
+import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
 
-MARKERS = {
+DISPOSITION_MARKERS = ('declined', 'offsetting', 'enforced')
+FOUL_PATTERN = r'\bpenalt(?:y|ies)\b'
+FOUL = re.compile(FOUL_PATTERN, re.I)
+MARKER_PATTERNS = {
     'declined': re.compile(r'\bdeclined\b', re.I),
     'offsetting': re.compile(r'\boffsetting\b|\boffset\b', re.I),
     'enforced': re.compile(r'\benforced\b', re.I),
@@ -17,23 +22,95 @@ MARKERS = {
     'half_distance': re.compile(r'\bhalf the distance\b|\bhalf distance\b', re.I),
     'automatic_first_down': re.compile(r'\bautomatic(?:ally)? first down\b', re.I),
 }
-FOUL = re.compile(r'\bpenalt(?:y|ies)\b', re.I)
 
 
 def description_features(description):
     text = description or ''
-    return {**{name: bool(pattern.search(text)) for name, pattern in MARKERS.items()},
+    return {**{name: bool(pattern.search(text))
+               for name, pattern in MARKER_PATTERNS.items()},
             'multiple_penalty_mentions': len(FOUL.findall(text)) > 1}
 
 
 def single_foul_evidence(description):
-    """Return a literal marker only when one foul mention has one disposition marker."""
+    """Return one literal marker only when the row names one foul and ruling."""
     text = description or ''
     if len(FOUL.findall(text)) != 1:
         return 'ambiguous_or_no_foul_mention'
-    features = description_features(text)
-    hits = [key for key in ('declined', 'offsetting', 'enforced') if features[key]]
+    hits = [key for key in ('declined', 'offsetting', 'enforced')
+            if MARKER_PATTERNS[key].search(text)]
     return hits[0] if len(hits) == 1 else 'ambiguous_or_no_disposition_marker'
+
+
+def _count(mask):
+    """Count true values in an Arrow boolean array, treating null as false."""
+    return pc.sum(pc.cast(pc.fill_null(mask, False), pa.int64())).as_py() or 0
+
+
+def _and(left, right):
+    return pc.fill_null(pc.and_(left, right), False)
+
+
+def _not(mask):
+    return pc.fill_null(pc.invert(mask), False)
+
+
+def _add_if_positive(counts, key, amount):
+    if amount:
+        counts[key] += amount
+
+
+def count_batch(counts, batch):
+    """Accumulate all report counters with vectorized Arrow kernels."""
+    descriptions = pc.utf8_lower(pc.fill_null(batch['desc'], ''))
+    mentions = pc.count_substring_regex(descriptions, FOUL_PATTERN)
+    markers = {
+        'declined': pc.match_substring_regex(descriptions, r'\bdeclined\b'),
+        'offsetting': pc.match_substring_regex(descriptions, r'\boffsetting\b|\boffset\b'),
+        'enforced': pc.match_substring_regex(descriptions, r'\benforced\b'),
+        'no_play': pc.match_substring_regex(descriptions, r'\bno play\b'),
+        'half_distance': pc.match_substring_regex(
+            descriptions, r'\bhalf the distance\b|\bhalf distance\b'),
+        'automatic_first_down': pc.match_substring_regex(
+            descriptions, r'\bautomatic(?:ally)? first down\b'),
+    }
+    features = {**markers, 'multiple_penalty_mentions': pc.greater(mentions, 1)}
+    penalty = batch['penalty']
+    flagged = pc.fill_null(pc.equal(penalty, 1), False)
+    zero_flag = pc.fill_null(pc.equal(penalty, 0), False)
+    unknown_flag = pc.is_null(penalty)
+    not_flagged = _not(flagged)
+
+    for name, values in features.items():
+        counts['all_rows_' + name] += _count(values)
+        counts['not_flagged_' + name] += _count(_and(not_flagged, values))
+        counts['zero_flag_' + name] += _count(_and(zero_flag, values))
+        counts['unknown_flag_' + name] += _count(_and(unknown_flag, values))
+        counts[name] += _count(_and(flagged, values))
+
+    has_foul_mention = pc.greater(mentions, 0)
+    disposition_count = pc.add(
+        pc.add(*(pc.cast(markers[name], pa.int8()) for name in DISPOSITION_MARKERS[:2])),
+        pc.cast(markers[DISPOSITION_MARKERS[2]], pa.int8()))
+    one_foul = pc.equal(mentions, 1)
+    one_disposition = pc.equal(disposition_count, 1)
+    clear_single = _and(one_foul, one_disposition)
+    _add_if_positive(counts, 'single_foul_evidence_enforced',
+                     _count(_and(clear_single, markers['enforced'])))
+    _add_if_positive(counts, 'single_foul_evidence_declined',
+                     _count(_and(clear_single, markers['declined'])))
+    _add_if_positive(counts, 'single_foul_evidence_offsetting',
+                     _count(_and(clear_single, markers['offsetting'])))
+    _add_if_positive(counts, 'single_foul_evidence_ambiguous_or_no_foul_mention',
+                     _count(_and(has_foul_mention, _not(one_foul))))
+    _add_if_positive(counts, 'single_foul_evidence_ambiguous_or_no_disposition_marker',
+                     _count(_and(one_foul, _not(one_disposition))))
+
+    counts['flagged_rows'] += _count(flagged)
+    description_present = pc.match_substring_regex(descriptions, r'\S')
+    counts['description_present'] += _count(_and(flagged, description_present))
+    for field in ('game_id', 'play_id', 'order_sequence', 'down', 'ydstogo',
+                  'yardline_100', 'game_seconds_remaining'):
+        counts[field + '_present'] += _count(_and(flagged, pc.is_valid(batch[field])))
 
 
 def digest(path):
@@ -64,28 +141,7 @@ def main():
         if missing:
             raise ValueError(f'{year} missing columns: {sorted(missing)}')
         for batch in parquet.iter_batches(batch_size=32768, columns=columns):
-            for row in batch.to_pylist():
-                description = row['desc'] or ''
-                features = description_features(description)
-                if FOUL.search(description):
-                    counts['single_foul_evidence_' + single_foul_evidence(description)] += 1
-                for key, value in features.items():
-                    counts['all_rows_' + key] += value
-                    if row['penalty'] != 1:
-                        counts['not_flagged_' + key] += value
-                    if row['penalty'] == 0:
-                        counts['zero_flag_' + key] += value
-                    elif row['penalty'] is None:
-                        counts['unknown_flag_' + key] += value
-                if row['penalty'] != 1:
-                    continue
-                counts['flagged_rows'] += 1
-                counts['description_present'] += bool(description.strip())
-                for key, value in features.items():
-                    counts[key] += value
-                for field in ('game_id', 'play_id', 'order_sequence', 'down', 'ydstogo',
-                              'yardline_100', 'game_seconds_remaining'):
-                    counts[field + '_present'] += row[field] is not None
+            count_batch(counts, batch)
         years[year] = {'source_sha256': actual, 'counts': dict(counts)}
     result = {'source_manifest_sha256': digest(args.manifest), 'seasons': years,
               'limitations': ('Literal text markers may overlap, refer to different fouls, or miss alternate wording. '
