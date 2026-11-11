@@ -1,0 +1,598 @@
+{
+  "cases": [
+    {
+      "game": {
+        "away_team": "TB",
+        "game_id": "2025_07_TB_DET",
+        "gameday": "2025-10-20",
+        "gsis": 59949,
+        "home_team": "DET",
+        "old_game_id": "2025102000",
+        "season": 2025,
+        "week": 7
+      },
+      "next_source_state": {
+        "down": 1,
+        "game_seconds_remaining": 3467,
+        "play_type": "run",
+        "posteam": "DET",
+        "qtr": 1,
+        "yardline_100": 30,
+        "ydstogo": 10
+      },
+      "official_clock": "12:54",
+      "official_events": [
+        {
+          "disposition": "accepted",
+          "team": "TB",
+          "type": "Illegal Contact",
+          "yards": 5
+        }
+      ],
+      "official_gamebook_url": "https://www.nflgsis.com/2025/REG/07/59949/Gamebook.pdf",
+      "official_page": 8,
+      "official_result": "Third-down pass is nullified; defensive penalty awards a first down.",
+      "order_sequence": 161,
+      "play_id": 161,
+      "source_row": {
+        "description_mentions_penalty": true,
+        "order_sequence": 161,
+        "penalty_fields": {
+          "first_down_penalty": 1.0,
+          "penalty": 1.0,
+          "penalty_team": "TB",
+          "penalty_type": "Illegal Contact",
+          "penalty_yards": 5.0,
+          "play_deleted": 0.0
+        },
+        "play_id": 161,
+        "state_before": {
+          "down": 3,
+          "game_seconds_remaining": 3474,
+          "play_type": "no_play",
+          "posteam": "DET",
+          "qtr": 1,
+          "yardline_100": 35,
+          "ydstogo": 6
+        }
+      }
+    },
+    {
+      "game": {
+        "away_team": "TB",
+        "game_id": "2025_07_TB_DET",
+        "gameday": "2025-10-20",
+        "gsis": 59949,
+        "home_team": "DET",
+        "old_game_id": "2025102000",
+        "season": 2025,
+        "week": 7
+      },
+      "next_source_state": {
+        "down": 1,
+        "game_seconds_remaining": 3162,
+        "play_type": "pass",
+        "posteam": "TB",
+        "qtr": 1,
+        "yardline_100": 65,
+        "ydstogo": 15
+      },
+      "official_clock": "7:42",
+      "official_events": [
+        {
+          "disposition": "accepted",
+          "team": "TB",
+          "type": "False Start",
+          "yards": 5
+        }
+      ],
+      "official_gamebook_url": "https://www.nflgsis.com/2025/REG/07/59949/Gamebook.pdf",
+      "official_page": 8,
+      "official_result": "Pre-snap foul repeats first down and increases distance by five.",
+      "order_sequence": 510,
+      "play_id": 510,
+      "source_row": {
+        "description_mentions_penalty": true,
+        "order_sequence": 510,
+        "penalty_fields": {
+          "first_down_penalty": 0.0,
+          "penalty": 1.0,
+          "penalty_team": "TB",
+          "penalty_type": "False Start",
+          "penalty_yards": 5.0,
+          "play_deleted": 0.0
+        },
+        "play_id": 510,
+        "state_before": {
+          "down": 1,
+          "game_seconds_remaining": 3162,
+          "play_type": "no_play",
+          "posteam": "TB",
+          "qtr": 1,
+          "yardline_100": 60,
+          "ydstogo": 10
+        }
+      }
+    },
+    {
+      "game": {
+        "away_team": "TB",
+        "game_id": "2025_07_TB_DET",
+        "gameday": "2025-10-20",
+        "gsis": 59949,
+        "home_team": "DET",
+        "old_game_id": "2025102000",
+        "season": 2025,
+        "week": 7
+      },
+      "next_source_state": {
+        "down": 1,
+        "game_seconds_remaining": 2693,
+        "play_type": "run",
+        "posteam": "TB",
+        "qtr": 2,
+        "yardline_100": 60,
+        "ydstogo": 10
+      },
+      "official_clock": "15:00",
+      "official_events": [
+        {
+          "disposition": "accepted",
+          "team": "DET",
+          "type": "Defensive Pass Interference",
+          "yards": 23
+        },
+        {
+          "disposition": "declined",
+          "team": "DET",
+          "type": "Defensive Holding",
+          "yards": null
+        }
+      ],
+      "official_gamebook_url": "https://www.nflgsis.com/2025/REG/07/59949/Gamebook.pdf",
+      "official_page": 10,
+      "official_result": "Two fouls on one opportunity have different dispositions; next state is first-and-10.",
+      "order_sequence": 938,
+      "play_id": 938,
+      "source_row": {
+        "description_mentions_penalty": true,
+        "order_sequence": 938,
+        "penalty_fields": {
+          "first_down_penalty": 1.0,
+          "penalty": 1.0,
+          "penalty_team": "DET",
+          "penalty_type": "Defensive Pass Interference",
+          "penalty_yards": 23.0,
+          "play_deleted": 0.0
+        },
+        "play_id": 938,
+        "state_before": {
+          "down": 2,
+          "game_seconds_remaining": 2700,
+          "play_type": "no_play",
+          "posteam": "TB",
+          "qtr": 2,
+          "yardline_100": 83,
+          "ydstogo": 8
+        }
+      }
+    },
+    {
+      "game": {
+        "away_team": "TB",
+        "game_id": "2025_07_TB_DET",
+        "gameday": "2025-10-20",
+        "gsis": 59949,
+        "home_team": "DET",
+        "old_game_id": "2025102000",
+        "season": 2025,
+        "week": 7
+      },
+      "next_source_state": {
+        "down": 2,
+        "game_seconds_remaining": 1995,
+        "play_type": "pass",
+        "posteam": "DET",
+        "qtr": 2,
+        "yardline_100": 91,
+        "ydstogo": 15
+      },
+      "official_clock": "3:37",
+      "official_events": [
+        {
+          "disposition": "accepted",
+          "team": "DET",
+          "type": "Offensive Pass Interference",
+          "yards": 8
+        }
+      ],
+      "official_gamebook_url": "https://www.nflgsis.com/2025/REG/07/59949/Gamebook.pdf",
+      "official_page": 10,
+      "official_result": "The apparent completion is nullified and second down repeats at a longer distance.",
+      "order_sequence": 1734,
+      "play_id": 1734,
+      "source_row": {
+        "description_mentions_penalty": true,
+        "order_sequence": 1734,
+        "penalty_fields": {
+          "first_down_penalty": 0.0,
+          "penalty": 1.0,
+          "penalty_team": "DET",
+          "penalty_type": "Offensive Pass Interference",
+          "penalty_yards": 8.0,
+          "play_deleted": 0.0
+        },
+        "play_id": 1734,
+        "state_before": {
+          "down": 2,
+          "game_seconds_remaining": 2017,
+          "play_type": "no_play",
+          "posteam": "DET",
+          "qtr": 2,
+          "yardline_100": 83,
+          "ydstogo": 7
+        }
+      }
+    },
+    {
+      "game": {
+        "away_team": "TB",
+        "game_id": "2025_07_TB_DET",
+        "gameday": "2025-10-20",
+        "gsis": 59949,
+        "home_team": "DET",
+        "old_game_id": "2025102000",
+        "season": 2025,
+        "week": 7
+      },
+      "next_source_state": {
+        "down": 1,
+        "game_seconds_remaining": 1071,
+        "play_type": "pass",
+        "posteam": "DET",
+        "qtr": 3,
+        "yardline_100": 70,
+        "ydstogo": 10
+      },
+      "official_clock": "2:59",
+      "official_events": [
+        {
+          "disposition": "accepted",
+          "team": "TB",
+          "type": "Player Out of Bounds on Kick",
+          "yards": 5
+        }
+      ],
+      "official_gamebook_url": "https://www.nflgsis.com/2025/REG/07/59949/Gamebook.pdf",
+      "official_page": 12,
+      "official_result": "Penalty is enforced after the punt; DET starts at its own 30.",
+      "order_sequence": 2956,
+      "play_id": 2956,
+      "source_row": {
+        "description_mentions_penalty": true,
+        "order_sequence": 2956,
+        "penalty_fields": {
+          "first_down_penalty": 0.0,
+          "penalty": 1.0,
+          "penalty_team": "TB",
+          "penalty_type": "Player Out of Bounds on Kick",
+          "penalty_yards": 5.0,
+          "play_deleted": 0.0
+        },
+        "play_id": 2956,
+        "state_before": {
+          "down": 4,
+          "game_seconds_remaining": 1079,
+          "play_type": "punt",
+          "posteam": "TB",
+          "qtr": 3,
+          "yardline_100": 72,
+          "ydstogo": 3
+        }
+      }
+    },
+    {
+      "game": {
+        "away_team": "TB",
+        "game_id": "2025_07_TB_DET",
+        "gameday": "2025-10-20",
+        "gsis": 59949,
+        "home_team": "DET",
+        "old_game_id": "2025102000",
+        "season": 2025,
+        "week": 7
+      },
+      "next_source_state": {
+        "down": 4,
+        "game_seconds_remaining": 696,
+        "play_type": "pass",
+        "posteam": "TB",
+        "qtr": 4,
+        "yardline_100": 63,
+        "ydstogo": 4
+      },
+      "official_clock": "11:40",
+      "official_events": [
+        {
+          "disposition": "declined",
+          "team": "TB",
+          "type": "Illegal Shift",
+          "yards": null
+        }
+      ],
+      "official_gamebook_url": "https://www.nflgsis.com/2025/REG/07/59949/Gamebook.pdf",
+      "official_page": 13,
+      "official_result": "Declined foul is described, but the source penalty flag is zero; the next down remains fourth.",
+      "order_sequence": 3358,
+      "play_id": 3358,
+      "source_row": {
+        "description_mentions_penalty": true,
+        "order_sequence": 3358,
+        "penalty_fields": {
+          "first_down_penalty": 0.0,
+          "penalty": 0.0,
+          "penalty_team": null,
+          "penalty_type": null,
+          "penalty_yards": null,
+          "play_deleted": 0.0
+        },
+        "play_id": 3358,
+        "state_before": {
+          "down": 3,
+          "game_seconds_remaining": 700,
+          "play_type": "pass",
+          "posteam": "TB",
+          "qtr": 4,
+          "yardline_100": 63,
+          "ydstogo": 4
+        }
+      }
+    },
+    {
+      "game": {
+        "away_team": "CAR",
+        "game_id": "2016_01_CAR_DEN",
+        "gameday": "2016-09-08",
+        "gsis": 56901,
+        "home_team": "DEN",
+        "old_game_id": "2016090800",
+        "season": 2016,
+        "week": 1
+      },
+      "next_source_state": {
+        "down": 1,
+        "game_seconds_remaining": 1505,
+        "play_type": "run",
+        "posteam": "DEN",
+        "qtr": 3,
+        "yardline_100": 40,
+        "ydstogo": 10
+      },
+      "official_clock": "10:09",
+      "official_events": [
+        {
+          "disposition": "accepted",
+          "team": "CAR",
+          "type": "Defensive Pass Interference",
+          "yards": 15
+        }
+      ],
+      "official_gamebook_url": "https://www.nflgsis.com/2016/REG/01/56901/Gamebook.pdf",
+      "official_page": 11,
+      "official_result": "Defensive penalty nullifies an incomplete pass and awards a first down.",
+      "order_sequence": 2098,
+      "play_id": 2098,
+      "source_row": {
+        "description_mentions_penalty": true,
+        "order_sequence": 2098,
+        "penalty_fields": {
+          "first_down_penalty": 1.0,
+          "penalty": 1.0,
+          "penalty_team": "CAR",
+          "penalty_type": "Defensive Pass Interference",
+          "penalty_yards": 15.0,
+          "play_deleted": 0.0
+        },
+        "play_id": 2098,
+        "state_before": {
+          "down": 2,
+          "game_seconds_remaining": 1509,
+          "play_type": "no_play",
+          "posteam": "DEN",
+          "qtr": 3,
+          "yardline_100": 55,
+          "ydstogo": 8
+        }
+      }
+    },
+    {
+      "game": {
+        "away_team": "CAR",
+        "game_id": "2016_01_CAR_DEN",
+        "gameday": "2016-09-08",
+        "gsis": 56901,
+        "home_team": "DEN",
+        "old_game_id": "2016090800",
+        "season": 2016,
+        "week": 1
+      },
+      "next_source_state": {
+        "down": null,
+        "game_seconds_remaining": 1803,
+        "play_type": "kickoff",
+        "posteam": "DEN",
+        "qtr": 2,
+        "yardline_100": 35,
+        "ydstogo": 0
+      },
+      "official_clock": "0:07",
+      "official_events": [
+        {
+          "disposition": "declined",
+          "team": "DEN",
+          "type": "Defensive Offside",
+          "yards": null
+        }
+      ],
+      "official_gamebook_url": "https://www.nflgsis.com/2016/REG/01/56901/Gamebook.pdf",
+      "official_page": 9,
+      "official_result": "Declined foul does not change the made field goal; source penalty flag is zero.",
+      "order_sequence": 1826,
+      "play_id": 1826,
+      "source_row": {
+        "description_mentions_penalty": true,
+        "order_sequence": 1826,
+        "penalty_fields": {
+          "first_down_penalty": 0.0,
+          "penalty": 0.0,
+          "penalty_team": null,
+          "penalty_type": null,
+          "penalty_yards": null,
+          "play_deleted": 0.0
+        },
+        "play_id": 1826,
+        "state_before": {
+          "down": 3,
+          "game_seconds_remaining": 1807,
+          "play_type": "field_goal",
+          "posteam": "CAR",
+          "qtr": 2,
+          "yardline_100": 26,
+          "ydstogo": 3
+        }
+      }
+    },
+    {
+      "game": {
+        "away_team": "CAR",
+        "game_id": "2016_01_CAR_DEN",
+        "gameday": "2016-09-08",
+        "gsis": 56901,
+        "home_team": "DEN",
+        "old_game_id": "2016090800",
+        "season": 2016,
+        "week": 1
+      },
+      "next_source_state": {
+        "down": 2,
+        "game_seconds_remaining": 36,
+        "play_type": "pass",
+        "posteam": "CAR",
+        "qtr": 4,
+        "yardline_100": 53,
+        "ydstogo": 10
+      },
+      "official_clock": "0:42",
+      "official_events": [
+        {
+          "disposition": "offsetting",
+          "team": "DEN",
+          "type": "Roughing the Passer",
+          "yards": null
+        },
+        {
+          "disposition": "offsetting",
+          "team": "CAR",
+          "type": "Intentional Grounding",
+          "yards": null
+        }
+      ],
+      "official_gamebook_url": "https://www.nflgsis.com/2016/REG/01/56901/Gamebook.pdf",
+      "official_page": 13,
+      "official_result": "Two offsetting fouls leave second-and-10 unchanged; source penalty status is null.",
+      "order_sequence": 3812,
+      "play_id": 3812,
+      "source_row": {
+        "description_mentions_penalty": true,
+        "order_sequence": 3812,
+        "penalty_fields": {
+          "first_down_penalty": null,
+          "penalty": null,
+          "penalty_team": null,
+          "penalty_type": null,
+          "penalty_yards": null,
+          "play_deleted": 0.0
+        },
+        "play_id": 3812,
+        "state_before": {
+          "down": 2,
+          "game_seconds_remaining": 42,
+          "play_type": "no_play",
+          "posteam": "CAR",
+          "qtr": 4,
+          "yardline_100": 53,
+          "ydstogo": 10
+        }
+      }
+    },
+    {
+      "game": {
+        "away_team": "CAR",
+        "game_id": "2016_01_CAR_DEN",
+        "gameday": "2016-09-08",
+        "gsis": 56901,
+        "home_team": "DEN",
+        "old_game_id": "2016090800",
+        "season": 2016,
+        "week": 1
+      },
+      "next_source_state": {
+        "down": 1,
+        "game_seconds_remaining": 114,
+        "play_type": "run",
+        "posteam": "CAR",
+        "qtr": 4,
+        "yardline_100": 66,
+        "ydstogo": 10
+      },
+      "official_clock": "2:00",
+      "official_events": [
+        {
+          "disposition": "accepted",
+          "team": "DEN",
+          "type": "Illegal Use of Hands",
+          "yards": 5
+        }
+      ],
+      "official_gamebook_url": "https://www.nflgsis.com/2016/REG/01/56901/Gamebook.pdf",
+      "official_page": 13,
+      "official_result": "Fourth-down defensive foul awards a new first down.",
+      "order_sequence": 3673,
+      "play_id": 3673,
+      "source_row": {
+        "description_mentions_penalty": true,
+        "order_sequence": 3673,
+        "penalty_fields": {
+          "first_down_penalty": 1.0,
+          "penalty": 1.0,
+          "penalty_team": "DEN",
+          "penalty_type": "Illegal Use of Hands",
+          "penalty_yards": 5.0,
+          "play_deleted": 0.0
+        },
+        "play_id": 3673,
+        "state_before": {
+          "down": 4,
+          "game_seconds_remaining": 120,
+          "play_type": "no_play",
+          "posteam": "CAR",
+          "qtr": 4,
+          "yardline_100": 71,
+          "ydstogo": 21
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "All sampled plays come from two games, in 2016 and 2025, and do not establish field semantics across all eras.",
+    "Official foul labels were manually read from the linked GSIS gamebook at the listed page and clock.",
+    "The sample validates selected PBP mappings and adjacent source states; it is not model training data."
+  ],
+  "pbp_sha256_by_season": {
+    "2016": "95eba04e2145e3c1c8ca502f2a3a76cfb0a5990680c3fb480f02a74a45f54a3b",
+    "2025": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+  },
+  "sample_type": "manual official-record cross-check across two games; not a representative or corpus-wide adjudication",
+  "schedule_sha256": "d07a0e7c18f03cd23e25f295eb322a708602f0e372f6ac4bd597dfeb25cda90c",
+  "source_manifest_sha256": "c4b4a1a5eaec359e8cbb7d52a266093b4b6992474f8cc8da12e6b17ed8c4ff46"
+}
