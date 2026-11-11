@@ -1,6 +1,6 @@
 # AGENT TASK: Evaluate Natural Sports Commentary Separately from Factual Accuracy
 
-**Repository:** \`micahp/legendarypicks\`  
+**Repository:** `micahp/legendarypicks`  
 **Date:** 2026-11-11  
 **Status:** Implementation instructions, not an evaluation result  
 **Scope:** CPU-only, deterministic editorial quality evaluation for pregame previews, postgame recaps, and homepage/social feed copy. Research/QA first. No production feature-flag changes, deploys, schema migrations, or generated-story replacements without separate review.
@@ -26,15 +26,15 @@ The agent must build a **separate evaluation lane**. Do not silently fold this i
 
 Inspect the actual branch/PR state before writing code:
 
-- \`backend/story_engine.py\`: deterministic pregame fact selection, \`_nba_player_clause\`, \`_nfl_player_clause\`, \`render_story\`, \`select_story_angle\`.
-- \`backend/story_engine_audit.py\`: independent evidence/claim verification. **Preserve as a separate gate.**
-- \`backend/story_rubric.py\`: \`_fan_voice_score\` currently mainly recognizes jargon, a handful of sport-specific expressions, and generic filler; \`_flow_score\` checks length/repetition. Neither can reliably judge whether meaning is natural.
-- \`backend/story_engine_runtime.py\`: accepted-cache and append-only generation history, cutoff and fallback behavior. No unreviewed production behavior changes.
-- \`backend/core_stories.py\`: legacy LLM-generated previews and recaps; archived output may serve as a labeled offline comparison baseline, not truth or a model-run requirement.
-- \`backend/test_story_engine.py\`, \`backend/test_story_rubric.py\`, \`backend/test_story_engine_runtime.py\`.
-- Draft PR #35 / branch \`research/postgame-content-demo\`: \`backend/postgame_story_engine.py\`, \`backend/postgame_rubric.py\`, \`backend/demo_postgame.py\`, \`docs/research/postgame-content-demo-2026-11-10/\`. The PR's research artifacts are not production; verify current head.
-- \`docs/research/narrative-event-knowledge-2026-11-03/espn-editorial-benchmark/README.md\`: prior same-cutoff comparison, editorial limitations and source metadata.
-- \`docs/HISTORICAL-RELATIONSHIPS-RIVALRIES-2026-11-11.md\`: historical relationship/first-meeting storylines. Naturalness QA must cover them too.
+- `backend/story_engine.py`: deterministic pregame fact selection, `_nba_player_clause`, `_nfl_player_clause`, `render_story`, `select_story_angle`.
+- `backend/story_engine_audit.py`: independent evidence/claim verification. **Preserve as a separate gate.**
+- `backend/story_rubric.py`: `_fan_voice_score` currently mainly recognizes jargon, a handful of sport-specific expressions, and generic filler; `_flow_score` checks length/repetition. Neither can reliably judge whether meaning is natural.
+- `backend/story_engine_runtime.py`: accepted-cache and append-only generation history, cutoff and fallback behavior. No unreviewed production behavior changes.
+- `backend/core_stories.py`: legacy LLM-generated previews and recaps; archived output may serve as a labeled offline comparison baseline, not truth or a model-run requirement.
+- `backend/test_story_engine.py`, `backend/test_story_rubric.py`, `backend/test_story_engine_runtime.py`.
+- Draft PR #35 / branch `research/postgame-content-demo`: `backend/postgame_story_engine.py`, `backend/postgame_rubric.py`, `backend/demo_postgame.py`, `docs/research/postgame-content-demo-2026-11-10/`. The PR's research artifacts are not production; verify current head.
+- `docs/research/narrative-event-knowledge-2026-11-03/espn-editorial-benchmark/README.md`: prior same-cutoff comparison, editorial limitations and source metadata.
+- `docs/HISTORICAL-RELATIONSHIPS-RIVALRIES-2026-11-11.md`: historical relationship/first-meeting storylines. Naturalness QA must cover them too.
 
 First deliver a small inventory table naming the current evaluator, what it can/cannot detect, and what will be reused. Do **not** implement a second factual audit.
 
@@ -44,17 +44,17 @@ Produce separate, immutable results. No single weighted average across tracks.
 
 | Track | Question | Source of truth | Gate |
 |---|---|---|---|
-| **Fact integrity** | Are numbers, identities, sources, dates and events supported? | Existing independent evidence/claim audit | Unsupported claims \`blocked\` |
-| **Editorial selection** | Did the generator choose the most relevant sports storyline? | Ranked candidates + blinded editorial judgments | Important missed hook \`review\` |
-| **Natural sports commentary** | Does the selected copy sound like a knowledgeable sports fan/commentator and communicate a coherent meaning? | Deterministic structural checks **plus separate human ratings** | Severe semantic failure \`review\`; human approval for rollout |
+| **Fact integrity** | Are numbers, identities, sources, dates and events supported? | Existing independent evidence/claim audit | Unsupported claims `blocked` |
+| **Editorial selection** | Did the generator choose the most relevant sports storyline? | Ranked candidates + blinded editorial judgments | Important missed hook `review` |
+| **Natural sports commentary** | Does the selected copy sound like a knowledgeable sports fan/commentator and communicate a coherent meaning? | Deterministic structural checks **plus separate human ratings** | Severe semantic failure `review`; human approval for rollout |
 
-The current \`story_rubric.py\` may continue displaying its six pastel dimensions. Add a **separate naturalness evaluation** panel/ledger with its own version, category scores, problem spans and explanations; don't rewrite historic rubric scores. The legacy \`fan_voice\` metric must remain labeled as a heuristic proxy.
+The current `story_rubric.py` may continue displaying its six pastel dimensions. Add a **separate naturalness evaluation** panel/ledger with its own version, category scores, problem spans and explanations; don't rewrite historic rubric scores. The legacy `fan_voice` metric must remain labeled as a heuristic proxy.
 
 Factual errors found during naturalness review should be sent to the fact-audit track; do not misclassify them merely as bad prose. A missed Brown–Tatum reunion may be an **editorial selection** error even if the selected sentence reads naturally.
 
 ## 3. Naturalness dimensions and annotation guide
 
-Use **six independent, human-readable dimensions, each 0–4** (4 = broadcast-ready, 3 = good, 2 = awkward but understandable, 1 = confusing, 0 = incoherent/incorrect meaning). Also return \`not_applicable\` if a dimension genuinely does not apply; never score missing information as perfect.
+Use **six independent, human-readable dimensions, each 0–4** (4 = broadcast-ready, 3 = good, 2 = awkward but understandable, 1 = confusing, 0 = incoherent/incorrect meaning). Also return `not_applicable` if a dimension genuinely does not apply; never score missing information as perfect.
 
 1. **Semantic coherence**: Does the literal sentence make sense? Correct agents, subjects, actions and objects. No "offense scored 31 from him", "player scored 30 assists", "team posted three rebounds", or inverted cause/effect.
 2. **Sport-specific authenticity**: Would a sports fan naturally say this? NBA points/rebounds/assists, NFL passing/rushing/receiving yards, NHL goals/shots, tennis sets/breaks. Avoid robotic research terminology, but allow accurate advanced metrics when they genuinely explain the story.
@@ -64,7 +64,7 @@ Use **six independent, human-readable dimensions, each 0–4** (4 = broadcast-re
 6. **Narrative and temporal perspective**: Pregame forecasts sound prospective, postgame recaps sound retrospective, live feed describes only known game state. No "entered this game" in a pregame article unless idiomatic; no "will face" after final; avoid implying participation if a player was inactive. A team meeting, a player actually taking the floor, and a first arena return are different claims.
 
 For each deficiency, collect:
-\`error_code\`, \`severity\` (\`minor|major|critical\`), \`span\`, \`reason\`, \`suggested_rewrite\`, \`semantic_slots\` (when applicable), and whether this is a human finding or an automated rule. A suggested rewrite is a **review artifact**, not automatically published prose.
+`error_code`, `severity` (`minor|major|critical`), `span`, `reason`, `suggested_rewrite`, `semantic_slots` (when applicable), and whether this is a human finding or an automated rule. A suggested rewrite is a **review artifact**, not automatically published prose.
 
 ## 4. Build deterministic *structural* checks, not a fake AI taste detector
 
@@ -72,7 +72,7 @@ The code's role is to detect verifiable classes of construction mistakes and rou
 
 Introduce a versioned normalizer/representation of the *fact-to-sentence contract*:
 
-\`\`\`json
+```json
 {
   "event_id": "fixture-game",
   "league": "nba",
@@ -88,7 +88,7 @@ Introduce a versioned normalizer/representation of the *fact-to-sentence contrac
   "source_evidence_ids": ["fixture-source"],
   "sentence_template_id": "nba_recent_30_plus_v1"
 }
-\`\`\`
+```
 
 *This is a synthetic schema example, not a real Brunson record or an existing database contract.*
 
@@ -99,7 +99,7 @@ Introduce a versioned normalizer/representation of the *fact-to-sentence contrac
 - Static patterns may flag "scored [number] from [player]", "had scored ... from him", "led an offense that scored ... from him", missing stat units, repeated "in his previous two games before this one", and contradictory tense cues. Patterns should match **structures**, not blanket-ban safe words such as "offense", "scored", "led" or "from".
 - Avoid pronoun-gender assumptions from names; prefer named subject or neutral phrasing when the antecedent is unclear.
 - Allow natural variation: "put up 31", "dropped 31", "scored 31", "had 31 points" are valid NBA formulations in context. Do not force all outputs into identical dry sentences.
-- Do **not** auto-fail correctly rendered stylistic choices merely because an n-gram is unfamiliar. Ambiguous constructions get \`needs-human-review\` with a rationale.
+- Do **not** auto-fail correctly rendered stylistic choices merely because an n-gram is unfamiliar. Ambiguous constructions get `needs-human-review` with a rationale.
 
 ## 5. Required regression examples (tests first)
 
@@ -126,7 +126,7 @@ Use synthetic fixtures with explicit fact IDs and reliable source windows. These
 
 **Additional adversarial tests**: player traded midseason, zero vs missing game logs, last-game score referenced as current, opponent/teammate ambiguity, NBA Cup vs regular season, OT period, partial PBP, pronoun antecedent ambiguity, duplicated clauses, repeated headline in body, exact league-specific stat units, one meaningful advanced metric, and no-stat but historically significant rivalry preview.
 
-Keep a fixed **negative set** and a fixed **clean set**. Test mutation behavior: change \`window=season\` to \`window=last_5\`, swap \`subject_type=player\` to \`team\`, swap \`points\` to \`assists\`, or change pregame to postgame. The evaluator must detect the introduced defect when it is within its structural competence; it must not use unrelated factual-audit results to pass.
+Keep a fixed **negative set** and a fixed **clean set**. Test mutation behavior: change `window=season` to `window=last_5`, swap `subject_type=player` to `team`, swap `points` to `assists`, or change pregame to postgame. The evaluator must detect the introduced defect when it is within its structural competence; it must not use unrelated factual-audit results to pass.
 
 ## 6. Human editorial evaluation is the gold standard
 
@@ -137,11 +137,11 @@ A deterministic linter alone cannot learn whether copy actually feels like human
 - Present **blind, randomized A/B pairs** of (A) existing deterministic output vs (B) revised output, and optionally (C) archived legacy LLM output if the original artifact and cutoff are already available. Do not call an LLM to make or judge each story.
 - Include the same compact, cutoff-safe fact brief for both candidates, with named metrics and source IDs. Hide generator identity, rank, and rubric score. No post-cutoff facts in the brief.
 - **Two independent human reviewers** with sports familiarity for an initial 40-pair subset (20 NBA / 20 NFL), plus targeted review of flagged semantic defects. Capture reviewer sports familiarity, confidence, versioned instructions and blind ordering. Reconcile disagreements; retain original independent labels.
-- Human per-dimension 0–4 ratings; **overall question**: "Would you expect to hear or read this from a competent sports commentator?" (\`yes|borderline|no\`). Also request \`A|B|tie|neither\` and a concise free-text reason. Don't simulate human feedback.
+- Human per-dimension 0–4 ratings; **overall question**: "Would you expect to hear or read this from a competent sports commentator?" (`yes|borderline|no`). Also request `A|B|tie|neither` and a concise free-text reason. Don't simulate human feedback.
 - Track editorial preference separately from factual correctness and hook-selection recall. A more natural sentence about the wrong event still loses the editorial-selection evaluation.
 - Track simple percent agreement and explain disagreements; report Cohen's kappa only when sample and label distribution make it interpretable.
 
-No blind ratings yet? Report \`human_n=0\`, not \`passed\`.
+No blind ratings yet? Report `human_n=0`, not `passed`.
 
 ## 7. Metrics, thresholds and rollout gate
 
@@ -150,7 +150,7 @@ Report **per league, story phase, story angle, template, and generator version**
 - critical/major/minor semantic findings per 100 passages;
 - percent clean of critical errors in fixed regression and held-out sets;
 - precision and recall of automated *critical-defect flags* against human annotations, with examples of false positives/negatives;
-- human \`broadcast_ready\` rate and 0–4 dimension distributions;
+- human `broadcast_ready` rate and 0–4 dimension distributions;
 - blind pairwise preference, ties and "neither" share;
 - stat-window confusion, entity/action mismatch, tense errors and filler rates;
 - repeated sentence-template frequency and error concentration by template;
@@ -161,7 +161,7 @@ Report **per league, story phase, story angle, template, and generator version**
 
 1. 100% of the *known critical regression fixtures* correctly flagged without false "pass" classifications; clean fixtures remain unblocked. This tests the **documented rules**, not general language quality.
 2. Zero unsupported claims accepted by the independent factual audit; this is unchanged from current policy.
-3. No deterministic evaluator may label a story \`human_approved\` or \`broadcast_ready\` without real reviewer data.
+3. No deterministic evaluator may label a story `human_approved` or `broadcast_ready` without real reviewer data.
 4. Preserve existing generation semantics during shadow evaluation; no automatic rewriting or promotion from a proxy score.
 5. New template cannot be released if an unresolved critical semantic failure is found on its targeted test set or in manual review. Do not overfit to the Brunson phrase alone.
 
@@ -171,7 +171,7 @@ Report **per league, story phase, story angle, template, and generator version**
 
 Suggested implementation on an **implementation feature branch**, not by changing production copy directly:
 
-\`\`\`text
+```text
 backend/sports_language_contracts.py
 backend/sports_language_evaluator.py
 backend/test_sports_language_evaluator.py
@@ -186,12 +186,12 @@ docs/research/natural-sports-commentary-2026-11-11/
   reviewer_guide.md
   evaluation.json
   demo.html
-\`\`\`
+```
 
 - Evaluator: pure Python, standard library where practical, CPU-only, zero network/model calls for fixture replay. Stable IDs and byte-for-byte deterministic outputs (exclude machine-specific timestamps).
-- \`demo.html\`: side-by-side old/new sentences with highlighted failure spans, evidence snippets, factual-audit status **in a separate column**, naturalness dimensions as a distinct pastel bar, reviewer vote capture only when truly entered. No fake counts. Self-contained and mobile-readable.
-- Support either \`story_engine\` output or PR #35 postgame result via small adapters, not by hardcoding one branch's schema. Pin adapter versions and do not couple postgame research publication to \`dev\`.
-- Append-only ledger keyed by \`(league, event_id, as_of, generator_version, output_hash, evaluator_version)\`; distinct human ratings keyed by review assignment.
+- `demo.html`: side-by-side old/new sentences with highlighted failure spans, evidence snippets, factual-audit status **in a separate column**, naturalness dimensions as a distinct pastel bar, reviewer vote capture only when truly entered. No fake counts. Self-contained and mobile-readable.
+- Support either `story_engine` output or PR #35 postgame result via small adapters, not by hardcoding one branch's schema. Pin adapter versions and do not couple postgame research publication to `dev`.
+- Append-only ledger keyed by `(league, event_id, as_of, generator_version, output_hash, evaluator_version)`; distinct human ratings keyed by review assignment.
 - Preserve cutoff timestamps, model/fact manifest, source identity and renderer/template version; sanitize any HTML/CSV display strings.
 - Keep ESPN/AP as **offline editorial benchmarks only**. Do not copy article text, assume it is a legal training corpus, or use ESPN as a runtime dependency.
 - New gate initially **shadow-only**; do not mark existing accepted history unpublishable retroactively. Apply to new publication only after explicit authorization and an independently reviewed rollout/rollback plan.
@@ -199,14 +199,14 @@ docs/research/natural-sports-commentary-2026-11-11/
 ## 9. Exact agent execution order
 
 1. Inspect actual repo/PR heads and freeze existing generation/rubric baselines.
-2. Write a short source-of-truth inventory of fields and current \`fan_voice\` blind spots.
+2. Write a short source-of-truth inventory of fields and current `fan_voice` blind spots.
 3. Write failing TDD cases for the Brunson sentence, good rewrites, bad sport/stat windows, pronoun/relationship examples and phase mistakes.
 4. Build typed contracts and deterministic rule checks, including **rule IDs with explainable spans**; verify fixes on all targeted tests.
 5. Run evaluator in shadow against already generated stories; **do not regenerate the corpus after viewing the results**.
 6. Freeze separate held-out data and perform a blinded human annotation round. Disclose no evaluator scores during review.
 7. Compare old/new on identical fact bundles and cutoffs. Distinguish template fixes, missed hook selection, and missing input facts in findings.
 8. Generate a self-contained inspection dashboard and README with replay commands, scores, examples, limits and next steps.
-9. Open a **draft implementation PR** only after code/tests exist. Documentation can live on \`dev\`; no PR for docs-only changes. Never merge, deploy or alter live story flags as part of this assignment.
+9. Open a **draft implementation PR** only after code/tests exist. Documentation can live on `dev`; no PR for docs-only changes. Never merge, deploy or alter live story flags as part of this assignment.
 
 ## Definition of done
 
