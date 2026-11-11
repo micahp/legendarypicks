@@ -26,6 +26,7 @@ from fastapi.responses import JSONResponse
 from _core import _db
 import check_nfl_schedule_scores as cs
 import nfl_metrics as mt
+import team_codes
 
 router = APIRouter()
 
@@ -33,10 +34,9 @@ ADOPTED = "nfl-v1 half_life=6 cap=14.0 prior_games=4 prior_shrink=0.3333 sigma=1
 ELO_STACK = "nfl-v1+elo stack"   # prefix of every version string lock_nfl_elo.py writes
 TEAM_COUNT = 32
 # Team codes are the schedule's own (nfl_schedule and nfl_teams use LAR and WSH in this
-# database). prop_games rows may carry a full team name instead, which nfl_teams maps. The ESPN to
-# nflverse spelling in capture_espn_weekly_projections.TEAM_FIX (LAR to LA, WSH to WAS) is accepted
-# only when its target is one of the season's team codes.
-PROP_ALIASES = {"LA": "LAR", "WAS": "WSH"}
+# database). prop_games rows may carry a full team name instead, which nfl_teams maps. Any other
+# spelling team_codes knows (LA, WAS, ...) is accepted only when its canonical code is one of the
+# season's team codes.
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
@@ -117,8 +117,12 @@ class StrengthTiers:
                 return raw
             if raw in by_name:
                 return by_name[raw]
-            if PROP_ALIASES.get(raw) in teams:
-                return PROP_ALIASES[raw]
+            try:
+                canonical = team_codes.normalize("nfl", raw)
+            except team_codes.UnknownTeamCode:
+                canonical = None
+            if canonical in teams:
+                return canonical
             raise ValueError("%s: cannot map team %r to a team code" % (where, raw))
 
         first = con.execute("SELECT MIN(gameday) FROM nfl_schedule WHERE season = ? "

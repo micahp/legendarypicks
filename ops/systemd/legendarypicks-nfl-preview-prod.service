@@ -1,0 +1,13 @@
+[Unit]
+Description=Preview all NFL model projections for the upcoming week (PROD)
+After=network-online.target
+Wants=network-online.target
+OnFailure=legendarypicks-ops-alert@%N.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.db
+Nice=10
+ExecStart=/root/legendarypicks/backend/venv/bin/python nfl_projection_preview.py --apply --allow-prod
+TimeoutStartSec=600

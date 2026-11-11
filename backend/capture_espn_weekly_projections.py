@@ -25,6 +25,7 @@ import sqlite3
 import sys
 
 import paced_http
+import team_codes
 from ppr_scoring import STAT_IDS
 
 URL = ("https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/{season}/segments/0/leaguedefaults/3"
@@ -38,7 +39,6 @@ OUR_STAT = {"att": STAT_IDS["pass_att"], "cmp": STAT_IDS["pass_cmp"], "pass_yds"
             "pass_td": STAT_IDS["pass_td"], "rush_att": STAT_IDS["rush_att"], "rush_yds": STAT_IDS["rush_yds"],
             "rush_td": STAT_IDS["rush_td"], "tgt": STAT_IDS["targets"], "rec": STAT_IDS["receptions"],
             "rec_yds": STAT_IDS["rec_yds"], "rec_td": STAT_IDS["rec_td"]}
-TEAM_FIX = {"LAR": "LA", "WSH": "WAS"}   # ESPN abbreviations to nflverse's, as in players.team vs nfl_schedule
 
 
 def fetch_pages(season, pages, cache_dir):
@@ -95,7 +95,8 @@ def store(con, season, weeks, players, as_of):
             unmatched += 1
             continue
         pid, team = who
-        team = TEAM_FIX.get(team, team)
+        # The players and nfl_schedule tables use canonical LAR/WSH, not LA/WAS.
+        team = team_codes.normalize("nfl", team)
         for week, stats in projections(e, weeks).items():
             gid = game_for(con, season, week, team)
             if gid is None:

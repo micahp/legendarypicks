@@ -16,14 +16,17 @@ import hashlib
 import json
 import os
 import sqlite3
+import sys
 import urllib.request
+from pathlib import Path
 
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from scripts import nfl_team_codes
+
 ROSTER_URL = 'https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_{year}.parquet'
 DEFAULT_DB = '/root/legendarypicks/backend/data/picks.db'
-# Roster and injury codes that differ from the snap table's team codes. Unmapped codes are reported, not guessed.
-TEAM_MAP = {'LA': 'LAR', 'WAS': 'WSH', 'OAK': 'LV'}
 SNAP_COLS = ['offense_snaps', 'defense_snaps', 'st_snaps']
 INJURY_STATUSES = ('Out', 'Doubtful', 'Questionable')
 
@@ -45,7 +48,7 @@ def load_rosters(years, cache_dir):
         frame = pd.read_parquet(path, columns=['season', 'game_type', 'week', 'team', 'gsis_id', 'status', 'full_name'])
         frames.append(frame)
     roster = pd.concat(frames, ignore_index=True)
-    roster['team'] = roster['team'].replace(TEAM_MAP)
+    roster = nfl_team_codes.normalize_frame(roster, ['team'])
     return roster, digests
 
 
@@ -114,7 +117,7 @@ def injury_consistency(con, snaps, pfr_map, years):
     injuries = pd.read_sql(
         'select season, game_type, week, team, gsis_id, report_status from nfl_hist_injuries '
         'where season between ? and ?', con, params=(min(years), max(years)))
-    injuries['team'] = injuries['team'].replace(TEAM_MAP)
+    injuries = nfl_team_codes.normalize_frame(injuries, ['team'])
     injuries = injuries.merge(pfr_map, on='gsis_id', how='left')
     per_player = snaps.groupby(['season', 'game_type', 'week', 'team', 'pfr_player_id'], as_index=False).agg(
         snaps=('snaps', 'sum'))

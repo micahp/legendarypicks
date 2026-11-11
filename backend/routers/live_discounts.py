@@ -34,7 +34,7 @@ _SERIES = {"mlb": "KXMLBGAME", "nfl": "KXNFLGAME", "nba": "KXNBAGAME", "nhl": "K
            "wc": "KXWCADVANCE"}
 # ESPN abbrev -> Kalshi ticker abbrev, where they differ. Unmatched games are reported in the
 # payload's `unmatched` list rather than silently dropped.
-_ESPN_TO_KALSHI = {"mlb": {"ARI": "AZ", "CHW": "CWS", "OAK": "ATH"}}
+_ESPN_TO_KALSHI = {"mlb": {"CHW": "CWS", "OAK": "ATH"}}
 
 _CACHE_TTL = 40          # seconds; widget polls at ~45s
 # How long a failing build may keep serving its last good answer. Generous
@@ -185,6 +185,12 @@ def _situations(league):
         if sit:
             out[str(ev.get("id"))] = sit
     return out
+
+
+def _kalshi_code(league, abbr):
+    if league == "mlb" and abbr == "ARI":
+        return "AZ"
+    return _ESPN_TO_KALSHI.get(league, {}).get(abbr, abbr)
 
 
 def _rally_evidence(sit, team_is_home, status_detail):
@@ -379,8 +385,7 @@ def _build(league):
     markets = _kalshi_markets(series)
     rank, meta = _strength(league)
     sits = _situations(league)
-    alias = _ESPN_TO_KALSHI.get(league, {})
-    k = lambda ab: alias.get(ab, ab)
+    k = lambda ab: _kalshi_code(league, ab)  # noqa: E731
 
     cards, upcoming, unmatched = [], [], []
     with closing(_db()) as con:
