@@ -530,7 +530,7 @@ def _preserve_failed_record(directory, seed, record, outcome, snapshot, rng_plan
 
 def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False,
                    paired_randomness=False, rng_plan=None, export_plays=False, failure_dir=None,
-                   failure_identities=None):
+                   failure_identities=None, trace_outcome_probabilities=False):
     record = None
     error = None
     caught_exception = None
@@ -538,6 +538,7 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
     decisions = None
     try:
         if slc_engine.is_slc(ref):
+            ref.contextual_sampler.trace_outcome_probabilities = bool(trace_outcome_probabilities)
             record, decisions = slc_engine.play(seed, ref, snapshot, paired_randomness=paired_randomness,
                                                 rng_plan=rng_plan)
         else:
@@ -565,6 +566,10 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
             outcome['failed_record_unavailable'] = 'simulation failed before a complete record was returned'
     if decisions is not None:
         outcome['playcall'] = slc_engine.summary(decisions, record)
+        if trace_outcome_probabilities:
+            outcome['outcome_probability_traces'] = [
+                decision['outcome_probability_trace'] for decision in decisions
+                if 'outcome_probability_trace' in decision]
     if record and record.get('blocked_attempt'):
         hashes = _artifact_hashes(profile_manifest or {})
         hashes['snapshot.snapshot_sha256'] = snapshot.get('snapshot_sha256', 'unavailable')
@@ -687,7 +692,7 @@ def _open_seed_ledger(path, header, resume, *, seed_end=None, allowed_seeds=None
 
 def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=None, archive_validation=None,
                   export_boxscores=False, paired_randomness=False, rng_plan=None, export_plays=False,
-                  failure_dir=None, failure_identities=None):
+                  failure_dir=None, failure_identities=None, trace_outcome_probabilities=False):
     """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
     cached = finished.get(seed)
     has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
@@ -701,7 +706,8 @@ def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=Non
     outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation,
                                            export_boxscores, paired_randomness, rng_plan=rng_plan,
                                            export_plays=export_plays, failure_dir=failure_dir,
-                                           failure_identities=failure_identities)
+                                           failure_identities=failure_identities,
+                                           trace_outcome_probabilities=trace_outcome_probabilities)
     row = {'seed': seed, 'outcome': outcome, 'players': contribution}
     ledger.write(json.dumps(row, sort_keys=True) + '\n')
     ledger.flush()
@@ -1205,7 +1211,8 @@ def run_batch(args):
                 failure_dir=Path(args.out).with_suffix('.failures'),
                 failure_identities={key: ledger_header.get(key) for key in (
                     'game_id', 'source_snapshot_sha256', 'observed_reference_sha256',
-                    'source_commit', 'playcall_artifact_sha256')})
+                    'source_commit', 'playcall_artifact_sha256')},
+                trace_outcome_probabilities=args.trace_outcome_probabilities)
             outcomes.append(outcome)
             if boxscore_handle is not None and seed not in exported_seed_ids and outcome.get('boxscore'):
                 boxscore_handle.write(json.dumps({'type': 'game', **outcome['boxscore']},
@@ -1463,6 +1470,8 @@ def main(argv=None):
                     help='SLC research ablation: adjust QB run-role selection using the named QB\'s prior non-scramble run tendency; requires QB decisions')
     ap.add_argument('--playcall-player-outcomes', action='store_true',
                     help='SLC research: player-conditioned QB, receiver and rusher event/yards/touchdown outcome distributions')
+    ap.add_argument('--trace-outcome-probabilities', action='store_true',
+                    help='SLC research diagnostic: export per-play event probabilities before and after each enabled conditioning layer')
     ap.add_argument('--playcall-player-outcomes-receiver-only', action='store_true',
                     help='research ablation: condition player outcome draws on the receiver only; requires --playcall-player-outcomes')
     ap.add_argument('--playcall-decision-unfiltered', action='store_true',

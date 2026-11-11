@@ -126,6 +126,55 @@ class Sampler(unittest.TestCase):
         self.assertEqual(decision['state']['team'], 'AAA')
         self.assertAlmostEqual(decision['p_dropback'], 0.5, places=6)
 
+    def test_probability_trace_reports_exact_cell_base_and_final_event_probabilities(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.trace_outcome_probabilities = True
+        pool = cell([('pass_complete', 'pass')] * 6 + [('pass_incomplete', 'pass')] * 3 + [('sack', 'pass')])
+
+        sampler.sample(random.Random(10), pool, 'A', 'B', state=STATE)
+
+        trace = sampler.decisions[-1]['outcome_probability_trace']
+        self.assertEqual(trace['path'], 'exact_cell')
+        self.assertEqual(trace['stages'][0]['stage'], 'base_exact_cell')
+        self.assertEqual(trace['stages'][0]['probabilities'], {
+            'pass_complete': 0.6, 'pass_incomplete': 0.3, 'sack': 0.1,
+        })
+        self.assertEqual(trace['stages'][-1]['stage'], 'final_event_draw')
+        self.assertEqual(trace['stages'][0]['probabilities'], trace['stages'][-1]['probabilities'])
+
+    def test_probability_trace_marks_sparse_backoff_path_and_fallback_level(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.trace_outcome_probabilities = True
+        sampler.outcome_backoff_enabled = True
+        current = cell([('pass_complete', 'pass'), ('pass_incomplete', 'pass'), ('sack', 'pass')])
+        sampler.source_pool = {('historical',): cell(
+            [('pass_complete', 'pass')] * 36 + [('pass_incomplete', 'pass')] * 18 + [('sack', 'pass')] * 6)}
+
+        sampler.sample(random.Random(11), current, 'A', 'B', state=STATE)
+
+        trace = sampler.decisions[-1]['outcome_probability_trace']
+        self.assertEqual(trace['path'], 'sparse_backoff')
+        self.assertEqual(trace['stages'][0]['stage'], 'base_sparse_backoff')
+        self.assertEqual(trace['stages'][-1]['stage'], 'final_event_draw')
+        self.assertEqual(sampler.decisions[-1]['outcome_fallback'], 'exact_cell')
+
+    def test_probability_tracing_does_not_change_sampled_play_or_rng_state(self):
+        pool = cell([('pass_complete', 'pass')] * 6 + [('pass_incomplete', 'pass')] * 3 + [('sack', 'pass')])
+        plain = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)),
+                                    side_teams={'A': 'AAA', 'B': 'BBB'})
+        traced = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(30.0)),
+                                     side_teams={'A': 'AAA', 'B': 'BBB'})
+        traced.trace_outcome_probabilities = True
+        plain_rng, traced_rng = random.Random(19), random.Random(19)
+
+        plain_result = plain.sample(plain_rng, pool, 'A', 'B', state=STATE)
+        traced_result = traced.sample(traced_rng, pool, 'A', 'B', state=STATE)
+
+        self.assertEqual(plain_result, traced_result)
+        self.assertEqual(plain_rng.getstate(), traced_rng.getstate())
+
     def test_pregame_player_sampling_excludes_unmodeled_lateral_rows(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(100.0)),
                                       side_teams={'A': 'AAA', 'B': 'BBB'})
