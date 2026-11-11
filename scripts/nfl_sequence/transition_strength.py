@@ -112,6 +112,26 @@ def _counts(pool):
     return league, teams, plays, sorted(seasons)
 
 
+def _clean_pool_from_rows(rows):
+    """Classify ordered plays first, then retain only verified non-penalty samples.
+
+    Keeping every row during E1 classification preserves receiving-team and
+    turnover sequencing. Unknown penalty status is excluded from model fitting;
+    NULL is never treated as a clean-play label.
+    """
+    pool, excluded = e1.build_pool(rows)
+    unknown = sum(row.get('penalty') is None for row in rows)
+    unrecognized = sum(row.get('penalty') not in (0, 1, None) for row in rows)
+    clean = {cell: [sample for sample in samples if sample[1].get('penalty') == 0]
+             for cell, samples in pool.items()}
+    clean = {cell: samples for cell, samples in clean.items() if samples}
+    if unknown:
+        excluded['penalty status unknown'] += unknown
+    if unrecognized:
+        excluded['penalty status unrecognized'] += unrecognized
+    return clean, excluded, unknown, unrecognized
+
+
 def _manifest(ratios, target_season, seasons, plays, prior_strength, parent=None):
     manifest = {'method': METHOD, 'target_season': int(target_season), 'fit_seasons': list(seasons),
                 'plays': int(plays), 'prior_strength': float(prior_strength), 'parent_sha256': parent,
@@ -156,9 +176,11 @@ def adapt(hist, rows, *, n0, team_games, prior_strength=PRIOR_STRENGTH):
         raise ValueError('transition season-adaptation n0 must be positive and finite')
     if not math.isfinite(float(prior_strength)) or float(prior_strength) <= 0:
         raise ValueError('transition prior strength must be positive and finite')
-    known_penalty_rows = [row for row in rows if row.get('penalty') is not None]
-    unknown_penalty_rows = len(rows) - len(known_penalty_rows)
-    pool, excluded = e1.build_pool(known_penalty_rows)
+    # Keep unknown-status rows in each game's ordered sequence while building
+    # the pool. Removing them first can make a preceding punt or turnover appear
+    # to have a clean next-possession snap. Exclude them only after E1 has used
+    # the complete play sequence to classify transitions.
+    pool, excluded, unknown_penalty_rows, unrecognized_penalty_rows = _clean_pool_from_rows(rows)
     _league_counts, team_counts, plays, seasons = _counts(pool)
     if len(seasons) > 1:
         raise ValueError(f'current transition update contains multiple seasons: {seasons}')
@@ -192,6 +214,7 @@ def adapt(hist, rows, *, n0, team_games, prior_strength=PRIOR_STRENGTH):
     manifest.update({'season_update': True, 'n0': float(n0), 'team_games': dict(sorted(team_games.items())),
                      'cells_blended': cells_blended, 'cells_without_history': cells_without_history,
                      'rows_excluded_unknown_penalty_status': unknown_penalty_rows,
+                     'rows_excluded_unrecognized_penalty_status': unrecognized_penalty_rows,
                      'excluded': dict(sorted(excluded.items()))})
     manifest['sha256'] = _sha({key: value for key, value in manifest.items() if key != 'sha256'})
     return TransitionStrength(ratios, hist.league_shares, manifest)
@@ -199,5 +222,12 @@ def adapt(hist, rows, *, n0, team_games, prior_strength=PRIOR_STRENGTH):
 
 def build_from_rows(rows, target_season, prior_strength=PRIOR_STRENGTH, cutoff=None):
     holdout.refuse_unless_cutoff(target_season, 'team transition rows', cutoff)
-    pool, _excluded = e1.build_pool(rows)
-    return build_from_pool(pool, target_season, prior_strength, cutoff=cutoff)
+    pool, excluded, unknown, unrecognized = _clean_pool_from_rows(rows)
+    table = build_from_pool(pool, target_season, prior_strength, cutoff=cutoff)
+    table.manifest.update({
+        'rows_excluded_unknown_penalty_status': unknown,
+        'rows_excluded_unrecognized_penalty_status': unrecognized,
+        'excluded': dict(sorted(excluded.items())),
+    })
+    table.manifest['sha256'] = _sha({key: value for key, value in table.manifest.items() if key != 'sha256'})
+    return table

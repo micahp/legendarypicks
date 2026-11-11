@@ -2,7 +2,7 @@ import collections, hashlib, json, math, os, sqlite3, sys
 from bisect import bisect_left
 from pathlib import Path
 
-sys.path.insert(0, '/root/ot-sim-out/slc-down-metrics-replay-code-09a794f0/scripts/nfl_sequence')
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'scripts' / 'nfl_sequence'))
 import e0_single_play as e0
 import e1_drive as e1
 import team_tendency as tt
@@ -306,8 +306,11 @@ def main():
                 # independent 4th-down action scoring, with situation-specific league action share.
                 # Condition on historical source cell; FG feasibility is exactly the normal 60-yard rule + observed max.
                 fgmax=70.0
-                for row in test_rows:
-                    if row['game_id']!=gid or row.get('down')!=4 or row.get('qtr') is None or int(row['qtr'])>4:continue
+                # `current_by_game` is built once above. Iterating all season rows
+                # here for every target game made this section O(games * plays).
+                # Restricting it to the current game makes the full pass O(plays).
+                for row in current_by_game.get(gid,()):
+                    if row.get('down')!=4 or row.get('qtr') is None or int(row['qtr'])>4:continue
                     if row.get('penalty')==1:continue
                     action={'run':'go','pass':'go','punt':'punt','field_goal':'field_goal'}.get(row.get('play_type'))
                     if action is None:continue
