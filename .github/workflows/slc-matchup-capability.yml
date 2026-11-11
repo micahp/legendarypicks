@@ -6,12 +6,16 @@ on:
     paths:
       - 'scripts/nfl_sequence/matchup_capability.py'
       - 'scripts/nfl_sequence/test_matchup_capability.py'
+      - 'scripts/nfl_sequence/evaluate_matchup_capability.py'
+      - 'scripts/nfl_sequence/test_matchup_capability_evaluator.py'
       - '.github/workflows/slc-matchup-capability.yml'
   pull_request:
     branches: [slc-v2, main]
     paths:
       - 'scripts/nfl_sequence/matchup_capability.py'
       - 'scripts/nfl_sequence/test_matchup_capability.py'
+      - 'scripts/nfl_sequence/evaluate_matchup_capability.py'
+      - 'scripts/nfl_sequence/test_matchup_capability_evaluator.py'
       - '.github/workflows/slc-matchup-capability.yml'
 
 jobs:
@@ -24,3 +28,7 @@ jobs:
           python-version: '3.11'
       - name: Conditional probability, opponent effect, shrinkage and cutoff tests
         run: python3 -m unittest discover -s scripts/nfl_sequence -p 'test_matchup_capability.py' -v
+      - name: Evaluation source and category contract tests
+        run: python3 -m unittest discover -s scripts/nfl_sequence -p 'test_matchup_capability_evaluator.py' -v
+      - name: Compile holdout evaluation command without importing source data
+        run: python3 -m py_compile scripts/nfl_sequence/evaluate_matchup_capability.py
