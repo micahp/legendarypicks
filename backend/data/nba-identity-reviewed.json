@@ -1,65 +1,224 @@
 {
-  "_provenance": {
-    "written": "2026-10-02",
-    "decision": "Each nba.com PLAYER_ID below is the same person as the ESPN athlete id beside it. Verified by birth date: nba.com's team page and ESPN's core athlete record (sports.core.api.espn.com/v2/sports/basketball/leagues/nba/athletes/<id>) publish the same date for every entry. All seven signed new contracts in late July 2026 that ESPN's 2026-08-04 roster had not yet reflected, so team and transaction-date evidence could not bind them. Two of the ESPN ids sit in players.nba_id, which holds hoopR's ESPN athlete ids, not NBA ids.",
-    "used_by": "ingest_nba_roster.py, as evidence for a sole name candidate whose ESPN id matches. Needed once: after the first publish these players carry an nba.com crosswalk row and resolve by exact id."
+ "_provenance": {
+  "written": "2026-10-02",
+  "decision": "Each nba.com PLAYER_ID below is the same person as the ESPN athlete id beside it. Verified by birth date: nba.com's team page and ESPN's core athlete record (sports.core.api.espn.com/v2/sports/basketball/leagues/nba/athletes/<id>) publish the same date for every entry. All seven signed new contracts in late July 2026 that ESPN's 2026-08-04 roster had not yet reflected, so team and transaction-date evidence could not bind them. Two of the ESPN ids sit in players.nba_id, which holds hoopR's ESPN athlete ids, not NBA ids.",
+  "used_by": "ingest_nba_roster.py, as evidence for a sole name candidate whose ESPN id matches. Needed once: after the first publish these players carry an nba.com crosswalk row and resolve by exact id.",
+  "added_2026_11_12": "16 preseason players bound by nba.com box-score name plus a matching birth date"
+ },
+ "nba": {
+  "1641761": {
+   "espn_id": 4702670,
+   "name": "Grant Nelson",
+   "nba_com_team": "BKN",
+   "nba_com_birth_date": "MAR 18, 2002",
+   "espn_birth_date": "2002-03-18",
+   "nba_com_how_acquired": "Signed on 10/15/25"
   },
-  "nba": {
-    "1641761": {
-      "espn_id": 4702670,
-      "name": "Grant Nelson",
-      "nba_com_team": "BKN",
-      "nba_com_birth_date": "MAR 18, 2002",
-      "espn_birth_date": "2002-03-18",
-      "nba_com_how_acquired": "Signed on 10/15/25"
-    },
-    "1641763": {
-      "espn_id": 5105553,
-      "name": "Julian Phillips",
-      "nba_com_team": "HOU",
-      "nba_com_birth_date": "NOV 05, 2003",
-      "espn_birth_date": "2003-11-05",
-      "nba_com_how_acquired": "Signed on 07/24/26"
-    },
-    "1631131": {
-      "espn_id": 4432827,
-      "name": "Oscar Tshiebwe",
-      "nba_com_team": "HOU",
-      "nba_com_birth_date": "NOV 27, 1999",
-      "espn_birth_date": "1999-11-27",
-      "nba_com_how_acquired": "Signed on 07/23/26"
-    },
-    "1631219": {
-      "espn_id": 4432588,
-      "name": "John Butler Jr.",
-      "nba_com_team": "MIL",
-      "nba_com_birth_date": "DEC 04, 2002",
-      "espn_birth_date": "2002-12-04",
-      "nba_com_how_acquired": "Signed on 10/15/25"
-    },
-    "1641723": {
-      "espn_id": 4683736,
-      "name": "Kobe Bufkin",
-      "nba_com_team": "NO",
-      "nba_com_birth_date": "SEP 21, 2003",
-      "espn_birth_date": "2003-09-21",
-      "nba_com_how_acquired": "Signed on 07/25/26"
-    },
-    "1631132": {
-      "espn_id": 4431778,
-      "name": "Christian Koloko",
-      "nba_com_team": "NO",
-      "nba_com_birth_date": "JUN 20, 2000",
-      "espn_birth_date": "2000-06-20",
-      "nba_com_how_acquired": "Signed on 07/28/26"
-    },
-    "1631127": {
-      "espn_id": 4433618,
-      "name": "Harrison Ingram",
-      "nba_com_team": "UTAH",
-      "nba_com_birth_date": "NOV 27, 2002",
-      "espn_birth_date": "2002-11-27",
-      "nba_com_how_acquired": "Signed on 07/25/26"
-    }
+  "1641763": {
+   "espn_id": 5105553,
+   "name": "Julian Phillips",
+   "nba_com_team": "HOU",
+   "nba_com_birth_date": "NOV 05, 2003",
+   "espn_birth_date": "2003-11-05",
+   "nba_com_how_acquired": "Signed on 07/24/26"
+  },
+  "1631131": {
+   "espn_id": 4432827,
+   "name": "Oscar Tshiebwe",
+   "nba_com_team": "HOU",
+   "nba_com_birth_date": "NOV 27, 1999",
+   "espn_birth_date": "1999-11-27",
+   "nba_com_how_acquired": "Signed on 07/23/26"
+  },
+  "1631219": {
+   "espn_id": 4432588,
+   "name": "John Butler Jr.",
+   "nba_com_team": "MIL",
+   "nba_com_birth_date": "DEC 04, 2002",
+   "espn_birth_date": "2002-12-04",
+   "nba_com_how_acquired": "Signed on 10/15/25"
+  },
+  "1641723": {
+   "espn_id": 4683736,
+   "name": "Kobe Bufkin",
+   "nba_com_team": "NO",
+   "nba_com_birth_date": "SEP 21, 2003",
+   "espn_birth_date": "2003-09-21",
+   "nba_com_how_acquired": "Signed on 07/25/26"
+  },
+  "1631132": {
+   "espn_id": 4431778,
+   "name": "Christian Koloko",
+   "nba_com_team": "NO",
+   "nba_com_birth_date": "JUN 20, 2000",
+   "espn_birth_date": "2000-06-20",
+   "nba_com_how_acquired": "Signed on 07/28/26"
+  },
+  "1631127": {
+   "espn_id": 4433618,
+   "name": "Harrison Ingram",
+   "nba_com_team": "UTAH",
+   "nba_com_birth_date": "NOV 27, 2002",
+   "espn_birth_date": "2002-11-27",
+   "nba_com_how_acquired": "Signed on 07/25/26"
+  },
+  "1630283": {
+   "espn_id": 3950760,
+   "name": "Kylor Kelley",
+   "nba_com_team": "MIA",
+   "nba_com_birth_date": "1997-08-26",
+   "espn_birth_date": "1997-08-26",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1641917": {
+   "espn_id": 4278395,
+   "name": "Taylor Funk",
+   "nba_com_team": "UTAH",
+   "nba_com_birth_date": "1997-11-06",
+   "espn_birth_date": "1997-11-06",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643069": {
+   "espn_id": 4432394,
+   "name": "Cameron Matthews",
+   "nba_com_team": "HOU",
+   "nba_com_birth_date": "2001-12-23",
+   "espn_birth_date": "2001-12-23",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643019": {
+   "espn_id": 4432753,
+   "name": "Gabe Madsen",
+   "nba_com_team": "MIA",
+   "nba_com_birth_date": "2001-05-01",
+   "espn_birth_date": "2001-05-01",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643572": {
+   "espn_id": 4684443,
+   "name": "Rafael Castro",
+   "nba_com_team": "LAL",
+   "nba_com_birth_date": "2003-03-30",
+   "espn_birth_date": "2003-03-30",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1642922": {
+   "espn_id": 4701819,
+   "name": "Jalon Moore",
+   "nba_com_team": "NO",
+   "nba_com_birth_date": "2003-04-10",
+   "espn_birth_date": "2003-04-10",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1642283": {
+   "espn_id": 4702528,
+   "name": "Jaxson Robinson",
+   "nba_com_team": "CLE",
+   "nba_com_birth_date": "2002-12-03",
+   "espn_birth_date": "2002-12-03",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643208": {
+   "espn_id": 4897155,
+   "name": "Anthony Pritchard",
+   "nba_com_team": "OKC",
+   "nba_com_birth_date": "2003-05-06",
+   "espn_birth_date": "2003-05-06",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1642481": {
+   "espn_id": 4897696,
+   "name": "Jamarion Sharp",
+   "nba_com_team": "TOR",
+   "nba_com_birth_date": "2001-08-26",
+   "espn_birth_date": "2001-08-26",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643091": {
+   "espn_id": 4898260,
+   "name": "Tyson Degenhart",
+   "nba_com_team": "TOR",
+   "nba_com_birth_date": "2002-10-13",
+   "espn_birth_date": "2002-10-13",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643679": {
+   "espn_id": 5105411,
+   "name": "Jorge Diaz-Graham",
+   "nba_com_team": "DAL",
+   "nba_com_birth_date": "2003-06-29",
+   "espn_birth_date": "2003-06-29",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643726": {
+   "espn_id": 5106051,
+   "name": "Ezra Ausar",
+   "nba_com_team": "MIA",
+   "nba_com_birth_date": "2003-02-14",
+   "espn_birth_date": "2003-02-14",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643753": {
+   "espn_id": 5106293,
+   "name": "Mohamed Wague",
+   "nba_com_team": "UTAH",
+   "nba_com_birth_date": "1999-12-17",
+   "espn_birth_date": "1999-12-17",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643617": {
+   "espn_id": 5107069,
+   "name": "Zach Cleveland",
+   "nba_com_team": "MEM",
+   "nba_com_birth_date": "2004-03-12",
+   "espn_birth_date": "2004-03-12",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643818": {
+   "espn_id": 5239799,
+   "name": "Taye Fields",
+   "nba_com_team": "PHI",
+   "nba_com_birth_date": "2003-07-16",
+   "espn_birth_date": "2003-07-16",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1643037": {
+   "espn_id": 5457832,
+   "name": "Noam Yaacov",
+   "nba_com_team": "CLE",
+   "nba_com_birth_date": "2004-10-20",
+   "espn_birth_date": "2004-10-20",
+   "evidence": "2026-11-12: name in nba.com preseason box score on the game date; nba.com player page BIRTHDATE equals ESPN athlete dateOfBirth"
+  },
+  "1627746": {
+   "name": "Skal Labissiere",
+   "nba_com_birth_date": "1996-03-18",
+   "evidence": "2026-11-12: nba.com player page publishes this name for this id; id was already bound in player_source_ids"
+  },
+  "1631174": {
+   "name": "Tyler Burton",
+   "nba_com_birth_date": "2000-02-11",
+   "evidence": "2026-11-12: nba.com player page publishes this name for this id; id was already bound in player_source_ids"
+  },
+  "1631214": {
+   "name": "Alondes Williams",
+   "nba_com_birth_date": "1999-06-19",
+   "evidence": "2026-11-12: nba.com player page publishes this name for this id; id was already bound in player_source_ids"
+  },
+  "1641780": {
+   "name": "Johni Broome",
+   "nba_com_birth_date": "2002-07-19",
+   "evidence": "2026-11-12: nba.com player page publishes this name for this id; id was already bound in player_source_ids"
+  },
+  "1643133": {
+   "name": "Lawson Lovering",
+   "nba_com_birth_date": "2003-05-09",
+   "evidence": "2026-11-12: nba.com player page publishes this name for this id; id was already bound in player_source_ids"
+  },
+  "1643141": {
+   "name": "Jahmyl Telfort",
+   "nba_com_birth_date": "2001-04-30",
+   "evidence": "2026-11-12: nba.com player page publishes this name for this id; id was already bound in player_source_ids"
   }
+ }
 }

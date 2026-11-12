@@ -495,6 +495,18 @@ def _nba_com_official_names(con):
             "AND m.source_player_key IS NOT NULL AND m.display_name IS NOT NULL "
             "ORDER BY s.id, m.id"):
         names[str(key)] = name
+    # Reviewed ids: nba.com ids bound by name on an nba.com box score plus an
+    # ESPN/nba.com birth-date match. The name is nba.com's own, from its player page.
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "data", "nba-identity-reviewed.json")
+    try:
+        with open(path, encoding="utf-8") as handle:
+            reviewed = json.load(handle).get("nba", {})
+    except (OSError, ValueError):
+        reviewed = {}
+    for key, entry in reviewed.items():
+        if str(key) not in names and isinstance(entry, dict) and entry.get("name"):
+            names[str(key)] = entry["name"]
     return names
 
 
