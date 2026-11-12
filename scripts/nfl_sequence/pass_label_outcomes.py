@@ -16,7 +16,6 @@ from scipy.optimize import minimize
 
 import decision_layer
 import e0_single_play as e0
-import fit_cache
 
 MODEL_ID = 'slc-pass-label-conditional-outcomes-v1-research'
 OUTCOMES = ('pass_complete', 'pass_incomplete', 'interception', 'fumble_lost')
@@ -43,34 +42,6 @@ class PassLabelOutcomeModel:
         self.manifest = dict(manifest)
         self._calibration = {}
         self._feature_index = {feature: i for i, feature in enumerate(FEATURES)}
-
-    @classmethod
-    def fit_cached(cls, pool, *, ridge=RIDGE, base_prior=BASE_PRIOR):
-        """Reuse an identical conditional fit across games while preserving exact fit inputs.
-
-        Hash only the values read by fit(), including row order, penalty status,
-        season, and the three labels. Raw yards and player ids do not affect the fit.
-        The shared fit cache adds Python/build-code hashes and remains opt-in for
-        direct callers; the V1.6 batch runner enables it for multi-game runs.
-        """
-        if not fit_cache.os.environ.get('SLC_FIT_CACHE_DIR'):
-            return cls.fit(pool, ridge=ridge, base_prior=base_prior)
-
-        digest = hashlib.sha256()
-        for cell, rows in pool.items():
-            digest.update(json.dumps(['cell', cell], separators=(',', ':')).encode())
-            digest.update(b'\n')
-            for event, row, _runoff, _spot in rows:
-                labels = row.get('labels') or {}
-                values = (event, row.get('season'), row.get('penalty'),
-                          tuple(labels.get(category) for category in CATEGORIES))
-                digest.update(json.dumps(values, separators=(',', ':')).encode())
-                digest.update(b'\n')
-
-        source = (digest.hexdigest(), float(ridge), float(base_prior))
-        return fit_cache.memo('pass_label_outcomes.fit', source,
-                              lambda: cls.fit(pool, ridge=ridge, base_prior=base_prior),
-                              code_files=(__file__,))
 
     @classmethod
     def fit(cls, pool, *, ridge=RIDGE, base_prior=BASE_PRIOR):
