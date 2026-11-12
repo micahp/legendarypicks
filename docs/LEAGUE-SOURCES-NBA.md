@@ -53,6 +53,22 @@ tennis. It has no NBA section.
 | Draft position | Not checked | Official NBA draft pages | Unknown | Must be checked before any draft claim is used. |
 | Live forecasts | Prospective forecast rows | ESPN live scoreboard and summary (`docs/NBA-GAME-MODEL-PHASE1.md`) | Repo doc | Subject to the ESPN request-budget rules. |
 
+## Player facts for the pinned game, checked 2026-11-11
+
+Sources: ESPN roster API (`teams/9` and `teams/10` with `enable=roster`), ESPN
+athlete overview (`athletes/{id}`), and ESPN game logs (`athletes/{id}/gamelog`).
+ESPN gives game dates in UTC. The dates below are converted to Eastern time.
+Averages are computed here from the listed regular-season games.
+
+| Fact | Status | Detail |
+|---|---|---|
+| Yaxel Lendeborg, draft | Checked today | ESPN athlete overview, `displayDraft`: "2026: Rd 1, Pk 11 (GS)". 11th overall pick, 2026. |
+| Lendeborg, regular-season points | Checked today | 23, 23, 17, 16, 37, 6, 26, 31, 26, 18, 12 (11 games, Oct. 22 to Nov. 10). Average 21.4 (computed: 235 / 11). |
+| Lendeborg, last three games | Checked today | Nov. 1 at LAC (37), Nov. 7 vs ORL (23), Nov. 9 vs NO (23). ESPN dates are UTC: Nov. 2, Nov. 8, and Nov. 10 in UTC. |
+| Stephen Curry, points per game | Checked today | 30.6 (computed from 9 regular-season games in the ESPN log: 23, 24, 24, 44, 31, 34, 29, 41, 25). The log has 9 games, not 11. |
+| Kevin Durant, points per game | Checked today | 21.0 (computed from 11 regular-season games in the ESPN log). Last game: 23 vs DEN, Nov. 9 ET, a 110-100 win. |
+| Durant and the Warriors history | Unknown | Not checked. The spec lists it as a possible angle. |
+
 ## Endpoint checks, 2026-11-11
 
 | Endpoint | Result | Note |
@@ -61,6 +77,7 @@ tennis. It has no NBA section.
 | ESPN scoreboard API, `.../nba/scoreboard?dates=20261111` | HTTP 200 | Usable. Lists 10 events for the date. |
 | ESPN team API, `.../nba/teams/10` (Houston) | HTTP 200 | Usable. |
 | ESPN league injuries API, `.../nba/injuries` | HTTP 200 | Usable. Feed has a timestamp and per-row dates. |
+| ESPN athlete APIs (Lendeborg 5175737, Curry 3975, Durant 3202): overview and gamelog | HTTP 200 | Usable. |
 | ESPN web preview page, `espn.com/nba/preview/_/gameId/401909974` | HTTP 403 via WebFetch | The web page is blocked. The API is not. |
 | NBA CDN, `cdn.nba.com/static/json/...` (two files) | HTTP 403 | Blocked from this box. |
 | NBA stats API, `stats.nba.com/stats/scoreboardv2` | Timed out after 20 s | Not confirmed as blocked. Not reachable in this check. |
@@ -71,12 +88,11 @@ Older repo docs also report 403 from stats.nba.com and cdn.nba.com
 
 ## Open items
 
-1. Check Lendeborg's draft position and game logs (ESPN athlete pages). Not checked yet.
-2. Check Curry and Durant context. Not checked yet.
-3. Complete the `nba_schedule` snapshot and its ESPN ID crosswalk.
-4. Confirm 2026–27 final scores are written to `nba_schedule`.
-5. Confirm a stable NBA player game-log source for 2026–27.
-6. Decide whether the official NBA draft page can be the draft source.
+1. Check Durant's history with Golden State. Not checked yet.
+2. Complete the `nba_schedule` snapshot and its ESPN ID crosswalk.
+3. Confirm 2026–27 final scores are written to `nba_schedule`.
+4. Confirm a stable NBA player game-log source for 2026–27.
+5. Decide whether the official NBA draft page can be the draft source.
 
 ## Changes to this doc
 
