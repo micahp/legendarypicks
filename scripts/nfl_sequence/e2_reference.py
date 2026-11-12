@@ -664,8 +664,8 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             import formation_layer as fl
             seasons = sorted({int(row['season']) for row in rows})
             participation = fl.load_participation(db, seasons)
-            fl.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], participation)
-            contextual_sampler.formation_priors = fl.priors(db, int(eligible_before[0]))
+            fl.attach((row for cell in pool.values() for _event, row, _runoff, _spot in cell), participation)
+            contextual_sampler.formation_priors = fl.priors(db, int(eligible_before[0]), participation=participation)
             contextual_sampler.formation_outcomes = True
         contextual_sampler.exact_yardline = bool(playcall_exact_yardline)
         if playcall_point_splits:  # team score-state shifts of the dropback rate, from the seasons before the cutoff only
@@ -704,7 +704,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             frame = pm4.load_frame_cached(Path(playcall_streak_league), seasons, db=db) if isinstance(playcall_streak_league, str) \
                 else _shared_play_call_frame(pm4, db, cutoff)
             states_l = _prior_streak_states(ss2, db, cutoff, streak_states)
-            ss2.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], states_l)
+            ss2.attach((row for cell in pool.values() for _event, row, _runoff, _spot in cell), states_l)
             contextual_sampler.streak_league = ss2.league_priors(frame, states_l, cutoff)
             contextual_sampler.streak_outcomes = True
         if playcall_coverage:  # defensive coverage on dropbacks: the defense's prior shares; outcomes conditioned on it
@@ -712,7 +712,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                 raise ValueError('coverage priors need an eligible-before cutoff')
             import defense_layer as dl
             seasons = sorted({int(row['season']) for row in rows})
-            dl.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], dl.load_coverage(db, seasons))
+            dl.attach((row for cell in pool.values() for _event, row, _runoff, _spot in cell), dl.load_coverage(db, seasons))
             contextual_sampler.defense_priors = dl.priors(db, int(eligible_before[0]))
             contextual_sampler.coverage_outcomes = True
         if playcall_decision:  # decision model categories A to N: team priors from the most recent prior season; outcomes by label
@@ -722,7 +722,7 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             cutoff = int(eligible_before[0])
             labelled = dl2.load_rows(db, range(dl2.FIRST_CHARTED_SEASON, cutoff),
                                      known_clean_only=playcall_known_clean_only)  # raises when no charted season precedes it
-            dl2.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], labelled)
+            dl2.attach((row for cell in pool.values() for _event, row, _runoff, _spot in cell), labelled)
             contextual_sampler.decision_table = dl2.fit(labelled, prior_season=cutoff - 1)
             contextual_sampler.decision_outcomes = True
         if playcall_player_shares:  # prior-season player target and carry shares for the pre-event adapter
