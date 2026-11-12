@@ -459,7 +459,8 @@ class FinishedSeeds(dict):
 
 
 def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False,
-                   paired_randomness=False, paired_seed_snapshot_sha256=None):
+                   paired_randomness=False, paired_seed_snapshot_sha256=None,
+                   play_export_handle=None, exported_seed_ids=None):
     record = None
     error = None
     caught_exception = None
@@ -478,6 +479,10 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
         error = f'{type(exc).__name__}: {exc}'
         caught_exception = exc
         validation_error = record is not None
+    if play_export_handle is not None and record is not None:
+        _write_ordered_game(play_export_handle, seed, snapshot, profile_manifest, record, decisions)
+        if exported_seed_ids is not None:
+            exported_seed_ids.add(seed)
     outcome = _record_outcome(seed, record, error, validation_error)
     if record and record.get('paired_random_streams'):
         outcome['paired_random_streams'] = record['paired_random_streams']
@@ -596,15 +601,18 @@ def _open_seed_ledger(path, header, resume, *, seed_end=None, allowed_seeds=None
 
 
 def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=None, archive_validation=None,
-                  export_boxscores=False, paired_randomness=False, paired_seed_snapshot_sha256=None):
+                  export_boxscores=False, paired_randomness=False, paired_seed_snapshot_sha256=None,
+                  export_plays=False, play_export_handle=None, exported_seed_ids=None):
     """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
     cached = finished.get(seed)
     has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
     if (cached is not None and cached['outcome']['status'] not in ERROR_STATUSES
-            and (not export_boxscores or has_boxscore)):
+            and (not export_boxscores or has_boxscore)
+            and (not export_plays or seed in (exported_seed_ids or set()))):
         return cached['outcome'], cached['players']
     outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation,
-                                           export_boxscores, paired_randomness, paired_seed_snapshot_sha256)
+                                           export_boxscores, paired_randomness, paired_seed_snapshot_sha256,
+                                           play_export_handle, exported_seed_ids)
     row = {'seed': seed, 'outcome': outcome, 'players': contribution}
     ledger.write(json.dumps(row, sort_keys=True) + '\n')
     ledger.flush()
@@ -622,6 +630,69 @@ def _write_boxscore_header(handle, profile_manifest, snapshot):
                              'source_cutoff': snapshot['as_of'],
                              'evaluation_class': profile_manifest['evaluation_class']},
                             sort_keys=True) + '\n')
+
+
+def _play_export_manifest(profile_manifest, snapshot):
+    return {
+        'schema': 'lp-nfl-slc-ordered-game-jsonl-1',
+        'type': 'manifest',
+        'game_id': snapshot['schedule']['game_id'],
+        'model_id': profile_manifest['model_id'],
+        'configuration_hash': profile_manifest['configuration_hash'],
+        'reference_sha256': profile_manifest.get('reference_sha256'),
+        'snapshot_sha256': snapshot.get('snapshot_sha256'),
+        'source_cutoff': snapshot.get('as_of'),
+        'record_shape': 'one game record per row; drives and plays retain simulator order',
+    }
+
+
+def _write_ordered_game(handle, seed, snapshot, profile_manifest, record, decisions=None):
+    """Persist the exact generated game record, including ordered drive/play state transitions."""
+    handle.write(json.dumps({
+        'type': 'game',
+        'game_id': snapshot['schedule']['game_id'],
+        'seed': seed,
+        'status': record.get('status'),
+        'valid_full_game': record.get('valid_full_game'),
+        'configuration_hash': profile_manifest.get('configuration_hash') if profile_manifest else None,
+        'snapshot_sha256': snapshot.get('snapshot_sha256'),
+        'playcall_decisions': decisions,
+        'record': record,
+    }, sort_keys=True, separators=(',', ':')) + '\n')
+    handle.flush()
+
+
+def _prepare_play_sidecar(path, resume, profile_manifest, snapshot):
+    """Open an ordered game-record sidecar and return its already-exported seed IDs."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    manifest = _play_export_manifest(profile_manifest, snapshot)
+    exported = set()
+    if resume and path.exists():
+        with path.open() as source:
+            first = source.readline()
+            try:
+                existing_manifest = json.loads(first)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f'{path}: invalid ordered-play manifest') from exc
+            if existing_manifest != manifest:
+                raise ValueError(f'{path}: ordered-play export belongs to different frozen inputs')
+            for line_number, line in enumerate(source, 2):
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(f'{path}: invalid JSON on line {line_number}') from exc
+                seed = row.get('seed')
+                if row.get('type') != 'game' or type(seed) is not int:
+                    raise ValueError(f'{path}: invalid game row on line {line_number}')
+                if seed in exported:
+                    raise ValueError(f'{path}: duplicate exported seed {seed}')
+                exported.add(seed)
+        return path.open('a'), exported
+    if path.exists():
+        raise FileExistsError(f'{path} exists; pass --resume to continue it or choose a new --out path')
+    with path.open('w') as handle:
+        handle.write(json.dumps(manifest, sort_keys=True, separators=(',', ':')) + '\n')
+    return path.open('a'), exported
 
 
 def _prepare_boxscore_sidecar(path, finished, profile_manifest, snapshot):
@@ -934,6 +1005,7 @@ def run_batch(args):
         'slc_profile': profile_manifest,
         'historical_archive_reconstruction': archive_validation,
         'boxscore_export': bool(args.export_boxscores),
+        'ordered_play_export': bool(args.export_plays),
         'paired_randomness': bool(args.paired_randomness),
         'paired_seed_snapshot_sha256': paired_input_sha256,
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
@@ -969,6 +1041,12 @@ def run_batch(args):
     if args.export_boxscores:
         boxscore_handle, exported_seed_ids = _prepare_boxscore_sidecar(
             boxscore_path, finished, profile_manifest, snapshot)
+    play_handle = None
+    exported_play_seed_ids = set()
+    play_path = Path(args.out).with_suffix('.plays.jsonl')
+    if args.export_plays:
+        play_handle, exported_play_seed_ids = _prepare_play_sidecar(
+            play_path, args.resume, profile_manifest, snapshot)
     started = time.monotonic()
     for player_id in _player_template(snapshot):
         player_totals[player_id]
@@ -978,7 +1056,9 @@ def run_batch(args):
                 seed, finished, ledger, ref, snapshot, profile_manifest=profile_manifest,
                 archive_validation=archive_validation, export_boxscores=args.export_boxscores,
                 paired_randomness=args.paired_randomness,
-                paired_seed_snapshot_sha256=paired_input_sha256)
+                paired_seed_snapshot_sha256=paired_input_sha256,
+                export_plays=args.export_plays, play_export_handle=play_handle,
+                exported_seed_ids=exported_play_seed_ids)
             outcomes.append(outcome)
             if boxscore_handle is not None and seed not in exported_seed_ids and outcome.get('boxscore'):
                 boxscore_handle.write(json.dumps({'type': 'game', **outcome['boxscore']},
@@ -1006,6 +1086,8 @@ def run_batch(args):
     finally:
         if boxscore_handle is not None:
             boxscore_handle.close()
+        if play_handle is not None:
+            play_handle.close()
         ledger.close()
 
     simulation_seconds = time.monotonic() - started
@@ -1112,6 +1194,10 @@ def run_batch(args):
         'boxscore_export': {'enabled': bool(args.export_boxscores),
                             'schema': slc_outputs.BOX_SCHEMA if args.export_boxscores else None,
                             'path': str(boxscore_path) if args.export_boxscores else None},
+        'ordered_play_export': {'enabled': bool(args.export_plays),
+                                'schema': 'lp-nfl-slc-ordered-game-jsonl-1' if args.export_plays else None,
+                                'path': str(play_path) if args.export_plays else None,
+                                'game_records_exported': len(exported_play_seed_ids)},
         'boxscore_distributions': boxscore_summary,
         'player_projections': _player_projections(snapshot, player_totals, games_with_player_stats),
         'replay_examples': replay_examples,
@@ -1250,6 +1336,9 @@ def main(argv=None):
                     help='continue the seed ledger next to --out (<out stem>.seeds.jsonl); refuses a ledger from other inputs')
     ap.add_argument('--export-boxscores', action='store_true',
                     help='write a versioned per-seed box-score JSONL sidecar and valid-game distributions')
+    ap.add_argument('--export-plays', action='store_true',
+                    help='write each generated full game record, with ordered drives and before/after play states, '
+                         'to <out stem>.plays.jsonl; opt-in because records are larger than box-score exports')
     ap.add_argument('--paired-randomness', action='store_true',
                     help='research evaluation mode: isolate random draws by game snapshot, drive, play and semantic event '
                          'so matched-seed ablations do not shift unrelated random streams')

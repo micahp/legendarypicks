@@ -145,6 +145,55 @@ class SeedLedger(unittest.TestCase):
         rows = [json.loads(line) for line in self.path.read_text().splitlines()[1:]]
         self.assertEqual([row['seed'] for row in rows], [2])
 
+    def test_ordered_play_export_preserves_generated_game_transitions(self):
+        path = Path(self.tmp.name) / 'run.plays.jsonl'
+        profile = {'model_id': 'test-model', 'configuration_hash': 'config',
+                   'evaluation_class': 'test'}
+        snapshot = {'schedule': {'game_id': 'g1'}, 'snapshot_sha256': 'snapshot',
+                    'as_of': '2025-10-01T00:00:00Z'}
+        drive = {'index': 1, 'offense_team': 'A', 'terminal': 'punt', 'plays': [
+            {'sequence': 1, 'event_type': 'run',
+             'state_before': {'down': 1, 'yards_to_go': 10},
+             'decision': {'intent': 'run'}, 'outcome': {'yards_gained': 7},
+             'state_after': {'down': 2, 'yards_to_go': 3}},
+            {'sequence': 2, 'event_type': 'sack',
+             'state_before': {'down': 2, 'yards_to_go': 3},
+             'decision': {'intent': 'dropback'}, 'outcome': {'yards_gained': -6},
+             'state_after': {'down': 3, 'yards_to_go': 9}},
+        ]}
+        record = {'status': 'complete', 'valid_full_game': True, 'drives': [drive]}
+        with path.open('w') as handle:
+            batch._write_ordered_game(handle, 1, snapshot, profile, record)
+
+        row = json.loads(path.read_text())
+        plays = row['record']['drives'][0]['plays']
+        self.assertEqual([play['sequence'] for play in plays], [1, 2])
+        self.assertEqual(plays[0]['state_after']['yards_to_go'], 3)
+        self.assertEqual(plays[1]['state_before']['yards_to_go'], 3)
+        self.assertEqual(row['record']['drives'][0]['terminal'], 'punt')
+
+    def test_export_play_resume_reuses_only_seeds_with_saved_game_records(self):
+        finished = {1: {'seed': 1, 'outcome': {'seed': 1, 'status': 'complete'}, 'players': {}}}
+        handle = self._fresh()
+        path = Path(self.tmp.name) / 'run.plays.jsonl'
+        snapshot = {'schedule': {'game_id': 'g1'}, 'snapshot_sha256': 's', 'as_of': 'cutoff'}
+        play_handle, exported = batch._prepare_play_sidecar(
+            path, False, {'model_id': 'm', 'configuration_hash': 'c'}, snapshot)
+        try:
+            with mock.patch.object(batch.gs, 'play_game', return_value=OK_RECORD) as play_game, \
+                    mock.patch.object(batch.gs, 'validate_game'):
+                batch._seed_outcome(1, finished, handle, None, snapshot, export_plays=True,
+                                    play_export_handle=play_handle, exported_seed_ids=exported)
+                self.assertIn(1, exported)
+                batch._seed_outcome(1, finished, handle, None, snapshot, export_plays=True,
+                                    play_export_handle=play_handle, exported_seed_ids=exported)
+            self.assertEqual(play_game.call_count, 1)
+        finally:
+            play_handle.close()
+            handle.close()
+        rows = [json.loads(line) for line in path.read_text().splitlines()]
+        self.assertEqual([row['type'] for row in rows], ['manifest', 'game'])
+
 
 if __name__ == '__main__':
     unittest.main()
