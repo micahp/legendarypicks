@@ -24,6 +24,7 @@ import copy
 from collections import defaultdict
 from datetime import datetime, timezone
 import hashlib
+import gzip
 import json
 import os
 from pathlib import Path
@@ -461,9 +462,39 @@ class FinishedSeeds(dict):
         self.duplicate_rows = 0
 
 
+def _preserve_failed_record(directory, seed, record, outcome, snapshot, paired_seed_snapshot_sha256, profile_manifest):
+    """Save a deterministic, immutable compressed failure envelope for replay."""
+    payload = {
+        'schema': 'lp.nfl.failed-game-record.v1', 'seed': seed, 'record': record,
+        'status': outcome.get('status'), 'error': outcome.get('error'),
+        'blocker': outcome.get('blocker'), 'assertion_failure': outcome.get('assertion_failure'),
+        'boxscore_error': outcome.get('boxscore_error'),
+        'unresolved_transition': outcome.get('unresolved_transition'),
+        'snapshot_sha256': snapshot.get('snapshot_sha256'),
+        'paired_seed_snapshot_sha256': paired_seed_snapshot_sha256,
+        'game_id': (snapshot.get('schedule') or {}).get('game_id'),
+        'profile_identity': {key: (profile_manifest or {}).get(key) for key in
+                             ('configuration_hash', 'model_id', 'reference_sha256')},
+    }
+    compressed = gzip.compress(json.dumps(payload, sort_keys=True, separators=(',', ':'),
+                                          ensure_ascii=False, default=str).encode(), mtime=0)
+    digest = hashlib.sha256(compressed).hexdigest()
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f'seed-{seed}-{digest}.json.gz'
+    try:
+        with path.open('xb') as handle:
+            handle.write(compressed)
+    except FileExistsError:
+        if path.read_bytes() != compressed:
+            raise ValueError(f'failure record already exists with different content: {path}')
+    return {'schema': payload['schema'], 'path': str(path), 'sha256': digest}
+
+
 def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validation=None, export_boxscores=False,
                    paired_randomness=False, paired_seed_snapshot_sha256=None,
-                   play_export_handle=None, exported_seed_ids=None):
+                   play_export_handle=None, exported_seed_ids=None, failure_dir=None,
+                   trace_outcome_probabilities=False):
     record = None
     error = None
     caught_exception = None
@@ -471,6 +502,7 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
     decisions = None
     try:
         if slc_engine.is_slc(ref):
+            ref.contextual_sampler.trace_outcome_probabilities = bool(trace_outcome_probabilities)
             record, decisions = slc_engine.play(seed, ref, snapshot, paired_randomness=paired_randomness,
                                                 paired_seed_snapshot_sha256=paired_seed_snapshot_sha256)
         else:
@@ -491,6 +523,10 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
         outcome['paired_random_streams'] = record['paired_random_streams']
     if decisions is not None:
         outcome['playcall'] = slc_engine.summary(decisions, record)
+        if trace_outcome_probabilities:
+            outcome['outcome_probability_traces'] = [
+                d['outcome_probability_trace'] for d in decisions
+                if 'outcome_probability_trace' in d]
     if caught_exception is not None:
         hashes = _artifact_hashes(profile_manifest or {})
         hashes['snapshot.snapshot_sha256'] = snapshot.get('snapshot_sha256', 'unavailable')
@@ -547,6 +583,12 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
                 minimal = slc_outputs.build_boxscore(seed, outcome, None, snapshot, profile_manifest, archive_validation)
                 minimal['boxscore_error'] = boxscore_error
                 outcome['boxscore'] = minimal
+    if failure_dir is not None and (caught_exception is not None or
+                                    outcome.get('status') in ERROR_STATUSES or
+                                    outcome.get('assertion_failure') is not None or
+                                    outcome.get('unresolved_transition') is not None):
+        outcome['failed_record'] = _preserve_failed_record(
+            failure_dir, seed, record, outcome, snapshot, paired_seed_snapshot_sha256, profile_manifest)
     contribution = None
     if outcome['valid_full_game'] and record:
         contribution = {
@@ -605,7 +647,8 @@ def _open_seed_ledger(path, header, resume, *, seed_end=None, allowed_seeds=None
 
 def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=None, archive_validation=None,
                   export_boxscores=False, paired_randomness=False, paired_seed_snapshot_sha256=None,
-                  export_plays=False, play_export_handle=None, exported_seed_ids=None):
+                  export_plays=False, play_export_handle=None, exported_seed_ids=None,
+                  failure_dir=None, trace_outcome_probabilities=False):
     """A finished seed is reused from the ledger unless it errored; anything else is simulated and appended."""
     cached = finished.get(seed)
     has_boxscore = bool(cached and cached.get('outcome', {}).get('boxscore'))
@@ -615,7 +658,8 @@ def _seed_outcome(seed, finished, ledger, ref, snapshot, *, profile_manifest=Non
         return cached['outcome'], cached['players']
     outcome, contribution = _simulate_seed(seed, ref, snapshot, profile_manifest, archive_validation,
                                            export_boxscores, paired_randomness, paired_seed_snapshot_sha256,
-                                           play_export_handle, exported_seed_ids)
+                                           play_export_handle, exported_seed_ids,
+                                           failure_dir, trace_outcome_probabilities)
     row = {'seed': seed, 'outcome': outcome, 'players': contribution}
     ledger.write(json.dumps(row, sort_keys=True) + '\n')
     ledger.flush()
@@ -1019,6 +1063,7 @@ def run_batch(args):
         'historical_archive_reconstruction': archive_validation,
         'boxscore_export': bool(args.export_boxscores),
         'ordered_play_export': bool(args.export_plays),
+        'trace_outcome_probabilities': bool(args.trace_outcome_probabilities),
         'paired_randomness': bool(args.paired_randomness),
         'paired_seed_snapshot_sha256': paired_input_sha256,
         'playcall_team_outcomes': bool(args.playcall_team_outcomes), 'playcall_formation': bool(args.playcall_formation),
@@ -1071,7 +1116,9 @@ def run_batch(args):
                 paired_randomness=args.paired_randomness,
                 paired_seed_snapshot_sha256=paired_input_sha256,
                 export_plays=args.export_plays, play_export_handle=play_handle,
-                exported_seed_ids=exported_play_seed_ids)
+                exported_seed_ids=exported_play_seed_ids,
+                failure_dir=Path(args.out).with_suffix('.failures'),
+                trace_outcome_probabilities=args.trace_outcome_probabilities)
             outcomes.append(outcome)
             if boxscore_handle is not None and seed not in exported_seed_ids and outcome.get('boxscore'):
                 boxscore_handle.write(json.dumps({'type': 'game', **outcome['boxscore']},
@@ -1354,6 +1401,8 @@ def main(argv=None):
     ap.add_argument('--export-plays', action='store_true',
                     help='write each generated full game record, with ordered drives and before/after play states, '
                          'to <out stem>.plays.jsonl; opt-in because records are larger than box-score exports')
+    ap.add_argument('--trace-outcome-probabilities', action='store_true',
+                    help='opt-in V2-style per-play event probabilities before/after active modifiers; no RNG change')
     ap.add_argument('--paired-randomness', action='store_true',
                     help='research evaluation mode: isolate random draws by game snapshot, drive, play and semantic event '
                          'so matched-seed ablations do not shift unrelated random streams')
