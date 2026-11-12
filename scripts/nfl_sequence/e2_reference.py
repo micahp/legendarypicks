@@ -628,12 +628,33 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
         raise ValueError('team tendencies require an eligible-before cutoff')
     if team_tendency and not team_tendency_teams:
         raise ValueError('team tendencies need the side map {"A": home, "B": away} from the frozen schedule')
-    rows = e1.load(db, eligible_before=eligible_before)
     team_before = int(eligible_before[0]) if playcall_team_outcomes and eligible_before is not None else None
-    pool, pool_excluded, team_pool = e1.build_pools(rows, regulation_only=regulation_only,
-                                                    include_qb_scrambles=playcall_qb_decisions, team_before_season=team_before,
-                                                    known_clean_penalties=playcall_known_clean_only,
-                                                    separate_sack_fumbles=playcall_separate_sack_fumbles)
+
+    def build_observed_pool():
+        source_rows = e1.load(db, eligible_before=eligible_before)
+        source_pool, excluded, team_source = e1.build_pools(
+            source_rows, regulation_only=regulation_only,
+            include_qb_scrambles=playcall_qb_decisions, team_before_season=team_before,
+            known_clean_penalties=playcall_known_clean_only,
+            separate_sack_fumbles=playcall_separate_sack_fumbles)
+        return source_rows, source_pool, excluded, team_source
+
+    if playcall_artifact is not None and os.environ.get('SLC_FIT_CACHE_DIR'):
+        import reference_build_cache as reference_cache
+        # On a warm hit, e1.load() does not run, so enforce its cutoff gate here.
+        if eligible_before is not None:
+            season, week = (int(value) for value in eligible_before)
+            e1.holdout.refuse_unless_cutoff(season, 'pool cutoff', eligible_before)
+            if season < min(e1.POOL_SEASONS) or week < 1 or week > 18:
+                raise ValueError('dynamic pool cutoff must be week 1-18 of 2022 or later')
+        settings = (tuple(eligible_before) if eligible_before is not None else None,
+                    bool(regulation_only), bool(playcall_qb_decisions), team_before,
+                    bool(playcall_known_clean_only), bool(playcall_separate_sack_fumbles))
+        rows, pool, pool_excluded, team_pool = reference_cache.memo_db(
+            'e1_rows_and_pools', db, settings, build_observed_pool,
+            code_files=(__file__, e1.__file__, e1.e0.__file__))
+    else:
+        rows, pool, pool_excluded, team_pool = build_observed_pool()
     contextual_sampler = None
     contextual_pool_manifest = {}
     if contextual_mode is not None:
@@ -678,9 +699,21 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             # Formation priors use 2016+ participation, broader than the 2022+
             # E1 outcome pool. Load the FULL priors window once for both uses.
             cutoff_season = int(eligible_before[0])
-            participation = fl.load_participation(db, range(fl.PARTICIPATION_FIRST, cutoff_season))
+            if os.environ.get('SLC_FIT_CACHE_DIR'):
+                import reference_build_cache as reference_cache
+                participation = reference_cache.memo_db(
+                    'formation_participation', db, (fl.PARTICIPATION_FIRST, cutoff_season),
+                    lambda: fl.load_participation(db, range(fl.PARTICIPATION_FIRST, cutoff_season)),
+                    code_files=(fl.__file__, __file__))
+                formation_priors = reference_cache.memo_db(
+                    'formation_priors', db, (fl.PARTICIPATION_FIRST, cutoff_season),
+                    lambda: fl.priors(db, cutoff_season, participation=participation),
+                    code_files=(fl.__file__, e1.e0.__file__, __file__))
+            else:
+                participation = fl.load_participation(db, range(fl.PARTICIPATION_FIRST, cutoff_season))
+                formation_priors = fl.priors(db, cutoff_season, participation=participation)
             fl.attach((row for cell in pool.values() for _event, row, _runoff, _spot in cell), participation)
-            contextual_sampler.formation_priors = fl.priors(db, cutoff_season, participation=participation)
+            contextual_sampler.formation_priors = formation_priors
             contextual_sampler.formation_outcomes = True
         contextual_sampler.exact_yardline = bool(playcall_exact_yardline)
         if playcall_point_splits:  # team score-state shifts of the dropback rate, from the seasons before the cutoff only
