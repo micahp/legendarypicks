@@ -274,6 +274,20 @@ def _make_registered(migration_id: str) -> Callable[[sqlite3.Connection], str]:
     return lambda con: _probe_registered(con, migration_id)
 
 
+def _probe_players_hoopr_id(con: sqlite3.Connection) -> str:
+    """players.nba_id was renamed to players.hoopr_id (v10.1.5)."""
+    columns = _columns(con, "players")
+    if not columns:
+        return "unknown: players table missing"
+    if "hoopr_id" in columns and "nba_id" in columns:
+        return "unknown: players has both hoopr_id and nba_id"
+    if "hoopr_id" in columns:
+        return "applied"
+    if "nba_id" in columns:
+        return "not_applied: players still has nba_id"
+    return "unknown: players has neither hoopr_id nor nba_id"
+
+
 def _probe_merge_nba_identities(con: sqlite3.Connection) -> str:
     """Whether the NBA identity merge's durable postcondition holds.
 
@@ -473,6 +487,13 @@ LEGACY_MIGRATIONS: tuple[LegacyMigration, ...] = (
         description="merge split NBA espn_id/nba_id rows",
         probe=_probe_merge_nba_identities,
         note="269 split athletes fixed on prod 2026-08-05; dev was already clean",
+    ),
+    LegacyMigration(
+        migration_id="legacy_migrate_players_hoopr_id",
+        script="backend/migrate_players_hoopr_id.py",
+        description="rename players.nba_id to players.hoopr_id",
+        probe=_probe_players_hoopr_id,
+        note="applied by hand on dev and prod 2026-11-12 (v10.1.5); rollback: --rollback",
     ),
 )
 
