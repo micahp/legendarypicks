@@ -91,6 +91,24 @@ class RunScrambleBackoff(unittest.TestCase):
         self.assertEqual(results[0], results[1])
         self.assertEqual(target, key_for(1, 10, 50))
 
+    def test_fourth_and_medium_own_end_run_uses_down_field_support(self):
+        state = {'quarter': 4, 'clock': 200, 'down': 4, 'togo': 4, 'yl': 86, 'score_diff': 0}
+        source_pool = {key_for(4, 7, 86): [sample('run', index=i, down=4, togo=7, yl=86, yards=3)
+                                            for i in range(25)]}
+        current = [sample('pass_complete', index=900, play_type='pass', down=4, togo=4, yl=86)]
+        sampler = slc.PlayCallSampler(layer(-100.0), side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.source_pool = source_pool
+        sampler.outcome_backoff_enabled = True
+        sampler.allow_sparse_cells = True
+        sampler.blocker_fixes = frozenset({'run_scramble_backoff'})
+
+        event, row, _runoff, _spot = sampler.sample(random.Random(44), current, 'A', 'B', state=state)
+        decision = sampler.decisions[-1]
+        self.assertEqual((decision['intent'], event, row['down'], row['ydstogo']), ('run', 'run', 4, 7))
+        self.assertEqual(decision['outcome_fallback'], 'down_field')
+        self.assertEqual(decision['outcome_fallback_support_n'], 25)
+
+
     def test_scramble_backoff_keeps_scrambles_distinct_and_rejects_out_of_support_gains(self):
         broad_rows = [sample('run', index=i, togo=15, yards=3, qb_scramble=1) for i in range(25)]
         broad_rows.append(sample('run', index=25, togo=15, yards=8, qb_scramble=1))
@@ -166,6 +184,21 @@ class RunScrambleBackoff(unittest.TestCase):
                              'sparse-test', sampling_policy=policy)
         self.assertEqual(policy.calls, 1)
         self.assertEqual(result[1], 'turnover_on_downs')
+
+
+class BlockerFixDefaults(unittest.TestCase):
+    def test_playcall_artifact_runs_enable_all_fixes_by_default_with_explicit_ablation(self):
+        defaults = e2r.resolve_blocker_fixes(has_playcall_artifact=True)
+        self.assertEqual(defaults, e2r.BLOCKER_FIXES)
+        selected = e2r.resolve_blocker_fixes(
+            disabled=('run_scramble_backoff',), has_playcall_artifact=True)
+        self.assertNotIn('run_scramble_backoff', selected)
+        self.assertEqual(set(selected), set(e2r.BLOCKER_FIXES) - {'run_scramble_backoff'})
+
+    def test_s0_runs_do_not_enable_or_accept_blocker_fixes(self):
+        self.assertEqual(e2r.resolve_blocker_fixes(has_playcall_artifact=False), ())
+        with self.assertRaisesRegex(ValueError, 'require a play-call artifact'):
+            e2r.resolve_blocker_fixes(disabled=('run_scramble_backoff',), has_playcall_artifact=False)
 
 
 class FieldGoalFeasibility(unittest.TestCase):

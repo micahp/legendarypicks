@@ -71,7 +71,9 @@ def parse_args(argv=None):
     ap.add_argument('--player-outcomes-receiver-only', action='store_true',
                     help='research ablation: apply player-conditioned event and result weights to receivers only; requires --player-outcomes')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
-                    help='opt-in SLC research blocker fix; repeat to enable multiple fixes')
+                    help='SLC blocker fix (all fixes default on with --artifact)')
+    ap.add_argument('--slc-disable-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
+                    help='research ablation: disable one default SLC blocker fix; repeat as needed')
     ap.add_argument('--slc-fg-ordinary-cutoff', type=float, default=60.0,
                     help='ordinary field-goal decision maximum in yards when long_field_goal_feasibility is enabled')
     ap.add_argument('--season-adapt', action='store_true',
@@ -86,8 +88,8 @@ def parse_args(argv=None):
         ap.error('--player-outcomes-receiver-only requires --player-outcomes')
     if args.decision_unfiltered and not args.decision:
         ap.error('--decision-unfiltered requires --decision')
-    if args.slc_blocker_fix and not args.artifact:
-        ap.error('--slc-blocker-fix requires --artifact')
+    if (args.slc_blocker_fix or args.slc_disable_blocker_fix) and not args.artifact:
+        ap.error('SLC blocker-fix options require --artifact')
     return args
 
 
@@ -98,6 +100,9 @@ def player_shares_for(args):
 
 def main():
     args = parse_args()
+    args.slc_blocker_fix = er.resolve_blocker_fixes(
+        args.slc_blocker_fix, args.slc_disable_blocker_fix,
+        has_playcall_artifact=bool(args.artifact))
     source_provenance = game_cli.producer_source()
 
     if args.snapshot_file:

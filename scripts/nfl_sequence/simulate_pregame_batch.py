@@ -112,6 +112,8 @@ def _reproduction_command(args, seed):
         command.extend(['--playcall-artifact', str(args.playcall_artifact)])
     for fix in args.slc_blocker_fix:
         command.extend(['--slc-blocker-fix', fix])
+    for fix in args.slc_disable_blocker_fix:
+        command.extend(['--slc-disable-blocker-fix', fix])
     if args.slc_blocker_fix:
         command.extend(['--slc-fg-ordinary-cutoff', str(args.slc_fg_ordinary_cutoff)])
     if args.slc_profile != 'custom':
@@ -881,6 +883,9 @@ def run_batch(args):
     elif retrospective_marker:
         raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
     resolved_profile = slc_config.apply_profile_to_args(args)
+    args.slc_blocker_fix = er.resolve_blocker_fixes(
+        args.slc_blocker_fix, args.slc_disable_blocker_fix,
+        has_playcall_artifact=bool(args.playcall_artifact))
     source_preflight.validate_model_sources(args, snapshot)
     if args.slc_profile == 'v1_full_stack' and not args.historical_archive_reconstruction:
         # Prospective snapshots continue through the existing capture checks; archival inputs use the separate mode above.
@@ -1335,7 +1340,9 @@ def main(argv=None):
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
-                    help='opt-in SLC research blocker fix; repeat to enable multiple fixes')
+                    help='SLC blocker fix (all fixes default on with --playcall-artifact)')
+    ap.add_argument('--slc-disable-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
+                    help='research ablation: disable one default SLC blocker fix; repeat as needed')
     ap.add_argument('--slc-fg-ordinary-cutoff', type=float, default=60.0,
                     help='ordinary field-goal decision maximum in yards when long_field_goal_feasibility is enabled')
     ap.add_argument('--progress-every', type=int, default=1000,
@@ -1372,8 +1379,8 @@ def main(argv=None):
         args.seed_selection_manifest = selection.manifest()
         args.games = len(selection.seeds)
         args.seed_start = selection.seed_start
-    if args.slc_blocker_fix and not args.playcall_artifact:
-        ap.error('--slc-blocker-fix requires --playcall-artifact')
+    if (args.slc_blocker_fix or args.slc_disable_blocker_fix) and not args.playcall_artifact:
+        ap.error('SLC blocker-fix options require --playcall-artifact')
     if args.playcall_player_outcomes_receiver_only and not args.playcall_player_outcomes:
         ap.error('--playcall-player-outcomes-receiver-only requires --playcall-player-outcomes')
     if args.availability_snapshot and not args.roster_snapshot:

@@ -47,6 +47,19 @@ def normalize_blocker_fixes(fixes):
     return frozenset(fixes)
 
 
+def resolve_blocker_fixes(enabled=(), disabled=(), *, has_playcall_artifact):
+    """Enable blocker corrections by default for SLC artifact runs, with explicit research opt-outs."""
+    enabled = normalize_blocker_fixes(enabled)
+    disabled = normalize_blocker_fixes(disabled)
+    if not has_playcall_artifact:
+        if enabled or disabled:
+            raise ValueError('SLC blocker fixes require a play-call artifact')
+        return ()
+    selected = set(BLOCKER_FIXES) | set(enabled)
+    selected.difference_update(disabled)
+    return tuple(fix for fix in BLOCKER_FIXES if fix in selected)
+
+
 def load_position_usage(db=e1.DEFAULT_DB, eligible_before=None):
     """Measure ball-carrier and target position shares on the E1 historical window.
 
