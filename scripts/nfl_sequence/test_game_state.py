@@ -127,10 +127,37 @@ class Ledger(unittest.TestCase):
         self.assertTrue(first_plays)
         self.assertEqual(first['paired_random_streams']['snapshot_sha256'], snapshot['snapshot_sha256'])
 
+        # Model-specific snapshots differ, but their common input must yield
+        # the same named RNG roots and event draw keys in paired mode.
+        other_profile = copy.deepcopy(snapshot)
+        other_profile['snapshot_sha256'] = 'e' * 64
+        control = gs.play_game(9, reference, winner_choice='receive', max_drives=1,
+                               pregame_snapshot=snapshot, paired_randomness=True,
+                               paired_seed_snapshot_sha256='c' * 64)
+        candidate = gs.play_game(9, reference, winner_choice='receive', max_drives=1,
+                                 pregame_snapshot=other_profile, paired_randomness=True,
+                                 paired_seed_snapshot_sha256='c' * 64)
+        self.assertNotEqual(control['snapshot_hash'], candidate['snapshot_hash'])
+        self.assertEqual(control['paired_random_streams'], candidate['paired_random_streams'])
+        control_keys = [p['sampling']['paired_random_streams']
+                        for d in control['drives'] for p in d['plays']]
+        candidate_keys = [p['sampling']['paired_random_streams']
+                          for d in candidate['drives'] for p in d['plays']]
+        self.assertTrue(control_keys)
+        self.assertEqual(control_keys, candidate_keys)
+        different_input = gs.play_game(9, reference, winner_choice='receive', max_drives=1,
+                                       pregame_snapshot=other_profile, paired_randomness=True,
+                                       paired_seed_snapshot_sha256='f' * 64)
+        self.assertNotEqual(control['paired_random_streams']['root_sha256'],
+                            different_input['paired_random_streams']['root_sha256'])
+
     def test_paired_stream_mode_requires_a_frozen_snapshot_and_default_emits_no_new_metadata(self):
         reference = ref(StaticPool('run', 1, 20), kickoff_pool())
         with self.assertRaisesRegex(ValueError, 'frozen pregame snapshot'):
             gs.play_game(9, reference, winner_choice='receive', max_drives=1, paired_randomness=True)
+        with self.assertRaisesRegex(ValueError, 'requires paired_randomness'):
+            gs.play_game(9, reference, winner_choice='receive', max_drives=1,
+                         paired_seed_snapshot_sha256='a' * 64)
         ordinary = gs.play_game(9, reference, winner_choice='receive', max_drives=1)
         self.assertNotIn('paired_random_streams', ordinary)
 
