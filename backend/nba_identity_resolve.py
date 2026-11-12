@@ -17,6 +17,8 @@ turns "create" into "hold".
 """
 from __future__ import annotations
 
+import json
+import os
 import re
 import sqlite3
 import unicodedata
@@ -36,6 +38,47 @@ def name_key(name: Optional[str]) -> str:
 def _first_last(key: str) -> Tuple[str, str]:
     parts = key.split()
     return (parts[0], parts[-1]) if parts else ("", "")
+
+
+REVIEWED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "data", "nba-identity-reviewed.json")
+
+
+def _reviewed_pairs(path: str = REVIEWED_PATH) -> dict:
+    """{espn_id: {nba.com ids}} from the reviewed file (birth-date or box-score evidence)."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            entries = json.load(handle).get("nba", {})
+    except (OSError, ValueError):
+        return {}
+    pairs: dict = {}
+    for nba_id, entry in entries.items():
+        if isinstance(entry, dict) and entry.get("espn_id"):
+            pairs.setdefault(str(entry["espn_id"]), set()).add(str(nba_id))
+    return pairs
+
+
+def crosswalk_nba_com_id(con: sqlite3.Connection, espn_id) -> Tuple[Optional[str], bool]:
+    """Verified nba.com id for an ESPN id, from evidence we already hold.
+
+    Sources: the reviewed file, and a player_source_ids row that carries the ESPN
+    id (source 'espn') next to an nba.com id for the same player. Returns
+    (nba_com_id or None, conflict). Two different ids is a conflict, never a pick.
+    """
+    espn_id = str(espn_id) if espn_id not in (None, "") else None
+    if not espn_id:
+        return None, False
+    found = set(_reviewed_pairs().get(espn_id, set()))
+    for (pid,) in con.execute("SELECT DISTINCT player_id FROM player_source_ids "
+                              "WHERE league='nba' AND source='espn' AND source_player_key=?",
+                              (espn_id,)).fetchall():
+        for (key,) in con.execute("SELECT source_player_key FROM player_source_ids "
+                                  "WHERE league='nba' AND source='nba.com' AND player_id=?",
+                                  (pid,)).fetchall():
+            found.add(str(key))
+    if len(found) > 1:
+        return None, True
+    return (next(iter(found)) if found else None), False
 
 
 def resolve(con: sqlite3.Connection, espn_id, name: str, nba_com_id=None

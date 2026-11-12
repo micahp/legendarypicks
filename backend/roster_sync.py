@@ -228,33 +228,46 @@ def _sync_league(con: sqlite3.Connection, league: str) -> dict:
                 })
                 continue
 
-            candidates = name_to_rows.get(_identity_name_key(name), [])
-            if not candidates and league == "nba":
-                # Before minting a person, ask every identity we hold (ESPN id,
-                # hoopR id, nba.com id, recorded aliases, first+last name). A
-                # candidate with no id evidence is HELD and queued, never
-                # created: 'William Kyle III' was once minted beside 63170
-                # 'William Kyle' by a name check that missed the suffix.
-                decision, found_id, why = nba_identity_resolve.resolve(con, eid, name)
-                if decision in ("reuse", "attach_espn"):
-                    planned.append({
-                        "action": "update",
-                        "player_id": found_id,
-                        "name": name,
-                        "team": abbr,
-                        "position": pos,
-                        "jersey": p.get("jersey"),
-                        "source_player_key": eid,
+            if league == "nba":
+                # Every NBA assignment or insertion is decided by the resolver.
+                # A unique normalised name is NOT identity evidence here: it used
+                # to bind an ESPN id to the only row with that name ('William Kyle
+                # III' was once minted beside 63170 'William Kyle'). Evidence is an
+                # id: the ESPN id, the hoopR id, or the verified nba.com crosswalk.
+                # Anything unproven is HELD (queued for review), never bound.
+                nba_com_id, crosswalk_conflict = nba_identity_resolve.crosswalk_nba_com_id(con, eid)
+                if crosswalk_conflict:
+                    identity_failures.append({
+                        "team": abbr, "name": name, "source_player_key": eid,
+                        "reason": "nba_identity_hold: conflicting nba.com crosswalk for this ESPN id",
                     })
                     continue
-                if decision == "hold":
-                    identity_failures.append({
-                        "team": abbr,
-                        "name": name,
+                decision, found_id, why = nba_identity_resolve.resolve(
+                    con, eid, name, nba_com_id=nba_com_id)
+                if decision in ("reuse", "attach_espn"):
+                    held = con.execute("SELECT team FROM players WHERE id=?",
+                                       (found_id,)).fetchone()
+                    held_team = str(held["team"] or "").upper() if held else ""
+                    if held_team and held_team != abbr:
+                        team_changes.append({"name": name, "from": held_team, "to": abbr})
+                    planned.append({
+                        "action": "update", "player_id": found_id, "name": name,
+                        "team": abbr, "position": pos, "jersey": p.get("jersey"),
                         "source_player_key": eid,
+                    })
+                elif decision == "hold":
+                    identity_failures.append({
+                        "team": abbr, "name": name, "source_player_key": eid,
                         "reason": "nba_identity_hold: " + why,
                     })
-                    continue
+                else:
+                    planned.append({
+                        "action": "insert", "player_id": None, "name": name,
+                        "team": abbr, "position": pos, "jersey": p.get("jersey"),
+                        "source_player_key": eid,
+                    })
+                continue
+            candidates = name_to_rows.get(_identity_name_key(name), [])
             if not candidates:
                 planned.append({
                     "action": "insert",
