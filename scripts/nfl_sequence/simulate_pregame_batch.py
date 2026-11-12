@@ -121,6 +121,12 @@ def _reproduction_command(args, seed):
         command.extend(['--slc-profile', args.slc_profile])
     if args.playcall_pass_label_mode != 'legacy':
         command.extend(['--playcall-pass-label-mode', args.playcall_pass_label_mode])
+    if args.slc_materialized_history:
+        command.extend(['--slc-materialized-history', str(args.slc_materialized_history)])
+    if args.slc_legacy_history_build:
+        command.append('--slc-legacy-history-build')
+    if args.trace_outcome_probabilities:
+        command.append('--trace-outcome-probabilities')
     for layer in args.slc_disable_layer:
         command.extend(['--slc-disable-layer', layer])
     if args.historical_archive_reconstruction:
@@ -929,6 +935,8 @@ def run_batch(args):
     resolved_profile = slc_config.apply_profile_to_args(args)
     # V1.6 consumes a prebuilt, versioned E1 artifact by default. A deliberate
     # parity ablation can still run the old classifier without touching V1.5.
+    if args.slc_profile == 'v1_6_candidate' and args.slc_legacy_history_build:
+        os.environ.pop('SLC_MATERIALIZED_HISTORY', None)
     if args.slc_profile == 'v1_6_candidate' and not args.slc_legacy_history_build:
         artifact = args.slc_materialized_history or (
             Path(os.environ.get('XDG_CACHE_HOME') or Path.home() / '.cache')
