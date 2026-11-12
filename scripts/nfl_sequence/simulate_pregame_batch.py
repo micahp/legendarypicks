@@ -64,6 +64,7 @@ import historical_archive  # noqa: E402
 import source_preflight  # noqa: E402
 import football_assertions  # noqa: E402
 import seed_selection  # noqa: E402
+import run_input_inventory  # noqa: E402
 
 SCHEMA = 'lp-statistical-game-batch-1'
 PLAYER_CATEGORIES = {
@@ -1484,7 +1485,7 @@ def main(argv=None):
                     help='SLC v1 research: decision model categories A to N as pre-event draws (team priors from the prior season) '
                          'and outcomes conditioned on them')
     ap.add_argument('--playcall-pass-label-mode', choices=('auto', 'legacy', 'off', 'two_stage', 'conditional'),
-                    default='auto', help='A/D/E pass-dependent labels: auto uses the conditional model when decision labels '
+                    default='legacy', help='A/D/E pass-dependent labels: auto uses the conditional model when decision labels '
                          'are enabled and legacy otherwise; legacy preserves old runs; off removes event lifts but keeps '
                          'row filtering; two_stage uses marginal pass-only lifts; conditional uses a regularized pass-outcome '
                          'model with sacks excluded and calibrated label effects')
@@ -1687,11 +1688,31 @@ def main(argv=None):
         ap.error('--progress-every must be non-negative')
     if args.max_simulation_errors is not None and args.max_simulation_errors < 0:
         ap.error('--max-simulation-errors must be non-negative')
+    # This is an observational sidecar, not a new hash-matching prerequisite.
+    # Write it before expensive reference setup, and finalize even if preflight
+    # or simulation raises. It has no influence on RNG or configuration identity.
+    inventory_path, inventory_record = None, None
     try:
-        source_preflight.validate_cli_paths(args)
-        run_batch(args)
-    except source_preflight.PreflightError as exc:
-        ap.error(str(exc))
+        inventory_path, inventory_record = run_input_inventory.begin(args)
+    except (OSError, ValueError, TypeError) as exc:
+        print(f'warning: SLC input inventory unavailable: {exc}', file=sys.stderr)
+    completed = False
+    try:
+        try:
+            source_preflight.validate_cli_paths(args)
+            run_batch(args)
+            completed = True
+        except source_preflight.PreflightError as exc:
+            ap.error(str(exc))
+    finally:
+        if inventory_path is not None:
+            try:
+                run_input_inventory.finish(args, inventory_path, inventory_record,
+                                           status='completed' if completed else 'failed_or_interrupted')
+                print(f'input_inventory={inventory_path}', file=sys.stderr)
+            except (OSError, ValueError, TypeError) as exc:
+                print(f'warning: SLC input inventory finalization unavailable: {exc}',
+                      file=sys.stderr)
 
 
 if __name__ == '__main__':

@@ -151,7 +151,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
                    player_outcomes_receiver_only=False, blocker_fixes=None, fg_ordinary_cutoff=60,
                    qb_run_role_style=None, score_clock_playcalling=True, season_adapt=False, season_adapt_n0=4.0,
                    pbv1_table=None, participation_field=None, participation_snap_counts=None, fg_kicker=None,
-                   workload_adaptive=None, experimental_workload_estimator=None, pass_label_mode='auto'):
+                   workload_adaptive=None, experimental_workload_estimator=None, pass_label_mode='legacy'):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it.
 
