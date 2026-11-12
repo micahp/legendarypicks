@@ -663,7 +663,8 @@ class PlayCallSampler:
             if (self.pass_label_mode in ('two_stage', 'conditional') and use_labels
                     and outcome_intent == 'dropback' and not scramble):
                 key, pass_label_conditioning_applied = self._draw_two_stage_pass_event(
-                    rng, keys, weights, entry, labels, offense=offense, state=state)
+                    rng, keys, weights, entry, labels, offense=offense, state=state,
+                    trace=probability_trace if self.trace_outcome_probabilities else None)
             else:
                 key = rng.choices(keys, weights=weights)[0]
                 pass_label_conditioning_applied = False
@@ -875,7 +876,7 @@ class PlayCallSampler:
         self.decisions.append(decision_record)
         return event, row, runoff, spot
 
-    def _draw_two_stage_pass_event(self, rng, keys, weights, entry, labels, *, offense, state):
+    def _draw_two_stage_pass_event(self, rng, keys, weights, entry, labels, *, offense, state, trace=None):
         """Keep A/D/E out of sack selection, then condition only a selected pass outcome."""
         pass_indices = [index for index, key in enumerate(keys) if key[1] in PASS_LABEL_EVENTS]
         other_indices = [index for index, key in enumerate(keys) if key[1] not in PASS_LABEL_EVENTS]
@@ -883,6 +884,12 @@ class PlayCallSampler:
                   if indices and sum(weights[index] for index in indices) > 0]
         if not groups:
             raise e1.SamplingUnavailable('pass_label_two_stage_has_no_positive_event_mass')
+        if trace is not None:
+            mass = {name: sum(weights[i] for i in ix) for name, ix in groups}
+            total = sum(mass.values())
+            trace.append({'stage': 'two_stage_pre_pass_group',
+                          'probabilities': {name: round(value / total, 8)
+                                            for name, value in mass.items()}})
         if len(groups) == 1:
             selected_group, indices = groups[0]
         else:
@@ -921,9 +928,15 @@ class PlayCallSampler:
                 context, labels, keys[i][1], label_prior=label_prior,
                 calibration_key=(team, label_cell)) for weight, i in zip(conditional_weights, indices)]
         if len(indices) == 1:
+            if trace is not None:
+                trace.append(_event_probability_stage(
+                    'two_stage_conditional_pass_outcome', [keys[i] for i in indices], conditional_weights))
             return keys[indices[0]], True
         if not any(weight > 0 for weight in conditional_weights):
             conditional_weights = [weights[i] for i in indices]
+        if trace is not None:
+            trace.append(_event_probability_stage(
+                'two_stage_conditional_pass_outcome', [keys[i] for i in indices], conditional_weights))
         selected = rng.choices([keys[i] for i in indices], weights=conditional_weights)[0]
         return selected, True
 
