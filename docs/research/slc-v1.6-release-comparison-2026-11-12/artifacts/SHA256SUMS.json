@@ -1,0 +1,79 @@
+{
+  "schema": "slc-v16-release-comparison-archive-v1",
+  "files": [
+    {
+      "arm": "V1.5",
+      "path": "V1.5/2026_08_ARI_DAL.json",
+      "sha256": "fc1c574df73bc382a3f88f27ccd372ddacaa3d1a68d2b6b46aee361631f2c64a",
+      "bytes": 1910102
+    },
+    {
+      "arm": "V1.5",
+      "path": "V1.5/2026_08_ARI_DAL.boxscores.jsonl",
+      "sha256": "9630fcf317f66152f73e009451ac63cc1f84d3e4460feb3b5c1021d9df17279f",
+      "bytes": 603154
+    },
+    {
+      "arm": "V1.5",
+      "path": "V1.5/2026_08_ARI_DAL.seeds.jsonl",
+      "sha256": "51ab176e755e6f498d04fb0de3fe2a8f7e8d5a3198d2b291ab742ad870d0b21e",
+      "bytes": 1127343
+    },
+    {
+      "arm": "V1.5",
+      "path": "V1.5/2026_08_ATL_TB.json",
+      "sha256": "2a245c76f43462e61a15d8d67dad525bf20f0460d0b42ee151c1ded5d7977caf",
+      "bytes": 1792484
+    },
+    {
+      "arm": "V1.5",
+      "path": "V1.5/2026_08_ATL_TB.boxscores.jsonl",
+      "sha256": "47246f92c479a1b7fef158f1ea6715ed1344439383465e6ea4b9a32d0337b4bf",
+      "bytes": 558046
+    },
+    {
+      "arm": "V1.5",
+      "path": "V1.5/2026_08_ATL_TB.seeds.jsonl",
+      "sha256": "e4e888521e9e0bd6c43b528db314cdab36119ec1710898ddf6b3d98fe625f0ec",
+      "bytes": 1062966
+    },
+    {
+      "arm": "V1.6",
+      "path": "V1.6/2026_08_ARI_DAL.json",
+      "sha256": "85133c59dafdadd2437d0626a14fdfaf3949d567f44b871c8b4f9d781ff2b32b",
+      "bytes": 1927384
+    },
+    {
+      "arm": "V1.6",
+      "path": "V1.6/2026_08_ARI_DAL.boxscores.jsonl",
+      "sha256": "927601913ff055f44bcf3a6ae10cecbf7b2799b55e935e98f38599c8a681b221",
+      "bytes": 599220
+    },
+    {
+      "arm": "V1.6",
+      "path": "V1.6/2026_08_ARI_DAL.seeds.jsonl",
+      "sha256": "58082391b09633fbcdd1a4408bd31560ae59fce0a02a1e6f1b6cd1e49e0a726e",
+      "bytes": 1143151
+    },
+    {
+      "arm": "V1.6",
+      "path": "V1.6/2026_08_ATL_TB.json",
+      "sha256": "df938385b1bcdc38b37bef1178d6e02b15f35ac356dc007427a308a39db88d24",
+      "bytes": 1871541
+    },
+    {
+      "arm": "V1.6",
+      "path": "V1.6/2026_08_ATL_TB.boxscores.jsonl",
+      "sha256": "6b4e8df87d4ccedbaa90a1b6a6d7bf27ade0e8b3161f703a11db057b743d5399",
+      "bytes": 574734
+    },
+    {
+      "arm": "V1.6",
+      "path": "V1.6/2026_08_ATL_TB.seeds.jsonl",
+      "sha256": "ee948f7021df23d9e4a0520cc93d86e4a63b9906c9b20a554d558346ab9c35a6",
+      "bytes": 1118443
+    }
+  ],
+  "archive_sha256": "4a08905d6b08dab7f8c71b5fcfdeffadbb5835ce368ab9126ac3ea168b627400",
+  "archive_bytes": 1042159
+}
