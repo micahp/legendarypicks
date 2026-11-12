@@ -106,9 +106,16 @@ class Context:
             raise ValueError("rule era must identify a supported year")
 
     def keys(self) -> tuple[str, ...]:
-        root = [self.phase, str(self.rule_era), self.play_class, str(self.down),
-                _bucket_distance(self.to_go), _bucket_field(self.yardline_100)]
-        return tuple(json.dumps(root[:n], separators=(",", ":")) for n in (1, 2, 3, 4, 6))
+        # First learn context across years; then let a supported rule era
+        # override it. On a new holdout year, return to the context baseline
+        # rather than erasing the entire down/play-class signal.
+        basic = [self.phase, self.play_class, str(self.down),
+                 _bucket_distance(self.to_go), _bucket_field(self.yardline_100)]
+        era = [self.phase, str(self.rule_era), self.play_class, str(self.down),
+               _bucket_distance(self.to_go), _bucket_field(self.yardline_100)]
+        contexts = (basic[:1], basic[:2], basic[:3], basic[:5],
+                    era[:2], era[:3], era[:4], era[:6])
+        return tuple(json.dumps(parts, separators=(",", ":")) for parts in contexts)
 
 
 @dataclass(frozen=True)
@@ -149,8 +156,8 @@ class Opportunity:
 class PenaltyModel:
     """Smoothed categorical stage model with separate committing-team shrinkage.
 
-    Context priors are backoff-smoothed from phase -> rule era -> play class ->
-    down -> exact distance/field bucket. Team propensities are shrunk toward
+    Context priors are backoff-smoothed from phase -> play class -> down ->
+    exact distance/field bucket, then optionally refined by rule era. Team propensities are shrunk toward
     historical league-side rates, estimated from the *same opportunity*
     denominator. No offense/defense effects are applied to the event-free mass.
     """
