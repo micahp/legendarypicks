@@ -293,7 +293,7 @@ class Reference:
         try:
             if passing:
                 assigned['passer'] = pre['passer']
-                if event != 'sack':  # a sack has no target
+                if event not in ('sack', 'sack_fumble_lost'):  # sacks have no target
                     assigned['receiver'] = pre['receiver']
             if rushing:
                 assigned['rusher'] = pre['rusher']

@@ -537,13 +537,17 @@ class PlayCallSampler:
                 and not use_player_outcomes):
             if fallback_by_key is None:
                 key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]  # the unchanged baseline draw
+            pass_label_conditioning_applied = False
         elif fallback_by_key is None:
             if (self.pass_label_mode in ('two_stage', 'conditional') and use_labels
                     and outcome_intent == 'dropback' and not scramble):
-                key = self._draw_two_stage_pass_event(
+                key, pass_label_conditioning_applied = self._draw_two_stage_pass_event(
                     rng, keys, weights, entry, labels, offense=offense, state=state)
             else:
                 key = rng.choices(keys, weights=weights)[0]
+                pass_label_conditioning_applied = False
+        else:
+            pass_label_conditioning_applied = False
         candidates = fallback_by_key[key] if fallback_by_key is not None else entry['by_key'][key]
         if self.qb_decision_table is not None:
             if scramble and fallback_by_key is None:
@@ -554,6 +558,39 @@ class PlayCallSampler:
                 candidates = [c for c in candidates if c[1].get('qb_scramble') != 1]
                 if not candidates:
                     raise e1.SamplingUnavailable(f'non_scramble_run_source_rows_missing:{entry["key"]}')
+        exact_yardline_conditioned = False
+        exact_yardline_fallback = None
+        if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
+            exact = [c for c in candidates if c[1].get('yardline_100') is not None
+                     and int(c[1]['yardline_100']) == int(state['yl'])]
+            if exact:
+                candidates = exact  # keep the touchdown flag tied to the current line of scrimmage
+                exact_yardline_conditioned = True
+            else:
+                exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
+        exact_distance_conditioned = False
+        exact_distance_fallback = None
+        exact_distance_support = 0
+        exact_distance_branch = None
+        if (self.exact_distance_yardage and called_intent in SCRIMMAGE_INTENTS
+                and state.get('togo') is not None):
+            # Measure support before formation, coverage, streak, label, and
+            # target-role filters. Those filters can otherwise reduce every
+            # exact-distance cell below the threshold and silently disable the
+            # chain-advancement correction in full-stack runs.
+            exact_distance = [candidate for candidate in candidates
+                              if candidate[1].get('ydstogo') is not None
+                              and int(candidate[1]['ydstogo']) == int(state['togo'])]
+            exact_distance_support = len(exact_distance)
+            if exact_distance_support >= self.exact_distance_min_support:
+                shrinkage = exact_distance_support / (
+                    exact_distance_support + self.exact_distance_shrinkage_k)
+                exact_distance_branch = 'exact' if rng.random() < shrinkage else 'bucket'
+                if exact_distance_branch == 'exact':
+                    candidates = exact_distance
+                exact_distance_conditioned = True
+            else:
+                exact_distance_fallback = 'exact_distance_support_below_minimum'
         if use_formation:
             matched = [c for c in candidates if c[1].get('formation', UNKNOWN) == formation]
             if matched:
@@ -600,56 +637,11 @@ class PlayCallSampler:
                 qb_target_role_conditioned = True
             else:
                 qb_target_role_fallback = 'no_target_identity_match_in_event_cell'
-        exact_yardline_conditioned = False
-        exact_yardline_fallback = None
-        if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
-            exact = [c for c in candidates if c[1].get('yardline_100') is not None and int(c[1]['yardline_100']) == int(state['yl'])]
-            if exact:
-                candidates = exact  # a touchdown flag then comes from the same distance the state is at
-                exact_yardline_conditioned = True
-            else:
-                exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
-        exact_distance_conditioned = False
-        exact_distance_fallback = None
-        exact_distance_support = 0
-        exact_distance_branch = None
-        if (self.exact_distance_yardage and called_intent in SCRIMMAGE_INTENTS
-                and state.get('togo') is not None):
-            exact_distance = [candidate for candidate in candidates
-                              if candidate[1].get('ydstogo') is not None
-                              and int(candidate[1]['ydstogo']) == int(state['togo'])]
-            exact_distance_support = len(exact_distance)
-            if exact_distance_support >= self.exact_distance_min_support:
-                shrinkage = exact_distance_support / (
-                    exact_distance_support + self.exact_distance_shrinkage_k)
-                if use_player_outcomes:
-                    import player_outcomes
-                    row_weights = [player_outcomes.row_weight(
-                        self.player_outcome_table, key[1], candidate[1], pre_event, state,
-                        enabled_roles=self.player_outcome_roles) for candidate in candidates]
-                    exact_ids = {id(candidate) for candidate in exact_distance}
-                    exact_weights = [weight for candidate, weight in zip(candidates, row_weights)
-                                     if id(candidate) in exact_ids]
-                    bucket_weights = row_weights
-                else:
-                    exact_weights = None
-                    bucket_weights = None
-                exact_distance_branch = 'exact' if rng.random() < shrinkage else 'bucket'
-                if exact_distance_branch == 'exact':
-                    candidates = exact_distance
-                    if use_player_outcomes:
-                        row_weights = exact_weights
-                else:
-                    row_weights = bucket_weights
-                exact_distance_conditioned = True
-            else:
-                exact_distance_fallback = 'exact_distance_support_below_minimum'
         if use_player_outcomes:
-            if not exact_distance_conditioned or exact_distance_branch == 'bucket':
-                import player_outcomes
-                row_weights = [player_outcomes.row_weight(self.player_outcome_table, key[1], c[1], pre_event, state,
-                                                          enabled_roles=self.player_outcome_roles)
-                               for c in candidates]
+            import player_outcomes
+            row_weights = [player_outcomes.row_weight(self.player_outcome_table, key[1], c[1], pre_event, state,
+                                                      enabled_roles=self.player_outcome_roles)
+                           for c in candidates]
             event, row, runoff, spot = rng.choices(candidates, weights=row_weights, k=1)[0]
         else:
             event, row, runoff, spot = rng.choice(candidates)
@@ -671,6 +663,7 @@ class PlayCallSampler:
             'labels': labels, 'labels_conditioned': bool(use_labels), 'labels_matched': labels_matched,
             'labels_unmatched': labels_unmatched,
             'pass_label_mode': self.pass_label_mode,
+            'pass_label_outcome_conditioned': pass_label_conditioning_applied,
             'pass_label_stage': ('post_pass_selection' if self.pass_label_mode in ('two_stage', 'conditional')
                                  else 'legacy_pre_event' if self.pass_label_mode == 'legacy' else 'disabled'),
             'decision_row_filter_applied': bool(use_labels and self.decision_filter),
@@ -758,8 +751,9 @@ class PlayCallSampler:
             indices = next(ix for name, ix in groups if name == selected_group)
         if selected_group != 'pass':
             if len(indices) == 1:
-                return keys[indices[0]]
-            return rng.choices([keys[i] for i in indices], weights=[weights[i] for i in indices])[0]
+                return keys[indices[0]], False
+            selected = rng.choices([keys[i] for i in indices], weights=[weights[i] for i in indices])[0]
+            return selected, False
 
         conditional_weights = [weights[i] for i in indices]
         labels = labels or {}
@@ -787,10 +781,11 @@ class PlayCallSampler:
                 context, labels, keys[i][1], label_prior=label_prior,
                 calibration_key=(team, label_cell)) for weight, i in zip(conditional_weights, indices)]
         if len(indices) == 1:
-            return keys[indices[0]]
+            return keys[indices[0]], True
         if not any(weight > 0 for weight in conditional_weights):
             conditional_weights = [weights[i] for i in indices]
-        return rng.choices([keys[i] for i in indices], weights=conditional_weights)[0]
+        selected = rng.choices([keys[i] for i in indices], weights=conditional_weights)[0]
+        return selected, True
 
     def _player_support(self, pre_event):
         import player_outcomes

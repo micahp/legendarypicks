@@ -100,10 +100,11 @@ class Sampler(unittest.TestCase):
         keys = [('dropback', 'pass_complete'), ('dropback', 'pass_incomplete'), ('dropback', 'sack')]
         labels = {'A': 'WR', 'D': 'deep', 'E': 'left'}
         for draw in (0.8,):
-            selected = sampler._draw_two_stage_pass_event(
+            selected, conditioned = sampler._draw_two_stage_pass_event(
                 SequenceChoiceRng(draw), keys, [2.0, 2.0, 6.0], {}, labels,
                 offense='A', state={'down': 3, 'togo': 8, 'yl': 50})
             self.assertEqual(selected[1], 'sack')
+            self.assertFalse(conditioned)
 
     def test_conditional_model_only_changes_outcome_after_pass_is_selected(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)))
@@ -118,10 +119,11 @@ class Sampler(unittest.TestCase):
         labels = {'A': 'WR', 'D': 'deep', 'E': 'left'}
         state = {'down': 3, 'togo': 8, 'yl': 50}
         with patch.object(slc.decision_layer, 'distribution', return_value={'WR': 1.0}):
-            selected = sampler._draw_two_stage_pass_event(
+            selected, conditioned = sampler._draw_two_stage_pass_event(
                 SequenceChoiceRng(0.1, 0.1), keys, [2.0, 2.0, 1.0], {}, labels,
                 offense='A', state=state)
         self.assertEqual(selected[1], 'pass_complete')
+        self.assertTrue(conditioned)
     def test_missing_team_outcome_support_is_recorded_as_a_fallback(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)),
                                       side_teams={'A': 'AAA', 'B': 'BBB'})
@@ -152,6 +154,26 @@ class Sampler(unittest.TestCase):
         rng = random.Random(1)
         drawn = {sampler.sample(rng, pool, 'A', 'B', state=STATE)[0] for _ in range(200)}
         self.assertEqual(drawn, {'run'})
+
+    def test_exact_distance_support_is_measured_before_formation_filtering(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(-30.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.exact_distance_yardage = True
+        sampler.exact_distance_shrinkage_k = 0.0
+        sampler.formation_outcomes = True
+        pool = cell([('run', 'run') for _ in range(60)])
+        for i, (_event, row, _runoff, _spot) in enumerate(pool):
+            row['ydstogo'] = 5
+            row['formation'] = 'SHOTGUN' if i < 30 else 'PISTOL'
+        sampler.participant_chooser = lambda *_: {'formation': 'SHOTGUN'}
+
+        sampler.sample(random.Random(11), pool, 'A', 'B', state={**STATE, 'togo': 5})
+
+        decision = sampler.decisions[-1]
+        self.assertEqual(decision['exact_distance_yardage_support'], 60)
+        self.assertTrue(decision['exact_distance_yardage_conditioned'])
+        self.assertEqual(decision['exact_distance_yardage_branch'], 'exact')
+        self.assertTrue(decision['formation_conditioned'])
 
     def test_the_play_is_chosen_before_the_outcome_and_every_decision_is_recorded(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)), side_teams={'A': 'AAA', 'B': 'BBB'})

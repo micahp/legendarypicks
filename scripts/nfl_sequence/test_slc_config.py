@@ -25,7 +25,7 @@ class FullStackProfile(unittest.TestCase):
         self.assertEqual(set(self.resolved['enabled_layers']), set(config.ENGINE_LAYER_KEYS))
         for layer in config.ENGINE_LAYER_KEYS:
             expected = layer not in ('fixed_player_target_carry_shares', 'qb_run_role_style',
-                                     'pass_label_outcome_conditioning')
+                                     'pass_label_outcome_conditioning', 'exact_distance_yardage_outcomes')
             self.assertEqual(self.resolved['enabled_layers'][layer], expected, layer)
         self.assertTrue(self.resolved['enabled_layers']['decision_row_filter'])
         self.assertTrue(self.resolved['enabled_layers']['current_streak_context'])
@@ -38,9 +38,11 @@ class FullStackProfile(unittest.TestCase):
 
     def test_v16_candidate_disables_coverage_outcome_weighting(self):
         candidate = config.resolve_profile('v1_6_candidate', artifact_path='artifact.json',
-                                           streak_file='streak.json')
+                                           streak_file='streak.json', pass_label_mode='conditional')
         self.assertFalse(candidate['options']['playcall_coverage'])
         self.assertFalse(candidate['enabled_layers']['defensive_coverage_outcomes'])
+        self.assertTrue(candidate['enabled_layers']['exact_distance_yardage_outcomes'])
+        self.assertTrue(candidate['enabled_layers']['pass_label_outcome_conditioning'])
         self.assertTrue(self.resolved['enabled_layers']['defensive_coverage_outcomes'])
 
     def test_fixed_shares_and_unfiltered_decisions_are_incompatible(self):

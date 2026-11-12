@@ -13,7 +13,7 @@ Every draw is seeded from the snapshot hash, the game seed and the decision inde
 import hashlib
 import random
 
-PASS_EVENTS = ('pass_complete', 'pass_incomplete', 'interception', 'sack')
+PASS_EVENTS = ('pass_complete', 'pass_incomplete', 'interception', 'sack', 'sack_fumble_lost')
 TARGET_EVENTS = ('pass_complete', 'pass_incomplete', 'interception')  # a sack has no target
 
 

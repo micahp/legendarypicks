@@ -642,6 +642,7 @@ def _execution_verification(outcomes, profile_manifest):
         'qb_decisions': 'qb_decisions', 'qb_run_role_style': 'qb_run_role_style',
         'player_conditioned_outcomes': 'player_conditioned_outcomes',
         'target_role_priors': 'target_role_priors', 'decision_labels': 'decision_labels',
+        'pass_label_outcome_conditioning': 'pass_label_outcome_conditioning',
         'decision_row_filter': 'decision_row_filter', 'playbook_priors': 'playbook_priors',
         'point_splits': 'point_splits_evaluated', 'team_streak_splits': 'team_streak_splits_evaluated',
         'league_streak_splits': 'league_streak_splits_evaluated',

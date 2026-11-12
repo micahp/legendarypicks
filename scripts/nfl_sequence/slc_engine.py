@@ -888,6 +888,8 @@ def summary(decisions, record=None):
                 'target_role_priors': sum(bool((d.get('participants') or {}).get('target_role_prior_used'))
                                           for d in decisions),
                 'decision_labels': sum(bool(d.get('labels_conditioned')) for d in decisions),
+                'pass_label_outcome_conditioning': sum(
+                    bool(d.get('pass_label_outcome_conditioned')) for d in decisions),
                 'decision_row_filter': sum(bool(d.get('decision_row_filter_applied')) for d in decisions),
                 'decision_row_filter_matches': sum(bool(d.get('labels_matched')) for d in decisions),
                 'playbook_priors': sum(bool((d.get('participants') or {}).get('playbook_used')) for d in decisions),
@@ -1124,8 +1126,9 @@ def _describe_layer(ref):
                          'playcall_model.py',
                          'team_tendency.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
                          'streak_splits.py', 'target_roles.py', 'decision_layer.py', 'player_shares.py',
+                         'e0_single_play.py',
                          'pass_label_outcomes.py', 'share_distributions.py', 'fit_cache.py', 'qb_decisions.py',
-                         'player_outcomes.py', 'playbook_prior.py',
+                         'player_outcomes.py', 'playbook_prior.py', 'season_layers.py',
                          'paired_random_streams.py', 'run_slc_game.py', 'simulate_pregame_batch.py',
                          'slc_engine.py', 'slc_playcall.py')
     description['integration_code_sha256'] = {

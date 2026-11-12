@@ -318,6 +318,31 @@ class PregamePlayerUsage(unittest.TestCase):
         self.assertEqual(participants['sampled_play_context']['lateral_receiver_player_id'], 'OLD_LATERAL')
         self.assertEqual(participants['sampled_play_context']['lateral_receiving_yards'], -4)
 
+    def test_sack_fumble_uses_selected_qb_when_source_row_has_no_passer(self):
+        source = {'game_id': 'G1', 'play_id': 2}
+        reference = gs.Reference({}, [], {}, {('G1', 2): {'play_type': 'pass'}})
+        play = {'sequence': 2, 'event_type': 'sack_fumble_lost', 'state_before': {'offense_team': 'A'},
+                'outcome': {
+                    'sampled_from': source,
+                    'pre_event': {'team': 'HOM',
+                                  'passer': {'gsis_id': 'QB1', 'player_name': 'Starter', 'pos_abb': 'QB'},
+                                  'receiver': {'gsis_id': 'RB1', 'player_name': 'Back', 'pos_abb': 'RB'}},
+                }}
+
+        participants = reference.participants_for(play, 'A', self.snapshot(), seed=3)
+        play['participants'] = participants
+        drive = {'offense_team': 'A', 'quarter_start': 3, 'clock_start': 600,
+                 'end_quarter': 3, 'end_clock': 592, 'terminal': 'turnover',
+                 'field_goal_made': None,
+                 'plays': [{**play, 'outcome': {**play['outcome'], 'yards_gained': -7,
+                                                'touchdown': False, 'turnover': True, 'punt': False}}]}
+        stats = game_stats.compute([drive], {'A': 0, 'B': 0})
+
+        self.assertEqual(participants['passer_id'], 'QB1')
+        self.assertIsNone(participants['receiver_id'])
+        self.assertEqual(stats['player'][0]['passing']['sacked'], 1)
+        self.assertEqual(stats['player'][0]['miscellaneous']['fumbles_lost'], 1)
+
     def test_non_scrimmage_play_drops_historical_participant_ids(self):
         source = {'game_id': 'G1', 'play_id': 1}
         facts = {'passer_id': 'OLD_QB', 'receiver_id': 'OLD_WR', 'rusher_id': 'OLD_RB',
