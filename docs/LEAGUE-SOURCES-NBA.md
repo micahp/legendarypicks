@@ -53,6 +53,29 @@ tennis. It has no NBA section.
 | Draft position | Not checked | Official NBA draft pages | Unknown | Must be checked before any draft claim is used. |
 | Live forecasts | Prospective forecast rows | ESPN live scoreboard and summary (`docs/NBA-GAME-MODEL-PHASE1.md`) | Repo doc | Subject to the ESPN request-budget rules. |
 
+## League gates, run 2026-11-11
+
+Command, read-only, against `backend/data/picks.dev.db`:
+
+    ./venv/bin/python -m audit_league_stats --db data/picks.dev.db --league nba
+
+Result: 11 PASS, 4 UNVERIFIED, 0 FAIL. Gate definitions are in
+`backend/audit_league_stats/cli.py` (the `"nba"` entry) and `docs/NEW-LEAGUE-CHECKLIST.md`.
+
+| Gate | Result | What it means for the engine |
+|---|---|---|
+| A required season stats | PASS | 13 required stats present over 1,041 rows. |
+| B content, C / F / G / PF | PASS | 500 / 500 / 500 / 93 logs sampled, all with PTS, REB, AST, MIN, FGM recorded. |
+| B content, PG / SF / SG | UNVERIFIED | No game logs at all for these positions. The engine cannot score those players yet. |
+| C vocabulary (position, position group, team) | PASS | One vocabulary each. 39 inactive players have no roster values. |
+| D leaders reach logs | PASS | 576 of 576 season-2026 leaders have a game log in that season. |
+| E qualifier | PASS | `games` present. Published rule: 58 games. |
+| F identity crosswalk | PASS | ESPN ID on 662 rows, NBA ID on 541 rows. |
+| G published identity | UNVERIFIED | 388 players have no mapped publisher ID. 282 players used in logs or shares sit outside the publisher map. The ESPN/NBA pair check ran on 0 players. |
+
+Blockers for the engine: the missing guard and wing logs (gate B), and the identity
+map (gate G). Neither is fixed. Fixing either writes to the database and needs approval.
+
 ## Player facts for the pinned game, checked 2026-11-11
 
 Sources: ESPN roster API (`teams/9` and `teams/10` with `enable=roster`), ESPN
