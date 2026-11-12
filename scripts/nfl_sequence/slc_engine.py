@@ -1140,6 +1140,10 @@ def _describe_layer(ref):
     description['integration_code_sha256'] = {
         name: _file_sha256(HERE / name) for name in integration_files if (HERE / name).exists()
     }
+    if getattr(sampler, 'source_support_artifact', None) is not None:
+        # Only V1.6's materialized path adds this source to model provenance.
+        description['integration_code_sha256']['slc_materialized_history.py'] = (
+            _file_sha256(HERE / 'slc_materialized_history.py'))
     return description
 
 
