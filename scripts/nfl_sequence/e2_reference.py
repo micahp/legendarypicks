@@ -662,10 +662,12 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             if eligible_before is None:
                 raise ValueError('formation priors need an eligible-before cutoff')
             import formation_layer as fl
-            seasons = sorted({int(row['season']) for row in rows})
-            participation = fl.load_participation(db, seasons)
+            # Formation priors use 2016+ participation, broader than the 2022+
+            # E1 outcome pool. Load the FULL priors window once for both uses.
+            cutoff_season = int(eligible_before[0])
+            participation = fl.load_participation(db, range(fl.PARTICIPATION_FIRST, cutoff_season))
             fl.attach((row for cell in pool.values() for _event, row, _runoff, _spot in cell), participation)
-            contextual_sampler.formation_priors = fl.priors(db, int(eligible_before[0]), participation=participation)
+            contextual_sampler.formation_priors = fl.priors(db, cutoff_season, participation=participation)
             contextual_sampler.formation_outcomes = True
         contextual_sampler.exact_yardline = bool(playcall_exact_yardline)
         if playcall_point_splits:  # team score-state shifts of the dropback rate, from the seasons before the cutoff only
