@@ -835,7 +835,7 @@ def run_batch(args):
         ref, excluded_kickoffs = slc_engine.load_reference(args.db, snapshot, args.playcall_artifact,
                                                            team_outcomes=args.playcall_team_outcomes,
                                                            formation=args.playcall_formation,
-                                                           player_shares=args.playcall_player_shares,
+                                                           player_shares=args.playcall_player_shares or args.playcall_dirichlet_shares,
                                                            exact_yardline=args.playcall_exact_yardline,
                                                            coverage=args.playcall_coverage,
                                                            point_splits=(str(args.playcall_point_splits_cache) if args.playcall_point_splits_cache else args.playcall_point_splits),
@@ -857,7 +857,9 @@ def run_batch(args):
                                                            qb_run_role_style=resolved_profile['enabled_layers'].get(
                                                                'qb_run_role_style', False),
                                                            score_clock_playcalling=resolved_profile['enabled_layers'].get(
-                                                               'score_clock_playcalling', True))
+                                                               'score_clock_playcalling', True),
+                                                           season_adapt=args.playcall_season_adapt,
+                                                           season_adapt_n0=args.season_adapt_n0)
     elif args.context_mode == 'unconditioned':
         ref, excluded_kickoffs = er.load(args.db, try_policy=try_policy,
                                          safety_kick_table=safety_kick_table)
@@ -1209,6 +1211,11 @@ def main(argv=None):
     ap.add_argument('--playcall-team-outcomes', action='store_true',
                     help='SLC v1 research: reweight which historical outcome is drawn by prior-season team event splits '
                          '(offense and defense), within the play-call intent. Needs --playcall-artifact')
+    ap.add_argument('--playcall-season-adapt', action='store_true',
+                    help='SLC V1.5 research: blend the target season\'s results available at the cutoff into the team '
+                         'splits. Needs --playcall-team-outcomes')
+    ap.add_argument('--season-adapt-n0', type=float, default=4.0,
+                    help='prior weight N0 of the historical team splits in the season blend (predeclared 4)')
     ap.add_argument('--playcall-artifact',
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')

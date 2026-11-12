@@ -74,6 +74,10 @@ def parse_args(argv=None):
                     help='opt-in SLC research blocker fix; repeat to enable multiple fixes')
     ap.add_argument('--slc-fg-ordinary-cutoff', type=float, default=60.0,
                     help='ordinary field-goal decision maximum in yards when long_field_goal_feasibility is enabled')
+    ap.add_argument('--season-adapt', action='store_true',
+                    help='SLC V1.5 research: blend the target season\'s results available at the cutoff into the team splits')
+    ap.add_argument('--season-adapt-n0', type=float, default=4.0,
+                    help='prior weight N0 of the historical team splits in the season blend (predeclared 4)')
     ap.add_argument('--seed', type=int, required=True)
     ap.add_argument('--db', default=e1.DEFAULT_DB)
     ap.add_argument('--out', type=Path, required=True)
@@ -178,7 +182,8 @@ def main():
                                                 blocker_fixes=args.slc_blocker_fix,
                                                 fg_ordinary_cutoff=args.slc_fg_ordinary_cutoff,
                                                 score_clock_playcalling=resolved_profile['enabled_layers'].get(
-                                                    'score_clock_playcalling', True))
+                                                    'score_clock_playcalling', True),
+                                                season_adapt=args.season_adapt, season_adapt_n0=args.season_adapt_n0)
     playcall_layer = slc_engine.describe(ref)
     slc_config.validate_engine_layers(resolved_profile, playcall_layer)
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
@@ -273,6 +278,8 @@ def main():
         'result': record,
         'event_trace': decisions,
     }
+    if args.season_adapt:  # the adaptation's inputs and blended tables are kept only for an adapted run
+        trace['season_adapt'] = ref.contextual_sampler.season_adapt
     args.out.write_text(json.dumps(trace, indent=1, sort_keys=True, default=str) + '\n')
     print(json.dumps({'game_id': schedule['game_id'], 'seed': args.seed, 'status': record.get('status'),
                       'complete_game': record.get('complete_game'), 'valid_full_game_claim': trace['contract']['valid_full_game_claim'],
