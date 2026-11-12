@@ -48,6 +48,9 @@ OUTCOME_BACKOFF_MIN_SUPPORT = {
     'field_zone': 50,
     'league_intent': 50,
 }
+PASS_LABEL_EVENTS = frozenset(('pass_complete', 'pass_incomplete', 'interception', 'fumble_lost'))
+PASS_LABEL_CATEGORIES = frozenset(('A', 'D', 'E'))
+PASS_LABEL_MODES = frozenset(('legacy', 'off', 'two_stage', 'conditional'))
 
 
 def _sha(value):
@@ -182,6 +185,9 @@ class PlayCallSampler:
         self.player_shares = None  # prior-season player shares for the pre-event participant adapter (player_shares)
         # red-zone geometry: inside the 20, draw the outcome only from rows at the state's exact yard line when there are any
         self.exact_yardline = False
+        self.exact_distance_yardage = False
+        self.exact_distance_min_support = 50
+        self.exact_distance_shrinkage_k = 25.0
         # team score-state splits: log-odds shifts of the dropback rate by score bucket (point_splits), None when off
         self.point_shifts = None
         # win-loss streak splits: log-odds shifts by streak bucket, and each team's current bucket (streak_splits)
@@ -199,6 +205,8 @@ class PlayCallSampler:
         self.decision_table = None
         self.decision_outcomes = False
         self.decision_filter = True  # False: the lifts shape the outcome, but the row is drawn from the whole cell (an experiment)
+        self.pass_label_mode = 'legacy'
+        self.pass_label_outcome_model = None
         # per-game Dirichlet target and carry shares (share_distributions), None when off: the receiver and rusher are drawn from them
         self.share_table = None
         # the playbook files as the pre-event prior for pass depth, pass location and run gap (playbook_prior), None when off
@@ -507,8 +515,12 @@ class PlayCallSampler:
                 if use_streak:  # the league's outcome mix for this streak state, relative to the cell
                     weight *= self._lift(entry, k, streak_bucket, 'by_streak')
                 if use_labels:  # the drawn labels' lifts, averaged in log space: the categories overlap, so they do not compound
+                    active_labels = [(category, value) for category, value in labels.items()
+                                     if value is not None and not (
+                                         self.pass_label_mode in ('off', 'two_stage', 'conditional')
+                                         and category in PASS_LABEL_CATEGORIES)]
                     weight *= decision_layer.geometric_mean([self._label_lift(entry, k, decision_layer.label_key(c, v))
-                                                             for c, v in labels.items() if v is not None])
+                                                             for c, v in active_labels])
                 if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
                     weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
                 if use_player_outcomes:
@@ -526,7 +538,12 @@ class PlayCallSampler:
             if fallback_by_key is None:
                 key = rng.choices(keys, weights=[entry['base'][k] for k in keys])[0]  # the unchanged baseline draw
         elif fallback_by_key is None:
-            key = rng.choices(keys, weights=weights)[0]
+            if (self.pass_label_mode in ('two_stage', 'conditional') and use_labels
+                    and outcome_intent == 'dropback' and not scramble):
+                key = self._draw_two_stage_pass_event(
+                    rng, keys, weights, entry, labels, offense=offense, state=state)
+            else:
+                key = rng.choices(keys, weights=weights)[0]
         candidates = fallback_by_key[key] if fallback_by_key is not None else entry['by_key'][key]
         if self.qb_decision_table is not None:
             if scramble and fallback_by_key is None:
@@ -557,6 +574,10 @@ class PlayCallSampler:
                 streak_fallback = 'no_source_rows_for_current_streak'
         if use_labels and self.decision_filter:  # the row takes each drawn label in category order, where the cell has such a row
             for cat in decision_layer.CATS:
+                if (self.pass_label_mode in ('off', 'two_stage', 'conditional')
+                        and cat in PASS_LABEL_CATEGORIES):
+                    if self.pass_label_mode == 'off' or key[1] not in PASS_LABEL_EVENTS:
+                        continue
                 value = labels.get(cat)
                 if value is None:
                     continue
@@ -588,11 +609,47 @@ class PlayCallSampler:
                 exact_yardline_conditioned = True
             else:
                 exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
+        exact_distance_conditioned = False
+        exact_distance_fallback = None
+        exact_distance_support = 0
+        exact_distance_branch = None
+        if (self.exact_distance_yardage and called_intent in SCRIMMAGE_INTENTS
+                and state.get('togo') is not None):
+            exact_distance = [candidate for candidate in candidates
+                              if candidate[1].get('ydstogo') is not None
+                              and int(candidate[1]['ydstogo']) == int(state['togo'])]
+            exact_distance_support = len(exact_distance)
+            if exact_distance_support >= self.exact_distance_min_support:
+                shrinkage = exact_distance_support / (
+                    exact_distance_support + self.exact_distance_shrinkage_k)
+                if use_player_outcomes:
+                    import player_outcomes
+                    row_weights = [player_outcomes.row_weight(
+                        self.player_outcome_table, key[1], candidate[1], pre_event, state,
+                        enabled_roles=self.player_outcome_roles) for candidate in candidates]
+                    exact_ids = {id(candidate) for candidate in exact_distance}
+                    exact_weights = [weight for candidate, weight in zip(candidates, row_weights)
+                                     if id(candidate) in exact_ids]
+                    bucket_weights = row_weights
+                else:
+                    exact_weights = None
+                    bucket_weights = None
+                exact_distance_branch = 'exact' if rng.random() < shrinkage else 'bucket'
+                if exact_distance_branch == 'exact':
+                    candidates = exact_distance
+                    if use_player_outcomes:
+                        row_weights = exact_weights
+                else:
+                    row_weights = bucket_weights
+                exact_distance_conditioned = True
+            else:
+                exact_distance_fallback = 'exact_distance_support_below_minimum'
         if use_player_outcomes:
-            import player_outcomes
-            row_weights = [player_outcomes.row_weight(self.player_outcome_table, key[1], c[1], pre_event, state,
-                                                      enabled_roles=self.player_outcome_roles)
-                           for c in candidates]
+            if not exact_distance_conditioned or exact_distance_branch == 'bucket':
+                import player_outcomes
+                row_weights = [player_outcomes.row_weight(self.player_outcome_table, key[1], c[1], pre_event, state,
+                                                          enabled_roles=self.player_outcome_roles)
+                               for c in candidates]
             event, row, runoff, spot = rng.choices(candidates, weights=row_weights, k=1)[0]
         else:
             event, row, runoff, spot = rng.choice(candidates)
@@ -604,11 +661,18 @@ class PlayCallSampler:
             'formation_conditioned': bool(use_formation), 'coverage': coverage, 'coverage_conditioned': bool(use_coverage),
             'exact_yardline_conditioned': exact_yardline_conditioned,
             'exact_yardline_fallback': exact_yardline_fallback,
+            'exact_distance_yardage_conditioned': exact_distance_conditioned,
+            'exact_distance_yardage_fallback': exact_distance_fallback,
+            'exact_distance_yardage_support': exact_distance_support,
+            'exact_distance_yardage_branch': exact_distance_branch,
             'formation_fallback': formation_fallback, 'coverage_fallback': coverage_fallback,
             'streak_fallback': streak_fallback,
             'streak_outcome_conditioned': bool(use_streak),
             'labels': labels, 'labels_conditioned': bool(use_labels), 'labels_matched': labels_matched,
             'labels_unmatched': labels_unmatched,
+            'pass_label_mode': self.pass_label_mode,
+            'pass_label_stage': ('post_pass_selection' if self.pass_label_mode in ('two_stage', 'conditional')
+                                 else 'legacy_pre_event' if self.pass_label_mode == 'legacy' else 'disabled'),
             'decision_row_filter_applied': bool(use_labels and self.decision_filter),
             'team_outcome_split': self.team_outcomes is not None,
             'team_outcome_fallbacks': list(self._current_team_outcome_fallbacks),
@@ -677,6 +741,56 @@ class PlayCallSampler:
             )
         self.decisions.append(decision_record)
         return event, row, runoff, spot
+
+    def _draw_two_stage_pass_event(self, rng, keys, weights, entry, labels, *, offense, state):
+        """Keep A/D/E out of sack selection, then condition only a selected pass outcome."""
+        pass_indices = [index for index, key in enumerate(keys) if key[1] in PASS_LABEL_EVENTS]
+        other_indices = [index for index, key in enumerate(keys) if key[1] not in PASS_LABEL_EVENTS]
+        groups = [(name, indices) for name, indices in (('pass', pass_indices), ('other', other_indices))
+                  if indices and sum(weights[index] for index in indices) > 0]
+        if not groups:
+            raise e1.SamplingUnavailable('pass_label_two_stage_has_no_positive_event_mass')
+        if len(groups) == 1:
+            selected_group, indices = groups[0]
+        else:
+            selected_group = rng.choices([name for name, _ in groups],
+                                         weights=[sum(weights[i] for i in ix) for _, ix in groups])[0]
+            indices = next(ix for name, ix in groups if name == selected_group)
+        if selected_group != 'pass':
+            if len(indices) == 1:
+                return keys[indices[0]]
+            return rng.choices([keys[i] for i in indices], weights=[weights[i] for i in indices])[0]
+
+        conditional_weights = [weights[i] for i in indices]
+        labels = labels or {}
+        applicable = [(category, labels.get(category)) for category in ('A', 'D', 'E')
+                      if labels.get(category) is not None]
+        if self.pass_label_mode == 'two_stage':
+            conditional_weights = [weight * decision_layer.geometric_mean([
+                self._label_lift(entry, keys[i], decision_layer.label_key(category, value))
+                for category, value in applicable]) for weight, i in zip(conditional_weights, indices)]
+        elif self.pass_label_mode == 'conditional':
+            model = self.pass_label_outcome_model
+            if model is None or self.decision_table is None:
+                raise e1.SamplingUnavailable('conditional_pass_label_model_missing')
+            context = e0.pool_key(int(state['down']), state['togo'], state['yl'])
+            team = self._team(offense)
+            label_cell = decision_layer.cell_of(state['down'], state['togo'], state['yl'])
+            label_prior = {}
+            for category in ('A', 'D', 'E'):
+                if self.decision_table['league'][category].get(label_cell):
+                    label_prior[category] = decision_layer.distribution(
+                        self.decision_table, team, label_cell, category)
+                else:
+                    label_prior[category] = {None: 1.0}
+            conditional_weights = [weight * model.ratio(
+                context, labels, keys[i][1], label_prior=label_prior,
+                calibration_key=(team, label_cell)) for weight, i in zip(conditional_weights, indices)]
+        if len(indices) == 1:
+            return keys[indices[0]]
+        if not any(weight > 0 for weight in conditional_weights):
+            conditional_weights = [weights[i] for i in indices]
+        return rng.choices([keys[i] for i in indices], weights=conditional_weights)[0]
 
     def _player_support(self, pre_event):
         import player_outcomes
@@ -766,6 +880,14 @@ class PlayCallSampler:
             out['qb_decision_model'] = self.qb_decision_manifest
         if getattr(self, 'player_outcome_manifest', None) is not None:
             out['player_outcome_model'] = self.player_outcome_manifest
+        out['pass_label_mode'] = self.pass_label_mode
+        out['exact_distance_yardage'] = {
+            'enabled': self.exact_distance_yardage,
+            'minimum_support': self.exact_distance_min_support,
+            'shrinkage_k': self.exact_distance_shrinkage_k,
+        }
+        if self.pass_label_outcome_model is not None:
+            out['pass_label_outcome_model'] = self.pass_label_outcome_model.manifest
         if getattr(self, 'share_model_manifest', None) is not None:
             out['player_share_distribution'] = self.share_model_manifest
         if getattr(self, 'season_blend_manifest', None) is not None:

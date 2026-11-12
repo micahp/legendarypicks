@@ -133,7 +133,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
                    player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
-                   qb_run_role_style=None, score_clock_playcalling=True, season_adapt=False, season_adapt_n0=4.0):
+                   qb_run_role_style=None, score_clock_playcalling=True, season_adapt=False, season_adapt_n0=4.0,
+                   pass_label_mode='legacy', exact_distance_yardage=False):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it.
 
@@ -142,6 +143,11 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     is this snapshot's game, and its cutoff is that game's kickoff minus 90 minutes."""
     schedule = require_snapshot(snapshot)['schedule']
     season = int(schedule['season'])
+    import slc_playcall as slc
+    if pass_label_mode not in slc.PASS_LABEL_MODES:
+        raise ValueError(f'unknown pass-label mode: {pass_label_mode!r}')
+    if pass_label_mode != 'legacy' and not decision:
+        raise ValueError('pass-label modes other than legacy require decision labels')
     if player_outcomes_receiver_only and not player_outcomes:
         raise ValueError('receiver-only player outcomes require player_outcomes=True')
     check_artifact_cutoff(json.loads(Path(artifact_path).read_text()), season)
@@ -160,6 +166,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playcall_point_splits=point_splits, playcall_streak=streak, playcall_streak_league=streak_league,
                    playcall_qb_decisions=(qb_decisions or run_scramble_backoff),
                    playcall_player_outcomes=player_outcomes, blocker_fixes=fixes,
+                   playcall_known_clean_only=(pass_label_mode != 'legacy'),
+                   playcall_separate_sack_fumbles=(pass_label_mode == 'conditional'),
                    fg_ordinary_cutoff=fg_ordinary_cutoff, fingerprint=False)  # fingerprinted below, after the pool exclusions and the adapters
     ref.contextual_sampler.score_clock_playcalling_enabled = bool(score_clock_playcalling)
     ref.pool, lateral_source_filter = exclude_unmodeled_lateral_rows(ref.pool, ref.participants)
@@ -168,6 +176,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     ref.pool_scope['unmodeled_lateral_source_filter'] = lateral_source_filter
     ref.pool_scope['inconsistent_completion_yardage_filter'] = pass_yardage_source_filter
     sampler = ref.contextual_sampler
+    sampler.pass_label_mode = pass_label_mode
+    sampler.exact_distance_yardage = bool(exact_distance_yardage)
     sampler.qb_run_role_style_enabled = bool(qb_run_role_style)
     sampler.source_cutoff = {'eligible_before': [season, 1]}
     sampler.optional_input_sha256 = {}
@@ -216,6 +226,9 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         ref.contextual_sampler.player_outcome_manifest = outcome_model.manifest(
             outcome_table, source_commit, enabled_roles=ref.contextual_sampler.player_outcome_roles)
     ref.contextual_sampler.decision_filter = decision_filter  # an experiment switch: False draws rows from the whole cell
+    if pass_label_mode == 'conditional':
+        import pass_label_outcomes
+        sampler.pass_label_outcome_model = pass_label_outcomes.PassLabelOutcomeModel.fit(ref.pool)
     if dirichlet_shares:  # per-game Dirichlet target and carry shares, fitted on the season before the game season
         if not source_commit:
             raise ValueError('Dirichlet player shares need a source commit for their model manifest')
@@ -250,7 +263,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
         ref.contextual_sampler.current_streak = {team: ss.bucket_from_text(rec.get('streak', '')) for team, rec in records.items()}
         sampler.optional_input_sha256['current_streak_file'] = _file_sha256(streak_file)
     if season_evidence is not None:  # after every table is loaded, so each one is blended once
-        season_layers.apply(ref, db, season_evidence)
+        season_layers.apply(ref, db, season_evidence, known_clean_only=(pass_label_mode != 'legacy'))
     # Include every enabled model table and manifest in the reference identity. e2 computes an initial fingerprint before
     # these optional adapters are attached, so the final reference must be fingerprinted after all loading is complete.
     ref.model_inputs = er._reference_fingerprint(ref)
@@ -590,7 +603,7 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
         if not _decision_resolves_to_event(decision, event):
             fail(index, decision, play, f'decision event {decision.get("event")} disagrees with play event {event}')
 
-        if event in ('pass_complete', 'pass_incomplete', 'interception', 'run', 'fumble_lost') \
+        if event in ('pass_complete', 'pass_incomplete', 'interception', 'run', 'fumble_lost', 'sack_fumble_lost') \
                 and _has_lateral_source(sampled):
             fail(index, decision, play,
                  'lateral source outcomes are unsupported until every lateral player and yard is modeled',
@@ -608,11 +621,12 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
             'pass_incomplete': ('passer', 'receiver'),
             'interception': ('passer', 'receiver'),
             'sack': ('passer',),
+            'sack_fumble_lost': ('passer',),
             'run': ('rusher',),
         }.get(event)
         if qb_action == 'scramble' and event in PASS_RESULT_EVENTS:
             realized_roles = ()  # report the illegal play-type transition as ILLEGAL_STATE below
-        if event == 'fumble_lost':
+        if event in ('fumble_lost', 'sack_fumble_lost'):
             realized_roles = tuple(
                 role for role in ('passer', 'rusher', 'receiver')
                 if participants.get(f'{role}_id') is not None
@@ -663,7 +677,7 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                    for field in ('passing_yards', 'receiving_yards')):
                 fail(index, decision, play,
                      'an interception cannot credit passing or receiving yards to the intended target')
-        elif event == 'fumble_lost':
+        elif event in ('fumble_lost', 'sack_fumble_lost'):
             if not outcome.get('turnover'):
                 fail(index, decision, play, 'a fumble_lost event must establish a recovered change of possession')
             before = play.get('state_before') or {}
@@ -676,9 +690,15 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                 fail(index, decision, play,
                      'fumble-return touchdowns are outside the supported transition model',
                      failure_class='UNSUPPORTED_RULE')
-        elif event == 'sack':
+        elif event in ('sack', 'sack_fumble_lost'):
             if isinstance(yards, (int, float)) and yards > 0:
                 fail(index, decision, play, 'a sack cannot produce positive rushing or passing gain')
+            if event == 'sack_fumble_lost' and not outcome.get('turnover'):
+                fail(index, decision, play, 'a sack-fumble must establish a recovered change of possession')
+            if event == 'sack_fumble_lost' and any(
+                    sampled.get(field) not in (None, 0, 0.0)
+                    for field in ('passing_yards', 'receiving_yards')):
+                fail(index, decision, play, 'a sack-fumble cannot credit pass or receiving yards')
         elif event == 'run' and outcome.get('touchdown'):
             before = play.get('state_before') or {}
             if (not isinstance(before.get('yardline_100'), int) or not isinstance(yards, int)
@@ -697,7 +717,7 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
         elif called == 'dropback' and outcome_intent == 'run':
             fail(index, decision, play, 'a dropback cannot become a run without an explicit scramble decision')
 
-        if event == 'sack':
+        if event in ('sack', 'sack_fumble_lost'):
             if (called != 'dropback' or qb_action == 'scramble' or not participants.get('passer_id')
                     or participants.get('receiver_id') is not None):
                 fail(index, decision, play, 'a sack needs a passer, no target, and no pass-attempt credit')
@@ -785,7 +805,7 @@ def summary(decisions, record=None):
         if all(state.get(key) is not None for key in
                ('team', 'down', 'togo', 'yardline_100', 'score_diff', 'quarter', 'clock')):
             event = decision.get('event')
-            if event in ('pass_complete', 'pass_incomplete', 'interception', 'sack', 'spike'):
+            if event in ('pass_complete', 'pass_incomplete', 'interception', 'sack', 'sack_fumble_lost', 'spike'):
                 action = 'pass'
             elif event == 'run' or (event == 'fumble_lost' and decision.get('outcome_intent') == 'run'):
                 action = 'run'
@@ -809,7 +829,8 @@ def summary(decisions, record=None):
         if run_style:
             qb_run_style_support[run_style.get('support_level', 'unknown')] += 1
         for key in ('qb_scramble_fallback', 'qb_target_role_fallback', 'qb_target_role_draw_fallback',
-                    'exact_yardline_fallback', 'formation_fallback', 'coverage_fallback', 'streak_fallback'):
+                    'exact_yardline_fallback', 'exact_distance_yardage_fallback',
+                    'formation_fallback', 'coverage_fallback', 'streak_fallback'):
             if decision.get(key):
                 fallbacks[str(decision[key])] += 1
         for category in decision.get('labels_unmatched', []):
@@ -877,6 +898,8 @@ def summary(decisions, record=None):
                 'league_streak_splits_evaluated': sum(bool(d.get('league_streak_split_applied')) for d in decisions),
                 'league_streak_splits_nonzero': sum(bool(d.get('league_streak_shift')) for d in decisions),
                 'exact_yardline_outcomes': sum(bool(d.get('exact_yardline_conditioned')) for d in decisions),
+                'exact_distance_yardage_outcomes': sum(bool(d.get('exact_distance_yardage_conditioned'))
+                                                       for d in decisions),
                 'current_streak_context': sum(d.get('streak_bucket') is not None for d in decisions),
             },
             'fallback_events': dict(sorted(fallbacks.items()))}
@@ -993,12 +1016,14 @@ def _describe_layer(ref):
         'player_conditioned_outcomes': sampler.player_outcome_table is not None,
         'target_role_priors': sampler.role_table is not None,
         'decision_labels': decision_enabled,
+        'pass_label_outcome_conditioning': sampler.pass_label_mode != 'legacy',
         'decision_row_filter': bool(decision_enabled and sampler.decision_filter),
         'playbook_priors': sampler.playbook_table is not None,
         'point_splits': sampler.point_shifts is not None,
         'team_streak_splits': sampler.streak_shifts is not None,
         'league_streak_splits': sampler.streak_league is not None,
         'exact_yardline_outcomes': bool(sampler.exact_yardline),
+        'exact_distance_yardage_outcomes': bool(sampler.exact_distance_yardage),
         'current_streak_context': bool(sampler.current_streak),
     }
     reference_sha = (getattr(ref, 'model_inputs', None) or {}).get('sha256')
@@ -1023,6 +1048,11 @@ def _describe_layer(ref):
         'decision_labels': {'table': sampler.decision_table, 'enabled': sampler.decision_outcomes,
                             'source_files': {key: value for key, value in sampler.optional_input_sha256.items()
                                              if key.startswith('decision_source:')}},
+        'pass_label_outcome_conditioning': {
+            'mode': sampler.pass_label_mode,
+            'model_manifest': (sampler.pass_label_outcome_model.manifest
+                               if sampler.pass_label_outcome_model is not None else None),
+        },
         'decision_row_filter': {'artifact_sha256': artifact['sha256'], 'enabled': bool(sampler.decision_filter)},
         'playbook_priors': {'table': sampler.playbook_table,
                             'files': {key: value for key, value in sampler.optional_input_sha256.items()
@@ -1032,6 +1062,11 @@ def _describe_layer(ref):
         'league_streak_splits': sampler.streak_league,
         'exact_yardline_outcomes': {'reference_sha256': reference_sha,
                                     'rule': 'exact yard line inside the 20 where source rows exist'},
+        'exact_distance_yardage_outcomes': {
+            'reference_sha256': reference_sha,
+            'minimum_support': sampler.exact_distance_min_support,
+            'shrinkage_k': sampler.exact_distance_shrinkage_k,
+        },
         'current_streak_context': {'file_sha256': sampler.optional_input_sha256.get('current_streak_file'),
                                    'current_streak': sampler.current_streak},
     }
@@ -1050,6 +1085,9 @@ def _describe_layer(ref):
                    'score_clock_fallback_policy': ('historical_down_distance_field_cell_rate; independent point and streak '
                                                    'layers remain separately switchable'),
                    'optional_input_sha256': dict(sorted(getattr(sampler, 'optional_input_sha256', {}).items()))}
+    description['pass_label_mode'] = sampler.pass_label_mode
+    if sampler.pass_label_outcome_model is not None:
+        description['pass_label_outcome_model'] = sampler.pass_label_outcome_model.manifest
     if sampler.blocker_fixes:
         description['blocker_resolution'] = {
                        'enabled_fixes': sorted(sampler.blocker_fixes),

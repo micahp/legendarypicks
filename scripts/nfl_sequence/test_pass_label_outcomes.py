@@ -15,7 +15,7 @@ class PassLabelOutcomeModelTest(unittest.TestCase):
             event = events[i % len(events)]
             labels = ({'A': 'WR', 'D': 'deep', 'E': 'left'} if event == 'pass_complete'
                       else {'A': 'RB', 'D': 'short', 'E': 'middle'})
-            row = {'season': 2024, 'labels': labels}
+            row = {'season': 2024, 'labels': labels, 'penalty': 0}
             pool[(1, '3-5', '30-49')].append((event, row, 0.0, 50))
 
         model = PassLabelOutcomeModel.fit(pool)
@@ -45,10 +45,24 @@ class PassLabelOutcomeModelTest(unittest.TestCase):
             pool[(1, '3-5', '30-49')].append((event, {
                 'season': 2024,
                 'labels': {'A': 'WR' if i % 2 else 'RB', 'D': 'short', 'E': 'left'},
+                'penalty': 0,
             }, 0.0, 50))
         model = PassLabelOutcomeModel.fit(pool)
         self.assertEqual(model.base_probabilities((4, '10+', '80-99')),
                          dict(zip(OUTCOMES, model.global_base)))
+
+    def test_penalty_unknown_and_tagged_rows_do_not_enter_fit(self):
+        pool = {(1, '3-5', '30-49'): []}
+        for i in range(120):
+            penalty = 0 if i < 110 else (None if i < 115 else 1)
+            pool[(1, '3-5', '30-49')].append((OUTCOMES[i % len(OUTCOMES)], {
+                'season': 2024, 'labels': {'A': 'WR', 'D': 'short', 'E': 'left'}, 'penalty': penalty,
+            }, 0.0, 50))
+        model = PassLabelOutcomeModel.fit(pool)
+        self.assertEqual(model.manifest['rows'], 110)
+        self.assertEqual(model.manifest['penalty_eligibility'], {
+            'known_clean': 110, 'penalty_tagged': 5, 'unknown': 5, 'other': 0,
+        })
 
 
 if __name__ == '__main__':

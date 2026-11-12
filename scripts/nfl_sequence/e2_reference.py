@@ -572,7 +572,8 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
          playcall_player_shares=False, playcall_exact_yardline=False, playcall_coverage=False,
          playcall_point_splits=False, playcall_streak=False, playcall_streak_league=False, playcall_target_roles=False,
          playcall_decision=False, playcall_qb_decisions=False, playcall_player_outcomes=False,
-         blocker_fixes=(), fg_ordinary_cutoff=60, playcall_season_adapt=None, fingerprint=True):
+         blocker_fixes=(), fg_ordinary_cutoff=60, playcall_season_adapt=None, fingerprint=True,
+         playcall_known_clean_only=False, playcall_separate_sack_fumbles=False):
     """Returns (Reference, excluded_kickoffs). Refuses a kick table whose buckets do not match the engine's.
 
     `playcall_season_adapt` (SLC V1.5, research): {'game_id', 'kickoff', 'n0'} for one target game. It blends that game's
@@ -617,7 +618,9 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
     rows = e1.load(db, eligible_before=eligible_before)
     team_before = int(eligible_before[0]) if playcall_team_outcomes and eligible_before is not None else None
     pool, pool_excluded, team_pool = e1.build_pools(rows, regulation_only=regulation_only,
-                                                    include_qb_scrambles=playcall_qb_decisions, team_before_season=team_before)
+                                                    include_qb_scrambles=playcall_qb_decisions, team_before_season=team_before,
+                                                    known_clean_penalties=playcall_known_clean_only,
+                                                    separate_sack_fumbles=playcall_separate_sack_fumbles)
     contextual_sampler = None
     contextual_pool_manifest = {}
     if contextual_mode is not None:
@@ -717,7 +720,8 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                 raise ValueError('decision categories need an eligible-before cutoff')
             import decision_layer as dl2
             cutoff = int(eligible_before[0])
-            labelled = dl2.load_rows(db, range(dl2.FIRST_CHARTED_SEASON, cutoff))  # raises when no charted season precedes it
+            labelled = dl2.load_rows(db, range(dl2.FIRST_CHARTED_SEASON, cutoff),
+                                     known_clean_only=playcall_known_clean_only)  # raises when no charted season precedes it
             dl2.attach([row for cell in pool.values() for _event, row, _runoff, _spot in cell], labelled)
             contextual_sampler.decision_table = dl2.fit(labelled, prior_season=cutoff - 1)
             contextual_sampler.decision_outcomes = True

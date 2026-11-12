@@ -146,6 +146,7 @@ def _reproduction_command(args, seed):
         ('--playcall-player-shares', args.playcall_player_shares),
         ('--playcall-dirichlet-shares', args.playcall_dirichlet_shares),
         ('--playcall-exact-yardline', args.playcall_exact_yardline),
+        ('--playcall-exact-distance-yardage', args.playcall_exact_distance_yardage),
         ('--playcall-target-roles', args.playcall_target_roles),
         ('--playcall-decision', args.playcall_decision),
         ('--playcall-decision-unfiltered', args.playcall_decision_unfiltered),
@@ -645,6 +646,7 @@ def _execution_verification(outcomes, profile_manifest):
         'point_splits': 'point_splits_evaluated', 'team_streak_splits': 'team_streak_splits_evaluated',
         'league_streak_splits': 'league_streak_splits_evaluated',
         'exact_yardline_outcomes': 'exact_yardline_outcomes', 'current_streak_context': 'current_streak_context',
+        'exact_distance_yardage_outcomes': 'exact_distance_yardage_outcomes',
     }
     counts = {layer: 0 for layer in fields}
     enabled_layers = profile_manifest.get('enabled_layers') or {}
@@ -837,6 +839,7 @@ def run_batch(args):
                                                            formation=args.playcall_formation,
                                                            player_shares=args.playcall_player_shares or args.playcall_dirichlet_shares,
                                                            exact_yardline=args.playcall_exact_yardline,
+                                                           exact_distance_yardage=args.playcall_exact_distance_yardage,
                                                            coverage=args.playcall_coverage,
                                                            point_splits=(str(args.playcall_point_splits_cache) if args.playcall_point_splits_cache else args.playcall_point_splits),
                                                            streak=(str(args.playcall_streak_cache) if args.playcall_streak_cache else args.playcall_streak_splits),
@@ -844,6 +847,7 @@ def run_batch(args):
                                                            target_roles=args.playcall_target_roles,
                                                            decision=args.playcall_decision,
                                                            decision_filter=not args.playcall_decision_unfiltered,
+                                                           pass_label_mode=args.playcall_pass_label_mode,
                                                            dirichlet_shares=args.playcall_dirichlet_shares,
                                                            qb_decisions=args.playcall_qb_decisions,
                                                            player_outcomes=args.playcall_player_outcomes,
@@ -928,12 +932,14 @@ def run_batch(args):
         'playcall_coverage': bool(args.playcall_coverage),
         'playcall_player_shares': bool(args.playcall_player_shares or args.playcall_dirichlet_shares),
         'playcall_decision': bool(args.playcall_decision), 'playcall_dirichlet_shares': bool(args.playcall_dirichlet_shares),
+        'playcall_pass_label_mode': args.playcall_pass_label_mode,
         'playcall_qb_decisions': bool(args.playcall_qb_decisions),
         'playcall_qb_run_role_style': bool(args.playcall_qb_run_role_style),
         'playcall_player_outcomes': bool(args.playcall_player_outcomes),
         'playcall_player_outcomes_receiver_only': bool(args.playcall_player_outcomes_receiver_only),
         'playcall_playbook': bool(args.playcall_playbook),
         'playcall_exact_yardline': bool(args.playcall_exact_yardline),
+        'playcall_exact_distance_yardage': bool(args.playcall_exact_distance_yardage),
         'playcall_enabled_layers': (playcall_description or {}).get('enabled_layers'),
         'playcall_source_cutoff': (playcall_description or {}).get('source_cutoff'),
         'playcall_optional_input_sha256': (playcall_description or {}).get('optional_input_sha256'),
@@ -1128,7 +1134,7 @@ def main(argv=None):
                     help=('explicitly use the current schedule row when no as-of version exists; preserves its real '
                           'ingestion timestamp and classifies the v1 comparison as exploratory'))
     ap.add_argument('--snapshot-file', help='hash-pinned pregame snapshot JSON or game payload containing one')
-    ap.add_argument('--slc-profile', choices=('custom', 's0', 'v1_full_stack'), default='custom',
+    ap.add_argument('--slc-profile', choices=('custom', 's0', 'v1_full_stack', 'v1_6_candidate'), default='custom',
                     help='named fail-closed layer configuration; custom preserves the legacy manual feature flags')
     ap.add_argument('--slc-disable-layer', action='append', default=[],
                     help='SLC ablation: disable one named optional layer; repeat for multiple layers')
@@ -1193,6 +1199,9 @@ def main(argv=None):
     ap.add_argument('--playcall-decision', action='store_true',
                     help='SLC v1 research: decision model categories A to N as pre-event draws (team priors from the prior season) '
                          'and outcomes conditioned on them')
+    ap.add_argument('--playcall-pass-label-mode', choices=('legacy', 'off', 'two_stage', 'conditional'),
+                    default='legacy', help='A/D/E pass-label outcome timing; legacy preserves V1.5, conditional is required '
+                         'for --slc-profile v1_6_candidate')
     ap.add_argument('--playcall-streak-league', action='store_true',
                     help='SLC v1 research: league-wide streak splits (dropback shift and outcome mix by streak state)')
     ap.add_argument('--playcall-streak-file', type=Path, default=None,
@@ -1205,6 +1214,8 @@ def main(argv=None):
                     help='SLC v1 research: pre-event receivers and carriers drawn by prior-season player shares')
     ap.add_argument('--playcall-exact-yardline', action='store_true',
                     help='SLC v1 research: inside the 20, draw the outcome from rows at the exact yard line')
+    ap.add_argument('--playcall-exact-distance-yardage', action='store_true',
+                    help='SLC V1.6 candidate: blend exact yards-to-go rows with distance-bucket rows when support is sufficient')
     ap.add_argument('--playcall-formation', action='store_true',
                     help='SLC v1 research: pre-event formation and personnel from prior seasons, and outcomes conditioned '
                          'on the chosen formation. Needs --playcall-artifact')

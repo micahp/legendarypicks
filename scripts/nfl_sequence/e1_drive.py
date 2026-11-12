@@ -37,7 +37,7 @@ POOL_SEASONS = (2022, 2023, 2024, 2025)
 HOLDOUT_SEASON = holdout.HOLDOUT_SEASON  # sealed for every model; no loader in this package may read it
 MODEL_VERSION = 'e1-empirical-v0'
 RULES_VERSION = 'e1-drive-2026-10-24'
-EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'interception', 'fumble_lost', 'punt',
+EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'sack_fumble_lost', 'interception', 'fumble_lost', 'punt',
           'field_goal_attempt')
 KICK_EVENTS = ('punt', 'field_goal_attempt', 'blocked_punt', 'blocked_field_goal')
 POSSESSION_TERMINALS = ('turnover', 'turnover_on_downs', 'punt')  # a play that hands the ball over; a score or a field goal does not
@@ -105,7 +105,7 @@ def load_seasons(db, seasons):
     return [r for r in rows if r['season'] in seasons]
 
 
-def classify(row, nxt, excluded, include_qb_scrambles=False):
+def classify(row, nxt, excluded, include_qb_scrambles=False, separate_sack_fumbles=False):
     """Return (event, clock_runoff_seconds, spot) or None, counting every exclusion."""
     if row['penalty'] == 1:
         excluded['penalty (not modelled)'] += 1
@@ -137,6 +137,11 @@ def classify(row, nxt, excluded, include_qb_scrambles=False):
     if row['yards_gained'] is None:
         excluded['yards_gained null'] += 1
         return None
+    if separate_sack_fumbles and row['sack'] == 1 and row['fumble_lost'] == 1:
+        if nxt['posteam'] != row['defteam'] or nxt['play_type'] not in ('run', 'pass') or nxt['yardline_100'] is None:
+            excluded['sack-fumble without a clean new-offense snap'] += 1
+            return None
+        return 'sack_fumble_lost', runoff, int(nxt['yardline_100'])
     if row['interception'] == 1 or row['fumble_lost'] == 1:
         if row['touchdown'] == 1:
             excluded['turnover that is a touchdown (not modelled)'] += 1
@@ -158,7 +163,7 @@ def classify(row, nxt, excluded, include_qb_scrambles=False):
     return None
 
 
-def build_pool(rows, regulation_only=False, include_qb_scrambles=False):
+def build_pool(rows, regulation_only=False, include_qb_scrambles=False, separate_sack_fumbles=False):
     """The sampling pool, keyed on down, distance and field position.
 
     With `regulation_only`, overtime rows (quarter 5 or later) are not sampled. A regulation-only candidate must not draw its
@@ -176,7 +181,8 @@ def build_pool(rows, regulation_only=False, include_qb_scrambles=False):
             if row['play_type'] not in PLAY_TYPES or row['down'] is None or not 1 <= row['down'] <= 4:
                 continue
             nxt = plays[i + 1] if i + 1 < len(plays) else None
-            hit = classify(row, nxt, excluded, include_qb_scrambles=include_qb_scrambles)
+            hit = classify(row, nxt, excluded, include_qb_scrambles=include_qb_scrambles,
+                           separate_sack_fumbles=separate_sack_fumbles)
             if hit is None:
                 continue
             event, runoff, spot = hit
@@ -185,7 +191,8 @@ def build_pool(rows, regulation_only=False, include_qb_scrambles=False):
     return pool, excluded
 
 
-def build_pools(rows, regulation_only=False, include_qb_scrambles=False, team_before_season=None):
+def build_pools(rows, regulation_only=False, include_qb_scrambles=False, team_before_season=None,
+                known_clean_penalties=False, separate_sack_fumbles=False):
     """build_pool(rows, regulation_only, include_qb_scrambles) and, when `team_before_season` is given, the all-quarter pool
     of the rows from seasons before it (what team_tendency.build_from_rows builds from those rows), in one classify pass.
 
@@ -207,13 +214,19 @@ def build_pools(rows, regulation_only=False, include_qb_scrambles=False, team_be
             in_team = team_pool is not None and int(row['season']) < team_before_season
             if not (in_main or in_team):
                 continue
+            if known_clean_penalties and row.get('penalty') != 0:
+                reason = ('known penalty row excluded (strict clean pool)' if row.get('penalty') == 1
+                          else 'unknown or unrecognized penalty status excluded (strict clean pool)')
+                excluded[reason] += 1
+                continue
             if row['play_type'] not in PLAY_TYPES or row['down'] is None or not 1 <= row['down'] <= 4:
                 continue
             nxt = plays[i + 1] if i + 1 < len(plays) else None
             key = (int(row['down']), e0.ydstogo_bucket(row['ydstogo']), e0.yardline_bucket(row['yardline_100']))
             if in_main:
                 counted = Counter()
-                hit = classify(row, nxt, counted, include_qb_scrambles=include_qb_scrambles)
+                hit = classify(row, nxt, counted, include_qb_scrambles=include_qb_scrambles,
+                               separate_sack_fumbles=separate_sack_fumbles)
                 excluded.update(counted)
                 if hit is not None:
                     event, runoff, spot = hit
@@ -224,7 +237,8 @@ def build_pools(rows, regulation_only=False, include_qb_scrambles=False, team_be
                 if in_main and not (include_qb_scrambles and row['qb_scramble'] == 1):
                     team_hit = hit
                 else:
-                    team_hit = classify(row, nxt, Counter(), include_qb_scrambles=False)
+                    team_hit = classify(row, nxt, Counter(), include_qb_scrambles=False,
+                                        separate_sack_fumbles=separate_sack_fumbles)
                 if team_hit is not None:
                     event, runoff, spot = team_hit
                     team_pool.setdefault(key, []).append((event, row, runoff, spot))
@@ -502,16 +516,16 @@ def check_drive(plays, terminal):
         raise AssertionError('last play does not carry the terminal')
     for i, p in enumerate(plays):
         sb, sa, o = p['state_before'], p['state_after'], p['outcome']
-        if p['event_type'] in ('run', 'pass_complete', 'pass_incomplete', 'sack'):
+        if p['event_type'] in ('run', 'pass_complete', 'pass_incomplete', 'sack', 'sack_fumble_lost'):
             yards = o.get('yards_gained')
             yardline = sb.get('yardline_100')
             if not isinstance(yards, int) or not isinstance(yardline, int):
                 raise AssertionError(f'play {i + 1}: scrimmage gain and pre-play spot must be integers')
             if p['event_type'] == 'pass_incomplete' and yards != 0:
                 raise AssertionError(f'play {i + 1}: an incomplete pass must have zero credited gain')
-            if p['event_type'] == 'sack' and yards > 0:
+            if p['event_type'] in ('sack', 'sack_fumble_lost') and yards > 0:
                 raise AssertionError(f'play {i + 1}: a sack cannot have positive credited gain')
-            if p['event_type'] in ('run', 'pass_complete', 'sack') \
+            if p['event_type'] in ('run', 'pass_complete', 'sack', 'sack_fumble_lost') \
                     and (yards > yardline or yardline - yards > 100):
                 raise AssertionError(f'play {i + 1}: credited gain crosses a goal line without ending at it')
             sampled_yards = o.get('sampled_yards_gained')

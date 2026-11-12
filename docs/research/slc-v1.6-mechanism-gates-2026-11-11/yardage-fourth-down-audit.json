@@ -1,0 +1,176 @@
+{
+  "code_sha256": {
+    "evaluator": "7cc94783a689204a490641a2e8f6af419818135aa6398e8d971832d0142241ac",
+    "yardage_bucket_source": "3cbfa4045846bdbca6120e0527bbab7802aed6fb79be0301c73a45fa74ab85ad"
+  },
+  "fourth_down_policy": {
+    "games": 272,
+    "interpretation": "This tests conditional choice on observed fourth-down situations; it does not test how often SLC generates each situation.",
+    "league_situation_cell": {
+      "brier": 0.32753087464113506,
+      "ll": 0.5446775968951493
+    },
+    "policy": {
+      "actions": [
+        "go",
+        "punt",
+        "field_goal"
+      ],
+      "context": [
+        "yards_to_go_bin",
+        "yardline_bin"
+      ],
+      "penalty_policy": "penalty=0 only",
+      "team_prior_shrinkage_k": 30.0
+    },
+    "team_minus_league_log_loss_game_clustered_95ci": [
+      -0.005608638664127488,
+      0.0020047734186081703
+    ],
+    "team_specific_shrunk": {
+      "brier": 0.32565263528856747,
+      "ll": 0.5428935287915219
+    },
+    "team_support": {
+      "no_team_history": 4,
+      "support_ge_20": 2537,
+      "support_lt_20": 1043
+    },
+    "test_fourth_downs": 3580,
+    "test_season": 2025,
+    "train_seasons": [
+      2022,
+      2023,
+      2024
+    ]
+  },
+  "input": {
+    "database_path": "/tmp/slc-v16-audit-snapshot.db",
+    "database_sha256": "8b218b81978a7cf13b9912554dcd650fa4ae064a95665fafb435745f1958cbd8",
+    "eligibility_by_season": {
+      "2022": {
+        "known_clean": 35955,
+        "penalty_tagged": 624
+      },
+      "2023": {
+        "known_clean": 36323,
+        "penalty_tagged": 656
+      },
+      "2024": {
+        "known_clean": 35616,
+        "penalty_tagged": 689
+      },
+      "2025": {
+        "known_clean": 34942,
+        "penalty_tagged": 687
+      }
+    },
+    "mtime_ns": 1794449349446343185,
+    "query_uses": "read-only SQLite URI; only penalty=0 rows enter either analysis",
+    "size_bytes": 48607232
+  },
+  "limitations": [
+    "This is a single retrospective holdout and is development-exposed.",
+    "Model candidate settings are fixed in source; do not tune them against the 2025 holdout.",
+    "A conditional-policy score cannot identify generated fourth-down opportunity errors."
+  ],
+  "schema": "slc-v1.6-mechanism-gate-audit-1",
+  "status": "offline_historical_development_audit",
+  "yardage_and_chain_advancement": {
+    "candidate": {
+      "fallback": "Use bucket distribution when exact-distance support is below threshold.",
+      "minimum_exact_distance_training_rows": 50,
+      "shrinkage_k": 25.0
+    },
+    "event_yardage": {
+      "baseline_crps": 2.8370510535068236,
+      "baseline_line_to_gain_brier": 0.1789365158062236,
+      "baseline_success_rate": 0.29524262607040913,
+      "exact_distance_crps": 2.836505751967189,
+      "exact_distance_line_to_gain_brier": 0.17799027340800647,
+      "exact_support_coverage": 0.8867427846495401,
+      "games": 272,
+      "n": 31530
+    },
+    "limitations": [
+      "Observed-context, no-draw comparison; it does not reproduce generated full-game state frequencies.",
+      "Data are known-clean PBP rows only; this does not model penalties."
+    ],
+    "line_to_gain": {
+      "baseline_crps": 2.8370510535068236,
+      "baseline_line_to_gain_brier": 0.1789365158062236,
+      "baseline_success_rate": 0.29524262607040913,
+      "exact_distance_crps": 2.836505751967189,
+      "exact_distance_line_to_gain_brier": 0.17799027340800647,
+      "exact_support_coverage": 0.8867427846495401,
+      "games": 272,
+      "n": 31530
+    },
+    "line_to_gain_brier_delta_exact_minus_bucket_game_clustered_95ci": [
+      -0.0013489642831445426,
+      -0.0005806564983788502
+    ],
+    "support": {
+      "bucket_fallback": 3571,
+      "exact_distance": 27959
+    },
+    "test_season": 2025,
+    "third_down": {
+      "baseline_crps": 2.7492688039319,
+      "baseline_line_to_gain_brier": 0.2129103497430115,
+      "baseline_success_rate": 0.4076911291558143,
+      "exact_distance_crps": 2.745254419306993,
+      "exact_distance_line_to_gain_brier": 0.21213190572432142,
+      "exact_support_coverage": 0.7698789643021297,
+      "games": 272,
+      "n": 6527
+    },
+    "third_down_by_distance": {
+      "1-2": {
+        "baseline_crps": 2.4005926122406516,
+        "baseline_line_to_gain_brier": 0.22260588475686438,
+        "baseline_success_rate": 0.6414545454545455,
+        "exact_distance_crps": 2.3860196257150936,
+        "exact_distance_line_to_gain_brier": 0.21971770046675532,
+        "exact_support_coverage": 0.936,
+        "games": 268,
+        "n": 1375
+      },
+      "10+": {
+        "baseline_crps": 2.97895567545897,
+        "baseline_line_to_gain_brier": 0.16072013667779364,
+        "baseline_success_rate": 0.20835751596053395,
+        "exact_distance_crps": 2.9866277631044396,
+        "exact_distance_line_to_gain_brier": 0.15875043294479257,
+        "exact_support_coverage": 0.5206035983749274,
+        "games": 272,
+        "n": 1723
+      },
+      "3-5": {
+        "baseline_crps": 2.6611600214237097,
+        "baseline_line_to_gain_brier": 0.24707705252346848,
+        "baseline_success_rate": 0.4823170731707317,
+        "exact_distance_crps": 2.649181230027327,
+        "exact_distance_line_to_gain_brier": 0.24808182279314372,
+        "exact_support_coverage": 0.8652439024390244,
+        "games": 272,
+        "n": 1640
+      },
+      "6-9": {
+        "baseline_crps": 2.8768136263174546,
+        "baseline_line_to_gain_brier": 0.2244022356610513,
+        "baseline_success_rate": 0.35159306875349355,
+        "exact_distance_crps": 2.8769601768500412,
+        "exact_distance_line_to_gain_brier": 0.22475792351940976,
+        "exact_support_coverage": 0.7948574622694242,
+        "games": 272,
+        "n": 1789
+      }
+    },
+    "train_seasons": [
+      2022,
+      2023,
+      2024
+    ]
+  }
+}

@@ -172,10 +172,10 @@ def adapt_target_roles(table, db, evidence):
     return {**table, 'team': team}, _summary(stats)
 
 
-def adapt_decision(table, db, evidence):
+def adapt_decision(table, db, evidence, known_clean_only=False):
     """(blended decision table, the current-season decision fit, summary). The fit is reused by the playbook blend."""
     import decision_layer as dl
-    rows = dl.load_rows(db, None, evidence=evidence)
+    rows = dl.load_rows(db, None, evidence=evidence, known_clean_only=known_clean_only)
     season = dl.fit(rows, prior_season=evidence.season)
     stats = Counter()
     team = {cat: blend_keyed(table['team'][cat], season['team'][cat], lambda key: evidence.team_weight(key[0]), stats)
@@ -383,7 +383,7 @@ UNCHANGED = {
 }
 
 
-def apply(ref, db, evidence):
+def apply(ref, db, evidence, known_clean_only=False):
     """Blend every loaded layer of `ref` that has a current-season source toward the current season, in place, and record
     what was done on the sampler (season_blend_manifest, which the reference fingerprint and the layer manifest include)."""
     import point_splits as sp
@@ -407,9 +407,10 @@ def apply(ref, db, evidence):
             import decision_layer as dl
             if sampler.decision_table is not None:
                 sampler.decision_table, season_decision, layers['decision_labels'] = adapt_decision(
-                    sampler.decision_table, db, evidence)
+                    sampler.decision_table, db, evidence, known_clean_only=known_clean_only)
             else:
-                season_decision = dl.fit(dl.load_rows(db, None, evidence=evidence), prior_season=evidence.season)
+                season_decision = dl.fit(dl.load_rows(db, None, evidence=evidence,
+                                                      known_clean_only=known_clean_only), prior_season=evidence.season)
         if sampler.playbook_table is not None:
             sampler.playbook_table, layers['playbook_priors'] = adapt_playbook(sampler.playbook_table, season_decision, evidence)
         if sampler.qb_decision_table is not None:

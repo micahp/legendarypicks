@@ -286,8 +286,9 @@ def event_weight(table, event, participants, enabled_roles=None):
     """Likelihood-ratio adjustment for the selected participants' event probabilities."""
     ratios = []
     enabled = set(normalize_roles(enabled_roles))
-    if 'qb' in enabled and event in QB_EVENTS:
-        ratios.append(event_ratio(table, 'qb', _player_id(participants, 'passer'), event))
+    modeled_event = 'sack' if event == 'sack_fumble_lost' else event
+    if 'qb' in enabled and modeled_event in QB_EVENTS:
+        ratios.append(event_ratio(table, 'qb', _player_id(participants, 'passer'), modeled_event))
     if 'receiver' in enabled and event in RECEIVER_EVENTS:
         ratios.append(event_ratio(table, 'receiver', _player_id(participants, 'receiver'), event))
     if 'rusher' in enabled and event in RUSHER_EVENTS:
@@ -302,7 +303,7 @@ def row_weight(table, event, row, participants, state=None, enabled_roles=None):
     if event == 'pass_complete':
         roles = [('qb', _player_id(participants, 'passer'), 'passing_yards'),
                  ('receiver', _player_id(participants, 'receiver'), 'receiving_yards')]
-    elif event == 'sack':
+    elif event in ('sack', 'sack_fumble_lost'):
         roles = [('qb', _player_id(participants, 'passer'), 'yards_gained')]
     elif event in ('run', 'fumble_lost'):
         roles = [('rusher', _player_id(participants, 'rusher'), 'rushing_yards')]

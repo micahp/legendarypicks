@@ -156,7 +156,7 @@ def charting_from_release(season):
     return out
 
 
-def load_rows(db, seasons, evidence=None):
+def load_rows(db, seasons, evidence=None, known_clean_only=False):
     """Labelled scrimmage plays for the given seasons, from the play-by-play joined to FTN charting. Regular season only.
 
     `evidence` (season_layers.Evidence, SLC V1.5) labels the current-season games available at its cutoff instead. The database
@@ -168,6 +168,7 @@ def load_rows(db, seasons, evidence=None):
     if not seasons or seasons[0] < FIRST_CHARTED_SEASON:
         raise ValueError(f'decision categories need FTN charting seasons ({FIRST_CHARTED_SEASON} on) before the cutoff')
     positions = _positions()
+    clean_clause = ' AND p.penalty = 0' if known_clean_only else ''
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         if evidence is None:
@@ -175,10 +176,10 @@ def load_rows(db, seasons, evidence=None):
             rows = con.execute(
                 f"SELECT {PBP_FIELDS}, {', '.join('c.' + f for f in CHARTING_FIELDS)} FROM nfl_pbp p JOIN nfl_hist_ftn_charting c "
                 f"ON c.nflverse_game_id = p.game_id AND c.nflverse_play_id = p.play_id "
-                f"WHERE p.season IN ({marks}) AND {PBP_SCOPE}", seasons).fetchall()
+                f"WHERE p.season IN ({marks}) AND {PBP_SCOPE}{clean_clause}", seasons).fetchall()
         else:
             where, params = evidence.sql_filter('p.')
-            plays = con.execute(f"SELECT {PBP_FIELDS} FROM nfl_pbp p WHERE {where} AND {PBP_SCOPE} "
+            plays = con.execute(f"SELECT {PBP_FIELDS} FROM nfl_pbp p WHERE {where} AND {PBP_SCOPE}{clean_clause} "
                                 f"ORDER BY p.game_id, p.play_id", params).fetchall()
             charting = charting_from_release(evidence.season)
             rows = [(*play, *charting[(play[0], int(play[1]))]) for play in plays if (play[0], int(play[1])) in charting]

@@ -43,6 +43,10 @@ def yardline_bucket(y):
     return '1-9' if y <= 9 else '10-19' if y <= 19 else '20-49' if y <= 49 else '50-79' if y <= 79 else '80-99'
 
 
+def pool_key(down, togo, yardline):
+    return (int(down), ydstogo_bucket(int(togo)), yardline_bucket(int(yardline)))
+
+
 def as_int(x):
     return None if x is None else int(x)
 

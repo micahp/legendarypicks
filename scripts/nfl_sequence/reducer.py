@@ -11,7 +11,7 @@ Decisions:
 - A field-goal attempt is a terminal with no result. Made or missed is not in the published columns.
 """
 
-TURNOVER_EVENTS = ('interception', 'fumble_lost')
+TURNOVER_EVENTS = ('interception', 'fumble_lost', 'sack_fumble_lost')
 DOWN_EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack')
 EVENT_VOCABULARY = DOWN_EVENTS + TURNOVER_EVENTS + (
     'punt', 'field_goal_attempt', 'blocked_punt', 'blocked_field_goal')
@@ -64,17 +64,17 @@ def apply_play(st, event, yards, spot=None, kick_outcome=None):
     if event not in EVENT_VOCABULARY:
         raise ValueError(f'unknown event {event!r}; the reducer refuses to guess')
     _validate_state(st)
-    if event in ('run', 'pass_complete', 'pass_incomplete', 'sack'):
+    if event in ('run', 'pass_complete', 'pass_incomplete', 'sack', 'sack_fumble_lost'):
         if type(yards) is not int:
             raise ValueError(f'{event} needs an integer yards-gained result (got {yards!r})')
         if event == 'pass_incomplete' and yards != 0:
             raise ValueError(f'an incomplete pass must have zero yards gained (got {yards})')
-        if event in ('run', 'pass_complete', 'sack'):
+        if event in ('run', 'pass_complete', 'sack', 'sack_fumble_lost'):
             if yards > st['yl']:
                 raise ValueError(f'{event} gain {yards} exceeds the {st["yl"]} yards to the goal line')
             if st['yl'] - yards > 100:
                 raise ValueError(f'{event} loss {yards} carries the ball past its own goal line')
-        if event == 'sack' and yards > 0:
+        if event in ('sack', 'sack_fumble_lost') and yards > 0:
             raise ValueError('a sack cannot produce positive yardage')
     flags = _no_flags()
     if event == 'field_goal_attempt':

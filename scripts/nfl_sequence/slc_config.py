@@ -23,6 +23,8 @@ V1_OPTIONS = {
     'playcall_streak_league': True,
     'playcall_exact_yardline': True,
 }
+V16_CANDIDATE_OPTIONS = dict(V1_OPTIONS, playcall_season_adapt=True,
+                             playcall_exact_distance_yardage=True)
 
 OPTION_TO_LAYER = {
     'playcall_team_outcomes': 'team_offense_defense_outcomes',
@@ -40,6 +42,7 @@ OPTION_TO_LAYER = {
     'playcall_streak_splits': 'team_streak_splits',
     'playcall_streak_league': 'league_streak_splits',
     'playcall_exact_yardline': 'exact_yardline_outcomes',
+    'playcall_exact_distance_yardage': 'exact_distance_yardage_outcomes',
 }
 
 LAYER_CODE_FILES = {
@@ -55,12 +58,16 @@ LAYER_CODE_FILES = {
     'target_role_priors': ('target_roles.py', 'pre_event.py'),
     'decision_labels': ('decision_layer.py', 'pass_label_outcomes.py', 'e2_reference.py',
                         'slc_engine.py', 'slc_playcall.py'),
+    'pass_label_outcome_conditioning': ('pass_label_outcomes.py', 'decision_layer.py', 'e0_single_play.py',
+                                        'e1_drive.py', 'e2_reference.py', 'season_layers.py',
+                                        'slc_engine.py', 'slc_playcall.py'),
     'decision_row_filter': ('decision_layer.py', 'slc_playcall.py'),
     'playbook_priors': ('playbook_prior.py', 'pre_event.py'),
     'point_splits': ('point_splits.py', 'slc_playcall.py'),
     'team_streak_splits': ('streak_splits.py', 'slc_playcall.py'),
     'league_streak_splits': ('streak_splits.py', 'slc_playcall.py'),
     'exact_yardline_outcomes': ('slc_playcall.py',),
+    'exact_distance_yardage_outcomes': ('slc_playcall.py', 'e0_single_play.py'),
     'current_streak_context': ('streak_splits.py', 'slc_playcall.py'),
 }
 
@@ -76,25 +83,29 @@ ENGINE_LAYER_KEYS = (
     'player_conditioned_outcomes',
     'target_role_priors',
     'decision_labels',
+    'pass_label_outcome_conditioning',
     'decision_row_filter',
     'playbook_priors',
     'point_splits',
     'team_streak_splits',
     'league_streak_splits',
     'exact_yardline_outcomes',
+    'exact_distance_yardage_outcomes',
     'current_streak_context',
 )
 
 ABLATION_LAYERS = frozenset(ENGINE_LAYER_KEYS) - {'fixed_player_target_carry_shares'}
 
 
-def _expected_layers(options, *, profile, streak_file, decision_filter, artifact_enabled=False):
+def _expected_layers(options, *, profile, streak_file, decision_filter, artifact_enabled=False,
+                     pass_label_mode='legacy'):
     layers = {key: False for key in ENGINE_LAYER_KEYS}
     if profile == 's0':
         return layers
     layers.update({
         'score_clock_playcalling': bool(artifact_enabled),
         'decision_row_filter': bool(options.get('playcall_decision') and decision_filter),
+        'pass_label_outcome_conditioning': pass_label_mode != 'legacy',
         'current_streak_context': bool(streak_file),
     })
     for option, layer in OPTION_TO_LAYER.items():
@@ -120,12 +131,15 @@ def options_from_args(args):
         'playcall_streak_splits': bool(args.playcall_streak_splits or args.playcall_streak_cache),
         'playcall_streak_league': bool(args.playcall_streak_league),
         'playcall_exact_yardline': bool(args.playcall_exact_yardline),
+        'playcall_exact_distance_yardage': bool(getattr(args, 'playcall_exact_distance_yardage', False)),
+        'playcall_season_adapt': bool(getattr(args, 'playcall_season_adapt', False)),
     }
 
 
 def apply_profile_to_args(args):
     """Resolve a named profile and install its effective switches on a batch-runner namespace."""
     supplied = options_from_args(args)
+    pass_label_mode = getattr(args, 'playcall_pass_label_mode', 'legacy')
     if args.playcall_decision_unfiltered:
         supplied['playcall_decision_unfiltered'] = True
     resolved = resolve_profile(
@@ -135,14 +149,18 @@ def apply_profile_to_args(args):
         streak_file=args.playcall_streak_file,
         disable_layers=args.slc_disable_layer,
         decision_filter=not args.playcall_decision_unfiltered,
+        pass_label_mode=pass_label_mode,
     )
     if args.slc_profile == 'custom' and not args.playcall_artifact and any(supplied.values()):
         raise ValueError('SLC feature flags require --playcall-artifact; refusing to silently run a partial S0 control')
     if args.slc_profile == 'v1_full_stack' and args.playcall_player_outcomes_receiver_only:
         raise ValueError('v1_full_stack requires all configured player-outcome roles; receiver-only is an ablation')
-    if args.slc_profile in ('s0', 'v1_full_stack'):
+    if args.slc_profile in ('s0', 'v1_full_stack', 'v1_6_candidate'):
         for option in V1_OPTIONS:
             setattr(args, option, resolved['options'].get(option, False))
+        if args.slc_profile == 'v1_6_candidate':
+            args.playcall_season_adapt = resolved['options']['playcall_season_adapt']
+            args.playcall_exact_distance_yardage = resolved['options']['playcall_exact_distance_yardage']
         args.playcall_player_shares = resolved['options'].get('playcall_player_shares', False)
         args.playcall_decision_unfiltered = not resolved['decision_filter']
         args.playcall_streak_splits = resolved['options'].get('playcall_streak_splits', False)
@@ -152,10 +170,12 @@ def apply_profile_to_args(args):
 
 
 def resolve_profile(profile='custom', *, options=None, artifact_path=None, streak_file=None,
-                    disable_layers=(), decision_filter=True):
+                    disable_layers=(), decision_filter=True, pass_label_mode='legacy'):
     """Resolve a preset. v1_full_stack owns its flags; manual overrides cannot make a partial stack wear its label."""
-    if profile not in ('custom', 's0', 'v1_full_stack'):
+    if profile not in ('custom', 's0', 'v1_full_stack', 'v1_6_candidate'):
         raise ValueError(f'unknown SLC profile {profile!r}')
+    if pass_label_mode not in ('legacy', 'off', 'two_stage', 'conditional'):
+        raise ValueError(f'unknown pass-label mode {pass_label_mode!r}')
     supplied = {key: bool(value) for key, value in (options or {}).items()}
     disabled = set(disable_layers)
     unknown = disabled - ABLATION_LAYERS
@@ -166,17 +186,20 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
         if artifact_path or streak_file or any(supplied.values()) or disabled:
             raise ValueError('S0 cannot load or enable SLC layers')
         layers = _expected_layers({}, profile='s0', streak_file=None, decision_filter=False)
+        if pass_label_mode != 'legacy':
+            raise ValueError('pass-label mode requires an SLC play-call profile')
         return {'profile': profile, 'model_id': 'S0', 'options': {}, 'enabled_layers': layers,
-                'decision_filter': False, 'disabled_layers': []}
+                'decision_filter': False, 'disabled_layers': [], 'pass_label_mode': pass_label_mode}
 
-    if profile == 'v1_full_stack':
+    if profile in ('v1_full_stack', 'v1_6_candidate'):
         if not artifact_path:
             raise ValueError('v1_full_stack requires --playcall-artifact')
         if supplied.get('playcall_player_shares'):
             raise ValueError('fixed and Dirichlet player share models are incompatible')
         if supplied.get('playcall_decision_unfiltered'):
             raise ValueError('v1_full_stack requires the decision row filter; disable it with --slc-disable-layer')
-        resolved_options = dict(V1_OPTIONS)
+        resolved_options = dict(V16_CANDIDATE_OPTIONS if profile == 'v1_6_candidate' else V1_OPTIONS)
+        resolved_options['playcall_pass_label_mode'] = pass_label_mode
         resolved_options['playcall_qb_run_role_style'] = supplied.get('playcall_qb_run_role_style', False)
         resolved_filter = True
         resolved_streak_file = streak_file
@@ -200,21 +223,33 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
             raise ValueError('QB run-role style requires the QB decision model')
         if resolved_options['playcall_qb_run_role_style'] and not resolved_options['playcall_decision']:
             raise ValueError('QB run-role style requires decision labels')
+        if pass_label_mode != 'legacy' and not resolved_options['playcall_decision']:
+            raise ValueError('non-legacy pass-label modes require decision labels')
+        if profile == 'v1_6_candidate' and pass_label_mode != 'conditional':
+            raise ValueError('v1_6_candidate requires conditional pass-label outcomes')
+        if profile == 'v1_6_candidate' and 'pass_label_outcome_conditioning' in disabled:
+            raise ValueError('v1_6_candidate cannot disable pass-label outcome conditioning')
+        if profile == 'v1_6_candidate' and 'exact_distance_yardage_outcomes' in disabled:
+            raise ValueError('v1_6_candidate cannot disable exact-distance yardage conditioning')
         needs_streak = (resolved_options['playcall_streak_splits'] or
                         resolved_options['playcall_streak_league'] or 'current_streak_context' not in disabled)
         if needs_streak and not resolved_streak_file:
             raise ValueError('v1_full_stack requires a frozen pregame streak file')
         layers = _expected_layers(resolved_options, profile=profile, streak_file=resolved_streak_file,
-                                  decision_filter=resolved_filter, artifact_enabled=True)
+                                  decision_filter=resolved_filter, artifact_enabled=True,
+                                  pass_label_mode=pass_label_mode)
         if 'score_clock_playcalling' in disabled:
             layers['score_clock_playcalling'] = False
         if 'qb_run_role_style' in disabled:
             layers['qb_run_role_style'] = False
         disabled_names = sorted(disabled)
         if disabled_names:
-            model_id = 'SLC_v1_ablation_' + '_'.join(disabled_names)
+            prefix = 'SLC_v1_6_candidate_ablation' if profile == 'v1_6_candidate' else 'SLC_v1_ablation'
+            model_id = prefix + '_' + '_'.join(disabled_names)
             if resolved_options['playcall_qb_run_role_style']:
                 model_id += '_with_qb_run_role_style'
+        elif profile == 'v1_6_candidate':
+            model_id = 'SLC_v1_6_candidate'
         else:
             model_id = ('SLC_v1_full_stack_qb_run_role_style'
                         if resolved_options['playcall_qb_run_role_style'] else 'SLC_v1_full_stack')
@@ -225,10 +260,13 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
             'enabled_layers': layers,
             'decision_filter': resolved_filter,
             'disabled_layers': disabled_names,
+            'pass_label_mode': pass_label_mode,
         }
 
     # The legacy default remains a manual/custom configuration, with explicit one-layer ablations.
     resolved_filter = bool(decision_filter)
+    if pass_label_mode != 'legacy' and not supplied.get('playcall_decision'):
+        raise ValueError('non-legacy pass-label modes require decision labels')
     resolved_streak_file = streak_file
     for layer in disabled:
         if layer == 'decision_row_filter':
@@ -240,7 +278,8 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
             if option:
                 supplied[option] = False
     layers = _expected_layers(supplied, profile='custom', streak_file=resolved_streak_file,
-                              decision_filter=resolved_filter, artifact_enabled=bool(artifact_path))
+                              decision_filter=resolved_filter, artifact_enabled=bool(artifact_path),
+                              pass_label_mode=pass_label_mode)
     if 'score_clock_playcalling' in disabled:
         layers['score_clock_playcalling'] = False
     if 'qb_run_role_style' in disabled:
@@ -259,7 +298,7 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
         model_id += '_ablation_' + '_'.join(disabled_names)
     return {'profile': profile, 'model_id': model_id,
             'options': supplied, 'enabled_layers': layers, 'decision_filter': resolved_filter,
-            'disabled_layers': disabled_names}
+            'disabled_layers': disabled_names, 'pass_label_mode': pass_label_mode}
 
 
 def validate_engine_layers(resolved, description):
@@ -312,12 +351,14 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         'player_conditioned_outcomes': layer_hashes.get('player_conditioned_outcomes'),
         'target_role_priors': layer_hashes.get('target_role_priors'),
         'decision_labels': layer_hashes.get('decision_labels'),
+        'pass_label_outcome_conditioning': layer_hashes.get('pass_label_outcome_conditioning'),
         'decision_row_filter': layer_hashes.get('decision_row_filter'),
         'playbook_priors': layer_hashes.get('playbook_priors'),
         'point_splits': layer_hashes.get('point_splits'),
         'team_streak_splits': layer_hashes.get('team_streak_splits'),
         'league_streak_splits': layer_hashes.get('league_streak_splits'),
         'exact_yardline_outcomes': layer_hashes.get('exact_yardline_outcomes'),
+        'exact_distance_yardage_outcomes': layer_hashes.get('exact_distance_yardage_outcomes'),
         'current_streak_context': optional_hashes.get('current_streak_file'),
     }
     settings = {
@@ -338,6 +379,10 @@ def build_manifest(resolved, description, snapshot, input_provenance):
                                'fit_seasons': desc.get('fit_seasons')},
         'decision_labels': {'categories': 'A-N', 'filter': resolved['decision_filter'],
                             'overlap_rule': 'category A controls target-role label when available; playbook replaces C/D/E where supported'},
+        'pass_label_outcome_conditioning': {
+            'mode': resolved['pass_label_mode'],
+            'policy': 'A/D/E are applied only after selecting a pass outcome; non-legacy modes use a strict penalty-clean source pool',
+        },
         'decision_row_filter': {'enabled': resolved['decision_filter']},
         'playbook_priors': {'precedence': 'replaces decision labels for C/D/E when the source cell has a playbook prior',
                             'artifact_files': sorted(k for k in optional_hashes if k.startswith('playbook:'))},
@@ -345,6 +390,11 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         'team_streak_splits': {'input_sha256': reference_sha},
         'league_streak_splits': {'input_sha256': reference_sha},
         'exact_yardline_outcomes': {'yardline_rule': 'exact yardline inside the 20 when source rows exist'},
+        'exact_distance_yardage_outcomes': {
+            'minimum_exact_distance_support': 50,
+            'shrinkage_k': 25.0,
+            'policy': 'mixture of exact-yards-to-go and distance-bucket source rows; bucket fallback below support',
+        },
         'current_streak_context': {'input_sha256': optional_hashes.get('current_streak_file')},
     }
     resolved_input_provenance = {
@@ -382,6 +432,7 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         'schema': 'lp-nfl-slc-profile-manifest-1',
         'profile': resolved['profile'],
         'model_id': resolved['model_id'],
+        'pass_label_mode': resolved['pass_label_mode'],
         'enabled_layers': dict(resolved['enabled_layers']),
         'disabled_layers': list(resolved['disabled_layers']),
         'layers': layers,

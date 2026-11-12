@@ -11,7 +11,7 @@ from collections import defaultdict
 
 QUARTER_LENGTH = 900
 ATTRIBUTION = 'sampled_observed_play'
-SCRIMMAGE_EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'interception', 'fumble_lost')
+SCRIMMAGE_EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'sack_fumble_lost', 'interception', 'fumble_lost')
 
 
 def _elapsed(quarter, clock):
@@ -43,8 +43,8 @@ def team_stats(drives, points):
             if ev == 'run' or (ev == 'fumble_lost' and part.get('rusher_id')):
                 t['rush_att'] += 1
                 t['rush_yds'] += _credited(play, _player_yards(play, 'rushing_yards', yards))
-            elif ev in ('pass_complete', 'pass_incomplete', 'interception', 'sack'):
-                if ev == 'sack':
+            elif ev in ('pass_complete', 'pass_incomplete', 'interception', 'sack', 'sack_fumble_lost'):
+                if ev in ('sack', 'sack_fumble_lost'):
                     t['sacks_taken'] += 1
                     t['sack_yds'] += yards
                 else:
@@ -54,11 +54,11 @@ def team_stats(drives, points):
                         t['pass_yds'] += _credited(play, _player_yards(play, 'passing_yards', yards))
                         if 'receiving_yards' in (part.get('sampled_play_context') or {}):
                             t['receiving_yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
-            if out['turnover'] and ev in ('interception', 'fumble_lost'):
+            if out['turnover'] and ev in ('interception', 'fumble_lost', 'sack_fumble_lost'):
                 t['turnovers'] += 1
             if ev == 'interception':
                 t['interceptions'] += 1
-            if ev == 'fumble_lost':
+            if ev in ('fumble_lost', 'sack_fumble_lost'):
                 t['fumbles_lost'] += 1
             # Regular punts set `punt`; `punt_attempt` is only present on some
             # special-team outcomes (notably blocked kicks). Count either flag
@@ -153,14 +153,14 @@ def player_lines(drives):
                 r['att'] += 1
                 r['yds'] += _credited(play, _player_yards(play, 'rushing_yards', yards))
                 r['td'] += int(ev == 'run' and td)
-            if ev == 'fumble_lost':
+            if ev in ('fumble_lost', 'sack_fumble_lost'):
                 role = 'rusher' if part.get('rusher_id') else 'passer'
                 fumbler = part.get(f'{role}_id')
                 if fumbler:
                     line(fumbler, part, role)['miscellaneous']['fumbles_lost'] += 1
-            if ev in ('pass_complete', 'pass_incomplete', 'interception', 'sack') and part['passer_id']:
+            if ev in ('pass_complete', 'pass_incomplete', 'interception', 'sack', 'sack_fumble_lost') and part['passer_id']:
                 p = line(part['passer_id'], part, 'passer')['passing']
-                if ev == 'sack':
+                if ev in ('sack', 'sack_fumble_lost'):
                     p['sacked'] += 1
                     p['sack_yds'] += yards
                     continue

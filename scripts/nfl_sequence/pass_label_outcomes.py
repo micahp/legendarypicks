@@ -49,6 +49,7 @@ class PassLabelOutcomeModel:
         samples = []
         all_counts = {}
         global_counts = np.ones(len(OUTCOMES), dtype=np.float64)
+        penalty_eligibility = {'known_clean': 0, 'penalty_tagged': 0, 'unknown': 0, 'other': 0}
         feature_index = {feature: i for i, feature in enumerate(FEATURES)}
         outcome_index = {event: i for i, event in enumerate(OUTCOMES)}
         for cell, rows in pool.items():
@@ -56,6 +57,19 @@ class PassLabelOutcomeModel:
             for event, row, _runoff, _spot in rows:
                 if event not in outcome_index:
                     continue
+                penalty = row.get('penalty')
+                if penalty is None:
+                    penalty_eligibility['unknown'] += 1
+                    continue
+                try:
+                    penalty = int(penalty)
+                except (TypeError, ValueError):
+                    penalty_eligibility['other'] += 1
+                    continue
+                if penalty != 0:
+                    penalty_eligibility['penalty_tagged' if penalty == 1 else 'other'] += 1
+                    continue
+                penalty_eligibility['known_clean'] += 1
                 if int(row.get('season', 0)) < decision_layer.FIRST_CHARTED_SEASON:
                     continue
                 counts[outcome_index[event]] += 1.0
@@ -112,6 +126,8 @@ class PassLabelOutcomeModel:
             'ridge': float(ridge),
             'base_prior': float(base_prior),
             'iterations': int(result.nit),
+            'penalty_eligibility': penalty_eligibility,
+            'penalty_policy': 'fit only rows with penalty=0; NULL, tagged and unknown codes are excluded',
             'fit_seasons': sorted({int(row.get('season')) for rows in pool.values()
                                    for _event, row, _runoff, _spot in rows
                                    if row.get('labels') and any(row['labels'].get(c) is not None

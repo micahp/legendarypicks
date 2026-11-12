@@ -1,0 +1,135 @@
+{
+  "baseline": {
+    "brier": 0.47172039312501285,
+    "log_loss": 0.7457515802333735
+  },
+  "code_sha256": {
+    "decision_layer.py": "32bec8de6fd6e451b45f88aee0b9533189a5a7bad9d7e995c6c6095ac6f3a6df",
+    "evaluate_pass_label_outcomes.py": "e52493b0b1f06258726aae60ed5ef929ea15b1ecf5cb0a4664271768083d7459",
+    "pass_label_outcomes.py": "0f2da99327b82d925810810c0b734e25daed64ff22af4725757a8b8c18773c74",
+    "slc_playcall.py": "4565afcecfeedb69b395dbd78e66c788a1931ddef66702e664845b468ddbeb87"
+  },
+  "cohort": {
+    "games": 272,
+    "pass_outcomes": 17006
+  },
+  "conditional": {
+    "brier": 0.4304912219445452,
+    "log_loss": 0.6972510494193777
+  },
+  "database_sha256": "8b218b81978a7cf13b9912554dcd650fa4ae064a95665fafb435745f1958cbd8",
+  "fit_seasons": [
+    2022,
+    2023,
+    2024
+  ],
+  "limitations": [
+    "The 2025 historical cohort is development-exposed.",
+    "Scores are conditional on observed A/D/E labels; this is not a full-game validation.",
+    "Sacks are excluded from the conditional pass-outcome stage and retain the separate first-stage probability."
+  ],
+  "model_manifest": {
+    "base_prior": 20.0,
+    "contexts": 73,
+    "features": [
+      "A=RB",
+      "A=WR",
+      "A=TE",
+      "A=Other",
+      "D=short",
+      "D=deep",
+      "E=left",
+      "E=middle",
+      "E=right"
+    ],
+    "fit_seasons": [
+      2022,
+      2023,
+      2024
+    ],
+    "iterations": 18,
+    "model": "slc-pass-label-conditional-outcomes-v1-research",
+    "outcomes": [
+      "pass_complete",
+      "pass_incomplete",
+      "interception",
+      "fumble_lost"
+    ],
+    "penalty_eligibility": {
+      "known_clean": 52979,
+      "other": 0,
+      "penalty_tagged": 0,
+      "unknown": 0
+    },
+    "penalty_policy": "fit only rows with penalty=0; NULL, tagged and unknown codes are excluded",
+    "ridge": 0.01,
+    "rows": 52978,
+    "sha256": "451dddc6ce61a671b80d56094a0f7e70cf1a1e0c3fe3b1aeb7644b1ae9abbabb",
+    "source_code_sha256": "0f2da99327b82d925810810c0b734e25daed64ff22af4725757a8b8c18773c74"
+  },
+  "paired_game_bootstrap_delta_conditional_minus_baseline_95ci": {
+    "brier": [
+      -0.044170558797774366,
+      -0.03822015266567339
+    ],
+    "log_loss": [
+      -0.05204562179251411,
+      -0.0450248036482898
+    ]
+  },
+  "penalty_eligibility": {
+    "by_season": {
+      "2022": {
+        "known_clean": 18893,
+        "other": 0,
+        "penalty_tagged": 234,
+        "unknown": 0
+      },
+      "2023": {
+        "known_clean": 19317,
+        "other": 0,
+        "penalty_tagged": 248,
+        "unknown": 0
+      },
+      "2024": {
+        "known_clean": 18729,
+        "other": 0,
+        "penalty_tagged": 239,
+        "unknown": 0
+      },
+      "2025": {
+        "known_clean": 18276,
+        "other": 0,
+        "penalty_tagged": 259,
+        "unknown": 0
+      }
+    },
+    "excluded_other_penalty_status_rows": 0,
+    "excluded_penalty_tagged_rows": 980,
+    "excluded_unknown_penalty_status_rows": 0,
+    "included_known_clean_rows": 75215,
+    "policy": "Only rows with penalty=0 are included; NULL and unrecognized penalty status are excluded."
+  },
+  "source_sha256": {
+    "ftn_2022": "2846ef9bcc5f7298a5c783fb9a5edc85b3820c0b4943bf60a1217398e412985b",
+    "ftn_2023": "162f0f48a8fca23f86a334c78e27f8daa7443e6b383beada0416b65c593b2c0e",
+    "ftn_2024": "9396c95effac1a81cc30efcf9c4c87ab89855548ae605404318ae949d4356119",
+    "ftn_2025": "2ee4b11962f4c91d426e0edeca5bbded078616ce0efab0710aa2b40b4cfad898",
+    "pbp_2022": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+    "pbp_2023": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+    "pbp_2024": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+    "pbp_2025": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29",
+    "players": "44867006413eac856c5f4529e0d263ce44a6dbcfe6d8166e8e353bfb680bd630"
+  },
+  "status": "research_conditional_pass_outcome_evaluation",
+  "test_event_counts": {
+    "fumble_lost": 53,
+    "interception": 358,
+    "pass_complete": 10933,
+    "pass_incomplete": 5662,
+    "sack": 1197,
+    "sack_fumble_lost": 73
+  },
+  "test_season": 2025,
+  "test_turnover_event_count": 484
+}

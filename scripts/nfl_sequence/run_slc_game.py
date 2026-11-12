@@ -218,6 +218,7 @@ def main():
         'team_streak_splits': 'team streak splits',
         'league_streak_splits': 'league streak splits',
         'exact_yardline_outcomes': 'exact-yardline outcomes',
+        'exact_distance_yardage_outcomes': 'exact-distance yardage outcomes',
         'current_streak_context': 'current pregame streak context',
     }
     active = playcall_layer.get('enabled_layers', {})

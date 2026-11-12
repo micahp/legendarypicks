@@ -1,6 +1,7 @@
 import random
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import numpy as np
@@ -71,7 +72,56 @@ class Layer(unittest.TestCase):
         self.assertAlmostEqual(layer.logit(1, 10, 50, 0, 1, 500, 'ZZZ'), layer.logit(1, 10, 50, 0, 1, 500))
 
 
+class SequenceChoiceRng:
+    def __init__(self, *draws):
+        self.draws = iter(draws)
+
+    def choices(self, population, weights, k=1):
+        draw = next(self.draws)
+        target = draw * sum(weights)
+        for item, weight in zip(population, weights):
+            target -= weight
+            if target < 0:
+                return [item]
+        return [population[-1]]
+
+
 class Sampler(unittest.TestCase):
+    def test_v15_default_keeps_legacy_pass_label_behavior(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)))
+        self.assertEqual(sampler.pass_label_mode, 'legacy')
+
+    def test_conditional_a_de_cannot_change_sack_probability(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)))
+        sampler.pass_label_mode = 'conditional'
+        sampler.pass_label_outcome_model = type('Model', (), {
+            'ratio': lambda _self, _context, _labels, event, **_kwargs: 1000.0 if event == 'pass_complete' else 0.001
+        })()
+        keys = [('dropback', 'pass_complete'), ('dropback', 'pass_incomplete'), ('dropback', 'sack')]
+        labels = {'A': 'WR', 'D': 'deep', 'E': 'left'}
+        for draw in (0.8,):
+            selected = sampler._draw_two_stage_pass_event(
+                SequenceChoiceRng(draw), keys, [2.0, 2.0, 6.0], {}, labels,
+                offense='A', state={'down': 3, 'togo': 8, 'yl': 50})
+            self.assertEqual(selected[1], 'sack')
+
+    def test_conditional_model_only_changes_outcome_after_pass_is_selected(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)))
+        sampler.pass_label_mode = 'conditional'
+        sampler.pass_label_outcome_model = type('Model', (), {
+            'ratio': lambda _self, _context, _labels, event, **_kwargs: 100.0 if event == 'pass_complete' else 0.01
+        })()
+        sampler.side_teams = {'A': 'AAA'}
+        sampler.decision_table = {'league': {category: {'3|7-10|50-79': {'present': 1}}
+                                              for category in ('A', 'D', 'E')}}
+        keys = [('dropback', 'pass_complete'), ('dropback', 'pass_incomplete'), ('dropback', 'sack')]
+        labels = {'A': 'WR', 'D': 'deep', 'E': 'left'}
+        state = {'down': 3, 'togo': 8, 'yl': 50}
+        with patch.object(slc.decision_layer, 'distribution', return_value={'WR': 1.0}):
+            selected = sampler._draw_two_stage_pass_event(
+                SequenceChoiceRng(0.1, 0.1), keys, [2.0, 2.0, 1.0], {}, labels,
+                offense='A', state=state)
+        self.assertEqual(selected[1], 'pass_complete')
     def test_missing_team_outcome_support_is_recorded_as_a_fallback(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)),
                                       side_teams={'A': 'AAA', 'B': 'BBB'})

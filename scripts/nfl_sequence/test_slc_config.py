@@ -24,7 +24,8 @@ class FullStackProfile(unittest.TestCase):
     def test_profile_enumerates_every_intended_layer_and_excludes_fixed_share_adapter(self):
         self.assertEqual(set(self.resolved['enabled_layers']), set(config.ENGINE_LAYER_KEYS))
         for layer in config.ENGINE_LAYER_KEYS:
-            expected = layer not in ('fixed_player_target_carry_shares', 'qb_run_role_style')
+            expected = layer not in ('fixed_player_target_carry_shares', 'qb_run_role_style',
+                                     'pass_label_outcome_conditioning')
             self.assertEqual(self.resolved['enabled_layers'][layer], expected, layer)
         self.assertTrue(self.resolved['enabled_layers']['decision_row_filter'])
         self.assertTrue(self.resolved['enabled_layers']['current_streak_context'])
@@ -134,6 +135,18 @@ class FullStackProfile(unittest.TestCase):
         self.assertFalse(args.playcall_player_shares)
         self.assertTrue(args.playcall_decision)
         self.assertFalse(args.playcall_decision_unfiltered)
+
+    def test_v16_candidate_is_separate_and_requires_conditional_pass_labels(self):
+        with self.assertRaisesRegex(ValueError, 'requires conditional'):
+            config.resolve_profile('v1_6_candidate', artifact_path='artifact.json', streak_file='streak.json')
+        candidate = config.resolve_profile('v1_6_candidate', artifact_path='artifact.json', streak_file='streak.json',
+                                           pass_label_mode='conditional')
+        self.assertEqual(candidate['model_id'], 'SLC_v1_6_candidate')
+        self.assertTrue(candidate['options']['playcall_season_adapt'])
+        self.assertTrue(candidate['enabled_layers']['pass_label_outcome_conditioning'])
+        v15 = config.resolve_profile('v1_full_stack', artifact_path='artifact.json', streak_file='streak.json')
+        self.assertEqual(v15['pass_label_mode'], 'legacy')
+        self.assertFalse(v15['enabled_layers']['pass_label_outcome_conditioning'])
 
     def test_manifest_hashes_every_enabled_layer_and_pins_input_provenance(self):
         description = {

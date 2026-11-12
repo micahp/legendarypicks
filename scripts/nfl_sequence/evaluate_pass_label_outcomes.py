@@ -103,7 +103,8 @@ def load_plays(database, first_season, test_season):
 
 def evaluate(database, test_season, bootstrap_reps, bootstrap_seed):
     first_season = decision_layer.FIRST_CHARTED_SEASON
-    labelled = decision_layer.load_rows(str(database), range(first_season, test_season + 1))
+    labelled = decision_layer.load_rows(str(database), range(first_season, test_season + 1),
+                                        known_clean_only=True)
     labels = {(row['game_id'], int(row['play_id'])): row for row in labelled}
     plays, penalty_eligibility = load_plays(database, first_season, test_season)
     training_pool = defaultdict(list)
@@ -119,7 +120,8 @@ def evaluate(database, test_season, bootstrap_reps, bootstrap_seed):
                 test_rows.append((play, {} if label_row is None else label_row['labels']))
         elif play['season'] < test_season:
             label_row = labels.get((play['game_id'], play['play_id']))
-            row = {'season': play['season'], 'labels': {} if label_row is None else label_row['labels']}
+            row = {'season': play['season'], 'penalty': 0,
+                   'labels': {} if label_row is None else label_row['labels']}
             training_pool[play['context']].append((play['event'], row, 0.0, 0))
 
     model = PassLabelOutcomeModel.fit(training_pool)
