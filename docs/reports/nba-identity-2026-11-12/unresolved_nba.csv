@@ -1,4 +1,4 @@
-source_player_key,raw_name,team,games_parked,reason,first_seen,espn_id_now_in_players
+source_player_key,raw_name,team,times_seen,reason,first_seen,espn_id_now_in_players
 ,Alexandre Sarr,WAS,6414,,2026-10-19T07:34:26.575018+00:00,no
 2990969,Georges Niang,GS,75,espn_id_not_in_spine,2026-10-21T09:29:15.377668+00:00,yes
 4683730,Jaden Akins,NY,75,espn_id_not_in_spine,2026-10-21T09:29:15.297545+00:00,yes

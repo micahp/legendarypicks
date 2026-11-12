@@ -5,7 +5,8 @@ Opens the database read-only and writes:
   - a markdown summary (counts and problem lists)
   - players_nba.csv: every NBA row in `players`, with its IDs
   - unresolved_nba.csv: every NBA row in `unresolved_players`, and whether its
-    ESPN ID now exists in `players`
+    ESPN ID now exists in `players`. `times_seen` is the queue's `count`: how
+    often resolution failed. It is NOT a count of missing games.
 
 Usage:
   python3 nba_identity_report.py --db /abs/path/picks.dev.db --out /abs/out/dir
@@ -99,7 +100,7 @@ def main(argv=None) -> int:
             "yes" if str(key) in espn_in_players else "no"))
     unresolved_csv = os.path.join(args.out, "unresolved_nba.csv")
     write_csv(unresolved_csv,
-              ["source_player_key", "raw_name", "team", "games_parked", "reason",
+              ["source_player_key", "raw_name", "team", "times_seen", "reason",
                "first_seen", "espn_id_now_in_players"],
               unresolved_rows)
 
@@ -138,6 +139,8 @@ def main(argv=None) -> int:
         "",
         "- `players_nba.csv`: every NBA row, with its IDs.",
         "- `unresolved_nba.csv`: every parked row, with `espn_id_now_in_players`.",
+        "  `times_seen` counts repeated failed resolution attempts. It is not a",
+        "  count of missing games. The queue stores no game ID, date, or stats.",
         "",
     ]
     if dup_espn:
