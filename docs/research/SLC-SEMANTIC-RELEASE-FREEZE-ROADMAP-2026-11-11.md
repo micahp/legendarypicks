@@ -27,7 +27,7 @@ V1.7 must be a separate penalty-only experiment. V2.0 must first beat the league
 
 ## Automatic observational input inventory
 
-Every normal batch invocation with --out now creates a unique .inputs.<UTC>-<nanoseconds>.json beside the output. It records at start and end: explicit source file paths, availability, file size, modification UTC time/nanoseconds, code Git HEAD, requested expected hashes, and SHA-256 of files up to 32 MiB. Larger DB/Parquet sources record their size and timestamp without an expensive mandatory full hash. Changed paths are marked clearly.
+Every normal batch invocation with --out now creates a unique .inputs.<UTC>-<nanoseconds>.json beside the output. It records at start and end: explicit source file paths, availability, file size, modification UTC time/nanoseconds, code Git HEAD, requested expected hashes, and SHA-256 of files up to 32 MiB. Larger DB/Parquet sources record their size and timestamp without an expensive mandatory full hash. Changed paths are marked clearly. After a successful run, the same sidecar copies the authoritative model ID, configuration hash, reference hash, snapshot hash, source cutoff, and integration-code hashes from the completed simulator payload. This distinguishes OS-level file observations from model inputs actually resolved by the engine.
 
 This log is NOT part of RNG or model reference identity. A live database changing does not fail the inventory or require the user to manually align hashes. An actual paired causal experiment may still require a stable source snapshot, and current *model-specific required hashes / source preflight* are not bypassed.
 

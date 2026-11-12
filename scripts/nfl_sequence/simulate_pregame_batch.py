@@ -1697,10 +1697,11 @@ def main(argv=None):
     except (OSError, ValueError, TypeError) as exc:
         print(f'warning: SLC input inventory unavailable: {exc}', file=sys.stderr)
     completed = False
+    run_payload = None
     try:
         try:
             source_preflight.validate_cli_paths(args)
-            run_batch(args)
+            run_payload = run_batch(args)
             completed = True
         except source_preflight.PreflightError as exc:
             ap.error(str(exc))
@@ -1708,7 +1709,8 @@ def main(argv=None):
         if inventory_path is not None:
             try:
                 run_input_inventory.finish(args, inventory_path, inventory_record,
-                                           status='completed' if completed else 'failed_or_interrupted')
+                                           status='completed' if completed else 'failed_or_interrupted',
+                                           run_payload=run_payload)
                 print(f'input_inventory={inventory_path}', file=sys.stderr)
             except (OSError, ValueError, TypeError) as exc:
                 print(f'warning: SLC input inventory finalization unavailable: {exc}',

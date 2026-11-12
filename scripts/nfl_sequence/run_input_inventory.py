@@ -103,7 +103,7 @@ def begin(args, *, root=None):
     return path, record
 
 
-def finish(args, path, record, *, status):
+def finish(args, path, record, *, status, run_payload=None):
     after = inspect_args(args)
     changed = []
     for name, old in record["inputs_before"].items():
@@ -111,7 +111,22 @@ def finish(args, path, record, *, status):
         if new and any(old.get(k) != new.get(k) for k in
                        ("status", "size_bytes", "mtime_ns", "sha256")):
             changed.append(name)
+    manifest = ((run_payload or {}).get("slc_profile_manifest") or {})
+    # These are the authoritative hashes of what the model actually loaded,
+    # as distinct from OS timestamps on source paths observed before/after.
+    identity = {
+        "model_id": manifest.get("model_id"),
+        "configuration_hash": manifest.get("configuration_hash"),
+        "snapshot_sha256": manifest.get("snapshot_sha256"),
+        "reference_sha256": manifest.get("reference_sha256"),
+        "playcall_artifact_sha256": manifest.get("playcall_artifact_sha256"),
+        "source_cutoff": manifest.get("source_cutoff"),
+        "integration_code_sha256": manifest.get("integration_code_sha256", {}),
+        "optional_input_sha256": (manifest.get("input_provenance") or {}).get(
+            "optional_input_sha256", {}),
+    } if manifest else None
     updated = {**record, "status": status, "finished_at_utc": now(),
-               "inputs_after": after, "files_changed_during_run": changed}
+               "inputs_after": after, "files_changed_during_run": changed,
+               "model_identity_from_result": identity}
     write(path, updated)
     return updated
