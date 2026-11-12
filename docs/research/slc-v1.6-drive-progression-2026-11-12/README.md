@@ -84,7 +84,7 @@ The initial samples cannot establish whether the correction improved these measu
 
 ## Controlled replay on the pulled branch
 
-The comparison was rerun after pulling `slc-v1.6` through `0bf575ca`. The baseline used that commit without the local label fix; the corrected arm used the same commit plus the `decision_layer.py` change above. Both used the identical frozen ARI–DAL input snapshot (`e03fb6de…`), the same read-only database, play-call artifact (`27c02afd…`), streak input (`4d3e0d71…`), V1.6 candidate settings, seeds 1–10, and paired RNG roots. Nine seeds completed full games in each arm; seed 1 hit the same fourth-down no-run-support blocker in both. Metrics below use the matched nine complete seeds (18 team-games per arm). Reference hashes differ because the label-loader code differs, as expected; the raw data and all other run inputs were held fixed.
+The comparison was rerun after pulling `slc-v1.6` through `0bf575ca`. The baseline used that commit without the local label fix; the corrected arm used the same commit plus the `decision_layer.py` change, now committed as `6df31da6`. Both used the identical frozen ARI–DAL input snapshot (`e03fb6de…`), the same read-only database, play-call artifact (`27c02afd…`), streak input (`4d3e0d71…`), V1.6 candidate settings, seeds 1–10, and paired RNG roots. Nine seeds completed full games in each arm; seed 1 hit `playcall_no_run_outcomes_in_cell:(4, '4-6', '80-99')` in both. Metrics below use the matched nine complete seeds (18 team-games per arm). Reference hashes differ because the label-loader code differs, as expected; the raw data and all other run inputs were held fixed.
 
 | Measure per team-game, unless a rate | Historical | Pulled branch, label bug | Pulled branch, corrected labels |
 |---|---:|---:|---:|
@@ -97,3 +97,16 @@ The comparison was rerun after pulling `slc-v1.6` through `0bf575ca`. The baseli
 | Early-down negative plays | 4.43 | 4.67 | 4.83 |
 
 The correction moved second-down 6–9 sack rate toward the historical rate, but first-down sack rate moved slightly away; the progression measures were mixed and mostly farther from the historical counts. This small one-matchup sample does not establish a stable effect. It does confirm the label fix changes sampled outcomes under controlled inputs, so V1.6 remains open pending a larger targeted evaluation and the release gate.
+
+### Reproduction inputs
+
+The exact frozen input snapshot is [`evidence/frozen-ari-dal-input-snapshot.json`](evidence/frozen-ari-dal-input-snapshot.json) (13,094 bytes; file SHA-256 `be2f329cb2a9db6974a384d4413896a51e2442b423e553ee4a17a5c02947bdb9`; embedded snapshot SHA-256 `e03fb6de4c54e53ed04d6a1ae2113db5e1a7986e9d8693a57cea6d9eab5eadc9`). Other pinned inputs:
+
+| Input | Identity |
+|---|---|
+| Read-only database `/root/legendarypicks/backend/data/picks.dev.db` | 3,966,197,760 bytes; SHA-256 `a26164c4bb0dea3575bad182f398e7662d90725702d468d9804f169ba774264f` |
+| Play-call artifact `docs/research/SLC-PLAYCALL-ARTIFACT-v1.json` | Model artifact SHA-256 `27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7` |
+| Pregame streak input `docs/research/slc-week8-2026/wl-streaks-2026-10-29.json` | File SHA-256 `4d3e0d712134396ea91d1d9d8bca11ce9d6089674d9d6e2360696f44e311af5c` |
+| Baseline / corrected source | `0bf575ca` / `6df31da6` |
+
+Both runs used `--slc-profile v1_6_candidate --playcall-pass-label-mode conditional --games 10 --seed-start 1 --paired-randomness --export-plays`, with the three inputs above. The per-arm reference hashes were `7f062790771f4538ff27909fca2f3241d9e648a6f1fd0b5afefc9e37a83d3438` (baseline) and `5f0fc4417c4ff7cd15fab42094fc4b36cf9a798c0a827a0f3ede354116e13fc8` (corrected); the RNG roots matched for every seed. The outputs were `pulled-unfixed.json` and `pulled-fixed.json` under `/tmp/slc-v16-earlydropback-2026-11-12/`.
