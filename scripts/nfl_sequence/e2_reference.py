@@ -637,7 +637,18 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
         raise ValueError('team tendencies need the side map {"A": home, "B": away} from the frozen schedule')
     team_before = int(eligible_before[0]) if playcall_team_outcomes and eligible_before is not None else None
 
+    materialized_history = os.environ.get('SLC_MATERIALIZED_HISTORY')
+
     def build_observed_pool():
+        if materialized_history:
+            # No historical SQL play scan or classify() in the simulation path.
+            import slc_materialized_history
+            return slc_materialized_history.load_pools(
+                db, materialized_history, eligible_before=eligible_before,
+                regulation_only=regulation_only,
+                include_qb_scrambles=playcall_qb_decisions, team_before_season=team_before,
+                known_clean_penalties=playcall_known_clean_only,
+                separate_sack_fumbles=playcall_separate_sack_fumbles)
         source_rows = e1.load(db, eligible_before=eligible_before)
         source_pool, excluded, team_source = e1.build_pools(
             source_rows, regulation_only=regulation_only,
@@ -654,12 +665,16 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
             e1.holdout.refuse_unless_cutoff(season, 'pool cutoff', eligible_before)
             if season < min(e1.POOL_SEASONS) or week < 1 or week > 18:
                 raise ValueError('dynamic pool cutoff must be week 1-18 of 2022 or later')
+        artifact_identity = (reference_cache.file_identity(materialized_history)
+                             if materialized_history else None)
         settings = (tuple(eligible_before) if eligible_before is not None else None,
                     bool(regulation_only), bool(playcall_qb_decisions), team_before,
-                    bool(playcall_known_clean_only), bool(playcall_separate_sack_fumbles))
+                    bool(playcall_known_clean_only), bool(playcall_separate_sack_fumbles),
+                    artifact_identity)
         rows, pool, pool_excluded, team_pool = reference_cache.memo_db(
             'e1_rows_and_pools', db, settings, build_observed_pool,
-            code_files=(__file__, e1.__file__, e1.e0.__file__))
+            code_files=(__file__, e1.__file__, e1.e0.__file__) +
+                       ((str(Path(__file__).with_name('slc_materialized_history.py')),) if materialized_history else ()))
     else:
         rows, pool, pool_excluded, team_pool = build_observed_pool()
     contextual_sampler = None
