@@ -148,6 +148,38 @@ class Sampler(unittest.TestCase):
         self.assertEqual(drawn, {'pass_complete', 'pass_incomplete', 'sack'})
         self.assertTrue(all(d['intent'] == 'dropback' for d in sampler.decisions))
 
+    def test_v16_fourth_down_missing_run_replays_without_changing_kick_share(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(-30.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+        pool = cell([('punt', 'punt'), ('pass_complete', 'pass'), ('pass_incomplete', 'pass')])
+        for _event, row, _runoff, _spot in pool:
+            row.update(down=4, ydstogo=5, yardline_100=90)
+        state = dict(STATE, down=4, togo=5, yl=90)
+        with self.assertRaisesRegex(e1.SamplingUnavailable, 'playcall_no_run_outcomes_in_cell'):
+            sampler.sample(random.Random(0), pool, 'A', 'B', state=state)
+        sampler.fourth_down_intent_guard = True
+        event, row, _runoff, _spot = sampler.sample(random.Random(0), pool, 'A', 'B', state=state)
+        self.assertIn(event, ('pass_complete', 'pass_incomplete'))
+        self.assertEqual(row['play_type'], 'pass')
+        self.assertEqual(sampler.decisions[-1]['intent_before_support_guard'], 'run')
+        self.assertEqual(sampler.decisions[-1]['intent'], 'dropback')
+        self.assertTrue(sampler.decisions[-1]['fourth_down_intent_guard_applied'])
+        self.assertEqual(sampler.decisions[-1]['fourth_down_intent_guard_reason'],
+                         'unsupported_fourth_down_run_intent_resolved_to_dropback')
+        self.assertAlmostEqual(sampler.decisions[-1]['kick_share'], 1 / 3, places=6)
+
+    def test_v16_fourth_down_guard_leaves_supported_runs_unchanged(self):
+        sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(-30.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+        sampler.fourth_down_intent_guard = True
+        pool = cell([('run', 'run'), ('pass_complete', 'pass')])
+        for _event, row, _runoff, _spot in pool:
+            row.update(down=4, ydstogo=5, yardline_100=90)
+        event, _row, _runoff, _spot = sampler.sample(random.Random(0), pool, 'A', 'B',
+                                                    state=dict(STATE, down=4, togo=5, yl=90))
+        self.assertEqual(event, 'run')
+        self.assertFalse(sampler.decisions[-1]['fourth_down_intent_guard_applied'])
+
     def test_a_near_certain_run_draws_only_runs(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(-30.0)), side_teams={'A': 'AAA', 'B': 'BBB'})
         pool = cell([('run', 'run'), ('pass_complete', 'pass')])
