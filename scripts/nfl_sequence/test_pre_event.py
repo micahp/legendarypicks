@@ -39,6 +39,21 @@ SNAPSHOT = {
 
 
 class Choice(unittest.TestCase):
+    def test_paired_participant_draws_ignore_model_specific_snapshot_reseal(self):
+        first_snapshot = dict(SNAPSHOT)
+        second_snapshot = dict(SNAPSHOT, snapshot_sha256='b' * 64)
+        kwargs = dict(seed=7, index=0, seed_snapshot_sha256='c' * 64)
+        with patch.object(pe, '_draw', wraps=pe._draw) as first_draw:
+            first = pe.choose(first_snapshot, 'home', 'dropback', **kwargs)
+        with patch.object(pe, '_draw', wraps=pe._draw) as second_draw:
+            second = pe.choose(second_snapshot, 'home', 'dropback', **kwargs)
+        self.assertEqual(first, second)
+        self.assertTrue(first_draw.call_args_list)
+        self.assertEqual([call.args for call in first_draw.call_args_list],
+                         [call.args for call in second_draw.call_args_list])
+        self.assertTrue(all(call.args[0].startswith('c' * 64 + ':')
+                            for call in first_draw.call_args_list))
+
     def test_a_dropback_names_the_starting_qb_and_a_target_before_any_outcome(self):
         chosen = pe.choose(SNAPSHOT, 'home', 'dropback', seed=7, index=0)
         self.assertEqual(chosen['passer']['gsis_id'], 'AQB1')
