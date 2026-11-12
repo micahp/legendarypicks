@@ -782,3 +782,62 @@ class RosterSyncFreshnessTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class RosterSyncNbaIdentityGuardTests(unittest.TestCase):
+    """A fresh NBA roster must reuse William Kyle (63170), not mint a second row."""
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        handle.close()
+        self.db_path = handle.name
+        self.con = sqlite3.connect(self.db_path)
+        self.con.row_factory = sqlite3.Row
+        self.con.executescript(
+            "CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, "
+            "league TEXT NOT NULL, team TEXT, position TEXT, espn_id TEXT, hoopr_id TEXT, "
+            "nfl_gsis_id TEXT, active INTEGER DEFAULT 1, updated_at TEXT);"
+            "CREATE TABLE player_source_ids(player_id INT, league TEXT, source TEXT, source_player_key TEXT);")
+        self.con.execute("INSERT INTO players(id,name,league,team,active) VALUES(63170,'William Kyle','nba','LAL',0)")
+        self.con.execute("INSERT INTO players(id,name,league,team,espn_id,active) VALUES(1,'Other Guy','nba','ATL','55',1)")
+        create_roster_schema(self.con)
+        self.con.commit()
+        self.expected = roster_sync._EXPECTED_TEAM_COUNTS["nba"]
+        roster_sync._EXPECTED_TEAM_COUNTS["nba"] = 2
+
+    def tearDown(self):
+        roster_sync._EXPECTED_TEAM_COUNTS["nba"] = self.expected
+        self.con.close()
+        os.unlink(self.db_path)
+
+    def run_sync(self, kyle_name, kyle_id):
+        def roster(_league, team):
+            return {"LAL": [{"player_id": kyle_id, "name": kyle_name, "position": "G"}],
+                    "ATL": [{"player_id": "55", "name": "Other Guy", "position": "F"}]}[team]
+        with patch.object(roster_sync.espn, "team_strength",
+                          side_effect=lambda _l: [{"abbrev": "LAL"}, {"abbrev": "ATL"}]), \
+             patch.object(roster_sync.espn, "roster", side_effect=roster):
+            return roster_sync.sync_league(self.con, "nba")
+
+    def count(self):
+        return self.con.execute("SELECT COUNT(*) FROM players WHERE league='nba'").fetchone()[0]
+
+    def test_suffix_name_reuses_the_existing_row_through_the_nba_com_id_or_name_key(self):
+        before = self.count()
+        self.run_sync("William Kyle III", "5107258")
+        self.assertEqual(self.count(), before)
+        self.assertEqual(self.con.execute(
+            "SELECT espn_id FROM players WHERE id=63170").fetchone()[0], "5107258")
+
+    def test_espn_id_owner_is_reused_on_a_second_ingest(self):
+        self.run_sync("William Kyle III", "5107258")
+        before = self.count()
+        self.run_sync("William Kyle III", "5107258")
+        self.assertEqual(self.count(), before)
+
+    def test_first_last_candidate_is_held_not_created(self):
+        before = self.count()
+        result = self.run_sync("William Dean Kyle", "777")
+        self.assertEqual(self.count(), before)
+        self.assertTrue(any("nba_identity_hold" in f["reason"]
+                            for f in (result.get("failures") or [])), result)
+

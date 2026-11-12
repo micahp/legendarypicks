@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 from audit_league_stats import _identity_name_key
 from league_stats import queue_unresolved_player
+import nba_identity_resolve
 from nfl_identity import espn_assignment_conflict, load_espn_to_gsis
 from roster_membership import (
     normalized_source_payload,
@@ -228,6 +229,32 @@ def _sync_league(con: sqlite3.Connection, league: str) -> dict:
                 continue
 
             candidates = name_to_rows.get(_identity_name_key(name), [])
+            if not candidates and league == "nba":
+                # Before minting a person, ask every identity we hold (ESPN id,
+                # hoopR id, nba.com id, recorded aliases, first+last name). A
+                # candidate with no id evidence is HELD and queued, never
+                # created: 'William Kyle III' was once minted beside 63170
+                # 'William Kyle' by a name check that missed the suffix.
+                decision, found_id, why = nba_identity_resolve.resolve(con, eid, name)
+                if decision in ("reuse", "attach_espn"):
+                    planned.append({
+                        "action": "update",
+                        "player_id": found_id,
+                        "name": name,
+                        "team": abbr,
+                        "position": pos,
+                        "jersey": p.get("jersey"),
+                        "source_player_key": eid,
+                    })
+                    continue
+                if decision == "hold":
+                    identity_failures.append({
+                        "team": abbr,
+                        "name": name,
+                        "source_player_key": eid,
+                        "reason": "nba_identity_hold: " + why,
+                    })
+                    continue
             if not candidates:
                 planned.append({
                     "action": "insert",
