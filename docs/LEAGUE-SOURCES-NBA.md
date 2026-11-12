@@ -67,7 +67,7 @@ Averages are computed here from the listed regular-season games.
 | Lendeborg, last three games | Checked today | Nov. 1 vs LAC (37), Nov. 7 vs ORL (23), Nov. 9 vs NO (23). ESPN dates are UTC: Nov. 2, Nov. 8, and Nov. 10 in UTC. |
 | Stephen Curry, points per game | Checked today | 30.6 (computed from 9 regular-season games in the ESPN log: 23, 24, 24, 44, 31, 34, 29, 41, 25). The log has 9 games, not 11. |
 | Kevin Durant, points per game | Checked today | 21.0 (computed from 11 regular-season games in the ESPN log). Last game: 23 vs DEN, Nov. 9 ET, a 110-100 win. |
-| Durant and the Warriors history | Unknown | Not checked. The spec lists it as a possible angle. |
+| Durant and the Warriors history | Dropped from this fixture | ESPN athlete overview (`athletes/3202`) lists Houston as the current team and has no prior-team field. The only Golden State match is a team filter option, not history. The spec calls this an optional angle. Reopen if a source with career history is found. |
 
 ## Endpoint checks, 2026-11-11
 
@@ -88,8 +88,7 @@ Older repo docs also report 403 from stats.nba.com and cdn.nba.com
 
 ## Open items
 
-1. Check Durant's history with Golden State. Not checked yet.
-2. Complete the `nba_schedule` snapshot and its ESPN ID crosswalk.
+1. Complete the `nba_schedule` snapshot and its ESPN ID crosswalk.
 3. Confirm 2026–27 final scores are written to `nba_schedule`.
 4. Confirm a stable NBA player game-log source for 2026–27.
 5. Decide whether the official NBA draft page can be the draft source.
