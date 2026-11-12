@@ -1,0 +1,383 @@
+{
+  "definitions": {
+    "drives": "simulated ordered-drive terminal vs historical last nonempty series_result grouped by game/drive/posteam",
+    "historical_dropbacks": "qb_dropback flag; includes sacks",
+    "historical_fourth_down_opportunities": "Historical down=4 PBP rows excluding no_play; all fourth-down snaps retained for opportunity counts, run/pass subset shown separately.",
+    "interpretation_caveat": "Descriptive bounded comparison, not a causal label-fix estimate: profile settings differ and seed identifiers do not guarantee common random draws across profiles.",
+    "negative_early_down_dropback": "sacks and net dropback yards per first/second down dropback; raw conversion by down uses 40% yards-to-go on first, 60% on second, line-to-gain on third/fourth, touchdowns count as success",
+    "sampling": "100 seeds per matchup/profile, two matchups; 200 team-games per profile; fixed seeds do not establish paired random streams across profiles",
+    "sim_yards": "outcome.yards_gained; dropback includes sacks",
+    "turnovers": "Giveaways exclude turnovers on downs; report turnovers on downs separately."
+  },
+  "early_down_dropback_decomposition": {
+    "V1.5": {
+      "first_down": {
+        "dropback_incomplete_rate": 0.2843862645,
+        "dropback_net_yards_per_dropback": 8.0072092582,
+        "dropback_sack_rate": 0.010055018,
+        "dropback_share": 0.4548671039,
+        "negative_yardage_rate": 0.0751639627,
+        "plays": 11588,
+        "run_yards_per_play": 4.3395599177
+      },
+      "second_down": {
+        "dropback_incomplete_rate": 0.3048659384,
+        "dropback_net_yards_per_dropback": 6.722939424,
+        "dropback_sack_rate": 0.0146971202,
+        "dropback_share": 0.5615032898,
+        "negative_yardage_rate": 0.06245121,
+        "plays": 8967,
+        "run_yards_per_play": 4.2360122075
+      }
+    },
+    "V1.6 corrected": {
+      "first_down": {
+        "dropback_incomplete_rate": 0.2812178564,
+        "dropback_net_yards_per_dropback": 7.5832133306,
+        "dropback_sack_rate": 0.0493725571,
+        "dropback_share": 0.4401883546,
+        "negative_yardage_rate": 0.0920945395,
+        "plays": 11043,
+        "run_yards_per_play": 4.4615011323
+      },
+      "second_down": {
+        "dropback_incomplete_rate": 0.2814555921,
+        "dropback_net_yards_per_dropback": 5.8575246711,
+        "dropback_sack_rate": 0.0530427632,
+        "dropback_share": 0.5633541811,
+        "negative_yardage_rate": 0.0857076674,
+        "plays": 8634,
+        "run_yards_per_play": 4.4055702918
+      }
+    },
+    "definitions": {
+      "dropback_share": "dropbacks / (run + dropback) on that down",
+      "incomplete_rate": "incomplete passes / dropbacks; sacks excluded from incomplete numerator",
+      "negative_yardage_rate": "run/dropback outcomes with yards_gained < 0 divided by all run/dropback plays on that down"
+    },
+    "historical": {
+      "first_down": {
+        "dropback_incomplete_rate": 0.3426614146,
+        "dropback_net_yards_per_dropback": 6.7343038191,
+        "dropback_sack_rate": 0.0504195924,
+        "dropback_share": 0.5002827424,
+        "negative_yardage_rate": 0.0795105986,
+        "plays": 58357,
+        "run_yards_per_play": 4.4250394349
+      },
+      "second_down": {
+        "dropback_incomplete_rate": 0.3436062222,
+        "dropback_net_yards_per_dropback": 6.0754034908,
+        "dropback_sack_rate": 0.0561600818,
+        "dropback_share": 0.6166490284,
+        "negative_yardage_rate": 0.082434532,
+        "plays": 44411,
+        "run_yards_per_play": 4.3124816446
+      }
+    }
+  },
+  "historical_source": {
+    "database": "/root/legendarypicks/backend/data/picks.dev.db.pre-roster-sync-20261111.bak",
+    "games": 1087,
+    "pbp_rows": 177449,
+    "seasons": "2022-2025, weeks 1-18, rows with posteam and drive",
+    "sha256": "7dc065201762daf516daba6f23c271173966548e7c3349a00ce7bd543f273cdf",
+    "size_bytes": 3938639872,
+    "team_games": 2174
+  },
+  "metrics": {
+    "V1.5": {
+      "down_1_plays_per_team_game": 28.97,
+      "down_1_success_pct": 0.5358129099068001,
+      "down_2_plays_per_team_game": 22.4175,
+      "down_2_success_pct": 0.5107616817218691,
+      "down_3_plays_per_team_game": 13.525,
+      "down_3_success_pct": 0.4744916820702403,
+      "down_4_plays_per_team_game": 1.9875,
+      "down_4_success_pct": 0.5886792452830188,
+      "downs_drives_per_team_game": 0.8,
+      "drives_per_team_game": 10.2375,
+      "dropback_net_yards_per_dropback": 7.073215251487291,
+      "dropbacks_per_team_game": 36.98,
+      "fg_drives_per_team_game": 1.86,
+      "first_down_dropback_sack_rate": 0.010055018023145514,
+      "fourth_5_or_less_per_team_game": 4.01,
+      "fourth_5_or_less_scrimmage_per_team_game": 1.66,
+      "fourth_all_per_team_game": 6.885,
+      "games": 200,
+      "punt_drives_per_team_game": 3.1075,
+      "run_attempts_per_team_game": 29.92,
+      "run_yards_per_play": 4.352774064171123,
+      "sack_rate_per_dropback": 0.01602217414818821,
+      "sacks_per_team_game": 0.5925,
+      "second_down_6_9_dropback_sack_rate": 0.01753507014028056,
+      "td_drives_per_team_game": 2.8825,
+      "team_games": 400,
+      "third_10plus_per_team_game": 2.245,
+      "third_3_5_per_team_game": 4.3075,
+      "turnover_drives_per_team_game": 0.6125,
+      "turnover_on_downs_drives_per_team_game": 0.8,
+      "turnover_on_downs_per_team_game": 0.8,
+      "turnovers_per_team_game": 0.5975
+    },
+    "V1.6 corrected": {
+      "down_1_plays_per_team_game": 27.6075,
+      "down_1_success_pct": 0.5244951553020013,
+      "down_2_plays_per_team_game": 21.585,
+      "down_2_success_pct": 0.4863331016909891,
+      "down_3_plays_per_team_game": 13.9825,
+      "down_3_success_pct": 0.4364384051492938,
+      "down_4_plays_per_team_game": 2.06,
+      "down_4_success_pct": 0.558252427184466,
+      "downs_drives_per_team_game": 0.88,
+      "drives_per_team_game": 10.5125,
+      "dropback_net_yards_per_dropback": 6.348334958896475,
+      "dropbacks_per_team_game": 35.885,
+      "fg_drives_per_team_game": 1.9425,
+      "first_down_dropback_sack_rate": 0.04937255708701913,
+      "fourth_5_or_less_per_team_game": 4.14,
+      "fourth_5_or_less_scrimmage_per_team_game": 1.6825,
+      "fourth_all_per_team_game": 7.6675,
+      "games": 200,
+      "punt_drives_per_team_game": 3.735,
+      "run_attempts_per_team_game": 29.35,
+      "run_yards_per_play": 4.492333901192504,
+      "sack_rate_per_dropback": 0.059356276995959315,
+      "sacks_per_team_game": 2.13,
+      "second_down_6_9_dropback_sack_rate": 0.051714752313554706,
+      "td_drives_per_team_game": 2.4125,
+      "team_games": 400,
+      "third_10plus_per_team_game": 2.645,
+      "third_3_5_per_team_game": 4.045,
+      "turnover_drives_per_team_game": 0.555,
+      "turnover_on_downs_drives_per_team_game": 0.88,
+      "turnover_on_downs_per_team_game": 0.8775,
+      "turnovers_per_team_game": 0.5275
+    },
+    "historical": {
+      "down_1_plays_per_team_game": 26.843146274149035,
+      "down_1_success_pct": 0.5122093322137875,
+      "down_2_plays_per_team_game": 20.42824287028519,
+      "down_2_success_pct": 0.4757605097836122,
+      "down_3_plays_per_team_game": 12.738730450781969,
+      "down_3_success_pct": 0.40037553260634073,
+      "down_4_plays_per_team_game": 1.4599816007359705,
+      "down_4_success_pct": 0.5437933207309389,
+      "downs_drives_per_team_game": 0.6218951241950322,
+      "drives_per_team_game": 10.85510579576817,
+      "dropback_net_yards_per_dropback": 6.1764328696853115,
+      "dropbacks_per_team_game": 37.302667893284266,
+      "fg_drives_per_team_game": 1.9811407543698252,
+      "first_down_dropback_sack_rate": 0.05041959239595821,
+      "fourth_5_or_less_per_team_game": 3.0427782888684454,
+      "fourth_5_or_less_scrimmage_per_team_game": 1.1490340386384545,
+      "fourth_all_per_team_game": 7.176172953081877,
+      "games": 1087,
+      "punt_drives_per_team_game": 3.861545538178473,
+      "run_attempts_per_team_game": 24.38822447102116,
+      "run_yards_per_play": 4.286778574122972,
+      "sack_rate_per_dropback": 0.06545328992798659,
+      "sacks_per_team_game": 2.441582336706532,
+      "second_down_6_9_dropback_sack_rate": 0.05757081719991848,
+      "td_drives_per_team_game": 2.486200551977921,
+      "team_games": 2174,
+      "third_10plus_per_team_game": 3.402483900643974,
+      "third_3_5_per_team_game": 3.185372585096596,
+      "turnover_drives_per_team_game": 1.093836246550138,
+      "turnover_on_downs_per_team_game": 0.6218951241950322,
+      "turnovers_per_team_game": 1.1890524379024838
+    }
+  },
+  "run_inputs": {
+    "v15-ari-dal": {
+      "blocker_fixes": [
+        "blocked_kick_geometry",
+        "blocked_kick_source_audit",
+        "long_field_goal_feasibility",
+        "run_scramble_backoff",
+        "safety_free_kick_boundaries"
+      ],
+      "boxscores_sha256": "9a0fd7816e51645320c319688758496dcf8a8254ccd64f3901b5a528ba661f1c",
+      "configuration_hash": "94e2ac721a4cb0607e74c8b5036c97cf8ccf749dc91b9effce7020d9a3aa3d04",
+      "game_id": "2026_08_ARI_DAL",
+      "ordered_plays_sha256": "2250028dbf6025c48c51ebe6e3ce2acaac9effe4d35cd0e71de50379f3a9e723",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "pregame_snapshot_sha256": "11ea9f26caff8b90c2bafdab533d01c64864a569eeaeaf8804350cb224740615",
+      "profile": "v1_full_stack",
+      "reference_sha256": "38eaabfc12b5e9612d46faa070cbac8bbe05324d25726b15291d132da1673213",
+      "requested_seeds": "1-100",
+      "roster_snapshot_id": "capture:26f521cf71fa1097d41723401658e8987e2b48893431d25bbc9967cc8fd9e102",
+      "seed_ledger_sha256": "b0e207fd31b69e2b8957a8dcb8e925cd2e9d07c14043c9b1d98a55000e3ced77",
+      "simulation_report_sha256": "651583ec0c9b5b647e637565c6418e1253851eeecb3434e99a3d6d3b1c32bf8b",
+      "source_cutoff": {
+        "eligible_before": [
+          2026,
+          1
+        ]
+      },
+      "valid_full_games": 100
+    },
+    "v15-atl-tb": {
+      "blocker_fixes": [
+        "blocked_kick_geometry",
+        "blocked_kick_source_audit",
+        "long_field_goal_feasibility",
+        "run_scramble_backoff",
+        "safety_free_kick_boundaries"
+      ],
+      "boxscores_sha256": "0c3b18962063ae482c79b6e9b9dd43e2cf2b15c9f5f06a80755f2b4c997e9b84",
+      "configuration_hash": "385d6852aa9e6f09d5e8b589535a07c0b063f6f1315d83d931bf35ec380998ba",
+      "game_id": "2026_08_ATL_TB",
+      "ordered_plays_sha256": "cbd2fb34cfc7f6767b44051a8a59d5d5f237e7e834f966a1abee2d1561d967b2",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "pregame_snapshot_sha256": "36dd8b91144e6ba4a28335715515ee8e897ee47916cf683bceee9ecc6bcfbcec",
+      "profile": "v1_full_stack",
+      "reference_sha256": "6fe3377949f62e1a47b05c1408ab5591950b79d9052e2fd20c622043627e21ad",
+      "requested_seeds": "1-100",
+      "roster_snapshot_id": "capture:8a3e17d441167aeb1613df6b0e28d297a22acba05c12cb61880e7f6bce04007d",
+      "seed_ledger_sha256": "0332d36beeed4fd2efb5911d03217fe0cac05aec4a576feef42a93baad111993",
+      "simulation_report_sha256": "98c06244e880f2ad26b1eab78df05df787e285085b6b8724b97c0fe25d940741",
+      "source_cutoff": {
+        "eligible_before": [
+          2026,
+          1
+        ]
+      },
+      "valid_full_games": 100
+    },
+    "v16-ari-dal": {
+      "blocker_fixes": [
+        "blocked_kick_geometry",
+        "blocked_kick_source_audit",
+        "long_field_goal_feasibility",
+        "run_scramble_backoff",
+        "safety_free_kick_boundaries"
+      ],
+      "boxscores_sha256": "2d25bcefc1ba9cb66300a9272879ea7ed107b9d1c732bfafa71dc9fdb3a0f1a3",
+      "configuration_hash": "f990261085429531e40da4522d571f1c007f0ada6750faef4af2bc50ba7c39b4",
+      "game_id": "2026_08_ARI_DAL",
+      "ordered_plays_sha256": "8069ea1121286e5f629b74ffadf50eb1f96bddcf67f29bc11b9e0166fb1f2183",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "pregame_snapshot_sha256": "b05fd629806426dfe8e471d255a7526d9905c6bcf8bf27a543bdd409b1c0094a",
+      "profile": "v1_6_candidate",
+      "reference_sha256": "4a8c644d69992908d00df3c9cbe7b19ea633860bfe7fc8da4220835ba22102ae",
+      "requested_seeds": "1-100",
+      "roster_snapshot_id": "capture:26f521cf71fa1097d41723401658e8987e2b48893431d25bbc9967cc8fd9e102",
+      "seed_ledger_sha256": "1f5e1bff95025ba9163a1701ad22509af36913a361cf22c6f985fc47b4d43339",
+      "simulation_report_sha256": "e000d3c2c2ae386d0cbb83ff8014832e1c99f925202130c5f6f0437939af1ee1",
+      "source_cutoff": {
+        "eligible_before": [
+          2026,
+          1
+        ]
+      },
+      "valid_full_games": 100
+    },
+    "v16-atl-tb": {
+      "blocker_fixes": [
+        "blocked_kick_geometry",
+        "blocked_kick_source_audit",
+        "long_field_goal_feasibility",
+        "run_scramble_backoff",
+        "safety_free_kick_boundaries"
+      ],
+      "boxscores_sha256": "cc7be33690c8dadf3e5507b2a47cfbd34dd8aa32ee4456c57877e50ac5a78554",
+      "configuration_hash": "fc8ac997fd1986d39078585b2bed1550f023b1471fa30b901b399e2b7e74fbb5",
+      "game_id": "2026_08_ATL_TB",
+      "ordered_plays_sha256": "fce61f3e0a7db49dae2de36b5f799eb0521d5857d3da08735ad45a0e585fa6ae",
+      "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+      "pregame_snapshot_sha256": "486288b24913ce608e658ab43369538c073aadb514b68dc4a23e424e3f28dc39",
+      "profile": "v1_6_candidate",
+      "reference_sha256": "26741a8dc749c910d9d0f38189435f60c9ee10f64b7aae143c3236d479524986",
+      "requested_seeds": "1-100",
+      "roster_snapshot_id": "capture:8a3e17d441167aeb1613df6b0e28d297a22acba05c12cb61880e7f6bce04007d",
+      "seed_ledger_sha256": "e8b26660e62baa34cc0530e49c24e5542f5dc40e8ef2c0750afe5297064f7e81",
+      "simulation_report_sha256": "d109adf823db3ceec49b5f005cacb5d84344a9fca1d44e23dae837040d5e83fa",
+      "source_cutoff": {
+        "eligible_before": [
+          2026,
+          1
+        ]
+      },
+      "valid_full_games": 100
+    }
+  },
+  "simulations": {
+    "v15-ari-dal": {
+      "manifest": {
+        "configuration_hash": "94e2ac721a4cb0607e74c8b5036c97cf8ccf749dc91b9effce7020d9a3aa3d04",
+        "game_id": "2026_08_ARI_DAL",
+        "model_id": "SLC_v1_full_stack",
+        "record_shape": "one game record per row; drives and plays retain simulator order",
+        "reference_sha256": "38eaabfc12b5e9612d46faa070cbac8bbe05324d25726b15291d132da1673213",
+        "schema": "lp-nfl-slc-ordered-game-jsonl-1",
+        "snapshot_sha256": "11ea9f26caff8b90c2bafdab533d01c64864a569eeaeaf8804350cb224740615",
+        "source_cutoff": "2026-10-29T00:02:21Z",
+        "type": "manifest"
+      },
+      "n": {
+        "v15-ari-dal": 100
+      },
+      "plays_sha256": "2250028dbf6025c48c51ebe6e3ce2acaac9effe4d35cd0e71de50379f3a9e723",
+      "seeds_sha256": "b0e207fd31b69e2b8957a8dcb8e925cd2e9d07c14043c9b1d98a55000e3ced77",
+      "summary_sha256": "651583ec0c9b5b647e637565c6418e1253851eeecb3434e99a3d6d3b1c32bf8b"
+    },
+    "v15-atl-tb": {
+      "manifest": {
+        "configuration_hash": "385d6852aa9e6f09d5e8b589535a07c0b063f6f1315d83d931bf35ec380998ba",
+        "game_id": "2026_08_ATL_TB",
+        "model_id": "SLC_v1_full_stack",
+        "record_shape": "one game record per row; drives and plays retain simulator order",
+        "reference_sha256": "6fe3377949f62e1a47b05c1408ab5591950b79d9052e2fd20c622043627e21ad",
+        "schema": "lp-nfl-slc-ordered-game-jsonl-1",
+        "snapshot_sha256": "36dd8b91144e6ba4a28335715515ee8e897ee47916cf683bceee9ecc6bcfbcec",
+        "source_cutoff": "2026-10-29T00:02:21Z",
+        "type": "manifest"
+      },
+      "n": {
+        "v15-atl-tb": 100
+      },
+      "plays_sha256": "cbd2fb34cfc7f6767b44051a8a59d5d5f237e7e834f966a1abee2d1561d967b2",
+      "seeds_sha256": "0332d36beeed4fd2efb5911d03217fe0cac05aec4a576feef42a93baad111993",
+      "summary_sha256": "98c06244e880f2ad26b1eab78df05df787e285085b6b8724b97c0fe25d940741"
+    },
+    "v16-ari-dal": {
+      "manifest": {
+        "configuration_hash": "f990261085429531e40da4522d571f1c007f0ada6750faef4af2bc50ba7c39b4",
+        "game_id": "2026_08_ARI_DAL",
+        "model_id": "SLC_v1_6_candidate",
+        "record_shape": "one game record per row; drives and plays retain simulator order",
+        "reference_sha256": "4a8c644d69992908d00df3c9cbe7b19ea633860bfe7fc8da4220835ba22102ae",
+        "schema": "lp-nfl-slc-ordered-game-jsonl-1",
+        "snapshot_sha256": "b05fd629806426dfe8e471d255a7526d9905c6bcf8bf27a543bdd409b1c0094a",
+        "source_cutoff": "2026-10-29T00:02:21Z",
+        "type": "manifest"
+      },
+      "n": {
+        "v16-ari-dal": 100
+      },
+      "plays_sha256": "8069ea1121286e5f629b74ffadf50eb1f96bddcf67f29bc11b9e0166fb1f2183",
+      "seeds_sha256": "1f5e1bff95025ba9163a1701ad22509af36913a361cf22c6f985fc47b4d43339",
+      "summary_sha256": "e000d3c2c2ae386d0cbb83ff8014832e1c99f925202130c5f6f0437939af1ee1"
+    },
+    "v16-atl-tb": {
+      "manifest": {
+        "configuration_hash": "fc8ac997fd1986d39078585b2bed1550f023b1471fa30b901b399e2b7e74fbb5",
+        "game_id": "2026_08_ATL_TB",
+        "model_id": "SLC_v1_6_candidate",
+        "record_shape": "one game record per row; drives and plays retain simulator order",
+        "reference_sha256": "26741a8dc749c910d9d0f38189435f60c9ee10f64b7aae143c3236d479524986",
+        "schema": "lp-nfl-slc-ordered-game-jsonl-1",
+        "snapshot_sha256": "486288b24913ce608e658ab43369538c073aadb514b68dc4a23e424e3f28dc39",
+        "source_cutoff": "2026-10-29T00:02:21Z",
+        "type": "manifest"
+      },
+      "n": {
+        "v16-atl-tb": 100
+      },
+      "plays_sha256": "fce61f3e0a7db49dae2de36b5f799eb0521d5857d3da08735ad45a0e585fa6ae",
+      "seeds_sha256": "e8b26660e62baa34cc0530e49c24e5542f5dc40e8ef2c0750afe5297064f7e81",
+      "summary_sha256": "d109adf823db3ceec49b5f005cacb5d84344a9fca1d44e23dae837040d5e83fa"
+    }
+  }
+}

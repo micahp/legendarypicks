@@ -110,3 +110,7 @@ The exact frozen input snapshot is [`evidence/frozen-ari-dal-input-snapshot.json
 | Baseline / corrected source | `0bf575ca` / `6df31da6` |
 
 Both runs used `--slc-profile v1_6_candidate --playcall-pass-label-mode conditional --games 10 --seed-start 1 --paired-randomness --export-plays` and explicitly enabled `run_scramble_backoff`, `long_field_goal_feasibility`, `blocked_kick_source_audit`, `blocked_kick_geometry`, and `safety_free_kick_boundaries`. The per-arm reference hashes were `f2962a9c14f1b5b6c4a0d27d62fc35ef34ba08012a3156cf6982be812cf213e0` (baseline) and `309dd9e21252fc5ad9b96dfae0c1f7bbfbaf867e780654915a4386d06ea28443` (corrected); the input snapshot and RNG roots matched for every seed. The outputs were `repro-unfixed.json` and `repro-fixed.json` under `/tmp/slc-v16-earlydropback-2026-11-12/`.
+
+## Bounded 100-seed profile comparison
+
+The later four-arm scorecard supersedes the earlier small-sample values above for the matched V1.5/V1.6 profile review. See [the 2026-11-12 drive-progression scorecard](drive-progression-scorecard.md) and its [machine-readable results](drive-progression-scorecard.json). The updated run used 100 seeds per matchup with all five blocker fixes enabled. It confirms the early-down sack-rate correction, but turnover giveaways and fourth-and-short opportunities remain materially off historical rates; V1.6 is not frozen.

@@ -29,8 +29,16 @@ def database_identity(db):
         except FileNotFoundError:
             result.append((suffix, None))
             continue
-        result.append((suffix, (stat.st_dev, stat.st_ino, stat.st_size,
-                                stat.st_mtime_ns, stat.st_ctime_ns)))
+        # SQLite may touch ctime on an empty WAL while opening a read-only
+        # connection. With no WAL payload, that metadata change cannot alter
+        # the database contents; retain inode/size/mtime so real replacement or
+        # writes still invalidate the identity.
+        if suffix == '-wal' and stat.st_size == 0:
+            identity = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+        else:
+            identity = (stat.st_dev, stat.st_ino, stat.st_size,
+                        stat.st_mtime_ns, stat.st_ctime_ns)
+        result.append((suffix, identity))
     return str(path), tuple(result)
 
 
