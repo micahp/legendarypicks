@@ -34,6 +34,13 @@ def database_identity(db):
     return str(path), tuple(result)
 
 
+def file_identity(path):
+    """A fast, conservative identity for a pinned non-SQLite source file."""
+    resolved = Path(path).resolve(strict=True)
+    stat = resolved.stat()
+    return (str(resolved), stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+
+
 def memo_db(name, db, settings, builder, code_files):
     """Reuse one DB-derived table; require an unchanged DB during its load.
 
