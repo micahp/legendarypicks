@@ -64,6 +64,19 @@ class ConditionalFitCache(unittest.TestCase):
         for variant in variants:
             self.assertNotEqual(cache.pass_label_input_sha256(variant), reference_hash)
 
+    def test_fumble_source_play_type_and_scramble_change_fit_cache_identity(self):
+        original = {(1, '3-5', '30-49'): [
+            ('fumble_lost', {'season': 2024, 'penalty': 0, 'play_type': 'pass',
+                             'qb_scramble': 0,
+                             'labels': {'A': 'WR', 'D': 'short', 'E': 'left'}}, 0, None)]}
+        baseline = cache.pass_label_input_sha256(original)
+        changed_type = copy.deepcopy(original)
+        changed_type[(1, '3-5', '30-49')][0][1]['play_type'] = 'run'
+        self.assertNotEqual(cache.pass_label_input_sha256(changed_type), baseline)
+        changed_scramble = copy.deepcopy(original)
+        changed_scramble[(1, '3-5', '30-49')][0][1]['qb_scramble'] = 1
+        self.assertNotEqual(cache.pass_label_input_sha256(changed_scramble), baseline)
+
     def test_unrelated_yardage_does_not_invalidate_fit(self):
         original = self.pool()
         altered = copy.deepcopy(original)
