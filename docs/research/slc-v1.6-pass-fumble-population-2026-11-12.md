@@ -1,6 +1,6 @@
 # V1.6 residual gap: source-population audit candidate (2026-11-12)
 
-**Base:** `slc-v1.6@a635a96c`. This research branch does not alter the V1.6 release candidate.
+**Base:** `slc-v1.6@a635a96c`. The source-population correction was merged locally into `slc-v1.6` at `41c6b0cb` for a bounded V1.6-only rerun. No probability weights were tuned.
 
 ## Observed full-game evidence
 
@@ -30,7 +30,23 @@ Regressions added:
 - A pass-label fit with 80 extra rushing/scramble fumbles must have the same base and conditional probabilities as the pass-only fit.
 - Changing the source event's run/dropback flags must change its fit-cache identity.
 
-**Not established:** Whether this correction brings V1.6 giveaways closer to historical rates, or whether it improves event-level held-out scoring. It must not be merged based solely on structural correctness.
+## V1.6-only full-game rerun
+
+The correction was rerun on the same two matchups, seeds, and frozen data inputs as the earlier V1.6 scorecard: 100 seeds each for ARI–DAL and ATL–TB (200 valid games / 400 team-games), with all five blocker fixes enabled. The database SHA-256 remained `7dc065201762daf516daba6f23c271173966548e7c3349a00ce7bd543f273cdf`; both roster snapshot IDs, snapshot files, playcall artifact, streak file, and 212,104-row materialized-history artifact were unchanged. Paired RNG snapshot hashes matched the prior run in each matchup. The fast-host name did not resolve in this environment, so this rerun used the local read-only copy of the same database.
+
+| Metric | Prior V1.6 | Corrected V1.6 | Historical |
+|---|---:|---:|---:|
+| Giveaways per team-game | 0.5275 | 0.5300 | 1.1891 |
+| First-down incompletions per dropback | 28.12% | 28.15% | 34.27% |
+| Second-down incompletions per dropback | 28.15% | 28.17% | 34.36% |
+| First-down sacks per dropback | 4.94% | 4.93% | 5.04% |
+| Second-down, 6–9 to-go sacks per dropback | 5.17% | 5.12% | 5.76% |
+| Third-and-3–5 per team-game | 4.045 | 4.060 | 3.185 |
+| Fourth-and-5-or-short per team-game | 4.140 | 4.138 | 3.043 |
+
+The corrected fit explicitly excluded **301 non-pass fumble rows**. The full-game rerun shows no material change in giveaways, incompletions, or progression metrics: giveaways remain far below history, and early-down incompletions remain about six percentage points low. The correction fixes the training-population defect, but it does not explain or close these full-game gaps. The run completed 100/100 valid games for each matchup with zero simulation errors.
+
+Raw corrected outputs, including ordered plays, seed ledgers, boxscores, and reports, are in `/tmp/slc-v16-pass-fumble-fix-2026-11-12/` on this host. The pass-fit cache recorded a miss on ARI–DAL and a hit on ATL–TB, using the corrected cache identity. This validates execution of the corrected V1.6 path, not held-out event log loss or calibration.
 
 ## Required evidence to promote
 
@@ -39,6 +55,6 @@ Regressions added:
 3. On the frozen ARI-DAL and ATL-TB 100-seed setup, compare corrected vs baseline with paired RNG, checking interceptions, lost fumbles (run and pass separately), incompletions, fourth-and-short, and legal full-game coverage.
 4. If the change does not improve heldout event score and V1.6 drive outcomes without regression, do not promote it.
 
-The archived run evidence is `docs/research/slc-v1.6-drive-progression-2026-11-12/evidence/v15-v16-100-seed-runs.tar.gz`, 68,765,088 bytes. Its raw binary content is not accessible through the available GitHub text connector. The scorecard and code were inspected; no claim is made that this branch was validated by the archived individual plays or by a fresh full-game run.
+The prior run evidence is `docs/research/slc-v1.6-drive-progression-2026-11-12/evidence/v15-v16-100-seed-runs.tar.gz`, 68,765,088 bytes. The corrected run's raw outputs remain in the local `/tmp` directory above and have not been added to Git.
 
 No probabilistic correction to the released V1.6 model is asserted.
