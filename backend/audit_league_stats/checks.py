@@ -475,6 +475,105 @@ def check_identity_crosswalk(con, league, spec, out):
         out.add(PASS, league, "F/identity-crosswalk",
                 "publishers cross-referenced (%s)" % ", ".join(notes))
 
+def _nba_com_official_names(con):
+    """{NBA.com PLAYER_ID: name} exactly as nba.com published it on its team pages.
+
+    Read from the stored official roster snapshots (source 'nba.com:team-roster'),
+    oldest first so the newest spelling wins. This is offline on purpose: a gate
+    must not call a publisher. hoopR/SportsDataverse cannot serve this check for
+    the current season: its newest release is 2025-26, so every 2026-27 rookie and
+    signing is outside its map.
+    """
+    if not {"roster_snapshots", "roster_memberships"} <= {
+            r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'")}:
+        return {}
+    names = {}
+    for key, name in con.execute(
+            "SELECT m.source_player_key, m.display_name FROM roster_memberships m "
+            "JOIN roster_snapshots s ON s.id = m.snapshot_id "
+            "WHERE s.source = 'nba.com:team-roster' AND s.league = 'nba' "
+            "AND m.source_player_key IS NOT NULL AND m.display_name IS NOT NULL "
+            "ORDER BY s.id, m.id"):
+        names[str(key)] = name
+    return names
+
+
+def _check_nba_com_identity(con, league, out):
+    """G for NBA: each player's official NBA.com id must carry that player's name.
+
+    hoopR ids (players.hoopr_id) are ESPN athlete ids and are a different
+    namespace; they are not checked here. The official ids live in
+    player_source_ids(source='nba.com'). A wrong pairing FAILS. A current-season
+    player with no official id, or whose id nba.com never published a name for,
+    is UNVERIFIED, never PASS.
+    """
+    names = _nba_com_official_names(con)
+    if not names:
+        out.add(UNVERIFIED, league, "G/published-identity",
+                "no stored nba.com roster snapshot -- run ingest_nba_roster.py")
+        return
+    ids = {}
+    for pid, key in con.execute(
+            "SELECT player_id, source_player_key FROM player_source_ids "
+            "WHERE league='nba' AND source='nba.com'"):
+        ids.setdefault(int(pid), set()).add(str(key))
+    checked = skipped = wrong = 0
+    examples = []
+    players = {int(r[0]): r[1] for r in con.execute(
+        "SELECT id, name FROM players WHERE league='nba'")}
+    # data/name-aliases.json records accepted same-person spellings keyed by the
+    # ESPN/hoopR athlete id, not by the nba.com id, so look the alias up by those.
+    pcols = _columns(con, "players")
+    alias_keys = {}
+    for r in con.execute("SELECT id, espn_id%s FROM players WHERE league='nba'"
+                         % (", hoopr_id" if "hoopr_id" in pcols else "")):
+        alias_keys[int(r[0])] = [str(k) for k in r[1:] if k not in (None, "", 0)]
+    for pid, keys in ids.items():
+        name = players.get(pid)
+        if name is None:
+            continue
+        for key in keys:
+            truth = names.get(key)
+            if truth is None:
+                skipped += 1
+                continue
+            checked += 1
+            if _identity_name_key(truth) != _identity_name_key(name) \
+                    and not any(name_aliases.matches_published(league, k, name, truth)
+                                for k in [key] + alias_keys.get(pid, [])):
+                wrong += 1
+                if len(examples) < 3:
+                    examples.append(f"id={pid} '{name}' has nba.com id {key} "
+                                    f"which nba.com publishes as '{truth}'")
+    season = con.execute(
+        "SELECT MAX(season) FROM player_game_logs WHERE league='nba'").fetchone()[0]
+    used = {int(r[0]) for r in con.execute(
+        "SELECT DISTINCT player_id FROM player_game_logs "
+        "WHERE league='nba' AND season=? AND player_id IS NOT NULL", (season,))}
+    no_id = sorted(p for p in used if p in players and p not in ids)
+    outside = sorted(p for p in used if p in ids and not any(k in names for k in ids[p]))
+    orphan = sorted(p for p in used if p not in players)
+    note = (f"nba.com ids checked={checked}, no published name={skipped}; "
+            f"current season={season}, used players={len(used)}, "
+            f"without an nba.com id={len(no_id)}, id not in nba.com names={len(outside)}, "
+            f"orphan player_ids={len(orphan)}")
+    if wrong:
+        out.add(FAIL, league, "G/published-identity",
+                f"{wrong} of {checked} rows carry an nba.com id belonging to a different "
+                f"player: {'; '.join(examples)}; {note}")
+    elif not checked:
+        out.add(UNVERIFIED, league, "G/published-identity",
+                f"no nba.com id matched a published name; {note}")
+    elif no_id or outside or orphan:
+        shown = ", ".join(f"{p}:{players.get(p)}" for p in (no_id + outside)[:5])
+        out.add(UNVERIFIED, league, "G/published-identity",
+                f"current-season players cannot be verified against nba.com "
+                f"(e.g. {shown}); {note}")
+    else:
+        out.add(PASS, league, "G/published-identity",
+                f"all {checked} checked nba.com ids carry the published name; {note}")
+
+
 def check_published_identity(con, league, spec, out):
     """G. Does each external id point at the person whose name is on the row?
 
@@ -504,6 +603,8 @@ def check_published_identity(con, league, spec, out):
     positives, which is how a real signal gets dismissed as noise. What it must
     NOT tolerate is a different person.
     """
+    if league == "nba":
+        return _check_nba_com_identity(con, league, out)
     published = _published_identity_names(league)
     if not published:
         out.add(UNVERIFIED, league, "G/published-identity",
