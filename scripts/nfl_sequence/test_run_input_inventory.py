@@ -42,6 +42,20 @@ class InventoryTests(unittest.TestCase):
             self.assertEqual(json.loads(sidecar.read_text())["status"], "completed")
             self.assertEqual(path.read_bytes(), b"new version")
 
+    def test_model_hash_identity_is_copied_from_result_when_present(self):
+        with tempfile.TemporaryDirectory() as root:
+            args = Namespace(out=str(Path(root) / "run.json"), db=Path(root) / "missing.db")
+            path, started = inventory.begin(args, root=root)
+            payload = {"slc_profile_manifest": {
+                "model_id": "SLC_v1_full_stack", "configuration_hash": "abc",
+                "reference_sha256": "refhash", "snapshot_sha256": "snaphash",
+                "playcall_artifact_sha256": "artifacthash", "source_cutoff": [2026, 10],
+                "integration_code_sha256": {"slc_playcall.py": "codehash"},
+            }}
+            result = inventory.finish(args, path, started, status="completed", run_payload=payload)
+            self.assertEqual(result["model_identity_from_result"]["reference_sha256"], "refhash")
+            self.assertEqual(result["model_identity_from_result"]["configuration_hash"], "abc")
+
     def test_new_invocation_never_overwrites_prior_sidecar(self):
         with tempfile.TemporaryDirectory() as root:
             args = Namespace(out=str(Path(root) / "run.json"), db=Path(root) / "missing.db")
