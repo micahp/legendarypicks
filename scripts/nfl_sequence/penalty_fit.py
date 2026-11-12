@@ -25,15 +25,17 @@ PHASES = ("pre_snap", "live_ball")
 PLAY_CLASSES = ("run", "dropback", "kick")
 CATEGORIES = {
     "pre_snap": {
-        "offense": ("false_start", "delay_of_game", "illegal_formation",
-                    "illegal_shift", "illegal_motion"),
-        "defense": ("offside", "encroachment", "neutral_zone_infraction"),
+        # Only dead-ball, before-snap fouls belong here. Formation, motion,
+        # and ordinary offside flags generally belong with a snapped play.
+        "offense": ("false_start", "delay_of_game"),
+        "defense": ("encroachment", "neutral_zone_infraction"),
     },
     "live_ball": {
         "offense": ("offensive_holding", "offensive_pass_interference",
-                    "illegal_block", "intentional_grounding"),
+                    "illegal_block", "intentional_grounding",
+                    "illegal_formation", "illegal_shift", "illegal_motion"),
         "defense": ("defensive_holding", "defensive_pass_interference",
-                    "illegal_contact", "roughing_passer"),
+                    "illegal_contact", "roughing_passer", "offside"),
     },
 }
 # Unknown or multiple-foul opportunities are outside this first gated model.
