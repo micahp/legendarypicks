@@ -227,8 +227,8 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
             outcome_table, source_commit, enabled_roles=ref.contextual_sampler.player_outcome_roles)
     ref.contextual_sampler.decision_filter = decision_filter  # an experiment switch: False draws rows from the whole cell
     if pass_label_mode == 'conditional':
-        import pass_label_outcomes
-        sampler.pass_label_outcome_model = pass_label_outcomes.PassLabelOutcomeModel.fit_cached(ref.pool)
+        import slc_setup_cache
+        sampler.pass_label_outcome_model = slc_setup_cache.fit_pass_label_outcomes(ref.pool)
     if dirichlet_shares:  # per-game Dirichlet target and carry shares, fitted on the season before the game season
         if not source_commit:
             raise ValueError('Dirichlet player shares need a source commit for their model manifest')
