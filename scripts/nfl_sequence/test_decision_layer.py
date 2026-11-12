@@ -23,7 +23,8 @@ CELL = dl.cell_of(1, 10, 50)  # the cell of STATE: first and ten at midfield (te
 
 def play(**kw):
     """A labelled-play input with every field empty; keyword arguments set the fields a test cares about."""
-    base = {'is_pass': False, 'is_run': False, 'qb_scramble': False, 'receiver_pos': None, 'rusher_pos': None, 'pass_length': None,
+    base = {'is_pass': False, 'is_dropback': False, 'is_run': False, 'qb_scramble': False,
+            'receiver_pos': None, 'rusher_pos': None, 'pass_length': None,
             'pass_location': None, 'run_gap': None, 'shotgun': None, 'is_play_action': None, 'is_motion': None,
             'n_blitzers': None, 'n_pass_rushers': None, 'qb_location': None, 'starting_hash': None,
             'n_offense_backfield': None, 'n_defense_box': None}
@@ -81,6 +82,15 @@ class LabelRules(unittest.TestCase):
         running = dl.label_row(play(is_run=True, n_blitzers=0, n_pass_rushers=5))
         self.assertIsNone(running['I'])
         self.assertIsNone(running['N'])
+
+    def test_a_sack_dropback_keeps_pre_snap_pass_context_but_has_no_pass_attempt_labels(self):
+        labels = dl.label_row(play(is_dropback=True, is_play_action=1, n_blitzers=1, n_pass_rushers=5,
+                                   shotgun=1, is_motion=1))
+        self.assertEqual((labels['G'], labels['I'], labels['N']), ('yes', 'yes', '5+'))
+        self.assertEqual((labels['F'], labels['H']), ('yes', 'yes'))
+        self.assertIsNone(labels['A'])
+        self.assertIsNone(labels['D'])
+        self.assertIsNone(labels['E'])
 
 
 class Cells(unittest.TestCase):
@@ -232,10 +242,10 @@ class SamplerWithLabels(unittest.TestCase):
         self.assertIn('E', record['labels_matched'])
 
 
-DECISION_MODEL_2025 = {  # category_defined_2025 in the frozen validation record (validate2025.json, decision_model.py)
+DECISION_MODEL_2025 = {  # 2025 row counts with G/I/N pre-snap context extended to all dropbacks, including sacks
     # Raw historical B count includes QB scrambles; calibration below removes those separate decision events.
-    'A': 16609, 'B': 14168, 'C': 8704, 'D': 17358, 'E': 17358, 'F': 32813, 'G': 18645, 'H': 32813, 'I': 18645,
-    'J': 32757, 'K': 32765, 'L': 32773, 'M': 32761, 'N': 18553}
+    'A': 16609, 'B': 14168, 'C': 8704, 'D': 17358, 'E': 17358, 'F': 32813, 'G': 19734, 'H': 32813, 'I': 19734,
+    'J': 32757, 'K': 32765, 'L': 32773, 'M': 32761, 'N': 19632}
 
 
 class DatabaseCalibration(unittest.TestCase):

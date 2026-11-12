@@ -9,6 +9,7 @@ This module makes those labels SLC's pre-event decisions:
 - The sampled historical row is filtered by the drawn labels when matching source rows is supported. A, D, and E describe an intended
   pass (target role, depth, location); they must not change sack probability. The SLC conditional mode models their effect on pass
   outcomes only after the pass-attempt stage. The legacy marginal lifts remain available only to reproduce older runs.
+- G, I, and N describe pre-snap pass context and apply to every QB dropback, including sacks, whose pass_attempt flag is zero.
 
 The prior is built from the most recent season before the cutoff, as the decision model's own prior is (2025 for a 2026 forecast).
 Charting categories (G to N) exist from 2022 on, so a cutoff before 2023 has no prior and fails loudly. Pass length comes from the
@@ -77,9 +78,10 @@ def cell_of(down, togo, yl):
 
 
 def label_row(r):
-    """Labels for one scrimmage play. `r` holds the fields load_rows selects; a category the play does not have is None."""
+    """Labels for one scrimmage play; pre-snap pass context applies to dropbacks, including sacks."""
     out = {c: None for c in CATS}
     is_pass = r['is_pass']
+    is_dropback = r.get('is_dropback', is_pass) or is_pass
     is_run = r['is_run'] and not r.get('qb_scramble', False)
     if is_pass and r['receiver_pos'] is not None:
         out['A'] = role_of_receiver(r['receiver_pos'])
@@ -93,11 +95,11 @@ def label_row(r):
         out['E'] = r['pass_location']
     if r['shotgun'] is not None:
         out['F'] = 'yes' if int(r['shotgun']) == 1 else 'no'
-    if is_pass and r['is_play_action'] is not None:
+    if is_dropback and r['is_play_action'] is not None:
         out['G'] = 'yes' if int(r['is_play_action']) == 1 else 'no'
     if r['is_motion'] is not None:
         out['H'] = 'yes' if int(r['is_motion']) == 1 else 'no'
-    if is_pass and r['n_blitzers'] is not None:
+    if is_dropback and r['n_blitzers'] is not None:
         out['I'] = 'yes' if int(r['n_blitzers']) >= 1 else 'no'
     if r['qb_location'] not in (None, '0'):
         out['J'] = r['qb_location']
@@ -109,7 +111,7 @@ def label_row(r):
     if r['n_defense_box'] is not None and int(r['n_defense_box']) != 0:
         n = int(r['n_defense_box'])
         out['M'] = '<=5' if n <= 5 else ('8+' if n >= 8 else str(n))
-    if is_pass and r['n_pass_rushers'] is not None and int(r['n_pass_rushers']) >= 3:
+    if is_dropback and r['n_pass_rushers'] is not None and int(r['n_pass_rushers']) >= 3:
         out['N'] = '3-4' if int(r['n_pass_rushers']) <= 4 else '5+'
     return out
 
@@ -134,7 +136,7 @@ def _pass_length(seasons):
     return out
 
 
-PBP_FIELDS = ('p.game_id, p.play_id, p.season, p.posteam, p.pass_attempt, p.rush_attempt, p.qb_scramble, p.down, p.ydstogo, '
+PBP_FIELDS = ('p.game_id, p.play_id, p.season, p.posteam, p.pass_attempt, p.qb_dropback, p.rush_attempt, p.qb_scramble, p.down, p.ydstogo, '
               'p.yardline_100, p.pass_location, p.run_gap, p.shotgun, p.receiver_player_id, p.rusher_player_id')
 PBP_SCOPE = ("p.week <= 18 AND p.play_type IN ('pass', 'run') AND p.posteam IS NOT NULL "
              "AND p.down BETWEEN 1 AND 4 AND p.ydstogo IS NOT NULL AND p.yardline_100 IS NOT NULL")
@@ -187,10 +189,11 @@ def load_rows(db, seasons, evidence=None, known_clean_only=False):
         con.close()
     length = _pass_length(seasons)
     out = []
-    for (g, p, season, team, pa, ru, scramble, down, togo, yl, ploc, rgap, shot, rec, rush,
+    for (g, p, season, team, pa, dropback, ru, scramble, down, togo, yl, ploc, rgap, shot, rec, rush,
          hash_, qbl, nob, ndb, pa_flag, motion, blitz, rushers) in rows:
         is_pass = pa == 1
         r = {'is_pass': is_pass, 'is_run': (ru == 1) and not is_pass and scramble != 1, 'qb_scramble': scramble == 1,
+             'is_dropback': (dropback == 1) or is_pass,
              'receiver_pos': positions.get(rec) if rec else None,
              'rusher_pos': positions.get(rush) if rush else None, 'pass_length': length.get((g, int(p))),
              'pass_location': ploc, 'run_gap': rgap, 'shotgun': shot, 'is_play_action': pa_flag, 'is_motion': motion,

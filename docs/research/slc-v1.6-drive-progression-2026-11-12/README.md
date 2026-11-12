@@ -60,3 +60,40 @@ Each JSONL starts with a manifest and then has one full game record per seed. Fi
 | `evidence/frozen-after-2026_08_ATL_TB.plays.jsonl.gz` | `84b1ec9e1b182e16d32ac2127392513db37c87bc6a492bc3aace356e4a225cc5` |
 
 “Before” and “after” distinguish the baseline and rejected weights-off diagnostic arms; no engine correction is represented by “after.”
+
+## Follow-up: early-down dropbacks after the paired-RNG fix
+
+An initial 10-seed ARI–DAL replay compared the label-loader change, but the two outputs recorded different reference and final snapshot hashes. Its metrics below are descriptive only; they are not a controlled before/after comparison. A controlled replay on the pulled branch is documented in the next section.
+
+| Measure per team-game, unless a rate | Historical | Initial sample | Initial label-fix sample |
+|---|---:|---:|---:|
+| First-down sack rate | 5.3% | 3.1% | 2.7% |
+| Second-down 6–9 dropback count | 4.25 | 4.75 | 4.75 |
+| Second-down 6–9 sack rate | 6.1% | 3.2% | 3.2% |
+| Third-and-3–5 situations | 3.16 | 3.70 | 4.10 |
+| Third-and-10+ situations | 3.45 | 2.85 | 3.00 |
+| Fourth-and-5-or-short situations | 2.95 | 4.45 | 4.55 |
+| Early-down mean gain | 5.37 | 5.331 | 5.343 |
+| Early-down negative plays | 4.43 | 4.00 | 4.05 |
+
+In these initial runs, first-down dropbacks were 13.05 and 12.80 per team-game; the broad 2022–2025 clean play sample is 13.16. The second-and-6–9 dropback share was 63.3% and 60.1%, with 7.50 and 7.90 such states per team-game. Because the run hashes differ, these initial differences cannot establish a change in dropback selection. Mean early-down gain was near the historical value, while negative plays remained low.
+
+The code audit found a real outcome-conditioning defect. Sacks have `qb_dropback=1` and `pass_attempt=0`, but the decision-label loader treated `pass_attempt` as the definition of a pass for categories G (play action), I (blitz), and N (pass rushers). Charting has these pre-snap labels for nearly all clean sacks, yet the old loader omitted them. The loader now assigns G/I/N to all dropbacks while keeping A/D/E (target role, depth, location) on pass attempts only. That prevents sack rows from being treated as unsupported for the drawn pre-snap context.
+
+The initial samples cannot establish whether the correction improved these measures because their hashes differ. A 2025 held-out cell check found the unmodified historical source distribution predicted first-down sacks at 5.29% against 5.30% observed, and second-down 6–9 sacks at 6.06% against 5.42% observed. QB event weights changed those estimates only to 5.23% and 5.92%; formation conditioning moved them slightly upward.
+
+## Controlled replay on the pulled branch
+
+The comparison was rerun after pulling `slc-v1.6` through `0bf575ca`. The baseline used that commit without the local label fix; the corrected arm used the same commit plus the `decision_layer.py` change above. Both used the identical frozen ARI–DAL input snapshot (`e03fb6de…`), the same read-only database, play-call artifact (`27c02afd…`), streak input (`4d3e0d71…`), V1.6 candidate settings, seeds 1–10, and paired RNG roots. Nine seeds completed full games in each arm; seed 1 hit the same fourth-down no-run-support blocker in both. Metrics below use the matched nine complete seeds (18 team-games per arm). Reference hashes differ because the label-loader code differs, as expected; the raw data and all other run inputs were held fixed.
+
+| Measure per team-game, unless a rate | Historical | Pulled branch, label bug | Pulled branch, corrected labels |
+|---|---:|---:|---:|
+| First-down sacks / dropbacks | 5.3% | 11 / 262 (4.2%) | 10 / 263 (3.8%) |
+| Second-down 6–9 sacks / dropbacks | 6.1% | 5 / 98 (5.1%) | 7 / 102 (6.9%) |
+| Third-and-3–5 situations | 3.16 | 3.83 | 4.11 |
+| Third-and-10+ situations | 3.45 | 2.61 | 2.94 |
+| Fourth-and-5-or-short situations | 2.95 | 3.28 | 3.78 |
+| Early-down mean gain | 5.37 | 5.70 | 5.51 |
+| Early-down negative plays | 4.43 | 4.67 | 4.83 |
+
+The correction moved second-down 6–9 sack rate toward the historical rate, but first-down sack rate moved slightly away; the progression measures were mixed and mostly farther from the historical counts. This small one-matchup sample does not establish a stable effect. It does confirm the label fix changes sampled outcomes under controlled inputs, so V1.6 remains open pending a larger targeted evaluation and the release gate.
