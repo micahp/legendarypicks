@@ -87,6 +87,27 @@ class SequenceChoiceRng:
 
 
 class Sampler(unittest.TestCase):
+    def test_v2_probability_trace_does_not_advance_rng_or_change_samples(self):
+        pool = cell([('pass_complete', 'pass'), ('pass_incomplete', 'pass'),
+                     ('sack', 'pass'), ('run', 'run')])
+        control = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(3.0)),
+                                      side_teams={'A': 'AAA', 'B': 'BBB'})
+        traced = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(3.0)),
+                                     side_teams={'A': 'AAA', 'B': 'BBB'})
+        traced.trace_outcome_probabilities = True
+        random_seed = 42
+        for _ in range(12):
+            a = control.sample(random.Random(random_seed), pool, 'A', 'B', state=STATE)
+            b = traced.sample(random.Random(random_seed), pool, 'A', 'B', state=STATE)
+            self.assertEqual(a, b)
+            decision = traced.decisions[-1]
+            evidence = decision['outcome_probability_trace']
+            self.assertEqual(evidence['selected_event'], a[0])
+            self.assertTrue(evidence['stages'])
+            self.assertTrue(any(stage['stage'].startswith('base_') for stage in evidence['stages']))
+            self.assertNotIn('outcome_probability_trace', control.decisions[-1])
+            random_seed += 1
+
     def test_v15_default_keeps_legacy_pass_label_behavior(self):
         sampler = slc.PlayCallSampler(slc.PlayCallLayer(blank_artifact(0.0)))
         self.assertEqual(sampler.pass_label_mode, 'legacy')
