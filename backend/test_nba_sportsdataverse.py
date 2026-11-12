@@ -92,7 +92,7 @@ class SportsDataverseIngestTests(unittest.TestCase):
         con.row_factory = sqlite3.Row
         con.executescript("""
             CREATE TABLE players(id INTEGER PRIMARY KEY,name TEXT NOT NULL,team TEXT,league TEXT NOT NULL,
-                                 espn_id TEXT,nba_id TEXT,active INTEGER DEFAULT 1,
+                                 espn_id TEXT,hoopr_id TEXT,active INTEGER DEFAULT 1,
                                  UNIQUE(espn_id,league));
             CREATE TABLE player_source_ids(id INTEGER PRIMARY KEY,source TEXT NOT NULL,league TEXT NOT NULL,
                 source_player_key TEXT NOT NULL,player_id INTEGER NOT NULL,first_seen TEXT NOT NULL,
@@ -203,7 +203,7 @@ class SportsDataverseIngestTests(unittest.TestCase):
         ])
         con = sqlite3.connect(self.path)
         con.execute(
-            "INSERT INTO players(id,name,team,league,espn_id,nba_id,active) "
+            "INSERT INTO players(id,name,team,league,espn_id,hoopr_id,active) "
             "VALUES(40,'ESPN Veteran','BOS','nba','404',NULL,0)"
         )
         con.commit()

@@ -101,7 +101,7 @@ def _load_mlb_players(
     columns = _table_columns(connection, "players")
     wanted = (
         "id", "name", "team", "league", "espn_id", "mlbam_id",
-        "nfl_gsis_id", "nhl_id", "nba_id", "active", "position",
+        "nfl_gsis_id", "nhl_id", "hoopr_id", "active", "position",
     )
     expressions = [
         _quote(column) if column in columns else f"NULL AS {_quote(column)}"

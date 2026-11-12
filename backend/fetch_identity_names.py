@@ -57,14 +57,14 @@ HDR = {"User-Agent": "legendarypicks/1.0"}
 # Each league is asked of the publisher that ISSUED the id we are checking --
 # asking anyone else only tells you the two sources agree about a name, which
 # is not the question. `nfl_gsis_id` comes from nflverse, `nhl_id` from
-# api.nhle.com, and `nba_id` from hoopR (see the note on NBA_URL).
+# api.nhle.com, and `hoopr_id` from hoopR (see the note on NBA_URL).
 NFL_PLAYERS_URL = ("https://github.com/nflverse/nflverse-data/releases/"
                    "download/players/players.parquet")
 NHL_SUMMARY_URL = ("https://api.nhle.com/stats/rest/en/{group}/summary"
                    "?limit={limit}&start={start}"
                    "&cayenneExp=seasonId={season_id}%20and%20gameTypeId=2")
-# hoopR is ESPN-derived, and `players.nba_id` is ESPN's athlete id -- verified
-# 2026-08-05: on all 51 prod rows carrying both, `nba_id == espn_id` exactly.
+# hoopR is ESPN-derived, and `players.hoopr_id` is ESPN's athlete id -- verified
+# 2026-08-05: on all 51 prod rows carrying both, `hoopr_id == espn_id` exactly.
 # stats.nba.com's own ids are not in this database and stats.nba.com blocks
 # datacenter IPs anyway (AGENTS.md S7), so hoopR is both the issuer of record
 # and the only reachable one.
@@ -243,7 +243,7 @@ def nhl_identity_names(season: int) -> dict[str, str]:
 
 
 def nba_identity_names(season: int) -> dict[str, str]:
-    """Published `nba_id` -> display name, from the newest hoopR season on disk.
+    """Published `hoopr_id` -> display name, from the newest hoopR season on disk.
 
     hoopR lags: on 2026-08-05 the newest published file was **2023**, which is
     the same staleness behind the NBA leaderboard serving 2023. Walking back is

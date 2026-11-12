@@ -12,7 +12,7 @@ Modelled on ingest_nhl_roster.py, which is the pattern for this spine:
 
 - the whole 30-team population is fetched and validated before a write opens;
 - identity resolves by the NBA id first, through player_source_ids(source='nba.com');
-  NOT through players.nba_id. Measured 2026-10-02 on both databases: that column holds ESPN
+  NOT through players.hoopr_id. Measured 2026-10-02 on both databases: that column holds ESPN
   athlete ids (hoopR's), equal to espn_id on every row that has both (320 prod, 331 dev), and
   no row holds a modern NBA person id. ingest_hoopR.py resolves by it, so it keeps its meaning
   and this publisher never writes it;
@@ -89,7 +89,7 @@ REVIEWED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data",
 
 
 def _reviewed_birth_dates(path: str = REVIEWED_PATH) -> dict[str, dt.date]:
-    """Reviewed birth dates keyed by the id our player row carries (espn_id or legacy nba_id)."""
+    """Reviewed birth dates keyed by the id our player row carries (espn_id or legacy hoopr_id)."""
     try:
         with open(path) as fh:
             entries = json.load(fh).get("nba") or {}
@@ -286,7 +286,7 @@ def _choose_unbound_candidate(candidates, member: Mapping[str, object], bound=fr
         if logged and _normal_team(logged) == team:
             return unbound[0], "matched_last_logged_team"
     # Last resort, still evidence: the sole candidate's reviewed birth date equals nba.com's,
-    # looked up by whichever id our row holds (players.nba_id is hoopR's ESPN athlete id).
+    # looked up by whichever id our row holds (players.hoopr_id is hoopR's ESPN athlete id).
     # Measured 2026-10-02: seven offseason signings ESPN's 08-04 roster still showed on their
     # old teams all matched to the day.
     theirs = nba_birth_date(member.get("birth_date"))

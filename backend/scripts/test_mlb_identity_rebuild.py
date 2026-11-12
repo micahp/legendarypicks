@@ -23,7 +23,7 @@ CREATE TABLE players(
   mlbam_id INTEGER,
   nfl_gsis_id TEXT,
   nhl_id INTEGER,
-  nba_id INTEGER,
+  hoopr_id INTEGER,
   active INTEGER,
   position TEXT
 );
@@ -74,7 +74,7 @@ class MlbIdentityRebuildTests(unittest.TestCase):
         candidate.executemany(
             """INSERT INTO players(
                  id,name,team,league,espn_id,mlbam_id,nfl_gsis_id,
-                 nhl_id,nba_id,active,position
+                 nhl_id,hoopr_id,active,position
                ) VALUES(?,?,NULL,'mlb',NULL,?,NULL,NULL,NULL,1,NULL)""",
             [
                 (1, "Alpha One", 100),
@@ -145,7 +145,7 @@ class MlbIdentityRebuildTests(unittest.TestCase):
         reference.executemany(
             """INSERT INTO players(
                  id,name,team,league,espn_id,mlbam_id,nfl_gsis_id,
-                 nhl_id,nba_id,active,position
+                 nhl_id,hoopr_id,active,position
                ) VALUES(?,?,NULL,'mlb',NULL,?,NULL,NULL,NULL,1,NULL)""",
             [
                 (101, "Alpha One", 100),

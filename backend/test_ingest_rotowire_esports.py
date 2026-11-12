@@ -28,7 +28,7 @@ SCHEMA = """
 CREATE TABLE players(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL, team TEXT, league TEXT NOT NULL,
-  espn_id TEXT, mlbam_id INTEGER, nfl_gsis_id TEXT, nhl_id INTEGER, nba_id INTEGER,
+  espn_id TEXT, mlbam_id INTEGER, nfl_gsis_id TEXT, nhl_id INTEGER, hoopr_id INTEGER,
   active INTEGER DEFAULT 1, position TEXT, updated_at TEXT, injury_status TEXT,
   last_news_date TEXT, position_group TEXT, pitcher_role TEXT, entity_type TEXT,
   UNIQUE(espn_id, league));

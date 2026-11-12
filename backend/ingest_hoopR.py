@@ -63,10 +63,10 @@ def ingest_season(season: int, con: sqlite3.Connection):
         lambda x: x.value_counts().index[0] if len(x) > 0 else "???"
     )
 
-    # Pre-load only unambiguous player_id lookups: nba_id → players.id.
+    # Pre-load only unambiguous player_id lookups: hoopr_id → players.id.
     con.row_factory = sqlite3.Row
-    nba_id_to_player, ambiguous_nba_ids = load_unique_source_id_map(
-        con, league="nba", id_column=hoopr_column.hoopr_column(con) or "nba_id"
+    hoopr_id_to_player, ambiguous_hoopr_ids = load_unique_source_id_map(
+        con, league="nba", id_column=hoopr_column.hoopr_column(con) or "hoopr_id"
     )
 
     ingested = 0
@@ -76,7 +76,7 @@ def ingest_season(season: int, con: sqlite3.Connection):
         athlete_id = int(row["athlete_id"]) if row["athlete_id"] == row["athlete_id"] else None
         team = teams.get(athlete_id, "???")
         source_key = str(athlete_id) if athlete_id is not None else None
-        player_id = nba_id_to_player.get(source_key) if source_key else None
+        player_id = hoopr_id_to_player.get(source_key) if source_key else None
         if player_id is None:
             queue_unresolved_player(
                 con,
@@ -86,9 +86,9 @@ def ingest_season(season: int, con: sqlite3.Connection):
                 team=team,
                 source_player_key=source_key,
                 reason=(
-                    "duplicate_spine_nba_id"
-                    if source_key in ambiguous_nba_ids
-                    else "nba_id_not_in_spine"
+                    "duplicate_spine_hoopr_id"
+                    if source_key in ambiguous_hoopr_ids
+                    else "hoopr_id_not_in_spine"
                 ),
             )
             unresolved += 1

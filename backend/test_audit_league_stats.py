@@ -20,7 +20,7 @@ import audit_league_stats as audit  # noqa: E402
 SCHEMA = """
 CREATE TABLE players(
   id INTEGER PRIMARY KEY, name TEXT, team TEXT, league TEXT, position TEXT,
-  espn_id TEXT, mlbam_id TEXT, nfl_gsis_id TEXT, nhl_id TEXT, nba_id TEXT
+  espn_id TEXT, mlbam_id TEXT, nfl_gsis_id TEXT, nhl_id TEXT, hoopr_id TEXT
 );
 CREATE TABLE player_stats(
   player_id INTEGER, league TEXT, season INTEGER, stat_type TEXT,
@@ -46,10 +46,10 @@ class AuditTests(unittest.TestCase):
     def player(self, pid, position, team="WPG", league="nhl", **ids):
         self.con.execute(
             "INSERT INTO players(id,name,team,league,position,espn_id,mlbam_id,"
-            "nfl_gsis_id,nhl_id,nba_id) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            "nfl_gsis_id,nhl_id,hoopr_id) VALUES(?,?,?,?,?,?,?,?,?,?)",
             (pid, f"Player {pid}", team, league, position,
              ids.get("espn_id"), ids.get("mlbam_id"), ids.get("nfl_gsis_id"),
-             ids.get("nhl_id"), ids.get("nba_id")))
+             ids.get("nhl_id"), ids.get("hoopr_id")))
 
     def log(self, pid, stats, league="nhl", season=2026):
         self.con.execute("INSERT INTO player_game_logs VALUES(?,?,?,?)",
@@ -317,12 +317,12 @@ class AuditTests(unittest.TestCase):
     def test_one_athlete_on_two_rows_fails(self):
         """The live NBA condition: 269 athletes split across two players.id rows.
 
-        hoopR's athlete_id IS ESPN's, but legacy imports wrote it to `nba_id`
+        hoopR's athlete_id IS ESPN's, but legacy imports wrote it to `hoopr_id`
         while roster and log jobs wrote it to `espn_id`. When those land on
         different rows, one real player's historical stats and current game
         logs belong to two different people and no join reunites them.
         """
-        self.player(1, "C", league="nba", nba_id="4066261")
+        self.player(1, "C", league="nba", hoopr_id="4066261")
         self.player(2, "C", league="nba", espn_id="4066261")
         self.con.commit()
 
@@ -336,7 +336,7 @@ class AuditTests(unittest.TestCase):
         no crosswalk — and the next ingest keyed on the other id builds a second
         population instead of enriching this one.
         """
-        self.player(1, "C", league="nba", nba_id="111")
+        self.player(1, "C", league="nba", hoopr_id="111")
         self.player(2, "C", league="nba", espn_id="222")
         self.con.commit()
 
@@ -345,8 +345,8 @@ class AuditTests(unittest.TestCase):
 
     def test_a_real_crosswalk_passes(self):
         """What NFL looks like: 16,774 rows carrying both ids."""
-        self.player(1, "C", league="nba", nba_id="4066261", espn_id="4066261")
-        self.player(2, "C", league="nba", nba_id="999", espn_id="999")
+        self.player(1, "C", league="nba", hoopr_id="4066261", espn_id="4066261")
+        self.player(2, "C", league="nba", hoopr_id="999", espn_id="999")
         self.con.commit()
 
         states = self.states("nba", "F/identity-crosswalk")
@@ -573,11 +573,11 @@ class AuditTests(unittest.TestCase):
         self.con.execute("ALTER TABLE players ADD COLUMN entity_type TEXT")
         self.con.execute(
             "INSERT INTO players(id,name,team,league,position,espn_id,mlbam_id,"
-            "nfl_gsis_id,nhl_id,nba_id,active,entity_type) "
+            "nfl_gsis_id,nhl_id,hoopr_id,active,entity_type) "
             "VALUES(1,'Dak Prescott','DAL','nfl','QB','1',NULL,NULL,NULL,NULL,1,'player')")
         self.con.execute(
             "INSERT INTO players(id,name,team,league,position,espn_id,mlbam_id,"
-            "nfl_gsis_id,nhl_id,nba_id,active,entity_type) "
+            "nfl_gsis_id,nhl_id,hoopr_id,active,entity_type) "
             "VALUES(2,'DAL D/ST','DAL','nfl',NULL,'-16000',NULL,NULL,NULL,NULL,1,'team_defense')")
         self.con.commit()
 
@@ -590,7 +590,7 @@ class AuditTests(unittest.TestCase):
         self.con.execute("ALTER TABLE players ADD COLUMN entity_type TEXT")
         self.con.execute(
             "INSERT INTO players(id,name,team,league,position,espn_id,mlbam_id,"
-            "nfl_gsis_id,nhl_id,nba_id,active,entity_type) "
+            "nfl_gsis_id,nhl_id,hoopr_id,active,entity_type) "
             "VALUES(1,'Some Wideout','DAL','nfl',NULL,'1',NULL,NULL,NULL,NULL,1,'player')")
         self.con.commit()
 

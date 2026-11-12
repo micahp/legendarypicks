@@ -387,7 +387,7 @@ def check_identity_crosswalk(con, league, spec, out):
 
     `players` is the spine: one row per person, carrying our `id` plus one
     external id per publisher (`espn_id`, `mlbam_id`, `nfl_gsis_id`, `nhl_id`,
-    `nba_id`). Everything else joins on `players.id`. So a publisher can only
+    `hoopr_id`). Everything else joins on `players.id`. So a publisher can only
     contribute to a league if the spine carries ITS id -- and a league's entire
     character is decided by that one fact, silently, at ingest time.
 
@@ -396,7 +396,7 @@ def check_identity_crosswalk(con, league, spec, out):
       NFL   18,697 espn_id + 25,007 gsis, 16,774 rows carry BOTH.  Healthy.
             Team, position, ranks, news and ADP all work because two publishers
             can reach the same row.
-      NBA   521 espn_id, 541 nba_id, **0 rows carry both.**  Two disjoint
+      NBA   521 espn_id, 541 hoopr_id, **0 rows carry both.**  Two disjoint
             populations, 269 athletes split across two `players.id` rows -- one
             holding the historical stats, the other the current game logs.
       MLB   2,747 mlbam_id, **0 espn_id.**  ESPN is what publishes team and

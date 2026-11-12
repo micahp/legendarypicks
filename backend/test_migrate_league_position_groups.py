@@ -19,7 +19,7 @@ def _make_db(path: str) -> sqlite3.Connection:
             id INTEGER PRIMARY KEY,
             name TEXT, league TEXT NOT NULL, team TEXT,
             position TEXT, position_group TEXT, active INTEGER,
-            entity_type TEXT, espn_id TEXT, nba_id TEXT, nfl_gsis_id TEXT,
+            entity_type TEXT, espn_id TEXT, hoopr_id TEXT, nfl_gsis_id TEXT,
             nhl_id TEXT
         );
     """)

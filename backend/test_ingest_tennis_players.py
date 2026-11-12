@@ -46,7 +46,7 @@ class TennisSpineTest(unittest.TestCase):
                     mlbam_id INTEGER,
                     nfl_gsis_id TEXT,
                     nhl_id INTEGER,
-                    nba_id INTEGER,
+                    hoopr_id INTEGER,
                     active INTEGER DEFAULT 1,
                     updated_at TEXT,
                     UNIQUE(espn_id, league)

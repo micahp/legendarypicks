@@ -120,7 +120,7 @@ def _bootstrap(path: str, old_registry: bool = False) -> None:
         con.execute(
             "CREATE TABLE players("
             "id INTEGER PRIMARY KEY, name TEXT, league TEXT, team TEXT,"
-            "position TEXT, active INTEGER, espn_id TEXT, nba_id TEXT,"
+            "position TEXT, active INTEGER, espn_id TEXT, hoopr_id TEXT,"
             "mlbam_id TEXT, nfl_gsis_id TEXT, nhl_id TEXT,"
             "position_group TEXT, pitcher_role TEXT, entity_type TEXT,"
             "injury_status TEXT, last_news_date TEXT)"
@@ -210,7 +210,7 @@ class MigrateAllTests(unittest.TestCase):
         self._level_pair()
         with sqlite3.connect(self.dev) as connection:
             connection.execute(
-                "INSERT INTO players(id,name,league,nba_id) VALUES(1,'Legacy','nba','7')"
+                "INSERT INTO players(id,name,league,hoopr_id) VALUES(1,'Legacy','nba','7')"
             )
             connection.execute(
                 "INSERT INTO players(id,name,league,espn_id) VALUES(2,'Current','nba','7')"
@@ -347,7 +347,7 @@ class MigrateAllTests(unittest.TestCase):
             con.execute("ALTER TABLE players RENAME TO players_orig")
             con.execute(
                 "CREATE TABLE players AS "
-                "SELECT id,name,league,team,active,espn_id,nba_id "
+                "SELECT id,name,league,team,active,espn_id,hoopr_id "
                 "FROM players_orig"
             )
             con.execute("DROP TABLE players_orig")

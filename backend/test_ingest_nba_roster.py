@@ -19,8 +19,8 @@ def test_acquired_from_reads_the_published_move():
     assert nba.acquired_from(None) is None
 
 
-def _row(pid, team, nba_id=None):
-    return {"id": pid, "name": "Same Name", "team": team, "position": "G", "nba_id": nba_id}
+def _row(pid, team, hoopr_id=None):
+    return {"id": pid, "name": "Same Name", "team": team, "position": "G", "hoopr_id": hoopr_id}
 
 
 def test_a_name_binds_only_with_team_or_acquired_from_evidence():
@@ -88,7 +88,7 @@ def test_a_dated_move_after_our_last_roster_explains_a_different_team():
 
 def test_birth_date_breaks_a_sole_name_tie_and_a_mismatch_stays_unproven():
     import datetime as dt
-    row = {"id": 12, "name": "Same Name", "team": "UTAH", "position": "C", "espn_id": 4432827, "nba_id": 4432827}
+    row = {"id": 12, "name": "Same Name", "team": "UTAH", "position": "C", "espn_id": 4432827, "hoopr_id": 4432827}
     member = {"team": "HOU", "how_acquired": "Signed on 07/24/26", "birth_date": "NOV 27, 1999"}
     since = dt.date(2026, 8, 4)                       # the move predates our snapshot: dates alone fail
     same = lambda espn_id: dt.date(1999, 11, 27)
@@ -112,7 +112,7 @@ def test_last_logged_team_binds_a_stale_sole_candidate():
     import sqlite3
     con = sqlite3.connect(":memory:")
     con.row_factory = sqlite3.Row
-    con.execute("CREATE TABLE p(id INT, name TEXT, team TEXT, espn_id TEXT, nba_id TEXT)")
+    con.execute("CREATE TABLE p(id INT, name TEXT, team TEXT, espn_id TEXT, hoopr_id TEXT)")
     con.execute("INSERT INTO p VALUES (25589,'Bradley Beal','WSH',NULL,'6580')")
     row = con.execute("SELECT * FROM p").fetchone()
     member = {"team": "LAC", "how_acquired": "Signed on 07/18/25", "birth_date": "JUN 28, 1993"}

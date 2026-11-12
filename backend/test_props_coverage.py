@@ -27,7 +27,7 @@ def _db(path, players, props=(), games=(), results=()):
         """
         CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
           team TEXT, league TEXT NOT NULL, espn_id TEXT, active INTEGER DEFAULT 1,
-          mlbam_id TEXT, nfl_gsis_id TEXT, nhl_id TEXT, nba_id TEXT,
+          mlbam_id TEXT, nfl_gsis_id TEXT, nhl_id TEXT, hoopr_id TEXT,
           updated_at TEXT, UNIQUE(espn_id, league));
         CREATE TABLE player_source_ids(
           source TEXT, league TEXT, source_player_key TEXT, player_id INTEGER);
