@@ -31,11 +31,11 @@ tennis. It has no NBA section.
 | Venue: Toyota Center, Houston | Checked today | ESPN summary API, `gameInfo.venue`. |
 | Game state: scheduled | Checked today | ESPN summary API, `header` status. |
 | Broadcast is national | Checked today | ESPN summary API, `broadcasts[].market.type = National`. |
-| Network name | Unknown | The ESPN summary API returned no network name. Do not write "ESPN" as a fact. |
-| Golden State record 8-3 | Checked today, as-of unknown | ESPN summary API, 2026-27 standings. The standings snapshot time is not in the response. |
-| Houston record | Unknown | Not found in the response I read. A secondary page (SportBusy) shows 7-1. That conflicts with 8-3, which the spec states. It is not a source of truth. |
-| Injuries, Houston: Clint Capela (out), Steven Adams (out) | Checked today, as-of unknown | ESPN summary API, `injuries`. No time stamp. Not usable for pregame claims until a time is found. |
-| Injuries, Golden State: Will Richard (day-to-day), Gary Payton II (out), Brandon Williams (out), Kristaps Porzingis (out), Moses Moody (out) | Checked today, as-of unknown | ESPN summary API, `injuries`. No time stamp. Not usable for pregame claims until a time is found. |
+| Network: ESPN (national) | Checked today | ESPN scoreboard API, `dates=20261111`, event 401909974: `broadcasts` market national, names ESPN; `geoBroadcasts` TV, ESPN. |
+| Golden State record 8-3 | Checked today | ESPN team and scoreboard APIs (home/away record fields, `records[0]` = overall). No time stamp in the response; the request time was 2026-11-11, before tipoff. |
+| Houston record 8-3 | Checked today | ESPN team API, `teams/10`, overall record `8-3`; the scoreboard shows the same. A secondary page (SportBusy, 7-1) conflicts. It is not a source of truth. |
+| Injuries, Houston: Clint Capela (out, 2026-11-09 23:56Z), Steven Adams (out, 2026-11-09 23:55Z) | Checked today | ESPN league injuries API, `injuries`, feed timestamp 2026-11-12 00:35:37Z (before the 02:30Z tipoff). Each row has its own `date`. |
+| Injuries, Golden State: Will Richard (day-to-day, 2026-11-11 19:09Z, "upgraded to probable"), Gary Payton II (out, 2026-11-10 21:36Z), Brandon Williams (out, 2026-11-10 21:24Z), Kristaps Porzingis (out, 2026-11-06 21:26Z), Moses Moody and Jimmy Butler III (out, 2026-10-16, long-term) | Checked today | ESPN league injuries API, same feed timestamp as above. Each row has its own `date`. |
 | Players in the spec's fixture (Lendeborg, Curry, Durant) | Unknown in this doc | Not checked here. |
 
 ## Source inventory
@@ -57,7 +57,10 @@ tennis. It has no NBA section.
 
 | Endpoint | Result | Note |
 |---|---|---|
-| ESPN summary API, `site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909974` | HTTP 200 | Usable. Four calls to ESPN today. |
+| ESPN summary API, `site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909974` | HTTP 200 | Usable. |
+| ESPN scoreboard API, `.../nba/scoreboard?dates=20261111` | HTTP 200 | Usable. Lists 10 events for the date. |
+| ESPN team API, `.../nba/teams/10` (Houston) | HTTP 200 | Usable. |
+| ESPN league injuries API, `.../nba/injuries` | HTTP 200 | Usable. Feed has a timestamp and per-row dates. |
 | ESPN web preview page, `espn.com/nba/preview/_/gameId/401909974` | HTTP 403 via WebFetch | The web page is blocked. The API is not. |
 | NBA CDN, `cdn.nba.com/static/json/...` (two files) | HTTP 403 | Blocked from this box. |
 | NBA stats API, `stats.nba.com/stats/scoreboardv2` | Timed out after 20 s | Not confirmed as blocked. Not reachable in this check. |
@@ -68,14 +71,12 @@ Older repo docs also report 403 from stats.nba.com and cdn.nba.com
 
 ## Open items
 
-1. Find a time stamp for the injury statuses.
-2. Find the network name for the broadcast.
-3. Confirm Houston's 2026–27 record from a source.
-4. Find an NBA injury source with time stamps.
-5. Complete the `nba_schedule` snapshot and its ESPN ID crosswalk.
-6. Confirm 2026–27 final scores are written to `nba_schedule`.
-7. Confirm a stable NBA player game-log source for 2026–27.
-8. Decide whether the official NBA draft page can be the draft source.
+1. Check Lendeborg's draft position and game logs (ESPN athlete pages). Not checked yet.
+2. Check Curry and Durant context. Not checked yet.
+3. Complete the `nba_schedule` snapshot and its ESPN ID crosswalk.
+4. Confirm 2026–27 final scores are written to `nba_schedule`.
+5. Confirm a stable NBA player game-log source for 2026–27.
+6. Decide whether the official NBA draft page can be the draft source.
 
 ## Changes to this doc
 
