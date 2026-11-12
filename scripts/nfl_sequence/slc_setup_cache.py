@@ -21,7 +21,7 @@ def pass_label_input_sha256(pool):
     """Fingerprint exactly the ordered inputs consumed by the conditional fit.
 
     The fitted model uses the pool cell, event type, season, penalty eligibility,
-    and its A/D/E labels. Its manifest also scans the labels on other event
+    source run/dropback flags for fumbles, and its A/D/E labels. Its manifest also scans the labels on other event
     types, so those are included. No raw player or yardage field participates.
     The ordered digest is streaming and does not materialize another pool.
     """
@@ -32,6 +32,7 @@ def pass_label_input_sha256(pool):
         for event, row, _runoff, _spot in rows:
             labels = row.get('labels') or {}
             values = (event, row.get('season'), row.get('penalty'),
+                      row.get('play_type'), row.get('qb_scramble'),
                       tuple(labels.get(category) for category in pass_label_outcomes.CATEGORIES))
             digest.update(json.dumps(values, separators=(',', ':')).encode())
             digest.update(b'\n')
