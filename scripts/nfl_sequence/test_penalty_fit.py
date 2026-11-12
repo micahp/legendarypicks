@@ -159,7 +159,7 @@ class TeamFirstModelTests(unittest.TestCase):
         self.assertTrue(all(item in CATALOG["pre_snap"] for item in a))
 
     def test_json_round_trip_is_prediction_and_hash_identical(self):
-        rows = [observation(i, outcome="defense:offside" if i % 13 == 0 else NO_FOUL)
+        rows = [observation(i, outcome="defense:encroachment" if i % 13 == 0 else NO_FOUL)
                 for i in range(80)]
         model = fitted(*rows)
         restored = PenaltyModel.from_json(model.to_json())
