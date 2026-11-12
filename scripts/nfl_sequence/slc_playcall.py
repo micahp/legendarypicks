@@ -32,6 +32,7 @@ import point_splits  # noqa: E402
 import decision_layer  # noqa: E402
 import streak_splits  # noqa: E402
 import pre_event as pe  # noqa: E402
+import slc_intent_support  # noqa: E402
 import run_playcall_eval as rpe  # noqa: E402
 
 ARTIFACT_ID = 'slc_playcall_v1'
@@ -171,6 +172,7 @@ class PlayCallSampler:
         self._backoff_index_uses_lateral_filter = None
         self._backoff_lateral_rows_excluded = 0
         self.outcome_backoff_enabled = False
+        self.fourth_down_intent_guard = False  # V1.6 only; preserve frozen V1.5 policy
         self.allow_sparse_cells = False
         self.scramble_backoff_enabled = False
         self.scramble_bounds = None
@@ -429,6 +431,25 @@ class PlayCallSampler:
         else:
             intent = 'dropback' if rng.random() < p else 'run'
             fallback = None
+        intent_before_support_guard = intent
+        fourth_down_support_fallback = None
+        if (self.fourth_down_intent_guard and not self.outcome_backoff_enabled
+                and int(state['down']) == 4 and intent in SCRIMMAGE_INTENTS):
+            # The logistic model may call a run in a sparse 4th-down cell
+            # containing historical punts and dropbacks but no runnable rows.
+            # Preserve the kick-vs-go decision and keep the outcome in-cell.
+            supported = set()
+            for (source_intent, _event), source_rows in entry['by_key'].items():
+                if source_intent == 'dropback' and source_rows:
+                    supported.add('dropback')
+                elif source_intent == 'run' and any(
+                        self.qb_decision_table is None or row.get('qb_scramble') != 1
+                        for _sample_event, row, _runoff, _spot in source_rows):
+                    supported.add('run')
+            intent, fourth_down_support_fallback = slc_intent_support.resolve_fourth_down_intent(
+                intent, state['down'], supported, enabled=True)
+            if fourth_down_support_fallback is not None:
+                fallback = fourth_down_support_fallback
         called_intent = intent
         pre_event = self.participant_chooser(called_intent, offense, state) if self.participant_chooser is not None else None
         qb_decision = pre_event.get('qb_decision') if pre_event else None
@@ -698,6 +719,9 @@ class PlayCallSampler:
             'p_dropback': round(p, 6), 'point_shift': round(point_shift, 6), 'streak_shift': round(streak_shift, 6),
             'streak_bucket': self.current_streak.get(team), 'league_streak_shift': round(league_streak_shift, 6),
             'kick_share': round(kick_share, 6),
+            'intent_before_support_guard': intent_before_support_guard,
+            'fourth_down_intent_guard_applied': fourth_down_support_fallback is not None,
+            'fourth_down_intent_guard_reason': fourth_down_support_fallback,
             'intent': called_intent, 'outcome_intent': outcome_intent, 'event': event,
             'fallback': fallback, 'source': {'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season']},
             'source_row_filter_policy': ('exclude_unmodeled_lateral_transfers'
@@ -876,6 +900,7 @@ class PlayCallSampler:
         if getattr(self, 'player_outcome_manifest', None) is not None:
             out['player_outcome_model'] = self.player_outcome_manifest
         out['pass_label_mode'] = self.pass_label_mode
+        out['fourth_down_intent_guard'] = bool(self.fourth_down_intent_guard)
         out['exact_distance_yardage'] = {
             'enabled': self.exact_distance_yardage,
             'minimum_support': self.exact_distance_min_support,
