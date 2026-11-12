@@ -8,6 +8,8 @@ from unittest import mock
 
 import e1_drive as e1
 import slc_materialized_history as history
+import slc_playcall as slc
+import test_slc_playcall as slc_fixtures
 
 
 NUMBERS = {
@@ -83,6 +85,25 @@ class MaterializedClassificationParity(unittest.TestCase):
         self.assertTrue(rows)
         self.assertTrue(pool)
         self.assertIsNone(team)
+
+    def test_prebuilt_backoff_index_matches_runtime_index_and_row_order(self):
+        rows, pool, _excluded, _team = history.load_pools(
+            self.db, self.artifact, eligible_before=(2025, 8),
+            include_qb_scrambles=True, separate_sack_fumbles=True)
+        state = {'down': 1, 'togo': 10, 'yl': 65}
+        old = slc.PlayCallSampler(slc.PlayCallLayer(slc_fixtures.blank_artifact(0.0)))
+        old.source_pool = pool
+        new = slc.PlayCallSampler(slc.PlayCallLayer(slc_fixtures.blank_artifact(0.0)))
+        new.source_pool = pool
+        new.source_support_artifact = str(self.artifact)
+        new.source_support_variant = '11'
+        with mock.patch.dict(slc.OUTCOME_BACKOFF_MIN_SUPPORT, {'exact_cell': 1}):
+            control, level = old._backoff_candidates(state, 'run', False)
+            optimized, optimized_level = new._backoff_candidates(state, 'run', False)
+        self.assertEqual(optimized_level, level)
+        self.assertEqual(optimized, control)
+        self.assertIsNone(new._backoff_index)
+        self.assertIsNotNone(new._source_support_lookup)
 
     def test_source_database_mutation_invalidates_materialized_data(self):
         with sqlite3.connect(self.db) as con:
