@@ -1,0 +1,30 @@
+name: SLC release provenance tests
+on:
+  push:
+    branches: [research/slc-model-release-locks-2026-11-11]
+    paths:
+      - 'scripts/nfl_sequence/run_input_inventory.py'
+      - 'scripts/nfl_sequence/test_run_input_inventory.py'
+      - 'scripts/nfl_sequence/simulate_pregame_batch.py'
+      - 'scripts/nfl_sequence/slc_engine.py'
+      - '.github/workflows/slc-release-inventory.yml'
+  pull_request:
+    branches: [slc-v2, main]
+    paths:
+      - 'scripts/nfl_sequence/run_input_inventory.py'
+      - 'scripts/nfl_sequence/test_run_input_inventory.py'
+      - 'scripts/nfl_sequence/simulate_pregame_batch.py'
+      - 'scripts/nfl_sequence/slc_engine.py'
+      - '.github/workflows/slc-release-inventory.yml'
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Non-gating provenance checks
+        run: python3 -m unittest discover -s scripts/nfl_sequence -p 'test_run_input_inventory.py' -v
+      - name: Runner integration syntax
+        run: python3 -m py_compile scripts/nfl_sequence/run_input_inventory.py scripts/nfl_sequence/simulate_pregame_batch.py scripts/nfl_sequence/slc_engine.py
