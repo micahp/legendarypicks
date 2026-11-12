@@ -1,0 +1,23 @@
+name: V1.7 penalty probability model tests
+
+on:
+  push:
+    branches:
+      - feature/slc-v1.7-penalty-model-2026-11-12
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pure-python-penalty-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run V1.7 penalty model regressions
+        run: |
+          PYTHONPATH=scripts/nfl_sequence python -m unittest -v \
+            test_penalty_fit test_penalty_sampler test_penalty_train
