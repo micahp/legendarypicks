@@ -44,7 +44,8 @@ def main():
         elif league == "nfl":
             id_col = "nfl_gsis_id"
         elif league == "nba":
-            id_col = "nba_id"
+            cols = {r[1] for r in con.execute("PRAGMA table_info(players)")}
+            id_col = "hoopr_id" if "hoopr_id" in cols else "nba_id"
         elif league == "nhl":
             id_col = "nhl_id"
 
@@ -150,7 +151,7 @@ def main():
     for vname, vleague in verifications:
         # Check spine presence
         spine = con.execute(
-            "SELECT id, name, mlbam_id, nfl_gsis_id, nhl_id, nba_id FROM players WHERE league=? AND name=?",
+            "SELECT * FROM players WHERE league=? AND name=?",
             (vleague, vname)
         ).fetchone()
         if not spine:

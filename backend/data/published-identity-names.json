@@ -1387,7 +1387,7 @@
       }
     },
     "nba": {
-      "id_column": "nba_id",
+      "id_column": "hoopr_id",
       "names": {
         "1966": "LeBron James",
         "2184": "Udonis Haslem",

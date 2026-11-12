@@ -315,7 +315,7 @@ LEAGUES = (
     ("mlb", "mlbam_id", mlb_identity_names, PEOPLE_URL),
     ("nfl", "nfl_gsis_id", nfl_identity_names, NFL_PLAYERS_URL),
     ("nhl", "nhl_id", nhl_identity_names, NHL_SUMMARY_URL),
-    ("nba", "nba_id", nba_identity_names, NBA_URL),
+    ("nba", "hoopr_id", nba_identity_names, NBA_URL),
     ("ufc", "espn_id",
      functools.partial(espn_identity_names, sport="mma", league_path="ufc"),
      "https://sports.core.api.espn.com/v2/sports/mma/leagues/ufc/athletes"),

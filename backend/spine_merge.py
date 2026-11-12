@@ -133,7 +133,7 @@ class MergePlan:
 # perfectly well resolved without ESPN ever having heard of it: `player_source_ids` already
 # holds 1,470 rotowire, 131 underdog and 44 ufcstats bindings, and esports is 100% keyless by
 # nature, so the old rule could never merge a cs2 or valorant duplicate at all.
-_ID_COLUMNS = ("espn_id", "mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id")
+_ID_COLUMNS = ("espn_id", "mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id", "hoopr_id")
 
 
 def _present_id_columns(con) -> Tuple[str, ...]:

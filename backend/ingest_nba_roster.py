@@ -45,6 +45,7 @@ import sqlite3
 import sys
 from typing import Mapping, Sequence
 
+import hoopr_column
 import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -291,8 +292,8 @@ def _choose_unbound_candidate(candidates, member: Mapping[str, object], bound=fr
     theirs = nba_birth_date(member.get("birth_date"))
     if len(unbound) == 1 and theirs and birth_date_of is not None:
         row = unbound[0]
-        espn_id = row["espn_id"] if "espn_id" in row.keys() and row["espn_id"] else (
-            row["nba_id"] if "nba_id" in row.keys() else None)
+        legacy = next((row[c] for c in ("hoopr_id", "nba_id") if c in row.keys()), None)
+        espn_id = row["espn_id"] if "espn_id" in row.keys() and row["espn_id"] else legacy
         if espn_id and birth_date_of(espn_id) == theirs:
             return row, "matched_birth_date"
     return None, "ambiguous_name" if len(unbound) > 1 else "unverified_name"
@@ -314,13 +315,14 @@ def plan_population(connection: sqlite3.Connection,
     by_name: dict[str, list] = collections.defaultdict(list)
     import name_aliases
     for row in connection.execute(
-            f"SELECT id,name,team,position,espn_id,nba_id FROM players WHERE league='nba' AND {entity_scope}"):
+            f"SELECT id,name,team,position,espn_id,{hoopr_column.hoopr_column(connection) or 'NULL'} AS hoopr_id "
+            f"FROM players WHERE league='nba' AND {entity_scope}"):
         players[int(row["id"])] = row
         keys = {_identity_name_key(row["name"])}
         # Reviewed alternate names (data/name-aliases.json, keyed by ESPN id) widen who can be a
         # CANDIDATE; binding still needs evidence. Our "Kenyon Martin Jr." is nba.com's and
         # ESPN's "KJ Martin": without this he would have been minted a second time.
-        for ext in {row["espn_id"], row["nba_id"]} - {None}:
+        for ext in {row["espn_id"], row["hoopr_id"]} - {None}:
             keys |= {_identity_name_key(a) for a in name_aliases.aliases_for("nba", ext)}
         for key in keys:
             by_name[key].append(row)

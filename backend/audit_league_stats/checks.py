@@ -418,7 +418,7 @@ def check_identity_crosswalk(con, league, spec, out):
     before the damage.
     """
     columns = _columns(con, "players")
-    legacy = [c for c in ("mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id") if c in columns]
+    legacy = [c for c in ("mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id", "hoopr_id") if c in columns]
     if "espn_id" not in columns or not legacy:
         out.add(UNVERIFIED, league, "F/identity-crosswalk",
                 "players carries no external id columns to cross-check")
@@ -513,6 +513,8 @@ def check_published_identity(con, league, spec, out):
 
     id_column, names = published["id_column"], published["names"]
     player_columns = _columns(con, "players")
+    if id_column in ("nba_id", "hoopr_id"):  # the same column before/after the rename
+        id_column = "hoopr_id" if "hoopr_id" in player_columns else "nba_id"
     if id_column not in player_columns:
         out.add(UNVERIFIED, league, "G/published-identity",
                 f"players carries no {id_column} to check")

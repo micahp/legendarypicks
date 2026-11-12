@@ -563,21 +563,22 @@ def _espn_event_players(payload: dict, event_id: str, schedule: dict) -> dict:
 
 
 def _espn_id_owners(connection: sqlite3.Connection) -> Tuple[dict, dict]:
-    """Read ESPN athlete-id owners, including legacy ids stored in nba_id."""
+    """Read ESPN athlete-id owners, including legacy ids stored in hoopr_id (was nba_id)."""
     columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(players)")}
     if not {"id", "league", "espn_id"}.issubset(columns):
         raise SportsDataverseIngestError("players must expose id, league, and espn_id for ESPN matching")
     selected = ["id", "league", "espn_id"]
-    if "nba_id" in columns:
-        selected.append("nba_id")
+    legacy_column = next((c for c in ("hoopr_id", "nba_id") if c in columns), None)
+    if legacy_column:
+        selected.append(legacy_column)
     owners = collections.defaultdict(set)
     leagues = {}
     for row in connection.execute("SELECT {} FROM players".format(",".join(selected))):
         player_id, league = int(row["id"]), str(row["league"])
         leagues[player_id] = league
         keys = [row["espn_id"]]
-        if league == "nba" and "nba_id" in columns:
-            keys.append(row["nba_id"])
+        if league == "nba" and legacy_column:
+            keys.append(row[legacy_column])
         for raw_key in keys:
             key = str(raw_key or "").strip()
             if key:

@@ -283,8 +283,9 @@ def _probe_merge_nba_identities(con: sqlite3.Connection) -> str:
     no ESPN/legacy bridge split and no duplicate ESPN owner is the state this
     migration exists to establish.
     """
-    required = {"id", "league", "espn_id", "nba_id"}
     columns = _columns(con, "players")
+    legacy = "hoopr_id" if "hoopr_id" in columns else "nba_id"
+    required = {"id", "league", "espn_id", legacy}
     if not required <= columns:
         missing = sorted(required - columns)
         return "unknown: players lacks columns " + ", ".join(missing)
@@ -292,11 +293,11 @@ def _probe_merge_nba_identities(con: sqlite3.Connection) -> str:
         con,
         """SELECT COUNT(*) FROM players e JOIN players h
               ON h.league='nba' AND e.league='nba' AND e.id<>h.id
-             AND CAST(e.espn_id AS TEXT)=CAST(h.nba_id AS TEXT)
+             AND CAST(e.espn_id AS TEXT)=CAST(h.{legacy} AS TEXT)
             WHERE e.espn_id IS NOT NULL
               AND TRIM(CAST(e.espn_id AS TEXT))!=''
-              AND h.nba_id IS NOT NULL
-              AND TRIM(CAST(h.nba_id AS TEXT))!=''""",
+              AND h.{legacy} IS NOT NULL
+              AND TRIM(CAST(h.{legacy} AS TEXT))!=''""".replace("{legacy}", legacy),
     )
     if split:
         return f"unknown: {split} NBA identities remain split across rows"

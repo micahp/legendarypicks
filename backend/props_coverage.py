@@ -149,7 +149,7 @@ def _spine_dupes_sql(con: sqlite3.Connection) -> str:
     columns = {row[1] for row in con.execute("PRAGMA table_info(players)")}
     predicates = [
         "NULLIF(TRIM(CAST(p.{} AS TEXT)),'') IS NOT NULL".format(column)
-        for column in ("espn_id", "mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id")
+        for column in ("espn_id", "mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id", "hoopr_id")
         if column in columns
     ]
     has_source_ids = con.execute(

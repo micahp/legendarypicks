@@ -6,6 +6,7 @@ Usage: python3 ingest_hoopR.py [--season 2023]
 Downloads from sportsdataverse/hoopR-data GitHub repo (free, no IP blocks).
 """
 import sys, os, io, urllib.request, sqlite3
+import hoopr_column
 import pyarrow.parquet as pq
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from league_stats import (
@@ -65,7 +66,7 @@ def ingest_season(season: int, con: sqlite3.Connection):
     # Pre-load only unambiguous player_id lookups: nba_id → players.id.
     con.row_factory = sqlite3.Row
     nba_id_to_player, ambiguous_nba_ids = load_unique_source_id_map(
-        con, league="nba", id_column="nba_id"
+        con, league="nba", id_column=hoopr_column.hoopr_column(con) or "nba_id"
     )
 
     ingested = 0

@@ -14,7 +14,7 @@ the as-built + the lesson from the MLB dup bug).
 | `mlbam_id` | MLB / Statcast | MLB game logs (`ingest_mlb_logs`) |
 | `nfl_gsis_id` | nflverse (weekly + pbp) | NFL game logs |
 | `nhl_id` | api-web.nhle.com | NHL game logs |
-| `nba_id` | hoopR athlete_id | (legacy NBA) |
+| `hoopr_id` | hoopR athlete_id (ESPN id namespace). Was `nba_id`. | (legacy NBA) |
 
 Downstream tables key on `players.id`: `player_game_logs.player_id`, `props.player_id`,
 `player_stats.player_id`, `predictions.player_id`. The whole point: **join on the stable
