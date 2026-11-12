@@ -98,10 +98,12 @@ class PenaltyDataContractTests(unittest.TestCase):
         model = fitted(*rows)
         self.assertEqual(model.stage_exposures["pre_snap"], 50)
         self.assertEqual(model.stage_exposures["live_ball"], 50)
-        self.assertEqual(model.predict(context())["defense:roughing_passer"]
-                         if "defense:roughing_passer" in CATALOG["pre_snap"] else 0, 0)
+        self.assertNotIn("defense:roughing_passer", model.predict(context()))
+        self.assertIn("defense:roughing_passer", model.predict(
+            context("live_ball", play_class="run", era=2027)))
+        pre_only = fitted(observation(800))
         with self.assertRaisesRegex(ValueError, "no training opportunities"):
-            model.predict(context("live_ball", play_class="run", era=2027))
+            pre_only.predict(context("live_ball"))
 
     def test_prediction_has_valid_simplex_and_backoff_on_unknown_team(self):
         rows = [observation(i) for i in range(1, 20)]
