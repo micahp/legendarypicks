@@ -39,6 +39,34 @@ class PassLabelOutcomeModelTest(unittest.TestCase):
                     label_prior=prior, calibration_key=('AAA', '1|short|other'))
             self.assertAlmostEqual(average, base[event], places=8)
 
+    def test_rushing_and_scramble_fumbles_do_not_contaminate_pass_outcome_baselines(self):
+        cell = (1, '3-5', '30-49')
+        pass_rows = []
+        for i in range(240):
+            event = OUTCOMES[i % len(OUTCOMES)]
+            labels = {'A': 'WR' if i % 3 else 'RB',
+                      'D': 'short' if i % 2 else 'deep',
+                      'E': 'left' if i % 2 else 'middle'}
+            pass_rows.append((event, {'season': 2024, 'penalty': 0,
+                                      'play_type': 'pass', 'qb_scramble': 0,
+                                      'labels': labels}, 0, None))
+        added_rushing_fumbles = []
+        for i in range(80):
+            added_rushing_fumbles.append((
+                'fumble_lost', {'season': 2024, 'penalty': 0,
+                                'play_type': 'run', 'qb_scramble': int(i % 2 == 0),
+                                'labels': {'A': 'RB', 'D': 'short', 'E': 'left'}},
+                0, None))
+        control = PassLabelOutcomeModel.fit({cell: pass_rows})
+        candidate = PassLabelOutcomeModel.fit({cell: pass_rows + added_rushing_fumbles})
+        self.assertEqual(candidate.manifest['excluded_nonpass_fumbles'], 80)
+        self.assertEqual(candidate.manifest['rows'], control.manifest['rows'])
+        self.assertEqual(candidate.base_probabilities(cell), control.base_probabilities(cell))
+        labels = {'A': 'WR', 'D': 'short', 'E': 'left'}
+        for event in OUTCOMES:
+            self.assertAlmostEqual(candidate.probabilities(cell, labels)[event],
+                                   control.probabilities(cell, labels)[event], places=12)
+
     def test_unknown_context_falls_back_to_global_distribution(self):
         pool = {(1, '3-5', '30-49'): []}
         for i, event in enumerate(OUTCOMES * 30):

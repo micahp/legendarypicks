@@ -50,12 +50,21 @@ class PassLabelOutcomeModel:
         all_counts = {}
         global_counts = np.ones(len(OUTCOMES), dtype=np.float64)
         penalty_eligibility = {'known_clean': 0, 'penalty_tagged': 0, 'unknown': 0, 'other': 0}
+        excluded_nonpass_fumbles = 0
         feature_index = {feature: i for i, feature in enumerate(FEATURES)}
         outcome_index = {event: i for i, event in enumerate(OUTCOMES)}
         for cell, rows in pool.items():
             counts = np.ones(len(OUTCOMES), dtype=np.float64)
             for event, row, _runoff, _spot in rows:
                 if event not in outcome_index:
+                    continue
+                # E1's fumble_lost is shared by designed runs, scrambles, and
+                # dropbacks. This model is applied only after a selected
+                # *dropback* pass outcome. Do not train its event baseline on
+                # rushing fumbles which it can never sample.
+                if event == 'fumble_lost' and (row.get('play_type') == 'run'
+                                                or row.get('qb_scramble') == 1):
+                    excluded_nonpass_fumbles += 1
                     continue
                 penalty = row.get('penalty')
                 if penalty is None:
@@ -127,6 +136,7 @@ class PassLabelOutcomeModel:
             'base_prior': float(base_prior),
             'iterations': int(result.nit),
             'penalty_eligibility': penalty_eligibility,
+            'excluded_nonpass_fumbles': excluded_nonpass_fumbles,
             'penalty_policy': 'fit only rows with penalty=0; NULL, tagged and unknown codes are excluded',
             'fit_seasons': sorted({int(row.get('season')) for rows in pool.values()
                                    for _event, row, _runoff, _spot in rows
