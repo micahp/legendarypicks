@@ -180,6 +180,9 @@ class PlayCallSampler:
         self._cells = {}
         self.source_pool = None  # cutoff-filtered pool, supplied by e2_reference only for opted-in backoff
         self._backoff_index = None
+        self.source_support_artifact = None  # V1.6: prebuilt V2 support groups in history artifact
+        self.source_support_variant = None
+        self._source_support_lookup = None
         self._backoff_index_uses_lateral_filter = None
         self._backoff_lateral_rows_excluded = 0
         self.outcome_backoff_enabled = False
@@ -338,10 +341,53 @@ class PlayCallSampler:
                 legal.append(sample)
         return legal, rejected
 
+    def _materialized_backoff_candidates(self, state, called_intent, scramble, source_row_filter=None):
+        """Use prebuilt support groups; resolve IDs into the cutoff-safe, annotated source pool."""
+        import slc_materialized_history as history
+        target = (int(state['down']), e0.ydstogo_bucket(state['togo']), e0.yardline_bucket(state['yl']))
+        down, distance, field = target
+        use_lateral_filter = self.participant_chooser is not None
+        if (self._source_support_lookup is None
+                or self._backoff_index_uses_lateral_filter != use_lateral_filter):
+            lookup, excluded_total, sequence = {}, 0, 0
+            for source_cell in self.source_pool.values():
+                samples, excluded = self._participant_source_rows(source_cell)
+                excluded_total += excluded
+                for sample in samples:
+                    key = (sample[1]['game_id'], int(sample[1]['play_id']))
+                    lookup[key] = (sequence, sample)
+                    sequence += 1
+            self._source_support_lookup = lookup
+            self._backoff_index_uses_lateral_filter = use_lateral_filter
+            self._backoff_lateral_rows_excluded = excluded_total
+        outcome_class = 'qb_scramble' if scramble else called_intent
+        levels = (('exact_cell', target), ('down_field', (down, field)),
+                  ('down_distance', (down, distance)), ('field_zone', field), ('league_intent', None))
+        for level, key in levels:
+            ids = history.backoff_ids(self.source_support_artifact, self.source_support_variant,
+                                      level, outcome_class, key)
+            ranked = [self._source_support_lookup[source_id] for source_id in ids
+                      if source_id in self._source_support_lookup]
+            ranked.sort(key=lambda item: item[0])  # preserve source-pool order and paired RNG draws
+            candidates = [sample for _rank, sample in ranked]
+            if source_row_filter is not None:
+                candidates = [sample for sample in candidates if source_row_filter(sample, state)]
+            if scramble:
+                candidates, rejected = self._legal_scramble_rows(candidates, state)
+                self._last_scramble_rejected_bounds = rejected
+            else:
+                self._last_scramble_rejected_bounds = 0
+            if len(candidates) >= OUTCOME_BACKOFF_MIN_SUPPORT[level]:
+                return candidates, level
+        return None, None
+
     def _backoff_candidates(self, state, called_intent, scramble, source_row_filter=None):
         """Find cutoff-safe outcomes without changing the selected play intent or scramble class."""
         if self.source_pool is None:
             return None, None
+        if self.source_support_artifact is not None:
+            return self._materialized_backoff_candidates(
+                state, called_intent, scramble, source_row_filter=source_row_filter)
         target = (int(state['down']), e0.ydstogo_bucket(state['togo']), e0.yardline_bucket(state['yl']))
         down, distance, field = target
         use_lateral_filter = self.participant_chooser is not None
