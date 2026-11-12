@@ -63,12 +63,15 @@ def intent_of_play_type(play_type):
     return None
 
 
-def priors(db, cutoff_season):
+def priors(db, cutoff_season, participation=None):
     """The formation and personnel priors for seasons before the cutoff. Keys: (intent, down, distance bucket)."""
     if cutoff_season <= PARTICIPATION_FIRST:
         raise ValueError('no participation data before the cutoff season')
     seasons = range(PARTICIPATION_FIRST, cutoff_season)
-    participation = load_participation(db, seasons)
+    # Reuse the map already loaded to annotate historical source rows. Loading
+    # participation twice costs a second SQLite scan and a large temporary dict.
+    if participation is None:
+        participation = load_participation(db, seasons)
     con = sqlite3.connect(f'file:{db}?mode=ro', uri=True, timeout=10)
     try:
         marks = ','.join('?' * len(seasons))
