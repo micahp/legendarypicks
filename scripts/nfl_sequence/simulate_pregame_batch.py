@@ -927,6 +927,19 @@ def run_batch(args):
     elif retrospective_marker:
         raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
     resolved_profile = slc_config.apply_profile_to_args(args)
+    # V1.6 consumes a prebuilt, versioned E1 artifact by default. A deliberate
+    # parity ablation can still run the old classifier without touching V1.5.
+    if args.slc_profile == 'v1_6_candidate' and not args.slc_legacy_history_build:
+        artifact = args.slc_materialized_history or (
+            Path(os.environ.get('XDG_CACHE_HOME') or Path.home() / '.cache')
+            / 'legendarypicks' / 'slc-history.sqlite')
+        if not Path(artifact).is_file():
+            raise source_preflight.PreflightError(
+                f'V1.6 requires preclassified historical outcomes at {artifact}. Build once with: '
+                f'python3 scripts/nfl_sequence/slc_materialized_history.py build '
+                f'--db {args.db} --out {artifact}. For legacy parity only, pass '
+                f'--slc-legacy-history-build.')
+        os.environ['SLC_MATERIALIZED_HISTORY'] = str(Path(artifact).resolve())
     args.slc_blocker_fix = er.resolve_blocker_fixes(
         args.slc_blocker_fix, args.slc_disable_blocker_fix,
         has_playcall_artifact=bool(args.playcall_artifact))
@@ -1063,6 +1076,9 @@ def run_batch(args):
         'historical_archive_reconstruction': archive_validation,
         'boxscore_export': bool(args.export_boxscores),
         'ordered_play_export': bool(args.export_plays),
+        'materialized_history': (os.environ.get('SLC_MATERIALIZED_HISTORY')
+                                 if args.slc_profile == 'v1_6_candidate'
+                                 and not args.slc_legacy_history_build else None),
         'trace_outcome_probabilities': bool(args.trace_outcome_probabilities),
         'paired_randomness': bool(args.paired_randomness),
         'paired_seed_snapshot_sha256': paired_input_sha256,
@@ -1401,6 +1417,10 @@ def main(argv=None):
     ap.add_argument('--export-plays', action='store_true',
                     help='write each generated full game record, with ordered drives and before/after play states, '
                          'to <out stem>.plays.jsonl; opt-in because records are larger than box-score exports')
+    ap.add_argument('--slc-materialized-history', type=Path, default=None,
+                    help='V1.6 preclassified history SQLite; defaults to ~/.cache/legendarypicks/slc-history.sqlite')
+    ap.add_argument('--slc-legacy-history-build', action='store_true',
+                    help='parity-only: use legacy runtime E1 classification instead of materialized historical outcomes')
     ap.add_argument('--trace-outcome-probabilities', action='store_true',
                     help='opt-in V2-style per-play event probabilities before/after active modifiers; no RNG change')
     ap.add_argument('--paired-randomness', action='store_true',
@@ -1428,6 +1448,8 @@ def main(argv=None):
         args.seed_selection_manifest = selection.manifest()
         args.games = len(selection.seeds)
         args.seed_start = selection.seed_start
+    if args.slc_materialized_history and args.slc_legacy_history_build:
+        ap.error('--slc-materialized-history and --slc-legacy-history-build are alternatives')
     if (args.slc_blocker_fix or args.slc_disable_blocker_fix) and not args.playcall_artifact:
         ap.error('SLC blocker-fix options require --playcall-artifact')
     if args.playcall_player_outcomes_receiver_only and not args.playcall_player_outcomes:
