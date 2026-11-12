@@ -183,6 +183,7 @@ class PlayCallSampler:
         self.source_support_artifact = None  # V1.6: prebuilt V2 support groups in history artifact
         self.source_support_variant = None
         self._source_support_lookup = None
+        self._source_support_ids = {}  # reuse historical ID lookups across seeds
         self._backoff_index_uses_lateral_filter = None
         self._backoff_lateral_rows_excluded = 0
         self.outcome_backoff_enabled = False
@@ -364,8 +365,12 @@ class PlayCallSampler:
         levels = (('exact_cell', target), ('down_field', (down, field)),
                   ('down_distance', (down, distance)), ('field_zone', field), ('league_intent', None))
         for level, key in levels:
-            ids = history.backoff_ids(self.source_support_artifact, self.source_support_variant,
-                                      level, outcome_class, key)
+            cache_key = (level, outcome_class, key)
+            if cache_key not in self._source_support_ids:
+                self._source_support_ids[cache_key] = history.backoff_ids(
+                    self.source_support_artifact, self.source_support_variant,
+                    level, outcome_class, key)
+            ids = self._source_support_ids[cache_key]
             ranked = [self._source_support_lookup[source_id] for source_id in ids
                       if source_id in self._source_support_lookup]
             ranked.sort(key=lambda item: item[0])  # preserve source-pool order and paired RNG draws
