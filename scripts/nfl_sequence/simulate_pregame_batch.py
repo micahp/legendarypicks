@@ -933,6 +933,11 @@ def run_batch(args):
     elif retrospective_marker:
         raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
     resolved_profile = slc_config.apply_profile_to_args(args)
+    if args.slc_profile != 'v1_6_candidate':
+        # A caller's exported env var must not alter frozen V1.5 or S0 runs.
+        os.environ.pop('SLC_MATERIALIZED_HISTORY', None)
+        if args.slc_materialized_history or args.slc_legacy_history_build:
+            raise ValueError('historical materialization options require --slc-profile v1_6_candidate')
     # V1.6 consumes a prebuilt, versioned E1 artifact by default. A deliberate
     # parity ablation can still run the old classifier without touching V1.5.
     if args.slc_profile == 'v1_6_candidate' and args.slc_legacy_history_build:
