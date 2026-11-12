@@ -270,6 +270,7 @@ def _sync_league(con: sqlite3.Connection, league: str) -> dict:
                 if candidate_eid and candidate_eid != eid:
                     reason = "name_match_conflicting_espn_id"
                 else:
+                    reason = None
                     if league == "nfl":
                         reason = espn_assignment_conflict(
                             eid,
