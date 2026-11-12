@@ -719,9 +719,6 @@ class PlayCallSampler:
             'p_dropback': round(p, 6), 'point_shift': round(point_shift, 6), 'streak_shift': round(streak_shift, 6),
             'streak_bucket': self.current_streak.get(team), 'league_streak_shift': round(league_streak_shift, 6),
             'kick_share': round(kick_share, 6),
-            'intent_before_support_guard': intent_before_support_guard,
-            'fourth_down_intent_guard_applied': fourth_down_support_fallback is not None,
-            'fourth_down_intent_guard_reason': fourth_down_support_fallback,
             'intent': called_intent, 'outcome_intent': outcome_intent, 'event': event,
             'fallback': fallback, 'source': {'game_id': row['game_id'], 'play_id': row['play_id'], 'season': row['season']},
             'source_row_filter_policy': ('exclude_unmodeled_lateral_transfers'
@@ -756,6 +753,11 @@ class PlayCallSampler:
                                      else 'beyond_ordinary_cutoff' if fg_rejected_distance else None),
                 fg_fallback_level=None,
             )
+        if self.fourth_down_intent_guard:
+            decision_record.update(
+                intent_before_support_guard=intent_before_support_guard,
+                fourth_down_intent_guard_applied=fourth_down_support_fallback is not None,
+                fourth_down_intent_guard_reason=fourth_down_support_fallback)
         self.decisions.append(decision_record)
         return event, row, runoff, spot
 
@@ -900,7 +902,8 @@ class PlayCallSampler:
         if getattr(self, 'player_outcome_manifest', None) is not None:
             out['player_outcome_model'] = self.player_outcome_manifest
         out['pass_label_mode'] = self.pass_label_mode
-        out['fourth_down_intent_guard'] = bool(self.fourth_down_intent_guard)
+        if self.fourth_down_intent_guard:
+            out['fourth_down_intent_guard'] = True
         out['exact_distance_yardage'] = {
             'enabled': self.exact_distance_yardage,
             'minimum_support': self.exact_distance_min_support,
