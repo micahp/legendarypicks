@@ -70,12 +70,37 @@ def _classified_game(rows):
                _encode(row), _encode(variants))
 
 
+def _support_entries(records):
+    """Offline V2 backoff index: lookup groups map to source play IDs, not mutable rows."""
+    for game_id, play_id, _season, _week, raw, payload in records:
+        row = json.loads(raw)
+        variants = json.loads(payload)
+        for variant, details in variants.items():
+            hit = details['hit']
+            if hit is None:
+                continue
+            event = hit[0]
+            outcome_class = ('qb_scramble' if row['qb_scramble'] == 1
+                             else 'kick' if event in e1.KICK_EVENTS
+                             else 'run' if row['play_type'] == 'run' else 'dropback')
+            down, distance, field = e0.pool_key(int(row['down']), row['ydstogo'], row['yardline_100'])
+            for level, key in (
+                ('exact_cell', (down, distance, field)),
+                ('down_field', (down, field)),
+                ('down_distance', (down, distance)),
+                ('field_zone', field),
+                ('league_intent', None),
+            ):
+                yield (variant, level, outcome_class, _encode(key), game_id, play_id)
+
+
 def _insert_games(target, source):
     count = 0
     games = 0
     for _game_id, group in itertools.groupby(source, key=lambda r: r['game_id']):
         records = list(_classified_game(list(group)))
         target.executemany('INSERT INTO classified VALUES (?,?,?,?,?,?)', records)
+        target.executemany('INSERT INTO support VALUES (?,?,?,?,?,?)', _support_entries(records))
         count += len(records)
         games += 1
     return {'rows': count, 'games': games}
@@ -98,6 +123,12 @@ def _initialize(con):
             PRIMARY KEY (game_id, play_id)
         );
         CREATE INDEX classified_cutoff ON classified(season, week, game_id, play_id);
+        CREATE TABLE support (
+            variant TEXT NOT NULL, level TEXT NOT NULL, outcome_class TEXT NOT NULL,
+            lookup_key TEXT NOT NULL, game_id TEXT NOT NULL, play_id INTEGER NOT NULL
+        );
+        CREATE INDEX support_lookup ON support(variant,level,outcome_class,lookup_key);
+        CREATE INDEX support_game ON support(game_id);
         CREATE TABLE metadata (name TEXT PRIMARY KEY, value TEXT NOT NULL);
     """)
 
@@ -150,7 +181,9 @@ def refresh_game(db, out, game_id, *, only_this_game_changed=False):
         if _source_identity(db) != before:
             raise RuntimeError('source database changed during incremental classification')
         con.execute('DELETE FROM classified WHERE game_id = ?', (game_id,))
+        con.execute('DELETE FROM support WHERE game_id = ?', (game_id,))
         con.executemany('INSERT INTO classified VALUES (?,?,?,?,?,?)', records)
+        con.executemany('INSERT INTO support VALUES (?,?,?,?,?,?)', _support_entries(records))
         _meta_put(con, 'source_identity', before)
         updates = metadata.get('incremental_game_updates', [])
         _meta_put(con, 'incremental_game_updates', updates + [game_id])
@@ -161,6 +194,19 @@ def refresh_game(db, out, game_id, *, only_this_game_changed=False):
         })
         con.commit()
     return {'game_id': game_id, 'rows': len(records)}
+
+
+def backoff_ids(artifact, variant, level, outcome_class, key):
+    """Fetch precomputed candidate IDs for one V2 support level, cutoff filtering happens in sampler."""
+    con = sqlite3.connect(f'file:{Path(artifact).expanduser().resolve(strict=True)}?mode=ro',
+                          uri=True, timeout=10)
+    try:
+        return list(con.execute(
+            'SELECT game_id,play_id FROM support WHERE variant=? AND level=? '
+            'AND outcome_class=? AND lookup_key=?',
+            (variant, level, outcome_class, _encode(key))))
+    finally:
+        con.close()
 
 
 def load_pools(db, artifact, *, eligible_before=None, regulation_only=False,
