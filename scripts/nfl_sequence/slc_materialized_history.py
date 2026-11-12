@@ -127,8 +127,6 @@ def _initialize(con):
             variant TEXT NOT NULL, level TEXT NOT NULL, outcome_class TEXT NOT NULL,
             lookup_key TEXT NOT NULL, game_id TEXT NOT NULL, play_id INTEGER NOT NULL
         );
-        CREATE INDEX support_lookup ON support(variant,level,outcome_class,lookup_key);
-        CREATE INDEX support_game ON support(game_id);
         CREATE TABLE metadata (name TEXT PRIMARY KEY, value TEXT NOT NULL);
     """)
 
@@ -147,6 +145,10 @@ def build(db, out, *, replace=False):
         with sqlite3.connect(temp) as con:
             _initialize(con)
             stats = _insert_games(con, _open_source(db))
+            # Bulk insertion is much faster without maintaining millions of B-tree
+            # entries per row. Index only after the one-time preprocessing pass.
+            con.execute('CREATE INDEX support_lookup ON support(variant,level,outcome_class,lookup_key)')
+            con.execute('CREATE INDEX support_game ON support(game_id)')
             if _source_identity(db) != before:
                 raise RuntimeError('source database changed during preprocessing; discard artifact')
             _meta_put(con, 'schema', SCHEMA)
