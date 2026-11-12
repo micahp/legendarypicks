@@ -3,9 +3,11 @@ import copy
 import sqlite3
 import tempfile
 import unittest
+import sys
 from pathlib import Path
 from unittest import mock
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e1_drive as e1
 import slc_materialized_history as history
 import slc_playcall as slc
