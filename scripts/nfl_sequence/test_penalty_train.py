@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from penalty_train import train, opportunities_jsonl
+from penalty_train import train, opportunities_jsonl, adapt_historical_jsonl
 from penalty_fit import Context, PenaltyModel
 
 CUTOFF = "2025-01-01T00:00:00+00:00"
@@ -61,6 +61,42 @@ class PenaltyTrainingTests(unittest.TestCase):
             next(iterator)
             with self.assertRaisesRegex(ValueError, "bad.jsonl:2"):
                 next(iterator)
+
+    def test_historical_adapter_requires_independent_verification_and_keeps_audit_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "audited.jsonl"
+            output = Path(tmp) / "adapted.jsonl"
+            doc = row(1, foul=True)
+            doc["audit_evidence"] = {
+                "official_record_verified": True,
+                "opportunity_denominator_verified": True,
+                "official_record_url": "https://official.example/gamebook.pdf#page=3",
+                "source_row_id": "2024_01_ARI_DAL:1",
+            }
+            source.write_text(json.dumps(doc) + "\n")
+            result = adapt_historical_jsonl(source, output)
+            adapted = list(opportunities_jsonl(output))
+            self.assertEqual(len(adapted), 1)
+            self.assertEqual(result["rows"], 1)
+            audit = json.loads(Path(result["audit_manifest"]).read_text())
+            self.assertEqual(audit["evidence"][0]["source_row_id"],
+                             "2024_01_ARI_DAL:1")
+
+    def test_text_only_clause_candidate_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "text-only.jsonl"
+            output = Path(tmp) / "adapted.jsonl"
+            doc = row(1, foul=True)
+            doc["audit_evidence"] = {
+                "official_record_verified": False,
+                "opportunity_denominator_verified": False,
+                "official_record_url": "",
+                "source_row_id": "2024_01_ARI_DAL:1",
+                "source_text_disposition_only": True,
+            }
+            source.write_text(json.dumps(doc) + "\n")
+            with self.assertRaisesRegex(ValueError, "official_record_verified"):
+                adapt_historical_jsonl(source, output)
 
 
 if __name__ == "__main__":

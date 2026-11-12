@@ -1,0 +1,923 @@
+{
+  "current_season": {
+    "available_database_rows": 21018,
+    "available_games": 135,
+    "confirmed_penalty_rows_explicitly_rejected_by_e1_classifier": 327,
+    "confirmed_penalty_rows_prefiltered_before_e1_classifier": 1423,
+    "corrected_adapter_excluded_unknown_rows": 634,
+    "corrected_adapter_input_rows": 20384,
+    "legacy_adapter_input_rows": 21018,
+    "legacy_pool_exclusions": {
+      "negative derived clock runoff": 8,
+      "no same-quarter next snap for clock runoff": 4,
+      "punt without a clean receiving-team snap": 113,
+      "qb_scramble (not in E1 vocabulary)": 432,
+      "turnover that is a touchdown (not modelled)": 7,
+      "turnover without a clean new-offense snap": 34,
+      "unsupported play type or invalid down": 4887
+    },
+    "source_penalty_status": {
+      "0": 18634,
+      "1": 1750,
+      "unknown": 634
+    },
+    "team_games": {
+      "ARI": 9,
+      "ATL": 9,
+      "BAL": 9,
+      "BUF": 7,
+      "CAR": 8,
+      "CHI": 9,
+      "CIN": 8,
+      "CLE": 9,
+      "DAL": 9,
+      "DEN": 9,
+      "DET": 8,
+      "GB": 9,
+      "HOU": 8,
+      "IND": 9,
+      "JAX": 8,
+      "KC": 8,
+      "LAC": 8,
+      "LAR": 9,
+      "LV": 9,
+      "MIA": 8,
+      "MIN": 7,
+      "NE": 9,
+      "NO": 8,
+      "NYG": 8,
+      "NYJ": 9,
+      "PHI": 9,
+      "PIT": 8,
+      "SEA": 9,
+      "SF": 8,
+      "TB": 9,
+      "TEN": 8,
+      "WSH": 8
+    }
+  },
+  "history_table_sha256": "ff6fdcd3e2f70367cacfa7dd96c7735a9b4df444d2d4271e3c0b7b030e8fe79f",
+  "interpretation": "Ratios are multiplicative team event weights within a selected dropback and situation cell. They are not final game sack probabilities. Current-season penalty correction is compared with the old all-null database behavior using the same cutoff and games.",
+  "kickoff_utc": "2026-11-10T01:15:00+00:00",
+  "largest_absolute_ratio_delta": 0.4850920561929737,
+  "penalty_overlay_sha256": "0af09583a74a8dd1578b2d6cebb1d259a989a41a85352cda94c1e2dacab4b7de",
+  "pregame_cutoff_utc": "2026-11-09T23:45:00+00:00",
+  "sack_event_team_ratio_cells": [
+    {
+      "cell": [
+        2,
+        "6-9",
+        "30-49"
+      ],
+      "corrected_ratio": 1.0461809132883066,
+      "corrected_sack_support": 0,
+      "legacy_null_ratio": 1.5312729694812803,
+      "legacy_sack_support": 1,
+      "ratio_delta": -0.4850920561929737,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "50-59"
+      ],
+      "corrected_ratio": 0.7500049230787874,
+      "corrected_sack_support": 0,
+      "legacy_null_ratio": 1.2090459846444797,
+      "legacy_sack_support": 1,
+      "ratio_delta": -0.45904106156569224,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        2,
+        "6-9",
+        "60-69"
+      ],
+      "corrected_ratio": 0.8324397940994579,
+      "corrected_sack_support": 0,
+      "legacy_null_ratio": 1.2507962275819415,
+      "legacy_sack_support": 1,
+      "ratio_delta": -0.41835643348248364,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "60-69"
+      ],
+      "corrected_ratio": 1.196928855774611,
+      "corrected_sack_support": 2,
+      "legacy_null_ratio": 1.1367801772148354,
+      "legacy_sack_support": 2,
+      "ratio_delta": 0.06014867855977557,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "80-99"
+      ],
+      "corrected_ratio": 2.1356170669073262,
+      "corrected_sack_support": 2,
+      "legacy_null_ratio": 2.097697982445689,
+      "legacy_sack_support": 2,
+      "ratio_delta": 0.037919084461637276,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "30-49"
+      ],
+      "corrected_ratio": 1.371212155713147,
+      "corrected_sack_support": 2,
+      "legacy_null_ratio": 1.3347457414523123,
+      "legacy_sack_support": 2,
+      "ratio_delta": 0.036466414260834634,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "10-19"
+      ],
+      "corrected_ratio": 1.6592548860656178,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.6255858188144607,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.03366906725115704,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        2,
+        "6-9",
+        "60-69"
+      ],
+      "corrected_ratio": 1.3492478563907135,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.3158935762622397,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.03335428012847386,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "6-9",
+        "60-69"
+      ],
+      "corrected_ratio": 1.2369533402203856,
+      "corrected_sack_support": 2,
+      "legacy_null_ratio": 1.2079470474540124,
+      "legacy_sack_support": 2,
+      "ratio_delta": 0.02900629276637323,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "10+",
+        "50-59"
+      ],
+      "corrected_ratio": 1.2863412999776638,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.2579375043324885,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.028403795645175256,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "10+",
+        "10-19"
+      ],
+      "corrected_ratio": 1.0188651218062983,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 0.9906980556067778,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.028167066199520474,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        2,
+        "10+",
+        "60-69"
+      ],
+      "corrected_ratio": 1.3133081071952546,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.2891624882220496,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.024145618973204996,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        2,
+        "10+",
+        "30-49"
+      ],
+      "corrected_ratio": 1.3532137655965049,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.3352454072733795,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.017968358323125377,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "20-29"
+      ],
+      "corrected_ratio": 3.4841172982991773,
+      "corrected_sack_support": 3,
+      "legacy_null_ratio": 3.4841172982991773,
+      "legacy_sack_support": 3,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "30-49"
+      ],
+      "corrected_ratio": 1.5662308749520104,
+      "corrected_sack_support": 2,
+      "legacy_null_ratio": 1.5662308749520104,
+      "legacy_sack_support": 2,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "50-59"
+      ],
+      "corrected_ratio": 1.4940410164548097,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.4940410164548097,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "60-69"
+      ],
+      "corrected_ratio": 1.0809483617347653,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.0809483617347653,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "80-99"
+      ],
+      "corrected_ratio": 1.3435697046316515,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.3435697046316515,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        2,
+        "10+",
+        "70-79"
+      ],
+      "corrected_ratio": 1.2350941069949335,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.2350941069949335,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        2,
+        "3-5",
+        "60-69"
+      ],
+      "corrected_ratio": 1.6104687994931899,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.6104687994931899,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        2,
+        "6-9",
+        "70-79"
+      ],
+      "corrected_ratio": 1.3542136307113266,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.3542136307113266,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "1-2",
+        "60-69"
+      ],
+      "corrected_ratio": 2.7790811339198433,
+      "corrected_sack_support": 2,
+      "legacy_null_ratio": 2.7790811339198433,
+      "legacy_sack_support": 2,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "10+",
+        "60-69"
+      ],
+      "corrected_ratio": 1.3058618181818182,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.3058618181818182,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "10+",
+        "70-79"
+      ],
+      "corrected_ratio": 1.1725330005962418,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.1725330005962418,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "3-5",
+        "70-79"
+      ],
+      "corrected_ratio": 1.1454309502140425,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.1454309502140425,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "3-5",
+        "80-99"
+      ],
+      "corrected_ratio": 1.6455278592375366,
+      "corrected_sack_support": 2,
+      "legacy_null_ratio": 1.6455278592375366,
+      "legacy_sack_support": 2,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "6-9",
+        "50-59"
+      ],
+      "corrected_ratio": 0.902621908088371,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 0.902621908088371,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "60-69"
+      ],
+      "corrected_ratio": 1.940736394185905,
+      "corrected_sack_support": 3,
+      "legacy_null_ratio": 1.940736394185905,
+      "legacy_sack_support": 3,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "6-9",
+        "1-9"
+      ],
+      "corrected_ratio": 1.76508067928833,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.76508067928833,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        2,
+        "10+",
+        "10-19"
+      ],
+      "corrected_ratio": 1.2417747329706246,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.2417747329706246,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        2,
+        "10+",
+        "50-59"
+      ],
+      "corrected_ratio": 1.6638863243498074,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.6638863243498074,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        2,
+        "10+",
+        "70-79"
+      ],
+      "corrected_ratio": 1.806056846379427,
+      "corrected_sack_support": 2,
+      "legacy_null_ratio": 1.806056846379427,
+      "legacy_sack_support": 2,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        2,
+        "3-5",
+        "50-59"
+      ],
+      "corrected_ratio": 1.5168564043337183,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.5168564043337183,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        2,
+        "6-9",
+        "30-49"
+      ],
+      "corrected_ratio": 1.5184849844677328,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.5184849844677328,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        2,
+        "6-9",
+        "50-59"
+      ],
+      "corrected_ratio": 1.1091254162812685,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.1091254162812685,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "1-2",
+        "70-79"
+      ],
+      "corrected_ratio": 1.7040818816181134,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.7040818816181134,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "10+",
+        "30-49"
+      ],
+      "corrected_ratio": 1.0926022901829353,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.0926022901829353,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "10+",
+        "70-79"
+      ],
+      "corrected_ratio": 1.0734094096646691,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.0734094096646691,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "3-5",
+        "30-49"
+      ],
+      "corrected_ratio": 1.073811955834428,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.073811955834428,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "6-9",
+        "10-19"
+      ],
+      "corrected_ratio": 1.285839160839161,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.285839160839161,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        3,
+        "6-9",
+        "30-49"
+      ],
+      "corrected_ratio": 1.3303767311120254,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.3303767311120254,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        4,
+        "1-2",
+        "10-19"
+      ],
+      "corrected_ratio": 1.0,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.0,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "MIN"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "50-59"
+      ],
+      "corrected_ratio": 1.0188201090441942,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.0188201090441942,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        2,
+        "6-9",
+        "10-19"
+      ],
+      "corrected_ratio": 1.601599619892303,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.601599619892303,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        2,
+        "6-9",
+        "20-29"
+      ],
+      "corrected_ratio": 1.306478850221984,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.306478850221984,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "10+",
+        "50-59"
+      ],
+      "corrected_ratio": 1.2653562653562653,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.2653562653562653,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "10+",
+        "60-69"
+      ],
+      "corrected_ratio": 1.166397306397306,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.166397306397306,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "3-5",
+        "20-29"
+      ],
+      "corrected_ratio": 1.1437272453532616,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.1437272453532616,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "6-9",
+        "20-29"
+      ],
+      "corrected_ratio": 1.190080683436165,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.190080683436165,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "6-9",
+        "50-59"
+      ],
+      "corrected_ratio": 0.9686299776891971,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 0.9686299776891971,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "6-9",
+        "60-69"
+      ],
+      "corrected_ratio": 1.1714469505662688,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.1714469505662688,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "offense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "50-59"
+      ],
+      "corrected_ratio": 1.2741148024672933,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.2741148024672933,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        1,
+        "10+",
+        "80-99"
+      ],
+      "corrected_ratio": 1.3772844334880388,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.3772844334880388,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        1,
+        "6-9",
+        "1-9"
+      ],
+      "corrected_ratio": 2.974429393784233,
+      "corrected_sack_support": 2,
+      "legacy_null_ratio": 2.974429393784233,
+      "legacy_sack_support": 2,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        2,
+        "1-2",
+        "30-49"
+      ],
+      "corrected_ratio": 1.8365388579674293,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.8365388579674293,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        2,
+        "6-9",
+        "20-29"
+      ],
+      "corrected_ratio": 1.2804394983671297,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.2804394983671297,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        2,
+        "6-9",
+        "50-59"
+      ],
+      "corrected_ratio": 1.4719828637869619,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.4719828637869619,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "10+",
+        "60-69"
+      ],
+      "corrected_ratio": 1.0953737893604079,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.0953737893604079,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "3-5",
+        "50-59"
+      ],
+      "corrected_ratio": 0.9734725113932062,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 0.9734725113932062,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "3-5",
+        "70-79"
+      ],
+      "corrected_ratio": 1.1325621809492776,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.1325621809492776,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "BUF"
+    },
+    {
+      "cell": [
+        3,
+        "6-9",
+        "50-59"
+      ],
+      "corrected_ratio": 1.127591706539075,
+      "corrected_sack_support": 1,
+      "legacy_null_ratio": 1.127591706539075,
+      "legacy_sack_support": 1,
+      "ratio_delta": 0.0,
+      "side": "defense",
+      "team": "BUF"
+    }
+  ],
+  "source_database_sha256": "1a775208bc6e38763ef59c38a6cc79bda3636007feb8c6dc44f085f668341daa",
+  "target_game_id": "2026_09_BUF_MIN"
+}
