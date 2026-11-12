@@ -134,7 +134,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
                    player_outcomes_receiver_only=False, blocker_fixes=(), fg_ordinary_cutoff=60,
                    qb_run_role_style=None, score_clock_playcalling=True, season_adapt=False, season_adapt_n0=4.0,
-                   pass_label_mode='legacy', exact_distance_yardage=False):
+                   pass_label_mode='legacy', exact_distance_yardage=False, fourth_down_intent_guard=False):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it.
 
@@ -178,6 +178,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, formation=F
     sampler = ref.contextual_sampler
     sampler.pass_label_mode = pass_label_mode
     sampler.exact_distance_yardage = bool(exact_distance_yardage)
+    sampler.fourth_down_intent_guard = bool(fourth_down_intent_guard)
     sampler.qb_run_role_style_enabled = bool(qb_run_role_style)
     sampler.source_cutoff = {'eligible_before': [season, 1]}
     sampler.optional_input_sha256 = {}
@@ -1131,7 +1132,8 @@ def _describe_layer(ref):
                          'team_tendency.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
                          'streak_splits.py', 'target_roles.py', 'decision_layer.py', 'player_shares.py',
                          'e0_single_play.py',
-                         'pass_label_outcomes.py', 'share_distributions.py', 'fit_cache.py', 'slc_setup_cache.py', 'qb_decisions.py',
+                         'pass_label_outcomes.py', 'share_distributions.py', 'fit_cache.py', 'slc_setup_cache.py',
+                         'slc_intent_support.py', 'qb_decisions.py',
                          'player_outcomes.py', 'playbook_prior.py', 'season_layers.py',
                          'paired_random_streams.py', 'run_slc_game.py', 'simulate_pregame_batch.py',
                          'slc_engine.py', 'slc_playcall.py')
