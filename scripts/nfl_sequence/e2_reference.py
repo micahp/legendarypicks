@@ -552,6 +552,13 @@ def _shared_play_call_frame(pm, db, cutoff):
         cache_dir = os.environ.get('SLC_FRAME_CACHE_DIR')  # opt-in disk cache; every read checks the source fingerprint
         if cache_dir:
             frame = pm.load_frame_cached(Path(cache_dir) / f'play-call-frame-{cutoff}.npz', range(2010, cutoff), db=db)
+        elif os.environ.get('SLC_FIT_CACHE_DIR'):
+            import reference_build_cache as reference_cache
+            pm.holdout.refuse_if_holdout(cutoff - 1, 'play-call model frame')
+            frame = reference_cache.memo_db(
+                'playcall_frame', db, (2010, cutoff, True),
+                lambda: pm.load_frame(range(2010, cutoff), db=db),
+                code_files=(pm.__file__, pm.pco.__file__, __file__))
         else:
             frame = pm.load_frame(range(2010, cutoff), db=db)
         _PLAY_CALL_FRAMES[key] = frame
@@ -768,10 +775,26 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
                 raise ValueError('decision categories need an eligible-before cutoff')
             import decision_layer as dl2
             cutoff = int(eligible_before[0])
-            labelled = dl2.load_rows(db, range(dl2.FIRST_CHARTED_SEASON, cutoff),
-                                     known_clean_only=playcall_known_clean_only)  # raises when no charted season precedes it
+            def build_decision_inputs():
+                labelled_rows = dl2.load_rows(db, range(dl2.FIRST_CHARTED_SEASON, cutoff),
+                                               known_clean_only=playcall_known_clean_only)
+                return labelled_rows, dl2.fit(labelled_rows, prior_season=cutoff - 1)
+
+            if os.environ.get('SLC_FIT_CACHE_DIR'):
+                import reference_build_cache as reference_cache
+                if cutoff <= dl2.FIRST_CHARTED_SEASON:
+                    raise ValueError('no charting seasons precede this cutoff')
+                source_files = [dl2.PLAYERS_PARQUET] + [
+                    dl2.PBP_PARQUET.format(season=year)
+                    for year in range(dl2.FIRST_CHARTED_SEASON, cutoff)]
+                input_files = tuple(reference_cache.file_identity(path) for path in source_files)
+                labelled, decision_priors = reference_cache.memo_db(
+                    'decision_labels', db, (cutoff, bool(playcall_known_clean_only), input_files),
+                    build_decision_inputs, code_files=(dl2.__file__, __file__))
+            else:
+                labelled, decision_priors = build_decision_inputs()
             dl2.attach((row for cell in pool.values() for _event, row, _runoff, _spot in cell), labelled)
-            contextual_sampler.decision_table = dl2.fit(labelled, prior_season=cutoff - 1)
+            contextual_sampler.decision_table = decision_priors
             contextual_sampler.decision_outcomes = True
         if playcall_player_shares:  # prior-season player target and carry shares for the pre-event adapter
             if eligible_before is None:
