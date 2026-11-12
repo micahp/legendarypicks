@@ -925,6 +925,7 @@ def run_batch(args):
                                                            player_shares=args.playcall_player_shares or args.playcall_dirichlet_shares,
                                                            exact_yardline=args.playcall_exact_yardline,
                                                            exact_distance_yardage=args.playcall_exact_distance_yardage,
+                                                           fourth_down_intent_guard=args.slc_profile == 'v1_6_candidate',
                                                            coverage=args.playcall_coverage,
                                                            point_splits=(str(args.playcall_point_splits_cache) if args.playcall_point_splits_cache else args.playcall_point_splits),
                                                            streak=(str(args.playcall_streak_cache) if args.playcall_streak_cache else args.playcall_streak_splits),
