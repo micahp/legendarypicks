@@ -64,7 +64,7 @@ Averages are computed here from the listed regular-season games.
 |---|---|---|
 | Yaxel Lendeborg, draft | Checked today | ESPN athlete overview, `displayDraft`: "2026: Rd 1, Pk 11 (GS)". 11th overall pick, 2026. |
 | Lendeborg, regular-season points | Checked today | 23, 23, 17, 16, 37, 6, 26, 31, 26, 18, 12 (11 games, Oct. 22 to Nov. 10). Average 21.4 (computed: 235 / 11). |
-| Lendeborg, last three games | Checked today | Nov. 1 at LAC (37), Nov. 7 vs ORL (23), Nov. 9 vs NO (23). ESPN dates are UTC: Nov. 2, Nov. 8, and Nov. 10 in UTC. |
+| Lendeborg, last three games | Checked today | Nov. 1 vs LAC (37), Nov. 7 vs ORL (23), Nov. 9 vs NO (23). ESPN dates are UTC: Nov. 2, Nov. 8, and Nov. 10 in UTC. |
 | Stephen Curry, points per game | Checked today | 30.6 (computed from 9 regular-season games in the ESPN log: 23, 24, 24, 44, 31, 34, 29, 41, 25). The log has 9 games, not 11. |
 | Kevin Durant, points per game | Checked today | 21.0 (computed from 11 regular-season games in the ESPN log). Last game: 23 vs DEN, Nov. 9 ET, a 110-100 win. |
 | Durant and the Warriors history | Unknown | Not checked. The spec lists it as a possible angle. |
