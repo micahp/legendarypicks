@@ -362,13 +362,16 @@ def _decision_resolves_to_event(decision, event):
     )
 
 
-def play(seed, ref, snapshot, *, paired_randomness=False):
+def play(seed, ref, snapshot, *, paired_randomness=False, paired_seed_snapshot_sha256=None):
     """One SLC game. Returns (record, decisions): the engine record and this game's play-call decisions, in order."""
     if not is_slc(ref):
         raise ValueError('the reference was not loaded with the SLC play-call layer')
+    if paired_seed_snapshot_sha256 is not None and not paired_randomness:
+        raise ValueError('paired_seed_snapshot_sha256 requires paired_randomness')
     sampler = ref.contextual_sampler
     sampler.decisions.clear()
     sampler.participant_chooser = pre_event.chooser(require_snapshot(snapshot), seed,
+                                                    seed_snapshot_sha256=paired_seed_snapshot_sha256,
                                                     formation_priors=sampler.formation_priors,
                                                     player_shares=sampler.player_shares,
                                                     defense_priors=sampler.defense_priors,
@@ -380,7 +383,8 @@ def play(seed, ref, snapshot, *, paired_randomness=False):
                                                         sampler, 'qb_run_role_style_enabled', False))
     try:
         record = gs.play_game(seed, ref, pregame_snapshot=copy.deepcopy(snapshot),
-                              paired_randomness=paired_randomness)
+                              paired_randomness=paired_randomness,
+                              paired_seed_snapshot_sha256=paired_seed_snapshot_sha256)
     finally:
         sampler.participant_chooser = None
     decisions = list(sampler.decisions)
