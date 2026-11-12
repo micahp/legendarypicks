@@ -1741,7 +1741,7 @@ def active_unsupported_rules(guarded, blocker):
 
 
 def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None,
-              paired_randomness=False):
+              paired_randomness=False, paired_seed_snapshot_sha256=None):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
 
     `ref` is the observed Reference (e2_reference.load). It is required, so a game is never played with a silent
@@ -1749,12 +1749,18 @@ def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame
     unless a caller fixes them for a test.
     """
     snapshot_digest = pregame_snapshot['snapshot_sha256'] if pregame_snapshot else ''
+    if paired_seed_snapshot_sha256 is not None and not paired_randomness:
+        raise ValueError('paired_seed_snapshot_sha256 requires paired_randomness')
     if paired_randomness and not snapshot_digest:
         raise ValueError('paired random streams require a frozen pregame snapshot')
-    material = f'{seed}:{snapshot_digest}'.encode()
+    # Compare model variants with one shared frozen-input identity, not with
+    # their different resealed model snapshots. Ordinary seeds are unchanged.
+    random_input_digest = (paired_seed_snapshot_sha256 if paired_randomness
+                           and paired_seed_snapshot_sha256 is not None else snapshot_digest)
+    material = f'{seed}:{random_input_digest}'.encode()
     model_seed = int.from_bytes(hashlib.sha256(material).digest()[:8], 'big')
     rng = random.Random(model_seed)
-    streams = PairedRandomStreams(model_seed, snapshot_digest) if paired_randomness else None
+    streams = PairedRandomStreams(model_seed, random_input_digest) if paired_randomness else None
     toss_rng = streams.rng('regulation_coin_toss') if streams else rng
     choice_rng = streams.rng('regulation_first_choice') if streams else rng
     toss_winner = winner or toss_rng.choice(['A', 'B'])
