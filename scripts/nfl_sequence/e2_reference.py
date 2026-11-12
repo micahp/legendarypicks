@@ -868,6 +868,10 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
         contextual_sampler.fg_ordinary_cutoff = float(fg_ordinary_cutoff)
     if contextual_sampler is not None and 'run_scramble_backoff' in blocker_fixes:
         contextual_sampler.source_pool = pool
+        if materialized_history:
+            contextual_sampler.source_support_artifact = materialized_history
+            contextual_sampler.source_support_variant = (
+                f'{int(playcall_qb_decisions)}{int(playcall_separate_sack_fumbles)}')
         contextual_sampler.outcome_backoff_enabled = True
         contextual_sampler.allow_sparse_cells = True
         contextual_sampler.scramble_backoff_enabled = True
