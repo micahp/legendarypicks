@@ -1,8 +1,13 @@
 ## v10.1.5
 
-### Data
+### Breaking change: database schema
 
-- Rename `players.nba_id` to `players.hoopr_id`. The column always held hoopR (ESPN) athlete IDs, not official NBA.com IDs. Values, hash and row count are unchanged. The migration is `backend/migrate_players_hoopr_id.py` (dry run by default, `--apply`, `--rollback`). Code reads either name until prod is renamed.
+- `players.nba_id` is now `players.hoopr_id`, on dev and prod. The HTTP API and the frontend are not affected: no route or page used the old name.
+- The column always held hoopR (ESPN) athlete IDs, not official NBA.com IDs. Official NBA.com IDs stay in `player_source_ids` (source `nba.com`).
+- Values, hash and row count are unchanged (541 values).
+- Who is affected: any outside script or query that reads `players.nba_id`. Change it to `players.hoopr_id`.
+- Migration: `backend/migrate_players_hoopr_id.py` (dry run by default, `--apply`, `--rollback`). It is idempotent. Rollback restores the old name.
+- Code that must still open an old database reads either name.
 
 ## v10.1.4
 
