@@ -36,6 +36,13 @@ class FullStackProfile(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'frozen pregame streak'):
             config.resolve_profile('v1_full_stack', artifact_path='artifact.json')
 
+    def test_v16_candidate_disables_coverage_outcome_weighting(self):
+        candidate = config.resolve_profile('v1_6_candidate', artifact_path='artifact.json',
+                                           streak_file='streak.json')
+        self.assertFalse(candidate['options']['playcall_coverage'])
+        self.assertFalse(candidate['enabled_layers']['defensive_coverage_outcomes'])
+        self.assertTrue(self.resolved['enabled_layers']['defensive_coverage_outcomes'])
+
     def test_fixed_shares_and_unfiltered_decisions_are_incompatible(self):
         with self.assertRaisesRegex(ValueError, 'fixed and Dirichlet'):
             config.resolve_profile('v1_full_stack', artifact_path='a', streak_file='s',

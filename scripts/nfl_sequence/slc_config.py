@@ -23,8 +23,28 @@ V1_OPTIONS = {
     'playcall_streak_league': True,
     'playcall_exact_yardline': True,
 }
-V16_CANDIDATE_OPTIONS = dict(V1_OPTIONS, playcall_season_adapt=True,
+V16_CANDIDATE_OPTIONS = dict(V1_OPTIONS, playcall_coverage=False, playcall_season_adapt=True,
                              playcall_exact_distance_yardage=True)
+V16_COVERAGE_DECISION = {
+    'status': 'disabled',
+    'reason': 'coverage-conditioned outcome weights underpredict sacks on held-out plays',
+    'audit': {
+        'method': 'walk-forward observed-context event scoring',
+        'training_seasons': [2022, 2023, 2024],
+        'holdout_season': 2025,
+        'known_coverage_clean_dropbacks': 17887,
+        'sacks_without_coverage_2022': 1208,
+        'coverage_labels_on_2022_sacks': 0,
+        'observed_sack_rate': 0.06748,
+        'baseline_predicted_sack_rate': 0.06756,
+        'coverage_predicted_sack_rate': 0.04716,
+        'baseline_sack_brier': 0.062567,
+        'coverage_sack_brier': 0.063208,
+        'baseline_event_log_loss': 0.967961,
+        'coverage_event_log_loss': 0.979293,
+        'joined_audit_data_sha256': '0be86a1abbab7dae228246bfd57953d6f190cf257c3ad5d6ba248dadae3e35e6',
+    },
+}
 
 OPTION_TO_LAYER = {
     'playcall_team_outcomes': 'team_offense_defense_outcomes',
@@ -397,6 +417,8 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         },
         'current_streak_context': {'input_sha256': optional_hashes.get('current_streak_file')},
     }
+    if resolved['profile'] == 'v1_6_candidate':
+        settings['defensive_coverage_outcomes'] = dict(V16_COVERAGE_DECISION)
     resolved_input_provenance = {
         **(input_provenance or {}),
         'reference_sha256': reference_sha,
