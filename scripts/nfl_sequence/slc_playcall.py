@@ -54,6 +54,17 @@ PASS_LABEL_CATEGORIES = frozenset(('A', 'D', 'E'))
 PASS_LABEL_MODES = frozenset(('legacy', 'off', 'two_stage', 'conditional'))
 
 
+def _event_probability_stage(name, keys, weights):
+    """A tracing-only view of event weights; does not consume random numbers."""
+    total = float(sum(weights))
+    grouped = defaultdict(float)
+    if total > 0:
+        for (intent, event), weight in zip(keys, weights):
+            grouped[str(event)] += float(weight) / total
+    return {'stage': name, 'probabilities': {k: round(v, 8) for k, v in grouped.items()},
+            'weight_total': round(total, 8)}
+
+
 def _sha(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
@@ -172,6 +183,7 @@ class PlayCallSampler:
         self._backoff_index_uses_lateral_filter = None
         self._backoff_lateral_rows_excluded = 0
         self.outcome_backoff_enabled = False
+        self.trace_outcome_probabilities = False  # opt-in; no changes to sampling RNG
         self.fourth_down_intent_guard = False  # V1.6 only; preserve frozen V1.5 policy
         self.allow_sparse_cells = False
         self.scramble_backoff_enabled = False
@@ -471,6 +483,7 @@ class PlayCallSampler:
         backoff_candidates, outcome_fallback = (None, None)
         backoff_ess = None
         outcome_weight_fallback = None
+        probability_trace = []
         if self.outcome_backoff_enabled and called_intent in SCRIMMAGE_INTENTS:
             exact_outcome_rows = self._outcome_rows(cell, called_intent, scramble, state)
             if len(exact_outcome_rows) < OUTCOME_BACKOFF_MIN_SUPPORT['exact_cell']:
@@ -480,19 +493,29 @@ class PlayCallSampler:
             counts = Counter(sample[0] for sample in backoff_candidates)
             keys = sorted((outcome_intent, event) for event in counts)
             weights = [counts[key[1]] for key in keys]
+            if self.trace_outcome_probabilities:
+                probability_trace.append(_event_probability_stage('base_sparse_backoff', keys, weights))
             if self.team_outcomes is not None:
                 weights = [weight * self._outcome_weight(key[1], offense, defense, entry['key'] or target)
                            for weight, key in zip(weights, keys)]
+                if self.trace_outcome_probabilities:
+                    probability_trace.append(_event_probability_stage('team_event_weights', keys, weights))
             if use_player_outcomes:
                 import player_outcomes
                 weights = [weight * player_outcomes.event_weight(self.player_outcome_table, key[1], pre_event,
                                                                   enabled_roles=self.player_outcome_roles)
                            for weight, key in zip(weights, keys)]
+                if self.trace_outcome_probabilities:
+                    probability_trace.append(_event_probability_stage('player_event_weights', keys, weights))
             if not any(weight > 0 for weight in weights):
                 # These are modifiers within an already-selected play intent. If every modifier rejects
                 # its outcomes, retain that intent and fall back to the supported backoff distribution.
                 weights = [counts[key[1]] for key in keys]
                 outcome_weight_fallback = 'all_conditioned_weights_zero_within_selected_intent'
+                if self.trace_outcome_probabilities:
+                    probability_trace.append(_event_probability_stage('all_zero_weights_fallback', keys, weights))
+            if self.trace_outcome_probabilities:
+                probability_trace.append(_event_probability_stage('final_event_draw', keys, weights))
             weight_total = sum(weights)
             if weight_total > 0:
                 backoff_ess = 1.0 / sum(
@@ -524,6 +547,10 @@ class PlayCallSampler:
         streak_fallback = None
         weights = []
         baseline_weights = []
+        stage_values = ({stage: [] for stage in ('formation', 'coverage', 'league_streak',
+                                                 'decision_labels', 'team_event_weights',
+                                                 'player_event_weights')}
+                        if self.trace_outcome_probabilities else None)
         if fallback_by_key is None:
             for k in keys:
                 base_weight = (exact_counts[k[1]] if exact_outcome_rows is not None else entry['base'][k])
@@ -531,10 +558,16 @@ class PlayCallSampler:
                 weight = base_weight
                 if use_formation:  # lifts multiply: formation and coverage are treated as independent given the outcome
                     weight *= self._lift(entry, k, formation, 'by_formation')
+                if stage_values is not None:
+                    stage_values['formation'].append(weight)
                 if use_coverage:
                     weight *= self._lift(entry, k, coverage, 'by_coverage')
+                if stage_values is not None:
+                    stage_values['coverage'].append(weight)
                 if use_streak:  # the league's outcome mix for this streak state, relative to the cell
                     weight *= self._lift(entry, k, streak_bucket, 'by_streak')
+                if stage_values is not None:
+                    stage_values['league_streak'].append(weight)
                 if use_labels:  # the drawn labels' lifts, averaged in log space: the categories overlap, so they do not compound
                     active_labels = [(category, value) for category, value in labels.items()
                                      if value is not None and not (
@@ -542,18 +575,39 @@ class PlayCallSampler:
                                          and category in PASS_LABEL_CATEGORIES)]
                     weight *= decision_layer.geometric_mean([self._label_lift(entry, k, decision_layer.label_key(c, v))
                                                              for c, v in active_labels])
+                if stage_values is not None:
+                    stage_values['decision_labels'].append(weight)
                 if self.team_outcomes is not None:  # team splits weight which outcome type is drawn within the intent
                     weight *= self._outcome_weight(k[1], offense, defense, entry['key'])
+                if stage_values is not None:
+                    stage_values['team_event_weights'].append(weight)
                 if use_player_outcomes:
                     import player_outcomes
                     weight *= player_outcomes.event_weight(self.player_outcome_table, k[1], pre_event,
                                                            enabled_roles=self.player_outcome_roles)
+                if stage_values is not None:
+                    stage_values['player_event_weights'].append(weight)
                 weights.append(weight)
+            if self.trace_outcome_probabilities:
+                probability_trace.append(_event_probability_stage(
+                    'base_exact_cell' if exact_outcome_rows is None else 'base_exact_outcome_rows',
+                    keys, baseline_weights))
+                for stage_name, enabled in (('formation', use_formation), ('coverage', use_coverage),
+                                            ('league_streak', use_streak), ('decision_labels', use_labels),
+                                            ('team_event_weights', self.team_outcomes is not None),
+                                            ('player_event_weights', use_player_outcomes)):
+                    if enabled:
+                        probability_trace.append(_event_probability_stage(
+                            stage_name, keys, stage_values[stage_name]))
             if weights and not any(weight > 0 for weight in weights):
                 # Team/label/player outcome evidence may be sparse or conflicting. It may adjust
                 # outcomes, but it must not make a legal, already-chosen intent impossible to sample.
                 weights = baseline_weights
                 outcome_weight_fallback = 'all_conditioned_weights_zero_within_selected_intent'
+                if self.trace_outcome_probabilities:
+                    probability_trace.append(_event_probability_stage('all_zero_weights_fallback', keys, weights))
+        if self.trace_outcome_probabilities and fallback_by_key is None:
+            probability_trace.append(_event_probability_stage('final_pre_pass_label_draw', keys, weights))
         if (self.team_outcomes is None and not use_formation and not use_coverage and not use_streak and not use_labels
                 and not use_player_outcomes):
             if fallback_by_key is None:
@@ -743,6 +797,20 @@ class PlayCallSampler:
                 scramble_eligible_candidates=(len(backoff_candidates) if backoff_candidates is not None else
                                               len(exact_outcome_rows) if scramble and exact_outcome_rows is not None else 0),
             )
+        if self.trace_outcome_probabilities:
+            decision_record['outcome_probability_trace'] = {
+                'state': decision_record['state'], 'called_intent': called_intent,
+                'outcome_intent': outcome_intent, 'selected_event': event,
+                'source_fallback': outcome_fallback, 'support_n': (
+                    len(backoff_candidates) if backoff_candidates is not None else
+                    len(exact_outcome_rows) if exact_outcome_rows is not None else None),
+                'zero_weight_fallback': outcome_weight_fallback,
+                'stages': probability_trace,
+                'post_event_source_row_filters': {
+                    'formation': formation_fallback, 'coverage': coverage_fallback,
+                    'streak': streak_fallback, 'labels_matched': labels_matched,
+                    'labels_unmatched': labels_unmatched,
+                    'exact_distance': exact_distance_branch}}
         if 'long_field_goal_feasibility' in self.blocker_fixes:
             decision_record.update(
                 fg_rejected_distance=fg_rejected_distance,
