@@ -1,8 +1,11 @@
 import collections
 import random
+import sqlite3
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -17,6 +20,23 @@ def priors(cell_formation, league_formation, cell_personnel=None, league_personn
     cell = {'formation': collections.Counter(cell_formation), 'personnel': collections.Counter(cell_personnel or {'11': 1})}
     league = {'formation': collections.Counter(league_formation), 'personnel': collections.Counter(league_personnel or {'11': 1})}
     return {'cells': {('dropback', 2, 'mid'): cell}, 'league': {'dropback': league, 'run': league}, 'strength': 25.0}
+
+
+class FormationBuildReuse(unittest.TestCase):
+    def test_reusing_participation_avoids_second_historical_load(self):
+        with tempfile.TemporaryDirectory() as folder:
+            db = Path(folder) / 'history.sqlite'
+            with sqlite3.connect(db) as con:
+                con.execute('CREATE TABLE nfl_pbp (game_id TEXT, play_id INTEGER, down INTEGER, '
+                            'ydstogo INTEGER, play_type TEXT, posteam TEXT, season INTEGER, week INTEGER)')
+                con.execute("INSERT INTO nfl_pbp VALUES ('G1', 1, 2, 7, 'pass', 'AAA', 2025, 1)")
+            participation = {('G1', 1): ('SHOTGUN', '11')}
+            with mock.patch.object(fl, 'load_participation', return_value=participation) as load:
+                built = fl.priors(str(db), 2026, participation=participation)
+                self.assertEqual(load.call_count, 0)
+                control = fl.priors(str(db), 2026)
+                self.assertEqual(load.call_count, 1)
+            self.assertEqual(built, control)
 
 
 class Personnel(unittest.TestCase):
