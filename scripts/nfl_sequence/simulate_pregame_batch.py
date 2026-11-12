@@ -25,6 +25,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
 import shlex
 import sqlite3
@@ -907,6 +908,12 @@ def run_batch(args):
     cutoff_pool_mode = args.context_mode != 'unconditioned'
     try_policy = try_policy_module.TryPolicy.from_fixture() if args.try_policy == 'k1' else None
     safety_kick_table = not args.no_safety_table
+    # Expensive, cutoff-safe historical fits are identical across many matchups.
+    # Reuse them across processes by default, with existing exact-input/code-hash
+    # invalidation. An explicit empty SLC_FIT_CACHE_DIR disables all fit caching.
+    if args.playcall_artifact and 'SLC_FIT_CACHE_DIR' not in os.environ:
+        cache_home = Path(os.environ.get('XDG_CACHE_HOME') or Path.home() / '.cache')
+        os.environ['SLC_FIT_CACHE_DIR'] = str(cache_home / 'legendarypicks' / 'slc-fits')
     reference_started = time.monotonic()
     if args.playcall_artifact:
         if args.team_tendency or args.context_mode != 'unconditioned' or args.try_policy != 'unconditional' or args.no_safety_table:
