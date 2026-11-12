@@ -89,9 +89,9 @@ Older repo docs also report 403 from stats.nba.com and cdn.nba.com
 ## Open items
 
 1. Complete the `nba_schedule` snapshot and its ESPN ID crosswalk.
-3. Confirm 2026–27 final scores are written to `nba_schedule`.
-4. Confirm a stable NBA player game-log source for 2026–27.
-5. Decide whether the official NBA draft page can be the draft source.
+2. Confirm 2026–27 final scores are written to `nba_schedule`.
+3. Confirm a stable NBA player game-log source for 2026–27.
+4. Decide whether the official NBA draft page can be the draft source.
 
 ## Changes to this doc
 
