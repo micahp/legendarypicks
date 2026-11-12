@@ -1131,7 +1131,7 @@ def _describe_layer(ref):
                          'team_tendency.py', 'formation_layer.py', 'defense_layer.py', 'point_splits.py',
                          'streak_splits.py', 'target_roles.py', 'decision_layer.py', 'player_shares.py',
                          'e0_single_play.py',
-                         'pass_label_outcomes.py', 'share_distributions.py', 'fit_cache.py', 'qb_decisions.py',
+                         'pass_label_outcomes.py', 'share_distributions.py', 'fit_cache.py', 'slc_setup_cache.py', 'qb_decisions.py',
                          'player_outcomes.py', 'playbook_prior.py', 'season_layers.py',
                          'paired_random_streams.py', 'run_slc_game.py', 'simulate_pregame_batch.py',
                          'slc_engine.py', 'slc_playcall.py')
