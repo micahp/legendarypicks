@@ -1,3 +1,9 @@
+## v10.1.5
+
+### Data
+
+- Rename `players.nba_id` to `players.hoopr_id`. The column always held hoopR (ESPN) athlete IDs, not official NBA.com IDs. Values, hash and row count are unchanged. The migration is `backend/migrate_players_hoopr_id.py` (dry run by default, `--apply`, `--rollback`). Code reads either name until prod is renamed.
+
 ## v10.1.4
 
 ### League navigation
