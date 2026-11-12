@@ -91,13 +91,20 @@ MANIFEST = {
             # FTM/FTA/3PM/MIN/TO) -- a point guard and a center need no
             # different keys. 100% coverage measured over 500 sampled logs;
             # floor 0.8 trips only on a collapse.
-            "C": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
-            "F": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
-            "G": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
-            "PF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
-            "PG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
-            "SF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
-            "SG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8},
+            "C": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "F": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "G": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "PF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "PG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "SF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "SG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+        },
+        # The normalised groups (Guard/Forward/Center) are measured separately from
+        # the detailed positions above, on logs with real minutes only.
+        "position_group_content": {
+            "Guard": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "Forward": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "Center": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
         },
         # `position_group` carries the parent level (PF -> F, SG -> G) beside
         # the leaf in `position`, the same split MLB has; see

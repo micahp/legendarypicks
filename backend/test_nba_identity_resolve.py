@@ -35,6 +35,18 @@ class Resolve(unittest.TestCase):
         con.execute("UPDATE players SET espn_id='5107258' WHERE id=63170")
         self.assertEqual(r.resolve(con, "5107258", "William Kyle III")[:2], ("reuse", 63170))
 
+    def test_hoopr_id_owner_with_a_different_espn_id_holds(self):
+        con = db()
+        con.execute("UPDATE players SET hoopr_id='5107258', espn_id='4001' WHERE id=63170")
+        self.assertEqual(r.resolve(con, "5107258", "Bill Kyle")[0], "hold")
+
+    def test_espn_owner_with_a_conflicting_nba_com_id_holds(self):
+        con = db()
+        con.execute("UPDATE players SET espn_id='5107258' WHERE id=63170")
+        action, _, why = r.resolve(con, "5107258", "William Kyle III", nba_com_id="9999999")
+        self.assertEqual(action, "hold")
+        self.assertIn("conflicts", why)
+
     def test_unrelated_player_is_created(self):
         self.assertEqual(r.resolve(db(), "123", "Someone Else")[0], "create")
 

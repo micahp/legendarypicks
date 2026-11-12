@@ -98,12 +98,27 @@ def check_position_content(con, league, spec, out):
     MANIFEST (dict form); legacy list entries default to `_POSITION_CONTENT_FLOOR`.
     This check read PASS for NHL at 30% coverage on 2026-08-05 because the old
     logic only failed a stat that never appeared at all.
+
+    Two optional declarations make a thin sample visible instead of a pass:
+      min_sample        fewer qualifying logs than this is UNVERIFIED, not PASS
+      qualify_nonzero   a stat key (e.g. MIN): only logs where it is above zero
+                        count, so a did-not-play row is not an observation
+    `position_group_content` runs the same test on the normalised group column
+    (position_group) while the detailed positions stay separately reported.
     """
-    wanted = spec.get("position_content") or {}
+    _position_content(con, league, spec.get("position_content") or {}, "position", "B/position-content", out,
+                      missing_declaration=True)
+    groups = spec.get("position_group_content") or {}
+    if groups and "position_group" in _columns(con, "players"):
+        _position_content(con, league, groups, "position_group", "B/position-group", out)
+
+
+def _position_content(con, league, wanted, column, label, out, missing_declaration=False):
     if not wanted:
-        out.add(UNVERIFIED, league, "B/position-content",
-                "no position_content declared -- nobody has said what this "
-                "league's positions must record")
+        if missing_declaration:
+            out.add(UNVERIFIED, league, "B/position-content",
+                    "no position_content declared -- nobody has said what this "
+                    "league's positions must record")
         return
     for position, entry in sorted(wanted.items()):
         if isinstance(entry, dict):
@@ -115,10 +130,14 @@ def check_position_content(con, league, spec, out):
             # declaration is measurable instead of forever UNVERIFIED by a
             # position join that can never match.
             all_logs = bool(entry.get("all_logs", False))
+            min_sample = int(entry.get("min_sample", 0))
+            qualify = entry.get("qualify_nonzero")
         else:
             keys = entry
             floor = _POSITION_CONTENT_FLOOR
             all_logs = False
+            min_sample = 0
+            qualify = None
         if all_logs:
             rows = con.execute(
                 "SELECT l.stats FROM player_game_logs l "
@@ -126,16 +145,32 @@ def check_position_content(con, league, spec, out):
                 "WHERE l.league=? LIMIT 500", (league,)).fetchall()
         else:
             rows = con.execute(
-                """SELECT l.stats FROM player_game_logs l
+                f"""SELECT l.stats FROM player_game_logs l
                    JOIN players p ON p.id = l.player_id
-                   WHERE l.league=? AND UPPER(TRIM(p.position))=? LIMIT 500""",
+                   WHERE l.league=? AND UPPER(TRIM(p.{column}))=? LIMIT 500""",
                 (league, position.upper()),
             ).fetchall()
         if not rows:
-            out.add(UNVERIFIED, league, f"B/position-content[{position}]",
+            out.add(UNVERIFIED, league, f"{label}[{position}]",
                     "no game logs at all for this position -- cannot confirm "
                     "its stats are recorded")
             continue
+        total_rows = len(rows)
+        if qualify:
+            kept = []
+            for row in rows:
+                try:
+                    value = json.loads(row[0]).get(qualify)
+                    if value is not None and float(value) > 0:
+                        kept.append(row)
+                except (TypeError, ValueError, AttributeError):
+                    continue
+            rows = kept
+            if not rows:
+                out.add(UNVERIFIED, league, f"{label}[{position}]",
+                        f"{total_rows} logs found but none with {qualify} above zero -- "
+                        "no actual appearance to measure")
+                continue
         sampled = len(rows)
         # Each entry is a list of acceptable spellings for ONE stat; a log
         # records the stat when any spelling carries a non-null value.
@@ -159,14 +194,18 @@ def check_position_content(con, league, spec, out):
                                           100.0 * filled[i] / sampled)
                   for i, alts in enumerate(keys)]
         low = [c for i, c in enumerate(counts) if filled[i] < floors[i] * sampled]
+        basis = f"{sampled} qualifying of {total_rows} logs sampled" if qualify else f"{sampled} logs sampled"
         if low:
-            out.add(FAIL, league, f"B/position-content[{position}]",
-                    "%d logs sampled, below the declared floor: %s"
-                    % (sampled, "; ".join(low)))
+            out.add(FAIL, league, f"{label}[{position}]",
+                    "%s, below the declared floor: %s" % (basis, "; ".join(low)))
+        elif sampled < min_sample:
+            out.add(UNVERIFIED, league, f"{label}[{position}]",
+                    "insufficient sample: %s, need at least %d to call it a pass (coverage "
+                    "of what exists: %s)" % (basis, min_sample, ", ".join(counts)))
         else:
-            out.add(PASS, league, f"B/position-content[{position}]",
-                    "%d logs sampled, all recorded at >=%.0f%%: %s"
-                    % (sampled, 100 * min(floors), ", ".join(counts)))
+            out.add(PASS, league, f"{label}[{position}]",
+                    "%s, all recorded at >=%.0f%%: %s"
+                    % (basis, 100 * min(floors), ", ".join(counts)))
 
 def check_single_vocabulary(con, league, spec, out):
     """C. One categorical column, one vocabulary.
@@ -565,10 +604,28 @@ def _check_nba_com_identity(con, league, out):
     no_id = sorted(p for p in used if p in players and p not in ids)
     outside = sorted(p for p in used if p in ids and not any(k in names for k in ids[p]))
     orphan = sorted(p for p in used if p not in players)
+    # Participation coverage is reported beside identity coverage, never instead of
+    # it: who actually played (minutes above zero) versus who was only listed.
+    played = set()
+    for pid, stats in con.execute(
+            "SELECT player_id, stats FROM player_game_logs WHERE league='nba' AND season=? "
+            "AND player_id IS NOT NULL", (season,)):
+        try:
+            minutes = json.loads(stats).get("MIN")
+            if minutes is not None and float(minutes) > 0:
+                played.add(int(pid))
+        except (TypeError, ValueError, AttributeError):
+            continue
+    unverified = set(no_id) | set(outside)
+    verified_used = len(used) - len(unverified) - len(orphan)
+    played_unverified = sorted(p for p in unverified if p in played)
     note = (f"nba.com ids checked={checked}, no published name={skipped}; "
-            f"current season={season}, used players={len(used)}, "
-            f"without an nba.com id={len(no_id)}, id not in nba.com names={len(outside)}, "
-            f"orphan player_ids={len(orphan)}")
+            f"current season={season}; IDENTITY coverage: {verified_used} of {len(used)} used "
+            f"players verified (without an nba.com id={len(no_id)}, id not in nba.com names="
+            f"{len(outside)}, orphan player_ids={len(orphan)}); PARTICIPATION coverage: "
+            f"{len(played) - len(played_unverified)} of {len(played)} players with minutes "
+            f"verified, {len(unverified) - len(played_unverified)} unverified players never "
+            f"had minutes this season")
     if wrong:
         out.add(FAIL, league, "G/published-identity",
                 f"{wrong} of {checked} rows carry an nba.com id belonging to a different "

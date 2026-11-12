@@ -3,7 +3,8 @@
   "written": "2026-10-02",
   "decision": "Each nba.com PLAYER_ID below is the same person as the ESPN athlete id beside it. Verified by birth date: nba.com's team page and ESPN's core athlete record (sports.core.api.espn.com/v2/sports/basketball/leagues/nba/athletes/<id>) publish the same date for every entry. All seven signed new contracts in late July 2026 that ESPN's 2026-08-04 roster had not yet reflected, so team and transaction-date evidence could not bind them. Two of the ESPN ids sit in players.nba_id, which holds hoopR's ESPN athlete ids, not NBA ids.",
   "used_by": "ingest_nba_roster.py, as evidence for a sole name candidate whose ESPN id matches. Needed once: after the first publish these players carry an nba.com crosswalk row and resolve by exact id.",
-  "added_2026_11_12": "16 preseason players bound by nba.com box-score name plus a matching birth date"
+  "added_2026_11_12": "16 preseason players bound by nba.com box-score name plus a matching birth date",
+  "added_2026_11_12_b": "Tait-Jones, Celestine, Wrightsell approved by the owner; Carroll and five zero-minute players held"
  },
  "nba": {
   "1641761": {
@@ -219,6 +220,28 @@
    "name": "Jahmyl Telfort",
    "nba_com_birth_date": "2001-04-30",
    "evidence": "2026-11-12: nba.com player page publishes this name for this id; id was already bound in player_source_ids"
+  },
+  "1643092": {
+   "espn_id": 4711203,
+   "name": "Aniwaniwa Tait-Jones",
+   "nba_com_birth_date": "2001-01-05",
+   "espn_birth_date": "2001-01-05",
+   "evidence": "2026-11-12: nba.com player page and ESPN athlete record agree on full name, birth date and New Zealand; nba.com box score lists him as 'Niwa Tait-Jones'; did not play (ESPN: coach's decision)"
+  },
+  "1643719": {
+   "espn_id": 4598611,
+   "name": "Jalen Celestine",
+   "nba_com_birth_date": "2001-12-20",
+   "espn_birth_date": "",
+   "evidence": "2026-11-12: name and team (TOR) match the nba.com preseason box score of 2026-10-16; nba.com shows 5:34, ESPN shows 6 minutes; ESPN has no birth date; Toronto official roster lists him"
+  },
+  "1643767": {
+   "espn_id": 4702484,
+   "name": "Latrell Wrightsell",
+   "nba_com_birth_date": "2002-05-18",
+   "espn_birth_date": "2002-05-18",
+   "evidence": "2026-11-12: bound through ESPN athlete 4702484 (birth date 2002-05-18, college Alabama) which equals the nba.com page (birth date 2002-05-18, school Alabama). The row's own ESPN id 5460427 is an empty ESPN stub with the same name and team (ESPN team 30); kept as an UNCONFIRMED alias. A reviewer reported a different birth year (1999) on a G League roster page; not verified here, recorded as a discrepancy",
+   "espn_id_alias_unconfirmed": 5460427
   }
  }
 }

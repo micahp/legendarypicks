@@ -86,17 +86,38 @@ def resolve(con: sqlite3.Connection, espn_id, name: str, nba_com_id=None
     """Return (action, players.id or None, reason)."""
     espn_id = str(espn_id) if espn_id not in (None, "") else None
     cols = {r[1] for r in con.execute("PRAGMA table_info(players)")}
+    nba_owner = None
+    if nba_com_id:
+        owners = con.execute("SELECT DISTINCT player_id FROM player_source_ids "
+                             "WHERE league='nba' AND source='nba.com' AND source_player_key=?",
+                             (str(nba_com_id),)).fetchall()
+        if len(owners) > 1:
+            return "hold", None, "more than one row owns the nba.com id"
+        nba_owner = owners[0][0] if owners else None
     if espn_id:
         row = con.execute("SELECT id FROM players WHERE league='nba' AND espn_id=?",
                           (espn_id,)).fetchall()
         if len(row) == 1:
-            return "reuse", row[0][0], "espn_id owner"
+            pid = row[0][0]
+            # An ESPN id owner is not enough on its own: the verified nba.com id must
+            # not belong to someone else, and the owner must not carry a different one.
+            if nba_com_id:
+                held = {str(r[0]) for r in con.execute(
+                    "SELECT source_player_key FROM player_source_ids "
+                    "WHERE league='nba' AND source='nba.com' AND player_id=?", (pid,))}
+                if (nba_owner is not None and nba_owner != pid) or (held and str(nba_com_id) not in held):
+                    return "hold", pid, "ESPN id owner conflicts with the nba.com crosswalk"
+            return "reuse", pid, "espn_id owner"
         if len(row) > 1:
             return "hold", None, "more than one row owns the ESPN id"
         if "hoopr_id" in cols:
-            row = con.execute("SELECT id FROM players WHERE league='nba' AND CAST(hoopr_id AS TEXT)=?",
-                              (espn_id,)).fetchall()
+            row = con.execute("SELECT id, espn_id FROM players WHERE league='nba' "
+                              "AND CAST(hoopr_id AS TEXT)=?", (espn_id,)).fetchall()
             if len(row) == 1:
+                if row[0][1] not in (None, "") and str(row[0][1]) != espn_id:
+                    return "hold", row[0][0], "hoopr_id owner carries a different ESPN id"
+                if nba_owner is not None and nba_owner != row[0][0]:
+                    return "hold", row[0][0], "hoopr_id owner conflicts with the nba.com crosswalk"
                 return "reuse", row[0][0], "hoopr_id owner"
             if len(row) > 1:
                 return "hold", None, "more than one row owns the hoopR id"

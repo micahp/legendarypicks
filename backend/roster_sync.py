@@ -216,18 +216,6 @@ def _sync_league(con: sqlite3.Connection, league: str) -> dict:
                     "reason": "duplicate_spine_espn_id",
                 })
                 continue
-            if exact_ids:
-                planned.append({
-                    "action": "update",
-                    "player_id": exact_ids[0],
-                    "name": name,
-                    "team": abbr,
-                    "position": pos,
-                    "jersey": p.get("jersey"),
-                    "source_player_key": eid,
-                })
-                continue
-
             if league == "nba":
                 # Every NBA assignment or insertion is decided by the resolver.
                 # A unique normalised name is NOT identity evidence here: it used
@@ -267,6 +255,18 @@ def _sync_league(con: sqlite3.Connection, league: str) -> dict:
                         "source_player_key": eid,
                     })
                 continue
+            if exact_ids:
+                planned.append({
+                    "action": "update",
+                    "player_id": exact_ids[0],
+                    "name": name,
+                    "team": abbr,
+                    "position": pos,
+                    "jersey": p.get("jersey"),
+                    "source_player_key": eid,
+                })
+                continue
+
             candidates = name_to_rows.get(_identity_name_key(name), [])
             if not candidates:
                 planned.append({
@@ -454,6 +454,19 @@ def _sync_league(con: sqlite3.Connection, league: str) -> dict:
             exclude = "COALESCE(entity_type,'player')='player'"
         else:
             exclude = "COALESCE(position,'') != 'DEF'"
+        if league == "nba":
+            # An ESPN roster that omits a player is not evidence the player left the
+            # league. The latest official nba.com roster snapshot is separate
+            # membership evidence; keep those players active rather than let this
+            # ESPN-only pass erase it.
+            exclude += (
+                " AND id NOT IN (SELECT m.player_id FROM roster_memberships m "
+                "JOIN roster_snapshots s ON s.id = m.snapshot_id "
+                "WHERE s.source = 'nba.com:team-roster' AND s.league = 'nba' "
+                "AND s.id = (SELECT MAX(id) FROM roster_snapshots "
+                "WHERE source = 'nba.com:team-roster' AND league = 'nba') "
+                "AND m.player_id IS NOT NULL)"
+            )
         con.execute(
             f"UPDATE players SET active=0, updated_at=? WHERE league=? AND {exclude}",
             (verified_at, league),
