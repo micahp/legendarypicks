@@ -1,0 +1,93 @@
+{
+  "as_of_utc": "2026-11-13T00:10:12Z",
+  "capture_manifest_sha256": "c89f807a94ae9833b2b7fc08131e94829bb01ba868e626334bc9f34eeddc69e0",
+  "capture_sources": [
+    {
+      "acquired_at_utc": "2026-11-13T00:10:05Z",
+      "bytes": 523757,
+      "last_modified_utc": "2026-11-13T00:06:25Z",
+      "name": "games.parquet",
+      "role": "schedule",
+      "sha256": "e73f8ee48e1c64a82ed29d878597d338aa715438745a6c06914157450fa253c0",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/schedules/games.parquet"
+    },
+    {
+      "acquired_at_utc": "2026-11-13T00:10:05Z",
+      "bytes": 10122154,
+      "last_modified_utc": "2026-11-12T17:34:25Z",
+      "name": "play_by_play_2026.parquet",
+      "role": "play_by_play",
+      "sha256": "6555b925b9507d3f803092f20b06f2c015588e6562918d37027cd386d2607cc3",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/pbp/play_by_play_2026.parquet"
+    },
+    {
+      "acquired_at_utc": "2026-11-13T00:10:05Z",
+      "bytes": 3465032,
+      "last_modified_utc": "2026-11-12T15:57:20Z",
+      "name": "depth_charts_2026.parquet",
+      "role": "depth_charts",
+      "sha256": "8633b61b70c35eaf919c8aef9934c8802723de4dfb6aeb7f354dfc09237a5ced",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet"
+    },
+    {
+      "acquired_at_utc": "2026-11-13T00:10:05Z",
+      "bytes": 64510,
+      "last_modified_utc": "2026-11-12T15:56:22Z",
+      "name": "injuries_2026.parquet",
+      "role": "injuries",
+      "sha256": "a72cc1afc7224baf6cafdc81950d807fd603ee9c02e7348b38151fcc1af8fa36",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet"
+    },
+    {
+      "acquired_at_utc": "2026-11-13T00:10:06Z",
+      "bytes": 818687,
+      "last_modified_utc": "2026-11-12T15:58:36Z",
+      "name": "roster_weekly_2026.parquet",
+      "role": "roster_weekly",
+      "sha256": "c11a409d73b9a1b2e77a7d8e7d3903e7ae5d9250ba764c7c63552d51867df2e5",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_2026.parquet"
+    },
+    {
+      "acquired_at_utc": "2026-11-13T00:10:06Z",
+      "bytes": 134114,
+      "last_modified_utc": "2026-11-10T12:27:36Z",
+      "name": "snap_counts_2026.parquet",
+      "role": "snap_counts",
+      "sha256": "78c013d97bde36622c435c878cacf48e1c8b3f58d02967c9e0ed2fc884f449e9",
+      "url": "https://github.com/nflverse/nflverse-data/releases/download/snap_counts/snap_counts_2026.parquet"
+    }
+  ],
+  "database": {
+    "path": "/root/legendarypicks/backend/data/picks.dev.db",
+    "read_only": true,
+    "sha256": "4a782007fc6c04a8e9df6c2e3110f7cdd404a4afe841da29a2e001f56087b05e"
+  },
+  "evaluation": {
+    "class": "prospective_forecast",
+    "unverified_inputs": [],
+    "verified": true
+  },
+  "game_id": "2026_10_WAS_NYG",
+  "outputs": {
+    "capture/depth_charts_2026.parquet": "8633b61b70c35eaf919c8aef9934c8802723de4dfb6aeb7f354dfc09237a5ced",
+    "capture/games.parquet": "e73f8ee48e1c64a82ed29d878597d338aa715438745a6c06914157450fa253c0",
+    "capture/injuries_2026.parquet": "a72cc1afc7224baf6cafdc81950d807fd603ee9c02e7348b38151fcc1af8fa36",
+    "capture/manifest.json": "c89f807a94ae9833b2b7fc08131e94829bb01ba868e626334bc9f34eeddc69e0",
+    "capture/play_by_play_2026.parquet": "6555b925b9507d3f803092f20b06f2c015588e6562918d37027cd386d2607cc3",
+    "capture/roster_weekly_2026.parquet": "c11a409d73b9a1b2e77a7d8e7d3903e7ae5d9250ba764c7c63552d51867df2e5",
+    "capture/snap_counts_2026.parquet": "78c013d97bde36622c435c878cacf48e1c8b3f58d02967c9e0ed2fc884f449e9",
+    "full-depth-provenance.json": "7823e63fb5062155285abf30be506b60956d3ba5db65aa1674deb02c4147d288",
+    "full-depth-roster.json": "edb451dac3b3d1576b60a73324aa5de80dad96475ffe8561c6ac40a95e19966d",
+    "snapshot.json": "fdc71aeb316e7dc10294c3d6581e1c331fe49637ab68fc71b9b406c55a8449b4",
+    "starters-provenance.json": "bf1a8542f9117f2e67de8b0562c2a1ee56c19cdbac817306fd14bf4fc3e2ffe9",
+    "starters.json": "bcb5034ced0aea84fa0465822b646a89ac131b27be5bed419a308776561885bd"
+  },
+  "repository_commit": "3dab14525926f0dec47c1e613e72f69f6050bd57",
+  "roster_finalization_timing": {
+    "before_roster_finalization": false,
+    "status": "at_or_after_roster_finalization_point",
+    "window_opens_utc": "2026-11-12T23:45:00Z"
+  },
+  "roster_snapshot_id": "nflverse-full-depth:3e1803673111ed62f0b68949e65b2d4efc5508a25d63292801154e2337e14842",
+  "snapshot_sha256": "144bed3f807aff2d3c3fd7c12045413d48be13370c1d8aa1e132fa4aa6d9023f"
+}
