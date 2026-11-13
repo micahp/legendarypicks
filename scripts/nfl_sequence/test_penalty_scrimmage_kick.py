@@ -55,7 +55,7 @@ class ScrimmageKickTransitionTests(unittest.TestCase):
         self.assertFalse(got.enforcement["play_counts"])
 
     def test_defensive_holding_requires_actual_block_attempt_context(self):
-        with self.assertRaisesRegex(ValueError, "kick-block-attempt"):
+        with self.assertRaisesRegex(ValueError, "block-attempt or PSK"):
             self.run_foul("defense:defensive_holding")
         got = self.run_foul("defense:defensive_holding",
                             defensive_holding_block_attempt=True)
