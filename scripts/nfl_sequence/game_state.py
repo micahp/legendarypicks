@@ -238,6 +238,29 @@ def missed_field_goal_spot(kick_spot_yardline_100):
     return 80 if spot > 80 else spot
 
 
+def valid_missed_field_goal_sample(result, baseline):
+    """Check the observed missed-FG spot adjustment, including fractional snaps.
+
+    Foul enforcement may leave a fractional kick spot. The sampled historical
+    next-possession adjustment remains whole yards; reject forged source data,
+    out-of-field spots and inconsistent arithmetic rather than integer-casting.
+    """
+    if not isinstance(result, dict):
+        return False
+    spot = result.get('receiving_start_yardline_100')
+    adjustment = result.get('spot_adjustment_yards')
+    source = result.get('source')
+    return bool(
+        result.get('status') == 'sampled_historical_next_drive_spot'
+        and type(spot) in (int, float) and math.isfinite(spot) and 1 <= spot <= 99
+        and type(adjustment) is int
+        and type(baseline) in (int, float) and math.isfinite(baseline)
+        and math.isclose(spot, baseline + adjustment, rel_tol=0, abs_tol=1e-9)
+        and isinstance(source, dict) and source.get('game_id')
+        and type(source.get('play_id')) is int
+        and type(source.get('next_play_id')) is int)
+
+
 def quarter_end_kind(quarter):
     """What an expired clock means at the end of `quarter` when no play is left (rules file, sections 2-3)."""
     if quarter in (1, 3):
@@ -1880,18 +1903,7 @@ def _validate_game_impl(record):
                 raise AssertionError(f"missed field goal in drive {drive['index']} has an invalid period-expiry transition")
             continue
         spot = result.get('receiving_start_yardline_100')
-        adjustment = result.get('spot_adjustment_yards')
-        source = result.get('source')
-        # A previously enforced half-distance penalty can create a fractional
-        # snap and kick spot. The observed return adjustment is still an integer
-        # sample; the resulting legal receiving spot need not be an integer.
-        if (result.get('status') != 'sampled_historical_next_drive_spot'
-                or type(spot) not in (int, float) or not math.isfinite(spot)
-                or not 1 <= spot <= 99
-                or type(adjustment) is not int
-                or not math.isclose(spot, baseline + adjustment, rel_tol=0, abs_tol=1e-9)
-                or not isinstance(source, dict) or not source.get('game_id')
-                or not isinstance(source.get('play_id'), int) or not isinstance(source.get('next_play_id'), int)):
+        if not valid_missed_field_goal_sample(result, baseline):
             raise AssertionError(f"missed field goal in drive {drive['index']} has an invalid sampled spot")
         if index + 1 < len(record['drives']) and not (
                 drive['end_clock'] == 0 and drive['end_quarter'] in (2, 4)):
