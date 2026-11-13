@@ -1,0 +1,150 @@
+{
+ "NBA_Player_Movement": {
+  "rows": [
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Atlanta Hawks received draft consideration from Houston Rockets.",
+    "TEAM_ID": 1610612737.0,
+    "TEAM_SLUG": "hawks",
+    "PLAYER_ID": 0.0,
+    "PLAYER_SLUG": "",
+    "Additional_Sort": 1610612745.0,
+    "GroupSort": "Trade 2025005"
+   },
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Houston Rockets received center Clint Capela from Atlanta Hawks.",
+    "TEAM_ID": 1610612745.0,
+    "TEAM_SLUG": "rockets",
+    "PLAYER_ID": 203991.0,
+    "PLAYER_SLUG": "clint-capela",
+    "Additional_Sort": 1610612737.0,
+    "GroupSort": "Trade 2025005"
+   },
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Houston Rockets received forward Kevin Durant from Phoenix Suns.",
+    "TEAM_ID": 1610612745.0,
+    "TEAM_SLUG": "rockets",
+    "PLAYER_ID": 201142.0,
+    "PLAYER_SLUG": "kevin-durant",
+    "Additional_Sort": 1610612756.0,
+    "GroupSort": "Trade 2025005"
+   },
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Minnesota Timberwolves received draft consideration from Phoenix Suns.",
+    "TEAM_ID": 1610612750.0,
+    "TEAM_SLUG": "timberwolves",
+    "PLAYER_ID": 0.0,
+    "PLAYER_SLUG": "",
+    "Additional_Sort": 1610612756.0,
+    "GroupSort": "Trade 2025005"
+   },
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Brooklyn Nets received draft consideration from Houston Rockets.",
+    "TEAM_ID": 1610612751.0,
+    "TEAM_SLUG": "nets",
+    "PLAYER_ID": 0.0,
+    "PLAYER_SLUG": "",
+    "Additional_Sort": 1610612745.0,
+    "GroupSort": "Trade 2025005"
+   },
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Phoenix Suns received guard Jalen Green from Houston Rockets.",
+    "TEAM_ID": 1610612756.0,
+    "TEAM_SLUG": "suns",
+    "PLAYER_ID": 1630224.0,
+    "PLAYER_SLUG": "jalen-green",
+    "Additional_Sort": 1610612745.0,
+    "GroupSort": "Trade 2025005"
+   },
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Phoenix Suns received guard Dillon Brooks from Houston Rockets.",
+    "TEAM_ID": 1610612756.0,
+    "TEAM_SLUG": "suns",
+    "PLAYER_ID": 1628415.0,
+    "PLAYER_SLUG": "dillon-brooks",
+    "Additional_Sort": 1610612745.0,
+    "GroupSort": "Trade 2025005"
+   },
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Phoenix Suns received draft consideration from Houston Rockets.",
+    "TEAM_ID": 1610612756.0,
+    "TEAM_SLUG": "suns",
+    "PLAYER_ID": 0.0,
+    "PLAYER_SLUG": "",
+    "Additional_Sort": 1610612745.0,
+    "GroupSort": "Trade 2025005"
+   },
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Milwaukee Bucks received guard Vasilije Micic from Charlotte Hornets.",
+    "TEAM_ID": 1610612749.0,
+    "TEAM_SLUG": "bucks",
+    "PLAYER_ID": 203995.0,
+    "PLAYER_SLUG": "vasilije-micic",
+    "Additional_Sort": 1610612766.0,
+    "GroupSort": "Trade 2025001"
+   },
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Charlotte Hornets received guard Pat Connaughton from Milwaukee Bucks.",
+    "TEAM_ID": 1610612766.0,
+    "TEAM_SLUG": "hornets",
+    "PLAYER_ID": 1626192.0,
+    "PLAYER_SLUG": "pat-connaughton",
+    "Additional_Sort": 1610612749.0,
+    "GroupSort": "Trade 2025001"
+   },
+   {
+    "Transaction_Type": "Trade",
+    "TRANSACTION_DATE": "2025-07-06T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Charlotte Hornets received draft consideration from Milwaukee Bucks.",
+    "TEAM_ID": 1610612766.0,
+    "TEAM_SLUG": "hornets",
+    "PLAYER_ID": 0.0,
+    "PLAYER_SLUG": "",
+    "Additional_Sort": 1610612749.0,
+    "GroupSort": "Trade 2025001"
+   },
+   {
+    "Transaction_Type": "Signing",
+    "TRANSACTION_DATE": "2026-11-11T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Sacramento Kings signed forward Mason Plumlee to a Rest-of-Season Contract.",
+    "TEAM_ID": 1610612758.0,
+    "TEAM_SLUG": "kings",
+    "PLAYER_ID": 203486.0,
+    "PLAYER_SLUG": "mason-plumlee",
+    "Additional_Sort": 0.0,
+    "GroupSort": "Signing 1157910"
+   },
+   {
+    "Transaction_Type": "Waive",
+    "TRANSACTION_DATE": "2026-11-10T00:00:00",
+    "TRANSACTION_DESCRIPTION": "Los Angeles Lakers waived center Lawson Lovering.",
+    "TEAM_ID": 1610612747.0,
+    "TEAM_SLUG": "lakers",
+    "PLAYER_ID": 1643133.0,
+    "PLAYER_SLUG": "lawson-lovering",
+    "Additional_Sort": 0.0,
+    "GroupSort": "Waive 1157854"
+   }
+  ],
+  "columns": []
+ }
+}
