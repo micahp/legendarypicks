@@ -21,9 +21,9 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install source parquet reader
-        run: python -m pip install pyarrow==22.0.0
+        run: python -m pip install pyarrow==22.0.0 beautifulsoup4==4.14.2
       - name: Run injury-cutoff regression tests
-        run: PYTHONPATH=backend python -m unittest -v test_recover_nfl_injury_weeks test_reconstruct_nfl_roster_asof
+        run: PYTHONPATH=backend python -m unittest -v test_recover_nfl_injury_weeks test_reconstruct_nfl_roster_asof test_recover_official_nfl_inactives
       - name: Fetch published 2026 injury rows and historical game schedule
         run: |
           mkdir -p /tmp/lp-nfl-injuries
@@ -51,24 +51,26 @@ jobs:
             --schedule-csv /tmp/lp-nfl-injuries/games.csv \
             --out-dir /tmp/lp-nfl-injuries/roster-asof
           cat /tmp/lp-nfl-injuries/roster-asof/asof-depth-injury-coverage.json
-      - name: Inspect official Week 7 inactive HTML for stable extraction
-        continue-on-error: true
+      - name: Fetch identity crosswalk for official inactive articles
         run: |
-          python -m pip install beautifulsoup4==4.14.2
-          curl --fail --location --retry 2 --silent --show-error \
-            -A "Mozilla/5.0" \
-            https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season \
-            -o /tmp/lp-nfl-injuries/official-week7-inactives.html
-          python - <<'PY'
-          from bs4 import BeautifulSoup
-          html=open('/tmp/lp-nfl-injuries/official-week7-inactives.html').read()
-          soup=BeautifulSoup(html,'html.parser')
-          print("htmlbytes",len(html))
-          for h in soup.find_all(['h3'])[:3]:
-              print('TEAM',repr(h.get_text(" ",strip=True)), 'parentparent',h.parent.parent.name)
-              print('PARENT_HTML',str(h.parent)[:2200])
-              print('CONTAINER_HTML',str(h.parent.parent)[:3600])
-          PY
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_2026.parquet \
+            --output /tmp/lp-nfl-injuries/roster_weekly_2026.parquet
+      - name: Recover real official Sunday inactives with strict GSIS resolution
+        run: |
+          PYTHONPATH=backend python backend/recover_official_nfl_inactives.py \
+            --sources docs/research/nfl-injury-history-2026-weeks2-9/official-sunday-inactives-sources.json \
+            --schedule-csv /tmp/lp-nfl-injuries/games.csv \
+            --injury-csv /tmp/lp-nfl-injuries/recovered/nfl-injury-weeks-2-9.csv \
+            --depth-csv /tmp/lp-nfl-injuries/roster-asof/asof-depth-injury-rosters.csv \
+            --weekly-roster-parquet /tmp/lp-nfl-injuries/roster_weekly_2026.parquet \
+            --out-dir /tmp/lp-nfl-injuries/official-inactives
+          PYTHONPATH=backend python backend/reconstruct_nfl_roster_asof.py \
+            --depth-parquet /tmp/lp-nfl-injuries/depth_charts_2026.parquet \
+            --injury-csv /tmp/lp-nfl-injuries/recovered/nfl-injury-weeks-2-9.csv \
+            --schedule-csv /tmp/lp-nfl-injuries/games.csv \
+            --inactives-index /tmp/lp-nfl-injuries/official-inactives/official-inactives-matched-index.json \
+            --out-dir /tmp/lp-nfl-injuries/roster-with-inactives
       - name: Preserve source and extracted injury weeks in this research branch
         if: github.event_name == 'push'
         run: |
@@ -81,6 +83,17 @@ jobs:
           fi
           if [ ! -f "$output/asof-depth-injury-coverage.json" ]; then
             cp /tmp/lp-nfl-injuries/roster-asof/* "$output/"
+          fi
+          if [ ! -f "$output/official-inactives-coverage.json" ]; then
+            cp /tmp/lp-nfl-injuries/official-inactives/official-inactives-audit.csv "$output/"
+            cp /tmp/lp-nfl-injuries/official-inactives/official-inactives-matched-index.json "$output/"
+            cp /tmp/lp-nfl-injuries/official-inactives/official-inactives-coverage.json "$output/"
+          fi
+          if [ ! -f "$output/with-inactives-asof-depth-injury-coverage.json" ]; then
+            cp /tmp/lp-nfl-injuries/roster-with-inactives/asof-depth-injury-coverage.json \
+              "$output/with-inactives-asof-depth-injury-coverage.json"
+            cp /tmp/lp-nfl-injuries/roster-with-inactives/asof-depth-injury-rosters.csv \
+              "$output/with-inactives-asof-depth-injury-rosters.csv"
           fi
           if [ -z "$(git status --short -- "$output")" ]; then
             echo "All historical outputs already pinned."
@@ -99,6 +112,9 @@ jobs:
             /tmp/lp-nfl-injuries/injuries_2026.parquet
             /tmp/lp-nfl-injuries/games.csv
             /tmp/lp-nfl-injuries/depth_charts_2026.parquet
+            /tmp/lp-nfl-injuries/roster_weekly_2026.parquet
             /tmp/lp-nfl-injuries/recovered/
             /tmp/lp-nfl-injuries/roster-asof/
+            /tmp/lp-nfl-injuries/official-inactives/
+            /tmp/lp-nfl-injuries/roster-with-inactives/
           retention-days: 30
