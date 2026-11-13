@@ -97,6 +97,11 @@ def main():
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(summary, indent=2, default=str) + "\n")
+    print("SAVED_RECORD_KEYS", list(records[1]))
+    print("FAILURE_ENVELOPE_KEYS", list((records[1].get("assertion_failure") or {}).keys()))
+    print("FIRST_RECORD_CONTEXT", json.dumps({k: v for k, v in records[1].items()
+          if k not in ("assertion_failure", "unresolved_transition", "failed_record", "boxscore")},
+          default=str)[:4000])
     print("TOTAL", len(rows))
     print("STATUS", dict(by_status))
     print("BLOCKERS", dict(by_blocker))
@@ -107,6 +112,7 @@ def main():
         # envelope through the immutable CI log without downloading artifacts.
         cause = row.get("offending_outcome")
         cause = cause.get("message") if isinstance(cause, dict) else str(cause or "")
+        cause = cause or ""
         before = row.get("state_before")
         after = row.get("state_after")
         print("SEED", json.dumps({
