@@ -640,8 +640,8 @@ def check_drive(plays, terminal):
         if p['event_type'] in ('run', 'pass_complete', 'pass_incomplete', 'sack', 'sack_fumble_lost'):
             yards = o.get('yards_gained')
             yardline = sb.get('yardline_100')
-            if not isinstance(yards, int) or not isinstance(yardline, int):
-                raise AssertionError(f'play {i + 1}: scrimmage gain and pre-play spot must be integers')
+            if (type(yards) not in (int, float) or type(yardline) not in (int, float)):
+                raise AssertionError(f'play {i + 1}: scrimmage gain and spot must be numeric')
             if p['event_type'] == 'pass_incomplete' and yards != 0:
                 raise AssertionError(f'play {i + 1}: an incomplete pass must have zero credited gain')
             if p['event_type'] in ('sack', 'sack_fumble_lost') and yards > 0:
@@ -688,7 +688,7 @@ def check_drive(plays, terminal):
         if i < len(plays) - 1:
             if sa['down'] is None or not 1 <= sa['down'] <= 4 or sa['yardline_100'] is None:
                 raise AssertionError(f'play {i + 1}: non-terminal play has no legal down or field')
-            if not 1 <= sa['yardline_100'] <= 99 or sa['yards_to_go'] < 1:
+            if not 0 < sa['yardline_100'] < 100 or sa['yards_to_go'] <= 0:
                 raise AssertionError(f'play {i + 1}: illegal field or distance after the play')
         for side in ('before', 'after'):
             los = p['field'][side]['los']
@@ -700,6 +700,8 @@ def check_drive(plays, terminal):
         changed = sb['offense_team'] != sa['offense_team']
         if changed != (o['turnover'] or o['punt']):
             raise AssertionError(f'play {i + 1}: possession change does not match the turnover or punt flag')
+        if p['event_type'] == 'penalty' and not o.get('penalty_resolved'):
+            raise AssertionError(f'play {i + 1}: unadjudicated penalty inserted into game')
         if o['touchdown'] != (sa.get('end_of_drive') == 'touchdown'):
             raise AssertionError(f'play {i + 1}: touchdown flag and terminal disagree')
         if p['event_type'] == 'field_goal_attempt' and o['field_goal_attempt'] != (sa.get('end_of_drive') == 'field_goal_attempt'):
