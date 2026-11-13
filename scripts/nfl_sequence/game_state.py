@@ -1653,12 +1653,13 @@ class _Game:
         snapshot = self.pregame_snapshot
         # a full game is valid only on verified input provenance; an exploratory replay stays a statistical game
         verified = bool((snapshot or {}).get('evaluation', {}).get('verified'))
-        # Mechanically complete penalty games remain research-only until
-        # kick-foul population and ruling-disposition/spot calibration are verified.
+        # Keep the rule-consistent full-game validity independent from
+        # calibration of the penalty occurrence/election/spot model.
         penalty_layer = self.penalty_controller is not None
-        penalty_release_verified = not penalty_layer
-        valid_candidate = bool(snapshot and verified and complete and blocker is None
-                               and not guarded and not unsupported and penalty_release_verified)
+        valid_candidate, forecast_release_validated = full_game_validity(
+            snapshot, complete=complete, blocker=blocker,
+            guarded=guarded, unsupported=unsupported,
+            penalty_enabled=penalty_layer)
         record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete) + guard_reasons(guarded)
         rec = {
@@ -1695,6 +1696,7 @@ class _Game:
             'unmodelled_transitions': guarded,
             'two_minute_warnings': two_minute_warnings(self.drives, self.events),
             'valid_full_game': valid_candidate,
+            'forecast_release_validated': forecast_release_validated,
             'unsupported_rules': unsupported,
             'rule_capability_limitations': list(UNSUPPORTED_RULES),
             'guards': {r: dict(GUARDS[r]) for r in UNSUPPORTED_RULES},
@@ -1810,6 +1812,20 @@ def active_unsupported_rules(guarded, blocker):
     if blocker and blocker.startswith('blocked_kick'):
         active.add('blocked_kicks')
     return sorted(active)
+
+
+def full_game_validity(snapshot, *, complete, blocker, guarded, unsupported, penalty_enabled):
+    """Separate legal/mechanical validity from release-ready forecasting.
+
+    A fitted-but-uncalibrated research penalty model can finish a valid game
+    under its declared single-foul rule scope. That is NOT validation of its
+    propensity, foul spot, acceptance/election or outcome distributions.
+    """
+    mechanically_valid = bool(
+        snapshot and (snapshot.get('evaluation') or {}).get('verified')
+        and complete and blocker is None and not guarded and not unsupported)
+    release_validated = bool(mechanically_valid and not penalty_enabled)
+    return mechanically_valid, release_validated
 
 
 def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None,
