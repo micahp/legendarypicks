@@ -10,6 +10,7 @@ on:
   pull_request:
     branches:
       - feature/slc-v1.7-penalty-model-2026-11-12
+      - fix/slc-v17-scrimmage-kick-transitions-2026-11-12
   workflow_dispatch:
 
 permissions:
