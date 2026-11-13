@@ -13,6 +13,7 @@ from pathlib import Path
 import random
 
 from penalty_fit import Context, NO_FOUL, PenaltyModel, _utc
+from penalty_scrimmage_kick import KICK_FOUL_YARDS
 
 
 @dataclass(frozen=True)
@@ -96,7 +97,26 @@ class PenaltySampler:
         material = f"{namespace}|{game_seed}|{opportunity_key}"
         digest = hashlib.sha256(material.encode("utf-8")).digest()
         rng = random.Random(int.from_bytes(digest, "big"))
-        result = self.model.sample(context, rng)
+        if context.phase == 'live_ball' and context.play_class == 'kick':
+            # The original research cohort has no kick denominators.
+            # A non-release, rule-compatible fallback cannot pretend that
+            # pass interference, grounding, etc. occur on a punt. Preserve
+            # their probability mass as no foul, not as a fabricated kick.
+            probs = self.model.predict(context)
+            cleaned = {name: prob for name, prob in probs.items()
+                       if name == NO_FOUL or tuple(name.split(':', 1)) in KICK_FOUL_YARDS}
+            cleaned[NO_FOUL] = cleaned.get(NO_FOUL, 0.) + sum(
+                prob for name, prob in probs.items() if name not in cleaned)
+            threshold = rng.random()
+            total = 0.
+            result = NO_FOUL
+            for label, prob in cleaned.items():
+                total += prob
+                if threshold < total:
+                    result = label
+                    break
+        else:
+            result = self.model.sample(context, rng)
         return PenaltyProposal(
             opportunity_key=opportunity_key, phase=context.phase, outcome=result,
             model_sha256=self._model_hash,
