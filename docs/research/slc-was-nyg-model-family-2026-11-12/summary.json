@@ -1,0 +1,801 @@
+{
+  "common_seeds": {
+    "max": 20261211,
+    "min": 20261112,
+    "models": {
+      "v1": {
+        "games": 99,
+        "percent": {
+          "NYG": 46.464646464646464,
+          "WAS": 53.535353535353536,
+          "tie": 0.0
+        },
+        "reconciliation_status_other": [],
+        "teams": {
+          "NYG": {
+            "completion_pct": 60.998877665544335,
+            "drive_ends_per_game": {
+              "end_of_regulation": 0.5858585858585859,
+              "field_goal_attempt": 2.292929292929293,
+              "halftime": 0.494949494949495,
+              "punt": 3.404040404040404,
+              "safety": 0.030303030303030304,
+              "touchdown": 2.2626262626262625,
+              "turnover": 0.6767676767676768,
+              "turnover_on_downs": 0.8484848484848485
+            },
+            "per_game": {
+              "completions": 21.95959595959596,
+              "drives": 10.595959595959595,
+              "field_goal_attempts": 2.323232323232323,
+              "field_goals_made": 1.9898989898989898,
+              "fumbles_lost": 0.3434343434343434,
+              "interceptions": 0.30303030303030304,
+              "pass_attempts": 36.0,
+              "passing_yards": 244.7979797979798,
+              "plays": 69.9090909090909,
+              "punts": 3.4545454545454546,
+              "rush_attempts": 32.55555555555556,
+              "rushing_yards": 146.26262626262627,
+              "sacks_taken": 1.1717171717171717,
+              "touchdowns": 2.2525252525252526,
+              "turnovers": 0.6464646464646465,
+              "turnovers_on_downs": 0.8484848484848485
+            },
+            "score_mean": 21.595959595959595,
+            "score_median": 23,
+            "score_p10": 9.8,
+            "score_p90": 33.0,
+            "yards_per_pass_attempt": 6.7999438832772165,
+            "yards_per_rush": 4.492708656531182
+          },
+          "WAS": {
+            "completion_pct": 64.84703059388123,
+            "drive_ends_per_game": {
+              "end_of_regulation": 0.3838383838383838,
+              "field_goal_attempt": 1.8888888888888888,
+              "halftime": 0.46464646464646464,
+              "punt": 3.515151515151515,
+              "safety": 0.010101010101010102,
+              "touchdown": 2.4343434343434343,
+              "turnover": 1.0404040404040404,
+              "turnover_on_downs": 0.7474747474747475
+            },
+            "per_game": {
+              "completions": 21.838383838383837,
+              "drives": 10.484848484848484,
+              "field_goal_attempts": 1.9191919191919191,
+              "field_goals_made": 1.6363636363636365,
+              "fumbles_lost": 0.47474747474747475,
+              "interceptions": 0.5252525252525253,
+              "pass_attempts": 33.676767676767675,
+              "passing_yards": 244.7979797979798,
+              "plays": 65.43434343434343,
+              "punts": 3.5555555555555554,
+              "rush_attempts": 30.424242424242426,
+              "rushing_yards": 137.16161616161617,
+              "sacks_taken": 1.121212121212121,
+              "touchdowns": 2.4444444444444446,
+              "turnovers": 1.0,
+              "turnovers_on_downs": 0.7474747474747475
+            },
+            "score_mean": 22.07070707070707,
+            "score_median": 21,
+            "score_p10": 10.0,
+            "score_p90": 31.0,
+            "yards_per_pass_attempt": 7.2690461907618475,
+            "yards_per_rush": 4.508300132802125
+          }
+        },
+        "wins": {
+          "NYG": 46,
+          "WAS": 53
+        }
+      },
+      "v1.5": {
+        "games": 99,
+        "percent": {
+          "NYG": 49.494949494949495,
+          "WAS": 49.494949494949495,
+          "tie": 1.0101010101010102
+        },
+        "reconciliation_status_other": [],
+        "teams": {
+          "NYG": {
+            "completion_pct": 60.64233576642336,
+            "drive_ends_per_game": {
+              "end_of_regulation": 0.5454545454545454,
+              "field_goal_attempt": 2.0,
+              "halftime": 0.48484848484848486,
+              "punt": 3.787878787878788,
+              "safety": 0.020202020202020204,
+              "touchdown": 2.6262626262626263,
+              "turnover": 0.494949494949495,
+              "turnover_on_downs": 0.8787878787878788
+            },
+            "per_game": {
+              "completions": 20.97979797979798,
+              "drives": 10.83838383838384,
+              "field_goal_attempts": 2.01010101010101,
+              "field_goals_made": 1.7777777777777777,
+              "fumbles_lost": 0.20202020202020202,
+              "interceptions": 0.2727272727272727,
+              "pass_attempts": 34.5959595959596,
+              "passing_yards": 229.05050505050505,
+              "plays": 69.66666666666667,
+              "punts": 3.7777777777777777,
+              "rush_attempts": 33.666666666666664,
+              "rushing_yards": 155.40404040404042,
+              "sacks_taken": 1.303030303030303,
+              "touchdowns": 2.6161616161616164,
+              "turnovers": 0.47474747474747475,
+              "turnovers_on_downs": 0.8787878787878788
+            },
+            "score_mean": 23.585858585858585,
+            "score_median": 24,
+            "score_p10": 10.0,
+            "score_p90": 34.400000000000006,
+            "yards_per_pass_attempt": 6.620729927007299,
+            "yards_per_rush": 4.615961596159616
+          },
+          "WAS": {
+            "completion_pct": 63.27800829875519,
+            "drive_ends_per_game": {
+              "end_of_overtime": 0.010101010101010102,
+              "end_of_regulation": 0.43434343434343436,
+              "field_goal_attempt": 1.7575757575757576,
+              "halftime": 0.47474747474747475,
+              "punt": 3.6161616161616164,
+              "safety": 0.010101010101010102,
+              "touchdown": 2.474747474747475,
+              "turnover": 1.0101010101010102,
+              "turnover_on_downs": 0.9696969696969697
+            },
+            "per_game": {
+              "completions": 21.565656565656564,
+              "drives": 10.757575757575758,
+              "field_goal_attempts": 1.797979797979798,
+              "field_goals_made": 1.5151515151515151,
+              "fumbles_lost": 0.45454545454545453,
+              "interceptions": 0.5050505050505051,
+              "pass_attempts": 34.08080808080808,
+              "passing_yards": 248.63636363636363,
+              "plays": 65.4949494949495,
+              "punts": 3.6262626262626263,
+              "rush_attempts": 30.060606060606062,
+              "rushing_yards": 132.96969696969697,
+              "sacks_taken": 1.1616161616161615,
+              "touchdowns": 2.484848484848485,
+              "turnovers": 0.9595959595959596,
+              "turnovers_on_downs": 0.9696969696969697
+            },
+            "score_mean": 21.87878787878788,
+            "score_median": 22,
+            "score_p10": 13.0,
+            "score_p90": 31.0,
+            "yards_per_pass_attempt": 7.295494961470065,
+            "yards_per_rush": 4.423387096774194
+          }
+        },
+        "wins": {
+          "NYG": 49,
+          "WAS": 49,
+          "tie": 1
+        }
+      },
+      "v1.6": {
+        "games": 99,
+        "percent": {
+          "NYG": 39.39393939393939,
+          "WAS": 60.60606060606061,
+          "tie": 0.0
+        },
+        "reconciliation_status_other": [],
+        "teams": {
+          "NYG": {
+            "completion_pct": 61.35321100917431,
+            "drive_ends_per_game": {
+              "end_of_regulation": 0.5656565656565656,
+              "field_goal_attempt": 2.121212121212121,
+              "halftime": 0.4444444444444444,
+              "punt": 4.646464646464646,
+              "safety": 0.030303030303030304,
+              "touchdown": 1.8484848484848484,
+              "turnover": 0.48484848484848486,
+              "turnover_on_downs": 0.8787878787878788
+            },
+            "per_game": {
+              "completions": 21.616161616161616,
+              "drives": 11.02020202020202,
+              "field_goal_attempts": 2.202020202020202,
+              "field_goals_made": 1.6464646464646464,
+              "fumbles_lost": 0.09090909090909091,
+              "interceptions": 0.3333333333333333,
+              "pass_attempts": 35.23232323232323,
+              "passing_yards": 229.57575757575756,
+              "plays": 64.71717171717172,
+              "punts": 4.6767676767676765,
+              "rush_attempts": 25.03030303030303,
+              "rushing_yards": 118.0,
+              "sacks_taken": 4.434343434343434,
+              "touchdowns": 1.8181818181818181,
+              "turnovers": 0.42424242424242425,
+              "turnovers_on_downs": 0.8787878787878788
+            },
+            "score_mean": 17.646464646464647,
+            "score_median": 17,
+            "score_p10": 7.0,
+            "score_p90": 28.0,
+            "yards_per_pass_attempt": 6.51605504587156,
+            "yards_per_rush": 4.714285714285714
+          },
+          "WAS": {
+            "completion_pct": 63.06277742549144,
+            "drive_ends_per_game": {
+              "end_of_regulation": 0.42424242424242425,
+              "field_goal_attempt": 1.9696969696969697,
+              "halftime": 0.5151515151515151,
+              "punt": 4.363636363636363,
+              "touchdown": 2.414141414141414,
+              "turnover": 0.43434343434343436,
+              "turnover_on_downs": 0.8383838383838383
+            },
+            "per_game": {
+              "completions": 20.09090909090909,
+              "drives": 10.95959595959596,
+              "field_goal_attempts": 2.0,
+              "field_goals_made": 1.6767676767676767,
+              "fumbles_lost": 0.1919191919191919,
+              "interceptions": 0.1919191919191919,
+              "pass_attempts": 31.858585858585858,
+              "passing_yards": 228.23232323232324,
+              "plays": 67.44444444444444,
+              "punts": 4.393939393939394,
+              "rush_attempts": 32.72727272727273,
+              "rushing_yards": 145.6969696969697,
+              "sacks_taken": 2.8383838383838382,
+              "touchdowns": 2.4444444444444446,
+              "turnovers": 0.3838383838383838,
+              "turnovers_on_downs": 0.8383838383838383
+            },
+            "score_mean": 22.171717171717173,
+            "score_median": 23,
+            "score_p10": 10.0,
+            "score_p90": 34.0,
+            "yards_per_pass_attempt": 7.1639188332276476,
+            "yards_per_rush": 4.451851851851852
+          }
+        },
+        "wins": {
+          "NYG": 39,
+          "WAS": 60
+        }
+      },
+      "v2": {
+        "games": 99,
+        "percent": {
+          "NYG": 44.44444444444444,
+          "WAS": 52.525252525252526,
+          "tie": 3.0303030303030303
+        },
+        "reconciliation_status_other": [],
+        "teams": {
+          "NYG": {
+            "completion_pct": 62.46953696181966,
+            "drive_ends_per_game": {
+              "end_of_overtime": 0.020202020202020204,
+              "end_of_regulation": 0.45454545454545453,
+              "field_goal_attempt": 2.1414141414141414,
+              "halftime": 0.5353535353535354,
+              "punt": 4.3232323232323235,
+              "safety": 0.050505050505050504,
+              "touchdown": 1.8686868686868687,
+              "turnover": 0.6161616161616161,
+              "turnover_on_downs": 0.8585858585858586
+            },
+            "per_game": {
+              "completions": 23.303030303030305,
+              "drives": 10.868686868686869,
+              "field_goal_attempts": 2.1717171717171717,
+              "field_goals_made": 1.797979797979798,
+              "fourth_down_attempts": 2.0606060606060606,
+              "fourth_down_conversions": 1.1717171717171717,
+              "fumbles_lost": 0.15151515151515152,
+              "interceptions": 0.42424242424242425,
+              "pass_attempts": 37.303030303030305,
+              "passing_yards": 246.42424242424244,
+              "plays": 67.88888888888889,
+              "punts": 4.353535353535354,
+              "rush_attempts": 26.949494949494948,
+              "rushing_yards": 116.22222222222223,
+              "sacks_taken": 3.515151515151515,
+              "third_down_attempts": 14.545454545454545,
+              "third_down_conversions": 5.7272727272727275,
+              "touchdowns": 1.8585858585858586,
+              "turnovers": 0.5757575757575758,
+              "turnovers_on_downs": 0.8585858585858586
+            },
+            "score_mean": 18.404040404040405,
+            "score_median": 19,
+            "score_p10": 6.0,
+            "score_p90": 30.200000000000003,
+            "yards_per_pass_attempt": 6.606011372867587,
+            "yards_per_rush": 4.312593703148425
+          },
+          "WAS": {
+            "completion_pct": 65.18946692357098,
+            "drive_ends_per_game": {
+              "end_of_overtime": 0.010101010101010102,
+              "end_of_regulation": 0.5252525252525253,
+              "field_goal_attempt": 2.01010101010101,
+              "halftime": 0.43434343434343436,
+              "punt": 4.2727272727272725,
+              "safety": 0.04040404040404041,
+              "touchdown": 2.2525252525252526,
+              "turnover": 0.40404040404040403,
+              "turnover_on_downs": 0.8787878787878788
+            },
+            "per_game": {
+              "completions": 20.505050505050505,
+              "drives": 10.828282828282829,
+              "field_goal_attempts": 2.0505050505050506,
+              "field_goals_made": 1.7575757575757576,
+              "fourth_down_attempts": 1.797979797979798,
+              "fourth_down_conversions": 0.9494949494949495,
+              "fumbles_lost": 0.20202020202020202,
+              "interceptions": 0.16161616161616163,
+              "pass_attempts": 31.454545454545453,
+              "passing_yards": 211.23232323232324,
+              "plays": 66.93939393939394,
+              "punts": 4.343434343434343,
+              "rush_attempts": 32.92929292929293,
+              "rushing_yards": 149.6969696969697,
+              "sacks_taken": 2.4646464646464645,
+              "third_down_attempts": 14.181818181818182,
+              "third_down_conversions": 6.01010101010101,
+              "touchdowns": 2.2626262626262625,
+              "turnovers": 0.36363636363636365,
+              "turnovers_on_downs": 0.8787878787878788
+            },
+            "score_mean": 21.13131313131313,
+            "score_median": 20,
+            "score_p10": 13.0,
+            "score_p90": 29.200000000000003,
+            "yards_per_pass_attempt": 6.715478484264612,
+            "yards_per_rush": 4.54601226993865
+          }
+        },
+        "wins": {
+          "NYG": 44,
+          "WAS": 52,
+          "tie": 3
+        }
+      }
+    },
+    "n": 99
+  },
+  "inputs": {
+    "game_id": "2026_10_WAS_NYG",
+    "kickoff_utc": "2026-11-13T01:15:00Z",
+    "seed_root": 20261112,
+    "snapshot_file_sha256": "fdc71aeb316e7dc10294c3d6581e1c331fe49637ab68fc71b9b406c55a8449b4",
+    "source_cutoff_utc": "2026-11-13T00:10:12Z"
+  },
+  "invalid_boxes": {
+    "v1": {},
+    "v1.5": {},
+    "v1.6": {
+      "error": 1
+    },
+    "v2": {}
+  },
+  "model_samples": {
+    "v1": {
+      "games": 100,
+      "percent": {
+        "NYG": 46.0,
+        "WAS": 54.0,
+        "tie": 0.0
+      },
+      "reconciliation_status_other": [],
+      "teams": {
+        "NYG": {
+          "completion_pct": 60.9674728940784,
+          "drive_ends_per_game": {
+            "end_of_regulation": 0.58,
+            "field_goal_attempt": 2.27,
+            "halftime": 0.5,
+            "punt": 3.43,
+            "safety": 0.03,
+            "touchdown": 2.26,
+            "turnover": 0.67,
+            "turnover_on_downs": 0.85
+          },
+          "per_game": {
+            "completions": 21.93,
+            "drives": 10.59,
+            "field_goal_attempts": 2.3,
+            "field_goals_made": 1.97,
+            "fumbles_lost": 0.34,
+            "interceptions": 0.3,
+            "pass_attempts": 35.97,
+            "passing_yards": 244.21,
+            "plays": 69.98,
+            "punts": 3.48,
+            "rush_attempts": 32.67,
+            "rushing_yards": 146.6,
+            "sacks_taken": 1.16,
+            "touchdowns": 2.25,
+            "turnovers": 0.64,
+            "turnovers_on_downs": 0.85
+          },
+          "score_mean": 21.52,
+          "score_median": 23.0,
+          "score_p10": 9.9,
+          "score_p90": 33.0,
+          "yards_per_pass_attempt": 6.789268835140395,
+          "yards_per_rush": 4.487297214569942
+        },
+        "WAS": {
+          "completion_pct": 64.91071428571429,
+          "drive_ends_per_game": {
+            "end_of_regulation": 0.39,
+            "field_goal_attempt": 1.88,
+            "halftime": 0.46,
+            "punt": 3.53,
+            "safety": 0.01,
+            "touchdown": 2.43,
+            "turnover": 1.04,
+            "turnover_on_downs": 0.74
+          },
+          "per_game": {
+            "completions": 21.81,
+            "drives": 10.48,
+            "field_goal_attempts": 1.91,
+            "field_goals_made": 1.63,
+            "fumbles_lost": 0.48,
+            "interceptions": 0.52,
+            "pass_attempts": 33.6,
+            "passing_yards": 245.02,
+            "plays": 65.25,
+            "punts": 3.57,
+            "rush_attempts": 30.31,
+            "rushing_yards": 136.45,
+            "sacks_taken": 1.12,
+            "touchdowns": 2.44,
+            "turnovers": 1.0,
+            "turnovers_on_downs": 0.74
+          },
+          "score_mean": 22.02,
+          "score_median": 21.0,
+          "score_p10": 10.0,
+          "score_p90": 31.0,
+          "yards_per_pass_attempt": 7.292261904761904,
+          "yards_per_rush": 4.501814582645991
+        }
+      },
+      "wins": {
+        "NYG": 46,
+        "WAS": 54
+      }
+    },
+    "v1.5": {
+      "games": 100,
+      "percent": {
+        "NYG": 50.0,
+        "WAS": 49.0,
+        "tie": 1.0
+      },
+      "reconciliation_status_other": [],
+      "teams": {
+        "NYG": {
+          "completion_pct": 60.648148148148145,
+          "drive_ends_per_game": {
+            "end_of_regulation": 0.55,
+            "field_goal_attempt": 2.0,
+            "halftime": 0.49,
+            "punt": 3.77,
+            "safety": 0.02,
+            "touchdown": 2.63,
+            "turnover": 0.49,
+            "turnover_on_downs": 0.88
+          },
+          "per_game": {
+            "completions": 20.96,
+            "drives": 10.83,
+            "field_goal_attempts": 2.01,
+            "field_goals_made": 1.78,
+            "fumbles_lost": 0.2,
+            "interceptions": 0.27,
+            "pass_attempts": 34.56,
+            "passing_yards": 229.59,
+            "plays": 69.71,
+            "punts": 3.76,
+            "rush_attempts": 33.76,
+            "rushing_yards": 155.81,
+            "sacks_taken": 1.29,
+            "touchdowns": 2.62,
+            "turnovers": 0.47,
+            "turnovers_on_downs": 0.88
+          },
+          "score_mean": 23.62,
+          "score_median": 24.0,
+          "score_p10": 10.0,
+          "score_p90": 34.20000000000002,
+          "yards_per_pass_attempt": 6.643229166666667,
+          "yards_per_rush": 4.615225118483412
+        },
+        "WAS": {
+          "completion_pct": 63.32057697968796,
+          "drive_ends_per_game": {
+            "end_of_overtime": 0.01,
+            "end_of_regulation": 0.43,
+            "field_goal_attempt": 1.75,
+            "halftime": 0.47,
+            "punt": 3.62,
+            "safety": 0.01,
+            "touchdown": 2.47,
+            "turnover": 1.02,
+            "turnover_on_downs": 0.96
+          },
+          "per_game": {
+            "completions": 21.51,
+            "drives": 10.74,
+            "field_goal_attempts": 1.79,
+            "field_goals_made": 1.51,
+            "fumbles_lost": 0.47,
+            "interceptions": 0.5,
+            "pass_attempts": 33.97,
+            "passing_yards": 248.65,
+            "plays": 65.31,
+            "punts": 3.63,
+            "rush_attempts": 29.97,
+            "rushing_yards": 132.42,
+            "sacks_taken": 1.17,
+            "touchdowns": 2.48,
+            "turnovers": 0.97,
+            "turnovers_on_downs": 0.96
+          },
+          "score_mean": 21.84,
+          "score_median": 22.0,
+          "score_p10": 13.0,
+          "score_p90": 31.0,
+          "yards_per_pass_attempt": 7.319693847512511,
+          "yards_per_rush": 4.418418418418418
+        }
+      },
+      "wins": {
+        "NYG": 50,
+        "WAS": 49,
+        "tie": 1
+      }
+    },
+    "v1.6": {
+      "games": 999,
+      "percent": {
+        "NYG": 44.14414414414414,
+        "WAS": 55.75575575575576,
+        "tie": 0.1001001001001001
+      },
+      "reconciliation_status_other": [],
+      "teams": {
+        "NYG": {
+          "completion_pct": 62.06043165467626,
+          "drive_ends_per_game": {
+            "end_of_regulation": 0.5085085085085085,
+            "field_goal_attempt": 1.902902902902903,
+            "halftime": 0.46146146146146144,
+            "punt": 4.61961961961962,
+            "safety": 0.03903903903903904,
+            "touchdown": 2.0970970970970972,
+            "turnover": 0.5035035035035035,
+            "turnover_on_downs": 0.8928928928928929
+          },
+          "per_game": {
+            "completions": 21.58758758758759,
+            "drives": 11.025025025025025,
+            "field_goal_attempts": 1.942942942942943,
+            "field_goals_made": 1.5865865865865867,
+            "fumbles_lost": 0.11211211211211211,
+            "interceptions": 0.35535535535535534,
+            "pass_attempts": 34.78478478478478,
+            "passing_yards": 237.24924924924926,
+            "plays": 65.12312312312312,
+            "punts": 4.646646646646647,
+            "rush_attempts": 25.673673673673672,
+            "rushing_yards": 119.95095095095095,
+            "sacks_taken": 4.623623623623623,
+            "touchdowns": 2.095095095095095,
+            "turnovers": 0.4674674674674675,
+            "turnovers_on_downs": 0.8928928928928929
+          },
+          "score_mean": 19.38838838838839,
+          "score_median": 20,
+          "score_p10": 7.0,
+          "score_p90": 31.0,
+          "yards_per_pass_attempt": 6.820489208633093,
+          "yards_per_rush": 4.672138178415471
+        },
+        "WAS": {
+          "completion_pct": 63.4887227492618,
+          "drive_ends_per_game": {
+            "end_of_regulation": 0.4724724724724725,
+            "field_goal_attempt": 1.960960960960961,
+            "halftime": 0.5095095095095095,
+            "punt": 4.428428428428428,
+            "safety": 0.02702702702702703,
+            "touchdown": 2.3183183183183185,
+            "turnover": 0.4134134134134134,
+            "turnover_on_downs": 0.9039039039039038
+          },
+          "per_game": {
+            "completions": 20.23123123123123,
+            "drives": 11.034034034034034,
+            "field_goal_attempts": 2.001001001001001,
+            "field_goals_made": 1.7007007007007007,
+            "fumbles_lost": 0.1841841841841842,
+            "interceptions": 0.19519519519519518,
+            "pass_attempts": 31.865865865865867,
+            "passing_yards": 224.86986986986986,
+            "plays": 66.77777777777777,
+            "punts": 4.451451451451452,
+            "rush_attempts": 31.915915915915917,
+            "rushing_yards": 141.68568568568568,
+            "sacks_taken": 2.95995995995996,
+            "touchdowns": 2.32032032032032,
+            "turnovers": 0.3793793793793794,
+            "turnovers_on_downs": 0.9039039039039038
+          },
+          "score_mean": 21.34234234234234,
+          "score_median": 21,
+          "score_p10": 10.0,
+          "score_p90": 33.0,
+          "yards_per_pass_attempt": 7.056763209147452,
+          "yards_per_rush": 4.439342616986576
+        }
+      },
+      "wins": {
+        "NYG": 441,
+        "WAS": 557,
+        "tie": 1
+      }
+    },
+    "v2": {
+      "games": 100,
+      "percent": {
+        "NYG": 44.0,
+        "WAS": 53.0,
+        "tie": 3.0
+      },
+      "reconciliation_status_other": [],
+      "teams": {
+        "NYG": {
+          "completion_pct": 62.446695095948826,
+          "drive_ends_per_game": {
+            "end_of_overtime": 0.02,
+            "end_of_regulation": 0.45,
+            "field_goal_attempt": 2.14,
+            "halftime": 0.54,
+            "punt": 4.32,
+            "safety": 0.05,
+            "touchdown": 1.87,
+            "turnover": 0.63,
+            "turnover_on_downs": 0.87
+          },
+          "per_game": {
+            "completions": 23.43,
+            "drives": 10.89,
+            "field_goal_attempts": 2.17,
+            "field_goals_made": 1.79,
+            "fourth_down_attempts": 2.08,
+            "fourth_down_conversions": 1.18,
+            "fumbles_lost": 0.16,
+            "interceptions": 0.43,
+            "pass_attempts": 37.52,
+            "passing_yards": 247.35,
+            "plays": 68.0,
+            "punts": 4.35,
+            "rush_attempts": 26.85,
+            "rushing_yards": 115.9,
+            "sacks_taken": 3.5,
+            "third_down_attempts": 14.57,
+            "third_down_conversions": 5.73,
+            "touchdowns": 1.86,
+            "turnovers": 0.59,
+            "turnovers_on_downs": 0.87
+          },
+          "score_mean": 18.39,
+          "score_median": 19.0,
+          "score_p10": 6.0,
+          "score_p90": 30.10000000000001,
+          "yards_per_pass_attempt": 6.592484008528785,
+          "yards_per_rush": 4.316573556797021
+        },
+        "WAS": {
+          "completion_pct": 65.09704104358893,
+          "drive_ends_per_game": {
+            "end_of_overtime": 0.01,
+            "end_of_regulation": 0.53,
+            "field_goal_attempt": 2.01,
+            "halftime": 0.43,
+            "punt": 4.29,
+            "safety": 0.04,
+            "touchdown": 2.25,
+            "turnover": 0.41,
+            "turnover_on_downs": 0.88
+          },
+          "per_game": {
+            "completions": 20.46,
+            "drives": 10.85,
+            "field_goal_attempts": 2.05,
+            "field_goals_made": 1.76,
+            "fourth_down_attempts": 1.8,
+            "fourth_down_conversions": 0.95,
+            "fumbles_lost": 0.2,
+            "interceptions": 0.17,
+            "pass_attempts": 31.43,
+            "passing_yards": 210.92,
+            "plays": 66.88,
+            "punts": 4.36,
+            "rush_attempts": 32.91,
+            "rushing_yards": 149.09,
+            "sacks_taken": 2.45,
+            "third_down_attempts": 14.2,
+            "third_down_conversions": 6.02,
+            "touchdowns": 2.26,
+            "turnovers": 0.37,
+            "turnovers_on_downs": 0.88
+          },
+          "score_mean": 21.12,
+          "score_median": 20.0,
+          "score_p10": 13.0,
+          "score_p90": 29.10000000000001,
+          "yards_per_pass_attempt": 6.710785873369392,
+          "yards_per_rush": 4.530233971437253
+        }
+      },
+      "wins": {
+        "NYG": 44,
+        "WAS": 53,
+        "tie": 3
+      }
+    }
+  },
+  "v1.6_ordered_plays": {
+    "by_team": {
+      "NYG": {
+        "down_1_attempts": 27676,
+        "down_1_conversions": 5769,
+        "down_2_attempts": 21312,
+        "down_2_conversions": 6665,
+        "down_3_attempts": 14164,
+        "down_3_conversions": 5411,
+        "down_4_attempts": 1906,
+        "down_4_conversions": 993,
+        "fourth_conversion_pct": 52.09863588667366,
+        "fourth_le_5_opportunities": 3486,
+        "fourth_le_5_per_game": 3.4894894894894897,
+        "third_3_5_opportunities": 3576,
+        "third_3_5_per_game": 3.5795795795795797,
+        "third_conversion_pct": 38.202485173679754
+      },
+      "WAS": {
+        "down_1_attempts": 27985,
+        "down_1_conversions": 5257,
+        "down_2_attempts": 22162,
+        "down_2_conversions": 7070,
+        "down_3_attempts": 14588,
+        "down_3_conversions": 5962,
+        "down_4_attempts": 1976,
+        "down_4_conversions": 1055,
+        "fourth_conversion_pct": 53.39068825910931,
+        "fourth_le_5_opportunities": 4021,
+        "fourth_le_5_per_game": 4.025025025025025,
+        "third_3_5_opportunities": 4281,
+        "third_3_5_per_game": 4.285285285285285,
+        "third_conversion_pct": 40.869207567863995
+      }
+    },
+    "valid_games_read": 999
+  }
+}
