@@ -11,6 +11,26 @@ from penalty_game import PenaltyGameController
 from test_penalty_game_loop import AnyCell, FixturePlaycall, FixedPenaltySampler
 
 
+class PeriodPlaycall(FixturePlaycall):
+    """One initial field goal then repeated 3-and-out possessions at 40s/snap."""
+    def __init__(self):
+        super().__init__(["field_goal_attempt"])
+        self.calls = 0
+
+    def sample(self, rng, cell, *, offense, defense, state):
+        if self.calls == 0:
+            event = "field_goal_attempt"
+        else:
+            event = ("pass_incomplete", "pass_incomplete", "pass_incomplete", "punt")[
+                (self.calls - 1) % 4]
+        self.events = [event]
+        self.index = 0
+        chosen, row, _, spot = super().sample(rng, cell, offense=offense,
+                                              defense=defense, state=state)
+        self.calls += 1
+        return chosen, row, 40, spot
+
+
 class PenaltyFullGameFixtureTests(unittest.TestCase):
     def test_four_quarters_scoring_penalty_and_validation(self):
         kickoff_source = {
@@ -24,8 +44,7 @@ class PenaltyFullGameFixtureTests(unittest.TestCase):
         ref = gs.Reference(
             pool=AnyCell(), kickoff_pool=[kickoff_source],
             kicks=kicks, participants={},
-            contextual_sampler=FixturePlaycall(
-                ['field_goal_attempt', 'punt', 'punt', 'punt']),
+            contextual_sampler=PeriodPlaycall(),
         )
 
         def penalty_factory(*, seed, snapshot, ledger):
@@ -40,7 +59,7 @@ class PenaltyFullGameFixtureTests(unittest.TestCase):
         ref.penalty_controller_factory = penalty_factory
         record = gs.play_game(
             41017, ref, winner='A', winner_choice='receive',
-            max_drives=10, pregame_snapshot=None)
+            max_drives=45, pregame_snapshot=None)
         self.assertEqual(record['status'], 'complete_regulation',
                          msg=str(record.get('blocker')))
         self.assertTrue(record['complete_game'])
