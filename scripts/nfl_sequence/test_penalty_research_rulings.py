@@ -98,6 +98,42 @@ class ResearchRulingTests(unittest.TestCase):
         for value in (0.5, 2.25, 53.5, 99.75, True, None):
             self.assertFalse(has_exact_historical_integer(value))
 
+    def test_all_modeled_fouls_across_field_and_down_boundaries(self):
+        # The previous single-state tests missed deep own-goal half-yard
+        # positions and loss-of-down enforcement on fourth down.
+        for yl in (0.5, 1., 35., 98., 99.5):
+            for down in range(1, 5):
+                for (side, foul), rule in RULES.items():
+                    with self.subTest(yl=yl, down=down, side=side, foul=foul):
+                        is_pre = rule.phase == 'pre_snap'
+                        kind = ('run' if not is_pre and 'run' in rule.play_classes
+                                else 'pass_incomplete')
+                        state = {
+                            'quarter': 4, 'clock': 150,
+                            'offense': 'A', 'defense': 'B', 'down': down,
+                            'togo': min(8., yl), 'yl': yl,
+                            'selected_play_class': ('pre_snap' if is_pre else
+                                                    'run' if kind == 'run' else 'dropback'),
+                            'sampled_runoff_seconds': 8,
+                            'sampled_event_terminal': None,
+                            'sampled_event_yards': 0,
+                        }
+                        ctrl = PenaltyGameController(
+                            sampler=OneFoul(f'{side}:{foul}'), game_seed=18,
+                            team_identity={'A': 'WAS', 'B': 'NYG'},
+                            ruling_provider=ResearchPenaltyRulingPolicy(18))
+                        got = ctrl.resolve(
+                            phase=rule.phase, state=state,
+                            drive_index=1, play_index=2,
+                            event=None if is_pre else kind,
+                            after=None if is_pre else
+                            {'offense': 'A', 'defense': 'B',
+                             'down': down, 'togo': min(8., yl), 'yl': yl})
+                        self.assertTrue(got.enforcement['accepted'])
+                        self.assertGreater(got.state['yl'], 0)
+                        self.assertLess(got.state['yl'], 100)
+                        self.assertGreater(got.state['togo'], 0)
+
     def test_same_foul_and_seed_produces_identical_ruling(self):
         a = self.resolve('defense:defensive_pass_interference')
         b = self.resolve('defense:defensive_pass_interference')
