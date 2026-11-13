@@ -555,6 +555,22 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
 
     for offset, (decision, play) in enumerate(zip(decisions[len(plays):], partial_plays), len(plays) + 1):
         event = play.get('event_type')
+        if event == 'penalty':
+            # A blocked drive can contain a live-ball accepted foul before its
+            # unresolved final snap. That nullified play has a legitimate
+            # pre-outcome decision but no credited football outcome.
+            result = play.get('outcome') or {}
+            enforcement = result.get('penalty_enforcement') or {}
+            cancelled = result.get('cancelled_event')
+            if (not cancelled or not result.get('penalty_resolved')
+                    or not _decision_resolves_to_event(decision, cancelled)
+                    or enforcement.get('accepted') is not True
+                    or enforcement.get('play_counts')
+                    or result.get('yards_gained') is not None
+                    or result.get('touchdown') or result.get('safety')):
+                fail(offset, decision, play,
+                     'blocked-attempt nullified penalty lacks a legal source decision or credits a play')
+            continue
         if event not in gs.reducer.EVENT_VOCABULARY:
             fail(offset, decision, play, f'blocked-attempt play event {event!r} is outside the supported SLC rules vocabulary',
                  failure_class='UNSUPPORTED_RULE')

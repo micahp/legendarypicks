@@ -36,6 +36,8 @@ def exploratory_reasons(payload: dict) -> list[str]:
         reasons.append('schedule row is the current row, not an as-of version')
     if payload['source'].get('producer_worktree_dirty'):
         reasons.append('producer worktree was dirty')
+    if payload.get('simulation', {}).get('slc_profile') == 'v1_7_candidate':
+        reasons.append('V1.7 research penalty rulings are not forecast-release validated')
     availability = snapshot.get('availability')
     if availability is None:
         reasons.append('no availability snapshot applied')
@@ -57,6 +59,8 @@ def _entry(payload: dict, data: bytes, path: Path, run_id: str, created: str) ->
         'seed_start': payload['simulation']['seed_start'],
         'seed_end_inclusive': payload['simulation']['seed_end_inclusive'],
         'valid_full_games': payload['summary']['valid_full_games'],
+        'forecast_release_validated_games': payload['summary'].get(
+            'forecast_release_validated_games', payload['summary']['valid_full_games']),
         'source_commit': payload['source'].get('base_commit'),
         'producer_worktree_dirty': payload['source'].get('producer_worktree_dirty'),
         'frozen_input_sha256': payload['data_sources']['source_snapshot_sha256'],

@@ -1,0 +1,36 @@
+name: SLC V1.7 validity and failed-seed repair
+
+on:
+  push:
+    branches:
+      - fix/slc-v17-validity-and-seed-failures-2026-11-13
+  pull_request:
+    branches:
+      - fix/slc-v17-fractional-state-precision-2026-11-13
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preserved-failure-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Retrieve exact saved errors, not fresh simulations
+        run: |
+          git fetch origin research/was-nyg-player-projection-replay-2026-11-13
+          git show FETCH_HEAD:docs/research/slc-was-nyg-model-family-2026-11-12/v1.7-1000-pr43-errors.jsonl.gz > /tmp/v17-errors.jsonl.gz
+      - name: Classify all 47 exact failure envelopes
+        run: |
+          python scripts/nfl_sequence/diagnose_v17_failures.py \
+            --errors /tmp/v17-errors.jsonl.gz \
+            --out /tmp/v17-error-diagnostics.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v17-errors-triage
+          path: /tmp/v17-error-diagnostics.json
+          retention-days: 60

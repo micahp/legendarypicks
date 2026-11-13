@@ -139,7 +139,13 @@ def _series(before: DownState, new_y: float, side: str, *, auto_first: bool,
     # For a live-ball accepted foul, the down is replayed unless the foul carries
     # loss of down. Compute distance from the original line to gain, not from
     # the spot where an illegal block occurred during a run.
-    remaining = before.to_go + new_y - before.yardline_100
+    # A goal-to-go series has its line-to-gain at the goal line. Preserve
+    # that exact invariant instead of subtracting independently rounded
+    # floating-point spots (which can yield to_go = new_y + 1e-15).
+    if math.isclose(before.to_go, before.yardline_100, rel_tol=0, abs_tol=EPS):
+        remaining = new_y
+    else:
+        remaining = before.to_go + new_y - before.yardline_100
     if side == "defense":
         remaining = max(EPS, remaining)
     return DownState(new_down, remaining, new_y, before.possession), False, False
