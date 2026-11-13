@@ -106,11 +106,31 @@ def check_position_content(con, league, spec, out):
     `position_group_content` runs the same test on the normalised group column
     (position_group) while the detailed positions stay separately reported.
     """
-    _position_content(con, league, spec.get("position_content") or {}, "position", "B/position-content", out,
-                      missing_declaration=True)
+    # Groups first: a granular position with too few logs of its own defers to its
+    # group's result (entry key "defer_to_group"), so the group must already be measured.
     groups = spec.get("position_group_content") or {}
     if groups and "position_group" in _columns(con, "players"):
         _position_content(con, league, groups, "position_group", "B/position-group", out)
+    _position_content(con, league, spec.get("position_content") or {}, "position", "B/position-content", out,
+                      missing_declaration=True)
+
+
+def _deferred_to_group(entry, out, position, detail):
+    """A granular position too thin to judge alone is covered by its group's PASS.
+
+    Never a pass by default: only when the entry names a group AND that group's own
+    check PASSED on a sufficient sample. A FAIL or UNVERIFIED group keeps this
+    position UNVERIFIED. A thin sample is not bad data; it is a smaller sample.
+    """
+    group = entry.get("defer_to_group") if isinstance(entry, dict) else None
+    if not group:
+        return None
+    for row in out.rows:
+        state, check, text = row[0], row[-2], row[-1]   # (state, [league,] check, detail)
+        if check == "B/position-group[%s]" % group and state == PASS:
+            return ("%s; stat coverage is validated on the %s group instead (%s)"
+                    % (detail, group, text))
+    return None
 
 
 def _position_content(con, league, wanted, column, label, out, missing_declaration=False):
@@ -151,9 +171,9 @@ def _position_content(con, league, wanted, column, label, out, missing_declarati
                 (league, position.upper()),
             ).fetchall()
         if not rows:
-            out.add(UNVERIFIED, league, f"{label}[{position}]",
-                    "no game logs at all for this position -- cannot confirm "
-                    "its stats are recorded")
+            msg = "no game logs at all for this position -- cannot confirm its stats are recorded"
+            covered = _deferred_to_group(entry, out, position, msg)
+            out.add(PASS if covered else UNVERIFIED, league, f"{label}[{position}]", covered or msg)
             continue
         total_rows = len(rows)
         if qualify:
@@ -199,9 +219,10 @@ def _position_content(con, league, wanted, column, label, out, missing_declarati
             out.add(FAIL, league, f"{label}[{position}]",
                     "%s, below the declared floor: %s" % (basis, "; ".join(low)))
         elif sampled < min_sample:
-            out.add(UNVERIFIED, league, f"{label}[{position}]",
-                    "insufficient sample: %s, need at least %d to call it a pass (coverage "
-                    "of what exists: %s)" % (basis, min_sample, ", ".join(counts)))
+            msg = ("insufficient sample: %s, need at least %d to call it a pass (coverage "
+                   "of what exists: %s)" % (basis, min_sample, ", ".join(counts)))
+            covered = _deferred_to_group(entry, out, position, msg)
+            out.add(PASS if covered else UNVERIFIED, league, f"{label}[{position}]", covered or msg)
         else:
             out.add(PASS, league, f"{label}[{position}]",
                     "%s, all recorded at >=%.0f%%: %s"

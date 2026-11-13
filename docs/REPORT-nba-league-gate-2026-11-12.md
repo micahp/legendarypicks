@@ -32,6 +32,6 @@ Code: `dev` at `81d57909`. Prod is unchanged and has none of the data below.
 ## Decisions needed from Micah
 
 1. Does participation coverage count toward the Gate G pass? Today identity is strict.
-2. Gate B: Micah decided NOT to collapse positions into G/F/C. PG, SG, SF and PF stay as positions and stay checked. They are UNVERIFIED: PF 2, SF 4, SG 3 qualifying logs (need 30) and PG has none. Their 114 rows are old inactive rows. No threshold was lowered and no log was added. Open question: how the gate should treat a position that no active player holds.
+2. Gate B: positions are NOT collapsed to G/F/C. PG, SG, SF and PF stay as positions. Box-score stat coverage is validated on the groups with enough logs (Guard, Forward, Center: 494 to 499 real logs each). A granular position with too few logs defers to its group (`defer_to_group` in the spec) only when that group PASSES. The result line says so. Missing stats in a granular position still FAIL. A thin group keeps the granular position UNVERIFIED. No threshold was lowered and no log was added.
 3. London Lions: the resolver holds any player from ESPN team 134478. They are not added to the NBA table.
 4. Queue: 182 stale rows removed from dev `unresolved_players`. Each matched an existing player by id and name. Audit file: `docs/audit/audit_unresolved_stale_nba_20261112.csv`. No player or log was deleted. 30 NBA rows remain: KJ Martin (2, name alias), Jae Crowder and Quincy Acy (2 owners each), 15 London, Maxwell Lewis, 10 blank keys. Prod queue is unchanged.

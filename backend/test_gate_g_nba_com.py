@@ -116,3 +116,48 @@ class GateBSample(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GateBDeferToGroup(unittest.TestCase):
+    """A thin granular position is covered by its group's PASS, never by default."""
+
+    GROUP = {"keys": [["PTS"], ["MIN"]], "coverage": 0.8, "min_sample": 3, "qualify_nonzero": "MIN"}
+
+    def run_b(self, pg_logs, guard_logs, defer=True):
+        con = sqlite3.connect(":memory:")
+        con.executescript("CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, league TEXT, position TEXT, position_group TEXT);"
+                          "CREATE TABLE player_game_logs(player_id INT, league TEXT, season INT, stats TEXT);")
+        con.execute("INSERT INTO players VALUES(1,'A','nba','PG','Guard')")
+        con.execute("INSERT INTO players VALUES(2,'B','nba','G','Guard')")
+        for stats in pg_logs:
+            con.execute("INSERT INTO player_game_logs VALUES(1,'nba',2027,?)", (stats,))
+        for stats in guard_logs:
+            con.execute("INSERT INTO player_game_logs VALUES(2,'nba',2027,?)", (stats,))
+        entry = dict(self.GROUP, **({"defer_to_group": "Guard"} if defer else {}))
+        out = Out()
+        checks.check_position_content(con, "nba", {"position_content": {"PG": entry},
+                                                   "position_group_content": {"Guard": self.GROUP}}, out)
+        return {r[1]: r for r in out.rows}
+
+    GOOD = ['{"PTS":1,"MIN":9}'] * 4
+
+    def test_thin_position_passes_when_its_group_passes(self):
+        rows = self.run_b(['{"PTS":1,"MIN":9}'], self.GOOD)
+        self.assertEqual(rows["B/position-content[PG]"][0], "PASS")
+        self.assertIn("validated on the Guard group", rows["B/position-content[PG]"][2])
+
+    def test_no_logs_at_all_defers_too(self):
+        rows = self.run_b([], self.GOOD)
+        self.assertEqual(rows["B/position-content[PG]"][0], "PASS")
+
+    def test_thin_position_stays_unverified_when_the_group_is_also_thin(self):
+        rows = self.run_b(['{"PTS":1,"MIN":9}'], ['{"PTS":1,"MIN":9}'])
+        self.assertEqual(rows["B/position-content[PG]"][0], "UNVERIFIED")
+
+    def test_thin_position_stays_unverified_without_a_defer_declaration(self):
+        rows = self.run_b(['{"PTS":1,"MIN":9}'], self.GOOD, defer=False)
+        self.assertEqual(rows["B/position-content[PG]"][0], "UNVERIFIED")
+
+    def test_a_granular_position_with_missing_stats_still_fails(self):
+        rows = self.run_b(['{"MIN":9}'] * 3, self.GOOD)
+        self.assertEqual(rows["B/position-content[PG]"][0], "FAIL")

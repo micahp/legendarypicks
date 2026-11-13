@@ -94,10 +94,10 @@ MANIFEST = {
             "C": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
             "F": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
             "G": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
-            "PF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
-            "PG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
-            "SF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
-            "SG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "PF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN", "defer_to_group": "Forward"},
+            "PG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN", "defer_to_group": "Guard"},
+            "SF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN", "defer_to_group": "Forward"},
+            "SG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN", "defer_to_group": "Guard"},
         },
         # The normalised groups (Guard/Forward/Center) are measured separately from
         # the detailed positions above, on logs with real minutes only.
