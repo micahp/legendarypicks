@@ -499,13 +499,13 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                     play_terminal = None
                 runoff = penalty_info.runoff_seconds
         period_expired = bool(kick_outcome and kick_outcome.get('classification_status') == 'period_expired')
-        if clock is not None:
+        if clock is not None and penalty_info is None:
             runoff, _, refusal = clock.draw(row, event, play_terminal, st['quarter'], st['clock'],
                                              drive_index=drive_index, play_index=play_index,
                                              force_period_end=period_expired)
             if refusal:
                 return halt(f'clock model refused: {refusal}')
-        elif period_expired:
+        elif period_expired and penalty_info is None:
             # The sampled source outcome says this kick ends the period. Use this simulated state's exact remaining clock.
             runoff = st['clock']
         clock_raw = st['clock'] - runoff
@@ -570,7 +570,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                          'note': ('4th-down choice sampled from observed plays in the cell (go-for-it, punt or '
                                   'field-goal attempt)') if st['down'] == 4 else None},
             'outcome': {'passer_id': None, 'receiver_id': None, 'rusher_id': None,
-                        'yards_gained': None if event in KICK_EVENTS else yards,
+                        'yards_gained': None if event in KICK_EVENTS or event == 'penalty' else yards,
                         'sampled_yards_gained': sampled_yards,
                         'yardage_boundary_adjustment': yardage_boundary_adjustment,
                         'touchdown': flags['touchdown'],
