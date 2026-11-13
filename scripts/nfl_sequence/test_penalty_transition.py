@@ -43,12 +43,52 @@ class PenaltyTransitionTests(unittest.TestCase):
                        game_seed=1, opportunity_key='x', before=self.before,
                        after_play=DownState(3, 3, 55, 'WAS'), accepted=True)
 
-    def test_live_unsupported_foul_fails_closed(self):
+    def test_roughing_passer_requires_completion_context_and_then_enforces(self):
         ctx = Context('live_ball', 2026, 'WAS', 'NYG', 2, 8, 60, 'dropback')
-        with self.assertRaisesRegex(ValueError, 'unsupported live-pass foul'):
-            transition(sampler=FixedSampler('defense:roughing_passer'), context=ctx,
+        params = dict(sampler=FixedSampler('defense:roughing_passer'), context=ctx,
+                      game_seed=1, opportunity_key='x', before=self.before,
+                      after_play=DownState(3, 3, 55, 'WAS'), accepted=True)
+        with self.assertRaisesRegex(ValueError, 'pass outcome'):
+            transition(**params)
+        result = transition(**params, pass_outcome='complete')
+        self.assertEqual(result.state, DownState(1, 10, 40, 'WAS'))
+        self.assertTrue(result.enforcement['play_counts'])
+        self.assertTrue(result.enforcement['automatic_first_down'])
+
+    def test_illegal_shift_on_live_run_uses_bridge_and_replays_down(self):
+        ctx = Context('live_ball', 2026, 'WAS', 'NYG', 2, 8, 60, 'run')
+        result = transition(sampler=FixedSampler('offense:illegal_shift'),
+                            context=ctx, game_seed=1, opportunity_key='x',
+                            before=self.before, after_play=DownState(3, 2, 54, 'WAS'),
+                            accepted=True)
+        self.assertEqual(result.state, DownState(2, 13, 65, 'WAS'))
+        self.assertTrue(result.enforcement['replay_down'])
+
+    def test_illegal_block_needs_subtype_and_spot(self):
+        ctx = Context('live_ball', 2026, 'WAS', 'NYG', 2, 8, 60, 'run')
+        params = dict(sampler=FixedSampler('offense:illegal_block'),
+                      context=ctx, game_seed=1, opportunity_key='x',
+                      before=self.before, after_play=self.before, accepted=True)
+        with self.assertRaisesRegex(ValueError, 'subtype'):
+            transition(**params)
+        result = transition(**params, block_subtype='in_back', foul_yardline_100=50)
+        self.assertEqual(result.state, self.before)
+
+    def test_grounding_on_fourth_down_routes_to_context_defense_team(self):
+        before = DownState(4, 4, 60, 'WAS')
+        ctx = Context('live_ball', 2026, 'WAS', 'NYG', 4, 4, 60, 'dropback')
+        result = transition(sampler=FixedSampler('offense:intentional_grounding'),
+                            context=ctx, game_seed=1, opportunity_key='x', before=before,
+                            after_play=before, accepted=True, foul_yardline_100=67)
+        self.assertEqual(result.state, DownState(1, 10, 30, 'NYG'))
+        self.assertTrue(result.enforcement['turnover_on_downs'])
+
+    def test_kick_specific_and_unsupported_context_remain_explicitly_blocked(self):
+        ctx = Context('live_ball', 2026, 'WAS', 'NYG', 2, 8, 60, 'kick')
+        with self.assertRaisesRegex(ValueError, 'kick specialty'):
+            transition(sampler=FixedSampler('offense:illegal_formation'), context=ctx,
                        game_seed=1, opportunity_key='x', before=self.before,
-                       after_play=DownState(3, 8, 60, 'WAS'), accepted=True)
+                       after_play=self.before, accepted=True)
 
 
 if __name__ == '__main__':
