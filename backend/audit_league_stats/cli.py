@@ -45,8 +45,6 @@ MANIFEST = {
                 "qualifier": {"unit": "innings", "published": "1.0 IP x team games (162/162)"},
             },
         },
-        # Canonical NBA positions are G/F/C. PG/SG/SF/PF stay as source labels
-        # (metadata) and are not checked here: they have no or too few logs.
         "position_content": {
             # Two classes, measured 2026-08-05: every MLB position's log
             # carries the same ESPN box-score line -- batters (PA/H/R/RBI/HR/
@@ -96,6 +94,10 @@ MANIFEST = {
             "C": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
             "F": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
             "G": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "PF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "PG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "SF": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
+            "SG": {"keys": [["PTS"], ["REB"], ["AST"], ["MIN"], ["FGM"]], "coverage": 0.8, "min_sample": 30, "qualify_nonzero": "MIN"},
         },
         # The normalised groups (Guard/Forward/Center) are measured separately from
         # the detailed positions above, on logs with real minutes only.

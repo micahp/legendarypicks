@@ -32,26 +32,6 @@ Code: `dev` at `81d57909`. Prod is unchanged and has none of the data below.
 ## Decisions needed from Micah
 
 1. Does participation coverage count toward the Gate G pass? Today identity is strict.
-2. Gate B: group the detailed positions into Guard, Forward, Center, or normalize the old PG, SG, SF, PF rows.
-3. Keep London Lions players (14 ids, ESPN team 134478) out of the NBA table?
-4. Retire the 185 stale rows in `unresolved_players` (the id is now owned)? Needs approval to delete.
-
-## Held items
-
-- `unresolved_players` has 212 rows: 185 stale, 15 London Lions, 11 blank key, 1 Rotowire key (6575, likely Walter Clayton Jr.).
-- NBA.com and ESPN rosters disagree for some players (Lanier, Tomlin, Evans, Diop are on NBA.com only). Per-source status is derivable from the newest `roster_snapshots` row per source. No new field is needed.
-- Wrightsell: ESPN id 5460427 is an empty ESPN stub kept as `espn_id_alias_unconfirmed`. A reported 1999 birth year is unverified.
-
-## Before prod
-
-Prod needs the identity data migrated with approval. The gate must pass first. Remove the `nba_id` fallback reads only after both DBs are migrated and API tests pass.
-Disk is about 2.6 GB free, so a full prod backup is not possible now.
-
-## Update: decisions applied (branch `fix/nba-gate-decisions`, not on dev)
-
-Result on dev DB after the change: 14 pass, 0 UNVERIFIED, 0 FAIL.
-
-1. Gate G: players who played (minutes above zero) block. Zero-minute and roster-only ids are reported, not blocking. A wrong id pairing still FAILs. An orphan log still blocks.
-2. Gate B: canonical positions are G, F, C (and the Guard, Forward, Center groups). PG, SG, SF, PF are source labels and are no longer checked. No threshold was lowered.
+2. Gate B: Micah decided NOT to collapse positions into G/F/C. PG, SG, SF and PF stay as positions and stay checked. They are UNVERIFIED: PF 2, SF 4, SG 3 qualifying logs (need 30) and PG has none. Their 114 rows are old inactive rows. No threshold was lowered and no log was added. Open question: how the gate should treat a position that no active player holds.
 3. London Lions: the resolver holds any player from ESPN team 134478. They are not added to the NBA table.
 4. Queue: 182 stale rows removed from dev `unresolved_players`. Each matched an existing player by id and name. Audit file: `docs/audit/audit_unresolved_stale_nba_20261112.csv`. No player or log was deleted. 30 NBA rows remain: KJ Martin (2, name alias), Jae Crowder and Quincy Acy (2 owners each), 15 London, Maxwell Lewis, 10 blank keys. Prod queue is unchanged.
