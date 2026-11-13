@@ -14,6 +14,7 @@ import simulate_pregame_batch
 import sim_run_registry
 import slc_outputs
 import slc_engine
+import verify_v17_seed_repairs
 from football_assertions import FootballAssertionError
 from penalty_enforcement import DownState, enforce
 from penalty_game import PenaltyGameController
@@ -88,6 +89,36 @@ class V17FailureFamilyTests(unittest.TestCase):
         self.assertEqual(report['forecast_release_validated_games'], 1)
         self.assertIsNotNone(report['forecast_release_distribution']['market_settlement'])
         self.assertEqual(slc_outputs._box_status(row), 'valid_complete')
+
+    def test_exact_failed_seed_list_verifier_refuses_partial_or_release_leaks(self):
+        seeds = list(range(501, 548))
+        baseline = {'game_id': '2026_10_WAS_NYG', 'seeds': seeds}
+        def outcome(seed):
+            return {
+                'seed': seed, 'complete_game': True,
+                'mechanically_complete_game': True,
+                'valid_full_game': True, 'forecast_release_validated': False,
+                'research_only_penalty_model': True, 'status': 'complete_regulation',
+                'error': None, 'blocker': None,
+            }
+        replay = {
+            'game_id': '2026_10_WAS_NYG',
+            'simulation': {'slc_profile': 'v1_7_candidate', 'requested_games': 47},
+            'summary': {'outcomes': [outcome(seed) for seed in seeds]},
+        }
+        result = verify_v17_seed_repairs.verify(baseline, replay)
+        self.assertTrue(result['replay_completed_successfully'])
+        self.assertEqual(result['mechanically_verified_full_games'], 47)
+        self.assertEqual(result['still_failing'], 0)
+        self.assertFalse(result['research_release_approval'])
+        replay['summary']['outcomes'][0]['forecast_release_validated'] = True
+        result = verify_v17_seed_repairs.verify(baseline, replay)
+        self.assertEqual(result['still_failing'], 1)
+        self.assertIn('research_falsely_release_validated',
+                      result['failed_seeds'][0]['reasons'])
+        replay['summary']['outcomes'].pop()
+        with self.assertRaisesRegex(ValueError, 'exactly the pinned 47'):
+            verify_v17_seed_repairs.verify(baseline, replay)
 
     def test_missed_field_goal_sample_can_have_fractional_spot(self):
         baseline = gs.missed_field_goal_spot(
