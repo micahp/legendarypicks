@@ -471,8 +471,16 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         penalty_info = None
         if penalty_controller is not None:
             try:
+                source_class = ('kick' if selected_event in ('punt', 'field_goal_attempt')
+                                else 'run' if row.get('play_type') == 'run'
+                                else 'dropback')
                 penalty_info = penalty_controller.resolve(
-                    phase='live_ball', state=st, drive_index=drive_index,
+                    phase='live_ball',
+                    state={**st, 'selected_play_class': source_class,
+                           'sampled_runoff_seconds': runoff,
+                           'sampled_event_terminal': play_terminal,
+                           'sampled_event_yards': yards},
+                    drive_index=drive_index,
                     play_index=play_index, event=event, after=after,
                     kick_type=('punt' if selected_event == 'punt' else
                                'field_goal' if selected_event == 'field_goal_attempt' else None))
@@ -590,7 +598,10 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'punt': flags['punt'], 'punt_attempt': flags['punt_attempt'],
                         'field_goal_attempt': flags['field_goal_attempt'],
                         'safety': flags['safety'], 'scoring_team': flags.get('scoring_team'),
-                        'first_down': flags.get('first_down', False), 'clock_runoff_seconds': runoff,
+                        'first_down': (flags.get('first_down', False) or bool(
+                            penalty_info and penalty_info.enforcement.get('accepted')
+                            and penalty_info.enforcement.get('automatic_first_down'))),
+                        'clock_runoff_seconds': runoff,
                         'dead_ball_position': (None if after is None else {'offense': after['offense'],
                             'defense': after['defense'], 'down': after['down'], 'togo': after['togo'], 'yl': after['yl']}),
                         'clock_clamped_to_zero': clock_raw < 0,
