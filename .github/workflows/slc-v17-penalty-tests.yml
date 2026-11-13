@@ -51,4 +51,8 @@ jobs:
             test_game_state.GameStatsReconciliation \
             test_game_state.MissedFieldGoalBoundaries \
             test_game_state.MissedFieldGoalTransition \
-            test_pregame_batch.BatchAggregation
+            test_pregame_batch.BatchAggregation.test_all_seeds_are_retained_and_ties_are_in_regulation_distribution \
+            test_pregame_batch.BatchAggregation.test_market_pushes_and_missing_valid_samples_are_explicit \
+            test_pregame_batch.BatchAggregation.test_regulation_tie_is_not_misreported_as_a_partial_game \
+            test_pregame_batch.BatchAggregation.test_overtime_final_tie_is_not_misclassified_as_a_regulation_tie \
+            test_pregame_batch.BatchAggregation.test_refuses_missing_or_duplicate_seed_rows
