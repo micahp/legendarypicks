@@ -1,0 +1,63 @@
+{
+  "claim": "official reported pregame inactive decision, retrospectively retrieved, not always independently captured before kickoff",
+  "roster_weekly_identity_only_not_availability": true,
+  "season": 2026,
+  "source_articles": [
+    {
+      "url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+      "week": 2
+    },
+    {
+      "url": "https://amp.nfl.com/news/nfl-week-3-inactives-players-ruled-out-sunday-14-games-2026",
+      "week": 3
+    },
+    {
+      "url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+      "week": 4
+    },
+    {
+      "url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+      "week": 5
+    },
+    {
+      "url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+      "week": 6
+    },
+    {
+      "url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+      "week": 7
+    },
+    {
+      "url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+      "week": 8
+    },
+    {
+      "url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+      "week": 9
+    }
+  ],
+  "source_sha256_by_week": {
+    "2": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "3": "a5034f67237d05c71ab3da1147465ad1ea04af945aad7a758c0a25ac5d0e6bce",
+    "4": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "5": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "6": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "7": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "8": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "9": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4"
+  },
+  "summary": {
+    "article_updated_before_cutoff_team_games": 14,
+    "articles_downloaded": 8,
+    "fully_identity_resolved_team_games": 149,
+    "player_rows": 1124,
+    "retrospective_article_team_games": 165,
+    "source_team_games": 179,
+    "team_games_needing_identity_review": 30,
+    "unresolved_player_rows": 31
+  },
+  "weeks": [
+    2,
+    9
+  ]
+}

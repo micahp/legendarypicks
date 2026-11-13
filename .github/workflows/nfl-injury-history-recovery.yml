@@ -1,0 +1,122 @@
+name: Recover NFL 2026 injury Weeks 2-9
+
+on:
+  push:
+    branches:
+      - research/nfl-injury-weeks-2-9-recovery-2026-11-13
+  pull_request:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  recover-injury-history:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install source parquet reader
+        run: python -m pip install pyarrow==22.0.0 beautifulsoup4==4.14.2
+      - name: Run injury-cutoff regression tests
+        run: PYTHONPATH=backend python -m unittest -v test_recover_nfl_injury_weeks test_reconstruct_nfl_roster_asof test_recover_official_nfl_inactives
+      - name: Fetch published 2026 injury rows and historical game schedule
+        run: |
+          mkdir -p /tmp/lp-nfl-injuries
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet \
+            --output /tmp/lp-nfl-injuries/injuries_2026.parquet
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv \
+            --output /tmp/lp-nfl-injuries/games.csv
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet \
+            --output /tmp/lp-nfl-injuries/depth_charts_2026.parquet
+      - name: Extract all Week 2-9 reports and classify source timestamp evidence
+        run: |
+          PYTHONPATH=backend python backend/recover_nfl_injury_weeks.py \
+            --artifact /tmp/lp-nfl-injuries/injuries_2026.parquet \
+            --schedule-csv /tmp/lp-nfl-injuries/games.csv \
+            --out-dir /tmp/lp-nfl-injuries/recovered
+          cat /tmp/lp-nfl-injuries/recovered/README.md
+      - name: Reconstruct game-specific historical depth chart by pre-kickoff timestamp
+        run: |
+          PYTHONPATH=backend python backend/reconstruct_nfl_roster_asof.py \
+            --depth-parquet /tmp/lp-nfl-injuries/depth_charts_2026.parquet \
+            --injury-csv /tmp/lp-nfl-injuries/recovered/nfl-injury-weeks-2-9.csv \
+            --schedule-csv /tmp/lp-nfl-injuries/games.csv \
+            --out-dir /tmp/lp-nfl-injuries/roster-asof
+          cat /tmp/lp-nfl-injuries/roster-asof/asof-depth-injury-coverage.json
+      - name: Fetch identity crosswalk for official inactive articles
+        run: |
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/nflverse/nflverse-data/releases/download/weekly_rosters/roster_weekly_2026.parquet \
+            --output /tmp/lp-nfl-injuries/roster_weekly_2026.parquet
+      - name: Recover real official Sunday inactives with strict GSIS resolution
+        run: |
+          PYTHONPATH=backend python backend/recover_official_nfl_inactives.py \
+            --sources docs/research/nfl-injury-history-2026-weeks2-9/official-sunday-inactives-sources.json \
+            --schedule-csv /tmp/lp-nfl-injuries/games.csv \
+            --injury-csv /tmp/lp-nfl-injuries/recovered/nfl-injury-weeks-2-9.csv \
+            --depth-csv /tmp/lp-nfl-injuries/roster-asof/asof-depth-injury-rosters.csv \
+            --weekly-roster-parquet /tmp/lp-nfl-injuries/roster_weekly_2026.parquet \
+            --out-dir /tmp/lp-nfl-injuries/official-inactives
+          PYTHONPATH=backend python backend/reconstruct_nfl_roster_asof.py \
+            --depth-parquet /tmp/lp-nfl-injuries/depth_charts_2026.parquet \
+            --injury-csv /tmp/lp-nfl-injuries/recovered/nfl-injury-weeks-2-9.csv \
+            --schedule-csv /tmp/lp-nfl-injuries/games.csv \
+            --inactives-index /tmp/lp-nfl-injuries/official-inactives/official-inactives-matched-index.json \
+            --out-dir /tmp/lp-nfl-injuries/roster-with-inactives
+      - name: Preserve source and extracted injury weeks in this research branch
+        if: github.event_name == 'push'
+        run: |
+          output=docs/research/nfl-injury-history-2026-weeks2-9
+          mkdir -p "$output"
+          if [ ! -f "$output/nfl-injury-week-coverage.json" ]; then
+            cp /tmp/lp-nfl-injuries/recovered/* "$output/"
+            cp /tmp/lp-nfl-injuries/injuries_2026.parquet "$output/source-injuries_2026.parquet"
+            cp /tmp/lp-nfl-injuries/games.csv "$output/source-games.csv"
+          fi
+          if [ ! -f "$output/asof-depth-injury-coverage.json" ]; then
+            cp /tmp/lp-nfl-injuries/roster-asof/* "$output/"
+          fi
+          if [ ! -f "$output/official-inactives-coverage.json" ]; then
+            cp /tmp/lp-nfl-injuries/official-inactives/official-inactives-audit.csv "$output/"
+            cp /tmp/lp-nfl-injuries/official-inactives/official-inactives-matched-index.json "$output/"
+            cp /tmp/lp-nfl-injuries/official-inactives/official-inactives-coverage.json "$output/"
+          fi
+          # Do not overwrite previous research output. This v2 evidence
+          # explicitly leaves unlisted depth players' active status unknown.
+          if [ ! -f "$output/with-inactives-unknown-active-v2-coverage.json" ]; then
+            cp /tmp/lp-nfl-injuries/roster-with-inactives/asof-depth-injury-coverage.json \
+              "$output/with-inactives-unknown-active-v2-coverage.json"
+            cp /tmp/lp-nfl-injuries/roster-with-inactives/asof-depth-injury-rosters.csv \
+              "$output/with-inactives-unknown-active-v2-rosters.csv"
+          fi
+          if [ -z "$(git status --short -- "$output")" ]; then
+            echo "All historical outputs already pinned."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$output"
+          git commit -m "Pin downloaded 2026 NFL injury weeks 2-9 source and recovery results"
+          git push origin HEAD:refs/heads/research/nfl-injury-weeks-2-9-recovery-2026-11-13
+      - name: Upload reusable source and recovered injury-week data
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfl-injury-2026-weeks2-9-recovery
+          path: |
+            /tmp/lp-nfl-injuries/injuries_2026.parquet
+            /tmp/lp-nfl-injuries/games.csv
+            /tmp/lp-nfl-injuries/depth_charts_2026.parquet
+            /tmp/lp-nfl-injuries/roster_weekly_2026.parquet
+            /tmp/lp-nfl-injuries/recovered/
+            /tmp/lp-nfl-injuries/roster-asof/
+            /tmp/lp-nfl-injuries/official-inactives/
+            /tmp/lp-nfl-injuries/roster-with-inactives/
+          retention-days: 30
