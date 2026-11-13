@@ -40,6 +40,34 @@ class ReplayAsOfTests(unittest.TestCase):
         self.assertEqual(len(safe.status), 1)
         self.assertNotIn((2026, m.GAME, "NYG"), safe.status)
 
+    def test_loader_never_queries_week10_or_later_player_or_injury_rows(self):
+        con = sqlite3.connect(":memory:")
+        con.executescript("""
+        CREATE TABLE players (id INT, position TEXT, league TEXT);
+        CREATE TABLE nfl_schedule (game_id TEXT, season INT, week INT,
+            away_team TEXT, home_team TEXT, game_type TEXT);
+        CREATE TABLE player_game_logs (player_id INT,team TEXT,game_id TEXT,
+            stats TEXT,league TEXT,source TEXT,game_type TEXT);
+        CREATE TABLE player_game_availability (
+            season INT,game_id TEXT,team TEXT,player_id INT,
+            report_status TEXT,played INT,league TEXT);
+        """)
+        con.execute("INSERT INTO players VALUES(?,?,?)", (3, "WR", "nfl"))
+        for week, yds in ((9, 25), (10, 999)):
+            gid = f"2026_{week:02}_WAS_NYG"
+            con.execute("INSERT INTO nfl_schedule VALUES(?,?,?,?,?,?)",
+                        (gid, 2026, week, "WSH", "NYG", "REG"))
+            con.execute("INSERT INTO player_game_logs VALUES(?,?,?,?,?,?,?)",
+                        (3, "NYG", gid, '{"rec_yds": %d}' % yds,
+                         "nfl", "nflverse_weekly", "REG"))
+            con.execute("INSERT INTO player_game_availability VALUES(?,?,?,?,?,?,?)",
+                        (2026, gid, "NYG", 3, "Out", 0, "nfl"))
+        hist = m.load_as_of_history(con)
+        self.assertEqual(len(hist.rows), 1)
+        self.assertEqual(hist.rows[0].rec_yds, 25)
+        self.assertEqual(list(hist.status), [(2026, "2026_09_WAS_NYG", "NYG")])
+        con.close()
+
     def test_pinned_cohort_has_unique_exact_player_market_line(self):
         with tempfile.TemporaryDirectory() as t:
             folder = Path(t)
