@@ -502,7 +502,9 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
              if not (play.get('event_type') == 'penalty'
                      and (play.get('outcome') or {}).get('penalty_phase') == 'pre_snap')]
     blocked_attempt = record.get('blocked_attempt') or {}
-    partial_plays = blocked_attempt.get('plays_before_block') or []
+    partial_plays = [p for p in (blocked_attempt.get('plays_before_block') or [])
+                     if not (p.get('event_type') == 'penalty' and
+                             (p.get('outcome') or {}).get('penalty_phase') == 'pre_snap')]
     unrepresented_decisions = blocked_attempt.get('unrepresented_decisions') or []
     snapshot = snapshot or record.get('pregame_snapshot') or {}
     game_id = (snapshot.get('schedule') or {}).get('game_id') or record.get('game_id') or 'unknown'
