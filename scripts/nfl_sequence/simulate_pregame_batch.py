@@ -56,6 +56,8 @@ import historical_archive  # noqa: E402
 import source_preflight  # noqa: E402
 import football_assertions  # noqa: E402
 import seed_selection  # noqa: E402
+from penalty_sampler import PenaltySampler  # noqa: E402
+from penalty_game import PenaltyGameController, PinnedPenaltyRulingBook  # noqa: E402
 
 SCHEMA = 'lp-statistical-game-batch-1'
 PLAYER_CATEGORIES = {
@@ -933,16 +935,16 @@ def run_batch(args):
     elif retrospective_marker:
         raise ValueError('retrospective snapshot classification requires explicit --historical-archive-reconstruction mode')
     resolved_profile = slc_config.apply_profile_to_args(args)
-    if args.slc_profile != 'v1_6_candidate':
+    if args.slc_profile not in ('v1_6_candidate', 'v1_7_candidate'):
         # A caller's exported env var must not alter frozen V1.5 or S0 runs.
         os.environ.pop('SLC_MATERIALIZED_HISTORY', None)
         if args.slc_materialized_history or args.slc_legacy_history_build:
             raise ValueError('historical materialization options require --slc-profile v1_6_candidate')
     # V1.6 consumes a prebuilt, versioned E1 artifact by default. A deliberate
     # parity ablation can still run the old classifier without touching V1.5.
-    if args.slc_profile == 'v1_6_candidate' and args.slc_legacy_history_build:
+    if args.slc_profile in ('v1_6_candidate', 'v1_7_candidate') and args.slc_legacy_history_build:
         os.environ.pop('SLC_MATERIALIZED_HISTORY', None)
-    if args.slc_profile == 'v1_6_candidate' and not args.slc_legacy_history_build:
+    if args.slc_profile in ('v1_6_candidate', 'v1_7_candidate') and not args.slc_legacy_history_build:
         artifact = args.slc_materialized_history or (
             Path(os.environ.get('XDG_CACHE_HOME') or Path.home() / '.cache')
             / 'legendarypicks' / 'slc-history.sqlite')
@@ -1000,7 +1002,7 @@ def run_batch(args):
                                                            player_shares=args.playcall_player_shares or args.playcall_dirichlet_shares,
                                                            exact_yardline=args.playcall_exact_yardline,
                                                            exact_distance_yardage=args.playcall_exact_distance_yardage,
-                                                           fourth_down_intent_guard=args.slc_profile == 'v1_6_candidate',
+                                                           fourth_down_intent_guard=args.slc_profile in ('v1_6_candidate', 'v1_7_candidate'),
                                                            coverage=args.playcall_coverage,
                                                            point_splits=(str(args.playcall_point_splits_cache) if args.playcall_point_splits_cache else args.playcall_point_splits),
                                                            streak=(str(args.playcall_streak_cache) if args.playcall_streak_cache else args.playcall_streak_splits),
@@ -1045,6 +1047,27 @@ def run_batch(args):
                 contextual_bandwidth=args.context_bandwidth,
                 contextual_min_effective_games=args.context_min_source_games,
                 safety_kick_table=safety_kick_table)
+    penalty_paths = [args.slc_penalty_model, args.slc_penalty_manifest,
+                     args.slc_penalty_source_manifest, args.slc_penalty_rulings]
+    if args.slc_profile != 'v1_7_candidate' and any(penalty_paths):
+        raise ValueError('V1.7 penalty artifacts require --slc-profile v1_7_candidate')
+    if args.slc_profile == 'v1_7_candidate':
+        if not all(penalty_paths):
+            raise ValueError('V1.7 needs occurrence fit, fit/source manifests, and explicit rulings artifact')
+        penalty_sampler = PenaltySampler.from_artifacts(
+            model_path=args.slc_penalty_model,
+            manifest_path=args.slc_penalty_manifest,
+            source_manifest_path=args.slc_penalty_source_manifest,
+            as_of_utc=snapshot['as_of'])
+        ruling_book = PinnedPenaltyRulingBook.from_path(args.slc_penalty_rulings)
+        def penalty_factory(*, seed, snapshot, ledger):
+            return PenaltyGameController(
+                sampler=penalty_sampler, game_seed=seed,
+                team_identity={'A': snapshot['schedule']['home_team'],
+                               'B': snapshot['schedule']['away_team']},
+                ruling_provider=ruling_book.for_seed(seed),
+                rule_era=int(snapshot['schedule']['season']))
+        ref.penalty_controller_factory = penalty_factory
     reference_seconds = time.monotonic() - reference_started
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
@@ -1061,6 +1084,14 @@ def run_batch(args):
         'snapshot_evaluation': snapshot.get('evaluation'),
         'archive_validation': archive_validation,
     }
+    if args.slc_profile == 'v1_7_candidate':
+        input_provenance['v1_7_penalty_artifacts'] = {
+            'fit_model_sha256': hashlib.sha256(args.slc_penalty_model.read_bytes()).hexdigest(),
+            'fit_manifest_sha256': hashlib.sha256(args.slc_penalty_manifest.read_bytes()).hexdigest(),
+            'source_manifest_sha256': hashlib.sha256(args.slc_penalty_source_manifest.read_bytes()).hexdigest(),
+            'rulings_sha256': hashlib.sha256(args.slc_penalty_rulings.read_bytes()).hexdigest(),
+            'status': 'research_only_not_release_validated',
+        }
     profile_manifest = slc_config.build_manifest(resolved_profile, playcall_description, snapshot, input_provenance)
 
     baseline_files = {name: hashlib.sha256((REPO / name).read_bytes()).hexdigest() for name in V1_FILES}
@@ -1090,7 +1121,7 @@ def run_batch(args):
         'boxscore_export': bool(args.export_boxscores),
         'ordered_play_export': bool(args.export_plays),
         'materialized_history': (os.environ.get('SLC_MATERIALIZED_HISTORY')
-                                 if args.slc_profile == 'v1_6_candidate'
+                                 if args.slc_profile in ('v1_6_candidate', 'v1_7_candidate')
                                  and not args.slc_legacy_history_build else None),
         'trace_outcome_probabilities': bool(args.trace_outcome_probabilities),
         'paired_randomness': bool(args.paired_randomness),
@@ -1319,8 +1350,16 @@ def main(argv=None):
                     help=('explicitly use the current schedule row when no as-of version exists; preserves its real '
                           'ingestion timestamp and classifies the v1 comparison as exploratory'))
     ap.add_argument('--snapshot-file', help='hash-pinned pregame snapshot JSON or game payload containing one')
-    ap.add_argument('--slc-profile', choices=('custom', 's0', 'v1_full_stack', 'v1_6_candidate'), default='custom',
+    ap.add_argument('--slc-profile', choices=('custom', 's0', 'v1_full_stack', 'v1_6_candidate', 'v1_7_candidate'), default='custom',
                     help='named fail-closed layer configuration; custom preserves the legacy manual feature flags')
+    ap.add_argument('--slc-penalty-model', type=Path,
+                    help='V1.7 fitted penalty occurrence model artifact (research only)')
+    ap.add_argument('--slc-penalty-manifest', type=Path,
+                    help='V1.7 pinned fit manifest, hash matched to fitted model')
+    ap.add_argument('--slc-penalty-source-manifest', type=Path,
+                    help='V1.7 official opportunity source manifest')
+    ap.add_argument('--slc-penalty-rulings', type=Path,
+                    help='V1.7 pinned adjudication fixture/model output for this seed; incomplete rulings block')
     ap.add_argument('--slc-disable-layer', action='append', default=[],
                     help='SLC ablation: disable one named optional layer; repeat for multiple layers')
     ap.add_argument('--historical-archive-reconstruction', action='store_true',
