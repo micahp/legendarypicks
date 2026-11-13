@@ -35,6 +35,23 @@ def team_stats(drives, points):
         t['possession_seconds'] += end - _elapsed(d['quarter_start'], d['clock_start'])
         for play in d['plays']:
             ev, out, part = play['event_type'], play['outcome'], play['participants']
+            if out.get('penalty_resolved'):
+                proposal = out.get('penalty_proposal') or {}
+                enforcement = out.get('penalty_enforcement') or {}
+                outcome = proposal.get('outcome')
+                if not isinstance(outcome, str) or ':' not in outcome:
+                    raise ValueError('penalty play lacks committing team and foul')
+                committing_side = outcome.split(':', 1)[0]
+                if committing_side not in ('offense', 'defense'):
+                    raise ValueError('penalty committing side is invalid')
+                offending_team = (d['offense_team'] if committing_side == 'offense'
+                                  else 'B' if d['offense_team'] == 'A' else 'A')
+                penalized = team(offending_team)
+                if enforcement.get('accepted'):
+                    penalized['penalties'] += 1
+                    penalized['penalty_yards'] += enforcement.get('yards', 0)
+                else:
+                    penalized['penalties_declined'] += 1
             if ev in SCRIMMAGE_EVENTS:
                 t['plays'] += 1
             if ev in ('pass_complete', 'pass_incomplete', 'interception') and part.get('receiver_id'):
