@@ -931,6 +931,17 @@ class RosterSyncNbaIdentityGuardTests(unittest.TestCase):
         self.run_sync([{"player_id": "888", "name": "Zed Newcomer", "position": "F"}])  # ESPN omits Kyle
         self.assertEqual(self.con.execute("SELECT active FROM players WHERE id=63170").fetchone()[0], 1)
 
+    def test_espn_only_sync_reactivates_an_inactive_player_on_the_official_nba_com_roster(self):
+        self.con.execute("INSERT INTO roster_snapshots(id,league,season,source,captured_at,published_at,"
+                         "source_checksum,source_payload,team_count,player_count,status) "
+                         "VALUES(900,'nba',2027,'nba.com:team-roster','t','t','c','{}',30,1,'published')")
+        self.con.execute("INSERT INTO roster_memberships(snapshot_id,player_id,source_player_key,team,position,"
+                         "jersey,roster_status,display_name) VALUES(900,63170,'1643759','LAL','G','','active','William Kyle')")
+        self.con.execute("UPDATE players SET active=0 WHERE id=63170")
+        self.con.commit()
+        self.run_sync([{"player_id": "888", "name": "Zed Newcomer", "position": "F"}])  # ESPN omits Kyle
+        self.assertEqual(self.con.execute("SELECT active FROM players WHERE id=63170").fetchone()[0], 1)
+
     def test_espn_only_sync_still_deactivates_players_absent_from_every_roster(self):
         self.con.execute("UPDATE players SET active=1 WHERE id=63170")
         self.con.commit()

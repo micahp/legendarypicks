@@ -471,6 +471,19 @@ def _sync_league(con: sqlite3.Connection, league: str) -> dict:
             f"UPDATE players SET active=0, updated_at=? WHERE league=? AND {exclude}",
             (verified_at, league),
         )
+        if league == "nba":
+            # Union, not just preservation: a player on the latest official roster
+            # who was inactive (and absent from ESPN's roster) becomes active.
+            con.execute(
+                "UPDATE players SET active=1, updated_at=? WHERE league='nba' "
+                "AND COALESCE(active,0)=0 AND id IN (SELECT m.player_id "
+                "FROM roster_memberships m JOIN roster_snapshots s ON s.id = m.snapshot_id "
+                "WHERE s.source = 'nba.com:team-roster' AND s.league = 'nba' "
+                "AND s.id = (SELECT MAX(id) FROM roster_snapshots "
+                "WHERE source = 'nba.com:team-roster' AND league = 'nba') "
+                "AND m.player_id IS NOT NULL)",
+                (verified_at,),
+            )
 
         for item in planned:
             if league == "mlb":

@@ -618,13 +618,13 @@ def _check_nba_com_identity(con, league, out):
             continue
     unverified = set(no_id) | set(outside)
     verified_used = len(used) - len(unverified) - len(orphan)
-    played_unverified = sorted(p for p in unverified if p in played)
+    played_unverified = sorted(p for p in (unverified | set(orphan)) if p in played)
     note = (f"nba.com ids checked={checked}, no published name={skipped}; "
             f"current season={season}; IDENTITY coverage: {verified_used} of {len(used)} used "
             f"players verified (without an nba.com id={len(no_id)}, id not in nba.com names="
             f"{len(outside)}, orphan player_ids={len(orphan)}); PARTICIPATION coverage: "
             f"{len(played) - len(played_unverified)} of {len(played)} players with minutes "
-            f"verified, {len(unverified) - len(played_unverified)} unverified players never "
+            f"verified, {len(unverified | set(orphan)) - len(played_unverified)} unverified players never "
             f"had minutes this season")
     if wrong:
         out.add(FAIL, league, "G/published-identity",

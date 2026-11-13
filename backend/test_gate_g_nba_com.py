@@ -68,6 +68,12 @@ class GateG(unittest.TestCase):
         _, _, detail = self.run_gate(con)
         self.assertIn("PARTICIPATION coverage: 1 of 2", detail)
 
+    def test_an_orphan_player_id_is_not_counted_as_a_verified_participant(self):
+        con = build([("Ann Lee", "11")], [1, 99], {"11": "Ann Lee"})   # 99 has no players row
+        _, _, detail = self.run_gate(con)
+        self.assertIn("orphan player_ids=1", detail)
+        self.assertIn("PARTICIPATION coverage: 1 of 2", detail)
+
 
 class GateBSample(unittest.TestCase):
     def run_b(self, rows, entry):
