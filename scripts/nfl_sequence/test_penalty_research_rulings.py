@@ -101,6 +101,20 @@ class ResearchRulingTests(unittest.TestCase):
         self.assertTrue(got.enforcement['accepted'])
 
 
+class RepeatFieldGoalUntilScore(PeriodPlaycall):
+    """Synthetic scoring fixture persists after a nullified initial FG."""
+    def sample(self, rng, cell, *, offense, defense, state):
+        if self.calls > 0 and state.get('score_diff') == 0 and state['yl'] < 50:
+            self.events = ['field_goal_attempt']
+            self.index = 0
+            self.calls += 1
+            chosen, row, _, spot = super(PeriodPlaycall, self).sample(
+                rng, cell, offense=offense, defense=defense, state=state)
+            return chosen, row, min(40, state['clock']), spot
+        return super().sample(rng, cell, offense=offense,
+                              defense=defense, state=state)
+
+
 class ResearchFullGameTests(unittest.TestCase):
     def test_real_fitted_penalty_model_runs_multiple_synthetic_four_quarter_games(self):
         root = Path(__file__).resolve().parents[2] / 'docs/research/slc-v17-penalty-fit-2026-11-13'
@@ -117,9 +131,12 @@ class ResearchFullGameTests(unittest.TestCase):
                     kickoff_pool=[{'game_id': '2024_01_WAS_NYG',
                                   'play_id': 101, 'game_date': '2024-09-08',
                                   'runoff': 0, 'spot': 25}],
-                    kicks={'field_goal': {gs.fg_bucket(30): (100, 0)},
+                    kicks={'field_goal': {
+                               bucket: (100, 0) for bucket in
+                               ('1-9', '10-19', '20-29', '30-39', '40-49', '50+')
+                           },
                            'extra_point': (100, 0), 'two_point': (0, 100)},
-                    participants={}, contextual_sampler=PeriodPlaycall())
+                    participants={}, contextual_sampler=RepeatFieldGoalUntilScore())
 
                 def factory(*, seed, snapshot, ledger):
                     return PenaltyGameController(
