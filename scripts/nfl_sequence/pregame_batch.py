@@ -97,6 +97,7 @@ def summarize_outcomes(outcomes, requested, home_market_margin=None, market_tota
         raise ValueError('every requested simulation must have one unique integer seed outcome')
 
     complete = [row for row in outcomes if row.get('valid_full_game') and row.get('complete_game')
+                and row.get('status') not in ('simulation_error', 'validation_error')
                 and not row.get('tied_at_regulation_end')]
     # Research-only V1.7 penalty simulations can legally reach a final state
     # even when the foul/ruling model is not calibrated. Count these separately
