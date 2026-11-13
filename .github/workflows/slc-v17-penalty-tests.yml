@@ -27,4 +27,5 @@ jobs:
           PYTHONPATH=scripts/nfl_sequence python -m unittest -v \
             test_penalty_fit test_penalty_sampler test_penalty_train \
             test_penalty_enforcement test_penalty_transition \
-            test_penalty_scrimmage_kick test_penalty_game_loop
+            test_penalty_scrimmage_kick test_penalty_game_loop \
+            test_penalty_full_game_fixture
