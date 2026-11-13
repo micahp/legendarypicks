@@ -1053,6 +1053,23 @@ class _Game:
             if outcome.get('quarter_change') or after.get('end_of_drive') in ('halftime', 'end_of_regulation', 'end_of_overtime'):
                 reasons.append({'kind': 'period_end', 'team': None})
 
+            if play['event_type'] == 'penalty' and outcome.get('penalty_phase') == 'pre_snap':
+                # A dead-ball foul is not an observed snapped down. Its
+                # clock interval and restart must not impersonate one.
+                end_of_period = bool(outcome.get('quarter_change')
+                                     or after.get('end_of_drive') in ('halftime', 'end_of_regulation'))
+                before['clock_status'] = 'running_before_dead_ball_foul'
+                after['clock_status'] = ('period_ended' if end_of_period
+                                         else 'stopped_after_dead_ball_foul')
+                outcome['clock_transition'] = {
+                    'clock_interval': 'dead_ball_foul_no_snap',
+                    'runoff_seconds': outcome['clock_runoff_seconds'],
+                    'stoppages': reasons,
+                    'restart_trigger': 'period_restart' if end_of_period else 'next_snap',
+                    'restart_clock_seconds': after['clock_seconds'],
+                }
+                continue
+
             late_window = ((before['quarter'] == 2 and after['clock_seconds'] <= TWO_MINUTE_MARK)
                            or (before['quarter'] == 4 and after['clock_seconds'] <= 300))
             if any(reason['kind'] in ('automatic_two_minute_warning', 'team_timeout', 'incomplete_pass')
@@ -1794,6 +1811,16 @@ def _validate_game_impl(record):
             if p['state_before']['clock_seconds'] < 0 or p['state_after']['clock_seconds'] < 0:
                 raise AssertionError(f"a negative game clock in drive {d['index']} play {p['sequence']}: nothing may clamp it")
             transition = p['outcome'].get('clock_transition')
+            if p['event_type'] == 'penalty' and p['outcome'].get('penalty_phase') == 'pre_snap':
+                if (not p['outcome'].get('penalty_resolved')
+                        or not isinstance(transition, dict)
+                        or transition.get('clock_interval') != 'dead_ball_foul_no_snap'
+                        or transition.get('runoff_seconds') != p['outcome'].get('clock_runoff_seconds')
+                        or p['state_before'].get('clock_status') != 'running_before_dead_ball_foul'
+                        or p['state_after'].get('clock_status')
+                        not in ('stopped_after_dead_ball_foul', 'period_ended')):
+                    raise AssertionError('dead-ball foul has an invalid no-snap clock transition')
+                continue
             if transition is None and not record.get('valid_full_game'):
                 continue  # older research records predate explicit clock-transition annotations
             if not isinstance(transition, dict) or transition.get('clock_interval') != 'observed_snap_to_next_snap':
