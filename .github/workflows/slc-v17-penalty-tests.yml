@@ -45,3 +45,10 @@ jobs:
             test_penalty_research_rulings test_penalty_research_summary \
             test_penalty_goal_line_fumble test_penalty_fractional_state \
             test_penalty_v17_failure_repairs
+      - name: Run legacy game-state scoring, field-goal and batch/registry compatibility checks
+        run: |
+          PYTHONPATH=scripts/nfl_sequence python -m unittest -v \
+            test_game_state.GameStatsReconciliation \
+            test_game_state.MissedFieldGoalBoundaries \
+            test_game_state.MissedFieldGoalTransition \
+            test_pregame_batch.BatchAggregation
