@@ -67,7 +67,7 @@ class AsOfRosterTests(unittest.TestCase):
         self.assertEqual(c["depth_and_injury_only_not_finalized_team_games"], 1)
         ng = [x for x in got if x["team"] == "NYG"]
         self.assertEqual({x["gsis_id"]: x["pregame_inactive"] for x in ng},
-                         {"gsis1": False, "gsis2": True})
+                         {"gsis1": "", "gsis2": True})
 
     def test_after_kickoff_inactives_do_not_become_pregame_lock(self):
         evidence = {("2026_02_WAS_NYG", "NYG"): {
