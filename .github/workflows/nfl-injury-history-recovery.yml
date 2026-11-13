@@ -51,6 +51,23 @@ jobs:
             --schedule-csv /tmp/lp-nfl-injuries/games.csv \
             --out-dir /tmp/lp-nfl-injuries/roster-asof
           cat /tmp/lp-nfl-injuries/roster-asof/asof-depth-injury-coverage.json
+      - name: Inspect official Week 7 inactive HTML for stable extraction
+        continue-on-error: true
+        run: |
+          python -m pip install beautifulsoup4==4.14.2
+          curl --fail --location --retry 2 --silent --show-error \
+            -A "Mozilla/5.0" \
+            https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season \
+            -o /tmp/lp-nfl-injuries/official-week7-inactives.html
+          python - <<'PY'
+          from bs4 import BeautifulSoup
+          html=open('/tmp/lp-nfl-injuries/official-week7-inactives.html').read()
+          soup=BeautifulSoup(html,'html.parser')
+          print("htmlbytes",len(html))
+          for h in soup.find_all(['h2','h3','h4'])[:36]:
+              print('heading',h.name,repr(h.get_text(" ",strip=True)[:90]),'parent',h.parent.name,
+                    'next',repr(str(h.find_next_sibling())[:350]))
+          PY
       - name: Preserve source and extracted injury weeks in this research branch
         if: github.event_name == 'push'
         run: |
