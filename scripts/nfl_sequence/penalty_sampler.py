@@ -14,6 +14,8 @@ import random
 
 from penalty_fit import Context, NO_FOUL, PenaltyModel, _utc
 from penalty_scrimmage_kick import KICK_FOUL_YARDS
+from penalty_enforcement import RULES
+
 
 
 @dataclass(frozen=True)
@@ -103,21 +105,31 @@ class PenaltySampler:
         material = f"{namespace}|{game_seed}|{opportunity_key}"
         digest = hashlib.sha256(material.encode("utf-8")).digest()
         rng = random.Random(int.from_bytes(digest, "big"))
-        if context.phase == 'live_ball' and context.play_class == 'kick':
-            # The original research cohort has no kick denominators.
-            # A non-release, rule-compatible fallback cannot pretend that
-            # pass interference, grounding, etc. occur on a punt. Preserve
-            # their probability mass as no foul, not as a fabricated kick.
+        if context.phase == 'live_ball':
+            # Conditional support matters: a coarse pooled class model can
+            # put DPI on a run, or intentional grounding on a punt. These
+            # events are not physically possible on that snap. Retain their
+            # probability mass as a no-foul opportunity rather than
+            # renormalizing the remaining foul rates upward.
+            allowed = (set(KICK_FOUL_YARDS) if context.play_class == 'kick' else {
+                key for key, rule in RULES.items()
+                if rule.phase == 'live_ball' and context.play_class in rule.play_classes
+            })
             probs = self.model.predict(context)
-            cleaned = {name: prob for name, prob in probs.items()
-                       if name == NO_FOUL or tuple(name.split(':', 1)) in KICK_FOUL_YARDS}
-            cleaned[NO_FOUL] = cleaned.get(NO_FOUL, 0.) + sum(
-                prob for name, prob in probs.items() if name not in cleaned)
+            removed_mass = sum(
+                chance for label, chance in probs.items()
+                if label != NO_FOUL and tuple(label.split(':', 1)) not in allowed
+            )
+            cleaned = {
+                label: chance for label, chance in probs.items()
+                if label == NO_FOUL or tuple(label.split(':', 1)) in allowed
+            }
+            cleaned[NO_FOUL] = cleaned.get(NO_FOUL, 0.) + removed_mass
             threshold = rng.random()
             total = 0.
             result = NO_FOUL
-            for label, prob in cleaned.items():
-                total += prob
+            for label, chance in cleaned.items():
+                total += chance
                 if threshold < total:
                     result = label
                     break
