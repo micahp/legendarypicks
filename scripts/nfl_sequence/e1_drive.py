@@ -138,6 +138,9 @@ def classify(row, nxt, excluded, include_qb_scrambles=False, separate_sack_fumbl
         excluded['yards_gained null'] += 1
         return None
     if separate_sack_fumbles and row['sack'] == 1 and row['fumble_lost'] == 1:
+        if row['touchdown'] == 1:
+            excluded['sack-fumble return touchdown lacks modeled recovery geometry'] += 1
+            return None
         if nxt['posteam'] != row['defteam'] or nxt['play_type'] not in ('run', 'pass') or nxt['yardline_100'] is None:
             excluded['sack-fumble without a clean new-offense snap'] += 1
             return None
@@ -260,6 +263,27 @@ def _credit_field_boundary_yards(event, sampled_yards, yardline):
         return own_goal_limit, {'boundary': 'own_goal_line', 'sampled_yards_gained': sampled_yards,
                                 'credited_yards_gained': own_goal_limit}
     return sampled_yards, None
+
+
+def _turnover_geometry_eligible(sample, state):
+    """Reject turnover samples whose implied net gain crosses a goal line.
+
+    A clean next-offense snap does NOT identify the fumble spot/recovery in
+    either end zone. A transition of this class cannot be transported to a
+    synthetic field position where that net gain crosses a goal line without
+    additional data. Research V1.7 conditions only *these* source rows out,
+    reports the exclusion, and preserves V1.6's source sampling untouched.
+    An end-zone turnover/score distribution is still a separate model.
+    """
+    event, row, _runoff, _spot = sample
+    if event not in ('fumble_lost', 'sack_fumble_lost'):
+        return True
+    yards = row.get('yards_gained')
+    yl = state['yl']
+    if type(yards) not in (int, float):
+        return False
+    destination = yl - yards
+    return 0 < destination < 100
 
 
 def _pre_snap_penalty_play(st, resolved, simulation_id, sequence, direction):
@@ -386,7 +410,17 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 continue
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
         source_cell = pool.get(key, [])
-        cell = sampling_guard.filter_cell(source_cell, st) if sampling_guard is not None else source_cell
+        geometry_rejections = 0
+        if penalty_controller is not None:
+            # Sample only turnover outcomes whose original net gain remains
+            # in the field of play in this *simulated* situation. This is a
+            # V1.7 research conditional, never a silent V1.6 change.
+            legal_cell = [sample for sample in source_cell
+                          if _turnover_geometry_eligible(sample, st)]
+            geometry_rejections = len(source_cell) - len(legal_cell)
+        else:
+            legal_cell = source_cell
+        cell = sampling_guard.filter_cell(legal_cell, st) if sampling_guard is not None else legal_cell
         if not cell and source_cell:
             return halt(sampling_guard.unavailable_reason())
         if len(cell) < MIN_POOL and not getattr(sampling_policy, 'allow_sparse_cells', False):
@@ -406,8 +440,16 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                               'defense': st['defense'], 'down': st['down'], 'togo': st['togo'],
                               'yl': st['yl'], 'score_diff': score_diff,
                               'field_goal_feasibility': field_goal_distance,
-                              '_source_cell_filtered': cell is not source_cell}
-            if sampling_guard is not None and sampling_guard.requires_source_filter:
+                              '_source_cell_filtered': cell is not source_cell or
+                              geometry_rejections > 0}
+            if penalty_controller is not None:
+                def source_row_filter(sample, target_state):
+                    return (_turnover_geometry_eligible(sample, target_state)
+                            and (sampling_guard is None or
+                                 not sampling_guard.requires_source_filter or
+                                 sampling_guard.permits(sample, target_state)))
+                sampling_state['_source_row_filter'] = source_row_filter
+            elif sampling_guard is not None and sampling_guard.requires_source_filter:
                 sampling_state['_source_row_filter'] = sampling_guard.permits
             try:
                 selected_event, row, runoff, spot = sampling_policy.sample(
@@ -415,6 +457,9 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             except SamplingUnavailable as unavailable:
                 return halt(str(unavailable))
         event = selected_event
+        if penalty_controller is not None and not _turnover_geometry_eligible(
+                (selected_event, row, runoff, spot), st):
+            return halt('goal_line_fumble_geometry_requires_source_conditional')
         if sampling_guard is not None:
             selected_sample = (selected_event, row, runoff, spot)
             rejection = sampling_guard.rejection_reason(selected_sample, st)
@@ -576,6 +621,11 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         sequence = len(plays) + 1
         sampling = {'cell': list(key), 'cell_size': len(cell), 'cell_event_counts': dict(shares),
                     'field_goal_feasibility': field_goal_distance}
+        if penalty_controller is not None:
+            sampling['research_turnover_geometry_rejected_source_rows'] = geometry_rejections
+            sampling['research_turnover_geometry_basis'] = (
+                'fumble_lost/sack_fumble_lost with cross-goal sampled net gain:'
+                ' exclude until recovery-geometry model exists')
         if (sampling_guard is not None and sampling_guard.last_filter['excluded_rows']
                 and not sampling_guard.last_filter_reused):
             sampling['timeout_source_filter'] = dict(sampling_guard.last_filter)
