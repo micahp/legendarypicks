@@ -128,7 +128,7 @@ class FailLoud(unittest.TestCase):
         con = db()
         m.ingest(con, sample())
         small = sample()
-        small["NBA_Player_Movement"]["rows"] = small["NBA_Player_Movement"]["rows"][:5]
+        small["NBA_Player_Movement"]["rows"] = small["NBA_Player_Movement"]["rows"][-2:]   # keeps the newest date
         before = con.execute("SELECT COUNT(*) FROM nba_player_movement").fetchone()[0]
         with self.assertRaises(m.MovementFeedError):
             m.ingest(con, small)
