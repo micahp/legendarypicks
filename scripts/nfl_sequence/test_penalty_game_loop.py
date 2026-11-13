@@ -72,6 +72,31 @@ class PenaltyLoopTests(unittest.TestCase):
                                  'fixture-v17', sampling_policy=FixturePlaycall(events),
                                  penalty_controller=controller)
 
+    def test_disabled_penalties_preserve_exact_v16_play_path(self):
+        before, before_terminal = e1_drive.simulate(
+            self.start(), 12, AnyCell(), 'fixture-v16',
+            sampling_policy=FixturePlaycall(['punt']))
+        disabled = PenaltyGameController(
+            sampler=type('Disabled', (), {'enabled': False})(), game_seed=12,
+            team_identity={'A': 'WAS', 'B': 'NYG'},
+            ruling_provider=lambda *args, **kwargs: None)
+        after, after_terminal = e1_drive.simulate(
+            self.start(), 12, AnyCell(), 'fixture-v16',
+            sampling_policy=FixturePlaycall(['punt']),
+            penalty_controller=disabled)
+        self.assertEqual((before, before_terminal), (after, after_terminal))
+
+    def test_defensive_holding_overturns_fourth_down_failure(self):
+        plays, terminal = self.simulate(
+            self.controller(live='defense:defensive_holding'),
+            ['pass_incomplete', 'punt'])
+        self.assertEqual(terminal, 'punt')
+        self.assertEqual(plays[0]['event_type'], 'penalty')
+        self.assertEqual(plays[0]['state_after']['down'], 1)
+        self.assertEqual(plays[0]['state_after']['offense_team'], 'A')
+        self.assertFalse(plays[0]['outcome']['turnover'])
+        self.assertEqual(e1_drive.check_drive(plays, terminal)['turnovers'], 0)
+
     def test_false_start_creates_no_snap_and_changes_next_play_state(self):
         plays, terminal = self.simulate(
             self.controller(pre='offense:false_start'), ['punt'])
