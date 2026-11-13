@@ -103,9 +103,9 @@ class InjuryRecoveryTests(unittest.TestCase):
             root = Path(tmp)
             source = root/"games.csv"
             source.write_text(
-                "game_id,season,game_type,week,gameday,gametime,away_team,home_team\\n"
-                "2026_02_WAS_NYG,2026,REG,2,2026-09-20,13:00,WAS,NYG\\n"
-                "2026_10_WAS_NYG,2026,REG,10,2026-11-12,20:15,WAS,NYG\\n"
+                "game_id,season,game_type,week,gameday,gametime,away_team,home_team\n"
+                "2026_02_WAS_NYG,2026,REG,2,2026-09-20,13:00,WAS,NYG\n"
+                "2026_10_WAS_NYG,2026,REG,10,2026-11-12,20:15,WAS,NYG\n"
             )
             games = mod.get_schedule_csv(source)
             self.assertEqual(games[(2, "NYG")]["kickoff"], self.kickoff)
