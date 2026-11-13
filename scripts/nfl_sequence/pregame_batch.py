@@ -98,6 +98,17 @@ def summarize_outcomes(outcomes, requested, home_market_margin=None, market_tota
 
     complete = [row for row in outcomes if row.get('valid_full_game') and row.get('complete_game')
                 and not row.get('tied_at_regulation_end')]
+    # Research-only V1.7 penalty simulations can legally reach a final state
+    # even when the foul/ruling model is not calibrated. Count these separately
+    # without pretending their scores are verified forecast distributions.
+    mechanically_complete = [
+        row for row in outcomes if row.get('complete_game')
+        and row.get('status') not in ('simulation_error', 'validation_error')
+        and not row.get('tied_at_regulation_end')
+    ]
+    research_only_complete = [
+        row for row in mechanically_complete if not row.get('valid_full_game')
+    ]
     regulation_end = [row for row in outcomes if row.get('regulation_end_reached')]
     statuses = Counter(row.get('status') or 'unknown' for row in outcomes)
     blockers = Counter(row['blocker'] for row in outcomes if row.get('blocker'))
@@ -111,6 +122,13 @@ def summarize_outcomes(outcomes, requested, home_market_margin=None, market_tota
         'requested_games': requested,
         'valid_full_games': len(complete),
         'valid_full_game_coverage': _round(len(complete) / requested),
+        'mechanically_complete_games': len(mechanically_complete),
+        'mechanical_completion_coverage': _round(len(mechanically_complete) / requested),
+        'research_only_complete_games': len(research_only_complete),
+        'mechanically_complete_distribution': _distribution(mechanically_complete),
+        'mechanically_complete_distribution_status': (
+            'research_diagnostic_not_a_validated_forecast' if research_only_complete else
+            'same_population_as_valid_full_game_distribution'),
         'regulation_end_reached': len(regulation_end),
         'tied_at_regulation_end': tied,
         'final_ties': final_ties,
