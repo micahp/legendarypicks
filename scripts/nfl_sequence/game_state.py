@@ -38,6 +38,7 @@ Kickoff convention in the published nfl_pbp (measured 2026-10-24): on a kickoff 
 import copy
 import random
 import hashlib
+import math
 from collections import Counter, defaultdict
 from pathlib import Path
 import sys
@@ -1881,9 +1882,14 @@ def _validate_game_impl(record):
         spot = result.get('receiving_start_yardline_100')
         adjustment = result.get('spot_adjustment_yards')
         source = result.get('source')
+        # A previously enforced half-distance penalty can create a fractional
+        # snap and kick spot. The observed return adjustment is still an integer
+        # sample; the resulting legal receiving spot need not be an integer.
         if (result.get('status') != 'sampled_historical_next_drive_spot'
-                or not isinstance(spot, int) or not 1 <= spot <= 99
-                or not isinstance(adjustment, int) or spot != baseline + adjustment
+                or type(spot) not in (int, float) or not math.isfinite(spot)
+                or not 1 <= spot <= 99
+                or type(adjustment) is not int
+                or not math.isclose(spot, baseline + adjustment, rel_tol=0, abs_tol=1e-9)
                 or not isinstance(source, dict) or not source.get('game_id')
                 or not isinstance(source.get('play_id'), int) or not isinstance(source.get('next_play_id'), int)):
             raise AssertionError(f"missed field goal in drive {drive['index']} has an invalid sampled spot")
@@ -1892,7 +1898,10 @@ def _validate_game_impl(record):
             next_drive = record['drives'][index + 1]
             expected_offense = play['state_after']['defense_team']
             got_spot = next_drive['plays'][0]['state_before']['yardline_100']
-            if next_drive['offense_team'] != expected_offense or got_spot != spot:
+            if (next_drive['offense_team'] != expected_offense
+                    or type(got_spot) not in (int, float)
+                    or not math.isfinite(got_spot)
+                    or not math.isclose(got_spot, spot, rel_tol=0, abs_tol=1e-9)):
                 raise AssertionError(f"missed field goal in drive {drive['index']} disagrees with the next possession")
     snapshot = record.get('pregame_snapshot') or {}
     observed_reference = (snapshot.get('model_reference') or {}).get('observed_reference', {})
