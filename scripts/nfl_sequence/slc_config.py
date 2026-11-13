@@ -549,7 +549,7 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         },
         'current_streak_context': {'input_sha256': optional_hashes.get('current_streak_file')},
     }
-    if resolved['profile'] == 'v1_6_candidate':
+    if resolved['profile'] in ('v1_6_candidate', 'v1_7_candidate'):
         settings['defensive_coverage_outcomes'] = dict(V16_COVERAGE_DECISION)
         settings['exact_distance_yardage_outcomes']['decision_evidence'] = dict(V16_CHAIN_ADVANCEMENT_DECISION)
     resolved_input_provenance = {
