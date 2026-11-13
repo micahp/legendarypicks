@@ -138,6 +138,9 @@ def classify(row, nxt, excluded, include_qb_scrambles=False, separate_sack_fumbl
         excluded['yards_gained null'] += 1
         return None
     if separate_sack_fumbles and row['sack'] == 1 and row['fumble_lost'] == 1:
+        if row['touchdown'] == 1:
+            excluded['sack-fumble return touchdown lacks modeled recovery geometry'] += 1
+            return None
         if nxt['posteam'] != row['defteam'] or nxt['play_type'] not in ('run', 'pass') or nxt['yardline_100'] is None:
             excluded['sack-fumble without a clean new-offense snap'] += 1
             return None
@@ -262,12 +265,92 @@ def _credit_field_boundary_yards(event, sampled_yards, yardline):
     return sampled_yards, None
 
 
+def _turnover_geometry_eligible(sample, state):
+    """Reject turnover samples whose implied net gain crosses a goal line.
+
+    A clean next-offense snap does NOT identify the fumble spot/recovery in
+    either end zone. A transition of this class cannot be transported to a
+    synthetic field position where that net gain crosses a goal line without
+    additional data. Research V1.7 conditions only *these* source rows out,
+    reports the exclusion, and preserves V1.6's source sampling untouched.
+    An end-zone turnover/score distribution is still a separate model.
+    """
+    event, row, _runoff, _spot = sample
+    if event not in ('fumble_lost', 'sack_fumble_lost'):
+        return True
+    yards = row.get('yards_gained')
+    yl = state['yl']
+    if type(yards) not in (int, float):
+        return False
+    destination = yl - yards
+    return 0 < destination < 100
+
+
+def _pre_snap_penalty_play(st, resolved, simulation_id, sequence, direction):
+    """A dead-ball penalty is a game event, never an invented snap or player play."""
+    runoff = resolved.runoff_seconds
+    now = st['clock'] - runoff
+    if now < 0:
+        raise ValueError("penalty clock runoff exceeded period")
+    flip = now == 0 and st['quarter'] in FLIP_AFTER
+    terminal = ('halftime' if now == 0 and st['quarter'] == 2 else
+                'end_of_regulation' if now == 0 and st['quarter'] == 4 else None)
+    next_quarter = st['quarter'] + int(flip)
+    clock_after = QUARTER_LENGTH if flip else now
+    new = resolved.state
+    after = {'quarter': next_quarter, 'clock_seconds': clock_after,
+             'offense_team': new['offense'], 'defense_team': new['defense'],
+             'down': new['down'] if terminal is None else None,
+             'yards_to_go': new['togo'] if terminal is None else None,
+             'yardline_100': new['yl'] if terminal is None else None,
+             'home_score': None, 'away_score': None, 'home_timeouts': None,
+             'away_timeouts': None, 'drive_index': 1}
+    if terminal is not None:
+        after['end_of_drive'] = terminal
+    before = {'quarter': st['quarter'], 'clock_seconds': st['clock'],
+              'offense_team': st['offense'], 'defense_team': st['defense'],
+              'down': st['down'], 'yards_to_go': st['togo'], 'yardline_100': st['yl'],
+              'home_score': None, 'away_score': None, 'home_timeouts': None,
+              'away_timeouts': None, 'drive_index': 1}
+    from_dir = direction(st['offense'], st['quarter'])
+    to_dir = direction(new['offense'], next_quarter) if terminal is None else None
+    outcome = {
+        **reducer._no_flags(), 'first_down': bool(resolved.enforcement.get('automatic_first_down')),
+        'yards_gained': None, 'sampled_yards_gained': None,
+        'yardage_boundary_adjustment': None, 'scoring_team': None,
+        'clock_runoff_seconds': runoff, 'clock_clamped_to_zero': False,
+        'quarter_change': flip, 'clock_only_terminal': terminal is not None,
+        'final_play_yardline_100': new['yl'] if terminal is not None else None,
+        'sampled_touchdown_flag': False,
+        'dead_ball_position': new if terminal is None else None,
+        'penalty': True, 'penalty_resolved': True,
+        'penalty_phase': 'pre_snap', 'penalty_proposal': resolved.proposal,
+        'penalty_enforcement': resolved.enforcement, 'penalty_ruling': resolved.ruling,
+        'sampled_from': None,
+    }
+    return {'sequence': sequence, 'id': f'{simulation_id}:{sequence}',
+            'event_type': 'penalty',
+            'state_before': before, 'state_after': after,
+            'sampling': {'penalty_opportunity': True},
+            'decision': {'type': 'penalty', 'concept': None, 'coverage': None, 'note': 'dead-ball foul, no snap'},
+            'outcome': outcome,
+            'field': {'assignment_version': 'e1-field-end-v2', 'source': 'authored_demo_orientation',
+                      'before': {'dir': from_dir, 'los': e0.los(from_dir, st['yl'])},
+                      'after': {'dir': to_dir, 'los': e0.los(to_dir, new['yl']) if to_dir else None}}}, terminal
+
+
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
-             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None):
+             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None,
+             penalty_controller=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
     `sampling_guard` may remove source rows that are illegal in the live simulation state."""
+    # A disabled research penalty controller must be bit-for-bit identical
+    # to a caller that never supplied the V1.7 integration at all.
+    if penalty_controller is not None and not getattr(
+            getattr(penalty_controller, 'sampler', None), 'enabled', False):
+        penalty_controller = None
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -307,9 +390,44 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 stream_keys['clock_hazard'] = paired_random_streams.key(
                     'clock_quarter_end_hazard', drive_index, play_index)
                 stream_keys['clock_runoff'] = paired_random_streams.key('clock_runoff', drive_index, play_index)
+        if penalty_controller is not None:
+            try:
+                pre_penalty = penalty_controller.resolve(
+                    phase='pre_snap', state=st, drive_index=drive_index,
+                    play_index=play_index)
+            except ValueError as exc:
+                return halt(f'penalty_resolution_unavailable: {exc}')
+            if pre_penalty is not None:
+                try:
+                    penalty_play, penalty_terminal = _pre_snap_penalty_play(
+                        st, pre_penalty, simulation_id, len(plays) + 1, dir_of)
+                except ValueError as exc:
+                    return halt(f'penalty_transition_unavailable: {exc}')
+                plays.append(penalty_play)
+                after_penalty = penalty_play['state_after']
+                if penalty_terminal is not None:
+                    terminal = penalty_terminal
+                    break
+                st = {'quarter': after_penalty['quarter'], 'clock': after_penalty['clock_seconds'],
+                      'offense': after_penalty['offense_team'], 'defense': after_penalty['defense_team'],
+                      'down': after_penalty['down'], 'togo': after_penalty['yards_to_go'],
+                      'yl': after_penalty['yardline_100']}
+                continue
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
         source_cell = pool.get(key, [])
-        cell = sampling_guard.filter_cell(source_cell, st) if sampling_guard is not None else source_cell
+        geometry_rejections = 0
+        if penalty_controller is not None:
+            # Sample only turnover outcomes whose original net gain remains
+            # in the field of play in this *simulated* situation. This is a
+            # V1.7 research conditional, never a silent V1.6 change.
+            legal_cell = [sample for sample in source_cell
+                          if _turnover_geometry_eligible(sample, st)]
+            geometry_rejections = len(source_cell) - len(legal_cell)
+        else:
+            legal_cell = source_cell
+        if penalty_controller is not None and not legal_cell and source_cell:
+            return halt('goal_line_fumble_source_cell_has_no_geometrically_legal_outcome')
+        cell = sampling_guard.filter_cell(legal_cell, st) if sampling_guard is not None else legal_cell
         if not cell and source_cell:
             return halt(sampling_guard.unavailable_reason())
         if len(cell) < MIN_POOL and not getattr(sampling_policy, 'allow_sparse_cells', False):
@@ -329,8 +447,16 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                               'defense': st['defense'], 'down': st['down'], 'togo': st['togo'],
                               'yl': st['yl'], 'score_diff': score_diff,
                               'field_goal_feasibility': field_goal_distance,
-                              '_source_cell_filtered': cell is not source_cell}
-            if sampling_guard is not None and sampling_guard.requires_source_filter:
+                              '_source_cell_filtered': cell is not source_cell or
+                              geometry_rejections > 0}
+            if penalty_controller is not None:
+                def source_row_filter(sample, target_state):
+                    return (_turnover_geometry_eligible(sample, target_state)
+                            and (sampling_guard is None or
+                                 not sampling_guard.requires_source_filter or
+                                 sampling_guard.permits(sample, target_state)))
+                sampling_state['_source_row_filter'] = source_row_filter
+            elif sampling_guard is not None and sampling_guard.requires_source_filter:
                 sampling_state['_source_row_filter'] = sampling_guard.permits
             try:
                 selected_event, row, runoff, spot = sampling_policy.sample(
@@ -338,12 +464,16 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             except SamplingUnavailable as unavailable:
                 return halt(str(unavailable))
         event = selected_event
+        if penalty_controller is not None and not _turnover_geometry_eligible(
+                (selected_event, row, runoff, spot), st):
+            return halt('goal_line_fumble_geometry_requires_source_conditional')
         if sampling_guard is not None:
             selected_sample = (selected_event, row, runoff, spot)
             rejection = sampling_guard.rejection_reason(selected_sample, st)
             if rejection:
                 return halt(f'timeout_sampling_guard_rejected_source_row:{rejection}')
-            sampling_guard.observe(selected_sample, st)
+            if penalty_controller is None:
+                sampling_guard.observe(selected_sample, st)
         if event == 'field_goal_attempt' and not field_goal_distance['eligible']:
             return halt('field_goal_attempt_exceeds_historical_feasibility_ceiling')
         kick_outcome = None
@@ -390,14 +520,63 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             }
             raise football_assertions.FootballAssertionError(
                 football_assertions.classify_failure(invalid), str(invalid), context=context) from invalid
+        penalty_info = None
+        if penalty_controller is not None:
+            try:
+                source_class = ('kick' if selected_event in ('punt', 'field_goal_attempt')
+                                else 'run' if row.get('play_type') == 'run'
+                                else 'dropback')
+                penalty_info = penalty_controller.resolve(
+                    phase='live_ball',
+                    state={**st, 'selected_play_class': source_class,
+                           'sampled_runoff_seconds': runoff,
+                           'sampled_event_terminal': play_terminal,
+                           'sampled_event_yards': yards},
+                    drive_index=drive_index,
+                    play_index=play_index, event=event, after=after,
+                    kick_type=('punt' if selected_event == 'punt' else
+                               'field_goal' if selected_event == 'field_goal_attempt' else None))
+            except ValueError as exc:
+                return halt(f'penalty_resolution_unavailable: {exc}')
+            if penalty_info is not None and penalty_info.enforcement.get('accepted'):
+                # Accepted fouls that nullify the snap remove its touchdown,
+                # turnover, return and all player/team play statistics.
+                after = dict(penalty_info.state)
+                if not penalty_info.play_counts:
+                    play_terminal = ('turnover_on_downs' if
+                                     penalty_info.enforcement.get('turnover_on_downs') else None)
+                    flags = reducer._no_flags()
+                    if play_terminal:
+                        flags['turnover_on_downs'] = True
+                    event = 'penalty'
+                    sampled_yards = None
+                    yards = 0
+                    yardage_boundary_adjustment = None
+                else:
+                    # Completed passes with roughing keep the play. Receiving
+                    # team add-on enforcement keeps the legal punt and its
+                    # possession change. Do not turn a punt into another snap.
+                    if event == 'punt' and after.get('offense') == st['defense']:
+                        play_terminal = 'punt'
+                    elif after.get('offense') == st['offense']:
+                        play_terminal = None
+                    else:
+                        return halt('penalty_kept_play_with_possession_change_unsupported')
+                runoff = penalty_info.runoff_seconds
+        if (sampling_guard is not None and penalty_controller is not None
+                and not (penalty_info is not None and
+                         penalty_info.enforcement.get('accepted') and not penalty_info.play_counts)):
+            # A nullified historical sample did not cause the source play's
+            # timeout or personnel state transition.
+            sampling_guard.observe(selected_sample, st)
         period_expired = bool(kick_outcome and kick_outcome.get('classification_status') == 'period_expired')
-        if clock is not None:
+        if clock is not None and penalty_info is None:
             runoff, _, refusal = clock.draw(row, event, play_terminal, st['quarter'], st['clock'],
                                              drive_index=drive_index, play_index=play_index,
                                              force_period_end=period_expired)
             if refusal:
                 return halt(f'clock model refused: {refusal}')
-        elif period_expired:
+        elif period_expired and penalty_info is None:
             # The sampled source outcome says this kick ends the period. Use this simulated state's exact remaining clock.
             runoff = st['clock']
         clock_raw = st['clock'] - runoff
@@ -449,6 +628,11 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         sequence = len(plays) + 1
         sampling = {'cell': list(key), 'cell_size': len(cell), 'cell_event_counts': dict(shares),
                     'field_goal_feasibility': field_goal_distance}
+        if penalty_controller is not None:
+            sampling['research_turnover_geometry_rejected_source_rows'] = geometry_rejections
+            sampling['research_turnover_geometry_basis'] = (
+                'fumble_lost/sack_fumble_lost with cross-goal sampled net gain:'
+                ' exclude until recovery-geometry model exists')
         if (sampling_guard is not None and sampling_guard.last_filter['excluded_rows']
                 and not sampling_guard.last_filter_reused):
             sampling['timeout_source_filter'] = dict(sampling_guard.last_filter)
@@ -462,7 +646,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                          'note': ('4th-down choice sampled from observed plays in the cell (go-for-it, punt or '
                                   'field-goal attempt)') if st['down'] == 4 else None},
             'outcome': {'passer_id': None, 'receiver_id': None, 'rusher_id': None,
-                        'yards_gained': None if event in KICK_EVENTS else yards,
+                        'yards_gained': None if event in KICK_EVENTS or event == 'penalty' else yards,
                         'sampled_yards_gained': sampled_yards,
                         'yardage_boundary_adjustment': yardage_boundary_adjustment,
                         'touchdown': flags['touchdown'],
@@ -471,7 +655,10 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'punt': flags['punt'], 'punt_attempt': flags['punt_attempt'],
                         'field_goal_attempt': flags['field_goal_attempt'],
                         'safety': flags['safety'], 'scoring_team': flags.get('scoring_team'),
-                        'first_down': flags.get('first_down', False), 'clock_runoff_seconds': runoff,
+                        'first_down': (flags.get('first_down', False) or bool(
+                            penalty_info and penalty_info.enforcement.get('accepted')
+                            and penalty_info.enforcement.get('automatic_first_down'))),
+                        'clock_runoff_seconds': runoff,
                         'dead_ball_position': (None if after is None else {'offense': after['offense'],
                             'defense': after['defense'], 'down': after['down'], 'togo': after['togo'], 'yl': after['yl']}),
                         'clock_clamped_to_zero': clock_raw < 0,
@@ -491,10 +678,30 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                       'after': {'dir': after_dir,
                                 'los': e0.los(after_dir, yl_after) if after_has_position else None}},
         }
-        if kick_metadata:
-            play['outcome'].update(kick_metadata)
-        if kick_outcome:
-            play['outcome']['blocked_kick'] = kick_outcome
+        if penalty_info is not None:
+            play['outcome']['penalty'] = True
+            play['outcome']['penalty_resolved'] = True
+            play['outcome']['penalty_phase'] = 'live_ball'
+            play['outcome']['penalty_proposal'] = penalty_info.proposal
+            play['outcome']['penalty_ruling'] = penalty_info.ruling
+            play['outcome']['penalty_enforcement'] = penalty_info.enforcement
+            play['outcome']['penalty_original_event'] = selected_event
+            if penalty_info.enforcement.get('accepted') and not penalty_info.play_counts:
+                play['outcome']['sampled_touchdown_flag'] = False
+                play['outcome']['cancelled_event'] = selected_event
+                play['decision']['type'] = 'penalty'
+                play['decision']['note'] = 'accepted penalty nullified sampled event'
+        cancelled = bool(penalty_info is not None
+                         and penalty_info.enforcement.get('accepted')
+                         and not penalty_info.play_counts)
+        if cancelled and (kick_metadata or kick_outcome):
+            play['outcome']['nullified_kick_source'] = {
+                'metadata': kick_metadata, 'outcome': kick_outcome}
+        else:
+            if kick_metadata:
+                play['outcome'].update(kick_metadata)
+            if kick_outcome:
+                play['outcome']['blocked_kick'] = kick_outcome
         if row.get('pre_event') is not None:  # SLC: participants chosen before the outcome; absent for the S0 control
             play['outcome']['pre_event'] = row['pre_event']
         plays.append(play)
@@ -519,8 +726,8 @@ def check_drive(plays, terminal):
         if p['event_type'] in ('run', 'pass_complete', 'pass_incomplete', 'sack', 'sack_fumble_lost'):
             yards = o.get('yards_gained')
             yardline = sb.get('yardline_100')
-            if not isinstance(yards, int) or not isinstance(yardline, int):
-                raise AssertionError(f'play {i + 1}: scrimmage gain and pre-play spot must be integers')
+            if (type(yards) not in (int, float) or type(yardline) not in (int, float)):
+                raise AssertionError(f'play {i + 1}: scrimmage gain and spot must be numeric')
             if p['event_type'] == 'pass_incomplete' and yards != 0:
                 raise AssertionError(f'play {i + 1}: an incomplete pass must have zero credited gain')
             if p['event_type'] in ('sack', 'sack_fumble_lost') and yards > 0:
@@ -567,7 +774,7 @@ def check_drive(plays, terminal):
         if i < len(plays) - 1:
             if sa['down'] is None or not 1 <= sa['down'] <= 4 or sa['yardline_100'] is None:
                 raise AssertionError(f'play {i + 1}: non-terminal play has no legal down or field')
-            if not 1 <= sa['yardline_100'] <= 99 or sa['yards_to_go'] < 1:
+            if not 0 < sa['yardline_100'] < 100 or sa['yards_to_go'] <= 0:
                 raise AssertionError(f'play {i + 1}: illegal field or distance after the play')
         for side in ('before', 'after'):
             los = p['field'][side]['los']
@@ -579,6 +786,8 @@ def check_drive(plays, terminal):
         changed = sb['offense_team'] != sa['offense_team']
         if changed != (o['turnover'] or o['punt']):
             raise AssertionError(f'play {i + 1}: possession change does not match the turnover or punt flag')
+        if p['event_type'] == 'penalty' and not o.get('penalty_resolved'):
+            raise AssertionError(f'play {i + 1}: unadjudicated penalty inserted into game')
         if o['touchdown'] != (sa.get('end_of_drive') == 'touchdown'):
             raise AssertionError(f'play {i + 1}: touchdown flag and terminal disagree')
         if p['event_type'] == 'field_goal_attempt' and o['field_goal_attempt'] != (sa.get('end_of_drive') == 'field_goal_attempt'):

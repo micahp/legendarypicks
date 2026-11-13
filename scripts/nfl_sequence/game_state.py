@@ -325,6 +325,12 @@ class Reference:
         return out
 
     def participants_for(self, play, offense_team=None, snapshot=None, seed=None):
+        if play['event_type'] == 'penalty':
+            # Accepted penalties that nullify the down cannot inherit the
+            # sampled play's passer/runner or fabricate a credited snap.
+            return {'passer_id': None, 'rusher_id': None, 'receiver_id': None,
+                    'timeout': False, 'out_of_bounds': False,
+                    'attribution': 'no_participant_modelled', 'sampled_from': None}
         src = play['outcome']['sampled_from']
         facts = self.participants.get((src['game_id'], src['play_id']), {})
         keys = ('passer_id', 'rusher_id', 'receiver_id', 'posteam', 'defteam', 'air_yards', 'yards_after_catch', 'timeout',
@@ -683,6 +689,10 @@ class _Game:
         self.model_seed = seed if model_seed is None else model_seed
         self.next_play_sequence = 1
         self.ref = ref
+        penalty_factory = getattr(ref, 'penalty_controller_factory', None)
+        self.penalty_controller = (penalty_factory(
+            seed=seed, snapshot=pregame_snapshot, ledger=ledger)
+            if penalty_factory is not None else None)
         self.ledger = ledger
         self.rng = rng
         self.paired_random_streams = paired_random_streams
@@ -957,6 +967,11 @@ class _Game:
             # The duration of a made field-goal down is applied after its outcome is drawn. Check that terminal play then.
             if terminal == 'field_goal_attempt' and i == len(plays) - 1:
                 continue
+            if (play['event_type'] == 'penalty' and
+                    play['outcome'].get('penalty_phase') == 'pre_snap'):
+                # Two-minute warning is anchored to a legally snapped/kicked
+                # down, not a pre-snap false start or other no-snap foul.
+                continue
             if self._mark_two_minute_warning(play):
                 break
         return plays, terminal
@@ -1027,6 +1042,9 @@ class _Game:
                 reasons.append({'kind': 'automatic_two_minute_warning', 'team': None})
             if part.get('out_of_bounds'):
                 reasons.append({'kind': 'runner_out_of_bounds', 'team': None})
+            if outcome.get('penalty_resolved'):
+                reasons.append({'kind': 'enforced_or_declined_penalty',
+                                'team': (outcome.get('penalty_proposal') or {}).get('outcome')})
             if play['event_type'] == 'pass_incomplete':
                 reasons.append({'kind': 'incomplete_pass', 'team': None})
             first_down = (before.get('offense_team') == after.get('offense_team') and after.get('down') == 1
@@ -1039,6 +1057,23 @@ class _Game:
                 reasons.append({'kind': 'possession_change', 'team': None})
             if outcome.get('quarter_change') or after.get('end_of_drive') in ('halftime', 'end_of_regulation', 'end_of_overtime'):
                 reasons.append({'kind': 'period_end', 'team': None})
+
+            if play['event_type'] == 'penalty' and outcome.get('penalty_phase') == 'pre_snap':
+                # A dead-ball foul is not an observed snapped down. Its
+                # clock interval and restart must not impersonate one.
+                end_of_period = bool(outcome.get('quarter_change')
+                                     or after.get('end_of_drive') in ('halftime', 'end_of_regulation'))
+                before['clock_status'] = 'running_before_dead_ball_foul'
+                after['clock_status'] = ('period_ended' if end_of_period
+                                         else 'stopped_after_dead_ball_foul')
+                outcome['clock_transition'] = {
+                    'clock_interval': 'dead_ball_foul_no_snap',
+                    'runoff_seconds': outcome['clock_runoff_seconds'],
+                    'stoppages': reasons,
+                    'restart_trigger': 'period_restart' if end_of_period else 'next_snap',
+                    'restart_clock_seconds': after['clock_seconds'],
+                }
+                continue
 
             late_window = ((before['quarter'] == 2 and after['clock_seconds'] <= TWO_MINUTE_MARK)
                            or (before['quarter'] == 4 and after['clock_seconds'] <= 300))
@@ -1437,7 +1472,8 @@ class _Game:
                                       play_index_start=self.next_play_sequence,
                                       drive_index=len(self.drives) + 1,
                                       paired_random_streams=self.paired_random_streams,
-                                      sampling_guard=timeout_guard, **research)
+                                      sampling_guard=timeout_guard,
+                                      penalty_controller=self.penalty_controller, **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
@@ -1448,12 +1484,15 @@ class _Game:
                                     'note': 'raw E1 plays before the block; not part of drives or stats'}
             if decision_start is not None:
                 new_decisions = decision_log[decision_start:]
-                unrepresented = new_decisions[len(attempt):]
+                emitted_decision_plays = sum(1 for p in attempt if not (
+                    p.get('event_type') == 'penalty' and
+                    (p.get('outcome') or {}).get('penalty_phase') == 'pre_snap'))
+                unrepresented = new_decisions[emitted_decision_plays:]
                 if unrepresented:
                     self.blocked_attempt['unrepresented_decisions'] = copy.deepcopy(unrepresented)
             self.block(terminal)
             return
-        if any(p['outcome'].get('penalty') for p in plays):
+        if any(p['outcome'].get('penalty') and not p['outcome'].get('penalty_resolved') for p in plays):
             # a penalty is an unmodelled transition: the pool excludes penalty plays, so this should never be drawn; if it is,
             # the game is blocked, never completed
             self.block('penalty_not_modelled')
@@ -1590,7 +1629,12 @@ class _Game:
         snapshot = self.pregame_snapshot
         # a full game is valid only on verified input provenance; an exploratory replay stays a statistical game
         verified = bool((snapshot or {}).get('evaluation', {}).get('verified'))
-        valid_candidate = bool(snapshot and verified and complete and blocker is None and not guarded and not unsupported)
+        # Mechanically complete penalty games remain research-only until
+        # kick-foul population and ruling-disposition/spot calibration are verified.
+        penalty_layer = self.penalty_controller is not None
+        penalty_release_verified = not penalty_layer
+        valid_candidate = bool(snapshot and verified and complete and blocker is None
+                               and not guarded and not unsupported and penalty_release_verified)
         record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete) + guard_reasons(guarded)
         rec = {
@@ -1607,7 +1651,11 @@ class _Game:
             'scheduled_kickoff_utc': snapshot['schedule']['scheduled_kickoff_utc'] if snapshot else None,
             'snapshot_hash': snapshot['snapshot_sha256'] if snapshot else None,
             'roster_snapshot_id': snapshot['roster_snapshot_id'] if snapshot else None,
-            'model_version': (f'{e1.MODEL_VERSION}+{PREGAME_USAGE_VERSION}' if snapshot else e1.MODEL_VERSION),
+            'model_version': ((f'{e1.MODEL_VERSION}+{PREGAME_USAGE_VERSION}' if snapshot else e1.MODEL_VERSION)
+                              + ('+slc-v1.7-penalty-research' if penalty_layer else '')),
+            'penalty_model_coverage': ({'enabled': True, 'status': 'research_only_not_release_validated',
+                                         'full_rulebook_coverage': False} if penalty_layer else
+                                        {'enabled': False}),
             'rules_version': 'nfl-2026-e2-successor',
             'team_identity': ({'A': {'team': snapshot['schedule']['home_team'], 'side': 'home'},
                                'B': {'team': snapshot['schedule']['away_team'], 'side': 'away'}}
@@ -1679,7 +1727,7 @@ def unmodelled_transitions(drives, kickoffs):
                     'sampled_historical_next_drive_spot', 'period_expired'):
                 found.append({'kind': 'missed_field_goal_return', 'drive_index': d['index']})
         for p in d['plays']:
-            if p['outcome'].get('penalty'):
+            if p['outcome'].get('penalty') and not p['outcome'].get('penalty_resolved'):
                 found.append({'kind': 'penalty', 'drive_index': d['index'], 'sequence': p['sequence']})
             if p['participants'].get('timeout') and not p['participants'].get('timeout_applied'):
                 found.append({'kind': 'timeout', 'drive_index': d['index'], 'sequence': p['sequence']})
@@ -1780,6 +1828,16 @@ def _validate_game_impl(record):
             if p['state_before']['clock_seconds'] < 0 or p['state_after']['clock_seconds'] < 0:
                 raise AssertionError(f"a negative game clock in drive {d['index']} play {p['sequence']}: nothing may clamp it")
             transition = p['outcome'].get('clock_transition')
+            if p['event_type'] == 'penalty' and p['outcome'].get('penalty_phase') == 'pre_snap':
+                if (not p['outcome'].get('penalty_resolved')
+                        or not isinstance(transition, dict)
+                        or transition.get('clock_interval') != 'dead_ball_foul_no_snap'
+                        or transition.get('runoff_seconds') != p['outcome'].get('clock_runoff_seconds')
+                        or p['state_before'].get('clock_status') != 'running_before_dead_ball_foul'
+                        or p['state_after'].get('clock_status')
+                        not in ('stopped_after_dead_ball_foul', 'period_ended')):
+                    raise AssertionError('dead-ball foul has an invalid no-snap clock transition')
+                continue
             if transition is None and not record.get('valid_full_game'):
                 continue  # older research records predate explicit clock-transition annotations
             if not isinstance(transition, dict) or transition.get('clock_interval') != 'observed_snap_to_next_snap':

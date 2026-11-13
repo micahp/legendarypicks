@@ -5,6 +5,10 @@ on:
     branches:
       - feature/slc-v1.7-penalty-model-2026-11-12
       - feature/slc-v1.7-enforce-all-16-2026-11-12
+      - fix/slc-v17-scrimmage-kick-transitions-2026-11-12
+  pull_request:
+    branches:
+      - feature/slc-v1.7-penalty-model-2026-11-12
   workflow_dispatch:
 
 permissions:
@@ -18,8 +22,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Compile all changed game-engine entrypoints
+        run: |
+          python -m py_compile scripts/nfl_sequence/e1_drive.py \
+            scripts/nfl_sequence/game_state.py scripts/nfl_sequence/slc_playcall.py \
+            scripts/nfl_sequence/slc_engine.py scripts/nfl_sequence/slc_config.py \
+            scripts/nfl_sequence/simulate_pregame_batch.py \
+            scripts/nfl_sequence/penalty_game.py scripts/nfl_sequence/penalty_rulings.py
       - name: Run V1.7 penalty model regressions
         run: |
           PYTHONPATH=scripts/nfl_sequence python -m unittest -v \
             test_penalty_fit test_penalty_sampler test_penalty_train \
-            test_penalty_enforcement test_penalty_transition
+            test_penalty_enforcement test_penalty_transition \
+            test_penalty_scrimmage_kick test_penalty_game_loop \
+            test_penalty_full_game_fixture test_penalty_profile_integration \
+            test_penalty_research_rulings test_penalty_research_summary \
+            test_penalty_goal_line_fumble

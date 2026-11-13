@@ -11,6 +11,8 @@ Decisions:
 - A field-goal attempt is a terminal with no result. Made or missed is not in the published columns.
 """
 
+import math
+
 TURNOVER_EVENTS = ('interception', 'fumble_lost', 'sack_fumble_lost')
 DOWN_EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack')
 EVENT_VOCABULARY = DOWN_EVENTS + TURNOVER_EVENTS + (
@@ -33,10 +35,12 @@ def _validate_state(st):
         raise ValueError('play state needs two distinct teams')
     if type(down) is not int or not 1 <= down <= 4:
         raise ValueError(f'play state down must be 1 through 4 (got {down!r})')
-    if type(yardline) is not int or not 1 <= yardline <= 99:
-        raise ValueError(f'play state yardline must be 1 through 99 (got {yardline!r})')
-    if type(togo) is not int or not 1 <= togo <= yardline:
-        raise ValueError(f'play state distance must be 1 through the distance to goal (got {togo!r})')
+    if (type(yardline) not in (int, float) or not math.isfinite(yardline)
+            or not 0 < yardline < 100):
+        raise ValueError(f'play state yardline must be inside the field (got {yardline!r})')
+    if (type(togo) not in (int, float) or not math.isfinite(togo)
+            or not 0 < togo <= yardline):
+        raise ValueError(f'play state distance must be positive through goal (got {togo!r})')
 
 
 BLOCKED_KICK_STATUSES = ('classified_recovery', 'classified_dead_ball_spot', 'touchdown', 'safety', 'classified_next_snap',
@@ -65,8 +69,8 @@ def apply_play(st, event, yards, spot=None, kick_outcome=None):
         raise ValueError(f'unknown event {event!r}; the reducer refuses to guess')
     _validate_state(st)
     if event in ('run', 'pass_complete', 'pass_incomplete', 'sack', 'sack_fumble_lost'):
-        if type(yards) is not int:
-            raise ValueError(f'{event} needs an integer yards-gained result (got {yards!r})')
+        if (type(yards) not in (int, float) or not math.isfinite(yards)):
+            raise ValueError(f'{event} needs a finite yards-gained result (got {yards!r})')
         if event == 'pass_incomplete' and yards != 0:
             raise ValueError(f'an incomplete pass must have zero yards gained (got {yards})')
         if event in ('run', 'pass_complete', 'sack', 'sack_fumble_lost'):

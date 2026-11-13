@@ -1,0 +1,217 @@
+"""V1.7 research-ruling mechanics cover real fitted foul proposals across games.
+
+These tests explicitly do not establish penalty calibration or live accuracy.
+"""
+from pathlib import Path
+import unittest
+
+import game_state as gs
+import field_goal_feasibility as fg
+from slc_precision import has_exact_historical_integer
+
+from penalty_enforcement import RULES
+from penalty_game import PenaltyGameController
+from penalty_rulings import ResearchPenaltyRulingPolicy, RESEARCH_RULING_VERSION
+from penalty_sampler import PenaltyProposal, PenaltySampler
+from test_penalty_full_game_fixture import PeriodPlaycall
+from test_penalty_game_loop import AnyCell
+
+
+class OneFoul:
+    enabled = True
+
+    def __init__(self, label):
+        self.label = label
+
+    def propose(self, context, *, game_seed, opportunity_key):
+        return PenaltyProposal(opportunity_key, context.phase, self.label,
+                               'fixture-model', 'fixture-source', 'fixture')
+
+
+class ResearchRulingTests(unittest.TestCase):
+    def before(self, **extras):
+        return {'quarter': 2, 'clock': 420, 'offense': 'A',
+                'defense': 'B', 'down': 2, 'togo': 8, 'yl': 60,
+                **extras}
+
+    def resolve(self, label, *, event='pass_incomplete', after=None,
+                phase='live_ball', **extras):
+        ctrl = PenaltyGameController(
+            sampler=OneFoul(label), game_seed=101,
+            team_identity={'A': 'WAS', 'B': 'NYG'},
+            ruling_provider=ResearchPenaltyRulingPolicy(101))
+        sample_fields = dict(
+            selected_play_class='run' if event == 'run' else 'dropback',
+            sampled_runoff_seconds=8,
+            sampled_event_terminal=None,
+            sampled_event_yards=4)
+        sample_fields.update(extras)
+        before = self.before(**sample_fields)
+        return ctrl.resolve(
+            phase=phase, state=before, drive_index=1,
+            play_index=2, event=event,
+            after=(None if sample_fields['sampled_event_terminal'] in
+                   ('touchdown', 'safety', 'field_goal_attempt') else
+                   after if after is not None else
+                   {'offense': 'A', 'defense': 'B',
+                    'down': 3, 'togo': 4, 'yl': 56}))
+
+    def test_all_sixteen_supported_foul_types_enforce_without_missing_ruling_data(self):
+        for (side, foul), rule in RULES.items():
+            event = 'run' if rule.phase == 'live_ball' and 'run' in rule.play_classes else 'pass_incomplete'
+            if rule.phase == 'pre_snap':
+                event = None
+            with self.subTest(side=side, foul=foul):
+                state = self.before()
+                if rule.phase == 'pre_snap':
+                    ctrl = PenaltyGameController(
+                        sampler=OneFoul(f'{side}:{foul}'), game_seed=101,
+                        team_identity={'A': 'WAS', 'B': 'NYG'},
+                        ruling_provider=ResearchPenaltyRulingPolicy(101))
+                    result = ctrl.resolve(
+                        phase='pre_snap', state=state,
+                        drive_index=1, play_index=2)
+                else:
+                    result = self.resolve(f'{side}:{foul}', event=event)
+                self.assertIsNotNone(result)
+                self.assertTrue(result.enforcement['accepted'])
+                self.assertIn(result.state['offense'], ('A', 'B'))
+                self.assertLess(result.state['yl'], 100)
+                self.assertGreater(result.state['yl'], 0)
+                self.assertEqual(result.ruling['ruling_version'],
+                                 RESEARCH_RULING_VERSION)
+                self.assertFalse(result.ruling['verified'])
+
+    def test_half_yard_goal_spots_are_legal_for_future_sampling(self):
+        for spot in (0.5, 3.25, 27.75, 61.73643365772642, 99.5):
+            with self.subTest(spot=spot):
+                result = fg.evaluate(spot)
+                self.assertEqual(result['kick_distance_yards'], spot + 17)
+                self.assertEqual(result['eligible'], spot + 17 <= 70)
+        for illegal in (True, False, 0, 100, float('nan'), float('inf')):
+            with self.subTest(illegal=illegal), self.assertRaises(ValueError):
+                fg.evaluate(illegal)
+
+    def test_fractional_penalty_state_cannot_look_like_exact_historical_cell(self):
+        for value in (1, 2.0, 53):
+            self.assertTrue(has_exact_historical_integer(value))
+        for value in (0.5, 2.25, 53.5, 99.75, True, None):
+            self.assertFalse(has_exact_historical_integer(value))
+
+    def test_all_modeled_fouls_across_field_and_down_boundaries(self):
+        # The previous single-state tests missed deep own-goal half-yard
+        # positions and loss-of-down enforcement on fourth down.
+        for yl in (0.5, 1., 35., 98., 99.5):
+            for down in range(1, 5):
+                for (side, foul), rule in RULES.items():
+                    with self.subTest(yl=yl, down=down, side=side, foul=foul):
+                        is_pre = rule.phase == 'pre_snap'
+                        kind = ('run' if not is_pre and 'run' in rule.play_classes
+                                else 'pass_incomplete')
+                        state = {
+                            'quarter': 4, 'clock': 150,
+                            'offense': 'A', 'defense': 'B', 'down': down,
+                            'togo': min(8., yl), 'yl': yl,
+                            'selected_play_class': ('pre_snap' if is_pre else
+                                                    'run' if kind == 'run' else 'dropback'),
+                            'sampled_runoff_seconds': 8,
+                            'sampled_event_terminal': None,
+                            'sampled_event_yards': 0,
+                        }
+                        ctrl = PenaltyGameController(
+                            sampler=OneFoul(f'{side}:{foul}'), game_seed=18,
+                            team_identity={'A': 'WAS', 'B': 'NYG'},
+                            ruling_provider=ResearchPenaltyRulingPolicy(18))
+                        got = ctrl.resolve(
+                            phase=rule.phase, state=state,
+                            drive_index=1, play_index=2,
+                            event=None if is_pre else kind,
+                            after=None if is_pre else
+                            {'offense': 'A', 'defense': 'B',
+                             'down': down, 'togo': min(8., yl), 'yl': yl})
+                        self.assertTrue(got.enforcement['accepted'])
+                        self.assertGreater(got.state['yl'], 0)
+                        self.assertLess(got.state['yl'], 100)
+                        self.assertGreater(got.state['togo'], 0)
+
+    def test_same_foul_and_seed_produces_identical_ruling(self):
+        a = self.resolve('defense:defensive_pass_interference')
+        b = self.resolve('defense:defensive_pass_interference')
+        self.assertEqual(a, b)
+
+    def test_defensive_foul_on_offensive_touchdown_is_declined(self):
+        got = self.resolve('defense:offside', event='run', after=None,
+                           sampled_event_terminal='touchdown')
+        self.assertFalse(got.enforcement['accepted'])
+
+    def test_roughing_on_complete_pass_keeps_the_completion(self):
+        got = self.resolve('defense:roughing_passer',
+                           event='pass_complete')
+        self.assertTrue(got.enforcement['play_counts'])
+        self.assertLess(got.state['yl'], 56)
+
+    def test_nonstandard_live_run_fumble_uses_run_foul_vocabulary(self):
+        got = self.resolve('offense:offensive_holding',
+                           event='fumble_lost', selected_play_class='run')
+        self.assertTrue(got.enforcement['accepted'])
+
+
+class RepeatFieldGoalUntilScore(PeriodPlaycall):
+    """Synthetic scoring fixture persists after a nullified initial FG."""
+    def sample(self, rng, cell, *, offense, defense, state):
+        if self.calls > 0 and state.get('score_diff') == 0 and state['yl'] < 50:
+            self.events = ['field_goal_attempt']
+            self.index = 0
+            self.calls += 1
+            chosen, row, _, spot = super(PeriodPlaycall, self).sample(
+                rng, cell, offense=offense, defense=defense, state=state)
+            return chosen, row, min(40, state['clock']), spot
+        return super().sample(rng, cell, offense=offense,
+                              defense=defense, state=state)
+
+
+class ResearchFullGameTests(unittest.TestCase):
+    def test_real_fitted_penalty_model_runs_multiple_synthetic_four_quarter_games(self):
+        root = Path(__file__).resolve().parents[2] / 'docs/research/slc-v17-penalty-fit-2026-11-13'
+        sampler = PenaltySampler.from_artifacts(
+            model_path=root / 'model.json',
+            manifest_path=root / 'fit-manifest.json',
+            source_manifest_path=root / 'source-manifest.json',
+            as_of_utc='2026-11-13T00:00:00Z')
+        total_penalties = 0
+        for seed in range(41017, 41029):
+            with self.subTest(seed=seed):
+                ref = gs.Reference(
+                    pool=AnyCell(),
+                    kickoff_pool=[{'game_id': '2024_01_WAS_NYG',
+                                  'play_id': 101, 'game_date': '2024-09-08',
+                                  'runoff': 0, 'spot': 25}],
+                    kicks={'field_goal': {
+                               bucket: (100, 0) for bucket in
+                               ('1-9', '10-19', '20-29', '30-39', '40-49', '50+')
+                           },
+                           'extra_point': (100, 0), 'two_point': (0, 100)},
+                    participants={}, contextual_sampler=RepeatFieldGoalUntilScore())
+
+                def factory(*, seed, snapshot, ledger):
+                    return PenaltyGameController(
+                        sampler=sampler, game_seed=seed,
+                        team_identity={'A': 'WAS', 'B': 'NYG'},
+                        ruling_provider=ResearchPenaltyRulingPolicy(seed))
+                ref.penalty_controller_factory = factory
+                rec = gs.play_game(
+                    seed, ref, winner='A', winner_choice='receive',
+                    max_drives=50, pregame_snapshot=None)
+                self.assertTrue(rec['complete_game'],
+                                msg=f"{seed}: {rec.get('blocker')} / {rec.get('status')}")
+                gs.validate_game(rec)
+                self.assertFalse(rec['valid_full_game'])
+                self.assertFalse(rec['penalty_model_coverage']['full_rulebook_coverage'])
+                total_penalties += sum(
+                    team.get('penalties', 0)
+                    for team in rec['stats']['team'].values())
+        self.assertGreater(total_penalties, 0, 'seeds must exercise at least one fitted foul')
+
+
+if __name__ == '__main__':
+    unittest.main()

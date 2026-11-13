@@ -495,9 +495,16 @@ def exclude_inconsistent_pass_yardage_rows(pool, participant_facts):
 
 def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
     """Refuse mismatches between a pre-outcome QB choice and the play/stat event it produced."""
-    plays = [play for drive in record.get('drives', []) for play in drive.get('plays', [])]
+    # Dead-ball penalties consume a game event, not a play-call decision.
+    # Live-ball accepted fouls retain the selected source decision but must
+    # not credit the underlying nullified play.
+    plays = [play for drive in record.get('drives', []) for play in drive.get('plays', [])
+             if not (play.get('event_type') == 'penalty'
+                     and (play.get('outcome') or {}).get('penalty_phase') == 'pre_snap')]
     blocked_attempt = record.get('blocked_attempt') or {}
-    partial_plays = blocked_attempt.get('plays_before_block') or []
+    partial_plays = [p for p in (blocked_attempt.get('plays_before_block') or [])
+                     if not (p.get('event_type') == 'penalty' and
+                             (p.get('outcome') or {}).get('penalty_phase') == 'pre_snap')]
     unrepresented_decisions = blocked_attempt.get('unrepresented_decisions') or []
     snapshot = snapshot or record.get('pregame_snapshot') or {}
     game_id = (snapshot.get('schedule') or {}).get('game_id') or record.get('game_id') or 'unknown'
@@ -599,6 +606,18 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                 fail(index, decision, play,
                      f'SLC decision used state that disagrees with the pre-snap game state: {mismatches}',
                      failure_class='NONCAUSAL_INFORMATION')
+        if event == 'penalty' and outcome.get('cancelled_event'):
+            # The source decision still happened; its play result did not.
+            original = outcome['cancelled_event']
+            if not _decision_resolves_to_event(decision, original):
+                fail(index, decision, play,
+                     f'nullified penalty play decision {decision.get("event")} disagrees with {original}')
+            enforced = outcome.get('penalty_enforcement') or {}
+            if (not enforced.get('accepted') or enforced.get('play_counts')
+                    or outcome.get('yards_gained') is not None
+                    or outcome.get('touchdown') or outcome.get('safety')):
+                fail(index, decision, play, 'nullified penalty snap has credited game statistics')
+            continue
         called = decision.get('intent')
         outcome_intent = decision.get('outcome_intent', called)
         qb_action = decision.get('qb_action')
@@ -659,7 +678,7 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                      'credited passing yards must equal the corresponding receiver yards on a completion')
             if outcome.get('touchdown'):
                 before = play.get('state_before') or {}
-                if (not isinstance(before.get('yardline_100'), int) or not isinstance(yards, int)
+                if (not isinstance(before.get('yardline_100'), (int, float)) or not isinstance(yards, (int, float))
                         or yards < before['yardline_100'] or yards > before['yardline_100']):
                     fail(index, decision, play,
                          'a completed-pass touchdown must end at the goal line without exceeding credited yards')
@@ -706,7 +725,7 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                 fail(index, decision, play, 'a sack-fumble cannot credit pass or receiving yards')
         elif event == 'run' and outcome.get('touchdown'):
             before = play.get('state_before') or {}
-            if (not isinstance(before.get('yardline_100'), int) or not isinstance(yards, int)
+            if (not isinstance(before.get('yardline_100'), (int, float)) or not isinstance(yards, (int, float))
                     or yards < before['yardline_100'] or yards > before['yardline_100']):
                 fail(index, decision, play,
                      'a rushing touchdown must end at the goal line without exceeding credited yards')
@@ -779,7 +798,7 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                 yards = outcome.get('yards_gained')
                 yardline = before.get('yardline_100')
                 if (not outcome.get('safety') or not isinstance(yards, (int, float))
-                        or not isinstance(yardline, int) or yardline - yards < 100):
+                        or not isinstance(yardline, (int, float)) or yardline - yards < 100):
                     fail(index, decision, scoring_play,
                          'a scrimmage safety requires the ball to become dead in the offense\'s own end zone')
                 expected_scorer = before.get('defense_team')

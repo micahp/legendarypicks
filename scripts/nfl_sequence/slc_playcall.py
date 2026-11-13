@@ -34,6 +34,7 @@ import streak_splits  # noqa: E402
 import pre_event as pe  # noqa: E402
 import slc_intent_support  # noqa: E402
 import run_playcall_eval as rpe  # noqa: E402
+from slc_precision import has_exact_historical_integer  # noqa: E402
 
 ARTIFACT_ID = 'slc_playcall_v1'
 UNKNOWN = formation_layer.UNKNOWN
@@ -448,8 +449,11 @@ class PlayCallSampler:
             raise e1.SamplingUnavailable('playcall_state_incomplete')
         field_goal = state.get('field_goal_feasibility')
         if (not isinstance(field_goal, dict)
-                or field_goal.get('snap_yardline_100') != int(state['yl'])):
-            field_goal = fg_feasibility.evaluate(int(state['yl']))
+                or field_goal.get('snap_yardline_100') != state['yl']):
+            # Do not truncate half-yard penalty placements.  At 53.5 yards
+            # from goal, a 70.5-yard attempt is ineligible even though
+            # int(53.5)+17 would incorrectly pass the 70-yard ceiling.
+            field_goal = fg_feasibility.evaluate(state['yl'])
         source_row_filter = state.get('_source_row_filter')
         entry = self._entry(cell, cache=not state.get('_source_cell_filtered', False))
         self._current_team_outcome_fallbacks = []
@@ -687,7 +691,9 @@ class PlayCallSampler:
                     raise e1.SamplingUnavailable(f'non_scramble_run_source_rows_missing:{entry["key"]}')
         exact_yardline_conditioned = False
         exact_yardline_fallback = None
-        if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
+        if (self.exact_yardline and state.get('yl') is not None
+                and has_exact_historical_integer(state['yl'])
+                and int(state['yl']) <= 20):
             exact = [c for c in candidates if c[1].get('yardline_100') is not None
                      and int(c[1]['yardline_100']) == int(state['yl'])]
             if exact:
@@ -695,12 +701,15 @@ class PlayCallSampler:
                 exact_yardline_conditioned = True
             else:
                 exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
+        elif self.exact_yardline and state.get('yl') is not None and not has_exact_historical_integer(state['yl']):
+            exact_yardline_fallback = 'fractional_penalty_spot_uses_field_bucket'
         exact_distance_conditioned = False
         exact_distance_fallback = None
         exact_distance_support = 0
         exact_distance_branch = None
         if (self.exact_distance_yardage and called_intent in SCRIMMAGE_INTENTS
-                and state.get('togo') is not None):
+                and state.get('togo') is not None
+                and has_exact_historical_integer(state['togo'])):
             # Measure support before formation, coverage, streak, label, and
             # target-role filters. Those filters can otherwise reduce every
             # exact-distance cell below the threshold and silently disable the
@@ -718,6 +727,9 @@ class PlayCallSampler:
                 exact_distance_conditioned = True
             else:
                 exact_distance_fallback = 'exact_distance_support_below_minimum'
+        elif (self.exact_distance_yardage and called_intent in SCRIMMAGE_INTENTS
+              and state.get('togo') is not None):
+            exact_distance_fallback = 'fractional_penalty_distance_uses_bucket'
         if use_formation:
             matched = [c for c in candidates if c[1].get('formation', UNKNOWN) == formation]
             if matched:
