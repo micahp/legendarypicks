@@ -113,8 +113,11 @@ class PenaltyGameController:
         if offense not in self.teams or defense not in self.teams:
             raise ValueError("penalty state uses unknown team")
         play_class = ("pre_snap" if phase == "pre_snap" else
-                      "kick" if kick_type is not None else
-                      "run" if event == "run" else "dropback")
+                      state.get("selected_play_class") or
+                      ("kick" if kick_type is not None else
+                       "run" if event == "run" else "dropback"))
+        if play_class not in ("pre_snap", "kick", "run", "dropback"):
+            raise ValueError("invalid sampled play class for penalty opportunity")
         if phase == "live_ball" and event is None:
             raise ValueError("live-ball foul needs a selected football event")
         context = Context(
