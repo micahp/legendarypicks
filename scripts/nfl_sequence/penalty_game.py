@@ -165,7 +165,8 @@ class PenaltyGameController:
                 kick_enforcement_option=ruling.get("kick_enforcement_option"),
                 receiver_retained=ruling.get("receiver_retained"),
                 foul_during_kick=ruling.get("foul_during_kick"),
-                defensive_holding_block_attempt=ruling.get("defensive_holding_block_attempt"))
+                defensive_holding_block_attempt=ruling.get("defensive_holding_block_attempt"),
+                pre_sampled_proposal=proposal)
         except ValueError as exc:
             raise PenaltyResolutionUnavailable(
                 f"{proposal.outcome} {phase}: {exc}") from exc
