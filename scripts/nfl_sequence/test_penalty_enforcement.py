@@ -110,7 +110,9 @@ class PenaltyEnforcementTests(unittest.TestCase):
         e = enforce(before=inside_own_ten, after_play=inside_own_ten,
                     phase="live_pass", offender="offense", foul="intentional_grounding",
                     foul_yardline_100=97, accepted=True)
-        self.assertEqual(e.state, DownState(3, 10, 97, "ARI"))
+        # The 10-yard alternative is itself limited to half-distance:
+        # from own 5, the ball moves to own 2.5 (not to the release at own 3).
+        self.assertEqual(e.state, DownState(3, 10.5, 97.5, "ARI"))
         # From own 15, the passer throws at own 7 (eight yards back).
         # That is less than ten behind the LOS, but more than half of
         # the distance to the offense's goal: enforce at release spot.
