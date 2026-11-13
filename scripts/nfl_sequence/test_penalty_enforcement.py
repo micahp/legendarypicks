@@ -173,11 +173,19 @@ class PenaltyEnforcementTests(unittest.TestCase):
             self.e("offense", "offensive_holding", play_class="run")
         with self.assertRaisesRegex(ValueError, "pass outcome"):
             self.e("defense", "roughing_passer")
-        with self.assertRaisesRegex(ValueError, "safety"):
-            own_one = DownState(2, 10, 99, "ARI")
+        own_one = DownState(2, 10, 99, "ARI")
+        # The 2026 special case uses the passer's release spot instead of
+        # enforcing ten yards through the goal line.
+        near_goal = enforce(before=own_one, after_play=own_one, phase="live_pass",
+                            offender="offense", foul="intentional_grounding",
+                            foul_yardline_100=99.5, accepted=True)
+        self.assertEqual(near_goal.state, DownState(3, 10.5, 99.5, "ARI"))
+        # A pass actually thrown from inside the end zone is a safety;
+        # fail closed until the scoring transition driver can record it.
+        with self.assertRaisesRegex(ValueError, "field of play"):
             enforce(before=own_one, after_play=own_one, phase="live_pass",
                     offender="offense", foul="intentional_grounding",
-                    foul_yardline_100=99.5, accepted=True)
+                    foul_yardline_100=100, accepted=True)
 
     def test_does_not_silently_discard_possession_or_score_transitions(self):
         flipped = DownState(1, 10, 40, "DAL")
