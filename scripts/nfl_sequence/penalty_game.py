@@ -1,0 +1,133 @@
+"""Penalty event-to-football-state adapter for the V1.7 game loop.
+
+The probability fit predicts only occurrence/type. Rulings are a separate,
+explicit, evidence-backed input. A sampled foul without its acceptance,
+enforcement choice, spot, or clock evidence cannot be silently discarded.
+This module is opt-in: absent a controller the V1.6 game is unchanged.
+"""
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass
+from typing import Callable
+
+from penalty_enforcement import DownState
+from penalty_fit import Context
+from penalty_sampler import PenaltySampler
+from penalty_transition import transition
+
+
+class PenaltyResolutionUnavailable(ValueError):
+    """A real foul was sampled but required adjudication facts are missing."""
+
+
+@dataclass(frozen=True)
+class ResolvedPenalty:
+    phase: str
+    outcome: str
+    before: dict
+    state: dict
+    enforcement: dict
+    ruling: dict
+    proposal: dict
+    play_counts: bool
+    runoff_seconds: int
+
+
+class PenaltyGameController:
+    """Single deterministic occurrence stream per phase and snap opportunity.
+
+    ruling_provider(proposal, *, phase, state, event, after) -> dict | None
+    must return an explicit official/verified ruling. It must never use a
+    future game's observed result for a pregame forecast.
+    """
+
+    def __init__(self, *, sampler: PenaltySampler, game_seed: int,
+                 team_identity: dict[str, str], ruling_provider: Callable,
+                 rule_era: int = 2026):
+        if not isinstance(game_seed, int) or isinstance(game_seed, bool):
+            raise ValueError("game_seed must be an integer")
+        if set(team_identity) != {"A", "B"} or len(set(team_identity.values())) != 2:
+            raise ValueError("penalty controller requires two distinct NFL team IDs")
+        self.sampler = sampler
+        self.game_seed = game_seed
+        self.teams = dict(team_identity)
+        self.ruling_provider = ruling_provider
+        self.rule_era = rule_era
+
+    def resolve(self, *, phase: str, state: dict, drive_index: int,
+                play_index: int, event: str | None = None,
+                after: dict | None = None, kick_type: str | None = None,
+                opportunity_attempt: int = 0) -> ResolvedPenalty | None:
+        if phase not in ("pre_snap", "live_ball"):
+            raise ValueError("invalid penalty opportunity phase")
+        if not self.sampler.enabled:
+            return None
+        offense = state["offense"]
+        defense = state["defense"]
+        if offense not in self.teams or defense not in self.teams:
+            raise ValueError("penalty state uses unknown team")
+        play_class = ("pre_snap" if phase == "pre_snap" else
+                      "kick" if kick_type is not None else
+                      "run" if event == "run" else "dropback")
+        if phase == "live_ball" and event is None:
+            raise ValueError("live-ball foul needs a selected football event")
+        context = Context(
+            phase, self.rule_era, self.teams[offense], self.teams[defense],
+            state["down"], state["togo"], state["yl"], play_class)
+        # Include the attempt count: replayed penalty downs are independent
+        # opportunities even if the quarter/down/spot are unchanged.
+        key = f"drive:{drive_index}/play:{play_index}/attempt:{opportunity_attempt}/{phase}"
+        proposal = self.sampler.propose(context, game_seed=self.game_seed,
+                                        opportunity_key=key)
+        if not proposal.has_foul:
+            return None
+        ruling = self.ruling_provider(proposal, phase=phase, state=dict(state),
+                                      event=event, after=dict(after) if after else None)
+        if not isinstance(ruling, dict) or not isinstance(ruling.get("accepted"), bool):
+            raise PenaltyResolutionUnavailable(
+                f"{proposal.outcome} {phase}: no verified accept/decline ruling")
+        if "clock_runoff_seconds" not in ruling:
+            raise PenaltyResolutionUnavailable(
+                f"{proposal.outcome} {phase}: missing clock-administration evidence")
+        runoff = ruling["clock_runoff_seconds"]
+        if type(runoff) is not int or runoff < 0 or runoff > state["clock"]:
+            raise PenaltyResolutionUnavailable("penalty clock runoff must fit the current quarter")
+        before_state = DownState(state["down"], state["togo"], state["yl"],
+                                 context.offense_team)
+        if after is not None and after.get("down") is not None and after.get("yl") is not None:
+            after_state = DownState(after["down"], after["togo"], after["yl"],
+                                    self.teams[after["offense"]])
+        else:
+            after_state = before_state
+        try:
+            result = transition(
+                sampler=self.sampler, context=context, game_seed=self.game_seed,
+                opportunity_key=key, before=before_state, after_play=after_state,
+                accepted=ruling["accepted"],
+                foul_yardline_100=ruling.get("foul_yardline_100"),
+                pass_outcome=ruling.get("pass_outcome"),
+                block_subtype=ruling.get("block_subtype"),
+                kick_type=kick_type,
+                kick_enforcement_option=ruling.get("kick_enforcement_option"),
+                receiver_retained=ruling.get("receiver_retained"),
+                foul_during_kick=ruling.get("foul_during_kick"),
+                defensive_holding_block_attempt=ruling.get("defensive_holding_block_attempt"))
+        except ValueError as exc:
+            raise PenaltyResolutionUnavailable(
+                f"{proposal.outcome} {phase}: {exc}") from exc
+        enforced = result.state
+        new_offense = next((side for side, code in self.teams.items()
+                            if code == enforced.possession), None)
+        if new_offense is None:
+            raise PenaltyResolutionUnavailable("enforced possession not in the simulated game")
+        new_defense = "B" if new_offense == "A" else "A"
+        new_state = {"offense": new_offense, "defense": new_defense,
+                     "down": enforced.down, "togo": enforced.to_go,
+                     "yl": enforced.yardline_100}
+        return ResolvedPenalty(
+            phase=phase, outcome=proposal.outcome,
+            before=dict(state), state=new_state,
+            enforcement=result.enforcement or {}, ruling=dict(ruling),
+            proposal=asdict(result.proposal),
+            play_counts=bool(result.enforcement and result.enforcement.get("play_counts")),
+            runoff_seconds=runoff)
