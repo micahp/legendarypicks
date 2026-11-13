@@ -68,10 +68,16 @@ class V17FailureFamilyTests(unittest.TestCase):
             play(25.2, 2),
             play(95.25, -6, safety=True),
         ]
-        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
-                 'end_quarter': 1, 'end_clock': 820, 'terminal': 'safety',
-                 'field_goal_made': None, 'plays': test_plays}
-        result = game_stats.compute([drive], {'A': 0, 'B': 2})
+        # Keep both touchdowns and safeties in their actual scoring drives:
+        # team offensive touchdown accounting depends on the drive terminal.
+        first = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 900,
+                 'end_quarter': 1, 'end_clock': 875, 'terminal': 'touchdown',
+                 'touchdown_scored_by': 'A', 'field_goal_made': None,
+                 'plays': [test_plays[0]]}
+        second = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 850,
+                  'end_quarter': 1, 'end_clock': 820, 'terminal': 'safety',
+                  'field_goal_made': None, 'plays': test_plays[1:]}
+        result = game_stats.compute([first, second], {'A': 6, 'B': 2})
         team_yards = result['team']['A']['rush_yds']
         player_yards = result['player'][0]['rushing']['yds']
         self.assertEqual(team_yards, player_yards)
