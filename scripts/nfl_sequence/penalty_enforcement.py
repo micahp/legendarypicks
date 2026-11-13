@@ -211,15 +211,18 @@ def enforce(*, before: DownState, after_play: DownState, phase: str,
         # Rule 8-6-1(a): loss of down, and the lesser benefit to offense of
         # ten yards from previous or passer's release spot; special own-goal
         # line exception caps it at release spot.
-        ten_y = base + 10
         release_depth = foul_y - base
         own_goal_distance = 100 - base
-        if release_depth < 10 and release_depth > own_goal_distance / 2:
-            # 2026 Rule 8-6-1(a): release spot is the enforcement spot
-            # when the pass was thrown inside ten yards of the LOS but
-            # more than halfway to the offense's goal line.
+        half_distance = own_goal_distance / 2
+        if release_depth < 10 and release_depth > half_distance:
+            # 2026 Rule 8-6-1(a): the QB's release spot controls when
+            # the throw was within ten yards behind the LOS but farther
+            # back than half the remaining distance to the offense's goal.
             new_y = foul_y
         else:
+            # The alternative 10-yard penalty from the previous spot is
+            # itself bounded by ordinary half-distance enforcement.
+            ten_y, _ = _half_distance(base, "offense", 10)
             new_y = max(ten_y, foul_y)
         if not 0 < new_y < 100:
             raise ValueError("intentional grounding safety needs scoring transition")
