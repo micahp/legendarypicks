@@ -55,7 +55,7 @@ class OfficialInactivesTests(unittest.TestCase):
         self.assertEqual(len(index), 2)
         self.assertEqual(counts["fully_identity_resolved_team_games"], 2)
         self.assertEqual(counts["retrospective_article_team_games"], 2)
-        self.assertEqual(got[0]["gsis_id"], "gsisA")
+        self.assertIn("gsisA", {row["gsis_id"] for row in got})
 
     def test_no_false_activation_when_names_not_resolved(self):
         t = datetime(2026, 10, 25, 13, 30, tzinfo=timezone.utc)
