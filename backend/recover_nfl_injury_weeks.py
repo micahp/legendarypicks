@@ -102,6 +102,39 @@ def get_schedule(db_path: Path):
     return out
 
 
+def get_schedule_csv(path: Path):
+    """Use the published nflverse game schedule to audit historic weekly rows.
+
+    The current schedule is a kickoff comparator only; it is not itself an
+    independently archived pregame schedule.
+    """
+    out = {}
+    with path.open(newline="") as src:
+        for row in csv.DictReader(src):
+            if (str(row.get("season")) != str(SEASON)
+                    or str(row.get("game_type")).upper() != "REG"):
+                continue
+            if not row.get("week") or not FIRST_WEEK <= int(row["week"]) <= LAST_WEEK:
+                continue
+            day, clock = row.get("gameday"), row.get("gametime")
+            if not day or not clock:
+                continue
+            try:
+                start = datetime.strptime(
+                    f"{day} {clock}", "%Y-%m-%d %H:%M"
+                ).replace(tzinfo=ET).astimezone(UTC)
+            except ValueError:
+                continue
+            for team in (row.get("away_team"), row.get("home_team")):
+                if not team:
+                    continue
+                key = (int(row["week"]), normalize_optional("nfl", str(team)))
+                if key in out:
+                    raise ValueError("duplicate schedule team/week: " + str(key))
+                out[key] = {"game_id": row["game_id"], "kickoff": start}
+    return out
+
+
 def captures_from_index(path: Path | None):
     """Only accept separately documented observations with verified file hashes."""
     if path is None:
@@ -263,8 +296,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--artifact", type=Path, required=True,
                     help="The available cumulative nflverse 2026 injuries parquet")
-    ap.add_argument("--db", type=Path, required=True,
-                    help="SQLite schedule DB, opened read-only")
+    schedule_input = ap.add_mutually_exclusive_group(required=True)
+    schedule_input.add_argument("--db", type=Path,
+                                help="SQLite schedule DB, opened read-only")
+    schedule_input.add_argument("--schedule-csv", type=Path,
+                                help="nflverse schedules/games.csv downloaded independently")
     ap.add_argument("--capture-index", type=Path,
                     help="JSON listing independently timestamped archived parquet files")
     ap.add_argument("--out-dir", type=Path, required=True)
@@ -275,7 +311,8 @@ def main(argv=None):
     archives = [
         {**cap, "rows": read_artifact(cap["path"], SEASON)} for cap in captures
     ]
-    rows, summary = recover(current_rows, current_sha, get_schedule(args.db), archives)
+    schedule = get_schedule(args.db) if args.db else get_schedule_csv(args.schedule_csv)
+    rows, summary = recover(current_rows, current_sha, schedule, archives)
     if not rows:
         raise RuntimeError("2026 injury file has no 2026 Weeks 2-9 reports")
     manifest = write_report(args.out_dir, rows, summary, args.artifact,
