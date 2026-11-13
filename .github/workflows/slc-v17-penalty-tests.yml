@@ -7,10 +7,12 @@ on:
       - feature/slc-v1.7-enforce-all-16-2026-11-12
       - fix/slc-v17-scrimmage-kick-transitions-2026-11-12
       - fix/slc-v17-fractional-state-precision-2026-11-13
+      - fix/slc-v17-validity-and-seed-failures-2026-11-13
   pull_request:
     branches:
       - feature/slc-v1.7-penalty-model-2026-11-12
       - fix/slc-v17-scrimmage-kick-transitions-2026-11-12
+      - fix/slc-v17-fractional-state-precision-2026-11-13
   workflow_dispatch:
 
 permissions:
@@ -41,4 +43,5 @@ jobs:
             test_penalty_scrimmage_kick test_penalty_game_loop \
             test_penalty_full_game_fixture test_penalty_profile_integration \
             test_penalty_research_rulings test_penalty_research_summary \
-            test_penalty_goal_line_fumble test_penalty_fractional_state
+            test_penalty_goal_line_fumble test_penalty_fractional_state \
+            test_penalty_v17_failure_repairs
