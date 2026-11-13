@@ -64,9 +64,10 @@ jobs:
           html=open('/tmp/lp-nfl-injuries/official-week7-inactives.html').read()
           soup=BeautifulSoup(html,'html.parser')
           print("htmlbytes",len(html))
-          for h in soup.find_all(['h2','h3','h4'])[:36]:
-              print('heading',h.name,repr(h.get_text(" ",strip=True)[:90]),'parent',h.parent.name,
-                    'next',repr(str(h.find_next_sibling())[:350]))
+          for h in soup.find_all(['h3'])[:3]:
+              print('TEAM',repr(h.get_text(" ",strip=True)), 'parentparent',h.parent.parent.name)
+              print('PARENT_HTML',str(h.parent)[:2200])
+              print('CONTAINER_HTML',str(h.parent.parent)[:3600])
           PY
       - name: Preserve source and extracted injury weeks in this research branch
         if: github.event_name == 'push'
