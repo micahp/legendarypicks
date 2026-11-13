@@ -76,7 +76,10 @@ def main():
     messages = Counter()
     samples = defaultdict(list)
     for row in rows:
-        errmsg = row.get("error") or row.get("failure_message") or row.get("boxscore_error") or ""
+        event = row.get("offending_outcome")
+        errmsg = (row.get("error") or row.get("failure_message") or
+                  (event.get("message") if isinstance(event, dict) else None) or
+                  row.get("boxscore_error") or row.get("unresolved_reason") or "")
         signature = str(errmsg).split(" source_artifact_hashes=", 1)[0][:200]
         messages[signature] += 1
         if len(samples[signature]) < 5:
@@ -102,10 +105,16 @@ def main():
     for row in rows:
         # Printing compact diagnostics lets reviewers inspect the actual seed
         # envelope through the immutable CI log without downloading artifacts.
-        print("SEED", json.dumps({k: row[k] for k in (
-            "seed", "status", "blocker", "error", "failure_class",
-            "failure_message", "play_index", "decision", "offending_outcome",
-            "unresolved_reason")}, default=str)[:1800])
+        cause = row.get("offending_outcome")
+        cause = cause.get("message") if isinstance(cause, dict) else str(cause or "")
+        before = row.get("state_before")
+        after = row.get("state_after")
+        print("SEED", json.dumps({
+            "seed": row["seed"], "failure_class": row["failure_class"],
+            "play_index": row["play_index"], "cause": cause[:470],
+            "before": str(before)[:330], "after": str(after)[:330],
+            "blocker": row["blocker"], "unresolved": row["unresolved_reason"]
+        }, default=str)[:1250])
 
 
 if __name__ == "__main__":
