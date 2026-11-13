@@ -79,6 +79,47 @@ def prior_history(history):
     return result
 
 
+def load_as_of_history(con):
+    """Load only earlier regular-season boxscores and report rows at SQL level.
+
+    The standard History.load reads all current-season outcomes before its
+    internal method-level week filters. Never even read Week 10+ results or
+    availability as potential features for this historical replay.
+    """
+    positions = {pid: pos for pid, pos in con.execute(
+        "SELECT id,position FROM players WHERE league='nfl'")}
+    rows = []
+    sql = """SELECT l.player_id,l.team,l.game_id,l.stats,
+                    s.season,s.week,s.away_team,s.home_team
+             FROM player_game_logs l JOIN nfl_schedule s ON s.game_id=l.game_id
+             WHERE l.league='nfl' AND l.source='nflverse_weekly'
+               AND (l.game_type='REG' OR l.game_type IS NULL)
+               AND l.team IS NOT NULL AND l.game_id IS NOT NULL
+               AND s.season IN (?,?) AND (s.season<? OR s.week<?)
+               AND s.game_type='REG'"""
+    for pid, team, gid, stats, season, week, away, home in con.execute(
+            sql, (SEASON-1, SEASON, SEASON, WEEK)):
+        pos = positions.get(pid)
+        if pos not in eng.SKILL:
+            continue
+        if team not in (away, home):
+            raise RuntimeError(f"unplaced earlier player row {gid} {team} {pid}")
+        rows.append(eng.Row(pid, season, week, team,
+                            home if team == away else away,
+                            gid, "RB" if pos == "FB" else pos,
+                            json.loads(stats)))
+    statuses = defaultdict(dict)
+    sql = """SELECT a.season,a.game_id,a.team,a.player_id,a.report_status,a.played
+             FROM player_game_availability a
+             JOIN nfl_schedule s ON s.game_id=a.game_id
+             WHERE a.league='nfl' AND s.season IN (?,?)
+               AND (s.season<? OR s.week<?) AND s.game_type='REG'"""
+    for season, gid, team, pid, report, played in con.execute(
+            sql, (SEASON-1, SEASON, SEASON, WEEK)):
+        statuses[(season, gid, team)][pid] = (report, played)
+    return prior_history(eng.History(rows, statuses))
+
+
 def read_cohort(report):
     with (report / "graded-player-props.csv").open(newline="") as fp:
         rows = list(csv.DictReader(fp))
@@ -283,7 +324,7 @@ def run(dbpath, report, sims=4000):
                   for pid, gid, name, pos in con.execute(
                       "SELECT id,nfl_gsis_id,name,position FROM players WHERE league='nfl'"
                   ) if gid}
-        history = prior_history(eng.History.load(con, [SEASON-1, SEASON]))
+        history = load_as_of_history(con)
         predictions = []
         probs = []
         uncovered = Counter()
