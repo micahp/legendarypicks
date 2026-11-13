@@ -27,7 +27,8 @@ def transition(*, sampler: PenaltySampler, context: Context, game_seed: int,
                kick_enforcement_option: str | None = None,
                receiver_retained: bool | None = None,
                foul_during_kick: bool | None = None,
-               defensive_holding_block_attempt: bool | None = None) -> PenaltyTransition:
+               defensive_holding_block_attempt: bool | None = None,
+               pre_sampled_proposal: PenaltyProposal | None = None) -> PenaltyTransition:
     """Sample and enforce if an explicit acceptance decision is available.
 
     Source-dependent inputs are mandatory for grounding, DPI, run holding,
@@ -36,7 +37,10 @@ def transition(*, sampler: PenaltySampler, context: Context, game_seed: int,
     if (context.offense_team, context.down, context.to_go, context.yardline_100) != (
             before.possession, before.down, before.to_go, before.yardline_100):
         raise ValueError("penalty context does not match before-play state")
-    proposal = sampler.propose(context, game_seed=game_seed, opportunity_key=opportunity_key)
+    proposal = (pre_sampled_proposal if pre_sampled_proposal is not None else
+                sampler.propose(context, game_seed=game_seed, opportunity_key=opportunity_key))
+    if proposal.opportunity_key != opportunity_key or proposal.phase != context.phase:
+        raise ValueError("pre-sampled penalty proposal does not match opportunity and phase")
     if not proposal.has_foul:
         if accepted is not None or foul_yardline_100 is not None or block_subtype is not None:
             raise ValueError("no-foul opportunity cannot have an adjudication")
