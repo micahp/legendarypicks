@@ -145,6 +145,14 @@ class PenaltyGameController:
                                     self.teams[after["offense"]])
         else:
             after_state = before_state
+        # An accepted ordinary live-ball penalty erases the sampled snap:
+        # turnover-on-downs, touchdowns and interceptions cannot be passed
+        # as if they survived. The exception is roughing after a completed
+        # pass, whose gain must stand before the 15-yard enforcement.
+        if (ruling["accepted"] and phase == "live_ball" and play_class != "kick"
+                and not (proposal.foul_type == "roughing_passer"
+                         and ruling.get("pass_outcome") == "complete")):
+            after_state = before_state
         try:
             result = transition(
                 sampler=self.sampler, context=context, game_seed=self.game_seed,
