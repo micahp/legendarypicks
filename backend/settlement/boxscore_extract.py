@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """boxscore_extract.py — read a single stat for a player from an ESPN boxscore."""
+from __future__ import annotations
 from typing import Optional, List
 
 import team_codes
