@@ -14,6 +14,7 @@ CBS lists the final as WAS 24–21 NYG, with no overtime period. The game box sc
 - Winner Brier scores were tightly grouped: 0.194–0.250 for this single result. V2 is numerically lowest, by a negligible margin over V1.6. That does not establish a model ranking.
 - Player-prop probabilities were scored against pre-kickoff lines in the API database. On 323 matched player/market/line items, V1.6 was the strongest of the four batches (0.261), but the de-vigged market reference scored 0.248. All four model batches were worse than that market reference; all were also worse than the 0.25 constant-probability reference on this sample.
 - These are one-game results, not evidence of season-long calibration or betting value.
+- The later V1.7 candidate run completed its requested 1,000 seeds, but none passed the full-game validity gate; it contributes no forecast or Brier result.
 
 ## Game winner and Brier score
 
@@ -185,6 +186,15 @@ The saved family summary reports simulated sacks, giveaways, touchdowns, punts, 
 | V1.5 | 100 | 100 | 0 |
 | V1.6 | 1,000 | 999 | 1 engine exception |
 | V2 | 100 | 100 | 0 |
+| V1.7 candidate (PR 43) | 1,000 | 0 | 46 errors; 1 additional blocked seed |
+
+### V1.7 candidate batch (PR 43)
+
+The five 200-seed batches finished on the fast host by 2026-11-13 18:11 UTC. The runner marked **0/1,000 as valid full games**, so V1.7 has no winner probability, score forecast, or player-prop grade in this comparison. The batch outputs contain 953 mechanically complete simulations, but those are diagnostic only and do not pass the full-game gate.
+
+Across the batches, 46 seeds ended in errors: 33 `ILLEGAL_STATE`, 10 `STAT_ACCOUNTING`, and 3 `UNSUPPORTED_RULE`. Two seeds were flagged as blocked before regulation ended: `20261255` (unsupported run outcome on second-and-short in the own 1–9 yard zone) and `20261424` (accepted roughing-the-passer penalty after a possession-changing play could not be resolved). Seed `20261255` is also counted among the 46 errors, leaving 47 distinct affected seeds in total.
+
+The producer source was based on commit `984751d5746b6943a119a89b5d45271a67b9c4c2`, with a dirty worktree. The reproducibility artifact records the run configuration, all producer file hashes, input and model manifests, all 47 per-seed failure payloads, and hashes of the original compressed failure files where present. It is [v1.7-1000-pr43-errors.jsonl.gz](./v1.7-1000-pr43-errors.jsonl.gz); the first JSONL record is the run manifest, followed by one record per affected seed. No aggregate V1.7 forecast should be inferred from its mechanically complete subset.
 
 The common input snapshot is `slc-was-nyg-tnf-2026-11-12-final-0013Z/snapshot.json`, SHA-256 `fdc71aeb316e7dc10294c3d6581e1c331fe49637ab68fc71b9b406c55a8449b4`. It was built at 18:10:12 CST; roster feeds were last updated around 09:57 CST that morning. The snapshot’s internal `verified` flag does **not** establish that final inactives were known, so player-role/availability error remains a limitation.
 
@@ -201,7 +211,7 @@ V1, V1.5, and V2 were run from exported tracked code; all 25 recorded producer-f
 
 V1.6 seed `20261204` failed at Q4 7:54 on a NYG second-and-10 from its own 1: a lost sack fumble with −3 yards crossed the goal line and raised `ILLEGAL_STATE`. The exact replay was deterministic. It is excluded from V1.6 scores; this is an unresolved engine exception, not a zero-score or a forecast result. The reproducible failure report is [here](https://github.com/micahp/legendarypicks/tree/slc-v1.6/docs/research/slc-v16-was-nyg-seed-20261204).
 
-V1.7 did not complete a full-game batch and is not included. Optional V2+C and V2+D1 experiments were not run.
+V1.7 PR 43's full-game batch completed, but produced zero valid full-game simulations and is not included in the forecast tables. Optional V2+C and V2+D1 experiments were not run.
 
 ## Reproduction artifacts
 
