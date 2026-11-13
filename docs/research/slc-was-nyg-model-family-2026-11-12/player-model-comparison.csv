@@ -1,0 +1,31 @@
+comparison_type,model,stat,probability_items,probability_coverage_pct,brier_on_covered_items,common_spec_b_coverage_items,brier_on_common_coverage,point_forecast_count,point_mae,provenance
+prop_probability_brier,v1,,323,100.0,0.29068235294117645,170,0.27960588235294115,0,,frozen pregame batch
+prop_probability_brier,v1.5,,323,100.0,0.2903941176470588,170,0.26762,0,,frozen pregame batch
+prop_probability_brier,v1.6,,323,100.0,0.2609669763913791,170,0.2512421507063208,0,,frozen pregame batch
+prop_probability_brier,v2,,323,100.0,0.2984959752321981,170,0.29754588235294116,0,,frozen pregame batch
+prop_probability_brier,spec_b_v2,,170,52.63,0.28514488308823527,170,0.28514488308823527,0,,retrospectively reconstructed
+prop_probability_brier,forward_platt,,170,52.63,0.22780730826415097,170,0.22780730826415097,0,,retrospectively reconstructed
+prop_probability_brier,marcel_lite,,0,0.0,,0,,0,,retrospectively reconstructed
+prop_probability_brier,devigged_market,,323,100.0,0.24797190364126975,170,0.24780927678941386,0,,frozen pregame market lines
+point_stat_mae,marcel_lite,pass_yards,0,,,0,,20,16.353,retrospectively reconstructed; conditional point projections
+point_stat_mae,marcel_lite,pass_attempts,0,,,0,,20,2.3009999999999997,retrospectively reconstructed; conditional point projections
+point_stat_mae,marcel_lite,pass_completions,0,,,0,,20,1.4965,retrospectively reconstructed; conditional point projections
+point_stat_mae,marcel_lite,pass_tds,0,,,0,,20,0.202,retrospectively reconstructed; conditional point projections
+point_stat_mae,marcel_lite,receiving_yards,0,,,0,,20,18.456,retrospectively reconstructed; conditional point projections
+point_stat_mae,marcel_lite,receptions,0,,,0,,20,1.1115,retrospectively reconstructed; conditional point projections
+point_stat_mae,marcel_lite,targets,0,,,0,,20,1.566,retrospectively reconstructed; conditional point projections
+point_stat_mae,marcel_lite,rush_yards,0,,,0,,20,5.021999999999999,retrospectively reconstructed; conditional point projections
+point_stat_mae,marcel_lite,carries,0,,,0,,20,1.339,retrospectively reconstructed; conditional point projections
+point_stat_mae,marcel_lite,rushing_touchdowns,0,,,0,,20,0.132,retrospectively reconstructed; conditional point projections
+point_stat_mae,marcel_lite,receiving_touchdowns,0,,,0,,20,0.2125,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,pass_yards,0,,,0,,3,108.84957435980662,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,pass_attempts,0,,,0,,3,12.834616258978716,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,pass_completions,0,,,0,,3,8.905846278382125,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,pass_tds,0,,,0,,3,0.9120490446367372,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,receiving_yards,0,,,0,,18,19.04720447028095,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,receptions,0,,,0,,18,1.304308060731378,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,targets,0,,,0,,18,1.7757429383011245,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,rush_yards,0,,,0,,18,5.104364239711024,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,carries,0,,,0,,18,1.2605111535570042,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,rushing_touchdowns,0,,,0,,18,0.13975553056777168,retrospectively reconstructed; conditional point projections
+point_stat_mae,spec_b_v2,receiving_touchdowns,0,,,0,,18,0.2550108799204229,retrospectively reconstructed; conditional point projections

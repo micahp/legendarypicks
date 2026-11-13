@@ -1,0 +1,133 @@
+{
+  "coverage": {
+    "forward_platt": 170,
+    "marcel_lite_probability": 0,
+    "saved_prop_items": 323,
+    "spec_b_v2": 170,
+    "unsupported_market_counts": {
+      "interceptions_thrown": 2,
+      "pass_attempts": 0,
+      "pass_completions": 0,
+      "passing_rushing_yards": 30,
+      "passing_touchdowns": 0,
+      "passing_yards": 0,
+      "receiving_yards": 0,
+      "receptions": 0,
+      "rush_attempts": 22,
+      "rushing_receiving_yards": 33,
+      "rushing_yards": 63,
+      "targets": 0,
+      "total_touchdowns": 3
+    }
+  },
+  "eligible_skill_player_count": 38,
+  "forecast_provenance": "retrospectively reconstructed",
+  "frozen_roster_identity": "nflverse-full-depth:3e1803673111ed62f0b68949e65b2d4efc5508a25d63292801154e2337e14842",
+  "full_depth_roster_player_count": 125,
+  "game_id": "2026_10_WAS_NYG",
+  "inputs": {
+    "database_observation_limit": "all target model history explicitly truncated to 2026 Week 9; Week 10 labels used only for grading",
+    "database_path": "/root/legendarypicks/backend/data/picks.dev.db",
+    "database_snapshot_method": "SQLite online backup to a temporary read-only replay copy",
+    "database_snapshot_sha256": "d1bd1db6ca1adcb69d8e40d622b95d205ef2e61632214a647f539d82695efc00",
+    "injury_file_acquired_at_utc": "2026-11-13T00:10:05Z",
+    "injury_file_source_last_modified_utc": "2026-11-12T15:56:22Z",
+    "injury_snapshot_as_of_utc": "2026-11-13T00:10:12Z",
+    "injury_snapshot_path": "evidence/injuries_2026.parquet",
+    "injury_snapshot_sha256": "a72cc1afc7224baf6cafdc81950d807fd603ee9c02e7348b38151fcc1af8fa36",
+    "pregame_prop_quotes": "saved graded-player-props.csv",
+    "roster_path": "evidence/full-depth-roster.json",
+    "roster_sha256": "edb451dac3b3d1576b60a73324aa5de80dad96475ffe8561c6ac40a95e19966d",
+    "roster_snapshot_path": "evidence/finalized-snapshot.json",
+    "roster_snapshot_sha256": "fdc71aeb316e7dc10294c3d6581e1c331fe49637ab68fc71b9b406c55a8449b4"
+  },
+  "kickoff_cutoff_utc": "2026-11-13T01:15:00+00:00",
+  "limitations": [
+    "Marcel-lite is point-estimate only; no empirical distribution or over probabilities are invented.",
+    "Spec B v2 has no frozen rushing or joint-stat simulation distribution; those prop lines are excluded from its Brier score.",
+    "Forward Platt uses Week 2\u20139 sportsbook observations reconstructed from pre-kickoff line captures; no Week 10 outcomes are in its fit.",
+    "Forecasts are reconstructed now from preserved pregame roster/injury files and cutoff-safe historical stats, not predictions frozen before kickoff."
+  ],
+  "model_artifacts": {
+    "forward_platt": {
+      "a": 0.4305638652105106,
+      "b": 0.2363159664602235,
+      "historical_quote_cutoff": "each quote captured before scheduled kickoff",
+      "implementation": "backend/nfl_prop_calibration.py::fit_platt/apply_map",
+      "minimum_items": 200,
+      "source_sha256": "e70d6c8d7ffa8e76fcef2b1b1d0e872316d6cbb9e59b6c9e7ccf7839daf61106",
+      "trained_weeks": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "training_items": 55467,
+      "training_player_games": 1591
+    },
+    "marcel_lite": {
+      "implementation": "backend/analytics/projections.py::project_stat; wrapper backend/nfl_player_projection_v2.py::marcel",
+      "probability_distribution": null,
+      "source_sha256": "e9be1ee1249f81103321919d6a5908c6a2bf1af4432ee092dd2da0a3590fa2d0"
+    },
+    "spec_b_v2": {
+      "distribution_constants": {
+        "G": 1.23,
+        "R": 3.41
+      },
+      "draws_per_player": 4000,
+      "implementation": "backend/nfl_player_projection_v2.py",
+      "model_parameters": {
+        "B_car": null,
+        "B_tgt": null,
+        "H": 8.0,
+        "K_CR": 80.0,
+        "K_S": 1.0,
+        "K_T": 8.0,
+        "K_TDC": 320.0,
+        "K_TDT": 160.0,
+        "K_YPC": 160.0,
+        "K_YPT": 160.0,
+        "NMU_car": 0.519,
+        "NMU_tgt": 0.59,
+        "OTHER": 0.0424,
+        "P_LOG": null,
+        "REDIST": "v2.0"
+      },
+      "qb_distribution_constants": {
+        "G_PASS": 1.15,
+        "K_CMP": 160.0,
+        "K_PTD": 320.0,
+        "K_T_ATT": 4.0,
+        "K_YPA": 160.0,
+        "R_ATT": 14.62
+      },
+      "source_sha256": "3286521b2c20259d1e1d5953b1801809c510f055aec65832ec72ed3795bf1468"
+    }
+  },
+  "model_history": {
+    "availability_source": "week 10 frozen injuries_2026.parquet; postgame-built player_game_availability excluded",
+    "latest_2026_week_in_model_history": 9,
+    "seasons": [
+      2025,
+      2026
+    ],
+    "unknown_status": "not treated as Out/Doubtful"
+  },
+  "outputs": [
+    "reconstructed-player-projections.csv",
+    "reconstructed-player-prop-probabilities.csv",
+    "player-model-comparison.csv"
+  ],
+  "training_exclusions": {
+    "missing_kickoff_time_rows": 0,
+    "not_pregame_lead_passer": 2287,
+    "one_sided": 2,
+    "player_did_not_play": 2715,
+    "push_possible_whole_line": 1
+  }
+}

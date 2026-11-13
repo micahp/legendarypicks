@@ -120,6 +120,53 @@ These are simulated means in yards and the actual box-score yards. Model order i
 
 The largest misses among these examples were receiving production: Diggs and Likely both substantially exceeded all four means, while Nabers fell below all four. The complete CSV permits review of the roster-wide distribution rather than selecting only these examples after the game.
 
+### Reconstructed Legendary Picks player models
+
+I replayed Marcel-lite, Spec B v2 and Forward Platt using the frozen finalized WAS–NYG roster package from the fast host. Its snapshot was captured at 2026-11-13 00:10:12 UTC, about 65 minutes before kickoff. I used its full-depth roster and frozen `injuries_2026.parquet`; the snapshot marks 125 unique players and contains no unresolved player identities. The Week 10 injury report therefore comes from the preserved pregame artifact, not the current injury table. Historical player logs were cut off after Week 9. Predictions are **retrospectively reconstructed**, not forecasts saved before kickoff.
+
+Marcel-lite is a point-estimate model. Its supported code does not produce player-stat distributions, so I report its point estimates but no invented over probabilities or Brier score. Spec B v2 generates 4,000 draws for receiving stats and quarterback passing stats. Its implementation has point estimates for rushing stats, but no frozen rushing simulation distribution; combined yards, total touchdowns and interceptions also lack a supported distribution here. Those 153 lines have no Spec B or Platt probability. Forward Platt applies the existing two-parameter logistic map to Spec B probabilities. I refit that map only on pre-kickoff sportsbook line captures from Weeks 2–9: 55,467 eligible line/book items over 1,591 player-games. The fit was `a=0.430564`, `b=0.236316`; no Week 10 outcome or line entered the fit.
+
+| Player-stat model | Probability coverage | Brier on its covered lines | Brier on common 170 supported lines |
+|---|---:|---:|---:|
+| SLC V1 | 323 / 323 | 0.291 | 0.280 |
+| SLC V1.5 | 323 / 323 | 0.290 | 0.268 |
+| SLC V1.6 | 323 / 323 | 0.261 | 0.251 |
+| SLC V2 | 323 / 323 | 0.298 | 0.298 |
+| Spec B v2 | 170 / 323 (52.6%) | 0.285 | 0.285 |
+| Forward Platt on Spec B v2 | 170 / 323 (52.6%) | **0.228** | **0.228** |
+| Marcel-lite | 0 / 323 | Not produced | Not produced |
+| De-vigged market | 323 / 323 | 0.248 | 0.248 |
+
+The common-coverage column scores every listed probability model on the same 170 player/market/line items that Spec B supports. Forward Platt is the lowest Brier on this one-game subset; it also beats the de-vigged market there. That is a small, correlated, single-game evaluation of a map reconstructed from the preceding eight weeks, not evidence of a durable advantage. On the full 323-line cohort, the existing de-vigged market score remains 0.248. Use the Brier scale above: 0 is perfect, lower is better, and 0.25 is the constant 50% reference.
+
+The forecasts below show the reconstructed point estimates beside the four frozen SLC means and actual results. Marcel-lite and Spec B v2 are conditional player-stat projections; their point estimates do not encode the chance that a player is inactive. The SLC columns are simulation means, so they are not necessarily the same estimand.
+
+| Player-stat | Actual | Marcel-lite | Spec B v2 | SLC V1 | SLC V1.5 | SLC V1.6 | SLC V2 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Jayden Daniels passing yards | 249 | 212.8 | 210.9 | 244.6 | 248.4 | 224.4 | 210.4 |
+| J.J. McCarthy passing yards | 293 | 155.5 | 161.4 | 244.0 | 229.0 | 237.0 | 247.0 |
+| Rachaad White rushing yards | 47 | 32.6 | 35.7 | 29.0 | 23.0 | 23.0 | 16.0 |
+| Cam Skattebo rushing yards | 78 | 68.5 | 35.1 | 31.0 | 29.1 | 47.1 | 41.2 |
+| Stefon Diggs receiving yards | 83 | 41.7 | 38.6 | 15.0 | 20.0 | 17.0 | 7.0 |
+| Malik Nabers receiving yards | 44 | 95.7 | 58.7 | 62.0 | 57.0 | 80.0 | 100.0 |
+| Isaiah Likely receiving yards | 127 | 60.4 | 45.7 | 3.0 | 3.0 | 41.0 | 31.0 |
+
+Point-estimate errors should be compared within the same stat because yards, attempts, receptions and touchdowns have different scales. `player-model-comparison.csv` includes by-stat MAE rows for Marcel-lite and Spec B. The full player-level forecast rows include the actual, absolute error, distribution summaries where supported, identity and provenance.
+
+Coverage exclusions from Spec B: 63 rushing-yard lines, 22 rush-attempt lines, 33 rushing-plus-receiving-yard lines, 30 passing-plus-rushing-yard lines, two interception lines and three total-touchdown lines. Marcel-lite has point forecasts for the supported stats but no probability coverage by design. Unsupported probabilities are blank, never zero.
+
+The replay manifest records the local database path and SHA-256 of its SQLite backup, all frozen snapshot hashes, model source hashes and parameters, calibration sample and exclusions. The frozen injury parquet was acquired at 2026-11-13 00:10:06 UTC; its source file timestamp is 2026-11-12 15:56:22 UTC. Historical training forecasts use Week 2–9 game logs only. Historical as-of injury versions were not preserved for every training week, so the calibration replay omitted historical injury-based share redistribution; the Week 10 reconstruction uses the saved pregame injury artifact. No postgame-built availability table was used. Reproduce from the repository root with:
+
+```bash
+python docs/research/slc-was-nyg-model-family-2026-11-12/replay-player-models.py \
+  --db /path/to/picks.dev.db
+python -m unittest discover \
+  -s docs/research/slc-was-nyg-model-family-2026-11-12 \
+  -p 'test_replay_player_models.py' -v
+```
+
+The generated files are [reconstructed-player-projections.csv](./reconstructed-player-projections.csv), [reconstructed-player-prop-probabilities.csv](./reconstructed-player-prop-probabilities.csv), [player-model-comparison.csv](./player-model-comparison.csv) and [player-model-replay-manifest.json](./player-model-replay-manifest.json). The small frozen source files used by this reconstruction are under [evidence/](./evidence/).
+
 ### What these prop scores do and do not say
 
 The lines are real pre-kickoff API captures, so prop Brier can be calculated here. It is a **single-game retrospective check**. Several lines for one player share the same actual stat and are highly correlated; no independent-game uncertainty interval is meaningful. A decisive prop-model evaluation needs the same frozen line-selection rule over many games and must group uncertainty by player-game, as the NFL model card specifies. No prop model should be promoted from these results.
