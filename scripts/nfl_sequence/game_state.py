@@ -967,6 +967,11 @@ class _Game:
             # The duration of a made field-goal down is applied after its outcome is drawn. Check that terminal play then.
             if terminal == 'field_goal_attempt' and i == len(plays) - 1:
                 continue
+            if (play['event_type'] == 'penalty' and
+                    play['outcome'].get('penalty_phase') == 'pre_snap'):
+                # Two-minute warning is anchored to a legally snapped/kicked
+                # down, not a pre-snap false start or other no-snap foul.
+                continue
             if self._mark_two_minute_warning(play):
                 break
         return plays, terminal
