@@ -1479,7 +1479,10 @@ class _Game:
                                     'note': 'raw E1 plays before the block; not part of drives or stats'}
             if decision_start is not None:
                 new_decisions = decision_log[decision_start:]
-                unrepresented = new_decisions[len(attempt):]
+                emitted_decision_plays = sum(1 for p in attempt if not (
+                    p.get('event_type') == 'penalty' and
+                    (p.get('outcome') or {}).get('penalty_phase') == 'pre_snap'))
+                unrepresented = new_decisions[emitted_decision_plays:]
                 if unrepresented:
                     self.blocked_attempt['unrepresented_decisions'] = copy.deepcopy(unrepresented)
             self.block(terminal)
@@ -1621,7 +1624,12 @@ class _Game:
         snapshot = self.pregame_snapshot
         # a full game is valid only on verified input provenance; an exploratory replay stays a statistical game
         verified = bool((snapshot or {}).get('evaluation', {}).get('verified'))
-        valid_candidate = bool(snapshot and verified and complete and blocker is None and not guarded and not unsupported)
+        # Mechanically complete penalty games remain research-only until
+        # kick-foul population and ruling-disposition/spot calibration are verified.
+        penalty_layer = self.penalty_controller is not None
+        penalty_release_verified = not penalty_layer
+        valid_candidate = bool(snapshot and verified and complete and blocker is None
+                               and not guarded and not unsupported and penalty_release_verified)
         record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete) + guard_reasons(guarded)
         rec = {
@@ -1638,7 +1646,11 @@ class _Game:
             'scheduled_kickoff_utc': snapshot['schedule']['scheduled_kickoff_utc'] if snapshot else None,
             'snapshot_hash': snapshot['snapshot_sha256'] if snapshot else None,
             'roster_snapshot_id': snapshot['roster_snapshot_id'] if snapshot else None,
-            'model_version': (f'{e1.MODEL_VERSION}+{PREGAME_USAGE_VERSION}' if snapshot else e1.MODEL_VERSION),
+            'model_version': ((f'{e1.MODEL_VERSION}+{PREGAME_USAGE_VERSION}' if snapshot else e1.MODEL_VERSION)
+                              + ('+slc-v1.7-penalty-research' if penalty_layer else '')),
+            'penalty_model_coverage': ({'enabled': True, 'status': 'research_only_not_release_validated',
+                                         'full_rulebook_coverage': False} if penalty_layer else
+                                        {'enabled': False}),
             'rules_version': 'nfl-2026-e2-successor',
             'team_identity': ({'A': {'team': snapshot['schedule']['home_team'], 'side': 'home'},
                                'B': {'team': snapshot['schedule']['away_team'], 'side': 'away'}}
