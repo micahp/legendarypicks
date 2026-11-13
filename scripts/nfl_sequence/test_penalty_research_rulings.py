@@ -37,17 +37,21 @@ class ResearchRulingTests(unittest.TestCase):
             sampler=OneFoul(label), game_seed=101,
             team_identity={'A': 'WAS', 'B': 'NYG'},
             ruling_provider=ResearchPenaltyRulingPolicy(101))
-        before = self.before(
+        sample_fields = dict(
             selected_play_class='run' if event == 'run' else 'dropback',
             sampled_runoff_seconds=8,
             sampled_event_terminal=None,
-            sampled_event_yards=4,
-            **extras)
+            sampled_event_yards=4)
+        sample_fields.update(extras)
+        before = self.before(**sample_fields)
         return ctrl.resolve(
             phase=phase, state=before, drive_index=1,
             play_index=2, event=event,
-            after=after or {'offense': 'A', 'defense': 'B',
-                            'down': 3, 'togo': 4, 'yl': 56})
+            after=(None if sample_fields['sampled_event_terminal'] in
+                   ('touchdown', 'safety', 'field_goal_attempt') else
+                   after if after is not None else
+                   {'offense': 'A', 'defense': 'B',
+                    'down': 3, 'togo': 4, 'yl': 56}))
 
     def test_all_sixteen_supported_foul_types_enforce_without_missing_ruling_data(self):
         for (side, foul), rule in RULES.items():
