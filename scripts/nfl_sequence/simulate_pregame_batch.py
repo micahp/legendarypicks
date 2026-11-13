@@ -58,6 +58,7 @@ import football_assertions  # noqa: E402
 import seed_selection  # noqa: E402
 from penalty_sampler import PenaltySampler  # noqa: E402
 from penalty_game import PenaltyGameController, PinnedPenaltyRulingBook  # noqa: E402
+from penalty_rulings import ResearchPenaltyRulingPolicy, RESEARCH_RULING_VERSION  # noqa: E402
 
 SCHEMA = 'lp-statistical-game-batch-1'
 PLAYER_CATEGORIES = {
@@ -113,6 +114,16 @@ def _reproduction_command(args, seed):
         command.append('--no-safety-table')
     if args.playcall_artifact:
         command.extend(['--playcall-artifact', str(args.playcall_artifact)])
+    if args.slc_profile == 'v1_7_candidate':
+        command.extend(['--slc-penalty-ruling-policy', args.slc_penalty_ruling_policy])
+        for flag, path in (
+            ('--slc-penalty-model', args.slc_penalty_model),
+            ('--slc-penalty-manifest', args.slc_penalty_manifest),
+            ('--slc-penalty-source-manifest', args.slc_penalty_source_manifest),
+            ('--slc-penalty-rulings', args.slc_penalty_rulings),
+        ):
+            if path is not None:
+                command.extend([flag, str(path)])
     for fix in args.slc_blocker_fix:
         command.extend(['--slc-blocker-fix', fix])
     for fix in args.slc_disable_blocker_fix:
@@ -1052,20 +1063,27 @@ def run_batch(args):
     if args.slc_profile != 'v1_7_candidate' and any(penalty_paths):
         raise ValueError('V1.7 penalty artifacts require --slc-profile v1_7_candidate')
     if args.slc_profile == 'v1_7_candidate':
-        if not all(penalty_paths):
-            raise ValueError('V1.7 needs occurrence fit, fit/source manifests, and explicit rulings artifact')
+        if not all(penalty_paths[:3]):
+            raise ValueError('V1.7 needs the fitted occurrence model and both pinned manifests')
+        if args.slc_penalty_ruling_policy == 'pinned' and not args.slc_penalty_rulings:
+            raise ValueError('pinned V1.7 rulings require --slc-penalty-rulings')
+        if args.slc_penalty_ruling_policy == 'research' and args.slc_penalty_rulings:
+            raise ValueError('research rulings cannot be mixed with pinned per-seed rulings')
         penalty_sampler = PenaltySampler.from_artifacts(
             model_path=args.slc_penalty_model,
             manifest_path=args.slc_penalty_manifest,
             source_manifest_path=args.slc_penalty_source_manifest,
             as_of_utc=snapshot['as_of'])
-        ruling_book = PinnedPenaltyRulingBook.from_path(args.slc_penalty_rulings)
+        ruling_book = (PinnedPenaltyRulingBook.from_path(args.slc_penalty_rulings)
+                       if args.slc_penalty_ruling_policy == 'pinned' else None)
         def penalty_factory(*, seed, snapshot, ledger):
+            provider = (ruling_book.for_seed(seed) if ruling_book is not None
+                        else ResearchPenaltyRulingPolicy(seed))
             return PenaltyGameController(
                 sampler=penalty_sampler, game_seed=seed,
                 team_identity={'A': snapshot['schedule']['home_team'],
                                'B': snapshot['schedule']['away_team']},
-                ruling_provider=ruling_book.for_seed(seed),
+                ruling_provider=provider,
                 rule_era=int(snapshot['schedule']['season']))
         ref.penalty_controller_factory = penalty_factory
     reference_seconds = time.monotonic() - reference_started
@@ -1089,7 +1107,11 @@ def run_batch(args):
             'fit_model_sha256': hashlib.sha256(args.slc_penalty_model.read_bytes()).hexdigest(),
             'fit_manifest_sha256': hashlib.sha256(args.slc_penalty_manifest.read_bytes()).hexdigest(),
             'source_manifest_sha256': hashlib.sha256(args.slc_penalty_source_manifest.read_bytes()).hexdigest(),
-            'rulings_sha256': hashlib.sha256(args.slc_penalty_rulings.read_bytes()).hexdigest(),
+            'rulings_sha256': (hashlib.sha256(args.slc_penalty_rulings.read_bytes()).hexdigest()
+                               if args.slc_penalty_rulings else None),
+            'ruling_policy': args.slc_penalty_ruling_policy,
+            'ruling_policy_version': (RESEARCH_RULING_VERSION
+                                      if args.slc_penalty_ruling_policy == 'research' else None),
             'status': 'research_only_not_release_validated',
         }
     profile_manifest = slc_config.build_manifest(resolved_profile, playcall_description, snapshot, input_provenance)
@@ -1358,6 +1380,9 @@ def main(argv=None):
                     help='V1.7 pinned fit manifest, hash matched to fitted model')
     ap.add_argument('--slc-penalty-source-manifest', type=Path,
                     help='V1.7 official opportunity source manifest')
+    ap.add_argument('--slc-penalty-ruling-policy', choices=('pinned', 'research'),
+                    default='research',
+                    help='V1.7: research creates explicit hypothetical rulings (NOT calibrated); pinned uses audited input')
     ap.add_argument('--slc-penalty-rulings', type=Path,
                     help='V1.7 pinned adjudication fixture/model output for this seed; incomplete rulings block')
     ap.add_argument('--slc-disable-layer', action='append', default=[],
