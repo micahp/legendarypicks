@@ -29,3 +29,4 @@ point_stat_mae,spec_b_v2,rush_yards,0,,,0,,18,5.104364239711024,retrospectively 
 point_stat_mae,spec_b_v2,carries,0,,,0,,18,1.2605111535570042,retrospectively reconstructed; conditional point projections
 point_stat_mae,spec_b_v2,rushing_touchdowns,0,,,0,,18,0.13975553056777168,retrospectively reconstructed; conditional point projections
 point_stat_mae,spec_b_v2,receiving_touchdowns,0,,,0,,18,0.2550108799204229,retrospectively reconstructed; conditional point projections
+prop_probability_brier,v1.7,,323,100.0,0.2845851137897853,170,0.2744740472732598,0,,mechanically completed saved V1.7 batch outcomes; reconstructed postgame
