@@ -93,7 +93,7 @@ def main():
         "seeds": rows,
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+    args.out.write_text(json.dumps(summary, indent=2, default=str) + "\n")
     print("TOTAL", len(rows))
     print("STATUS", dict(by_status))
     print("BLOCKERS", dict(by_blocker))
