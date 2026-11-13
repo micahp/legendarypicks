@@ -1,4 +1,5 @@
 """Current-state field-goal distance and the pinned historical eligibility ceiling."""
+import math
 
 SNAP_TO_KICK_OFFSET_YARDS = 17  # holder placement (7) plus the 10-yard end zone
 MAX_HISTORICAL_KICK_DISTANCE_YARDS = 70
@@ -23,7 +24,12 @@ def _bucket_kick_distance_range(bucket):
 
 def evaluate(snap_yardline_100):
     """Compute a kick's distance from the current snap spot, then apply the pinned historical ceiling."""
-    if type(snap_yardline_100) is not int or not 1 <= snap_yardline_100 <= 99:
+    # Half-distance penalty enforcement can leave the ball at a fractional
+    # field position.  The original integer-only check incorrectly aborted
+    # otherwise valid next-snap states after an accepted penalty.
+    if (type(snap_yardline_100) not in (int, float)
+            or not math.isfinite(snap_yardline_100)
+            or not 0 < snap_yardline_100 < 100):
         raise ValueError(f'field-goal snap spot must be on the field (got {snap_yardline_100!r})')
     distance = snap_yardline_100 + SNAP_TO_KICK_OFFSET_YARDS
     bucket = _historical_snap_bucket(snap_yardline_100)
