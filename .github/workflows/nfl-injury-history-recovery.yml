@@ -1,0 +1,51 @@
+name: Recover NFL 2026 injury Weeks 2-9
+
+on:
+  push:
+    branches:
+      - research/nfl-injury-weeks-2-9-recovery-2026-11-13
+  pull_request:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recover-injury-history:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install source parquet reader
+        run: python -m pip install pyarrow==22.0.0
+      - name: Run injury-cutoff regression tests
+        run: PYTHONPATH=backend python -m unittest -v test_recover_nfl_injury_weeks
+      - name: Fetch published 2026 injury rows and historical game schedule
+        run: |
+          mkdir -p /tmp/lp-nfl-injuries
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/nflverse/nflverse-data/releases/download/injuries/injuries_2026.parquet \
+            --output /tmp/lp-nfl-injuries/injuries_2026.parquet
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv \
+            --output /tmp/lp-nfl-injuries/games.csv
+      - name: Extract all Week 2-9 reports and classify source timestamp evidence
+        run: |
+          PYTHONPATH=backend python backend/recover_nfl_injury_weeks.py \
+            --artifact /tmp/lp-nfl-injuries/injuries_2026.parquet \
+            --schedule-csv /tmp/lp-nfl-injuries/games.csv \
+            --out-dir /tmp/lp-nfl-injuries/recovered
+          cat /tmp/lp-nfl-injuries/recovered/README.md
+      - name: Upload reusable source and recovered injury-week data
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfl-injury-2026-weeks2-9-recovery
+          path: |
+            /tmp/lp-nfl-injuries/injuries_2026.parquet
+            /tmp/lp-nfl-injuries/games.csv
+            /tmp/lp-nfl-injuries/recovered/
+          retention-days: 30
