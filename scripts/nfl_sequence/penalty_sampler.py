@@ -77,7 +77,13 @@ class PenaltySampler:
         if _utc(as_of_utc) < _utc(model.train_before_utc):
             raise ValueError("penalty model was trained after the requested as-of time")
         sampler = cls(model, enabled=True)
+        kick_key = json.dumps(["live_ball", "kick"])
+        kick_opportunities = sum(model.context_counts.get(kick_key, {}).values())
         sampler.model_provenance = {
+            "kick_opportunities": kick_opportunities,
+            "kick_rate_status": ("research_uncalibrated_scrimmage_kick_backoff"
+                                 if kick_opportunities == 0 else
+                                 "kick_training_present_requires_holdout_validation"),
             "status": manifest["status"], "model_sha256": model.sha256(),
             "source_manifest_sha256": source_hash,
             "train_before_utc": model.train_before_utc,
