@@ -1,6 +1,7 @@
 """V1.7 opt-in penalty proposal must not affect the V1.6 RNG stream."""
 import random
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -84,6 +85,29 @@ class PenaltySamplerTests(unittest.TestCase):
         else:
             self.assertIsNone(result.committing_side)
             self.assertIsNone(result.foul_type)
+
+    def test_real_fitted_artifact_loads_and_samples_reproducibly(self):
+        root = Path(__file__).resolve().parents[2] / 'docs/research/slc-v17-penalty-fit-2026-11-13'
+        sampler = PenaltySampler.from_artifacts(
+            model_path=root / 'model.json', manifest_path=root / 'fit-manifest.json',
+            source_manifest_path=root / 'source-manifest.json', as_of_utc='2026-11-13T00:00:00Z')
+        self.assertEqual(sampler.model.opportunities, 9614)
+        self.assertEqual(sampler.model_provenance['status'], 'research_only_not_release_validated')
+        self.assertEqual(sampler.propose(ctx(), game_seed=17, opportunity_key='play-1'),
+                         sampler.propose(ctx(), game_seed=17, opportunity_key='play-1'))
+
+    def test_artifact_loader_rejects_changed_source_and_early_as_of(self):
+        root = Path(__file__).resolve().parents[2] / 'docs/research/slc-v17-penalty-fit-2026-11-13'
+        kwargs = dict(model_path=root / 'model.json', manifest_path=root / 'fit-manifest.json',
+                      source_manifest_path=root / 'source-manifest.json')
+        with self.assertRaisesRegex(ValueError, 'trained after'):
+            PenaltySampler.from_artifacts(**kwargs, as_of_utc='2024-01-01T00:00:00Z')
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / 'source.json'
+            source.write_text('{}')
+            kwargs['source_manifest_path'] = source
+            with self.assertRaisesRegex(ValueError, 'source manifest hash'):
+                PenaltySampler.from_artifacts(**kwargs, as_of_utc='2026-11-13T00:00:00Z')
 
 
 if __name__ == "__main__":

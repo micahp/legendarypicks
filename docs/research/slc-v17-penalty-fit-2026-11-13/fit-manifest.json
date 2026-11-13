@@ -1,0 +1,26 @@
+{
+  "model_schema": "lp.slc.penalty-occurrence.v1",
+  "model_sha256": "c4f1c9bb863bb4a5b2bf8ae1a815554cb02e9b6cac5c7d7024c441d085211071",
+  "observed_opportunities": 9614,
+  "source_manifest_sha256": "ee9f042d424799fb7caab5b039a969e4d798b75b8bfd0eaad160385d1931c34d",
+  "status": "research_only_not_release_validated",
+  "train_before_utc": "2025-01-01T00:00:00+00:00",
+  "train_input_path": "/root/slc-v17-penalty-official-cohort-v5/train-cutoff.jsonl",
+  "train_input_sha256": "a7e87a5e4cee08b22b438298595ca8ad922dfec0a4a07677520f77895e9f0cee",
+  "validation": {
+    "context_only_control": {
+      "any_foul_brier": 0.0223450922754077,
+      "log_loss": 0.1568400515944426,
+      "multiclass_brier": 0.04535737231287032,
+      "n": 2174
+    },
+    "holdout_input_path": "/root/slc-v17-penalty-official-cohort-v5/holdout.jsonl",
+    "holdout_input_sha256": "4b7d29e8f05bc8546af1307b9e085797ea0beaa3ac48e0634784e09308bc62c5",
+    "team_adjusted": {
+      "any_foul_brier": 0.02238666393099014,
+      "log_loss": 0.15507392718828586,
+      "multiclass_brier": 0.04535121391475426,
+      "n": 2174
+    }
+  }
+}

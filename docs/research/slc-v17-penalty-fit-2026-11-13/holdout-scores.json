@@ -1,0 +1,98 @@
+{
+  "context_only": {
+    "all": {
+      "any_foul_brier": 0.0223450922754077,
+      "log_loss": 0.1568400515944426,
+      "multiclass_brier": 0.04535737231287032,
+      "n": 2174,
+      "observed_fouls": 50,
+      "observed_rate": 0.022999080036798528,
+      "predicted_fouls": 71.5326525654109,
+      "predicted_rate": 0.03290370403192774
+    },
+    "live_ball": {
+      "any_foul_brier": 0.0350421986721096,
+      "log_loss": 0.24754121781846336,
+      "multiclass_brier": 0.07172975899992072,
+      "n": 1082,
+      "observed_fouls": 40,
+      "observed_rate": 0.036968576709796676,
+      "predicted_fouls": 42.34748726067631,
+      "predicted_rate": 0.03913815828158624
+    },
+    "pre_snap": {
+      "any_foul_brier": 0.00976425974680787,
+      "log_loss": 0.0669694821307158,
+      "multiclass_brier": 0.019226490998411744,
+      "n": 1092,
+      "observed_fouls": 10,
+      "observed_rate": 0.009157509157509158,
+      "predicted_fouls": 29.185165304734724,
+      "predicted_rate": 0.026726341854152676
+    }
+  },
+  "league": {
+    "all": {
+      "any_foul_brier": 0.02244444617759229,
+      "log_loss": 0.15368863941408467,
+      "multiclass_brier": 0.045416114434967174,
+      "n": 2174,
+      "observed_fouls": 50,
+      "observed_rate": 0.022999080036798528,
+      "predicted_fouls": 73.46984181632158,
+      "predicted_rate": 0.033794775444490145
+    },
+    "live_ball": {
+      "any_foul_brier": 0.03561494573252703,
+      "log_loss": 0.24207557656451334,
+      "multiclass_brier": 0.07242191210549997,
+      "n": 1082,
+      "observed_fouls": 40,
+      "observed_rate": 0.036968576709796676,
+      "predicted_fouls": 43.90790580319621,
+      "predicted_rate": 0.04058031959629964
+    },
+    "pre_snap": {
+      "any_foul_brier": 0.009394555592941799,
+      "log_loss": 0.06611110645003249,
+      "multiclass_brier": 0.018657622603907558,
+      "n": 1092,
+      "observed_fouls": 10,
+      "observed_rate": 0.009157509157509158,
+      "predicted_fouls": 29.561936013124974,
+      "predicted_rate": 0.02707136997538917
+    }
+  },
+  "team_adjusted": {
+    "all": {
+      "any_foul_brier": 0.02238666393099014,
+      "log_loss": 0.15507392718828586,
+      "multiclass_brier": 0.04535121391475426,
+      "n": 2174,
+      "observed_fouls": 50,
+      "observed_rate": 0.022999080036798528,
+      "predicted_fouls": 70.43708079418732,
+      "predicted_rate": 0.03239976117487917
+    },
+    "live_ball": {
+      "any_foul_brier": 0.03522531924858311,
+      "log_loss": 0.24575384244167423,
+      "multiclass_brier": 0.07190119904829703,
+      "n": 1082,
+      "observed_fouls": 40,
+      "observed_rate": 0.036968576709796676,
+      "predicted_fouls": 42.61407574504636,
+      "predicted_rate": 0.039384543202445804
+    },
+    "pre_snap": {
+      "any_foul_brier": 0.009665578717038206,
+      "log_loss": 0.06522441408923246,
+      "multiclass_brier": 0.01904436051320356,
+      "n": 1092,
+      "observed_fouls": 10,
+      "observed_rate": 0.009157509157509158,
+      "predicted_fouls": 27.82300504914116,
+      "predicted_rate": 0.02547894235269337
+    }
+  }
+}

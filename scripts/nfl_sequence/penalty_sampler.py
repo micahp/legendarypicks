@@ -8,9 +8,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
+from pathlib import Path
 import random
 
-from penalty_fit import Context, NO_FOUL, PenaltyModel
+from penalty_fit import Context, NO_FOUL, PenaltyModel, _utc
 
 
 @dataclass(frozen=True)
@@ -48,6 +50,39 @@ class PenaltySampler:
             raise ValueError("enabled V1.7 penalties require a fitted model")
         self.model = model
         self._model_hash = model.sha256() if self.enabled else None
+        self.model_provenance = None
+
+    @classmethod
+    def from_artifacts(cls, *, model_path: str | Path, manifest_path: str | Path,
+                       source_manifest_path: str | Path, as_of_utc: str) -> "PenaltySampler":
+        """Load a fitted research model only when its provenance is consistent.
+
+        This enables isolated proposals, not full-game enforcement or a release
+        claim. The source manifest is checked byte-for-byte against the fit.
+        """
+        model = PenaltyModel.from_json(Path(model_path).read_text(encoding="utf-8"))
+        manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
+        source_hash = hashlib.sha256(Path(source_manifest_path).read_bytes()).hexdigest()
+        if manifest.get("status") != "research_only_not_release_validated":
+            raise ValueError("expected a research-only penalty fit manifest")
+        if manifest.get("model_sha256") != model.sha256():
+            raise ValueError("penalty model hash does not match fit manifest")
+        if (manifest.get("source_manifest_sha256") != source_hash
+                or model.source_sha256 != source_hash):
+            raise ValueError("penalty source manifest hash mismatch")
+        if (manifest.get("train_before_utc") != model.train_before_utc
+                or manifest.get("observed_opportunities") != model.opportunities):
+            raise ValueError("penalty fit metadata does not match model")
+        if _utc(as_of_utc) < _utc(model.train_before_utc):
+            raise ValueError("penalty model was trained after the requested as-of time")
+        sampler = cls(model, enabled=True)
+        sampler.model_provenance = {
+            "status": manifest["status"], "model_sha256": model.sha256(),
+            "source_manifest_sha256": source_hash,
+            "train_before_utc": model.train_before_utc,
+            "observed_opportunities": model.opportunities,
+        }
+        return sampler
 
     def propose(self, context: Context, *, game_seed: int, opportunity_key: str) -> PenaltyProposal:
         if not isinstance(opportunity_key, str) or not opportunity_key.strip():

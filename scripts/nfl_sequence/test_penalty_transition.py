@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from penalty_enforcement import DownState
 from penalty_fit import Context
@@ -49,6 +50,18 @@ class PenaltyTransitionTests(unittest.TestCase):
             transition(sampler=FixedSampler('defense:roughing_passer'), context=ctx,
                        game_seed=1, opportunity_key='x', before=self.before,
                        after_play=DownState(3, 8, 60, 'WAS'), accepted=True)
+
+    def test_fitted_model_proposal_reaches_enforcement(self):
+        root = Path(__file__).resolve().parents[2] / 'docs/research/slc-v17-penalty-fit-2026-11-13'
+        sampler = PenaltySampler.from_artifacts(
+            model_path=root / 'model.json', manifest_path=root / 'fit-manifest.json',
+            source_manifest_path=root / 'source-manifest.json', as_of_utc='2026-11-13T00:00:00Z')
+        result = transition(sampler=sampler, context=self.context, game_seed=460,
+                            opportunity_key='demo-play-1', before=self.before,
+                            after_play=self.before, accepted=True)
+        self.assertEqual(result.proposal.outcome, 'offense:false_start')
+        self.assertEqual(result.state, DownState(2, 13, 65, 'WAS'))
+        self.assertEqual(result.enforcement['yards'], 5)
 
 
 if __name__ == '__main__':
