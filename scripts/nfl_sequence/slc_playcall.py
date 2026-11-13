@@ -448,8 +448,11 @@ class PlayCallSampler:
             raise e1.SamplingUnavailable('playcall_state_incomplete')
         field_goal = state.get('field_goal_feasibility')
         if (not isinstance(field_goal, dict)
-                or field_goal.get('snap_yardline_100') != int(state['yl'])):
-            field_goal = fg_feasibility.evaluate(int(state['yl']))
+                or field_goal.get('snap_yardline_100') != state['yl']):
+            # Do not truncate half-yard penalty placements.  At 53.5 yards
+            # from goal, a 70.5-yard attempt is ineligible even though
+            # int(53.5)+17 would incorrectly pass the 70-yard ceiling.
+            field_goal = fg_feasibility.evaluate(state['yl'])
         source_row_filter = state.get('_source_row_filter')
         entry = self._entry(cell, cache=not state.get('_source_cell_filtered', False))
         self._current_team_outcome_fallbacks = []
