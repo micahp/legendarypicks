@@ -55,14 +55,19 @@ jobs:
         if: github.event_name == 'push'
         run: |
           output=docs/research/nfl-injury-history-2026-weeks2-9
-          if [ -f "$output/nfl-injury-week-coverage.json" ]; then
-            echo "Pinned recovery already in the research branch; refusing overwrite."
+          mkdir -p "$output"
+          if [ ! -f "$output/nfl-injury-week-coverage.json" ]; then
+            cp /tmp/lp-nfl-injuries/recovered/* "$output/"
+            cp /tmp/lp-nfl-injuries/injuries_2026.parquet "$output/source-injuries_2026.parquet"
+            cp /tmp/lp-nfl-injuries/games.csv "$output/source-games.csv"
+          fi
+          if [ ! -f "$output/asof-depth-injury-coverage.json" ]; then
+            cp /tmp/lp-nfl-injuries/roster-asof/* "$output/"
+          fi
+          if [ -z "$(git status --short -- "$output")" ]; then
+            echo "All historical outputs already pinned."
             exit 0
           fi
-          mkdir -p "$output"
-          cp /tmp/lp-nfl-injuries/recovered/* "$output/"
-          cp /tmp/lp-nfl-injuries/injuries_2026.parquet "$output/source-injuries_2026.parquet"
-          cp /tmp/lp-nfl-injuries/games.csv "$output/source-games.csv"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$output"
