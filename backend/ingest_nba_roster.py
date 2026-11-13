@@ -95,7 +95,15 @@ def _reviewed_birth_dates(path: str = REVIEWED_PATH) -> dict[str, dt.date]:
             entries = json.load(fh).get("nba") or {}
     except FileNotFoundError:
         return {}
-    return {str(e["espn_id"]): dt.date.fromisoformat(e["espn_birth_date"]) for e in entries.values()}
+    out = {}
+    for entry in entries.values():
+        # Entries reviewed without an ESPN id or birth date cannot answer a birth-date
+        # match. Skip them; the other entries must still be usable.
+        try:
+            out[str(entry["espn_id"])] = dt.date.fromisoformat(entry["espn_birth_date"])
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
 
 
 def reviewed_birth_date(row_id) -> dt.date | None:

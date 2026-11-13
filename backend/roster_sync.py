@@ -231,7 +231,8 @@ def _sync_league(con: sqlite3.Connection, league: str) -> dict:
                     })
                     continue
                 decision, found_id, why = nba_identity_resolve.resolve(
-                    con, eid, name, nba_com_id=nba_com_id)
+                    con, eid, name, nba_com_id=nba_com_id,
+                    team_espn_id=p.get("team_espn_id") or p.get("team_id"))
                 if decision in ("reuse", "attach_espn"):
                     held = con.execute("SELECT team FROM players WHERE id=?",
                                        (found_id,)).fetchone()

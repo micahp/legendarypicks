@@ -942,6 +942,15 @@ class RosterSyncNbaIdentityGuardTests(unittest.TestCase):
         self.run_sync([{"player_id": "888", "name": "Zed Newcomer", "position": "F"}])  # ESPN omits Kyle
         self.assertEqual(self.con.execute("SELECT active FROM players WHERE id=63170").fetchone()[0], 1)
 
+    def test_a_non_nba_club_player_cannot_enter_the_nba_spine_through_the_writer(self):
+        before = self.count()
+        result = self.run_sync([{"player_id": "3133629", "name": "Keenan Evans",
+                                 "position": "G", "team_id": "134478"}])
+        self.assertEqual(self.count(), before)
+        self.assertEqual(self.con.execute(
+            "SELECT COUNT(*) FROM players WHERE league='nba' AND espn_id='3133629'").fetchone()[0], 0)
+        self.assertTrue(any("non-NBA club" in r for r in self.reasons(result)), result)
+
     def test_espn_only_sync_still_deactivates_players_absent_from_every_roster(self):
         self.con.execute("UPDATE players SET active=1 WHERE id=63170")
         self.con.commit()

@@ -1,3 +1,5 @@
+import json
+import os
 import datetime as dt
 import pytest
 
@@ -105,7 +107,9 @@ def test_reviewed_birth_dates_are_read_from_checked_file(tmp_path):
 
 
 def test_shipped_reviewed_file_parses():
-    assert len(nba._reviewed_birth_dates()) == 7
+    entries = json.load(open(nba.REVIEWED_PATH))["nba"]
+    valid = [e for e in entries.values() if e.get("espn_id") and e.get("espn_birth_date")]
+    assert len(nba._reviewed_birth_dates()) == len(valid) > 0
 
 
 def test_last_logged_team_binds_a_stale_sole_candidate():
@@ -137,3 +141,21 @@ def test_position_group_comes_from_the_published_hierarchy():
     assert nba._position_group("FC") == "Center"
     assert nba._position_group("GF") == "Guard-Forward"
     assert nba._position_group(None) is None
+
+
+def test_reviewed_birth_dates_skips_entries_without_a_birth_date_in_the_real_file():
+    real = os.path.join(os.path.dirname(__file__), "data", "nba-identity-reviewed.json")
+    entries = json.load(open(real))["nba"]
+    missing = [e for e in entries.values() if not e.get("espn_birth_date") or not e.get("espn_id")]
+    assert missing, "fixture no longer exercises the missing-birth-date case"
+    got = nba._reviewed_birth_dates(real)          # must not raise
+    assert len(got) == len(entries) - len(missing)
+
+
+def test_reviewed_birth_dates_tolerates_empty_and_malformed_entries(tmp_path):
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps({"nba": {"1": {"espn_id": 5, "espn_birth_date": ""},
+                                        "2": {"espn_id": 6},
+                                        "3": {"espn_id": 7, "espn_birth_date": "not-a-date"},
+                                        "4": {"espn_id": 8, "espn_birth_date": "2000-01-02"}}}))
+    assert nba._reviewed_birth_dates(str(path)) == {"8": dt.date(2000, 1, 2)}
