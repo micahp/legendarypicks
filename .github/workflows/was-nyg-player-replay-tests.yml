@@ -1,0 +1,30 @@
+name: WAS-NYG player-model replay tests
+
+on:
+  push:
+    branches:
+      - feature/was-nyg-player-replay-2026-11-13
+  pull_request:
+    branches:
+      - slc-v2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replay-unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile replay and model entrypoints
+        run: |
+          python -m py_compile backend/replay_was_nyg_player_models.py \
+            backend/nfl_player_projection_v2.py backend/nfl_prop_calibration.py \
+            backend/grade_nfl_prop_probabilities.py
+      - name: Run read-only as-of replay tests
+        run: |
+          PYTHONPATH=backend python -m unittest -v test_replay_was_nyg_player_models
