@@ -212,7 +212,15 @@ def enforce(*, before: DownState, after_play: DownState, phase: str,
         # ten yards from previous or passer's release spot; special own-goal
         # line exception caps it at release spot.
         ten_y = base + 10
-        new_y = foul_y if ten_y >= 100 else max(ten_y, foul_y)
+        release_depth = foul_y - base
+        own_goal_distance = 100 - base
+        if release_depth < 10 and release_depth > own_goal_distance / 2:
+            # 2026 Rule 8-6-1(a): release spot is the enforcement spot
+            # when the pass was thrown inside ten yards of the LOS but
+            # more than halfway to the offense's goal line.
+            new_y = foul_y
+        else:
+            new_y = max(ten_y, foul_y)
         if not 0 < new_y < 100:
             raise ValueError("intentional grounding safety needs scoring transition")
         actual = new_y - base
