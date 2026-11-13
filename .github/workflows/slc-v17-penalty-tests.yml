@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/slc-v1.7-penalty-model-2026-11-12
+      - feature/slc-v1.7-enforce-all-16-2026-11-12
   workflow_dispatch:
 
 permissions:
@@ -20,4 +21,5 @@ jobs:
       - name: Run V1.7 penalty model regressions
         run: |
           PYTHONPATH=scripts/nfl_sequence python -m unittest -v \
-            test_penalty_fit test_penalty_sampler test_penalty_train
+            test_penalty_fit test_penalty_sampler test_penalty_train \
+            test_penalty_enforcement test_penalty_transition
