@@ -325,6 +325,12 @@ class Reference:
         return out
 
     def participants_for(self, play, offense_team=None, snapshot=None, seed=None):
+        if play['event_type'] == 'penalty':
+            # Accepted penalties that nullify the down cannot inherit the
+            # sampled play's passer/runner or fabricate a credited snap.
+            return {'passer_id': None, 'rusher_id': None, 'receiver_id': None,
+                    'timeout': False, 'out_of_bounds': False,
+                    'attribution': 'no_participant_modelled', 'sampled_from': None}
         src = play['outcome']['sampled_from']
         facts = self.participants.get((src['game_id'], src['play_id']), {})
         keys = ('passer_id', 'rusher_id', 'receiver_id', 'posteam', 'defteam', 'air_yards', 'yards_after_catch', 'timeout',
@@ -683,6 +689,10 @@ class _Game:
         self.model_seed = seed if model_seed is None else model_seed
         self.next_play_sequence = 1
         self.ref = ref
+        penalty_factory = getattr(ref, 'penalty_controller_factory', None)
+        self.penalty_controller = (penalty_factory(
+            seed=seed, snapshot=pregame_snapshot, ledger=ledger)
+            if penalty_factory is not None else None)
         self.ledger = ledger
         self.rng = rng
         self.paired_random_streams = paired_random_streams
@@ -1027,6 +1037,9 @@ class _Game:
                 reasons.append({'kind': 'automatic_two_minute_warning', 'team': None})
             if part.get('out_of_bounds'):
                 reasons.append({'kind': 'runner_out_of_bounds', 'team': None})
+            if outcome.get('penalty_resolved'):
+                reasons.append({'kind': 'enforced_or_declined_penalty',
+                                'team': (outcome.get('penalty_proposal') or {}).get('outcome')})
             if play['event_type'] == 'pass_incomplete':
                 reasons.append({'kind': 'incomplete_pass', 'team': None})
             first_down = (before.get('offense_team') == after.get('offense_team') and after.get('down') == 1
@@ -1437,7 +1450,8 @@ class _Game:
                                       play_index_start=self.next_play_sequence,
                                       drive_index=len(self.drives) + 1,
                                       paired_random_streams=self.paired_random_streams,
-                                      sampling_guard=timeout_guard, **research)
+                                      sampling_guard=timeout_guard,
+                                      penalty_controller=self.penalty_controller, **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
@@ -1453,7 +1467,7 @@ class _Game:
                     self.blocked_attempt['unrepresented_decisions'] = copy.deepcopy(unrepresented)
             self.block(terminal)
             return
-        if any(p['outcome'].get('penalty') for p in plays):
+        if any(p['outcome'].get('penalty') and not p['outcome'].get('penalty_resolved') for p in plays):
             # a penalty is an unmodelled transition: the pool excludes penalty plays, so this should never be drawn; if it is,
             # the game is blocked, never completed
             self.block('penalty_not_modelled')
@@ -1679,7 +1693,7 @@ def unmodelled_transitions(drives, kickoffs):
                     'sampled_historical_next_drive_spot', 'period_expired'):
                 found.append({'kind': 'missed_field_goal_return', 'drive_index': d['index']})
         for p in d['plays']:
-            if p['outcome'].get('penalty'):
+            if p['outcome'].get('penalty') and not p['outcome'].get('penalty_resolved'):
                 found.append({'kind': 'penalty', 'drive_index': d['index'], 'sequence': p['sequence']})
             if p['participants'].get('timeout') and not p['participants'].get('timeout_applied'):
                 found.append({'kind': 'timeout', 'drive_index': d['index'], 'sequence': p['sequence']})
