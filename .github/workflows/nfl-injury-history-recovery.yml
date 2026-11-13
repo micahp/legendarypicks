@@ -89,11 +89,13 @@ jobs:
             cp /tmp/lp-nfl-injuries/official-inactives/official-inactives-matched-index.json "$output/"
             cp /tmp/lp-nfl-injuries/official-inactives/official-inactives-coverage.json "$output/"
           fi
-          if [ ! -f "$output/with-inactives-asof-depth-injury-coverage.json" ]; then
+          # Do not overwrite previous research output. This v2 evidence
+          # explicitly leaves unlisted depth players' active status unknown.
+          if [ ! -f "$output/with-inactives-unknown-active-v2-coverage.json" ]; then
             cp /tmp/lp-nfl-injuries/roster-with-inactives/asof-depth-injury-coverage.json \
-              "$output/with-inactives-asof-depth-injury-coverage.json"
+              "$output/with-inactives-unknown-active-v2-coverage.json"
             cp /tmp/lp-nfl-injuries/roster-with-inactives/asof-depth-injury-rosters.csv \
-              "$output/with-inactives-asof-depth-injury-rosters.csv"
+              "$output/with-inactives-unknown-active-v2-rosters.csv"
           fi
           if [ -z "$(git status --short -- "$output")" ]; then
             echo "All historical outputs already pinned."
