@@ -22,6 +22,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Compile all changed game-engine entrypoints
+        run: |
+          python -m py_compile scripts/nfl_sequence/e1_drive.py \
+            scripts/nfl_sequence/game_state.py scripts/nfl_sequence/slc_playcall.py \
+            scripts/nfl_sequence/slc_engine.py scripts/nfl_sequence/slc_config.py \
+            scripts/nfl_sequence/simulate_pregame_batch.py \
+            scripts/nfl_sequence/penalty_game.py scripts/nfl_sequence/penalty_rulings.py
       - name: Run V1.7 penalty model regressions
         run: |
           PYTHONPATH=scripts/nfl_sequence python -m unittest -v \
