@@ -841,8 +841,8 @@ def summary(decisions, record=None):
                 action = 'field_goal'
             else:
                 action = 'other'
-            distance = pm.DISTANCE_BUCKETS[pm.distance_bucket(int(state['togo']))][2]
-            field = pm.FIELD_BUCKETS[pm.field_bucket(int(state['yardline_100']))]
+            distance = pm.DISTANCE_BUCKETS[pm.distance_bucket(state['togo'])][2]
+            field = pm.FIELD_BUCKETS[pm.field_bucket(state['yardline_100'])]
             score = pm.SCORE_BUCKETS[pm.score_bucket(int(state['score_diff']))]
             clock = pm.CLOCK_BUCKETS[pm.clock_bucket(int(state['quarter']), int(state['clock']))]
             situational_counts[(str(state['team']), int(state['quarter']), int(state['down']), distance,

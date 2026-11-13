@@ -6,9 +6,11 @@ on:
       - feature/slc-v1.7-penalty-model-2026-11-12
       - feature/slc-v1.7-enforce-all-16-2026-11-12
       - fix/slc-v17-scrimmage-kick-transitions-2026-11-12
+      - fix/slc-v17-fractional-state-precision-2026-11-13
   pull_request:
     branches:
       - feature/slc-v1.7-penalty-model-2026-11-12
+      - fix/slc-v17-scrimmage-kick-transitions-2026-11-12
   workflow_dispatch:
 
 permissions:
@@ -22,6 +24,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install play-call test dependencies
+        run: python -m pip install numpy==1.26.4 scipy==1.14.1 pytz==2024.2
       - name: Compile all changed game-engine entrypoints
         run: |
           python -m py_compile scripts/nfl_sequence/e1_drive.py \
@@ -37,4 +41,4 @@ jobs:
             test_penalty_scrimmage_kick test_penalty_game_loop \
             test_penalty_full_game_fixture test_penalty_profile_integration \
             test_penalty_research_rulings test_penalty_research_summary \
-            test_penalty_goal_line_fumble
+            test_penalty_goal_line_fumble test_penalty_fractional_state
