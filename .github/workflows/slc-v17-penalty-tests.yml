@@ -27,7 +27,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install play-call test dependencies
-        run: python -m pip install numpy==1.26.4 scipy==1.14.1 pytz==2024.2
+        run: python -m pip install numpy==1.26.4 scipy==1.14.1 pytz==2024.2 pandas==2.2.3 pyarrow==22.0.0
       - name: Compile all changed game-engine entrypoints
         run: |
           python -m py_compile scripts/nfl_sequence/e1_drive.py \
