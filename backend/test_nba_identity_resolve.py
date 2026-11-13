@@ -53,3 +53,13 @@ class Resolve(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NonNbaClubTests(unittest.TestCase):
+    def test_a_london_lions_player_is_held_not_created(self):
+        con = sqlite3.connect(":memory:")
+        con.executescript("CREATE TABLE players(id INTEGER PRIMARY KEY, name TEXT, league TEXT, espn_id TEXT, hoopr_id TEXT);"
+                          "CREATE TABLE player_source_ids(player_id INT, league TEXT, source TEXT, source_player_key TEXT);")
+        action, pid, reason = r.resolve(con, "3133629", "Some Lion", team_espn_id="134478")
+        self.assertEqual((action, pid), ("hold", None))
+        self.assertIn("non-NBA club", reason)

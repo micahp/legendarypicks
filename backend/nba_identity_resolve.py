@@ -81,9 +81,16 @@ def crosswalk_nba_com_id(con: sqlite3.Connection, espn_id) -> Tuple[Optional[str
     return (next(iter(found)) if found else None), False
 
 
-def resolve(con: sqlite3.Connection, espn_id, name: str, nba_com_id=None
-            ) -> Tuple[str, Optional[int], str]:
+# Clubs that play NBA preseason games but are not NBA franchises. Their players
+# stay out of the NBA player table; the source evidence is kept by the caller.
+NON_NBA_CLUB_ESPN_IDS = {"134478"}  # London Lions
+
+
+def resolve(con: sqlite3.Connection, espn_id, name: str, nba_com_id=None,
+            team_espn_id=None) -> Tuple[str, Optional[int], str]:
     """Return (action, players.id or None, reason)."""
+    if team_espn_id is not None and str(team_espn_id) in NON_NBA_CLUB_ESPN_IDS:
+        return "hold", None, "non-NBA club (team ESPN id %s)" % team_espn_id
     espn_id = str(espn_id) if espn_id not in (None, "") else None
     cols = {r[1] for r in con.execute("PRAGMA table_info(players)")}
     nba_owner = None

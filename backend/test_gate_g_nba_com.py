@@ -58,7 +58,7 @@ class GateG(unittest.TestCase):
     def test_participation_coverage_is_reported_beside_identity_coverage(self):
         con = build([("Ann Lee", "11"), ("Bench Only", None)], [1, 2], {"11": "Ann Lee"}, dnp={2})
         state, _, detail = self.run_gate(con)
-        self.assertEqual(state, "UNVERIFIED")           # identity stays strict
+        self.assertEqual(state, "PASS")        # a no-minutes player does not block
         self.assertIn("IDENTITY coverage: 1 of 2", detail)
         self.assertIn("PARTICIPATION coverage: 1 of 1 players with minutes verified", detail)
         self.assertIn("1 unverified players never had minutes", detail)
@@ -73,6 +73,14 @@ class GateG(unittest.TestCase):
         _, _, detail = self.run_gate(con)
         self.assertIn("orphan player_ids=1", detail)
         self.assertIn("PARTICIPATION coverage: 1 of 2", detail)
+
+    def test_a_wrong_pairing_still_fails_even_if_that_player_never_played(self):
+        con = build([("Ann Lee", "22"), ("Bo Ray", "11")], [1], {"11": "Ann Lee", "22": "Bo Ray"}, dnp={1})
+        self.assertEqual(self.run_gate(con)[0], "FAIL")
+
+    def test_an_orphan_log_still_blocks(self):
+        con = build([("Ann Lee", "11")], [1, 99], {"11": "Ann Lee"}, dnp={99})
+        self.assertEqual(self.run_gate(con)[0], "UNVERIFIED")
 
 
 class GateBSample(unittest.TestCase):

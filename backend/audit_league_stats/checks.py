@@ -633,14 +633,18 @@ def _check_nba_com_identity(con, league, out):
     elif not checked:
         out.add(UNVERIFIED, league, "G/published-identity",
                 f"no nba.com id matched a published name; {note}")
-    elif no_id or outside or orphan:
-        shown = ", ".join(f"{p}:{players.get(p)}" for p in (no_id + outside)[:5])
+    elif played_unverified or orphan:
+        # Blocking: a player who actually played (minutes above zero) without a
+        # verified nba.com id, or a game log whose player_id has no players row.
+        shown = ", ".join(f"{p}:{players.get(p)}" for p in played_unverified[:5])
         out.add(UNVERIFIED, league, "G/published-identity",
-                f"current-season players cannot be verified against nba.com "
-                f"(e.g. {shown}); {note}")
+                f"players who played cannot be verified against nba.com "
+                f"(e.g. {shown}; orphan player_ids={len(orphan)}); {note}")
     else:
         out.add(PASS, league, "G/published-identity",
-                f"all {checked} checked nba.com ids carry the published name; {note}")
+                f"all {checked} checked nba.com ids carry the published name and every "
+                f"player who played is verified; non-blocking coverage of players who never "
+                f"had minutes: {len(unverified)} unverified; {note}")
 
 
 def check_published_identity(con, league, spec, out):

@@ -46,3 +46,12 @@ Code: `dev` at `81d57909`. Prod is unchanged and has none of the data below.
 
 Prod needs the identity data migrated with approval. The gate must pass first. Remove the `nba_id` fallback reads only after both DBs are migrated and API tests pass.
 Disk is about 2.6 GB free, so a full prod backup is not possible now.
+
+## Update: decisions applied (branch `fix/nba-gate-decisions`, not on dev)
+
+Result on dev DB after the change: 14 pass, 0 UNVERIFIED, 0 FAIL.
+
+1. Gate G: players who played (minutes above zero) block. Zero-minute and roster-only ids are reported, not blocking. A wrong id pairing still FAILs. An orphan log still blocks.
+2. Gate B: canonical positions are G, F, C (and the Guard, Forward, Center groups). PG, SG, SF, PF are source labels and are no longer checked. No threshold was lowered.
+3. London Lions: the resolver holds any player from ESPN team 134478. They are not added to the NBA table.
+4. Queue: 182 stale rows removed from dev `unresolved_players`. Each matched an existing player by id and name. Audit file: `backend/data/audit_unresolved_stale_nba_20261112.csv` (local, not committed). No player or log was deleted. 30 NBA rows remain: KJ Martin (2, name alias), Jae Crowder and Quincy Acy (2 owners each), 15 London, Maxwell Lewis, 10 blank keys. Prod queue is unchanged.
