@@ -125,9 +125,14 @@ class ResearchPenaltyRulingPolicy:
             ruling["foul_yardline_100"] = max(0., base - depth)
             ruling["assumptions"].append("hypothetical pass-interference foul location")
         elif foul == "intentional_grounding":
-            ruling["foul_yardline_100"] = min(
-                99., base + rng.uniform(0., min(7., 99. - base)))
-            ruling["assumptions"].append("hypothetical passer release spot")
+            # Half-distance enforcement can leave a snap inside the last
+            # yard of the offense's own territory. Never move the alleged
+            # passer release point *ahead* of that snap with a hard 99 cap.
+            room_to_goal = 100. - base
+            release_depth = rng.uniform(0., min(7., 0.9 * room_to_goal))
+            ruling["foul_yardline_100"] = base + release_depth
+            ruling["assumptions"].append(
+                "hypothetical passer release spot; own-end-zone safety not generated")
         elif foul in ("offensive_holding", "illegal_block"):
             if foul == "illegal_block":
                 ruling["block_subtype"] = "above_waist"
