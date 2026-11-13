@@ -145,6 +145,11 @@ class PenaltyGameController:
                                     self.teams[after["offense"]])
         else:
             after_state = before_state
+        if (ruling["accepted"] and phase == "live_ball" and after is None
+                and proposal.foul_type == "roughing_passer"
+                and ruling.get("pass_outcome") == "complete"):
+            raise PenaltyResolutionUnavailable(
+                "roughing on a scoring completion requires try/kickoff enforcement election")
         # An accepted ordinary live-ball penalty erases the sampled snap:
         # turnover-on-downs, touchdowns and interceptions cannot be passed
         # as if they survived. The exception is roughing after a completed
