@@ -41,12 +41,13 @@ def diagnostic(row):
     unresolved = row.get("unresolved_transition") or outcome.get("unresolved_transition") or {}
     d = {
         "seed": row.get("seed"),
-        "status": outcome.get("status"),
+        "status": row.get("status") or outcome.get("status"),
         "blocker": outcome.get("blocker"),
         "error": outcome.get("error"),
         "boxscore_error": str(outcome.get("boxscore_error") or "")[:1500],
         "failure_class": failure.get("failure_class") or failure.get("class"),
-        "failure_message": failure.get("message") or failure.get("error"),
+        "failure_message": (failure.get("violated_assertion") or failure.get("message")
+                            or failure.get("error")),
         "play_index": failure.get("play_index"),
         "decision": failure.get("decision"),
         "state_before": failure.get("state_before"),
