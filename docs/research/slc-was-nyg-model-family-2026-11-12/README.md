@@ -43,6 +43,24 @@ The score ranges below are marginal team-score 10th–90th percentiles, not an i
 
 V1 had the smallest combined absolute error in the two team means; V1.5 had the closest total. These are different summaries of one realized score.
 
+## Published game models alongside the SLC family
+
+The local API development database (`/root/legendarypicks/backend/data/picks.dev.db`) contains all three locked pregame projections for `2026_10_WAS_NYG`, locked at 2026-11-12 23:45:01 UTC. The local production database contains matching points and Elo projections; its EPA row was absent, so the EPA forecast below is documented from the development database and its presence on the production site is unverified. Final: WAS 24, NYG 21; actual home margin −3 and total 45. SLC margin and total use the simulated mean scores.
+
+| Model | NYG win probability | Winner Brier | WAS points | NYG points | NYG margin | Total | Absolute total error |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Published v1 points | 57.3% | 0.328 | 21.35 | 23.79 | +2.44 | 45.14 | 0.14 |
+| Published v2 EPA (development lock) | 63.2% | 0.400 | 21.67 | 26.09 | +4.42 | 47.77 | 2.77 |
+| Published v1 + Elo | 62.0% | 0.385 | 20.52 | 24.62 | +4.10 | 45.14 | 0.14 |
+| SLC V1 | 46.0% | 0.212 | 22.02 | 21.52 | −0.50 | 43.54 | 1.46 |
+| SLC V1.5 | 50.0% | 0.250 | 21.84 | 23.62 | +1.78 | 45.46 | 0.46 |
+| SLC V1.6 | 44.1% | 0.195 | 21.34 | 19.39 | −1.95 | 40.73 | 4.27 |
+| SLC V2 | 44.0% | 0.194 | 21.12 | 18.39 | −2.73 | 39.51 | 5.49 |
+
+Brier uses the unrounded stored probability for the published models and the game-count probability for SLC. All three published models favored NYG, while the points and Elo models projected the total closest to 45. On this single game the SLC winner probabilities scored better; 100-game SLC batches have considerable simulation noise. The three published models supply game forecasts, not player-prop forecasts, so the player-prop section evaluates the four SLC models.
+
+The model card reports historical winner Brier scores of 0.2288 for v1 points and 0.2291 for v2 EPA on the same 255-game 2025 holdout, and 0.2197 for v1 + Elo over the 2011–2023 retrospective. Those different evaluation periods are context, not directly comparable standings.
+
 ## Player props
 
 ### API lines and Brier results
