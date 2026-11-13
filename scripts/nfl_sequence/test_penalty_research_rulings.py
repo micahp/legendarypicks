@@ -7,6 +7,7 @@ import unittest
 
 import game_state as gs
 import field_goal_feasibility as fg
+from slc_precision import has_exact_historical_integer
 
 from penalty_enforcement import RULES
 from penalty_game import PenaltyGameController
@@ -90,6 +91,12 @@ class ResearchRulingTests(unittest.TestCase):
         for illegal in (True, False, 0, 100, float('nan'), float('inf')):
             with self.subTest(illegal=illegal), self.assertRaises(ValueError):
                 fg.evaluate(illegal)
+
+    def test_fractional_penalty_state_cannot_look_like_exact_historical_cell(self):
+        for value in (1, 2.0, 53):
+            self.assertTrue(has_exact_historical_integer(value))
+        for value in (0.5, 2.25, 53.5, 99.75, True, None):
+            self.assertFalse(has_exact_historical_integer(value))
 
     def test_same_foul_and_seed_produces_identical_ruling(self):
         a = self.resolve('defense:defensive_pass_interference')
