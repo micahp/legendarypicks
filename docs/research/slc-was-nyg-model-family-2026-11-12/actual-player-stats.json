@@ -1,0 +1,520 @@
+{
+  "1983526": {
+    "name": "D. Reader 98 DT",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "1998197": {
+    "name": "J. Winston 19 QB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {
+      "att": "2",
+      "td": "0",
+      "yds": "1"
+    },
+    "team": "NYG"
+  },
+  "1999951": {
+    "name": "D. Wise Jr. 91 DE",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2000038": {
+    "name": "S. Diggs 3 WR",
+    "passing": {},
+    "receiving": {
+      "rec": "6",
+      "tar": "10",
+      "td": "1",
+      "yds": "83"
+    },
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2060052": {
+    "name": "T. Way 10 P",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2071675": {
+    "name": "D. Smoot 98 DE",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2129678": {
+    "name": "S. Harris 93 DE",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2140999": {
+    "name": "J. Reaves 39 DB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2180542": {
+    "name": "S. Tuttle 96 DT",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2186283": {
+    "name": "T. Settle 97 DT",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2186497": {
+    "name": "C. Omenihu 90 DE",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2198663": {
+    "name": "R. Douglas 29 CB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2240651": {
+    "name": "D. Mooney 17 WR",
+    "passing": {},
+    "receiving": {
+      "rec": "2",
+      "tar": "5",
+      "td": "0",
+      "yds": "8"
+    },
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2241251": {
+    "name": "D. Singletary 26 RB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {
+      "att": "1",
+      "td": "0",
+      "yds": "3"
+    },
+    "team": "NYG"
+  },
+  "26695214": {
+    "name": "J. McCarthy 18 QB",
+    "passing": {
+      "att": "36",
+      "comp": "23",
+      "comp%": "63.9%",
+      "int": "1",
+      "rtg": "86.9",
+      "td": "1",
+      "yds": "293"
+    },
+    "receiving": {},
+    "rushing": {
+      "att": "6",
+      "td": "0",
+      "yds": "34"
+    },
+    "team": "NYG"
+  },
+  "26697012": {
+    "name": "C. Skattebo 44 RB",
+    "passing": {},
+    "receiving": {
+      "rec": "3",
+      "tar": "4",
+      "td": "0",
+      "yds": "44"
+    },
+    "rushing": {
+      "att": "18",
+      "td": "2",
+      "yds": "78"
+    },
+    "team": "NYG"
+  },
+  "26697079": {
+    "name": "G. Desrosiers Jr. 76 RB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "26697761": {
+    "name": "M. Nabers 1 WR",
+    "passing": {},
+    "receiving": {
+      "rec": "5",
+      "tar": "7",
+      "td": "0",
+      "yds": "44"
+    },
+    "rushing": {},
+    "team": "NYG"
+  },
+  "26706066": {
+    "name": "M. Fields 88 WR",
+    "passing": {},
+    "receiving": {
+      "rec": "3",
+      "tar": "4",
+      "td": "0",
+      "yds": "62"
+    },
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2804551": {
+    "name": "K. Chaisson 45 LB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2816298": {
+    "name": "A. Robertson 2 CB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2820090": {
+    "name": "A. Ekeler 30 RB",
+    "passing": {},
+    "receiving": {
+      "rec": "4",
+      "tar": "4",
+      "td": "0",
+      "yds": "26"
+    },
+    "rushing": {
+      "att": "9",
+      "td": "0",
+      "yds": "26"
+    },
+    "team": "WAS"
+  },
+  "2865671": {
+    "name": "J. Pinnock 25 SAF",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2868959": {
+    "name": "C. Jones 89 WR",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2869949": {
+    "name": "J. Stout 15 P",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "28873746": {
+    "name": "D. Stevens 19 K",
+    "passing": {
+      "att": "1",
+      "comp": "1"
+    },
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "28876817": {
+    "name": "D. Zvada 34 K",
+    "passing": {
+      "att": "1",
+      "comp": "0"
+    },
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "28877974": {
+    "name": "A. Williams 14 WR",
+    "passing": {},
+    "receiving": {
+      "rec": "2",
+      "tar": "2",
+      "td": "1",
+      "yds": "42"
+    },
+    "rushing": {},
+    "team": "WAS"
+  },
+  "28890311": {
+    "name": "A. Carter 3 LB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "28909269": {
+    "name": "S. Styles 52 LB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "29123025": {
+    "name": "R. Henry Jr. 34 RB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {
+      "att": "2",
+      "td": "0",
+      "yds": "4"
+    },
+    "team": "WAS"
+  },
+  "29128702": {
+    "name": "A. Reese 52 LB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "29166662": {
+    "name": "B. Jamison-Travis 97 DT",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2925877": {
+    "name": "F. Luvu 4 LB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2961253": {
+    "name": "O. Oweh 98 LB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2961906": {
+    "name": "I. Likely 9 TE",
+    "passing": {},
+    "receiving": {
+      "rec": "9",
+      "tar": "11",
+      "td": "1",
+      "yds": "127"
+    },
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2962092": {
+    "name": "A. Washington 24 SAF",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2963152": {
+    "name": "M. McFadden 41 LB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2963477": {
+    "name": "P. Butler 35 SAF",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2965208": {
+    "name": "C. Okonkwo 85 TE",
+    "passing": {},
+    "receiving": {
+      "rec": "4",
+      "tar": "8",
+      "td": "0",
+      "yds": "24"
+    },
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2965898": {
+    "name": "Q. Martin 20 SAF",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "2966771": {
+    "name": "G. Newsome II 20 CB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "2967873": {
+    "name": "J. Holland 8 SAF",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "3121502": {
+    "name": "L. McCaffrey 11 WR",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "3122290": {
+    "name": "D. Banks 2 CB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "3122466": {
+    "name": "N. Cross 25 SAF",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "3122944": {
+    "name": "T. Burks 13 WR",
+    "passing": {},
+    "receiving": {
+      "rec": "2",
+      "tar": "3",
+      "td": "0",
+      "yds": "27"
+    },
+    "rushing": {},
+    "team": "WAS"
+  },
+  "3123337": {
+    "name": "J. Daniels 5 QB",
+    "passing": {
+      "att": "33",
+      "comp": "23",
+      "comp%": "69.7%",
+      "int": "2",
+      "rtg": "96.7",
+      "td": "3",
+      "yds": "249"
+    },
+    "receiving": {},
+    "rushing": {
+      "att": "10",
+      "td": "0",
+      "yds": "28"
+    },
+    "team": "WAS"
+  },
+  "3123381": {
+    "name": "K. Thibodeaux 5 LB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "3125553": {
+    "name": "D. Alexander 91 DT",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "3127760": {
+    "name": "K. Medrano 56 LB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "3161741": {
+    "name": "A. Phillips 22 DB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "NYG"
+  },
+  "3162129": {
+    "name": "T. Johnson 84 TE",
+    "passing": {},
+    "receiving": {
+      "rec": "1",
+      "tar": "3",
+      "td": "0",
+      "yds": "8"
+    },
+    "rushing": {},
+    "team": "NYG"
+  },
+  "3164271": {
+    "name": "T. Amos 23 CB",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  },
+  "3168647": {
+    "name": "B. Sinnott 82 TE",
+    "passing": {},
+    "receiving": {
+      "rec": "4",
+      "tar": "4",
+      "td": "1",
+      "yds": "42"
+    },
+    "rushing": {},
+    "team": "WAS"
+  },
+  "3169147": {
+    "name": "R. White 1 RB",
+    "passing": {},
+    "receiving": {
+      "rec": "1",
+      "tar": "2",
+      "td": "0",
+      "yds": "5"
+    },
+    "rushing": {
+      "att": "11",
+      "td": "0",
+      "yds": "47"
+    },
+    "team": "WAS"
+  },
+  "3169274": {
+    "name": "J. Newton 95 DT",
+    "passing": {},
+    "receiving": {},
+    "rushing": {},
+    "team": "WAS"
+  }
+}

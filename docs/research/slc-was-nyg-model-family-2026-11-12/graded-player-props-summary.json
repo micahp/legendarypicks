@@ -1,0 +1,147 @@
+{
+  "brier_all_matched_lines": {
+    "v1": 0.29068235294117645,
+    "v1.5": 0.2903941176470588,
+    "v1.6": 0.2609669763913791,
+    "v2": 0.2984959752321981
+  },
+  "brier_by_market_same_market_lines": {
+    "interceptions_thrown": {
+      "devigged_market": 0.2567557502810923,
+      "n": 2,
+      "v1": 0.45530000000000004,
+      "v1.5": 0.48725,
+      "v1.6": 0.5845144443743042,
+      "v2": 0.5640499999999999
+    },
+    "pass_attempts": {
+      "devigged_market": 0.25757920517255306,
+      "n": 8,
+      "v1": 0.168275,
+      "v1.5": 0.134,
+      "v1.6": 0.1600298997696395,
+      "v2": 0.14446250000000002
+    },
+    "pass_completions": {
+      "devigged_market": 0.2472952817970032,
+      "n": 6,
+      "v1": 0.07183333333333333,
+      "v1.5": 0.09940000000000002,
+      "v1.6": 0.11334123579702492,
+      "v2": 0.06651666666666667
+    },
+    "passing_rushing_yards": {
+      "devigged_market": 0.2501672716267401,
+      "n": 30,
+      "v1": 0.10339666666666666,
+      "v1.5": 0.09275333333333334,
+      "v1.6": 0.16966766566366168,
+      "v2": 0.19909333333333334
+    },
+    "passing_touchdowns": {
+      "devigged_market": 0.27092247714528395,
+      "n": 2,
+      "v1": 0.2598499999999999,
+      "v1.5": 0.20800000000000002,
+      "v1.6": 0.2616770925079233,
+      "v2": 0.26570000000000005
+    },
+    "passing_yards": {
+      "devigged_market": 0.25072288063532366,
+      "n": 31,
+      "v1": 0.08180967741935485,
+      "v1.5": 0.07993548387096773,
+      "v1.6": 0.12326647419805094,
+      "v2": 0.1426483870967742
+    },
+    "receiving_yards": {
+      "devigged_market": 0.24901208742859718,
+      "n": 88,
+      "v1": 0.3232056818181818,
+      "v1.5": 0.3023659090909091,
+      "v1.6": 0.2820437486353402,
+      "v2": 0.34418863636363634
+    },
+    "receptions": {
+      "devigged_market": 0.22925546180714537,
+      "n": 19,
+      "v1": 0.4303105263157895,
+      "v1.5": 0.4321684210526316,
+      "v1.6": 0.35614909994552796,
+      "v2": 0.4096842105263158
+    },
+    "rush_attempts": {
+      "devigged_market": 0.2459674485118411,
+      "n": 22,
+      "v1": 0.49123181818181816,
+      "v1.5": 0.5331318181818182,
+      "v1.6": 0.416529642755869,
+      "v2": 0.49774090909090907
+    },
+    "rushing_receiving_yards": {
+      "devigged_market": 0.24989241047791289,
+      "n": 33,
+      "v1": 0.4905666666666667,
+      "v1.5": 0.4737030303030303,
+      "v1.6": 0.38333161322817644,
+      "v2": 0.30770909090909093
+    },
+    "rushing_yards": {
+      "devigged_market": 0.2503769313444439,
+      "n": 63,
+      "v1": 0.2334952380952381,
+      "v1.5": 0.2625603174603175,
+      "v1.6": 0.20529110708178666,
+      "v2": 0.26933174603174603
+    },
+    "targets": {
+      "devigged_market": 0.25,
+      "n": 16,
+      "v1": 0.380125,
+      "v1.5": 0.3821,
+      "v1.6": 0.30122383394405416,
+      "v2": 0.37511875
+    },
+    "total_touchdowns": {
+      "devigged_market": 0.1724460282779294,
+      "n": 3,
+      "v1": 0.21296666666666667,
+      "v1.5": 0.21413333333333334,
+      "v1.6": 0.1917245907903232,
+      "v2": 0.2193
+    }
+  },
+  "brier_same_lines_with_two_sided_market_odds": {
+    "devigged_market": 0.24797190364126975,
+    "v1": 0.29068235294117645,
+    "v1.5": 0.2903941176470588,
+    "v1.6": 0.2609669763913791,
+    "v2": 0.2984959752321981
+  },
+  "limitations": [
+    "One game only; repeated prop thresholds for the same player are correlated.",
+    "Forecasts use simulation frequencies and are not calibrated market probabilities.",
+    "Market benchmark averages de-vigged over prices across captured books for each exact player-market-line."
+  ],
+  "markets": {
+    "interceptions_thrown": 2,
+    "pass_attempts": 8,
+    "pass_completions": 6,
+    "passing_rushing_yards": 30,
+    "passing_touchdowns": 2,
+    "passing_yards": 31,
+    "receiving_yards": 88,
+    "receptions": 19,
+    "rush_attempts": 22,
+    "rushing_receiving_yards": 33,
+    "rushing_yards": 63,
+    "targets": 16,
+    "total_touchdowns": 3
+  },
+  "matched_player_market_lines": 323,
+  "matched_source_quotes": 1545,
+  "pregame_cutoff": "2026-11-13T01:15:00+00:00",
+  "source_game_id": 30217,
+  "two_sided_market_comparison_items": 323,
+  "unique_players": 15
+}
