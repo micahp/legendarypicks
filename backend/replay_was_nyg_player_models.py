@@ -80,7 +80,8 @@ def prior_history(history):
 
 
 def read_cohort(report):
-    rows = list(csv.DictReader((report / "graded-player-props.csv").open()))
+    with (report / "graded-player-props.csv").open(newline="") as fp:
+        rows = list(csv.DictReader(fp))
     if len(rows) != 323:
         raise ValueError(f"expected pinned 323-line cohort, got {len(rows)}")
     keys = [(r["stable_player_id"], r["market"], float(r["line"])) for r in rows]
@@ -92,10 +93,11 @@ def read_cohort(report):
 def model_roster(report):
     # SLC player output was derived from the pregame roster snapshot.
     teams = defaultdict(set)
-    for r in csv.DictReader((report / "player-projections.csv").open()):
-        if r["model"] == "v1.6":
-            team = {"WAS": "WSH", "WSH": "WSH"}.get(r["team"], r["team"])
-            teams[r["stable_player_id"]].add(team)
+    with (report / "player-projections.csv").open(newline="") as fp:
+        for r in csv.DictReader(fp):
+            if r["model"] == "v1.6":
+                team = {"WAS": "WSH", "WSH": "WSH"}.get(r["team"], r["team"])
+                teams[r["stable_player_id"]].add(team)
     return {gid: next(iter(cs)) for gid, cs in teams.items() if len(cs) == 1}
 
 
@@ -269,6 +271,9 @@ def run(dbpath, report, sims=4000):
     rows = read_cohort(report)
     roster = model_roster(report)
     with sqlite3.connect(f"file:{dbpath}?mode=ro", uri=True) as con:
+        # One consistent SQLite read snapshot, even if the ingest host is
+        # concurrently updating another connection in WAL mode.
+        con.execute("BEGIN")
         game = con.execute("SELECT away_team,home_team FROM nfl_schedule WHERE game_id=?", (GAME,)).fetchone()
         if not game:
             raise RuntimeError(f"schedule missing {GAME}")
@@ -305,7 +310,8 @@ def run(dbpath, report, sims=4000):
                         "model": model, "game_id": GAME, "stable_player_id": gid,
                         "player_id": pid, "player_name": name, "position": pos,
                         "team": team, "team_source": source, "market": market,
-                        "model_metric": DIRECT.get(market), "mean": pred["mean"],
+                        "model_metric": DIRECT.get(market), "actual": float(row["actual"]),
+                        "mean": pred["mean"], "absolute_error": abs(pred["mean"] - float(row["actual"])),
                         "median": pred["median"], "p10": pred["p10"], "p90": pred["p90"],
                         "draws_or_prior_games": pred["n"],
                         "distribution_kind": pred["distribution_kind"],
@@ -332,10 +338,12 @@ def run(dbpath, report, sims=4000):
                                      "no_preweek10_fit" if platt is None else
                                      "unsupported_or_no_history")})
 
+    if not any(p["p_over"] is not None for p in probs):
+        raise RuntimeError("no reproducible player prop probabilities; inspect roster/history joins")
     out = report
     projection_cols = ("model", "game_id", "stable_player_id", "player_id", "player_name",
                        "position", "team", "team_source", "market", "model_metric",
-                       "mean", "median", "p10", "p90", "draws_or_prior_games",
+                       "actual", "mean", "absolute_error", "median", "p10", "p90", "draws_or_prior_games",
                        "distribution_kind", "input_status")
     prob_cols = ("model", "game_id", "stable_player_id", "market", "line", "p_over", "status")
     _write_csv(out/"reconstructed-player-projections.csv", predictions, projection_cols)
@@ -418,7 +426,22 @@ def run(dbpath, report, sims=4000):
                 section.append(f"| {model} | {r['model']} | {r['items']} | "
                                f"{r['brier']:.4f} | {r['matched_market_brier']:.4f} | "
                                f"{r['gap_to_market']:+.4f} |")
-    section.extend(["", "No ranking across different model-coverage subsets is valid.",
+    section.extend(["", "### Selected player mean projections versus final box score", "",
+                    "| Player | Stat | Actual | Marcel-lite | Spec B |",
+                    "|---|---|---:|---:|---:|"])
+    grouped = defaultdict(dict)
+    for p in predictions:
+        grouped[(p["player_name"], p["market"], p["actual"])][p["model"]] = p["mean"]
+    # One row per player/market, largest available Spec B absolute misses first.
+    selected = sorted(grouped.items(), key=lambda kv:
+                      abs(kv[1].get("spec-b-v2", kv[1].get("marcel-lite", kv[0][2]))
+                          - kv[0][2]), reverse=True)[:15]
+    for (name, market, actual), values in selected:
+        marcel = f'{values["marcel-lite"]:.1f}' if "marcel-lite" in values else "—"
+        specb = f'{values["spec-b-v2"]:.1f}' if "spec-b-v2" in values else "—"
+        section.append(f"| {name} | {market} | {actual:g} | {marcel} | {specb} |")
+    section.extend(["", "This table is selected after the game for diagnosis, not a prospective ranking.", "",
+                    "No ranking across different model-coverage subsets is valid.",
                     "Raw frozen SLC grades remain unchanged. Platt is a line-probability",
                     "calibration on Spec B, **not** a separate player-stat distribution.",
                     "Historical Marcel-lite probabilities remain uncalibrated hit rates.",
