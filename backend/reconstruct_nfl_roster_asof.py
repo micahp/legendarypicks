@@ -159,8 +159,10 @@ def build(schedule, depth, injury, depth_sha, cutoff_before_kickoff_minutes=30,
                     "injury_report_status": report.get("report_status") or "",
                     "injury_practice_status": report.get("practice_status") or "",
                     "injury_evidence_class": report.get("evidence_class") or "none",
-                    "pregame_inactive": (True if d["gsis_id"] in inactive_ids else
-                                         False if inactive is not None else ""),
+                    "pregame_inactive": (True if d["gsis_id"] in inactive_ids else ""),
+                    # Absence from an inactive list DOES NOT prove active:
+                    # depth-chart sources include players not eligible on
+                    # game-day rosters (e.g. IR, reserve, traded).
                     "inactive_evidence_class": inactive_class,
                     "reconstruction_status": status_class,
                 })
@@ -200,8 +202,8 @@ def main():
         "depth_sha256": sha, "injury_csv_sha256": file_sha256(args.injury_csv),
         "schedule_csv_sha256": file_sha256(args.schedule_csv),
         "cutoff_before_kickoff_minutes": args.cutoff_minutes,
-        "finalized_roster_claim": False if not args.inactives_index else
-            "only games with individually sourced game-day inactives",
+        "finalized_roster_claim": False,
+        "official_inactives_claim": "unavailable depth players positively identified where team source list and identity joins are complete; remaining depth players are not automatically active",
         "warning": "Depth is not official game-day active roster; injury date_modified missing for most 2026 reports. Weekly roster generated after games is not pregame proof.",
         "coverage": counts,
         "output": "asof-depth-injury-rosters.csv",
