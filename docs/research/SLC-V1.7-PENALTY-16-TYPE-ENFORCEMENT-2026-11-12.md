@@ -43,7 +43,7 @@ The rules implementation must **never** invent the missing variables from event 
 
 ## Explicitly not integrated/unsupported
 
-This extends **single-foul scrimmage enforcement**, not the full NFL officiating and game-stat engine. It still does not decide whether a sampled foul should be accepted/declined, combine offsetting/multiple fouls, apply clock/runoff/timeout administration, adjust scoring/safety/fre e-kick transitions, preserve appropriate return-penalty possessions, or handle scrimmage-kick-specific rules. A safety from intentional grounding thrown in the offense's own end zone is recognized as requiring scoring integration and **does not silently become an ordinary loss of down**. Kick-specific variants of `illegal_formation` likewise remain excluded until modeled distinctly.
+This extends **single-foul scrimmage enforcement**, not the full NFL officiating and game-stat engine. It still does not decide whether a sampled foul should be accepted/declined, combine offsetting/multiple fouls, apply clock/runoff/timeout administration, adjust scoring/safety/free-kick transitions, preserve appropriate return-penalty possessions, or handle scrimmage-kick-specific rules. A safety from intentional grounding thrown in the offense's own end zone is recognized as requiring scoring integration and **does not silently become an ordinary loss of down**. Kick-specific variants of `illegal_formation` likewise remain excluded until modeled distinctly.
 
 Invalid phase/play class, missing spot facts, unsupported scoring/possession changes and ambiguous illegal blocks raise an explicit exception. These are intentional non-coverage boundaries, not successful enforcement simulations.
 
