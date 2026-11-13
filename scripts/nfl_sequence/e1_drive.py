@@ -420,6 +420,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             geometry_rejections = len(source_cell) - len(legal_cell)
         else:
             legal_cell = source_cell
+        if penalty_controller is not None and not legal_cell and source_cell:
+            return halt('goal_line_fumble_source_cell_has_no_geometrically_legal_outcome')
         cell = sampling_guard.filter_cell(legal_cell, st) if sampling_guard is not None else legal_cell
         if not cell and source_cell:
             return halt(sampling_guard.unavailable_reason())
