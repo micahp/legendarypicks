@@ -346,6 +346,11 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
     `sampling_guard` may remove source rows that are illegal in the live simulation state."""
+    # A disabled research penalty controller must be bit-for-bit identical
+    # to a caller that never supplied the V1.7 integration at all.
+    if penalty_controller is not None and not getattr(
+            getattr(penalty_controller, 'sampler', None), 'enabled', False):
+        penalty_controller = None
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
