@@ -415,7 +415,8 @@ def _player_projections(snapshot, totals, games):
 def _record_outcome(seed, record=None, error=None, validation_error=False):
     if record is None:
         return {'seed': seed, 'status': 'simulation_error', 'blocker': None,
-                'valid_full_game': False, 'complete_game': False, 'regulation_end_reached': False,
+                'valid_full_game': False, 'complete_game': False, 'mechanically_complete_game': False,
+                'regulation_end_reached': False,
                 'tied_at_regulation_end': False, 'home_points': None, 'away_points': None,
                 'score_scope': 'none', 'error': str(error)[:500]}
     blocker = record.get('blocker')
@@ -427,13 +428,19 @@ def _record_outcome(seed, record=None, error=None, validation_error=False):
         and record.get('final_clock_seconds') == 0 and record.get('tied'))
     valid = bool(record.get('valid_full_game') and record.get('complete_game') and not validation_error)
     status = 'validation_error' if validation_error else record.get('status', 'unknown')
+    mechanical = bool(record.get('complete_game') and not validation_error)
+    research_penalties = bool((record.get('penalty_model_coverage') or {}).get('enabled'))
     return {
         'seed': seed, 'status': status, 'blocker': blocker,
-        'valid_full_game': valid, 'complete_game': bool(record.get('complete_game') and not validation_error),
+        'valid_full_game': valid, 'complete_game': mechanical,
+        'mechanically_complete_game': mechanical,
+        'research_only_penalty_model': research_penalties,
         'regulation_end_reached': regulation_end, 'tied_at_regulation_end': tied_at_regulation_end,
         'final_tie': bool(record.get('tied')) if record.get('complete_game') else None,
         'home_points': record.get('points', {}).get('A'), 'away_points': record.get('points', {}).get('B'),
-        'score_scope': 'valid_final' if valid else 'regulation_end_only' if regulation_end else 'partial',
+        'score_scope': ('valid_final' if valid else
+                        'research_mechanically_complete_final' if mechanical else
+                        'regulation_end_only' if regulation_end else 'partial'),
         'unsupported_rules': record.get('unsupported_rules', []),
         'error': str(error)[:500] if error else None,
     }
