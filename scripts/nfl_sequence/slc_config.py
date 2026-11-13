@@ -304,10 +304,10 @@ def apply_profile_to_args(args):
         raise ValueError('SLC feature flags require --playcall-artifact; refusing to silently run a partial S0 control')
     if args.slc_profile == 'v1_full_stack' and args.playcall_player_outcomes_receiver_only:
         raise ValueError('v1_full_stack requires all configured player-outcome roles; receiver-only is an ablation')
-    if args.slc_profile in ('s0', 'v1_full_stack', 'v1_6_candidate'):
+    if args.slc_profile in ('s0', 'v1_full_stack', 'v1_6_candidate', 'v1_7_candidate'):
         for option in V1_OPTIONS:
             setattr(args, option, resolved['options'].get(option, False))
-        if args.slc_profile == 'v1_6_candidate':
+        if args.slc_profile in ('v1_6_candidate', 'v1_7_candidate'):
             args.playcall_season_adapt = resolved['options']['playcall_season_adapt']
             args.playcall_exact_distance_yardage = resolved['options']['playcall_exact_distance_yardage']
         args.playcall_player_shares = resolved['options'].get('playcall_player_shares', False)
@@ -321,7 +321,7 @@ def apply_profile_to_args(args):
 def resolve_profile(profile='custom', *, options=None, artifact_path=None, streak_file=None,
                     disable_layers=(), decision_filter=True, pass_label_mode='legacy'):
     """Resolve a preset. v1_full_stack owns its flags; manual overrides cannot make a partial stack wear its label."""
-    if profile not in ('custom', 's0', 'v1_full_stack', 'v1_6_candidate'):
+    if profile not in ('custom', 's0', 'v1_full_stack', 'v1_6_candidate', 'v1_7_candidate'):
         raise ValueError(f'unknown SLC profile {profile!r}')
     if pass_label_mode not in ('legacy', 'off', 'two_stage', 'conditional'):
         raise ValueError(f'unknown pass-label mode {pass_label_mode!r}')
@@ -340,14 +340,14 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
         return {'profile': profile, 'model_id': 'S0', 'options': {}, 'enabled_layers': layers,
                 'decision_filter': False, 'disabled_layers': [], 'pass_label_mode': pass_label_mode}
 
-    if profile in ('v1_full_stack', 'v1_6_candidate'):
+    if profile in ('v1_full_stack', 'v1_6_candidate', 'v1_7_candidate'):
         if not artifact_path:
             raise ValueError('v1_full_stack requires --playcall-artifact')
         if supplied.get('playcall_player_shares'):
             raise ValueError('fixed and Dirichlet player share models are incompatible')
         if supplied.get('playcall_decision_unfiltered'):
             raise ValueError('v1_full_stack requires the decision row filter; disable it with --slc-disable-layer')
-        resolved_options = dict(V16_CANDIDATE_OPTIONS if profile == 'v1_6_candidate' else V1_OPTIONS)
+        resolved_options = dict(V16_CANDIDATE_OPTIONS if profile in ('v1_6_candidate', 'v1_7_candidate') else V1_OPTIONS)
         resolved_options['playcall_pass_label_mode'] = pass_label_mode
         resolved_options['playcall_qb_run_role_style'] = supplied.get('playcall_qb_run_role_style', False)
         resolved_filter = True
@@ -374,11 +374,11 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
             raise ValueError('QB run-role style requires decision labels')
         if pass_label_mode != 'legacy' and not resolved_options['playcall_decision']:
             raise ValueError('non-legacy pass-label modes require decision labels')
-        if profile == 'v1_6_candidate' and pass_label_mode != 'conditional':
+        if profile in ('v1_6_candidate', 'v1_7_candidate') and pass_label_mode != 'conditional':
             raise ValueError('v1_6_candidate requires conditional pass-label outcomes')
-        if profile == 'v1_6_candidate' and 'pass_label_outcome_conditioning' in disabled:
+        if profile in ('v1_6_candidate', 'v1_7_candidate') and 'pass_label_outcome_conditioning' in disabled:
             raise ValueError('v1_6_candidate cannot disable pass-label outcome conditioning')
-        if profile == 'v1_6_candidate' and 'exact_distance_yardage_outcomes' in disabled:
+        if profile in ('v1_6_candidate', 'v1_7_candidate') and 'exact_distance_yardage_outcomes' in disabled:
             raise ValueError('v1_6_candidate cannot disable exact-distance yardage conditioning')
         needs_streak = (resolved_options['playcall_streak_splits'] or
                         resolved_options['playcall_streak_league'] or 'current_streak_context' not in disabled)
@@ -393,12 +393,15 @@ def resolve_profile(profile='custom', *, options=None, artifact_path=None, strea
             layers['qb_run_role_style'] = False
         disabled_names = sorted(disabled)
         if disabled_names:
-            prefix = 'SLC_v1_6_candidate_ablation' if profile == 'v1_6_candidate' else 'SLC_v1_ablation'
+            prefix = ('SLC_v1_7_candidate_ablation' if profile == 'v1_7_candidate' else
+                      'SLC_v1_6_candidate_ablation' if profile == 'v1_6_candidate' else 'SLC_v1_ablation')
             model_id = prefix + '_' + '_'.join(disabled_names)
             if resolved_options['playcall_qb_run_role_style']:
                 model_id += '_with_qb_run_role_style'
         elif profile == 'v1_6_candidate':
             model_id = 'SLC_v1_6_candidate'
+        elif profile == 'v1_7_candidate':
+            model_id = 'SLC_v1_7_candidate'
         else:
             model_id = ('SLC_v1_full_stack_qb_run_role_style'
                         if resolved_options['playcall_qb_run_role_style'] else 'SLC_v1_full_stack')
