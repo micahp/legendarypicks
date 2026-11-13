@@ -5,7 +5,9 @@ from penalty_enforcement import DownState
 from penalty_fit import Context
 from penalty_sampler import PenaltyProposal
 from penalty_transition import transition
-from penalty_scrimmage_kick import enforce_scrimmage_kick
+from penalty_scrimmage_kick import enforce_scrimmage_kick, KICK_FOUL_YARDS
+from penalty_sampler import PenaltySampler
+from pathlib import Path
 
 
 class FixedSampler:
@@ -94,6 +96,21 @@ class ScrimmageKickTransitionTests(unittest.TestCase):
             self.run_foul("offense:illegal_block")
         got = self.run_foul("offense:illegal_block", block_subtype="in_back")
         self.assertEqual(got.state, DownState(4, 13, 71, "WAS"))
+
+    def test_pinned_fitted_model_never_invents_pass_foul_on_a_kick(self):
+        root = Path(__file__).resolve().parents[2] / 'docs/research/slc-v17-penalty-fit-2026-11-13'
+        sampler = PenaltySampler.from_artifacts(
+            model_path=root / 'model.json',
+            manifest_path=root / 'fit-manifest.json',
+            source_manifest_path=root / 'source-manifest.json',
+            as_of_utc='2026-11-13T00:00:00Z')
+        self.assertEqual(sampler.model_provenance['kick_opportunities'], 0)
+        for seed in range(600):
+            proposal = sampler.propose(self.context, game_seed=seed,
+                                       opportunity_key='kick-1')
+            if proposal.has_foul:
+                self.assertIn((proposal.committing_side, proposal.foul_type),
+                              KICK_FOUL_YARDS)
 
     def test_cannot_force_pass_interference_or_roughing_passer_onto_kick(self):
         for foul in ("defense:defensive_pass_interference",
