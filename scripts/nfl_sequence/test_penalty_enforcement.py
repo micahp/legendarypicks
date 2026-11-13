@@ -29,6 +29,12 @@ class PenaltyEnforcementTests(unittest.TestCase):
                          offender="defense", foul="defensive_holding", accepted=True)
         self.assertEqual(result.state, DownState(1, 10, 55, "ARI"))
 
+    def test_automatic_first_down_near_goal_is_goal_to_go(self):
+        before = DownState(2, 8, 13, "ARI")
+        result = enforce(before=before, after_play=before, phase="live_pass",
+                         offender="defense", foul="defensive_holding", accepted=True)
+        self.assertEqual(result.state, DownState(1, 8, 8, "ARI"))
+
     def test_dpi_uses_foul_spot_and_auto_first(self):
         result = enforce(before=self.before, after_play=self.after, phase="live_pass",
                          offender="defense", foul="defensive_pass_interference",

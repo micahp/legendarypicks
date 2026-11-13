@@ -92,7 +92,7 @@ def enforce(*, before: DownState, after_play: DownState, phase: str,
             raise ValueError("enforcement resulting in a goal-line/safety case is unsupported")
         new_to_go = before.to_go + actual if offender == "offense" else max(1, before.to_go - actual)
         if offender == "defense" and (actual >= before.to_go or new_yardline <= before.yardline_100 - before.to_go):
-            down, new_to_go = 1, 10
+            down, new_to_go = 1, min(10, new_yardline)
         else:
             down = before.down
         return Enforcement(DownState(down, new_to_go, new_yardline, before.possession),
@@ -115,7 +115,7 @@ def enforce(*, before: DownState, after_play: DownState, phase: str,
     if new_yardline in (0, 100):
         raise ValueError("enforcement resulting in a goal-line/safety case is unsupported")
     if automatic_first or (offender == "defense" and new_yardline <= before.yardline_100 - before.to_go):
-        down, to_go = 1, 10
+        down, to_go = 1, min(10, new_yardline)
     elif offender == "offense":
         down, to_go = before.down, before.to_go + actual
     else:
