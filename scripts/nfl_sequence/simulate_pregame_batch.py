@@ -415,7 +415,8 @@ def _player_projections(snapshot, totals, games):
 def _record_outcome(seed, record=None, error=None, validation_error=False):
     if record is None:
         return {'seed': seed, 'status': 'simulation_error', 'blocker': None,
-                'valid_full_game': False, 'complete_game': False, 'mechanically_complete_game': False,
+                'valid_full_game': False, 'forecast_release_validated': False,
+                'complete_game': False, 'mechanically_complete_game': False,
                 'regulation_end_reached': False,
                 'tied_at_regulation_end': False, 'home_points': None, 'away_points': None,
                 'score_scope': 'none', 'error': str(error)[:500]}
@@ -430,15 +431,19 @@ def _record_outcome(seed, record=None, error=None, validation_error=False):
     status = 'validation_error' if validation_error else record.get('status', 'unknown')
     mechanical = bool(record.get('complete_game') and not validation_error)
     research_penalties = bool((record.get('penalty_model_coverage') or {}).get('enabled'))
+    release_validated = bool(valid and record.get(
+        'forecast_release_validated', not research_penalties))
     return {
         'seed': seed, 'status': status, 'blocker': blocker,
-        'valid_full_game': valid, 'complete_game': mechanical,
+        'valid_full_game': valid, 'forecast_release_validated': release_validated,
+        'complete_game': mechanical,
         'mechanically_complete_game': mechanical,
         'research_only_penalty_model': research_penalties,
         'regulation_end_reached': regulation_end, 'tied_at_regulation_end': tied_at_regulation_end,
         'final_tie': bool(record.get('tied')) if record.get('complete_game') else None,
         'home_points': record.get('points', {}).get('A'), 'away_points': record.get('points', {}).get('B'),
-        'score_scope': ('valid_final' if valid else
+        'score_scope': ('release_validated_final' if release_validated else
+                        'research_mechanically_verified_final' if valid else
                         'research_mechanically_complete_final' if mechanical else
                         'regulation_end_only' if regulation_end else 'partial'),
         'unsupported_rules': record.get('unsupported_rules', []),
@@ -1243,7 +1248,7 @@ def run_batch(args):
     summary = aggregation.summarize_outcomes(outcomes, args.games,
                                              home_market_margin=args.home_market_margin,
                                              market_total=args.market_total)
-    projected = summary['valid_full_game_distribution']
+    projected = summary['forecast_release_distribution']
     comparison = {'sample_games': projected['sample_games'], 'baseline_status': baseline['status']}
     if projected['sample_games'] and baseline['status'] == 'available':
         comparison.update({
@@ -1283,8 +1288,10 @@ def run_batch(args):
             'paired_random_stream_schema': ('lp.nfl.paired-random-streams.v1' if args.paired_randomness else None),
             'regulation_score_policy': ('all runs whose simulation reached the regulation end, including ties and '
                                         'guarded regulation-end outcomes; descriptive, not validated finals'),
-            'valid_score_policy': ('only valid_full_game=true, complete_game=true, untied outcomes; all other '
-                                   'seeds remain in outcomes and coverage counts'),
+            'valid_score_policy': ('valid_full_game means mechanically/legal full-game verified, '
+                                   'forecast_release_validated means both that and approved model '
+                                   'calibration; only release-validated games enter publishable '
+                                   'forecast comparisons and market settlement'),
             'context_mode': args.context_mode,
             'context_bandwidth_in_source_rating_sd': (args.context_bandwidth
                                                        if args.context_mode in ('offense', 'defense', 'both')
