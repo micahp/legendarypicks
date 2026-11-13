@@ -45,6 +45,10 @@ jobs:
             test_penalty_research_rulings test_penalty_research_summary \
             test_penalty_goal_line_fumble test_penalty_fractional_state \
             test_penalty_v17_failure_repairs
+      - name: Full game reducer, player and team accounting, and box-score regression suites
+        run: |
+          PYTHONPATH=scripts/nfl_sequence python -m unittest -v \
+            test_game_state test_slc_outputs test_slc_engine
       - name: Run legacy game-state scoring, field-goal and batch/registry compatibility checks
         run: |
           PYTHONPATH=scripts/nfl_sequence python -m unittest -v \
