@@ -420,7 +420,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             rejection = sampling_guard.rejection_reason(selected_sample, st)
             if rejection:
                 return halt(f'timeout_sampling_guard_rejected_source_row:{rejection}')
-            sampling_guard.observe(selected_sample, st)
+            if penalty_controller is None:
+                sampling_guard.observe(selected_sample, st)
         if event == 'field_goal_attempt' and not field_goal_distance['eligible']:
             return halt('field_goal_attempt_exceeds_historical_feasibility_ceiling')
         kick_outcome = None
@@ -502,6 +503,12 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                     else:
                         return halt('penalty_kept_play_with_possession_change_unsupported')
                 runoff = penalty_info.runoff_seconds
+        if (sampling_guard is not None and penalty_controller is not None
+                and not (penalty_info is not None and
+                         penalty_info.enforcement.get('accepted') and not penalty_info.play_counts)):
+            # A nullified historical sample did not cause the source play's
+            # timeout or personnel state transition.
+            sampling_guard.observe(selected_sample, st)
         period_expired = bool(kick_outcome and kick_outcome.get('classification_status') == 'period_expired')
         if clock is not None and penalty_info is None:
             runoff, _, refusal = clock.draw(row, event, play_terminal, st['quarter'], st['clock'],
