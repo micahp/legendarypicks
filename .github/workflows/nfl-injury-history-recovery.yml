@@ -23,7 +23,7 @@ jobs:
       - name: Install source parquet reader
         run: python -m pip install pyarrow==22.0.0
       - name: Run injury-cutoff regression tests
-        run: PYTHONPATH=backend python -m unittest -v test_recover_nfl_injury_weeks
+        run: PYTHONPATH=backend python -m unittest -v test_recover_nfl_injury_weeks test_reconstruct_nfl_roster_asof
       - name: Fetch published 2026 injury rows and historical game schedule
         run: |
           mkdir -p /tmp/lp-nfl-injuries
@@ -33,6 +33,9 @@ jobs:
           curl --fail --location --retry 3 --silent --show-error \
             https://github.com/nflverse/nflverse-data/releases/download/schedules/games.csv \
             --output /tmp/lp-nfl-injuries/games.csv
+          curl --fail --location --retry 3 --silent --show-error \
+            https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_2026.parquet \
+            --output /tmp/lp-nfl-injuries/depth_charts_2026.parquet
       - name: Extract all Week 2-9 reports and classify source timestamp evidence
         run: |
           PYTHONPATH=backend python backend/recover_nfl_injury_weeks.py \
@@ -40,6 +43,14 @@ jobs:
             --schedule-csv /tmp/lp-nfl-injuries/games.csv \
             --out-dir /tmp/lp-nfl-injuries/recovered
           cat /tmp/lp-nfl-injuries/recovered/README.md
+      - name: Reconstruct game-specific historical depth chart by pre-kickoff timestamp
+        run: |
+          PYTHONPATH=backend python backend/reconstruct_nfl_roster_asof.py \
+            --depth-parquet /tmp/lp-nfl-injuries/depth_charts_2026.parquet \
+            --injury-csv /tmp/lp-nfl-injuries/recovered/nfl-injury-weeks-2-9.csv \
+            --schedule-csv /tmp/lp-nfl-injuries/games.csv \
+            --out-dir /tmp/lp-nfl-injuries/roster-asof
+          cat /tmp/lp-nfl-injuries/roster-asof/asof-depth-injury-coverage.json
       - name: Preserve source and extracted injury weeks in this research branch
         if: github.event_name == 'push'
         run: |
@@ -64,5 +75,7 @@ jobs:
           path: |
             /tmp/lp-nfl-injuries/injuries_2026.parquet
             /tmp/lp-nfl-injuries/games.csv
+            /tmp/lp-nfl-injuries/depth_charts_2026.parquet
             /tmp/lp-nfl-injuries/recovered/
+            /tmp/lp-nfl-injuries/roster-asof/
           retention-days: 30
