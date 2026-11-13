@@ -492,11 +492,15 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                     yards = 0
                     yardage_boundary_adjustment = None
                 else:
-                    # E.g. completed pass with roughing: completed play counts,
-                    # but the enforced spot and series supersede the next snap.
-                    if after.get('offense') != st['offense']:
+                    # Completed passes with roughing keep the play. Receiving
+                    # team add-on enforcement keeps the legal punt and its
+                    # possession change. Do not turn a punt into another snap.
+                    if event == 'punt' and after.get('offense') == st['defense']:
+                        play_terminal = 'punt'
+                    elif after.get('offense') == st['offense']:
+                        play_terminal = None
+                    else:
                         return halt('penalty_kept_play_with_possession_change_unsupported')
-                    play_terminal = None
                 runoff = penalty_info.runoff_seconds
         period_expired = bool(kick_outcome and kick_outcome.get('classification_status') == 'period_expired')
         if clock is not None and penalty_info is None:
@@ -612,10 +616,17 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 play['outcome']['cancelled_event'] = selected_event
                 play['decision']['type'] = 'penalty'
                 play['decision']['note'] = 'accepted penalty nullified sampled event'
-        if kick_metadata:
-            play['outcome'].update(kick_metadata)
-        if kick_outcome:
-            play['outcome']['blocked_kick'] = kick_outcome
+        cancelled = bool(penalty_info is not None
+                         and penalty_info.enforcement.get('accepted')
+                         and not penalty_info.play_counts)
+        if cancelled and (kick_metadata or kick_outcome):
+            play['outcome']['nullified_kick_source'] = {
+                'metadata': kick_metadata, 'outcome': kick_outcome}
+        else:
+            if kick_metadata:
+                play['outcome'].update(kick_metadata)
+            if kick_outcome:
+                play['outcome']['blocked_kick'] = kick_outcome
         if row.get('pre_event') is not None:  # SLC: participants chosen before the outcome; absent for the S0 control
             play['outcome']['pre_event'] = row['pre_event']
         plays.append(play)
