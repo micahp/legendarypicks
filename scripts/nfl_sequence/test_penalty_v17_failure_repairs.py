@@ -9,6 +9,10 @@ import unittest
 import e1_drive
 import game_state as gs
 import game_stats
+import pregame_batch
+import simulate_pregame_batch
+import sim_run_registry
+import slc_outputs
 import slc_engine
 from football_assertions import FootballAssertionError
 from penalty_enforcement import DownState, enforce
@@ -18,6 +22,73 @@ from test_penalty_game_loop import AnyCell, FixturePlaycall, FixedPenaltySampler
 
 
 class V17FailureFamilyTests(unittest.TestCase):
+    def test_valid_full_game_reports_mechanics_but_not_penalty_release(self):
+        snapshot = {'evaluation': {'verified': True}}
+        kwargs = {'complete': True, 'blocker': None, 'guarded': [],
+                  'unsupported': []}
+        mechanical, release = gs.full_game_validity(
+            snapshot, penalty_enabled=True, **kwargs)
+        self.assertTrue(mechanical)
+        self.assertFalse(release)
+        self.assertEqual(
+            gs.full_game_validity(snapshot, penalty_enabled=False, **kwargs),
+            (True, True))
+        self.assertEqual(
+            gs.full_game_validity(snapshot, penalty_enabled=True,
+                                  **{**kwargs, 'blocker': 'unresolved'}),
+            (False, False))
+        self.assertEqual(
+            gs.full_game_validity({'evaluation': {'verified': False}},
+                                  penalty_enabled=False, **kwargs),
+            (False, False))
+        self.assertEqual(
+            gs.full_game_validity(snapshot, penalty_enabled=True,
+                                  **{**kwargs, 'guarded': ['missing_legal_transition']}),
+            (False, False))
+
+    def test_research_valid_game_is_never_counted_as_release_forecast(self):
+        research_record = {
+            'status': 'complete_regulation', 'complete_game': True,
+            'valid_full_game': True, 'forecast_release_validated': False,
+            'penalty_model_coverage': {'enabled': True},
+            'regulation_end_reached': True, 'points': {'A': 20, 'B': 24}}
+        row = simulate_pregame_batch._record_outcome(31, research_record)
+        self.assertTrue(row['valid_full_game'])
+        self.assertTrue(row['mechanically_complete_game'])
+        self.assertTrue(row['research_only_penalty_model'])
+        self.assertFalse(row['forecast_release_validated'])
+        self.assertEqual(row['score_scope'], 'research_mechanically_verified_final')
+        self.assertEqual(slc_outputs._box_status(row), 'research_valid_complete')
+        sample = pregame_batch.summarize_outcomes(
+            [row], requested=1, home_market_margin=3, market_total=40)
+        self.assertEqual(sample['valid_full_games'], 1)
+        self.assertEqual(sample['mechanically_complete_games'], 1)
+        self.assertEqual(sample['forecast_release_validated_games'], 0)
+        self.assertEqual(sample['valid_full_game_distribution']['sample_games'], 1)
+        self.assertIsNone(sample['valid_full_game_distribution']['market_settlement'])
+        self.assertEqual(sample['forecast_release_distribution']['sample_games'], 0)
+        self.assertIsNone(sample['forecast_release_distribution']['market_settlement'])
+        self.assertIn(
+            'V1.7 research penalty rulings are not forecast-release validated',
+            sim_run_registry.exploratory_reasons({
+                'pregame_snapshot': {'schedule': {'availability_classification': 'versioned_as_of'},
+                                      'availability': {'classification': 'verified'}},
+                'source': {'producer_worktree_dirty': False},
+                'simulation': {'slc_profile': 'v1_7_candidate'}}))
+
+    def test_legacy_release_ready_game_keeps_forecast_and_market_settlement(self):
+        record = {
+            'status': 'complete_regulation', 'complete_game': True,
+            'valid_full_game': True, 'regulation_end_reached': True,
+            'points': {'A': 24, 'B': 17}}
+        row = simulate_pregame_batch._record_outcome(5, record)
+        self.assertTrue(row['forecast_release_validated'])
+        report = pregame_batch.summarize_outcomes(
+            [row], requested=1, home_market_margin=3, market_total=37)
+        self.assertEqual(report['forecast_release_validated_games'], 1)
+        self.assertIsNotNone(report['forecast_release_distribution']['market_settlement'])
+        self.assertEqual(slc_outputs._box_status(row), 'valid_complete')
+
     def test_missed_field_goal_sample_can_have_fractional_spot(self):
         baseline = gs.missed_field_goal_spot(
             gs.kick_spot_yardline_100(40.94821145364832))
