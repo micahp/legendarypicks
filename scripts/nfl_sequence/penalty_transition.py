@@ -28,7 +28,10 @@ def transition(*, sampler: PenaltySampler, context: Context, game_seed: int,
                receiver_retained: bool | None = None,
                foul_during_kick: bool | None = None,
                defensive_holding_block_attempt: bool | None = None,
-               pre_sampled_proposal: PenaltyProposal | None = None) -> PenaltyTransition:
+               pre_sampled_proposal: PenaltyProposal | None = None,
+               end_of_kick_yardline_100: float | None = None,
+               foul_spot_receiving_yardline_100: float | None = None,
+               kick_crossed_scrimmage_line: bool | None = None) -> PenaltyTransition:
     """Sample and enforce if an explicit acceptance decision is available.
 
     Source-dependent inputs are mandatory for grounding, DPI, run holding,
@@ -56,7 +59,10 @@ def transition(*, sampler: PenaltySampler, context: Context, game_seed: int,
             accepted=accepted, enforcement_option=kick_enforcement_option,
             receiver_retained=receiver_retained, defense_team=context.defense_team,
             foul_during_kick=foul_during_kick, block_subtype=block_subtype,
-            defensive_holding_block_attempt=defensive_holding_block_attempt)
+            defensive_holding_block_attempt=defensive_holding_block_attempt,
+            end_of_kick_yardline_100=end_of_kick_yardline_100,
+            foul_spot_receiving_yardline_100=foul_spot_receiving_yardline_100,
+            kick_crossed_scrimmage_line=kick_crossed_scrimmage_line)
         return PenaltyTransition(result.state, proposal, asdict(result))
     result = enforce(
         before=before, after_play=after_play,
