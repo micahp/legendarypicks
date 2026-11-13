@@ -28,7 +28,7 @@ class PeriodPlaycall(FixturePlaycall):
         chosen, row, _, spot = super().sample(rng, cell, offense=offense,
                                               defense=defense, state=state)
         self.calls += 1
-        return chosen, row, 40, spot
+        return chosen, row, min(40, state['clock']), spot
 
 
 class PenaltyFullGameFixtureTests(unittest.TestCase):
