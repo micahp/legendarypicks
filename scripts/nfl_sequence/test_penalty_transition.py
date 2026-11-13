@@ -86,7 +86,7 @@ class PenaltyTransitionTests(unittest.TestCase):
 
     def test_kick_specific_and_unsupported_context_remain_explicitly_blocked(self):
         ctx = Context('live_ball', 2026, 'WAS', 'NYG', 2, 8, 60, 'kick')
-        with self.assertRaisesRegex(ValueError, 'kick specialty'):
+        with self.assertRaisesRegex(ValueError, 'scrimmage kick requires punt or field_goal'):
             transition(sampler=FixedSampler('offense:illegal_formation'), context=ctx,
                        game_seed=1, opportunity_key='x', before=self.before,
                        after_play=self.before, accepted=True)
