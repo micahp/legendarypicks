@@ -61,6 +61,28 @@ class ScrimmageKickTransitionTests(unittest.TestCase):
                             defensive_holding_block_attempt=True)
         self.assertEqual(got.state, DownState(1, 10, 56, "WAS"))
 
+    def test_receiving_team_holding_psk_uses_less_beneficial_enforcement_spot(self):
+        got = self.run_foul(
+            "defense:defensive_holding",
+            kick_enforcement_option="post_scrimmage_kick",
+            receiver_retained=True, kick_crossed_scrimmage_line=True,
+            end_of_kick_yardline_100=80,
+            foul_spot_receiving_yardline_100=72)
+        self.assertEqual(got.state, DownState(1, 10, 85, "NYG"))
+        self.assertTrue(got.enforcement["play_counts"])
+        self.assertEqual(got.enforcement["enforcement_spot"], "post_scrimmage_kick")
+
+    def test_psk_requires_actual_foul_spot_and_excludes_block_attempts(self):
+        args = dict(kick_enforcement_option="post_scrimmage_kick",
+                    receiver_retained=True, kick_crossed_scrimmage_line=True,
+                    end_of_kick_yardline_100=80)
+        with self.assertRaisesRegex(ValueError, "verified end-of-kick"):
+            self.run_foul("defense:defensive_holding", **args)
+        with self.assertRaisesRegex(ValueError, "excludes attempted kick blocks"):
+            self.run_foul("defense:defensive_holding",
+                          **dict(args, foul_spot_receiving_yardline_100=72,
+                                 defensive_holding_block_attempt=True))
+
     def test_declined_foul_retains_original_kick_and_possession(self):
         got = self.run_foul("offense:illegal_formation", accepted=False,
                             kick_enforcement_option=None)
