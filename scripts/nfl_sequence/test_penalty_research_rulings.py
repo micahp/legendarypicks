@@ -6,6 +6,8 @@ from pathlib import Path
 import unittest
 
 import game_state as gs
+import field_goal_feasibility as fg
+
 from penalty_enforcement import RULES
 from penalty_game import PenaltyGameController
 from penalty_rulings import ResearchPenaltyRulingPolicy, RESEARCH_RULING_VERSION
@@ -78,6 +80,16 @@ class ResearchRulingTests(unittest.TestCase):
                 self.assertEqual(result.ruling['ruling_version'],
                                  RESEARCH_RULING_VERSION)
                 self.assertFalse(result.ruling['verified'])
+
+    def test_half_yard_goal_spots_are_legal_for_future_sampling(self):
+        for spot in (0.5, 3.25, 27.75, 61.73643365772642, 99.5):
+            with self.subTest(spot=spot):
+                result = fg.evaluate(spot)
+                self.assertEqual(result['kick_distance_yards'], spot + 17)
+                self.assertEqual(result['eligible'], spot + 17 <= 70)
+        for illegal in (True, False, 0, 100, float('nan'), float('inf')):
+            with self.subTest(illegal=illegal), self.assertRaises(ValueError):
+                fg.evaluate(illegal)
 
     def test_same_foul_and_seed_produces_identical_ruling(self):
         a = self.resolve('defense:defensive_pass_interference')
