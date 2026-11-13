@@ -678,7 +678,7 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                      'credited passing yards must equal the corresponding receiver yards on a completion')
             if outcome.get('touchdown'):
                 before = play.get('state_before') or {}
-                if (not isinstance(before.get('yardline_100'), int) or not isinstance(yards, int)
+                if (not isinstance(before.get('yardline_100'), (int, float)) or not isinstance(yards, (int, float))
                         or yards < before['yardline_100'] or yards > before['yardline_100']):
                     fail(index, decision, play,
                          'a completed-pass touchdown must end at the goal line without exceeding credited yards')
@@ -725,7 +725,7 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                 fail(index, decision, play, 'a sack-fumble cannot credit pass or receiving yards')
         elif event == 'run' and outcome.get('touchdown'):
             before = play.get('state_before') or {}
-            if (not isinstance(before.get('yardline_100'), int) or not isinstance(yards, int)
+            if (not isinstance(before.get('yardline_100'), (int, float)) or not isinstance(yards, (int, float))
                     or yards < before['yardline_100'] or yards > before['yardline_100']):
                 fail(index, decision, play,
                      'a rushing touchdown must end at the goal line without exceeding credited yards')
@@ -798,7 +798,7 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                 yards = outcome.get('yards_gained')
                 yardline = before.get('yardline_100')
                 if (not outcome.get('safety') or not isinstance(yards, (int, float))
-                        or not isinstance(yardline, int) or yardline - yards < 100):
+                        or not isinstance(yardline, (int, float)) or yardline - yards < 100):
                     fail(index, decision, scoring_play,
                          'a scrimmage safety requires the ball to become dead in the offense\'s own end zone')
                 expected_scorer = before.get('defense_team')
