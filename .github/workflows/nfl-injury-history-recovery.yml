@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   recover-injury-history:
@@ -40,6 +40,23 @@ jobs:
             --schedule-csv /tmp/lp-nfl-injuries/games.csv \
             --out-dir /tmp/lp-nfl-injuries/recovered
           cat /tmp/lp-nfl-injuries/recovered/README.md
+      - name: Preserve source and extracted injury weeks in this research branch
+        if: github.event_name == 'push'
+        run: |
+          output=docs/research/nfl-injury-history-2026-weeks2-9
+          if [ -f "$output/nfl-injury-week-coverage.json" ]; then
+            echo "Pinned recovery already in the research branch; refusing overwrite."
+            exit 0
+          fi
+          mkdir -p "$output"
+          cp /tmp/lp-nfl-injuries/recovered/* "$output/"
+          cp /tmp/lp-nfl-injuries/injuries_2026.parquet "$output/source-injuries_2026.parquet"
+          cp /tmp/lp-nfl-injuries/games.csv "$output/source-games.csv"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$output"
+          git commit -m "Pin downloaded 2026 NFL injury weeks 2-9 source and recovery results"
+          git push origin HEAD:refs/heads/research/nfl-injury-weeks-2-9-recovery-2026-11-13
       - name: Upload reusable source and recovered injury-week data
         uses: actions/upload-artifact@v4
         with:
