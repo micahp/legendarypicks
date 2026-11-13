@@ -443,6 +443,11 @@ class PlayCallSampler:
         return (historical_cell_dropback_probability(entry['base']),
                 'historical_down_distance_field_cell_rate')
 
+    @staticmethod
+    def _has_exact_historical_spot(value):
+        """Fractional penalty spots have no exact integer nflverse source row."""
+        return type(value) in (int, float) and float(value).is_integer()
+
     def sample(self, rng, cell, offense, defense, state=None):
         if state is None or any(state.get(k) is None for k in ('quarter', 'clock', 'down', 'togo', 'yl', 'score_diff')):
             raise e1.SamplingUnavailable('playcall_state_incomplete')
@@ -690,7 +695,9 @@ class PlayCallSampler:
                     raise e1.SamplingUnavailable(f'non_scramble_run_source_rows_missing:{entry["key"]}')
         exact_yardline_conditioned = False
         exact_yardline_fallback = None
-        if self.exact_yardline and state.get('yl') is not None and int(state['yl']) <= 20:
+        if (self.exact_yardline and state.get('yl') is not None
+                and self._has_exact_historical_spot(state['yl'])
+                and int(state['yl']) <= 20):
             exact = [c for c in candidates if c[1].get('yardline_100') is not None
                      and int(c[1]['yardline_100']) == int(state['yl'])]
             if exact:
@@ -698,12 +705,15 @@ class PlayCallSampler:
                 exact_yardline_conditioned = True
             else:
                 exact_yardline_fallback = 'no_source_rows_at_exact_yardline'
+        elif self.exact_yardline and state.get('yl') is not None and not self._has_exact_historical_spot(state['yl']):
+            exact_yardline_fallback = 'fractional_penalty_spot_uses_field_bucket'
         exact_distance_conditioned = False
         exact_distance_fallback = None
         exact_distance_support = 0
         exact_distance_branch = None
         if (self.exact_distance_yardage and called_intent in SCRIMMAGE_INTENTS
-                and state.get('togo') is not None):
+                and state.get('togo') is not None
+                and self._has_exact_historical_spot(state['togo'])):
             # Measure support before formation, coverage, streak, label, and
             # target-role filters. Those filters can otherwise reduce every
             # exact-distance cell below the threshold and silently disable the
@@ -721,6 +731,9 @@ class PlayCallSampler:
                 exact_distance_conditioned = True
             else:
                 exact_distance_fallback = 'exact_distance_support_below_minimum'
+        elif (self.exact_distance_yardage and called_intent in SCRIMMAGE_INTENTS
+              and state.get('togo') is not None):
+            exact_distance_fallback = 'fractional_penalty_distance_uses_bucket'
         if use_formation:
             matched = [c for c in candidates if c[1].get('formation', UNKNOWN) == formation]
             if matched:
