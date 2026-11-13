@@ -130,6 +130,22 @@ class PenaltyLoopTests(unittest.TestCase):
         self.assertTrue(plays[0]['outcome']['punt'])
         self.assertEqual(e1_drive.check_drive(plays, terminal)['punts'], 1)
 
+    def test_psk_receiver_holding_keeps_punt_and_enforces_at_end_of_kick(self):
+        plays, terminal = self.simulate(
+            self.controller(live='defense:defensive_holding',
+                            extra={'kick_enforcement_option': 'post_scrimmage_kick',
+                                   'receiver_retained': True,
+                                   'kick_crossed_scrimmage_line': True,
+                                   'end_of_kick_yardline_100': 80,
+                                   'foul_spot_receiving_yardline_100': 72}),
+            ['punt'])
+        self.assertEqual(terminal, 'punt')
+        self.assertEqual(len(plays), 1)
+        self.assertEqual(plays[0]['state_after']['offense_team'], 'B')
+        self.assertEqual(plays[0]['state_after']['yardline_100'], 85)
+        self.assertTrue(plays[0]['outcome']['punt'])
+        self.assertEqual(e1_drive.check_drive(plays, terminal)['punts'], 1)
+
     def test_offensive_holding_replays_punt_at_correct_distance(self):
         plays, terminal = self.simulate(
             self.controller(live='offense:offensive_holding'), ['punt', 'punt'])
