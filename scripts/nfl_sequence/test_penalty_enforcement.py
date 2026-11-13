@@ -111,6 +111,15 @@ class PenaltyEnforcementTests(unittest.TestCase):
                     phase="live_pass", offender="offense", foul="intentional_grounding",
                     foul_yardline_100=97, accepted=True)
         self.assertEqual(e.state, DownState(3, 10, 97, "ARI"))
+        # From own 15, the passer throws at own 7 (eight yards back).
+        # That is less than ten behind the LOS, but more than half of
+        # the distance to the offense's goal: enforce at release spot.
+        own_fifteen = DownState(2, 10, 85, "ARI")
+        halfway_exception = enforce(
+            before=own_fifteen, after_play=own_fifteen,
+            phase="live_pass", offender="offense", foul="intentional_grounding",
+            foul_yardline_100=93, accepted=True)
+        self.assertEqual(halfway_exception.state, DownState(3, 18, 93, "ARI"))
 
     def test_fourth_down_grounding_changes_possession_with_explicit_opponent(self):
         fourth = DownState(4, 5, 60, "ARI")
