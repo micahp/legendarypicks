@@ -1,0 +1,2430 @@
+[
+  {
+    "game_id": "2026_02_SEA_ARI",
+    "gsis_ids": [
+      "00-0033066",
+      "00-0039007",
+      "00-0040382",
+      "00-0041070",
+      "00-0041561"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "ARI"
+  },
+  {
+    "game_id": "2026_02_CAR_ATL",
+    "gsis_ids": [
+      "00-0036212",
+      "00-0039917",
+      "00-0040156",
+      "00-0041121",
+      "00-0041188"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "ATL"
+  },
+  {
+    "game_id": "2026_02_MIN_CHI",
+    "gsis_ids": [
+      "00-0028986",
+      "00-0038595",
+      "00-0039461",
+      "00-0040740",
+      "00-0041171"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "CHI"
+  },
+  {
+    "game_id": "2026_02_CIN_HOU",
+    "gsis_ids": [
+      "00-0026300",
+      "00-0034800",
+      "00-0039375",
+      "00-0040015",
+      "00-0040534",
+      "00-0041062",
+      "00-0041118"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "CIN"
+  },
+  {
+    "game_id": "2026_02_CLE_TB",
+    "gsis_ids": [
+      "00-0036306",
+      "00-0036953",
+      "00-0041073",
+      "00-0041075",
+      "00-0041092",
+      "00-0041115"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "CLE"
+  },
+  {
+    "game_id": "2026_02_WAS_DAL",
+    "gsis_ids": [
+      "00-0033877",
+      "00-0037120",
+      "00-0037310",
+      "00-0038556",
+      "00-0039387",
+      "00-0040017",
+      "00-0040930"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "DAL"
+  },
+  {
+    "game_id": "2026_02_JAX_DEN",
+    "gsis_ids": [
+      "00-0036879",
+      "00-0037294",
+      "00-0038976",
+      "00-0040730",
+      "00-0041133",
+      "00-0041498",
+      "00-0041552"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "DEN"
+  },
+  {
+    "game_id": "2026_02_GB_NYJ",
+    "gsis_ids": [
+      "00-0033109",
+      "00-0036625",
+      "00-0039819",
+      "00-0040016",
+      "00-0040023"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "GB"
+  },
+  {
+    "game_id": "2026_02_CIN_HOU",
+    "gsis_ids": [
+      "00-0031364",
+      "00-0036554",
+      "00-0036556",
+      "00-0037633",
+      "00-0038131",
+      "00-0039422",
+      "00-0041313"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "HOU"
+  },
+  {
+    "game_id": "2026_02_IND_KC",
+    "gsis_ids": [
+      "00-0035021",
+      "00-0039178",
+      "00-0039578",
+      "00-0040179",
+      "00-0040206",
+      "00-0041080"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "IND"
+  },
+  {
+    "game_id": "2026_02_JAX_DEN",
+    "gsis_ids": [
+      "00-0038118",
+      "00-0040234",
+      "00-0040723",
+      "00-0041055",
+      "00-0041059",
+      "00-0041084",
+      "00-0041106"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "JAX"
+  },
+  {
+    "game_id": "2026_02_IND_KC",
+    "gsis_ids": [
+      "00-0038982",
+      "00-0039824",
+      "00-0040116",
+      "00-0040906",
+      "00-0040987",
+      "00-0041256",
+      "00-0041358"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "KC"
+  },
+  {
+    "game_id": "2026_02_LV_LAC",
+    "gsis_ids": [
+      "00-0035688",
+      "00-0036992",
+      "00-0037320",
+      "00-0040065",
+      "00-0041105",
+      "00-0041107"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "LAC"
+  },
+  {
+    "game_id": "2026_02_LV_LAC",
+    "gsis_ids": [
+      "00-0037461",
+      "00-0038579",
+      "00-0039338",
+      "00-0040199",
+      "00-0040641",
+      "00-0040650",
+      "00-0040883"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "LV"
+  },
+  {
+    "game_id": "2026_02_MIA_SF",
+    "gsis_ids": [
+      "00-0037666",
+      "00-0039174",
+      "00-0039390",
+      "00-0039911",
+      "00-0040398",
+      "00-0041077",
+      "00-0041530"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "MIA"
+  },
+  {
+    "game_id": "2026_02_MIN_CHI",
+    "gsis_ids": [
+      "00-0035228",
+      "00-0036259",
+      "00-0039237",
+      "00-0040507",
+      "00-0040624",
+      "00-0041053",
+      "00-0041054"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "MIN"
+  },
+  {
+    "game_id": "2026_02_PIT_NE",
+    "gsis_ids": [
+      "00-0034778",
+      "00-0039289",
+      "00-0039828",
+      "00-0041103",
+      "00-0041123",
+      "00-0041314"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "NE"
+  },
+  {
+    "game_id": "2026_02_NO_BAL",
+    "gsis_ids": [
+      "00-0037013",
+      "00-0037283",
+      "00-0038551",
+      "00-0039357",
+      "00-0039622",
+      "00-0041173",
+      "00-0041390"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "NO"
+  },
+  {
+    "game_id": "2026_02_GB_NYJ",
+    "gsis_ids": [
+      "00-0034789",
+      "00-0036842",
+      "00-0036902",
+      "00-0038905",
+      "00-0039347",
+      "00-0041038"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "NYJ"
+  },
+  {
+    "game_id": "2026_02_PHI_TEN",
+    "gsis_ids": [
+      "00-0036224",
+      "00-0036980",
+      "00-0038400",
+      "00-0040891",
+      "00-0040897"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "PHI"
+  },
+  {
+    "game_id": "2026_02_SEA_ARI",
+    "gsis_ids": [
+      "00-0034869",
+      "00-0038591",
+      "00-0038765",
+      "00-0039020",
+      "00-0040061",
+      "00-0040621"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "SEA"
+  },
+  {
+    "game_id": "2026_02_MIA_SF",
+    "gsis_ids": [
+      "00-0039435",
+      "00-0040172",
+      "00-0040589",
+      "00-0041068",
+      "00-0041090"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "SF"
+  },
+  {
+    "game_id": "2026_02_CLE_TB",
+    "gsis_ids": [
+      "00-0038818",
+      "00-0040143",
+      "00-0040384",
+      "00-0041079",
+      "00-0041082",
+      "00-0041253"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "TB"
+  },
+  {
+    "game_id": "2026_02_PHI_TEN",
+    "gsis_ids": [
+      "00-0036876",
+      "00-0037758",
+      "00-0038586",
+      "00-0039430",
+      "00-0040512",
+      "00-0040892"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "TEN"
+  },
+  {
+    "game_id": "2026_02_WAS_DAL",
+    "gsis_ids": [
+      "00-0034302",
+      "00-0034780",
+      "00-0037809",
+      "00-0039355",
+      "00-0040314",
+      "00-0041117",
+      "00-0041183"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-09-20T23:00:00Z",
+    "source_sha256": "8b134fad3eac296f3c15ebac3a22bdbeafb887b71ce0b9df7b697e5caac76106",
+    "source_url": "https://amp.nfl.com/news/nfl-week-2-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "WSH"
+  },
+  {
+    "game_id": "2026_04_TEN_BAL",
+    "gsis_ids": [
+      "00-0032398",
+      "00-0033935",
+      "00-0040076",
+      "00-0040981"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "BAL"
+  },
+  {
+    "game_id": "2026_04_NE_BUF",
+    "gsis_ids": [
+      "00-0036378",
+      "00-0037288",
+      "00-0040724",
+      "00-0041086",
+      "00-0041128",
+      "00-0041443",
+      "00-0041548"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "BUF"
+  },
+  {
+    "game_id": "2026_04_DET_CAR",
+    "gsis_ids": [
+      "00-0036417",
+      "00-0039356",
+      "00-0039491",
+      "00-0040174",
+      "00-0041138",
+      "00-0041149"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "CAR"
+  },
+  {
+    "game_id": "2026_04_NYJ_CHI",
+    "gsis_ids": [
+      "00-0035357",
+      "00-0036337",
+      "00-0039461",
+      "00-0039918",
+      "00-0040740",
+      "00-0041171"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "CHI"
+  },
+  {
+    "game_id": "2026_04_JAX_CIN",
+    "gsis_ids": [
+      "00-0034800",
+      "00-0036231",
+      "00-0037193",
+      "00-0039313",
+      "00-0040015",
+      "00-0041069",
+      "00-0041118"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "CIN"
+  },
+  {
+    "game_id": "2026_04_DAL_HOU",
+    "gsis_ids": [
+      "00-0037310",
+      "00-0037839",
+      "00-0038556",
+      "00-0038705",
+      "00-0039387",
+      "00-0040017",
+      "00-0040930"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "DAL"
+  },
+  {
+    "game_id": "2026_04_DEN_SF",
+    "gsis_ids": [
+      "00-0036879",
+      "00-0037799",
+      "00-0041133",
+      "00-0041498",
+      "00-0041552"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "DEN"
+  },
+  {
+    "game_id": "2026_04_DET_CAR",
+    "gsis_ids": [
+      "00-0034270",
+      "00-0035707",
+      "00-0036272",
+      "00-0039396",
+      "00-0040761",
+      "00-0040914"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "DET"
+  },
+  {
+    "game_id": "2026_04_IND_WAS",
+    "gsis_ids": [
+      "00-0030279",
+      "00-0035535",
+      "00-0039578",
+      "00-0040179",
+      "00-0040206",
+      "00-0041080"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "IND"
+  },
+  {
+    "game_id": "2026_04_JAX_CIN",
+    "gsis_ids": [
+      "00-0037313",
+      "00-0038118",
+      "00-0038616",
+      "00-0040723",
+      "00-0041055",
+      "00-0041059",
+      "00-0041106"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "JAX"
+  },
+  {
+    "game_id": "2026_04_KC_LV",
+    "gsis_ids": [
+      "00-0039824",
+      "00-0040116",
+      "00-0040906",
+      "00-0040987",
+      "00-0041256",
+      "00-0041497"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "KC"
+  },
+  {
+    "game_id": "2026_04_LAC_SEA",
+    "gsis_ids": [
+      "00-0033546",
+      "00-0034790",
+      "00-0036736",
+      "00-0038046",
+      "00-0040464",
+      "00-0041107",
+      "00-0041550"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "LAC"
+  },
+  {
+    "game_id": "2026_04_LA_PHI",
+    "gsis_ids": [
+      "00-0031388",
+      "00-0036093",
+      "00-0036244",
+      "00-0037195",
+      "00-0039780",
+      "00-0041399",
+      "00-0041568"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "LAR"
+  },
+  {
+    "game_id": "2026_04_KC_LV",
+    "gsis_ids": [
+      "00-0037461",
+      "00-0038579",
+      "00-0038594",
+      "00-0039423",
+      "00-0039735"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "LV"
+  },
+  {
+    "game_id": "2026_04_MIA_MIN",
+    "gsis_ids": [
+      "00-0038603",
+      "00-0039174",
+      "00-0039390",
+      "00-0040398",
+      "00-0041077",
+      "00-0041523",
+      "00-0041530"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "MIA"
+  },
+  {
+    "game_id": "2026_04_NE_BUF",
+    "gsis_ids": [
+      "00-0036981",
+      "00-0039147",
+      "00-0041103",
+      "00-0041123",
+      "00-0041314",
+      "00-0041316"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "NE"
+  },
+  {
+    "game_id": "2026_04_ARI_NYG",
+    "gsis_ids": [
+      "00-0033046",
+      "00-0035250",
+      "00-0036587",
+      "00-0040225",
+      "00-0040471",
+      "00-0041095",
+      "00-0041101"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "NYG"
+  },
+  {
+    "game_id": "2026_04_NYJ_CHI",
+    "gsis_ids": [
+      "00-0036986",
+      "00-0037083",
+      "00-0037255",
+      "00-0038120",
+      "00-0039890",
+      "00-0040186",
+      "00-0040736"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "NYJ"
+  },
+  {
+    "game_id": "2026_04_LA_PHI",
+    "gsis_ids": [
+      "00-0034351",
+      "00-0034951",
+      "00-0034993",
+      "00-0035662",
+      "00-0036418",
+      "00-0036912",
+      "00-0040891"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "PHI"
+  },
+  {
+    "game_id": "2026_04_LAC_SEA",
+    "gsis_ids": [
+      "00-0037003",
+      "00-0038694",
+      "00-0038765",
+      "00-0040058",
+      "00-0040621",
+      "00-0040673",
+      "00-0041382"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "SEA"
+  },
+  {
+    "game_id": "2026_04_GB_TB",
+    "gsis_ids": [
+      "00-0034855",
+      "00-0037311",
+      "00-0038818",
+      "00-0040747",
+      "00-0041031",
+      "00-0041079",
+      "00-0041082"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "TB"
+  },
+  {
+    "game_id": "2026_04_TEN_BAL",
+    "gsis_ids": [
+      "00-0036876",
+      "00-0036924",
+      "00-0038407",
+      "00-0040512",
+      "00-0040557",
+      "00-0040892"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "TEN"
+  },
+  {
+    "game_id": "2026_04_IND_WAS",
+    "gsis_ids": [
+      "00-0035659",
+      "00-0036618",
+      "00-0037256",
+      "00-0037616",
+      "00-0039355",
+      "00-0039412",
+      "00-0039910"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-04T22:58:00Z",
+    "source_sha256": "de42fbf619f8f8334e8369438959865118c256435e3c84f12dc8b08e1665720d",
+    "source_url": "https://amp.nfl.com/news/nfl-week-4-inactives-players-ruled-out-sunday-14-games-2026",
+    "team": "WSH"
+  },
+  {
+    "game_id": "2026_05_DET_ARI",
+    "gsis_ids": [
+      "00-0033066",
+      "00-0035378",
+      "00-0038663",
+      "00-0039849",
+      "00-0041561"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "ARI"
+  },
+  {
+    "game_id": "2026_05_BAL_ATL",
+    "gsis_ids": [
+      "00-0033935",
+      "00-0034796",
+      "00-0038112",
+      "00-0038383",
+      "00-0040076",
+      "00-0040876"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "BAL"
+  },
+  {
+    "game_id": "2026_05_CIN_MIA",
+    "gsis_ids": [
+      "00-0036231",
+      "00-0040015",
+      "00-0041062",
+      "00-0041069",
+      "00-0041116",
+      "00-0041118"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CIN"
+  },
+  {
+    "game_id": "2026_05_CLE_NYJ",
+    "gsis_ids": [
+      "00-0036630",
+      "00-0036953",
+      "00-0039895",
+      "00-0040685",
+      "00-0041073",
+      "00-0041092",
+      "00-0041131"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CLE"
+  },
+  {
+    "game_id": "2026_05_DET_ARI",
+    "gsis_ids": [
+      "00-0035637",
+      "00-0036272",
+      "00-0039396",
+      "00-0040390",
+      "00-0040761",
+      "00-0040914"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "DET"
+  },
+  {
+    "game_id": "2026_05_CHI_GB",
+    "gsis_ids": [
+      "00-0036551",
+      "00-0039272",
+      "00-0039817",
+      "00-0040689"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "GB"
+  },
+  {
+    "game_id": "2026_05_HOU_TEN",
+    "gsis_ids": [
+      "00-0039422",
+      "00-0039902",
+      "00-0041305",
+      "00-0041313",
+      "00-0041449",
+      "00-0041472",
+      "00-0041559"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "HOU"
+  },
+  {
+    "game_id": "2026_05_PHI_JAX",
+    "gsis_ids": [
+      "00-0033038",
+      "00-0037106",
+      "00-0038118",
+      "00-0040411",
+      "00-0041045",
+      "00-0041059",
+      "00-0041106"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "JAX"
+  },
+  {
+    "game_id": "2026_05_DEN_LAC",
+    "gsis_ids": [
+      "00-0034356",
+      "00-0034790",
+      "00-0036736",
+      "00-0038544",
+      "00-0039897",
+      "00-0041381",
+      "00-0041550"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LAC"
+  },
+  {
+    "game_id": "2026_05_LV_NE",
+    "gsis_ids": [
+      "00-0037291",
+      "00-0037461",
+      "00-0038579",
+      "00-0040199",
+      "00-0040871",
+      "00-0040883",
+      "00-0040998"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LV"
+  },
+  {
+    "game_id": "2026_05_CIN_MIA",
+    "gsis_ids": [
+      "00-0038521",
+      "00-0038603",
+      "00-0039174",
+      "00-0041077",
+      "00-0041096",
+      "00-0041523",
+      "00-0041530"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "MIA"
+  },
+  {
+    "game_id": "2026_05_LV_NE",
+    "gsis_ids": [
+      "00-0034778",
+      "00-0039147",
+      "00-0041088",
+      "00-0041103",
+      "00-0041123",
+      "00-0041316"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NE"
+  },
+  {
+    "game_id": "2026_05_NYG_WAS",
+    "gsis_ids": [
+      "00-0035250",
+      "00-0036502",
+      "00-0038998",
+      "00-0040471",
+      "00-0041095",
+      "00-0041101"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NYG"
+  },
+  {
+    "game_id": "2026_05_CLE_NYJ",
+    "gsis_ids": [
+      "00-0036986",
+      "00-0037255",
+      "00-0038120",
+      "00-0039447",
+      "00-0039890",
+      "00-0040186"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NYJ"
+  },
+  {
+    "game_id": "2026_05_PHI_JAX",
+    "gsis_ids": [
+      "00-0034844",
+      "00-0034993",
+      "00-0035662",
+      "00-0036224",
+      "00-0036912",
+      "00-0040587"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "PHI"
+  },
+  {
+    "game_id": "2026_05_IND_PIT",
+    "gsis_ids": [
+      "00-0035699",
+      "00-0036139",
+      "00-0038395",
+      "00-0040203",
+      "00-0041261",
+      "00-0041490",
+      "00-0041565"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "PIT"
+  },
+  {
+    "game_id": "2026_05_SF_SEA",
+    "gsis_ids": [
+      "00-0037003",
+      "00-0040058",
+      "00-0040621",
+      "00-0040673",
+      "00-0041178"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "SEA"
+  },
+  {
+    "game_id": "2026_05_NYG_WAS",
+    "gsis_ids": [
+      "00-0031588",
+      "00-0032268",
+      "00-0035279",
+      "00-0037616",
+      "00-0038100",
+      "00-0039681",
+      "00-0041183"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-11T22:54:00Z",
+    "source_sha256": "89177201524d7bcf7f807efd2241c2468edf272e0ac81a4867113af1e0f60717",
+    "source_url": "https://amp.nfl.com/news/nfl-week-5-inactives-players-ruled-out-sunday-2026-season",
+    "team": "WSH"
+  },
+  {
+    "game_id": "2026_06_ARI_LA",
+    "gsis_ids": [
+      "00-0033066",
+      "00-0035378",
+      "00-0038613",
+      "00-0038663",
+      "00-0041027",
+      "00-0041370",
+      "00-0041561"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "ARI"
+  },
+  {
+    "game_id": "2026_06_CHI_ATL",
+    "gsis_ids": [
+      "00-0033662",
+      "00-0036281",
+      "00-0037823",
+      "00-0037826",
+      "00-0041121",
+      "00-0041188",
+      "00-0041194"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "ATL"
+  },
+  {
+    "game_id": "2026_06_BAL_CLE",
+    "gsis_ids": [
+      "00-0034796",
+      "00-0036081",
+      "00-0036395",
+      "00-0038112",
+      "00-0038383",
+      "00-0040876",
+      "00-0040879"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "BAL"
+  },
+  {
+    "game_id": "2026_06_CAR_PHI",
+    "gsis_ids": [
+      "00-0036265",
+      "00-0039356",
+      "00-0040458",
+      "00-0040541",
+      "00-0041034",
+      "00-0041138",
+      "00-0041149"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CAR"
+  },
+  {
+    "game_id": "2026_06_CHI_ATL",
+    "gsis_ids": [
+      "00-0028986",
+      "00-0035386",
+      "00-0038595",
+      "00-0039071",
+      "00-0040236",
+      "00-0041085",
+      "00-0041171"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CHI"
+  },
+  {
+    "game_id": "2026_06_BAL_CLE",
+    "gsis_ids": [
+      "00-0036287",
+      "00-0036953",
+      "00-0039895",
+      "00-0040685",
+      "00-0040784",
+      "00-0041073",
+      "00-0041092"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CLE"
+  },
+  {
+    "game_id": "2026_06_DAL_GB",
+    "gsis_ids": [
+      "00-0037310",
+      "00-0037839",
+      "00-0038556",
+      "00-0038705",
+      "00-0040045",
+      "00-0040874",
+      "00-0040930"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "DAL"
+  },
+  {
+    "game_id": "2026_06_DAL_GB",
+    "gsis_ids": [
+      "00-0036551",
+      "00-0036625",
+      "00-0039272",
+      "00-0040884"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "GB"
+  },
+  {
+    "game_id": "2026_06_HOU_JAX",
+    "gsis_ids": [
+      "00-0034836",
+      "00-0035685",
+      "00-0037246",
+      "00-0039422",
+      "00-0041305",
+      "00-0041472",
+      "00-0041559"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "HOU"
+  },
+  {
+    "game_id": "2026_06_TEN_IND",
+    "gsis_ids": [
+      "00-0035021",
+      "00-0039377",
+      "00-0039578",
+      "00-0040128",
+      "00-0040206"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "IND"
+  },
+  {
+    "game_id": "2026_06_HOU_JAX",
+    "gsis_ids": [
+      "00-0035827",
+      "00-0037106",
+      "00-0037313",
+      "00-0041045",
+      "00-0041055",
+      "00-0041059",
+      "00-0041106"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "JAX"
+  },
+  {
+    "game_id": "2026_06_LAC_KC",
+    "gsis_ids": [
+      "00-0039067",
+      "00-0039824",
+      "00-0040116",
+      "00-0040906",
+      "00-0040987",
+      "00-0041256",
+      "00-0041497"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "KC"
+  },
+  {
+    "game_id": "2026_06_LAC_KC",
+    "gsis_ids": [
+      "00-0032146",
+      "00-0034356",
+      "00-0034790",
+      "00-0036736",
+      "00-0039897",
+      "00-0040727",
+      "00-0041381"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LAC"
+  },
+  {
+    "game_id": "2026_06_ARI_LA",
+    "gsis_ids": [
+      "00-0036093",
+      "00-0036237",
+      "00-0036849",
+      "00-0037191",
+      "00-0041399",
+      "00-0041568"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LAR"
+  },
+  {
+    "game_id": "2026_06_BUF_LV",
+    "gsis_ids": [
+      "00-0037461",
+      "00-0038579",
+      "00-0040169",
+      "00-0040650",
+      "00-0040883",
+      "00-0041006"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LV"
+  },
+  {
+    "game_id": "2026_06_NYJ_NE",
+    "gsis_ids": [
+      "00-0034778",
+      "00-0041088",
+      "00-0041103",
+      "00-0041123",
+      "00-0041314",
+      "00-0041316"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NE"
+  },
+  {
+    "game_id": "2026_06_NO_NYG",
+    "gsis_ids": [
+      "00-0033290",
+      "00-0038998",
+      "00-0039176",
+      "00-0039847",
+      "00-0039861",
+      "00-0041462"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NYG"
+  },
+  {
+    "game_id": "2026_06_NYJ_NE",
+    "gsis_ids": [
+      "00-0036788",
+      "00-0036902",
+      "00-0036986",
+      "00-0037255",
+      "00-0038120",
+      "00-0039890"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NYJ"
+  },
+  {
+    "game_id": "2026_06_PIT_TB",
+    "gsis_ids": [
+      "00-0035239",
+      "00-0036862",
+      "00-0038395",
+      "00-0040203",
+      "00-0041261",
+      "00-0041490",
+      "00-0041565"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "PIT"
+  },
+  {
+    "game_id": "2026_06_PIT_TB",
+    "gsis_ids": [
+      "00-0034855",
+      "00-0036411",
+      "00-0038818",
+      "00-0038951",
+      "00-0040747",
+      "00-0041079",
+      "00-0041082"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-18T22:55:00Z",
+    "source_sha256": "0d37a9ea5fc5ed16b7786910fcd277f04899628954ef253ce29bd576603a50cf",
+    "source_url": "https://amp.nfl.com/news/nfl-week-6-inactives-players-ruled-out-sunday-2026-season",
+    "team": "TB"
+  },
+  {
+    "game_id": "2026_07_DEN_ARI",
+    "gsis_ids": [
+      "00-0035378",
+      "00-0038571",
+      "00-0039807",
+      "00-0040706",
+      "00-0041027",
+      "00-0041138",
+      "00-0041561"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "ARI"
+  },
+  {
+    "game_id": "2026_07_SF_ATL",
+    "gsis_ids": [
+      "00-0027973",
+      "00-0035208",
+      "00-0036990",
+      "00-0037746",
+      "00-0040156",
+      "00-0041194",
+      "00-0041469"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "ATL"
+  },
+  {
+    "game_id": "2026_07_CIN_BAL",
+    "gsis_ids": [
+      "00-0034796",
+      "00-0036081",
+      "00-0036302",
+      "00-0038383",
+      "00-0040876"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "BAL"
+  },
+  {
+    "game_id": "2026_07_TB_CAR",
+    "gsis_ids": [
+      "00-0036265",
+      "00-0036653",
+      "00-0036934",
+      "00-0039356",
+      "00-0040458",
+      "00-0041071",
+      "00-0041149"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CAR"
+  },
+  {
+    "game_id": "2026_07_CIN_BAL",
+    "gsis_ids": [
+      "00-0037844",
+      "00-0040015",
+      "00-0040756",
+      "00-0041062",
+      "00-0041118"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CIN"
+  },
+  {
+    "game_id": "2026_07_CLE_TEN",
+    "gsis_ids": [
+      "00-0036287",
+      "00-0039373",
+      "00-0039895",
+      "00-0041073",
+      "00-0041075",
+      "00-0041092"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CLE"
+  },
+  {
+    "game_id": "2026_07_GB_DET",
+    "gsis_ids": [
+      "00-0039396",
+      "00-0040374",
+      "00-0040390",
+      "00-0040761",
+      "00-0040914"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "DET"
+  },
+  {
+    "game_id": "2026_07_GB_DET",
+    "gsis_ids": [
+      "00-0029592",
+      "00-0034431",
+      "00-0036625",
+      "00-0039272",
+      "00-0040142",
+      "00-0040884"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "GB"
+  },
+  {
+    "game_id": "2026_07_NYG_HOU",
+    "gsis_ids": [
+      "00-0035685",
+      "00-0037130",
+      "00-0037246",
+      "00-0039422",
+      "00-0039857",
+      "00-0041472",
+      "00-0041559"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "HOU"
+  },
+  {
+    "game_id": "2026_07_IND_MIN",
+    "gsis_ids": [
+      "00-0037190",
+      "00-0039578",
+      "00-0039816",
+      "00-0040128",
+      "00-0040206",
+      "00-0041039",
+      "00-0041518"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "IND"
+  },
+  {
+    "game_id": "2026_07_KC_SEA",
+    "gsis_ids": [
+      "00-0036557",
+      "00-0038489",
+      "00-0039067",
+      "00-0040906",
+      "00-0041256",
+      "00-0041497"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "KC"
+  },
+  {
+    "game_id": "2026_07_LA_LV",
+    "gsis_ids": [
+      "00-0036093",
+      "00-0037191",
+      "00-0037587",
+      "00-0041394",
+      "00-0041510",
+      "00-0041568"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LAR"
+  },
+  {
+    "game_id": "2026_07_LA_LV",
+    "gsis_ids": [
+      "00-0037262",
+      "00-0037461",
+      "00-0038579",
+      "00-0039423",
+      "00-0040650",
+      "00-0040883",
+      "00-0041006"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LV"
+  },
+  {
+    "game_id": "2026_07_NYG_HOU",
+    "gsis_ids": [
+      "00-0036996",
+      "00-0036998",
+      "00-0037138",
+      "00-0038998",
+      "00-0039847",
+      "00-0040181",
+      "00-0040471"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NYG"
+  },
+  {
+    "game_id": "2026_07_MIA_NYJ",
+    "gsis_ids": [
+      "00-0036788",
+      "00-0036842",
+      "00-0036902",
+      "00-0037255",
+      "00-0038114",
+      "00-0038120",
+      "00-0039372"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NYJ"
+  },
+  {
+    "game_id": "2026_07_PIT_NO",
+    "gsis_ids": [
+      "00-0036504",
+      "00-0036862",
+      "00-0038395",
+      "00-0040203",
+      "00-0041490",
+      "00-0041565"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "PIT"
+  },
+  {
+    "game_id": "2026_07_KC_SEA",
+    "gsis_ids": [
+      "00-0035704",
+      "00-0037003",
+      "00-0038922",
+      "00-0039165",
+      "00-0040061",
+      "00-0040882",
+      "00-0041178"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "SEA"
+  },
+  {
+    "game_id": "2026_07_SF_ATL",
+    "gsis_ids": [
+      "00-0031408",
+      "00-0035413",
+      "00-0035717",
+      "00-0035719",
+      "00-0036844",
+      "00-0040185",
+      "00-0040589"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "SF"
+  },
+  {
+    "game_id": "2026_07_TB_CAR",
+    "gsis_ids": [
+      "00-0036411",
+      "00-0037835",
+      "00-0040129",
+      "00-0041079",
+      "00-0041082",
+      "00-0041253"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-10-25T23:02:00Z",
+    "source_sha256": "b60f0d456f79c1338c41c41cab054fe8a1b4c5e5884955472c6d55046240ce64",
+    "source_url": "https://amp.nfl.com/news/nfl-week-7-inactives-players-ruled-out-sunday-2026-season",
+    "team": "TB"
+  },
+  {
+    "game_id": "2026_08_ARI_DAL",
+    "gsis_ids": [
+      "00-0038397",
+      "00-0038571",
+      "00-0038663",
+      "00-0038782",
+      "00-0040706",
+      "00-0041138",
+      "00-0041561"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "ARI"
+  },
+  {
+    "game_id": "2026_08_ATL_TB",
+    "gsis_ids": [
+      "00-0027973",
+      "00-0036990",
+      "00-0037746",
+      "00-0037826",
+      "00-0040077",
+      "00-0040156",
+      "00-0041194"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "ATL"
+  },
+  {
+    "game_id": "2026_08_BAL_BUF",
+    "gsis_ids": [
+      "00-0035667",
+      "00-0036378",
+      "00-0036976",
+      "00-0037034",
+      "00-0041086",
+      "00-0041128",
+      "00-0041443"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "BUF"
+  },
+  {
+    "game_id": "2026_08_CLE_PIT",
+    "gsis_ids": [
+      "00-0036287",
+      "00-0039373",
+      "00-0040704",
+      "00-0041073",
+      "00-0041075",
+      "00-0041092"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CLE"
+  },
+  {
+    "game_id": "2026_08_ARI_DAL",
+    "gsis_ids": [
+      "00-0037801",
+      "00-0038547",
+      "00-0038625",
+      "00-0038742",
+      "00-0040008",
+      "00-0040874"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "DAL"
+  },
+  {
+    "game_id": "2026_08_KC_DEN",
+    "gsis_ids": [
+      "00-0036564",
+      "00-0036879",
+      "00-0037294",
+      "00-0041133",
+      "00-0041297",
+      "00-0041498",
+      "00-0041552"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "DEN"
+  },
+  {
+    "game_id": "2026_08_MIN_DET",
+    "gsis_ids": [
+      "00-0039396",
+      "00-0040374",
+      "00-0040390",
+      "00-0040761",
+      "00-0040914"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "DET"
+  },
+  {
+    "game_id": "2026_08_IND_JAX",
+    "gsis_ids": [
+      "00-0033439",
+      "00-0035026",
+      "00-0036195",
+      "00-0039816",
+      "00-0040139",
+      "00-0040206",
+      "00-0041518"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "IND"
+  },
+  {
+    "game_id": "2026_08_IND_JAX",
+    "gsis_ids": [
+      "00-0038596",
+      "00-0039395",
+      "00-0040411",
+      "00-0041045",
+      "00-0041059",
+      "00-0041106"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "JAX"
+  },
+  {
+    "game_id": "2026_08_KC_DEN",
+    "gsis_ids": [
+      "00-0037080",
+      "00-0038489",
+      "00-0040906",
+      "00-0040987",
+      "00-0041256",
+      "00-0041543"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "KC"
+  },
+  {
+    "game_id": "2026_08_LAC_LA",
+    "gsis_ids": [
+      "00-0034356",
+      "00-0036736",
+      "00-0037320",
+      "00-0040311",
+      "00-0041381",
+      "00-0041550"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LAC"
+  },
+  {
+    "game_id": "2026_08_LAC_LA",
+    "gsis_ids": [
+      "00-0032228",
+      "00-0036093",
+      "00-0036244",
+      "00-0039061",
+      "00-0041394",
+      "00-0041568"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LAR"
+  },
+  {
+    "game_id": "2026_08_LV_NYJ",
+    "gsis_ids": [
+      "00-0037461",
+      "00-0038579",
+      "00-0040199",
+      "00-0040581",
+      "00-0040650",
+      "00-0040883",
+      "00-0040894"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LV"
+  },
+  {
+    "game_id": "2026_08_NE_MIA",
+    "gsis_ids": [
+      "00-0038728",
+      "00-0039383",
+      "00-0039390",
+      "00-0039461",
+      "00-0039839",
+      "00-0041077",
+      "00-0041521"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "MIA"
+  },
+  {
+    "game_id": "2026_08_LV_NYJ",
+    "gsis_ids": [
+      "00-0033375",
+      "00-0036902",
+      "00-0036986",
+      "00-0038114",
+      "00-0038120",
+      "00-0038194",
+      "00-0041026"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NYJ"
+  },
+  {
+    "game_id": "2026_08_PHI_WAS",
+    "gsis_ids": [
+      "00-0032580",
+      "00-0036912",
+      "00-0037132",
+      "00-0038393",
+      "00-0040422",
+      "00-0040708"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "PHI"
+  },
+  {
+    "game_id": "2026_08_CLE_PIT",
+    "gsis_ids": [
+      "00-0036504",
+      "00-0036862",
+      "00-0040203",
+      "00-0040341",
+      "00-0041490",
+      "00-0041565"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "PIT"
+  },
+  {
+    "game_id": "2026_08_ATL_TB",
+    "gsis_ids": [
+      "00-0038818",
+      "00-0040129",
+      "00-0041079",
+      "00-0041082",
+      "00-0041253"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "TB"
+  },
+  {
+    "game_id": "2026_08_TEN_CIN",
+    "gsis_ids": [
+      "00-0035889",
+      "00-0036876",
+      "00-0038407",
+      "00-0039032",
+      "00-0040512",
+      "00-0040892",
+      "00-0041438"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "TEN"
+  },
+  {
+    "game_id": "2026_08_PHI_WAS",
+    "gsis_ids": [
+      "00-0033918",
+      "00-0034333",
+      "00-0034780",
+      "00-0036260",
+      "00-0041117",
+      "00-0041183"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-11-01T23:55:00Z",
+    "source_sha256": "cbc40e0c4ea00f58df14157aca632449452ec9cf660765b6f4108b9b269b60a0",
+    "source_url": "https://amp.nfl.com/news/nfl-week-8-inactives-players-ruled-out-sunday-2026-season",
+    "team": "WSH"
+  },
+  {
+    "game_id": "2026_09_ARI_SEA",
+    "gsis_ids": [
+      "00-0037157",
+      "00-0038571",
+      "00-0038663",
+      "00-0038782",
+      "00-0041113",
+      "00-0041138"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "ARI"
+  },
+  {
+    "game_id": "2026_09_CIN_ATL",
+    "gsis_ids": [
+      "00-0027973",
+      "00-0037826",
+      "00-0040077",
+      "00-0040156",
+      "00-0041044",
+      "00-0041194"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "ATL"
+  },
+  {
+    "game_id": "2026_09_DEN_CAR",
+    "gsis_ids": [
+      "00-0035687",
+      "00-0036265",
+      "00-0036417",
+      "00-0036934",
+      "00-0040458",
+      "00-0041063",
+      "00-0041149"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CAR"
+  },
+  {
+    "game_id": "2026_09_TB_CHI",
+    "gsis_ids": [
+      "00-0028986",
+      "00-0040236",
+      "00-0041060",
+      "00-0041085",
+      "00-0041171"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CHI"
+  },
+  {
+    "game_id": "2026_09_CIN_ATL",
+    "gsis_ids": [
+      "00-0036231",
+      "00-0040015",
+      "00-0041062",
+      "00-0041118"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CIN"
+  },
+  {
+    "game_id": "2026_09_CLE_NO",
+    "gsis_ids": [
+      "00-0033131",
+      "00-0033537",
+      "00-0036287",
+      "00-0041073",
+      "00-0041075",
+      "00-0041092"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "CLE"
+  },
+  {
+    "game_id": "2026_09_DAL_IND",
+    "gsis_ids": [
+      "00-0037247",
+      "00-0037801",
+      "00-0038547",
+      "00-0038556",
+      "00-0038742",
+      "00-0039167",
+      "00-0040017"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "DAL"
+  },
+  {
+    "game_id": "2026_09_DEN_CAR",
+    "gsis_ids": [
+      "00-0035406",
+      "00-0036221",
+      "00-0036564",
+      "00-0036879",
+      "00-0039371",
+      "00-0041133",
+      "00-0041498"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "DEN"
+  },
+  {
+    "game_id": "2026_09_GB_NE",
+    "gsis_ids": [
+      "00-0034431",
+      "00-0037076",
+      "00-0038589",
+      "00-0039272",
+      "00-0039811",
+      "00-0039819"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "GB"
+  },
+  {
+    "game_id": "2026_09_HOU_LAC",
+    "gsis_ids": [
+      "00-0034836",
+      "00-0035685",
+      "00-0037130",
+      "00-0039359",
+      "00-0039422",
+      "00-0041559"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "HOU"
+  },
+  {
+    "game_id": "2026_09_DAL_IND",
+    "gsis_ids": [
+      "00-0033439",
+      "00-0036195",
+      "00-0036298",
+      "00-0038394",
+      "00-0040139",
+      "00-0040206",
+      "00-0041043"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "IND"
+  },
+  {
+    "game_id": "2026_09_NYJ_KC",
+    "gsis_ids": [
+      "00-0038489",
+      "00-0040906",
+      "00-0040987",
+      "00-0041256",
+      "00-0041543",
+      "00-0041545"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "KC"
+  },
+  {
+    "game_id": "2026_09_HOU_LAC",
+    "gsis_ids": [
+      "00-0036736",
+      "00-0037320",
+      "00-0038414",
+      "00-0040311",
+      "00-0041550"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LAC"
+  },
+  {
+    "game_id": "2026_09_LA_WAS",
+    "gsis_ids": [
+      "00-0032228",
+      "00-0036093",
+      "00-0037191",
+      "00-0039061",
+      "00-0041394",
+      "00-0041421",
+      "00-0041568"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LAR"
+  },
+  {
+    "game_id": "2026_09_LV_SF",
+    "gsis_ids": [
+      "00-0037262",
+      "00-0038579",
+      "00-0040581",
+      "00-0040650",
+      "00-0040883",
+      "00-0040894"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "LV"
+  },
+  {
+    "game_id": "2026_09_DET_MIA",
+    "gsis_ids": [
+      "00-0037666",
+      "00-0038521",
+      "00-0039174",
+      "00-0039390",
+      "00-0039839",
+      "00-0039874",
+      "00-0041077"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "MIA"
+  },
+  {
+    "game_id": "2026_09_GB_NE",
+    "gsis_ids": [
+      "00-0035676",
+      "00-0039770",
+      "00-0040734",
+      "00-0041103",
+      "00-0041123"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NE"
+  },
+  {
+    "game_id": "2026_09_NYG_PHI",
+    "gsis_ids": [
+      "00-0037138",
+      "00-0039176",
+      "00-0040181",
+      "00-0040225",
+      "00-0040471",
+      "00-0040715",
+      "00-0041462"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NYG"
+  },
+  {
+    "game_id": "2026_09_NYJ_KC",
+    "gsis_ids": [
+      "00-0033375",
+      "00-0036902",
+      "00-0036986",
+      "00-0037740",
+      "00-0038194",
+      "00-0039158",
+      "00-0039347"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "NYJ"
+  },
+  {
+    "game_id": "2026_09_NYG_PHI",
+    "gsis_ids": [
+      "00-0032580",
+      "00-0036501",
+      "00-0036912",
+      "00-0037132",
+      "00-0038393",
+      "00-0040708"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "PHI"
+  },
+  {
+    "game_id": "2026_09_ARI_SEA",
+    "gsis_ids": [
+      "00-0031933",
+      "00-0034342",
+      "00-0034350",
+      "00-0034869",
+      "00-0037545",
+      "00-0037821",
+      "00-0038694"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "SEA"
+  },
+  {
+    "game_id": "2026_09_LV_SF",
+    "gsis_ids": [
+      "00-0031408",
+      "00-0035719",
+      "00-0036341",
+      "00-0039435",
+      "00-0040589",
+      "00-0041090"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "SF"
+  },
+  {
+    "game_id": "2026_09_TB_CHI",
+    "gsis_ids": [
+      "00-0039068",
+      "00-0039310",
+      "00-0041079",
+      "00-0041082",
+      "00-0041253"
+    ],
+    "recovery_class": "official_article_updated_before_cutoff",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "TB"
+  },
+  {
+    "game_id": "2026_09_LA_WAS",
+    "gsis_ids": [
+      "00-0033918",
+      "00-0034780",
+      "00-0037742",
+      "00-0041117",
+      "00-0041183"
+    ],
+    "recovery_class": "retrospective_official_inactives",
+    "source_last_updated_at_utc": "2026-11-08T23:56:00Z",
+    "source_sha256": "ca8aee994215fd89a16e4d81f314fabf009c1aed432aa495d9999207134398e4",
+    "source_url": "https://amp.nfl.com/news/nfl-week-9-inactives-players-ruled-out-sunday-2026-season",
+    "team": "WSH"
+  }
+]
