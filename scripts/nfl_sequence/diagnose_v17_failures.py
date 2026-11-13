@@ -1,0 +1,112 @@
+"""Inspect preserved, immutable V1.7 failure envelopes; never re-run simulations.
+
+Input: research report's v1.7-1000-pr43-errors.jsonl.gz.
+Output: a compact aggregate and a per-seed diagnostics table, preserving exact
+exception messages and the offending decision/state without guessing causes.
+"""
+import argparse
+from collections import Counter, defaultdict
+import gzip
+import json
+from pathlib import Path
+
+
+def iter_records(path):
+    with gzip.open(path, "rt", encoding="utf-8") as stream:
+        for row in stream:
+            if row.strip():
+                yield json.loads(row)
+
+
+def flatten(value, prefix="", depth=0):
+    if depth > 6:
+        return
+    if isinstance(value, dict):
+        for k, v in value.items():
+            p = f"{prefix}.{k}" if prefix else k
+            if isinstance(v, (dict, list)):
+                yield from flatten(v, p, depth + 1)
+            elif any(word in k.lower() for word in
+                     ("message", "error", "reason", "failure", "blocker",
+                      "class", "type", "decision", "outcome", "event", "terminal", "ruling")):
+                yield p, str(v)[:500]
+    elif isinstance(value, list):
+        for i, item in enumerate(value[:8]):
+            yield from flatten(item, f"{prefix}[{i}]", depth + 1)
+
+
+def diagnostic(row):
+    outcome = row.get("outcome") or {}
+    failure = row.get("assertion_failure") or outcome.get("assertion_failure") or {}
+    unresolved = row.get("unresolved_transition") or outcome.get("unresolved_transition") or {}
+    d = {
+        "seed": row.get("seed"),
+        "status": outcome.get("status"),
+        "blocker": outcome.get("blocker"),
+        "error": outcome.get("error"),
+        "boxscore_error": str(outcome.get("boxscore_error") or "")[:1500],
+        "failure_class": failure.get("failure_class") or failure.get("class"),
+        "failure_message": failure.get("message") or failure.get("error"),
+        "play_index": failure.get("play_index"),
+        "decision": failure.get("decision"),
+        "state_before": failure.get("state_before"),
+        "state_after": failure.get("state_after"),
+        "offending_outcome": failure.get("outcome"),
+        "unresolved_reason": unresolved.get("reason") or unresolved.get("blocker"),
+        "failing_record": row.get("failed_record") or outcome.get("failed_record"),
+        "interesting_fields": dict(list(flatten(
+            {"failure": failure, "unresolved": unresolved}))[:34]),
+    }
+    return d
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--errors", type=Path, required=True)
+    ap.add_argument("--out", type=Path, required=True)
+    args = ap.parse_args()
+    records = list(iter_records(args.errors))
+    manifest = records[0]
+    rows = [diagnostic(r) for r in records[1:]]
+    if len(rows) != 47 or len({x["seed"] for x in rows}) != 47:
+        raise ValueError(f"expected 47 distinct errors; got {len(rows)}")
+    by_status = Counter(x["status"] for x in rows)
+    by_blocker = Counter(x["blocker"] for x in rows)
+    by_class = Counter(x["failure_class"] for x in rows)
+    messages = Counter()
+    samples = defaultdict(list)
+    for row in rows:
+        errmsg = row.get("error") or row.get("failure_message") or row.get("boxscore_error") or ""
+        signature = str(errmsg).split(" source_artifact_hashes=", 1)[0][:200]
+        messages[signature] += 1
+        if len(samples[signature]) < 5:
+            samples[signature].append(row["seed"])
+    summary = {
+        "source_manifest": {k: manifest.get(k) for k in
+                            ("record_type", "run_id", "failure_record_count", "configuration_hash")},
+        "count": len(rows),
+        "status": dict(by_status), "blockers": dict(by_blocker),
+        "failure_classes": dict(by_class),
+        "error_signatures": [
+            {"count": n, "seeds": samples[k], "signature": k}
+            for k, n in messages.most_common()],
+        "seeds": rows,
+    }
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+    print("TOTAL", len(rows))
+    print("STATUS", dict(by_status))
+    print("BLOCKERS", dict(by_blocker))
+    print("CLASSES", dict(by_class))
+    print("SIGNATURES", json.dumps(summary["error_signatures"], indent=2))
+    for row in rows:
+        # Printing compact diagnostics lets reviewers inspect the actual seed
+        # envelope through the immutable CI log without downloading artifacts.
+        print("SEED", json.dumps({k: row[k] for k in (
+            "seed", "status", "blocker", "error", "failure_class",
+            "failure_message", "play_index", "decision", "offending_outcome",
+            "unresolved_reason")}, default=str)[:1800])
+
+
+if __name__ == "__main__":
+    main()
