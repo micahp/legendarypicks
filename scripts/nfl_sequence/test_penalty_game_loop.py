@@ -6,6 +6,7 @@ claim that the empirical 2026 V1.7 penalty model is calibrated.
 import unittest
 
 import e1_drive
+import game_stats
 from penalty_game import PenaltyGameController
 from penalty_sampler import PenaltyProposal
 
@@ -100,6 +101,22 @@ class PenaltyLoopTests(unittest.TestCase):
         self.assertFalse(plays[0]['outcome']['punt'])
         self.assertTrue(plays[1]['outcome']['punt'])
         self.assertEqual(e1_drive.check_drive(plays, terminal)['punts'], 1)
+
+    def test_accepted_foul_appears_in_penalty_totals_not_rushing_passing_or_punts(self):
+        plays, terminal = self.simulate(
+            self.controller(live='offense:offensive_holding'), ['punt', 'punt'])
+        for play in plays:
+            play['participants'] = {'passer_id': None, 'receiver_id': None,
+                                    'rusher_id': None, 'timeout': False}
+        drive = {'offense_team': 'A', 'quarter_start': 1, 'clock_start': 400,
+                 'end_quarter': 1, 'end_clock': plays[-1]['state_after']['clock_seconds'],
+                 'plays': plays, 'terminal': terminal, 'field_goal_made': None}
+        stats = game_stats.team_stats([drive], {'A': 0, 'B': 0})
+        self.assertEqual(stats['A']['penalties'], 1)
+        self.assertEqual(stats['A']['penalty_yards'], 10)
+        self.assertEqual(stats['A'].get('pass_att', 0), 0)
+        self.assertEqual(stats['A'].get('rush_att', 0), 0)
+        self.assertEqual(stats['A']['punts'], 1)
 
     def test_accepted_opi_cancels_sampled_touchdown_and_all_yards(self):
         plays, terminal = self.simulate(
