@@ -32,7 +32,10 @@ def enforce_scrimmage_kick(*, before: DownState, after_play: DownState,
                            defense_team: str | None = None,
                            foul_during_kick: bool | None = None,
                            block_subtype: str | None = None,
-                           defensive_holding_block_attempt: bool | None = None) -> Enforcement:
+                           defensive_holding_block_attempt: bool | None = None,
+                           end_of_kick_yardline_100: float | None = None,
+                           foul_spot_receiving_yardline_100: float | None = None,
+                           kick_crossed_scrimmage_line: bool | None = None) -> Enforcement:
     """Enforce only the supported previous-spot or kicking-team add-on choice.
 
     Rule 14-4-8: an accepted foul from snap until the legal scrimmage kick
@@ -58,8 +61,10 @@ def enforce_scrimmage_kick(*, before: DownState, after_play: DownState,
         raise ValueError(f"scrimmage-kick foul not supported by V1.7: {key}")
     if foul == "illegal_block" and block_subtype not in ("in_back", "above_waist"):
         raise ValueError("scrimmage-kick illegal block requires verified 10-yard subtype")
-    if foul == "defensive_holding" and defensive_holding_block_attempt is not True:
-        raise ValueError("receiving-team holding needs verified kick-block-attempt context")
+    if (foul == "defensive_holding" and
+            defensive_holding_block_attempt is not True and
+            enforcement_option != "post_scrimmage_kick"):
+        raise ValueError("receiving-team holding needs verified block-attempt or PSK context")
     if not accepted:
         if enforcement_option not in (None, "decline"):
             raise ValueError("declined foul cannot have enforcement election")
@@ -67,8 +72,30 @@ def enforce_scrimmage_kick(*, before: DownState, after_play: DownState,
                            play_counts=True, replay_down=False,
                            clock_action="retain_play_clock", enforcement_spot="dead_ball")
 
-    if enforcement_option not in ("previous_spot", "receiving_dead_ball"):
+    if enforcement_option not in ("previous_spot", "receiving_dead_ball", "post_scrimmage_kick"):
         raise ValueError("accepted scrimmage kick foul requires explicit enforcement election")
+    if enforcement_option == "post_scrimmage_kick":
+        # Rule 14-4-8(4): Team B fouls during a scrimmage kick beyond
+        # the line (excluding an attempt to block the kick) are enforced
+        # from the less advantageous of end of kick and spot of foul.
+        if offender != "defense" or receiver_retained is not True:
+            raise ValueError("PSK requires a receiving-team foul with continuous receiving possession")
+        if defensive_holding_block_attempt is True or kick_crossed_scrimmage_line is not True:
+            raise ValueError("PSK excludes attempted kick blocks and requires kick beyond the line")
+        if after_play.possession != defense_team:
+            raise ValueError("PSK enforcement requires receiver to keep the ball")
+        if (end_of_kick_yardline_100 is None or foul_spot_receiving_yardline_100 is None
+                or not 0 < end_of_kick_yardline_100 < 100
+                or not 0 < foul_spot_receiving_yardline_100 < 100):
+            raise ValueError("PSK requires verified end-of-kick and foul spots in receiving coordinates")
+        base = max(end_of_kick_yardline_100, foul_spot_receiving_yardline_100)
+        new_yl, actual = _half_distance(base, "offense", yards)
+        new_state = DownState(1, min(10., new_yl), new_yl, defense_team)
+        return Enforcement(new_state, True, actual, "NFL 2026 Rule 14-4-8(4)",
+                           play_counts=True, replay_down=False,
+                           clock_action="retain_play_clock",
+                           enforcement_spot="post_scrimmage_kick")
+
     if enforcement_option == "receiving_dead_ball":
         if offender != "offense":
             raise ValueError("receiving-team foul cannot use kicking-team add-on election")
