@@ -3,7 +3,7 @@
 **Game:** Washington Commanders at New York Giants, November 12, 2026  
 **Final:** Washington 24, New York 21  
 **Forecast inputs:** Frozen before kickoff at 2026-11-13 01:15 UTC.  
-**Scope:** The four completed batches in this run package: V1, V1.5, V1.6, and V2.
+**Scope:** Seven game forecasts: four completed SLC batches (V1, V1.5, V1.6, and V2) and three recorded Legendary Picks game model projections. Player props cover the four SLC batches. The EPA game projection is a development lock; its public availability is unverified.
 
 CBS lists the final as WAS 24–21 NYG, with no overtime period. The game box score reports 340 Washington yards, 399 New York yards, and 45 total points. [CBS final box score](https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20261112_WAS%40NYG/)
 
@@ -12,7 +12,7 @@ CBS lists the final as WAS 24–21 NYG, with no overtime period. The game box sc
 - Three models gave Washington a higher win probability; V1.5 gave New York a slight edge. Washington won.
 - V1.5 had the closest expected total (45.46 vs. 45 actual). V1 had the lowest combined absolute team-score error (2.50 points).
 - Winner Brier scores were tightly grouped: 0.194–0.250 for this single result. V2 is numerically lowest, by a negligible margin over V1.6. That does not establish a model ranking.
-- Player-prop probabilities were scored against pre-kickoff lines in the API database. On 309 matched player/market/line items, V1.6 was the strongest of the four batches (0.266), but the de-vigged market reference scored 0.248. All four model batches were worse than that market reference; all were also worse than the 0.25 constant-probability reference on this sample.
+- Player-prop probabilities were scored against pre-kickoff lines in the API database. On 323 matched player/market/line items, V1.6 was the strongest of the four batches (0.261), but the de-vigged market reference scored 0.248. All four model batches were worse than that market reference; all were also worse than the 0.25 constant-probability reference on this sample.
 - These are one-game results, not evidence of season-long calibration or betting value.
 
 ## Game winner and Brier score
@@ -67,9 +67,9 @@ The model card reports historical winner Brier scores of 0.2288 for v1 points an
 
 I used the NFL game row `prop_games.id=30217` and its `props` records from the API’s `picks.dev.db`. The selected player lines and odds were captured before the 01:15 UTC kickoff; the latest included capture was 2026-11-12 23:42:37 UTC. Of 1,811 paired source/line quotes in the API, 1,545 matched a modeled stat and final player record; these collapse to 323 unique player/market/line items across 15 players and 13 markets. Over and under prices were paired by player, market, exact line, and source, then de-vigged. For each exact player/market/line, the reference is the mean de-vigged over probability across captured sources. Model probabilities are the empirical share of valid simulated games over that line. Pushes and unsupported or unmatched markets are excluded. The matched source-line snapshot is preserved in [pregame-prop-quotes.csv](./pregame-prop-quotes.csv), and the deduplicated scoring items are in [graded-player-props.csv](./graded-player-props.csv).
 
-The Brier scale is 0 to 1: 0 is perfect, lower is better, and a constant 50% forecast contributes 0.25 per item. The table gives scores on the **same 309 exact player/market/line items**. Values below 0.25 beat that simple reference on this sample; the market score is the stronger reference. Do not compare these directly with the NFL card’s season-level prop Briers: this is one game, with multiple correlated lines for the same player. V1/V1.5/V2 also have only 100 Monte Carlo draws each, so their per-line probabilities are coarser than V1.6’s 999-draw estimates.
+The Brier scale is 0 to 1: 0 is perfect, lower is better, and a constant 50% forecast contributes 0.25 per item. The table gives scores on the **same 323 exact player/market/line items**. Values below 0.25 beat that simple reference on this sample; the market score is the stronger reference. Do not compare these directly with the NFL card’s season-level prop Briers: this is one game, with multiple correlated lines for the same player. V1/V1.5/V2 also have only 100 Monte Carlo draws each, so their per-line probabilities are coarser than V1.6’s 999-draw estimates.
 
-| Forecast | Brier (309 items) | Difference from market |
+| Forecast | Brier (323 items) | Difference from market |
 |---|---:|---:|
 | V1 | 0.291 | +0.043 |
 | V1.5 | 0.290 | +0.042 |
@@ -78,7 +78,7 @@ The Brier scale is 0 to 1: 0 is perfect, lower is better, and a constant 50% for
 | Constant 50% | 0.250 | +0.002 |
 | De-vigged market average | **0.248** | — |
 
-V1.6 was the best of these four empirical distributions on the sampled prop thresholds, but did not beat the market or the constant 50% baseline. The difference from 0.25 is very small; the 309 rows are not 309 independent games. Do not interpret the apparent V1.6 advantage as evidence it is a better general prop model.
+V1.6 was the best of these four empirical distributions on the sampled prop thresholds, but did not beat the market or the constant 50% baseline. The difference from 0.25 is very small; the 323 rows are not 323 independent games. Do not interpret the apparent V1.6 advantage as evidence it is a better general prop model.
 
 | Market | Items | V1 | V1.5 | V1.6 | V2 | De-vigged market |
 |---|---:|---:|---:|---:|---:|---:|
