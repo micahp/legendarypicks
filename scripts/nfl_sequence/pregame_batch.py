@@ -107,9 +107,14 @@ def summarize_outcomes(outcomes, requested, home_market_margin=None, market_tota
         and row.get('status') not in ('simulation_error', 'validation_error')
         and not row.get('tied_at_regulation_end')
     ]
-    research_only_complete = [
-        row for row in mechanically_complete if not row.get('valid_full_game')
-    ]
+    # Older non-penalty runs lack an explicit release flag: only those may
+    # inherit full-game validity. V1.7 research outcomes always require an
+    # explicit release check and may never silently inherit it.
+    def release_ok(row):
+        return bool(row.get('valid_full_game') and row.get(
+            'forecast_release_validated', not row.get('research_only_penalty_model')))
+    release_complete = [row for row in complete if release_ok(row)]
+    research_only_complete = [row for row in mechanically_complete if not release_ok(row)]
     regulation_end = [row for row in outcomes if row.get('regulation_end_reached')]
     statuses = Counter(row.get('status') or 'unknown' for row in outcomes)
     blockers = Counter(row['blocker'] for row in outcomes if row.get('blocker'))
@@ -126,6 +131,10 @@ def summarize_outcomes(outcomes, requested, home_market_margin=None, market_tota
         'mechanically_complete_games': len(mechanically_complete),
         'mechanical_completion_coverage': _round(len(mechanically_complete) / requested),
         'research_only_complete_games': len(research_only_complete),
+        'forecast_release_validated_games': len(release_complete),
+        'forecast_release_coverage': _round(len(release_complete) / requested),
+        'forecast_release_distribution': _distribution(
+            release_complete, home_market_margin, market_total),
         'mechanically_complete_distribution': _distribution(mechanically_complete),
         'mechanically_complete_distribution_status': (
             'research_diagnostic_not_a_validated_forecast' if research_only_complete else
@@ -138,7 +147,11 @@ def summarize_outcomes(outcomes, requested, home_market_margin=None, market_tota
         'simulation_or_validation_errors': failures,
         'status_counts': dict(sorted(statuses.items())),
         'blocker_counts': dict(sorted(blockers.items())),
-        'valid_full_game_distribution': _distribution(complete, home_market_margin, market_total),
+        # Mechanically valid, but not necessarily a release-validated
+        # distribution. No market settlement when research results are present.
+        'valid_full_game_distribution': _distribution(
+            complete, home_market_margin if not research_only_complete else None,
+            market_total if not research_only_complete else None),
         'regulation_end_reached_distribution': _distribution(regulation_end, home_market_margin, market_total),
         'outcomes': outcomes,
     }
