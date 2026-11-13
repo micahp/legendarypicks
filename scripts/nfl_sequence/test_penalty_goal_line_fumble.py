@@ -10,10 +10,15 @@ import e0_single_play as e0
 import e1_drive as e1
 import football_assertions
 from penalty_game import PenaltyGameController
+from penalty_sampler import PenaltyProposal
 
 
-class DisabledPenaltySampler:
-    enabled = False
+class NoFoulSampler:
+    enabled = True
+
+    def propose(self, context, *, game_seed, opportunity_key):
+        return PenaltyProposal(opportunity_key, context.phase, 'none',
+                               'fixture-model', 'fixture-source', 'fixture')
 
 
 class ChooseFirst:
@@ -47,7 +52,7 @@ class GoalLineFumbleGeometryTests(unittest.TestCase):
     def test_no_cross_goal_recovery_geometry_is_fabricated(self):
         st, pool = self.source_pool()
         disabled = PenaltyGameController(
-            sampler=DisabledPenaltySampler(), game_seed=61,
+            sampler=NoFoulSampler(), game_seed=61,
             team_identity={'A': 'WAS', 'B': 'NYG'},
             ruling_provider=lambda *args, **kwargs: None)
         plays, terminal = e1.simulate(
