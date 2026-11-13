@@ -98,7 +98,7 @@ class Context:
             raise ValueError("pre-snap prediction must not know the intended play class")
         if self.phase == "live_ball" and self.play_class not in PLAY_CLASSES:
             raise ValueError("live-ball opportunities require a run/dropback/kick intent")
-        if not 1 <= self.down <= 4 or self.to_go < 1 or not 0 <= self.yardline_100 <= 100:
+        if not 1 <= self.down <= 4 or self.to_go <= 0 or not 0 <= self.yardline_100 <= 100:
             raise ValueError("invalid down, distance or field position")
         if not self.offense_team or not self.defense_team or self.offense_team == self.defense_team:
             raise ValueError("offense and defense teams must be distinct")
