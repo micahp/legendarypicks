@@ -2,7 +2,7 @@
 
 ## Results and interpretation (audited November 13, 2026)
 
-**Headline:** the **raw Spec B v2 probabilities do not beat the de-vigged sportsbook market** on this eight-week retrospective sample. Forward-only Platt recalibration materially reduces raw-model Brier error and beats the market on the *same graded lines* in each of Weeks 6–9. The calibrated edge is small in the pooled Weeks 3–9 comparison and is **not yet validated as a deployable betting edge**. The 38 original book/stat disagreements are now fully explained by one weekly receiving-stat ingestion defect affecting two lateral plays; the separately saved corrected-history what-if closes all 38 without changing the graded population.
+**Headline:** the **raw Spec B v2 probabilities do not beat the de-vigged sportsbook market** on this eight-week retrospective sample. A new quote-timestamp audit excluded 16.1% of selected lines as not strictly pre-kickoff, and a matched Weeks 3–9 comparison reduces the apparent forward Platt advantage from 0.001890 to 0.001055 Brier (44.2%). Forward-only Platt recalibration materially reduces raw-model Brier error and beats the market on the *same graded lines* in each of Weeks 6–9. The calibrated edge is small in the pooled Weeks 3–9 comparison and is **not yet validated as a deployable betting edge**. The 38 original book/stat disagreements are now fully explained by one weekly receiving-stat ingestion defect affecting two lateral plays; the separately saved corrected-history what-if closes all 38 without changing the graded population.
 
 The audit covers **65,448** eligible book/line observations across **117** games and **360** distinct players, representing **3,805** player-game-market point estimates. These are not 65,448 independent bets: multiple thresholds and sportsbooks repeatedly score the same realized player stat. Three of the 120 games in the finalized-roster universe have no eligible graded props. The finished gamebook roster labels were checked *after* projections, never fed into them.
 
@@ -26,6 +26,48 @@ These are **line-count-weighted** comparisons, not averages of weekly scores:
 - The strongest observed calibrated weeks are **Week 7 (0.23848 versus 0.24544 market)** and **Week 9 (0.23759 versus 0.24524 market)**. Week 8's margin is only **0.00025**.
 
 The Platt maps' logit slopes are far below one: **0.197** for Week 3 and **0.346** for Week 9. This means the fitted layer is **aggressively compressing the model's extreme probabilities**, not making small adjustments. For example, under the Week 9 map a raw 10% probability becomes approximately **36%**, and a raw 90% becomes approximately **72%**. Thus the large raw-to-calibrated improvement principally indicates **raw probability overconfidence/miscalibration**; it does not by itself show the raw model distinguishes outcomes well. Test calibrated predictions against a constant base-rate model, the market, and a clustered per-player-game calibration analysis before promoting them.
+
+### Quote provenance: timestamp audit and population-matched comparison
+
+The [executed quote provenance audit](prop-quote-provenance-audit.json)
+checks both selected sportsbook sides against the stored kickoff for each
+graded line. **54,907/65,448 lines (83.9%)** have both stored side
+timestamps strictly before `prop_games.start_time`; **10,541 (16.1%)**
+have at least one selected side captured at or after kickoff. This is
+a significant **selection/provenance defect** in the original market
+benchmark, not evidence that 16% of bets were actually placed live.
+The source may overwrite odds in place, so an older valid quote
+cannot necessarily be recovered from the latest database row.
+
+The [timestamp-filtered Brier artifact](impact-prekickoff-only-subset.json)
+was originally summarized by comparing a **Platt denominator that
+excludes Week 2** against a **market denominator that includes Week 2**.
+Those are not the same observations. The corrected,
+[population-matched comparison](impact-prekickoff-matched-population.json)
+uses **Weeks 3–9 on both sides**:
+
+| Matched Weeks 3–9 population | Graded lines | Forward Platt Brier | De-vigged market Brier | Advantage (market minus Platt) |
+|---|---:|---:|---:|---:|
+| All selected quotes | 57,248 | 0.243917 | 0.245807 | +0.001890 |
+| Both quote sides timestamped before stored kickoff | 47,830 | 0.245320 | 0.246375 | +0.001055 |
+
+The positive advantage therefore **shrinks by 44.2%**, rather than
+42% from the earlier mixed-denominator presentation. The
+timestamp-eligible subset favors Platt in **Weeks 6, 7, and 9**;
+Week 8 becomes a very small market win. The raw Spec B v2 model
+still trails the market. None of these differences establishes
+profitability or statistical significance given correlated alternate
+lines, repeated books, and the selective sample.
+
+**Important limits:** This filters the *existing* reconstructed
+predictions and their existing forward Platt maps; it does **not**
+refit each historical map using only the timestamp-eligible training
+population. Neither the sportsbook kickoff timestamps nor the
+underlying append-only pre-kickoff quote histories have been fully
+verified independently. The uncorrected source-stat settlement issue
+is still in the original line-level benchmark; a separate
+corrected-history what-if is documented below. These two studies
+must not be silently mixed into a new `valid_pregame` score.
 
 ### Corrected-history counterfactual (not the frozen baseline)
 
