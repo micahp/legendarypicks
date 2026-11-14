@@ -70,7 +70,7 @@ class Adapter(unittest.TestCase):
     def test_the_story_keeps_the_one_to_three_sentence_contract_and_house_style(self):
         out = adapter.generate_story_with_relationships(bundle(), self.inputs)
         self.assertLessEqual(len([s for s in out["story"].split(". ") if s]), 3)
-        self.assertNotIn("—", out["story"])
+        self.assertNotIn("\u2014", out["story"])
 
     def test_the_manifest_records_the_decision_and_the_displaced_facts(self):
         out = adapter.generate_story_with_relationships(bundle(), self.inputs)
