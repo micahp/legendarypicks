@@ -1,70 +1,68 @@
 {
   "corrections": {
-    "('2026_03_ARI_SF', '00-0035719', 'receiving_yards')": 80.0,
-    "('2026_04_DAL_HOU', '00-0035685', 'receiving_yards')": 19.0
+    "2026_03_ARI_SF": {
+      "gsis": "00-0035719",
+      "rec_td": 1,
+      "rec_yds": 80.0
+    },
+    "2026_04_DAL_HOU": {
+      "gsis": "00-0035685",
+      "rec_td": 0,
+      "rec_yds": 19.0
+    }
   },
+  "note": "Holds every probability fixed; only the outcome and actual for the two receiving_yards player-games change.",
   "per_week": {
     "3": {
-      "affected_lines": 27,
-      "brier_after": {
-        "forward_platt_brier": 0.250211167492731,
-        "market_brier": 0.24625571717661768,
-        "spec_b_v2_brier": 0.28388022591261763
+      "forward_platt_brier": {
+        "after": 0.2500950831263897,
+        "before": 0.2500435866900233,
+        "delta": 5.149643636637169e-05
       },
-      "brier_before": {
-        "forward_platt_brier": 0.2500435866900233,
-        "market_brier": 0.24625307769255184,
-        "spec_b_v2_brier": 0.28285783975133555
+      "market_brier": {
+        "after": 0.24625314239730203,
+        "before": 0.24625307769255184,
+        "delta": 6.470475019670907e-08
       },
-      "brier_delta": {
-        "forward_platt_brier": 0.0001675808027076786,
-        "market_brier": 2.6394840658416907e-06,
-        "spec_b_v2_brier": 0.001022386161282085
-      },
-      "constant_50_after": 0.25,
-      "constant_50_before": 0.25,
-      "status": "ok"
+      "spec_b_v2_brier": {
+        "after": 0.2834438865587637,
+        "before": 0.28285783975133555,
+        "delta": 0.0005860468074281311
+      }
     },
     "4": {
-      "affected_lines": 19,
-      "brier_after": {
-        "forward_platt_brier": 0.2480061554466134,
-        "market_brier": 0.24689818338106564,
-        "spec_b_v2_brier": 0.2862331409185659
+      "forward_platt_brier": {
+        "after": 0.24788015328611973,
+        "before": 0.24787568196030946,
+        "delta": 4.471325810273541e-06
       },
-      "brier_before": {
-        "forward_platt_brier": 0.24787568196030946,
-        "market_brier": 0.24686282058378659,
-        "spec_b_v2_brier": 0.2853466484227348
+      "market_brier": {
+        "after": 0.2469004338440984,
+        "before": 0.24686282058378659,
+        "delta": 3.761326031181955e-05
       },
-      "brier_delta": {
-        "forward_platt_brier": 0.00013047348630393363,
-        "market_brier": 3.536279727905933e-05,
-        "spec_b_v2_brier": 0.0008864924958310594
-      },
-      "constant_50_after": 0.25,
-      "constant_50_before": 0.25,
-      "status": "ok"
+      "spec_b_v2_brier": {
+        "after": 0.2858139635978321,
+        "before": 0.2853466484227348,
+        "delta": 0.0004673151750972937
+      }
     }
   },
   "pooled_weeks2_9": {
     "forward_platt_brier": {
-      "after": 0.2439610078453339,
+      "after": 0.24392526782434074,
       "before": 0.24391749314997,
-      "delta": 4.351469536389985e-05,
-      "n": 57248
+      "delta": 7.774674370741863e-06
     },
     "market_brier": {
       "after": 0.2457587054910017,
       "before": 0.24575352825128086,
-      "delta": 5.17723972084938e-06,
-      "n": 65448
+      "delta": 5.17723972084938e-06
     },
     "spec_b_v2_brier": {
-      "after": 0.2654662121082768,
+      "after": 0.26535618582787096,
       "before": 0.26522155986527474,
-      "delta": 0.0002446522430020748,
-      "n": 65448
+      "delta": 0.00013462596259622428
     }
   }
 }

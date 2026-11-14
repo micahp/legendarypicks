@@ -1,34 +1,39 @@
 {
-  "3": {
-    "affected": 1,
-    "delta": {
-      "marcel_lite_mean": null,
-      "projection_mean": 0.0005262668456360586
-    },
-    "mae_after": {
-      "marcel_lite_mean": null,
-      "projection_mean": 12.059176352260796
-    },
-    "mae_before": {
-      "marcel_lite_mean": null,
-      "projection_mean": 12.05865008541516
-    },
-    "n_point_rows": 499
+  "corrected_player_games": {
+    "2026_03_ARI_SF": "Deebo Samuel Sr. rec_yds 0 -> 80",
+    "2026_04_DAL_HOU": "David Montgomery rec_yds 0 -> 19"
   },
-  "4": {
-    "affected": 1,
-    "delta": {
-      "marcel_lite_mean": -0.03009259259259167,
-      "projection_mean": 0.0038662942281675328
+  "per_week": {
+    "3": {
+      "affected_point_rows": 1,
+      "marcel_lite_mean": {
+        "after": null,
+        "before": null,
+        "delta": null,
+        "n": 0
+      },
+      "projection_mean": {
+        "after": 12.059176352260796,
+        "before": 12.05865008541516,
+        "delta": 0.0005262668456360586,
+        "n": 499
+      }
     },
-    "mae_after": {
-      "marcel_lite_mean": 15.641180555555556,
-      "projection_mean": 14.426893932040635
-    },
-    "mae_before": {
-      "marcel_lite_mean": 15.671273148148147,
-      "projection_mean": 14.423027637812467
-    },
-    "n_point_rows": 515
-  }
+    "4": {
+      "affected_point_rows": 1,
+      "marcel_lite_mean": {
+        "after": 15.641180555555556,
+        "before": 15.671273148148147,
+        "delta": -0.03009259259259167,
+        "n": 432
+      },
+      "projection_mean": {
+        "after": 14.426893932040635,
+        "before": 14.423027637812467,
+        "delta": 0.0038662942281675328,
+        "n": 515
+      }
+    }
+  },
+  "scope": "player-game-market point rows; probability-freezing settlement-only correction"
 }

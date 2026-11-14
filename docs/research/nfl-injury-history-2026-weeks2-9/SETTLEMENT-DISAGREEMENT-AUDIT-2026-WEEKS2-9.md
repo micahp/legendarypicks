@@ -135,22 +135,65 @@ above both 0 and the true value.
 
 ## Impact
 
-### Settlement-only (exact, no re-forecast)
+### Settlement-only (probabilities held fixed)
 
-Flipping the affected rows to the correct outcome, holding every probability
-fixed (`impact-settlement-only.json`, `impact-mae-settlement-only.json`):
+Setting `actual` to the true value and re-deriving `over` from `actual > line`
+for the 46 receiving-yards lines on the two player-games, with every probability
+untouched (`impact-settlement-only.json`, `impact-mae-settlement-only.json`):
 
 | Week | Lines | Spec B v2 Brier | Δ | Forward Platt Brier | Δ | Market Brier | Δ |
 |---|---|---|---|---|---|---|---|
-| 3 | 27 | 0.28286 → 0.28388 | +0.00102 | 0.25004 → 0.25021 | +0.00017 | 0.246254 → 0.246256 | +0.000003 |
-| 4 | 19 | 0.28535 → 0.28623 | +0.00089 | 0.24788 → 0.24801 | +0.00013 | 0.246863 → 0.246898 | +0.000035 |
-| 2–9 pooled | 46 | 0.265222 → 0.265466 | +0.000245 | 0.243917 → 0.243961 | +0.000044 | 0.245754 → 0.245759 | +0.000005 |
+| 3 | 35 | 0.282858 → 0.283444 | +0.000586 | 0.250044 → 0.250095 | +0.000052 | 0.2462531 → 0.2462531 | +0.0000001 |
+| 4 | 26 | 0.285347 → 0.285814 | +0.000467 | 0.247876 → 0.247880 | +0.000004 | 0.2468628 → 0.2469004 | +0.000038 |
+| 2–9 pooled | 46 | 0.265222 → 0.265356 | +0.000135 | 0.243917 → 0.243925 | +0.000008 | 0.2457535 → 0.2457587 | +0.000005 |
 
 The correction makes our scores **slightly worse**, which is the expected
-direction: the model had those overs underpriced, and the bogus zero was
-rewarding it with a free correct "under". Point MAE moves by ~0.0005–0.004 per
-week (two rows out of ~500), and Marcel-lite on Week 4 improves by 0.03 because
-it projected 16 for Montgomery against a true 19 rather than against 0.
+direction: the model had those overs priced low, and the bogus zero was
+rewarding it with a free correct "under". Point MAE over the ~500 player-game
+markets per week moves by +0.0005 (Week 3) and +0.0039 (Week 4); Marcel-lite on
+Week 4 improves 15.671 → 15.641 because it projected 16 for Montgomery against a
+true 19 instead of against 0.
+
+### History contamination (full what-if rerun)
+
+Those same two rows are also history for later weeks, so the effect is separate
+from settlement. `run_corrected_history_impact.py` patches only the two
+in-memory `History` rows and calls the committed runner unchanged; its outputs
+are in `impact-corrected-history/`. No database row, grader file, or committed
+artifact was touched.
+
+| Check | Before | After |
+|---|---|---|
+| Recorded settlement disagreements, Weeks 2–9 | 38 | **0** |
+| Graded prop lines | 65,448 | 65,448 |
+| Player-game-market rows | 3,805 | 3,805 |
+
+Week-level Brier deltas from the rerun:
+
+| Week | Spec B v2 | Forward Platt | Market |
+|---|---|---|---|
+| 3 | +0.000586 | +0.000052 | 0.000000 |
+| 4 | +0.000463 | −0.000071 | +0.000038 |
+| 5 | +0.000035 | +0.000083 | 0.000000 |
+| 6 | −0.000024 | −0.000043 | 0.000000 |
+| 7 | −0.000020 | +0.000059 | 0.000000 |
+| 8 | −0.000015 | +0.000033 | 0.000000 |
+| 9 | −0.000018 | +0.000011 | 0.000000 |
+| 2–9 pooled | +0.000129 | +0.000017 | +0.000005 |
+
+- **The 38 disagreements go to exactly 0**, with no change to the graded
+  population. That is a complete, closed explanation: nothing else in the
+  sample depends on this defect.
+- Weeks 3–4 move because the outcomes themselves change; Weeks 5–9 move by
+  ≤0.00004 because every later receiving-yard projection shifts by a few
+  hundredths of a yard — the engine's season-level rate denominators include the
+  corrected player-game, so the change reaches players who were never quoted.
+- Deebo's Week 4 Marcel-lite jumps 26.33 → 53.0, which is the largest single
+  downstream distortion found.
+- Direction is consistent across both methods: the raw model scores marginally
+  worse once the stat is right, and it still does not beat the market pooled
+  (0.2654 vs 0.2458) or on forward Platt (0.2439 vs 0.2458 — a 0.002 edge that
+  weakens, not strengthens, under correction).
 
 ## What this audit does not change
 
@@ -169,15 +212,26 @@ python docs/research/nfl-injury-history-2026-weeks2-9/audit_settlement_disagreem
   --out-dir docs/research/nfl-injury-history-2026-weeks2-9   # positional in practice
 ```
 
-The audit opens the database read-only and writes
+```sh
+python docs/research/nfl-injury-history-2026-weeks2-9/run_corrected_history_impact.py
+```
+
+Both open the database read-only. The audit writes
 `settlement-disagreements-2026-weeks2-9.csv` and
-`settlement-disagreements-summary.json`.
+`settlement-disagreements-summary.json`; the what-if runner writes only inside
+`impact-corrected-history/`.
 
 ## Recommended fix (not applied)
 
 Move `rec_yds`, `rec_td`, `rec` and `rec_air_yds` out of the target-gated group
 into the always-written set alongside `targets`, so a published zero target and
-a published 80-yard lateral touchdown are both represented. Then re-ingest 2025
-and 2026 and confirm: (a) the 38 disagreements go to zero, (b) the 2025 Isaiah
-Bond row appears, (c) no other stat field changes. Until that is reviewed, the
-backtest should be read with these two rows treated as known bad actuals.
+a published 80-yard lateral touchdown are both represented — the same treatment
+`target_share` already received, for the same reason.
+
+Condition (a) is already demonstrated by the in-memory what-if: correcting only
+these two rows takes the disagreement count from 38 to 0. Before applying it,
+confirm (b) the 2025 Isaiah Bond row appears, and (c) no other stat field
+changes for any player-week, then re-run the backtest and re-record the metrics.
+
+Until that is reviewed, read the committed backtest with these two rows treated
+as known bad actuals and with the settlement column at 23/15 for Weeks 3/4.
