@@ -221,7 +221,67 @@ Both open the database read-only. The audit writes
 `settlement-disagreements-summary.json`; the what-if runner writes only inside
 `impact-corrected-history/`.
 
-## Recommended fix (not applied)
+## Repair applied (2026-11-14)
+
+The source-data contract is now fixed in code and the three damaged stored rows
+are corrected. The original backtest artifacts above are untouched.
+
+**Code.** `backend/ingest_nfl_weekly_stats.py`: the receiving key group is gated
+on
+
+```python
+(_RECV_KEYS, tgt or rec_yds or rec_td)
+```
+
+and the row-inclusion gate is `att or sac or car or tgt or rec_yds or rec_td or
+converted_two_point`. A published receiving line with zero targets is therefore
+kept, in the same spirit as the existing `target_share` carve-out.
+
+**Data.** `repair_lateral_receiving_rows.py` re-reads the published nflverse
+artifact, refuses to run if the affected-case count differs from the expected
+1 (2025) + 2 (2026), and patches only the receiving keys on those rows:
+
+| Row id | Player | Season / week | Before | After |
+|---|---|---|---|---|
+| 882052 | Deebo Samuel Sr. | 2026 wk3 | no rec keys | `rec_yds 80`, `rec_td 1` |
+| 883132 | David Montgomery | 2026 wk4 | no rec keys | `rec_yds 19`, `rec_td 0` |
+| 21029 | Isaiah Bond | 2025 wk16 | no rec keys | `rec_yds 21`, `rec_td 0` |
+
+Original stats JSON for the three rows is preserved in
+`lateral-row-repair-backup.json`. No other key, row, or table changed.
+
+**Verification.** Re-running the independent audit against the repaired database
+reports **0 recorded-settlement disagreements across the same 65,448 graded
+lines**, with no in-memory patching and no grader change. The three rows are
+also exactly the complete affected set in the published 2025 and 2026 artifacts.
+
+### Backtest rerun against the repaired database
+
+Run into `impact-db-repaired/` so the committed scores above stay untouched.
+The live development database writes continuously, which trips the runner's
+"database changed during the read-only backtest" guard, so the run used a
+consistent 142 MB snapshot of the tables the backtest reads
+(`players`, `player_game_logs`, `nfl_schedule`, `props`, `prop_results`,
+`prop_games`, `player_game_availability`, `player_game_shares`).
+
+| Week | Disagreements before → after | Spec B v2 Brier | Δ | Forward Platt | Market | Point MAE |
+|---|---|---|---|---|---|---|
+| 2 | 0 → 0 | 0.26954 → 0.26953 | −0.00000 | n/a | 0.24538 → 0.24538 | 13.2476 → 13.2476 |
+| 3 | 23 → **0** | 0.28286 → 0.28343 | +0.00058 | 0.25004 → 0.25009 | 0.24625 → 0.24625 | 12.0587 → 12.0590 |
+| 4 | 15 → **0** | 0.28535 → 0.28580 | +0.00045 | 0.24788 → 0.24780 | 0.24686 → 0.24690 | 14.4230 → 14.4284 |
+| 5 | 0 → 0 | 0.25808 → 0.25811 | +0.00003 | 0.24624 → 0.24632 | unchanged | 12.4410 → 12.4429 |
+| 6 | 0 → 0 | 0.26347 → 0.26344 | −0.00003 | 0.24230 → 0.24226 | unchanged | 10.8890 → 10.8884 |
+| 7 | 0 → 0 | 0.24641 → 0.24639 | −0.00002 | 0.23848 → 0.23854 | unchanged | 11.5598 → 11.5599 |
+| 8 | 0 → 0 | 0.26532 → 0.26530 | −0.00002 | 0.24510 → 0.24513 | unchanged | 13.4520 → 13.4524 |
+| 9 | 0 → 0 | 0.25035 → 0.25032 | −0.00002 | 0.23759 → 0.23760 | unchanged | 11.1845 → 11.1838 |
+
+The graded population is unchanged at 65,448 prop lines and 3,805
+player-game-market rows, and every week keeps the same line count. The stored-data repair
+reproduces the in-memory counterfactual (+0.00058 / +0.00045 in Weeks 3–4) and
+adds the 2025 Isaiah Bond repair, which the in-memory what-if could not.
+
+
+## Recommended fix (historical recommendation)
 
 Move `rec_yds`, `rec_td`, `rec` and `rec_air_yds` out of the target-gated group
 into the always-written set alongside `targets`, so a published zero target and

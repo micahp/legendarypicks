@@ -1,0 +1,2 @@
+# 26 MB per-line export: regenerate with run_prop_projection_backtest.py --db <snapshot>
+walk-forward-prop-projections.csv

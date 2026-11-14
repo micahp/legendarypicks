@@ -281,9 +281,14 @@ def build_rows(path: str, all_positions: bool = False):
         sac = _num(row["sacks_suffered"]) or 0
         car = _num(row["carries"]) or 0
         tgt = _num(row["targets"]) or 0
+        # A post-catch lateral is credited to the player who ends the play with
+        # receiving yards and any touchdown but no target and no reception, so
+        # target volume cannot gate the receiving fields or those yards vanish.
+        rec_yds = _num(row["receiving_yards"]) or 0
+        rec_td = _num(row["receiving_tds"]) or 0
         converted_two_point = any(_num(row[key]) for key in _TWO_POINT_COLS)
         if not all_positions and not (
-            att or sac or car or tgt or converted_two_point
+            att or sac or car or tgt or rec_yds or rec_td or converted_two_point
         ):
             continue
 
@@ -307,7 +312,7 @@ def build_rows(path: str, all_positions: bool = False):
         pat_att_val = _num(row["pat_att"]) or 0
         is_kicker = bool(fg_att or pat_att_val)
         groups = ((_PASS_KEYS, att or sac), (_RUSH_KEYS, car),
-                  (_RECV_KEYS, tgt), (_KICK_KEYS, is_kicker))
+                  (_RECV_KEYS, tgt or rec_yds or rec_td), (_KICK_KEYS, is_kicker))
         for keys, active in groups:
             if not active:
                 continue
