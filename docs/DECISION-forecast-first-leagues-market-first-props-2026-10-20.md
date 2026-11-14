@@ -3,6 +3,8 @@ Date: 2026-10-20
 Status: **Agreed product direction, NOT yet implemented.**
 Supersedes the navigation destination proposed in PROPS-TABS-DESIGN.md; that older file is historical context, not current IA guidance.
 
+**Implementation spec (2026-11-14):** [SPEC-props-forecast-discovery-2026-11-14.md](SPEC-props-forecast-discovery-2026-11-14.md) details the Props landing, model-vs-line card, provider-preserving API, player/game/home reuse, readiness gates and phased implementation. It is **docs-only; no behavior changed**.
+
 ## User jobs, not model names
 
 The two primary questions are:
