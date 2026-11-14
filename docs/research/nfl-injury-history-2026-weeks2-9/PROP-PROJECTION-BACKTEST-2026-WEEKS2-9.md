@@ -86,6 +86,11 @@ Two additional reproducibility limitations are visible in the current runner and
 
 **Keep the frozen raw model and the forward Platt layer separately versioned.** The current evidence supports further research into calibration, not a claim that the raw model beats sportsbooks or that these retrospective reconstructions were available before kickoff. The next evidence gates are (a) exact 38-row settlement reconciliation against actual stat definitions and the official gamebooks — **done, see the settlement audit** — (b) confirmed pre-kickoff time alignment for two-sided market prices, (c) refreshed row-level source URLs, and (d) per-market and clustered uncertainty analysis, including a clean future holdout. Do not overwrite this run's scores to force the settlement check to zero.
 
+
+## Follow-up: forward point calibration
+
+[Research-only Weeks 2–9 point calibration](POINT-CALIBRATION-2026-WEEKS2-9.md) tested additive-mean, additive-median and multiplicative corrections market by market. A forward-shrunk receptions correction of **+0.625 receptions** through Week 9 improves subsequent-week MAE in the historical walk-forward comparison, while adding **+7.064 receiving yards** worsens MAE. The frozen model and prop-probability Platt calibration are unchanged; the candidate requires a fresh holdout before deployment.
+
 ## Scope
 
 This replays the frozen Spec B v2 player projection engine in a walk-forward
