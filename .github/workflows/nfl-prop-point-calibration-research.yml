@@ -8,6 +8,8 @@ on:
       - 'docs/research/nfl-injury-history-2026-weeks2-9/test_calibrate_player_projection_points.py'
       - 'docs/research/nfl-injury-history-2026-weeks2-9/player-game-market-projections.csv'
       - 'docs/research/nfl-injury-history-2026-weeks2-9/point-projection-calibration-study.json'
+      - 'docs/research/nfl-injury-history-2026-weeks2-9/audit_prop_quote_provenance.py'
+      - 'docs/research/nfl-injury-history-2026-weeks2-9/test_audit_prop_quote_provenance.py'
       - '.github/workflows/nfl-prop-point-calibration-research.yml'
   workflow_dispatch:
 
@@ -22,7 +24,8 @@ jobs:
       - name: Syntax and leakage tests
         run: |
           python -m py_compile docs/research/nfl-injury-history-2026-weeks2-9/calibrate_player_projection_points.py
-          python -m unittest discover -s docs/research/nfl-injury-history-2026-weeks2-9 -p test_calibrate_player_projection_points.py -v
+          python -m unittest discover -s docs/research/nfl-injury-history-2026-weeks2-9 -p 'test_*_projection_points.py' -v
+          python -m unittest discover -s docs/research/nfl-injury-history-2026-weeks2-9 -p 'test_audit_prop_quote_provenance.py' -v
       - name: Rebuild on committed distinct player-game-market data
         run: |
           python docs/research/nfl-injury-history-2026-weeks2-9/calibrate_player_projection_points.py \
