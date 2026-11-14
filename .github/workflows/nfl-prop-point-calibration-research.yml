@@ -1,0 +1,55 @@
+name: NFL point calibration research replay
+on:
+  push:
+    branches:
+      - research/finalized-rosters-weeks2-9-2026
+    paths:
+      - 'docs/research/nfl-injury-history-2026-weeks2-9/calibrate_player_projection_points.py'
+      - 'docs/research/nfl-injury-history-2026-weeks2-9/test_calibrate_player_projection_points.py'
+      - 'docs/research/nfl-injury-history-2026-weeks2-9/player-game-market-projections.csv'
+      - 'docs/research/nfl-injury-history-2026-weeks2-9/point-projection-calibration-study.json'
+      - '.github/workflows/nfl-prop-point-calibration-research.yml'
+  workflow_dispatch:
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Syntax and leakage tests
+        run: |
+          python -m py_compile docs/research/nfl-injury-history-2026-weeks2-9/calibrate_player_projection_points.py
+          python -m unittest discover -s docs/research/nfl-injury-history-2026-weeks2-9 -p test_calibrate_player_projection_points.py -v
+      - name: Rebuild on committed distinct player-game-market data
+        run: |
+          python docs/research/nfl-injury-history-2026-weeks2-9/calibrate_player_projection_points.py \
+            --json /tmp/point-calibration.json --csv /tmp/point-calibration.csv
+      - name: Audit regenerated summary against committed results
+        run: |
+          python - <<'PY'
+          import csv, json, math
+          from pathlib import Path
+          root=Path("docs/research/nfl-injury-history-2026-weeks2-9")
+          actual=json.loads(Path("/tmp/point-calibration.json").read_text())
+          expected=json.loads((root/"point-projection-calibration-study.json").read_text())
+          def compare(a,b,where="root"):
+              if isinstance(a,dict):
+                  assert isinstance(b,dict) and a.keys()==b.keys(), where
+                  for k,v in a.items(): compare(v,b[k],where+"."+k)
+              elif isinstance(a,list):
+                  assert isinstance(b,list) and len(a)==len(b), where
+                  for i,v in enumerate(a): compare(v,b[i],where+"["+str(i)+"]")
+              elif isinstance(a,float):
+                  assert isinstance(b,(float,int)) and math.isclose(a,b,abs_tol=1e-9,rel_tol=1e-9), (where,a,b)
+              else:
+                  assert a==b, (where,a,b)
+          compare(actual,expected)
+          with Path("/tmp/point-calibration.csv").open() as f:
+              rows=list(csv.DictReader(f))
+          assert len(rows)==3805, len(rows)
+          assert len(actual["market_results"])==6
+          print("PASS: 3805 independent forecasts, 6 markets, committed metrics agree")
+          PY
