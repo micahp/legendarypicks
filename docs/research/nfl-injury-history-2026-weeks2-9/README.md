@@ -32,3 +32,9 @@ proof of what the site showed before a historic kickoff.
 See [FINALIZED-ROSTERS-2026-WEEKS2-9.md](FINALIZED-ROSTERS-2026-WEEKS2-9.md)
 for the official gamebook roster reconstruction. It provides retrospective
 actual game-day active/inactive labels, not pregame-known model inputs.
+
+## NFL player-prop model backtest
+
+See [2026 Weeks 2–9 projection backtest and interpretation](PROP-PROJECTION-BACKTEST-2026-WEEKS2-9.md)
+for the 65,448-line probability comparison, per-market point accuracy,
+settlement-audit flags, and pregame-quote provenance limitations.
