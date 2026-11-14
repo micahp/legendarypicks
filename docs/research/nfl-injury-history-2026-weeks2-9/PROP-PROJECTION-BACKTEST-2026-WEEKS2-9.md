@@ -42,6 +42,12 @@ betting profitability follows from a retrospective reconstruction.
 
 ## Rebuild
 
+An independent settlement audit recomputes eligibility straight from
+`grader.collect()` for Weeks 2–9 only and re-checks every graded prop against
+the recorded sportsbook settlement without rerunning simulation draws. The
+runner aborts if the audit's eligible count differs from the grader population;
+for this run the audit found 0 disagreements in every week.
+
 Run from the repository root. The database is opened with SQLite `mode=ro`; the
 script does not write projection, calibration, or grading rows to it.
 
