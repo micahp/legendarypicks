@@ -193,7 +193,9 @@ class _Run:
             else:
                 self.add(cid, kind, [], txn.id, "scheduled_team_matchup", True,
                          [{"type": "first_team_meeting", "trade_date": txn.effective_date,
-                           "meetings_checked_from": self.meetings_start}],
+                           "meetings_checked_from": self.meetings_start,
+                           "moves": [{"player": m.player_key, "from": m.from_team, "to": m.to_team}
+                                     for m in sorted(direct, key=lambda m: (m.to_team, m.player_key))]}],
                          [m.evidence_id for m in direct],
                          {"recency_days": _days(self.as_of, txn.effective_date),
                           "multi_party_teams": len(txn.teams), "first_event": True},

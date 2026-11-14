@@ -9,11 +9,12 @@ Branch `feat/historical-relationships-nba`. Draft. No merge, no deploy, no produ
 | Pure graph: trade transactions, team stints, shared tenure, as-of filter | `backend/sports_relationships.py` | `test_sports_relationships.py` (18) |
 | Deterministic candidate detector | `backend/storyline_candidates.py` | `test_storyline_candidates.py` (30) |
 | Editorial ranking (rubric v0-unvalidated) | `backend/storyline_ranking.py` | `test_storyline_ranking.py` (22) |
+| Plain wording templates and an independent audit of the finished text | `backend/storyline_templates.py`, `backend/storyline_audit.py` | `test_storyline_audit.py` (28) |
 
 Kinds detected: `former_team_matchup`, `reciprocal_trade_reunion`, `first_team_meeting_after_trade`, `former_arena_return`, `first_return_to_former_arena`, `former_teammates_now_opponents`.
 
 ## Not built (spec items still open)
-- Audit (`storyline_audit.py`), prose templates, and the `story_engine.py` adapter.
+- The `story_engine.py` adapter. The templates and audit exist but nothing calls them from the engine yet.
 - `playoff_series_rematch`, `championship_or_franchise_milestone_connection`, `historical_rivalry`, `first_actual_opponents_after_trade`. No series, championship or appearance source is loaded.
 - The 12-game editorial evaluation, the 50-game held-out set, before/after stories, latency measurement.
 - A real inactive-list source. Whether Durant played on 2025-11-24 must come from one. The detector only takes availability as an input.

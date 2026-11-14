@@ -96,6 +96,8 @@ class FirstTeamMeeting(unittest.TestCase):
         self.assertEqual(c["claim_scope"], "scheduled_team_matchup")
         self.assertTrue(c["rank_features"]["first_event"])
         self.assertEqual(c["entities"]["players"], [])           # a team claim, not a player return
+        moves = {(m["player"], m["from"], m["to"]) for m in c["claims"][0]["moves"]}
+        self.assertEqual(moves, {(DURANT, "PHX", "HOU"), (GREEN, "HOU", "PHX"), (BROOKS, "HOU", "PHX")})
 
     def test_an_earlier_meeting_after_the_trade_means_not_first(self):
         result = run(game=HOU_GAME, prior_meetings=["2025-11-24"], meetings_coverage_start="2025-01-01",
