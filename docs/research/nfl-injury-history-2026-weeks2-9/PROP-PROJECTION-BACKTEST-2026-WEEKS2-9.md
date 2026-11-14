@@ -46,7 +46,9 @@ An independent settlement audit recomputes eligibility straight from
 `grader.collect()` for Weeks 2–9 only and re-checks every graded prop against
 the recorded sportsbook settlement without rerunning simulation draws. The
 runner aborts if the audit's eligible count differs from the grader population;
-for this run the audit found 0 disagreements in every week.
+for this run the population matched and the audit found 38 rows where the
+book's recorded settlement disagrees with the graded stat line, all in Week 3
+(23) and Week 4 (15).
 
 Run from the repository root. The database is opened with SQLite `mode=ro`; the
 script does not write projection, calibration, or grading rows to it.
