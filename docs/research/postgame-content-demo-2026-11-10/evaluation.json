@@ -1,0 +1,24 @@
+{
+  "by_league": {
+    "nba": {
+      "blocked": 0,
+      "human_ratings": 0,
+      "median_ms": 0.050869,
+      "narrative_beyond_result": 0,
+      "p95_ms": 0.070191,
+      "sampled": 50,
+      "score_only_eligible": 50
+    },
+    "nfl": {
+      "blocked": 0,
+      "human_ratings": 0,
+      "median_ms": 0.045334,
+      "narrative_beyond_result": 0,
+      "p95_ms": 0.097592,
+      "sampled": 50,
+      "score_only_eligible": 50
+    }
+  },
+  "method": "scoreboard snapshots; score-only, not full claim or editorial evaluation",
+  "seed": "20261110-postgame-v1"
+}

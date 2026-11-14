@@ -1,0 +1,104 @@
+{
+  "as_of_utc": "2026-11-11T05:50:32+00:00",
+  "event_sequence": "unavailable",
+  "events": [],
+  "game": {
+    "end_utc": null,
+    "game_id": "401873037",
+    "league": "nfl",
+    "period": 4,
+    "start_utc": "2026-11-06T01:15:00+00:00",
+    "status": "final",
+    "status_detail": "Final"
+  },
+  "players": [
+    {
+      "id": "4360310",
+      "name": "Trevor Lawrence",
+      "game_id": "401873037",
+      "team_id": "JAX",
+      "publisher_team_id": "30",
+      "source_id": "boxscore:401873037",
+      "stats": {
+        "passing_yards": 242,
+        "passing_touchdowns": 1
+      }
+    },
+    {
+      "id": "4429582",
+      "name": "Joe Fagnano",
+      "game_id": "401873037",
+      "team_id": "BAL",
+      "publisher_team_id": "33",
+      "source_id": "boxscore:401873037",
+      "stats": {
+        "passing_yards": 60,
+        "passing_touchdowns": 0
+      }
+    },
+    {
+      "id": "3043078",
+      "name": "Derrick Henry",
+      "game_id": "401873037",
+      "team_id": "BAL",
+      "publisher_team_id": "33",
+      "source_id": "boxscore:401873037",
+      "stats": {
+        "passing_yards": -3,
+        "passing_touchdowns": 0
+      }
+    }
+  ],
+  "pregame_model_locks": [],
+  "sources": [
+    {
+      "captured_at": "2026-11-06T04:06:46+00:00",
+      "id": "scoreboard:401873037",
+      "source": "espn",
+      "source_event_id": "401873037",
+      "url": "https://www.espn.com/nfl/game/_/gameId/401873037"
+    },
+    {
+      "id": "summary:401873037",
+      "kind": "final_summary",
+      "status": "final",
+      "source": "espn",
+      "source_event_id": "401873037",
+      "captured_at": "2026-11-11T05:48:36+00:00",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401873037",
+      "raw_response_sha256": "7a9ce405f7fc61d9d8962b1e28e9f2e8b205fed17d181e86b7fb26c946e34e7b",
+      "capture_note": "Final status, team IDs and scores reconciled; raw response not stored."
+    },
+    {
+      "id": "boxscore:401873037",
+      "kind": "final_boxscore",
+      "status": "final",
+      "source": "espn",
+      "source_event_id": "401873037",
+      "captured_at": "2026-11-11T05:50:32+00:00",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401873037",
+      "raw_response_sha256": "ff0bc16166660727d66565ba418047dce77ea14d13d800eb0f85b5809c107ce0",
+      "teams": {
+        "30": 33,
+        "33": 10
+      },
+      "capture_note": "Final passing lines from game summary; raw response not stored."
+    }
+  ],
+  "teams": [
+    {
+      "id": "JAX",
+      "name": "Jacksonville Jaguars",
+      "score": 33,
+      "side": "away",
+      "publisher_team_id": "30"
+    },
+    {
+      "id": "BAL",
+      "name": "Baltimore Ravens",
+      "score": 10,
+      "side": "home",
+      "publisher_team_id": "33"
+    }
+  ]
+}

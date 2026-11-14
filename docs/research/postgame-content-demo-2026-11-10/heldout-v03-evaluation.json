@@ -1,0 +1,103 @@
+{
+  "by_league": {
+    "nba": {
+      "capture_issues": 0,
+      "claims_in_blocked_games": 0,
+      "claims_in_passing_games": 123,
+      "duplicate_headlines": 0,
+      "games": 50,
+      "games_all_mechanical_checks_pass": 50,
+      "gates": {
+        "eligible": 50
+      },
+      "human_ratings": 0,
+      "mean_story_words": 18.2,
+      "narrative_beyond_result": 17,
+      "nonempty_headlines": 50,
+      "renderer_median_ms": 0.4168,
+      "renderer_p95_ms": 6.4698,
+      "rubric_dimension_means": {
+        "clarity": 70,
+        "facts": 100,
+        "hook": 43.6,
+        "sequence": null,
+        "specificity": 40.3,
+        "voice": 75
+      },
+      "selected_angle_counts": {
+        "fallback": 33,
+        "standout_player": 17
+      },
+      "source_coverage": {
+        "final_boxscore": 50,
+        "pregame_lock": 0,
+        "publisher_pbp_crosschecked": 3,
+        "rights_cleared_video": 0,
+        "scoreboard": 50
+      },
+      "templates": {
+        "final_result": 33,
+        "player": 17
+      }
+    },
+    "nfl": {
+      "capture_issues": 0,
+      "claims_in_blocked_games": 0,
+      "claims_in_passing_games": 91,
+      "duplicate_headlines": 0,
+      "games": 50,
+      "games_all_mechanical_checks_pass": 50,
+      "gates": {
+        "eligible": 28,
+        "eligible_score_only": 22
+      },
+      "human_ratings": 0,
+      "mean_story_words": 15.44,
+      "narrative_beyond_result": 20,
+      "nonempty_headlines": 50,
+      "renderer_median_ms": 0.4838,
+      "renderer_p95_ms": 0.7604,
+      "rubric_dimension_means": {
+        "clarity": 70,
+        "facts": 100,
+        "hook": 52.4,
+        "sequence": null,
+        "specificity": 50.2,
+        "voice": 75
+      },
+      "selected_angle_counts": {
+        "fallback": 30,
+        "standout_player": 20
+      },
+      "source_coverage": {
+        "final_boxscore": 50,
+        "pregame_lock": 0,
+        "publisher_pbp_crosschecked": 0,
+        "rights_cleared_video": 0,
+        "scoreboard": 50
+      },
+      "templates": {
+        "final_result": 30,
+        "yardage": 20
+      }
+    }
+  },
+  "corpus_sha256": "7ddfcbc7e4c4e7e7d55b76410a2f47881036f9b340f5d079f38df2cc9bed173e",
+  "engine_version": "postgame-v0.3",
+  "frozen_sha256": {
+    "capture_postgame_holdout.py": "d39ac067c63430ca4b73d0d545c7333ecfd2d04db6bbbf9ed2fe8490276b6a49",
+    "postgame_feed_adapter.py": "7440c0aafd565e2435ba3c70ddaae75de1024678678402ef915795a509c118f3",
+    "postgame_rubric.py": "ef38de4a2145b0d1542a6ae5bfb06cce5f71d5db6050ee5cc3382a68ddec3eb6",
+    "postgame_story_audit.py": "5b7f4782b75c007baee39272e939d77951eaf7b56704e77a5c5b3eb054db7674",
+    "postgame_story_engine.py": "56963211480ae1b8acedcc489f5bc228231f3ec46f09a7c74ee048e8ee81d8c3",
+    "postgame_story_events.py": "72d58102af6bdd66cfa6c47cc8130866925f21b8d10c4f6520952bb1f3311c9d"
+  },
+  "limitations": [
+    "Mechanical checks recompute normalized facts, not independent publisher facts.",
+    "Source coverage does not prove all individual plays are correct.",
+    "Automated editorial proxy scores are not human judgments.",
+    "Human preference versus legacy and external editorial metadata was not measured."
+  ],
+  "sample": "50 NFL and 50 NBA fixed-seed completed games; previous and coached fixtures excluded",
+  "seed": "20261111-postgame-heldout-v03"
+}

@@ -1,0 +1,5216 @@
+{
+  "as_of_utc": "2026-11-11T06:08:35+00:00",
+  "event_sequence": {
+    "source_id": "pbp:401909961"
+  },
+  "events": [
+    {
+      "clock_seconds": 720,
+      "id": "4019099614",
+      "kind": "start",
+      "period": 1,
+      "scores": {
+        "2": 0,
+        "20": 0
+      },
+      "sequence": 4
+    },
+    {
+      "clock_seconds": 704,
+      "id": "4019099618",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 0,
+        "20": 0
+      },
+      "sequence": 8
+    },
+    {
+      "clock_seconds": 704,
+      "id": "4019099619",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 0,
+        "20": 0
+      },
+      "sequence": 9
+    },
+    {
+      "clock_seconds": 697,
+      "id": "40190996110",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 0,
+        "20": 0
+      },
+      "sequence": 10
+    },
+    {
+      "clock_seconds": 697,
+      "id": "40190996111",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 0,
+        "20": 0
+      },
+      "sequence": 11
+    },
+    {
+      "clock_seconds": 687,
+      "id": "40190996112",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 0,
+        "20": 0
+      },
+      "sequence": 12
+    },
+    {
+      "clock_seconds": 687,
+      "id": "40190996113",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 0,
+        "20": 0
+      },
+      "sequence": 13
+    },
+    {
+      "clock_seconds": 675,
+      "id": "40190996114",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 2,
+        "20": 0
+      },
+      "sequence": 14
+    },
+    {
+      "clock_seconds": 656,
+      "id": "40190996115",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 2,
+        "20": 0
+      },
+      "sequence": 15
+    },
+    {
+      "clock_seconds": 656,
+      "id": "40190996117",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 2,
+        "20": 1
+      },
+      "sequence": 17
+    },
+    {
+      "clock_seconds": 656,
+      "id": "40190996118",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 2,
+        "20": 2
+      },
+      "sequence": 18
+    },
+    {
+      "clock_seconds": 647,
+      "id": "40190996119",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 2,
+        "20": 2
+      },
+      "sequence": 19
+    },
+    {
+      "clock_seconds": 641,
+      "id": "40190996121",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 4,
+        "20": 2
+      },
+      "sequence": 21
+    },
+    {
+      "clock_seconds": 618,
+      "id": "40190996122",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 4,
+        "20": 2
+      },
+      "sequence": 22
+    },
+    {
+      "clock_seconds": 618,
+      "id": "40190996123",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 4,
+        "20": 2
+      },
+      "sequence": 23
+    },
+    {
+      "clock_seconds": 605,
+      "id": "40190996124",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 4,
+        "20": 2
+      },
+      "sequence": 24
+    },
+    {
+      "clock_seconds": 601,
+      "id": "40190996126",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 4,
+        "20": 5
+      },
+      "sequence": 26
+    },
+    {
+      "clock_seconds": 586,
+      "id": "40190996128",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 4,
+        "20": 5
+      },
+      "sequence": 28
+    },
+    {
+      "clock_seconds": 586,
+      "id": "40190996129",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 4,
+        "20": 5
+      },
+      "sequence": 29
+    },
+    {
+      "clock_seconds": 569,
+      "id": "40190996130",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 4,
+        "20": 5
+      },
+      "sequence": 30
+    },
+    {
+      "clock_seconds": 564,
+      "id": "40190996131",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 4,
+        "20": 5
+      },
+      "sequence": 31
+    },
+    {
+      "clock_seconds": 561,
+      "id": "40190996133",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 7,
+        "20": 5
+      },
+      "sequence": 33
+    },
+    {
+      "clock_seconds": 539,
+      "id": "40190996135",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 7,
+        "20": 5
+      },
+      "sequence": 35
+    },
+    {
+      "clock_seconds": 539,
+      "id": "40190996136",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 7,
+        "20": 5
+      },
+      "sequence": 36
+    },
+    {
+      "clock_seconds": 535,
+      "id": "40190996138",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 7,
+        "20": 5
+      },
+      "sequence": 38
+    },
+    {
+      "clock_seconds": 532,
+      "id": "40190996140",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 9,
+        "20": 5
+      },
+      "sequence": 40
+    },
+    {
+      "clock_seconds": 521,
+      "id": "40190996142",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 9,
+        "20": 7
+      },
+      "sequence": 42
+    },
+    {
+      "clock_seconds": 511,
+      "id": "40190996144",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 11,
+        "20": 7
+      },
+      "sequence": 44
+    },
+    {
+      "clock_seconds": 501,
+      "id": "40190996146",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 11,
+        "20": 9
+      },
+      "sequence": 46
+    },
+    {
+      "clock_seconds": 501,
+      "id": "40190996147",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 11,
+        "20": 9
+      },
+      "sequence": 47
+    },
+    {
+      "clock_seconds": 501,
+      "id": "40190996149",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 11,
+        "20": 10
+      },
+      "sequence": 49
+    },
+    {
+      "clock_seconds": 492,
+      "id": "40190996150",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 13,
+        "20": 10
+      },
+      "sequence": 50
+    },
+    {
+      "clock_seconds": 478,
+      "id": "40190996151",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 13,
+        "20": 10
+      },
+      "sequence": 51
+    },
+    {
+      "clock_seconds": 478,
+      "id": "40190996153",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 13,
+        "20": 11
+      },
+      "sequence": 53
+    },
+    {
+      "clock_seconds": 478,
+      "id": "40190996154",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 13,
+        "20": 12
+      },
+      "sequence": 54
+    },
+    {
+      "clock_seconds": 478,
+      "id": "40190996156",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 13,
+        "20": 12
+      },
+      "sequence": 56
+    },
+    {
+      "clock_seconds": 464,
+      "id": "40190996157",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 16,
+        "20": 12
+      },
+      "sequence": 57
+    },
+    {
+      "clock_seconds": 449,
+      "id": "40190996159",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 16,
+        "20": 12
+      },
+      "sequence": 59
+    },
+    {
+      "clock_seconds": 449,
+      "id": "40190996160",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 16,
+        "20": 12
+      },
+      "sequence": 60
+    },
+    {
+      "clock_seconds": 432,
+      "id": "40190996162",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 16,
+        "20": 12
+      },
+      "sequence": 62
+    },
+    {
+      "clock_seconds": 432,
+      "id": "40190996164",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 17,
+        "20": 12
+      },
+      "sequence": 64
+    },
+    {
+      "clock_seconds": 432,
+      "id": "40190996165",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 18,
+        "20": 12
+      },
+      "sequence": 65
+    },
+    {
+      "clock_seconds": 432,
+      "id": "40190996166",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 18,
+        "20": 12
+      },
+      "sequence": 66
+    },
+    {
+      "clock_seconds": 416,
+      "id": "40190996168",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 18,
+        "20": 12
+      },
+      "sequence": 68
+    },
+    {
+      "clock_seconds": 416,
+      "id": "40190996169",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 18,
+        "20": 12
+      },
+      "sequence": 69
+    },
+    {
+      "clock_seconds": 411,
+      "id": "40190996170",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 18,
+        "20": 12
+      },
+      "sequence": 70
+    },
+    {
+      "clock_seconds": 408,
+      "id": "40190996172",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 18,
+        "20": 12
+      },
+      "sequence": 72
+    },
+    {
+      "clock_seconds": 408,
+      "id": "40190996174",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 18,
+        "20": 12
+      },
+      "sequence": 74
+    },
+    {
+      "clock_seconds": 391,
+      "id": "40190996175",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 21,
+        "20": 12
+      },
+      "sequence": 75
+    },
+    {
+      "clock_seconds": 381,
+      "id": "40190996176",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 21,
+        "20": 14
+      },
+      "sequence": 76
+    },
+    {
+      "clock_seconds": 362,
+      "id": "40190996177",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 21,
+        "20": 14
+      },
+      "sequence": 77
+    },
+    {
+      "clock_seconds": 362,
+      "id": "40190996178",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 21,
+        "20": 14
+      },
+      "sequence": 78
+    },
+    {
+      "clock_seconds": 358,
+      "id": "40190996179",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 14
+      },
+      "sequence": 79
+    },
+    {
+      "clock_seconds": 347,
+      "id": "40190996180",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 14
+      },
+      "sequence": 80
+    },
+    {
+      "clock_seconds": 347,
+      "id": "40190996181",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 14
+      },
+      "sequence": 81
+    },
+    {
+      "clock_seconds": 340,
+      "id": "40190996182",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 14
+      },
+      "sequence": 82
+    },
+    {
+      "clock_seconds": 340,
+      "id": "40190996183",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 14
+      },
+      "sequence": 83
+    },
+    {
+      "clock_seconds": 333,
+      "id": "40190996184",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 14
+      },
+      "sequence": 84
+    },
+    {
+      "clock_seconds": 333,
+      "id": "40190996186",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 15
+      },
+      "sequence": 86
+    },
+    {
+      "clock_seconds": 333,
+      "id": "40190996187",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 87
+    },
+    {
+      "clock_seconds": 333,
+      "id": "40190996190",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 90
+    },
+    {
+      "clock_seconds": 333,
+      "id": "40190996191",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 91
+    },
+    {
+      "clock_seconds": 333,
+      "id": "40190996195",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 95
+    },
+    {
+      "clock_seconds": 333,
+      "id": "40190996196",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 96
+    },
+    {
+      "clock_seconds": 333,
+      "id": "40190996197",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 97
+    },
+    {
+      "clock_seconds": 318,
+      "id": "40190996198",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 98
+    },
+    {
+      "clock_seconds": 318,
+      "id": "40190996199",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 99
+    },
+    {
+      "clock_seconds": 314,
+      "id": "401909961100",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 100
+    },
+    {
+      "clock_seconds": 314,
+      "id": "401909961101",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 101
+    },
+    {
+      "clock_seconds": 309,
+      "id": "401909961102",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 16
+      },
+      "sequence": 102
+    },
+    {
+      "clock_seconds": 309,
+      "id": "401909961104",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 17
+      },
+      "sequence": 104
+    },
+    {
+      "clock_seconds": 309,
+      "id": "401909961105",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 18
+      },
+      "sequence": 105
+    },
+    {
+      "clock_seconds": 291,
+      "id": "401909961106",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 18
+      },
+      "sequence": 106
+    },
+    {
+      "clock_seconds": 291,
+      "id": "401909961107",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 18
+      },
+      "sequence": 107
+    },
+    {
+      "clock_seconds": 283,
+      "id": "401909961108",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 108
+    },
+    {
+      "clock_seconds": 257,
+      "id": "401909961109",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 109
+    },
+    {
+      "clock_seconds": 257,
+      "id": "401909961110",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 110
+    },
+    {
+      "clock_seconds": 247,
+      "id": "401909961111",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 111
+    },
+    {
+      "clock_seconds": 247,
+      "id": "401909961112",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 112
+    },
+    {
+      "clock_seconds": 229,
+      "id": "401909961113",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 113
+    },
+    {
+      "clock_seconds": 217,
+      "id": "401909961114",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 114
+    },
+    {
+      "clock_seconds": 200,
+      "id": "401909961116",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 116
+    },
+    {
+      "clock_seconds": 200,
+      "id": "401909961117",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 117
+    },
+    {
+      "clock_seconds": 181,
+      "id": "401909961118",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 118
+    },
+    {
+      "clock_seconds": 181,
+      "id": "401909961119",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 23,
+        "20": 20
+      },
+      "sequence": 119
+    },
+    {
+      "clock_seconds": 175,
+      "id": "401909961120",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 20
+      },
+      "sequence": 120
+    },
+    {
+      "clock_seconds": 161,
+      "id": "401909961122",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 20
+      },
+      "sequence": 122
+    },
+    {
+      "clock_seconds": 161,
+      "id": "401909961124",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 20
+      },
+      "sequence": 124
+    },
+    {
+      "clock_seconds": 161,
+      "id": "401909961125",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 20
+      },
+      "sequence": 125
+    },
+    {
+      "clock_seconds": 161,
+      "id": "401909961127",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 20
+      },
+      "sequence": 127
+    },
+    {
+      "clock_seconds": 161,
+      "id": "401909961129",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 20
+      },
+      "sequence": 129
+    },
+    {
+      "clock_seconds": 161,
+      "id": "401909961130",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 20
+      },
+      "sequence": 130
+    },
+    {
+      "clock_seconds": 161,
+      "id": "401909961131",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 21
+      },
+      "sequence": 131
+    },
+    {
+      "clock_seconds": 161,
+      "id": "401909961132",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 21
+      },
+      "sequence": 132
+    },
+    {
+      "clock_seconds": 161,
+      "id": "401909961133",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 21
+      },
+      "sequence": 133
+    },
+    {
+      "clock_seconds": 141,
+      "id": "401909961134",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 21
+      },
+      "sequence": 134
+    },
+    {
+      "clock_seconds": 122,
+      "id": "401909961135",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 21
+      },
+      "sequence": 135
+    },
+    {
+      "clock_seconds": 122,
+      "id": "401909961136",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 21
+      },
+      "sequence": 136
+    },
+    {
+      "clock_seconds": 104,
+      "id": "401909961137",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 21
+      },
+      "sequence": 137
+    },
+    {
+      "clock_seconds": 104,
+      "id": "401909961138",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 21
+      },
+      "sequence": 138
+    },
+    {
+      "clock_seconds": 90,
+      "id": "401909961139",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 21
+      },
+      "sequence": 139
+    },
+    {
+      "clock_seconds": 90,
+      "id": "401909961140",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 26,
+        "20": 21
+      },
+      "sequence": 140
+    },
+    {
+      "clock_seconds": 74,
+      "id": "401909961141",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 28,
+        "20": 21
+      },
+      "sequence": 141
+    },
+    {
+      "clock_seconds": 64,
+      "id": "401909961143",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 28,
+        "20": 21
+      },
+      "sequence": 143
+    },
+    {
+      "clock_seconds": 64,
+      "id": "401909961145",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 28,
+        "20": 21
+      },
+      "sequence": 145
+    },
+    {
+      "clock_seconds": 48.7,
+      "id": "401909961146",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 28,
+        "20": 21
+      },
+      "sequence": 146
+    },
+    {
+      "clock_seconds": 48.7,
+      "id": "401909961147",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 28,
+        "20": 21
+      },
+      "sequence": 147
+    },
+    {
+      "clock_seconds": 31.3,
+      "id": "401909961149",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 28,
+        "20": 21
+      },
+      "sequence": 149
+    },
+    {
+      "clock_seconds": 31.3,
+      "id": "401909961150",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 28,
+        "20": 21
+      },
+      "sequence": 150
+    },
+    {
+      "clock_seconds": 25.6,
+      "id": "401909961151",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 28,
+        "20": 21
+      },
+      "sequence": 151
+    },
+    {
+      "clock_seconds": 25.6,
+      "id": "401909961152",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 28,
+        "20": 21
+      },
+      "sequence": 152
+    },
+    {
+      "clock_seconds": 25.5,
+      "id": "401909961153",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 30,
+        "20": 21
+      },
+      "sequence": 153
+    },
+    {
+      "clock_seconds": 4.2,
+      "id": "401909961154",
+      "kind": "score",
+      "period": 1,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 154
+    },
+    {
+      "clock_seconds": 1,
+      "id": "401909961156",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 156
+    },
+    {
+      "clock_seconds": 1,
+      "id": "401909961157",
+      "kind": "play",
+      "period": 1,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 157
+    },
+    {
+      "clock_seconds": 0,
+      "id": "401909961158",
+      "kind": "period_end",
+      "period": 1,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 158
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961161",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 161
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961162",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 162
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961167",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 167
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961168",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 168
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961169",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 169
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961170",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 170
+    },
+    {
+      "clock_seconds": 696,
+      "id": "401909961172",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 172
+    },
+    {
+      "clock_seconds": 696,
+      "id": "401909961173",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 30,
+        "20": 23
+      },
+      "sequence": 173
+    },
+    {
+      "clock_seconds": 682,
+      "id": "401909961176",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 32,
+        "20": 23
+      },
+      "sequence": 176
+    },
+    {
+      "clock_seconds": 667,
+      "id": "401909961178",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 32,
+        "20": 25
+      },
+      "sequence": 178
+    },
+    {
+      "clock_seconds": 650,
+      "id": "401909961179",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 34,
+        "20": 25
+      },
+      "sequence": 179
+    },
+    {
+      "clock_seconds": 628,
+      "id": "401909961181",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 34,
+        "20": 25
+      },
+      "sequence": 181
+    },
+    {
+      "clock_seconds": 628,
+      "id": "401909961182",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 34,
+        "20": 25
+      },
+      "sequence": 182
+    },
+    {
+      "clock_seconds": 620,
+      "id": "401909961183",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 34,
+        "20": 25
+      },
+      "sequence": 183
+    },
+    {
+      "clock_seconds": 620,
+      "id": "401909961184",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 34,
+        "20": 25
+      },
+      "sequence": 184
+    },
+    {
+      "clock_seconds": 605,
+      "id": "401909961185",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 34,
+        "20": 25
+      },
+      "sequence": 185
+    },
+    {
+      "clock_seconds": 605,
+      "id": "401909961186",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 34,
+        "20": 25
+      },
+      "sequence": 186
+    },
+    {
+      "clock_seconds": 592,
+      "id": "401909961187",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 34,
+        "20": 28
+      },
+      "sequence": 187
+    },
+    {
+      "clock_seconds": 577,
+      "id": "401909961189",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 36,
+        "20": 28
+      },
+      "sequence": 189
+    },
+    {
+      "clock_seconds": 560,
+      "id": "401909961190",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 36,
+        "20": 28
+      },
+      "sequence": 190
+    },
+    {
+      "clock_seconds": 560,
+      "id": "401909961191",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 36,
+        "20": 28
+      },
+      "sequence": 191
+    },
+    {
+      "clock_seconds": 553,
+      "id": "401909961192",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 39,
+        "20": 28
+      },
+      "sequence": 192
+    },
+    {
+      "clock_seconds": 537,
+      "id": "401909961193",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 39,
+        "20": 28
+      },
+      "sequence": 193
+    },
+    {
+      "clock_seconds": 537,
+      "id": "401909961195",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 39,
+        "20": 29
+      },
+      "sequence": 195
+    },
+    {
+      "clock_seconds": 537,
+      "id": "401909961196",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 39,
+        "20": 30
+      },
+      "sequence": 196
+    },
+    {
+      "clock_seconds": 537,
+      "id": "401909961198",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 39,
+        "20": 30
+      },
+      "sequence": 198
+    },
+    {
+      "clock_seconds": 517,
+      "id": "401909961199",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 41,
+        "20": 30
+      },
+      "sequence": 199
+    },
+    {
+      "clock_seconds": 507,
+      "id": "401909961201",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 41,
+        "20": 32
+      },
+      "sequence": 201
+    },
+    {
+      "clock_seconds": 490,
+      "id": "401909961203",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 41,
+        "20": 32
+      },
+      "sequence": 203
+    },
+    {
+      "clock_seconds": 490,
+      "id": "401909961204",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 41,
+        "20": 32
+      },
+      "sequence": 204
+    },
+    {
+      "clock_seconds": 480,
+      "id": "401909961205",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 41,
+        "20": 32
+      },
+      "sequence": 205
+    },
+    {
+      "clock_seconds": 480,
+      "id": "401909961207",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 41,
+        "20": 33
+      },
+      "sequence": 207
+    },
+    {
+      "clock_seconds": 480,
+      "id": "401909961208",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 41,
+        "20": 34
+      },
+      "sequence": 208
+    },
+    {
+      "clock_seconds": 480,
+      "id": "401909961210",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 41,
+        "20": 34
+      },
+      "sequence": 210
+    },
+    {
+      "clock_seconds": 464,
+      "id": "401909961211",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 43,
+        "20": 34
+      },
+      "sequence": 211
+    },
+    {
+      "clock_seconds": 454,
+      "id": "401909961212",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 43,
+        "20": 34
+      },
+      "sequence": 212
+    },
+    {
+      "clock_seconds": 454,
+      "id": "401909961214",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 43,
+        "20": 34
+      },
+      "sequence": 214
+    },
+    {
+      "clock_seconds": 441,
+      "id": "401909961215",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 215
+    },
+    {
+      "clock_seconds": 434,
+      "id": "401909961216",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 216
+    },
+    {
+      "clock_seconds": 425,
+      "id": "401909961217",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 217
+    },
+    {
+      "clock_seconds": 425,
+      "id": "401909961218",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 218
+    },
+    {
+      "clock_seconds": 403,
+      "id": "401909961219",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 219
+    },
+    {
+      "clock_seconds": 403,
+      "id": "401909961220",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 220
+    },
+    {
+      "clock_seconds": 395,
+      "id": "401909961221",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 221
+    },
+    {
+      "clock_seconds": 395,
+      "id": "401909961222",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 222
+    },
+    {
+      "clock_seconds": 382,
+      "id": "401909961223",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 223
+    },
+    {
+      "clock_seconds": 382,
+      "id": "401909961224",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 224
+    },
+    {
+      "clock_seconds": 374,
+      "id": "401909961225",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 225
+    },
+    {
+      "clock_seconds": 374,
+      "id": "401909961226",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 226
+    },
+    {
+      "clock_seconds": 359,
+      "id": "401909961227",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 227
+    },
+    {
+      "clock_seconds": 359,
+      "id": "401909961228",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 228
+    },
+    {
+      "clock_seconds": 352,
+      "id": "401909961232",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 232
+    },
+    {
+      "clock_seconds": 352,
+      "id": "401909961233",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 233
+    },
+    {
+      "clock_seconds": 352,
+      "id": "401909961237",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 237
+    },
+    {
+      "clock_seconds": 352,
+      "id": "401909961238",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 238
+    },
+    {
+      "clock_seconds": 352,
+      "id": "401909961239",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 239
+    },
+    {
+      "clock_seconds": 352,
+      "id": "401909961241",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 241
+    },
+    {
+      "clock_seconds": 349,
+      "id": "401909961242",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 242
+    },
+    {
+      "clock_seconds": 341,
+      "id": "401909961244",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 244
+    },
+    {
+      "clock_seconds": 341,
+      "id": "401909961245",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 34
+      },
+      "sequence": 245
+    },
+    {
+      "clock_seconds": 337,
+      "id": "401909961247",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 45,
+        "20": 36
+      },
+      "sequence": 247
+    },
+    {
+      "clock_seconds": 331,
+      "id": "401909961249",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 36
+      },
+      "sequence": 249
+    },
+    {
+      "clock_seconds": 316,
+      "id": "401909961250",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 36
+      },
+      "sequence": 250
+    },
+    {
+      "clock_seconds": 316,
+      "id": "401909961252",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 36
+      },
+      "sequence": 252
+    },
+    {
+      "clock_seconds": 316,
+      "id": "401909961253",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 36
+      },
+      "sequence": 253
+    },
+    {
+      "clock_seconds": 316,
+      "id": "401909961254",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 36
+      },
+      "sequence": 254
+    },
+    {
+      "clock_seconds": 316,
+      "id": "401909961255",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 36
+      },
+      "sequence": 255
+    },
+    {
+      "clock_seconds": 304,
+      "id": "401909961256",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 36
+      },
+      "sequence": 256
+    },
+    {
+      "clock_seconds": 304,
+      "id": "401909961257",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 36
+      },
+      "sequence": 257
+    },
+    {
+      "clock_seconds": 297,
+      "id": "401909961258",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 36
+      },
+      "sequence": 258
+    },
+    {
+      "clock_seconds": 297,
+      "id": "401909961260",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 37
+      },
+      "sequence": 260
+    },
+    {
+      "clock_seconds": 297,
+      "id": "401909961261",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 48,
+        "20": 38
+      },
+      "sequence": 261
+    },
+    {
+      "clock_seconds": 276,
+      "id": "401909961262",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 51,
+        "20": 38
+      },
+      "sequence": 262
+    },
+    {
+      "clock_seconds": 262,
+      "id": "401909961264",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 51,
+        "20": 38
+      },
+      "sequence": 264
+    },
+    {
+      "clock_seconds": 262,
+      "id": "401909961265",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 51,
+        "20": 38
+      },
+      "sequence": 265
+    },
+    {
+      "clock_seconds": 251,
+      "id": "401909961266",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 51,
+        "20": 38
+      },
+      "sequence": 266
+    },
+    {
+      "clock_seconds": 251,
+      "id": "401909961267",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 51,
+        "20": 38
+      },
+      "sequence": 267
+    },
+    {
+      "clock_seconds": 228,
+      "id": "401909961269",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 51,
+        "20": 38
+      },
+      "sequence": 269
+    },
+    {
+      "clock_seconds": 228,
+      "id": "401909961270",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 51,
+        "20": 38
+      },
+      "sequence": 270
+    },
+    {
+      "clock_seconds": 211,
+      "id": "401909961271",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 38
+      },
+      "sequence": 271
+    },
+    {
+      "clock_seconds": 193,
+      "id": "401909961272",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 38
+      },
+      "sequence": 272
+    },
+    {
+      "clock_seconds": 193,
+      "id": "401909961273",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 38
+      },
+      "sequence": 273
+    },
+    {
+      "clock_seconds": 188,
+      "id": "401909961274",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 40
+      },
+      "sequence": 274
+    },
+    {
+      "clock_seconds": 173,
+      "id": "401909961275",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 40
+      },
+      "sequence": 275
+    },
+    {
+      "clock_seconds": 173,
+      "id": "401909961276",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 40
+      },
+      "sequence": 276
+    },
+    {
+      "clock_seconds": 170,
+      "id": "401909961277",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 40
+      },
+      "sequence": 277
+    },
+    {
+      "clock_seconds": 170,
+      "id": "401909961278",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 40
+      },
+      "sequence": 278
+    },
+    {
+      "clock_seconds": 166,
+      "id": "401909961279",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 42
+      },
+      "sequence": 279
+    },
+    {
+      "clock_seconds": 165,
+      "id": "401909961281",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 42
+      },
+      "sequence": 281
+    },
+    {
+      "clock_seconds": 165,
+      "id": "401909961284",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 42
+      },
+      "sequence": 284
+    },
+    {
+      "clock_seconds": 165,
+      "id": "401909961288",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 42
+      },
+      "sequence": 288
+    },
+    {
+      "clock_seconds": 165,
+      "id": "401909961289",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 42
+      },
+      "sequence": 289
+    },
+    {
+      "clock_seconds": 165,
+      "id": "401909961290",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 42
+      },
+      "sequence": 290
+    },
+    {
+      "clock_seconds": 146,
+      "id": "401909961291",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 42
+      },
+      "sequence": 291
+    },
+    {
+      "clock_seconds": 146,
+      "id": "401909961292",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 54,
+        "20": 42
+      },
+      "sequence": 292
+    },
+    {
+      "clock_seconds": 144,
+      "id": "401909961293",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 56,
+        "20": 42
+      },
+      "sequence": 293
+    },
+    {
+      "clock_seconds": 144,
+      "id": "401909961294",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 56,
+        "20": 42
+      },
+      "sequence": 294
+    },
+    {
+      "clock_seconds": 144,
+      "id": "401909961297",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 56,
+        "20": 42
+      },
+      "sequence": 297
+    },
+    {
+      "clock_seconds": 144,
+      "id": "401909961299",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 56,
+        "20": 42
+      },
+      "sequence": 299
+    },
+    {
+      "clock_seconds": 144,
+      "id": "401909961300",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 57,
+        "20": 42
+      },
+      "sequence": 300
+    },
+    {
+      "clock_seconds": 123,
+      "id": "401909961301",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 57,
+        "20": 44
+      },
+      "sequence": 301
+    },
+    {
+      "clock_seconds": 101,
+      "id": "401909961303",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 59,
+        "20": 44
+      },
+      "sequence": 303
+    },
+    {
+      "clock_seconds": 87,
+      "id": "401909961304",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 59,
+        "20": 47
+      },
+      "sequence": 304
+    },
+    {
+      "clock_seconds": 74,
+      "id": "401909961306",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 47
+      },
+      "sequence": 306
+    },
+    {
+      "clock_seconds": 56,
+      "id": "401909961308",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 47
+      },
+      "sequence": 308
+    },
+    {
+      "clock_seconds": 56,
+      "id": "401909961310",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 48
+      },
+      "sequence": 310
+    },
+    {
+      "clock_seconds": 56,
+      "id": "401909961311",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 49
+      },
+      "sequence": 311
+    },
+    {
+      "clock_seconds": 47.6,
+      "id": "401909961312",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 49
+      },
+      "sequence": 312
+    },
+    {
+      "clock_seconds": 39.9,
+      "id": "401909961314",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 49
+      },
+      "sequence": 314
+    },
+    {
+      "clock_seconds": 39.9,
+      "id": "401909961315",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 49
+      },
+      "sequence": 315
+    },
+    {
+      "clock_seconds": 33.5,
+      "id": "401909961316",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 49
+      },
+      "sequence": 316
+    },
+    {
+      "clock_seconds": 33.5,
+      "id": "401909961317",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 49
+      },
+      "sequence": 317
+    },
+    {
+      "clock_seconds": 31.2,
+      "id": "401909961318",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 49
+      },
+      "sequence": 318
+    },
+    {
+      "clock_seconds": 30.2,
+      "id": "401909961320",
+      "kind": "score",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 51
+      },
+      "sequence": 320
+    },
+    {
+      "clock_seconds": 13.1,
+      "id": "401909961321",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 51
+      },
+      "sequence": 321
+    },
+    {
+      "clock_seconds": 13.1,
+      "id": "401909961322",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 51
+      },
+      "sequence": 322
+    },
+    {
+      "clock_seconds": 1.1,
+      "id": "401909961323",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 51
+      },
+      "sequence": 323
+    },
+    {
+      "clock_seconds": 1.1,
+      "id": "401909961324",
+      "kind": "play",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 51
+      },
+      "sequence": 324
+    },
+    {
+      "clock_seconds": 0,
+      "id": "401909961325",
+      "kind": "period_end",
+      "period": 2,
+      "scores": {
+        "2": 62,
+        "20": 51
+      },
+      "sequence": 325
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961327",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 62,
+        "20": 51
+      },
+      "sequence": 327
+    },
+    {
+      "clock_seconds": 702,
+      "id": "401909961329",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 62,
+        "20": 54
+      },
+      "sequence": 329
+    },
+    {
+      "clock_seconds": 686,
+      "id": "401909961331",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 62,
+        "20": 54
+      },
+      "sequence": 331
+    },
+    {
+      "clock_seconds": 686,
+      "id": "401909961332",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 62,
+        "20": 54
+      },
+      "sequence": 332
+    },
+    {
+      "clock_seconds": 680,
+      "id": "401909961333",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 62,
+        "20": 54
+      },
+      "sequence": 333
+    },
+    {
+      "clock_seconds": 680,
+      "id": "401909961335",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 62,
+        "20": 55
+      },
+      "sequence": 335
+    },
+    {
+      "clock_seconds": 680,
+      "id": "401909961336",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 62,
+        "20": 56
+      },
+      "sequence": 336
+    },
+    {
+      "clock_seconds": 664,
+      "id": "401909961337",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 65,
+        "20": 56
+      },
+      "sequence": 337
+    },
+    {
+      "clock_seconds": 648,
+      "id": "401909961338",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 65,
+        "20": 56
+      },
+      "sequence": 338
+    },
+    {
+      "clock_seconds": 648,
+      "id": "401909961339",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 65,
+        "20": 56
+      },
+      "sequence": 339
+    },
+    {
+      "clock_seconds": 640,
+      "id": "401909961340",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 65,
+        "20": 56
+      },
+      "sequence": 340
+    },
+    {
+      "clock_seconds": 630,
+      "id": "401909961342",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 65,
+        "20": 56
+      },
+      "sequence": 342
+    },
+    {
+      "clock_seconds": 630,
+      "id": "401909961343",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 65,
+        "20": 56
+      },
+      "sequence": 343
+    },
+    {
+      "clock_seconds": 621,
+      "id": "401909961344",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 67,
+        "20": 56
+      },
+      "sequence": 344
+    },
+    {
+      "clock_seconds": 611,
+      "id": "401909961345",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 67,
+        "20": 56
+      },
+      "sequence": 345
+    },
+    {
+      "clock_seconds": 611,
+      "id": "401909961346",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 67,
+        "20": 56
+      },
+      "sequence": 346
+    },
+    {
+      "clock_seconds": 598,
+      "id": "401909961347",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 56
+      },
+      "sequence": 347
+    },
+    {
+      "clock_seconds": 583,
+      "id": "401909961349",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 59
+      },
+      "sequence": 349
+    },
+    {
+      "clock_seconds": 565,
+      "id": "401909961351",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 59
+      },
+      "sequence": 351
+    },
+    {
+      "clock_seconds": 565,
+      "id": "401909961352",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 59
+      },
+      "sequence": 352
+    },
+    {
+      "clock_seconds": 546,
+      "id": "401909961357",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 61
+      },
+      "sequence": 357
+    },
+    {
+      "clock_seconds": 531,
+      "id": "401909961359",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 61
+      },
+      "sequence": 359
+    },
+    {
+      "clock_seconds": 531,
+      "id": "401909961360",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 61
+      },
+      "sequence": 360
+    },
+    {
+      "clock_seconds": 519,
+      "id": "401909961361",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 61
+      },
+      "sequence": 361
+    },
+    {
+      "clock_seconds": 519,
+      "id": "401909961364",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 61
+      },
+      "sequence": 364
+    },
+    {
+      "clock_seconds": 508,
+      "id": "401909961365",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 63
+      },
+      "sequence": 365
+    },
+    {
+      "clock_seconds": 508,
+      "id": "401909961366",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 69,
+        "20": 63
+      },
+      "sequence": 366
+    },
+    {
+      "clock_seconds": 490,
+      "id": "401909961367",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 63
+      },
+      "sequence": 367
+    },
+    {
+      "clock_seconds": 461,
+      "id": "401909961369",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 63
+      },
+      "sequence": 369
+    },
+    {
+      "clock_seconds": 461,
+      "id": "401909961370",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 63
+      },
+      "sequence": 370
+    },
+    {
+      "clock_seconds": 447,
+      "id": "401909961371",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 63
+      },
+      "sequence": 371
+    },
+    {
+      "clock_seconds": 447,
+      "id": "401909961372",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 63
+      },
+      "sequence": 372
+    },
+    {
+      "clock_seconds": 441,
+      "id": "401909961373",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 63
+      },
+      "sequence": 373
+    },
+    {
+      "clock_seconds": 441,
+      "id": "401909961375",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 64
+      },
+      "sequence": 375
+    },
+    {
+      "clock_seconds": 441,
+      "id": "401909961378",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 64
+      },
+      "sequence": 378
+    },
+    {
+      "clock_seconds": 441,
+      "id": "401909961379",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 65
+      },
+      "sequence": 379
+    },
+    {
+      "clock_seconds": 441,
+      "id": "401909961381",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 65
+      },
+      "sequence": 381
+    },
+    {
+      "clock_seconds": 431,
+      "id": "401909961382",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 65
+      },
+      "sequence": 382
+    },
+    {
+      "clock_seconds": 431,
+      "id": "401909961383",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 65
+      },
+      "sequence": 383
+    },
+    {
+      "clock_seconds": 420,
+      "id": "401909961384",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 67
+      },
+      "sequence": 384
+    },
+    {
+      "clock_seconds": 394,
+      "id": "401909961386",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 67
+      },
+      "sequence": 386
+    },
+    {
+      "clock_seconds": 394,
+      "id": "401909961387",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 67
+      },
+      "sequence": 387
+    },
+    {
+      "clock_seconds": 393,
+      "id": "401909961390",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 67
+      },
+      "sequence": 390
+    },
+    {
+      "clock_seconds": 383,
+      "id": "401909961391",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 67
+      },
+      "sequence": 391
+    },
+    {
+      "clock_seconds": 383,
+      "id": "401909961392",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 71,
+        "20": 67
+      },
+      "sequence": 392
+    },
+    {
+      "clock_seconds": 366,
+      "id": "401909961394",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 73,
+        "20": 67
+      },
+      "sequence": 394
+    },
+    {
+      "clock_seconds": 359,
+      "id": "401909961395",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 73,
+        "20": 67
+      },
+      "sequence": 395
+    },
+    {
+      "clock_seconds": 359,
+      "id": "401909961397",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 73,
+        "20": 67
+      },
+      "sequence": 397
+    },
+    {
+      "clock_seconds": 350,
+      "id": "401909961398",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 73,
+        "20": 67
+      },
+      "sequence": 398
+    },
+    {
+      "clock_seconds": 350,
+      "id": "401909961399",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 73,
+        "20": 67
+      },
+      "sequence": 399
+    },
+    {
+      "clock_seconds": 336,
+      "id": "401909961400",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 73,
+        "20": 69
+      },
+      "sequence": 400
+    },
+    {
+      "clock_seconds": 323,
+      "id": "401909961402",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 69
+      },
+      "sequence": 402
+    },
+    {
+      "clock_seconds": 301,
+      "id": "401909961404",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 71
+      },
+      "sequence": 404
+    },
+    {
+      "clock_seconds": 294,
+      "id": "401909961406",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 71
+      },
+      "sequence": 406
+    },
+    {
+      "clock_seconds": 294,
+      "id": "401909961408",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 71
+      },
+      "sequence": 408
+    },
+    {
+      "clock_seconds": 285,
+      "id": "401909961409",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 73
+      },
+      "sequence": 409
+    },
+    {
+      "clock_seconds": 263,
+      "id": "401909961410",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 73
+      },
+      "sequence": 410
+    },
+    {
+      "clock_seconds": 263,
+      "id": "401909961411",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 73
+      },
+      "sequence": 411
+    },
+    {
+      "clock_seconds": 263,
+      "id": "401909961412",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 73
+      },
+      "sequence": 412
+    },
+    {
+      "clock_seconds": 263,
+      "id": "401909961413",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 73
+      },
+      "sequence": 413
+    },
+    {
+      "clock_seconds": 263,
+      "id": "401909961415",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 73
+      },
+      "sequence": 415
+    },
+    {
+      "clock_seconds": 263,
+      "id": "401909961417",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 73
+      },
+      "sequence": 417
+    },
+    {
+      "clock_seconds": 242,
+      "id": "401909961418",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 76
+      },
+      "sequence": 418
+    },
+    {
+      "clock_seconds": 230,
+      "id": "401909961420",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 76
+      },
+      "sequence": 420
+    },
+    {
+      "clock_seconds": 230,
+      "id": "401909961422",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 76,
+        "20": 76
+      },
+      "sequence": 422
+    },
+    {
+      "clock_seconds": 223,
+      "id": "401909961423",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 79,
+        "20": 76
+      },
+      "sequence": 423
+    },
+    {
+      "clock_seconds": 199,
+      "id": "401909961424",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 79,
+        "20": 79
+      },
+      "sequence": 424
+    },
+    {
+      "clock_seconds": 182,
+      "id": "401909961426",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 82,
+        "20": 79
+      },
+      "sequence": 426
+    },
+    {
+      "clock_seconds": 160,
+      "id": "401909961429",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 82,
+        "20": 79
+      },
+      "sequence": 429
+    },
+    {
+      "clock_seconds": 160,
+      "id": "401909961430",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 82,
+        "20": 79
+      },
+      "sequence": 430
+    },
+    {
+      "clock_seconds": 144,
+      "id": "401909961431",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 85,
+        "20": 79
+      },
+      "sequence": 431
+    },
+    {
+      "clock_seconds": 120,
+      "id": "401909961433",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 85,
+        "20": 79
+      },
+      "sequence": 433
+    },
+    {
+      "clock_seconds": 120,
+      "id": "401909961434",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 85,
+        "20": 79
+      },
+      "sequence": 434
+    },
+    {
+      "clock_seconds": 116,
+      "id": "401909961435",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 85,
+        "20": 79
+      },
+      "sequence": 435
+    },
+    {
+      "clock_seconds": 116,
+      "id": "401909961439",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 85,
+        "20": 79
+      },
+      "sequence": 439
+    },
+    {
+      "clock_seconds": 116,
+      "id": "401909961440",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 85,
+        "20": 79
+      },
+      "sequence": 440
+    },
+    {
+      "clock_seconds": 116,
+      "id": "401909961442",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 85,
+        "20": 79
+      },
+      "sequence": 442
+    },
+    {
+      "clock_seconds": 102,
+      "id": "401909961443",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 85,
+        "20": 79
+      },
+      "sequence": 443
+    },
+    {
+      "clock_seconds": 91,
+      "id": "401909961444",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 88,
+        "20": 79
+      },
+      "sequence": 444
+    },
+    {
+      "clock_seconds": 73,
+      "id": "401909961446",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 88,
+        "20": 82
+      },
+      "sequence": 446
+    },
+    {
+      "clock_seconds": 57.9,
+      "id": "401909961447",
+      "kind": "score",
+      "period": 3,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 447
+    },
+    {
+      "clock_seconds": 39.6,
+      "id": "401909961449",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 449
+    },
+    {
+      "clock_seconds": 39.6,
+      "id": "401909961450",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 450
+    },
+    {
+      "clock_seconds": 20.2,
+      "id": "401909961451",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 451
+    },
+    {
+      "clock_seconds": 20.2,
+      "id": "401909961452",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 452
+    },
+    {
+      "clock_seconds": 3.1,
+      "id": "401909961453",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 453
+    },
+    {
+      "clock_seconds": 3.1,
+      "id": "401909961454",
+      "kind": "play",
+      "period": 3,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 454
+    },
+    {
+      "clock_seconds": 0,
+      "id": "401909961455",
+      "kind": "period_end",
+      "period": 3,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 455
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961458",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 458
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961459",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 459
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961462",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 462
+    },
+    {
+      "clock_seconds": 720,
+      "id": "401909961463",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 91,
+        "20": 82
+      },
+      "sequence": 463
+    },
+    {
+      "clock_seconds": 699,
+      "id": "401909961465",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 465
+    },
+    {
+      "clock_seconds": 681,
+      "id": "401909961466",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 466
+    },
+    {
+      "clock_seconds": 681,
+      "id": "401909961467",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 467
+    },
+    {
+      "clock_seconds": 676,
+      "id": "401909961468",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 468
+    },
+    {
+      "clock_seconds": 676,
+      "id": "401909961469",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 469
+    },
+    {
+      "clock_seconds": 652,
+      "id": "401909961471",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 471
+    },
+    {
+      "clock_seconds": 652,
+      "id": "401909961472",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 472
+    },
+    {
+      "clock_seconds": 651,
+      "id": "401909961474",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 474
+    },
+    {
+      "clock_seconds": 634,
+      "id": "401909961475",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 475
+    },
+    {
+      "clock_seconds": 634,
+      "id": "401909961476",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 476
+    },
+    {
+      "clock_seconds": 624,
+      "id": "401909961477",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 477
+    },
+    {
+      "clock_seconds": 624,
+      "id": "401909961480",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 94,
+        "20": 82
+      },
+      "sequence": 480
+    },
+    {
+      "clock_seconds": 613,
+      "id": "401909961481",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 97,
+        "20": 82
+      },
+      "sequence": 481
+    },
+    {
+      "clock_seconds": 591,
+      "id": "401909961483",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 97,
+        "20": 82
+      },
+      "sequence": 483
+    },
+    {
+      "clock_seconds": 591,
+      "id": "401909961484",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 97,
+        "20": 82
+      },
+      "sequence": 484
+    },
+    {
+      "clock_seconds": 576,
+      "id": "401909961485",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 100,
+        "20": 82
+      },
+      "sequence": 485
+    },
+    {
+      "clock_seconds": 574,
+      "id": "401909961486",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 100,
+        "20": 82
+      },
+      "sequence": 486
+    },
+    {
+      "clock_seconds": 574,
+      "id": "401909961490",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 100,
+        "20": 82
+      },
+      "sequence": 490
+    },
+    {
+      "clock_seconds": 574,
+      "id": "401909961491",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 100,
+        "20": 82
+      },
+      "sequence": 491
+    },
+    {
+      "clock_seconds": 550,
+      "id": "401909961492",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 100,
+        "20": 82
+      },
+      "sequence": 492
+    },
+    {
+      "clock_seconds": 550,
+      "id": "401909961493",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 100,
+        "20": 82
+      },
+      "sequence": 493
+    },
+    {
+      "clock_seconds": 544,
+      "id": "401909961494",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 100,
+        "20": 82
+      },
+      "sequence": 494
+    },
+    {
+      "clock_seconds": 544,
+      "id": "401909961495",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 100,
+        "20": 82
+      },
+      "sequence": 495
+    },
+    {
+      "clock_seconds": 524,
+      "id": "401909961496",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 102,
+        "20": 82
+      },
+      "sequence": 496
+    },
+    {
+      "clock_seconds": 524,
+      "id": "401909961497",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 102,
+        "20": 82
+      },
+      "sequence": 497
+    },
+    {
+      "clock_seconds": 524,
+      "id": "401909961499",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 103,
+        "20": 82
+      },
+      "sequence": 499
+    },
+    {
+      "clock_seconds": 524,
+      "id": "401909961501",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 103,
+        "20": 82
+      },
+      "sequence": 501
+    },
+    {
+      "clock_seconds": 511,
+      "id": "401909961502",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 103,
+        "20": 82
+      },
+      "sequence": 502
+    },
+    {
+      "clock_seconds": 511,
+      "id": "401909961503",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 103,
+        "20": 82
+      },
+      "sequence": 503
+    },
+    {
+      "clock_seconds": 497,
+      "id": "401909961504",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 82
+      },
+      "sequence": 504
+    },
+    {
+      "clock_seconds": 488,
+      "id": "401909961508",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 82
+      },
+      "sequence": 508
+    },
+    {
+      "clock_seconds": 488,
+      "id": "401909961509",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 82
+      },
+      "sequence": 509
+    },
+    {
+      "clock_seconds": 488,
+      "id": "401909961510",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 82
+      },
+      "sequence": 510
+    },
+    {
+      "clock_seconds": 474,
+      "id": "401909961511",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 82
+      },
+      "sequence": 511
+    },
+    {
+      "clock_seconds": 474,
+      "id": "401909961512",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 82
+      },
+      "sequence": 512
+    },
+    {
+      "clock_seconds": 463,
+      "id": "401909961513",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 82
+      },
+      "sequence": 513
+    },
+    {
+      "clock_seconds": 463,
+      "id": "401909961516",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 82
+      },
+      "sequence": 516
+    },
+    {
+      "clock_seconds": 463,
+      "id": "401909961519",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 82
+      },
+      "sequence": 519
+    },
+    {
+      "clock_seconds": 463,
+      "id": "401909961520",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 82
+      },
+      "sequence": 520
+    },
+    {
+      "clock_seconds": 457,
+      "id": "401909961521",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 85
+      },
+      "sequence": 521
+    },
+    {
+      "clock_seconds": 434,
+      "id": "401909961523",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 85
+      },
+      "sequence": 523
+    },
+    {
+      "clock_seconds": 434,
+      "id": "401909961524",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 85
+      },
+      "sequence": 524
+    },
+    {
+      "clock_seconds": 419,
+      "id": "401909961525",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 85
+      },
+      "sequence": 525
+    },
+    {
+      "clock_seconds": 419,
+      "id": "401909961526",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 85
+      },
+      "sequence": 526
+    },
+    {
+      "clock_seconds": 416,
+      "id": "401909961530",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 85
+      },
+      "sequence": 530
+    },
+    {
+      "clock_seconds": 416,
+      "id": "401909961531",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 105,
+        "20": 85
+      },
+      "sequence": 531
+    },
+    {
+      "clock_seconds": 404,
+      "id": "401909961534",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 108,
+        "20": 85
+      },
+      "sequence": 534
+    },
+    {
+      "clock_seconds": 382,
+      "id": "401909961536",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 108,
+        "20": 87
+      },
+      "sequence": 536
+    },
+    {
+      "clock_seconds": 359,
+      "id": "401909961538",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 108,
+        "20": 87
+      },
+      "sequence": 538
+    },
+    {
+      "clock_seconds": 359,
+      "id": "401909961539",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 108,
+        "20": 87
+      },
+      "sequence": 539
+    },
+    {
+      "clock_seconds": 347,
+      "id": "401909961540",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 108,
+        "20": 87
+      },
+      "sequence": 540
+    },
+    {
+      "clock_seconds": 338,
+      "id": "401909961542",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 87
+      },
+      "sequence": 542
+    },
+    {
+      "clock_seconds": 335,
+      "id": "401909961544",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 87
+      },
+      "sequence": 544
+    },
+    {
+      "clock_seconds": 335,
+      "id": "401909961550",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 87
+      },
+      "sequence": 550
+    },
+    {
+      "clock_seconds": 335,
+      "id": "401909961551",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 87
+      },
+      "sequence": 551
+    },
+    {
+      "clock_seconds": 335,
+      "id": "401909961552",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 87
+      },
+      "sequence": 552
+    },
+    {
+      "clock_seconds": 335,
+      "id": "401909961553",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 87
+      },
+      "sequence": 553
+    },
+    {
+      "clock_seconds": 335,
+      "id": "401909961554",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 87
+      },
+      "sequence": 554
+    },
+    {
+      "clock_seconds": 335,
+      "id": "401909961558",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 87
+      },
+      "sequence": 558
+    },
+    {
+      "clock_seconds": 335,
+      "id": "401909961559",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 87
+      },
+      "sequence": 559
+    },
+    {
+      "clock_seconds": 335,
+      "id": "401909961560",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 87
+      },
+      "sequence": 560
+    },
+    {
+      "clock_seconds": 315,
+      "id": "401909961561",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 111,
+        "20": 89
+      },
+      "sequence": 561
+    },
+    {
+      "clock_seconds": 299,
+      "id": "401909961562",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 113,
+        "20": 89
+      },
+      "sequence": 562
+    },
+    {
+      "clock_seconds": 288,
+      "id": "401909961564",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 113,
+        "20": 89
+      },
+      "sequence": 564
+    },
+    {
+      "clock_seconds": 288,
+      "id": "401909961568",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 113,
+        "20": 89
+      },
+      "sequence": 568
+    },
+    {
+      "clock_seconds": 288,
+      "id": "401909961569",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 113,
+        "20": 89
+      },
+      "sequence": 569
+    },
+    {
+      "clock_seconds": 283,
+      "id": "401909961570",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 113,
+        "20": 89
+      },
+      "sequence": 570
+    },
+    {
+      "clock_seconds": 283,
+      "id": "401909961571",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 113,
+        "20": 89
+      },
+      "sequence": 571
+    },
+    {
+      "clock_seconds": 263,
+      "id": "401909961572",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 115,
+        "20": 89
+      },
+      "sequence": 572
+    },
+    {
+      "clock_seconds": 263,
+      "id": "401909961574",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 115,
+        "20": 89
+      },
+      "sequence": 574
+    },
+    {
+      "clock_seconds": 263,
+      "id": "401909961576",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 116,
+        "20": 89
+      },
+      "sequence": 576
+    },
+    {
+      "clock_seconds": 263,
+      "id": "401909961578",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 116,
+        "20": 89
+      },
+      "sequence": 578
+    },
+    {
+      "clock_seconds": 247,
+      "id": "401909961579",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 116,
+        "20": 89
+      },
+      "sequence": 579
+    },
+    {
+      "clock_seconds": 247,
+      "id": "401909961580",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 116,
+        "20": 89
+      },
+      "sequence": 580
+    },
+    {
+      "clock_seconds": 235,
+      "id": "401909961581",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 581
+    },
+    {
+      "clock_seconds": 213,
+      "id": "401909961583",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 583
+    },
+    {
+      "clock_seconds": 213,
+      "id": "401909961584",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 584
+    },
+    {
+      "clock_seconds": 199,
+      "id": "401909961586",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 586
+    },
+    {
+      "clock_seconds": 188,
+      "id": "401909961587",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 587
+    },
+    {
+      "clock_seconds": 188,
+      "id": "401909961588",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 588
+    },
+    {
+      "clock_seconds": 171,
+      "id": "401909961589",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 589
+    },
+    {
+      "clock_seconds": 171,
+      "id": "401909961590",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 590
+    },
+    {
+      "clock_seconds": 159,
+      "id": "401909961591",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 591
+    },
+    {
+      "clock_seconds": 149,
+      "id": "401909961592",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 592
+    },
+    {
+      "clock_seconds": 149,
+      "id": "401909961593",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 89
+      },
+      "sequence": 593
+    },
+    {
+      "clock_seconds": 140,
+      "id": "401909961594",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 91
+      },
+      "sequence": 594
+    },
+    {
+      "clock_seconds": 129,
+      "id": "401909961596",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 91
+      },
+      "sequence": 596
+    },
+    {
+      "clock_seconds": 127,
+      "id": "401909961598",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 91
+      },
+      "sequence": 598
+    },
+    {
+      "clock_seconds": 127,
+      "id": "401909961600",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 92
+      },
+      "sequence": 600
+    },
+    {
+      "clock_seconds": 127,
+      "id": "401909961601",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 93
+      },
+      "sequence": 601
+    },
+    {
+      "clock_seconds": 115,
+      "id": "401909961602",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 93
+      },
+      "sequence": 602
+    },
+    {
+      "clock_seconds": 115,
+      "id": "401909961603",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 93
+      },
+      "sequence": 603
+    },
+    {
+      "clock_seconds": 108,
+      "id": "401909961604",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 95
+      },
+      "sequence": 604
+    },
+    {
+      "clock_seconds": 93,
+      "id": "401909961606",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 95
+      },
+      "sequence": 606
+    },
+    {
+      "clock_seconds": 93,
+      "id": "401909961607",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 95
+      },
+      "sequence": 607
+    },
+    {
+      "clock_seconds": 84,
+      "id": "401909961608",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 95
+      },
+      "sequence": 608
+    },
+    {
+      "clock_seconds": 84,
+      "id": "401909961609",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 95
+      },
+      "sequence": 609
+    },
+    {
+      "clock_seconds": 73,
+      "id": "401909961610",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 95
+      },
+      "sequence": 610
+    },
+    {
+      "clock_seconds": 73,
+      "id": "401909961611",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 95
+      },
+      "sequence": 611
+    },
+    {
+      "clock_seconds": 68,
+      "id": "401909961612",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 95
+      },
+      "sequence": 612
+    },
+    {
+      "clock_seconds": 54.7,
+      "id": "401909961614",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 98
+      },
+      "sequence": 614
+    },
+    {
+      "clock_seconds": 44.9,
+      "id": "401909961616",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 98
+      },
+      "sequence": 616
+    },
+    {
+      "clock_seconds": 44.9,
+      "id": "401909961617",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 98
+      },
+      "sequence": 617
+    },
+    {
+      "clock_seconds": 38.9,
+      "id": "401909961618",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 118,
+        "20": 98
+      },
+      "sequence": 618
+    },
+    {
+      "clock_seconds": 34.8,
+      "id": "401909961620",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 121,
+        "20": 98
+      },
+      "sequence": 620
+    },
+    {
+      "clock_seconds": 29.7,
+      "id": "401909961622",
+      "kind": "play",
+      "period": 4,
+      "scores": {
+        "2": 121,
+        "20": 98
+      },
+      "sequence": 622
+    },
+    {
+      "clock_seconds": 27.9,
+      "id": "401909961624",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 123,
+        "20": 98
+      },
+      "sequence": 624
+    },
+    {
+      "clock_seconds": 22.1,
+      "id": "401909961625",
+      "kind": "score",
+      "period": 4,
+      "scores": {
+        "2": 123,
+        "20": 101
+      },
+      "sequence": 625
+    },
+    {
+      "clock_seconds": 0,
+      "id": "401909961628",
+      "kind": "period_end",
+      "period": 4,
+      "scores": {
+        "2": 123,
+        "20": 101
+      },
+      "sequence": 628
+    },
+    {
+      "clock_seconds": 0,
+      "id": "401909961629",
+      "kind": "end",
+      "period": 4,
+      "scores": {
+        "2": 123,
+        "20": 101
+      },
+      "sequence": 629
+    }
+  ],
+  "game": {
+    "end_utc": null,
+    "game_id": "401909961",
+    "league": "nba",
+    "period": 4,
+    "start_utc": "2026-11-11T01:00:00+00:00",
+    "status": "final",
+    "status_detail": "Final"
+  },
+  "players": [
+    {
+      "game_id": "401909961",
+      "id": "4251",
+      "name": "Paul George",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 1,
+        "points": 36,
+        "rebounds": 5
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4065648",
+      "name": "Jayson Tatum",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 4,
+        "points": 21,
+        "rebounds": 6
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4397424",
+      "name": "Neemias Queta",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 3,
+        "points": 4,
+        "rebounds": 6
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "3078576",
+      "name": "Derrick White",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 3,
+        "points": 5,
+        "rebounds": 1
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4683689",
+      "name": "Jordan Walsh",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 2,
+        "points": 8,
+        "rebounds": 2
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4065804",
+      "name": "Sam Hauser",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 2,
+        "points": 12,
+        "rebounds": 5
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4277951",
+      "name": "Luka Garza",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 2,
+        "points": 2,
+        "rebounds": 0
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4351852",
+      "name": "Mitchell Robinson",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 2,
+        "points": 2,
+        "rebounds": 6
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4066354",
+      "name": "Payton Pritchard",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 5,
+        "points": 18,
+        "rebounds": 6
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4397251",
+      "name": "Ron Harper Jr.",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 0,
+        "points": 0,
+        "rebounds": 1
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4593841",
+      "name": "Baylor Scheierman",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 2,
+        "points": 5,
+        "rebounds": 3
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "5175647",
+      "name": "Hugo Gonzalez",
+      "publisher_team_id": "2",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 2,
+        "points": 10,
+        "rebounds": 2
+      },
+      "team_id": "BOS"
+    },
+    {
+      "game_id": "401909961",
+      "id": "1966",
+      "name": "LeBron James",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 5,
+        "points": 11,
+        "rebounds": 8
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "3059318",
+      "name": "Joel Embiid",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 1,
+        "points": 16,
+        "rebounds": 6
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "3917376",
+      "name": "Jaylen Brown",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 2,
+        "points": 13,
+        "rebounds": 5
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4431678",
+      "name": "Tyrese Maxey",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 4,
+        "points": 24,
+        "rebounds": 1
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "5124612",
+      "name": "VJ Edgecombe",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 5,
+        "points": 8,
+        "rebounds": 4
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "3912848",
+      "name": "Dean Wade",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 0,
+        "points": 8,
+        "rebounds": 9
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4432446",
+      "name": "Jabari Walker",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 0,
+        "points": 2,
+        "rebounds": 4
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4711297",
+      "name": "Justin Edwards",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 0,
+        "points": 0,
+        "rebounds": 0
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "2581018",
+      "name": "Kentavious Caldwell-Pope",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 2,
+        "points": 0,
+        "rebounds": 0
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4351851",
+      "name": "Anfernee Simons",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 0,
+        "points": 17,
+        "rebounds": 3
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "4873090",
+      "name": "Labaron Philon Jr.",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 3,
+        "points": 2,
+        "rebounds": 1
+      },
+      "team_id": "PHI"
+    },
+    {
+      "game_id": "401909961",
+      "id": "5099752",
+      "name": "Rayan Rupert",
+      "publisher_team_id": "20",
+      "source_id": "boxscore:401909961",
+      "stats": {
+        "assists": 1,
+        "points": 0,
+        "rebounds": 1
+      },
+      "team_id": "PHI"
+    }
+  ],
+  "pregame_model_locks": [],
+  "segments": {
+    "period_scores": {
+      "2": [
+        30,
+        32,
+        29,
+        32
+      ],
+      "20": [
+        23,
+        28,
+        31,
+        19
+      ]
+    },
+    "source_id": "boxscore:401909961"
+  },
+  "sources": [
+    {
+      "captured_at": "2026-11-11T06:08:20+00:00",
+      "id": "scoreboard:401909961",
+      "payload_sha256": "9f4f2a373ba78b8d0bf243877bf3020ed7f4b6852141f0155da3ab7c8558d52d",
+      "source": "espn",
+      "source_event_id": "401909961",
+      "url": "https://www.espn.com/nba/game/_/gameId/401909961"
+    },
+    {
+      "capture_note": "Summary and core endpoint agree on count, ordered IDs, scores, period, clock; all pages captured.",
+      "captured_at": "2026-11-11T06:08:35+00:00",
+      "coverage": "complete",
+      "crosscheck_raw_response_sha256": "988f105cd329737604e1ab4f0d11281f98c5edd077f04728704fc5c10e2ca554",
+      "crosscheck_url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/events/401909961/competitions/401909961/plays?limit=500",
+      "event_count": 437,
+      "events_sha256": "7744d202e29b668615d0bae7cde06a873025911070778c107716e438b06ce811",
+      "id": "pbp:401909961",
+      "kind": "final_pbp",
+      "raw_response_sha256": "a96823588300e21cf809f475f7fdc753002948c5e2ae44c0de7c4b9297fc622d",
+      "source": "espn",
+      "source_event_id": "401909961",
+      "status": "final",
+      "teams": {
+        "2": 123,
+        "20": 101
+      },
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909961"
+    },
+    {
+      "captured_at": "2026-11-11T06:08:35+00:00",
+      "id": "boxscore:401909961",
+      "kind": "final_boxscore",
+      "raw_response_sha256": "a96823588300e21cf809f475f7fdc753002948c5e2ae44c0de7c4b9297fc622d",
+      "source": "espn",
+      "source_event_id": "401909961",
+      "status": "final",
+      "teams": {
+        "2": 123,
+        "20": 101
+      },
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401909961"
+    }
+  ],
+  "teams": [
+    {
+      "id": "BOS",
+      "name": "Boston Celtics",
+      "publisher_team_id": "2",
+      "score": 123,
+      "side": "away"
+    },
+    {
+      "id": "PHI",
+      "name": "Philadelphia 76ers",
+      "publisher_team_id": "20",
+      "score": 101,
+      "side": "home"
+    }
+  ]
+}
