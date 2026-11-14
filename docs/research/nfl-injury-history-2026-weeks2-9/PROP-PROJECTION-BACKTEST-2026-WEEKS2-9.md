@@ -2,7 +2,7 @@
 
 ## Results and interpretation (audited November 13, 2026)
 
-**Headline:** the **raw Spec B v2 probabilities do not beat the de-vigged sportsbook market** on this eight-week retrospective sample. Forward-only Platt recalibration materially reduces raw-model Brier error and beats the market on the *same graded lines* in each of Weeks 6–9. The calibrated edge is small in the pooled Weeks 3–9 comparison and is **not yet validated as a deployable betting edge**. Recorded book settlements disagree with the stat-log grader on 38 quoted lines; the individual causes have not been resolved.
+**Headline:** the **raw Spec B v2 probabilities do not beat the de-vigged sportsbook market** on this eight-week retrospective sample. Forward-only Platt recalibration materially reduces raw-model Brier error and beats the market on the *same graded lines* in each of Weeks 6–9. The calibrated edge is small in the pooled Weeks 3–9 comparison and is **not yet validated as a deployable betting edge**. The 38 original book/stat disagreements are now fully explained by one weekly receiving-stat ingestion defect affecting two lateral plays; the separately saved corrected-history what-if closes all 38 without changing the graded population.
 
 The audit covers **65,448** eligible book/line observations across **117** games and **360** distinct players, representing **3,805** player-game-market point estimates. These are not 65,448 independent bets: multiple thresholds and sportsbooks repeatedly score the same realized player stat. Three of the 120 games in the finalized-roster universe have no eligible graded props. The finished gamebook roster labels were checked *after* projections, never fed into them.
 
@@ -26,6 +26,54 @@ These are **line-count-weighted** comparisons, not averages of weekly scores:
 - The strongest observed calibrated weeks are **Week 7 (0.23848 versus 0.24544 market)** and **Week 9 (0.23759 versus 0.24524 market)**. Week 8's margin is only **0.00025**.
 
 The Platt maps' logit slopes are far below one: **0.197** for Week 3 and **0.346** for Week 9. This means the fitted layer is **aggressively compressing the model's extreme probabilities**, not making small adjustments. For example, under the Week 9 map a raw 10% probability becomes approximately **36%**, and a raw 90% becomes approximately **72%**. Thus the large raw-to-calibrated improvement principally indicates **raw probability overconfidence/miscalibration**; it does not by itself show the raw model distinguishes outcomes well. Test calibrated predictions against a constant base-rate model, the market, and a clustered per-player-game calibration analysis before promoting them.
+
+### Corrected-history counterfactual (not the frozen baseline)
+
+The [settlement root-cause audit](SETTLEMENT-DISAGREEMENT-AUDIT-2026-WEEKS2-9.md)
+proves that the 38 mismatched quote lines cover only **two** player-games:
+Deebo Samuel Sr. in Week 3 (80 receiving yards and a receiving touchdown
+credited after a lateral, with zero targets) and David Montgomery in Week 4
+(19 receiving yards after a lateral, also with zero targets). The weekly
+ingester gated every receiving key on a nonzero target count and stored
+both players as having zero receiving yards. The sportsbook's recorded
+results were correct; our imported stat line was not. A similar **2025
+Week 16 Isaiah Bond** observation was found in the prior-season history.
+
+An independent, read-only **full in-memory corrected-history what-if**
+was committed under [impact-corrected-history](impact-corrected-history/).
+It updates only those two 2026 history rows and re-fits the forward
+Platt calibration from prior weeks. It is **not** a permanent DB
+repair, grader change, or original-baseline overwrite.
+
+| Comparison | Original committed | Two-row corrected-history what-if |
+|---|---:|---:|
+| Graded lines, Weeks 2–9 | 65,448 | **65,448** |
+| Recorded book/stat disagreements | 38 | **0** |
+| Raw Spec B v2 pooled Brier, Weeks 2–9 | 0.265222 | **0.265350** |
+| De-vigged market pooled Brier, Weeks 2–9 | 0.245754 | **0.245759** |
+| Forward Platt Brier, matched Weeks 3–9 | 0.243917 | **0.243935** |
+| De-vigged market Brier, matched Weeks 3–9 | 0.245807 | **0.245813** |
+| Platt advantage, market minus Platt | 0.001890 | **0.001878** |
+
+The raw model still trails the market in **every** week, while forward
+Platt still wins on this selected set in Weeks **6–9**. Correcting the
+ingested stats makes the raw score slightly **worse**, because the
+incorrect zero-yard result had given its low-probability overs free
+correct unders. The calibrated market comparison also weakens
+slightly, **not** strengthens.
+
+The corrected-history file is an evaluated counterfactual, not yet
+a versioned clean production source. The 2025 case also needs the same
+ingest repair. Preserve original and corrected runs side by side until
+the reproducible ingester repair, source-row audit and 2025/2026
+re-ingestion are reviewed.
+
+The [point-calibration follow-up](POINT-CALIBRATION-2026-WEEKS2-9.md)
+now also includes corrected-history coefficients and forward errors:
+the candidate reception adjustment remains **+0.6249**; a uniform
+receiving-yard increase remains worse on MAE. Do **not** treat the
+zero-disagreement counterfactual as proof of valid pre-kickoff
+market prices. That is a distinct unresolved provenance gate.
 
 ### Point projections, distribution coverage and Marcel-lite
 
@@ -84,7 +132,7 @@ Two additional reproducibility limitations are visible in the current runner and
 
 ### Decision
 
-**Keep the frozen raw model and the forward Platt layer separately versioned.** The current evidence supports further research into calibration, not a claim that the raw model beats sportsbooks or that these retrospective reconstructions were available before kickoff. The next evidence gates are (a) exact 38-row settlement reconciliation against actual stat definitions and the official gamebooks — **done, see the settlement audit** — (b) confirmed pre-kickoff time alignment for two-sided market prices, (c) refreshed row-level source URLs, and (d) per-market and clustered uncertainty analysis, including a clean future holdout. Do not overwrite this run's scores to force the settlement check to zero.
+**Keep the frozen raw model and the forward Platt layer separately versioned.** The current evidence supports further research into calibration, not a claim that the raw model beats sportsbooks or that these retrospective reconstructions were available before kickoff. The next evidence gates are (a) the permanent, narrowly verified weekly-ingest repair with both 2025 and 2026 affected rows restored, rather than only the in-memory what-if, (b) confirmed pre-kickoff time alignment for both sides of every quoted price, (c) regenerated row-level gamebook URLs, and (d) per-market calibration with clustered uncertainty and an untouched future holdout. The 38-row root cause is **closed analytically**, but the underlying historical database and frozen artifact have deliberately not been rewritten. Do not overwrite this run's scores to force the settlement check to zero.
 
 
 ## Follow-up: forward point calibration
