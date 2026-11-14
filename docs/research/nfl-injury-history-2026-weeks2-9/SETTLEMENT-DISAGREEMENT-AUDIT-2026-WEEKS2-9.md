@@ -208,8 +208,8 @@ Week-level Brier deltas from the rerun:
 
 ```sh
 python docs/research/nfl-injury-history-2026-weeks2-9/audit_settlement_disagreements.py \
-  --db backend/data/picks.dev.db \
-  --out-dir docs/research/nfl-injury-history-2026-weeks2-9   # positional in practice
+  backend/data/picks.dev.db \
+  docs/research/nfl-injury-history-2026-weeks2-9
 ```
 
 ```sh
