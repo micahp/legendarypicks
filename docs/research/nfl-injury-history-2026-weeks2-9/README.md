@@ -38,3 +38,7 @@ actual game-day active/inactive labels, not pregame-known model inputs.
 See [2026 Weeks 2–9 projection backtest and interpretation](PROP-PROJECTION-BACKTEST-2026-WEEKS2-9.md)
 for the 65,448-line probability comparison, per-market point accuracy,
 settlement-audit flags, and pregame-quote provenance limitations.
+
+## Forward player point calibration
+
+[Research-only market-by-market point calibration and proposed corrections](POINT-CALIBRATION-2026-WEEKS2-9.md) compares raw and corrected point estimates without using target-week outcomes for fitting.
