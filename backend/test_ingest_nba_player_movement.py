@@ -20,7 +20,7 @@ def db(with_ids=True):
     con = sqlite3.connect(":memory:")
     con.execute("CREATE TABLE player_source_ids(player_id INT, league TEXT, source TEXT, source_player_key TEXT)")
     if with_ids:
-        for pid, key in ((29313, "201142"), (29368, "1631105"), (29364, "1628415")):
+        for pid, key in ((29313, "201142"), (29368, "1630224"), (29364, "1628415")):
             con.execute("INSERT INTO player_source_ids VALUES(?,'nba','nba.com',?)", (pid, key))
     return con
 
