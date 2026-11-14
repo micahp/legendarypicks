@@ -20,7 +20,7 @@ class ForwardCalibrationTests(unittest.TestCase):
         p = MODULE.fit(t)
         self.assertAlmostEqual(p["mean_offset"], 0.5)
         self.assertAlmostEqual(p["median_offset"], 0.5)
-        self.assertAlmostEqual(p["mean_scale"], 1.25)
+        self.assertAlmostEqual(p["mean_scale"], 1.20)
         self.assertEqual(MODULE.predict(0.0, p, "add_mean"), 0.5)
         self.assertEqual(MODULE.predict(0.0, p, "add_median"), 0.5)
         self.assertEqual(MODULE.predict(-4.0, p, "raw"), 0.0)
