@@ -1,0 +1,157 @@
+{
+  "per_week_pre_kickoff_only": {
+    "2": {
+      "forward_platt_brier": {
+        "brier": null,
+        "n": 0
+      },
+      "lines": 7077,
+      "market_brier": {
+        "brier": 0.24646783115567888,
+        "n": 7077
+      },
+      "spec_b_v2_brier": {
+        "brier": 0.27023547264024306,
+        "n": 7077
+      }
+    },
+    "3": {
+      "forward_platt_brier": {
+        "brier": 0.2515565769240807,
+        "n": 6713
+      },
+      "lines": 6713,
+      "market_brier": {
+        "brier": 0.24689044928735948,
+        "n": 6713
+      },
+      "spec_b_v2_brier": {
+        "brier": 0.2841289001936541,
+        "n": 6713
+      }
+    },
+    "4": {
+      "forward_platt_brier": {
+        "brier": 0.24901989825780282,
+        "n": 7191
+      },
+      "lines": 7191,
+      "market_brier": {
+        "brier": 0.247869559891076,
+        "n": 7191
+      },
+      "spec_b_v2_brier": {
+        "brier": 0.2827580445869837,
+        "n": 7191
+      }
+    },
+    "5": {
+      "forward_platt_brier": {
+        "brier": 0.24760647132909222,
+        "n": 6626
+      },
+      "lines": 6626,
+      "market_brier": {
+        "brier": 0.24517187606304097,
+        "n": 6626
+      },
+      "spec_b_v2_brier": {
+        "brier": 0.25783508594929067,
+        "n": 6626
+      }
+    },
+    "6": {
+      "forward_platt_brier": {
+        "brier": 0.24280325118461543,
+        "n": 6422
+      },
+      "lines": 6422,
+      "market_brier": {
+        "brier": 0.24656582600294175,
+        "n": 6422
+      },
+      "spec_b_v2_brier": {
+        "brier": 0.2617975294008876,
+        "n": 6422
+      }
+    },
+    "7": {
+      "forward_platt_brier": {
+        "brier": 0.2405636613327361,
+        "n": 7237
+      },
+      "lines": 7237,
+      "market_brier": {
+        "brier": 0.24639668245927318,
+        "n": 7237
+      },
+      "spec_b_v2_brier": {
+        "brier": 0.24808361366070195,
+        "n": 7237
+      }
+    },
+    "8": {
+      "forward_platt_brier": {
+        "brier": 0.24643150153698443,
+        "n": 6741
+      },
+      "lines": 6741,
+      "market_brier": {
+        "brier": 0.24635544752002597,
+        "n": 6741
+      },
+      "spec_b_v2_brier": {
+        "brier": 0.2664868979843495,
+        "n": 6741
+      }
+    },
+    "9": {
+      "forward_platt_brier": {
+        "brier": 0.23944560677425883,
+        "n": 6900
+      },
+      "lines": 6900,
+      "market_brier": {
+        "brier": 0.24528682971776625,
+        "n": 6900
+      },
+      "spec_b_v2_brier": {
+        "brier": 0.25163169639492755,
+        "n": 6900
+      }
+    }
+  },
+  "pooled": {
+    "all_lines": {
+      "forward_platt_brier": {
+        "brier": 0.24391749314997,
+        "n": 57248
+      },
+      "market_brier": {
+        "brier": 0.24575352825128086,
+        "n": 65448
+      },
+      "spec_b_v2_brier": {
+        "brier": 0.26522155986527474,
+        "n": 65448
+      }
+    },
+    "pre_kickoff_only": {
+      "forward_platt_brier": {
+        "brier": 0.24531994570490462,
+        "n": 47830
+      },
+      "market_brier": {
+        "brier": 0.24638656283277094,
+        "n": 54907
+      },
+      "spec_b_v2_brier": {
+        "brier": 0.2653729734881254,
+        "n": 54907
+      }
+    }
+  },
+  "rows_pre_kickoff_only": 54907,
+  "rows_total": 65448,
+  "source": "prop-quote-timestamp-exceptions.csv (10,541 flagged lines, 16.11%)"
+}

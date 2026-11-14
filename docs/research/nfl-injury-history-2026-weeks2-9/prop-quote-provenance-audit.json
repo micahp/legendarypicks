@@ -1,0 +1,45 @@
+{
+  "distinct_game_player_market_discrepancies": 2,
+  "quote_status_by_week": {
+    "2": {
+      "selected_quote_at_or_after_kickoff": 1123,
+      "selected_quote_pre_kickoff_recorded": 7077
+    },
+    "3": {
+      "selected_quote_at_or_after_kickoff": 1149,
+      "selected_quote_pre_kickoff_recorded": 6713
+    },
+    "4": {
+      "selected_quote_at_or_after_kickoff": 1804,
+      "selected_quote_pre_kickoff_recorded": 7191
+    },
+    "5": {
+      "selected_quote_at_or_after_kickoff": 1075,
+      "selected_quote_pre_kickoff_recorded": 6626
+    },
+    "6": {
+      "selected_quote_at_or_after_kickoff": 647,
+      "selected_quote_pre_kickoff_recorded": 6422
+    },
+    "7": {
+      "selected_quote_at_or_after_kickoff": 1500,
+      "selected_quote_pre_kickoff_recorded": 7237
+    },
+    "8": {
+      "selected_quote_at_or_after_kickoff": 1800,
+      "selected_quote_pre_kickoff_recorded": 6741
+    },
+    "9": {
+      "selected_quote_at_or_after_kickoff": 1443,
+      "selected_quote_pre_kickoff_recorded": 6900
+    }
+  },
+  "quote_status_counts": {
+    "selected_quote_at_or_after_kickoff": 10541,
+    "selected_quote_pre_kickoff_recorded": 54907
+  },
+  "recorded_book_settlement_disagreements": 38,
+  "rows_scored": 65448,
+  "scope": "Existing graded lines; latest stored odds per side. Does not recover in-place overwritten odds.",
+  "selected_quote_validation": "Both side odds_captured_at timezone-aware and strictly earlier than stored prop_games.start_time; statuses not certified independently against ESPN scheduled kickoff."
+}

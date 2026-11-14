@@ -157,15 +157,33 @@ Use the matching gamebook for each game from
 rows, manufacture a missing archived quote, or silently recompute the
 existing Brier scores.
 
-The read-only `audit_prop_quote_provenance.py` now crosswalks the
-existing 65,448 graded rows back to stored quote sides and their
-`odds_captured_at` values, flags either side captured at/after
-`prop_games.start_time`, and emits a row-level settlement mismatch
-file. It is **an executable audit, not yet an executed result**:
-the underlying 4 GB API SQLite database is not available in the
-GitHub file connector. Timestamp classifications from the currently
-stored rows are not proof that the historical price was captured before
-kickoff when the source overwrote old prices.
+The read-only `audit_prop_quote_provenance.py` crosswalks the existing
+65,448 graded rows back to stored quote sides and their `odds_captured_at`
+values, flags either side captured at/after `prop_games.start_time`, and
+emits a row-level settlement mismatch file. **It has now been executed
+against the development database** (`prop-quote-provenance-audit.json`,
+`prop-quote-timestamp-exceptions.csv`):
+
+- 54,907 of 65,448 graded lines (83.9%) have both selected sides recorded
+  strictly before the stored kickoff.
+- **10,541 lines (16.11%)** have at least one selected side captured at or
+  after kickoff — 1,123 in Week 2, 1,149 in Week 3, 1,804 in Week 4, 1,075
+  in Week 5, 647 in Week 6, 1,500 in Week 7, 1,800 in Week 8, 1,443 in Week 9.
+- The audit also reproduces the 38 recorded-settlement disagreements across
+  2 distinct game-player-markets, matching the root-cause audit independently.
+
+Timestamp classifications from the currently stored rows are still not proof
+that the historical price was captured before kickoff when the source
+overwrote old prices; they bound the problem rather than certify the quotes.
+
+Re-scoring Brier on the verified pre-kickoff subset only
+(`impact-prekickoff-only-subset.json`) shows what that provenance gap costs
+the claim: forward Platt Brier **0.24532 vs market 0.24639 (edge −0.00107)**,
+against **0.24392 vs 0.24575 (edge −0.00184)** on all lines. **The apparent
+forward-calibration edge over the market loses roughly 42% of its size** once
+post-kickoff captures are excluded, and week by week the pooled edge survives
+only because of Weeks 6, 7 and 9 (Week 8 goes from a small Platt win to a small
+loss). The edge is therefore provisional in the same sense the market price is.
 
 ```sh
 python docs/research/nfl-injury-history-2026-weeks2-9/audit_prop_quote_provenance.py \
