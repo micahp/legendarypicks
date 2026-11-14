@@ -176,14 +176,27 @@ Timestamp classifications from the currently stored rows are still not proof
 that the historical price was captured before kickoff when the source
 overwrote old prices; they bound the problem rather than certify the quotes.
 
-Re-scoring Brier on the verified pre-kickoff subset only
-(`impact-prekickoff-only-subset.json`) shows what that provenance gap costs
-the claim: forward Platt Brier **0.24532 vs market 0.24639 (edge −0.00107)**,
-against **0.24392 vs 0.24575 (edge −0.00184)** on all lines. **The apparent
-forward-calibration edge over the market loses roughly 42% of its size** once
-post-kickoff captures are excluded, and week by week the pooled edge survives
-only because of Weeks 6, 7 and 9 (Week 8 goes from a small Platt win to a small
-loss). The edge is therefore provisional in the same sense the market price is.
+The original `impact-prekickoff-only-subset.json` summary inadvertently
+compared forward Platt **Weeks 3–9** (Week 2 had no fitted map) against a
+market Brier pooled over **Weeks 2–9**. Those denominators are not paired.
+
+The [matched-line comparison](impact-prekickoff-matched-population.json)
+uses **only Weeks 3–9 for Platt and market together**:
+
+- All selected lines (**57,248**): Platt **0.243917**, market **0.245807**,
+  advantage (market minus Platt) **+0.001890**.
+- Both stored quote sides strictly before the stored kickoff
+  (**47,830**): Platt **0.245320**, market **0.246375**, advantage
+  **+0.001055**.
+
+**The apparent forward-calibration advantage falls by 44.2%, not 42%.**
+With this filter, Platt wins Weeks 6, 7 and 9; Week 8 switches from a
+small Platt win to a very small market win. The timestamp-filtered score
+reuses the original Platt coefficients, **not** a new forward Platt
+refit based solely on eligible prior-week quotes. This subset is not
+a fully reconstructed closing-line benchmark because odds are
+updated in place, nor are the residual gains proof of profitability
+or statistical significance.
 
 ```sh
 python docs/research/nfl-injury-history-2026-weeks2-9/audit_prop_quote_provenance.py \
