@@ -1,0 +1,122 @@
+{
+  "title": "Matched-line Weeks 3–9 Platt-vs-market comparison for quote timestamp provenance",
+  "source_files": [
+    "weekly-prop-projection-metrics.csv",
+    "impact-prekickoff-only-subset.json",
+    "prop-quote-provenance-audit.json"
+  ],
+  "comparison_eligibility": "Only weeks with a fitted forward Platt map (Weeks 3–9). Market and Platt Brier evaluated on the same N within each condition.",
+  "original_quote_selection": {
+    "n_lines": 57248,
+    "platt_brier": 0.24391749314997002,
+    "market_brier": 0.24580719778582555,
+    "market_minus_platt_brier": 0.001889704635855527,
+    "weekly": [
+      {
+        "week": 3,
+        "n": 7862,
+        "platt": 0.2500435866900233,
+        "market": 0.24625307769255184
+      },
+      {
+        "week": 4,
+        "n": 8995,
+        "platt": 0.24787568196030946,
+        "market": 0.24686282058378659
+      },
+      {
+        "week": 5,
+        "n": 7701,
+        "platt": 0.2462356507922196,
+        "market": 0.24574351196395133
+      },
+      {
+        "week": 6,
+        "n": 7069,
+        "platt": 0.2423049163790722,
+        "market": 0.24571559654471703
+      },
+      {
+        "week": 7,
+        "n": 8737,
+        "platt": 0.238483358361594,
+        "market": 0.24543570734821432
+      },
+      {
+        "week": 8,
+        "n": 8541,
+        "platt": 0.24509865923090413,
+        "market": 0.24534861529372196
+      },
+      {
+        "week": 9,
+        "n": 8343,
+        "platt": 0.23758519224842295,
+        "market": 0.24524380378028482
+      }
+    ]
+  },
+  "both_selected_sides_before_stored_kickoff": {
+    "n_lines": 47830,
+    "platt_brier": 0.24531994570490465,
+    "market_brier": 0.24637453824733882,
+    "market_minus_platt_brier": 0.001054592542434174,
+    "weekly": [
+      {
+        "week": 3,
+        "n": 6713,
+        "platt": 0.2515565769240807,
+        "market": 0.24689044928735948
+      },
+      {
+        "week": 4,
+        "n": 7191,
+        "platt": 0.24901989825780282,
+        "market": 0.247869559891076
+      },
+      {
+        "week": 5,
+        "n": 6626,
+        "platt": 0.24760647132909222,
+        "market": 0.24517187606304097
+      },
+      {
+        "week": 6,
+        "n": 6422,
+        "platt": 0.24280325118461543,
+        "market": 0.24656582600294175
+      },
+      {
+        "week": 7,
+        "n": 7237,
+        "platt": 0.2405636613327361,
+        "market": 0.24639668245927318
+      },
+      {
+        "week": 8,
+        "n": 6741,
+        "platt": 0.24643150153698443,
+        "market": 0.24635544752002597
+      },
+      {
+        "week": 9,
+        "n": 6900,
+        "platt": 0.23944560677425883,
+        "market": 0.24528682971776625
+      }
+    ]
+  },
+  "change": {
+    "excluded_lines": 9418,
+    "retained_fraction": 0.835487702627166,
+    "advantage_reduction_absolute": 0.000835112093421353,
+    "advantage_reduction_fraction": 0.44192731370597094
+  },
+  "interpretation": "Using matched Weeks 3–9 line populations, the Platt edge remains positive but shrinks by 44.2% on currently stored quote sides timestamped strictly before prop_games.start_time. This is a subset audit, not refitting forward Platt using only timestamp-eligible historical training lines, not a genuine append-only last-prekickoff quote reconstruction, and not a new untampered production forecast.",
+  "limitations": [
+    "Stored kickoff has not been independently cross-checked against authoritative schedule on all rows.",
+    "Odds can be updated in place; rows timestamped after kickoff do not imply an earlier price can be recovered.",
+    "Player-game-market and multi-book lines are highly correlated; no clustered uncertainty interval is computed.",
+    "The recorded settlement bug affecting two player-games remains in the uncorrected original line-level benchmark."
+  ]
+}
