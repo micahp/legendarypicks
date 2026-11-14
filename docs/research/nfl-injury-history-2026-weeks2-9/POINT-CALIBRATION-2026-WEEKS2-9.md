@@ -39,6 +39,42 @@ alternate line. They are descriptive normal approximations; they do
 not correct for trying three candidate adjustment methods and then
 choosing one based on the same evaluation weeks.
 
+## Retest after restoring lateral receiving history (2026 Week 3–4)
+
+The settlement root-cause audit found that the weekly ingest dropped **80
+receiving yards and one receiving TD** for Deebo Samuel Sr. in Week 3 and
+**19 receiving yards** for David Montgomery in Week 4, because their
+post-catch laterals produced nonzero receiving yards with zero targets.
+The counterfactual [corrected-history](impact-corrected-history/) replay
+changes two in-memory player-history rows, **not** the underlying database.
+The additional [corrected point-calibration study](point-projection-calibration-corrected-history.json)
+refits using that counterfactual's 3,805 player-game-market source rows.
+
+| Market | Original W3–W9 raw MAE | Corrected-history raw MAE | Corrected-history add-mean MAE | Corrected through-W9 add-mean offset | Decision |
+|---|---:|---:|---:|---:|---|
+| Receptions | 1.56073 | 1.56073 | **1.51778** | **+0.624895 receptions** | Research candidate unchanged |
+| Receiving yards | 20.12425 | 20.12718 | **20.57039** | +7.11712 yards | **Reject blanket offset** |
+| Passing yards | 57.85656 | 57.85656 | 57.44888 | +4.47499 yards | Still inconclusive |
+| Pass attempts | 6.39306 | 6.39306 | 6.42609 | +0.65373 attempts | Raw remains better |
+| Pass completions | 4.62494 | 4.62494 | 4.62301 | +0.23250 completions | Negligible improvement |
+| Passing TDs | 0.89200 | 0.89200 | 0.89458 | +0.02259 TDs | Raw remains better |
+
+The corrected-history receiving-yard mean-offset MAE gain is **−0.4432
+yards**, with an approximate game-clustered 95% interval of **−0.7626
+to −0.1239**. Receptions retain a gain of **+0.04294 catches** with
+an interval of **+0.01537 to +0.07052**. These are retrospective
+research diagnostics, not a future independent holdout.
+
+**Interpretation:** the receiving-yards problem was not a general
+missing +7.53 yards of offense. Two specific stat lines were wrong;
+fixing their history barely changes the global calibration result.
+The **2025 Week 16 Isaiah Bond** zero-target lateral is also missing
+receiving yards in the *previous-season* history, and the current 2026
+corrected-history counterfactual did **not** patch that season.
+Therefore this is not yet the final calibration basis. The priority
+remains the verified ingester repair and 2025/2026 source backfill,
+then a genuinely untouched forward-week assessment.
+
 ## Conservation and serving constraints
 
 **Do not literally add 0.625 receptions to every player on a roster.**
@@ -92,7 +128,10 @@ calibration and paired market comparisons on a new holdout.
   and final roster labels were applied *after* forecasting.
 - The quoted sportsbook benchmark in the main backtest remains
   **provisional** until two-sided quote timestamps are checked against
-  kickoff, and 38 book/stat settlement discrepancies are reconciled.
+  kickoff. The 38 recorded-settlement discrepancies have now been
+  reconciled to two zero-target lateral plays and one weekly-ingest bug;
+  a corrected-history replay closes them, but the underlying database
+  remains unmodified.
   In-place sportsbook quote updates can make historical pre-kickoff
   reconstruction impossible without archived observations.
 - The existing bad per-row `gamebook_url` export was fixed in
@@ -136,8 +175,10 @@ python docs/research/nfl-injury-history-2026-weeks2-9/audit_prop_quote_provenanc
 This creates `prop-quote-provenance-audit.json`,
 `recorded-settlement-disagreements.csv`, and
 `prop-quote-timestamp-exceptions.csv` on the executing host.
-Reconcile them against the reported 38 disagreements before
-qualifying any sportsbook benchmark as pregame-safe.
+The 38 disagreements have been independently reconciled in
+`SETTLEMENT-DISAGREEMENT-AUDIT-2026-WEEKS2-9.md`; this quote audit
+remains useful for **timestamp provenance**, not as a replacement
+for that completed root-cause analysis.
 
 **Promotion gates:** evaluate the receptions candidate on a later
 untouched period, compare with raw on the same independent
