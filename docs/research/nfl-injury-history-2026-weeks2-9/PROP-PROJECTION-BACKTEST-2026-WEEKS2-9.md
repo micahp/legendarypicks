@@ -27,9 +27,49 @@ These are **line-count-weighted** comparisons, not averages of weekly scores:
 
 The Platt maps' logit slopes are far below one: **0.197** for Week 3 and **0.346** for Week 9. This means the fitted layer is **aggressively compressing the model's extreme probabilities**, not making small adjustments. For example, under the Week 9 map a raw 10% probability becomes approximately **36%**, and a raw 90% becomes approximately **72%**. Thus the large raw-to-calibrated improvement principally indicates **raw probability overconfidence/miscalibration**; it does not by itself show the raw model distinguishes outcomes well. Test calibrated predictions against a constant base-rate model, the market, and a clustered per-player-game calibration analysis before promoting them.
 
-### Point projections and Marcel-lite
+### Point projections, distribution coverage and Marcel-lite
 
-On the **2,793** player-game-market observations in Weeks 4–9 where both methods have an estimate, raw Spec B v2's aggregated absolute error is **12.37** versus **13.47** for Marcel-lite, using player-game-market rather than alternate-line weighting. However, this aggregate pools **incompatible units** (e.g. passing yards, receiving yards, receptions, attempts, touchdowns), so it is only a bookkeeping summary, **not a meaningful single MAE unit**. Marcel-lite has no comparison value for Weeks 2–3. A credible point-forecast verdict needs per-market MAE, appropriate units, and paired comparisons on identical populations. The current output does not provide that stratified conclusion.
+I separately inspected the **3,805-row** player-game-market CSV, rather
+than multiplying the same outcome by every alternate line/book. Marcel-lite
+has an estimate on **2,549** of these rows (Weeks 4–9); all 2,549 also have
+Spec B v2 estimates. The following MAE figures compare **identical paired
+rows within each market**, so the units remain meaningful:
+
+| Market | All point rows | Paired rows | Spec B v2 MAE on paired rows | Marcel-lite MAE on paired rows | Spec B mean bias (projection minus actual, all rows) | Observed coverage of Spec B 10th–90th percentile band |
+|---|---:|---:|---:|---:|---:|---:|
+| Passing yards | 203 | 142 | **59.78 yards** | 62.83 yards | -6.68 yards | 89.7% |
+| Pass attempts | 203 | 142 | **6.31 attempts** | 7.23 attempts | -0.98 attempts | 89.2% |
+| Pass completions | 203 | 142 | **4.61 completions** | 5.01 completions | -0.35 completions | 89.2% |
+| Passing TDs | 203 | 142 | **0.873 TD** | 0.942 TD | -0.034 TD | 97.0% |
+| Receiving yards | 1,517 | 1,003 | **20.41 yards** | 21.85 yards | -7.53 yards | 82.5% |
+| Receptions | 1,476 | 978 | **1.547 receptions** | 1.575 receptions | -0.667 receptions | 87.8% |
+
+**Interpretation:**
+
+- **Point-estimate direction is promising, but not settled:** Spec B v2 has
+  lower MAE than Marcel-lite in **all six observed markets** on the paired
+  population. Some advantages, particularly receptions and TDs, are small.
+  These results do **not** imply calibrated prop probabilities or profitable
+  bets; the raw probability Brier remains worse than the market every week.
+- **Systematic negative bias:** the model's mean projections are below
+  realized outcomes on average in **all six markets**, notably **7.53
+  receiving yards** and **0.667 receptions** per eligible observation.
+  Because the sample includes only graded player-game participants and
+  is selected by available props, do not generalize the bias to all
+  NFL roster players.
+- **Intervals tend to over-cover:** observed inclusion in the nominal 80%
+  central bands is **86.4% overall**, with especially high **97.0%**
+  for discrete passing-touchdown outcomes. Discrete/inclusive quantile
+  endpoints can naturally over-cover, so this is a coverage diagnostic,
+  not proof that every distribution is too wide. Together with the raw
+  Brier result, it argues for inspecting distribution shape and
+  market-relative calibration rather than only moving projected means.
+
+There is no meaningful single yard-like unit for the pooled MAE because
+yards, attempts, catches and TDs are mixed. The market-level paired
+values above supersede any unstratified comparison. Only six market
+families had point rows in the committed CSV; the engine's supported
+targets market has no observations here.
 
 ### Settlement and data-provenance audit
 
