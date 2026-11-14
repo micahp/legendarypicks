@@ -1,0 +1,70 @@
+{
+  "corrections": {
+    "('2026_03_ARI_SF', '00-0035719', 'receiving_yards')": 80.0,
+    "('2026_04_DAL_HOU', '00-0035685', 'receiving_yards')": 19.0
+  },
+  "per_week": {
+    "3": {
+      "affected_lines": 27,
+      "brier_after": {
+        "forward_platt_brier": 0.250211167492731,
+        "market_brier": 0.24625571717661768,
+        "spec_b_v2_brier": 0.28388022591261763
+      },
+      "brier_before": {
+        "forward_platt_brier": 0.2500435866900233,
+        "market_brier": 0.24625307769255184,
+        "spec_b_v2_brier": 0.28285783975133555
+      },
+      "brier_delta": {
+        "forward_platt_brier": 0.0001675808027076786,
+        "market_brier": 2.6394840658416907e-06,
+        "spec_b_v2_brier": 0.001022386161282085
+      },
+      "constant_50_after": 0.25,
+      "constant_50_before": 0.25,
+      "status": "ok"
+    },
+    "4": {
+      "affected_lines": 19,
+      "brier_after": {
+        "forward_platt_brier": 0.2480061554466134,
+        "market_brier": 0.24689818338106564,
+        "spec_b_v2_brier": 0.2862331409185659
+      },
+      "brier_before": {
+        "forward_platt_brier": 0.24787568196030946,
+        "market_brier": 0.24686282058378659,
+        "spec_b_v2_brier": 0.2853466484227348
+      },
+      "brier_delta": {
+        "forward_platt_brier": 0.00013047348630393363,
+        "market_brier": 3.536279727905933e-05,
+        "spec_b_v2_brier": 0.0008864924958310594
+      },
+      "constant_50_after": 0.25,
+      "constant_50_before": 0.25,
+      "status": "ok"
+    }
+  },
+  "pooled_weeks2_9": {
+    "forward_platt_brier": {
+      "after": 0.2439610078453339,
+      "before": 0.24391749314997,
+      "delta": 4.351469536389985e-05,
+      "n": 57248
+    },
+    "market_brier": {
+      "after": 0.2457587054910017,
+      "before": 0.24575352825128086,
+      "delta": 5.17723972084938e-06,
+      "n": 65448
+    },
+    "spec_b_v2_brier": {
+      "after": 0.2654662121082768,
+      "before": 0.26522155986527474,
+      "delta": 0.0002446522430020748,
+      "n": 65448
+    }
+  }
+}

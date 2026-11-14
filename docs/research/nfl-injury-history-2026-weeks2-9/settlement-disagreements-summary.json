@@ -1,0 +1,54 @@
+{
+  "disagreement_rate": 0.0005806136169172473,
+  "disagreement_rows": 38,
+  "distinct_books": 7,
+  "distinct_games": 2,
+  "distinct_player_game_markets": 2,
+  "distinct_players": 2,
+  "eligible_prop_line_rows": 65448,
+  "groups": {
+    "by_book": {
+      "bovada": 13,
+      "rotowire:betmgm-sb": 4,
+      "rotowire:betrivers-sb": 2,
+      "rotowire:caesars-sb": 4,
+      "rotowire:draftkings-sb": 6,
+      "rotowire:fanduel-sb": 4,
+      "rotowire:hardrock-sb": 5
+    },
+    "by_game": {
+      "2026_03_ARI_SF": 23,
+      "2026_04_DAL_HOU": 15
+    },
+    "by_market": {
+      "receiving_yards": 38
+    },
+    "by_player": {
+      "David Montgomery": 15,
+      "Deebo Samuel Sr.": 23
+    },
+    "by_player_market": {
+      "David Montgomery|receiving_yards": 15,
+      "Deebo Samuel Sr.|receiving_yards": 23
+    },
+    "by_position": {
+      "RB": 15,
+      "WR": 23
+    }
+  },
+  "pre_classification": {
+    "source settled actual != our stat value": 38
+  },
+  "rows_out": "docs/research/nfl-injury-history-2026-weeks2-9/settlement-disagreements-2026-weeks2-9.csv",
+  "season": 2026,
+  "weeks": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ]
+}

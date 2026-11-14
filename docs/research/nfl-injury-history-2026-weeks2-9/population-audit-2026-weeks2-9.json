@@ -1,0 +1,22 @@
+{
+  "purpose": "Preserve the passing result separately from the unresolved settlement discrepancies.",
+  "season": 2026,
+  "weeks": [2, 3, 4, 5, 6, 7, 8, 9],
+  "population_check": {
+    "method": "target_settlement_disagreements() in run_prop_projection_backtest.py re-derives eligible rows from grader.collect() for Weeks 2-9 only, then the runner asserts its count equals len(graded).",
+    "grader_population_rows": 65448,
+    "independent_audit_population_rows": 65448,
+    "result": "PASS",
+    "meaning": "The scored population is reproducible from grader.collect() by a second code path; no row was admitted or dropped by the runner's own filtering."
+  },
+  "reproducibility": {
+    "method": "full rerun on 2026-11-13 with the settlement-audit code path enabled",
+    "weekly_brier_and_mae_identical_to_prior_run": true,
+    "note": "Prop probabilities are seeded per (game_id, player_id, market), so the rerun is deterministic. Only the recorded_book_settlement_disagreements column was added to the metrics CSV."
+  },
+  "scored_population_integrity": {
+    "finalized_gamebook_join": "every graded player matched the official GSIS gamebook by (game_id, team, gsis_id) and was ACTIVE with a non-'did_not_play' roster role",
+    "violations": 0
+  },
+  "separate_from": "settlement-disagreements-2026-weeks2-9.csv (38 prop lines, 2 player-games) — a stat-contract issue in the ingest, not a population or scoring-population defect."
+}
