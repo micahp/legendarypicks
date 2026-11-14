@@ -181,6 +181,7 @@ def main():
             row["team"] = hist_row.team
             row["player_name"] = roster["player_name"]
             row["gamebook_roster_role"] = roster["gamebook_roster_role"]
+            row["gamebook_url"] = roster["gamebook_url"]
 
         maps = forward_maps(graded)
         projector = grader.Projector(hist)
@@ -217,7 +218,7 @@ def main():
                 "forward_platt_brier": ((p_platt - row["over"]) ** 2) if p_platt is not None else None,
                 "market_brier": ((row["p_market"] - row["over"]) ** 2)
                                 if row["p_market"] is not None else None,
-                "gamebook_url": roster["gamebook_url"],
+                "gamebook_url": row["gamebook_url"],
                 "forecast_condition": "conditional on player having a target game stat-log row",
             })
             key = (week, row["game_id"], row["player_id"], row["market"])
