@@ -42,3 +42,7 @@ settlement-audit flags, and pregame-quote provenance limitations.
 ## Forward player point calibration
 
 [Research-only market-by-market point calibration and proposed corrections](POINT-CALIBRATION-2026-WEEKS2-9.md) compares raw and corrected point estimates without using target-week outcomes for fitting.
+
+## Settlement discrepancy root cause and corrected-history comparison
+
+[The 38-row settlement audit](SETTLEMENT-DISAGREEMENT-AUDIT-2026-WEEKS2-9.md) identifies one zero-target receiving-stat ingester defect affecting Deebo Samuel Sr. (Week 3) and David Montgomery (Week 4); a two-row in-memory repair closes all 38 without changing the graded population. [The calibration report](POINT-CALIBRATION-2026-WEEKS2-9.md) and [its corrected-history results](point-projection-calibration-corrected-history.json) now distinguish original and repaired-history evaluation without editing the frozen model or source database.
