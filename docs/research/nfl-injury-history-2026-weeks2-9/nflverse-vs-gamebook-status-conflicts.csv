@@ -1,0 +1,7 @@
+game_id,week,team,gsis_id,player_name,gamebook_status,nflverse_weekly_status,gamebook_url,gamebook_sha256
+2026_04_DET_CAR,4,CAR,00-0040174,Cam Jackson,INACTIVE,ACT,https://www.nflgsis.com/2026/REG/04/60240/Gamebook.pdf,065510567478f150c78778ad384eb6869c9b0c690a1166f23962fb285a37facb
+2026_05_LV_NE,5,NE,00-0041123,Behren Morton,INACTIVE,ACT,https://www.nflgsis.com/2026/REG/05/60245/Gamebook.pdf,99279c888e02f65fe2e08b2ba358b68a6e3d345f6ab688ff093043c0d775f0c7
+2026_05_MIN_NO,5,NO,00-0037013,Zach Wilson,INACTIVE,ACT,https://www.nflgsis.com/2026/REG/05/60246/Gamebook.pdf,510d5605b6c45a0758ce40c6f0c9463addea977f90ec83295229d96937cba301
+2026_05_IND_PIT,5,IND,00-0040206,Riley Leonard,INACTIVE,ACT,https://www.nflgsis.com/2026/REG/05/60248/Gamebook.pdf,5dcbb36225d4808bb5838d8943b8a428f453db3ee16d0bd166ae6c186a145d6b
+2026_05_IND_PIT,5,PIT,00-0040203,Will Howard,INACTIVE,ACT,https://www.nflgsis.com/2026/REG/05/60248/Gamebook.pdf,5dcbb36225d4808bb5838d8943b8a428f453db3ee16d0bd166ae6c186a145d6b
+2026_05_NYG_WAS,5,NYG,00-0038998,Jake Haener,INACTIVE,ACT,https://www.nflgsis.com/2026/REG/05/60250/Gamebook.pdf,a29d87e5130c9de91b9d728f51126765bc5b3178072850c3ba0fec8a57b93862

@@ -1,0 +1,2196 @@
+{
+  "active_player_game_rows": 11516,
+  "active_roster_size_distribution": {
+    "47": 5,
+    "48": 234,
+    "49": 1
+  },
+  "all_gamebooks_hash_verified": true,
+  "all_player_id_joins_resolved": true,
+  "conflict_rows": "nflverse-vs-gamebook-status-conflicts.csv",
+  "forecast_cutoff_eligibility": "not established; NFL gamebooks are postgame sources",
+  "game_count": 120,
+  "games": {
+    "2026_02_CAR_ATL": {
+      "teams": {
+        "ATL": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "CAR": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_02_CIN_HOU": {
+      "teams": {
+        "CIN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "HOU": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_02_CLE_TB": {
+      "teams": {
+        "CLE": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TB": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_02_DET_BUF": {
+      "teams": {
+        "BUF": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "DET": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_02_GB_NYJ": {
+      "teams": {
+        "GB": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "NYJ": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_02_IND_KC": {
+      "teams": {
+        "IND": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "KC": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_02_JAX_DEN": {
+      "teams": {
+        "DEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "JAX": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_02_LV_LAC": {
+      "teams": {
+        "LAC": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "LV": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_02_MIA_SF": {
+      "teams": {
+        "MIA": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "SF": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_02_MIN_CHI": {
+      "teams": {
+        "CHI": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "MIN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_02_NO_BAL": {
+      "teams": {
+        "BAL": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "NO": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_02_NYG_LA": {
+      "teams": {
+        "LAR": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "NYG": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_02_PHI_TEN": {
+      "teams": {
+        "PHI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_02_PIT_NE": {
+      "teams": {
+        "NE": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "PIT": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_02_SEA_ARI": {
+      "teams": {
+        "ARI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "SEA": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_02_WAS_DAL": {
+      "teams": {
+        "DAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "WSH": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_03_ARI_SF": {
+      "teams": {
+        "ARI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "SF": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_03_ATL_GB": {
+      "teams": {
+        "ATL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "GB": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_03_BAL_DAL": {
+      "teams": {
+        "BAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "DAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_03_CAR_CLE": {
+      "teams": {
+        "CAR": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "CLE": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_03_CIN_PIT": {
+      "teams": {
+        "CIN": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "PIT": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_03_HOU_IND": {
+      "teams": {
+        "HOU": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "IND": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_03_KC_MIA": {
+      "teams": {
+        "KC": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "MIA": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_03_LAC_BUF": {
+      "teams": {
+        "BUF": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "LAC": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_03_LA_DEN": {
+      "teams": {
+        "DEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "LAR": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_03_LV_NO": {
+      "teams": {
+        "LV": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "NO": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_03_MIN_TB": {
+      "teams": {
+        "MIN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TB": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_03_NE_JAX": {
+      "teams": {
+        "JAX": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "NE": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_03_NYJ_DET": {
+      "teams": {
+        "DET": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "NYJ": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_03_PHI_CHI": {
+      "teams": {
+        "CHI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "PHI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_03_SEA_WAS": {
+      "teams": {
+        "SEA": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "WSH": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_03_TEN_NYG": {
+      "teams": {
+        "NYG": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_04_ARI_NYG": {
+      "teams": {
+        "ARI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "NYG": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_04_ATL_NO": {
+      "teams": {
+        "ATL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "NO": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_04_DAL_HOU": {
+      "teams": {
+        "DAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "HOU": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_04_DEN_SF": {
+      "teams": {
+        "DEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "SF": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_04_DET_CAR": {
+      "teams": {
+        "CAR": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "DET": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_04_GB_TB": {
+      "teams": {
+        "GB": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 4,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "TB": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_04_IND_WAS": {
+      "teams": {
+        "IND": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "WSH": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_04_JAX_CIN": {
+      "teams": {
+        "CIN": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "JAX": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_04_KC_LV": {
+      "teams": {
+        "KC": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "LV": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_04_LAC_SEA": {
+      "teams": {
+        "LAC": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "SEA": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_04_LA_PHI": {
+      "teams": {
+        "LAR": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "PHI": {
+          "active": 47,
+          "did_not_play": 2,
+          "inactive": 8,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_04_MIA_MIN": {
+      "teams": {
+        "MIA": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "MIN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_04_NE_BUF": {
+      "teams": {
+        "BUF": {
+          "active": 47,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "NE": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_04_NYJ_CHI": {
+      "teams": {
+        "CHI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "NYJ": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_04_PIT_CLE": {
+      "teams": {
+        "CLE": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "PIT": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_04_TEN_BAL": {
+      "teams": {
+        "BAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 4,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_05_BAL_ATL": {
+      "teams": {
+        "ATL": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "BAL": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_05_BUF_LA": {
+      "teams": {
+        "BUF": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "LAR": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_05_CHI_GB": {
+      "teams": {
+        "CHI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "GB": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 4,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_05_CIN_MIA": {
+      "teams": {
+        "CIN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "MIA": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_05_CLE_NYJ": {
+      "teams": {
+        "CLE": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "NYJ": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_05_DEN_LAC": {
+      "teams": {
+        "DEN": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "LAC": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_05_DET_ARI": {
+      "teams": {
+        "ARI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "DET": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_05_HOU_TEN": {
+      "teams": {
+        "HOU": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TEN": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_05_IND_PIT": {
+      "teams": {
+        "IND": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "PIT": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_05_LV_NE": {
+      "teams": {
+        "LV": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "NE": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_05_MIN_NO": {
+      "teams": {
+        "MIN": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "NO": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_05_NYG_WAS": {
+      "teams": {
+        "NYG": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "WSH": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_05_PHI_JAX": {
+      "teams": {
+        "JAX": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "PHI": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_05_SF_SEA": {
+      "teams": {
+        "SEA": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "SF": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_05_TB_DAL": {
+      "teams": {
+        "DAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TB": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_06_ARI_LA": {
+      "teams": {
+        "ARI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "LAR": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_06_BAL_CLE": {
+      "teams": {
+        "BAL": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "CLE": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_06_BUF_LV": {
+      "teams": {
+        "BUF": {
+          "active": 47,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "LV": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_06_CAR_PHI": {
+      "teams": {
+        "CAR": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "PHI": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_06_CHI_ATL": {
+      "teams": {
+        "ATL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "CHI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_06_DAL_GB": {
+      "teams": {
+        "DAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "GB": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 4,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_06_HOU_JAX": {
+      "teams": {
+        "HOU": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "JAX": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_06_LAC_KC": {
+      "teams": {
+        "KC": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "LAC": {
+          "active": 48,
+          "did_not_play": 4,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 22
+        }
+      }
+    },
+    "2026_06_NO_NYG": {
+      "teams": {
+        "NO": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "NYG": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_06_NYJ_NE": {
+      "teams": {
+        "NE": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "NYJ": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_06_PIT_TB": {
+      "teams": {
+        "PIT": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TB": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_06_SEA_DEN": {
+      "teams": {
+        "DEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "SEA": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_06_TEN_IND": {
+      "teams": {
+        "IND": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "TEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_06_WAS_SF": {
+      "teams": {
+        "SF": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "WSH": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_07_CIN_BAL": {
+      "teams": {
+        "BAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "CIN": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_07_CLE_TEN": {
+      "teams": {
+        "CLE": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TEN": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_07_DAL_PHI": {
+      "teams": {
+        "DAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "PHI": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_07_DEN_ARI": {
+      "teams": {
+        "ARI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "DEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_07_GB_DET": {
+      "teams": {
+        "DET": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "GB": {
+          "active": 47,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_07_IND_MIN": {
+      "teams": {
+        "IND": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "MIN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_07_KC_SEA": {
+      "teams": {
+        "KC": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "SEA": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_07_LA_LV": {
+      "teams": {
+        "LAR": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "LV": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_07_MIA_NYJ": {
+      "teams": {
+        "MIA": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "NYJ": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_07_NE_CHI": {
+      "teams": {
+        "CHI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "NE": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_07_NYG_HOU": {
+      "teams": {
+        "HOU": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "NYG": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_07_PIT_NO": {
+      "teams": {
+        "NO": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "PIT": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_07_SF_ATL": {
+      "teams": {
+        "ATL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "SF": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_07_TB_CAR": {
+      "teams": {
+        "CAR": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "TB": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_08_ARI_DAL": {
+      "teams": {
+        "ARI": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "DAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_08_ATL_TB": {
+      "teams": {
+        "ATL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TB": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_08_BAL_BUF": {
+      "teams": {
+        "BAL": {
+          "active": 49,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "BUF": {
+          "active": 47,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_08_CAR_GB": {
+      "teams": {
+        "CAR": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "GB": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_08_CHI_SEA": {
+      "teams": {
+        "CHI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "SEA": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_08_CLE_PIT": {
+      "teams": {
+        "CLE": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "PIT": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_08_IND_JAX": {
+      "teams": {
+        "IND": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "JAX": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_08_KC_DEN": {
+      "teams": {
+        "DEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "KC": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_08_LAC_LA": {
+      "teams": {
+        "LAC": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 23
+        },
+        "LAR": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_08_LV_NYJ": {
+      "teams": {
+        "LV": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "NYJ": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_08_MIN_DET": {
+      "teams": {
+        "DET": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "MIN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_08_NE_MIA": {
+      "teams": {
+        "MIA": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "NE": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_08_PHI_WAS": {
+      "teams": {
+        "PHI": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "WSH": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_08_TEN_CIN": {
+      "teams": {
+        "CIN": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "TEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_09_ARI_SEA": {
+      "teams": {
+        "ARI": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "SEA": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_09_BUF_MIN": {
+      "teams": {
+        "BUF": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "MIN": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_09_CIN_ATL": {
+      "teams": {
+        "ATL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "CIN": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 4,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_09_CLE_NO": {
+      "teams": {
+        "CLE": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "NO": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_09_DAL_IND": {
+      "teams": {
+        "DAL": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "IND": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_09_DEN_CAR": {
+      "teams": {
+        "CAR": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "DEN": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_09_DET_MIA": {
+      "teams": {
+        "DET": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "MIA": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_09_GB_NE": {
+      "teams": {
+        "GB": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "NE": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_09_HOU_LAC": {
+      "teams": {
+        "HOU": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "LAC": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_09_JAX_BAL": {
+      "teams": {
+        "BAL": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "JAX": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 4,
+          "starters": 22,
+          "substitutions": 25
+        }
+      }
+    },
+    "2026_09_LA_WAS": {
+      "teams": {
+        "LAR": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "WSH": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    },
+    "2026_09_LV_SF": {
+      "teams": {
+        "LV": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 24
+        },
+        "SF": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        }
+      }
+    },
+    "2026_09_NYG_PHI": {
+      "teams": {
+        "NYG": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "PHI": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_09_NYJ_KC": {
+      "teams": {
+        "KC": {
+          "active": 48,
+          "did_not_play": 0,
+          "inactive": 6,
+          "starters": 22,
+          "substitutions": 26
+        },
+        "NYJ": {
+          "active": 48,
+          "did_not_play": 3,
+          "inactive": 7,
+          "starters": 22,
+          "substitutions": 23
+        }
+      }
+    },
+    "2026_09_TB_CHI": {
+      "teams": {
+        "CHI": {
+          "active": 48,
+          "did_not_play": 1,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 25
+        },
+        "TB": {
+          "active": 48,
+          "did_not_play": 2,
+          "inactive": 5,
+          "starters": 22,
+          "substitutions": 24
+        }
+      }
+    }
+  },
+  "identity_source": "nflverse roster_weekly_2026.parquet (GSIS ID, team, week, jersey, name)",
+  "inactive_list_size_distribution": {
+    "4": 6,
+    "5": 32,
+    "6": 82,
+    "7": 119,
+    "8": 1
+  },
+  "inactive_player_game_rows": 1517,
+  "player_rows": "finalized-game-day-rosters.csv",
+  "roster_player_game_rows": 13033,
+  "roster_status_source": "NFL GSIS official gamebook, page 1 roster sections",
+  "season": 2026,
+  "source_manifest": "official-gamebooks-source-manifest.csv",
+  "team_game_count": 240,
+  "weekly_identity_source_sha256": "ad5aaeefbae79632fa53f8f96e18ef6f7a696d93fd3ce78270ae74195b1528da",
+  "weekly_source_status_conflicts": 6,
+  "weeks": [
+    2,
+    9
+  ]
+}
