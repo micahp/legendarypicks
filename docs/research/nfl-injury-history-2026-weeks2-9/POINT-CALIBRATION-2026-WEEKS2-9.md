@@ -39,6 +39,21 @@ alternate line. They are descriptive normal approximations; they do
 not correct for trying three candidate adjustment methods and then
 choosing one based on the same evaluation weeks.
 
+## Conservation and serving constraints
+
+**Do not literally add 0.625 receptions to every player on a roster.**
+The fitted outcome population is a selected, conditional-on-participating
+prop subset, and blindly giving every candidate receiver an extra
+0.625 catches can exceed the team's projected pass completions and
+break the sum of player target shares. This is a **point-level audit
+transform**, not an instruction to alter the simulator's team volume
+or 4,000 correlated player draws. A deployable candidate must preserve
+team totals and pass attempts, including QB attempts, completions,
+receiver targets and catches. It also needs to work for players with
+no previously available graded sportsbook prop. Retain separate
+raw-v2 and candidate labels; never mix corrected means with uncorrected
+probability distributions.
+
 ## Why a constant bias fix is insufficient
 
 A player projected for 8 receiving yards and a player projected for
@@ -91,6 +106,38 @@ python docs/research/nfl-injury-history-2026-weeks2-9/calibrate_player_projectio
 python -m unittest discover -s docs/research/nfl-injury-history-2026-weeks2-9 \
   -p test_calibrate_player_projection_points.py
 ```
+
+## Quote and settlement provenance
+
+The correct price baseline is the **latest observed paired over/under
+quote from append-only evidence where both prices were captured before
+the scheduled kickoff instant**. The source's current latest row alone
+is insufficient when the ingest updates stored odds in place.
+Use the matching gamebook for each game from
+`official-gamebooks-source-manifest.csv`. Do not backdate current
+rows, manufacture a missing archived quote, or silently recompute the
+existing Brier scores.
+
+The read-only `audit_prop_quote_provenance.py` now crosswalks the
+existing 65,448 graded rows back to stored quote sides and their
+`odds_captured_at` values, flags either side captured at/after
+`prop_games.start_time`, and emits a row-level settlement mismatch
+file. It is **an executable audit, not yet an executed result**:
+the underlying 4 GB API SQLite database is not available in the
+GitHub file connector. Timestamp classifications from the currently
+stored rows are not proof that the historical price was captured before
+kickoff when the source overwrote old prices.
+
+```sh
+python docs/research/nfl-injury-history-2026-weeks2-9/audit_prop_quote_provenance.py \
+  --db backend/data/picks.dev.db
+```
+
+This creates `prop-quote-provenance-audit.json`,
+`recorded-settlement-disagreements.csv`, and
+`prop-quote-timestamp-exceptions.csv` on the executing host.
+Reconcile them against the reported 38 disagreements before
+qualifying any sportsbook benchmark as pregame-safe.
 
 **Promotion gates:** evaluate the receptions candidate on a later
 untouched period, compare with raw on the same independent
