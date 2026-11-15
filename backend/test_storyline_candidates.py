@@ -115,7 +115,7 @@ class FirstTeamMeeting(unittest.TestCase):
         result = run(prior_meetings=[], meetings_coverage_start="2025-10-21", offseason_rule=True)
         c = one(result, "first_team_meeting_after_trade")
         self.assertTrue(c["claims"][0]["offseason_rule_applied"])
-        self.assertEqual(c["claims"][0]["meetings_scope"], "regular_season")
+        self.assertEqual(c["claims"][0]["meetings_scope"], "official_games")
 
     def test_the_offseason_rule_is_off_unless_asked_for(self):
         result = run(prior_meetings=[], meetings_coverage_start="2025-10-21")

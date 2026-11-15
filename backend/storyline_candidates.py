@@ -13,10 +13,10 @@ Inputs
                      stints and meetings after it are ignored whatever the graph holds.
   prior_meetings     dates of earlier games between these two teams, or None if unknown.
   meetings_coverage_start  first day those meetings are complete from. Meetings are
-                     REGULAR-SEASON games only; preseason and playoffs are not covered.
+                     official games (regular season, play-in, Cup, postseason); preseason is excluded.
   offseason_rule     if True, a trade dated July 1 to Sept 30 counts as covered by a meeting
                      history that begins on or after Oct 1 of the same year. This assumes no
-                     regular-season game is played between such a trade and the opening game.
+                     official game is played between such a trade and the opening game.
                      The caller must only set it when the first season in the history is complete.
   appearance_history {"coverage_start": day, "games": {player id: [{"date","home"}]}}
                      of games the player appeared in, or None if unknown.
@@ -205,14 +205,14 @@ class _Run:
                 self.add(cid, kind, [], txn.id, "scheduled_team_matchup", True,
                          [{"type": "first_team_meeting", "trade_date": txn.effective_date,
                            "meetings_checked_from": self.meetings_start,
-                           "meetings_scope": "regular_season",
+                           "meetings_scope": "official_games",
                            "offseason_rule_applied": self.meetings_start > txn.effective_date,
                            "moves": [{"player": m.player_key, "from": m.from_team, "to": m.to_team}
                                      for m in sorted(direct, key=lambda m: (m.to_team, m.player_key))]}],
                          [m.evidence_id for m in direct],
                          {"recency_days": _days(self.as_of, txn.effective_date),
                           "multi_party_teams": len(txn.teams), "first_event": True},
-                         {"regular-season team meeting only; says nothing about who plays"})
+                         {"official-game team meeting only; says nothing about who plays"})
 
     def teammates(self):
         home, away = self.game["home"], self.game["away"]

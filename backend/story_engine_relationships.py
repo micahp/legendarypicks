@@ -72,25 +72,40 @@ def collect_relationship_inputs(db_path, game, *, as_of):
             roster[team] = sorted(str(m["source_player_key"]) for m in members)
             names.update({str(m["source_player_key"]): m["display_name"] for m in members})
         day = _cutoff_day(as_of)
-        meetings = [r[0] for r in con.execute(
-            "SELECT game_date FROM team_game_results WHERE league='nba' AND team=? AND opponent=? "
-            "AND game_date<=? AND game_id<>? ORDER BY game_date",
-            (game["away"], game["home"], day, str(game.get("game_id") or "")))]
-        start = con.execute("SELECT MIN(game_date) FROM team_game_results WHERE league='nba' AND team=?",
-                            (game["away"],)).fetchone()[0]
-        full = bool(start) and all(con.execute(
-            "SELECT COUNT(*) FROM team_game_results WHERE league='nba' AND team=? AND game_date>=? "
-            "AND game_date<=date(?, '+250 day')", (team, start, start)).fetchone()[0] >= 82
-            for team in (game["away"], game["home"]))
+        if "nba_sportsdataverse_games" not in have:
+            raise RelationshipDataMissing("table nba_sportsdataverse_games is missing")
+        gid = str(game.get("game_id") or "")
+        found = con.execute(
+            "SELECT game_date, game_type FROM nba_sportsdataverse_games "
+            "WHERE ((home=? AND away=?) OR (home=? AND away=?)) AND game_date<=? "
+            "AND source_game_id<>? AND COALESCE(espn_event_id,'')<>? ORDER BY game_date, source_game_id",
+            (game["home"], game["away"], game["away"], game["home"], day, gid, gid)).fetchall()
+        meetings = [r[0] for r in found]
+        detail = [{"date": r[0], "game_type": r[1]} for r in found]
+        first = con.execute("SELECT game_date, season FROM nba_sportsdataverse_games "
+                            "ORDER BY game_date LIMIT 1").fetchone()
+        start = first[0] if first else None
+        full = False
+        if first:
+            season = first[1]
+            reg_ok = all(con.execute(
+                "SELECT COUNT(*) FROM nba_sportsdataverse_games WHERE season=? AND game_type='REG' "
+                "AND (home=? OR away=?)", (season, team, team)).fetchone()[0] >= 82
+                for team in (game["away"], game["home"]))
+            post = con.execute("SELECT COUNT(*) FROM nba_sportsdataverse_games WHERE season=? "
+                               "AND game_type='POST'", (season,)).fetchone()[0]
+            full = reg_ok and post > 0
     finally:
         con.close()
     return {"rows": rows, "roster": roster, "names": names, "availability": {},
-            "prior_meetings": meetings, "meetings_coverage_start": start, "offseason_rule": full,
+            "prior_meetings": meetings, "meetings_detail": detail, "meetings_coverage_start": start,
+            "offseason_rule": full,
             "roster_snapshot": {"id": snap["id"], "source": snap["source"], "captured_at": snap["captured_at"]},
             "notes": ["availability source: none, every player is 'unknown'",
-                      "meetings are regular-season games only; offseason rule %s" % (
-                          "ON (first season in the history has 82+ games for both teams)" if full else
-                          "OFF (first season in the history is not shown to be complete)"),
+                      "meetings: regular season, play-in, NBA Cup and postseason games; preseason excluded by decision",
+                      "offseason rule %s" % (
+                          "ON (first season in the history has 82+ regular-season games for both teams and a postseason)"
+                          if full else "OFF (first season in the history is not shown to be complete)"),
                       "appearance history: not loaded, no 'first' claim about a player"]}
 
 

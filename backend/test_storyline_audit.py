@@ -48,7 +48,7 @@ class Templates(unittest.TestCase):
 
     def test_first_meeting_is_a_team_claim_and_names_no_return(self):
         out = render(pick(result(), "first_team_meeting_after_trade"))
-        self.assertIn("first regular-season time since the July 6, 2025 trade", out["text"])
+        self.assertIn("first time since the July 6, 2025 trade", out["text"])
         self.assertNotIn("return", out["text"].lower())
 
     def test_expected_player_is_worded_as_expected(self):

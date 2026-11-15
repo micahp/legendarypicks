@@ -73,7 +73,7 @@ def render(c, names):
     if kind == "first_team_meeting_after_trade":
         claim = claims[0]
         return _out(c, "First meeting since the trade",
-                    "%s and %s meet for the first regular-season time since the %s trade." % (
+                    "%s and %s meet for the first time since the %s trade." % (
                         team_city(teams[0]), team_city(teams[1]), _day(claim["trade_date"])),
                     _moves_text(claim["moves"], names))
     if kind in ("former_team_matchup", "former_arena_return", "first_return_to_former_arena"):

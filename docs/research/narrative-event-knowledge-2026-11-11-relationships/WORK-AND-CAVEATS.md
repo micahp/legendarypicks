@@ -51,14 +51,14 @@ The story keeps the one to three sentence rule. A four sentence trade summary is
 
 ## 3. What was verified
 
-- 201 tests pass. That includes the 57 existing story engine tests, run unchanged.
+- 205 tests pass. That includes the 57 existing story engine tests, run unchanged.
 - The real movement file was ingested on a throwaway database and on the dev database:
   10,142 rows, 1,813 trades, 0 direction conflicts, 0 unparsed.
 - Durant moves PHX to HOU. Green and Brooks move HOU to PHX. The seven team deal is one node
   with four draft consideration rows kept.
 - Mutation checks: for every gate (direction, as-of, scratch, coverage, ranking, audit, adapter)
   a test fails when the gate is removed. Details in section 6.
-- One end to end run on a test database produced: "Houston and Phoenix meet for the first regular-season time
+- One end to end run on a test database produced: "Houston and Phoenix meet for the first time
   since the July 6, 2025 trade. Kevin Durant went from the Phoenix Suns to the Houston Rockets.
   Dillon Brooks and Jalen Green went from the Houston Rockets to the Phoenix Suns." The existing
   engine's line for the same input was "Houston brings a three-game winning streak into its
@@ -101,27 +101,34 @@ Whether Durant played on 2025-11-24 cannot be answered from our data. The detect
 templates handle `expected_to_play`, `active_confirmed` and `inactive` correctly in tests, but
 nothing feeds those states yet.
 
-**F. "First meeting since the trade" rests on an offseason rule you approved (2026-11-14).**
-`team_game_results` for the NBA starts 2025-10-21 and holds regular season games only
-(measured 2026-11-12). The Durant trade is dated 2025-07-06, before the history begins. The
-rule: a trade dated July 1 to September 30 counts as covered when the meeting history begins on
-or after October 1 of the same year, because no regular season game is played in between. The
-code turns the rule on only when the first season in the history is complete (82 or more games
-for both teams within 250 days of the first game). Measured 2026-11-14 on the dev database:
-HOU 82 games and PHX 82 games, so the rule is ON for that pair.
-What the rule does not cover, and the wording reflects it:
-- Preseason and summer league games are not in our data. The headline says "first
-  regular-season time since the trade", not "first time".
-- Playoff games are not in our data (the table is regular season only). A later season's
-  "first regular-season meeting" could follow a playoff meeting we cannot see. The claim is
-  scoped to the regular season for that reason (`meetings_scope: regular_season`).
-- A trade dated outside July 1 to September 30 (for example a trade in October) is not covered.
-- The rule trusts that the history starts at an opening game. The 82 game check is the only
-  test of that.
-- `game_date` in `team_game_results` can differ by one day from the NBA's own date (945 games,
-  measured earlier). The Nov 24, 2025 HOU at PHX game appears as 2025-11-25. The adapter
-  compares our dates with our dates (bundle start in UTC), so the comparison is consistent, but
-  a date shown to a reader must not be copied from this table.
+**F. "First meeting since the trade" uses official games and an offseason rule you approved.**
+Decision 2026-11-15: preseason is not needed, postseason is.
+Source: `nba_sportsdataverse_games` (NBA game ids, NBA's own dates). It holds one season,
+2025-26: 1,230 regular season, 1 NBA Cup, 6 play-in and 85 postseason games, 2025-10-21 to
+2026-06-13 (measured 2026-11-15). A "meeting" is any of those four kinds. Preseason is excluded
+by decision, not by accident.
+Reconciled once: ESPN's core API reports 85 postseason events for 2026 (one request, 200,
+2026-11-15), the same as our 85. The 1,230 regular season games is the league's own schedule
+size. The play-in and Cup counts were not reconciled.
+The earlier source, `team_game_results`, was regular season only and shifted dates by a day, so
+the collector no longer reads it. Meeting dates now match the NBA's (the Nov 24, 2025 game is
+2025-11-24 in this table).
+The Durant trade is dated 2025-07-06, before the history begins. The offseason rule: a trade
+dated July 1 to September 30 counts as covered when the history begins on or after October 1
+of the same year, because no official game is played in between. The collector turns the rule
+on only when the first season in the history is complete: 82 or more regular season games for
+both teams and at least one postseason game. Measured on the dev database: the rule is ON for
+HOU and PHX, and their four meetings are 2025-11-24, 2025-12-05, 2026-01-05 and 2026-04-07,
+all regular season.
+Limits:
+- The table holds one season. A trade dated before 2025-07-01 cannot be given a "first meeting"
+  claim, and a meeting in an earlier season would be invisible to any trade that is not covered
+  by the rule. So the claim is safe only for trades made in the summer of 2025 or later.
+- A trade dated outside July 1 to September 30 (for example in October) is not covered.
+- The rule trusts that the history starts at an opening game. The completeness check is the
+  only test of that.
+- The one NBA Cup game in the table is counted as a meeting. Whether Cup games should count was
+  not decided.
 
 **G. The Nov 24, 2025 and Apr 7, 2026 games cannot be replayed from our data.**
 Roster snapshots start 2026-08-04 (ESPN) and 2026-10-03 (NBA.com). The collector refuses a
@@ -134,9 +141,14 @@ So no "first return to the former arena" claim can be proven in production use. 
 exists and is tested with supplied history. The collector does not supply it.
 
 **I. Angles that are not built.**
-Playoff series rematch, championship connection, historical rivalry, and first actual
+Playoff series rematch (its source now exists, see below), championship connection, historical rivalry, and first actual
 opponents after a trade. No series, championship or on court appearance source is loaded.
 The detector lists them as `not_supported` in every result.
+
+Postseason data now exists for 2025-26 only. For example Houston's 2026 round one games are
+in the table (6 games against Los Angeles, shown as a 4 to 2 series loss in the scores). The
+spec's example of Golden State eliminating Houston the season before is NOT in our data,
+because 2024-25 is not loaded. A rematch angle for that season needs that season loaded first.
 
 **J. Only angles with a fixed score can be replaced.**
 When the existing engine takes its fallback paths (`star_performance`,
