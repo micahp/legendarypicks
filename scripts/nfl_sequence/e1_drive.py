@@ -559,6 +559,12 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                     if event == 'punt' and after.get('offense') == st['defense']:
                         play_terminal = 'punt'
                     elif after.get('offense') == st['offense']:
+                        if play_terminal == 'turnover_on_downs':
+                            # A roughing-the-passer first down supersedes the
+                            # originally failed fourth-down conversion; the
+                            # legal completed pass still credits its yards.
+                            flags['turnover_on_downs'] = False
+                            flags['turnover'] = False
                         play_terminal = None
                     else:
                         return halt('penalty_kept_play_with_possession_change_unsupported')

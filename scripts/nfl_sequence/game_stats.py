@@ -8,6 +8,7 @@ Yards credited on a touchdown are capped at the distance to the goal line in the
 the observed play, not the simulated spot, and a line that said otherwise would contradict the field.
 """
 from collections import defaultdict
+import math
 
 QUARTER_LENGTH = 900
 ATTRIBUTION = 'sampled_observed_play'
@@ -126,12 +127,21 @@ def team_stats(drives, points):
 
 
 def _credited(play, yards):
-    """Credit only the distance the ball can legally travel before becoming dead at either goal line."""
+    """One integer stat credit for both player and team, from a legal field state.
+
+    The V1.7 transition engine retains fractional yardlines after half-distance
+    enforcement, while official box-score yardage is integral. Resolve the
+    boundary distance ONCE per play with symmetric half-away-from-zero rounding.
+    Never independently truncate team totals and player totals after summing.
+    """
     if play['outcome']['touchdown']:
-        return min(yards, play['state_before']['yardline_100'])
-    if play['outcome'].get('safety'):
-        return max(yards, play['state_before']['yardline_100'] - 100)
-    return yards
+        yards = min(yards, play['state_before']['yardline_100'])
+    elif play['outcome'].get('safety'):
+        yards = max(yards, play['state_before']['yardline_100'] - 100)
+    if type(yards) not in (int, float) or not math.isfinite(yards):
+        raise ValueError('cannot credit a nonfinite or nonnumeric play yardage')
+    magnitude = math.floor(abs(yards) + 0.5)
+    return magnitude if yards >= 0 else -magnitude
 
 
 def _player_yards(play, field, fallback):

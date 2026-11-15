@@ -503,6 +503,9 @@ def build_boxscore(seed, outcome, record, snapshot, profile_manifest, archive_va
 
 def _box_status(outcome):
     if outcome.get('valid_full_game'):
+        if (outcome.get('research_only_penalty_model')
+                and not outcome.get('forecast_release_validated')):
+            return 'research_valid_complete'
         return 'valid_complete'
     if outcome.get('tied_at_regulation_end'):
         return 'regulation_tie'
@@ -666,7 +669,8 @@ def aggregate_boxscores(boxscores, requested_games=None):
         'unique_seeds': len(unique), 'duplicate_ledger_rows': duplicates,
         'valid_complete_games': n_valid, 'coverage': n_valid / requested_games if requested_games else None,
         'status_counts': {status: sum(box['status'] == status for box in unique)
-                          for status in ('valid_complete', 'regulation_tie', 'incomplete', 'blocked', 'error')},
+                          for status in ('valid_complete', 'research_valid_complete', 'regulation_tie',
+                                         'incomplete', 'blocked', 'error')},
         'game': {key: _distribution(values) for key, values in game_values.items()},
         'winner_probability': {key: count / n_valid if n_valid else None for key, count in winners.items()},
         'scoring_frequency': {key: count / n_valid if n_valid else None for key, count in scoring.items()},
