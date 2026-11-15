@@ -135,6 +135,11 @@ No LP live forecast/lock/grading updates, production writes, shared engine chang
 - Heavy or optional libraries live in ingest scripts, never in request handlers. Persist to the DB;
   no in-memory caches as the source of truth. Serving reads the DB only, never ESPN per request.
 - A comment saying data does not exist is a hypothesis: check it before building on it.
+- `/root/prediction-market-trading/data/orderflow`: since 2026-11-15, top-level `*.jsonl` files not
+  modified for 30 days are gzipped in place (`X.jsonl.gz`) to save disk. A script that reads old
+  tapes must also read `*.jsonl.gz` (`gzip.open(path, "rt")`). `KALSHI_POINTS_*` and `USOPEN_*`, which
+  `ingest_kalshi_tennis_points.py` and `ingest_usopen_points.py` read, stay plain. See that repo's
+  AGENTS.md section 6.
 
 ## Verifying (3, 4, 6, 11)
 - Verify against the requirement and an independent source, never against the output of the code

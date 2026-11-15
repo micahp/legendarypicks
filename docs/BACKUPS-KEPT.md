@@ -43,6 +43,13 @@ not counted here.
   `VACUUM INTO` and verified with `quick_check`. Deleted at the owner's request. This was the dev database restore point
   made before the MLS identity closure work.
 
+## Deleted by owner, 2026-11-15
+
+- `/root/legendarypicks/backend/data/picks.db.bak-premigrate-nfl-inputs-20261104T214716` (3.0 GiB), made by the NFL
+  inputs migration on 2026-11-04. Not pinned, not named in any doc. Deleted at the owner's request to free disk (100% full).
+  Kept: the three pinned incident copies above, and `picks.db.bak-premigrate-ufc-timer-20261115-052431`, the restore point of
+  the 2026-11-15 history job that failed when it ran the UFC refresh at the same time as `legendarypicks-ufc-fight-stats-prod`.
+
 ## Naming
 
 `<database>.bak-<purpose>-<yyyymmdd>[-<hhmm>]`. The purpose says what the backup protects against, so a later decision to delete
