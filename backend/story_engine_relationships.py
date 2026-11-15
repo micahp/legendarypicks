@@ -78,12 +78,19 @@ def collect_relationship_inputs(db_path, game, *, as_of):
             (game["away"], game["home"], day, str(game.get("game_id") or "")))]
         start = con.execute("SELECT MIN(game_date) FROM team_game_results WHERE league='nba' AND team=?",
                             (game["away"],)).fetchone()[0]
+        full = bool(start) and all(con.execute(
+            "SELECT COUNT(*) FROM team_game_results WHERE league='nba' AND team=? AND game_date>=? "
+            "AND game_date<=date(?, '+250 day')", (team, start, start)).fetchone()[0] >= 82
+            for team in (game["away"], game["home"]))
     finally:
         con.close()
     return {"rows": rows, "roster": roster, "names": names, "availability": {},
-            "prior_meetings": meetings, "meetings_coverage_start": start,
+            "prior_meetings": meetings, "meetings_coverage_start": start, "offseason_rule": full,
             "roster_snapshot": {"id": snap["id"], "source": snap["source"], "captured_at": snap["captured_at"]},
             "notes": ["availability source: none, every player is 'unknown'",
+                      "meetings are regular-season games only; offseason rule %s" % (
+                          "ON (first season in the history has 82+ games for both teams)" if full else
+                          "OFF (first season in the history is not shown to be complete)"),
                       "appearance history: not loaded, no 'first' claim about a player"]}
 
 
@@ -108,7 +115,8 @@ def generate_story_with_relationships(bundle, inputs, *, strict=False, prior_use
     det = sc.detect(game, graph, inputs["roster"], inputs.get("availability", {}), as_of=day,
                     prior_meetings=inputs.get("prior_meetings"),
                     meetings_coverage_start=inputs.get("meetings_coverage_start"),
-                    appearance_history=inputs.get("appearance_history"))
+                    appearance_history=inputs.get("appearance_history"),
+                    offseason_rule=bool(inputs.get("offseason_rule")))
     base_kind = base["angle"]["kind"]
     rankable = base_kind in rubric["existing"]
     ranked = rk.rank(det["candidates"], existing_angle=base["angle"] if rankable else None,

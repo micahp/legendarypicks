@@ -51,14 +51,14 @@ The story keeps the one to three sentence rule. A four sentence trade summary is
 
 ## 3. What was verified
 
-- 194 tests pass. That includes the 57 existing story engine tests, run unchanged.
+- 201 tests pass. That includes the 57 existing story engine tests, run unchanged.
 - The real movement file was ingested on a throwaway database and on the dev database:
   10,142 rows, 1,813 trades, 0 direction conflicts, 0 unparsed.
 - Durant moves PHX to HOU. Green and Brooks move HOU to PHX. The seven team deal is one node
   with four draft consideration rows kept.
 - Mutation checks: for every gate (direction, as-of, scratch, coverage, ranking, audit, adapter)
   a test fails when the gate is removed. Details in section 6.
-- One end to end run on a test database produced: "Houston and Phoenix meet for the first time
+- One end to end run on a test database produced: "Houston and Phoenix meet for the first regular-season time
   since the July 6, 2025 trade. Kevin Durant went from the Phoenix Suns to the Houston Rockets.
   Dillon Brooks and Jalen Green went from the Houston Rockets to the Phoenix Suns." The existing
   engine's line for the same input was "Houston brings a three-game winning streak into its
@@ -101,13 +101,27 @@ Whether Durant played on 2025-11-24 cannot be answered from our data. The detect
 templates handle `expected_to_play`, `active_confirmed` and `inactive` correctly in tests, but
 nothing feeds those states yet.
 
-**F. "First meeting since the trade" is blocked by our meeting history.**
+**F. "First meeting since the trade" rests on an offseason rule you approved (2026-11-14).**
 `team_game_results` for the NBA starts 2025-10-21 and holds regular season games only
-(measured 2026-11-12). The Durant trade is dated 2025-07-06. The detector requires meeting
-history to start on or before the trade, so on real data it rejects the claim with
-`meeting_history_incomplete`. That is the correct fail loud result. A rule such as "no games
-exist between the offseason trade and opening night" would allow it, but that rule is an
-assumption I have not verified, so it is not in the code. It needs your decision.
+(measured 2026-11-12). The Durant trade is dated 2025-07-06, before the history begins. The
+rule: a trade dated July 1 to September 30 counts as covered when the meeting history begins on
+or after October 1 of the same year, because no regular season game is played in between. The
+code turns the rule on only when the first season in the history is complete (82 or more games
+for both teams within 250 days of the first game). Measured 2026-11-14 on the dev database:
+HOU 82 games and PHX 82 games, so the rule is ON for that pair.
+What the rule does not cover, and the wording reflects it:
+- Preseason and summer league games are not in our data. The headline says "first
+  regular-season time since the trade", not "first time".
+- Playoff games are not in our data (the table is regular season only). A later season's
+  "first regular-season meeting" could follow a playoff meeting we cannot see. The claim is
+  scoped to the regular season for that reason (`meetings_scope: regular_season`).
+- A trade dated outside July 1 to September 30 (for example a trade in October) is not covered.
+- The rule trusts that the history starts at an opening game. The 82 game check is the only
+  test of that.
+- `game_date` in `team_game_results` can differ by one day from the NBA's own date (945 games,
+  measured earlier). The Nov 24, 2025 HOU at PHX game appears as 2025-11-25. The adapter
+  compares our dates with our dates (bundle start in UTC), so the comparison is consistent, but
+  a date shown to a reader must not be copied from this table.
 
 **G. The Nov 24, 2025 and Apr 7, 2026 games cannot be replayed from our data.**
 Roster snapshots start 2026-08-04 (ESPN) and 2026-10-03 (NBA.com). The collector refuses a
@@ -146,7 +160,7 @@ one end to end run above is a demonstration, not an evaluation.
 
 ## 5. Decisions that need you
 
-1. Allow the offseason rule in F, yes or no.
+1. Done: the offseason rule (F) is approved and built. Check the preseason and playoff limits in F.
 2. Where an inactive list and a 2025-26 roster history should come from (E, G).
 3. Whether to add the ingest to `ingest_registry.py` with a timer. This changes systemd timers.
 4. Whether to run the 12 game editorial review and tune the rubric (A, M).
@@ -165,6 +179,9 @@ tests again. Every one of these made a test fail:
   prior use penalty, no evidence penalty, reversed tie break.
 - Audit: each check removed in turn (direction, claims, first, availability, team scope,
   cutoff, banned words, postgame words, missing name, em dash). Template direction reversed.
+- Offseason rule: always on, no July to September window, no same-year check, no October
+  check, flag always false, audit ignoring the flag or the scope, collector always on, 82 game
+  check weakened.
 - Adapter: cutoff day leak, audit ignored, unranked base replaced, roster after cutoff allowed,
   inactive players kept, own game counted as a meeting, no sentence cap, changed output with no
   input, displaced facts dropped.

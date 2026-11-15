@@ -12,7 +12,12 @@ Inputs
   as_of              cutoff day (YYYY-MM-DD, not after the game day). Trades,
                      stints and meetings after it are ignored whatever the graph holds.
   prior_meetings     dates of earlier games between these two teams, or None if unknown.
-  meetings_coverage_start  first day those meetings are complete from.
+  meetings_coverage_start  first day those meetings are complete from. Meetings are
+                     REGULAR-SEASON games only; preseason and playoffs are not covered.
+  offseason_rule     if True, a trade dated July 1 to Sept 30 counts as covered by a meeting
+                     history that begins on or after Oct 1 of the same year. This assumes no
+                     regular-season game is played between such a trade and the opening game.
+                     The caller must only set it when the first season in the history is complete.
   appearance_history {"coverage_start": day, "games": {player id: [{"date","home"}]}}
                      of games the player appeared in, or None if unknown.
 
@@ -49,7 +54,7 @@ def _days(later: str, earlier: str):
 
 class _Run:
     def __init__(self, game, graph, roster, availability, as_of, prior_meetings,
-                 meetings_coverage_start, appearance_history):
+                 meetings_coverage_start, appearance_history, offseason_rule=False):
         for status in availability.values():
             if status == "played":
                 raise ValueError("'played' cannot enter a pregame candidate run")
@@ -61,6 +66,7 @@ class _Run:
         self.avail, self.as_of = availability, as_of
         self.meetings, self.meetings_start = prior_meetings, meetings_coverage_start
         self.history = appearance_history
+        self.offseason_rule = offseason_rule
         self.candidates, self.rejected = [], []
         self.txn_of_evidence = {m.evidence_id: t for t in graph.transactions for m in t.movements}
         self.teams = sorted({game["home"], game["away"]})
@@ -180,13 +186,18 @@ class _Run:
                       "multi_party_teams": len(txn.teams), "first_event": False},
                      {"team-level claim; availability not required"})
 
+    def offseason_covers(self, txn):
+        start, date = self.meetings_start, txn.effective_date
+        return bool(self.offseason_rule and "07-01" <= date[5:] <= "09-30"
+                    and start[:4] == date[:4] and start[5:] >= "10-01")
+
     def first_meeting(self):
         for txn, direct in self.trades_between():
             cid = "nba:%s:first_team_meeting_after_trade:%s" % (self.game["game_id"], txn.id)
             kind = "first_team_meeting_after_trade"
             if self.meetings is None or self.meetings_start is None:
                 self.reject(cid, kind, "meeting_history_unknown")
-            elif self.meetings_start > txn.effective_date:
+            elif self.meetings_start > txn.effective_date and not self.offseason_covers(txn):
                 self.reject(cid, kind, "meeting_history_incomplete")
             elif any(txn.effective_date <= d < self.game["date"] for d in self.meetings):
                 self.reject(cid, kind, "prior_meeting_exists")
@@ -194,12 +205,14 @@ class _Run:
                 self.add(cid, kind, [], txn.id, "scheduled_team_matchup", True,
                          [{"type": "first_team_meeting", "trade_date": txn.effective_date,
                            "meetings_checked_from": self.meetings_start,
+                           "meetings_scope": "regular_season",
+                           "offseason_rule_applied": self.meetings_start > txn.effective_date,
                            "moves": [{"player": m.player_key, "from": m.from_team, "to": m.to_team}
                                      for m in sorted(direct, key=lambda m: (m.to_team, m.player_key))]}],
                          [m.evidence_id for m in direct],
                          {"recency_days": _days(self.as_of, txn.effective_date),
                           "multi_party_teams": len(txn.teams), "first_event": True},
-                         {"team meeting only; says nothing about who plays"})
+                         {"regular-season team meeting only; says nothing about who plays"})
 
     def teammates(self):
         home, away = self.game["home"], self.game["away"]
@@ -227,9 +240,9 @@ class _Run:
 
 
 def detect(game, graph, roster, availability, *, as_of, prior_meetings=None,
-           meetings_coverage_start=None, appearance_history=None):
+           meetings_coverage_start=None, appearance_history=None, offseason_rule=False):
     run = _Run(game, graph, roster, availability, as_of, prior_meetings,
-               meetings_coverage_start, appearance_history)
+               meetings_coverage_start, appearance_history, offseason_rule)
     run.former_team_and_arena()
     run.reciprocal()
     run.first_meeting()

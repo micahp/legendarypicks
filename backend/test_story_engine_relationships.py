@@ -24,7 +24,8 @@ def bundle(**kw):
     return b
 
 
-def make_db(path, snapshot_at="2026-10-30T12:00:00+00:00", meetings=(), first_game="2025-01-01", payload=None):
+def make_db(path, snapshot_at="2026-10-30T12:00:00+00:00", meetings=(), first_game="2025-01-01", payload=None,
+            season_games=0):
     con = sqlite3.connect(path)
     con.executescript("""
       CREATE TABLE player_source_ids(player_id INT, league TEXT, source TEXT, source_player_key TEXT);
@@ -38,7 +39,12 @@ def make_db(path, snapshot_at="2026-10-30T12:00:00+00:00", meetings=(), first_ga
     for i, (key, team, name) in enumerate([(DURANT, "HOU", "Kevin Durant"), (GREEN, "PHX", "Jalen Green"),
                                            (BROOKS, "PHX", "Dillon Brooks")], 1):
         con.execute("INSERT INTO roster_memberships VALUES(?,1,?,?,?, 'active', ?)", (i, i, key, team, name))
-    con.execute("INSERT INTO team_game_results VALUES('nba','old','HOU',?, 'PHX')", (first_game,))
+    con.execute("INSERT INTO team_game_results VALUES('nba','old','HOU',?, 'XXX')", (first_game,))
+    import datetime as dt
+    for team in ("HOU", "PHX"):
+        for i in range(season_games):
+            day = (dt.date.fromisoformat(first_game) + dt.timedelta(days=i)).isoformat()
+            con.execute("INSERT INTO team_game_results VALUES('nba',?,?,?, 'XXX')", ("s%s%d" % (team, i), team, day))
     for i, d in enumerate(meetings):
         con.execute("INSERT INTO team_game_results VALUES('nba',?,'HOU',?, 'PHX')", ("m%d" % i, d))
     con.commit()
@@ -63,7 +69,7 @@ class Adapter(unittest.TestCase):
         out = adapter.generate_story_with_relationships(bundle(), self.inputs)
         self.assertEqual(out["manifest"]["relationships"]["status"], "relationship_lead")
         self.assertEqual(out["angle"]["kind"], "relationship:first_team_meeting_after_trade")
-        self.assertIn("first time since the July 6, 2025 trade", out["story"])
+        self.assertIn("first regular-season time since the July 6, 2025 trade", out["story"])
         self.assertIn("Kevin Durant went from the Phoenix Suns to the Houston Rockets", out["story"])
         self.assertIsNone(se.RESEARCH_JARGON.search(out["story"]))
 
@@ -98,7 +104,7 @@ class Adapter(unittest.TestCase):
         make_db(db, meetings=["2025-11-24"])
         inputs = adapter.collect_relationship_inputs(db, GAME, as_of="2026-11-02T22:00:00Z")
         out = adapter.generate_story_with_relationships(bundle(), inputs)
-        self.assertNotIn("first time", out["story"])
+        self.assertNotIn("first regular-season time", out["story"])
         reasons = [e["reason"] for e in out["manifest"]["relationships"]["log"] if e["role"] == "rejected_by_detector"]
         self.assertIn("prior_meeting_exists", reasons)
 
@@ -112,12 +118,33 @@ class Adapter(unittest.TestCase):
         self.assertEqual(len([x for x in out["story"].split(". ") if x]), 3)
         self.assertNotIn("Atlanta Hawks", out["story"])
 
+    def test_the_offseason_rule_allows_the_first_meeting_when_the_season_is_complete(self):
+        db = os.path.join(self.dir.name, "season.db")
+        make_db(db, first_game="2025-10-21", season_games=82)
+        inputs = adapter.collect_relationship_inputs(db, GAME, as_of="2026-11-02T22:00:00Z")
+        self.assertTrue(inputs["offseason_rule"])
+        self.assertIn("offseason rule ON", " ".join(inputs["notes"]))
+        out = adapter.generate_story_with_relationships(bundle(), inputs)
+        self.assertEqual(out["angle"]["kind"], "relationship:first_team_meeting_after_trade")
+        claim = out["manifest"]["selected_facts"][0]["claims"][0]
+        self.assertTrue(claim["offseason_rule_applied"])
+        self.assertEqual(claim["meetings_scope"], "regular_season")
+
+    def test_the_offseason_rule_stays_off_when_the_first_season_is_not_complete(self):
+        db = os.path.join(self.dir.name, "part.db")
+        make_db(db, first_game="2025-10-21", season_games=40)
+        inputs = adapter.collect_relationship_inputs(db, GAME, as_of="2026-11-02T22:00:00Z")
+        self.assertFalse(inputs["offseason_rule"])
+        self.assertIn("offseason rule OFF", " ".join(inputs["notes"]))
+        out = adapter.generate_story_with_relationships(bundle(), inputs)
+        self.assertNotIn("first regular-season time", out["story"])
+
     def test_meeting_history_that_starts_after_the_trade_proves_nothing(self):
         db = os.path.join(self.dir.name, "late_start.db")
         make_db(db, first_game="2025-10-21")
         inputs = adapter.collect_relationship_inputs(db, GAME, as_of="2026-11-02T22:00:00Z")
         out = adapter.generate_story_with_relationships(bundle(), inputs)
-        self.assertNotIn("first time", out["story"])
+        self.assertNotIn("first regular-season time", out["story"])
         reasons = [e["reason"] for e in out["manifest"]["relationships"]["log"] if e["role"] == "rejected_by_detector"]
         self.assertIn("meeting_history_incomplete", reasons)
 

@@ -111,6 +111,31 @@ class FirstTeamMeeting(unittest.TestCase):
         self.assertNotIn("first_team_meeting_after_trade", kinds(result))
         self.assertIn("meeting_history_incomplete", reasons(result, "first_team_meeting_after_trade"))
 
+    def test_the_offseason_rule_covers_a_summer_trade_when_history_starts_at_opening_night(self):
+        result = run(prior_meetings=[], meetings_coverage_start="2025-10-21", offseason_rule=True)
+        c = one(result, "first_team_meeting_after_trade")
+        self.assertTrue(c["claims"][0]["offseason_rule_applied"])
+        self.assertEqual(c["claims"][0]["meetings_scope"], "regular_season")
+
+    def test_the_offseason_rule_is_off_unless_asked_for(self):
+        result = run(prior_meetings=[], meetings_coverage_start="2025-10-21")
+        self.assertIn("meeting_history_incomplete", reasons(result, "first_team_meeting_after_trade"))
+
+    def test_the_offseason_rule_does_not_stretch_past_its_window(self):
+        for start in ("2025-09-15", "2026-10-21"):      # not an October opening of the trade's year
+            result = run(prior_meetings=[], meetings_coverage_start=start, offseason_rule=True)
+            self.assertNotIn("first_team_meeting_after_trade", kinds(result), start)
+        late = graph(raw("2025-10-25", "Trade", "Phoenix Suns received guard Some Guy from Houston Rockets.",
+                         "suns", 555, "some-guy", "Trade 2025077"))
+        result = run(g=late, prior_meetings=[], meetings_coverage_start="2025-10-30", offseason_rule=True,
+                     as_of="2025-11-23")
+        trades = [c["event_id"] for c in result["candidates"] if c["kind"] == "first_team_meeting_after_trade"]
+        self.assertTrue(all("2025-10-25" not in t for t in trades))
+
+    def test_a_prior_meeting_still_blocks_a_first_under_the_offseason_rule(self):
+        result = run(prior_meetings=["2025-11-10"], meetings_coverage_start="2025-10-21", offseason_rule=True)
+        self.assertIn("prior_meeting_exists", reasons(result, "first_team_meeting_after_trade"))
+
     def test_no_meeting_history_given_is_unknown_not_first(self):
         result = run()
         self.assertNotIn("first_team_meeting_after_trade", kinds(result))

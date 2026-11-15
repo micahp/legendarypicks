@@ -79,7 +79,9 @@ def audit(c, text, graph, *, as_of, names):
     if re.search(r"\bfirst\b", text, re.I):
         claim = c["claims"][0] if c["claims"] else {}
         ok = (kind == "first_team_meeting_after_trade" and claim.get("meetings_checked_from")
-              and claim["meetings_checked_from"] <= claim.get("trade_date", ""))
+              and (claim["meetings_checked_from"] <= claim.get("trade_date", "")
+                   or claim.get("offseason_rule_applied") is True)
+              and claim.get("meetings_scope") == "regular_season")
         ok = ok or (kind == "first_return_to_former_arena" and claim.get("first_return") is True)
         if not ok:
             fail("unsupported_first", kind)

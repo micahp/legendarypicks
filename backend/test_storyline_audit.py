@@ -48,7 +48,7 @@ class Templates(unittest.TestCase):
 
     def test_first_meeting_is_a_team_claim_and_names_no_return(self):
         out = render(pick(result(), "first_team_meeting_after_trade"))
-        self.assertIn("first time since the July 6, 2025 trade", out["text"])
+        self.assertIn("first regular-season time since the July 6, 2025 trade", out["text"])
         self.assertNotIn("return", out["text"].lower())
 
     def test_expected_player_is_worded_as_expected(self):
@@ -150,6 +150,16 @@ class Audit(unittest.TestCase):
         c = pick(self.res, "former_arena_return", DURANT)
         report = audit(c, "Kevin Durant makes his first return to Phoenix.")
         self.assertIn("unsupported_first", checks(report))
+
+    def test_the_offseason_flag_is_needed_when_history_starts_after_the_trade(self):
+        res = result(meetings_coverage_start="2025-10-21", offseason_rule=True)
+        first = copy.deepcopy(pick(res, "first_team_meeting_after_trade"))
+        self.assertTrue(audit(first, render(first)["text"])["ok"])
+        first["claims"][0]["offseason_rule_applied"] = False
+        self.assertIn("unsupported_first", checks(audit(first, render(first)["text"])))
+        first = copy.deepcopy(pick(res, "first_team_meeting_after_trade"))
+        first["claims"][0]["meetings_scope"] = "all"
+        self.assertIn("unsupported_first", checks(audit(first, render(first)["text"])))
 
     def test_first_team_meeting_wording_is_allowed_for_that_kind_only(self):
         first = pick(self.res, "first_team_meeting_after_trade")

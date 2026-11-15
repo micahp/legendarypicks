@@ -8,10 +8,10 @@ Branch `feat/historical-relationships-nba`. Draft. No merge, no deploy, no produ
 | Piece | File | Tests |
 |---|---|---|
 | Ingest of NBA.com's official player movement file | `backend/ingest_nba_player_movement.py` | `test_ingest_nba_player_movement.py` (21) |
-| Pure graph: trade transactions, team stints, shared tenure, as-of filter | `backend/sports_relationships.py` | `test_sports_relationships.py` (18) |
+| Pure graph: trade transactions, team stints, shared tenure, as-of filter | `backend/sports_relationships.py` | `test_sports_relationships.py` (20) |
 | Deterministic candidate detector | `backend/storyline_candidates.py` | `test_storyline_candidates.py` (30) |
 | Editorial ranking (rubric v0-unvalidated) | `backend/storyline_ranking.py` | `test_storyline_ranking.py` (22) |
-| Adapter and read-only collector (`story_engine.py` unchanged) | `backend/story_engine_relationships.py` | `test_story_engine_relationships.py` (18) |
+| Adapter and read-only collector (`story_engine.py` unchanged) | `backend/story_engine_relationships.py` | `test_story_engine_relationships.py` (20) |
 | Plain wording templates and an independent audit of the finished text | `backend/storyline_templates.py`, `backend/storyline_audit.py` | `test_storyline_audit.py` (28) |
 
 Kinds detected: `former_team_matchup`, `reciprocal_trade_reunion`, `first_team_meeting_after_trade`, `former_arena_return`, `first_return_to_former_arena`, `former_teammates_now_opponents`.
