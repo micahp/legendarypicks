@@ -33,10 +33,11 @@ import sys
 import tempfile
 
 HERE = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import team_codes  # noqa: E402
 LISTEN = HERE.parent / "data" / "radio-listen.json"
 OUT = pathlib.Path(os.environ.get("LP_RADIO_BLACKOUTS", HERE / "data" / "radio-blackouts.json"))
 SAMPLE_S = 20
-ALIAS = {"nhl": {"UTAH": "UTA"}, "nba": {"UTA": "UTAH"}}
 NOTICE = re.compile(
     r"not (?:be )?(?:in an area where this game is available|available in (?:your|this) area)"
     r"|blacked out in your area|due to (?:league|leak) restrictions|broadcast guidelines"
@@ -45,9 +46,11 @@ NOTICE = re.compile(
 
 def pick(table, league, home, away):
     """The stream the card plays: home club first, else away (mirrors audioForGame()[0])."""
+    if league not in team_codes.CANONICAL:
+        return None, None
+    streams = team_codes.TeamKeyed(league, (table.get(league) or {}).items())  # UTA and UTAH are one club per league
     for team in (home, away):
-        key = ALIAS.get(league, {}).get(team, team)
-        e = (table.get(league) or {}).get(key)
+        e = streams.get(team)
         if e and e.get("stream"):
             return team, e["stream"]
     return None, None

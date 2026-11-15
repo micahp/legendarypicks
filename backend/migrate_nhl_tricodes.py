@@ -40,8 +40,11 @@ import os
 import sqlite3
 import sys
 
-# The publisher's own tricodes. Verified against api.nhle.com, not inferred.
-TRICODES = {"LA": "LAK", "SJ": "SJS", "TB": "TBL", "UTAH": "UTA"}
+import team_codes  # noqa: E402
+
+# The publisher's own tricodes, from backend/team_codes.py (verified against api.nhle.com, not inferred). The four
+# codes this migration was counted and applied for on 2026-09-07; NJ to NJD was not part of it.
+TRICODES = {code: team_codes.to_source("nhl", "nhle", code) for code in ("LA", "SJ", "TB", "UTAH")}
 
 # (table, column, how to reach the league). Every entry is scoped; see the docstring.
 TARGETS = [
