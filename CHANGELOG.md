@@ -1,3 +1,27 @@
+## v10.2.0
+
+### NBA player identities
+
+- Roster sync sends every NBA identity decision through one resolver. It reuses, attaches or holds a player. It never creates a duplicate player.
+- Gate G reads reviewed nba.com IDs and checks them against nba.com's published names. Gate B uses the canonical G/F/C positions and holds non-NBA clubs.
+- The daily job now runs the NFL roster sync.
+
+### NFL injury recovery, weeks 2 to 9
+
+- Recovers availability from the nflverse schedule and official Sunday inactive reports.
+- Uses pregame source timing. A player missing from the inactive list is never treated as active.
+- Source files are pinned under `docs/research`.
+
+### Fixes
+
+- Receiving stats stay when a player has zero targets.
+- The settlement boxscore import runs under the Python 3.8 dev venv.
+- The UFC current-card run takes one lock. Its two timers can no longer run at the same time.
+
+### Docs
+
+- Props forecast discovery spec, and the backup and orderflow notes.
+
 ## v10.1.5
 
 ### Breaking change: database schema
