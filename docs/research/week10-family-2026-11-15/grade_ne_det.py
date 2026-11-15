@@ -188,8 +188,8 @@ def main():
                    "seeds are model draws, not paired across arms (v2 uses rng protocol v2)"]},
         indent=2, sort_keys=True) + "\n")
 
-    lines = ["# Week 10: NE at DET, SLC model family", "",
-             "**Final:** DET %d, NE %d (home win = 1)." % (home_points, away_points), "",
+    lines = ["# Week 10: %s at %s, SLC model family" % (away, home), "",
+             "**Final:** %s %d, %s %d (home win = 1)." % (home, home_points, away, away_points), "",
              "Inputs: the prospective snapshots built 2026-11-14 18:54:46Z, week-10 kicker table",
              "(LA = McManus), week-9 streaks and snap counts. Each arm is its own git ref.", "",
              "## Game level", "",

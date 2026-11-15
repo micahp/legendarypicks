@@ -1,6 +1,6 @@
-# Week 10: NE at DET, SLC model family
+# Week 10: BUF at NYJ, SLC model family
 
-**Final:** DET 12, NE 31 (home win = 1).
+**Final:** NYJ 12, BUF 31 (home win = 1).
 
 Inputs: the prospective snapshots built 2026-11-14 18:54:46Z, week-10 kicker table
 (LA = McManus), week-9 streaks and snap counts. Each arm is its own git ref.
