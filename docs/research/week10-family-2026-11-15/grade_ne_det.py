@@ -17,6 +17,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 GAME = "2026_10_NE_DET"
+HOME_AWAY = ("DET", "NE")
 ARMS = ("v1", "v1.5", "v1.6", "v1.7", "v1.7-pr43", "v2")
 # our boxscore keys -> ESPN (category, label) with the labels the summary uses
 MARKETS = {
@@ -101,9 +102,13 @@ def main():
     ap.add_argument("--runs", type=Path, required=True)
     ap.add_argument("--espn", type=Path, required=True)
     ap.add_argument("--out-dir", type=Path, required=True)
+    ap.add_argument("--game", default=GAME)
+    ap.add_argument("--home-away", default="DET,NE")
     args = ap.parse_args()
+    globals()["GAME"] = args.game
+    globals()["HOME_AWAY"] = tuple(args.home_away.split(","))
     score, actual_players = load_actuals(args.espn)
-    home, away = "DET", "NE"
+    home, away = HOME_AWAY
     home_points, away_points = score[home], score[away]
 
     games, dists = {}, {}
@@ -176,7 +181,7 @@ def main():
         mae[arm] = {"n": len(errs), "mae": statistics.fmean(errs) if errs else None}
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    (args.out_dir / "ne-det-family-grading.json").write_text(json.dumps(
+    (args.out_dir / ("%s-family-grading.json" % args.game)).write_text(json.dumps(
         {"game": GAME, "final_score": score, "game_level": summary,
          "player_mae": mae, "graded_stats": graded,
          "notes": ["no 2026-11-15 prop_games row exists in picks.dev.db, so market grading is unavailable",
@@ -188,7 +193,7 @@ def main():
              "Inputs: the prospective snapshots built 2026-11-14 18:54:46Z, week-10 kicker table",
              "(LA = McManus), week-9 streaks and snap counts. Each arm is its own git ref.", "",
              "## Game level", "",
-             "| Arm | Valid seeds | P(DET) | P(NE) | P(tie) | Home Brier | DET mean (P10-P90) | NE mean (P10-P90) | Total | Combined score error |",
+             "| Arm | Valid seeds | P(%s) | P(%s) | P(tie) | Home Brier | %s mean (P10-P90) | %s mean (P10-P90) | Total | Combined score error |" % (home, away, home, away),
              "|---|---:|---:|---:|---:|---:|---|---|---:|---:|"]
     for arm in ARMS:
         s = summary[arm]
@@ -215,9 +220,9 @@ def main():
         cells = ["-" if row[a] is None else "%.2f" % row[a] for a in ARMS]
         lines.append("| %s | %s | %s | %.0f | %s |" % (row["player"], row["team"], row["market"],
                                                       row["actual"], " | ".join(cells)))
-    (args.out_dir / "NE-DET-FAMILY-GRADING.md").write_text("\n".join(lines) + "\n")
+    (args.out_dir / ("%s-FAMILY-GRADING.md" % args.game.replace("2026_10_","").replace("_","-"))).write_text("\n".join(lines) + "\n")
     print("\n".join(lines[:20]))
-    print("... wrote", args.out_dir / "NE-DET-FAMILY-GRADING.md")
+    print("... wrote", args.out_dir / ("%s-FAMILY-GRADING.md" % args.game.replace("2026_10_","").replace("_","-")))
 
 
 if __name__ == "__main__":

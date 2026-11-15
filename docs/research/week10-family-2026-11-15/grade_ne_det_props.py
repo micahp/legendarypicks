@@ -12,7 +12,7 @@ import argparse, json, sqlite3, statistics
 from collections import defaultdict
 from pathlib import Path
 
-GAME = "2026_10_NE_DET"
+GAME = "2026_10_NE_DET"  # overridden by --game
 ARMS = ("v1", "v1.5", "v1.6", "v1.7", "v1.7-pr43", "v2")
 # DB market -> (sim metric, actual group, actual field)
 MARKETS = {
@@ -129,10 +129,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", type=Path, required=True)
     ap.add_argument("--props-db", type=Path, required=True)
+    ap.add_argument("--game", default=GAME)
+    ap.add_argument("--prop-game-id", type=int, default=30226)
     ap.add_argument("--espn", type=Path, required=True)
     ap.add_argument("--kickoff", default="2026-11-15T14:30:00Z")
     ap.add_argument("--out-dir", type=Path, required=True)
     args = ap.parse_args()
+    globals()["GAME"] = args.game
 
     actual_players = parse_actuals(args.espn)
     db = sqlite3.connect("file:%s?mode=ro" % args.props_db, uri=True)
@@ -140,10 +143,10 @@ def main():
     sql = """select p.player_id, p.market, p.line, p.side, p.source, p.captured_at, p.odds,
                     pl.nfl_gsis_id, pl.name, pl.team
              from props p join players pl on pl.id = p.player_id
-             where p.game_id = 30226 and p.captured_at < ?"""
+             where p.game_id = ? and p.captured_at < ?"""
     raw = defaultdict(dict)
     names = {}
-    for row in db.execute(sql, (args.kickoff,)):
+    for row in db.execute(sql, (args.prop_game_id, args.kickoff)):
         if row["nfl_gsis_id"]:
             key = (row["nfl_gsis_id"], row["market"], float(row["line"]), row["source"])
             raw[key][row["side"].lower()] = {"odds": row["odds"], "captured_at": row["captured_at"]}
@@ -208,12 +211,12 @@ def main():
     summary["constant_50"] = {"n": len(graded), "brier": 0.25}
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    (args.out_dir / "ne-det-prop-grading.json").write_text(json.dumps(
+    (args.out_dir / ("%s-prop-grading.json" % args.game)).write_text(json.dumps(
         {"game": GAME, "kickoff": args.kickoff,
          "raw_quote_rows": len(items), "graded_items": len(graded),
          "summary": summary, "items": graded}, indent=2, sort_keys=True) + "\n")
 
-    lines = ["# Week 10 NE@DET: prop grading, six SLC arms", "",
+    lines = ["# %s: prop grading, six SLC arms" % args.game, "",
              "Pre-kickoff lines only (captured before %s). One row per player/market/line;" % args.kickoff,
              "model probability is the share of 1,000 simulated games over the line, market",
              "probability is the mean de-vigged over probability across books.", "",
@@ -230,9 +233,9 @@ def main():
             g["name"], g["team"], g["market"], g["line"], g["actual"],
             "yes" if g["over_hit"] else "no", g["books"],
             "-" if g["market_p"] is None else "%.2f" % g["market_p"], " | ".join(cells)))
-    (args.out_dir / "NE-DET-PROP-GRADING.md").write_text("\n".join(lines) + "\n")
+    (args.out_dir / ("%s-PROP-GRADING.md" % args.game.replace("2026_10_","").replace("_","-"))).write_text("\n".join(lines) + "\n")
     print("\n".join(lines[:16]))
-    print("graded items:", len(graded), "-> wrote", args.out_dir / "NE-DET-PROP-GRADING.md")
+    print("graded items:", len(graded), "-> wrote", args.out_dir / ("%s-PROP-GRADING.md" % args.game.replace("2026_10_","").replace("_","-")))
 
 
 if __name__ == "__main__":
