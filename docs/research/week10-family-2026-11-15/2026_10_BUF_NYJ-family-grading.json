@@ -1,4 +1,5 @@
 {
+  "actual_home_win": 0,
   "final_score": {
     "BUF": 31,
     "NYJ": 12
@@ -6,6 +7,7 @@
   "game": "2026_10_BUF_NYJ",
   "game_level": {
     "v1": {
+      "actual_home_win": 0,
       "away": {
         "mean": 25.092,
         "median": 24.0,
@@ -21,7 +23,7 @@
         "p10": 9.0,
         "p90": 31.0
       },
-      "home_win_brier": 0.45158399999999993,
+      "home_win_brier": 0.10758400000000001,
       "margin": {
         "mean": -5.399,
         "median": -6.0,
@@ -42,6 +44,7 @@
       "valid_seeds": 1000
     },
     "v1.5": {
+      "actual_home_win": 0,
       "away": {
         "mean": 24.853,
         "median": 25.0,
@@ -57,7 +60,7 @@
         "p10": 9.0,
         "p90": 30.0
       },
-      "home_win_brier": 0.4610410000000001,
+      "home_win_brier": 0.10304100000000001,
       "margin": {
         "mean": -5.228,
         "median": -6.0,
@@ -78,6 +81,7 @@
       "valid_seeds": 1000
     },
     "v1.6": {
+      "actual_home_win": 0,
       "away": {
         "mean": 26.423,
         "median": 27.0,
@@ -93,7 +97,7 @@
         "p10": 10.0,
         "p90": 33.0
       },
-      "home_win_brier": 0.43692100000000006,
+      "home_win_brier": 0.11492100000000001,
       "margin": {
         "mean": -5.607,
         "median": -6.0,
@@ -114,6 +118,7 @@
       "valid_seeds": 1000
     },
     "v1.7": {
+      "actual_home_win": 0,
       "away": {
         "mean": 24.433,
         "median": 24.0,
@@ -129,7 +134,7 @@
         "p10": 9.0,
         "p90": 30.0
       },
-      "home_win_brier": 0.45697599999999994,
+      "home_win_brier": 0.104976,
       "margin": {
         "mean": -5.871,
         "median": -6.0,
@@ -150,6 +155,7 @@
       "valid_seeds": 1000
     },
     "v1.7-pr43": {
+      "actual_home_win": 0,
       "away": {
         "mean": 24.874,
         "median": 24.0,
@@ -165,7 +171,7 @@
         "p10": 7.0,
         "p90": 30.0
       },
-      "home_win_brier": 0.45562500000000006,
+      "home_win_brier": 0.10562500000000001,
       "margin": {
         "mean": -6.409,
         "median": -6.0,
@@ -186,6 +192,7 @@
       "valid_seeds": 1000
     },
     "v2": {
+      "actual_home_win": 0,
       "away": {
         "mean": 20.533,
         "median": 20.0,
@@ -201,7 +208,7 @@
         "p10": 6.0,
         "p90": 27.0
       },
-      "home_win_brier": 0.379456,
+      "home_win_brier": 0.147456,
       "margin": {
         "mean": -3.61,
         "median": -4.0,
@@ -1083,7 +1090,7 @@
     }
   ],
   "notes": [
-    "no 2026-11-15 prop_games row exists in picks.dev.db, so market grading is unavailable",
+    "home_win_brier scores against the actual result: (p_home - home_win)^2",
     "seeds are model draws, not paired across arms (v2 uses rng protocol v2)"
   ],
   "player_mae": {

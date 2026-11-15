@@ -31,6 +31,16 @@ MARKETS = {
 }
 
 
+def home_win_outcome(home_points, away_points):
+    """1 when the home team won, 0 for an away win or a tie."""
+    return 1 if home_points > away_points else 0
+
+
+def home_win_brier(p_home, home_points, away_points):
+    """Squared error of the home-win probability against the actual result."""
+    return (p_home - home_win_outcome(home_points, away_points)) ** 2
+
+
 def quantity(values):
     xs = sorted(values)
     if not xs:
@@ -110,6 +120,7 @@ def main():
     score, actual_players = load_actuals(args.espn)
     home, away = HOME_AWAY
     home_points, away_points = score[home], score[away]
+    actual_home_win = home_win_outcome(home_points, away_points)
 
     games, dists = {}, {}
     for arm in ARMS:
@@ -146,7 +157,8 @@ def main():
             "valid_seeds": n,
             "p_home_win": p_home, "p_away_win": wins[away] / n if n else None,
             "p_tie": wins["tie"] / n if n else None,
-            "home_win_brier": (p_home - 1.0) ** 2 if n else None,
+            "home_win_brier": home_win_brier(p_home, home_points, away_points) if n else None,
+            "actual_home_win": actual_home_win,
             "home": quantity(pts_home), "away": quantity(pts_away),
             "total": quantity([h + a for h, a in zip(pts_home, pts_away)]),
             "margin": quantity([h - a for h, a in zip(pts_home, pts_away)]),
@@ -182,14 +194,15 @@ def main():
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
     (args.out_dir / ("%s-family-grading.json" % args.game)).write_text(json.dumps(
-        {"game": GAME, "final_score": score, "game_level": summary,
-         "player_mae": mae, "graded_stats": graded,
-         "notes": ["no 2026-11-15 prop_games row exists in picks.dev.db, so market grading is unavailable",
+        {"game": GAME, "final_score": score, "actual_home_win": actual_home_win,
+         "game_level": summary, "player_mae": mae, "graded_stats": graded,
+         "notes": ["home_win_brier scores against the actual result: (p_home - home_win)^2",
                    "seeds are model draws, not paired across arms (v2 uses rng protocol v2)"]},
         indent=2, sort_keys=True) + "\n")
 
     lines = ["# Week 10: %s at %s, SLC model family" % (away, home), "",
-             "**Final:** %s %d, %s %d (home win = 1)." % (home, home_points, away, away_points), "",
+             "**Final:** %s %d, %s %d (home win = %d)." % (home, home_points, away, away_points,
+                                                           actual_home_win), "",
              "Inputs: the prospective snapshots built 2026-11-14 18:54:46Z, week-10 kicker table",
              "(LA = McManus), week-9 streaks and snap counts. Each arm is its own git ref.", "",
              "## Game level", "",
