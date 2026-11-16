@@ -1,5 +1,11 @@
 # Week 10, all twelve games: SLC family grading
 
+**Read with [../GRADING-CAVEATS.md](../GRADING-CAVEATS.md):** two tiers (26 rows at
+1,000 seeds, 40 at 100 seeds with 0.01 granularity), two classified seed failures
+(HOU_CLE v1.7 seed 300055, JAX_TEN v1.7-pr43 seed 300088), and the v1.7 arms here are
+PR #42/#43 at `v1_full_stack` - not the PR #47 `v1_7_candidate` profile, so these are
+not a validation of PR #47.
+
 Per game, per arm. Tier says which batch the numbers come from: `1000-seed` for the
 frozen blocks, `100-seed` for the blocks re-run after the stop. Tiers are never mixed
 inside one arm.

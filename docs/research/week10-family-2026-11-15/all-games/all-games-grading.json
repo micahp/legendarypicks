@@ -1,4 +1,37 @@
 {
+  "caveats": {
+    "profile": {
+      "note": "not the PR #47 v1_7_candidate profile; these results do not validate PR #47",
+      "playcall_pass_label_mode": "conditional",
+      "slc_profile": "v1_full_stack",
+      "v1.7": "PR #42 6ac6180c, feature/slc-v1.7-penalty-model-2026-11-12",
+      "v1.7-pr43": "PR #43 984751d5, fix/slc-v1.7-fractional-state-precision-2026-11-13"
+    },
+    "seed_failures": [
+      {
+        "arm": "v1.7",
+        "failure_class": "FootballAssertionError/ILLEGAL_STATE",
+        "game": "2026_10_HOU_CLE",
+        "seed": 300055,
+        "status": "simulation_error",
+        "valid_seeds": 99,
+        "violated_assertion": "sack_fumble_lost loss -9 carries the ball past its own goal line"
+      },
+      {
+        "arm": "v1.7-pr43",
+        "failure_class": "FootballAssertionError/ILLEGAL_STATE",
+        "game": "2026_10_JAX_TEN",
+        "seed": 300088,
+        "status": "simulation_error",
+        "valid_seeds": 99,
+        "violated_assertion": "sack_fumble_lost loss -9 carries the ball past its own goal line"
+      }
+    ],
+    "tier_counts": {
+      "100-seed": 40,
+      "1000-seed": 26
+    }
+  },
   "failures": [],
   "pending_not_final": [
     {
