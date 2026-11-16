@@ -1,0 +1,15 @@
+[
+ {
+  "run_id": "pp-2026-w10-20261116T172305",
+  "league": "nfl",
+  "season": 2026,
+  "week": 10,
+  "model": "nfl-player-v2",
+  "model_version": "v2",
+  "started_at": "2026-11-16T17:23:05+00:00",
+  "finished_at": "2026-11-16T17:23:05.634463+00:00",
+  "params_json": "{\"constants\": {\"B_car\": null, \"B_tgt\": null, \"H\": 8.0, \"K_CR\": 80.0, \"K_S\": 1.0, \"K_T\": 8.0, \"K_TDC\": 320.0, \"K_TDT\": 160.0, \"K_YPC\": 160.0, \"K_YPT\": 160.0, \"NMU_car\": 0.519, \"NMU_tgt\": 0.59, \"OTHER\": 0.0424, \"P_LOG\": null, \"REDIST\": \"v2.0\"}, \"dist\": {\"G\": 1.23, \"R\": 3.41}, \"p_plays_questionable\": 0.682, \"sims\": 1000}",
+  "status": "ok",
+  "error": null
+ }
+]
