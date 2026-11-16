@@ -1,0 +1,3876 @@
+{
+  "game": "2026_10_KC_ATL",
+  "graded_items": 213,
+  "items": [
+    {
+      "actual": 30.0,
+      "books": 2,
+      "line": 46.5,
+      "market": "receiving_yards",
+      "market_p": 0.5025116540749075,
+      "model_ps": {
+        "v1": 0.586,
+        "v1.5": 0.54,
+        "v1.6": 0.57,
+        "v1.7": 0.57,
+        "v1.7-pr43": 0.54,
+        "v2": 0.67
+      },
+      "name": "Travis Kelce",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 30.0,
+      "books": 11,
+      "line": 47.5,
+      "market": "receiving_yards",
+      "market_p": 0.5013826205177326,
+      "model_ps": {
+        "v1": 0.58,
+        "v1.5": 0.52,
+        "v1.6": 0.57,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.52,
+        "v2": 0.63
+      },
+      "name": "Travis Kelce",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 30.0,
+      "books": 10,
+      "line": 48.5,
+      "market": "receiving_yards",
+      "market_p": 0.5007923131498833,
+      "model_ps": {
+        "v1": 0.566,
+        "v1.5": 0.51,
+        "v1.6": 0.55,
+        "v1.7": 0.55,
+        "v1.7-pr43": 0.51,
+        "v2": 0.62
+      },
+      "name": "Travis Kelce",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 30.0,
+      "books": 5,
+      "line": 49.5,
+      "market": "receiving_yards",
+      "market_p": 0.4985882662453881,
+      "model_ps": {
+        "v1": 0.554,
+        "v1.5": 0.5,
+        "v1.6": 0.54,
+        "v1.7": 0.54,
+        "v1.7-pr43": 0.5,
+        "v2": 0.6
+      },
+      "name": "Travis Kelce",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 30.0,
+      "books": 1,
+      "line": 50.5,
+      "market": "receiving_yards",
+      "market_p": 0.4969864995178399,
+      "model_ps": {
+        "v1": 0.538,
+        "v1.5": 0.5,
+        "v1.6": 0.52,
+        "v1.7": 0.53,
+        "v1.7-pr43": 0.47,
+        "v2": 0.59
+      },
+      "name": "Travis Kelce",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 2.0,
+      "books": 2,
+      "line": 3.5,
+      "market": "receptions",
+      "market_p": 0.5873705511248661,
+      "model_ps": {
+        "v1": 0.756,
+        "v1.5": 0.72,
+        "v1.6": 0.74,
+        "v1.7": 0.72,
+        "v1.7-pr43": 0.64,
+        "v2": 0.83
+      },
+      "name": "Travis Kelce",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 2.0,
+      "books": 2,
+      "line": 4.0,
+      "market": "receptions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.617,
+        "v1.5": 0.59,
+        "v1.6": 0.57,
+        "v1.7": 0.57,
+        "v1.7-pr43": 0.56,
+        "v2": 0.73
+      },
+      "name": "Travis Kelce",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 2.0,
+      "books": 6,
+      "line": 4.5,
+      "market": "receptions",
+      "market_p": 0.42545116608883676,
+      "model_ps": {
+        "v1": 0.617,
+        "v1.5": 0.59,
+        "v1.6": 0.57,
+        "v1.7": 0.57,
+        "v1.7-pr43": 0.56,
+        "v2": 0.73
+      },
+      "name": "Travis Kelce",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 2.0,
+      "books": 1,
+      "line": 6.0,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.617,
+        "v1.5": 0.58,
+        "v1.6": 0.62,
+        "v1.7": 0.57,
+        "v1.7-pr43": 0.57,
+        "v2": 0.72
+      },
+      "name": "Travis Kelce",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 8.0,
+      "books": 1,
+      "line": 6.5,
+      "market": "receiving_yards",
+      "market_p": 0.5025544959128065,
+      "model_ps": {
+        "v1": 0.093,
+        "v1.5": 0.09,
+        "v1.6": 0.1,
+        "v1.7": 0.04,
+        "v1.7-pr43": 0.1,
+        "v2": 0.24
+      },
+      "name": "Austin Hooper",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 1.0,
+      "books": 1,
+      "line": 0.5,
+      "market": "receptions",
+      "market_p": 0.6342107541778509,
+      "model_ps": {
+        "v1": 0.125,
+        "v1.5": 0.13,
+        "v1.6": 0.16,
+        "v1.7": 0.09,
+        "v1.7-pr43": 0.16,
+        "v2": 0.34
+      },
+      "name": "Austin Hooper",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 0.0,
+      "books": 6,
+      "line": 0.5,
+      "market": "interceptions_thrown",
+      "market_p": 0.4091092825090756,
+      "model_ps": {
+        "v1": 0.274,
+        "v1.5": 0.20000000000000004,
+        "v1.6": 0.29,
+        "v1.7": 0.26,
+        "v1.7-pr43": 0.28,
+        "v2": 0.24
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 35.0,
+      "books": 2,
+      "line": 31.5,
+      "market": "pass_attempts",
+      "market_p": 0.5101522842639594,
+      "model_ps": {
+        "v1": 0.896,
+        "v1.5": 0.85,
+        "v1.6": 0.8,
+        "v1.7": 0.87,
+        "v1.7-pr43": 0.86,
+        "v2": 0.86
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 35.0,
+      "books": 8,
+      "line": 32.5,
+      "market": "pass_attempts",
+      "market_p": 0.5159894526371266,
+      "model_ps": {
+        "v1": 0.867,
+        "v1.5": 0.83,
+        "v1.6": 0.77,
+        "v1.7": 0.85,
+        "v1.7-pr43": 0.83,
+        "v2": 0.84
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 35.0,
+      "books": 4,
+      "line": 33.5,
+      "market": "pass_attempts",
+      "market_p": 0.4890010180061861,
+      "model_ps": {
+        "v1": 0.827,
+        "v1.5": 0.82,
+        "v1.6": 0.74,
+        "v1.7": 0.78,
+        "v1.7-pr43": 0.8,
+        "v2": 0.8
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 22.0,
+      "books": 9,
+      "line": 21.5,
+      "market": "pass_completions",
+      "market_p": 0.5149969551917944,
+      "model_ps": {
+        "v1": 0.857,
+        "v1.5": 0.81,
+        "v1.6": 0.83,
+        "v1.7": 0.89,
+        "v1.7-pr43": 0.85,
+        "v2": 0.89
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 22.0,
+      "books": 9,
+      "line": 22.5,
+      "market": "pass_completions",
+      "market_p": 0.49587834866672675,
+      "model_ps": {
+        "v1": 0.799,
+        "v1.5": 0.76,
+        "v1.6": 0.72,
+        "v1.7": 0.78,
+        "v1.7-pr43": 0.8,
+        "v2": 0.85
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 1,
+      "line": 248.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4969864995178399,
+      "model_ps": {
+        "v1": 0.886,
+        "v1.5": 0.85,
+        "v1.6": 0.85,
+        "v1.7": 0.79,
+        "v1.7-pr43": 0.76,
+        "v2": 0.81
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 4,
+      "line": 249.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5007738407245005,
+      "model_ps": {
+        "v1": 0.885,
+        "v1.5": 0.84,
+        "v1.6": 0.85,
+        "v1.7": 0.79,
+        "v1.7-pr43": 0.76,
+        "v2": 0.8
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 2,
+      "line": 250.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.882,
+        "v1.5": 0.84,
+        "v1.6": 0.85,
+        "v1.7": 0.78,
+        "v1.7-pr43": 0.76,
+        "v2": 0.77
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 3,
+      "line": 251.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49899549983928,
+      "model_ps": {
+        "v1": 0.876,
+        "v1.5": 0.83,
+        "v1.6": 0.85,
+        "v1.7": 0.77,
+        "v1.7-pr43": 0.7399999999999999,
+        "v2": 0.7600000000000001
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 7,
+      "line": 252.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5000681498114238,
+      "model_ps": {
+        "v1": 0.8709999999999999,
+        "v1.5": 0.83,
+        "v1.6": 0.85,
+        "v1.7": 0.7700000000000001,
+        "v1.7-pr43": 0.74,
+        "v2": 0.75
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 5,
+      "line": 253.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5011135992789933,
+      "model_ps": {
+        "v1": 0.869,
+        "v1.5": 0.8299999999999998,
+        "v1.6": 0.85,
+        "v1.7": 0.77,
+        "v1.7-pr43": 0.74,
+        "v2": 0.75
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 7,
+      "line": 254.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.865,
+        "v1.5": 0.82,
+        "v1.6": 0.84,
+        "v1.7": 0.7700000000000001,
+        "v1.7-pr43": 0.7299999999999999,
+        "v2": 0.7299999999999999
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 3,
+      "line": 255.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5005711087505283,
+      "model_ps": {
+        "v1": 0.862,
+        "v1.5": 0.82,
+        "v1.6": 0.84,
+        "v1.7": 0.77,
+        "v1.7-pr43": 0.73,
+        "v2": 0.7200000000000001
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 4,
+      "line": 256.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.859,
+        "v1.5": 0.82,
+        "v1.6": 0.83,
+        "v1.7": 0.76,
+        "v1.7-pr43": 0.73,
+        "v2": 0.72
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 4,
+      "line": 257.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4999725929016741,
+      "model_ps": {
+        "v1": 0.855,
+        "v1.5": 0.81,
+        "v1.6": 0.83,
+        "v1.7": 0.74,
+        "v1.7-pr43": 0.72,
+        "v2": 0.71
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 4,
+      "line": 258.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4994806381917899,
+      "model_ps": {
+        "v1": 0.85,
+        "v1.5": 0.8,
+        "v1.6": 0.83,
+        "v1.7": 0.73,
+        "v1.7-pr43": 0.7,
+        "v2": 0.71
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 2,
+      "line": 259.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49099099099099097,
+      "model_ps": {
+        "v1": 0.846,
+        "v1.5": 0.8,
+        "v1.6": 0.82,
+        "v1.7": 0.73,
+        "v1.7-pr43": 0.68,
+        "v2": 0.71
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 1,
+      "line": 260.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5018229546448885,
+      "model_ps": {
+        "v1": 0.84,
+        "v1.5": 0.8,
+        "v1.6": 0.82,
+        "v1.7": 0.73,
+        "v1.7-pr43": 0.68,
+        "v2": 0.7
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 4,
+      "line": 261.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49954426133877794,
+      "model_ps": {
+        "v1": 0.838,
+        "v1.5": 0.8,
+        "v1.6": 0.81,
+        "v1.7": 0.73,
+        "v1.7-pr43": 0.68,
+        "v2": 0.7
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 363.0,
+      "books": 2,
+      "line": 262.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.831,
+        "v1.5": 0.79,
+        "v1.6": 0.81,
+        "v1.7": 0.73,
+        "v1.7-pr43": 0.68,
+        "v2": 0.7
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 5.0,
+      "books": 11,
+      "line": 1.5,
+      "market": "passing_touchdowns",
+      "market_p": 0.5306345846890499,
+      "model_ps": {
+        "v1": 0.619,
+        "v1.5": 0.6,
+        "v1.6": 0.73,
+        "v1.7": 0.61,
+        "v1.7-pr43": 0.68,
+        "v2": 0.49
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 1,
+      "line": 235.5,
+      "market": "passing_yards",
+      "market_p": 0.4969864995178399,
+      "model_ps": {
+        "v1": 0.803,
+        "v1.5": 0.77,
+        "v1.6": 0.83,
+        "v1.7": 0.71,
+        "v1.7-pr43": 0.66,
+        "v2": 0.7
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 2,
+      "line": 236.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.796,
+        "v1.5": 0.75,
+        "v1.6": 0.82,
+        "v1.7": 0.71,
+        "v1.7-pr43": 0.66,
+        "v2": 0.69
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 1,
+      "line": 237.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.791,
+        "v1.5": 0.75,
+        "v1.6": 0.82,
+        "v1.7": 0.71,
+        "v1.7-pr43": 0.66,
+        "v2": 0.69
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 8,
+      "line": 238.5,
+      "market": "passing_yards",
+      "market_p": 0.49947033499436155,
+      "model_ps": {
+        "v1": 0.79,
+        "v1.5": 0.75,
+        "v1.6": 0.81,
+        "v1.7": 0.7,
+        "v1.7-pr43": 0.65,
+        "v2": 0.68
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 9,
+      "line": 239.5,
+      "market": "passing_yards",
+      "market_p": 0.4999971589371532,
+      "model_ps": {
+        "v1": 0.783,
+        "v1.5": 0.75,
+        "v1.6": 0.78,
+        "v1.7": 0.7,
+        "v1.7-pr43": 0.63,
+        "v2": 0.67
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 9,
+      "line": 240.5,
+      "market": "passing_yards",
+      "market_p": 0.49935416367694924,
+      "model_ps": {
+        "v1": 0.776,
+        "v1.5": 0.75,
+        "v1.6": 0.78,
+        "v1.7": 0.7,
+        "v1.7-pr43": 0.63,
+        "v2": 0.67
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 5,
+      "line": 241.5,
+      "market": "passing_yards",
+      "market_p": 0.4955291662288291,
+      "model_ps": {
+        "v1": 0.77,
+        "v1.5": 0.74,
+        "v1.6": 0.77,
+        "v1.7": 0.69,
+        "v1.7-pr43": 0.63,
+        "v2": 0.66
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 5,
+      "line": 242.5,
+      "market": "passing_yards",
+      "market_p": 0.4984163178506192,
+      "model_ps": {
+        "v1": 0.769,
+        "v1.5": 0.73,
+        "v1.6": 0.77,
+        "v1.7": 0.69,
+        "v1.7-pr43": 0.63,
+        "v2": 0.65
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 2,
+      "line": 243.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.763,
+        "v1.5": 0.72,
+        "v1.6": 0.75,
+        "v1.7": 0.68,
+        "v1.7-pr43": 0.62,
+        "v2": 0.65
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 4,
+      "line": 244.5,
+      "market": "passing_yards",
+      "market_p": 0.49947352904013814,
+      "model_ps": {
+        "v1": 0.758,
+        "v1.5": 0.72,
+        "v1.6": 0.75,
+        "v1.7": 0.68,
+        "v1.7-pr43": 0.61,
+        "v2": 0.64
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 2,
+      "line": 245.5,
+      "market": "passing_yards",
+      "market_p": 0.48449642138325044,
+      "model_ps": {
+        "v1": 0.751,
+        "v1.5": 0.71,
+        "v1.6": 0.75,
+        "v1.7": 0.68,
+        "v1.7-pr43": 0.6,
+        "v2": 0.64
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 3,
+      "line": 247.5,
+      "market": "passing_yards",
+      "market_p": 0.4992980387201842,
+      "model_ps": {
+        "v1": 0.7399999999999999,
+        "v1.5": 0.69,
+        "v1.6": 0.75,
+        "v1.7": 0.67,
+        "v1.7-pr43": 0.59,
+        "v2": 0.63
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 348.0,
+      "books": 3,
+      "line": 248.5,
+      "market": "passing_yards",
+      "market_p": 0.4996881736497801,
+      "model_ps": {
+        "v1": 0.737,
+        "v1.5": 0.69,
+        "v1.6": 0.75,
+        "v1.7": 0.65,
+        "v1.7-pr43": 0.59,
+        "v2": 0.63
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 2.0,
+      "books": 4,
+      "line": 2.5,
+      "market": "rush_attempts",
+      "market_p": 0.5632849400873373,
+      "model_ps": {
+        "v1": 0.753,
+        "v1.5": 0.75,
+        "v1.6": 0.73,
+        "v1.7": 0.76,
+        "v1.7-pr43": 0.75,
+        "v2": 0.76
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 15.0,
+      "books": 10,
+      "line": 8.5,
+      "market": "rushing_yards",
+      "market_p": 0.5003316013522836,
+      "model_ps": {
+        "v1": 0.883,
+        "v1.5": 0.85,
+        "v1.6": 0.8400000000000001,
+        "v1.7": 0.82,
+        "v1.7-pr43": 0.9200000000000002,
+        "v2": 0.86
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 15.0,
+      "books": 8,
+      "line": 9.5,
+      "market": "rushing_yards",
+      "market_p": 0.49473757544490754,
+      "model_ps": {
+        "v1": 0.863,
+        "v1.5": 0.84,
+        "v1.6": 0.81,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.9,
+        "v2": 0.86
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 15.0,
+      "books": 4,
+      "line": 10.5,
+      "market": "rushing_yards",
+      "market_p": 0.4901162200131629,
+      "model_ps": {
+        "v1": 0.85,
+        "v1.5": 0.84,
+        "v1.6": 0.81,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.9,
+        "v2": 0.85
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 15.0,
+      "books": 2,
+      "line": 12.5,
+      "market": "rushing_yards",
+      "market_p": 0.4786016380236305,
+      "model_ps": {
+        "v1": 0.803,
+        "v1.5": 0.81,
+        "v1.6": 0.79,
+        "v1.7": 0.75,
+        "v1.7-pr43": 0.85,
+        "v2": 0.81
+      },
+      "name": "Patrick Mahomes",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 17.0,
+      "books": 9,
+      "line": 7.5,
+      "market": "receiving_yards",
+      "market_p": 0.5042896659200609,
+      "model_ps": {
+        "v1": 0.196,
+        "v1.5": 0.19,
+        "v1.6": 0.21,
+        "v1.7": 0.14,
+        "v1.7-pr43": 0.16,
+        "v2": 0.39
+      },
+      "name": "Olamide Zaccheaus",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 17.0,
+      "books": 10,
+      "line": 8.5,
+      "market": "receiving_yards",
+      "market_p": 0.5015322632484628,
+      "model_ps": {
+        "v1": 0.188,
+        "v1.5": 0.17,
+        "v1.6": 0.21000000000000002,
+        "v1.7": 0.13,
+        "v1.7-pr43": 0.15,
+        "v2": 0.37
+      },
+      "name": "Olamide Zaccheaus",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 17.0,
+      "books": 2,
+      "line": 9.5,
+      "market": "receiving_yards",
+      "market_p": 0.4831822249814558,
+      "model_ps": {
+        "v1": 0.182,
+        "v1.5": 0.17,
+        "v1.6": 0.21,
+        "v1.7": 0.13,
+        "v1.7-pr43": 0.14,
+        "v2": 0.35
+      },
+      "name": "Olamide Zaccheaus",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 2.0,
+      "books": 6,
+      "line": 1.5,
+      "market": "receptions",
+      "market_p": 0.4239877825363669,
+      "model_ps": {
+        "v1": 0.125,
+        "v1.5": 0.11,
+        "v1.6": 0.13,
+        "v1.7": 0.10000000000000002,
+        "v1.7-pr43": 0.08,
+        "v2": 0.22
+      },
+      "name": "Olamide Zaccheaus",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 4.0,
+      "books": 1,
+      "line": 2.0,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.125,
+        "v1.5": 0.13,
+        "v1.6": 0.14,
+        "v1.7": 0.13,
+        "v1.7-pr43": 0.09,
+        "v2": 0.34
+      },
+      "name": "Olamide Zaccheaus",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 6.0,
+      "books": 9,
+      "line": 10.5,
+      "market": "receiving_yards",
+      "market_p": 0.5031359659002834,
+      "model_ps": {
+        "v1": 0.544,
+        "v1.5": 0.63,
+        "v1.6": 0.54,
+        "v1.7": 0.48000000000000004,
+        "v1.7-pr43": 0.51,
+        "v2": 0.54
+      },
+      "name": "Noah Gray",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 6.0,
+      "books": 11,
+      "line": 11.5,
+      "market": "receiving_yards",
+      "market_p": 0.5010539548276326,
+      "model_ps": {
+        "v1": 0.522,
+        "v1.5": 0.62,
+        "v1.6": 0.5,
+        "v1.7": 0.45,
+        "v1.7-pr43": 0.49,
+        "v2": 0.47
+      },
+      "name": "Noah Gray",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 6.0,
+      "books": 10,
+      "line": 12.5,
+      "market": "receiving_yards",
+      "market_p": 0.49772872975647947,
+      "model_ps": {
+        "v1": 0.51,
+        "v1.5": 0.59,
+        "v1.6": 0.5,
+        "v1.7": 0.44000000000000006,
+        "v1.7-pr43": 0.49000000000000005,
+        "v2": 0.4600000000000001
+      },
+      "name": "Noah Gray",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 6.0,
+      "books": 2,
+      "line": 13.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.498,
+        "v1.5": 0.57,
+        "v1.6": 0.49,
+        "v1.7": 0.43,
+        "v1.7-pr43": 0.47,
+        "v2": 0.45
+      },
+      "name": "Noah Gray",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 6.0,
+      "books": 1,
+      "line": 14.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.477,
+        "v1.5": 0.55,
+        "v1.6": 0.45,
+        "v1.7": 0.38,
+        "v1.7-pr43": 0.46,
+        "v2": 0.43
+      },
+      "name": "Noah Gray",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 1.0,
+      "books": 8,
+      "line": 1.5,
+      "market": "receptions",
+      "market_p": 0.4674045602341933,
+      "model_ps": {
+        "v1": 0.483,
+        "v1.5": 0.5,
+        "v1.6": 0.46,
+        "v1.7": 0.43,
+        "v1.7-pr43": 0.46,
+        "v2": 0.43
+      },
+      "name": "Noah Gray",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 3.0,
+      "books": 1,
+      "line": 2.0,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.432,
+        "v1.5": 0.51,
+        "v1.6": 0.45,
+        "v1.7": 0.36,
+        "v1.7-pr43": 0.43,
+        "v2": 0.32
+      },
+      "name": "Noah Gray",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 3.0,
+      "books": 1,
+      "line": 2.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.432,
+        "v1.5": 0.51,
+        "v1.6": 0.45,
+        "v1.7": 0.36,
+        "v1.7-pr43": 0.43,
+        "v2": 0.32
+      },
+      "name": "Noah Gray",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 7.0,
+      "books": 2,
+      "line": 1.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.122,
+        "v1.5": 0.14,
+        "v1.6": 0.12,
+        "v1.7": 0.14,
+        "v1.7-pr43": 0.14,
+        "v2": 0.09
+      },
+      "name": "Khalil Herbert",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 7.0,
+      "books": 6,
+      "line": 2.5,
+      "market": "receiving_yards",
+      "market_p": 0.5064382452441475,
+      "model_ps": {
+        "v1": 0.12,
+        "v1.5": 0.10000000000000002,
+        "v1.6": 0.12,
+        "v1.7": 0.14,
+        "v1.7-pr43": 0.13,
+        "v2": 0.09000000000000001
+      },
+      "name": "Khalil Herbert",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 7.0,
+      "books": 3,
+      "line": 3.5,
+      "market": "receiving_yards",
+      "market_p": 0.5007019612798158,
+      "model_ps": {
+        "v1": 0.11,
+        "v1.5": 0.10000000000000002,
+        "v1.6": 0.12,
+        "v1.7": 0.14,
+        "v1.7-pr43": 0.13,
+        "v2": 0.08
+      },
+      "name": "Khalil Herbert",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 2.0,
+      "books": 6,
+      "line": 0.5,
+      "market": "receptions",
+      "market_p": 0.6143643389705903,
+      "model_ps": {
+        "v1": 0.149,
+        "v1.5": 0.15,
+        "v1.6": 0.12,
+        "v1.7": 0.17,
+        "v1.7-pr43": 0.14,
+        "v2": 0.09000000000000001
+      },
+      "name": "Khalil Herbert",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 109.0,
+      "books": 3,
+      "line": 70.5,
+      "market": "receiving_yards",
+      "market_p": 0.5014040999719179,
+      "model_ps": {
+        "v1": 0.884,
+        "v1.5": 0.93,
+        "v1.6": 0.85,
+        "v1.7": 0.85,
+        "v1.7-pr43": 0.85,
+        "v2": 0.64
+      },
+      "name": "Drake London",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 109.0,
+      "books": 8,
+      "line": 71.5,
+      "market": "receiving_yards",
+      "market_p": 0.5003873534458365,
+      "model_ps": {
+        "v1": 0.874,
+        "v1.5": 0.93,
+        "v1.6": 0.85,
+        "v1.7": 0.83,
+        "v1.7-pr43": 0.85,
+        "v2": 0.62
+      },
+      "name": "Drake London",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 109.0,
+      "books": 11,
+      "line": 72.5,
+      "market": "receiving_yards",
+      "market_p": 0.49958635403894935,
+      "model_ps": {
+        "v1": 0.868,
+        "v1.5": 0.92,
+        "v1.6": 0.85,
+        "v1.7": 0.83,
+        "v1.7-pr43": 0.83,
+        "v2": 0.6
+      },
+      "name": "Drake London",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 109.0,
+      "books": 3,
+      "line": 73.5,
+      "market": "receiving_yards",
+      "market_p": 0.4982935385594642,
+      "model_ps": {
+        "v1": 0.864,
+        "v1.5": 0.92,
+        "v1.6": 0.84,
+        "v1.7": 0.82,
+        "v1.7-pr43": 0.83,
+        "v2": 0.58
+      },
+      "name": "Drake London",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 109.0,
+      "books": 4,
+      "line": 74.5,
+      "market": "receiving_yards",
+      "market_p": 0.4953989219444879,
+      "model_ps": {
+        "v1": 0.853,
+        "v1.5": 0.92,
+        "v1.6": 0.84,
+        "v1.7": 0.79,
+        "v1.7-pr43": 0.81,
+        "v2": 0.57
+      },
+      "name": "Drake London",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 109.0,
+      "books": 1,
+      "line": 79.5,
+      "market": "receiving_yards",
+      "market_p": 0.4974455040871935,
+      "model_ps": {
+        "v1": 0.828,
+        "v1.5": 0.92,
+        "v1.6": 0.83,
+        "v1.7": 0.76,
+        "v1.7-pr43": 0.78,
+        "v2": 0.53
+      },
+      "name": "Drake London",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 6.0,
+      "books": 10,
+      "line": 5.5,
+      "market": "receptions",
+      "market_p": 0.5116389011683642,
+      "model_ps": {
+        "v1": 0.9280000000000002,
+        "v1.5": 0.95,
+        "v1.6": 0.95,
+        "v1.7": 0.9399999999999998,
+        "v1.7-pr43": 0.9399999999999998,
+        "v2": 0.78
+      },
+      "name": "Drake London",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 12.0,
+      "books": 1,
+      "line": 8.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.978,
+        "v1.5": 0.98,
+        "v1.6": 0.98,
+        "v1.7": 0.99,
+        "v1.7-pr43": 0.96,
+        "v2": 0.88
+      },
+      "name": "Drake London",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 12.0,
+      "books": 1,
+      "line": 9.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.962,
+        "v1.5": 0.96,
+        "v1.6": 0.95,
+        "v1.7": 0.97,
+        "v1.7-pr43": 0.93,
+        "v2": 0.76
+      },
+      "name": "Drake London",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 63.0,
+      "books": 5,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.5014567804653948,
+      "model_ps": {
+        "v1": 0.068,
+        "v1.5": 0.03,
+        "v1.6": 0.06,
+        "v1.7": 0.04,
+        "v1.7-pr43": 0.13,
+        "v2": 0.15
+      },
+      "name": "Jahan Dotson",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 63.0,
+      "books": 11,
+      "line": 28.5,
+      "market": "receiving_yards",
+      "market_p": 0.4998059108940947,
+      "model_ps": {
+        "v1": 0.06199999999999999,
+        "v1.5": 0.029999999999999995,
+        "v1.6": 0.05999999999999999,
+        "v1.7": 0.04,
+        "v1.7-pr43": 0.11999999999999998,
+        "v2": 0.13
+      },
+      "name": "Jahan Dotson",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 63.0,
+      "books": 7,
+      "line": 29.5,
+      "market": "receiving_yards",
+      "market_p": 0.49707385731859294,
+      "model_ps": {
+        "v1": 0.06,
+        "v1.5": 0.03,
+        "v1.6": 0.06,
+        "v1.7": 0.04,
+        "v1.7-pr43": 0.12,
+        "v2": 0.13
+      },
+      "name": "Jahan Dotson",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 3.0,
+      "books": 5,
+      "line": 1.5,
+      "market": "receptions",
+      "market_p": 0.6096169917995029,
+      "model_ps": {
+        "v1": 0.11300000000000002,
+        "v1.5": 0.06,
+        "v1.6": 0.12,
+        "v1.7": 0.09,
+        "v1.7-pr43": 0.15,
+        "v2": 0.32
+      },
+      "name": "Jahan Dotson",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 3.0,
+      "books": 1,
+      "line": 2.0,
+      "market": "receptions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.053,
+        "v1.5": 0.04,
+        "v1.6": 0.06,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.11,
+        "v2": 0.13
+      },
+      "name": "Jahan Dotson",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 3.0,
+      "books": 4,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.37183650128495715,
+      "model_ps": {
+        "v1": 0.053,
+        "v1.5": 0.04,
+        "v1.6": 0.06,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.11,
+        "v2": 0.13
+      },
+      "name": "Jahan Dotson",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 6.0,
+      "books": 1,
+      "line": 3.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.072,
+        "v1.5": 0.05,
+        "v1.6": 0.08,
+        "v1.7": 0.05,
+        "v1.7-pr43": 0.11,
+        "v2": 0.2
+      },
+      "name": "Jahan Dotson",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 6.0,
+      "books": 1,
+      "line": 25.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.544,
+        "v1.5": 0.46,
+        "v1.6": 0.57,
+        "v1.7": 0.62,
+        "v1.7-pr43": 0.59,
+        "v2": 0.49
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 6.0,
+      "books": 1,
+      "line": 26.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.519,
+        "v1.5": 0.43,
+        "v1.6": 0.55,
+        "v1.7": 0.62,
+        "v1.7-pr43": 0.57,
+        "v2": 0.46
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 6.0,
+      "books": 4,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.5033947161824479,
+      "model_ps": {
+        "v1": 0.504,
+        "v1.5": 0.41,
+        "v1.6": 0.52,
+        "v1.7": 0.59,
+        "v1.7-pr43": 0.56,
+        "v2": 0.43
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 6.0,
+      "books": 10,
+      "line": 28.5,
+      "market": "receiving_yards",
+      "market_p": 0.5000391749644645,
+      "model_ps": {
+        "v1": 0.484,
+        "v1.5": 0.41,
+        "v1.6": 0.4699999999999999,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.54,
+        "v2": 0.41
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 6.0,
+      "books": 3,
+      "line": 29.5,
+      "market": "receiving_yards",
+      "market_p": 0.4975999871510622,
+      "model_ps": {
+        "v1": 0.467,
+        "v1.5": 0.38999999999999996,
+        "v1.6": 0.45,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.52,
+        "v2": 0.4000000000000001
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 4.0,
+      "books": 5,
+      "line": 3.5,
+      "market": "receptions",
+      "market_p": 0.5724730426651772,
+      "model_ps": {
+        "v1": 0.604,
+        "v1.5": 0.55,
+        "v1.6": 0.61,
+        "v1.7": 0.65,
+        "v1.7-pr43": 0.62,
+        "v2": 0.4600000000000001
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 4.0,
+      "books": 4,
+      "line": 4.5,
+      "market": "receptions",
+      "market_p": 0.4143647596641188,
+      "model_ps": {
+        "v1": 0.421,
+        "v1.5": 0.33,
+        "v1.6": 0.39,
+        "v1.7": 0.39,
+        "v1.7-pr43": 0.43,
+        "v2": 0.34
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 16.0,
+      "books": 2,
+      "line": 18.5,
+      "market": "rush_attempts",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.678,
+        "v1.5": 0.64,
+        "v1.6": 0.66,
+        "v1.7": 0.6,
+        "v1.7-pr43": 0.66,
+        "v2": 0.69
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 16.0,
+      "books": 7,
+      "line": 19.5,
+      "market": "rush_attempts",
+      "market_p": 0.5042301965231311,
+      "model_ps": {
+        "v1": 0.62,
+        "v1.5": 0.58,
+        "v1.6": 0.6,
+        "v1.7": 0.52,
+        "v1.7-pr43": 0.56,
+        "v2": 0.6
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 16.0,
+      "books": 1,
+      "line": 20.5,
+      "market": "rush_attempts",
+      "market_p": 0.46983184965380814,
+      "model_ps": {
+        "v1": 0.57,
+        "v1.5": 0.53,
+        "v1.6": 0.55,
+        "v1.7": 0.45,
+        "v1.7-pr43": 0.52,
+        "v2": 0.54
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 77.0,
+      "books": 1,
+      "line": 113.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.601,
+        "v1.5": 0.48,
+        "v1.6": 0.6,
+        "v1.7": 0.58,
+        "v1.7-pr43": 0.67,
+        "v2": 0.56
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 77.0,
+      "books": 1,
+      "line": 114.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.592,
+        "v1.5": 0.47,
+        "v1.6": 0.6,
+        "v1.7": 0.55,
+        "v1.7-pr43": 0.65,
+        "v2": 0.52
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 77.0,
+      "books": 2,
+      "line": 116.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.578,
+        "v1.5": 0.46,
+        "v1.6": 0.59,
+        "v1.7": 0.53,
+        "v1.7-pr43": 0.61,
+        "v2": 0.5
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 77.0,
+      "books": 9,
+      "line": 117.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5000560995094301,
+      "model_ps": {
+        "v1": 0.568,
+        "v1.5": 0.4600000000000001,
+        "v1.6": 0.58,
+        "v1.7": 0.52,
+        "v1.7-pr43": 0.6,
+        "v2": 0.49
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 77.0,
+      "books": 10,
+      "line": 118.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.49929413557129776,
+      "model_ps": {
+        "v1": 0.563,
+        "v1.5": 0.4600000000000001,
+        "v1.6": 0.58,
+        "v1.7": 0.52,
+        "v1.7-pr43": 0.6,
+        "v2": 0.49000000000000005
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 77.0,
+      "books": 4,
+      "line": 119.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5002614406425165,
+      "model_ps": {
+        "v1": 0.556,
+        "v1.5": 0.46,
+        "v1.6": 0.58,
+        "v1.7": 0.51,
+        "v1.7-pr43": 0.59,
+        "v2": 0.48
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 77.0,
+      "books": 9,
+      "line": 120.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.499781359733541,
+      "model_ps": {
+        "v1": 0.547,
+        "v1.5": 0.44999999999999996,
+        "v1.6": 0.58,
+        "v1.7": 0.48000000000000004,
+        "v1.7-pr43": 0.58,
+        "v2": 0.47
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 77.0,
+      "books": 3,
+      "line": 121.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.4969404264751673,
+      "model_ps": {
+        "v1": 0.54,
+        "v1.5": 0.45,
+        "v1.6": 0.58,
+        "v1.7": 0.46,
+        "v1.7-pr43": 0.58,
+        "v2": 0.47
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 77.0,
+      "books": 1,
+      "line": 122.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5010179153094463,
+      "model_ps": {
+        "v1": 0.531,
+        "v1.5": 0.45,
+        "v1.6": 0.57,
+        "v1.7": 0.45,
+        "v1.7-pr43": 0.58,
+        "v2": 0.47
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 77.0,
+      "books": 1,
+      "line": 129.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5025544959128065,
+      "model_ps": {
+        "v1": 0.477,
+        "v1.5": 0.4,
+        "v1.6": 0.54,
+        "v1.7": 0.41,
+        "v1.7-pr43": 0.53,
+        "v2": 0.4
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 71.0,
+      "books": 1,
+      "line": 81.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.604,
+        "v1.5": 0.52,
+        "v1.6": 0.59,
+        "v1.7": 0.49,
+        "v1.7-pr43": 0.65,
+        "v2": 0.52
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 71.0,
+      "books": 1,
+      "line": 82.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.598,
+        "v1.5": 0.52,
+        "v1.6": 0.58,
+        "v1.7": 0.48,
+        "v1.7-pr43": 0.65,
+        "v2": 0.52
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 71.0,
+      "books": 8,
+      "line": 83.5,
+      "market": "rushing_yards",
+      "market_p": 0.499743799959008,
+      "model_ps": {
+        "v1": 0.581,
+        "v1.5": 0.51,
+        "v1.6": 0.56,
+        "v1.7": 0.47,
+        "v1.7-pr43": 0.65,
+        "v2": 0.52
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 71.0,
+      "books": 10,
+      "line": 84.5,
+      "market": "rushing_yards",
+      "market_p": 0.5000282217225341,
+      "model_ps": {
+        "v1": 0.571,
+        "v1.5": 0.5,
+        "v1.6": 0.56,
+        "v1.7": 0.4699999999999999,
+        "v1.7-pr43": 0.65,
+        "v2": 0.5
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 71.0,
+      "books": 6,
+      "line": 85.5,
+      "market": "rushing_yards",
+      "market_p": 0.4988051692250761,
+      "model_ps": {
+        "v1": 0.564,
+        "v1.5": 0.49,
+        "v1.6": 0.54,
+        "v1.7": 0.47,
+        "v1.7-pr43": 0.65,
+        "v2": 0.49
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 71.0,
+      "books": 11,
+      "line": 86.5,
+      "market": "rushing_yards",
+      "market_p": 0.4980451483671352,
+      "model_ps": {
+        "v1": 0.554,
+        "v1.5": 0.49,
+        "v1.6": 0.54,
+        "v1.7": 0.45,
+        "v1.7-pr43": 0.63,
+        "v2": 0.4799999999999999
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 71.0,
+      "books": 5,
+      "line": 87.5,
+      "market": "rushing_yards",
+      "market_p": 0.49957882323211056,
+      "model_ps": {
+        "v1": 0.545,
+        "v1.5": 0.48,
+        "v1.6": 0.53,
+        "v1.7": 0.44000000000000006,
+        "v1.7-pr43": 0.62,
+        "v2": 0.48
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 71.0,
+      "books": 1,
+      "line": 89.5,
+      "market": "rushing_yards",
+      "market_p": 0.4939310568053083,
+      "model_ps": {
+        "v1": 0.523,
+        "v1.5": 0.47,
+        "v1.6": 0.51,
+        "v1.7": 0.42,
+        "v1.7-pr43": 0.58,
+        "v2": 0.46
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 71.0,
+      "books": 1,
+      "line": 91.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.505,
+        "v1.5": 0.45,
+        "v1.6": 0.5,
+        "v1.7": 0.39,
+        "v1.7-pr43": 0.55,
+        "v2": 0.43
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 71.0,
+      "books": 1,
+      "line": 97.5,
+      "market": "rushing_yards",
+      "market_p": 0.4974455040871935,
+      "model_ps": {
+        "v1": 0.458,
+        "v1.5": 0.4,
+        "v1.6": 0.43,
+        "v1.7": 0.32,
+        "v1.7-pr43": 0.47,
+        "v2": 0.4
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 5.0,
+      "books": 1,
+      "line": 5.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.594,
+        "v1.5": 0.54,
+        "v1.6": 0.57,
+        "v1.7": 0.54,
+        "v1.7-pr43": 0.54,
+        "v2": 0.37
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 1.0,
+      "books": 1,
+      "line": 0.5,
+      "market": "total_touchdowns",
+      "market_p": 0.6288995741969122,
+      "model_ps": {
+        "v1": 0.592,
+        "v1.5": 0.49,
+        "v1.6": 0.5,
+        "v1.7": 0.49,
+        "v1.7-pr43": 0.54,
+        "v2": 0.54
+      },
+      "name": "Bijan Robinson",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 53.0,
+      "books": 1,
+      "line": 20.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.074,
+        "v1.5": 0.04,
+        "v1.6": 0.04,
+        "v1.7": 0.08,
+        "v1.7-pr43": 0.06,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 53.0,
+      "books": 10,
+      "line": 21.5,
+      "market": "receiving_yards",
+      "market_p": 0.4985479975328855,
+      "model_ps": {
+        "v1": 0.069,
+        "v1.5": 0.04,
+        "v1.6": 0.04,
+        "v1.7": 0.07,
+        "v1.7-pr43": 0.05,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 53.0,
+      "books": 7,
+      "line": 22.5,
+      "market": "receiving_yards",
+      "market_p": 0.4954381280759227,
+      "model_ps": {
+        "v1": 0.066,
+        "v1.5": 0.04,
+        "v1.6": 0.04,
+        "v1.7": 0.07,
+        "v1.7-pr43": 0.05,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 53.0,
+      "books": 6,
+      "line": 23.5,
+      "market": "receiving_yards",
+      "market_p": 0.4912873427542442,
+      "model_ps": {
+        "v1": 0.057,
+        "v1.5": 0.04,
+        "v1.6": 0.04,
+        "v1.7": 0.07,
+        "v1.7-pr43": 0.04,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 53.0,
+      "books": 4,
+      "line": 24.5,
+      "market": "receiving_yards",
+      "market_p": 0.49766667965089456,
+      "model_ps": {
+        "v1": 0.056,
+        "v1.5": 0.04,
+        "v1.6": 0.02,
+        "v1.7": 0.07,
+        "v1.7-pr43": 0.03,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 53.0,
+      "books": 1,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.4920127795527157,
+      "model_ps": {
+        "v1": 0.048,
+        "v1.5": 0.03,
+        "v1.6": 0.01,
+        "v1.7": 0.07,
+        "v1.7-pr43": 0.03,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 53.0,
+      "books": 1,
+      "line": 30.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.043,
+        "v1.5": 0.03,
+        "v1.6": 0.01,
+        "v1.7": 0.07,
+        "v1.7-pr43": 0.03,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 53.0,
+      "books": 6,
+      "line": 31.5,
+      "market": "receiving_yards",
+      "market_p": 0.4933628885947701,
+      "model_ps": {
+        "v1": 0.041,
+        "v1.5": 0.03,
+        "v1.6": 0.01,
+        "v1.7": 0.07,
+        "v1.7-pr43": 0.03,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 53.0,
+      "books": 8,
+      "line": 32.5,
+      "market": "receiving_yards",
+      "market_p": 0.49695516955650415,
+      "model_ps": {
+        "v1": 0.039,
+        "v1.5": 0.02,
+        "v1.6": 0.01,
+        "v1.7": 0.06,
+        "v1.7-pr43": 0.03,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 53.0,
+      "books": 2,
+      "line": 35.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.034,
+        "v1.5": 0.02,
+        "v1.6": 0.01,
+        "v1.7": 0.05,
+        "v1.7-pr43": 0.02,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 4.0,
+      "books": 8,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.4455234708336123,
+      "model_ps": {
+        "v1": 0.037,
+        "v1.5": 0.05,
+        "v1.6": 0.01,
+        "v1.7": 0.04,
+        "v1.7-pr43": 0.01,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 4.0,
+      "books": 3,
+      "line": 3.5,
+      "market": "receptions",
+      "market_p": 0.39370085939485194,
+      "model_ps": {
+        "v1": 0.018,
+        "v1.5": 0.02,
+        "v1.6": 0.01,
+        "v1.7": 0.03,
+        "v1.7-pr43": 0.01,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 5.0,
+      "books": 2,
+      "line": 3.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.04,
+        "v1.5": 0.03,
+        "v1.6": 0.01,
+        "v1.7": 0.03,
+        "v1.7-pr43": 0.04,
+        "v2": 0.0
+      },
+      "name": "Josh Downs",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 82.0,
+      "books": 1,
+      "line": 52.5,
+      "market": "receiving_yards",
+      "market_p": 0.5036927621861153,
+      "model_ps": {
+        "v1": 0.509,
+        "v1.5": 0.41,
+        "v1.6": 0.49,
+        "v1.7": 0.47,
+        "v1.7-pr43": 0.39,
+        "v2": 0.36
+      },
+      "name": "Rashee Rice",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 82.0,
+      "books": 1,
+      "line": 53.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.501,
+        "v1.5": 0.39,
+        "v1.6": 0.49,
+        "v1.7": 0.46,
+        "v1.7-pr43": 0.39,
+        "v2": 0.34
+      },
+      "name": "Rashee Rice",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 82.0,
+      "books": 7,
+      "line": 54.5,
+      "market": "receiving_yards",
+      "market_p": 0.5015750829155754,
+      "model_ps": {
+        "v1": 0.491,
+        "v1.5": 0.39,
+        "v1.6": 0.48,
+        "v1.7": 0.44,
+        "v1.7-pr43": 0.39,
+        "v2": 0.34
+      },
+      "name": "Rashee Rice",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 82.0,
+      "books": 11,
+      "line": 55.5,
+      "market": "receiving_yards",
+      "market_p": 0.5002485327929187,
+      "model_ps": {
+        "v1": 0.4809999999999999,
+        "v1.5": 0.39,
+        "v1.6": 0.4799999999999999,
+        "v1.7": 0.4,
+        "v1.7-pr43": 0.39,
+        "v2": 0.33
+      },
+      "name": "Rashee Rice",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 82.0,
+      "books": 9,
+      "line": 56.5,
+      "market": "receiving_yards",
+      "market_p": 0.500796549217084,
+      "model_ps": {
+        "v1": 0.473,
+        "v1.5": 0.39,
+        "v1.6": 0.4600000000000001,
+        "v1.7": 0.4,
+        "v1.7-pr43": 0.39,
+        "v2": 0.31
+      },
+      "name": "Rashee Rice",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 82.0,
+      "books": 5,
+      "line": 57.5,
+      "market": "receiving_yards",
+      "market_p": 0.4996314706855586,
+      "model_ps": {
+        "v1": 0.4640000000000001,
+        "v1.5": 0.38,
+        "v1.6": 0.4600000000000001,
+        "v1.7": 0.38,
+        "v1.7-pr43": 0.37,
+        "v2": 0.31
+      },
+      "name": "Rashee Rice",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 82.0,
+      "books": 2,
+      "line": 58.5,
+      "market": "receiving_yards",
+      "market_p": 0.4989470580802763,
+      "model_ps": {
+        "v1": 0.458,
+        "v1.5": 0.37,
+        "v1.6": 0.46,
+        "v1.7": 0.37,
+        "v1.7-pr43": 0.36,
+        "v2": 0.31
+      },
+      "name": "Rashee Rice",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 5.0,
+      "books": 4,
+      "line": 4.5,
+      "market": "receptions",
+      "market_p": 0.5716498354986908,
+      "model_ps": {
+        "v1": 0.539,
+        "v1.5": 0.45,
+        "v1.6": 0.43,
+        "v1.7": 0.48,
+        "v1.7-pr43": 0.46,
+        "v2": 0.39
+      },
+      "name": "Rashee Rice",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 5.0,
+      "books": 9,
+      "line": 5.5,
+      "market": "receptions",
+      "market_p": 0.48708808446054896,
+      "model_ps": {
+        "v1": 0.42,
+        "v1.5": 0.3,
+        "v1.6": 0.35,
+        "v1.7": 0.33,
+        "v1.7-pr43": 0.31,
+        "v2": 0.31
+      },
+      "name": "Rashee Rice",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 6.0,
+      "books": 2,
+      "line": 7.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.459,
+        "v1.5": 0.38,
+        "v1.6": 0.4,
+        "v1.7": 0.33,
+        "v1.7-pr43": 0.37,
+        "v2": 0.32
+      },
+      "name": "Rashee Rice",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 0.0,
+      "books": 9,
+      "line": 26.5,
+      "market": "receiving_yards",
+      "market_p": 0.5003408350708203,
+      "model_ps": {
+        "v1": 0.702,
+        "v1.5": 0.67,
+        "v1.6": 0.68,
+        "v1.7": 0.62,
+        "v1.7-pr43": 0.67,
+        "v2": 0.87
+      },
+      "name": "Xavier Worthy",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 0.0,
+      "books": 8,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.49979476883454405,
+      "model_ps": {
+        "v1": 0.692,
+        "v1.5": 0.67,
+        "v1.6": 0.68,
+        "v1.7": 0.62,
+        "v1.7-pr43": 0.65,
+        "v2": 0.85
+      },
+      "name": "Xavier Worthy",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 0.0,
+      "books": 1,
+      "line": 28.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.681,
+        "v1.5": 0.67,
+        "v1.6": 0.67,
+        "v1.7": 0.61,
+        "v1.7-pr43": 0.64,
+        "v2": 0.85
+      },
+      "name": "Xavier Worthy",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 0.0,
+      "books": 1,
+      "line": 29.5,
+      "market": "receiving_yards",
+      "market_p": 0.4928711096627016,
+      "model_ps": {
+        "v1": 0.666,
+        "v1.5": 0.65,
+        "v1.6": 0.67,
+        "v1.7": 0.6,
+        "v1.7-pr43": 0.62,
+        "v2": 0.85
+      },
+      "name": "Xavier Worthy",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 0.0,
+      "books": 6,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.5348869022966841,
+      "model_ps": {
+        "v1": 0.713,
+        "v1.5": 0.7200000000000001,
+        "v1.6": 0.67,
+        "v1.7": 0.69,
+        "v1.7-pr43": 0.77,
+        "v2": 0.91
+      },
+      "name": "Xavier Worthy",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 3.0,
+      "books": 1,
+      "line": 4.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.683,
+        "v1.5": 0.68,
+        "v1.6": 0.64,
+        "v1.7": 0.63,
+        "v1.7-pr43": 0.75,
+        "v2": 0.89
+      },
+      "name": "Xavier Worthy",
+      "over_hit": 0,
+      "team": "KC"
+    },
+    {
+      "actual": 1.0,
+      "books": 9,
+      "line": 0.5,
+      "market": "interceptions_thrown",
+      "market_p": 0.4927099846651602,
+      "model_ps": {
+        "v1": 0.49300000000000005,
+        "v1.5": 0.47,
+        "v1.6": 0.44999999999999996,
+        "v1.7": 0.5,
+        "v1.7-pr43": 0.54,
+        "v2": 0.49
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 43.0,
+      "books": 8,
+      "line": 31.5,
+      "market": "pass_attempts",
+      "market_p": 0.49945014004325894,
+      "model_ps": {
+        "v1": 0.835,
+        "v1.5": 0.87,
+        "v1.6": 0.82,
+        "v1.7": 0.75,
+        "v1.7-pr43": 0.77,
+        "v2": 0.43
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 43.0,
+      "books": 5,
+      "line": 32.5,
+      "market": "pass_attempts",
+      "market_p": 0.48799129900092497,
+      "model_ps": {
+        "v1": 0.808,
+        "v1.5": 0.8299999999999998,
+        "v1.6": 0.8,
+        "v1.7": 0.7,
+        "v1.7-pr43": 0.68,
+        "v2": 0.4
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 43.0,
+      "books": 2,
+      "line": 33.5,
+      "market": "pass_attempts",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.754,
+        "v1.5": 0.76,
+        "v1.6": 0.75,
+        "v1.7": 0.67,
+        "v1.7-pr43": 0.66,
+        "v2": 0.35
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 23.0,
+      "books": 7,
+      "line": 19.5,
+      "market": "pass_completions",
+      "market_p": 0.5156670007375619,
+      "model_ps": {
+        "v1": 0.771,
+        "v1.5": 0.8099999999999999,
+        "v1.6": 0.79,
+        "v1.7": 0.64,
+        "v1.7-pr43": 0.68,
+        "v2": 0.44
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 23.0,
+      "books": 7,
+      "line": 20.5,
+      "market": "pass_completions",
+      "market_p": 0.4936975774067309,
+      "model_ps": {
+        "v1": 0.711,
+        "v1.5": 0.76,
+        "v1.6": 0.71,
+        "v1.7": 0.57,
+        "v1.7-pr43": 0.61,
+        "v2": 0.34
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 4,
+      "line": 223.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5007843875502008,
+      "model_ps": {
+        "v1": 0.681,
+        "v1.5": 0.77,
+        "v1.6": 0.69,
+        "v1.7": 0.61,
+        "v1.7-pr43": 0.59,
+        "v2": 0.37
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 6,
+      "line": 224.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4993121587398706,
+      "model_ps": {
+        "v1": 0.677,
+        "v1.5": 0.7600000000000001,
+        "v1.6": 0.68,
+        "v1.7": 0.6,
+        "v1.7-pr43": 0.59,
+        "v2": 0.36000000000000004
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 5,
+      "line": 225.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4992199196244543,
+      "model_ps": {
+        "v1": 0.672,
+        "v1.5": 0.76,
+        "v1.6": 0.68,
+        "v1.7": 0.6,
+        "v1.7-pr43": 0.58,
+        "v2": 0.35
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 6,
+      "line": 226.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.666,
+        "v1.5": 0.75,
+        "v1.6": 0.65,
+        "v1.7": 0.59,
+        "v1.7-pr43": 0.58,
+        "v2": 0.3499999999999999
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 6,
+      "line": 227.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5003462412054733,
+      "model_ps": {
+        "v1": 0.655,
+        "v1.5": 0.75,
+        "v1.6": 0.65,
+        "v1.7": 0.59,
+        "v1.7-pr43": 0.57,
+        "v2": 0.3499999999999999
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 4,
+      "line": 228.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5007843875502008,
+      "model_ps": {
+        "v1": 0.652,
+        "v1.5": 0.74,
+        "v1.6": 0.65,
+        "v1.7": 0.58,
+        "v1.7-pr43": 0.56,
+        "v2": 0.34
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 7,
+      "line": 229.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4992550335986454,
+      "model_ps": {
+        "v1": 0.642,
+        "v1.5": 0.7299999999999999,
+        "v1.6": 0.65,
+        "v1.7": 0.57,
+        "v1.7-pr43": 0.54,
+        "v2": 0.34
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 3,
+      "line": 230.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5010045001607201,
+      "model_ps": {
+        "v1": 0.632,
+        "v1.5": 0.71,
+        "v1.6": 0.65,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.54,
+        "v2": 0.33
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 3,
+      "line": 231.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4983030174283332,
+      "model_ps": {
+        "v1": 0.625,
+        "v1.5": 0.71,
+        "v1.6": 0.63,
+        "v1.7": 0.55,
+        "v1.7-pr43": 0.53,
+        "v2": 0.32
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 2,
+      "line": 232.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5024182275635243,
+      "model_ps": {
+        "v1": 0.619,
+        "v1.5": 0.7,
+        "v1.6": 0.63,
+        "v1.7": 0.55,
+        "v1.7-pr43": 0.52,
+        "v2": 0.31
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 2,
+      "line": 233.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4990885226775558,
+      "model_ps": {
+        "v1": 0.613,
+        "v1.5": 0.7,
+        "v1.6": 0.62,
+        "v1.7": 0.54,
+        "v1.7-pr43": 0.5,
+        "v2": 0.3
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 315.0,
+      "books": 1,
+      "line": 234.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49817704535511165,
+      "model_ps": {
+        "v1": 0.609,
+        "v1.5": 0.7,
+        "v1.6": 0.6,
+        "v1.7": 0.54,
+        "v1.7-pr43": 0.49,
+        "v2": 0.27
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 0.0,
+      "books": 6,
+      "line": 1.5,
+      "market": "passing_touchdowns",
+      "market_p": 0.4269087678673134,
+      "model_ps": {
+        "v1": 0.303,
+        "v1.5": 0.22,
+        "v1.6": 0.45,
+        "v1.7": 0.32,
+        "v1.7-pr43": 0.33,
+        "v2": 0.17
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 0,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 1,
+      "line": 209.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.684,
+        "v1.5": 0.8,
+        "v1.6": 0.68,
+        "v1.7": 0.6,
+        "v1.7-pr43": 0.63,
+        "v2": 0.35
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 2,
+      "line": 212.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.67,
+        "v1.5": 0.75,
+        "v1.6": 0.66,
+        "v1.7": 0.59,
+        "v1.7-pr43": 0.58,
+        "v2": 0.32
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 3,
+      "line": 213.5,
+      "market": "passing_yards",
+      "market_p": 0.4992980387201842,
+      "model_ps": {
+        "v1": 0.664,
+        "v1.5": 0.75,
+        "v1.6": 0.66,
+        "v1.7": 0.59,
+        "v1.7-pr43": 0.57,
+        "v2": 0.31
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 3,
+      "line": 214.5,
+      "market": "passing_yards",
+      "market_p": 0.4992980387201842,
+      "model_ps": {
+        "v1": 0.649,
+        "v1.5": 0.75,
+        "v1.6": 0.66,
+        "v1.7": 0.59,
+        "v1.7-pr43": 0.57,
+        "v2": 0.3
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 6,
+      "line": 215.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.646,
+        "v1.5": 0.73,
+        "v1.6": 0.65,
+        "v1.7": 0.59,
+        "v1.7-pr43": 0.57,
+        "v2": 0.3
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 6,
+      "line": 216.5,
+      "market": "passing_yards",
+      "market_p": 0.5005252744015856,
+      "model_ps": {
+        "v1": 0.639,
+        "v1.5": 0.71,
+        "v1.6": 0.65,
+        "v1.7": 0.59,
+        "v1.7-pr43": 0.57,
+        "v2": 0.29
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 6,
+      "line": 217.5,
+      "market": "passing_yards",
+      "market_p": 0.4993074193054361,
+      "model_ps": {
+        "v1": 0.633,
+        "v1.5": 0.71,
+        "v1.6": 0.63,
+        "v1.7": 0.57,
+        "v1.7-pr43": 0.56,
+        "v2": 0.29
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 6,
+      "line": 218.5,
+      "market": "passing_yards",
+      "market_p": 0.49914676927973206,
+      "model_ps": {
+        "v1": 0.621,
+        "v1.5": 0.6999999999999998,
+        "v1.6": 0.6,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.54,
+        "v2": 0.29
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 2,
+      "line": 219.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.615,
+        "v1.5": 0.68,
+        "v1.6": 0.6,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.52,
+        "v2": 0.28
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 4,
+      "line": 220.5,
+      "market": "passing_yards",
+      "market_p": 0.50075337512054,
+      "model_ps": {
+        "v1": 0.607,
+        "v1.5": 0.68,
+        "v1.6": 0.6,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.51,
+        "v2": 0.27
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 3,
+      "line": 221.5,
+      "market": "passing_yards",
+      "market_p": 0.49899549983928,
+      "model_ps": {
+        "v1": 0.604,
+        "v1.5": 0.68,
+        "v1.6": 0.6,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.5,
+        "v2": 0.27
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 3,
+      "line": 223.5,
+      "market": "passing_yards",
+      "market_p": 0.5006479285723542,
+      "model_ps": {
+        "v1": 0.594,
+        "v1.5": 0.67,
+        "v1.6": 0.59,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.49,
+        "v2": 0.26
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 286.0,
+      "books": 1,
+      "line": 226.5,
+      "market": "passing_yards",
+      "market_p": 0.49817704535511165,
+      "model_ps": {
+        "v1": 0.575,
+        "v1.5": 0.63,
+        "v1.6": 0.58,
+        "v1.7": 0.54,
+        "v1.7-pr43": 0.46,
+        "v2": 0.24
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 4.0,
+      "books": 2,
+      "line": 3.5,
+      "market": "rush_attempts",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.241,
+        "v1.5": 0.19,
+        "v1.6": 0.23,
+        "v1.7": 0.15,
+        "v1.7-pr43": 0.17,
+        "v2": 0.26
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 29.0,
+      "books": 1,
+      "line": 3.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.789,
+        "v1.5": 0.81,
+        "v1.6": 0.83,
+        "v1.7": 0.62,
+        "v1.7-pr43": 0.73,
+        "v2": 0.82
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 29.0,
+      "books": 9,
+      "line": 6.5,
+      "market": "rushing_yards",
+      "market_p": 0.5075040630546113,
+      "model_ps": {
+        "v1": 0.664,
+        "v1.5": 0.67,
+        "v1.6": 0.75,
+        "v1.7": 0.51,
+        "v1.7-pr43": 0.63,
+        "v2": 0.64
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 29.0,
+      "books": 10,
+      "line": 7.5,
+      "market": "rushing_yards",
+      "market_p": 0.5008435969426699,
+      "model_ps": {
+        "v1": 0.632,
+        "v1.5": 0.65,
+        "v1.6": 0.72,
+        "v1.7": 0.5,
+        "v1.7-pr43": 0.59,
+        "v2": 0.59
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 29.0,
+      "books": 2,
+      "line": 8.5,
+      "market": "rushing_yards",
+      "market_p": 0.4963379928015401,
+      "model_ps": {
+        "v1": 0.595,
+        "v1.5": 0.62,
+        "v1.6": 0.7,
+        "v1.7": 0.45,
+        "v1.7-pr43": 0.54,
+        "v2": 0.56
+      },
+      "name": "Michael Penix Jr.",
+      "over_hit": 1,
+      "team": "ATL"
+    },
+    {
+      "actual": 70.0,
+      "books": 1,
+      "line": 10.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.106,
+        "v1.5": 0.09,
+        "v1.6": 0.11,
+        "v1.7": 0.14,
+        "v1.7-pr43": 0.1,
+        "v2": 0.36
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 70.0,
+      "books": 9,
+      "line": 11.5,
+      "market": "receiving_yards",
+      "market_p": 0.5037928478238158,
+      "model_ps": {
+        "v1": 0.096,
+        "v1.5": 0.09,
+        "v1.6": 0.09,
+        "v1.7": 0.13,
+        "v1.7-pr43": 0.09,
+        "v2": 0.31
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 70.0,
+      "books": 9,
+      "line": 12.5,
+      "market": "receiving_yards",
+      "market_p": 0.4959501060182265,
+      "model_ps": {
+        "v1": 0.09,
+        "v1.5": 0.09,
+        "v1.6": 0.09,
+        "v1.7": 0.12000000000000001,
+        "v1.7-pr43": 0.08,
+        "v2": 0.26
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 70.0,
+      "books": 3,
+      "line": 13.5,
+      "market": "receiving_yards",
+      "market_p": 0.49688890620119275,
+      "model_ps": {
+        "v1": 0.08,
+        "v1.5": 0.07,
+        "v1.6": 0.08,
+        "v1.7": 0.12,
+        "v1.7-pr43": 0.08,
+        "v2": 0.24
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 70.0,
+      "books": 8,
+      "line": 24.5,
+      "market": "receiving_yards",
+      "market_p": 0.5043475611824146,
+      "model_ps": {
+        "v1": 0.031,
+        "v1.5": 0.04,
+        "v1.6": 0.04,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.04,
+        "v2": 0.13
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 70.0,
+      "books": 8,
+      "line": 25.5,
+      "market": "receiving_yards",
+      "market_p": 0.5012196085954036,
+      "model_ps": {
+        "v1": 0.027,
+        "v1.5": 0.04,
+        "v1.6": 0.03,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.02,
+        "v2": 0.12
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 70.0,
+      "books": 2,
+      "line": 26.5,
+      "market": "receiving_yards",
+      "market_p": 0.5009344750919913,
+      "model_ps": {
+        "v1": 0.026,
+        "v1.5": 0.03,
+        "v1.6": 0.03,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.02,
+        "v2": 0.12
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 70.0,
+      "books": 3,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.49789340636191276,
+      "model_ps": {
+        "v1": 0.025000000000000005,
+        "v1.5": 0.03,
+        "v1.6": 0.03,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.02,
+        "v2": 0.12
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 6.0,
+      "books": 6,
+      "line": 1.5,
+      "market": "receptions",
+      "market_p": 0.5604779401019179,
+      "model_ps": {
+        "v1": 0.108,
+        "v1.5": 0.08,
+        "v1.6": 0.11,
+        "v1.7": 0.13,
+        "v1.7-pr43": 0.12,
+        "v2": 0.52
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 6.0,
+      "books": 6,
+      "line": 3.5,
+      "market": "receptions",
+      "market_p": 0.45463276227038163,
+      "model_ps": {
+        "v1": 0.011000000000000001,
+        "v1.5": 0.01,
+        "v1.6": 0.01,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.01,
+        "v2": 0.12
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 22.0,
+      "books": 8,
+      "line": 16.5,
+      "market": "rush_attempts",
+      "market_p": 0.5098311174534078,
+      "model_ps": {
+        "v1": 0.014,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.02,
+        "v2": 0.03
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 22.0,
+      "books": 5,
+      "line": 17.5,
+      "market": "rush_attempts",
+      "market_p": 0.4751461301033089,
+      "model_ps": {
+        "v1": 0.012,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.02,
+        "v2": 0.02
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 171.0,
+      "books": 1,
+      "line": 23.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5110619469026548,
+      "model_ps": {
+        "v1": 0.179,
+        "v1.5": 0.19,
+        "v1.6": 0.21,
+        "v1.7": 0.15,
+        "v1.7-pr43": 0.26,
+        "v2": 0.82
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 171.0,
+      "books": 7,
+      "line": 24.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5017162338590929,
+      "model_ps": {
+        "v1": 0.174,
+        "v1.5": 0.19,
+        "v1.6": 0.21,
+        "v1.7": 0.13,
+        "v1.7-pr43": 0.25,
+        "v2": 0.79
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 171.0,
+      "books": 10,
+      "line": 25.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.49761421691151525,
+      "model_ps": {
+        "v1": 0.164,
+        "v1.5": 0.19,
+        "v1.6": 0.18,
+        "v1.7": 0.12,
+        "v1.7-pr43": 0.23000000000000004,
+        "v2": 0.77
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 171.0,
+      "books": 2,
+      "line": 26.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5010387236164201,
+      "model_ps": {
+        "v1": 0.161,
+        "v1.5": 0.18,
+        "v1.6": 0.18,
+        "v1.7": 0.11,
+        "v1.7-pr43": 0.23,
+        "v2": 0.74
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 171.0,
+      "books": 1,
+      "line": 101.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.008,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.02,
+        "v2": 0.06
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 171.0,
+      "books": 4,
+      "line": 102.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5007738407245005,
+      "model_ps": {
+        "v1": 0.008,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.01,
+        "v2": 0.06
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 171.0,
+      "books": 3,
+      "line": 103.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5013851374748944,
+      "model_ps": {
+        "v1": 0.007,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.01,
+        "v2": 0.06
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 171.0,
+      "books": 7,
+      "line": 104.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5017417126332139,
+      "model_ps": {
+        "v1": 0.007,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.01,
+        "v2": 0.06
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 171.0,
+      "books": 2,
+      "line": 105.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5010387236164201,
+      "model_ps": {
+        "v1": 0.006,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.01,
+        "v2": 0.06
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 171.0,
+      "books": 2,
+      "line": 106.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.006,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.01,
+        "v2": 0.06
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 101.0,
+      "books": 1,
+      "line": 8.5,
+      "market": "rushing_yards",
+      "market_p": 0.5171246675799823,
+      "model_ps": {
+        "v1": 0.257,
+        "v1.5": 0.24,
+        "v1.6": 0.24,
+        "v1.7": 0.22,
+        "v1.7-pr43": 0.37,
+        "v2": 0.96
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 101.0,
+      "books": 11,
+      "line": 9.5,
+      "market": "rushing_yards",
+      "market_p": 0.5016938062580095,
+      "model_ps": {
+        "v1": 0.239,
+        "v1.5": 0.23999999999999996,
+        "v1.6": 0.23999999999999996,
+        "v1.7": 0.22,
+        "v1.7-pr43": 0.36,
+        "v2": 0.94
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 101.0,
+      "books": 1,
+      "line": 10.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.226,
+        "v1.5": 0.2,
+        "v1.6": 0.24,
+        "v1.7": 0.2,
+        "v1.7-pr43": 0.35,
+        "v2": 0.93
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 101.0,
+      "books": 3,
+      "line": 72.5,
+      "market": "rushing_yards",
+      "market_p": 0.5007019612798158,
+      "model_ps": {
+        "v1": 0.02,
+        "v1.5": 0.02,
+        "v1.6": 0.01,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.02,
+        "v2": 0.12
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 101.0,
+      "books": 9,
+      "line": 73.5,
+      "market": "rushing_yards",
+      "market_p": 0.5000373637862612,
+      "model_ps": {
+        "v1": 0.019,
+        "v1.5": 0.02,
+        "v1.6": 0.01,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.02,
+        "v2": 0.11
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 101.0,
+      "books": 1,
+      "line": 74.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.017,
+        "v1.5": 0.02,
+        "v1.6": 0.01,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.02,
+        "v2": 0.1
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 101.0,
+      "books": 3,
+      "line": 75.5,
+      "market": "rushing_yards",
+      "market_p": 0.5014040999719179,
+      "model_ps": {
+        "v1": 0.017,
+        "v1.5": 0.02,
+        "v1.6": 0.01,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.02,
+        "v2": 0.08
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 7.0,
+      "books": 2,
+      "line": 2.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.084,
+        "v1.5": 0.07,
+        "v1.6": 0.1,
+        "v1.7": 0.07,
+        "v1.7-pr43": 0.1,
+        "v2": 0.41
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    },
+    {
+      "actual": 2.0,
+      "books": 1,
+      "line": 0.5,
+      "market": "total_touchdowns",
+      "market_p": 0.5725322727865432,
+      "model_ps": {
+        "v1": 0.099,
+        "v1.5": 0.15,
+        "v1.6": 0.05,
+        "v1.7": 0.06,
+        "v1.7-pr43": 0.13,
+        "v2": 0.35
+      },
+      "name": "Emmett Johnson",
+      "over_hit": 1,
+      "team": "KC"
+    }
+  ],
+  "kickoff": "2026-11-15T18:00:00Z",
+  "raw_quote_rows": 954,
+  "summary": {
+    "constant_50": {
+      "brier": 0.25,
+      "n": 213
+    },
+    "market": {
+      "brier": 0.24816289899705213,
+      "n": 213
+    },
+    "v1": {
+      "brier": 0.37855261032863846,
+      "n": 213
+    },
+    "v1.5": {
+      "brier": 0.36946901408450705,
+      "n": 213
+    },
+    "v1.6": {
+      "brier": 0.3796276995305164,
+      "n": 213
+    },
+    "v1.7": {
+      "brier": 0.3889173708920188,
+      "n": 213
+    },
+    "v1.7-pr43": {
+      "brier": 0.39907042253521124,
+      "n": 213
+    },
+    "v2": {
+      "brier": 0.39819342723004697,
+      "n": 213
+    }
+  }
+}

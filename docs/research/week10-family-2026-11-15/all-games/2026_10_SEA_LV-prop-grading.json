@@ -1,0 +1,4074 @@
+{
+  "game": "2026_10_SEA_LV",
+  "graded_items": 224,
+  "items": [
+    {
+      "actual": 34.0,
+      "books": 8,
+      "line": 18.5,
+      "market": "receiving_yards",
+      "market_p": 0.5028170365149693,
+      "model_ps": {
+        "v1": 0.68,
+        "v1.5": 0.73,
+        "v1.6": 0.69,
+        "v1.7": 0.67,
+        "v1.7-pr43": 0.62,
+        "v2": 0.73
+      },
+      "name": "Cooper Kupp",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 34.0,
+      "books": 8,
+      "line": 19.5,
+      "market": "receiving_yards",
+      "market_p": 0.5011308965869288,
+      "model_ps": {
+        "v1": 0.67,
+        "v1.5": 0.73,
+        "v1.6": 0.66,
+        "v1.7": 0.66,
+        "v1.7-pr43": 0.61,
+        "v2": 0.69
+      },
+      "name": "Cooper Kupp",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 34.0,
+      "books": 11,
+      "line": 20.5,
+      "market": "receiving_yards",
+      "market_p": 0.49957938946555075,
+      "model_ps": {
+        "v1": 0.66,
+        "v1.5": 0.73,
+        "v1.6": 0.64,
+        "v1.7": 0.64,
+        "v1.7-pr43": 0.58,
+        "v2": 0.67
+      },
+      "name": "Cooper Kupp",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 34.0,
+      "books": 9,
+      "line": 21.5,
+      "market": "receiving_yards",
+      "market_p": 0.49564249978885067,
+      "model_ps": {
+        "v1": 0.66,
+        "v1.5": 0.7,
+        "v1.6": 0.62,
+        "v1.7": 0.63,
+        "v1.7-pr43": 0.58,
+        "v2": 0.66
+      },
+      "name": "Cooper Kupp",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 34.0,
+      "books": 1,
+      "line": 22.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.63,
+        "v1.5": 0.69,
+        "v1.6": 0.61,
+        "v1.7": 0.63,
+        "v1.7-pr43": 0.58,
+        "v2": 0.65
+      },
+      "name": "Cooper Kupp",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 34.0,
+      "books": 1,
+      "line": 23.5,
+      "market": "receiving_yards",
+      "market_p": 0.48987854251012153,
+      "model_ps": {
+        "v1": 0.61,
+        "v1.5": 0.67,
+        "v1.6": 0.6,
+        "v1.7": 0.6,
+        "v1.7-pr43": 0.57,
+        "v2": 0.64
+      },
+      "name": "Cooper Kupp",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 3,
+      "line": 1.5,
+      "market": "receptions",
+      "market_p": 0.60722997163378,
+      "model_ps": {
+        "v1": 0.7399999999999999,
+        "v1.5": 0.77,
+        "v1.6": 0.77,
+        "v1.7": 0.7200000000000001,
+        "v1.7-pr43": 0.6999999999999998,
+        "v2": 0.8000000000000002
+      },
+      "name": "Cooper Kupp",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 7,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.3984688862288707,
+      "model_ps": {
+        "v1": 0.52,
+        "v1.5": 0.59,
+        "v1.6": 0.55,
+        "v1.7": 0.58,
+        "v1.7-pr43": 0.54,
+        "v2": 0.62
+      },
+      "name": "Cooper Kupp",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 2,
+      "line": 3.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.6,
+        "v1.5": 0.68,
+        "v1.6": 0.61,
+        "v1.7": 0.62,
+        "v1.7-pr43": 0.59,
+        "v2": 0.65
+      },
+      "name": "Cooper Kupp",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 13.0,
+      "books": 1,
+      "line": 0.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.36,
+        "v1.5": 0.33,
+        "v1.6": 0.34,
+        "v1.7": 0.32,
+        "v1.7-pr43": 0.26,
+        "v2": 0.42
+      },
+      "name": "Ian Thomas",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 0.0,
+      "books": 7,
+      "line": 0.5,
+      "market": "interceptions_thrown",
+      "market_p": 0.47176004448179504,
+      "model_ps": {
+        "v1": 0.42,
+        "v1.5": 0.4,
+        "v1.6": 0.4,
+        "v1.7": 0.43,
+        "v1.7-pr43": 0.38,
+        "v2": 0.43
+      },
+      "name": "Drew Lock",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 17.0,
+      "books": 2,
+      "line": 27.5,
+      "market": "pass_attempts",
+      "market_p": 0.548763620707553,
+      "model_ps": {
+        "v1": 0.86,
+        "v1.5": 0.81,
+        "v1.6": 0.89,
+        "v1.7": 0.79,
+        "v1.7-pr43": 0.81,
+        "v2": 0.79
+      },
+      "name": "Drew Lock",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 17.0,
+      "books": 8,
+      "line": 28.5,
+      "market": "pass_attempts",
+      "market_p": 0.4978392804971398,
+      "model_ps": {
+        "v1": 0.82,
+        "v1.5": 0.8,
+        "v1.6": 0.86,
+        "v1.7": 0.78,
+        "v1.7-pr43": 0.78,
+        "v2": 0.72
+      },
+      "name": "Drew Lock",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 14.0,
+      "books": 2,
+      "line": 18.5,
+      "market": "pass_completions",
+      "market_p": 0.5332554186145346,
+      "model_ps": {
+        "v1": 0.87,
+        "v1.5": 0.86,
+        "v1.6": 0.89,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.86,
+        "v2": 0.79
+      },
+      "name": "Drew Lock",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 14.0,
+      "books": 8,
+      "line": 19.5,
+      "market": "pass_completions",
+      "market_p": 0.49556738790090904,
+      "model_ps": {
+        "v1": 0.83,
+        "v1.5": 0.83,
+        "v1.6": 0.87,
+        "v1.7": 0.73,
+        "v1.7-pr43": 0.78,
+        "v2": 0.7
+      },
+      "name": "Drew Lock",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 1,
+      "line": 208.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.92,
+        "v1.5": 0.86,
+        "v1.6": 0.92,
+        "v1.7": 0.85,
+        "v1.7-pr43": 0.84,
+        "v2": 0.76
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 5,
+      "line": 209.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5009948637223502,
+      "model_ps": {
+        "v1": 0.9099999999999999,
+        "v1.5": 0.86,
+        "v1.6": 0.9099999999999999,
+        "v1.7": 0.85,
+        "v1.7-pr43": 0.8400000000000001,
+        "v2": 0.75
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 5,
+      "line": 211.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4997908474859868,
+      "model_ps": {
+        "v1": 0.9099999999999999,
+        "v1.5": 0.85,
+        "v1.6": 0.9,
+        "v1.7": 0.85,
+        "v1.7-pr43": 0.8299999999999998,
+        "v2": 0.74
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 4,
+      "line": 212.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4994806381917899,
+      "model_ps": {
+        "v1": 0.91,
+        "v1.5": 0.85,
+        "v1.6": 0.89,
+        "v1.7": 0.82,
+        "v1.7-pr43": 0.83,
+        "v2": 0.72
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 7,
+      "line": 213.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4994297508087445,
+      "model_ps": {
+        "v1": 0.91,
+        "v1.5": 0.85,
+        "v1.6": 0.89,
+        "v1.7": 0.8099999999999999,
+        "v1.7-pr43": 0.82,
+        "v2": 0.72
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 3,
+      "line": 214.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.9,
+        "v1.5": 0.84,
+        "v1.6": 0.89,
+        "v1.7": 0.81,
+        "v1.7-pr43": 0.82,
+        "v2": 0.71
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 3,
+      "line": 215.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49939234845170394,
+      "model_ps": {
+        "v1": 0.9,
+        "v1.5": 0.84,
+        "v1.6": 0.89,
+        "v1.7": 0.81,
+        "v1.7-pr43": 0.82,
+        "v2": 0.71
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 5,
+      "line": 216.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5005737434429909,
+      "model_ps": {
+        "v1": 0.89,
+        "v1.5": 0.8400000000000001,
+        "v1.6": 0.8800000000000001,
+        "v1.7": 0.8100000000000002,
+        "v1.7-pr43": 0.82,
+        "v2": 0.7
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 4,
+      "line": 217.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.501265775202524,
+      "model_ps": {
+        "v1": 0.89,
+        "v1.5": 0.84,
+        "v1.6": 0.87,
+        "v1.7": 0.81,
+        "v1.7-pr43": 0.81,
+        "v2": 0.7
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 1,
+      "line": 218.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.88,
+        "v1.5": 0.83,
+        "v1.6": 0.87,
+        "v1.7": 0.81,
+        "v1.7-pr43": 0.81,
+        "v2": 0.68
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 260.0,
+      "books": 1,
+      "line": 219.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.87,
+        "v1.5": 0.83,
+        "v1.6": 0.87,
+        "v1.7": 0.81,
+        "v1.7-pr43": 0.81,
+        "v2": 0.66
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 2.0,
+      "books": 7,
+      "line": 1.5,
+      "market": "passing_touchdowns",
+      "market_p": 0.42973935687265913,
+      "model_ps": {
+        "v1": 0.36,
+        "v1.5": 0.42,
+        "v1.6": 0.57,
+        "v1.7": 0.45,
+        "v1.7-pr43": 0.52,
+        "v2": 0.33
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 1,
+      "line": 198.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.88,
+        "v1.5": 0.84,
+        "v1.6": 0.87,
+        "v1.7": 0.78,
+        "v1.7-pr43": 0.81,
+        "v2": 0.71
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 5,
+      "line": 199.5,
+      "market": "passing_yards",
+      "market_p": 0.49675331546691404,
+      "model_ps": {
+        "v1": 0.8699999999999999,
+        "v1.5": 0.8299999999999998,
+        "v1.6": 0.8699999999999999,
+        "v1.7": 0.78,
+        "v1.7-pr43": 0.8100000000000002,
+        "v2": 0.71
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 5,
+      "line": 200.5,
+      "market": "passing_yards",
+      "market_p": 0.5005108991825613,
+      "model_ps": {
+        "v1": 0.8699999999999999,
+        "v1.5": 0.82,
+        "v1.6": 0.8699999999999999,
+        "v1.7": 0.78,
+        "v1.7-pr43": 0.8,
+        "v2": 0.71
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 7,
+      "line": 202.5,
+      "market": "passing_yards",
+      "market_p": 0.49804189321783926,
+      "model_ps": {
+        "v1": 0.87,
+        "v1.5": 0.82,
+        "v1.6": 0.87,
+        "v1.7": 0.76,
+        "v1.7-pr43": 0.79,
+        "v2": 0.67
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 10,
+      "line": 203.5,
+      "market": "passing_yards",
+      "market_p": 0.4971757532832929,
+      "model_ps": {
+        "v1": 0.86,
+        "v1.5": 0.8100000000000002,
+        "v1.6": 0.86,
+        "v1.7": 0.76,
+        "v1.7-pr43": 0.78,
+        "v2": 0.67
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 3,
+      "line": 204.5,
+      "market": "passing_yards",
+      "market_p": 0.4988272013109898,
+      "model_ps": {
+        "v1": 0.85,
+        "v1.5": 0.81,
+        "v1.6": 0.84,
+        "v1.7": 0.7600000000000001,
+        "v1.7-pr43": 0.7799999999999999,
+        "v2": 0.67
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 3,
+      "line": 205.5,
+      "market": "passing_yards",
+      "market_p": 0.47912998387381683,
+      "model_ps": {
+        "v1": 0.85,
+        "v1.5": 0.8000000000000002,
+        "v1.6": 0.84,
+        "v1.7": 0.7600000000000001,
+        "v1.7-pr43": 0.7799999999999999,
+        "v2": 0.66
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 8,
+      "line": 206.5,
+      "market": "passing_yards",
+      "market_p": 0.5000178579399437,
+      "model_ps": {
+        "v1": 0.85,
+        "v1.5": 0.78,
+        "v1.6": 0.84,
+        "v1.7": 0.76,
+        "v1.7-pr43": 0.77,
+        "v2": 0.66
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 4,
+      "line": 207.5,
+      "market": "passing_yards",
+      "market_p": 0.4883255214500053,
+      "model_ps": {
+        "v1": 0.85,
+        "v1.5": 0.78,
+        "v1.6": 0.83,
+        "v1.7": 0.76,
+        "v1.7-pr43": 0.77,
+        "v2": 0.65
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 1,
+      "line": 209.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.83,
+        "v1.5": 0.77,
+        "v1.6": 0.81,
+        "v1.7": 0.74,
+        "v1.7-pr43": 0.77,
+        "v2": 0.63
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 240.0,
+      "books": 1,
+      "line": 210.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.81,
+        "v1.5": 0.77,
+        "v1.6": 0.81,
+        "v1.7": 0.72,
+        "v1.7-pr43": 0.75,
+        "v2": 0.62
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 6.0,
+      "books": 2,
+      "line": 2.5,
+      "market": "rush_attempts",
+      "market_p": 0.5097167770717859,
+      "model_ps": {
+        "v1": 0.5,
+        "v1.5": 0.54,
+        "v1.6": 0.54,
+        "v1.7": 0.55,
+        "v1.7-pr43": 0.6,
+        "v2": 0.41
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 6.0,
+      "books": 2,
+      "line": 3.5,
+      "market": "rush_attempts",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.33,
+        "v1.5": 0.35,
+        "v1.6": 0.3,
+        "v1.7": 0.32,
+        "v1.7-pr43": 0.37,
+        "v2": 0.25
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 20.0,
+      "books": 2,
+      "line": 4.5,
+      "market": "rushing_yards",
+      "market_p": 0.5101214574898786,
+      "model_ps": {
+        "v1": 0.83,
+        "v1.5": 0.72,
+        "v1.6": 0.81,
+        "v1.7": 0.77,
+        "v1.7-pr43": 0.76,
+        "v2": 0.73
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 20.0,
+      "books": 9,
+      "line": 5.5,
+      "market": "rushing_yards",
+      "market_p": 0.4989811611691432,
+      "model_ps": {
+        "v1": 0.8,
+        "v1.5": 0.7,
+        "v1.6": 0.78,
+        "v1.7": 0.74,
+        "v1.7-pr43": 0.73,
+        "v2": 0.7
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 20.0,
+      "books": 11,
+      "line": 6.5,
+      "market": "rushing_yards",
+      "market_p": 0.4926604429378718,
+      "model_ps": {
+        "v1": 0.78,
+        "v1.5": 0.68,
+        "v1.6": 0.77,
+        "v1.7": 0.7400000000000001,
+        "v1.7-pr43": 0.73,
+        "v2": 0.69
+      },
+      "name": "Drew Lock",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": -1.0,
+      "books": 11,
+      "line": 11.5,
+      "market": "receiving_yards",
+      "market_p": 0.5047961484120403,
+      "model_ps": {
+        "v1": 0.13,
+        "v1.5": 0.09,
+        "v1.6": 0.1,
+        "v1.7": 0.1,
+        "v1.7-pr43": 0.07,
+        "v2": 0.6
+      },
+      "name": "Jalen Nailor",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": -1.0,
+      "books": 9,
+      "line": 12.5,
+      "market": "receiving_yards",
+      "market_p": 0.49651579337824664,
+      "model_ps": {
+        "v1": 0.12000000000000001,
+        "v1.5": 0.09,
+        "v1.6": 0.09,
+        "v1.7": 0.1,
+        "v1.7-pr43": 0.07,
+        "v2": 0.59
+      },
+      "name": "Jalen Nailor",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": -1.0,
+      "books": 1,
+      "line": 13.5,
+      "market": "receiving_yards",
+      "market_p": 0.48987854251012153,
+      "model_ps": {
+        "v1": 0.11,
+        "v1.5": 0.08,
+        "v1.6": 0.09,
+        "v1.7": 0.1,
+        "v1.7-pr43": 0.06,
+        "v2": 0.56
+      },
+      "name": "Jalen Nailor",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": -1.0,
+      "books": 1,
+      "line": 14.5,
+      "market": "receiving_yards",
+      "market_p": 0.49630723781388475,
+      "model_ps": {
+        "v1": 0.09,
+        "v1.5": 0.07,
+        "v1.6": 0.09,
+        "v1.7": 0.1,
+        "v1.7-pr43": 0.06,
+        "v2": 0.56
+      },
+      "name": "Jalen Nailor",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 1.0,
+      "books": 7,
+      "line": 1.5,
+      "market": "receptions",
+      "market_p": 0.4533326191595956,
+      "model_ps": {
+        "v1": 0.09,
+        "v1.5": 0.06,
+        "v1.6": 0.06,
+        "v1.7": 0.05,
+        "v1.7-pr43": 0.05,
+        "v2": 0.51
+      },
+      "name": "Jalen Nailor",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 4.0,
+      "books": 2,
+      "line": 2.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.08,
+        "v1.5": 0.09,
+        "v1.6": 0.06,
+        "v1.7": 0.08,
+        "v1.7-pr43": 0.07,
+        "v2": 0.54
+      },
+      "name": "Jalen Nailor",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 8.0,
+      "books": 2,
+      "line": 15.5,
+      "market": "receiving_yards",
+      "market_p": 0.5173267326732673,
+      "model_ps": {
+        "v1": 0.39,
+        "v1.5": 0.26,
+        "v1.6": 0.37,
+        "v1.7": 0.33,
+        "v1.7-pr43": 0.3,
+        "v2": 0.48
+      },
+      "name": "Rashid Shaheed",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 5,
+      "line": 16.5,
+      "market": "receiving_yards",
+      "market_p": 0.5045190923425624,
+      "model_ps": {
+        "v1": 0.37,
+        "v1.5": 0.24,
+        "v1.6": 0.36,
+        "v1.7": 0.31,
+        "v1.7-pr43": 0.27,
+        "v2": 0.48
+      },
+      "name": "Rashid Shaheed",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 6,
+      "line": 17.5,
+      "market": "receiving_yards",
+      "market_p": 0.4995895307745206,
+      "model_ps": {
+        "v1": 0.36000000000000004,
+        "v1.5": 0.24,
+        "v1.6": 0.3499999999999999,
+        "v1.7": 0.29,
+        "v1.7-pr43": 0.27,
+        "v2": 0.46
+      },
+      "name": "Rashid Shaheed",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 9,
+      "line": 18.5,
+      "market": "receiving_yards",
+      "market_p": 0.4978689649839465,
+      "model_ps": {
+        "v1": 0.36,
+        "v1.5": 0.24000000000000002,
+        "v1.6": 0.32,
+        "v1.7": 0.29,
+        "v1.7-pr43": 0.25,
+        "v2": 0.44999999999999996
+      },
+      "name": "Rashid Shaheed",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 1,
+      "line": 19.5,
+      "market": "receiving_yards",
+      "market_p": 0.4939310568053083,
+      "model_ps": {
+        "v1": 0.35,
+        "v1.5": 0.22,
+        "v1.6": 0.31,
+        "v1.7": 0.27,
+        "v1.7-pr43": 0.24,
+        "v2": 0.42
+      },
+      "name": "Rashid Shaheed",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 6,
+      "line": 1.5,
+      "market": "receptions",
+      "market_p": 0.6042360389109495,
+      "model_ps": {
+        "v1": 0.33,
+        "v1.5": 0.23,
+        "v1.6": 0.33,
+        "v1.7": 0.32,
+        "v1.7-pr43": 0.29,
+        "v2": 0.47
+      },
+      "name": "Rashid Shaheed",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 1,
+      "line": 2.0,
+      "market": "receptions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.18,
+        "v1.5": 0.16,
+        "v1.6": 0.21,
+        "v1.7": 0.19,
+        "v1.7-pr43": 0.16,
+        "v2": 0.28
+      },
+      "name": "Rashid Shaheed",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 1,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.39163382843285843,
+      "model_ps": {
+        "v1": 0.18,
+        "v1.5": 0.16,
+        "v1.6": 0.21,
+        "v1.7": 0.19,
+        "v1.7-pr43": 0.16,
+        "v2": 0.28
+      },
+      "name": "Rashid Shaheed",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 2.0,
+      "books": 1,
+      "line": 3.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.2,
+        "v1.5": 0.18,
+        "v1.6": 0.18,
+        "v1.7": 0.18,
+        "v1.7-pr43": 0.17,
+        "v2": 0.38
+      },
+      "name": "Rashid Shaheed",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 171.0,
+      "books": 1,
+      "line": 83.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.66,
+        "v1.5": 0.6,
+        "v1.6": 0.64,
+        "v1.7": 0.46,
+        "v1.7-pr43": 0.53,
+        "v2": 0.46
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 171.0,
+      "books": 1,
+      "line": 85.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.66,
+        "v1.5": 0.57,
+        "v1.6": 0.62,
+        "v1.7": 0.45,
+        "v1.7-pr43": 0.5,
+        "v2": 0.43
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 171.0,
+      "books": 5,
+      "line": 87.5,
+      "market": "receiving_yards",
+      "market_p": 0.5007897003229983,
+      "model_ps": {
+        "v1": 0.65,
+        "v1.5": 0.57,
+        "v1.6": 0.62,
+        "v1.7": 0.44000000000000006,
+        "v1.7-pr43": 0.5,
+        "v2": 0.43
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 171.0,
+      "books": 6,
+      "line": 88.5,
+      "market": "receiving_yards",
+      "market_p": 0.5000066251607489,
+      "model_ps": {
+        "v1": 0.65,
+        "v1.5": 0.57,
+        "v1.6": 0.62,
+        "v1.7": 0.44,
+        "v1.7-pr43": 0.49,
+        "v2": 0.41
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 171.0,
+      "books": 11,
+      "line": 89.5,
+      "market": "receiving_yards",
+      "market_p": 0.49952818835606966,
+      "model_ps": {
+        "v1": 0.63,
+        "v1.5": 0.56,
+        "v1.6": 0.6,
+        "v1.7": 0.44,
+        "v1.7-pr43": 0.47,
+        "v2": 0.4
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 171.0,
+      "books": 8,
+      "line": 90.5,
+      "market": "receiving_yards",
+      "market_p": 0.4992848708426882,
+      "model_ps": {
+        "v1": 0.62,
+        "v1.5": 0.56,
+        "v1.6": 0.59,
+        "v1.7": 0.43,
+        "v1.7-pr43": 0.46,
+        "v2": 0.4
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 171.0,
+      "books": 5,
+      "line": 91.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.61,
+        "v1.5": 0.56,
+        "v1.6": 0.57,
+        "v1.7": 0.42000000000000004,
+        "v1.7-pr43": 0.4600000000000001,
+        "v2": 0.4
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 171.0,
+      "books": 1,
+      "line": 92.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.6,
+        "v1.5": 0.56,
+        "v1.6": 0.56,
+        "v1.7": 0.41,
+        "v1.7-pr43": 0.46,
+        "v2": 0.38
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 2,
+      "line": 6.5,
+      "market": "receptions",
+      "market_p": 0.5287610619469026,
+      "model_ps": {
+        "v1": 0.71,
+        "v1.5": 0.71,
+        "v1.6": 0.68,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.63,
+        "v2": 0.66
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 1,
+      "line": 7.0,
+      "market": "receptions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.61,
+        "v1.5": 0.67,
+        "v1.6": 0.59,
+        "v1.7": 0.43,
+        "v1.7-pr43": 0.52,
+        "v2": 0.54
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 8,
+      "line": 7.5,
+      "market": "receptions",
+      "market_p": 0.45608656016766264,
+      "model_ps": {
+        "v1": 0.61,
+        "v1.5": 0.67,
+        "v1.6": 0.59,
+        "v1.7": 0.43,
+        "v1.7-pr43": 0.52,
+        "v2": 0.54
+      },
+      "name": "Jaxon Smith-Njigba",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 9.0,
+      "books": 6,
+      "line": 25.5,
+      "market": "receiving_yards",
+      "market_p": 0.5032421561877147,
+      "model_ps": {
+        "v1": 0.92,
+        "v1.5": 0.88,
+        "v1.6": 0.91,
+        "v1.7": 0.87,
+        "v1.7-pr43": 0.9,
+        "v2": 0.93
+      },
+      "name": "Tre Tucker",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 9.0,
+      "books": 11,
+      "line": 26.5,
+      "market": "receiving_yards",
+      "market_p": 0.4999662738515637,
+      "model_ps": {
+        "v1": 0.92,
+        "v1.5": 0.88,
+        "v1.6": 0.91,
+        "v1.7": 0.87,
+        "v1.7-pr43": 0.8900000000000001,
+        "v2": 0.92
+      },
+      "name": "Tre Tucker",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 9.0,
+      "books": 10,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.5002406996378632,
+      "model_ps": {
+        "v1": 0.9099999999999999,
+        "v1.5": 0.8800000000000001,
+        "v1.6": 0.9099999999999999,
+        "v1.7": 0.8699999999999999,
+        "v1.7-pr43": 0.85,
+        "v2": 0.9200000000000002
+      },
+      "name": "Tre Tucker",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 9.0,
+      "books": 2,
+      "line": 28.5,
+      "market": "receiving_yards",
+      "market_p": 0.49684010954286917,
+      "model_ps": {
+        "v1": 0.91,
+        "v1.5": 0.87,
+        "v1.6": 0.9,
+        "v1.7": 0.87,
+        "v1.7-pr43": 0.83,
+        "v2": 0.91
+      },
+      "name": "Tre Tucker",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 9.0,
+      "books": 1,
+      "line": 36.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.83,
+        "v1.5": 0.86,
+        "v1.6": 0.88,
+        "v1.7": 0.81,
+        "v1.7-pr43": 0.78,
+        "v2": 0.8
+      },
+      "name": "Tre Tucker",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 9.0,
+      "books": 2,
+      "line": 43.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.77,
+        "v1.5": 0.82,
+        "v1.6": 0.87,
+        "v1.7": 0.73,
+        "v1.7-pr43": 0.72,
+        "v2": 0.7
+      },
+      "name": "Tre Tucker",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 9.0,
+      "books": 2,
+      "line": 44.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.82,
+        "v1.6": 0.86,
+        "v1.7": 0.73,
+        "v1.7-pr43": 0.7,
+        "v2": 0.7
+      },
+      "name": "Tre Tucker",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 1.0,
+      "books": 10,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.48452592230146496,
+      "model_ps": {
+        "v1": 0.9399999999999998,
+        "v1.5": 0.96,
+        "v1.6": 0.93,
+        "v1.7": 0.9200000000000002,
+        "v1.7-pr43": 0.89,
+        "v2": 0.96
+      },
+      "name": "Tre Tucker",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 2.0,
+      "books": 2,
+      "line": 4.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.93,
+        "v1.5": 0.93,
+        "v1.6": 0.95,
+        "v1.7": 0.89,
+        "v1.7-pr43": 0.91,
+        "v2": 0.96
+      },
+      "name": "Tre Tucker",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 16.0,
+      "books": 1,
+      "line": 19.5,
+      "market": "receiving_yards",
+      "market_p": 0.5060689431946916,
+      "model_ps": {
+        "v1": 0.33,
+        "v1.5": 0.48,
+        "v1.6": 0.39,
+        "v1.7": 0.41,
+        "v1.7-pr43": 0.32,
+        "v2": 0.75
+      },
+      "name": "Michael Mayer",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 16.0,
+      "books": 10,
+      "line": 20.5,
+      "market": "receiving_yards",
+      "market_p": 0.5024573615563199,
+      "model_ps": {
+        "v1": 0.3,
+        "v1.5": 0.45,
+        "v1.6": 0.38,
+        "v1.7": 0.38,
+        "v1.7-pr43": 0.31,
+        "v2": 0.74
+      },
+      "name": "Michael Mayer",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 16.0,
+      "books": 11,
+      "line": 21.5,
+      "market": "receiving_yards",
+      "market_p": 0.5020059908259533,
+      "model_ps": {
+        "v1": 0.29,
+        "v1.5": 0.44,
+        "v1.6": 0.35,
+        "v1.7": 0.36,
+        "v1.7-pr43": 0.3,
+        "v2": 0.7400000000000001
+      },
+      "name": "Michael Mayer",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 16.0,
+      "books": 3,
+      "line": 22.5,
+      "market": "receiving_yards",
+      "market_p": 0.5021065936380872,
+      "model_ps": {
+        "v1": 0.29,
+        "v1.5": 0.43,
+        "v1.6": 0.34,
+        "v1.7": 0.33,
+        "v1.7-pr43": 0.28,
+        "v2": 0.7200000000000001
+      },
+      "name": "Michael Mayer",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 16.0,
+      "books": 2,
+      "line": 29.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.2,
+        "v1.5": 0.35,
+        "v1.6": 0.22,
+        "v1.7": 0.26,
+        "v1.7-pr43": 0.19,
+        "v2": 0.61
+      },
+      "name": "Michael Mayer",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 16.0,
+      "books": 2,
+      "line": 30.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.18,
+        "v1.5": 0.33,
+        "v1.6": 0.2,
+        "v1.7": 0.24,
+        "v1.7-pr43": 0.17,
+        "v2": 0.61
+      },
+      "name": "Michael Mayer",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 2.0,
+      "books": 11,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.5321026687222994,
+      "model_ps": {
+        "v1": 0.27,
+        "v1.5": 0.34,
+        "v1.6": 0.29,
+        "v1.7": 0.3,
+        "v1.7-pr43": 0.25,
+        "v2": 0.7400000000000001
+      },
+      "name": "Michael Mayer",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 3.0,
+      "books": 1,
+      "line": 3.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.28,
+        "v1.5": 0.39,
+        "v1.6": 0.35,
+        "v1.7": 0.32,
+        "v1.7-pr43": 0.28,
+        "v2": 0.7
+      },
+      "name": "Michael Mayer",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 20.0,
+      "books": 3,
+      "line": 13.5,
+      "market": "rush_attempts",
+      "market_p": 0.5180467091295117,
+      "model_ps": {
+        "v1": 0.86,
+        "v1.5": 0.88,
+        "v1.6": 0.88,
+        "v1.7": 0.84,
+        "v1.7-pr43": 0.9,
+        "v2": 0.42
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 20.0,
+      "books": 7,
+      "line": 14.5,
+      "market": "rush_attempts",
+      "market_p": 0.5199521164656609,
+      "model_ps": {
+        "v1": 0.84,
+        "v1.5": 0.86,
+        "v1.6": 0.87,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.87,
+        "v2": 0.31
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 20.0,
+      "books": 1,
+      "line": 15.0,
+      "market": "rush_attempts",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.82,
+        "v1.5": 0.82,
+        "v1.6": 0.84,
+        "v1.7": 0.79,
+        "v1.7-pr43": 0.85,
+        "v2": 0.27
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 20.0,
+      "books": 9,
+      "line": 15.5,
+      "market": "rush_attempts",
+      "market_p": 0.4932668138534454,
+      "model_ps": {
+        "v1": 0.82,
+        "v1.5": 0.82,
+        "v1.6": 0.84,
+        "v1.7": 0.79,
+        "v1.7-pr43": 0.85,
+        "v2": 0.27
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 2,
+      "line": 52.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.85,
+        "v1.5": 0.81,
+        "v1.6": 0.82,
+        "v1.7": 0.75,
+        "v1.7-pr43": 0.91,
+        "v2": 0.52
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 2,
+      "line": 54.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.85,
+        "v1.5": 0.81,
+        "v1.6": 0.8,
+        "v1.7": 0.75,
+        "v1.7-pr43": 0.89,
+        "v2": 0.46
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 2,
+      "line": 57.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.84,
+        "v1.5": 0.79,
+        "v1.6": 0.78,
+        "v1.7": 0.74,
+        "v1.7-pr43": 0.88,
+        "v2": 0.43
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 2,
+      "line": 58.5,
+      "market": "rushing_yards",
+      "market_p": 0.5173267326732673,
+      "model_ps": {
+        "v1": 0.82,
+        "v1.5": 0.79,
+        "v1.6": 0.77,
+        "v1.7": 0.73,
+        "v1.7-pr43": 0.87,
+        "v2": 0.43
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 6,
+      "line": 59.5,
+      "market": "rushing_yards",
+      "market_p": 0.5045118940594132,
+      "model_ps": {
+        "v1": 0.82,
+        "v1.5": 0.77,
+        "v1.6": 0.77,
+        "v1.7": 0.7200000000000001,
+        "v1.7-pr43": 0.86,
+        "v2": 0.41
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 9,
+      "line": 60.5,
+      "market": "rushing_yards",
+      "market_p": 0.5010759653224521,
+      "model_ps": {
+        "v1": 0.81,
+        "v1.5": 0.76,
+        "v1.6": 0.76,
+        "v1.7": 0.71,
+        "v1.7-pr43": 0.85,
+        "v2": 0.38
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 5,
+      "line": 61.5,
+      "market": "rushing_yards",
+      "market_p": 0.5053268471706146,
+      "model_ps": {
+        "v1": 0.8100000000000002,
+        "v1.5": 0.76,
+        "v1.6": 0.76,
+        "v1.7": 0.71,
+        "v1.7-pr43": 0.8299999999999998,
+        "v2": 0.34
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 3,
+      "line": 62.5,
+      "market": "rushing_yards",
+      "market_p": 0.5122531163953273,
+      "model_ps": {
+        "v1": 0.8000000000000002,
+        "v1.5": 0.7600000000000001,
+        "v1.6": 0.7600000000000001,
+        "v1.7": 0.69,
+        "v1.7-pr43": 0.83,
+        "v2": 0.33
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 10,
+      "line": 63.5,
+      "market": "rushing_yards",
+      "market_p": 0.5019445022085194,
+      "model_ps": {
+        "v1": 0.79,
+        "v1.5": 0.76,
+        "v1.6": 0.74,
+        "v1.7": 0.67,
+        "v1.7-pr43": 0.82,
+        "v2": 0.32
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 8,
+      "line": 64.5,
+      "market": "rushing_yards",
+      "market_p": 0.503766820012943,
+      "model_ps": {
+        "v1": 0.79,
+        "v1.5": 0.76,
+        "v1.6": 0.74,
+        "v1.7": 0.66,
+        "v1.7-pr43": 0.79,
+        "v2": 0.3
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 94.0,
+      "books": 10,
+      "line": 65.5,
+      "market": "rushing_yards",
+      "market_p": 0.5017665026052682,
+      "model_ps": {
+        "v1": 0.79,
+        "v1.5": 0.76,
+        "v1.6": 0.73,
+        "v1.7": 0.64,
+        "v1.7-pr43": 0.78,
+        "v2": 0.29
+      },
+      "name": "Zach Charbonnet",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 18.0,
+      "books": 3,
+      "line": 57.5,
+      "market": "receiving_yards",
+      "market_p": 0.5016744360499383,
+      "model_ps": {
+        "v1": 0.17,
+        "v1.5": 0.20000000000000004,
+        "v1.6": 0.23,
+        "v1.7": 0.23,
+        "v1.7-pr43": 0.20000000000000004,
+        "v2": 0.17
+      },
+      "name": "Brock Bowers",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 18.0,
+      "books": 9,
+      "line": 58.5,
+      "market": "receiving_yards",
+      "market_p": 0.5003780642069313,
+      "model_ps": {
+        "v1": 0.17,
+        "v1.5": 0.2,
+        "v1.6": 0.21,
+        "v1.7": 0.23000000000000004,
+        "v1.7-pr43": 0.2,
+        "v2": 0.15
+      },
+      "name": "Brock Bowers",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 18.0,
+      "books": 9,
+      "line": 59.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.17,
+        "v1.5": 0.18,
+        "v1.6": 0.21,
+        "v1.7": 0.23000000000000004,
+        "v1.7-pr43": 0.19,
+        "v2": 0.15
+      },
+      "name": "Brock Bowers",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 18.0,
+      "books": 2,
+      "line": 60.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.16,
+        "v1.5": 0.18,
+        "v1.6": 0.2,
+        "v1.7": 0.23,
+        "v1.7-pr43": 0.17,
+        "v2": 0.15
+      },
+      "name": "Brock Bowers",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 18.0,
+      "books": 1,
+      "line": 61.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.16,
+        "v1.5": 0.18,
+        "v1.6": 0.19,
+        "v1.7": 0.23,
+        "v1.7-pr43": 0.17,
+        "v2": 0.14
+      },
+      "name": "Brock Bowers",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 18.0,
+      "books": 1,
+      "line": 72.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.09,
+        "v1.5": 0.11,
+        "v1.6": 0.14,
+        "v1.7": 0.11,
+        "v1.7-pr43": 0.12,
+        "v2": 0.06
+      },
+      "name": "Brock Bowers",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 18.0,
+      "books": 1,
+      "line": 75.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.06,
+        "v1.5": 0.11,
+        "v1.6": 0.12,
+        "v1.7": 0.08,
+        "v1.7-pr43": 0.1,
+        "v2": 0.06
+      },
+      "name": "Brock Bowers",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 2.0,
+      "books": 9,
+      "line": 5.5,
+      "market": "receptions",
+      "market_p": 0.4837942777131855,
+      "model_ps": {
+        "v1": 0.2,
+        "v1.5": 0.21,
+        "v1.6": 0.22,
+        "v1.7": 0.21,
+        "v1.7-pr43": 0.17,
+        "v2": 0.2
+      },
+      "name": "Brock Bowers",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 2.0,
+      "books": 1,
+      "line": 8.0,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.14,
+        "v1.5": 0.17,
+        "v1.6": 0.14,
+        "v1.7": 0.13,
+        "v1.7-pr43": 0.08,
+        "v2": 0.12
+      },
+      "name": "Brock Bowers",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 19.0,
+      "books": 2,
+      "line": 19.5,
+      "market": "receiving_yards",
+      "market_p": 0.5036620071984599,
+      "model_ps": {
+        "v1": 0.72,
+        "v1.5": 0.76,
+        "v1.6": 0.76,
+        "v1.7": 0.68,
+        "v1.7-pr43": 0.72,
+        "v2": 0.67
+      },
+      "name": "AJ Barner",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 19.0,
+      "books": 6,
+      "line": 20.5,
+      "market": "receiving_yards",
+      "market_p": 0.5014364369401011,
+      "model_ps": {
+        "v1": 0.69,
+        "v1.5": 0.75,
+        "v1.6": 0.7399999999999999,
+        "v1.7": 0.66,
+        "v1.7-pr43": 0.71,
+        "v2": 0.66
+      },
+      "name": "AJ Barner",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 19.0,
+      "books": 8,
+      "line": 21.5,
+      "market": "receiving_yards",
+      "market_p": 0.49731931235741483,
+      "model_ps": {
+        "v1": 0.66,
+        "v1.5": 0.75,
+        "v1.6": 0.72,
+        "v1.7": 0.66,
+        "v1.7-pr43": 0.7,
+        "v2": 0.65
+      },
+      "name": "AJ Barner",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 19.0,
+      "books": 11,
+      "line": 22.5,
+      "market": "receiving_yards",
+      "market_p": 0.4980606481262233,
+      "model_ps": {
+        "v1": 0.65,
+        "v1.5": 0.7400000000000001,
+        "v1.6": 0.71,
+        "v1.7": 0.65,
+        "v1.7-pr43": 0.68,
+        "v2": 0.63
+      },
+      "name": "AJ Barner",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 19.0,
+      "books": 2,
+      "line": 23.5,
+      "market": "receiving_yards",
+      "market_p": 0.4957855697909642,
+      "model_ps": {
+        "v1": 0.64,
+        "v1.5": 0.7,
+        "v1.6": 0.7,
+        "v1.7": 0.6,
+        "v1.7-pr43": 0.66,
+        "v2": 0.59
+      },
+      "name": "AJ Barner",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 19.0,
+      "books": 3,
+      "line": 24.5,
+      "market": "receiving_yards",
+      "market_p": 0.4966261808367072,
+      "model_ps": {
+        "v1": 0.63,
+        "v1.5": 0.68,
+        "v1.6": 0.69,
+        "v1.7": 0.57,
+        "v1.7-pr43": 0.65,
+        "v2": 0.59
+      },
+      "name": "AJ Barner",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 19.0,
+      "books": 2,
+      "line": 25.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.61,
+        "v1.5": 0.66,
+        "v1.6": 0.68,
+        "v1.7": 0.54,
+        "v1.7-pr43": 0.63,
+        "v2": 0.57
+      },
+      "name": "AJ Barner",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 3.0,
+      "books": 9,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.5207163006009545,
+      "model_ps": {
+        "v1": 0.66,
+        "v1.5": 0.66,
+        "v1.6": 0.65,
+        "v1.7": 0.61,
+        "v1.7-pr43": 0.7,
+        "v2": 0.7
+      },
+      "name": "AJ Barner",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 3.0,
+      "books": 1,
+      "line": 3.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.76,
+        "v1.5": 0.69,
+        "v1.6": 0.68,
+        "v1.7": 0.64,
+        "v1.7-pr43": 0.7,
+        "v2": 0.79
+      },
+      "name": "AJ Barner",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 46.0,
+      "books": 2,
+      "line": 24.5,
+      "market": "receiving_yards",
+      "market_p": 0.502106149957877,
+      "model_ps": {
+        "v1": 0.58,
+        "v1.5": 0.56,
+        "v1.6": 0.52,
+        "v1.7": 0.67,
+        "v1.7-pr43": 0.53,
+        "v2": 0.55
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 46.0,
+      "books": 12,
+      "line": 25.5,
+      "market": "receiving_yards",
+      "market_p": 0.5015791536084525,
+      "model_ps": {
+        "v1": 0.56,
+        "v1.5": 0.52,
+        "v1.6": 0.51,
+        "v1.7": 0.66,
+        "v1.7-pr43": 0.52,
+        "v2": 0.53
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 46.0,
+      "books": 5,
+      "line": 26.5,
+      "market": "receiving_yards",
+      "market_p": 0.4969266348907303,
+      "model_ps": {
+        "v1": 0.55,
+        "v1.5": 0.51,
+        "v1.6": 0.5,
+        "v1.7": 0.63,
+        "v1.7-pr43": 0.52,
+        "v2": 0.51
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 46.0,
+      "books": 2,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.52,
+        "v1.5": 0.49,
+        "v1.6": 0.49,
+        "v1.7": 0.61,
+        "v1.7-pr43": 0.5,
+        "v2": 0.5
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 46.0,
+      "books": 1,
+      "line": 30.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.5,
+        "v1.5": 0.43,
+        "v1.6": 0.44,
+        "v1.7": 0.55,
+        "v1.7-pr43": 0.46,
+        "v2": 0.44
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 4.0,
+      "books": 3,
+      "line": 3.5,
+      "market": "receptions",
+      "market_p": 0.5773975139306828,
+      "model_ps": {
+        "v1": 0.58,
+        "v1.5": 0.6,
+        "v1.6": 0.6,
+        "v1.7": 0.62,
+        "v1.7-pr43": 0.64,
+        "v2": 0.5
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 4.0,
+      "books": 7,
+      "line": 4.5,
+      "market": "receptions",
+      "market_p": 0.4242052390052909,
+      "model_ps": {
+        "v1": 0.45,
+        "v1.5": 0.43,
+        "v1.6": 0.43,
+        "v1.7": 0.41,
+        "v1.7-pr43": 0.51,
+        "v2": 0.34
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 9.0,
+      "books": 9,
+      "line": 10.5,
+      "market": "rush_attempts",
+      "market_p": 0.4864290538413159,
+      "model_ps": {
+        "v1": 0.94,
+        "v1.5": 0.9300000000000002,
+        "v1.6": 0.9200000000000002,
+        "v1.7": 0.9700000000000001,
+        "v1.7-pr43": 0.9499999999999998,
+        "v2": 0.76
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 64.0,
+      "books": 1,
+      "line": 61.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.500940910801656,
+      "model_ps": {
+        "v1": 0.9,
+        "v1.5": 0.82,
+        "v1.6": 0.9,
+        "v1.7": 0.89,
+        "v1.7-pr43": 0.88,
+        "v2": 0.73
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 64.0,
+      "books": 1,
+      "line": 62.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5030135004821601,
+      "model_ps": {
+        "v1": 0.89,
+        "v1.5": 0.82,
+        "v1.6": 0.89,
+        "v1.7": 0.88,
+        "v1.7-pr43": 0.87,
+        "v2": 0.72
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 64.0,
+      "books": 7,
+      "line": 63.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.4984611413053419,
+      "model_ps": {
+        "v1": 0.89,
+        "v1.5": 0.8099999999999999,
+        "v1.6": 0.86,
+        "v1.7": 0.88,
+        "v1.7-pr43": 0.87,
+        "v2": 0.7
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 64.0,
+      "books": 9,
+      "line": 64.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5003752771090412,
+      "model_ps": {
+        "v1": 0.88,
+        "v1.5": 0.81,
+        "v1.6": 0.85,
+        "v1.7": 0.88,
+        "v1.7-pr43": 0.86,
+        "v2": 0.69
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 64.0,
+      "books": 5,
+      "line": 65.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.49833783503012674,
+      "model_ps": {
+        "v1": 0.8699999999999999,
+        "v1.5": 0.8100000000000002,
+        "v1.6": 0.85,
+        "v1.7": 0.8800000000000001,
+        "v1.7-pr43": 0.85,
+        "v2": 0.67
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 64.0,
+      "books": 1,
+      "line": 66.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.84,
+        "v1.5": 0.81,
+        "v1.6": 0.85,
+        "v1.7": 0.88,
+        "v1.7-pr43": 0.85,
+        "v2": 0.67
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 18.0,
+      "books": 12,
+      "line": 33.5,
+      "market": "rushing_yards",
+      "market_p": 0.5022837772467991,
+      "model_ps": {
+        "v1": 0.92,
+        "v1.5": 0.92,
+        "v1.6": 0.87,
+        "v1.7": 0.94,
+        "v1.7-pr43": 0.87,
+        "v2": 0.77
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 18.0,
+      "books": 10,
+      "line": 34.5,
+      "market": "rushing_yards",
+      "market_p": 0.4982720306947838,
+      "model_ps": {
+        "v1": 0.9200000000000002,
+        "v1.5": 0.9200000000000002,
+        "v1.6": 0.8699999999999999,
+        "v1.7": 0.93,
+        "v1.7-pr43": 0.86,
+        "v2": 0.74
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 18.0,
+      "books": 2,
+      "line": 35.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.9,
+        "v1.5": 0.9,
+        "v1.6": 0.87,
+        "v1.7": 0.93,
+        "v1.7-pr43": 0.86,
+        "v2": 0.74
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 18.0,
+      "books": 1,
+      "line": 36.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.89,
+        "v1.5": 0.88,
+        "v1.6": 0.87,
+        "v1.7": 0.93,
+        "v1.7-pr43": 0.85,
+        "v2": 0.73
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 4.0,
+      "books": 1,
+      "line": 5.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.56,
+        "v1.5": 0.58,
+        "v1.6": 0.56,
+        "v1.7": 0.56,
+        "v1.7-pr43": 0.59,
+        "v2": 0.4
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 0.0,
+      "books": 1,
+      "line": 0.5,
+      "market": "total_touchdowns",
+      "market_p": 0.34532616005379957,
+      "model_ps": {
+        "v1": 0.55,
+        "v1.5": 0.59,
+        "v1.6": 0.64,
+        "v1.7": 0.57,
+        "v1.7-pr43": 0.56,
+        "v2": 0.4
+      },
+      "name": "Ashton Jeanty",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 10.0,
+      "books": 7,
+      "line": 4.5,
+      "market": "receiving_yards",
+      "market_p": 0.5054787989881314,
+      "model_ps": {
+        "v1": 0.78,
+        "v1.5": 0.65,
+        "v1.6": 0.66,
+        "v1.7": 0.68,
+        "v1.7-pr43": 0.67,
+        "v2": 0.58
+      },
+      "name": "Jack Bech",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 10.0,
+      "books": 2,
+      "line": 5.5,
+      "market": "receiving_yards",
+      "market_p": 0.5037123462028001,
+      "model_ps": {
+        "v1": 0.78,
+        "v1.5": 0.63,
+        "v1.6": 0.66,
+        "v1.7": 0.65,
+        "v1.7-pr43": 0.67,
+        "v2": 0.57
+      },
+      "name": "Jack Bech",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 10.0,
+      "books": 3,
+      "line": 6.5,
+      "market": "receiving_yards",
+      "market_p": 0.49684044233807273,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.58,
+        "v1.6": 0.64,
+        "v1.7": 0.63,
+        "v1.7-pr43": 0.63,
+        "v2": 0.55
+      },
+      "name": "Jack Bech",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 10.0,
+      "books": 2,
+      "line": 7.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.73,
+        "v1.5": 0.55,
+        "v1.6": 0.6,
+        "v1.7": 0.61,
+        "v1.7-pr43": 0.63,
+        "v2": 0.5
+      },
+      "name": "Jack Bech",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 2.0,
+      "books": 5,
+      "line": 0.5,
+      "market": "receptions",
+      "market_p": 0.6147150227585169,
+      "model_ps": {
+        "v1": 0.8400000000000001,
+        "v1.5": 0.69,
+        "v1.6": 0.68,
+        "v1.7": 0.7,
+        "v1.7-pr43": 0.73,
+        "v2": 0.63
+      },
+      "name": "Jack Bech",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 1.0,
+      "books": 3,
+      "line": 0.5,
+      "market": "receptions",
+      "market_p": 0.5012154360376785,
+      "model_ps": {
+        "v1": 0.19000000000000003,
+        "v1.5": 0.15,
+        "v1.6": 0.16,
+        "v1.7": 0.16,
+        "v1.7-pr43": 0.15,
+        "v2": 0.49
+      },
+      "name": "Mike Washington Jr.",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 8.0,
+      "books": 2,
+      "line": 7.5,
+      "market": "rush_attempts",
+      "market_p": 0.5316593886462881,
+      "model_ps": {
+        "v1": 0.02,
+        "v1.5": 0.02,
+        "v1.6": 0.01,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.01,
+        "v2": 0.24
+      },
+      "name": "Mike Washington Jr.",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 8.0,
+      "books": 8,
+      "line": 8.5,
+      "market": "rush_attempts",
+      "market_p": 0.5006148664039113,
+      "model_ps": {
+        "v1": 0.02,
+        "v1.5": 0.01,
+        "v1.6": 0.01,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.01,
+        "v2": 0.21
+      },
+      "name": "Mike Washington Jr.",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 27.0,
+      "books": 2,
+      "line": 28.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.495260663507109,
+      "model_ps": {
+        "v1": 0.05,
+        "v1.5": 0.02,
+        "v1.6": 0.01,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.0,
+        "v2": 0.49
+      },
+      "name": "Mike Washington Jr.",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 27.0,
+      "books": 2,
+      "line": 29.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.4967053241960991,
+      "model_ps": {
+        "v1": 0.05,
+        "v1.5": 0.01,
+        "v1.6": 0.01,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.0,
+        "v2": 0.45
+      },
+      "name": "Mike Washington Jr.",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 27.0,
+      "books": 2,
+      "line": 30.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.504739336492891,
+      "model_ps": {
+        "v1": 0.05,
+        "v1.5": 0.01,
+        "v1.6": 0.01,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.0,
+        "v2": 0.42
+      },
+      "name": "Mike Washington Jr.",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 23.0,
+      "books": 4,
+      "line": 24.5,
+      "market": "rushing_yards",
+      "market_p": 0.5025092051938052,
+      "model_ps": {
+        "v1": 0.02,
+        "v1.5": 0.01,
+        "v1.6": 0.01,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.01,
+        "v2": 0.43
+      },
+      "name": "Mike Washington Jr.",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 23.0,
+      "books": 9,
+      "line": 25.5,
+      "market": "rushing_yards",
+      "market_p": 0.5015357746282132,
+      "model_ps": {
+        "v1": 0.02,
+        "v1.5": 0.01,
+        "v1.6": 0.01,
+        "v1.7": 0.01,
+        "v1.7-pr43": 0.01,
+        "v2": 0.39
+      },
+      "name": "Mike Washington Jr.",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 23.0,
+      "books": 12,
+      "line": 26.5,
+      "market": "rushing_yards",
+      "market_p": 0.497396450423733,
+      "model_ps": {
+        "v1": 0.02,
+        "v1.5": 0.01,
+        "v1.6": 0.01,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.01,
+        "v2": 0.38000000000000006
+      },
+      "name": "Mike Washington Jr.",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 23.0,
+      "books": 2,
+      "line": 27.5,
+      "market": "rushing_yards",
+      "market_p": 0.4957855697909642,
+      "model_ps": {
+        "v1": 0.02,
+        "v1.5": 0.01,
+        "v1.6": 0.01,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.01,
+        "v2": 0.37
+      },
+      "name": "Mike Washington Jr.",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 8.0,
+      "books": 2,
+      "line": 7.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.11,
+        "v1.5": 0.15,
+        "v1.6": 0.16,
+        "v1.7": 0.15,
+        "v1.7-pr43": 0.09,
+        "v2": 0.17
+      },
+      "name": "Jadarian Price",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 2,
+      "line": 8.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.09,
+        "v1.5": 0.13,
+        "v1.6": 0.15,
+        "v1.7": 0.14,
+        "v1.7-pr43": 0.09,
+        "v2": 0.15
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 9,
+      "line": 9.5,
+      "market": "receiving_yards",
+      "market_p": 0.5022072540655929,
+      "model_ps": {
+        "v1": 0.07,
+        "v1.5": 0.12000000000000001,
+        "v1.6": 0.11,
+        "v1.7": 0.11,
+        "v1.7-pr43": 0.08,
+        "v2": 0.13
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 10,
+      "line": 10.5,
+      "market": "receiving_yards",
+      "market_p": 0.5056383810765201,
+      "model_ps": {
+        "v1": 0.05,
+        "v1.5": 0.09,
+        "v1.6": 0.11000000000000001,
+        "v1.7": 0.1,
+        "v1.7-pr43": 0.06,
+        "v2": 0.11000000000000001
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 12,
+      "line": 11.5,
+      "market": "receiving_yards",
+      "market_p": 0.4995656846691296,
+      "model_ps": {
+        "v1": 0.05000000000000001,
+        "v1.5": 0.07,
+        "v1.6": 0.10000000000000002,
+        "v1.7": 0.08,
+        "v1.7-pr43": 0.06,
+        "v2": 0.09000000000000001
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 1,
+      "line": 56.5,
+      "market": "receiving_yards",
+      "market_p": 0.48987854251012153,
+      "model_ps": {
+        "v1": 0.0,
+        "v1.5": 0.0,
+        "v1.6": 0.01,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.0,
+        "v2": 0.0
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 8.0,
+      "books": 1,
+      "line": 60.5,
+      "market": "receiving_yards",
+      "market_p": 0.48987854251012153,
+      "model_ps": {
+        "v1": 0.0,
+        "v1.5": 0.0,
+        "v1.6": 0.01,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.0,
+        "v2": 0.0
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 7,
+      "line": 1.5,
+      "market": "receptions",
+      "market_p": 0.5473054304303254,
+      "model_ps": {
+        "v1": 0.03,
+        "v1.5": 0.07,
+        "v1.6": 0.09,
+        "v1.7": 0.12,
+        "v1.7-pr43": 0.06,
+        "v2": 0.05
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 1,
+      "line": 2.0,
+      "market": "receptions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.01,
+        "v1.6": 0.03,
+        "v1.7": 0.04,
+        "v1.7-pr43": 0.01,
+        "v2": 0.02
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 1,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.39834243853985596,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.01,
+        "v1.6": 0.03,
+        "v1.7": 0.04,
+        "v1.7-pr43": 0.01,
+        "v2": 0.02
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 9.0,
+      "books": 2,
+      "line": 9.5,
+      "market": "rush_attempts",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.03,
+        "v1.7-pr43": 0.04,
+        "v2": 0.08
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 9.0,
+      "books": 9,
+      "line": 10.5,
+      "market": "rush_attempts",
+      "market_p": 0.49743629236788167,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.030000000000000002,
+        "v1.7-pr43": 0.02,
+        "v2": 0.02
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 44.0,
+      "books": 1,
+      "line": 48.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.0,
+        "v2": 0.08
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 44.0,
+      "books": 1,
+      "line": 49.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.0,
+        "v2": 0.08
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 44.0,
+      "books": 1,
+      "line": 53.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.491415490270889,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.0,
+        "v2": 0.06
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 44.0,
+      "books": 1,
+      "line": 55.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.0,
+        "v2": 0.05
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 44.0,
+      "books": 9,
+      "line": 56.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.49937265261127073,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.0,
+        "v2": 0.05
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 44.0,
+      "books": 9,
+      "line": 57.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5011716398658526,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.0,
+        "v2": 0.05
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 44.0,
+      "books": 10,
+      "line": 58.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5006068642064305,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.0,
+        "v2": 0.04
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 44.0,
+      "books": 8,
+      "line": 59.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.49889314398851053,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.0,
+        "v2": 0.04
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 44.0,
+      "books": 9,
+      "line": 60.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.4987174234480891,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.0,
+        "v2": 0.04
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 44.0,
+      "books": 5,
+      "line": 61.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.499796427555224,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.04,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.0,
+        "v2": 0.04
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 36.0,
+      "books": 2,
+      "line": 36.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.03,
+        "v1.7": 0.03,
+        "v1.7-pr43": 0.03,
+        "v2": 0.09
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 36.0,
+      "books": 2,
+      "line": 37.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.03,
+        "v1.7": 0.03,
+        "v1.7-pr43": 0.03,
+        "v2": 0.09
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 36.0,
+      "books": 1,
+      "line": 40.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.03,
+        "v1.7": 0.03,
+        "v1.7-pr43": 0.02,
+        "v2": 0.07
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 36.0,
+      "books": 4,
+      "line": 41.5,
+      "market": "rushing_yards",
+      "market_p": 0.49641656064859185,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.03,
+        "v1.7": 0.03,
+        "v1.7-pr43": 0.02,
+        "v2": 0.06
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 36.0,
+      "books": 10,
+      "line": 42.5,
+      "market": "rushing_yards",
+      "market_p": 0.5000731654059074,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.03,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.02,
+        "v2": 0.05
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 36.0,
+      "books": 10,
+      "line": 43.5,
+      "market": "rushing_yards",
+      "market_p": 0.5025864649085257,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.03,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.02,
+        "v2": 0.05
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 36.0,
+      "books": 11,
+      "line": 44.5,
+      "market": "rushing_yards",
+      "market_p": 0.499537182375091,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.0,
+        "v1.6": 0.029999999999999995,
+        "v1.7": 0.02,
+        "v1.7-pr43": 0.01,
+        "v2": 0.05
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 2,
+      "line": 2.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.02,
+        "v1.5": 0.02,
+        "v1.6": 0.04,
+        "v1.7": 0.08,
+        "v1.7-pr43": 0.02,
+        "v2": 0.05
+      },
+      "name": "Jadarian Price",
+      "over_hit": 0,
+      "team": "SEA"
+    },
+    {
+      "actual": 1.0,
+      "books": 1,
+      "line": 0.5,
+      "market": "total_touchdowns",
+      "market_p": 0.3316325219134771,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.03,
+        "v1.6": 0.07,
+        "v1.7": 0.03,
+        "v1.7-pr43": 0.03,
+        "v2": 0.18
+      },
+      "name": "Jadarian Price",
+      "over_hit": 1,
+      "team": "SEA"
+    },
+    {
+      "actual": 0.0,
+      "books": 6,
+      "line": 0.5,
+      "market": "interceptions_thrown",
+      "market_p": 0.5829900161524947,
+      "model_ps": {
+        "v1": 0.63,
+        "v1.5": 0.63,
+        "v1.6": 0.55,
+        "v1.7": 0.53,
+        "v1.7-pr43": 0.6,
+        "v2": 0.36999999999999994
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 29.0,
+      "books": 9,
+      "line": 30.5,
+      "market": "pass_attempts",
+      "market_p": 0.5048083722036079,
+      "model_ps": {
+        "v1": 0.77,
+        "v1.5": 0.75,
+        "v1.6": 0.82,
+        "v1.7": 0.72,
+        "v1.7-pr43": 0.72,
+        "v2": 0.75
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 17.0,
+      "books": 9,
+      "line": 17.5,
+      "market": "pass_completions",
+      "market_p": 0.5182935887093041,
+      "model_ps": {
+        "v1": 0.88,
+        "v1.5": 0.86,
+        "v1.6": 0.8999999999999999,
+        "v1.7": 0.85,
+        "v1.7-pr43": 0.87,
+        "v2": 0.9300000000000002
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 17.0,
+      "books": 5,
+      "line": 18.5,
+      "market": "pass_completions",
+      "market_p": 0.47892289972339935,
+      "model_ps": {
+        "v1": 0.78,
+        "v1.5": 0.82,
+        "v1.6": 0.85,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.82,
+        "v2": 0.89
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 2,
+      "line": 193.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.78,
+        "v1.5": 0.84,
+        "v1.6": 0.87,
+        "v1.7": 0.83,
+        "v1.7-pr43": 0.78,
+        "v2": 0.86
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 7,
+      "line": 194.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.50029677817612,
+      "model_ps": {
+        "v1": 0.7700000000000001,
+        "v1.5": 0.83,
+        "v1.6": 0.86,
+        "v1.7": 0.82,
+        "v1.7-pr43": 0.7700000000000001,
+        "v2": 0.86
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 7,
+      "line": 195.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49951748264808354,
+      "model_ps": {
+        "v1": 0.76,
+        "v1.5": 0.83,
+        "v1.6": 0.86,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.76,
+        "v2": 0.86
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 5,
+      "line": 196.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49907361137087064,
+      "model_ps": {
+        "v1": 0.76,
+        "v1.5": 0.8299999999999998,
+        "v1.6": 0.85,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.76,
+        "v2": 0.86
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 1,
+      "line": 197.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49817704535511165,
+      "model_ps": {
+        "v1": 0.76,
+        "v1.5": 0.83,
+        "v1.6": 0.85,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.76,
+        "v2": 0.84
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 7,
+      "line": 198.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4998889725607397,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.83,
+        "v1.6": 0.85,
+        "v1.7": 0.7700000000000001,
+        "v1.7-pr43": 0.74,
+        "v2": 0.83
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 5,
+      "line": 199.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49898183595340884,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.82,
+        "v1.6": 0.85,
+        "v1.7": 0.77,
+        "v1.7-pr43": 0.73,
+        "v2": 0.8299999999999998
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 4,
+      "line": 200.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.50051936180821,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.81,
+        "v1.6": 0.84,
+        "v1.7": 0.77,
+        "v1.7-pr43": 0.73,
+        "v2": 0.83
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 2,
+      "line": 201.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5015687751004017,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.81,
+        "v1.6": 0.83,
+        "v1.7": 0.77,
+        "v1.7-pr43": 0.72,
+        "v2": 0.81
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 1,
+      "line": 203.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.8,
+        "v1.6": 0.83,
+        "v1.7": 0.77,
+        "v1.7-pr43": 0.7,
+        "v2": 0.81
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 1,
+      "line": 205.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4653465346534653,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.79,
+        "v1.6": 0.82,
+        "v1.7": 0.76,
+        "v1.7-pr43": 0.7,
+        "v2": 0.81
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 165.0,
+      "books": 1,
+      "line": 206.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.78,
+        "v1.6": 0.82,
+        "v1.7": 0.74,
+        "v1.7-pr43": 0.7,
+        "v2": 0.78
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 0.0,
+      "books": 7,
+      "line": 0.5,
+      "market": "passing_touchdowns",
+      "market_p": 0.6508811954874718,
+      "model_ps": {
+        "v1": 0.68,
+        "v1.5": 0.78,
+        "v1.6": 0.8,
+        "v1.7": 0.82,
+        "v1.7-pr43": 0.7,
+        "v2": 0.8
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 2,
+      "line": 176.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.8,
+        "v1.5": 0.89,
+        "v1.6": 0.9,
+        "v1.7": 0.83,
+        "v1.7-pr43": 0.78,
+        "v2": 0.85
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 1,
+      "line": 177.5,
+      "market": "passing_yards",
+      "market_p": 0.4969864995178399,
+      "model_ps": {
+        "v1": 0.79,
+        "v1.5": 0.87,
+        "v1.6": 0.88,
+        "v1.7": 0.83,
+        "v1.7-pr43": 0.78,
+        "v2": 0.84
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 5,
+      "line": 178.5,
+      "market": "passing_yards",
+      "market_p": 0.500206337003698,
+      "model_ps": {
+        "v1": 0.79,
+        "v1.5": 0.86,
+        "v1.6": 0.8699999999999999,
+        "v1.7": 0.8299999999999998,
+        "v1.7-pr43": 0.77,
+        "v2": 0.8400000000000001
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 9,
+      "line": 179.5,
+      "market": "passing_yards",
+      "market_p": 0.498994772818657,
+      "model_ps": {
+        "v1": 0.79,
+        "v1.5": 0.84,
+        "v1.6": 0.87,
+        "v1.7": 0.82,
+        "v1.7-pr43": 0.77,
+        "v2": 0.83
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 9,
+      "line": 180.5,
+      "market": "passing_yards",
+      "market_p": 0.4993963969500112,
+      "model_ps": {
+        "v1": 0.78,
+        "v1.5": 0.83,
+        "v1.6": 0.87,
+        "v1.7": 0.81,
+        "v1.7-pr43": 0.77,
+        "v2": 0.83
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 6,
+      "line": 181.5,
+      "market": "passing_yards",
+      "market_p": 0.4970412735660508,
+      "model_ps": {
+        "v1": 0.7799999999999999,
+        "v1.5": 0.83,
+        "v1.6": 0.87,
+        "v1.7": 0.81,
+        "v1.7-pr43": 0.77,
+        "v2": 0.83
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 5,
+      "line": 182.5,
+      "market": "passing_yards",
+      "market_p": 0.499657334749683,
+      "model_ps": {
+        "v1": 0.78,
+        "v1.5": 0.8299999999999998,
+        "v1.6": 0.8699999999999999,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.77,
+        "v2": 0.8299999999999998
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 1,
+      "line": 183.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.78,
+        "v1.5": 0.81,
+        "v1.6": 0.86,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.76,
+        "v2": 0.82
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 1,
+      "line": 184.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.77,
+        "v1.5": 0.81,
+        "v1.6": 0.86,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.76,
+        "v2": 0.8
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 1,
+      "line": 186.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.76,
+        "v1.5": 0.8,
+        "v1.6": 0.84,
+        "v1.7": 0.8,
+        "v1.7-pr43": 0.75,
+        "v2": 0.79
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 1,
+      "line": 188.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.78,
+        "v1.6": 0.81,
+        "v1.7": 0.78,
+        "v1.7-pr43": 0.72,
+        "v2": 0.77
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 143.0,
+      "books": 1,
+      "line": 189.5,
+      "market": "passing_yards",
+      "market_p": 0.4653465346534653,
+      "model_ps": {
+        "v1": 0.75,
+        "v1.5": 0.78,
+        "v1.6": 0.8,
+        "v1.7": 0.78,
+        "v1.7-pr43": 0.7,
+        "v2": 0.76
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 6.0,
+      "books": 3,
+      "line": 3.5,
+      "market": "rush_attempts",
+      "market_p": 0.5087630031659883,
+      "model_ps": {
+        "v1": 0.3,
+        "v1.5": 0.36000000000000004,
+        "v1.6": 0.33,
+        "v1.7": 0.16,
+        "v1.7-pr43": 0.24,
+        "v2": 0.27
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 22.0,
+      "books": 11,
+      "line": 11.5,
+      "market": "rushing_yards",
+      "market_p": 0.5014090066745159,
+      "model_ps": {
+        "v1": 0.51,
+        "v1.5": 0.55,
+        "v1.6": 0.56,
+        "v1.7": 0.57,
+        "v1.7-pr43": 0.56,
+        "v2": 0.45
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 22.0,
+      "books": 11,
+      "line": 12.5,
+      "market": "rushing_yards",
+      "market_p": 0.5035473498298658,
+      "model_ps": {
+        "v1": 0.47,
+        "v1.5": 0.4799999999999999,
+        "v1.6": 0.56,
+        "v1.7": 0.49,
+        "v1.7-pr43": 0.52,
+        "v2": 0.4
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 22.0,
+      "books": 7,
+      "line": 13.5,
+      "market": "rushing_yards",
+      "market_p": 0.5072067236000014,
+      "model_ps": {
+        "v1": 0.45,
+        "v1.5": 0.46,
+        "v1.6": 0.5,
+        "v1.7": 0.42,
+        "v1.7-pr43": 0.47000000000000003,
+        "v2": 0.36
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 22.0,
+      "books": 2,
+      "line": 14.5,
+      "market": "rushing_yards",
+      "market_p": 0.5072159011587323,
+      "model_ps": {
+        "v1": 0.42,
+        "v1.5": 0.43,
+        "v1.6": 0.48,
+        "v1.7": 0.39,
+        "v1.7-pr43": 0.41,
+        "v2": 0.32
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 22.0,
+      "books": 10,
+      "line": 15.5,
+      "market": "rushing_yards",
+      "market_p": 0.5029043414245413,
+      "model_ps": {
+        "v1": 0.39,
+        "v1.5": 0.41,
+        "v1.6": 0.44000000000000006,
+        "v1.7": 0.35,
+        "v1.7-pr43": 0.38,
+        "v2": 0.3
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 22.0,
+      "books": 2,
+      "line": 16.5,
+      "market": "rushing_yards",
+      "market_p": 0.5037123462028001,
+      "model_ps": {
+        "v1": 0.37,
+        "v1.5": 0.4,
+        "v1.6": 0.39,
+        "v1.7": 0.32,
+        "v1.7-pr43": 0.36,
+        "v2": 0.26
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 1,
+      "team": "LV"
+    },
+    {
+      "actual": 22.0,
+      "books": 1,
+      "line": 194.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.0,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.0,
+        "v2": 0.0
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 22.0,
+      "books": 1,
+      "line": 195.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.0,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.0,
+        "v2": 0.0
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    },
+    {
+      "actual": 22.0,
+      "books": 1,
+      "line": 196.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.0,
+        "v1.5": 0.0,
+        "v1.6": 0.0,
+        "v1.7": 0.0,
+        "v1.7-pr43": 0.0,
+        "v2": 0.0
+      },
+      "name": "Fernando Mendoza",
+      "over_hit": 0,
+      "team": "LV"
+    }
+  ],
+  "kickoff": "2026-11-15T21:05:00Z",
+  "raw_quote_rows": 1037,
+  "summary": {
+    "constant_50": {
+      "brier": 0.25,
+      "n": 224
+    },
+    "market": {
+      "brier": 0.24977601296465662,
+      "n": 224
+    },
+    "v1": {
+      "brier": 0.23963973214285714,
+      "n": 224
+    },
+    "v1.5": {
+      "brier": 0.2577558035714286,
+      "n": 224
+    },
+    "v1.6": {
+      "brier": 0.26321830357142856,
+      "n": 224
+    },
+    "v1.7": {
+      "brier": 0.25646785714285714,
+      "n": 224
+    },
+    "v1.7-pr43": {
+      "brier": 0.24000535714285715,
+      "n": 224
+    },
+    "v2": {
+      "brier": 0.308621875,
+      "n": 224
+    }
+  }
+}

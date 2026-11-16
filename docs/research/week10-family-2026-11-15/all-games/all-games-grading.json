@@ -1,0 +1,1199 @@
+{
+  "failures": [],
+  "pending_not_final": [
+    {
+      "game": "2026_10_PIT_CIN",
+      "status": "STATUS_IN_PROGRESS"
+    }
+  ],
+  "rows": [
+    {
+      "arm": "v1",
+      "away": "NE",
+      "final": {
+        "DET": 35,
+        "NE": 10
+      },
+      "game": "2026_10_NE_DET",
+      "home": "DET",
+      "home_win_brier": 0.17472400000000002,
+      "market_prop_brier": 0.25056152051637987,
+      "p_home": 0.582,
+      "prop_brier": 0.25658788607594935,
+      "prop_items": 237,
+      "score_error": 22.680000000000003,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.5",
+      "away": "NE",
+      "final": {
+        "DET": 35,
+        "NE": 10
+      },
+      "game": "2026_10_NE_DET",
+      "home": "DET",
+      "home_win_brier": 0.17808400000000005,
+      "market_prop_brier": 0.25056152051637987,
+      "p_home": 0.578,
+      "prop_brier": 0.2584528987341772,
+      "prop_items": 237,
+      "score_error": 22.770999999999997,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.6",
+      "away": "NE",
+      "final": {
+        "DET": 35,
+        "NE": 10
+      },
+      "game": "2026_10_NE_DET",
+      "home": "DET",
+      "home_win_brier": 0.17056900000000003,
+      "market_prop_brier": 0.25056152051637987,
+      "p_home": 0.587,
+      "prop_brier": 0.25630987341772155,
+      "prop_items": 237,
+      "score_error": 22.346,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.7",
+      "away": "NE",
+      "final": {
+        "DET": 35,
+        "NE": 10
+      },
+      "game": "2026_10_NE_DET",
+      "home": "DET",
+      "home_win_brier": 0.11971599999999999,
+      "market_prop_brier": 0.25056152051637987,
+      "p_home": 0.654,
+      "prop_brier": 0.23933901687763712,
+      "prop_items": 237,
+      "score_error": 20.56,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "NE",
+      "final": {
+        "DET": 35,
+        "NE": 10
+      },
+      "game": "2026_10_NE_DET",
+      "home": "DET",
+      "home_win_brier": 0.1369,
+      "market_prop_brier": 0.25056152051637987,
+      "p_home": 0.63,
+      "prop_brier": 0.25012810970464133,
+      "prop_items": 237,
+      "score_error": 20.651,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v2",
+      "away": "NE",
+      "final": {
+        "DET": 35,
+        "NE": 10
+      },
+      "game": "2026_10_NE_DET",
+      "home": "DET",
+      "home_win_brier": 0.17808400000000005,
+      "market_prop_brier": 0.25056152051637987,
+      "p_home": 0.578,
+      "prop_brier": 0.23907701265822784,
+      "prop_items": 237,
+      "score_error": 22.425,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1",
+      "away": "KC",
+      "final": {
+        "ATL": 13,
+        "KC": 35
+      },
+      "game": "2026_10_KC_ATL",
+      "home": "ATL",
+      "home_win_brier": 0.05664399999999999,
+      "market_prop_brier": 0.24816289899705213,
+      "p_home": 0.238,
+      "prop_brier": 0.37855261032863846,
+      "prop_items": 213,
+      "score_error": 13.705000000000002,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.5",
+      "away": "KC",
+      "final": {
+        "ATL": 13,
+        "KC": 35
+      },
+      "game": "2026_10_KC_ATL",
+      "home": "ATL",
+      "home_win_brier": 0.04409999999999999,
+      "market_prop_brier": 0.24816289899705213,
+      "p_home": 0.21,
+      "prop_brier": 0.36946901408450705,
+      "prop_items": 213,
+      "score_error": 12.66,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.6",
+      "away": "KC",
+      "final": {
+        "ATL": 13,
+        "KC": 35
+      },
+      "game": "2026_10_KC_ATL",
+      "home": "ATL",
+      "home_win_brier": 0.07840000000000001,
+      "market_prop_brier": 0.24816289899705213,
+      "p_home": 0.28,
+      "prop_brier": 0.3796276995305164,
+      "prop_items": 213,
+      "score_error": 13.720000000000002,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7",
+      "away": "KC",
+      "final": {
+        "ATL": 13,
+        "KC": 35
+      },
+      "game": "2026_10_KC_ATL",
+      "home": "ATL",
+      "home_win_brier": 0.028900000000000006,
+      "market_prop_brier": 0.24816289899705213,
+      "p_home": 0.17,
+      "prop_brier": 0.3889173708920188,
+      "prop_items": 213,
+      "score_error": 11.59,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "KC",
+      "final": {
+        "ATL": 13,
+        "KC": 35
+      },
+      "game": "2026_10_KC_ATL",
+      "home": "ATL",
+      "home_win_brier": 0.04409999999999999,
+      "market_prop_brier": 0.24816289899705213,
+      "p_home": 0.21,
+      "prop_brier": 0.39907042253521124,
+      "prop_items": 213,
+      "score_error": 12.349999999999998,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v2",
+      "away": "KC",
+      "final": {
+        "ATL": 13,
+        "KC": 35
+      },
+      "game": "2026_10_KC_ATL",
+      "home": "ATL",
+      "home_win_brier": 0.0529,
+      "market_prop_brier": 0.24816289899705213,
+      "p_home": 0.23,
+      "prop_brier": 0.39819342723004697,
+      "prop_items": 213,
+      "score_error": 13.34,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1",
+      "away": "HOU",
+      "final": {
+        "CLE": 27,
+        "HOU": 24
+      },
+      "game": "2026_10_HOU_CLE",
+      "home": "CLE",
+      "home_win_brier": 0.521284,
+      "market_prop_brier": 0.24994615990091118,
+      "p_home": 0.278,
+      "prop_brier": 0.2645323821428572,
+      "prop_items": 280,
+      "score_error": 12.383,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.5",
+      "away": "HOU",
+      "final": {
+        "CLE": 27,
+        "HOU": 24
+      },
+      "game": "2026_10_HOU_CLE",
+      "home": "CLE",
+      "home_win_brier": 0.48163599999999995,
+      "market_prop_brier": 0.24994615990091118,
+      "p_home": 0.306,
+      "prop_brier": 0.2630709607142857,
+      "prop_items": 280,
+      "score_error": 12.258000000000003,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.6",
+      "away": "HOU",
+      "final": {
+        "CLE": 27,
+        "HOU": 24
+      },
+      "game": "2026_10_HOU_CLE",
+      "home": "CLE",
+      "home_win_brier": 0.4858090000000001,
+      "market_prop_brier": 0.24994615990091118,
+      "p_home": 0.303,
+      "prop_brier": 0.26044448214285715,
+      "prop_items": 280,
+      "score_error": 9.822,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.7",
+      "away": "HOU",
+      "final": {
+        "CLE": 27,
+        "HOU": 24
+      },
+      "game": "2026_10_HOU_CLE",
+      "home": "CLE",
+      "home_win_brier": 0.5143352719110295,
+      "market_prop_brier": 0.24994615990091118,
+      "p_home": 0.2828282828282828,
+      "prop_brier": 0.2984680863468742,
+      "prop_items": 280,
+      "score_error": 14.686868686868685,
+      "tier": "100-seed",
+      "valid_seeds": 99
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "HOU",
+      "final": {
+        "CLE": 27,
+        "HOU": 24
+      },
+      "game": "2026_10_HOU_CLE",
+      "home": "CLE",
+      "home_win_brier": 0.4096,
+      "market_prop_brier": 0.24994615990091118,
+      "p_home": 0.36,
+      "prop_brier": 0.3057728571428571,
+      "prop_items": 280,
+      "score_error": 13.96,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v2",
+      "away": "HOU",
+      "final": {
+        "CLE": 27,
+        "HOU": 24
+      },
+      "game": "2026_10_HOU_CLE",
+      "home": "CLE",
+      "home_win_brier": 0.46922500000000006,
+      "market_prop_brier": 0.24994615990091118,
+      "p_home": 0.315,
+      "prop_brier": 0.2765789392857143,
+      "prop_items": 280,
+      "score_error": 14.316000000000003,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1",
+      "away": "JAX",
+      "final": {
+        "JAX": 40,
+        "TEN": 23
+      },
+      "game": "2026_10_JAX_TEN",
+      "home": "TEN",
+      "home_win_brier": 0.066564,
+      "market_prop_brier": 0.2500901280335101,
+      "p_home": 0.258,
+      "prop_brier": 0.2171069044368601,
+      "prop_items": 293,
+      "score_error": 19.860000000000003,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.5",
+      "away": "JAX",
+      "final": {
+        "JAX": 40,
+        "TEN": 23
+      },
+      "game": "2026_10_JAX_TEN",
+      "home": "TEN",
+      "home_win_brier": 0.07182400000000001,
+      "market_prop_brier": 0.2500901280335101,
+      "p_home": 0.268,
+      "prop_brier": 0.21465884982935154,
+      "prop_items": 293,
+      "score_error": 19.556,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.6",
+      "away": "JAX",
+      "final": {
+        "JAX": 40,
+        "TEN": 23
+      },
+      "game": "2026_10_JAX_TEN",
+      "home": "TEN",
+      "home_win_brier": 0.059049,
+      "market_prop_brier": 0.2500901280335101,
+      "p_home": 0.243,
+      "prop_brier": 0.2079732013651877,
+      "prop_items": 293,
+      "score_error": 16.301000000000002,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.7",
+      "away": "JAX",
+      "final": {
+        "JAX": 40,
+        "TEN": 23
+      },
+      "game": "2026_10_JAX_TEN",
+      "home": "TEN",
+      "home_win_brier": 0.04000000000000001,
+      "market_prop_brier": 0.2500901280335101,
+      "p_home": 0.2,
+      "prop_brier": 0.22641535836177476,
+      "prop_items": 293,
+      "score_error": 20.34,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "JAX",
+      "final": {
+        "JAX": 40,
+        "TEN": 23
+      },
+      "game": "2026_10_JAX_TEN",
+      "home": "TEN",
+      "home_win_brier": 0.040812162024283234,
+      "market_prop_brier": 0.2500901280335101,
+      "p_home": 0.20202020202020202,
+      "prop_brier": 0.2354154848725125,
+      "prop_items": 293,
+      "score_error": 18.98989898989899,
+      "tier": "100-seed",
+      "valid_seeds": 99
+    },
+    {
+      "arm": "v2",
+      "away": "JAX",
+      "final": {
+        "JAX": 40,
+        "TEN": 23
+      },
+      "game": "2026_10_JAX_TEN",
+      "home": "TEN",
+      "home_win_brier": 0.089401,
+      "market_prop_brier": 0.2500901280335101,
+      "p_home": 0.299,
+      "prop_brier": 0.2269572184300341,
+      "prop_items": 293,
+      "score_error": 22.313,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1",
+      "away": "CAR",
+      "final": {
+        "CAR": 20,
+        "NO": 17
+      },
+      "game": "2026_10_CAR_NO",
+      "home": "NO",
+      "home_win_brier": 0.5505639999999999,
+      "market_prop_brier": 0.2505010225590526,
+      "p_home": 0.742,
+      "prop_brier": 0.29912975210084036,
+      "prop_items": 238,
+      "score_error": 10.498999999999999,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.5",
+      "away": "CAR",
+      "final": {
+        "CAR": 20,
+        "NO": 17
+      },
+      "game": "2026_10_CAR_NO",
+      "home": "NO",
+      "home_win_brier": 0.580644,
+      "market_prop_brier": 0.2505010225590526,
+      "p_home": 0.762,
+      "prop_brier": 0.3053276386554622,
+      "prop_items": 238,
+      "score_error": 11.301000000000002,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.6",
+      "away": "CAR",
+      "final": {
+        "CAR": 20,
+        "NO": 17
+      },
+      "game": "2026_10_CAR_NO",
+      "home": "NO",
+      "home_win_brier": 0.567009,
+      "market_prop_brier": 0.2505010225590526,
+      "p_home": 0.753,
+      "prop_brier": 0.30595171848739494,
+      "prop_items": 238,
+      "score_error": 10.855,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.7",
+      "away": "CAR",
+      "final": {
+        "CAR": 20,
+        "NO": 17
+      },
+      "game": "2026_10_CAR_NO",
+      "home": "NO",
+      "home_win_brier": 0.546121,
+      "market_prop_brier": 0.2505010225590526,
+      "p_home": 0.739,
+      "prop_brier": 0.2730269033613445,
+      "prop_items": 238,
+      "score_error": 10.227,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "CAR",
+      "final": {
+        "CAR": 20,
+        "NO": 17
+      },
+      "game": "2026_10_CAR_NO",
+      "home": "NO",
+      "home_win_brier": 0.4760999999999999,
+      "market_prop_brier": 0.2505010225590526,
+      "p_home": 0.69,
+      "prop_brier": 0.26736596638655463,
+      "prop_items": 238,
+      "score_error": 9.59,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v2",
+      "away": "CAR",
+      "final": {
+        "CAR": 20,
+        "NO": 17
+      },
+      "game": "2026_10_CAR_NO",
+      "home": "NO",
+      "home_win_brier": 0.45697600000000005,
+      "market_prop_brier": 0.2505010225590526,
+      "p_home": 0.676,
+      "prop_brier": 0.25737773529411767,
+      "prop_items": 238,
+      "score_error": 8.294999999999998,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1",
+      "away": "MIA",
+      "final": {
+        "IND": 24,
+        "MIA": 22
+      },
+      "game": "2026_10_MIA_IND",
+      "home": "IND",
+      "home_win_brier": 0.28090000000000004,
+      "market_prop_brier": 0.24660949954582018,
+      "p_home": 0.47,
+      "prop_brier": 0.34387359307359305,
+      "prop_items": 231,
+      "score_error": 5.620000000000001,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.5",
+      "away": "MIA",
+      "final": {
+        "IND": 24,
+        "MIA": 22
+      },
+      "game": "2026_10_MIA_IND",
+      "home": "IND",
+      "home_win_brier": 0.2601,
+      "market_prop_brier": 0.24660949954582018,
+      "p_home": 0.49,
+      "prop_brier": 0.3536064935064935,
+      "prop_items": 231,
+      "score_error": 3.5700000000000003,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.6",
+      "away": "MIA",
+      "final": {
+        "IND": 24,
+        "MIA": 22
+      },
+      "game": "2026_10_MIA_IND",
+      "home": "IND",
+      "home_win_brier": 0.4488999999999999,
+      "market_prop_brier": 0.24660949954582018,
+      "p_home": 0.33,
+      "prop_brier": 0.3456233766233766,
+      "prop_items": 231,
+      "score_error": 7.159999999999997,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7",
+      "away": "MIA",
+      "final": {
+        "IND": 24,
+        "MIA": 22
+      },
+      "game": "2026_10_MIA_IND",
+      "home": "IND",
+      "home_win_brier": 0.36,
+      "market_prop_brier": 0.24660949954582018,
+      "p_home": 0.4,
+      "prop_brier": 0.32306060606060605,
+      "prop_items": 231,
+      "score_error": 5.109999999999999,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "MIA",
+      "final": {
+        "IND": 24,
+        "MIA": 22
+      },
+      "game": "2026_10_MIA_IND",
+      "home": "IND",
+      "home_win_brier": 0.30250000000000005,
+      "market_prop_brier": 0.24660949954582018,
+      "p_home": 0.45,
+      "prop_brier": 0.3154714285714286,
+      "prop_items": 231,
+      "score_error": 5.859999999999999,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v2",
+      "away": "MIA",
+      "final": {
+        "IND": 24,
+        "MIA": 22
+      },
+      "game": "2026_10_MIA_IND",
+      "home": "IND",
+      "home_win_brier": 0.4355999999999999,
+      "market_prop_brier": 0.24660949954582018,
+      "p_home": 0.34,
+      "prop_brier": 0.30354329004329006,
+      "prop_items": 231,
+      "score_error": 8.299999999999997,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1",
+      "away": "MIN",
+      "final": {
+        "GB": 10,
+        "MIN": 30
+      },
+      "game": "2026_10_MIN_GB",
+      "home": "GB",
+      "home_win_brier": 0.30250000000000005,
+      "market_prop_brier": 0.24785011209563312,
+      "p_home": 0.55,
+      "prop_brier": 0.36512642487046637,
+      "prop_items": 193,
+      "score_error": 22.27,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.5",
+      "away": "MIN",
+      "final": {
+        "GB": 10,
+        "MIN": 30
+      },
+      "game": "2026_10_MIN_GB",
+      "home": "GB",
+      "home_win_brier": 0.36,
+      "market_prop_brier": 0.24785011209563312,
+      "p_home": 0.6,
+      "prop_brier": 0.3561103626943005,
+      "prop_items": 193,
+      "score_error": 23.900000000000002,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.6",
+      "away": "MIN",
+      "final": {
+        "GB": 10,
+        "MIN": 30
+      },
+      "game": "2026_10_MIN_GB",
+      "home": "GB",
+      "home_win_brier": 0.4760999999999999,
+      "market_prop_brier": 0.24785011209563312,
+      "p_home": 0.69,
+      "prop_brier": 0.36928445595854925,
+      "prop_items": 193,
+      "score_error": 25.81,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7",
+      "away": "MIN",
+      "final": {
+        "GB": 10,
+        "MIN": 30
+      },
+      "game": "2026_10_MIN_GB",
+      "home": "GB",
+      "home_win_brier": 0.32489999999999997,
+      "market_prop_brier": 0.24785011209563312,
+      "p_home": 0.57,
+      "prop_brier": 0.27485284974093266,
+      "prop_items": 193,
+      "score_error": 23.49,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "MIN",
+      "final": {
+        "GB": 10,
+        "MIN": 30
+      },
+      "game": "2026_10_MIN_GB",
+      "home": "GB",
+      "home_win_brier": 0.42250000000000004,
+      "market_prop_brier": 0.24785011209563312,
+      "p_home": 0.65,
+      "prop_brier": 0.31491036269430056,
+      "prop_items": 193,
+      "score_error": 25.24,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v2",
+      "away": "MIN",
+      "final": {
+        "GB": 10,
+        "MIN": 30
+      },
+      "game": "2026_10_MIN_GB",
+      "home": "GB",
+      "home_win_brier": 0.5328999999999999,
+      "market_prop_brier": 0.24785011209563312,
+      "p_home": 0.73,
+      "prop_brier": 0.3228279792746114,
+      "prop_items": 193,
+      "score_error": 25.93,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1",
+      "away": "BUF",
+      "final": {
+        "BUF": 31,
+        "NYJ": 12
+      },
+      "game": "2026_10_BUF_NYJ",
+      "home": "NYJ",
+      "home_win_brier": 0.10758400000000001,
+      "market_prop_brier": 0.2498586036250651,
+      "p_home": 0.328,
+      "prop_brier": 0.40286898958333334,
+      "prop_items": 192,
+      "score_error": 13.601000000000003,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.5",
+      "away": "BUF",
+      "final": {
+        "BUF": 31,
+        "NYJ": 12
+      },
+      "game": "2026_10_BUF_NYJ",
+      "home": "NYJ",
+      "home_win_brier": 0.10304100000000001,
+      "market_prop_brier": 0.2498586036250651,
+      "p_home": 0.321,
+      "prop_brier": 0.40035332291666664,
+      "prop_items": 192,
+      "score_error": 13.771999999999998,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.6",
+      "away": "BUF",
+      "final": {
+        "BUF": 31,
+        "NYJ": 12
+      },
+      "game": "2026_10_BUF_NYJ",
+      "home": "NYJ",
+      "home_win_brier": 0.11492100000000001,
+      "market_prop_brier": 0.2498586036250651,
+      "p_home": 0.339,
+      "prop_brier": 0.40676908333333334,
+      "prop_items": 192,
+      "score_error": 13.393,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.7",
+      "away": "BUF",
+      "final": {
+        "BUF": 31,
+        "NYJ": 12
+      },
+      "game": "2026_10_BUF_NYJ",
+      "home": "NYJ",
+      "home_win_brier": 0.104976,
+      "market_prop_brier": 0.2498586036250651,
+      "p_home": 0.324,
+      "prop_brier": 0.373588890625,
+      "prop_items": 192,
+      "score_error": 13.129000000000001,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "BUF",
+      "final": {
+        "BUF": 31,
+        "NYJ": 12
+      },
+      "game": "2026_10_BUF_NYJ",
+      "home": "NYJ",
+      "home_win_brier": 0.10562500000000001,
+      "market_prop_brier": 0.2498586036250651,
+      "p_home": 0.325,
+      "prop_brier": 0.379786015625,
+      "prop_items": 192,
+      "score_error": 12.591000000000001,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v2",
+      "away": "BUF",
+      "final": {
+        "BUF": 31,
+        "NYJ": 12
+      },
+      "game": "2026_10_BUF_NYJ",
+      "home": "NYJ",
+      "home_win_brier": 0.147456,
+      "market_prop_brier": 0.2498586036250651,
+      "p_home": 0.384,
+      "prop_brier": 0.3115018802083333,
+      "prop_items": 192,
+      "score_error": 15.389999999999997,
+      "tier": "1000-seed",
+      "valid_seeds": 1000
+    },
+    {
+      "arm": "v1",
+      "away": "LA",
+      "final": {
+        "ARI": 6,
+        "LA": 34
+      },
+      "game": "2026_10_LA_ARI",
+      "home": "ARI",
+      "home_win_brier": 0.0841,
+      "market_prop_brier": 0.24928716797734682,
+      "p_home": 0.29,
+      "prop_brier": 0.3509057347670251,
+      "prop_items": 279,
+      "score_error": 23.189999999999998,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.5",
+      "away": "LA",
+      "final": {
+        "ARI": 6,
+        "LA": 34
+      },
+      "game": "2026_10_LA_ARI",
+      "home": "ARI",
+      "home_win_brier": 0.16000000000000003,
+      "market_prop_brier": 0.24928716797734682,
+      "p_home": 0.4,
+      "prop_brier": 0.35205734767025093,
+      "prop_items": 279,
+      "score_error": 24.3,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.6",
+      "away": "LA",
+      "final": {
+        "ARI": 6,
+        "LA": 34
+      },
+      "game": "2026_10_LA_ARI",
+      "home": "ARI",
+      "home_win_brier": 0.2116,
+      "market_prop_brier": 0.24928716797734682,
+      "p_home": 0.46,
+      "prop_brier": 0.35224695340501794,
+      "prop_items": 279,
+      "score_error": 26.62,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7",
+      "away": "LA",
+      "final": {
+        "ARI": 6,
+        "LA": 34
+      },
+      "game": "2026_10_LA_ARI",
+      "home": "ARI",
+      "home_win_brier": 0.1369,
+      "market_prop_brier": 0.24928716797734682,
+      "p_home": 0.37,
+      "prop_brier": 0.32538351254480286,
+      "prop_items": 279,
+      "score_error": 24.979999999999997,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "LA",
+      "final": {
+        "ARI": 6,
+        "LA": 34
+      },
+      "game": "2026_10_LA_ARI",
+      "home": "ARI",
+      "home_win_brier": 0.1296,
+      "market_prop_brier": 0.24928716797734682,
+      "p_home": 0.36,
+      "prop_brier": 0.33703225806451614,
+      "prop_items": 279,
+      "score_error": 23.33,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v2",
+      "away": "LA",
+      "final": {
+        "ARI": 6,
+        "LA": 34
+      },
+      "game": "2026_10_LA_ARI",
+      "home": "ARI",
+      "home_win_brier": 0.0841,
+      "market_prop_brier": 0.24928716797734682,
+      "p_home": 0.29,
+      "prop_brier": 0.34099999999999997,
+      "prop_items": 279,
+      "score_error": 23.07,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1",
+      "away": "SEA",
+      "final": {
+        "LV": 13,
+        "SEA": 21
+      },
+      "game": "2026_10_SEA_LV",
+      "home": "LV",
+      "home_win_brier": 0.1024,
+      "market_prop_brier": 0.24977601296465662,
+      "p_home": 0.32,
+      "prop_brier": 0.23963973214285714,
+      "prop_items": 224,
+      "score_error": 9.04,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.5",
+      "away": "SEA",
+      "final": {
+        "LV": 13,
+        "SEA": 21
+      },
+      "game": "2026_10_SEA_LV",
+      "home": "LV",
+      "home_win_brier": 0.09,
+      "market_prop_brier": 0.24977601296465662,
+      "p_home": 0.3,
+      "prop_brier": 0.2577558035714286,
+      "prop_items": 224,
+      "score_error": 12.41,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.6",
+      "away": "SEA",
+      "final": {
+        "LV": 13,
+        "SEA": 21
+      },
+      "game": "2026_10_SEA_LV",
+      "home": "LV",
+      "home_win_brier": 0.06760000000000001,
+      "market_prop_brier": 0.24977601296465662,
+      "p_home": 0.26,
+      "prop_brier": 0.26321830357142856,
+      "prop_items": 224,
+      "score_error": 12.93,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7",
+      "away": "SEA",
+      "final": {
+        "LV": 13,
+        "SEA": 21
+      },
+      "game": "2026_10_SEA_LV",
+      "home": "LV",
+      "home_win_brier": 0.1024,
+      "market_prop_brier": 0.24977601296465662,
+      "p_home": 0.32,
+      "prop_brier": 0.25646785714285714,
+      "prop_items": 224,
+      "score_error": 10.84,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "SEA",
+      "final": {
+        "LV": 13,
+        "SEA": 21
+      },
+      "game": "2026_10_SEA_LV",
+      "home": "LV",
+      "home_win_brier": 0.07840000000000001,
+      "market_prop_brier": 0.24977601296465662,
+      "p_home": 0.28,
+      "prop_brier": 0.24000535714285715,
+      "prop_items": 224,
+      "score_error": 10.579999999999998,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v2",
+      "away": "SEA",
+      "final": {
+        "LV": 13,
+        "SEA": 21
+      },
+      "game": "2026_10_SEA_LV",
+      "home": "LV",
+      "home_win_brier": 0.2025,
+      "market_prop_brier": 0.24977601296465662,
+      "p_home": 0.45,
+      "prop_brier": 0.308621875,
+      "prop_items": 224,
+      "score_error": 8.91,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1",
+      "away": "SF",
+      "final": {
+        "DAL": 40,
+        "SF": 46
+      },
+      "game": "2026_10_SF_DAL",
+      "home": "DAL",
+      "home_win_brier": 0.27040000000000003,
+      "market_prop_brier": 0.25083643634300273,
+      "p_home": 0.52,
+      "prop_brier": 0.4062238683127572,
+      "prop_items": 243,
+      "score_error": 37.75,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.5",
+      "away": "SF",
+      "final": {
+        "DAL": 40,
+        "SF": 46
+      },
+      "game": "2026_10_SF_DAL",
+      "home": "DAL",
+      "home_win_brier": 0.3364,
+      "market_prop_brier": 0.25083643634300273,
+      "p_home": 0.58,
+      "prop_brier": 0.4147884773662551,
+      "prop_items": 243,
+      "score_error": 38.64,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.6",
+      "away": "SF",
+      "final": {
+        "DAL": 40,
+        "SF": 46
+      },
+      "game": "2026_10_SF_DAL",
+      "home": "DAL",
+      "home_win_brier": 0.36,
+      "market_prop_brier": 0.25083643634300273,
+      "p_home": 0.6,
+      "prop_brier": 0.37951358024691356,
+      "prop_items": 243,
+      "score_error": 32.22,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7",
+      "away": "SF",
+      "final": {
+        "DAL": 40,
+        "SF": 46
+      },
+      "game": "2026_10_SF_DAL",
+      "home": "DAL",
+      "home_win_brier": 0.25,
+      "market_prop_brier": 0.25083643634300273,
+      "p_home": 0.5,
+      "prop_brier": 0.4220687242798354,
+      "prop_items": 243,
+      "score_error": 38.459999999999994,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v1.7-pr43",
+      "away": "SF",
+      "final": {
+        "DAL": 40,
+        "SF": 46
+      },
+      "game": "2026_10_SF_DAL",
+      "home": "DAL",
+      "home_win_brier": 0.3721,
+      "market_prop_brier": 0.25083643634300273,
+      "p_home": 0.61,
+      "prop_brier": 0.4454798353909465,
+      "prop_items": 243,
+      "score_error": 40.93,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    },
+    {
+      "arm": "v2",
+      "away": "SF",
+      "final": {
+        "DAL": 40,
+        "SF": 46
+      },
+      "game": "2026_10_SF_DAL",
+      "home": "DAL",
+      "home_win_brier": 0.1936,
+      "market_prop_brier": 0.25083643634300273,
+      "p_home": 0.44,
+      "prop_brier": 0.3552897119341564,
+      "prop_items": 243,
+      "score_error": 39.31,
+      "tier": "100-seed",
+      "valid_seeds": 100
+    }
+  ]
+}

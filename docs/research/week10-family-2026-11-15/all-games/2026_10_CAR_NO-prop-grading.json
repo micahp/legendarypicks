@@ -1,0 +1,4326 @@
+{
+  "game": "2026_10_CAR_NO",
+  "graded_items": 238,
+  "items": [
+    {
+      "actual": 24.0,
+      "books": 5,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.501042262529294,
+      "model_ps": {
+        "v1": 0.016,
+        "v1.5": 0.021,
+        "v1.6": 0.015,
+        "v1.7": 0.015,
+        "v1.7-pr43": 0.02,
+        "v2": 0.046
+      },
+      "name": "Darren Waller",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 24.0,
+      "books": 8,
+      "line": 28.5,
+      "market": "receiving_yards",
+      "market_p": 0.4994371532143417,
+      "model_ps": {
+        "v1": 0.013,
+        "v1.5": 0.017,
+        "v1.6": 0.014,
+        "v1.7": 0.011,
+        "v1.7-pr43": 0.02,
+        "v2": 0.039
+      },
+      "name": "Darren Waller",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 24.0,
+      "books": 10,
+      "line": 29.5,
+      "market": "receiving_yards",
+      "market_p": 0.4988441058700337,
+      "model_ps": {
+        "v1": 0.011,
+        "v1.5": 0.016,
+        "v1.6": 0.014000000000000002,
+        "v1.7": 0.011,
+        "v1.7-pr43": 0.02,
+        "v2": 0.031
+      },
+      "name": "Darren Waller",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 24.0,
+      "books": 5,
+      "line": 30.5,
+      "market": "receiving_yards",
+      "market_p": 0.49503090029357394,
+      "model_ps": {
+        "v1": 0.01,
+        "v1.5": 0.015,
+        "v1.6": 0.013000000000000001,
+        "v1.7": 0.011,
+        "v1.7-pr43": 0.02,
+        "v2": 0.028000000000000004
+      },
+      "name": "Darren Waller",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 2.0,
+      "books": 10,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.4992572368848922,
+      "model_ps": {
+        "v1": 0.008,
+        "v1.5": 0.009,
+        "v1.6": 0.008,
+        "v1.7": 0.011,
+        "v1.7-pr43": 0.02,
+        "v2": 0.034
+      },
+      "name": "Darren Waller",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 1,
+      "line": 3.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.011,
+        "v1.5": 0.008,
+        "v1.6": 0.007,
+        "v1.7": 0.015,
+        "v1.7-pr43": 0.02,
+        "v2": 0.029
+      },
+      "name": "Darren Waller",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 10.0,
+      "books": 9,
+      "line": 14.5,
+      "market": "receiving_yards",
+      "market_p": 0.5019555486260248,
+      "model_ps": {
+        "v1": 0.49300000000000005,
+        "v1.5": 0.503,
+        "v1.6": 0.534,
+        "v1.7": 0.506,
+        "v1.7-pr43": 0.5,
+        "v2": 0.51
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 10.0,
+      "books": 9,
+      "line": 15.5,
+      "market": "receiving_yards",
+      "market_p": 0.49825602141484576,
+      "model_ps": {
+        "v1": 0.473,
+        "v1.5": 0.486,
+        "v1.6": 0.512,
+        "v1.7": 0.48500000000000004,
+        "v1.7-pr43": 0.48000000000000004,
+        "v2": 0.48299999999999993
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 10.0,
+      "books": 2,
+      "line": 19.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.386,
+        "v1.5": 0.408,
+        "v1.6": 0.407,
+        "v1.7": 0.402,
+        "v1.7-pr43": 0.36,
+        "v2": 0.393
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 3.0,
+      "books": 6,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.555362821686321,
+      "model_ps": {
+        "v1": 0.48900000000000005,
+        "v1.5": 0.506,
+        "v1.6": 0.504,
+        "v1.7": 0.47300000000000003,
+        "v1.7-pr43": 0.44,
+        "v2": 0.506
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 3.0,
+      "books": 2,
+      "line": 3.5,
+      "market": "receptions",
+      "market_p": 0.3708559483643832,
+      "model_ps": {
+        "v1": 0.307,
+        "v1.5": 0.317,
+        "v1.6": 0.318,
+        "v1.7": 0.286,
+        "v1.7-pr43": 0.29,
+        "v2": 0.284
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 2.0,
+      "books": 2,
+      "line": 4.5,
+      "market": "rush_attempts",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.966,
+        "v1.5": 0.974,
+        "v1.6": 0.965,
+        "v1.7": 0.959,
+        "v1.7-pr43": 0.99,
+        "v2": 0.992
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 3,
+      "line": 30.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5006924824109468,
+      "model_ps": {
+        "v1": 0.9380000000000001,
+        "v1.5": 0.961,
+        "v1.6": 0.947,
+        "v1.7": 0.9369999999999999,
+        "v1.7-pr43": 0.94,
+        "v2": 0.953
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 1,
+      "line": 31.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.931,
+        "v1.5": 0.96,
+        "v1.6": 0.942,
+        "v1.7": 0.933,
+        "v1.7-pr43": 0.94,
+        "v2": 0.951
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 9,
+      "line": 32.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.49765042791890807,
+      "model_ps": {
+        "v1": 0.927,
+        "v1.5": 0.957,
+        "v1.6": 0.9380000000000001,
+        "v1.7": 0.9300000000000002,
+        "v1.7-pr43": 0.94,
+        "v2": 0.9439999999999998
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 3,
+      "line": 33.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.922,
+        "v1.5": 0.953,
+        "v1.6": 0.934,
+        "v1.7": 0.9250000000000002,
+        "v1.7-pr43": 0.93,
+        "v2": 0.9419999999999998
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 5,
+      "line": 34.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.49948910081743875,
+      "model_ps": {
+        "v1": 0.9190000000000002,
+        "v1.5": 0.95,
+        "v1.6": 0.931,
+        "v1.7": 0.921,
+        "v1.7-pr43": 0.93,
+        "v2": 0.938
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 1,
+      "line": 35.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.49277456647398843,
+      "model_ps": {
+        "v1": 0.915,
+        "v1.5": 0.946,
+        "v1.6": 0.927,
+        "v1.7": 0.916,
+        "v1.7-pr43": 0.93,
+        "v2": 0.93
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 4.0,
+      "books": 5,
+      "line": 12.5,
+      "market": "rushing_yards",
+      "market_p": 0.5024717715743542,
+      "model_ps": {
+        "v1": 0.959,
+        "v1.5": 0.9730000000000001,
+        "v1.6": 0.958,
+        "v1.7": 0.958,
+        "v1.7-pr43": 0.97,
+        "v2": 0.985
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 4.0,
+      "books": 9,
+      "line": 13.5,
+      "market": "rushing_yards",
+      "market_p": 0.5010050639191055,
+      "model_ps": {
+        "v1": 0.9549999999999998,
+        "v1.5": 0.967,
+        "v1.6": 0.951,
+        "v1.7": 0.956,
+        "v1.7-pr43": 0.9600000000000001,
+        "v2": 0.979
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 4.0,
+      "books": 8,
+      "line": 14.5,
+      "market": "rushing_yards",
+      "market_p": 0.49674155663037656,
+      "model_ps": {
+        "v1": 0.949,
+        "v1.5": 0.964,
+        "v1.6": 0.946,
+        "v1.7": 0.953,
+        "v1.7-pr43": 0.96,
+        "v2": 0.975
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 4.0,
+      "books": 1,
+      "line": 16.5,
+      "market": "rushing_yards",
+      "market_p": 0.46370450401782703,
+      "model_ps": {
+        "v1": 0.942,
+        "v1.5": 0.954,
+        "v1.6": 0.941,
+        "v1.7": 0.939,
+        "v1.7-pr43": 0.95,
+        "v2": 0.963
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 2.0,
+      "books": 1,
+      "line": 0.5,
+      "market": "total_touchdowns",
+      "market_p": 0.2845912266221086,
+      "model_ps": {
+        "v1": 0.545,
+        "v1.5": 0.526,
+        "v1.6": 0.572,
+        "v1.7": 0.531,
+        "v1.7-pr43": 0.56,
+        "v2": 0.447
+      },
+      "name": "Alvin Kamara",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 2,
+      "line": 4.5,
+      "market": "receiving_yards",
+      "market_p": 0.5106661099108586,
+      "model_ps": {
+        "v1": 0.176,
+        "v1.5": 0.17,
+        "v1.6": 0.165,
+        "v1.7": 0.167,
+        "v1.7-pr43": 0.2,
+        "v2": 0.294
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 5,
+      "line": 5.5,
+      "market": "receiving_yards",
+      "market_p": 0.5006676080370231,
+      "model_ps": {
+        "v1": 0.162,
+        "v1.5": 0.158,
+        "v1.6": 0.152,
+        "v1.7": 0.157,
+        "v1.7-pr43": 0.19,
+        "v2": 0.268
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 6,
+      "line": 6.5,
+      "market": "receiving_yards",
+      "market_p": 0.5011493840054884,
+      "model_ps": {
+        "v1": 0.151,
+        "v1.5": 0.149,
+        "v1.6": 0.144,
+        "v1.7": 0.14,
+        "v1.7-pr43": 0.18000000000000002,
+        "v2": 0.235
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 6,
+      "line": 7.5,
+      "market": "receiving_yards",
+      "market_p": 0.5006261483251763,
+      "model_ps": {
+        "v1": 0.142,
+        "v1.5": 0.138,
+        "v1.6": 0.131,
+        "v1.7": 0.127,
+        "v1.7-pr43": 0.16,
+        "v2": 0.212
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 9,
+      "line": 8.5,
+      "market": "receiving_yards",
+      "market_p": 0.4984444284176576,
+      "model_ps": {
+        "v1": 0.137,
+        "v1.5": 0.132,
+        "v1.6": 0.12000000000000001,
+        "v1.7": 0.121,
+        "v1.7-pr43": 0.15,
+        "v2": 0.193
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 1,
+      "line": 9.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.122,
+        "v1.5": 0.121,
+        "v1.6": 0.114,
+        "v1.7": 0.117,
+        "v1.7-pr43": 0.13,
+        "v2": 0.165
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 2,
+      "line": 10.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.118,
+        "v1.5": 0.116,
+        "v1.6": 0.105,
+        "v1.7": 0.11,
+        "v1.7-pr43": 0.11,
+        "v2": 0.146
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 2,
+      "line": 11.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.108,
+        "v1.5": 0.108,
+        "v1.6": 0.1,
+        "v1.7": 0.099,
+        "v1.7-pr43": 0.11,
+        "v2": 0.124
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 5,
+      "line": 0.5,
+      "market": "receptions",
+      "market_p": 0.6517259083521829,
+      "model_ps": {
+        "v1": 0.198,
+        "v1.5": 0.194,
+        "v1.6": 0.189,
+        "v1.7": 0.187,
+        "v1.7-pr43": 0.23000000000000004,
+        "v2": 0.36
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 5,
+      "line": 1.5,
+      "market": "receptions",
+      "market_p": 0.36148762493213105,
+      "model_ps": {
+        "v1": 0.07,
+        "v1.5": 0.074,
+        "v1.6": 0.074,
+        "v1.7": 0.05800000000000001,
+        "v1.7-pr43": 0.08,
+        "v2": 0.093
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 1.0,
+      "books": 1,
+      "line": 1.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.107,
+        "v1.5": 0.103,
+        "v1.6": 0.1,
+        "v1.7": 0.091,
+        "v1.7-pr43": 0.12,
+        "v2": 0.166
+      },
+      "name": "Noah Fant",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 28.0,
+      "books": 8,
+      "line": 21.5,
+      "market": "receiving_yards",
+      "market_p": 0.5000106656522154,
+      "model_ps": {
+        "v1": 0.876,
+        "v1.5": 0.867,
+        "v1.6": 0.89,
+        "v1.7": 0.865,
+        "v1.7-pr43": 0.9,
+        "v2": 0.756
+      },
+      "name": "Juwan Johnson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 28.0,
+      "books": 4,
+      "line": 22.5,
+      "market": "receiving_yards",
+      "market_p": 0.49763033175355453,
+      "model_ps": {
+        "v1": 0.863,
+        "v1.5": 0.854,
+        "v1.6": 0.883,
+        "v1.7": 0.854,
+        "v1.7-pr43": 0.88,
+        "v2": 0.745
+      },
+      "name": "Juwan Johnson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 28.0,
+      "books": 8,
+      "line": 23.5,
+      "market": "receiving_yards",
+      "market_p": 0.5001074077794639,
+      "model_ps": {
+        "v1": 0.852,
+        "v1.5": 0.844,
+        "v1.6": 0.874,
+        "v1.7": 0.84,
+        "v1.7-pr43": 0.87,
+        "v2": 0.722
+      },
+      "name": "Juwan Johnson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 28.0,
+      "books": 10,
+      "line": 24.5,
+      "market": "receiving_yards",
+      "market_p": 0.5011779261492826,
+      "model_ps": {
+        "v1": 0.845,
+        "v1.5": 0.836,
+        "v1.6": 0.858,
+        "v1.7": 0.829,
+        "v1.7-pr43": 0.85,
+        "v2": 0.705
+      },
+      "name": "Juwan Johnson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 28.0,
+      "books": 2,
+      "line": 25.5,
+      "market": "receiving_yards",
+      "market_p": 0.5029735725596922,
+      "model_ps": {
+        "v1": 0.834,
+        "v1.5": 0.827,
+        "v1.6": 0.849,
+        "v1.7": 0.816,
+        "v1.7-pr43": 0.85,
+        "v2": 0.692
+      },
+      "name": "Juwan Johnson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 28.0,
+      "books": 3,
+      "line": 26.5,
+      "market": "receiving_yards",
+      "market_p": 0.501230920728705,
+      "model_ps": {
+        "v1": 0.826,
+        "v1.5": 0.819,
+        "v1.6": 0.839,
+        "v1.7": 0.809,
+        "v1.7-pr43": 0.85,
+        "v2": 0.6750000000000002
+      },
+      "name": "Juwan Johnson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 28.0,
+      "books": 1,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.818,
+        "v1.5": 0.81,
+        "v1.6": 0.823,
+        "v1.7": 0.795,
+        "v1.7-pr43": 0.84,
+        "v2": 0.652
+      },
+      "name": "Juwan Johnson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 28.0,
+      "books": 1,
+      "line": 32.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.764,
+        "v1.5": 0.752,
+        "v1.6": 0.766,
+        "v1.7": 0.724,
+        "v1.7-pr43": 0.77,
+        "v2": 0.566
+      },
+      "name": "Juwan Johnson",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 2.0,
+      "books": 6,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.5586376137090878,
+      "model_ps": {
+        "v1": 0.876,
+        "v1.5": 0.874,
+        "v1.6": 0.89,
+        "v1.7": 0.858,
+        "v1.7-pr43": 0.9,
+        "v2": 0.8039999999999999
+      },
+      "name": "Juwan Johnson",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 3.0,
+      "books": 1,
+      "line": 3.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.915,
+        "v1.5": 0.913,
+        "v1.6": 0.922,
+        "v1.7": 0.892,
+        "v1.7-pr43": 0.89,
+        "v2": 0.851
+      },
+      "name": "Juwan Johnson",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 2,
+      "line": 16.5,
+      "market": "receiving_yards",
+      "market_p": 0.5042144302090357,
+      "model_ps": {
+        "v1": 0.63,
+        "v1.5": 0.633,
+        "v1.6": 0.618,
+        "v1.7": 0.596,
+        "v1.7-pr43": 0.61,
+        "v2": 0.636
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 80.0,
+      "books": 11,
+      "line": 17.5,
+      "market": "receiving_yards",
+      "market_p": 0.5013535101930159,
+      "model_ps": {
+        "v1": 0.607,
+        "v1.5": 0.612,
+        "v1.6": 0.6,
+        "v1.7": 0.576,
+        "v1.7-pr43": 0.61,
+        "v2": 0.615
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 80.0,
+      "books": 10,
+      "line": 18.5,
+      "market": "receiving_yards",
+      "market_p": 0.49864455407040686,
+      "model_ps": {
+        "v1": 0.587,
+        "v1.5": 0.597,
+        "v1.6": 0.579,
+        "v1.7": 0.553,
+        "v1.7-pr43": 0.61,
+        "v2": 0.594
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 80.0,
+      "books": 3,
+      "line": 19.5,
+      "market": "receiving_yards",
+      "market_p": 0.49531996238346193,
+      "model_ps": {
+        "v1": 0.56,
+        "v1.5": 0.576,
+        "v1.6": 0.561,
+        "v1.7": 0.539,
+        "v1.7-pr43": 0.59,
+        "v2": 0.572
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 80.0,
+      "books": 2,
+      "line": 20.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.538,
+        "v1.5": 0.559,
+        "v1.6": 0.541,
+        "v1.7": 0.52,
+        "v1.7-pr43": 0.55,
+        "v2": 0.554
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 80.0,
+      "books": 3,
+      "line": 21.5,
+      "market": "receiving_yards",
+      "market_p": 0.49905901836796146,
+      "model_ps": {
+        "v1": 0.514,
+        "v1.5": 0.537,
+        "v1.6": 0.521,
+        "v1.7": 0.5,
+        "v1.7-pr43": 0.52,
+        "v2": 0.536
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 5.0,
+      "books": 6,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.5695430668469493,
+      "model_ps": {
+        "v1": 0.612,
+        "v1.5": 0.632,
+        "v1.6": 0.621,
+        "v1.7": 0.596,
+        "v1.7-pr43": 0.64,
+        "v2": 0.649
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 5.0,
+      "books": 2,
+      "line": 3.0,
+      "market": "receptions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.413,
+        "v1.5": 0.436,
+        "v1.6": 0.401,
+        "v1.7": 0.405,
+        "v1.7-pr43": 0.39,
+        "v2": 0.446
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 5.0,
+      "books": 8,
+      "line": 3.5,
+      "market": "receptions",
+      "market_p": 0.44596362583149346,
+      "model_ps": {
+        "v1": 0.413,
+        "v1.5": 0.436,
+        "v1.6": 0.401,
+        "v1.7": 0.405,
+        "v1.7-pr43": 0.39,
+        "v2": 0.446
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 27.0,
+      "books": 9,
+      "line": 17.5,
+      "market": "rush_attempts",
+      "market_p": 0.5055227660500335,
+      "model_ps": {
+        "v1": 0.501,
+        "v1.5": 0.482,
+        "v1.6": 0.504,
+        "v1.7": 0.495,
+        "v1.7-pr43": 0.48000000000000004,
+        "v2": 0.598
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 27.0,
+      "books": 9,
+      "line": 18.5,
+      "market": "rush_attempts",
+      "market_p": 0.49159895954522537,
+      "model_ps": {
+        "v1": 0.45499999999999996,
+        "v1.5": 0.429,
+        "v1.6": 0.4570000000000001,
+        "v1.7": 0.445,
+        "v1.7-pr43": 0.44,
+        "v2": 0.556
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 172.0,
+      "books": 3,
+      "line": 95.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5013851374748944,
+      "model_ps": {
+        "v1": 0.523,
+        "v1.5": 0.526,
+        "v1.6": 0.542,
+        "v1.7": 0.534,
+        "v1.7-pr43": 0.58,
+        "v2": 0.65
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 172.0,
+      "books": 1,
+      "line": 96.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.519,
+        "v1.5": 0.52,
+        "v1.6": 0.53,
+        "v1.7": 0.525,
+        "v1.7-pr43": 0.57,
+        "v2": 0.646
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 172.0,
+      "books": 5,
+      "line": 98.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.501465969237823,
+      "model_ps": {
+        "v1": 0.507,
+        "v1.5": 0.504,
+        "v1.6": 0.508,
+        "v1.7": 0.512,
+        "v1.7-pr43": 0.55,
+        "v2": 0.63
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 172.0,
+      "books": 3,
+      "line": 99.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5003136369338853,
+      "model_ps": {
+        "v1": 0.49899999999999994,
+        "v1.5": 0.49700000000000005,
+        "v1.6": 0.5,
+        "v1.7": 0.507,
+        "v1.7-pr43": 0.55,
+        "v2": 0.622
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 172.0,
+      "books": 5,
+      "line": 100.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.500579786126586,
+      "model_ps": {
+        "v1": 0.49000000000000005,
+        "v1.5": 0.492,
+        "v1.6": 0.496,
+        "v1.7": 0.5,
+        "v1.7-pr43": 0.54,
+        "v2": 0.616
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 172.0,
+      "books": 9,
+      "line": 101.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5000968728015195,
+      "model_ps": {
+        "v1": 0.482,
+        "v1.5": 0.48799999999999993,
+        "v1.6": 0.49099999999999994,
+        "v1.7": 0.48799999999999993,
+        "v1.7-pr43": 0.53,
+        "v2": 0.605
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 172.0,
+      "books": 8,
+      "line": 102.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5000052767301149,
+      "model_ps": {
+        "v1": 0.477,
+        "v1.5": 0.481,
+        "v1.6": 0.484,
+        "v1.7": 0.481,
+        "v1.7-pr43": 0.52,
+        "v2": 0.601
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 172.0,
+      "books": 7,
+      "line": 103.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.4995578053002854,
+      "model_ps": {
+        "v1": 0.467,
+        "v1.5": 0.473,
+        "v1.6": 0.475,
+        "v1.7": 0.472,
+        "v1.7-pr43": 0.5,
+        "v2": 0.599
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 172.0,
+      "books": 1,
+      "line": 104.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.458,
+        "v1.5": 0.467,
+        "v1.6": 0.47,
+        "v1.7": 0.469,
+        "v1.7-pr43": 0.5,
+        "v2": 0.593
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 92.0,
+      "books": 8,
+      "line": 73.5,
+      "market": "rushing_yards",
+      "market_p": 0.5000812106474817,
+      "model_ps": {
+        "v1": 0.477,
+        "v1.5": 0.465,
+        "v1.6": 0.49,
+        "v1.7": 0.496,
+        "v1.7-pr43": 0.49,
+        "v2": 0.595
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 92.0,
+      "books": 7,
+      "line": 74.5,
+      "market": "rushing_yards",
+      "market_p": 0.5016707756320871,
+      "model_ps": {
+        "v1": 0.468,
+        "v1.5": 0.46,
+        "v1.6": 0.483,
+        "v1.7": 0.48999999999999994,
+        "v1.7-pr43": 0.48999999999999994,
+        "v2": 0.587
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 92.0,
+      "books": 3,
+      "line": 75.5,
+      "market": "rushing_yards",
+      "market_p": 0.4989652556655979,
+      "model_ps": {
+        "v1": 0.455,
+        "v1.5": 0.451,
+        "v1.6": 0.4789999999999999,
+        "v1.7": 0.482,
+        "v1.7-pr43": 0.48,
+        "v2": 0.576
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 92.0,
+      "books": 3,
+      "line": 76.5,
+      "market": "rushing_yards",
+      "market_p": 0.5007019612798158,
+      "model_ps": {
+        "v1": 0.44,
+        "v1.5": 0.443,
+        "v1.6": 0.472,
+        "v1.7": 0.47700000000000004,
+        "v1.7-pr43": 0.48,
+        "v2": 0.563
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 92.0,
+      "books": 4,
+      "line": 77.5,
+      "market": "rushing_yards",
+      "market_p": 0.5028417642042475,
+      "model_ps": {
+        "v1": 0.429,
+        "v1.5": 0.439,
+        "v1.6": 0.462,
+        "v1.7": 0.468,
+        "v1.7-pr43": 0.48,
+        "v2": 0.557
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 92.0,
+      "books": 5,
+      "line": 78.5,
+      "market": "rushing_yards",
+      "market_p": 0.4990364881490418,
+      "model_ps": {
+        "v1": 0.41899999999999993,
+        "v1.5": 0.43099999999999994,
+        "v1.6": 0.45200000000000007,
+        "v1.7": 0.461,
+        "v1.7-pr43": 0.4699999999999999,
+        "v2": 0.556
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 92.0,
+      "books": 10,
+      "line": 79.5,
+      "market": "rushing_yards",
+      "market_p": 0.4999563984783214,
+      "model_ps": {
+        "v1": 0.41200000000000003,
+        "v1.5": 0.42299999999999993,
+        "v1.6": 0.44299999999999995,
+        "v1.7": 0.454,
+        "v1.7-pr43": 0.4600000000000001,
+        "v2": 0.551
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 92.0,
+      "books": 7,
+      "line": 80.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.402,
+        "v1.5": 0.414,
+        "v1.6": 0.431,
+        "v1.7": 0.441,
+        "v1.7-pr43": 0.45,
+        "v2": 0.542
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 5.0,
+      "books": 1,
+      "line": 3.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.684,
+        "v1.5": 0.714,
+        "v1.6": 0.683,
+        "v1.7": 0.659,
+        "v1.7-pr43": 0.66,
+        "v2": 0.676
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 5.0,
+      "books": 1,
+      "line": 4.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.543,
+        "v1.5": 0.554,
+        "v1.6": 0.502,
+        "v1.7": 0.498,
+        "v1.7-pr43": 0.53,
+        "v2": 0.508
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 2.0,
+      "books": 1,
+      "line": 0.5,
+      "market": "total_touchdowns",
+      "market_p": 0.5697269982937393,
+      "model_ps": {
+        "v1": 0.445,
+        "v1.5": 0.458,
+        "v1.6": 0.443,
+        "v1.7": 0.418,
+        "v1.7-pr43": 0.39,
+        "v2": 0.452
+      },
+      "name": "Chuba Hubbard",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 48.0,
+      "books": 9,
+      "line": 13.5,
+      "market": "receiving_yards",
+      "market_p": 0.5048403292127721,
+      "model_ps": {
+        "v1": 0.377,
+        "v1.5": 0.375,
+        "v1.6": 0.375,
+        "v1.7": 0.337,
+        "v1.7-pr43": 0.4,
+        "v2": 0.694
+      },
+      "name": "Tommy Tremble",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 48.0,
+      "books": 6,
+      "line": 14.5,
+      "market": "receiving_yards",
+      "market_p": 0.5030794910203878,
+      "model_ps": {
+        "v1": 0.35799999999999993,
+        "v1.5": 0.36000000000000004,
+        "v1.6": 0.359,
+        "v1.7": 0.315,
+        "v1.7-pr43": 0.38000000000000006,
+        "v2": 0.674
+      },
+      "name": "Tommy Tremble",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 48.0,
+      "books": 6,
+      "line": 15.5,
+      "market": "receiving_yards",
+      "market_p": 0.5015648593173413,
+      "model_ps": {
+        "v1": 0.343,
+        "v1.5": 0.345,
+        "v1.6": 0.34,
+        "v1.7": 0.3,
+        "v1.7-pr43": 0.38000000000000006,
+        "v2": 0.657
+      },
+      "name": "Tommy Tremble",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 48.0,
+      "books": 3,
+      "line": 20.5,
+      "market": "receiving_yards",
+      "market_p": 0.4996903487911217,
+      "model_ps": {
+        "v1": 0.254,
+        "v1.5": 0.254,
+        "v1.6": 0.27,
+        "v1.7": 0.235,
+        "v1.7-pr43": 0.28,
+        "v2": 0.564
+      },
+      "name": "Tommy Tremble",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 48.0,
+      "books": 3,
+      "line": 21.5,
+      "market": "receiving_yards",
+      "market_p": 0.5018467220683287,
+      "model_ps": {
+        "v1": 0.242,
+        "v1.5": 0.248,
+        "v1.6": 0.249,
+        "v1.7": 0.22,
+        "v1.7-pr43": 0.25,
+        "v2": 0.534
+      },
+      "name": "Tommy Tremble",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 9,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.4333033663157326,
+      "model_ps": {
+        "v1": 0.207,
+        "v1.5": 0.205,
+        "v1.6": 0.204,
+        "v1.7": 0.196,
+        "v1.7-pr43": 0.2,
+        "v2": 0.562
+      },
+      "name": "Tommy Tremble",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 5.0,
+      "books": 1,
+      "line": 2.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.435,
+        "v1.5": 0.451,
+        "v1.6": 0.423,
+        "v1.7": 0.391,
+        "v1.7-pr43": 0.38,
+        "v2": 0.804
+      },
+      "name": "Tommy Tremble",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 30.0,
+      "books": 5,
+      "line": 69.5,
+      "market": "receiving_yards",
+      "market_p": 0.5006190725796004,
+      "model_ps": {
+        "v1": 0.767,
+        "v1.5": 0.777,
+        "v1.6": 0.782,
+        "v1.7": 0.734,
+        "v1.7-pr43": 0.65,
+        "v2": 0.582
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 30.0,
+      "books": 5,
+      "line": 70.5,
+      "market": "receiving_yards",
+      "market_p": 0.49832645753191257,
+      "model_ps": {
+        "v1": 0.762,
+        "v1.5": 0.772,
+        "v1.6": 0.775,
+        "v1.7": 0.724,
+        "v1.7-pr43": 0.65,
+        "v2": 0.573
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 30.0,
+      "books": 3,
+      "line": 71.5,
+      "market": "receiving_yards",
+      "market_p": 0.4985632183908046,
+      "model_ps": {
+        "v1": 0.755,
+        "v1.5": 0.767,
+        "v1.6": 0.771,
+        "v1.7": 0.714,
+        "v1.7-pr43": 0.65,
+        "v2": 0.567
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 30.0,
+      "books": 8,
+      "line": 73.5,
+      "market": "receiving_yards",
+      "market_p": 0.5017522299653928,
+      "model_ps": {
+        "v1": 0.746,
+        "v1.5": 0.756,
+        "v1.6": 0.758,
+        "v1.7": 0.694,
+        "v1.7-pr43": 0.65,
+        "v2": 0.544
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 30.0,
+      "books": 10,
+      "line": 74.5,
+      "market": "receiving_yards",
+      "market_p": 0.5012744515859086,
+      "model_ps": {
+        "v1": 0.737,
+        "v1.5": 0.748,
+        "v1.6": 0.751,
+        "v1.7": 0.686,
+        "v1.7-pr43": 0.65,
+        "v2": 0.538
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 30.0,
+      "books": 5,
+      "line": 75.5,
+      "market": "receiving_yards",
+      "market_p": 0.5012411976361318,
+      "model_ps": {
+        "v1": 0.732,
+        "v1.5": 0.742,
+        "v1.6": 0.743,
+        "v1.7": 0.678,
+        "v1.7-pr43": 0.63,
+        "v2": 0.531
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 30.0,
+      "books": 2,
+      "line": 76.5,
+      "market": "receiving_yards",
+      "market_p": 0.4981057736020609,
+      "model_ps": {
+        "v1": 0.718,
+        "v1.5": 0.73,
+        "v1.6": 0.738,
+        "v1.7": 0.671,
+        "v1.7-pr43": 0.63,
+        "v2": 0.521
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 30.0,
+      "books": 1,
+      "line": 77.5,
+      "market": "receiving_yards",
+      "market_p": 0.49905908919834396,
+      "model_ps": {
+        "v1": 0.71,
+        "v1.5": 0.722,
+        "v1.6": 0.732,
+        "v1.7": 0.661,
+        "v1.7-pr43": 0.62,
+        "v2": 0.513
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 3.0,
+      "books": 7,
+      "line": 5.5,
+      "market": "receptions",
+      "market_p": 0.5338282623235937,
+      "model_ps": {
+        "v1": 0.825,
+        "v1.5": 0.84,
+        "v1.6": 0.8310000000000001,
+        "v1.7": 0.814,
+        "v1.7-pr43": 0.74,
+        "v2": 0.712
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 3.0,
+      "books": 2,
+      "line": 6.0,
+      "market": "receptions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.752,
+        "v1.5": 0.757,
+        "v1.6": 0.746,
+        "v1.7": 0.713,
+        "v1.7-pr43": 0.7,
+        "v2": 0.578
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 3.0,
+      "books": 6,
+      "line": 6.5,
+      "market": "receptions",
+      "market_p": 0.42949283330463967,
+      "model_ps": {
+        "v1": 0.7520000000000001,
+        "v1.5": 0.757,
+        "v1.6": 0.746,
+        "v1.7": 0.713,
+        "v1.7-pr43": 0.6999999999999998,
+        "v2": 0.578
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 4.0,
+      "books": 1,
+      "line": 9.0,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.792,
+        "v1.5": 0.798,
+        "v1.6": 0.786,
+        "v1.7": 0.788,
+        "v1.7-pr43": 0.76,
+        "v2": 0.665
+      },
+      "name": "Chris Olave",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 4.0,
+      "books": 1,
+      "line": 6.5,
+      "market": "receiving_yards",
+      "market_p": 0.5101214574898786,
+      "model_ps": {
+        "v1": 0.115,
+        "v1.5": 0.111,
+        "v1.6": 0.102,
+        "v1.7": 0.106,
+        "v1.7-pr43": 0.09,
+        "v2": 0.174
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 9,
+      "line": 7.5,
+      "market": "receiving_yards",
+      "market_p": 0.49541682440223833,
+      "model_ps": {
+        "v1": 0.111,
+        "v1.5": 0.101,
+        "v1.6": 0.095,
+        "v1.7": 0.1,
+        "v1.7-pr43": 0.08,
+        "v2": 0.163
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 4,
+      "line": 8.5,
+      "market": "receiving_yards",
+      "market_p": 0.49493927125506076,
+      "model_ps": {
+        "v1": 0.106,
+        "v1.5": 0.098,
+        "v1.6": 0.091,
+        "v1.7": 0.093,
+        "v1.7-pr43": 0.07,
+        "v2": 0.154
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 3,
+      "line": 10.5,
+      "market": "receiving_yards",
+      "market_p": 0.4943671305500332,
+      "model_ps": {
+        "v1": 0.09400000000000001,
+        "v1.5": 0.08900000000000001,
+        "v1.6": 0.08,
+        "v1.7": 0.078,
+        "v1.7-pr43": 0.06,
+        "v2": 0.139
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 5,
+      "line": 11.5,
+      "market": "receiving_yards",
+      "market_p": 0.4995067321753295,
+      "model_ps": {
+        "v1": 0.083,
+        "v1.5": 0.084,
+        "v1.6": 0.069,
+        "v1.7": 0.072,
+        "v1.7-pr43": 0.05,
+        "v2": 0.124
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 4,
+      "line": 12.5,
+      "market": "receiving_yards",
+      "market_p": 0.49969506680920656,
+      "model_ps": {
+        "v1": 0.07,
+        "v1.5": 0.078,
+        "v1.6": 0.066,
+        "v1.7": 0.066,
+        "v1.7-pr43": 0.05,
+        "v2": 0.119
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 4,
+      "line": 13.5,
+      "market": "receiving_yards",
+      "market_p": 0.49597900530385064,
+      "model_ps": {
+        "v1": 0.066,
+        "v1.5": 0.074,
+        "v1.6": 0.06,
+        "v1.7": 0.06,
+        "v1.7-pr43": 0.05,
+        "v2": 0.113
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 3,
+      "line": 15.5,
+      "market": "receiving_yards",
+      "market_p": 0.5003096512088784,
+      "model_ps": {
+        "v1": 0.059,
+        "v1.5": 0.069,
+        "v1.6": 0.055,
+        "v1.7": 0.054,
+        "v1.7-pr43": 0.05000000000000001,
+        "v2": 0.09300000000000001
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 2,
+      "line": 19.5,
+      "market": "receiving_yards",
+      "market_p": 0.5033809891808346,
+      "model_ps": {
+        "v1": 0.045,
+        "v1.5": 0.052,
+        "v1.6": 0.045,
+        "v1.7": 0.039,
+        "v1.7-pr43": 0.04,
+        "v2": 0.061
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 2,
+      "line": 20.5,
+      "market": "receiving_yards",
+      "market_p": 0.4990650710545998,
+      "model_ps": {
+        "v1": 0.041,
+        "v1.5": 0.05,
+        "v1.6": 0.041,
+        "v1.7": 0.038,
+        "v1.7-pr43": 0.03,
+        "v2": 0.056
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 9,
+      "line": 1.5,
+      "market": "receptions",
+      "market_p": 0.41312577881439144,
+      "model_ps": {
+        "v1": 0.051,
+        "v1.5": 0.060000000000000005,
+        "v1.6": 0.05,
+        "v1.7": 0.052,
+        "v1.7-pr43": 0.05,
+        "v2": 0.076
+      },
+      "name": "John Metchie III",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 10,
+      "line": 0.5,
+      "market": "interceptions_thrown",
+      "market_p": 0.486981522309196,
+      "model_ps": {
+        "v1": 0.529,
+        "v1.5": 0.56,
+        "v1.6": 0.522,
+        "v1.7": 0.532,
+        "v1.7-pr43": 0.52,
+        "v2": 0.398
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 30.0,
+      "books": 2,
+      "line": 35.5,
+      "market": "pass_attempts",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.532,
+        "v1.5": 0.562,
+        "v1.6": 0.548,
+        "v1.7": 0.46,
+        "v1.7-pr43": 0.41,
+        "v2": 0.412
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 30.0,
+      "books": 9,
+      "line": 36.5,
+      "market": "pass_attempts",
+      "market_p": 0.49753229735728965,
+      "model_ps": {
+        "v1": 0.49099999999999994,
+        "v1.5": 0.492,
+        "v1.6": 0.498,
+        "v1.7": 0.396,
+        "v1.7-pr43": 0.36,
+        "v2": 0.359
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 17.0,
+      "books": 8,
+      "line": 22.5,
+      "market": "pass_completions",
+      "market_p": 0.5055282758753479,
+      "model_ps": {
+        "v1": 0.386,
+        "v1.5": 0.407,
+        "v1.6": 0.395,
+        "v1.7": 0.29,
+        "v1.7-pr43": 0.29,
+        "v2": 0.382
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 17.0,
+      "books": 1,
+      "line": 23.0,
+      "market": "pass_completions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.317,
+        "v1.5": 0.331,
+        "v1.6": 0.32,
+        "v1.7": 0.227,
+        "v1.7-pr43": 0.18,
+        "v2": 0.316
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 17.0,
+      "books": 5,
+      "line": 23.5,
+      "market": "pass_completions",
+      "market_p": 0.4700015500694416,
+      "model_ps": {
+        "v1": 0.317,
+        "v1.5": 0.331,
+        "v1.6": 0.32,
+        "v1.7": 0.227,
+        "v1.7-pr43": 0.18,
+        "v2": 0.316
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 4,
+      "line": 255.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5095234443032258,
+      "model_ps": {
+        "v1": 0.376,
+        "v1.5": 0.386,
+        "v1.6": 0.404,
+        "v1.7": 0.241,
+        "v1.7-pr43": 0.21,
+        "v2": 0.249
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 9,
+      "line": 256.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4993765275076064,
+      "model_ps": {
+        "v1": 0.369,
+        "v1.5": 0.381,
+        "v1.6": 0.401,
+        "v1.7": 0.235,
+        "v1.7-pr43": 0.21,
+        "v2": 0.24000000000000002
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 7,
+      "line": 257.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5003799068116024,
+      "model_ps": {
+        "v1": 0.362,
+        "v1.5": 0.379,
+        "v1.6": 0.39300000000000007,
+        "v1.7": 0.232,
+        "v1.7-pr43": 0.21,
+        "v2": 0.238
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 6,
+      "line": 258.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.500631408799313,
+      "model_ps": {
+        "v1": 0.35600000000000004,
+        "v1.5": 0.377,
+        "v1.6": 0.38800000000000007,
+        "v1.7": 0.225,
+        "v1.7-pr43": 0.21,
+        "v2": 0.234
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 6,
+      "line": 259.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5001568184669427,
+      "model_ps": {
+        "v1": 0.35200000000000004,
+        "v1.5": 0.37399999999999994,
+        "v1.6": 0.383,
+        "v1.7": 0.22,
+        "v1.7-pr43": 0.20000000000000004,
+        "v2": 0.225
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 3,
+      "line": 260.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4993075175890532,
+      "model_ps": {
+        "v1": 0.345,
+        "v1.5": 0.36599999999999994,
+        "v1.6": 0.377,
+        "v1.7": 0.213,
+        "v1.7-pr43": 0.19000000000000003,
+        "v2": 0.22
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 2,
+      "line": 261.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5012772479564033,
+      "model_ps": {
+        "v1": 0.336,
+        "v1.5": 0.357,
+        "v1.6": 0.373,
+        "v1.7": 0.205,
+        "v1.7-pr43": 0.19,
+        "v2": 0.217
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 8,
+      "line": 262.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4995354763201009,
+      "model_ps": {
+        "v1": 0.33,
+        "v1.5": 0.354,
+        "v1.6": 0.369,
+        "v1.7": 0.197,
+        "v1.7-pr43": 0.18,
+        "v2": 0.211
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 4,
+      "line": 263.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4986704096601623,
+      "model_ps": {
+        "v1": 0.328,
+        "v1.5": 0.347,
+        "v1.6": 0.363,
+        "v1.7": 0.193,
+        "v1.7-pr43": 0.17,
+        "v2": 0.206
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 3,
+      "line": 264.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49968636306611464,
+      "model_ps": {
+        "v1": 0.321,
+        "v1.5": 0.34,
+        "v1.6": 0.36000000000000004,
+        "v1.7": 0.19299999999999998,
+        "v1.7-pr43": 0.17,
+        "v2": 0.20099999999999998
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 5,
+      "line": 265.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4992199196244543,
+      "model_ps": {
+        "v1": 0.316,
+        "v1.5": 0.336,
+        "v1.6": 0.35,
+        "v1.7": 0.191,
+        "v1.7-pr43": 0.17,
+        "v2": 0.195
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 3,
+      "line": 266.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5006076515482961,
+      "model_ps": {
+        "v1": 0.313,
+        "v1.5": 0.331,
+        "v1.6": 0.3459999999999999,
+        "v1.7": 0.18899999999999997,
+        "v1.7-pr43": 0.16,
+        "v2": 0.19299999999999998
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 3,
+      "line": 267.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5006076515482961,
+      "model_ps": {
+        "v1": 0.309,
+        "v1.5": 0.322,
+        "v1.6": 0.34,
+        "v1.7": 0.18600000000000003,
+        "v1.7-pr43": 0.16,
+        "v2": 0.18899999999999997
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 201.0,
+      "books": 3,
+      "line": 268.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5006076515482961,
+      "model_ps": {
+        "v1": 0.302,
+        "v1.5": 0.313,
+        "v1.6": 0.336,
+        "v1.7": 0.18400000000000002,
+        "v1.7-pr43": 0.16,
+        "v2": 0.18400000000000002
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 11,
+      "line": 1.5,
+      "market": "passing_touchdowns",
+      "market_p": 0.5162775827983076,
+      "model_ps": {
+        "v1": 0.259,
+        "v1.5": 0.241,
+        "v1.6": 0.319,
+        "v1.7": 0.242,
+        "v1.7-pr43": 0.23999999999999996,
+        "v2": 0.18999999999999997
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 200.0,
+      "books": 1,
+      "line": 234.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.365,
+        "v1.5": 0.383,
+        "v1.6": 0.373,
+        "v1.7": 0.229,
+        "v1.7-pr43": 0.19,
+        "v2": 0.31
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 200.0,
+      "books": 2,
+      "line": 243.5,
+      "market": "passing_yards",
+      "market_p": 0.5116796232620721,
+      "model_ps": {
+        "v1": 0.321,
+        "v1.5": 0.326,
+        "v1.6": 0.325,
+        "v1.7": 0.189,
+        "v1.7-pr43": 0.16,
+        "v2": 0.254
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 200.0,
+      "books": 8,
+      "line": 244.5,
+      "market": "passing_yards",
+      "market_p": 0.5011263172938658,
+      "model_ps": {
+        "v1": 0.31,
+        "v1.5": 0.323,
+        "v1.6": 0.32,
+        "v1.7": 0.187,
+        "v1.7-pr43": 0.15,
+        "v2": 0.249
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 200.0,
+      "books": 7,
+      "line": 245.5,
+      "market": "passing_yards",
+      "market_p": 0.5025998120983531,
+      "model_ps": {
+        "v1": 0.301,
+        "v1.5": 0.315,
+        "v1.6": 0.316,
+        "v1.7": 0.183,
+        "v1.7-pr43": 0.15,
+        "v2": 0.24700000000000003
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 200.0,
+      "books": 7,
+      "line": 246.5,
+      "market": "passing_yards",
+      "market_p": 0.499865584171192,
+      "model_ps": {
+        "v1": 0.295,
+        "v1.5": 0.307,
+        "v1.6": 0.311,
+        "v1.7": 0.176,
+        "v1.7-pr43": 0.15,
+        "v2": 0.238
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 200.0,
+      "books": 8,
+      "line": 247.5,
+      "market": "passing_yards",
+      "market_p": 0.5017842357055572,
+      "model_ps": {
+        "v1": 0.289,
+        "v1.5": 0.303,
+        "v1.6": 0.301,
+        "v1.7": 0.176,
+        "v1.7-pr43": 0.15,
+        "v2": 0.234
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 200.0,
+      "books": 7,
+      "line": 248.5,
+      "market": "passing_yards",
+      "market_p": 0.4993342314639637,
+      "model_ps": {
+        "v1": 0.286,
+        "v1.5": 0.293,
+        "v1.6": 0.296,
+        "v1.7": 0.172,
+        "v1.7-pr43": 0.15,
+        "v2": 0.226
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 200.0,
+      "books": 5,
+      "line": 249.5,
+      "market": "passing_yards",
+      "market_p": 0.500124321445196,
+      "model_ps": {
+        "v1": 0.279,
+        "v1.5": 0.287,
+        "v1.6": 0.291,
+        "v1.7": 0.169,
+        "v1.7-pr43": 0.14,
+        "v2": 0.223
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 200.0,
+      "books": 3,
+      "line": 250.5,
+      "market": "passing_yards",
+      "market_p": 0.5013995892171353,
+      "model_ps": {
+        "v1": 0.272,
+        "v1.5": 0.283,
+        "v1.6": 0.286,
+        "v1.7": 0.164,
+        "v1.7-pr43": 0.14,
+        "v2": 0.213
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 200.0,
+      "books": 2,
+      "line": 251.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.265,
+        "v1.5": 0.281,
+        "v1.6": 0.283,
+        "v1.7": 0.163,
+        "v1.7-pr43": 0.14,
+        "v2": 0.204
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 8,
+      "line": 2.5,
+      "market": "rush_attempts",
+      "market_p": 0.4633431659876771,
+      "model_ps": {
+        "v1": 0.623,
+        "v1.5": 0.612,
+        "v1.6": 0.597,
+        "v1.7": 0.58,
+        "v1.7-pr43": 0.65,
+        "v2": 0.333
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 2,
+      "line": 5.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.844,
+        "v1.5": 0.849,
+        "v1.6": 0.834,
+        "v1.7": 0.815,
+        "v1.7-pr43": 0.89,
+        "v2": 0.659
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 2,
+      "line": 6.5,
+      "market": "rushing_yards",
+      "market_p": 0.500470455400828,
+      "model_ps": {
+        "v1": 0.808,
+        "v1.5": 0.821,
+        "v1.6": 0.809,
+        "v1.7": 0.779,
+        "v1.7-pr43": 0.89,
+        "v2": 0.626
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 9,
+      "line": 7.5,
+      "market": "rushing_yards",
+      "market_p": 0.5048773020845683,
+      "model_ps": {
+        "v1": 0.785,
+        "v1.5": 0.79,
+        "v1.6": 0.788,
+        "v1.7": 0.755,
+        "v1.7-pr43": 0.85,
+        "v2": 0.57
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 10,
+      "line": 8.5,
+      "market": "rushing_yards",
+      "market_p": 0.5035300984243739,
+      "model_ps": {
+        "v1": 0.752,
+        "v1.5": 0.764,
+        "v1.6": 0.76,
+        "v1.7": 0.727,
+        "v1.7-pr43": 0.8400000000000001,
+        "v2": 0.533
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 4,
+      "line": 9.5,
+      "market": "rushing_yards",
+      "market_p": 0.5009471131989696,
+      "model_ps": {
+        "v1": 0.72,
+        "v1.5": 0.742,
+        "v1.6": 0.733,
+        "v1.7": 0.697,
+        "v1.7-pr43": 0.81,
+        "v2": 0.495
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 2,
+      "line": 10.5,
+      "market": "rushing_yards",
+      "market_p": 0.4765476641904238,
+      "model_ps": {
+        "v1": 0.692,
+        "v1.5": 0.704,
+        "v1.6": 0.699,
+        "v1.7": 0.676,
+        "v1.7-pr43": 0.8,
+        "v2": 0.463
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 2,
+      "line": 13.5,
+      "market": "rushing_yards",
+      "market_p": 0.4989470580802763,
+      "model_ps": {
+        "v1": 0.624,
+        "v1.5": 0.621,
+        "v1.6": 0.622,
+        "v1.7": 0.593,
+        "v1.7-pr43": 0.6,
+        "v2": 0.358
+      },
+      "name": "Bryce Young",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 14.0,
+      "books": 10,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.5019019845952217,
+      "model_ps": {
+        "v1": 0.385,
+        "v1.5": 0.404,
+        "v1.6": 0.404,
+        "v1.7": 0.336,
+        "v1.7-pr43": 0.45,
+        "v2": 0.624
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 5,
+      "line": 28.5,
+      "market": "receiving_yards",
+      "market_p": 0.5056137557138305,
+      "model_ps": {
+        "v1": 0.377,
+        "v1.5": 0.398,
+        "v1.6": 0.394,
+        "v1.7": 0.329,
+        "v1.7-pr43": 0.44000000000000006,
+        "v2": 0.609
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 11,
+      "line": 29.5,
+      "market": "receiving_yards",
+      "market_p": 0.50291167056151,
+      "model_ps": {
+        "v1": 0.368,
+        "v1.5": 0.38799999999999996,
+        "v1.6": 0.385,
+        "v1.7": 0.319,
+        "v1.7-pr43": 0.44,
+        "v2": 0.598
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 5,
+      "line": 30.5,
+      "market": "receiving_yards",
+      "market_p": 0.498948387502836,
+      "model_ps": {
+        "v1": 0.36,
+        "v1.5": 0.378,
+        "v1.6": 0.37,
+        "v1.7": 0.31,
+        "v1.7-pr43": 0.43,
+        "v2": 0.581
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 4,
+      "line": 31.5,
+      "market": "receiving_yards",
+      "market_p": 0.5014906303236797,
+      "model_ps": {
+        "v1": 0.353,
+        "v1.5": 0.371,
+        "v1.6": 0.364,
+        "v1.7": 0.299,
+        "v1.7-pr43": 0.42,
+        "v2": 0.57
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 1,
+      "line": 32.5,
+      "market": "receiving_yards",
+      "market_p": 0.5037884527958782,
+      "model_ps": {
+        "v1": 0.347,
+        "v1.5": 0.357,
+        "v1.6": 0.353,
+        "v1.7": 0.296,
+        "v1.7-pr43": 0.41,
+        "v2": 0.557
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 3,
+      "line": 34.5,
+      "market": "receiving_yards",
+      "market_p": 0.501230920728705,
+      "model_ps": {
+        "v1": 0.334,
+        "v1.5": 0.333,
+        "v1.6": 0.334,
+        "v1.7": 0.278,
+        "v1.7-pr43": 0.4000000000000001,
+        "v2": 0.532
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 14.0,
+      "books": 2,
+      "line": 35.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.324,
+        "v1.5": 0.329,
+        "v1.6": 0.326,
+        "v1.7": 0.271,
+        "v1.7-pr43": 0.39,
+        "v2": 0.515
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 2.0,
+      "books": 1,
+      "line": 2.5,
+      "market": "receptions",
+      "market_p": 0.6202531645569621,
+      "model_ps": {
+        "v1": 0.378,
+        "v1.5": 0.399,
+        "v1.6": 0.407,
+        "v1.7": 0.33,
+        "v1.7-pr43": 0.45,
+        "v2": 0.669
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 2.0,
+      "books": 10,
+      "line": 3.5,
+      "market": "receptions",
+      "market_p": 0.46209287277357614,
+      "model_ps": {
+        "v1": 0.254,
+        "v1.5": 0.268,
+        "v1.6": 0.302,
+        "v1.7": 0.221,
+        "v1.7-pr43": 0.34,
+        "v2": 0.496
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 2.0,
+      "books": 1,
+      "line": 4.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.306,
+        "v1.5": 0.314,
+        "v1.6": 0.338,
+        "v1.7": 0.271,
+        "v1.7-pr43": 0.36,
+        "v2": 0.625
+      },
+      "name": "Devaughn Vele",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 0.0,
+      "books": 8,
+      "line": 44.5,
+      "market": "receiving_yards",
+      "market_p": 0.5000070354389389,
+      "model_ps": {
+        "v1": 0.212,
+        "v1.5": 0.211,
+        "v1.6": 0.215,
+        "v1.7": 0.177,
+        "v1.7-pr43": 0.18,
+        "v2": 0.292
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 5,
+      "line": 45.5,
+      "market": "receiving_yards",
+      "market_p": 0.4995028768910557,
+      "model_ps": {
+        "v1": 0.20400000000000001,
+        "v1.5": 0.203,
+        "v1.6": 0.207,
+        "v1.7": 0.175,
+        "v1.7-pr43": 0.18,
+        "v2": 0.279
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 9,
+      "line": 46.5,
+      "market": "receiving_yards",
+      "market_p": 0.4993437513574214,
+      "model_ps": {
+        "v1": 0.197,
+        "v1.5": 0.198,
+        "v1.6": 0.197,
+        "v1.7": 0.17,
+        "v1.7-pr43": 0.17,
+        "v2": 0.269
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 10,
+      "line": 47.5,
+      "market": "receiving_yards",
+      "market_p": 0.5002187464541301,
+      "model_ps": {
+        "v1": 0.19,
+        "v1.5": 0.19,
+        "v1.6": 0.185,
+        "v1.7": 0.167,
+        "v1.7-pr43": 0.17,
+        "v2": 0.261
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 6,
+      "line": 48.5,
+      "market": "receiving_yards",
+      "market_p": 0.5014811932487103,
+      "model_ps": {
+        "v1": 0.18299999999999997,
+        "v1.5": 0.18099999999999997,
+        "v1.6": 0.17600000000000002,
+        "v1.7": 0.158,
+        "v1.7-pr43": 0.15,
+        "v2": 0.249
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 11,
+      "line": 49.5,
+      "market": "receiving_yards",
+      "market_p": 0.5034000611828814,
+      "model_ps": {
+        "v1": 0.175,
+        "v1.5": 0.177,
+        "v1.6": 0.166,
+        "v1.7": 0.15,
+        "v1.7-pr43": 0.13,
+        "v2": 0.23600000000000002
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 12,
+      "line": 50.5,
+      "market": "receiving_yards",
+      "market_p": 0.5014916276755895,
+      "model_ps": {
+        "v1": 0.164,
+        "v1.5": 0.171,
+        "v1.6": 0.163,
+        "v1.7": 0.142,
+        "v1.7-pr43": 0.11,
+        "v2": 0.228
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 5,
+      "line": 51.5,
+      "market": "receiving_yards",
+      "market_p": 0.5018094089264173,
+      "model_ps": {
+        "v1": 0.158,
+        "v1.5": 0.165,
+        "v1.6": 0.156,
+        "v1.7": 0.138,
+        "v1.7-pr43": 0.11000000000000001,
+        "v2": 0.21600000000000003
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 2,
+      "line": 52.5,
+      "market": "receiving_yards",
+      "market_p": 0.502106149957877,
+      "model_ps": {
+        "v1": 0.155,
+        "v1.5": 0.155,
+        "v1.6": 0.153,
+        "v1.7": 0.135,
+        "v1.7-pr43": 0.11,
+        "v2": 0.212
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 1,
+      "line": 55.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.139,
+        "v1.5": 0.141,
+        "v1.6": 0.139,
+        "v1.7": 0.121,
+        "v1.7-pr43": 0.09,
+        "v2": 0.19
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 9,
+      "line": 4.5,
+      "market": "receptions",
+      "market_p": 0.48267239860102623,
+      "model_ps": {
+        "v1": 0.183,
+        "v1.5": 0.149,
+        "v1.6": 0.181,
+        "v1.7": 0.147,
+        "v1.7-pr43": 0.11,
+        "v2": 0.256
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 1,
+      "line": 6.0,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.202,
+        "v1.5": 0.204,
+        "v1.6": 0.2,
+        "v1.7": 0.184,
+        "v1.7-pr43": 0.16,
+        "v2": 0.312
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 4.0,
+      "books": 1,
+      "line": 6.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.202,
+        "v1.5": 0.204,
+        "v1.6": 0.2,
+        "v1.7": 0.184,
+        "v1.7-pr43": 0.16,
+        "v2": 0.312
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 1,
+      "line": 0.5,
+      "market": "total_touchdowns",
+      "market_p": 0.31955538446732745,
+      "model_ps": {
+        "v1": 0.136,
+        "v1.5": 0.098,
+        "v1.6": 0.128,
+        "v1.7": 0.114,
+        "v1.7-pr43": 0.12,
+        "v2": 0.123
+      },
+      "name": "Jalen Coker",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 35.0,
+      "books": 1,
+      "line": 59.5,
+      "market": "receiving_yards",
+      "market_p": 0.5037884527958782,
+      "model_ps": {
+        "v1": 0.486,
+        "v1.5": 0.494,
+        "v1.6": 0.503,
+        "v1.7": 0.425,
+        "v1.7-pr43": 0.36,
+        "v2": 0.574
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 35.0,
+      "books": 8,
+      "line": 60.5,
+      "market": "receiving_yards",
+      "market_p": 0.5002632354799309,
+      "model_ps": {
+        "v1": 0.474,
+        "v1.5": 0.481,
+        "v1.6": 0.491,
+        "v1.7": 0.41,
+        "v1.7-pr43": 0.34,
+        "v2": 0.563
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 35.0,
+      "books": 1,
+      "line": 61.5,
+      "market": "receiving_yards",
+      "market_p": 0.5017133262515848,
+      "model_ps": {
+        "v1": 0.463,
+        "v1.5": 0.476,
+        "v1.6": 0.485,
+        "v1.7": 0.402,
+        "v1.7-pr43": 0.32,
+        "v2": 0.552
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 35.0,
+      "books": 1,
+      "line": 62.5,
+      "market": "receiving_yards",
+      "market_p": 0.5122512062726177,
+      "model_ps": {
+        "v1": 0.45,
+        "v1.5": 0.466,
+        "v1.6": 0.466,
+        "v1.7": 0.391,
+        "v1.7-pr43": 0.3,
+        "v2": 0.539
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 35.0,
+      "books": 1,
+      "line": 63.5,
+      "market": "receiving_yards",
+      "market_p": 0.5037884527958782,
+      "model_ps": {
+        "v1": 0.433,
+        "v1.5": 0.458,
+        "v1.6": 0.455,
+        "v1.7": 0.379,
+        "v1.7-pr43": 0.3,
+        "v2": 0.527
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 35.0,
+      "books": 5,
+      "line": 64.5,
+      "market": "receiving_yards",
+      "market_p": 0.5022549756519578,
+      "model_ps": {
+        "v1": 0.42699999999999994,
+        "v1.5": 0.44699999999999995,
+        "v1.6": 0.44400000000000006,
+        "v1.7": 0.374,
+        "v1.7-pr43": 0.3,
+        "v2": 0.516
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 35.0,
+      "books": 10,
+      "line": 65.5,
+      "market": "receiving_yards",
+      "market_p": 0.500388649770771,
+      "model_ps": {
+        "v1": 0.413,
+        "v1.5": 0.438,
+        "v1.6": 0.434,
+        "v1.7": 0.368,
+        "v1.7-pr43": 0.29,
+        "v2": 0.502
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 35.0,
+      "books": 10,
+      "line": 66.5,
+      "market": "receiving_yards",
+      "market_p": 0.49885977167264484,
+      "model_ps": {
+        "v1": 0.40800000000000003,
+        "v1.5": 0.426,
+        "v1.6": 0.425,
+        "v1.7": 0.359,
+        "v1.7-pr43": 0.29,
+        "v2": 0.495
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 35.0,
+      "books": 9,
+      "line": 67.5,
+      "market": "receiving_yards",
+      "market_p": 0.4983339789165032,
+      "model_ps": {
+        "v1": 0.398,
+        "v1.5": 0.415,
+        "v1.6": 0.419,
+        "v1.7": 0.348,
+        "v1.7-pr43": 0.29,
+        "v2": 0.48799999999999993
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 35.0,
+      "books": 5,
+      "line": 68.5,
+      "market": "receiving_yards",
+      "market_p": 0.49898183595340884,
+      "model_ps": {
+        "v1": 0.383,
+        "v1.5": 0.4069999999999999,
+        "v1.6": 0.41200000000000003,
+        "v1.7": 0.338,
+        "v1.7-pr43": 0.28,
+        "v2": 0.4779999999999999
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 3.0,
+      "books": 5,
+      "line": 4.5,
+      "market": "receptions",
+      "market_p": 0.568651808685529,
+      "model_ps": {
+        "v1": 0.625,
+        "v1.5": 0.643,
+        "v1.6": 0.638,
+        "v1.7": 0.567,
+        "v1.7-pr43": 0.55,
+        "v2": 0.737
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 3.0,
+      "books": 2,
+      "line": 5.0,
+      "market": "receptions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.501,
+        "v1.5": 0.51,
+        "v1.6": 0.525,
+        "v1.7": 0.445,
+        "v1.7-pr43": 0.4,
+        "v2": 0.619
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 3.0,
+      "books": 7,
+      "line": 5.5,
+      "market": "receptions",
+      "market_p": 0.4358383900594639,
+      "model_ps": {
+        "v1": 0.501,
+        "v1.5": 0.51,
+        "v1.6": 0.525,
+        "v1.7": 0.445,
+        "v1.7-pr43": 0.4,
+        "v2": 0.619
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 7.0,
+      "books": 1,
+      "line": 8.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.649,
+        "v1.5": 0.672,
+        "v1.6": 0.651,
+        "v1.7": 0.59,
+        "v1.7-pr43": 0.59,
+        "v2": 0.713
+      },
+      "name": "Tetairoa McMillan",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 3,
+      "line": 8.5,
+      "market": "receiving_yards",
+      "market_p": 0.49845139869669713,
+      "model_ps": {
+        "v1": 0.38400000000000006,
+        "v1.5": 0.37399999999999994,
+        "v1.6": 0.38199999999999995,
+        "v1.7": 0.36400000000000005,
+        "v1.7-pr43": 0.38000000000000006,
+        "v2": 0.476
+      },
+      "name": "Mitchell Evans",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 0.0,
+      "books": 3,
+      "line": 9.5,
+      "market": "receiving_yards",
+      "market_p": 0.49876907927129494,
+      "model_ps": {
+        "v1": 0.357,
+        "v1.5": 0.3459999999999999,
+        "v1.6": 0.36400000000000005,
+        "v1.7": 0.341,
+        "v1.7-pr43": 0.32,
+        "v2": 0.445
+      },
+      "name": "Mitchell Evans",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 3.0,
+      "books": 2,
+      "line": 2.5,
+      "market": "rush_attempts",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.358,
+        "v1.5": 0.346,
+        "v1.6": 0.341,
+        "v1.7": 0.313,
+        "v1.7-pr43": 0.29,
+        "v2": 0.276
+      },
+      "name": "Trevor Etienne",
+      "over_hit": 1,
+      "team": "CAR"
+    },
+    {
+      "actual": 10.0,
+      "books": 1,
+      "line": 13.5,
+      "market": "rushing_receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.374,
+        "v1.5": 0.34,
+        "v1.6": 0.353,
+        "v1.7": 0.344,
+        "v1.7-pr43": 0.35,
+        "v2": 0.285
+      },
+      "name": "Trevor Etienne",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 8,
+      "line": 7.5,
+      "market": "rushing_yards",
+      "market_p": 0.5016824372093742,
+      "model_ps": {
+        "v1": 0.386,
+        "v1.5": 0.38,
+        "v1.6": 0.38,
+        "v1.7": 0.345,
+        "v1.7-pr43": 0.33,
+        "v2": 0.36
+      },
+      "name": "Trevor Etienne",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 2,
+      "line": 9.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.352,
+        "v1.5": 0.335,
+        "v1.6": 0.344,
+        "v1.7": 0.325,
+        "v1.7-pr43": 0.31,
+        "v2": 0.308
+      },
+      "name": "Trevor Etienne",
+      "over_hit": 0,
+      "team": "CAR"
+    },
+    {
+      "actual": 1.0,
+      "books": 10,
+      "line": 0.5,
+      "market": "interceptions_thrown",
+      "market_p": 0.5119514646026159,
+      "model_ps": {
+        "v1": 0.354,
+        "v1.5": 0.337,
+        "v1.6": 0.329,
+        "v1.7": 0.382,
+        "v1.7-pr43": 0.34,
+        "v2": 0.341
+      },
+      "name": "Tyler Shough",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 35.0,
+      "books": 9,
+      "line": 35.5,
+      "market": "pass_attempts",
+      "market_p": 0.5060982243667019,
+      "model_ps": {
+        "v1": 0.44699999999999995,
+        "v1.5": 0.4600000000000001,
+        "v1.6": 0.44,
+        "v1.7": 0.372,
+        "v1.7-pr43": 0.37,
+        "v2": 0.356
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 35.0,
+      "books": 8,
+      "line": 36.5,
+      "market": "pass_attempts",
+      "market_p": 0.48031331953147066,
+      "model_ps": {
+        "v1": 0.389,
+        "v1.5": 0.397,
+        "v1.6": 0.387,
+        "v1.7": 0.327,
+        "v1.7-pr43": 0.35,
+        "v2": 0.303
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 25.0,
+      "books": 2,
+      "line": 23.5,
+      "market": "pass_completions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.543,
+        "v1.5": 0.541,
+        "v1.6": 0.514,
+        "v1.7": 0.428,
+        "v1.7-pr43": 0.45,
+        "v2": 0.352
+      },
+      "name": "Tyler Shough",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 25.0,
+      "books": 9,
+      "line": 24.5,
+      "market": "pass_completions",
+      "market_p": 0.4924841453010988,
+      "model_ps": {
+        "v1": 0.456,
+        "v1.5": 0.441,
+        "v1.6": 0.453,
+        "v1.7": 0.342,
+        "v1.7-pr43": 0.38,
+        "v2": 0.281
+      },
+      "name": "Tyler Shough",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 212.0,
+      "books": 1,
+      "line": 266.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.589,
+        "v1.5": 0.584,
+        "v1.6": 0.609,
+        "v1.7": 0.443,
+        "v1.7-pr43": 0.43,
+        "v2": 0.287
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 212.0,
+      "books": 2,
+      "line": 269.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5025454101164779,
+      "model_ps": {
+        "v1": 0.565,
+        "v1.5": 0.565,
+        "v1.6": 0.587,
+        "v1.7": 0.418,
+        "v1.7-pr43": 0.37,
+        "v2": 0.271
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 212.0,
+      "books": 4,
+      "line": 271.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5037485474378678,
+      "model_ps": {
+        "v1": 0.552,
+        "v1.5": 0.556,
+        "v1.6": 0.574,
+        "v1.7": 0.407,
+        "v1.7-pr43": 0.37,
+        "v2": 0.26
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 212.0,
+      "books": 6,
+      "line": 272.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4994841061836663,
+      "model_ps": {
+        "v1": 0.545,
+        "v1.5": 0.551,
+        "v1.6": 0.564,
+        "v1.7": 0.4000000000000001,
+        "v1.7-pr43": 0.36000000000000004,
+        "v2": 0.256
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 212.0,
+      "books": 7,
+      "line": 273.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.5002987893057332,
+      "model_ps": {
+        "v1": 0.53,
+        "v1.5": 0.547,
+        "v1.6": 0.56,
+        "v1.7": 0.39,
+        "v1.7-pr43": 0.35,
+        "v2": 0.24899999999999997
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 212.0,
+      "books": 6,
+      "line": 274.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4986897483854218,
+      "model_ps": {
+        "v1": 0.527,
+        "v1.5": 0.542,
+        "v1.6": 0.553,
+        "v1.7": 0.385,
+        "v1.7-pr43": 0.3499999999999999,
+        "v2": 0.243
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 212.0,
+      "books": 8,
+      "line": 275.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.4997664902876122,
+      "model_ps": {
+        "v1": 0.52,
+        "v1.5": 0.539,
+        "v1.6": 0.542,
+        "v1.7": 0.375,
+        "v1.7-pr43": 0.35,
+        "v2": 0.236
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 212.0,
+      "books": 5,
+      "line": 276.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49846885633182125,
+      "model_ps": {
+        "v1": 0.515,
+        "v1.5": 0.536,
+        "v1.6": 0.536,
+        "v1.7": 0.369,
+        "v1.7-pr43": 0.34,
+        "v2": 0.229
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 212.0,
+      "books": 3,
+      "line": 277.5,
+      "market": "passing_rushing_yards",
+      "market_p": 0.49221358449195196,
+      "model_ps": {
+        "v1": 0.511,
+        "v1.5": 0.532,
+        "v1.6": 0.528,
+        "v1.7": 0.36599999999999994,
+        "v1.7-pr43": 0.34,
+        "v2": 0.228
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 1.0,
+      "books": 11,
+      "line": 1.5,
+      "market": "passing_touchdowns",
+      "market_p": 0.5296992067626616,
+      "model_ps": {
+        "v1": 0.43700000000000006,
+        "v1.5": 0.47200000000000003,
+        "v1.6": 0.6,
+        "v1.7": 0.483,
+        "v1.7-pr43": 0.47,
+        "v2": 0.301
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 1,
+      "line": 230.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.71,
+        "v1.5": 0.698,
+        "v1.6": 0.697,
+        "v1.7": 0.55,
+        "v1.7-pr43": 0.56,
+        "v2": 0.364
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 1,
+      "line": 236.5,
+      "market": "passing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.67,
+        "v1.5": 0.656,
+        "v1.6": 0.662,
+        "v1.7": 0.509,
+        "v1.7-pr43": 0.52,
+        "v2": 0.336
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 1,
+      "line": 246.5,
+      "market": "passing_yards",
+      "market_p": 0.5346534653465347,
+      "model_ps": {
+        "v1": 0.588,
+        "v1.5": 0.581,
+        "v1.6": 0.588,
+        "v1.7": 0.431,
+        "v1.7-pr43": 0.42,
+        "v2": 0.276
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 2,
+      "line": 248.5,
+      "market": "passing_yards",
+      "market_p": 0.5114295322203627,
+      "model_ps": {
+        "v1": 0.573,
+        "v1.5": 0.565,
+        "v1.6": 0.577,
+        "v1.7": 0.411,
+        "v1.7-pr43": 0.4,
+        "v2": 0.271
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 2,
+      "line": 249.5,
+      "market": "passing_yards",
+      "market_p": 0.5031714743543424,
+      "model_ps": {
+        "v1": 0.564,
+        "v1.5": 0.555,
+        "v1.6": 0.572,
+        "v1.7": 0.403,
+        "v1.7-pr43": 0.4,
+        "v2": 0.262
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 7,
+      "line": 250.5,
+      "market": "passing_yards",
+      "market_p": 0.5033856733297982,
+      "model_ps": {
+        "v1": 0.554,
+        "v1.5": 0.55,
+        "v1.6": 0.562,
+        "v1.7": 0.396,
+        "v1.7-pr43": 0.38,
+        "v2": 0.258
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 7,
+      "line": 251.5,
+      "market": "passing_yards",
+      "market_p": 0.5002095039118294,
+      "model_ps": {
+        "v1": 0.551,
+        "v1.5": 0.542,
+        "v1.6": 0.559,
+        "v1.7": 0.39300000000000007,
+        "v1.7-pr43": 0.38,
+        "v2": 0.248
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 12,
+      "line": 252.5,
+      "market": "passing_yards",
+      "market_p": 0.4998309267223619,
+      "model_ps": {
+        "v1": 0.543,
+        "v1.5": 0.54,
+        "v1.6": 0.551,
+        "v1.7": 0.38599999999999995,
+        "v1.7-pr43": 0.38000000000000006,
+        "v2": 0.245
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 5,
+      "line": 253.5,
+      "market": "passing_yards",
+      "market_p": 0.49939064107177933,
+      "model_ps": {
+        "v1": 0.537,
+        "v1.5": 0.534,
+        "v1.6": 0.54,
+        "v1.7": 0.381,
+        "v1.7-pr43": 0.37,
+        "v2": 0.24
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 1,
+      "line": 254.5,
+      "market": "passing_yards",
+      "market_p": 0.5036927621861153,
+      "model_ps": {
+        "v1": 0.528,
+        "v1.5": 0.524,
+        "v1.6": 0.534,
+        "v1.7": 0.378,
+        "v1.7-pr43": 0.36,
+        "v2": 0.234
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 2,
+      "line": 255.5,
+      "market": "passing_yards",
+      "market_p": 0.5023168364938857,
+      "model_ps": {
+        "v1": 0.523,
+        "v1.5": 0.52,
+        "v1.6": 0.528,
+        "v1.7": 0.373,
+        "v1.7-pr43": 0.35,
+        "v2": 0.228
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 187.0,
+      "books": 2,
+      "line": 256.5,
+      "market": "passing_yards",
+      "market_p": 0.4863831329913104,
+      "model_ps": {
+        "v1": 0.514,
+        "v1.5": 0.515,
+        "v1.6": 0.527,
+        "v1.7": 0.364,
+        "v1.7-pr43": 0.34,
+        "v2": 0.224
+      },
+      "name": "Tyler Shough",
+      "over_hit": 0,
+      "team": "NO"
+    },
+    {
+      "actual": 6.0,
+      "books": 6,
+      "line": 4.5,
+      "market": "rush_attempts",
+      "market_p": 0.5219036923996073,
+      "model_ps": {
+        "v1": 0.407,
+        "v1.5": 0.423,
+        "v1.6": 0.389,
+        "v1.7": 0.353,
+        "v1.7-pr43": 0.32,
+        "v2": 0.361
+      },
+      "name": "Tyler Shough",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 25.0,
+      "books": 1,
+      "line": 14.5,
+      "market": "rushing_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.569,
+        "v1.5": 0.562,
+        "v1.6": 0.578,
+        "v1.7": 0.546,
+        "v1.7-pr43": 0.62,
+        "v2": 0.558
+      },
+      "name": "Tyler Shough",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 25.0,
+      "books": 2,
+      "line": 15.5,
+      "market": "rushing_yards",
+      "market_p": 0.500470455400828,
+      "model_ps": {
+        "v1": 0.546,
+        "v1.5": 0.54,
+        "v1.6": 0.547,
+        "v1.7": 0.52,
+        "v1.7-pr43": 0.59,
+        "v2": 0.53
+      },
+      "name": "Tyler Shough",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 25.0,
+      "books": 11,
+      "line": 16.5,
+      "market": "rushing_yards",
+      "market_p": 0.5042012827207282,
+      "model_ps": {
+        "v1": 0.52,
+        "v1.5": 0.516,
+        "v1.6": 0.519,
+        "v1.7": 0.49500000000000005,
+        "v1.7-pr43": 0.55,
+        "v2": 0.507
+      },
+      "name": "Tyler Shough",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 25.0,
+      "books": 7,
+      "line": 17.5,
+      "market": "rushing_yards",
+      "market_p": 0.4968896236594339,
+      "model_ps": {
+        "v1": 0.489,
+        "v1.5": 0.49400000000000005,
+        "v1.6": 0.501,
+        "v1.7": 0.467,
+        "v1.7-pr43": 0.51,
+        "v2": 0.484
+      },
+      "name": "Tyler Shough",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 25.0,
+      "books": 3,
+      "line": 18.5,
+      "market": "rushing_yards",
+      "market_p": 0.4964060367214275,
+      "model_ps": {
+        "v1": 0.464,
+        "v1.5": 0.468,
+        "v1.6": 0.472,
+        "v1.7": 0.427,
+        "v1.7-pr43": 0.49,
+        "v2": 0.462
+      },
+      "name": "Tyler Shough",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 3,
+      "line": 27.5,
+      "market": "receiving_yards",
+      "market_p": 0.4996903487911217,
+      "model_ps": {
+        "v1": 0.066,
+        "v1.5": 0.05000000000000001,
+        "v1.6": 0.04700000000000001,
+        "v1.7": 0.044000000000000004,
+        "v1.7-pr43": 0.04,
+        "v2": 0.002
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 3,
+      "line": 28.5,
+      "market": "receiving_yards",
+      "market_p": 0.5009409816320386,
+      "model_ps": {
+        "v1": 0.064,
+        "v1.5": 0.04800000000000001,
+        "v1.6": 0.042,
+        "v1.7": 0.041,
+        "v1.7-pr43": 0.04,
+        "v2": 0.002
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 2,
+      "line": 29.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.06,
+        "v1.5": 0.044,
+        "v1.6": 0.041,
+        "v1.7": 0.036,
+        "v1.7-pr43": 0.04,
+        "v2": 0.002
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 2,
+      "line": 31.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.053,
+        "v1.5": 0.039,
+        "v1.6": 0.038,
+        "v1.7": 0.034,
+        "v1.7-pr43": 0.04,
+        "v2": 0.001
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 5,
+      "line": 32.5,
+      "market": "receiving_yards",
+      "market_p": 0.5011568124909258,
+      "model_ps": {
+        "v1": 0.049,
+        "v1.5": 0.035,
+        "v1.6": 0.036,
+        "v1.7": 0.031,
+        "v1.7-pr43": 0.04,
+        "v2": 0.001
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 1,
+      "line": 33.5,
+      "market": "receiving_yards",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.045,
+        "v1.5": 0.033,
+        "v1.6": 0.035,
+        "v1.7": 0.029,
+        "v1.7-pr43": 0.04,
+        "v2": 0.001
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 3,
+      "line": 39.5,
+      "market": "receiving_yards",
+      "market_p": 0.5010904630380326,
+      "model_ps": {
+        "v1": 0.03,
+        "v1.5": 0.027,
+        "v1.6": 0.029,
+        "v1.7": 0.019,
+        "v1.7-pr43": 0.03,
+        "v2": 0.001
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 5,
+      "line": 40.5,
+      "market": "receiving_yards",
+      "market_p": 0.5002718452169579,
+      "model_ps": {
+        "v1": 0.029000000000000005,
+        "v1.5": 0.026000000000000002,
+        "v1.6": 0.028000000000000004,
+        "v1.7": 0.016,
+        "v1.7-pr43": 0.03,
+        "v2": 0.001
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 11,
+      "line": 41.5,
+      "market": "receiving_yards",
+      "market_p": 0.5007891102012741,
+      "model_ps": {
+        "v1": 0.029,
+        "v1.5": 0.025,
+        "v1.6": 0.025,
+        "v1.7": 0.016,
+        "v1.7-pr43": 0.029999999999999995,
+        "v2": 0.001
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 7,
+      "line": 42.5,
+      "market": "receiving_yards",
+      "market_p": 0.4977434011167778,
+      "model_ps": {
+        "v1": 0.026,
+        "v1.5": 0.024,
+        "v1.6": 0.024,
+        "v1.7": 0.016,
+        "v1.7-pr43": 0.03,
+        "v2": 0.001
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 1,
+      "line": 43.5,
+      "market": "receiving_yards",
+      "market_p": 0.4839610536644275,
+      "model_ps": {
+        "v1": 0.024,
+        "v1.5": 0.023,
+        "v1.6": 0.023,
+        "v1.7": 0.015,
+        "v1.7-pr43": 0.03,
+        "v2": 0.001
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 80.0,
+      "books": 1,
+      "line": 44.5,
+      "market": "receiving_yards",
+      "market_p": 0.4653465346534653,
+      "model_ps": {
+        "v1": 0.022,
+        "v1.5": 0.022,
+        "v1.6": 0.022,
+        "v1.7": 0.014,
+        "v1.7-pr43": 0.03,
+        "v2": 0.001
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 11.0,
+      "books": 10,
+      "line": 3.5,
+      "market": "receptions",
+      "market_p": 0.5393587160577389,
+      "model_ps": {
+        "v1": 0.024,
+        "v1.5": 0.021,
+        "v1.6": 0.014000000000000002,
+        "v1.7": 0.013000000000000001,
+        "v1.7-pr43": 0.05,
+        "v2": 0.0
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 11.0,
+      "books": 2,
+      "line": 4.0,
+      "market": "receptions",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.014,
+        "v1.5": 0.007,
+        "v1.6": 0.007,
+        "v1.7": 0.006,
+        "v1.7-pr43": 0.03,
+        "v2": 0.0
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 11.0,
+      "books": 6,
+      "line": 4.5,
+      "market": "receptions",
+      "market_p": 0.42259509686522617,
+      "model_ps": {
+        "v1": 0.014,
+        "v1.5": 0.007,
+        "v1.6": 0.007,
+        "v1.7": 0.006000000000000001,
+        "v1.7-pr43": 0.03,
+        "v2": 0.0
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    },
+    {
+      "actual": 13.0,
+      "books": 1,
+      "line": 6.5,
+      "market": "targets",
+      "market_p": 0.5,
+      "model_ps": {
+        "v1": 0.011,
+        "v1.5": 0.008,
+        "v1.6": 0.008,
+        "v1.7": 0.004,
+        "v1.7-pr43": 0.03,
+        "v2": 0.0
+      },
+      "name": "Jordyn Tyson",
+      "over_hit": 1,
+      "team": "NO"
+    }
+  ],
+  "kickoff": "2026-11-15T18:00:00Z",
+  "raw_quote_rows": 1145,
+  "summary": {
+    "constant_50": {
+      "brier": 0.25,
+      "n": 238
+    },
+    "market": {
+      "brier": 0.2505010225590526,
+      "n": 238
+    },
+    "v1": {
+      "brier": 0.29912975210084036,
+      "n": 238
+    },
+    "v1.5": {
+      "brier": 0.3053276386554622,
+      "n": 238
+    },
+    "v1.6": {
+      "brier": 0.30595171848739494,
+      "n": 238
+    },
+    "v1.7": {
+      "brier": 0.2730269033613445,
+      "n": 238
+    },
+    "v1.7-pr43": {
+      "brier": 0.26736596638655463,
+      "n": 238
+    },
+    "v2": {
+      "brier": 0.25737773529411767,
+      "n": 238
+    }
+  }
+}
