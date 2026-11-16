@@ -1,14 +1,16 @@
 # Week 10, all twelve games: SLC family grading
 
-**Read with [../GRADING-CAVEATS.md](../GRADING-CAVEATS.md):** two tiers (26 rows at
-1,000 seeds, 40 at 100 seeds with 0.01 granularity), two classified seed failures
-(HOU_CLE v1.7 seed 300055, JAX_TEN v1.7-pr43 seed 300088), and the v1.7 arms here are
-PR #42/#43 at `v1_full_stack` - not the PR #47 `v1_7_candidate` profile, so these are
-not a validation of PR #47.
-
 Per game, per arm. Tier says which batch the numbers come from: `1000-seed` for the
 frozen blocks, `100-seed` for the blocks re-run after the stop. Tiers are never mixed
 inside one arm.
+
+**Read with [../GRADING-CAVEATS.md](../GRADING-CAVEATS.md):** two tiers - 1,000-seed
+blocks and 100-seed blocks with 0.01 probability granularity - never mixed inside one arm.
+Two seeds are excluded as simulation errors (HOU_CLE v1.7 seed 300055, JAX_TEN v1.7-pr43
+seed 300088; `sack_fumble_lost` past the goal line). The v1.7 arms are PR #42 `6ac6180c` and
+PR #43 `984751d5` at `--slc-profile v1_full_stack`, not PR #47 `v1_7_candidate`, so these
+numbers do not validate the PR #47 candidate.
+
 
 ## Game level
 
@@ -68,6 +70,12 @@ inside one arm.
 | NE_DET | 1000-seed | v1.7 | 1000 | 65.4% | 0.120 | 20.56 |
 | NE_DET | 1000-seed | v1.7-pr43 | 1000 | 63.0% | 0.137 | 20.65 |
 | NE_DET | 1000-seed | v2 | 1000 | 57.8% | 0.178 | 22.43 |
+| PIT_CIN | 100-seed | v1 | 100 | 68.0% | 0.102 | 14.73 |
+| PIT_CIN | 100-seed | v1.5 | 100 | 64.0% | 0.130 | 15.80 |
+| PIT_CIN | 100-seed | v1.6 | 100 | 68.0% | 0.102 | 13.85 |
+| PIT_CIN | 100-seed | v1.7 | 100 | 65.0% | 0.122 | 15.16 |
+| PIT_CIN | 100-seed | v1.7-pr43 | 100 | 58.0% | 0.176 | 17.04 |
+| PIT_CIN | 100-seed | v2 | 100 | 65.0% | 0.122 | 17.36 |
 | SEA_LV | 100-seed | v1 | 100 | 32.0% | 0.102 | 9.04 |
 | SEA_LV | 100-seed | v1.5 | 100 | 30.0% | 0.090 | 12.41 |
 | SEA_LV | 100-seed | v1.6 | 100 | 26.0% | 0.068 | 12.93 |
@@ -139,6 +147,12 @@ inside one arm.
 | NE_DET | v1.7 | 1000-seed | 237 | 0.2393 | 0.2506 |
 | NE_DET | v1.7-pr43 | 1000-seed | 237 | 0.2501 | 0.2506 |
 | NE_DET | v2 | 1000-seed | 237 | 0.2391 | 0.2506 |
+| PIT_CIN | v1 | 100-seed | 301 | 0.2310 | 0.2505 |
+| PIT_CIN | v1.5 | 100-seed | 301 | 0.2323 | 0.2505 |
+| PIT_CIN | v1.6 | 100-seed | 301 | 0.2282 | 0.2505 |
+| PIT_CIN | v1.7 | 100-seed | 301 | 0.2273 | 0.2505 |
+| PIT_CIN | v1.7-pr43 | 100-seed | 301 | 0.2479 | 0.2505 |
+| PIT_CIN | v2 | 100-seed | 301 | 0.2605 | 0.2505 |
 | SEA_LV | v1 | 100-seed | 224 | 0.2396 | 0.2498 |
 | SEA_LV | v1.5 | 100-seed | 224 | 0.2578 | 0.2498 |
 | SEA_LV | v1.6 | 100-seed | 224 | 0.2632 | 0.2498 |
@@ -151,5 +165,3 @@ inside one arm.
 | SF_DAL | v1.7 | 100-seed | 243 | 0.4221 | 0.2508 |
 | SF_DAL | v1.7-pr43 | 100-seed | 243 | 0.4455 | 0.2508 |
 | SF_DAL | v2 | 100-seed | 243 | 0.3553 | 0.2508 |
-
-Pending: still in progress at grading time - PIT_CIN (STATUS_IN_PROGRESS)
