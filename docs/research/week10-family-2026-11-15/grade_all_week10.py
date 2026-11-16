@@ -18,6 +18,23 @@ ARMS = ("v1", "v1.5", "v1.6", "v1.7", "v1.7-pr43", "v2")
 BIG = BASE / "runs"
 SMALL = BASE / "runs100"
 PROPS_DB = BASE / "props_week10.db"
+CAVEAT_MD = """**Read with [../GRADING-CAVEATS.md](../GRADING-CAVEATS.md):** two tiers - 1,000-seed
+blocks and 100-seed blocks - never mixed inside one arm. The binding precision limit is Monte
+Carlo error, not the 0.01 step: one game's win probability is a single Bernoulli draw, and the
+12-game arm spread of ~0.04 is inside one standard error (~0.06). Two seeds are excluded as
+simulation errors (HOU_CLE v1.7 seed 300055, JAX_TEN v1.7-pr43 seed 300088;
+`sack_fumble_lost` past the goal line - repair in PR #49). The v1.7 arms are PR #42 `6ac6180c`
+and PR #43 `984751d5` at `--slc-profile v1_full_stack`, not PR #47 `v1_7_candidate`, so these
+numbers do not validate the PR #47 candidate.
+"""
+SEED_FAILURES = [
+    {"game": "2026_10_HOU_CLE", "arm": "v1.7", "seed": 300055, "valid_seeds": 99,
+     "status": "simulation_error", "failure_class": "FootballAssertionError/ILLEGAL_STATE",
+     "violated_assertion": "sack_fumble_lost loss -9 carries the ball past its own goal line"},
+    {"game": "2026_10_JAX_TEN", "arm": "v1.7-pr43", "seed": 300088, "valid_seeds": 99,
+     "status": "simulation_error", "failure_class": "FootballAssertionError/ILLEGAL_STATE",
+     "violated_assertion": "sack_fumble_lost loss -9 carries the ball past its own goal line"},
+]
 ESPN = BASE / "inputs"
 
 
@@ -98,12 +115,21 @@ def main():
             })
 
     (OUT / "all-games-grading.json").write_text(json.dumps(
-        {"rows": rows, "failures": failures, "pending_not_final": pending}, indent=2, sort_keys=True) + "\n")
+        {"rows": rows, "failures": failures, "pending_not_final": pending,
+         "caveats": {
+             "tier_counts": {t: sum(1 for r in rows if r.get("tier") == t)
+                             for t in ("1000-seed", "100-seed")},
+             "seed_failures": SEED_FAILURES,
+             "profile": {"v1.7": "PR #42 6ac6180c, feature/slc-v1.7-penalty-model-2026-11-12",
+                         "v1.7-pr43": "PR #43 984751d5, fix/slc-v1.7-fractional-state-precision-2026-11-13",
+                         "slc_profile": "v1_full_stack", "playcall_pass_label_mode": "conditional",
+                         "note": "not PR #47 v1_7_candidate; these results do not validate PR #47"}}},
+        indent=2, sort_keys=True) + "\n")
 
     lines = ["# Week 10, all twelve games: SLC family grading", "",
              "Per game, per arm. Tier says which batch the numbers come from: `1000-seed` for the",
              "frozen blocks, `100-seed` for the blocks re-run after the stop. Tiers are never mixed",
-             "inside one arm.", "",
+             "inside one arm.", "", CAVEAT_MD, "",
              "## Game level", "",
              "| Game | Tier | Arm | Seeds | P(home) | Home Brier | Score error |", "|---|---|---|---:|---:|---:|---:|"]
     for r in sorted(rows, key=lambda r: (r["game"], r["arm"])):

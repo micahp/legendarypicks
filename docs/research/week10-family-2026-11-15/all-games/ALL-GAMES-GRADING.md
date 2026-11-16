@@ -5,10 +5,12 @@ frozen blocks, `100-seed` for the blocks re-run after the stop. Tiers are never 
 inside one arm.
 
 **Read with [../GRADING-CAVEATS.md](../GRADING-CAVEATS.md):** two tiers - 1,000-seed
-blocks and 100-seed blocks with 0.01 probability granularity - never mixed inside one arm.
-Two seeds are excluded as simulation errors (HOU_CLE v1.7 seed 300055, JAX_TEN v1.7-pr43
-seed 300088; `sack_fumble_lost` past the goal line). The v1.7 arms are PR #42 `6ac6180c` and
-PR #43 `984751d5` at `--slc-profile v1_full_stack`, not PR #47 `v1_7_candidate`, so these
+blocks and 100-seed blocks - never mixed inside one arm. The binding precision limit is Monte
+Carlo error, not the 0.01 step: one game's win probability is a single Bernoulli draw, and the
+12-game arm spread of ~0.04 is inside one standard error (~0.06). Two seeds are excluded as
+simulation errors (HOU_CLE v1.7 seed 300055, JAX_TEN v1.7-pr43 seed 300088;
+`sack_fumble_lost` past the goal line - repair in PR #49). The v1.7 arms are PR #42 `6ac6180c`
+and PR #43 `984751d5` at `--slc-profile v1_full_stack`, not PR #47 `v1_7_candidate`, so these
 numbers do not validate the PR #47 candidate.
 
 
