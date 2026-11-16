@@ -1,0 +1,642 @@
+{
+  "book_settlement_disagreements": 0,
+  "by_market": {
+    "pass_attempts": {
+      "items": 1393,
+      "platt_vs_market_brier": {
+        "ci95": [
+          -0.007598968671475859,
+          0.0048316176182783
+        ],
+        "delta": -0.002247648884406317,
+        "established": false
+      },
+      "platt_vs_raw_brier": {
+        "ci95": [
+          9.775726338012714e-05,
+          0.025746047345035217
+        ],
+        "delta": 0.012455247496861166,
+        "established": true
+      },
+      "platt_vs_raw_logloss": {
+        "ci95": [
+          0.00034524867106033863,
+          0.05349105576746338
+        ],
+        "delta": 0.02612337432146261,
+        "established": true
+      },
+      "player_games": 190,
+      "scores": {
+        "p_forward": {
+          "auc": 0.45660044387318616,
+          "brier": 0.2520403993983295,
+          "logloss": 0.6972745260871762
+        },
+        "p_market": {
+          "auc": 0.5214321729534925,
+          "brier": 0.2497927505139232,
+          "logloss": 0.6927300242945753
+        },
+        "p_ours": {
+          "auc": 0.4792931505490554,
+          "brier": 0.2644956468951907,
+          "logloss": 0.7233979004086388
+        }
+      },
+      "weeks": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    "pass_completions": {
+      "items": 1189,
+      "platt_vs_market_brier": {
+        "ci95": [
+          -0.012903609153381096,
+          0.00039889758975791834
+        ],
+        "delta": -0.006975713648561727,
+        "established": false
+      },
+      "platt_vs_raw_brier": {
+        "ci95": [
+          -0.0023644756564524805,
+          0.023978380681883182
+        ],
+        "delta": 0.009221877556199909,
+        "established": false
+      },
+      "platt_vs_raw_logloss": {
+        "ci95": [
+          -0.004052151036276541,
+          0.05086114022906252
+        ],
+        "delta": 0.01997411511001823,
+        "established": false
+      },
+      "player_games": 190,
+      "scores": {
+        "p_forward": {
+          "auc": 0.4652212690053512,
+          "brier": 0.2539283133605372,
+          "logloss": 0.7010562106169159
+        },
+        "p_market": {
+          "auc": 0.5798791018998273,
+          "brier": 0.24695259971197545,
+          "logloss": 0.6870431229781091
+        },
+        "p_ours": {
+          "auc": 0.4708811121492681,
+          "brier": 0.2631501909167371,
+          "logloss": 0.7210303257269342
+        }
+      },
+      "weeks": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    "passing_touchdowns": {
+      "items": 1186,
+      "platt_vs_market_brier": {
+        "ci95": [
+          -0.023177168283120136,
+          0.0022026670159210893
+        ],
+        "delta": -0.010752507386851101,
+        "established": false
+      },
+      "platt_vs_raw_brier": {
+        "ci95": [
+          -0.021486247421073162,
+          0.009267061358881612
+        ],
+        "delta": -0.005036623480864255,
+        "established": false
+      },
+      "platt_vs_raw_logloss": {
+        "ci95": [
+          -0.04443098780506061,
+          0.0194412289543342
+        ],
+        "delta": -0.01038934813751835,
+        "established": false
+      },
+      "player_games": 188,
+      "scores": {
+        "p_forward": {
+          "auc": 0.5617533392672808,
+          "brier": 0.24822969241003737,
+          "logloss": 0.6895819535855666
+        },
+        "p_market": {
+          "auc": 0.6309985240964712,
+          "brier": 0.23747718502318627,
+          "logloss": 0.6677217969893117
+        },
+        "p_ours": {
+          "auc": 0.6135436187789529,
+          "brier": 0.2431930689291731,
+          "logloss": 0.6791926054480483
+        }
+      },
+      "weeks": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    "passing_yards": {
+      "items": 10507,
+      "platt_vs_market_brier": {
+        "ci95": [
+          -0.00887350989585664,
+          0.003655067546673385
+        ],
+        "delta": -0.0037840297633671693,
+        "established": false
+      },
+      "platt_vs_raw_brier": {
+        "ci95": [
+          0.007589168218608611,
+          0.03445317753583663
+        ],
+        "delta": 0.01829337256440408,
+        "established": true
+      },
+      "platt_vs_raw_logloss": {
+        "ci95": [
+          0.016194678024713527,
+          0.07249802208483824
+        ],
+        "delta": 0.03872746309580277,
+        "established": true
+      },
+      "player_games": 190,
+      "scores": {
+        "p_forward": {
+          "auc": 0.509186195113612,
+          "brier": 0.24798627263046555,
+          "logloss": 0.6891333003125687
+        },
+        "p_market": {
+          "auc": 0.5643708182595787,
+          "brier": 0.24420224286709838,
+          "logloss": 0.6813298567712688
+        },
+        "p_ours": {
+          "auc": 0.5014467092825615,
+          "brier": 0.26627964519486963,
+          "logloss": 0.7278607634083715
+        }
+      },
+      "weeks": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    "receiving_yards": {
+      "items": 32029,
+      "platt_vs_market_brier": {
+        "ci95": [
+          0.0009664968995571344,
+          0.004767148790500442
+        ],
+        "delta": 0.002919595530623098,
+        "established": true
+      },
+      "platt_vs_raw_brier": {
+        "ci95": [
+          0.009166217083204975,
+          0.029571269710568032
+        ],
+        "delta": 0.018310168002428545,
+        "established": true
+      },
+      "platt_vs_raw_logloss": {
+        "ci95": [
+          0.021332503181017426,
+          0.06632825739277659
+        ],
+        "delta": 0.04122117308958695,
+        "established": true
+      },
+      "player_games": 1370,
+      "scores": {
+        "p_forward": {
+          "auc": 0.5511088022251783,
+          "brier": 0.24506783640568483,
+          "logloss": 0.6819865519939697
+        },
+        "p_market": {
+          "auc": 0.5415331975010764,
+          "brier": 0.24798743193630793,
+          "logloss": 0.6890658852230416
+        },
+        "p_ours": {
+          "auc": 0.5621151863287585,
+          "brier": 0.2633780044081134,
+          "logloss": 0.7232077250835567
+        }
+      },
+      "weeks": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    "receptions": {
+      "items": 8140,
+      "platt_vs_market_brier": {
+        "ci95": [
+          -0.006503114906781293,
+          0.00012430842382310514
+        ],
+        "delta": -0.0032784044934939804,
+        "established": false
+      },
+      "platt_vs_raw_brier": {
+        "ci95": [
+          0.012167291106232742,
+          0.03095603299450872
+        ],
+        "delta": 0.02065973284191963,
+        "established": true
+      },
+      "platt_vs_raw_logloss": {
+        "ci95": [
+          0.03419364891249188,
+          0.0755852418668298
+        ],
+        "delta": 0.05433589229232372,
+        "established": true
+      },
+      "player_games": 1348,
+      "scores": {
+        "p_forward": {
+          "auc": 0.57222896958285,
+          "brier": 0.2468662977631167,
+          "logloss": 0.6870526945947979
+        },
+        "p_market": {
+          "auc": 0.5884989017182413,
+          "brier": 0.2435878932696227,
+          "logloss": 0.6802594189930438
+        },
+        "p_ours": {
+          "auc": 0.5751338095586017,
+          "brier": 0.2675260306050363,
+          "logloss": 0.7413885868871216
+        }
+      },
+      "weeks": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    }
+  },
+  "candidate_state": "research_candidate_not_promoted",
+  "excluded": {
+    "no_projection": 0,
+    "not_lead_passer": 2737,
+    "not_played": 3428,
+    "one_side": 1,
+    "position": 0,
+    "quote_after_kickoff": 23652,
+    "quote_time_unknown": 0,
+    "quotes_unpaired_clock": 3,
+    "schedule_time_unknown": 0,
+    "week": 8258,
+    "whole_line": 1
+  },
+  "fits": {
+    "10": {
+      "intercept": 0.21086904051661004,
+      "model_id": "nfl-player-props-v2-forward-platt-v1",
+      "slope": 0.4196545405093368,
+      "train_items": 56938,
+      "train_player_games": 1615,
+      "train_through_week": 9
+    },
+    "2": null,
+    "3": {
+      "intercept": 0.04105841043593148,
+      "model_id": "nfl-player-props-v2-forward-platt-v1",
+      "slope": 0.1571923612939688,
+      "train_items": 6895,
+      "train_player_games": 211,
+      "train_through_week": 2
+    },
+    "4": {
+      "intercept": 0.08230832363803962,
+      "model_id": "nfl-player-props-v2-forward-platt-v1",
+      "slope": 0.06670719567308289,
+      "train_items": 13799,
+      "train_player_games": 422,
+      "train_through_week": 3
+    },
+    "5": {
+      "intercept": 0.11399923316784236,
+      "model_id": "nfl-player-props-v2-forward-platt-v1",
+      "slope": 0.0467895843277185,
+      "train_items": 21491,
+      "train_player_games": 641,
+      "train_through_week": 4
+    },
+    "6": {
+      "intercept": 0.13251367273147927,
+      "model_id": "nfl-player-props-v2-forward-platt-v1",
+      "slope": 0.16064012269429917,
+      "train_items": 28533,
+      "train_player_games": 843,
+      "train_through_week": 5
+    },
+    "7": {
+      "intercept": 0.1925655471326254,
+      "model_id": "nfl-player-props-v2-forward-platt-v1",
+      "slope": 0.2901125458133268,
+      "train_items": 35068,
+      "train_player_games": 1026,
+      "train_through_week": 6
+    },
+    "8": {
+      "intercept": 0.2260768835452681,
+      "model_id": "nfl-player-props-v2-forward-platt-v1",
+      "slope": 0.3961959847003386,
+      "train_items": 42429,
+      "train_player_games": 1224,
+      "train_through_week": 7
+    },
+    "9": {
+      "intercept": 0.21717451489549333,
+      "model_id": "nfl-player-props-v2-forward-platt-v1",
+      "slope": 0.3863515249709909,
+      "train_items": 49949,
+      "train_player_games": 1422,
+      "train_through_week": 8
+    }
+  },
+  "input_items": 61339,
+  "market_increment": {
+    "brier_improvement": {
+      "ci95": [
+        0.00028449645606370977,
+        0.003428896696934497
+      ],
+      "delta": 0.0018729477475868117,
+      "established": true
+    },
+    "by_market": {
+      "pass_attempts": {
+        "brier_improvement": {
+          "ci95": [
+            -0.0056522207491955245,
+            0.0034724720312858393
+          ],
+          "delta": -0.0015778555667546046,
+          "established": false
+        },
+        "items": 1202,
+        "logloss_improvement": {
+          "ci95": [
+            -0.01143399279944557,
+            0.007012051456368629
+          ],
+          "delta": -0.003210710777967196,
+          "established": false
+        },
+        "player_games": 164
+      },
+      "pass_completions": {
+        "brier_improvement": {
+          "ci95": [
+            -0.008206964326667787,
+            0.000733154975236322
+          ],
+          "delta": -0.0038700880070937915,
+          "established": false
+        },
+        "items": 1026,
+        "logloss_improvement": {
+          "ci95": [
+            -0.016550654590903213,
+            0.0016197698558133578
+          ],
+          "delta": -0.007772495400181878,
+          "established": false
+        },
+        "player_games": 164
+      },
+      "passing_touchdowns": {
+        "brier_improvement": {
+          "ci95": [
+            -0.005727392441531587,
+            0.0037544755535584007
+          ],
+          "delta": -0.0011487184028510233,
+          "established": false
+        },
+        "items": 1028,
+        "logloss_improvement": {
+          "ci95": [
+            -0.012913141173322318,
+            0.008466556865167285
+          ],
+          "delta": -0.0026828876243206734,
+          "established": false
+        },
+        "player_games": 162
+      },
+      "passing_yards": {
+        "brier_improvement": {
+          "ci95": [
+            -0.00556262977149774,
+            0.004503869005981237
+          ],
+          "delta": -0.0008117011352100911,
+          "established": false
+        },
+        "items": 9230,
+        "logloss_improvement": {
+          "ci95": [
+            -0.011907215008891359,
+            0.009434715641689406
+          ],
+          "delta": -0.0017844381780482976,
+          "established": false
+        },
+        "player_games": 164
+      },
+      "receiving_yards": {
+        "brier_improvement": {
+          "ci95": [
+            0.001995757830785788,
+            0.005534200964894709
+          ],
+          "delta": 0.00361220130397108,
+          "established": true
+        },
+        "items": 27993,
+        "logloss_improvement": {
+          "ci95": [
+            0.0047908878529634435,
+            0.012294273285526791
+          ],
+          "delta": 0.008265790742378987,
+          "established": true
+        },
+        "player_games": 1187
+      },
+      "receptions": {
+        "brier_improvement": {
+          "ci95": [
+            -0.0016130955080115028,
+            0.0024193652748443484
+          ],
+          "delta": 0.00034892529394406346,
+          "established": false
+        },
+        "items": 7061,
+        "logloss_improvement": {
+          "ci95": [
+            -0.003700025566774734,
+            0.004968662333980967
+          ],
+          "delta": 0.0005604488652842798,
+          "established": false
+        },
+        "player_games": 1168
+      }
+    },
+    "items": 47540,
+    "logloss_improvement": {
+      "ci95": [
+        0.0010632112126515159,
+        0.007629342873493372
+      ],
+      "delta": 0.004297000046031729,
+      "established": true
+    },
+    "market_refit": {
+      "brier": 0.2468911216066677,
+      "logloss": 0.6868316782312981
+    },
+    "player_games": 1357,
+    "stack": {
+      "brier": 0.2450181738590809,
+      "logloss": 0.6825346781852664
+    },
+    "weeks": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
+  },
+  "model_id": "nfl-player-props-v2-forward-platt-v1",
+  "overall": {
+    "items": 54444,
+    "platt_vs_market_brier": {
+      "ci95": [
+        -0.0017032862654750291,
+        0.0016867763117164314
+      ],
+      "delta": 5.30662656006986e-05,
+      "established": false
+    },
+    "platt_vs_raw_brier": {
+      "ci95": [
+        0.010916779913929586,
+        0.024777349649591496
+      ],
+      "delta": 0.017801348147576362,
+      "established": true
+    },
+    "platt_vs_raw_logloss": {
+      "ci95": [
+        0.02575754753236348,
+        0.05624841773393796
+      ],
+      "delta": 0.0407261385515032,
+      "established": true
+    },
+    "player_games": 1568,
+    "scores": {
+      "p_forward": {
+        "auc": 0.5525032548340129,
+        "brier": 0.24634072843111712,
+        "logloss": 0.6850963052019681
+      },
+      "p_market": {
+        "auc": 0.5585630095597516,
+        "brier": 0.24639379469671782,
+        "logloss": 0.6858408816727536
+      },
+      "p_ours": {
+        "auc": 0.5606626418459383,
+        "brier": 0.2641420765786935,
+        "logloss": 0.7258224437534713
+      }
+    },
+    "weeks": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ]
+  },
+  "qb_selector": "pregame_prior_attempts",
+  "quotes": "paired_pregame_timezone_aware",
+  "reasons_not_promoted": [
+    "Actual pre-kickoff projection and injury input snapshots not independently verified",
+    "Conditional-on-played subset remains observed-participation selection",
+    "Cannot claim independent market increment without positive paired clustered interval"
+  ],
+  "scope": "research_only_not_prospective_locked",
+  "stat_distributions_calibrated": false,
+  "uncalibrated_items": 6895
+}
