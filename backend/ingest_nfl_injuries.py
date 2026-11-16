@@ -169,6 +169,7 @@ def ensure_schema(connection: sqlite3.Connection) -> None:
           practice_status TEXT,
           primary_injury TEXT,
           date_modified TEXT,
+          observed_at TEXT NOT NULL,
           source TEXT NOT NULL,
           ingested_at TEXT NOT NULL,
           UNIQUE(league, season, week, team, gsis_id)
@@ -192,6 +193,9 @@ def ensure_schema(connection: sqlite3.Connection) -> None:
           ON unresolved_players(source, league, source_player_key);
         """
     )
+    columns = {row[1] for row in connection.execute("PRAGMA table_info(injury_reports)")}
+    if "observed_at" not in columns:
+        connection.execute("ALTER TABLE injury_reports ADD COLUMN observed_at TEXT")
 
 
 def _unique_owners(connection: sqlite3.Connection, column: str) -> dict:
@@ -236,7 +240,7 @@ def publish(year: int, rows: list[dict], gsis_to_espn: dict,
             row.get("report_status"), row.get("practice_status"),
             row.get("report_primary_injury"),
             str(date_modified) if date_modified is not None else None,
-            SOURCE, ingested_at,
+            ingested_at, SOURCE, ingested_at,
         ))
 
     print(
@@ -261,8 +265,8 @@ def publish(year: int, rows: list[dict], gsis_to_espn: dict,
         connection.executemany(
             """INSERT INTO injury_reports(
                  league,season,week,team,player_id,gsis_id,report_status,
-                 practice_status,primary_injury,date_modified,source,ingested_at
-               ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+                 practice_status,primary_injury,date_modified,observed_at,source,ingested_at
+               ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             prepared,
         )
 

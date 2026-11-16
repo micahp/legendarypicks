@@ -54,17 +54,18 @@ class InjuryIngestTests(unittest.TestCase):
         self.assertEqual(result["unresolved_ids"], 1)
         with sqlite3.connect(self.db) as connection:
             stored = connection.execute(
-                "SELECT gsis_id,team,player_id,report_status "
+                "SELECT gsis_id,team,player_id,report_status,date_modified,observed_at "
                 "FROM injury_reports ORDER BY gsis_id"
             ).fetchall()
             queued = connection.execute(
                 "SELECT source_player_key,raw_name,count FROM unresolved_players"
             ).fetchall()
         self.assertEqual(stored, [
-            ("gsis-direct", "LAR", 1, "Out"),
-            ("gsis-fallback", "LAR", 2, "Out"),
-            ("gsis-missing", "LAR", None, "Out"),
+            ("gsis-direct", "LAR", 1, "Out", None, stored[0][5]),
+            ("gsis-fallback", "LAR", 2, "Out", None, stored[1][5]),
+            ("gsis-missing", "LAR", None, "Out", None, stored[2][5]),
         ])
+        self.assertTrue(all(row[5] for row in stored))
         self.assertEqual(queued, [("gsis-missing", "Missing Player", 1)])
 
     def test_rerun_replaces_owned_season_and_does_not_inflate_queue(self):
