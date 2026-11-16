@@ -9,6 +9,11 @@ Decisions:
 - Turnovers (interception, fumble lost) and punts start the next offense at `spot`, the published position of that
   offense's next snap. `yards_gained` does not encode the spot for these events.
 - A field-goal attempt is a terminal with no result. Made or missed is not in the published columns.
+- A loss that carries the ball into the offense's own end zone is a scoring terminal, not an error. A
+  tackle there is a safety; a fumble that becomes dead there is a safety when the offense recovers and a
+  touchdown when the defense recovers. `recovery` carries that role ('offense' or 'defense'); when it is
+  unknown the reducer refuses to guess and raises UnmodelledOutcome, which the drive loop records as a
+  named block instead of a simulation error.
 """
 
 import math
@@ -57,7 +62,30 @@ class UnmodelledOutcome(ValueError):
         self.reason = reason
 
 
-def apply_play(st, event, yards, spot=None, kick_outcome=None):
+def _resolve_own_end_zone(st, event, recovery):
+    """Resolve a loss that puts the ball in the offense's own end zone.
+
+    A tackle behind the goal line is a safety. A fumble that becomes dead there turns on who
+    recovers it: the offense recovering its own fumble is still a safety, the defense recovering
+    it is a touchdown. The recovery role must be supplied; without it the reducer will not
+    invent an end-zone turnover, it raises UnmodelledOutcome so the caller classifies the seed.
+    """
+    flags = _no_flags()
+    if event in TURNOVER_EVENTS:
+        if recovery is None:
+            raise UnmodelledOutcome('own_end_zone_fumble_recovery_unresolved')
+        if recovery not in ('offense', 'defense'):
+            raise ValueError(f"recovery must be 'offense' or 'defense' (got {recovery!r})")
+        if recovery == 'defense':
+            flags['touchdown'] = True
+            flags['scoring_team'] = st['defense']
+            return None, 'touchdown', flags
+    flags['safety'] = True
+    flags['scoring_team'] = st['defense']
+    return None, 'safety', flags
+
+
+def apply_play(st, event, yards, spot=None, kick_outcome=None, recovery=None):
     """Apply one sampled play. Returns (after, terminal, flags).
 
     `after` is the state at the next snap, or None when the drive ends with no next snap (touchdown, safety,
@@ -77,7 +105,7 @@ def apply_play(st, event, yards, spot=None, kick_outcome=None):
             if yards > st['yl']:
                 raise ValueError(f'{event} gain {yards} exceeds the {st["yl"]} yards to the goal line')
             if st['yl'] - yards > 100:
-                raise ValueError(f'{event} loss {yards} carries the ball past its own goal line')
+                return _resolve_own_end_zone(st, event, recovery)
         if event in ('sack', 'sack_fumble_lost') and yards > 0:
             raise ValueError('a sack cannot produce positive yardage')
     flags = _no_flags()
