@@ -20,6 +20,8 @@ import json
 import math
 import os
 import sqlite3
+import sys
+import time
 from collections import Counter, defaultdict
 
 import calibrate_nfl_prop_probabilities as cal
@@ -122,8 +124,14 @@ def summarize(rows, boots):
     return ans
 
 
+def log(msg):
+    print(time.strftime('%H:%M:%S'), msg, file=sys.stderr, flush=True)
+
+
 def evaluate(graded, skipped=None, boots=400, min_items=MIN_TRAIN_ITEMS):
+    log('candidate_rows: %d graded items' % len(graded))
     rows, fits = candidate_rows(graded, min_items)
+    log('candidate_rows done: %d rows, %d calibrated' % (len(rows), sum(1 for r in rows if r['calibrated'])))
     calibrated = [r for r in rows if r["calibrated"]]
     results = {
         "model_id": MODEL_ID,
@@ -255,11 +263,15 @@ def main(argv=None):
         ap.error("LP_DB_PATH required")
     con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
     try:
+        log('grade: start season %d (loads player history, can take minutes)' % args.season)
         graded, skipped, disagree = grader.grade(
             con, args.season, pregame_only=True, qb_selection="pregame")
+        log('grade: done, %d graded, %s skipped, %s book disagreements' % (len(graded), skipped if not isinstance(skipped, (list, dict)) else len(skipped), len(disagree) if hasattr(disagree, '__len__') else disagree))
         if not graded:
             raise SystemExit("No valid pregame quote pairs/player-games to grade; no model result issued")
+        log('evaluate: start, %d bootstrap draws' % args.boot)
         output, rows = evaluate(graded, skipped, args.boot)
+        log('evaluate: done')
         if args.distribution:
             _rows, fits = candidate_rows(graded)
             output["stat_distribution_test"] = evaluate_full_distributions(
