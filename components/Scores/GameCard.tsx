@@ -4,7 +4,6 @@ import type { LivePeriod } from '../../lib/liveGameStatus'
 import { audioForGame } from '../../lib/gameAudio'
 import GameRadioButton from './GameRadioButton'
 import { useRadioBlackout } from '../../lib/useRadioBlackouts'
-import RadioSources from '../RadioSources'
 
 interface TeamInfo {
   teamId: string
@@ -118,7 +117,7 @@ export default function GameCard(g: GameProps) {
   }
 
   // What to show in the top-right area:
-  // - SCHEDULED: show time (except UFC)
+  // - SCHEDULED: show time in the pill's slot (except UFC)
   // - LIVE: show the explicit LIVE state plus publisher phase/clock
   // - FINAL: show FINAL badge (no time)
   const showTime = g.status === 'SCHEDULED' && (!isUFC || g.showScheduledTime)
@@ -179,17 +178,22 @@ export default function GameCard(g: GameProps) {
       onClick={handleClick}
       className={`-mx-3 rounded-lg px-3 py-3 text-zinc-100 transition-colors ${hasDetail ? 'hover:bg-zinc-800/50 cursor-pointer' : ''}`}
     >
-      {showStatusBadge && (
+      {(showStatusBadge || showTime) && (
       <div className="flex items-center justify-between text-xs text-zinc-400 mb-2">
         <span className="flex items-center gap-2">
         </span>
 
-        {/* Right side: status badge (LIVE/FINAL), or SCHEDULED badge only for UFC? No badge for scheduled non-UFC */}
-        <span
-          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${showStatusBadge ? getStatusBadge(g.status) : 'hidden'}`}
-        >
-          {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail, g.league) : (showStatusBadge ? getStatusLabel(g.status, g.statusDetail, g.league) : '')}
-        </span>
+        {/* Right side: status badge (LIVE/FINAL). A scheduled game shows its start time in the
+            same slot, so a game's state always reads from one place. */}
+        {showStatusBadge ? (
+          <span
+            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${getStatusBadge(g.status)}`}
+          >
+            {g.status === 'LIVE' ? formatLiveStatus(g.livePeriod, g.statusDetail, g.league) : getStatusLabel(g.status, g.statusDetail, g.league)}
+          </span>
+        ) : (
+          <span className="text-xs text-zinc-400">{timeLabel}</span>
+        )}
       </div>
       )}
 
@@ -227,8 +231,6 @@ export default function GameCard(g: GameProps) {
                 <span className={`text-xl font-black ${isFinal ? (isDraw ? 'text-white' : homeWon ? 'text-white' : 'text-zinc-500') : 'text-white'}`}>{g.homeTeam.score !== undefined ? g.homeTeam.score : outcomeLabel}</span>
               </span>
             )}
-            {/* Scheduled: the start time on the first team's row, in the header's own text style. */}
-            {showTime && <span className="text-xs text-zinc-400">{timeLabel}</span>}
           </div>
           <div className="flex justify-between items-center">
             <span className={`font-semibold ${sideClass(g.awayTeam) ?? (isFinal ? (isDraw ? 'text-zinc-200' : awayWon ? 'text-zinc-200' : 'text-zinc-500') : 'text-zinc-200')}`}>{teamLabel(g.awayTeam)}</span>
@@ -251,9 +253,6 @@ export default function GameCard(g: GameProps) {
           {radio && <GameRadioButton src={radio.stream} team={radio.team} station={radio.display} live={g.status === 'LIVE'} blackout={blackout} />}
           {g.isPreseason && <div className="text-xs text-zinc-500">Preseason</div>}
         </div>
-      )}
-      {g.league === 'MLS' && (
-        <RadioSources home={g.homeTeam?.teamId || g.homeTeam?.name} away={g.awayTeam?.teamId || g.awayTeam?.name} />
       )}
     </div>
   )

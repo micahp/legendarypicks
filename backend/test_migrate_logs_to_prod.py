@@ -26,7 +26,7 @@ CREATE TABLE players(
     mlbam_id INTEGER,
     nfl_gsis_id TEXT,
     nhl_id INTEGER,
-    nba_id INTEGER,
+    hoopr_id INTEGER,
     active INTEGER DEFAULT 1,
     position TEXT,
     updated_at TEXT,

@@ -104,6 +104,8 @@ def main() -> int:
     paced.set_host_budget(int(os.environ.get("LP_NHL_HOST_BUDGET", "0")))
     paced.set_retry_waits((5.0, 30.0, 120.0))
     paced.set_min_interval(float(os.environ.get("LP_NHL_MIN_INTERVAL", "0.5")))
+    # Batch job: pause at the per-host window rather than raise (the shared default refuses).
+    paced.set_on_exhausted("sleep")
     paced.set_disk_cache(os.environ.get("LP_ESPN_CACHE_DIR") or os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "data", "espn-cache"),
         ttl=86400 * 30)

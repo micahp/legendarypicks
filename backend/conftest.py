@@ -52,6 +52,27 @@ def _restore_db_path_env():
     yield
 
 
+@pytest.fixture
+def exercise_story_warming():
+    """Opt in when a test directly exercises the asynchronous story warmer."""
+
+
+@pytest.fixture(autouse=True)
+def _disable_background_story_warming(monkeypatch, request):
+    """Keep ordinary API/ingest tests from launching provider-backed daemon work."""
+    if "exercise_story_warming" in request.fixturenames:
+        return
+
+    import core_stories
+    import routers.games as games
+
+    def no_story_warming(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(core_stories, "kick_game_stories", no_story_warming)
+    monkeypatch.setattr(games, "kick_game_stories", no_story_warming)
+
+
 # The app refuses to serve an un-migrated database at startup
 # (sports_service._refuse_unmigrated_database). Tests point LP_DB_PATH at
 # throwaway files and construct routers directly -- they are not real boots,

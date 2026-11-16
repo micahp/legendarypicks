@@ -775,10 +775,12 @@ def run(
             "collision_rows": plan.collision_rows,
         }
 
+    # Keep only the newest copy: each daily apply writes a full database copy (about 2.9 GB).
     backup_path = common.backup_database(
-        db_path, "mlb-history-timer"
+        db_path, "mlb-history-timer", keep=1
     )
     result = apply_plan(db_path, plan)
+    common.discard_backup(backup_path)
     emit(
         "MLB applied: {updated} updates, {inserted} inserts, "
         "{queued} unresolved identities; backup {backup}".format(

@@ -22,6 +22,7 @@ this once; see `espn_client.games` (line ~212), `ingest_nba_logs`, and
 `backfill_team_parity`, all of which filter on `completed`. `game_result` and the
 settlement gate never got the memo.
 """
+import json
 import sqlite3
 
 import pytest
@@ -121,6 +122,8 @@ def _db():
         CREATE TABLE players (id INTEGER PRIMARY KEY, name TEXT, team TEXT, espn_id TEXT);
         CREATE TABLE prop_results (prop_id INTEGER PRIMARY KEY, hit INTEGER,
             actual_value REAL, settled_at TEXT);
+        CREATE TABLE scoreboard_snapshots (
+            league TEXT, game_id TEXT, state TEXT, payload TEXT, fetched_at TEXT);
     """)
     con.execute("INSERT INTO prop_games (id, league, espn_event_id, home, away, date,"
                 " final_home, final_away) VALUES (1, 'mlb', '401815805', 'Atlanta Braves',"
@@ -129,9 +132,26 @@ def _db():
     return con
 
 
-def test_settlement_records_and_voids_a_publisher_postponed_game(espn):
-    espn(_POSTPONED)
+def _save_snapshot(con, summary):
+    competition = summary["header"]["competitions"][0]
+    status = competition["status"]["type"]
+    teams = {row["homeAway"]: row for row in competition["competitors"]}
+    payload = {
+        "completed": status.get("completed") is True,
+        "status_detail": status.get("description"),
+        "home": {"score": teams["home"].get("score")},
+        "away": {"score": teams["away"].get("score")},
+    }
+    con.execute(
+        "INSERT INTO scoreboard_snapshots VALUES(?,?,?,?,?)",
+        ("mlb", "401815805", status.get("state"), json.dumps(payload), "now"),
+    )
+    con.commit()
+
+
+def test_settlement_records_and_voids_a_publisher_postponed_game():
     con = _db()
+    _save_snapshot(con, _POSTPONED)
     con.executemany(
         "INSERT INTO props(id,game_id,market,line,side) VALUES(?,1,'hits',0.5,'over')",
         [(1,), (2,)],
@@ -152,9 +172,9 @@ def test_settlement_records_and_voids_a_publisher_postponed_game(espn):
     assert "publisher-confirmed cancellation" in out["msg"]
 
 
-def test_settlement_records_the_final_of_a_completed_game(espn):
-    espn(_summary(home_score="5", away_score="3"))
+def test_settlement_records_the_final_of_a_completed_game():
     con = _db()
+    _save_snapshot(con, _summary(home_score="5", away_score="3"))
     settlement.settle_game(con, 1)
     row = con.execute("SELECT final_home, final_away FROM prop_games WHERE id=1").fetchone()
     assert (row["final_home"], row["final_away"]) == (5, 3), \

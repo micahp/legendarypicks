@@ -32,6 +32,18 @@ def _pkg_local_event_starts(league, anchor, direction):
     return _pkg_les(league, anchor, direction)
 
 
+def _pkg_scoreboard_snapshot(league, game_date):
+    """Resolve `routers.games._scoreboard_snapshot` at call time (see `_pkg_local_event_starts`)."""
+    from routers.games import _scoreboard_snapshot as _pkg_snapshot
+    return _pkg_snapshot(league, game_date)
+
+
+def _pkg_capture_completed_day(league, game_date, games):
+    """Resolve `routers.games._capture_completed_day` at call time (see `_pkg_local_event_starts`)."""
+    from routers.games import _capture_completed_day as _pkg_capture
+    return _pkg_capture(league, game_date, games)
+
+
 _SCHEDULE_DATES_CONTRACT = "league-schedule-dates-v1"
 _NFL_SCHEDULE_WEEKS_CONTRACT = "nfl-schedule-weeks-v1"
 _NFL_SCHEDULE_WEEK_CONTRACT = "nfl-schedule-week-v1"
@@ -433,6 +445,59 @@ def get_nfl_schedule_week(
     return _get_football_schedule_week("nfl", season, season_type, week)
 
 
+def _today():
+    """The day the schedule is read against. A function so tests can pin it."""
+    return dt.date.today()
+
+
+def _ncaaf_week_games(season_type, selected):
+    """NCAAF week games, read one day at a time from our stored slates.
+
+    ESPN refuses the multi-day `dates=START-END` request this used to make: it returned
+    HTTP 400 for NCAAF on Oct 24, 2026. A fan-out of per-day requests on every page view
+    would spend the ESPN budget the serving path shares, so each day is read the way the
+    daily board reads it. A day we hold is served from the store. A day we have never read
+    and that has not started yet is not requested: the ingest fills it as its day comes
+    near, and it is listed in `unread_days` instead of looking like a day with no games.
+    Any other day we lack is requested from ESPN once, and a finished one is stored.
+
+    Returns `(games, unread_days)`. Games are limited to the published calendar window and
+    the requested season type.
+    """
+    import scoreboard_store
+
+    start, end = selected["start_time"], selected["end_time"]
+    today = _today()
+    day = dt.date.fromisoformat(start[:10])
+    last = dt.date.fromisoformat(end[:10])
+    games, unread_days = {}, []
+    while day <= last:
+        key = day.isoformat()
+        if day > today and scoreboard_store.read("ncaaf", key) is None:
+            unread_days.append(key)
+        else:
+            snapshot = _pkg_scoreboard_snapshot("ncaaf", key)
+            if snapshot is not None:
+                day_games = snapshot[0]
+            else:
+                try:
+                    day_games = espn.games("ncaaf", key)
+                except Exception as exc:
+                    print(f"[schedule] ncaaf day unavailable date={key}: "
+                          f"{type(exc).__name__}: {exc}")
+                    raise
+                if day < today:
+                    _pkg_capture_completed_day("ncaaf", key, day_games)
+            for game in day_games:
+                if game.get("season_type") != season_type or not game.get("date"):
+                    continue
+                if start <= str(game["date"]) < end:
+                    games.setdefault(str(game["game_id"]), game)
+        day += dt.timedelta(days=1)
+    ordered = sorted(games.values(), key=lambda game: (game["date"], str(game["game_id"])))
+    return ordered, unread_days
+
+
 def _get_football_schedule_week(league, season, season_type, week):
     if season < 2000 or season > 2100:
         raise HTTPException(400, "season must be between 2000 and 2100")
@@ -459,31 +524,29 @@ def _get_football_schedule_week(league, season, season_type, week):
     )
     if selected is None:
         raise HTTPException(404, f"{league.upper()} schedule week not found")
+    unread_days = None
     try:
         if league == "nfl":
             week_games = espn.nfl_schedule_week_games(season, season_type, week)
         else:
-            week_games = espn.football_schedule_week_games(
-                league, season, season_type, week,
-                selected.get("start_time"), selected.get("end_time"),
-            )
+            week_games, unread_days = _ncaaf_week_games(season_type, selected)
     except Exception as exc:
         raise HTTPException(502, f"{league.upper()} schedule week games unavailable") from exc
 
     contract = (_NFL_SCHEDULE_WEEK_CONTRACT if league == "nfl"
                 else _NCAAF_SCHEDULE_WEEK_CONTRACT)
+    content = {
+        "contract": contract,
+        "league": league,
+        "season": season,
+        "navigation": "week",
+        "selected_week": selected,
+        "games": week_games,
+    }
+    if unread_days is not None:
+        content["unread_days"] = unread_days
 
-    return JSONResponse(
-        content={
-            "contract": contract,
-            "league": league,
-            "season": season,
-            "navigation": "week",
-            "selected_week": selected,
-            "games": week_games,
-        },
-        headers={"Cache-Control": "public, max-age=20"},
-    )
+    return JSONResponse(content=content, headers={"Cache-Control": "public, max-age=20"})
 
 
 @router.get("/api/ncaaf/schedule-week")

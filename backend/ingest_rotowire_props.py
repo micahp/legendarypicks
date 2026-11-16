@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ingest player props from the RotoWire picks relay: NFL, MLB, MLS and Leagues Cup.
+"""Ingest player props from the RotoWire picks relay.
 
     LP_DB_PATH=data/picks.dev.db python ingest_rotowire_props.py nfl
     LP_DB_PATH=data/picks.dev.db python ingest_rotowire_props.py nfl --dry-run
@@ -62,6 +62,7 @@ from typing import Dict, List, Optional, Tuple
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import ingest_rotowire_archive as archive
+import mls_resolution
 from espn_client.scoreboard import _slate_day
 from team_codes import (
     ALIASES as TEAM_CODE_ALIASES,
@@ -93,7 +94,8 @@ SOURCE = "rotowire"
 # rows on 2026-08-19, against 0 of 30 NFL and 0 of 10 MLB. The board cannot place those at
 # all. See `_fill_missing_start_time`.
 LEAGUES = {
-    "nfl": {"sport": "NFL", "kind": "code", "teams": {"WAS": "WSH"}},
+    # Every NFL spelling backend/team_codes.py knows (it had its own one-entry copy, WAS only, before 2026-11-04).
+    "nfl": {"sport": "NFL", "kind": "code", "teams": TEAM_CODE_ALIASES.get("nfl", {})},
     # Hockey uses the same durable fixture contract as college football: both
     # clubs and the exact kickoff must match one stored scoreboard event before
     # a prop game can be created. RotoWire's UTA/LAK/TBL/SJS/NJD spellings are
@@ -207,6 +209,7 @@ CFB_GAME_MARKETS = {
     108: ("Passing Yards", "passing_yards"),
     109: ("Passing + Rushing Yards", "passing_rushing_yards"),
     110: ("Total Touchdowns", "total_touchdowns"),
+    113: ("Receiving Touchdowns", "receiving_touchdowns"),
     114: ("Receiving Yards", "receiving_yards"),
     115: ("Receptions", "receptions"),
     116: ("Rush Attempts", "rush_attempts"),
@@ -284,9 +287,23 @@ NHL_GAME_MARKETS = {
     # reported as unmapped rather than entering a market we cannot settle.
 }
 NBA_GAME_MARKETS = {
-    # Preseason boards carry Points (and Points + Rebounds + Assists); the regular season
-    # adds the rest. Only what the relay has actually shipped is mapped.
+    # Core 7 + PRA. The relay currently has no verified FGM/FTM Game market
+    # ids; those stay supported in the canonical market vocabulary for Bovada
+    # and for future RotoWire names, without guessing an id here.
+    34: ("Assists", "assists"),
+    35: ("Blocks", "blocks"),
+    36: ("Steals", "steals"),
+    37: ("Turnovers", "turnovers"),
+    41: ("3PT Made", "threes"),
     47: ("Points", "points"),
+    50: ("Rebounds", "rebounds"),
+    52: ("PTS+REB+AST", "points_rebounds_assists"),
+}
+NBA_NAME_FALLBACKS = {
+    "field goals made": ("Field Goals Made", "field_goals_made"),
+    "fgm": ("FGM", "field_goals_made"),
+    "free throws made": ("Free Throws Made", "free_throws_made"),
+    "ftm": ("FTM", "free_throws_made"),
 }
 MARKETS = {
     "nfl": NFL_GAME_MARKETS,
@@ -371,6 +388,13 @@ def parse(payload: Dict, league: str) -> Tuple[List[Dict], Dict]:
         counts["game_props"] += 1
 
         known = markets.get(market["marketID"])
+        if not known and league == "nba":
+            # These two scoped markets have not appeared in the archive under a
+            # stable relay id. Accept only exact known names while refusing to
+            # infer an id or loosen any already-mapped id/name pair.
+            known = NBA_NAME_FALLBACKS.get(
+                str(market.get("marketName") or "").strip().lower()
+            )
         if not known:
             unmapped_markets[(market["marketID"], market.get("marketName"))] += 1
             continue
@@ -432,6 +456,8 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
     spine says `WSH` and `NYC`, so comparing the raw strings would silently fail every
     fallback that needs a team.
     """
+    if league in ("mls", "lcup") and mls_resolution.cutover_enabled():
+        return _resolve_membership_gated(con, league, row, now, team_code)
     roster_league = roster_league or league
     # NCAAF resolves under the strict rule (step 2 of the 2026-10-02 repair order):
     # source team = roster team = one fixture team. Everywhere else the historical
@@ -528,6 +554,29 @@ def resolve_player(con: sqlite3.Connection, league: str, row: Dict, now: str,
                 (player_id, now, SOURCE, league, key))
             return player_id
         bind_player_source_key(con, league, key, player_id, now)
+    return player_id
+
+
+def _resolve_membership_gated(con: sqlite3.Connection, league: str, row: Dict, now: str,
+                              team_code: Optional[str]) -> Optional[int]:
+    """MLS and Leagues Cup under the cutover: the person must be on the club now, by the membership snapshot.
+
+    A key already bound to a current member keeps that binding. Otherwise the gated resolver decides by name, and
+    that answer is not written back as a binding: only identity onboarding creates or binds people. A departed
+    person is never returned, even when the stored club or an old binding still names them.
+    """
+    import _core  # lazy: the gated resolver lives there, so this ingest loads the app only when the cutover is on
+    key = row.get("source_player_key")
+    if key:
+        bound = con.execute(
+            "SELECT player_id FROM player_source_ids WHERE source=? AND league=? AND source_player_key=?",
+            (SOURCE, league, key)).fetchone()
+        if bound and bound["player_id"] in (mls_resolution.members_as_of(con) or {}):
+            return bound["player_id"]
+    player_id, _confidence = _core._resolve_player_for_ingest(
+        con, row["player_name"], team_code or "", league, source=SOURCE)
+    if player_id is None:
+        queue_unresolved(con, league, row, now, "not_in_spine")
     return player_id
 
 

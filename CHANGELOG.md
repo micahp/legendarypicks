@@ -1,4 +1,390 @@
+## v10.2.0
+
+### NBA player identities
+
+- Roster sync sends every NBA identity decision through one resolver. It reuses, attaches or holds a player. It never creates a duplicate player.
+- Gate G reads reviewed nba.com IDs and checks them against nba.com's published names. Gate B uses the canonical G/F/C positions and holds non-NBA clubs.
+- The daily job now runs the NFL roster sync.
+
+### NFL injury recovery, weeks 2 to 9
+
+- Recovers availability from the nflverse schedule and official Sunday inactive reports.
+- Uses pregame source timing. A player missing from the inactive list is never treated as active.
+- Source files are pinned under `docs/research`.
+
+### Fixes
+
+- Receiving stats stay when a player has zero targets.
+- The settlement boxscore import runs under the Python 3.8 dev venv.
+- The UFC current-card run takes one lock. Its two timers can no longer run at the same time.
+
+### Docs
+
+- Props forecast discovery spec, and the backup and orderflow notes.
+
+## v10.1.5
+
+### Breaking change: database schema
+
+- `players.nba_id` is now `players.hoopr_id`, on dev and prod. The HTTP API and the frontend are not affected: no route or page used the old name.
+- The column always held hoopR (ESPN) athlete IDs, not official NBA.com IDs. Official NBA.com IDs stay in `player_source_ids` (source `nba.com`).
+- Values, hash and row count are unchanged (541 values).
+- Who is affected: any outside script or query that reads `players.nba_id`. Change it to `players.hoopr_id`.
+- Migration: `backend/migrate_players_hoopr_id.py` (dry run by default, `--apply`, `--rollback`). It is idempotent. Rollback restores the old name.
+- Code that must still open an old database reads either name.
+
+## v10.1.4
+
+### League navigation
+
+- Make the league directory open each league's active model or established default tab, while preserving saved tab choices.
+
+## v10.1.3
+
+### NBA model
+
+- Remove routine lock-status labels from Projections and use the brand green for win probability.
+
+## v10.1.2
+
+### NBA model
+
+- Add NBA Almanac team ratings and simplify accuracy to one held-out benchmark row per model.
+- Show the NBA model's W-L-P record instead of lock-status counts, and stack team scores in Record and Projections for easier scanning.
+- Make NBA record scores easier to scan with final-winner highlighting, no per-game times, and matching section spacing when rows wrap.
+- Simplify the Team Ratings heading and remove Almanac source-page text.
+
+### League navigation
+
+- Put Model first on league pages and open leagues with an active model on that model by default, while preserving saved tab choices.
+
+### NHL model
+
+- Paginate Record by complete local game-date groups from the single-model API, show stacked projected and final team scores with matching section spacing, and remove per-game times plus lock and line-capture timestamps from list items.
+- Add prospective forecasts for WPG @ CAR on Nov 1 to the NHL research feed.
+
+## v10.1.1
+
+### NBA model
+
+- Group the record by game date and load older results in date-based pages.
+- Settle NBA projections from stored game results and allow corrected grades to update cleanly.
+
+## v10.1.0
+
+### NBA model
+
+- Make the NBA research model page available from the production leagues hub, with its benchmark and model-store status.
+- Mark NBA as live in the homepage Models hero.
+
+### Homepage prop history
+
+- Show the latest 20 NFL receiving-yard games in season and week order, filling missing game dates from the published NFL schedule.
+- Label the chart's date range and clarify that each bar represents one game.
+
+## v10.0.11
+
+### Product highlights
+
+- Added NHL, tennis, and NCAAF model pages; expanded NFL and NBA forecasts with locked picks, record views, accuracy metrics, and clearer game results.
+- Added the NFL projections surface and teammate-out prop filtering; improved prop history, grading, and settlement across leagues.
+- Expanded league and scores UI with persistent league tabs, NBA standings and box scores, soccer and esports hubs, and richer tennis results.
+
+### Build reliability
+
+- Remove retired Flow/Top Shot contest files that still imported dependencies removed from the app.
+- Fix TypeScript iterator errors in the scores and props screens.
+
+## v10.0.10
+
+### Models and league pages
+
+- Enable NFL forecast locking and grading for production, and show NCAAF team names with adjacent final scores and winner highlighting.
+- Preserve each league's selected tab when navigating between leagues; add NBA standings, stakes, and player box scores.
+
+### Data reliability
+
+- Add an opt-in MLS membership-based identity cutover with historical membership resolution and holds for ambiguous identities.
+- Bound story warming, restore shared ESPN pacing after batch jobs, and keep backend integration checks offline.
+- Align NHL team codes to native tricodes and use completed NFL seasons for draft reference stats.
+
+## v10.0.9
+
+### NCAAF schedule
+
+- The week view is built from stored slates, one day at a time. It no longer uses ESPN's date-range request, which now fails for NCAAF, so weeks no longer show "Unable to load games."
+- Days we have not read yet are listed as not loaded yet, instead of showing as empty days.
+
+### Scores
+
+- A scheduled game's start time sits in the live pill's slot.
+- Tennis and soccer league scores use the Scores page's tinted league panel, and tournament headings have more space above them.
+
+### Tennis
+
+- ATP and WTA 250 singles are tracked, and every athlete on a tracked slate is added to the player spine.
+- A player a bookmaker writes family name first resolves to their existing row instead of a duplicate.
+
+### NBA model
+
+- Unlocked previews are graded apart from the locked record, and late-preview locks come from stored pregame previews.
+- Benchmark intervals are date-clustered.
+
+## v10.0.8
+
+### NCAAF model
+
+- Group the projections and the record by day, drop the kickoff column, and show Won and Lost results in green and red on the record tab.
+- Add a Model accuracy button beside the tabs, with Brier score, winner accuracy and graded games for each model.
+
+### Homepage
+
+- Show NCAAF as live on the Models slide in place of MLB, and update the intro sentence to match.
+
+## v10.0.7
+
+### NCAAF model
+
+- Freeze one projection per game and model at 90 minutes before kickoff, then grade it from ESPN finals or from the stored scoreboard snapshot, so grading no longer depends on ESPN alone.
+- Count the legacy forecasts in the record, add each team's record and the real kickoff time to the cards, and show the projection the same way before and after it is frozen.
+- Gate runs on a parity certificate, migrate the model database with a backup before each run, and hold postseason previews out of locks.
+- Match the other model pages: pill tabs for Projections, Record and Team Ratings, the model picker beside the title, and no venue line.
+
+### Models
+
+- Load the coming-soon icon font in the page head on the MLB, NBA, UFC and MLS model tabs, so the icon shows instead of its name.
+
+## v10.0.6
+
+### NFL model
+
+- Make one Model Pick per game and model version, chosen by a fixed rule order (favourite to cover, favourite moneyline, underdog to cover, then team strength), frozen at lock and graded once. This replaces the separate Winner, Spread and Total picks.
+- Preview v1 points, v2 EPA and v1 + Elo before their games lock, so the model page lists all three each week.
+- Put the spread and total on separate rows of each game card, enlarge the Model Pick, and drop the line capture text.
+
+### NCAAF model
+
+- Show each team's record on projections and in the record.
+- Grade finished games from scoreboard finals, count every stored forecast in the record, and show real kickoff times.
+- Drop the status labels and the header notes, and refresh and grade the model every 30 minutes.
+
+### Tennis model
+
+- Lock the V2 forecast ledger for the Ningbo Open, count unmapped surfaces apart from identity failures, and fail the job when a match is skipped.
+- Stop a page view from making a lock: the timer locks and freezes forecasts, and writes count and total-games distributions on the dev database only.
+- Add the CP4 prospective grader, the daily match-stats collector and the provider match-stat ingests (research only).
+- Bind a rankings ESPN id to one unbound same-name row.
+
+### NBA
+
+- Fold total_made_3_points_shots rows into threes, add recent logs and prop settlement, and leave DNP games out of the history chart.
+- Pause batch ingests at the ESPN per-host window instead of refusing, which restores the NBA game-log refresh.
+
+### NHL model
+
+- Remove the projection status labels.
+
+### Data and operations
+
+- Fetch prop pages in parallel batches of six, and join the history provider view through its index.
+- Take one ingest run lock per registry and database, and prune database backups daily without letting sidecars take a retention slot.
+
+## v10.0.5
+
+### NFL model
+
+- Lock and grade one Winner, Spread and Total pick per game on the model page, with the pick shown below the line at the bottom of each card.
+- Split the prediction, the lean and the qualifying wager on the model page, and drop the PREVIEW and unlocked labels from picks.
+
+### NFL projections and props
+
+- Add the NFL projections page with a projection record panel, plus player projection, slate and record endpoints.
+- Add the Without control to the prop chart: filter a player's history by teammates out, with chips and a shareable URL.
+- Grade passing prop markets on the pregame lead passer, and add forward Platt calibration as its own props model.
+
+### NFL data
+
+- Repair NFL player identities: 679 GSIS IDs corrected or cleared, two duplicate players merged, and the ESPN/GSIS identity audit back to 0 failures.
+
+### NCAAF model
+
+- Add the FBS model page with the G2h model by default, and separate previews from locks taken 90 minutes before kickoff.
+- Remove fabricated spread hints and preserve full kickoff times.
+
+### NHL model
+
+- Pick by the leeway hierarchy instead of maximum EV, show graded lean results separately from wager qualification, and fix settlement records.
+
+### Tennis model
+
+- Store every complete 500 and 1000 draw per tournament, give every tracked event a surface, and show only upcoming matches in projections.
+- Reject sportsbook quotes captured after a forecast lock, and label legacy and missing quotes by their provenance.
+
+### Leagues and scores
+
+- Offer soccer and esports hubs in the league switcher, and keep a scoreboard day open when a game is suspended.
+
+## v10.0.4
+
+### NHL model
+
+- Grade spread and total forecasts independently from frozen odds and report per-market Brier scores.
+
+### Tennis model
+
+- Grade only publisher-confirmed completed matches, retain the result snapshot provenance, and prevent saved grades from being rewritten.
+- Refresh stored projections when a player's canonical tennis identity mapping changes.
+
+### NFL model and homepage
+
+- Harden lock and grading writes, ignore unsuccessful model runs on the homepage, and show PREVIEW or LOCKED on projection cards.
+- Publish the featured prop preview through the weekly ingest registry job and serve the stored result.
+- Add 261,850 missing NFL player-game logs for seasons 2010–2025 to production with stable-identity matching.
+
+### Scores
+
+- Add 72 Varsity Network direct audio feeds for NCAAF teams.
+
+## v10.0.3
+
+### UFC props
+
+- Settlement retries continue for 96 hours after a fight, including reopening manual records still inside that window.
+- DWCS props can settle supported method markets from the cached scoreboard, and significant-strike totals from UFCalendar when available.
+- Release coverage measures settlement only for confirmed finished games and matches.
+
+### Esports
+
+- The esports hub opens on Live & Upcoming, with the EWC tournament center on its own tab.
+- EWC title match results support status filters and pagination.
+
+### Tennis model
+
+- Keep actual aces and total games on Record cards; Projections shows forecasts without actual results.
+
+### Props
+
+- Use Material icons for props tabs, including the performance tab.
+
+## v10.0.2
+
+### Tennis model
+
+- The projections view includes available upcoming ATP and WTA forecasts across the next three UTC days.
+- Record cards show the score, actual aces and total games alongside the model and Vegas lines.
+- The backend stores grades for locked pre-match forecasts after scoreboard results go final. A 30-minute job handles both dev and prod, and scheduled projection jobs serialize per database.
+
+### UFC props
+
+- DWCS fight-time props can settle from ESPN's completed round and clock when UFCStats has no fighter log; other missing stats remain pending.
+
+## v10.0.1
+
+Items already listed under v10.0.0 are not repeated here.
+
+### NHL model
+
+- The model pick follows a spread gate. If the underdog's spread edge shows over 1.0 on the card, the pick is that underdog +1.5 to cover. Otherwise, if Vegas has the model's favorite favored by 1.5, the pick is that favorite to win. Otherwise the pick is a total on the 5.5 or 6.5 line, chosen by the model's projected total.
+- The spread edge names the team it is on, for example "1.2 pts (UTA)".
+- Graded results grade the pick's own side.
+- Graded games leave the projections page and stay on the record.
+- The forecast pipeline runs every 30 minutes, and the lock timer every 15 minutes.
+
+### Tennis
+
+- Tennis model tab with Bovada moneyline and total beside each match.
+- Daily tennis projections are precomputed every six hours and stored per day.
+
+### NFL model
+
+- Previews default to the upcoming week.
+
+### Homepage
+
+- The Watch tab is hidden from the site navigation.
+
+### UFC
+
+- A published fight with no strike counts is unknown, not a failed plan.
+- Temporary: the settled-grading baseline for UFC props on picks.db is 73.0, down from 74.4. 559 fight-log rows for September and October 2026 events are not graded yet. Restore 74.4 once grading catches up.
+
+### Backend
+
+- pytz added to the backend image.
+- The backend image skips host data and mounts the research feed.
+
 # Changelog
+
+## v10.0.0
+
+### NHL model
+
+- New NHL model page with three views: Projections, Record and Team Ratings. Models are labelled Elo, xG Poisson and Elo + xG.
+- Per-model forecasts lock 90 minutes before puck drop, one immutable row per game, model and model version. A missed lock window is recorded and never backfilled.
+- Games are graded daily against official NHL results after a four-hour finality grace period. The official winner and score are kept separately from the goal target, which excludes the shootout-deciding goal.
+- Unlocked games appear as previews. They are rebuilt from the forecast feed on each daily grading run, are never graded, and never enter the lock tables.
+- Projection cards show the Bovada puck line and total next to the model's margin and total, with edges measured as model minus Vegas.
+- The model pick suggests the moneyline side or the over or under at 5.5 or 6.5 with the largest edge against the no-vig Bovada price.
+- Bovada lines refresh when the page loads if the newest snapshot is more than 15 minutes old.
+- The record lists graded games only.
+- Team record and points show under each team name, from the NHL standings. The daily grade run refreshes them.
+
+### NFL model
+
+- Projections are game cards with the model pick on the right, and team records under team names.
+- The record tab lists graded weeks only.
+- Playoff odds is a tab on the NFL hub. The page says the ratings trail the market.
+- Models: v1 points, v2 EPA and v1 plus Elo, each locked no earlier than 90 minutes before kickoff.
+- Every locked projection per model version, with the line it was locked against and its grade once final.
+- Locks refuse to run unless every earlier game has its final result.
+
+### Homepage
+
+- Hero carousel with a prop preview and a models slide.
+- The featured prop comes only from games that have not started.
+
+### Scoreboard
+
+- Live status labels for soccer and NHL are fixed.
+- NBA live clock order is restored.
+- Scoreboard cards are two columns again, with a center divider and a calmer row hover.
+- The radio row layout is adjusted.
+
+### Props
+
+- Prop history hit rate uses the newest 20 settled props, not the oldest 20.
+- The Props Slate columns are restored.
+
+### Tennis
+
+- A daily tennis model tab.
+- A Kalshi live points reader for ATP and WTA. The backend reads it; no points panel ships in this release.
+- Tennis identities resolve from publisher data, and the tennis ingest fails on an incomplete roster or an empty ESPN spine instead of discarding props.
+
+### MLS
+
+- MLS radio uses a play button, as MLB and NHL do. The station page links are removed, and verified radio directory links are added.
+
+### Navigation and Watch
+
+- The Predict link moves to the end of the header nav.
+- A Watch page lists verified broadcasts and a registry of free stream sources. The Watch tab is hidden from navigation in this release.
+
+### Data
+
+- NFL xpass and pass_oe backfill for 2010 to 2025, kept in the daily ingest.
+- NFL play-by-play adds qb_hit, qb_scramble, qb_dropback and no_huddle, with a dry-run-by-default backfill.
+- NFL game lines are captured from Bovada and The Odds API before kickoff. Each capture is dry run by default.
+- NFL playoff seeding follows the NFL's published tiebreaking procedure. It matches the playoff bracket actually played in 32 of 32 conference-seasons from 2010 to 2025.
+- UFC fight stats: a published fight with no strike counts is stored as unknown instead of failing the whole run. September and October 2026 UFC fight logs are backfilled for the current props board.
+- NHL ingests resolve a published player's NHL ID owner themselves instead of refusing the run.
+- Tennis identities resolve from publisher data when names don't match.
+- MLS radio uses a play button, as MLB and NHL do.
+
+### Operations
+
+- The backend Docker image no longer includes host data. The compose file mounts the NHL research feed read-only.
+- The daily NHL grade timer refreshes the NHL previews and standings.
 
 ## v0.9.9
 

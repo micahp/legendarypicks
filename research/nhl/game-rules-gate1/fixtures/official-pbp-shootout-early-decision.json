@@ -1,0 +1,31 @@
+{
+  "fixture_kind": "official_gamecenter_observed_early_shootout_decision",
+  "source": {
+    "provider": "NHL GameCenter play-by-play",
+    "url": "https://api-web.nhle.com/v1/gamecenter/2021020018/play-by-play",
+    "game_id": "2021020018",
+    "game_date": "2021-10-15",
+    "manifest_path_outside_repository": "/root/lp-data/nhl-fullframe-event-audit-2026-10-21/manifests/hardened-v1/pbp_verified_manifest.csv",
+    "compressed_body_path_outside_repository": "/root/lp-data/nhl-fullframe-event-audit-2026-10-21/raw/pbp/2021020018.json.gz",
+    "manifest_sha256": "d87e40a3387f014429377cc8dfb010cec8ca2d0e4d03d0b5bdbfacd8de9ca990",
+    "compressed_body_sha256": "c78321a249b76c59d52b7c5a3c336f2ec9058501530739628757c82f7449b79a",
+    "compressed_bytes": 11932
+  },
+  "observed_shootout": {
+    "official_home_team": "PHI",
+    "official_away_team": "VAN",
+    "official_final_score": {"home": 4, "away": 5},
+    "regulation_and_overtime_score": {"home": 4, "away": 4},
+    "period_start_index": 348,
+    "attempts": [
+      {"plays_index_zero_based": 349, "team_id": 4, "event_type": "missed-shot"},
+      {"plays_index_zero_based": 350, "team_id": 23, "event_type": "goal"},
+      {"plays_index_zero_based": 351, "team_id": 4, "event_type": "shot-on-goal"},
+      {"plays_index_zero_based": 352, "team_id": 23, "event_type": "goal"}
+    ],
+    "completion_index": 353,
+    "attempts_per_team": 2,
+    "shootout_goals_by_team_id": {"4": 0, "23": 2}
+  },
+  "scope_note": "Official source records two paired attempts and completion with one team winning 2-0. This is an observed early-ending shootout reference, not evidence of simulator compliance or player-lineup eligibility."
+}

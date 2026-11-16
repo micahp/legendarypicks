@@ -12,7 +12,7 @@ Modelled on ingest_nhl_roster.py, which is the pattern for this spine:
 
 - the whole 30-team population is fetched and validated before a write opens;
 - identity resolves by the NBA id first, through player_source_ids(source='nba.com');
-  NOT through players.nba_id. Measured 2026-10-02 on both databases: that column holds ESPN
+  NOT through players.hoopr_id. Measured 2026-10-02 on both databases: that column holds ESPN
   athlete ids (hoopR's), equal to espn_id on every row that has both (320 prod, 331 dev), and
   no row holds a modern NBA person id. ingest_hoopR.py resolves by it, so it keeps its meaning
   and this publisher never writes it;
@@ -45,6 +45,7 @@ import sqlite3
 import sys
 from typing import Mapping, Sequence
 
+import hoopr_column
 import paced_http
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -88,13 +89,21 @@ REVIEWED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data",
 
 
 def _reviewed_birth_dates(path: str = REVIEWED_PATH) -> dict[str, dt.date]:
-    """Reviewed birth dates keyed by the id our player row carries (espn_id or legacy nba_id)."""
+    """Reviewed birth dates keyed by the id our player row carries (espn_id or legacy hoopr_id)."""
     try:
         with open(path) as fh:
             entries = json.load(fh).get("nba") or {}
     except FileNotFoundError:
         return {}
-    return {str(e["espn_id"]): dt.date.fromisoformat(e["espn_birth_date"]) for e in entries.values()}
+    out = {}
+    for entry in entries.values():
+        # Entries reviewed without an ESPN id or birth date cannot answer a birth-date
+        # match. Skip them; the other entries must still be usable.
+        try:
+            out[str(entry["espn_id"])] = dt.date.fromisoformat(entry["espn_birth_date"])
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
 
 
 def reviewed_birth_date(row_id) -> dt.date | None:
@@ -285,14 +294,14 @@ def _choose_unbound_candidate(candidates, member: Mapping[str, object], bound=fr
         if logged and _normal_team(logged) == team:
             return unbound[0], "matched_last_logged_team"
     # Last resort, still evidence: the sole candidate's reviewed birth date equals nba.com's,
-    # looked up by whichever id our row holds (players.nba_id is hoopR's ESPN athlete id).
+    # looked up by whichever id our row holds (players.hoopr_id is hoopR's ESPN athlete id).
     # Measured 2026-10-02: seven offseason signings ESPN's 08-04 roster still showed on their
     # old teams all matched to the day.
     theirs = nba_birth_date(member.get("birth_date"))
     if len(unbound) == 1 and theirs and birth_date_of is not None:
         row = unbound[0]
-        espn_id = row["espn_id"] if "espn_id" in row.keys() and row["espn_id"] else (
-            row["nba_id"] if "nba_id" in row.keys() else None)
+        legacy = next((row[c] for c in ("hoopr_id", "nba_id") if c in row.keys()), None)
+        espn_id = row["espn_id"] if "espn_id" in row.keys() and row["espn_id"] else legacy
         if espn_id and birth_date_of(espn_id) == theirs:
             return row, "matched_birth_date"
     return None, "ambiguous_name" if len(unbound) > 1 else "unverified_name"
@@ -314,13 +323,14 @@ def plan_population(connection: sqlite3.Connection,
     by_name: dict[str, list] = collections.defaultdict(list)
     import name_aliases
     for row in connection.execute(
-            f"SELECT id,name,team,position,espn_id,nba_id FROM players WHERE league='nba' AND {entity_scope}"):
+            f"SELECT id,name,team,position,espn_id,{hoopr_column.hoopr_column(connection) or 'NULL'} AS hoopr_id "
+            f"FROM players WHERE league='nba' AND {entity_scope}"):
         players[int(row["id"])] = row
         keys = {_identity_name_key(row["name"])}
         # Reviewed alternate names (data/name-aliases.json, keyed by ESPN id) widen who can be a
         # CANDIDATE; binding still needs evidence. Our "Kenyon Martin Jr." is nba.com's and
         # ESPN's "KJ Martin": without this he would have been minted a second time.
-        for ext in {row["espn_id"], row["nba_id"]} - {None}:
+        for ext in {row["espn_id"], row["hoopr_id"]} - {None}:
             keys |= {_identity_name_key(a) for a in name_aliases.aliases_for("nba", ext)}
         for key in keys:
             by_name[key].append(row)

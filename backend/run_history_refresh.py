@@ -57,8 +57,8 @@ DEFERRED = {
         "parallelize and collides with batting natural keys"
     ),
     "nba": (
-        "not scheduled: the existing ingester performs source requests while "
-        "holding daily write transactions and can create duplicate identities"
+        "current-season ESPN logs refresh through ingest_registry; the bounded "
+        "historical SportsDataverse backfill is a separate one-time coverage task"
     ),
     "nfl": (
         "not scheduled: the existing full-season writer still needs a verified "

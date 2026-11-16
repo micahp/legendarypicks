@@ -3,7 +3,7 @@
   "updated": "2026-08-27",
   "note": "MLS radio map. MIA (Inter Miami) is the reference entry with the verified WUUB stream used by the booth pipeline. All other entries are skeleton placeholders — verified:false until a stream URL is confirmed. NEVER fabricate a callsign or URL. 2026-08-27 pass: 14 streams verified live (HTTP 200 audio probe); the rest carry confirmed callsigns but no open stream URL (private apps/audacy/tunein-only). Official publisher-page sources are recorded separately under each team’s `sources`; the legacy top-level `verified` flag still means a raw stream was verified for the existing relay.",
   "directory_updated": "2026-10-10",
-  "directory_note": "Verified official publisher pages are in radio-mls-directory.json. Top-level `verified` continues to describe raw stream verification for the legacy relay; linkout verification is separate."
+  "directory_note": "radio-mls-directory.json was removed on 2026-10-13, when the MLS station links were replaced by the MLS play button. Its official publisher pages are in git history before commit 3683b25. Top-level `verified` continues to describe raw stream verification for the legacy relay."
  },
  "_wc": {
   "station": "iHeart FIFA World Cup 2026 (FOX Sports English)",
@@ -22,7 +22,7 @@
   "city": "Atlanta, GA",
   "stream": null,
   "verified": false,
-  "note": "No public raw stream URL verified; official radio partner page is in radio-mls-directory.json."
+  "note": "No public raw stream URL verified. The official radio partner page was listed in radio-mls-directory.json, removed 2026-10-13 (see git history before commit 3683b25)."
  },
  "ATX": {
   "station": "Alt 97.5 (KASE-HD2, iHeartRadio)",

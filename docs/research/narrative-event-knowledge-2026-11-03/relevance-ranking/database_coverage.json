@@ -1,0 +1,460 @@
+{
+  "as_of": "2026-11-03T00:32:27Z",
+  "coverage": {
+    "nba_event_level_tables": [],
+    "nba_player_boxes_nbacom": {
+      "exists": true,
+      "games": 43,
+      "latest_capture": "2026-10-26T21:59:19.339706+00:00",
+      "rows": 1489
+    },
+    "nba_schedule": {
+      "exists": true,
+      "game_date_range": [
+        "2026-10-03",
+        "2027-04-11"
+      ],
+      "games": 1273,
+      "rows": 1273
+    },
+    "nba_sportsdataverse_games": {
+      "exists": true,
+      "game_date_range": [
+        "2025-10-21",
+        "2026-06-13"
+      ],
+      "rows": 1322
+    },
+    "nfl_pbp": {
+      "all_seasons": {
+        "games": 4295,
+        "plays": 758135
+      },
+      "current_season_2026": {
+        "games": 120,
+        "plays": 21018
+      },
+      "exists": true,
+      "game_date_range": [
+        "2010-09-09",
+        "2026-11-01"
+      ],
+      "games": 4295,
+      "rows": 758135
+    },
+    "nfl_schedule": {
+      "exists": true,
+      "games": 4635,
+      "rows": 4635
+    },
+    "player_game_logs": {
+      "by_league_season_at_cutoff": [
+        {
+          "first_game": "2026-08-04",
+          "games": 62,
+          "last_game": "2026-09-07",
+          "latest_capture": "2026-09-07 04:15:28",
+          "league": "lcup",
+          "rows": 2094,
+          "season": 2026
+        },
+        {
+          "first_game": "2026-07-17",
+          "games": 45,
+          "last_game": "2026-08-24",
+          "latest_capture": "2026-08-26 02:53:31",
+          "league": "ligamx",
+          "rows": 1410,
+          "season": 2026
+        },
+        {
+          "first_game": "2026-03-15",
+          "games": 2599,
+          "last_game": "2026-10-28",
+          "latest_capture": "2026-10-31 11:30:08",
+          "league": "mlb",
+          "rows": 71191,
+          "season": 2026
+        },
+        {
+          "first_game": "2025-02-22",
+          "games": 541,
+          "last_game": "2025-12-06",
+          "latest_capture": "2026-08-06 22:54:39",
+          "league": "mls",
+          "rows": 16661,
+          "season": 2025
+        },
+        {
+          "first_game": "2026-02-21",
+          "games": 370,
+          "last_game": "2026-10-29",
+          "latest_capture": "2026-10-29 05:03:35",
+          "league": "mls",
+          "rows": 13411,
+          "season": 2026
+        },
+        {
+          "first_game": "2025-10-21",
+          "games": 1378,
+          "last_game": "2026-10-20",
+          "latest_capture": "2026-10-21 15:27:45",
+          "league": "nba",
+          "rows": 30424,
+          "season": 2026
+        },
+        {
+          "first_game": "2026-10-03",
+          "games": 159,
+          "last_game": "2026-11-01",
+          "latest_capture": "2026-11-02 05:27:02",
+          "league": "nba",
+          "rows": 4652,
+          "season": 2027
+        },
+        {
+          "first_game": "2025-08-23",
+          "games": 888,
+          "last_game": "2025-12-13",
+          "latest_capture": "2026-08-08 04:18:47",
+          "league": "ncaaf",
+          "rows": 56577,
+          "season": 2025
+        },
+        {
+          "first_game": "2026-08-29",
+          "games": 619,
+          "last_game": "2026-11-01",
+          "latest_capture": "2026-11-02 12:59:40",
+          "league": "ncaaf",
+          "rows": 39092,
+          "season": 2026
+        },
+        {
+          "first_game": "2010-09-09",
+          "games": 267,
+          "last_game": "2011-02-06",
+          "latest_capture": "2026-10-16 20:41:17",
+          "league": "nfl",
+          "rows": 17569,
+          "season": 2010
+        },
+        {
+          "first_game": "2011-09-08",
+          "games": 267,
+          "last_game": "2012-02-05",
+          "latest_capture": "2026-10-16 20:41:29",
+          "league": "nfl",
+          "rows": 17419,
+          "season": 2011
+        },
+        {
+          "first_game": "2012-09-05",
+          "games": 267,
+          "last_game": "2013-02-03",
+          "latest_capture": "2026-10-16 20:41:32",
+          "league": "nfl",
+          "rows": 17398,
+          "season": 2012
+        },
+        {
+          "first_game": "2013-09-05",
+          "games": 267,
+          "last_game": "2014-02-02",
+          "latest_capture": "2026-10-16 20:41:36",
+          "league": "nfl",
+          "rows": 17227,
+          "season": 2013
+        },
+        {
+          "first_game": "2014-09-04",
+          "games": 267,
+          "last_game": "2015-02-01",
+          "latest_capture": "2026-10-16 20:41:40",
+          "league": "nfl",
+          "rows": 17601,
+          "season": 2014
+        },
+        {
+          "first_game": "2015-09-10",
+          "games": 267,
+          "last_game": "2016-02-07",
+          "latest_capture": "2026-10-16 20:41:44",
+          "league": "nfl",
+          "rows": 17592,
+          "season": 2015
+        },
+        {
+          "first_game": "2016-09-08",
+          "games": 267,
+          "last_game": "2017-02-05",
+          "latest_capture": "2026-10-16 20:41:48",
+          "league": "nfl",
+          "rows": 17531,
+          "season": 2016
+        },
+        {
+          "first_game": "2017-09-07",
+          "games": 267,
+          "last_game": "2018-02-04",
+          "latest_capture": "2026-10-16 20:41:51",
+          "league": "nfl",
+          "rows": 17456,
+          "season": 2017
+        },
+        {
+          "first_game": "2018-09-06",
+          "games": 267,
+          "last_game": "2019-02-03",
+          "latest_capture": "2026-10-16 20:41:55",
+          "league": "nfl",
+          "rows": 17393,
+          "season": 2018
+        },
+        {
+          "first_game": "2019-09-05",
+          "games": 267,
+          "last_game": "2020-02-02",
+          "latest_capture": "2026-10-16 20:41:58",
+          "league": "nfl",
+          "rows": 17341,
+          "season": 2019
+        },
+        {
+          "first_game": "2020-09-10",
+          "games": 269,
+          "last_game": "2021-02-07",
+          "latest_capture": "2026-10-16 20:42:03",
+          "league": "nfl",
+          "rows": 17581,
+          "season": 2020
+        },
+        {
+          "first_game": "2021-09-09",
+          "games": 285,
+          "last_game": "2022-02-13",
+          "latest_capture": "2026-10-16 20:42:07",
+          "league": "nfl",
+          "rows": 18947,
+          "season": 2021
+        },
+        {
+          "first_game": "2022-09-08",
+          "games": 284,
+          "last_game": "2023-02-12",
+          "latest_capture": "2026-10-16 20:42:11",
+          "league": "nfl",
+          "rows": 18809,
+          "season": 2022
+        },
+        {
+          "first_game": "2023-09-07",
+          "games": 285,
+          "last_game": "2024-02-11",
+          "latest_capture": "2026-10-16 20:42:15",
+          "league": "nfl",
+          "rows": 18621,
+          "season": 2023
+        },
+        {
+          "first_game": "2024-09-05",
+          "games": 285,
+          "last_game": "2025-02-09",
+          "latest_capture": "2026-10-13 06:16:41",
+          "league": "nfl",
+          "rows": 18961,
+          "season": 2024
+        },
+        {
+          "first_game": "2025-09-04",
+          "games": 285,
+          "last_game": "2026-02-08",
+          "latest_capture": "2026-10-09 20:31:57",
+          "league": "nfl",
+          "rows": 19400,
+          "season": 2025
+        },
+        {
+          "first_game": "2026-09-09",
+          "games": 120,
+          "last_game": "2026-11-01",
+          "latest_capture": "2026-11-02 10:10:11",
+          "league": "nfl",
+          "rows": 8355,
+          "season": 2026
+        },
+        {
+          "first_game": "2025-10-07",
+          "games": 1394,
+          "last_game": "2026-06-14",
+          "latest_capture": "2026-08-04 16:34:38",
+          "league": "nhl",
+          "rows": 51143,
+          "season": 2026
+        },
+        {
+          "first_game": "2026-09-29",
+          "games": 94,
+          "last_game": "2026-10-13",
+          "latest_capture": "2026-10-14 02:07:36",
+          "league": "nhl",
+          "rows": 3584,
+          "season": 2027
+        },
+        {
+          "first_game": "2021-01-20",
+          "games": 1,
+          "last_game": "2021-01-20",
+          "latest_capture": "2026-07-24 16:54:36",
+          "league": "ufc",
+          "rows": 1,
+          "season": 2021
+        },
+        {
+          "first_game": "2022-09-21",
+          "games": 3,
+          "last_game": "2022-12-11",
+          "latest_capture": "2026-07-24 16:54:42",
+          "league": "ufc",
+          "rows": 3,
+          "season": 2022
+        },
+        {
+          "first_game": "2023-01-21",
+          "games": 6,
+          "last_game": "2023-12-17",
+          "latest_capture": "2026-07-24 16:54:42",
+          "league": "ufc",
+          "rows": 6,
+          "season": 2023
+        },
+        {
+          "first_game": "2024-01-14",
+          "games": 21,
+          "last_game": "2024-12-15",
+          "latest_capture": "2026-07-24 16:54:46",
+          "league": "ufc",
+          "rows": 21,
+          "season": 2024
+        },
+        {
+          "first_game": "2025-01-11",
+          "games": 34,
+          "last_game": "2025-12-07",
+          "latest_capture": "2026-07-24 16:54:45",
+          "league": "ufc",
+          "rows": 34,
+          "season": 2025
+        },
+        {
+          "first_game": "2026-02-08",
+          "games": 21,
+          "last_game": "2026-09-02",
+          "latest_capture": "2026-10-15 20:22:14",
+          "league": "ufc",
+          "rows": 29,
+          "season": 2026
+        },
+        {
+          "first_game": "2026-06-11",
+          "games": 102,
+          "last_game": "2026-07-15",
+          "latest_capture": "2026-07-18 12:49:49",
+          "league": "wc",
+          "rows": 3222,
+          "season": 2026
+        }
+      ],
+      "exists": true,
+      "game_date_range": [
+        "2010-09-09",
+        "2026-11-01"
+      ],
+      "games": 12767,
+      "rows": 588756
+    },
+    "team_game_results": {
+      "exists": true,
+      "game_date_range": [
+        "2010-09-09",
+        "2027-01-10"
+      ],
+      "games": 10400,
+      "rows": 20800
+    },
+    "team_game_stats": {
+      "by_league_source": [
+        {
+          "games": 8,
+          "league": "mlb",
+          "rows": 16,
+          "source": null
+        },
+        {
+          "games": 510,
+          "league": "mls",
+          "rows": 1020,
+          "source": "espn_site_web_api:scoreboard+summary"
+        },
+        {
+          "games": 2,
+          "league": "nba",
+          "rows": 4,
+          "source": null
+        },
+        {
+          "games": 1231,
+          "league": "nba",
+          "rows": 2462,
+          "source": "espn_site_api:scoreboard+summary"
+        },
+        {
+          "games": 888,
+          "league": "ncaaf",
+          "rows": 1776,
+          "source": "espn_site_web_api:scoreboard+summary"
+        },
+        {
+          "games": 285,
+          "league": "nfl",
+          "rows": 570,
+          "source": "espn_site_api:scoreboard+summary"
+        },
+        {
+          "games": 1312,
+          "league": "nhl",
+          "rows": 2624,
+          "source": "espn_site_api:scoreboard+summary"
+        },
+        {
+          "games": 94,
+          "league": "nhl",
+          "rows": 188,
+          "source": "nhle.com:gamecenter/right-rail+landing"
+        }
+      ],
+      "exists": true,
+      "games": 4330,
+      "nba_local_crosswalk_seasons": [
+        {
+          "game_type": "CUP",
+          "games": 1,
+          "rows": 2,
+          "season": 2025
+        },
+        {
+          "game_type": "REG",
+          "games": 1230,
+          "rows": 2460,
+          "season": 2025
+        }
+      ],
+      "nba_populated_rows_at_cutoff": 2462,
+      "rows": 8660
+    }
+  },
+  "database": "/root/legendarypicks/backend/data/picks.dev.db",
+  "external_requests": 0,
+  "method": "SQLite mode=ro and PRAGMA query_only=ON; local tables only",
+  "query_only": 1
+}

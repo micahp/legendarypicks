@@ -12,7 +12,7 @@ import datetime as dt
 import sys
 from .config import API_BASE, LEAGUES, _MINTED_PLAYERS, _RESTED_LEAGUES, _STALE_TEAM_TAGS, _TEAM_LEVEL_OUTCOMES, _UNMAPPED_PLAYER_MARKETS  # noqa: E402
 from .backoff import _load_backoff, _record_result, _save_backoff, _should_fetch  # noqa: E402
-from .client import fetch_events, parse_player_props  # noqa: E402
+from .client import fetch_events, fetch_tennis_tour, parse_player_props  # noqa: E402
 from .direct import _event_start_iso, _ufc_direct_ingest, _wc_direct_ingest, _wc_event_date  # noqa: E402
 from .ingest import capture_snapshots, ingest_batch  # noqa: E402
 
@@ -46,7 +46,10 @@ def main():
             continue
         print(f"Fetching {key.upper()} from Bovada...")
         try:
-            events = fetch_events(sport, lg)
+            if lg.startswith("tree:"):
+                events = fetch_tennis_tour(lg.split(":", 1)[1])
+            else:
+                events = fetch_events(sport, lg)
         except Exception as e:
             print(f"  FAIL: {e}")
             continue

@@ -16,7 +16,14 @@ const nhl = {
   awayTeam: { teamId: 'EDM', name: 'Edmonton Oilers' },
   startTime: '2026-10-08T02:00:00Z',
 }
-const table = listen as unknown as Record<string, Record<string, { href: string; label: string; stream: string }>>
+const table = listen as unknown as Record<string, Record<string, {
+  href?: string
+  label: string
+  station: string
+  provider: string
+  stream: string
+  codec?: string
+}>>
 
 describe('team radio data', () => {
   it('every link opens a publisher player page', () => {
@@ -52,6 +59,34 @@ describe('team radio data', () => {
     expect(audioForGame('UFC', 'A', 'B')).toEqual([])
     expect(audioForGame(undefined, 'NYY', 'TB')).toEqual([])
   })
+
+  it('the MLS gameAudio list matches data/radio-listen.json', () => {
+    for (const [team, entry] of Object.entries(table.mls)) {
+      expect(entry.stream).toMatch(/^https:\/\/playerservices\.streamtheworld\.com\/api\/livestream-redirect\/.+\.aac$/)
+      expect(teamAudio('MLS', team)).toMatchObject({
+        team,
+        label: entry.label,
+        station: entry.station,
+        provider: entry.provider,
+        stream: entry.stream,
+        display: entry.label,
+      })
+      expect(audioForGame('MLS', team, undefined)).toEqual([teamAudio('MLS', team)])
+    }
+  })
+
+  it('routes all inventoried Varsity feeds by NCAAF scoreboard team code', () => {
+    const teams = Object.keys(table.ncaaf)
+    expect(teams).toHaveLength(72)
+    for (const team of teams) {
+      expect(teamAudio('NCAAF', team)).toMatchObject({
+        team,
+        provider: 'Varsity Network',
+        stream: table.ncaaf[team].stream,
+      })
+    }
+    expect(audioForGame('NCAAF', 'WASH', 'IOWA').map((audio) => audio.team)).toEqual(['WASH', 'IOWA'])
+  })
 })
 
 describe('GameCard radio button', () => {
@@ -80,6 +115,36 @@ describe('GameCard radio button', () => {
     expect(play).toHaveBeenCalledTimes(1)
     expect(container.querySelector('audio')?.getAttribute('src')).toBe(table.nhl.ANA.stream)
     expect(push).not.toHaveBeenCalled()
+  })
+
+  it('MLS radio uses the same play button and plays the mapped stream', () => {
+    const { container } = render(
+      <GameCard gameId="mls-1" league="MLS" status="LIVE" startTime="2026-10-08T00:00:00Z"
+        homeTeam={{ teamId: 'CLT', name: 'Charlotte FC' }} awayTeam={{ teamId: 'ATL', name: 'Atlanta United' }} />,
+    )
+    const button = screen.getByRole('button', { name: /play live radio \(CLT\)/i })
+    fireEvent.click(button)
+    expect(play).toHaveBeenCalledTimes(1)
+    expect(container.querySelector('audio')?.getAttribute('src')).toBe(table.mls.CLT.stream)
+  })
+
+  it('MLS stations render no plain links', () => {
+    render(
+      <GameCard gameId="mls-1" league="MLS" status="LIVE" startTime="2026-10-08T00:00:00Z"
+        homeTeam={{ teamId: 'CLT', name: 'Charlotte FC' }} awayTeam={{ teamId: 'ATL', name: 'Atlanta United' }} />,
+    )
+    expect(screen.queryByRole('link')).toBeNull()
+  })
+
+  it('plays the configured Varsity feed for a live NCAAF game', () => {
+    const { container } = render(
+      <GameCard gameId="ncaaf-1" league="NCAAF" status="LIVE" startTime="2026-10-10T00:00:00Z"
+        homeTeam={{ teamId: 'ISU', name: 'Iowa State Cyclones' }}
+        awayTeam={{ teamId: 'BYU', name: 'BYU Cougars' }} />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /play live radio/i }))
+    expect(play).toHaveBeenCalledTimes(1)
+    expect(container.querySelector('audio')?.getAttribute('src')).toBe(table.ncaaf.ISU.stream)
   })
 
   it('falls back to the away team when the home club has no stream', () => {

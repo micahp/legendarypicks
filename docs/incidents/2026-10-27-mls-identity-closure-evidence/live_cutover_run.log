@@ -1,0 +1,10 @@
+  mls via _fotmob_squads: 900 published squad members
+  mls via _mls_squads: 955 published squad members
+  mls cutover: published (verified); onboarded 0, rekeyed 0, queued 0
+  wrote 1855
+    published_roster holds 1057 members for lcup from fotmob
+    published_roster holds 495 members for ligamx from fotmob
+    published_roster holds 914 members for mls from fotmob
+    published_roster holds 967 members for mls from mlssoccer
+  identities: mls_cutover_published=1
+  identity_blockers=0

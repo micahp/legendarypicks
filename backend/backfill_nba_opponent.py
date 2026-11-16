@@ -11,6 +11,8 @@ Safe: only UPDATEs rows where opponent IS NULL (idempotent re-run = no-op).
 import sys, os, sqlite3, time, datetime as dt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
+# Batch job: one scoreboard per date, so pause at ESPN's per-host window rather than raise.
+espn.set_on_exhausted("sleep")
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "picks.db")
 

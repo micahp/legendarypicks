@@ -49,6 +49,10 @@ _PLAY_COLS = [
     # Added 2026-10-11 (docs/RESEARCH-nfl-model-inputs-2026-10-11.md). Appended last so a
     # widened existing table and a freshly created one have the same column order.
     "qb_hit", "qb_scramble", "qb_dropback", "no_huddle",
+    # Added 2026-10-13: nflverse's expected pass probability and pass over expected (floats), backfilled for
+    # 2010 to 2025 by backfill_nfl_pbp_proe.py. In _PLAY_COLS so the daily ingest of the current season keeps them
+    # (the replace would otherwise null them), and so a source file without them fails loudly.
+    "xpass", "pass_oe",
 ]
 
 # The columns added after 2010-2026 were stored. backfill_columns() fills them on stored

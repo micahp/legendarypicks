@@ -69,6 +69,7 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 
 
 def run(db_path, leagues, apply_changes):
+    import mls_resolution
     con = sqlite3.connect(db_path, timeout=30)
     con.row_factory = sqlite3.Row
     published_roster.ensure(con)
@@ -77,10 +78,16 @@ def run(db_path, leagues, apply_changes):
         players = con.execute(
             "SELECT id, name, team, position, position_group FROM players "
             "WHERE league=? AND active=1", (league,)).fetchall()
+        # With the MLS cutover on, the match is the person's own membership record in the current snapshot. No
+        # observation row is read, so a stale row can never bind anyone. Off, the legacy lookup is unchanged.
+        evidence = mls_resolution.membership_evidence(con) if league == "mls" and mls_resolution.cutover_enabled() else None
         bound = filled = collided = disagreed = 0
         unresolved = []
         for player in players:
-            match = published_roster.lookup(con, league, player["name"], player["team"])
+            if evidence is not None:
+                match = mls_resolution.evidence_match(evidence.get(player["id"]), player["position_group"])
+            else:
+                match = published_roster.lookup(con, league, player["name"], player["team"])
             if not match:
                 if not (player["position"] or "").strip():
                     unresolved.append(player)

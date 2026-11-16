@@ -91,6 +91,8 @@ def main(argv=None):
     parser.add_argument("--since", default=None,
                         help="only rows dated on or after this (default: all)")
     args = parser.parse_args(argv)
+    # Batch job: one scoreboard per date, so pause at ESPN's per-host window rather than raise.
+    espn.set_on_exhausted("sleep")
 
     con = sqlite3.connect(DB, timeout=30)
     con.row_factory = sqlite3.Row

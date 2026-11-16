@@ -1,0 +1,1833 @@
+{
+ "per_seed": [
+  {
+   "seed": 1,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 2,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 3,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 4,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 5,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 6,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 7,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 8,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 9,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 10,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 11,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 12,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 13,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 14,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 15,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 16,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 17,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 18,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 19,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 20,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 21,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 22,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 23,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 24,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 25,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 26,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 27,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 28,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 29,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 30,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 31,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 32,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 33,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 34,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 35,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "overtime_block": 1,
+   "seed": 36,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 37,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 38,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 39,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 40,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 41,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 42,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 43,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 44,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 45,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 46,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 47,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 48,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 49,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 50,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 51,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 52,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 53,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 54,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "overtime_block": 1,
+   "seed": 55,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 56,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 3,
+   "seed": 57,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 58,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 59,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 60,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 61,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 62,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 63,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 64,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 65,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 66,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 3,
+   "seed": 67,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 68,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 69,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 70,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 71,
+   "timeout": 2,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 72,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 73,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 74,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 75,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 76,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 77,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 78,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 79,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 80,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 81,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 82,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 83,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 84,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 85,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 86,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 87,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 88,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 89,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 90,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 91,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 92,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 93,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 94,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 95,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 96,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 97,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 98,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 99,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 100,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 101,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 102,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 103,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 104,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 105,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 106,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 107,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 108,
+   "timeout": 2,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 109,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 110,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 111,
+   "timeout": 2,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 112,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 113,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "overtime_block": 1,
+   "seed": 114,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 115,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 116,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 117,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 3,
+   "seed": 118,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 119,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 120,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 121,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 122,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 123,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 124,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 125,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 126,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 127,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 128,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 129,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 130,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 131,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 132,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 133,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 134,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 135,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 136,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 137,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 138,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 139,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 140,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 141,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 142,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 143,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 144,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 145,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 146,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 147,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 148,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 149,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 150,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 151,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 152,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 153,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 3,
+   "seed": 154,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 155,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 156,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 157,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 4,
+   "seed": 158,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 159,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 160,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 161,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 162,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "overtime_block": 1,
+   "seed": 163,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 164,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 165,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 166,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 167,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 168,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 169,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 170,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 3,
+   "seed": 171,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 172,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 173,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 174,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "overtime_block": 1,
+   "seed": 175,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 176,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 3,
+   "seed": 177,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 178,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 179,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 180,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 181,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 182,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 3,
+   "seed": 183,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 184,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "overtime_block": 1,
+   "seed": 185,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 3,
+   "seed": 186,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 187,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 188,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 189,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 190,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 191,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 192,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 193,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 194,
+   "timeout": 1,
+   "two_minute_stops": 1,
+   "two_minute_warning": 1
+  },
+  {
+   "seed": 195,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 196,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 197,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 198,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 199,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 200,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 201,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 202,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 203,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 204,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 205,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 206,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 207,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 208,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 209,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 210,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 211,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 212,
+   "timeout": 2,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 213,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 214,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 215,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 216,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 217,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 218,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 219,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 220,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 221,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 222,
+   "timeout": 2,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 3,
+   "seed": 223,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 224,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 225,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 226,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 227,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 228,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 229,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 230,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 231,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 232,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 233,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 234,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 235,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 236,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 237,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 238,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 239,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 240,
+   "timeout": 2,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 241,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 242,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 243,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 244,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 245,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "overtime_block": 1,
+   "seed": 246,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 247,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 248,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 249,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 250,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 251,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 252,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 253,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 254,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 255,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 256,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 257,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 258,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 5,
+   "seed": 259,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 260,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 261,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 262,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 263,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 264,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 265,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 266,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 267,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 268,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 269,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 270,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 271,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 272,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 273,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 274,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 275,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "overtime_block": 1,
+   "seed": 276,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 277,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 278,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "overtime_block": 1,
+   "seed": 279,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "overtime_block": 1,
+   "seed": 280,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 281,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 282,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 283,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 284,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 285,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 286,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 287,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 288,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 289,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "overtime_block": 1,
+   "seed": 290,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 291,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 292,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 293,
+   "timeout": 1,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 294,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 2,
+   "seed": 295,
+   "timeout": 2,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 296,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 3,
+   "seed": 297,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 298,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "seed": 299,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  },
+  {
+   "missed_field_goal_return": 1,
+   "seed": 300,
+   "two_minute_stops": 2,
+   "two_minute_warning": 2
+  }
+ ],
+ "seeds_with_any_unmodelled_transition": 300,
+ "source": {
+  "crosscheck": "legality_check.check_unmodelled, derived from the plays; 0 mismatches",
+  "engine_commit": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b",
+  "games": "seeds 1-300, er.load() regulation-only pool, validate_game on every record",
+  "producer_worktree_dirty": true,
+  "research_source_sha256": "79a65db640e587798f2a067853a3ba8f723aadfbb10e3021cddb3c92ec08c117"
+ },
+ "two_minute_stops_status": "warning crossing markers are recorded at actual post-down clocks and independently derived from plays and kickoffs; the complete clock running/stopped and restart lifecycle is guarded as an unmodelled two_minute_warning transition.",
+ "two_minute_stops_total": 599,
+ "two_minute_warning_by_quarter": {
+  "Q2": 300,
+  "Q4": 299
+ },
+ "types": [
+  {
+   "count": 599,
+   "guard": "clock_start_stop",
+   "printed_heading": "RULE 3 DEFINITIONS, SECTION 41 TWO-MINUTE WARNING; RULE 4 GAME TIMING, SECTIONS 3 STARTING THE GAME CLOCK, 4 STOPPING THE GAME CLOCK and 5 TIMEOUTS",
+   "seeds_affected": 300,
+   "status": "guarded: the crossing marker is recorded at the actual post-down clock, but running/stopped state and explicit restart transitions are unsupported",
+   "type": "two_minute_warning"
+  },
+  {
+   "count": 0,
+   "guard": "penalties",
+   "printed_heading": "RULE 14 PENALTY ENFORCEMENT; the clock stop for a foul is RULE 4 GAME TIMING, SECTION 4 STOPPING THE GAME CLOCK, items (e) \"at the end of a down during which a foul occurs\" and (g)",
+   "seeds_affected": 0,
+   "status": "scoped out: guard enforced, not modelled; valid_full_game false; never a legal complete game",
+   "type": "penalty"
+  },
+  {
+   "count": 77,
+   "guard": "timeouts",
+   "printed_heading": "RULE 4 GAME TIMING, SECTION 5 TIMEOUTS, ARTICLE 1 CHARGED TEAM TIMEOUTS and Item 1 \"Timeouts Allowed\" (\"three charged team timeouts during each half\")",
+   "seeds_affected": 70,
+   "status": "scoped out: guard enforced, not modelled; valid_full_game false; never a legal complete game",
+   "type": "timeout"
+  },
+  {
+   "count": 11,
+   "guard": "overtime",
+   "printed_heading": "RULE 16 OVERTIME PROCEDURES, SECTION 1 ARTICLE 3 \"an extra period of 10 minutes shall commence\"",
+   "seeds_affected": 11,
+   "status": "scoped out: guard enforced, not modelled; valid_full_game false; never a legal complete game",
+   "type": "overtime_block"
+  },
+  {
+   "count": 239,
+   "guard": "missed_field_goal_return",
+   "printed_heading": "RULE 11 SCORING, SECTION 4 FIELD GOAL, ARTICLE 2 MISSED FIELD GOALS, exceptions (1) and (2): receivers touch beyond the line of scrimmage",
+   "seeds_affected": 176,
+   "status": "scoped out: guard enforced, not modelled; valid_full_game false; never a legal complete game",
+   "type": "missed_field_goal_return"
+  },
+  {
+   "count": 0,
+   "guard": "onside_kicks",
+   "printed_heading": "RULE 6 FREE KICKS (onside kick); no onside kick is drawn in this engine",
+   "seeds_affected": 0,
+   "status": "scoped out: guard enforced, not modelled; valid_full_game false; never a legal complete game",
+   "type": "onside_kick"
+  },
+  {
+   "count": 0,
+   "guard": "exception_coin_toss",
+   "printed_heading": "RULE 4 GAME TIMING, SECTION 2 STARTING A PERIOD OR HALF, ARTICLE 2 TOSS OF COIN, the forfeited-privilege exception",
+   "seeds_affected": 0,
+   "status": "scoped out: guard enforced, not modelled; valid_full_game false; never a legal complete game",
+   "type": "exception_coin_toss"
+  }
+ ]
+}

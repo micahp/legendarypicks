@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh NBA game model inputs every 15 minutes
+
+[Timer]
+OnCalendar=*-*-* *:02/15:00
+Persistent=true
+Unit=legendarypicks-nba-model-data.service
+
+[Install]
+WantedBy=timers.target

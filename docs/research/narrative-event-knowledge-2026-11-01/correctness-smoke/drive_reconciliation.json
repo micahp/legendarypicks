@@ -1,0 +1,77 @@
+{
+  "exact_fields_compared": [
+    "game_id",
+    "drive",
+    "offense",
+    "defense",
+    "fixed_drive_result",
+    "outcome",
+    "points_offense",
+    "points_defense",
+    "next_offense",
+    "status"
+  ],
+  "existing_fixture_records": 150,
+  "fixture_status_counts": {
+    "no_next_start": 10,
+    "usable": 140
+  },
+  "independent_score_cross_checks": {
+    "scope": "63 overtime games only; cross-table corroboration exists for 14 games and is absent for 49; no score mismatch was found among the 14 comparable games.",
+    "team_game_results_missing_two_team_rows": 49,
+    "team_game_results_schedule_score_matches": 14,
+    "team_game_results_score_mismatches": 0
+  },
+  "limitation": "The reconstructed sample covers overtime only, not regulation drives. Local nfl_pbp lacks fixed_drive_result and per-play score snapshots; all general drive outcomes remain quarantined. The 14/63 team_game_results checks are cross-table corroboration for those games, not independent evidence for the full population.",
+  "local_db_overtime_drive_count": 664,
+  "local_db_to_fixture": {
+    "matched_drive_keys": 150,
+    "next_offense_normalized_match": 150,
+    "offense_normalized_match": 150,
+    "terminal_label_exact": 146,
+    "terminal_label_mismatch": 4
+  },
+  "overtime_games": 63,
+  "overtime_winner_direction_matches_schedule_final_winner_after_observed_tries": 63,
+  "overtime_winner_direction_mismatches": [],
+  "raw_parquet_source_checksums_verified": 4,
+  "regenerated_drive_records": 150,
+  "regenerated_key_fields_exact_match_records": 150,
+  "source": "existing LP Gridiron overtime drive reconstruction; no network requests",
+  "source_sha256": {
+    "play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+    "play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+    "play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+    "play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+  },
+  "terminal_label_mismatches": [
+    {
+      "drive": "27.0",
+      "game_id": "2022_01_IND_HOU",
+      "independent_fixed_drive_result": "End of half",
+      "local_last_series_result": "First down",
+      "outcome": "period_end"
+    },
+    {
+      "drive": "26.0",
+      "game_id": "2022_01_PIT_CIN",
+      "independent_fixed_drive_result": "Missed field goal",
+      "local_last_series_result": "First down",
+      "outcome": "field_goal_missed"
+    },
+    {
+      "drive": "25.0",
+      "game_id": "2022_10_DAL_GB",
+      "independent_fixed_drive_result": "Field goal",
+      "local_last_series_result": "QB kneel",
+      "outcome": "field_goal_made"
+    },
+    {
+      "drive": "22.0",
+      "game_id": "2023_15_MIN_CIN",
+      "independent_fixed_drive_result": "Field goal",
+      "local_last_series_result": "QB kneel",
+      "outcome": "field_goal_made"
+    }
+  ]
+}

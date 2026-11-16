@@ -3,9 +3,11 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import GameCard from '../../components/Scores/GameCard'
+import LeagueSwitcher from '../../components/Leagues/LeagueSwitcher'
 import NewsTab from '../../components/Leagues/NewsTab'
 import StandingsTab from '../../components/Leagues/StandingsTab'
 import StatsTab from '../../components/Leagues/StatsTab'
+import ComingSoonModelTab from '../../components/Leagues/ComingSoonModelTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
 import { useStatsData } from '../../components/Leagues/hooks/useStatsData'
 import type { StandingGroup } from '../../components/Leagues/types'
@@ -13,7 +15,7 @@ import { SportsService } from '../../services/sports'
 import type { Game } from '../../services/sports'
 
 type Competition = 'mls' | 'lcup'
-type Section = 'scores' | 'standings' | 'stats' | 'bracket' | 'leaders' | 'news'
+type Section = 'scores' | 'standings' | 'stats' | 'bracket' | 'leaders' | 'model' | 'news'
 
 type BracketTeam = {
   id: string
@@ -78,6 +80,7 @@ const COMPETITIONS: { key: Competition; label: string }[] = [
 
 const SECTIONS: Record<Competition, { key: Section; label: string }[]> = {
   mls: [
+    { key: 'model', label: 'Model' },
     { key: 'scores', label: 'Scores' },
     { key: 'standings', label: 'Standings' },
     { key: 'stats', label: 'Stats' },
@@ -211,8 +214,15 @@ export default function SoccerLeaguePage({
 
   return (
     <>
-      <Head><title>Soccer — Legendary Picks</title></Head>
+      <Head>
+        <title>Soccer — Legendary Picks</title>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block&icon_names=neurology"
+        />
+      </Head>
       <div className="space-y-6">
+        <LeagueSwitcher activeLeague="soccer" />
         <header>
           <h1 className="text-3xl font-extrabold tracking-tight">Soccer</h1>
         </header>
@@ -291,6 +301,8 @@ export default function SoccerLeaguePage({
             onSelectTeamCategory={stats.selectTeamCategory}
           />
         )}
+
+        {competition === 'mls' && section === 'model' && <ComingSoonModelTab />}
         {section === 'news' && competition === 'mls' && <NewsTab league="mls" {...mlsNews} />}
         {section === 'news' && competition === 'lcup' && <NewsTab league="lcup" {...lcupNews} />}
       </div>
@@ -315,7 +327,7 @@ function ScoresPanel({ date, setDate, games, loading, error, competition }: {
         <button aria-label="Next day" onClick={() => setDate(shiftDate(date, 1))} className="px-3 py-1 text-zinc-400 hover:text-white">→</button>
       </div>
       {error ? <Unavailable text={error} /> : loading ? <Loading /> : games.length ? (
-        <div className="grid gap-3 md:grid-cols-2">{games.map(game => <GameCard key={game.gameId} {...game} />)}</div>
+        <div className="grid gap-3 md:grid-cols-2">{games.map(game => <div key={game.gameId} className="rounded-xl bg-zinc-900 px-4 py-1 shadow"><GameCard {...game} /></div>)}</div>
       ) : <Unavailable text={`No ${label} matches were published for this date.`} />}
     </section>
   )

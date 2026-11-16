@@ -1,0 +1,8 @@
+game_id,season,player_id,status,official_name,official_team,official_toi,official_saves,official_shots_against,official_goals_against,archive_name,archive_team,archive_icetime,archive_saves,archive_shots_against,archive_goals_against
+2019020515,2019,8479394,OFFICIAL_ONLY,C. Hart,PHI,20:00,6,7,1,,,,,,
+2019020559,2019,8476904,OFFICIAL_ONLY,C. Driedger,FLA,60:00,42,44,2,,,,,,
+2019020570,2019,8479496,ARCHIVE_ONLY,,,,,,,David Rittich,CGY,595.0,2,2,0
+2019020876,2019,8476434,ARCHIVE_ONLY,,,,,,,John Gibson,ANA,1200.0,7,8,1
+2019020876,2019,8476932,OFFICIAL_ONLY,A. Stolarz,ANA,58:52,34,36,2,,,,,,
+2019020951,2019,8479188,OFFICIAL_ONLY,D. Ayres,CAR,28:41,8,10,2,,,,,,
+2019021048,2019,8468011,OFFICIAL_ONLY,R. Miller,ANA,09:40,4,5,1,,,,,,

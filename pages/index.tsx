@@ -2,6 +2,10 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import LiveDot from '../components/LiveDot'
+import FirstHero from '../components/Home/FirstHero'
+import HeroCarousel from '../components/Home/HeroCarousel'
+import ModelsSlide from '../components/Home/ModelsSlide'
+import { useFeatured } from '../components/Home/useFeatured'
 
 // The homepage leads with props — the most differentiated surface we have.
 // Micah's framing: "props" alone is a noun; the differentiator is the HISTORY,
@@ -30,15 +34,17 @@ function EsportsLiveIndicator() {
 }
 
 export default function Home() {
+  const featured = useFeatured()
+
   return (
     <>
       <Head>
-        <title>Legendary Picks: props with history, and how every line landed</title>
-        <meta name="description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and league coverage." />
+        <title>Legendary Picks: live prop lines and hit rate history across 11 leagues</title>
+        <meta name="description" content="See how often any player has cleared a line over their last 5, 10 and 20 games and the full season before you decide." />
         <link rel="canonical" href="https://legendarypicks.xyz/" />
         {/* Open Graph (Facebook/LinkedIn/iMessage/etc.) */}
-        <meta property="og:title" content="Legendary Picks: props with history, and how every line landed" />
-        <meta property="og:description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and league coverage." />
+        <meta property="og:title" content="Legendary Picks: live prop lines and hit rate history across 11 leagues" />
+        <meta property="og:description" content="See how often any player has cleared a line over their last 5, 10 and 20 games and the full season before you decide." />
         <meta property="og:image" content="https://legendarypicks.xyz/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
@@ -47,34 +53,17 @@ export default function Home() {
         <meta property="og:site_name" content="Legendary Picks" />
         {/* Twitter / X card */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Legendary Picks: props with history, and how every line landed" />
-        <meta name="twitter:description" content="Player props with settled history: how the line landed, hit rates, and projections. Live scores, predictions, news, esports and league coverage." />
+        <meta name="twitter:title" content="Legendary Picks: live prop lines and hit rate history across 11 leagues" />
+        <meta name="twitter:description" content="See how often any player has cleared a line over their last 5, 10 and 20 games and the full season before you decide." />
         <meta name="twitter:image" content="https://legendarypicks.xyz/og-image.png" />
       </Head>
 
-      <section className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-ink-900 to-zinc-900 p-8 md:p-12">
-        <div className="relative z-10 max-w-3xl">
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
-            Every prop line, and what it did.
-          </h1>
-          <p className="mt-4 text-zinc-300 max-w-xl">
-            Player props with the aftermath: how each line landed, hit rates over
-            the season, and projections built from the player&apos;s own game logs.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/props?tab=props" className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors">
-              Browse the prop board
-            </Link>
-            <Link href="/scores" className="px-5 py-2.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors">
-              Scoreboard
-            </Link>
-            <Link href="/predict" className="px-5 py-2.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors">
-              Predictions
-            </Link>
-          </div>
-        </div>
-        <div className="pointer-events-none absolute -right-24 -bottom-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
-      </section>
+      <HeroCarousel
+        slides={[
+          { label: 'Player props', node: <FirstHero featured={featured} /> },
+          { label: 'Prediction models', node: <ModelsSlide /> },
+        ]}
+      />
 
       {/* Primary surface: props and their history. Position and space carry the
           hierarchy — the props card is the first and largest; everything else

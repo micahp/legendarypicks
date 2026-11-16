@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import SoccerLeaguePage from '../pages/leagues/soccer'
 import MlsSoccerPage from '../pages/leagues/mls'
 import LeaguesCupSoccerPage from '../pages/leagues/lcup'
@@ -29,6 +29,13 @@ jest.mock('../components/Leagues/hooks/useStatsData', () => ({
   useStatsData: () => ({}),
 }))
 const getGames = SportsService.getGamesByLocalDate as jest.Mock
+const leagueNavigation = {
+  leagues: [
+    { league: 'ufc', sport: 'mma' },
+    { league: 'soccer', sport: 'soccer' },
+    { league: 'tennis', sport: 'tennis' },
+  ],
+}
 
 function clickLink(name: string) {
   const link = screen.getByRole('link', { name })
@@ -65,6 +72,9 @@ describe('Soccer league hub', () => {
     getGames.mockReset()
     getGames.mockResolvedValue([])
     ;(global as any).fetch = jest.fn((url: string) => {
+      if (url === '/api/navigation/sports') {
+        return Promise.resolve({ ok: true, json: async () => leagueNavigation })
+      }
       if (url === '/api/soccer/competitions/mls') {
         return Promise.resolve({ ok: true, json: async () => mlsSnapshot })
       }
@@ -79,7 +89,17 @@ describe('Soccer league hub', () => {
     await act(async () => { render(<SoccerLeaguePage />) })
 
     expect(screen.getByRole('heading', { name: 'Soccer' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'MLS' }).getAttribute('aria-current')).toBe('page')
+    const competitionsNav = screen.getByRole('navigation', { name: 'Soccer competitions' })
+    expect(within(competitionsNav).getByRole('link', { name: 'MLS' }).getAttribute('aria-current')).toBe('page')
+    const mlsSections = screen.getByRole('navigation', { name: 'MLS sections' })
+    expect(within(mlsSections).getAllByRole('link').map(link => link.textContent)).toEqual([
+      'Model', 'Scores', 'Standings', 'Stats', 'News',
+    ])
+    const leagueNav = screen.getByRole('navigation', { name: 'Leagues' })
+    const soccerLink = await within(leagueNav).findByRole('link', { name: 'Soccer' })
+    expect(soccerLink.getAttribute('aria-current')).toBe('page')
+    expect(within(leagueNav).getByRole('link', { name: 'Tennis' })).toBeTruthy()
+    expect(within(leagueNav).getByRole('link', { name: 'UFC' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Leagues Cup' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Standings' }).getAttribute('href')).toBe('/leagues/mls?tab=standings')
     await waitFor(() => expect(getGames).toHaveBeenCalledWith('mls', expect.any(String), { strict: true }))
@@ -122,7 +142,8 @@ describe('Soccer league hub', () => {
     await act(async () => { render(<MlsSoccerPage />) })
 
     expect(screen.getByRole('heading', { name: 'Soccer' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'MLS' }).getAttribute('aria-current')).toBe('page')
+    const competitionsNav = screen.getByRole('navigation', { name: 'Soccer competitions' })
+    expect(within(competitionsNav).getByRole('link', { name: 'MLS' }).getAttribute('aria-current')).toBe('page')
     expect(screen.getByText('MLS tables')).toBeTruthy()
   })
 
@@ -138,7 +159,11 @@ describe('Soccer league hub', () => {
   it('keeps the Leagues Cup route inside the same Soccer hub', async () => {
     await act(async () => { render(<LeaguesCupSoccerPage />) })
 
-    expect(screen.getByRole('link', { name: 'Leagues Cup' }).getAttribute('aria-current')).toBe('page')
+    const competitionsNav = screen.getByRole('navigation', { name: 'Soccer competitions' })
+    expect(within(competitionsNav).getByRole('link', { name: 'Leagues Cup' }).getAttribute('aria-current')).toBe('page')
+    const leagueNav = screen.getByRole('navigation', { name: 'Leagues' })
+    const soccerLink = await within(leagueNav).findByRole('link', { name: 'Soccer' })
+    expect(soccerLink.getAttribute('aria-current')).toBe('page')
     expect(await screen.findByText('Quarterfinals')).toBeTruthy()
   })
 })

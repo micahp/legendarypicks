@@ -29,9 +29,16 @@ folded through a reviewed alias -- they are the same person on the publisher's o
 and their names never match. That is STRICTER than name matching, not looser, so both
 candidate sources feed the same keep/drop machinery below.
 
+A publisher can also list one squad member twice. When its roster files two rows, or a row and an
+unlinked key, under one folded name at one club, that is one person listed twice. It is found from
+the roster, never from the name alone, and two rows with different ESPN, NBA, MLB, NHL or NFL ids are
+two people whatever the roster says. An unlinked key is bound to a player only when that player
+already holds a key from the same publisher.
+
 What it refuses:
-  - a name held by two rows that BOTH carry ids (two real players do share a name; NFL
-    has 442 such groups and NCAAF 171, and they are the spine working)
+  - a name held by two rows that BOTH carry ids, unless the roster files both under that name at one
+    club (two real players do share a name; NFL has 442 such groups and NCAAF 171, and they are the
+    spine working)
   - a name held by more than one id-less row, or more than one id-carrying row, because
     which merges into which is then a guess
   - anything where the surviving row is not uniquely determined
@@ -41,6 +48,7 @@ Plan first, apply second, in one transaction, like every other ingest here.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import os
 import sqlite3
 import sys
@@ -55,6 +63,13 @@ try:
     import published_roster
 except ImportError:  # a database or checkout without it simply has no published rosters
     published_roster = None
+
+_NO_MINT_LEAGUES = frozenset(getattr(published_roster, "NO_MINT_LEAGUES", ()))
+
+# A key binds only on its own evidence. Name and club, even with the same publisher already on that
+# player, bound the wrong people in the 2026-10-27 incident (a namesake and a transfer). Until the
+# evidence check exists these binds are reported for review and left unbound.
+BIND_BY_NAME_AND_CLUB = False
 
 
 def referencing_columns(con) -> List[Tuple[str, str]]:
@@ -92,14 +107,25 @@ class Merge:
 
 
 @dataclass
+class Bind:
+    """A publisher key the rosters tie to a player, with no player_source_ids row naming it yet."""
+    league: str
+    source: str
+    key: str
+    player_id: int
+    name: str
+
+
+@dataclass
 class MergePlan:
     merges: List[Merge] = field(default_factory=list)
+    binds: List[Bind] = field(default_factory=list)
     refused: List[Tuple[str, str, str]] = field(default_factory=list)
     columns: List[Tuple[str, str]] = field(default_factory=list)
 
     @property
     def mutations(self) -> int:
-        return len(self.merges)
+        return len(self.merges) + len(self.binds)
 
 
 # The columns that hold a PUBLISHER's id for a player. `espn_id` is not special; it is simply
@@ -107,7 +133,7 @@ class MergePlan:
 # perfectly well resolved without ESPN ever having heard of it: `player_source_ids` already
 # holds 1,470 rotowire, 131 underdog and 44 ufcstats bindings, and esports is 100% keyless by
 # nature, so the old rule could never merge a cs2 or valorant duplicate at all.
-_ID_COLUMNS = ("espn_id", "mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id")
+_ID_COLUMNS = ("espn_id", "mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id", "hoopr_id")
 
 
 def _present_id_columns(con) -> Tuple[str, ...]:
@@ -177,19 +203,157 @@ def _published_groups(con, league: Optional[str]) -> List[Tuple[str, str, List[i
         return []  # no published roster here; the name-keyed pass is the whole plan
     if not {"team", "active"} <= columns:
         return []  # a schema this old cannot say who is on a squad today
+    import mls_resolution
     out = []
     for one in leagues:
         claims: Dict[Tuple[str, str], List[int]] = {}
-        for row in con.execute(
-                "SELECT id, name, team FROM players WHERE league=? AND active=1 ORDER BY id",
-                (one,)).fetchall():
-            match = published_roster.lookup(con, one, row["name"], row["team"])
-            if match:
-                claims.setdefault((match[0], match[1]), []).append(row["id"])
+        if one == "mls" and mls_resolution.cutover_enabled():
+            # The claims are the keys the membership snapshot holds for each current person. No observation row is read.
+            for pid, record in (mls_resolution.membership_evidence(con) or {}).items():
+                for source, key in record["keys"].items():
+                    claims.setdefault((source, str(key)), []).append(pid)
+        else:
+            for row in con.execute(
+                    "SELECT id, name, team FROM players WHERE league=? AND active=1 ORDER BY id",
+                    (one,)).fetchall():
+                match = published_roster.lookup(con, one, row["name"], row["team"])
+                if match:
+                    claims.setdefault((match[0], match[1]), []).append(row["id"])
         for (source, key), ids in claims.items():
             if len(ids) > 1:
                 out.append((one, "{}={}".format(source, key), ids))
     return out
+
+
+def _roster_claims(con, league: Optional[str]) -> Dict[int, set]:
+    """player id -> the (folded name, roster team) pairs the published rosters file under that player."""
+    where = " AND league=?" if league else ""
+    try:
+        rows = con.execute(
+            "SELECT player_id, name_folded, team FROM published_roster "
+            "WHERE player_id IS NOT NULL" + where, (league,) if league else ()).fetchall()
+    except sqlite3.Error:
+        return {}  # a database without the published rosters has no roster evidence
+    claims: Dict[int, set] = {}
+    for row in rows:
+        if row[2]:
+            claims.setdefault(row[0], set()).add((row[1], row[2]))
+    return claims
+
+
+def _roster_clubs(con, league: Optional[str]) -> Dict[int, set]:
+    """player id -> the club names and codes the published rosters file under that player.
+
+    players.team holds a code (RBNY) and the rosters hold the full name (Red Bull New York), so a
+    row is on its roster's club when its own team matches either.
+    """
+    where = " AND league=?" if league else ""
+    try:
+        rows = con.execute(
+            "SELECT player_id, team, team_code FROM published_roster "
+            "WHERE player_id IS NOT NULL" + where, (league,) if league else ()).fetchall()
+    except sqlite3.Error:
+        return {}
+    clubs: Dict[int, set] = {}
+    for row in rows:
+        clubs.setdefault(row[0], set()).update(v for v in (row[1], row[2]) if v)
+    return clubs
+
+
+def _stable_conflict(rows) -> List[str]:
+    """The publisher-id columns on which these rows hold two different values."""
+    conflict = []
+    for column in _ID_COLUMNS:
+        values = {str(r[column]).strip() for r in rows
+                  if column in r.keys() and r[column] is not None and str(r[column]).strip()}
+        if len(values) > 1:
+            conflict.append(column)
+    return conflict
+
+
+def _roster_double_groups(con, league: Optional[str]) -> List[Tuple[str, str, List[int]]]:
+    """(league, label, [player ids]) for rows the published rosters file under one name at one club.
+
+    The name alone would not group these: a publisher that lists a squad member twice gives two
+    rows, or one row and one unlinked key, and the roster is what says they are one person.
+    """
+    by_claim: Dict[Tuple[str, str, str], List[int]] = {}
+    for pid, pairs in _roster_claims(con, league).items():
+        row = con.execute("SELECT league FROM players WHERE id=?", (pid,)).fetchone()
+        if row is None:
+            continue
+        for folded, team in pairs:
+            by_claim.setdefault((row[0], folded, team), []).append(pid)
+    return [(lg, "{} ({})".format(folded, team), sorted(set(ids)))
+            for (lg, folded, team), ids in by_claim.items() if len(set(ids)) > 1]
+
+
+def _unbound_binds(con, league: Optional[str], merged_away) -> Tuple[List[Bind], List[Tuple[str, str, str]]]:
+    """Publisher keys no player row names yet, that the rosters file under one player's name and club.
+
+    A publisher that lists a squad member twice leaves one of the two keys without a player row,
+    and the row it belongs to already carries that publisher's other key. The bind happens only
+    when the player already holds a key from that same publisher, so a name and a club alone never
+    attach a new publisher to someone.
+    """
+    claims = _roster_claims(con, league)
+    where = " AND league=?" if league else ""
+    try:
+        unbound = con.execute(
+            "SELECT league, source, source_player_key, name, name_folded, team FROM published_roster "
+            "WHERE player_id IS NULL AND team IS NOT NULL AND team != ''" + where,
+            (league,) if league else ()).fetchall()
+    except sqlite3.Error:
+        return [], []
+    refused: List[Tuple[str, str, str]] = []
+    per_owner: Dict[Tuple[str, int, str], List[Bind]] = {}
+    for lg, source, key, name, folded, team in unbound:
+        owners = sorted(pid for pid, pairs in claims.items() if (folded, team) in pairs)
+        if not owners:
+            continue  # nobody in the players table is this person: a new player, not a duplicate
+        if len(owners) > 1:
+            refused.append((lg, name, "{}={} is filed under {} players at {}; which one it belongs to is a guess"
+                            .format(source, key, len(owners), team)))
+            continue
+        owner = owners[0]
+        if owner in merged_away:
+            continue
+        owner_league = con.execute("SELECT league FROM players WHERE id=?", (owner,)).fetchone()
+        if owner_league is None:
+            continue
+        # A competition borrows its people from their home league (published_roster.NO_MINT_LEAGUES),
+        # so its keys bind to the home-league player. Anywhere else the league must match, and a
+        # mismatch is reported rather than skipped quietly.
+        borrows = lg in _NO_MINT_LEAGUES
+        if owner_league[0] != lg and not borrows:
+            refused.append((lg, name, "{}={} matches player {} by name and club, but that player is in {}; "
+                            "not bound across leagues".format(source, key, owner, owner_league[0])))
+            continue
+        if borrows:
+            held = con.execute(
+                "SELECT 1 FROM published_roster WHERE source=? AND player_id=?", (source, owner)).fetchone()
+        else:
+            held = con.execute(
+                "SELECT 1 FROM published_roster WHERE league=? AND source=? AND player_id=?",
+                (lg, source, owner)).fetchone()
+        if not held:
+            refused.append((lg, name, "{}={} matches player {} by name and club, but {} lists no key for "
+                            "them yet; not bound".format(source, key, owner, source)))
+            continue
+        if not BIND_BY_NAME_AND_CLUB:
+            refused.append((lg, name, "{}={} matches player {} by name and club only; not bound for review"
+                            .format(source, key, owner)))
+            continue
+        per_owner.setdefault((lg, owner, source), []).append(Bind(lg, source, key, owner, name))
+    binds: List[Bind] = []
+    for (lg, owner, source), found in sorted(per_owner.items()):
+        if len(found) > 1:
+            refused.append((found[0].league, found[0].name,
+                            "{} has {} unbound keys for player {}; which is the duplicate is a guess"
+                            .format(source, len(found), owner)))
+            continue
+        binds.append(found[0])
+    return binds, refused
 
 
 def _keys_by_publisher(con, rows) -> Dict[str, set]:
@@ -257,7 +421,11 @@ def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -
     )
 
     seen: set = set()
-    groups = ([("name",) + g for g in _name_groups(con, league)]
+    clubs = _roster_clubs(con, league)
+    # Roster groups go first. A pair a publisher double-lists is one person, and it has to be claimed
+    # before the name pass sees the same two rows, calls them two people and skips them.
+    groups = ([("roster",) + g for g in _roster_double_groups(con, league)]
+              + [("name",) + g for g in _name_groups(con, league)]
               + [("published",) + g for g in _published_groups(con, league)])
 
     for origin, group_league, label, ids in groups:
@@ -268,11 +436,48 @@ def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -
         group = {"league": group_league, "name": label}
         rows = con.execute(
             "SELECT id, name, {} FROM players WHERE id IN ({}) ORDER BY id".format(
-                ", ".join(_present_id_columns(con) or ("espn_id",)),
+                ", ".join([c for c in ("team",) if c in player_columns]
+                          + list(_present_id_columns(con) or ("espn_id",))),
                 ",".join("?" * len(ids))), ids).fetchall()
         identity = {r["id"]: publisher_identity(con, r["id"], r) for r in rows}
         with_id = [r for r in rows if identity[r["id"]]]
         without = [r for r in rows if not identity[r["id"]]]
+
+        if origin == "roster":
+            # The publisher files these rows under one name at one club. Two keys it holds for one
+            # squad member are a double listing, so the key-conflict refusal below does not apply.
+            # Two different stable ids (ESPN, NBA, ...) are still two people, whatever the roster says.
+            conflict = _stable_conflict(rows)
+            if conflict:
+                plan.refused.append((group["league"], group["name"],
+                                     "{} differ on these rows; two people".format(", ".join(conflict))))
+                continue
+            if len(rows) != 2:
+                plan.refused.append((group["league"], group["name"],
+                                     "{} rows resolve here; which survives is a guess".format(len(rows))))
+                continue
+            # The row already on the roster's club survives. Then the row carrying more ids, then the
+            # one more rows already point at, then age.
+            on_roster = {r["id"]: (r["team"] if "team" in r.keys() else None) in clubs.get(r["id"], set())
+                         for r in rows}
+            ranked = sorted(rows, key=lambda r: (
+                0 if on_roster[r["id"]] else 1,
+                -_identity_count(con, r),
+                -sum(_moved(con, plan, r["id"]).values()),
+                r["id"]))
+            keep, drop = ranked[0], ranked[1]
+            if group_league == "nfl" and nfl_crosswalk:
+                conflict = _nfl_pair_conflict((keep, drop), nfl_crosswalk)
+                if conflict:
+                    plan.refused.append((group["league"], group["name"],
+                                         "NFL ESPN/GSIS identity check refused merge: {}".format(conflict)))
+                    continue
+            plan.merges.append(Merge(
+                group["league"], group["name"], keep["id"], drop["id"],
+                identity[keep["id"]] or label, _moved(con, plan, drop["id"])))
+            if limit and len(plan.merges) >= limit:
+                break
+            continue
 
         if origin == "published":
             # These rows are grouped because the PUBLISHER named them as one squad member, so
@@ -359,12 +564,17 @@ def build_plan(con, league: Optional[str] = None, limit: Optional[int] = None) -
                                  identity[keep["id"]], _moved(con, plan, drop["id"])))
         if limit and len(plan.merges) >= limit:
             break
+    merged_away = {m.drop_id for m in plan.merges}
+    binds, refused = _unbound_binds(con, league, merged_away)
+    plan.binds.extend(binds)
+    plan.refused.extend(refused)
     return plan
 
 
 def render(plan: MergePlan, emit=print, show: int = 12) -> None:
     emit("  discovered {} player_id columns across the schema".format(len(plan.columns)))
-    emit("  {} merges planned, {} refused".format(len(plan.merges), len(plan.refused)))
+    emit("  {} merges and {} key binds planned, {} refused".format(
+        len(plan.merges), len(plan.binds), len(plan.refused)))
     by_league: Dict[str, int] = {}
     for m in plan.merges:
         by_league[m.league] = by_league.get(m.league, 0) + 1
@@ -376,6 +586,8 @@ def render(plan: MergePlan, emit=print, show: int = 12) -> None:
         # rather than labelling every publisher "espn".
         emit("    MERGE {:<6} {!r}: drop {} into {} (on {}) moving {}".format(
             m.league, m.name, m.drop_id, m.keep_id, m.keep_espn_id, detail))
+    for b in plan.binds[:show]:
+        emit("    BIND {:<6} {}={} ({!r}) to player {}".format(b.league, b.source, b.key, b.name, b.player_id))
     for league, name, why in plan.refused[:show]:
         emit("    REFUSE {:<6} {!r}: {}".format(league, name, why))
 
@@ -383,7 +595,7 @@ def render(plan: MergePlan, emit=print, show: int = 12) -> None:
 def apply_plan(con, plan: MergePlan) -> Dict[str, int]:
     """Repoint every reference, then delete the now-unreferenced row."""
     con.row_factory = sqlite3.Row
-    counts = {"merged": 0, "rows_moved": 0, "aliases": 0, "ids_carried": 0}
+    counts = {"merged": 0, "rows_moved": 0, "aliases": 0, "ids_carried": 0, "bound": 0}
     present = _present_id_columns(con)
     nfl_crosswalk = (
         load_espn_to_gsis()
@@ -431,6 +643,15 @@ def apply_plan(con, plan: MergePlan) -> Dict[str, int]:
             "DELETE FROM players WHERE id=? AND league=? AND NULLIF(espn_id,'') IS NULL",
             (m.drop_id, m.league))
         counts["merged"] += cur.rowcount
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    for b in plan.binds:
+        con.execute(
+            "INSERT INTO player_source_ids(source, league, source_player_key, player_id, first_seen, last_seen) "
+            "VALUES(?,?,?,?,?,?)", (b.source, b.league, b.key, b.player_id, now, now))
+        con.execute(
+            "UPDATE published_roster SET player_id=? WHERE league=? AND source=? AND source_player_key=?",
+            (b.player_id, b.league, b.source, b.key))
+        counts["bound"] += 1
     return counts
 
 
@@ -469,7 +690,7 @@ def main(argv=None) -> int:
             return 0
         with con:
             counts = apply_plan(con, plan)
-        print("  applied: {merged} rows merged, {rows_moved} references moved".format(**counts))
+        print("  applied: {merged} rows merged, {rows_moved} references moved, {bound} keys bound".format(**counts))
     finally:
         con.close()
     return 0

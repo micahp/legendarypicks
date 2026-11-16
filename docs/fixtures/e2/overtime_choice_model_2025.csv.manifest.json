@@ -1,0 +1,48 @@
+{
+  "chronological_check": {
+    "game_type": "REG",
+    "games": 6,
+    "kicks": 4,
+    "log_loss": {
+      "always_receive_control": 13.815511,
+      "fitted": 0.637513,
+      "neutral_50_50": 0.693147
+    },
+    "seasons": [
+      "2026"
+    ]
+  },
+  "engine_assumptions": [
+    "the coin toss is a seeded fair draw; the toss winner is the only team whose decision is modelled",
+    "the kick-or-receive decision is a seeded Bernoulli draw with p_kick; kick gives the other team the first possession",
+    "replays before 2026-10-25 use this 2025-only fit; the 2026 rows are a check, not a fit input",
+    "the always-receive and always-kick arms are labelled controls, not models"
+  ],
+  "excluded": "the 2023 Super Bowl and the 2025 playoff rows: not regular-season decisions under the current rules",
+  "fit_window": {
+    "game_type": "REG",
+    "games": 14,
+    "kicks": 10,
+    "seasons": [
+      "2025"
+    ]
+  },
+  "generator": "scripts/nfl_sequence/build_overtime_choice_model.py",
+  "generator_sha256": "45a1a284aa78880370fa909254c5ef28d8b09facec961a0d258552543b40dec5",
+  "observed_kick_rate_wilson95": [
+    0.453509,
+    0.882786
+  ],
+  "output": {
+    "path": "docs/fixtures/e2/overtime_choice_model_2025.csv",
+    "sha256": "5746fe4cc1f9428de2cd408d0641750df096009bff9459be929b5d7867bc76b1"
+  },
+  "p_kick": 0.6875,
+  "prior": {
+    "a": 1,
+    "b": 1,
+    "form": "Beta(a, b) posterior mean (kicks + a) / (games + a + b)"
+  },
+  "source": "docs/fixtures/e2/overtime_coin_toss_2023_2026.csv",
+  "source_sha256": "b7b29fa8d1ef699980645bffc9626d8fc1e2d142e60b5d37aa9d37dfbe92c531"
+}

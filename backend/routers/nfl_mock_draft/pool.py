@@ -26,6 +26,7 @@ from ..nfl_offseason import (
     _percentage,
     _pk_aggregates,
     _regular_season_aggregates,
+    _latest_completed_log_season,
     _rounded_ratio,
     _round,
     _table_columns,
@@ -62,11 +63,9 @@ def pool(season: int = Query(...)):
         # season (what the player actually did), not from the draft season
         # (which hasn't been played yet).
         # ------------------------------------------------------------------
-        _log_season_row = connection.execute(
-            "SELECT MAX(season) FROM player_game_logs WHERE league='nfl'"
-        ).fetchone()
-        _log_season = (_log_season_row[0] if _log_season_row and _log_season_row[0]
-                       else _CURRENT_SEASON - 1)
+        _log_season = (
+            _latest_completed_log_season(connection) or _CURRENT_SEASON - 1
+        )
 
         # Resolved through the PACKAGE at call time, not through the copy this
         # module bound at import. The test that pins the pool cache patches

@@ -29,6 +29,16 @@ runners). Whether rows arrive is the only honest instrument.
 """
 from typing import Dict, List, Optional
 
+from mls_resolution import cutover_enabled
+
+
+def _published_roster_step() -> List[str]:
+    """Use the membership cycle with the same runtime switch as MLS consumers."""
+    step = ["ingest_published_rosters.py", "--apply"]
+    if cutover_enabled():
+        step.append("--mls-cutover")
+    return step
+
 # Jobs share the shape `run_props_ingest.PROVIDERS` uses, plus two keys that registry
 # understands: `env` (per-job child environment) and `freshness` (required, see above).
 #
@@ -110,6 +120,105 @@ JOBS: List[Dict[str, object]] = [
             "date_column": "fetched_at",
             "stale_hours": 6,
             "label": "game summaries",
+        }],
+    },
+    {
+        "id": "nba_schedule",
+        "databases": ["dev", "prod"],
+        # nba.com's own game pages carry the score the moment a game is final, and they cost no
+        # ESPN request. This re-reads only the stored games that are not final yet and fall
+        # within a week back or three days ahead: one page each, a few a night. The full season
+        # walk (~1,300 pages) is a manual run, and the new-ids check (Cup knockouts appear in
+        # December) belongs to that walk, not this job.
+        "cadence_min": 30,
+        "timeout_sec": 900,
+        "host_lock": "nba_com",
+        "steps": [["ingest_nba_schedule.py", "--open", "--apply"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'nba_schedule' AND status = 'ok'",
+            "stale_hours": 2,
+            "label": "nba.com schedule refresh",
+        }],
+    },
+    {
+        "id": "nba_player_logs",
+        "databases": ["dev", "prod"],
+        # Recent ESPN boxscores are re-read with a 14-day overlap so late stat
+        # corrections are applied idempotently. The script fetches the complete
+        # range before its short SQLite transaction and stamps ESPN's NBA
+        # ending-year season key. Dev and production each serve their own prop
+        # history, so both databases need this refresh. It shares ESPN's host
+        # lock with every ESPN job.
+        "cadence_min": 360,
+        "timeout_sec": 1800,
+        "host_lock": "espn",
+        "steps": [["ingest_nba_logs.py", "--recent-days", "14"]],
+        "needs_api_base": False,
+        "freshness": [{
+            # During the offseason there may be no new NBA boxscore rows. The
+            # successful-run ledger measures refresh execution independently
+            # from whether the league had a game in the last six hours.
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'nba_player_logs' AND status = 'ok'",
+            "stale_hours": 12,
+            "label": "nba player log refresh",
+        }],
+    },
+    {
+        "id": "nba_sportsdataverse_logs",
+        "databases": ["dev"],
+        # Poll the official NBA Stats release assets every six hours. The current
+        # season asset may not exist yet; the ingester reports that explicitly
+        # and still refreshes the latest published season. ESPN remains the
+        # current-season fallback until SportsDataverse publishes that release.
+        "cadence_min": 360,
+        "timeout_sec": 1200,
+        "host_lock": "sportsdataverse",
+        "steps": [["ingest_nba_sportsdataverse.py", "--recent-seasons", "2"]],
+        "needs_api_base": False,
+        "freshness": [{
+            # This measures the release check itself. The job output reports
+            # separately whether the current-season asset has been published.
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'nba_sportsdataverse_logs' AND status = 'ok'",
+            "stale_hours": 12,
+            "label": "nba SportsDataverse release check",
+        }],
+    },
+    {
+        "id": "tennis_model_grading",
+        "cadence_min": 30,
+        "timeout_sec": 900,
+        "host_lock": "tennis_model",
+        "steps": [["grade_tennis_model.py", "--days", "3"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'tennis_model_grading' AND status = 'ok'",
+            "stale_hours": 2,
+            "label": "tennis model grading job",
+        }],
+    },
+    {
+        "id": "tennis_v2_research_ledger",
+        "cadence_min": 30,
+        "timeout_sec": 1800,
+        "host_lock": "tennis_model",
+        "steps": [["tennis_v2_research_ledger.py", "--days", "7"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'tennis_v2_research_ledger' AND status = 'ok'",
+            "stale_hours": 2,
+            "label": "tennis V2 prospective forecasts and grades",
+            "age_label": "last successful prospective capture",
         }],
     },
     {
@@ -195,8 +304,9 @@ JOBS: List[Dict[str, object]] = [
         "id": "nfl_schedule",
         # nfl_schedule stopped 2026-08-05 and the season started 2026-08-29, so the
         # schedule went stale three weeks before it mattered most. ingest_nfl_schedule was
-        # in no unit, no cron and no runner script.
-        "cadence_min": 720,
+        # in no unit, no cron and no runner script. Four hours, not twelve: the NFL stakes gate stays
+        # silent while a finished game's score is missing, so the schedule must catch up soon after games end.
+        "cadence_min": 240,
         "timeout_sec": 1200,
         # nflverse publishes as files on github, its own host, so this costs no ESPN
         # budget. With no --season the ingest selects the newest season published
@@ -365,8 +475,7 @@ JOBS: List[Dict[str, object]] = [
         # spend that budget at the same time. One request per club, ~60 clubs across the
         # three leagues.
         "host_lock": "fotmob",
-        "steps": [["ingest_league_clubs.py"],
-                  ["ingest_published_rosters.py", "--apply"]],
+        "steps": [["ingest_league_clubs.py"], _published_roster_step()],
         "needs_api_base": False,
         "freshness": [
             {
@@ -431,6 +540,23 @@ JOBS: List[Dict[str, object]] = [
             },
         ],
     },
+    {
+        "id": "home_prop_refresh",
+        # The featured preview reads one game log per qualifying player. Publish it
+        # weekly after the NFL slate so the homepage handler only reads a stored row.
+        "cadence_min": 10080,
+        "timeout_sec": 180,
+        "host_lock": "home_prop",
+        "steps": [["home_prop_refresh.py", "--apply"]],
+        "needs_api_base": False,
+        "freshness": [{
+            "table": "home_prop_cache",
+            "date_column": "generated_at",
+            "where": "id = 1",
+            "stale_hours": 240,
+            "label": "homepage prop preview",
+        }],
+    },
 ]
 
 # Jobs switched off by hand: put an id here and it drops out of every run. Settlement was paused
@@ -476,6 +602,13 @@ def validate(jobs: Optional[List[Dict[str, object]]] = None) -> None:
             if not isinstance(value, (int, float)) or value <= 0:
                 raise RegistryError(
                     "job {!r} has a non-positive {}: {!r}".format(job_id, key, value))
+        if "databases" in job:
+            databases = job["databases"]
+            if (not isinstance(databases, (list, tuple)) or not databases
+                    or any(database not in ("dev", "prod") for database in databases)):
+                raise RegistryError(
+                    "job {!r} has an invalid databases scope: {!r}".format(
+                        job_id, databases))
         if not job["freshness"]:
             raise RegistryError(
                 "job {!r} declares no freshness target. Every job must say how an outsider "

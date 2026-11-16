@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import PropChart, { PropHistory } from './PropChart'
+import PropChart, { nbaSeasonEndYear, PropHistory } from './PropChart'
 
 function chartData(games: PropHistory['games']): PropHistory {
   return {
@@ -21,6 +21,15 @@ const threeGames: PropHistory['games'] = [
   { date: '2026-07-21', value: 18, opponent: 'AWY', home: false, hit: false },
   { date: '2026-07-22', value: 21, opponent: 'UNK', home: null, hit: true },
 ]
+
+describe('NBA season key', () => {
+  it('uses ESPN and the game-log tables ending-year season key', () => {
+    expect(nbaSeasonEndYear('2026-10-21')).toBe(2027)
+    expect(nbaSeasonEndYear('2027-01-15')).toBe(2027)
+    expect(nbaSeasonEndYear('2027-06-22')).toBe(2027)
+    expect(nbaSeasonEndYear('not-a-date')).toBeNull()
+  })
+})
 
 describe('PropChart venue handling', () => {
   // The per-game labels moved out of the SVG and onto DOM columns under each

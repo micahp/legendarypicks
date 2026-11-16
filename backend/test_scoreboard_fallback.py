@@ -102,7 +102,11 @@ class SlateShape(unittest.TestCase):
         self.assertEqual(games[0]["source"], "bovada")
 
     def test_a_league_bovada_does_not_carry_returns_nothing(self):
-        self.assertEqual(fallback.bovada_games("ncaaf"), [])
+        # Not a real league on purpose: ncaaf stopped qualifying once Bovada
+        # mapped it, and this test then hit the live listing.
+        with patch.object(fallback.bovada_scraper, "fetch_events") as fetch:
+            self.assertEqual(fallback.bovada_games("cricket"), [])
+        fetch.assert_not_called()
 
     def test_a_listing_failure_is_an_empty_board_not_an_exception(self):
         """This is the fallback. It must never hand a second failure to a path

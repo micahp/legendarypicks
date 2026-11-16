@@ -31,13 +31,13 @@ import sqlite3
 import statistics as stt
 
 import nfl_backtest as nb
+import team_codes
 import nfl_metrics as nm
 
 FROZEN = {"half_life": 6.0, "cap": 14.0, "cap_points": None, "sigma": 13.295}
 SEASONS = range(2010, 2021)
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "data", "picks.dev.db")
-ELO_CODE = {"OAK": "LV"}
 
 
 def home_rate_by_game(con):
@@ -67,7 +67,7 @@ def elo_by_game(con):
     for date, t1, t2, p1 in con.execute(
             "SELECT date, team1, team2, elo_prob1 FROM nfl_elo_538 "
             "WHERE CAST(season AS INTEGER) BETWEEN 2010 AND 2020"):
-        elo[(date, ELO_CODE.get(t1, t1), ELO_CODE.get(t2, t2))] = float(p1)
+        elo[(date, team_codes.normalize("nfl", t1), team_codes.normalize("nfl", t2))] = float(p1)
     return elo
 
 

@@ -16,7 +16,40 @@ sys.path.insert(0, HERE)
 
 import spine_merge as sm
 
+def _real_data_dir():
+    """The data directory holding the real databases, even from a worktree.
+
+    A worktree's backend/data can hold a placeholder picks.db (an empty schema stub), and
+    pinning against that measured the stub, not the schema that ships. So a picks.db with
+    no players rows is not real; fall back to the main checkout via git's common dir.
+    """
+    local = os.path.join(HERE, "data")
+    try:
+        con = sqlite3.connect("file:{}?mode=ro".format(os.path.join(local, "picks.db")), uri=True)
+        try:
+            if con.execute("SELECT COUNT(*) FROM players").fetchone()[0] > 0:
+                return local
+        finally:
+            con.close()
+    except sqlite3.Error:
+        pass
+    try:
+        import subprocess
+        # --path-format=absolute needs git 2.31; this host's git is older, so resolve the
+        # (possibly relative) answer against HERE ourselves.
+        common = subprocess.run(
+            ["git", "-C", HERE, "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return local
+    common = os.path.normpath(os.path.join(HERE, common))
+    return os.path.join(os.path.dirname(common), "backend", "data")
+
+
+# REAL_DB is spine_merge's own default path (the fallback test asserts it); REAL_DATA is
+# where the schema pins read the real databases, which differs inside a worktree.
 REAL_DB = os.path.join(HERE, "data", "picks.db")
+REAL_DATA = _real_data_dir()
 
 
 def _fixture(path):
@@ -58,7 +91,27 @@ class ColumnDiscoveryTests(unittest.TestCase):
         con = _fixture(":memory:")
         self.assertEqual([t for t, _c in sm.referencing_columns(con) if t == "players"], [])
 
-    @unittest.skipUnless(os.path.isfile(REAL_DB), "needs the real database")
+    def test_sportsdataverse_log_player_id_is_discovered(self):
+        import migrate_schema
+
+        con = _fixture(":memory:")
+        migration = next(
+            item for item in migrate_schema.MIGRATIONS
+            if item.migration_id == "20261020_001_nba_sportsdataverse_history_view"
+        )
+        table = next(
+            item for item in migration.objects
+            if item.object_type == "table"
+            and item.name == "player_game_logs_sportsdataverse"
+        )
+        con.execute(table.sql)
+        self.assertIn(
+            ("player_game_logs_sportsdataverse", "player_id"),
+            sm.referencing_columns(con),
+        )
+
+    @unittest.skipUnless(os.path.isfile(os.path.join(REAL_DATA, "picks.db")),
+                         "needs the real database")
     def test_the_installed_schemas_are_pinned_and_agree(self):
         """Pinned deliberately, and checked on BOTH databases.
 
@@ -100,19 +153,48 @@ class ColumnDiscoveryTests(unittest.TestCase):
         # 2026-09-07: both gained `published_roster.player_id`, the roster-owned identity
         # binding v0.9.3 added. Discovery picking it up is the point: a merge that did not
         # repoint it would leave roster rows naming a player id that no longer exists.
-        expected = {"picks.db": 19, "picks.dev.db": 20}
-        for name, count in expected.items():
-            path = os.path.join(HERE, "data", name)
+        # 2026-10-21: re-pinned as exact SETS, measured on the real databases (prod 27,
+        # dev 30). The 19/20 counts had been red against both since well before this, and
+        # in worktrees they ran against a placeholder picks.db with 5 columns, so the
+        # failure read as "environment". A count says the schema changed; a set says
+        # which column, and that is the question this test exists to force.
+        # dev-only: nfl_player_birth_dates and nfl_published_fantasy_points.
+        # The NBA migration creates the provider-owned SportsDataverse table on both
+        # databases, empty on prod until the separately approved promotion.
+        shared = {
+            "injury_reports", "name_alias", "nfl_adp", "nfl_depth_chart",
+            "nfl_draft_notes", "nfl_dst_stats", "nfl_mock_draft_picks",
+            "nfl_player_projections", "nfl_snap_counts", "player_game_availability",
+            "player_game_logs", "player_game_logs_fotmob", "player_game_logs_ufcstats",
+            "player_game_logs_sportsdataverse", "player_game_logs_usopen",
+            "player_game_shares", "player_projection_grades",
+            "player_projections", "player_source_ids", "player_stats",
+            "player_team_shares", "props", "published_roster", "roster_memberships",
+            "roster_snap", "tennis_atp_players", "tennis_ranking_snapshots",
+            "tennis_wta_players",
+        }
+        expected = {
+            "picks.db": shared,
+            "picks.dev.db": shared | {
+                "nfl_player_birth_dates", "nfl_published_fantasy_points",
+            },
+        }
+        checked = 0
+        for name, tables in expected.items():
+            path = os.path.join(REAL_DATA, name)
             if not os.path.isfile(path):
                 continue
             con = sqlite3.connect("file:{}?mode=ro".format(path), uri=True)
             try:
                 found = sm.referencing_columns(con)
-                self.assertEqual(len(found), count,
-                                 "{} has {} player_id columns, expected {}: {}".format(
-                                     name, len(found), count, found))
             finally:
                 con.close()
+            want = {(table, "player_id") for table in tables}
+            self.assertEqual(set(found), want,
+                             "{} player_id columns differ: added {}, missing {}".format(
+                                 name, sorted(set(found) - want), sorted(want - set(found))))
+            checked += 1
+        self.assertGreater(checked, 0, "no real database found under {}".format(REAL_DATA))
 
 
 class MergeTests(unittest.TestCase):
@@ -504,3 +586,160 @@ class APublishersSquadFindsTheDuplicateANameCannot(unittest.TestCase):
             [("Nobody Published", "SD", "mls", None)])
         self.con.commit()
         self.assertEqual(sm.build_plan(self.con, league="mls").merges, [])
+
+
+class RosterFilesOneNameTwice(unittest.TestCase):
+    """A publisher can list one squad member twice. The roster says so; the name alone does not."""
+
+    def setUp(self):
+        self.con = _fixture(":memory:")
+        self.con.executescript("""
+            ALTER TABLE players ADD COLUMN active INTEGER DEFAULT 1;
+            CREATE TABLE player_source_ids(id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT,
+              league TEXT, source_player_key TEXT, player_id INTEGER, first_seen TEXT, last_seen TEXT,
+              UNIQUE(source, league, source_player_key));
+        """)
+        import published_roster
+        published_roster.ensure(self.con)
+        self.fold = published_roster.fold
+
+    def _player(self, name, team, espn=None):
+        return self.con.execute(
+            "INSERT INTO players(name, team, league, espn_id, active) VALUES(?,?,'mls',?,1)",
+            (name, team, espn)).lastrowid
+
+    def _key(self, source, key, name, roster_team, player_id=None, bind=False, code=None):
+        self.con.execute(
+            "INSERT INTO published_roster(league, source, source_player_key, name, name_folded, team, "
+            "position, position_group, updated_at, player_id, team_code) "
+            "VALUES('mls',?,?,?,?,?,'M','Midfield','now',?,?)",
+            (source, key, name, self.fold(name), roster_team, player_id, code))
+        if bind and player_id is not None:
+            self.con.execute(
+                "INSERT INTO player_source_ids(source, league, source_player_key, player_id, first_seen, last_seen) "
+                "VALUES(?,'mls',?,?,'now','now')", (source, key, player_id))
+        self.con.commit()
+
+    def test_two_rows_the_roster_files_under_one_name_at_one_club_are_one_person(self):
+        # The David Ruiz case: one row resolved to Miami, one to New York, the roster puts both at New York.
+        old = self._player("David Ruiz", "MIA", espn="229289")
+        new = self._player("David Ruiz", "Red Bull New York")
+        self._key("fotmob", "1348286", "David Ruiz", "Red Bull New York", old, bind=True)
+        self._key("fotmob", "1787871", "David Ruiz", "Red Bull New York", new, bind=True)
+        self._key("mlssoccer", "541416", "David Ruíz", "Red Bull New York", new, bind=True)
+        plan = sm.build_plan(self.con, "mls")
+        self.assertEqual([(m.keep_id, m.drop_id) for m in plan.merges], [(new, old)])
+        with self.con:
+            sm.apply_plan(self.con, plan)
+        self.assertEqual(self.con.execute("SELECT espn_id FROM players WHERE id=?", (new,)).fetchone()[0],
+                         "229289", "the ESPN id travels to the survivor")
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM players WHERE id=?", (old,)).fetchone()[0], 0)
+        self.assertEqual(self.con.execute(
+            "SELECT player_id FROM player_source_ids WHERE source_player_key='1348286'").fetchone()[0], new)
+
+    def test_two_rows_with_different_espn_ids_are_two_people_whatever_the_roster_says(self):
+        old = self._player("David Ruiz", "MIA", espn="229289")
+        new = self._player("David Ruiz", "Red Bull New York", espn="999111")
+        self._key("fotmob", "1348286", "David Ruiz", "Red Bull New York", old, bind=True)
+        self._key("fotmob", "1787871", "David Ruiz", "Red Bull New York", new, bind=True)
+        plan = sm.build_plan(self.con, "mls")
+        self.assertEqual(plan.merges, [])
+        self.assertTrue(any("differ on these rows" in why for _, _, why in plan.refused))
+
+    def test_a_name_the_roster_files_at_two_clubs_is_not_one_person(self):
+        old = self._player("David Ruiz", "MIA")
+        new = self._player("David Ruiz", "Red Bull New York")
+        self._key("fotmob", "1348286", "David Ruiz", "Inter Miami CF", old, bind=True)
+        self._key("fotmob", "1787871", "David Ruiz", "Red Bull New York", new, bind=True)
+        self.assertEqual(sm.build_plan(self.con, "mls").merges, [])
+
+    def test_an_unlinked_key_is_not_bound_on_name_and_club_alone(self):
+        # The Zambrano case: mlssoccer lists him twice and only one of the two keys has a player row.
+        # The publisher is already on him, which says only that the name and club match, so the key waits for review.
+        player = self._player("Marcos Zambrano", "NE")
+        self._key("fotmob", "1794408", "Marcos Zambrano", "New England Revolution", player, bind=True)
+        self._key("mlssoccer", "315191673", "Marcos Zambrano", "New England Revolution", player, bind=True)
+        self._key("mlssoccer", "540256", "Marcos Zambrano", "New England Revolution", None)
+        plan = sm.build_plan(self.con, "mls")
+        self.assertEqual(plan.merges, [])
+        self.assertEqual(plan.binds, [])
+        self.assertTrue(any("540256" in why and "name and club only" in why for _, _, why in plan.refused))
+        self.assertIsNone(self.con.execute(
+            "SELECT player_id FROM published_roster WHERE source_player_key='540256'").fetchone()[0])
+
+    def test_the_name_and_club_bind_is_kept_behind_a_switch(self):
+        player = self._player("Marcos Zambrano", "NE")
+        self._key("fotmob", "1794408", "Marcos Zambrano", "New England Revolution", player, bind=True)
+        self._key("mlssoccer", "315191673", "Marcos Zambrano", "New England Revolution", player, bind=True)
+        self._key("mlssoccer", "540256", "Marcos Zambrano", "New England Revolution", None)
+        sm.BIND_BY_NAME_AND_CLUB = True
+        try:
+            plan = sm.build_plan(self.con, "mls")
+        finally:
+            sm.BIND_BY_NAME_AND_CLUB = False
+        self.assertEqual([(b.source, b.key, b.player_id) for b in plan.binds],
+                         [("mlssoccer", "540256", player)])
+
+    def test_an_unlinked_key_from_a_publisher_the_player_does_not_hold_is_not_bound(self):
+        player = self._player("Marcos Zambrano", "NE")
+        self._key("fotmob", "1794408", "Marcos Zambrano", "New England Revolution", player, bind=True)
+        self._key("sportsdataverse", "77", "Marcos Zambrano", "New England Revolution", None)
+        plan = sm.build_plan(self.con, "mls")
+        self.assertEqual(plan.binds, [])
+        self.assertTrue(any("lists no key" in why for _, _, why in plan.refused))
+
+    def test_a_row_is_on_its_roster_club_by_code_as_well_as_by_name(self):
+        # Real rows: players.team is the club code (RBNY) and the roster carries both the code and the name.
+        old = self._player("David Ruiz", "MIA", espn="229289")
+        new = self._player("David Ruiz", "RBNY")
+        self._key("fotmob", "1348286", "David Ruiz", "Red Bull New York", old, bind=True, code="RBNY")
+        self._key("fotmob", "1787871", "David Ruiz", "Red Bull New York", new, bind=True, code="RBNY")
+        plan = sm.build_plan(self.con, "mls")
+        self.assertEqual([(m.keep_id, m.drop_id) for m in plan.merges], [(new, old)])
+
+
+class LeaguesCupBorrowsItsOwner(unittest.TestCase):
+    """Leagues Cup has no players of its own. Its keys bind to the MLS or Liga MX player they name."""
+
+    def setUp(self):
+        self.con = _fixture(":memory:")
+        self.con.executescript("""
+            ALTER TABLE players ADD COLUMN active INTEGER DEFAULT 1;
+            CREATE TABLE player_source_ids(id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT,
+              league TEXT, source_player_key TEXT, player_id INTEGER, first_seen TEXT, last_seen TEXT,
+              UNIQUE(source, league, source_player_key));
+        """)
+        import published_roster
+        published_roster.ensure(self.con)
+        self.fold = published_roster.fold
+
+    def _player(self, name, team, league):
+        return self.con.execute(
+            "INSERT INTO players(name, team, league, active) VALUES(?,?,?,1)", (name, team, league)).lastrowid
+
+    def _key(self, league, source, key, name, team, player_id):
+        self.con.execute(
+            "INSERT INTO published_roster(league, source, source_player_key, name, name_folded, team, "
+            "position, position_group, updated_at, player_id) VALUES(?,?,?,?,?,?,'F','Forward','now',?)",
+            (league, source, key, name, self.fold(name), team, player_id))
+        self.con.commit()
+
+    def test_a_leagues_cup_key_is_not_bound_to_the_mls_player_on_name_and_club_alone(self):
+        owner = self._player("Thayllon", "LAFC", "mls")
+        self._key("mls", "fotmob", "1259117", "Thayllon", "Los Angeles FC", owner)
+        self._key("lcup", "fotmob", "1259117", "Thayllon", "Los Angeles FC", owner)
+        self._key("lcup", "fotmob", "1738398", "Thayllon", "Los Angeles FC", None)
+        plan = sm.build_plan(self.con)
+        self.assertEqual(plan.binds, [])
+        self.assertTrue(any("1738398" in why and "name and club only" in why for _, _, why in plan.refused))
+        self.assertIsNone(self.con.execute(
+            "SELECT player_id FROM published_roster WHERE league='lcup' AND source_player_key='1738398'"
+        ).fetchone()[0])
+
+    def test_a_key_that_names_a_player_in_another_league_is_reported_not_skipped(self):
+        owner = self._player("Hugo Rodriguez", "Club Leon", "ligamx")
+        self._key("ligamx", "fotmob", "900", "Hugo Rodriguez", "Club Leon", owner)
+        self._key("mls", "fotmob", "901", "Hugo Rodriguez", "Club Leon", None)
+        plan = sm.build_plan(self.con)
+        self.assertEqual(plan.binds, [])
+        self.assertTrue(any("not bound across leagues" in why for _, _, why in plan.refused))

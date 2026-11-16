@@ -256,7 +256,7 @@ def main(argv=None):
     con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
     try:
         graded, skipped, disagree = grader.grade(
-            con, args.season, pregame_only=True, qb_selection="pregame")
+            con, args.season, pregame_only=True, population="pregame")
         if not graded:
             raise SystemExit("No valid pregame quote pairs/player-games to grade; no model result issued")
         output, rows = evaluate(graded, skipped, args.boot)

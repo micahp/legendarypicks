@@ -100,8 +100,9 @@ def _other_side(side):
 
 @router.get("/api/game/{league}/{game_id}/story")
 def game_story(league: str, game_id: str, refresh: bool = Query(False)):
-    """AI matchup blurb (DeepSeek V4 Pro), grounded ONLY in our records/streaks/form.
-    Cached per game. Generation logic lives in _core.generate_game_story so the
+    """Matchup story. Upcoming NBA and NFL previews use the CPU-only story engine;
+    other leagues and postgame recaps use the existing cached story path. Generation
+    logic lives in _core.generate_game_story so the
     pregenerate_game_stories job can warm the cache when a game is first discovered,
     instead of paying the latency on the first user view."""
     return generate_game_story(league, game_id, refresh)

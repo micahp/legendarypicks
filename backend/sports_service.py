@@ -73,6 +73,10 @@ from routers import (  # noqa: E402
     nfl_schedule_api,
     watch,
     nfl_model,
+    nhl_model,
+    nba_model,
+    fbs_model,
+    home,
 )
 
 app = FastAPI(title="Legendary Picks Sports API", description="Multi-league sports data (ESPN)", version="2.0.0")
@@ -103,6 +107,10 @@ app.include_router(ufc_picks.router)
 app.include_router(nfl_offseason.router)
 app.include_router(nfl_usage.router)
 app.include_router(nfl_model.router)
+app.include_router(nhl_model.router)
+app.include_router(nba_model.router)
+app.include_router(fbs_model.router)
+app.include_router(home.router)
 app.include_router(nfl_playoff_odds.router)
 app.include_router(nfl_draft_notes.router)
 app.include_router(nfl_mock_draft.router)

@@ -1,0 +1,170 @@
+{
+  "assumptions": [
+    "a try decision is only used where the game goes on; the try table holds decisions made before the game is decided",
+    "overtime cells are the seven observed 2025 regular-season overtime tries; they are shrunk toward the late-fourth-quarter cell",
+    "the regulation-rate fallback is replaced by this table only where no point after is observed in the drive"
+  ],
+  "baseline_unconditional_logloss_2025": 0.301515,
+  "cells": {
+    "late_q4|-4..-1": {
+      "n": 115,
+      "p_two": 0.244962,
+      "parent_p_two": 0.108374,
+      "two_point": 35
+    },
+    "late_q4|-8..-5": {
+      "n": 72,
+      "p_two": 0.327653,
+      "parent_p_two": 0.239474,
+      "two_point": 28
+    },
+    "late_q4|0": {
+      "n": 27,
+      "p_two": 0.0,
+      "parent_p_two": 0.0,
+      "two_point": 0
+    },
+    "late_q4|1..4": {
+      "n": 117,
+      "p_two": 0.212023,
+      "parent_p_two": 0.088158,
+      "two_point": 31
+    },
+    "late_q4|5..8": {
+      "n": 52,
+      "p_two": 0.181507,
+      "parent_p_two": 0.050275,
+      "two_point": 16
+    },
+    "late_q4|<=-9": {
+      "n": 111,
+      "p_two": 0.386346,
+      "parent_p_two": 0.324034,
+      "two_point": 46
+    },
+    "late_q4|>=9": {
+      "n": 164,
+      "p_two": 0.061163,
+      "parent_p_two": 0.04178,
+      "two_point": 11
+    },
+    "other|-4..-1": {
+      "n": 694,
+      "p_two": 0.074488,
+      "parent_p_two": 0.108374,
+      "two_point": 50
+    },
+    "other|-8..-5": {
+      "n": 308,
+      "p_two": 0.209424,
+      "parent_p_two": 0.239474,
+      "two_point": 63
+    },
+    "other|0": {
+      "n": 94,
+      "p_two": 0.0,
+      "parent_p_two": 0.0,
+      "two_point": 0
+    },
+    "other|1..4": {
+      "n": 643,
+      "p_two": 0.058309,
+      "parent_p_two": 0.088158,
+      "two_point": 36
+    },
+    "other|5..8": {
+      "n": 1217,
+      "p_two": 0.039869,
+      "parent_p_two": 0.050275,
+      "two_point": 48
+    },
+    "other|<=-9": {
+      "n": 355,
+      "p_two": 0.299263,
+      "parent_p_two": 0.324034,
+      "two_point": 105
+    },
+    "other|>=9": {
+      "n": 1679,
+      "p_two": 0.039381,
+      "parent_p_two": 0.04178,
+      "two_point": 66
+    },
+    "ot|-4..-1": {
+      "n": 3,
+      "p_two": 0.2877,
+      "parent_p_two": 0.244962,
+      "two_point": 3
+    },
+    "ot|-8..-5": {
+      "n": 0,
+      "p_two": 0.327653,
+      "parent_p_two": 0.327653,
+      "two_point": 0
+    },
+    "ot|0": {
+      "n": 0,
+      "p_two": 0.0,
+      "parent_p_two": 0.0,
+      "two_point": 0
+    },
+    "ot|1..4": {
+      "n": 0,
+      "p_two": 0.212023,
+      "parent_p_two": 0.212023,
+      "two_point": 0
+    },
+    "ot|5..8": {
+      "n": 4,
+      "p_two": 0.168062,
+      "parent_p_two": 0.181507,
+      "two_point": 0
+    },
+    "ot|<=-9": {
+      "n": 0,
+      "p_two": 0.386346,
+      "parent_p_two": 0.386346,
+      "two_point": 0
+    },
+    "ot|>=9": {
+      "n": 0,
+      "p_two": 0.061163,
+      "parent_p_two": 0.061163,
+      "two_point": 0
+    }
+  },
+  "chosen_k": 50,
+  "chosen_logloss_2025": 0.256156,
+  "fit_window": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "generator": "scripts/nfl_sequence/build_try_fallback.py",
+  "generator_sha256": "8bb4402c75e7507e3c225802099d0f4e854467ac1f182316c7287a492dcc7479",
+  "k_grid_logloss_2025": {
+    "0": 0.258735,
+    "10": 0.257605,
+    "100": 0.256171,
+    "2": 0.258456,
+    "20": 0.256939,
+    "5": 0.258093,
+    "50": 0.256156
+  },
+  "output": {
+    "path": "docs/fixtures/e2/try_fallback_2022_2025.csv",
+    "sha256": "a0e73fe15e2a3d7bebe0843526858786bd5c864140555aa3c13eb5dc686073de"
+  },
+  "selection_window": {
+    "fit": [
+      2022,
+      2023,
+      2024
+    ],
+    "test": 2025
+  },
+  "source": "docs/fixtures/e2/try_situation_2022_2025.csv",
+  "source_sha256": "1ae11f0788508158cf822814157b5df09073fa6954f45e5829bacfa6cfd98864",
+  "source_window": "2022-2025 regular season and postseason tries; 2026 not read (two-point holdout reserved)"
+}

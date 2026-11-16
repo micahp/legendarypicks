@@ -61,6 +61,7 @@ _CFBD_MARKETS = {
     "rushing_yards": ("rush_yds",),
     "rushing_touchdowns": ("rush_td",),
     "receiving_yards": ("rec_yds",),
+    "receiving_touchdowns": ("rec_td",),
     "receptions": ("rec",),
     "passing_rushing_yards": ("pass_yds", "rush_yds"),
     "rushing_receiving_yards": ("rush_yds", "rec_yds"),
@@ -236,6 +237,11 @@ def _settle_ncaaf_props(con: sqlite3.Connection, game, props: list,
                 "prop_id": prop["id"], "stage": "espn_fallback",
                 "terminal": "unmappable", "reason": _trail(prior, "no_market_mapping")}
             continue
+        if not prop["espn_id"]:
+            # Name only: no player-ID match, so the stored club would decide. Leave it pending.
+            # See docs/issues/settlement-name-only-pending.md.
+            pending += 1
+            continue
         category, stat_key = mapping
         if category is None:
             components = resolve_compound_market("ncaaf", prop["market"])
@@ -249,18 +255,18 @@ def _settle_ncaaf_props(con: sqlite3.Connection, game, props: list,
             actual = _find_player_compound_stat(
                 box, prop["player_name"], prop["player_team"],
                 [c[0] for c in components], [c[1] for c in components],
-                espn_id=prop["espn_id"], missing_as_zero=True)
+                espn_id=prop["espn_id"], missing_as_zero=True, league="ncaaf")
         else:
             actual = _find_player_stat(
                 box, prop["player_name"], prop["player_team"],
-                category, stat_key, espn_id=prop["espn_id"])
+                category, stat_key, espn_id=prop["espn_id"], league="ncaaf")
 
         # The DNP rule: zero only when another boxscore category proves the
         # same stable athlete appeared; absent from the whole boxscore the
         # prop stays pending rather than guessing a participation.
         if (actual is None and _player_appeared(
                 box, prop["player_name"], prop["player_team"],
-                espn_id=prop["espn_id"])):
+                espn_id=prop["espn_id"], league="ncaaf")):
             actual = 0.0
 
         if actual is None:

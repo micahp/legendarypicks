@@ -2,7 +2,7 @@
 """Merge split NBA identities through the shared ESPN/hoopR athlete ID.
 
 hoopR's ``athlete_id`` is ESPN's athlete ID. Legacy imports stored that value
-in ``players.nba_id`` while current roster/log jobs stored it in
+in ``players.hoopr_id`` while current roster/log jobs stored it in
 ``players.espn_id``. When those columns live on different ``players.id`` rows,
 one real player is split between historical stats and current game history.
 
@@ -22,6 +22,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import hoopr_column
 import migrate_schema
 from league_stats import normalize_player_name
 
@@ -45,7 +46,7 @@ MIGRATION_CHECKSUM = hashlib.sha256(
     json.dumps(
         {
             "migration_id": MIGRATION_ID,
-            "reason": "hoopR athlete_id == ESPN athlete id; legacy nba_id rows "
+            "reason": "hoopR athlete_id == ESPN athlete id; legacy hoopr_id rows "
                       "split from espn_id rows must collapse to the ESPN row",
             "movable_tables": sorted(_MOVABLE_TABLES),
         },
@@ -96,22 +97,23 @@ def _fingerprint(connection: sqlite3.Connection, table: str) -> str | None:
 
 
 def _pairs(connection: sqlite3.Connection) -> list[sqlite3.Row]:
+    col = hoopr_column.hoopr_column(connection)
     return connection.execute(
         """SELECT e.id AS winner_id,h.id AS loser_id,
                   CAST(e.espn_id AS TEXT) AS source_id,
                   e.name AS winner_name,h.name AS loser_name,
-                  e.nba_id AS winner_nba_id,h.espn_id AS loser_espn_id
+                  e.{col} AS winner_hoopr_id,h.espn_id AS loser_espn_id
            FROM players e
            JOIN players h
              ON h.league='nba'
             AND e.league='nba'
             AND e.id<>h.id
-            AND CAST(e.espn_id AS TEXT)=CAST(h.nba_id AS TEXT)
+            AND CAST(e.espn_id AS TEXT)=CAST(h.{col} AS TEXT)
            WHERE e.espn_id IS NOT NULL
              AND TRIM(CAST(e.espn_id AS TEXT))!=''
-             AND h.nba_id IS NOT NULL
-             AND TRIM(CAST(h.nba_id AS TEXT))!=''
-           ORDER BY e.id,h.id"""
+             AND h.{col} IS NOT NULL
+             AND TRIM(CAST(h.{col} AS TEXT))!=''
+           ORDER BY e.id,h.id""".replace("{col}", col)
     ).fetchall()
 
 
@@ -147,8 +149,8 @@ def build_plan(db_path: str) -> dict:
         conflicts = [
             row for row in pairs
             if (
-                row["winner_nba_id"] is not None
-                and str(row["winner_nba_id"]) != str(row["source_id"])
+                row["winner_hoopr_id"] is not None
+                and str(row["winner_hoopr_id"]) != str(row["source_id"])
             )
             or (
                 row["loser_espn_id"] is not None
@@ -282,8 +284,8 @@ def apply_plan(
                         (winner_id, loser_id),
                     )
             connection.execute(
-                """UPDATE players SET nba_id=?
-                   WHERE id=? AND league='nba'""",
+                "UPDATE players SET {}=?\n                   WHERE id=? AND league='nba'".format(
+                    hoopr_column.hoopr_column(connection)),
                 (source_id, winner_id),
             )
             connection.execute(

@@ -22,7 +22,7 @@ from routers import props  # noqa: E402
 
 
 def _provider_tables(con):
-    """Create FotMob's table and the joining view from the MIGRATION's own DDL.
+    """Create provider storage and the joining view from shipped schema DDL.
 
     Not a copy. A fixture that declares its own version of a shipped schema is a
     claim about that schema, and the two drift: earlier fixtures in this file
@@ -31,10 +31,16 @@ def _provider_tables(con):
     Importing the DDL means a schema change cannot pass these tests while
     breaking production.
     """
+    import migrate_schema
     import scripts_split_provider_logs as split
     split.ensure_espn_columns(con)
     con.executescript(split.DDL_TABLE)
-    con.executescript(split.DDL_VIEW)
+    migration = next(
+        item for item in migrate_schema.MIGRATIONS
+        if item.migration_id == "20261020_001_nba_sportsdataverse_history_view"
+    )
+    for schema_object in migration.objects:
+        con.execute(schema_object.sql)
 
 
 def _insert_fotmob_rows(con, rows):
@@ -89,16 +95,16 @@ class PropHistoryVenueTests(unittest.TestCase):
             [
                 (1, "nba", 2026, json.dumps({
                     "PTS": 24, "REB": 8, "AST": 5, "3PM": 2,
-                    "BLK": 1, "STL": 2, "TO": 3,
-                }), "2026-07-20", "OPP1", "home", 1, None, "espn"),
+                    "BLK": 1, "STL": 2, "TO": 3, "FGM": 10, "FTM": 4, "MIN": 35,
+                }), "2026-07-20", "OPP1", "home", 1, "REG", "espn"),
                 (1, "nba", 2026, json.dumps({
                     "PTS": 18, "REB": 7, "AST": 4, "3PM": 1,
-                    "BLK": 0, "STL": 1, "TO": 2,
-                }), "2026-07-21", "OPP2", "away", 2, None, "espn"),
+                    "BLK": 0, "STL": 1, "TO": 2, "FGM": 6, "FTM": 3, "MIN": 30,
+                }), "2026-07-21", "OPP2", "away", 2, "REG", "espn"),
                 (1, "nba", 2026, json.dumps({
                     "PTS": 21, "REB": 9, "AST": 6, "3PM": 4,
-                    "BLK": 2, "STL": 3, "TO": 1,
-                }), "2026-07-22", "OPP3", None, 3, None, "espn"),
+                    "BLK": 2, "STL": 3, "TO": 1, "FGM": 8, "FTM": 5, "MIN": 31,
+                }), "2026-07-22", "OPP3", None, 3, "REG", "espn"),
             ],
         )
         con.commit()
@@ -135,16 +141,160 @@ class PropHistoryVenueTests(unittest.TestCase):
             "blocks": [2, 0, 1],
             "steals": [3, 1, 2],
             "turnovers": [1, 2, 3],
+            "field_goals_made": [8, 6, 10],
+            "free_throws_made": [5, 3, 4],
+            "fgm": [8, 6, 10],
+            "ftm": [5, 3, 4],
             "points_rebounds_assists": [36, 29, 37],
+            "pra": [36, 29, 37],
         }
         for market, values in expected.items():
             result = props.prop_history(
                 player_id=1, market=market, line=0.5,
-                side="over", league="nba",
+                side="over", league="nba", season=2027,
             )
             self.assertEqual(
                 values, [game["value"] for game in result["games"]], market
             )
+            expected_rate = round(sum(value > 0.5 for value in values) / len(values), 3)
+            self.assertEqual(len(values), result["hit_rate_n"]["season"], market)
+            self.assertEqual(expected_rate, result["hit_rate"]["season"], market)
+
+    def test_nba_history_uses_regular_season_rows_only(self):
+        con = sqlite3.connect(self.path)
+        con.executemany(
+            "INSERT INTO player_game_logs(player_id,league,season,stats,game_date,"
+            "opponent,home_away,game_no,game_type,source) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            [
+                (1, "nba", 2026, json.dumps({"PTS": 100, "MIN": 30}),
+                 "2026-10-16", "PRE", "home", 4, "PRE", "espn"),
+                (1, "nba", 2026, json.dumps({"PTS": 100, "MIN": 30}),
+                 "2026-10-17", "UNK", "away", 5, None, "espn"),
+                (1, "nba", 2026, json.dumps({"PTS": 7, "MIN": 30}),
+                 "2026-10-20", "REG", "home", 6, "REG", "espn"),
+            ],
+        )
+        con.commit()
+        con.close()
+
+        result = props.prop_history(
+            player_id=1, market="points", line=20.5, side="over", league="nba",
+            season=2027,
+        )
+
+        self.assertEqual("2026-10-20", result["games"][0]["date"])
+        self.assertNotIn("2026-10-16", [game["date"] for game in result["games"]])
+        self.assertNotIn("2026-10-17", [game["date"] for game in result["games"]])
+        self.assertEqual({"REG"}, {game["game_type"] for game in result["games"]})
+        self.assertEqual(4, result["hit_rate_n"]["season"])
+        self.assertEqual(0.5, result["hit_rate"]["season"])
+
+    def test_nba_history_distinguishes_dnp_missing_and_played_rows(self):
+        con = sqlite3.connect(self.path)
+        con.execute(
+            "INSERT INTO player_game_logs(player_id,league,season,stats,game_date,"
+            "opponent,home_away,game_no,game_type,source) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (1, "nba", 2026, json.dumps({
+                "PTS": 0, "REB": 0, "AST": 0, "STL": 0, "BLK": 0,
+                "TO": 0, "3PM": 0, "FGM": 0, "FTM": 0, "MIN": 0,
+            }), "2026-07-23", "OPP4", "home", 4, "REG", "espn"),
+        )
+        con.execute(
+            "INSERT INTO player_game_logs(player_id,league,season,stats,game_date,"
+            "opponent,home_away,game_no,game_type,source) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            (1, "nba", 2026, json.dumps({"MIN": 20}), "2026-07-24", "OPP5",
+             "away", 5, "REG", "espn"),
+        )
+        con.commit()
+        con.close()
+
+        result = props.prop_history(
+            player_id=1, market="points", line=20.5, side="over", league="nba",
+            season=2027,
+        )
+
+        # The DNP (07-23, MIN 0) is out of the chart as well as the rates.
+        self.assertEqual(result["games"][0]["status"], "missing")
+        self.assertEqual(result["games"][0]["appearance_status"], "played")
+        self.assertIsNone(result["games"][0]["value"])
+        self.assertNotIn("2026-07-23", [g["date"] for g in result["games"]])
+        self.assertNotIn("dnp", [g["status"] for g in result["games"]])
+        self.assertEqual(result["hit_rate_n"]["l5"], 3)
+        self.assertEqual(result["hit_rate"]["season"], round(2 / 3, 3))
+
+        pushed = props.prop_history(
+            player_id=1, market="points", line=21, side="over", league="nba",
+            season=2027,
+        )
+        self.assertIsNone(pushed["games"][1]["hit"])
+        self.assertEqual(pushed["hit_rate_n"]["season"], 3)
+        self.assertEqual(pushed["hit_rate"]["season"], 0.5)
+
+    def test_nba_history_prefers_current_sportsdataverse_rows_and_keeps_dnp_out_of_rates(self):
+        con = sqlite3.connect(self.path)
+        con.row_factory = sqlite3.Row
+        con.execute(
+            "INSERT INTO nba_sportsdataverse_releases VALUES(2026,2027,'active-hash',3,3,3,1,'now','now')"
+        )
+        rows = [
+            ("0022600001", "2026-07-23", "dnp", {"PTS": 0, "MIN": 0}, "DNP - Rest"),
+            ("0022600002", "2026-07-24", "played", {
+                "PTS": 30, "REB": 8, "AST": 7, "STL": 2, "BLK": 1,
+                "TO": 3, "3PM": 4, "FGM": 9, "FTM": 5, "MIN": 35,
+            }, None),
+            ("0022600003", "2026-07-25", "unknown", {}, None),
+        ]
+        for index, (source_game_id, date, status, stats, comment) in enumerate(rows, 1):
+            con.execute(
+                """INSERT INTO player_game_logs_sportsdataverse
+                     (player_id,league,season,game_no,game_id,source_game_id,game_date,team,
+                      opponent,home_away,stats,source,source_player_key,appearance_status,
+                      dnp_comment,release_hash,ingested_at,game_type)
+                   VALUES(1,'nba',2026,?,? ,?,?,'AAA','OPP','home',?,
+                          'sportsdataverse_nba_stats',?,?,?,'active-hash','now','REG')""",
+                (source_game_id, "sdv-{}".format(index), source_game_id, date,
+                 json.dumps(stats), str(500 + index), status, comment),
+            )
+        con.commit()
+        con.close()
+
+        result = props.prop_history(
+            player_id=1, market="points", line=25, side="over", league="nba", season=2027
+        )
+        self.assertEqual([g["status"] for g in result["games"][:2]], ["missing", "played"])
+        self.assertEqual([g["appearance_status"] for g in result["games"][:2]],
+                         ["unknown", "played"])
+        self.assertEqual([g["value"] for g in result["games"][:2]], [None, 30])
+        self.assertNotIn("2026-07-23", [g["date"] for g in result["games"]])
+        self.assertEqual(result["hit_rate_n"]["season"], 4)
+        self.assertEqual(result["hit_rate"]["season"], 0.25)
+
+        fgm = props.prop_history(
+            player_id=1, market="field_goals_made", line=8.5,
+            side="over", league="nba", season=2027,
+        )
+        ftm = props.prop_history(
+            player_id=1, market="free_throws_made", line=4.5,
+            side="over", league="nba", season=2027,
+        )
+        self.assertEqual(fgm["games"][1]["value"], 9)
+        self.assertEqual(ftm["games"][1]["value"], 5)
+
+    def test_nba_season_window_uses_requested_ending_year(self):
+        result = props.prop_history(
+            player_id=1, market="points", line=20.5, side="over", league="nba",
+            season=2026,
+        )
+        self.assertEqual(result["season"], 2026)
+        self.assertIsNone(result["hit_rate"]["season"])
+        self.assertEqual(result["hit_rate_n"]["season"], 0)
+
+        current = props.prop_history(
+            player_id=1, market="points", line=20.5, side="over", league="nba",
+            season=2027,
+        )
+        self.assertEqual(current["season"], 2027)
+        self.assertEqual(current["hit_rate_n"]["season"], 3)
 
     def test_nba_fantasy_points_stays_unmapped_without_a_published_formula(self):
         result = props.prop_history(
@@ -914,6 +1064,8 @@ class TheNflMapNamesKeysTheNflLogsActuallyHold(unittest.TestCase):
               league TEXT, season INTEGER, stats TEXT, game_date TEXT,
               opponent TEXT, home_away TEXT, game_no INTEGER, game_type TEXT,
               source TEXT);
+            CREATE TABLE nfl_schedule(
+              game_id TEXT PRIMARY KEY, season INTEGER, gameday TEXT);
         """)
         _provider_tables(con)
         con.execute("INSERT INTO players VALUES(1,'Receiver','KC','nfl','WR')")

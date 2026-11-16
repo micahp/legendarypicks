@@ -1,0 +1,29 @@
+{
+  "archive_inputs": [],
+  "current_artifact": "/tmp/lp-nfl-injuries/injuries_2026.parquet",
+  "current_artifact_sha256": "65d181dfc37234327d60311099c65feaae6ef3e41650cb14c1ff44c7cb4dd84c",
+  "historical_claim": "candidate rows only unless pre_kickoff_archived_capture",
+  "original_report_modified_time": "nullable source date_modified, never set to ingest time",
+  "output": "nfl-injury-weeks-2-9.csv",
+  "season": 2026,
+  "summary": {
+    "historical_weekly_report_undated": 2639,
+    "missing_schedule_keys": 0,
+    "selected_weekly_rows": 2639,
+    "source_artifact_rows": 3121,
+    "unique_teams": 32,
+    "unique_weeks": 8,
+    "week_2": 251,
+    "week_3": 301,
+    "week_4": 318,
+    "week_5": 361,
+    "week_6": 376,
+    "week_7": 350,
+    "week_8": 320,
+    "week_9": 362
+  },
+  "weeks": [
+    2,
+    9
+  ]
+}

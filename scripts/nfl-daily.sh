@@ -49,6 +49,12 @@ for env_name in DEV PROD; do
   before=$STEP_FAILURES
   run_step 300 ingest_nfl_adp.py
   run_step 120 nfl_transactions_sync.py
+  # Team assignment. The transactions ticker was scheduled from the start but the
+  # roster sync never was, so players.team and roster_memberships kept the August
+  # preseason snapshot while nfl_transactions recorded every trade: Kirk Cousins
+  # read LV for 102 days after the Vikings acquired him. Cheap (one ESPN roster
+  # pull per team), so it rides the daily job ahead of the stats it feeds.
+  run_step 300 roster_sync.py nfl
   # This season's per-game box scores (2026-10-05: never scheduled, so player_game_logs had
   # no 2026 NFL row and no target share). nflverse rewrites the file weekly; the ingest
   # refetches after 6 h. Season = Sep-Feb; nothing to load Mar-Aug.

@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-15",
+  "window": "7d",
+  "ref_analyzed": "origin/dev",
+  "since": "2026-11-08T00:00:00",
+  "metrics": {
+    "commits": 59,
+    "commits_human": 55,
+    "commits_bot": 4,
+    "contributors": 1,
+    "prs_merged": 3,
+    "pr_refs": 3,
+    "insertions": 72556,
+    "deletions": 497,
+    "net_loc": 72059,
+    "insertions_human": 6508,
+    "deletions_human": 497,
+    "net_loc_human": 6011,
+    "test_loc": 1000,
+    "test_ratio": 0.154,
+    "active_days": 3,
+    "sessions": 12,
+    "deep_sessions": 1,
+    "medium_sessions": 3,
+    "micro_sessions": 8,
+    "avg_session_minutes": 18,
+    "active_hours": 3.6,
+    "loc_per_session_hour": 1819,
+    "weighted_commits": 140,
+    "peak_hour": 12,
+    "focus_score": 0.545,
+    "focus_dir": "backend",
+    "fix_pct": 0.127,
+    "feat_pct": 0.418,
+    "docs_pct": 0.236,
+    "test_pct": 0.109,
+    "data_pin_pct": 0.127,
+    "type_counts": {"feature_or_infra": 23, "docs_or_spec": 13, "data_pin_or_probe": 7, "fix": 7, "test": 6},
+    "ai_assisted_commits": 0,
+    "test_files_changed": 20
+  },
+  "notes": [
+    "The 4 github-actions[bot] commits pin 66,048 lines of downloaded NFL injury data (PR #45). Human metrics exclude them.",
+    "Commit subjects are not conventional-commit prefixed, so types were classified by subject verb.",
+    "Only origin/dev is measured. 48 local or origin branches had commits since 2026-11-08; work not merged to dev is not counted.",
+    "test_files_total is not compared with 2026-08-18: that retro counted 1919 files with a different scope (459 now, venv and node_modules excluded)."
+  ],
+  "authors": {
+    "micahp": {"commits": 55, "insertions": 6508, "deletions": 497, "test_ratio": 0.154, "top_area": "backend/"}
+  },
+  "version_range": ["10.1.5", "10.1.5"],
+  "streak_days": 0,
+  "test_health": {
+    "total_test_files": 459,
+    "tests_added_this_period": 20,
+    "regression_test_commits": 0,
+    "test_files_changed": 20
+  },
+  "tweetable": "Week of Nov 8: 55 commits (1 contributor + CI bot), 6.0k net LOC, 15% tests, 3 PRs, peak: 12pm | Streak: 0d"
+}

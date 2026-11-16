@@ -11,6 +11,7 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -57,6 +58,70 @@ class TheShippedRegistryIsValid(unittest.TestCase):
                     continue
                 self.assertTrue(os.path.isfile(os.path.join(here, script)),
                                 "{}: {} does not exist".format(job["id"], script))
+
+    def test_tennis_v2_capture_and_grading_runs_on_the_ingest_timer(self):
+        job = next(j for j in ingest_registry.JOBS
+                   if j["id"] == "tennis_v2_research_ledger")
+        self.assertEqual(job["cadence_min"], 30)
+        self.assertEqual(job["host_lock"], "tennis_model")
+        self.assertEqual(job["steps"], [["tennis_v2_research_ledger.py", "--days", "7"]])
+        self.assertTrue(any(
+            target["table"] == "ingest_runs"
+            and "tennis_v2_research_ledger" in target.get("where", "")
+            for target in job["freshness"]
+        ))
+
+    def test_home_prop_preview_has_a_weekly_publisher_job(self):
+        job = next(j for j in ingest_registry.JOBS if j["id"] == "home_prop_refresh")
+        self.assertEqual(job["cadence_min"], 10080)
+        self.assertEqual(job["steps"], [["home_prop_refresh.py", "--apply"]])
+        self.assertEqual(job["freshness"][0]["table"], "home_prop_cache")
+
+    def test_nba_schedule_refresh_runs_on_both_databases(self):
+        job = next(j for j in ingest_registry.JOBS if j["id"] == "nba_schedule")
+        self.assertEqual(job["databases"], ["dev", "prod"])
+        self.assertEqual(job["cadence_min"], 30)
+        self.assertEqual(job["host_lock"], "nba_com")
+        self.assertEqual(job["steps"], [["ingest_nba_schedule.py", "--open", "--apply"]])
+
+    def test_nba_recent_player_logs_run_on_the_ingest_timer(self):
+        job = next(j for j in ingest_registry.JOBS if j["id"] == "nba_player_logs")
+        self.assertEqual(job["databases"], ["dev", "prod"])
+        self.assertEqual(job["cadence_min"], 360)
+        self.assertEqual(job["host_lock"], "espn")
+        self.assertEqual(job["steps"], [["ingest_nba_logs.py", "--recent-days", "14"]])
+        self.assertTrue(any(
+            target["table"] == "ingest_runs"
+            and "nba_player_logs" in target["where"]
+            for target in job["freshness"]
+        ))
+
+    def test_sportsdataverse_nba_boxscores_run_on_the_ingest_timer(self):
+        job = next(j for j in ingest_registry.JOBS
+                   if j["id"] == "nba_sportsdataverse_logs")
+        self.assertEqual(job["databases"], ["dev"])
+        self.assertEqual(job["cadence_min"], 360)
+        self.assertEqual(job["host_lock"], "sportsdataverse")
+        self.assertEqual(job["steps"], [["ingest_nba_sportsdataverse.py", "--recent-seasons", "2"]])
+        self.assertTrue(any(
+            target["table"] == "ingest_runs"
+            and "nba_sportsdataverse_logs" in target["where"]
+            for target in job["freshness"]
+        ))
+
+    def test_published_roster_cutover_argument_tracks_the_runtime_gate(self):
+        step = ingest_registry._published_roster_step
+        with mock.patch.dict(os.environ, {"LP_MLS_CUTOVER": ""}):
+            self.assertEqual(step(), ["ingest_published_rosters.py", "--apply"])
+        for value in ("1", "true", "YES", " on "):
+            with mock.patch.dict(os.environ, {"LP_MLS_CUTOVER": value}):
+                self.assertEqual(
+                    step(),
+                    ["ingest_published_rosters.py", "--apply", "--mls-cutover"],
+                )
+        for value in ("0", "false", "off", "unexpected"):
+            with mock.patch.dict(os.environ, {"LP_MLS_CUTOVER": value}):
+                self.assertEqual(step(), ["ingest_published_rosters.py", "--apply"])
 
 
 class ARegistryRefusesWhatCannotBeChecked(unittest.TestCase):
@@ -117,6 +182,52 @@ class OneEngineNotTwo(unittest.TestCase):
             self.assertIn(target["job"], ingest_registry.job_ids())
 
 
+class DatabaseScopedJobs(unittest.TestCase):
+    def test_prod_selects_nba_schedule_but_not_sportsdataverse(self):
+        import contextlib
+        import io
+
+        with tempfile.TemporaryDirectory() as tmp:
+            prod_path = os.path.join(tmp, "picks.db")
+            open(prod_path, "wb").close()
+            with mock.patch.dict(os.environ, {"LP_DB_PATH": prod_path}):
+                selected, excluded = run_props_ingest._select_jobs_for_database(
+                    ingest_registry.JOBS, os.environ["LP_DB_PATH"]
+                )
+                selected_ids = {job["id"] for job in selected}
+                excluded_ids = {job["id"] for job in excluded}
+                nba_ids = {"nba_sportsdataverse_logs"}
+                self.assertTrue(nba_ids.isdisjoint(selected_ids))
+                self.assertTrue(nba_ids.issubset(excluded_ids))
+                self.assertIn("nba_schedule", selected_ids)
+                self.assertIn("nba_player_logs", selected_ids)
+
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    self.assertEqual(run_ingest_jobs.main(["--list"]), 0)
+                listing = output.getvalue()
+                self.assertIn("nba_schedule", listing)
+                self.assertIn("nba_player_logs", listing)
+                self.assertNotIn("nba_sportsdataverse_logs", listing)
+                self.assertIn("skipped_scope=1 (database=prod)", listing)
+
+                for job_id in sorted(nba_ids):
+                    output = io.StringIO()
+                    with mock.patch.object(
+                        run_props_ingest, "_try_lock", return_value=io.StringIO()
+                    ), contextlib.redirect_stdout(output):
+                        self.assertEqual(
+                            run_ingest_jobs.main(
+                                ["--only", job_id, "--dry-run"]
+                            ),
+                            0,
+                        )
+                    self.assertIn(
+                        "Skipping {}: skipped_scope (database=prod allowed=dev)".format(job_id),
+                        output.getvalue(),
+                    )
+
+
 class TheMonitorFailsClosed(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.mkdtemp()
@@ -174,6 +285,28 @@ class TheMonitorFailsClosed(unittest.TestCase):
         target = dict(self.target, stale_hours=6)
         self._insert("2026-09-06T09:00:00+00:00")
         self.assertEqual(self._levels([target]), ["OK"])
+
+    def test_prospective_capture_health_reports_minutes_since_success(self):
+        con = sqlite3.connect(self.db)
+        con.execute("CREATE TABLE ingest_runs(provider TEXT, status TEXT, finished_at TEXT)")
+        con.execute("INSERT INTO ingest_runs VALUES(?,?,?)", (
+            "tennis_v2_research_ledger", "ok", "2026-09-06T11:47:00+00:00"))
+        con.commit()
+        con.close()
+        target = {
+            "job": "tennis_v2_research_ledger",
+            "label": "tennis V2 prospective forecasts and grades",
+            "table": "ingest_runs",
+            "date_column": "finished_at",
+            "where": "provider = 'tennis_v2_research_ledger' AND status = 'ok'",
+            "stale_hours": 2,
+            "age_label": "last successful prospective capture",
+        }
+
+        result = monitor.check("test", self.db, [target], now=self.now)
+
+        self.assertEqual(result[0][0], "OK")
+        self.assertIn("last successful prospective capture 13m ago", result[0][1])
 
     def test_a_bare_date_is_read_as_the_START_of_that_day(self):
         """Never fresher than reality: a date-only value must not round in our favour."""

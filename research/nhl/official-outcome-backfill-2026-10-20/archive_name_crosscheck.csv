@@ -1,0 +1,6 @@
+player_id,official_names,archive_names,seasons,SOG_shared_rows,SAVES_shared_rows,affected_shared_rows,missing_name_rows,review_status
+8475825,J. Hakanpää,Jani Hakanp,2022,22,0,22,0,POTENTIAL_NAME_ALIAS_OR_ID_CONFLICT
+8480053,S. Chmelevski,Alexander Chmelevski,2020,5,0,5,0,POTENTIAL_NAME_ALIAS_OR_ID_CONFLICT
+8482109,A. Lafrenière,Alexis Lafrenire,2022,22,0,22,0,POTENTIAL_NAME_ALIAS_OR_ID_CONFLICT
+8482116,T. Stützle,Tim Sttzle,2022,21,0,21,0,POTENTIAL_NAME_ALIAS_OR_ID_CONFLICT
+8482475,E. Chinakhov,Yegor Chinakhov,2021;2022,81,0,81,0,POTENTIAL_NAME_ALIAS_OR_ID_CONFLICT

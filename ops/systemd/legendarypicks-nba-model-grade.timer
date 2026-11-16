@@ -1,0 +1,10 @@
+[Unit]
+Description=Grade NBA locks every 15 minutes
+
+[Timer]
+OnCalendar=*-*-* *:12/15:00
+Persistent=true
+Unit=legendarypicks-nba-model-grade.service
+
+[Install]
+WantedBy=timers.target

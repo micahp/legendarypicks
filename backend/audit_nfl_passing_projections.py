@@ -30,17 +30,8 @@ N_SIMS = 4000
 
 
 def pregame_leader(hist, season, team, week):
-    """The quarterback with the most attempts for this team in games BEFORE this week. Pregame information."""
-    tot = defaultdict(int)
-    for w, rows in hist.by_team[(season, team)].items():
-        if w >= week:
-            continue
-        for r in rows:
-            if r.pos == "QB" and r.att:
-                tot[r.pid] += r.att
-    if not tot:
-        return None
-    return max(sorted(tot), key=lambda p: tot[p])
+    """Re-exported from the grader, which now owns the population definition."""
+    return g.pregame_leader(hist, season, team, week)
 
 
 def postgame_leader(hist, season, team, week):

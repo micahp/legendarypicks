@@ -13,7 +13,7 @@ the second action. By default it targets BOTH databases:
 1. takes a verified VACUUM INTO backup (never cp);
 2. applies every numbered schema migration in ``migrate_schema.MIGRATIONS``,
    checking the ledger before and inserting a row after (idempotent);
-3. adopts the 20 legacy hand-run migration scripts into the ledger, probing
+3. adopts the 21 legacy hand-run migration scripts into the ledger, probing
    each database read-only and recording ``applied`` / ``unknown`` /
    ``not_applicable`` rather than guessing.
 

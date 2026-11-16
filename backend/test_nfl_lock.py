@@ -57,8 +57,11 @@ class LockDB(unittest.TestCase):
                                 "WHERE game_id = ? ORDER BY rowid", (gid,)).fetchall()
 
     def lock(self, fit=None, run_id=None, now=None, **kw):
-        return nl.lock_week(self.con, run_id or self.run, 2026, 5,
-                            nl.v1_projector(fit or fit_for(), 13.4), now=now or NOW, **kw)
+        run_id = run_id or self.run
+        out = nl.lock_week(self.con, run_id, 2026, 5,
+                           nl.v1_projector(fit or fit_for(), 13.4), now=now or NOW, **kw)
+        nl.finish_run(self.con, run_id, "ok")
+        return out
 
 
 class FirstLock(LockDB):
@@ -126,6 +129,42 @@ class Refusals(LockDB):
         n, = self.con.execute("SELECT COUNT(*) FROM game_projections").fetchone()
         self.assertEqual(n, 0)
 
+
+class AtomicWrites(LockDB):
+    def test_midweek_write_failure_rolls_back_snapshots_and_locks(self):
+        self.con.execute("""CREATE TRIGGER fail_second_projection
+          BEFORE INSERT ON game_projections WHEN NEW.game_id='g2'
+          BEGIN SELECT RAISE(ABORT, 'planted insert failure'); END""")
+        self.con.commit()
+
+        with self.assertRaisesRegex(sqlite3.IntegrityError, "planted insert failure"):
+            try:
+                self.lock(as_of="t0")
+            except sqlite3.IntegrityError:
+                nl.finish_run(self.con, self.run, "failed", error="planted insert failure")
+                raise
+
+        projections, = self.con.execute("SELECT COUNT(*) FROM game_projections").fetchone()
+        snapshots, = self.con.execute("SELECT COUNT(*) FROM nfl_line_snapshots").fetchone()
+        status, = self.con.execute("SELECT status FROM model_runs WHERE run_id=?", (self.run,)).fetchone()
+        self.assertEqual((projections, snapshots, status), (0, 0, "failed"))
+
+    def test_a_locked_row_from_a_failed_run_is_not_treated_as_a_valid_lock(self):
+        self.con.execute(
+            "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
+            "proj_margin, proj_total, p_home_win, locked, locked_at, model_version) "
+            "VALUES (?, 'nfl', 'g1', 2026, 5, 'AAA', 'BBB', 1, 44, 0.5, 1, 't0', 'v1')",
+            (self.run,),
+        )
+        nl.finish_run(self.con, self.run, "failed", error="planted failed run")
+        self.assertIsNone(nl.locked_projection(self.con, "g1", "v1"))
+        next_run = nl.start_run(self.con, "run-b", 2026, 5, "v1", {})
+        with self.assertRaisesRegex(ValueError, "locked row from run run-a with status failed"):
+            nl.lock_week(self.con, next_run, 2026, 5, nl.v1_projector(fit_for(), 13.4),
+                         as_of="t1", now=NOW)
+
+
+class Refusals(LockDB):
     def test_skip_mode_locks_unplayed_and_leaves_played_unwritten(self):
         self.con.execute("UPDATE nfl_schedule SET home_score=24, away_score=20 WHERE game_id='g2'")
         self.con.commit()

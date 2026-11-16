@@ -1,0 +1,2028 @@
+{
+  "as_of": "2026-11-03T00:32:27Z",
+  "league": "nba",
+  "schema_version": 1,
+  "season": 2027,
+  "source_game_count": 92,
+  "source_rule": "scored regular-season games, excluding Cup quarterfinals and semifinals; every source row was ingested by as_of",
+  "source_table": "nba_schedule",
+  "standings_date": "2026-11-02",
+  "teams": [
+    {
+      "code": "MEM",
+      "differential": 15.17,
+      "evidence": [
+        {
+          "against": 103,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 123,
+          "id": "0022600089",
+          "opponent": "UTAH",
+          "result": "W"
+        },
+        {
+          "against": 108,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 111,
+          "id": "0022600101",
+          "opponent": "GS",
+          "result": "W"
+        },
+        {
+          "against": 112,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 123,
+          "id": "0022600118",
+          "opponent": "SAC",
+          "result": "W"
+        },
+        {
+          "against": 105,
+          "available_at": "2026-10-27T03:55:41.973441+00:00",
+          "date": "2026-10-26",
+          "for": 110,
+          "id": "0022600126",
+          "opponent": "UTAH",
+          "result": "W"
+        },
+        {
+          "against": 103,
+          "available_at": "2026-10-30T04:28:35.266168+00:00",
+          "date": "2026-10-29",
+          "for": 124,
+          "id": "0022600146",
+          "opponent": "POR",
+          "result": "W"
+        },
+        {
+          "against": 105,
+          "available_at": "2026-11-01T03:04:38.216448+00:00",
+          "date": "2026-10-31",
+          "for": 136,
+          "id": "0022600150",
+          "opponent": "SAC",
+          "result": "W"
+        }
+      ],
+      "games": 6,
+      "losses": 0,
+      "name": "Memphis Grizzlies",
+      "rank": 1,
+      "win_pct": 1.0,
+      "wins": 6
+    },
+    {
+      "code": "HOU",
+      "differential": 12.43,
+      "evidence": [
+        {
+          "against": 110,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 128,
+          "id": "0022600091",
+          "opponent": "DAL",
+          "result": "W"
+        },
+        {
+          "against": 110,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 114,
+          "id": "0022600009",
+          "opponent": "SA",
+          "result": "W"
+        },
+        {
+          "against": 114,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 121,
+          "id": "0022600107",
+          "opponent": "ATL",
+          "result": "W"
+        },
+        {
+          "against": 110,
+          "available_at": "2026-10-27T03:55:41.973441+00:00",
+          "date": "2026-10-26",
+          "for": 120,
+          "id": "0022600125",
+          "opponent": "ATL",
+          "result": "W"
+        },
+        {
+          "against": 100,
+          "available_at": "2026-10-29T02:36:20.971077+00:00",
+          "date": "2026-10-28",
+          "for": 132,
+          "id": "0022600138",
+          "opponent": "MIL",
+          "result": "W"
+        },
+        {
+          "against": 116,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 111,
+          "id": "0022600021",
+          "opponent": "DAL",
+          "result": "L"
+        },
+        {
+          "against": 98,
+          "available_at": "2026-11-01T03:04:38.216448+00:00",
+          "date": "2026-10-31",
+          "for": 119,
+          "id": "0022600153",
+          "opponent": "OKC",
+          "result": "W"
+        }
+      ],
+      "games": 7,
+      "losses": 1,
+      "name": "Houston Rockets",
+      "rank": 2,
+      "win_pct": 0.8571,
+      "wins": 6
+    },
+    {
+      "code": "PHI",
+      "differential": 3.86,
+      "evidence": [
+        {
+          "against": 100,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-20",
+          "for": 106,
+          "id": "0022600002",
+          "opponent": "NY",
+          "result": "W"
+        },
+        {
+          "against": 106,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-22",
+          "for": 114,
+          "id": "0022600006",
+          "opponent": "CLE",
+          "result": "W"
+        },
+        {
+          "against": 116,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 127,
+          "id": "0022600106",
+          "opponent": "MIL",
+          "result": "W"
+        },
+        {
+          "against": 106,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 93,
+          "id": "0022600117",
+          "opponent": "DET",
+          "result": "L"
+        },
+        {
+          "against": 109,
+          "available_at": "2026-10-29T02:04:04.123249+00:00",
+          "date": "2026-10-28",
+          "for": 114,
+          "id": "0022600135",
+          "opponent": "IND",
+          "result": "W"
+        },
+        {
+          "against": 93,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 98,
+          "id": "0022600018",
+          "opponent": "NY",
+          "result": "W"
+        },
+        {
+          "against": 104,
+          "available_at": "2026-11-01T01:14:18.689123+00:00",
+          "date": "2026-10-31",
+          "for": 109,
+          "id": "0022600148",
+          "opponent": "CHA",
+          "result": "W"
+        }
+      ],
+      "games": 7,
+      "losses": 1,
+      "name": "Philadelphia 76ers",
+      "rank": 3,
+      "win_pct": 0.8571,
+      "wins": 6
+    },
+    {
+      "code": "BOS",
+      "differential": 9.5,
+      "evidence": [
+        {
+          "against": 121,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-20",
+          "for": 113,
+          "id": "0022600001",
+          "opponent": "DET",
+          "result": "L"
+        },
+        {
+          "against": 103,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 107,
+          "id": "0022600008",
+          "opponent": "NY",
+          "result": "W"
+        },
+        {
+          "against": 99,
+          "available_at": "2026-10-27T02:55:38.880484+00:00",
+          "date": "2026-10-26",
+          "for": 134,
+          "id": "0022600121",
+          "opponent": "CHI",
+          "result": "W"
+        },
+        {
+          "against": 124,
+          "available_at": "2026-10-28T03:06:58.533025+00:00",
+          "date": "2026-10-27",
+          "for": 125,
+          "id": "0022600128",
+          "opponent": "BKN",
+          "result": "W"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 125,
+          "id": "0022600016",
+          "opponent": "CHI",
+          "result": "W"
+        },
+        {
+          "against": 97,
+          "available_at": "2026-11-01T23:26:25.716309+00:00",
+          "date": "2026-11-01",
+          "for": 108,
+          "id": "0022600154",
+          "opponent": "ORL",
+          "result": "W"
+        }
+      ],
+      "games": 6,
+      "losses": 1,
+      "name": "Boston Celtics",
+      "rank": 4,
+      "win_pct": 0.8333,
+      "wins": 5
+    },
+    {
+      "code": "DET",
+      "differential": 8.0,
+      "evidence": [
+        {
+          "against": 113,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-20",
+          "for": 121,
+          "id": "0022600001",
+          "opponent": "BOS",
+          "result": "W"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 128,
+          "id": "0022600098",
+          "opponent": "MIA",
+          "result": "W"
+        },
+        {
+          "against": 93,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 106,
+          "id": "0022600117",
+          "opponent": "PHI",
+          "result": "W"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-10-28T03:06:58.533025+00:00",
+          "date": "2026-10-27",
+          "for": 97,
+          "id": "0022600129",
+          "opponent": "NY",
+          "result": "L"
+        },
+        {
+          "against": 89,
+          "available_at": "2026-10-29T02:04:04.123249+00:00",
+          "date": "2026-10-28",
+          "for": 97,
+          "id": "0022600134",
+          "opponent": "CHA",
+          "result": "W"
+        },
+        {
+          "against": 94,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 110,
+          "id": "0022600017",
+          "opponent": "BKN",
+          "result": "W"
+        }
+      ],
+      "games": 6,
+      "losses": 1,
+      "name": "Detroit Pistons",
+      "rank": 5,
+      "win_pct": 0.8333,
+      "wins": 5
+    },
+    {
+      "code": "POR",
+      "differential": 11.4,
+      "evidence": [
+        {
+          "against": 83,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 124,
+          "id": "0022600092",
+          "opponent": "PHX",
+          "result": "W"
+        },
+        {
+          "against": 120,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 128,
+          "id": "0022600103",
+          "opponent": "SAC",
+          "result": "W"
+        },
+        {
+          "against": 129,
+          "available_at": "2026-10-28T06:26:42.377798+00:00",
+          "date": "2026-10-27",
+          "for": 136,
+          "id": "0022600131",
+          "opponent": "LAL",
+          "result": "W"
+        },
+        {
+          "against": 124,
+          "available_at": "2026-10-30T04:28:35.266168+00:00",
+          "date": "2026-10-29",
+          "for": 103,
+          "id": "0022600146",
+          "opponent": "MEM",
+          "result": "L"
+        },
+        {
+          "against": 90,
+          "available_at": "2026-10-31T22:14:21.556165+00:00",
+          "date": "2026-10-31",
+          "for": 112,
+          "id": "0022600147",
+          "opponent": "UTAH",
+          "result": "W"
+        }
+      ],
+      "games": 5,
+      "losses": 1,
+      "name": "Portland Trail Blazers",
+      "rank": 6,
+      "win_pct": 0.8,
+      "wins": 4
+    },
+    {
+      "code": "LAL",
+      "differential": 5.29,
+      "evidence": [
+        {
+          "against": 105,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 127,
+          "id": "0022600005",
+          "opponent": "GS",
+          "result": "W"
+        },
+        {
+          "against": 117,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 125,
+          "id": "0022600102",
+          "opponent": "LAC",
+          "result": "W"
+        },
+        {
+          "against": 123,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 132,
+          "id": "0022600112",
+          "opponent": "UTAH",
+          "result": "W"
+        },
+        {
+          "against": 136,
+          "available_at": "2026-10-28T06:26:42.377798+00:00",
+          "date": "2026-10-27",
+          "for": 129,
+          "id": "0022600131",
+          "opponent": "POR",
+          "result": "L"
+        },
+        {
+          "against": 87,
+          "available_at": "2026-10-29T05:37:27.019977+00:00",
+          "date": "2026-10-28",
+          "for": 103,
+          "id": "0022600143",
+          "opponent": "LAC",
+          "result": "W"
+        },
+        {
+          "against": 112,
+          "available_at": "2026-10-31T04:52:31.318740+00:00",
+          "date": "2026-10-30",
+          "for": 95,
+          "id": "0022600023",
+          "opponent": "GS",
+          "result": "L"
+        },
+        {
+          "against": 125,
+          "available_at": "2026-11-02T04:59:16.482175+00:00",
+          "date": "2026-11-01",
+          "for": 131,
+          "id": "0022600157",
+          "opponent": "TOR",
+          "result": "W"
+        }
+      ],
+      "games": 7,
+      "losses": 2,
+      "name": "Los Angeles Lakers",
+      "rank": 7,
+      "win_pct": 0.7143,
+      "wins": 5
+    },
+    {
+      "code": "SA",
+      "differential": 7.17,
+      "evidence": [
+        {
+          "against": 116,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-20",
+          "for": 104,
+          "id": "0022600003",
+          "opponent": "OKC",
+          "result": "L"
+        },
+        {
+          "against": 114,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 110,
+          "id": "0022600009",
+          "opponent": "HOU",
+          "result": "L"
+        },
+        {
+          "against": 106,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 122,
+          "id": "0022600109",
+          "opponent": "DAL",
+          "result": "W"
+        },
+        {
+          "against": 103,
+          "available_at": "2026-10-28T03:06:58.533025+00:00",
+          "date": "2026-10-27",
+          "for": 130,
+          "id": "0022600130",
+          "opponent": "SAC",
+          "result": "W"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-10-29T04:04:17.782257+00:00",
+          "date": "2026-10-28",
+          "for": 117,
+          "id": "0022600141",
+          "opponent": "UTAH",
+          "result": "W"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-11-01T03:04:38.216448+00:00",
+          "date": "2026-10-31",
+          "for": 121,
+          "id": "0022600152",
+          "opponent": "MIN",
+          "result": "W"
+        }
+      ],
+      "games": 6,
+      "losses": 2,
+      "name": "San Antonio Spurs",
+      "rank": 8,
+      "win_pct": 0.6667,
+      "wins": 4
+    },
+    {
+      "code": "CLE",
+      "differential": 5.0,
+      "evidence": [
+        {
+          "against": 114,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-22",
+          "for": 106,
+          "id": "0022600006",
+          "opponent": "PHI",
+          "result": "L"
+        },
+        {
+          "against": 121,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 125,
+          "id": "0022600105",
+          "opponent": "BKN",
+          "result": "W"
+        },
+        {
+          "against": 125,
+          "available_at": "2026-10-27T02:55:38.880484+00:00",
+          "date": "2026-10-26",
+          "for": 127,
+          "id": "0022600120",
+          "opponent": "MIN",
+          "result": "W"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-10-29T01:34:16.250833+00:00",
+          "date": "2026-10-28",
+          "for": 121,
+          "id": "0022600133",
+          "opponent": "WSH",
+          "result": "W"
+        },
+        {
+          "against": 114,
+          "available_at": "2026-10-30T02:41:49.043496+00:00",
+          "date": "2026-10-29",
+          "for": 111,
+          "id": "0022600144",
+          "opponent": "ATL",
+          "result": "L"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-11-01T03:04:38.216448+00:00",
+          "date": "2026-10-31",
+          "for": 136,
+          "id": "0022600151",
+          "opponent": "MIL",
+          "result": "W"
+        }
+      ],
+      "games": 6,
+      "losses": 2,
+      "name": "Cleveland Cavaliers",
+      "rank": 9,
+      "win_pct": 0.6667,
+      "wins": 4
+    },
+    {
+      "code": "DAL",
+      "differential": 2.5,
+      "evidence": [
+        {
+          "against": 128,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 110,
+          "id": "0022600091",
+          "opponent": "HOU",
+          "result": "L"
+        },
+        {
+          "against": 105,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 121,
+          "id": "0022600095",
+          "opponent": "IND",
+          "result": "W"
+        },
+        {
+          "against": 122,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 106,
+          "id": "0022600109",
+          "opponent": "SA",
+          "result": "L"
+        },
+        {
+          "against": 109,
+          "available_at": "2026-10-27T02:55:38.880484+00:00",
+          "date": "2026-10-26",
+          "for": 113,
+          "id": "0022600122",
+          "opponent": "MIA",
+          "result": "W"
+        },
+        {
+          "against": 96,
+          "available_at": "2026-10-29T04:34:51.172178+00:00",
+          "date": "2026-10-28",
+          "for": 120,
+          "id": "0022600142",
+          "opponent": "OKC",
+          "result": "W"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 116,
+          "id": "0022600021",
+          "opponent": "HOU",
+          "result": "W"
+        }
+      ],
+      "games": 6,
+      "losses": 2,
+      "name": "Dallas Mavericks",
+      "rank": 10,
+      "win_pct": 0.6667,
+      "wins": 4
+    },
+    {
+      "code": "OKC",
+      "differential": -0.5,
+      "evidence": [
+        {
+          "against": 104,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-20",
+          "for": 116,
+          "id": "0022600003",
+          "opponent": "SA",
+          "result": "W"
+        },
+        {
+          "against": 84,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-22",
+          "for": 96,
+          "id": "0022600007",
+          "opponent": "DEN",
+          "result": "W"
+        },
+        {
+          "against": 101,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 108,
+          "id": "0022600116",
+          "opponent": "LAC",
+          "result": "W"
+        },
+        {
+          "against": 114,
+          "available_at": "2026-10-27T02:55:38.880484+00:00",
+          "date": "2026-10-26",
+          "for": 125,
+          "id": "0022600124",
+          "opponent": "PHX",
+          "result": "W"
+        },
+        {
+          "against": 120,
+          "available_at": "2026-10-29T04:34:51.172178+00:00",
+          "date": "2026-10-28",
+          "for": 96,
+          "id": "0022600142",
+          "opponent": "DAL",
+          "result": "L"
+        },
+        {
+          "against": 119,
+          "available_at": "2026-11-01T03:04:38.216448+00:00",
+          "date": "2026-10-31",
+          "for": 98,
+          "id": "0022600153",
+          "opponent": "HOU",
+          "result": "L"
+        }
+      ],
+      "games": 6,
+      "losses": 2,
+      "name": "Oklahoma City Thunder",
+      "rank": 11,
+      "win_pct": 0.6667,
+      "wins": 4
+    },
+    {
+      "code": "DEN",
+      "differential": -1.2,
+      "evidence": [
+        {
+          "against": 96,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-22",
+          "for": 84,
+          "id": "0022600007",
+          "opponent": "OKC",
+          "result": "L"
+        },
+        {
+          "against": 135,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 141,
+          "id": "0022600110",
+          "opponent": "NO",
+          "result": "W"
+        },
+        {
+          "against": 134,
+          "available_at": "2026-10-27T04:54:38.337876+00:00",
+          "date": "2026-10-26",
+          "for": 114,
+          "id": "0022600127",
+          "opponent": "GS",
+          "result": "L"
+        },
+        {
+          "against": 91,
+          "available_at": "2026-10-29T02:36:20.971077+00:00",
+          "date": "2026-10-28",
+          "for": 104,
+          "id": "0022600140",
+          "opponent": "NO",
+          "result": "W"
+        },
+        {
+          "against": 120,
+          "available_at": "2026-10-31T04:52:31.318740+00:00",
+          "date": "2026-10-30",
+          "for": 127,
+          "id": "0022600024",
+          "opponent": "PHX",
+          "result": "W"
+        }
+      ],
+      "games": 5,
+      "losses": 2,
+      "name": "Denver Nuggets",
+      "rank": 12,
+      "win_pct": 0.6,
+      "wins": 3
+    },
+    {
+      "code": "MIN",
+      "differential": 11.29,
+      "evidence": [
+        {
+          "against": 106,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 131,
+          "id": "0022600004",
+          "opponent": "MIA",
+          "result": "W"
+        },
+        {
+          "against": 93,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 115,
+          "id": "0022600096",
+          "opponent": "ORL",
+          "result": "W"
+        },
+        {
+          "against": 94,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 117,
+          "id": "0022600115",
+          "opponent": "TOR",
+          "result": "W"
+        },
+        {
+          "against": 127,
+          "available_at": "2026-10-27T02:55:38.880484+00:00",
+          "date": "2026-10-26",
+          "for": 125,
+          "id": "0022600120",
+          "opponent": "CLE",
+          "result": "L"
+        },
+        {
+          "against": 119,
+          "available_at": "2026-10-29T03:24:35.459559+00:00",
+          "date": "2026-10-28",
+          "for": 114,
+          "id": "0022600139",
+          "opponent": "GS",
+          "result": "L"
+        },
+        {
+          "against": 101,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 127,
+          "id": "0022600022",
+          "opponent": "LAC",
+          "result": "W"
+        },
+        {
+          "against": 121,
+          "available_at": "2026-11-01T03:04:38.216448+00:00",
+          "date": "2026-10-31",
+          "for": 111,
+          "id": "0022600152",
+          "opponent": "SA",
+          "result": "L"
+        }
+      ],
+      "games": 7,
+      "losses": 3,
+      "name": "Minnesota Timberwolves",
+      "rank": 13,
+      "win_pct": 0.5714,
+      "wins": 4
+    },
+    {
+      "code": "GS",
+      "differential": 2.86,
+      "evidence": [
+        {
+          "against": 127,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 105,
+          "id": "0022600005",
+          "opponent": "LAL",
+          "result": "L"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 108,
+          "id": "0022600101",
+          "opponent": "MEM",
+          "result": "L"
+        },
+        {
+          "against": 131,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 122,
+          "id": "0022600111",
+          "opponent": "PHX",
+          "result": "L"
+        },
+        {
+          "against": 114,
+          "available_at": "2026-10-27T04:54:38.337876+00:00",
+          "date": "2026-10-26",
+          "for": 134,
+          "id": "0022600127",
+          "opponent": "DEN",
+          "result": "W"
+        },
+        {
+          "against": 114,
+          "available_at": "2026-10-29T03:24:35.459559+00:00",
+          "date": "2026-10-28",
+          "for": 119,
+          "id": "0022600139",
+          "opponent": "MIN",
+          "result": "W"
+        },
+        {
+          "against": 95,
+          "available_at": "2026-10-31T04:52:31.318740+00:00",
+          "date": "2026-10-30",
+          "for": 112,
+          "id": "0022600023",
+          "opponent": "LAL",
+          "result": "W"
+        },
+        {
+          "against": 112,
+          "available_at": "2026-11-02T04:22:37.879069+00:00",
+          "date": "2026-11-01",
+          "for": 124,
+          "id": "0022600156",
+          "opponent": "LAC",
+          "result": "W"
+        }
+      ],
+      "games": 7,
+      "losses": 3,
+      "name": "Golden State Warriors",
+      "rank": 14,
+      "win_pct": 0.5714,
+      "wins": 4
+    },
+    {
+      "code": "TOR",
+      "differential": 7.83,
+      "evidence": [
+        {
+          "against": 92,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 135,
+          "id": "0022600088",
+          "opponent": "CHI",
+          "result": "W"
+        },
+        {
+          "against": 102,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 112,
+          "id": "0022600097",
+          "opponent": "WSH",
+          "result": "W"
+        },
+        {
+          "against": 117,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 94,
+          "id": "0022600115",
+          "opponent": "MIN",
+          "result": "L"
+        },
+        {
+          "against": 99,
+          "available_at": "2026-10-29T02:04:04.123249+00:00",
+          "date": "2026-10-28",
+          "for": 129,
+          "id": "0022600136",
+          "opponent": "ORL",
+          "result": "W"
+        },
+        {
+          "against": 121,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 114,
+          "id": "0022600019",
+          "opponent": "ORL",
+          "result": "L"
+        },
+        {
+          "against": 131,
+          "available_at": "2026-11-02T04:59:16.482175+00:00",
+          "date": "2026-11-01",
+          "for": 125,
+          "id": "0022600157",
+          "opponent": "LAL",
+          "result": "L"
+        }
+      ],
+      "games": 6,
+      "losses": 3,
+      "name": "Toronto Raptors",
+      "rank": 15,
+      "win_pct": 0.5,
+      "wins": 3
+    },
+    {
+      "code": "WSH",
+      "differential": 0.83,
+      "evidence": [
+        {
+          "against": 116,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 128,
+          "id": "0022600086",
+          "opponent": "MIL",
+          "result": "W"
+        },
+        {
+          "against": 112,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 102,
+          "id": "0022600097",
+          "opponent": "TOR",
+          "result": "L"
+        },
+        {
+          "against": 120,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 124,
+          "id": "0022600108",
+          "opponent": "CHI",
+          "result": "W"
+        },
+        {
+          "against": 110,
+          "available_at": "2026-10-27T01:26:52.621504+00:00",
+          "date": "2026-10-26",
+          "for": 103,
+          "id": "0022600119",
+          "opponent": "CHA",
+          "result": "L"
+        },
+        {
+          "against": 121,
+          "available_at": "2026-10-29T01:34:16.250833+00:00",
+          "date": "2026-10-28",
+          "for": 111,
+          "id": "0022600133",
+          "opponent": "CLE",
+          "result": "L"
+        },
+        {
+          "against": 79,
+          "available_at": "2026-10-31T01:56:26.138964+00:00",
+          "date": "2026-10-30",
+          "for": 95,
+          "id": "0022600015",
+          "opponent": "CHA",
+          "result": "W"
+        }
+      ],
+      "games": 6,
+      "losses": 3,
+      "name": "Washington Wizards",
+      "rank": 16,
+      "win_pct": 0.5,
+      "wins": 3
+    },
+    {
+      "code": "ATL",
+      "differential": 0.86,
+      "evidence": [
+        {
+          "against": 125,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 132,
+          "id": "0022600085",
+          "opponent": "ORL",
+          "result": "W"
+        },
+        {
+          "against": 81,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 128,
+          "id": "0022600094",
+          "opponent": "CHA",
+          "result": "W"
+        },
+        {
+          "against": 121,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 114,
+          "id": "0022600107",
+          "opponent": "HOU",
+          "result": "L"
+        },
+        {
+          "against": 120,
+          "available_at": "2026-10-27T03:55:41.973441+00:00",
+          "date": "2026-10-26",
+          "for": 110,
+          "id": "0022600125",
+          "opponent": "HOU",
+          "result": "L"
+        },
+        {
+          "against": 129,
+          "available_at": "2026-10-29T01:34:16.250833+00:00",
+          "date": "2026-10-28",
+          "for": 117,
+          "id": "0022600132",
+          "opponent": "MIA",
+          "result": "L"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-10-30T02:41:49.043496+00:00",
+          "date": "2026-10-29",
+          "for": 114,
+          "id": "0022600144",
+          "opponent": "CLE",
+          "result": "W"
+        },
+        {
+          "against": 121,
+          "available_at": "2026-11-01T02:04:03.638099+00:00",
+          "date": "2026-10-31",
+          "for": 99,
+          "id": "0022600149",
+          "opponent": "NO",
+          "result": "L"
+        }
+      ],
+      "games": 7,
+      "losses": 4,
+      "name": "Atlanta Hawks",
+      "rank": 17,
+      "win_pct": 0.4286,
+      "wins": 3
+    },
+    {
+      "code": "CHA",
+      "differential": -8.14,
+      "evidence": [
+        {
+          "against": 103,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 110,
+          "id": "0022600087",
+          "opponent": "BKN",
+          "result": "W"
+        },
+        {
+          "against": 128,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 81,
+          "id": "0022600094",
+          "opponent": "ATL",
+          "result": "L"
+        },
+        {
+          "against": 110,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 115,
+          "id": "0022600104",
+          "opponent": "MIA",
+          "result": "W"
+        },
+        {
+          "against": 103,
+          "available_at": "2026-10-27T01:26:52.621504+00:00",
+          "date": "2026-10-26",
+          "for": 110,
+          "id": "0022600119",
+          "opponent": "WSH",
+          "result": "W"
+        },
+        {
+          "against": 97,
+          "available_at": "2026-10-29T02:04:04.123249+00:00",
+          "date": "2026-10-28",
+          "for": 89,
+          "id": "0022600134",
+          "opponent": "DET",
+          "result": "L"
+        },
+        {
+          "against": 95,
+          "available_at": "2026-10-31T01:56:26.138964+00:00",
+          "date": "2026-10-30",
+          "for": 79,
+          "id": "0022600015",
+          "opponent": "WSH",
+          "result": "L"
+        },
+        {
+          "against": 109,
+          "available_at": "2026-11-01T01:14:18.689123+00:00",
+          "date": "2026-10-31",
+          "for": 104,
+          "id": "0022600148",
+          "opponent": "PHI",
+          "result": "L"
+        }
+      ],
+      "games": 7,
+      "losses": 4,
+      "name": "Charlotte Hornets",
+      "rank": 18,
+      "win_pct": 0.4286,
+      "wins": 3
+    },
+    {
+      "code": "NO",
+      "differential": 1.83,
+      "evidence": [
+        {
+          "against": 123,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 120,
+          "id": "0022600090",
+          "opponent": "IND",
+          "result": "L"
+        },
+        {
+          "against": 120,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 119,
+          "id": "0022600100",
+          "opponent": "UTAH",
+          "result": "L"
+        },
+        {
+          "against": 141,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 135,
+          "id": "0022600110",
+          "opponent": "DEN",
+          "result": "L"
+        },
+        {
+          "against": 104,
+          "available_at": "2026-10-29T02:36:20.971077+00:00",
+          "date": "2026-10-28",
+          "for": 91,
+          "id": "0022600140",
+          "opponent": "DEN",
+          "result": "L"
+        },
+        {
+          "against": 120,
+          "available_at": "2026-10-30T02:41:49.043496+00:00",
+          "date": "2026-10-29",
+          "for": 132,
+          "id": "0022600145",
+          "opponent": "SAC",
+          "result": "W"
+        },
+        {
+          "against": 99,
+          "available_at": "2026-11-01T02:04:03.638099+00:00",
+          "date": "2026-10-31",
+          "for": 121,
+          "id": "0022600149",
+          "opponent": "ATL",
+          "result": "W"
+        }
+      ],
+      "games": 6,
+      "losses": 4,
+      "name": "New Orleans Pelicans",
+      "rank": 19,
+      "win_pct": 0.3333,
+      "wins": 2
+    },
+    {
+      "code": "NY",
+      "differential": -0.67,
+      "evidence": [
+        {
+          "against": 106,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-20",
+          "for": 100,
+          "id": "0022600002",
+          "opponent": "PHI",
+          "result": "L"
+        },
+        {
+          "against": 107,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 103,
+          "id": "0022600008",
+          "opponent": "BOS",
+          "result": "L"
+        },
+        {
+          "against": 111,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 102,
+          "id": "0022600114",
+          "opponent": "ORL",
+          "result": "L"
+        },
+        {
+          "against": 97,
+          "available_at": "2026-10-28T03:06:58.533025+00:00",
+          "date": "2026-10-27",
+          "for": 111,
+          "id": "0022600129",
+          "opponent": "DET",
+          "result": "W"
+        },
+        {
+          "against": 127,
+          "available_at": "2026-10-29T03:24:35.459559+00:00",
+          "date": "2026-10-28",
+          "for": 133,
+          "id": "0022600137",
+          "opponent": "CHI",
+          "result": "W"
+        },
+        {
+          "against": 98,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 93,
+          "id": "0022600018",
+          "opponent": "PHI",
+          "result": "L"
+        }
+      ],
+      "games": 6,
+      "losses": 4,
+      "name": "New York Knicks",
+      "rank": 20,
+      "win_pct": 0.3333,
+      "wins": 2
+    },
+    {
+      "code": "MIA",
+      "differential": -3.17,
+      "evidence": [
+        {
+          "against": 131,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 106,
+          "id": "0022600004",
+          "opponent": "MIN",
+          "result": "L"
+        },
+        {
+          "against": 128,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 111,
+          "id": "0022600098",
+          "opponent": "DET",
+          "result": "L"
+        },
+        {
+          "against": 115,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 110,
+          "id": "0022600104",
+          "opponent": "CHA",
+          "result": "L"
+        },
+        {
+          "against": 113,
+          "available_at": "2026-10-27T02:55:38.880484+00:00",
+          "date": "2026-10-26",
+          "for": 109,
+          "id": "0022600122",
+          "opponent": "DAL",
+          "result": "L"
+        },
+        {
+          "against": 117,
+          "available_at": "2026-10-29T01:34:16.250833+00:00",
+          "date": "2026-10-28",
+          "for": 129,
+          "id": "0022600132",
+          "opponent": "ATL",
+          "result": "W"
+        },
+        {
+          "against": 125,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 145,
+          "id": "0022600020",
+          "opponent": "IND",
+          "result": "W"
+        }
+      ],
+      "games": 6,
+      "losses": 4,
+      "name": "Miami Heat",
+      "rank": 21,
+      "win_pct": 0.3333,
+      "wins": 2
+    },
+    {
+      "code": "ORL",
+      "differential": -9.0,
+      "evidence": [
+        {
+          "against": 132,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 125,
+          "id": "0022600085",
+          "opponent": "ATL",
+          "result": "L"
+        },
+        {
+          "against": 115,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 93,
+          "id": "0022600096",
+          "opponent": "MIN",
+          "result": "L"
+        },
+        {
+          "against": 102,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 111,
+          "id": "0022600114",
+          "opponent": "NY",
+          "result": "W"
+        },
+        {
+          "against": 129,
+          "available_at": "2026-10-29T02:04:04.123249+00:00",
+          "date": "2026-10-28",
+          "for": 99,
+          "id": "0022600136",
+          "opponent": "TOR",
+          "result": "L"
+        },
+        {
+          "against": 114,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 121,
+          "id": "0022600019",
+          "opponent": "TOR",
+          "result": "W"
+        },
+        {
+          "against": 108,
+          "available_at": "2026-11-01T23:26:25.716309+00:00",
+          "date": "2026-11-01",
+          "for": 97,
+          "id": "0022600154",
+          "opponent": "BOS",
+          "result": "L"
+        }
+      ],
+      "games": 6,
+      "losses": 4,
+      "name": "Orlando Magic",
+      "rank": 22,
+      "win_pct": 0.3333,
+      "wins": 2
+    },
+    {
+      "code": "IND",
+      "differential": -3.86,
+      "evidence": [
+        {
+          "against": 120,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 123,
+          "id": "0022600090",
+          "opponent": "NO",
+          "result": "W"
+        },
+        {
+          "against": 121,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 105,
+          "id": "0022600095",
+          "opponent": "DAL",
+          "result": "L"
+        },
+        {
+          "against": 109,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 136,
+          "id": "0022600113",
+          "opponent": "BKN",
+          "result": "W"
+        },
+        {
+          "against": 110,
+          "available_at": "2026-10-27T02:55:38.880484+00:00",
+          "date": "2026-10-26",
+          "for": 102,
+          "id": "0022600123",
+          "opponent": "MIL",
+          "result": "L"
+        },
+        {
+          "against": 114,
+          "available_at": "2026-10-29T02:04:04.123249+00:00",
+          "date": "2026-10-28",
+          "for": 109,
+          "id": "0022600135",
+          "opponent": "PHI",
+          "result": "L"
+        },
+        {
+          "against": 145,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 125,
+          "id": "0022600020",
+          "opponent": "MIA",
+          "result": "L"
+        },
+        {
+          "against": 98,
+          "available_at": "2026-11-02T01:01:01.155596+00:00",
+          "date": "2026-11-01",
+          "for": 90,
+          "id": "0022600155",
+          "opponent": "BKN",
+          "result": "L"
+        }
+      ],
+      "games": 7,
+      "losses": 5,
+      "name": "Indiana Pacers",
+      "rank": 23,
+      "win_pct": 0.2857,
+      "wins": 2
+    },
+    {
+      "code": "PHX",
+      "differential": -12.5,
+      "evidence": [
+        {
+          "against": 124,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 83,
+          "id": "0022600092",
+          "opponent": "POR",
+          "result": "L"
+        },
+        {
+          "against": 122,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 131,
+          "id": "0022600111",
+          "opponent": "GS",
+          "result": "W"
+        },
+        {
+          "against": 125,
+          "available_at": "2026-10-27T02:55:38.880484+00:00",
+          "date": "2026-10-26",
+          "for": 114,
+          "id": "0022600124",
+          "opponent": "OKC",
+          "result": "L"
+        },
+        {
+          "against": 127,
+          "available_at": "2026-10-31T04:52:31.318740+00:00",
+          "date": "2026-10-30",
+          "for": 120,
+          "id": "0022600024",
+          "opponent": "DEN",
+          "result": "L"
+        }
+      ],
+      "games": 4,
+      "losses": 3,
+      "name": "Phoenix Suns",
+      "rank": 24,
+      "win_pct": 0.25,
+      "wins": 1
+    },
+    {
+      "code": "LAC",
+      "differential": -7.33,
+      "evidence": [
+        {
+          "against": 96,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 121,
+          "id": "0022600093",
+          "opponent": "SAC",
+          "result": "W"
+        },
+        {
+          "against": 125,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 117,
+          "id": "0022600102",
+          "opponent": "LAL",
+          "result": "L"
+        },
+        {
+          "against": 108,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 101,
+          "id": "0022600116",
+          "opponent": "OKC",
+          "result": "L"
+        },
+        {
+          "against": 103,
+          "available_at": "2026-10-29T05:37:27.019977+00:00",
+          "date": "2026-10-28",
+          "for": 87,
+          "id": "0022600143",
+          "opponent": "LAL",
+          "result": "L"
+        },
+        {
+          "against": 127,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 101,
+          "id": "0022600022",
+          "opponent": "MIN",
+          "result": "L"
+        },
+        {
+          "against": 124,
+          "available_at": "2026-11-02T04:22:37.879069+00:00",
+          "date": "2026-11-01",
+          "for": 112,
+          "id": "0022600156",
+          "opponent": "GS",
+          "result": "L"
+        }
+      ],
+      "games": 6,
+      "losses": 5,
+      "name": "LA Clippers",
+      "rank": 25,
+      "win_pct": 0.1667,
+      "wins": 1
+    },
+    {
+      "code": "BKN",
+      "differential": -7.83,
+      "evidence": [
+        {
+          "against": 110,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 103,
+          "id": "0022600087",
+          "opponent": "CHA",
+          "result": "L"
+        },
+        {
+          "against": 125,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 121,
+          "id": "0022600105",
+          "opponent": "CLE",
+          "result": "L"
+        },
+        {
+          "against": 136,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 109,
+          "id": "0022600113",
+          "opponent": "IND",
+          "result": "L"
+        },
+        {
+          "against": 125,
+          "available_at": "2026-10-28T03:06:58.533025+00:00",
+          "date": "2026-10-27",
+          "for": 124,
+          "id": "0022600128",
+          "opponent": "BOS",
+          "result": "L"
+        },
+        {
+          "against": 110,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 94,
+          "id": "0022600017",
+          "opponent": "DET",
+          "result": "L"
+        },
+        {
+          "against": 90,
+          "available_at": "2026-11-02T01:01:01.155596+00:00",
+          "date": "2026-11-01",
+          "for": 98,
+          "id": "0022600155",
+          "opponent": "IND",
+          "result": "W"
+        }
+      ],
+      "games": 6,
+      "losses": 5,
+      "name": "Brooklyn Nets",
+      "rank": 26,
+      "win_pct": 0.1667,
+      "wins": 1
+    },
+    {
+      "code": "UTAH",
+      "differential": -10.17,
+      "evidence": [
+        {
+          "against": 123,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 103,
+          "id": "0022600089",
+          "opponent": "MEM",
+          "result": "L"
+        },
+        {
+          "against": 119,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 120,
+          "id": "0022600100",
+          "opponent": "NO",
+          "result": "W"
+        },
+        {
+          "against": 132,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 123,
+          "id": "0022600112",
+          "opponent": "LAL",
+          "result": "L"
+        },
+        {
+          "against": 110,
+          "available_at": "2026-10-27T03:55:41.973441+00:00",
+          "date": "2026-10-26",
+          "for": 105,
+          "id": "0022600126",
+          "opponent": "MEM",
+          "result": "L"
+        },
+        {
+          "against": 117,
+          "available_at": "2026-10-29T04:04:17.782257+00:00",
+          "date": "2026-10-28",
+          "for": 111,
+          "id": "0022600141",
+          "opponent": "SA",
+          "result": "L"
+        },
+        {
+          "against": 112,
+          "available_at": "2026-10-31T22:14:21.556165+00:00",
+          "date": "2026-10-31",
+          "for": 90,
+          "id": "0022600147",
+          "opponent": "POR",
+          "result": "L"
+        }
+      ],
+      "games": 6,
+      "losses": 5,
+      "name": "Utah Jazz",
+      "rank": 27,
+      "win_pct": 0.1667,
+      "wins": 1
+    },
+    {
+      "code": "MIL",
+      "differential": -13.17,
+      "evidence": [
+        {
+          "against": 128,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 116,
+          "id": "0022600086",
+          "opponent": "WSH",
+          "result": "L"
+        },
+        {
+          "against": 132,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 125,
+          "id": "0022600099",
+          "opponent": "CHI",
+          "result": "L"
+        },
+        {
+          "against": 127,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 116,
+          "id": "0022600106",
+          "opponent": "PHI",
+          "result": "L"
+        },
+        {
+          "against": 102,
+          "available_at": "2026-10-27T02:55:38.880484+00:00",
+          "date": "2026-10-26",
+          "for": 110,
+          "id": "0022600123",
+          "opponent": "IND",
+          "result": "W"
+        },
+        {
+          "against": 132,
+          "available_at": "2026-10-29T02:36:20.971077+00:00",
+          "date": "2026-10-28",
+          "for": 100,
+          "id": "0022600138",
+          "opponent": "HOU",
+          "result": "L"
+        },
+        {
+          "against": 136,
+          "available_at": "2026-11-01T03:04:38.216448+00:00",
+          "date": "2026-10-31",
+          "for": 111,
+          "id": "0022600151",
+          "opponent": "CLE",
+          "result": "L"
+        }
+      ],
+      "games": 6,
+      "losses": 5,
+      "name": "Milwaukee Bucks",
+      "rank": 28,
+      "win_pct": 0.1667,
+      "wins": 1
+    },
+    {
+      "code": "CHI",
+      "differential": -15.83,
+      "evidence": [
+        {
+          "against": 135,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 92,
+          "id": "0022600088",
+          "opponent": "TOR",
+          "result": "L"
+        },
+        {
+          "against": 125,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 132,
+          "id": "0022600099",
+          "opponent": "MIL",
+          "result": "W"
+        },
+        {
+          "against": 124,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-24",
+          "for": 120,
+          "id": "0022600108",
+          "opponent": "WSH",
+          "result": "L"
+        },
+        {
+          "against": 134,
+          "available_at": "2026-10-27T02:55:38.880484+00:00",
+          "date": "2026-10-26",
+          "for": 99,
+          "id": "0022600121",
+          "opponent": "BOS",
+          "result": "L"
+        },
+        {
+          "against": 133,
+          "available_at": "2026-10-29T03:24:35.459559+00:00",
+          "date": "2026-10-28",
+          "for": 127,
+          "id": "0022600137",
+          "opponent": "NY",
+          "result": "L"
+        },
+        {
+          "against": 125,
+          "available_at": "2026-10-31T02:56:30.440179+00:00",
+          "date": "2026-10-30",
+          "for": 111,
+          "id": "0022600016",
+          "opponent": "BOS",
+          "result": "L"
+        }
+      ],
+      "games": 6,
+      "losses": 5,
+      "name": "Chicago Bulls",
+      "rank": 29,
+      "win_pct": 0.1667,
+      "wins": 1
+    },
+    {
+      "code": "SAC",
+      "differential": -19.0,
+      "evidence": [
+        {
+          "against": 121,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-21",
+          "for": 96,
+          "id": "0022600093",
+          "opponent": "LAC",
+          "result": "L"
+        },
+        {
+          "against": 128,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-23",
+          "for": 120,
+          "id": "0022600103",
+          "opponent": "POR",
+          "result": "L"
+        },
+        {
+          "against": 123,
+          "available_at": "2026-10-26T17:40:39.122660+00:00",
+          "date": "2026-10-25",
+          "for": 112,
+          "id": "0022600118",
+          "opponent": "MEM",
+          "result": "L"
+        },
+        {
+          "against": 130,
+          "available_at": "2026-10-28T03:06:58.533025+00:00",
+          "date": "2026-10-27",
+          "for": 103,
+          "id": "0022600130",
+          "opponent": "SA",
+          "result": "L"
+        },
+        {
+          "against": 132,
+          "available_at": "2026-10-30T02:41:49.043496+00:00",
+          "date": "2026-10-29",
+          "for": 120,
+          "id": "0022600145",
+          "opponent": "NO",
+          "result": "L"
+        },
+        {
+          "against": 136,
+          "available_at": "2026-11-01T03:04:38.216448+00:00",
+          "date": "2026-10-31",
+          "for": 105,
+          "id": "0022600150",
+          "opponent": "MEM",
+          "result": "L"
+        }
+      ],
+      "games": 6,
+      "losses": 6,
+      "name": "Sacramento Kings",
+      "rank": 30,
+      "win_pct": 0.0,
+      "wins": 0
+    }
+  ]
+}

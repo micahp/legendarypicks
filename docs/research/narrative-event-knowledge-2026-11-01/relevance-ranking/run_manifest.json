@@ -1,0 +1,76 @@
+{
+  "as_of": "2026-11-01T09:00:00Z",
+  "blind_packet": {
+    "baseline_preview_available": false,
+    "baseline_reason": "core_stories output requires model inference; offline mode preserved its exact system prompt and reconstructed input",
+    "blind_drafts": 30,
+    "identity_key_path": "/root/lp-narrative-event-knowledge/docs/research/narrative-event-knowledge-2026-11-01/blind_identity_key.jsonl",
+    "targets_with_candidate_drafts": 15
+  },
+  "candidate_input_category_counts": {
+    "player_form": 120,
+    "selected:none": 5,
+    "selected:team_relationship": 10,
+    "selected:team_streak": 5,
+    "team_relationship": 40,
+    "team_streak": 13
+  },
+  "core_stories_source": "backend/core_stories.py::generate_game_story",
+  "core_stories_unchanged": true,
+  "core_system_prompt_sha256": "614420901837550a19e93290e471142cb9da3a1c47d9fa1af33a999210582657",
+  "database": "/root/legendarypicks/backend/data/picks.dev.db",
+  "database_mode": "mode=ro + query_only",
+  "external_requests": 0,
+  "generated_preview_counts": {
+    "combined": 15,
+    "core_stories_model_output": 0,
+    "event_only": 15
+  },
+  "human_ratings_entered": 0,
+  "independent_human_evaluation": false,
+  "inference_budget": {
+    "calls_for_10_nfl_plus_10_nba_three_variants": 60,
+    "estimated_input_tokens_characters_divided_by_4": 256836,
+    "estimated_openrouter_model_token_cost_usd_at_repo_noted_rates": 0.060125,
+    "inference_requests_made": 0,
+    "max_completion_tokens_per_call_for_opt_in": 600,
+    "max_completion_tokens_total": 36000,
+    "model": "deepseek/deepseek-v4.1-flash (repository default; not reverified online)",
+    "per_target_calls": 3,
+    "pricing_note": "backend/_core.py comments dated 2026-09-10 list these provider call fees and model token rates; how they combine is unspecified. Planning estimate only.",
+    "provider_call_fee_range_usd": {
+      "nous_0.00005_per_call": 0.003,
+      "openrouter_0.0002_per_call": 0.012
+    }
+  },
+  "limitations": [
+    "NFL schedule has local gametime without a timezone; its UTC game-date lower bound is sufficient to prove the shared cutoff precedes the target date, but is not the kickoff instant.",
+    "Upcoming NBA schedule rows have no stored ESPN event crosswalk; no ESPN or publisher request was made.",
+    "NBA team_game_stats has no populated current-season stat rows; this ranking uses local NBA schedule scores and prior-season nba_sportsdataverse_games scores.",
+    "core_stories matchup_context from ESPN summary is marked unavailable in baseline manifests.",
+    "No original-generator model output exists in offline mode, so there is no fair baseline rating or improvement claim.",
+    "Ranking weights are deterministic heuristics and have not been trained or independently human-validated.",
+    "Fourth-down and drive classifications remain quarantined in their separate correctness workstream."
+  ],
+  "mechanical_claims": {
+    "failed": 0,
+    "passed": 56,
+    "total": 56
+  },
+  "model_inference_requests": 0,
+  "nba_previous_season_regular_games_at_cutoff": 1230,
+  "nba_recent_completed_games_at_cutoff": 88,
+  "nba_schedule_rejections": {},
+  "nfl_pbp_run_pass_plays_with_epa": 13316,
+  "nfl_schedule_completed_games_at_cutoff": 108,
+  "nfl_schedule_rejections": {},
+  "objective": "offline deterministic matchup relevance ranking",
+  "selected_category_counts": {
+    "team_relationship": 10,
+    "team_streak": 5
+  },
+  "targets": {
+    "nba": 10,
+    "nfl": 10
+  }
+}

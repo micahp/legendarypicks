@@ -21,6 +21,7 @@ def test_the_job_service_runs_dev_then_prod_in_one_execstart():
     assert text.count("ExecStart=") == 1
     assert text.index("picks.dev.db") < text.index("data/picks.db")
     assert "run_ingest_jobs.py" in text
+    assert "OnFailure=legendarypicks-ops-alert@%N.service" in text
 
 
 def test_freshness_is_a_separate_unit_from_the_ingest():

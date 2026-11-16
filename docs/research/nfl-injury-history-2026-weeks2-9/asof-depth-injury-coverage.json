@@ -1,0 +1,24 @@
+{
+  "coverage": {
+    "depth_and_injury_only_not_finalized_team_games": 240,
+    "depth_player_role_rows": 17368,
+    "depth_team_games": 240,
+    "expected_team_games": 240,
+    "game_count": 120,
+    "injury_week_rows_matched": 2950,
+    "official_inactive_sources": 0,
+    "official_inactives_not_in_depth_chart": 0
+  },
+  "cutoff_before_kickoff_minutes": 30,
+  "depth_sha256": "341d1eddeaf64c7aaaed4cd190bffc941dcaa201e6689ef17a8070798120abce",
+  "finalized_roster_claim": false,
+  "injury_csv_sha256": "5a1aea201093c35e7e15cf39f754b5c003ba818d6787a1575a62716d0e64707a",
+  "output": "asof-depth-injury-rosters.csv",
+  "schedule_csv_sha256": "4b8dc481d91b06b3ba0f1c82b752bb45743b463cdd8d9f3fd6a9f42599a7fff1",
+  "season": 2026,
+  "warning": "Depth is not official game-day active roster; injury date_modified missing for most 2026 reports. Weekly roster generated after games is not pregame proof.",
+  "weeks": [
+    2,
+    9
+  ]
+}

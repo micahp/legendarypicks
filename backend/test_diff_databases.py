@@ -46,6 +46,24 @@ class DiffDatabasesTests(unittest.TestCase):
         make_db(self.dev, {"player_stats": "id INTEGER"})
         self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))
 
+    def test_dev_only_research_tables_are_advisory(self):
+        research_tables = (
+            "nba_player_boxes_nbacom",
+            "nfl_game_context",
+            "nfl_game_info_load_log",
+            "nfl_game_officials",
+            "nfl_game_officials_raw",
+            "nfl_game_xwalk",
+            "nfl_pbp_penalty",
+            "referee_check",
+        )
+        make_db(self.dev, {table: "id INTEGER" for table in research_tables})
+        self.assertEqual(0, diff.main(["--prod", self.prod, "--dev", self.dev]))
+
+    def test_nba_teams_remains_a_blocking_runtime_table(self):
+        make_db(self.dev, {"nba_teams": "season INTEGER, team TEXT"})
+        self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))
+
     def test_a_column_only_in_dev_blocks(self):
         con = sqlite3.connect(self.dev)
         con.execute("ALTER TABLE players ADD COLUMN position TEXT")
@@ -55,6 +73,32 @@ class DiffDatabasesTests(unittest.TestCase):
 
     def test_a_season_only_in_dev_blocks(self):
         make_db(self.dev, {"player_stats": "id INTEGER, league TEXT, season INTEGER"})
+        self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))
+
+    def test_pre_2024_availability_season_is_advisory(self):
+        con = sqlite3.connect(self.dev)
+        con.execute("CREATE TABLE player_game_availability (league TEXT, season INTEGER)")
+        con.execute("INSERT INTO player_game_availability VALUES ('nfl', 2010)")
+        con.execute("INSERT INTO player_game_availability VALUES ('nfl', 2024)")
+        con.commit()
+        con.close()
+        con = sqlite3.connect(self.prod)
+        con.execute("CREATE TABLE player_game_availability (league TEXT, season INTEGER)")
+        con.execute("INSERT INTO player_game_availability VALUES ('nfl', 2024)")
+        con.commit()
+        con.close()
+        self.assertEqual(0, diff.main(["--prod", self.prod, "--dev", self.dev]))
+
+    def test_live_availability_season_still_blocks(self):
+        con = sqlite3.connect(self.dev)
+        con.execute("CREATE TABLE player_game_availability (league TEXT, season INTEGER)")
+        con.execute("INSERT INTO player_game_availability VALUES ('nfl', 2025)")
+        con.commit()
+        con.close()
+        con = sqlite3.connect(self.prod)
+        con.execute("CREATE TABLE player_game_availability (league TEXT, season INTEGER)")
+        con.commit()
+        con.close()
         self.assertEqual(1, diff.main(["--prod", self.prod, "--dev", self.dev]))
 
     def test_volume_drift_is_advisory(self):

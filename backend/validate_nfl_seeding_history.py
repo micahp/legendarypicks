@@ -3,7 +3,7 @@ actually played, 2010-2025. Read-only: both databases are opened with mode=ro.
 
 2010-2023 come from the historical SQLite (codes already mapped to current ones). 2024-2025 come
 from the dev DB. Before any season is checked, every regular-season game in the season is matched
-against the nflverse games.parquet (raw codes, div_game flag) through CODE_MAP, and the division
+against the nflverse games.parquet (raw codes, div_game flag) through team_codes.normalize, and the division
 of both clubs under the current nfl_teams map must agree with div_game. A season whose map does
 not agree is reported and skipped, never silently checked.
 
@@ -23,10 +23,10 @@ import sys
 import pandas as pd
 
 import nfl_bracket_check as bc
+import team_codes
 import nfl_seeding as sd
 
 # nflverse raw code -> code used in the database. Every pair found in 10-11 check (step 1a).
-CODE_MAP = {"LA": "LAR", "STL": "LAR", "SD": "LAC", "OAK": "LV", "WAS": "WSH"}
 FIRST, LAST = 2010, 2025
 HIST_LAST = 2023
 
@@ -36,7 +36,7 @@ def ro(path):
 
 
 def map_code(raw):
-    return CODE_MAP.get(raw, raw)
+    return team_codes.normalize("nfl", raw)
 
 
 def verify_map(con, season, games_df, tmap):

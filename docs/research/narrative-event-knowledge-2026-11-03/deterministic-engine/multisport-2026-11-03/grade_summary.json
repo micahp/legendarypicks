@@ -1,0 +1,13 @@
+{
+  "html": "/tmp/pr30-story-grade/multisport-2026-11-03/dashboard.html",
+  "ledger_appended": null,
+  "output": "/tmp/pr30-story-grade/multisport-2026-11-03/graded.jsonl",
+  "rubric_version": "lp-story-quality-v1.0.0",
+  "statuses": {
+    "blocked": 0,
+    "eligible": 0,
+    "needs-audit": 27,
+    "review": 0
+  },
+  "stories": 27
+}

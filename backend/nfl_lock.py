@@ -71,9 +71,10 @@ def finish_run(con, run_id, status, error=None):
 def locked_projection(con, game_id, model_version):
     """The one projection grading uses for this version, or None if it never locked the game."""
     row = con.execute(
-        "SELECT run_id, proj_home, proj_away, proj_margin, proj_total, p_home_win, market_spread, "
-        "       market_total, market_source, locked_at, line_snapshot_id FROM game_projections "
-        "WHERE league = ? AND game_id = ? AND locked = 1 AND model_version = ?",
+        "SELECT g.run_id, g.proj_home, g.proj_away, g.proj_margin, g.proj_total, g.p_home_win, market_spread, "
+        "       market_total, market_source, locked_at, line_snapshot_id FROM game_projections g "
+        "JOIN model_runs r ON r.run_id = g.run_id AND r.status = 'ok' "
+        "WHERE g.league = ? AND g.game_id = ? AND g.locked = 1 AND g.model_version = ?",
         (LEAGUE, game_id, model_version)).fetchone()
     if row is None:
         return None
@@ -176,34 +177,46 @@ def lock_week(con, run_id, season, week, project, as_of=None, skip_scored=False,
             too_early.append(gid)
             continue
         neutral = (loc or "").strip().lower() == "neutral"
-        already = con.execute(
-            "SELECT 1 FROM game_projections WHERE league = ? AND game_id = ? AND locked = 1 "
-            "AND model_version = ?", (LEAGUE, gid, model_version)).fetchone()
-        if already is None and hs is not None and as_ is not None:
+        prior_lock = con.execute(
+            "SELECT p.run_id, r.status FROM game_projections p "
+            "LEFT JOIN model_runs r ON r.run_id = p.run_id "
+            "WHERE p.league = ? AND p.game_id = ? AND p.locked = 1 "
+            "AND p.model_version = ?", (LEAGUE, gid, model_version)).fetchone()
+        if prior_lock and prior_lock[1] != "ok":
+            raise ValueError("%s has a locked row from run %s with status %s" %
+                             (gid, prior_lock[0], prior_lock[1] or "missing"))
+        already = prior_lock is not None
+        if not already and hs is not None and as_ is not None:
             if not skip_scored:
                 raise ValueError("refusing to lock %s after its result (%s-%s)" % (gid, hs, as_))
             skipped.append(gid)
             continue
         ph, pa, p = project(home, away, neutral)
         plan.append((gid, home, away, ph, pa, p, spread, total, hml, aml, ingested_at,
-                     already is None))
+                     not already))
 
-    # Pass 2: write. Each row first copies the market line it was made against.
+    # Pass 2: write the whole batch atomically. A failed later insert must not leave
+    # earlier games locked under a run that the caller marks failed.
     new_locks = refreshes = 0
-    for gid, home, away, ph, pa, p, spread, total, hml, aml, ingested_at, first in plan:
-        snap = _snapshot(con, gid, as_of, ingested_at, spread, total, hml, aml)
-        con.execute(
-            "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
-            " proj_home, proj_away, proj_margin, proj_total, p_home_win, market_spread, "
-            " market_total, market_source, model_version, locked, locked_at, line_snapshot_id) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (run_id, LEAGUE, gid, season, week, home, away, ph, pa, ph - pa, ph + pa, p, spread,
-             total, MARKET_SOURCE, model_version, 1 if first else 0, as_of, snap))
-        if first:
-            new_locks += 1
-        else:
-            refreshes += 1
-    con.commit()
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        for gid, home, away, ph, pa, p, spread, total, hml, aml, ingested_at, first in plan:
+            snap = _snapshot(con, gid, as_of, ingested_at, spread, total, hml, aml)
+            con.execute(
+                "INSERT INTO game_projections (run_id, league, game_id, season, week, home, away, "
+                " proj_home, proj_away, proj_margin, proj_total, p_home_win, market_spread, "
+                " market_total, market_source, model_version, locked, locked_at, line_snapshot_id) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (run_id, LEAGUE, gid, season, week, home, away, ph, pa, ph - pa, ph + pa, p, spread,
+                 total, MARKET_SOURCE, model_version, 1 if first else 0, as_of, snap))
+            if first:
+                new_locks += 1
+            else:
+                refreshes += 1
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
     out = {"new_locks": new_locks, "refreshes": refreshes, "skipped": skipped, "started": started}
     if min_lead is not None:
         out["too_early"] = too_early

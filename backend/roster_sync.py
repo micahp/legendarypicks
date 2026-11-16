@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import espn_client as espn
 from audit_league_stats import _identity_name_key
 from league_stats import queue_unresolved_player
+import nba_identity_resolve
 from nfl_identity import espn_assignment_conflict, load_espn_to_gsis
 from roster_membership import (
     normalized_source_payload,
@@ -60,6 +61,8 @@ def configure_espn():
     """
     espn.set_retry_waits((5.0, 30.0, 120.0))
     espn.set_min_interval(float(os.environ.get("LP_ESPN_MIN_INTERVAL", "1.0")))
+    # Batch job: pause at ESPN's per-host window rather than raise (the shared default refuses).
+    espn.set_on_exhausted("sleep")
     espn.set_disk_cache(
         os.environ.get("LP_ESPN_CACHE_DIR")
         or os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "espn-cache"),
@@ -67,7 +70,7 @@ def configure_espn():
     )
 
 
-def sync_league(con: sqlite3.Connection, league: str) -> dict:
+def _sync_league(con: sqlite3.Connection, league: str) -> dict:
     # Idempotent, and it must run before the first `espn.` call below -- see the
     # docstring: entering here directly is the normal case, not the exception.
     configure_espn()
@@ -213,6 +216,46 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
                     "reason": "duplicate_spine_espn_id",
                 })
                 continue
+            if league == "nba":
+                # Every NBA assignment or insertion is decided by the resolver.
+                # A unique normalised name is NOT identity evidence here: it used
+                # to bind an ESPN id to the only row with that name ('William Kyle
+                # III' was once minted beside 63170 'William Kyle'). Evidence is an
+                # id: the ESPN id, the hoopR id, or the verified nba.com crosswalk.
+                # Anything unproven is HELD (queued for review), never bound.
+                nba_com_id, crosswalk_conflict = nba_identity_resolve.crosswalk_nba_com_id(con, eid)
+                if crosswalk_conflict:
+                    identity_failures.append({
+                        "team": abbr, "name": name, "source_player_key": eid,
+                        "reason": "nba_identity_hold: conflicting nba.com crosswalk for this ESPN id",
+                    })
+                    continue
+                decision, found_id, why = nba_identity_resolve.resolve(
+                    con, eid, name, nba_com_id=nba_com_id,
+                    team_espn_id=p.get("team_espn_id") or p.get("team_id"))
+                if decision in ("reuse", "attach_espn"):
+                    held = con.execute("SELECT team FROM players WHERE id=?",
+                                       (found_id,)).fetchone()
+                    held_team = str(held["team"] or "").upper() if held else ""
+                    if held_team and held_team != abbr:
+                        team_changes.append({"name": name, "from": held_team, "to": abbr})
+                    planned.append({
+                        "action": "update", "player_id": found_id, "name": name,
+                        "team": abbr, "position": pos, "jersey": p.get("jersey"),
+                        "source_player_key": eid,
+                    })
+                elif decision == "hold":
+                    identity_failures.append({
+                        "team": abbr, "name": name, "source_player_key": eid,
+                        "reason": "nba_identity_hold: " + why,
+                    })
+                else:
+                    planned.append({
+                        "action": "insert", "player_id": None, "name": name,
+                        "team": abbr, "position": pos, "jersey": p.get("jersey"),
+                        "source_player_key": eid,
+                    })
+                continue
             if exact_ids:
                 planned.append({
                     "action": "update",
@@ -268,6 +311,7 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
                 if candidate_eid and candidate_eid != eid:
                     reason = "name_match_conflicting_espn_id"
                 else:
+                    reason = None
                     if league == "nfl":
                         reason = espn_assignment_conflict(
                             eid,
@@ -411,10 +455,36 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
             exclude = "COALESCE(entity_type,'player')='player'"
         else:
             exclude = "COALESCE(position,'') != 'DEF'"
+        if league == "nba":
+            # An ESPN roster that omits a player is not evidence the player left the
+            # league. The latest official nba.com roster snapshot is separate
+            # membership evidence; keep those players active rather than let this
+            # ESPN-only pass erase it.
+            exclude += (
+                " AND id NOT IN (SELECT m.player_id FROM roster_memberships m "
+                "JOIN roster_snapshots s ON s.id = m.snapshot_id "
+                "WHERE s.source = 'nba.com:team-roster' AND s.league = 'nba' "
+                "AND s.id = (SELECT MAX(id) FROM roster_snapshots "
+                "WHERE source = 'nba.com:team-roster' AND league = 'nba') "
+                "AND m.player_id IS NOT NULL)"
+            )
         con.execute(
             f"UPDATE players SET active=0, updated_at=? WHERE league=? AND {exclude}",
             (verified_at, league),
         )
+        if league == "nba":
+            # Union, not just preservation: a player on the latest official roster
+            # who was inactive (and absent from ESPN's roster) becomes active.
+            con.execute(
+                "UPDATE players SET active=1, updated_at=? WHERE league='nba' "
+                "AND COALESCE(active,0)=0 AND id IN (SELECT m.player_id "
+                "FROM roster_memberships m JOIN roster_snapshots s ON s.id = m.snapshot_id "
+                "WHERE s.source = 'nba.com:team-roster' AND s.league = 'nba' "
+                "AND s.id = (SELECT MAX(id) FROM roster_snapshots "
+                "WHERE source = 'nba.com:team-roster' AND league = 'nba') "
+                "AND m.player_id IS NOT NULL)",
+                (verified_at,),
+            )
 
         for item in planned:
             if league == "mlb":
@@ -536,8 +606,13 @@ def sync_league(con: sqlite3.Connection, league: str) -> dict:
             "team_changes": team_changes}
 
 
+def sync_league(con: sqlite3.Connection, league: str) -> dict:
+    """Run roster fan-out with batch pacing, then restore the shared client."""
+    with espn.batch_pacing():
+        return _sync_league(con, league)
+
+
 def main(leagues):
-    configure_espn()
     con = sqlite3.connect(DB)
     con.row_factory = sqlite3.Row
     for lg in leagues:

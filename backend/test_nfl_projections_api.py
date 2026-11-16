@@ -58,6 +58,36 @@ class Api(unittest.TestCase):
             (run, "nfl", 2026, 6, "g1", player, "A", stat, mean, None, p10, p90, scenario, model, source,
              0.7 if model == "v2" else None, as_of))
 
+    def test_platt_model_applies_the_week_map_and_labels_itself(self):
+        self.con.execute(
+            "CREATE TABLE nfl_prop_calibration (season INTEGER, week INTEGER, model_version TEXT, a REAL, b REAL, "
+            "n_items INTEGER, n_player_games INTEGER, fitted_at_utc TEXT, PRIMARY KEY (season, week, model_version))")
+        self.con.execute("INSERT INTO nfl_prop_calibration VALUES (2026,6,'v2-platt',0.25,0.10,500,60,'2026-10-16T00:00:00+00:00')")
+        self.con.commit()
+        raw = api.nfl_player_projection(1, 6, 2026, "receptions", 2.5, model="v2")["prob_over"]
+        got = api.nfl_player_projection(1, 6, 2026, "receptions", 2.5, model="v2-platt")
+        self.assertEqual("v2-platt", got["model"])
+        po = got["prob_over"]
+        self.assertAlmostEqual(raw["p_over"], po["p_over_raw"], places=6)
+        self.assertLess(abs(po["p_over"] - 0.5), abs(po["p_over_raw"] - 0.5))   # slope 0.25 shrinks toward 0.5
+        self.assertEqual("applied", po["calibration"]["status"])
+        self.assertAlmostEqual(0.25, po["calibration"]["a"])
+
+    def test_platt_model_serves_raw_and_says_so_when_the_week_has_no_map(self):
+        self.con.execute(
+            "CREATE TABLE nfl_prop_calibration (season INTEGER, week INTEGER, model_version TEXT, a REAL, b REAL, "
+            "n_items INTEGER, n_player_games INTEGER, fitted_at_utc TEXT, PRIMARY KEY (season, week, model_version))")
+        self.con.commit()
+        got = api.nfl_player_projection(1, 6, 2026, "receptions", 2.5, model="v2-platt")
+        po = got["prob_over"]
+        self.assertEqual("v2-platt", got["model"])
+        self.assertEqual(po["p_over_raw"], po["p_over"])
+        self.assertEqual("raw_no_map", po["calibration"]["status"])
+
+    def test_unknown_model_is_rejected(self):
+        with self.assertRaises(HTTPException):
+            api.nfl_player_projection(1, 6, 2026, "receptions", 2.5, model="v3")
+
     def test_player_endpoint_shows_latest_v2_with_marcel_and_espn_beside(self):
         res = api.nfl_player_projection(1, week=None, season=None, market=None, line=None)
         self.assertEqual(("g1", 6, "v2"), (res["game_id"], res["week"], res["model"]))

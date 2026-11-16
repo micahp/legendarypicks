@@ -47,6 +47,17 @@ def _pkg__table_columns(*args, **kwargs):
     from routers.nfl_offseason import _table_columns as _pkg_f
     return _pkg_f(*args, **kwargs)
 
+
+def _latest_completed_log_season(connection: sqlite3.Connection) -> Optional[int]:
+    """Most recent NFL log season before the season currently being drafted."""
+    row = connection.execute(
+        "SELECT MAX(season) FROM player_game_logs "
+        "WHERE league='nfl' AND season<?",
+        (_CURRENT_SEASON,),
+    ).fetchone()
+    return row[0] if row and row[0] is not None else None
+
+
 def _availability_aggregates(
     connection: sqlite3.Connection, season: int
 ) -> Dict[int, dict]:

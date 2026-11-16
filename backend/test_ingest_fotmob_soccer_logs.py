@@ -31,7 +31,9 @@ def _provider_tables(con):
     breaking production.
     """
     import scripts_split_provider_logs as split
+    import nba_sportsdataverse
     split.ensure_espn_columns(con)
+    nba_sportsdataverse.ensure_schema(con)
     con.executescript(split.DDL_TABLE)
     con.executescript(split.DDL_VIEW)
 

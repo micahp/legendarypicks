@@ -98,12 +98,47 @@ def check_position_content(con, league, spec, out):
     MANIFEST (dict form); legacy list entries default to `_POSITION_CONTENT_FLOOR`.
     This check read PASS for NHL at 30% coverage on 2026-08-05 because the old
     logic only failed a stat that never appeared at all.
+
+    Two optional declarations make a thin sample visible instead of a pass:
+      min_sample        fewer qualifying logs than this is UNVERIFIED, not PASS
+      qualify_nonzero   a stat key (e.g. MIN): only logs where it is above zero
+                        count, so a did-not-play row is not an observation
+    `position_group_content` runs the same test on the normalised group column
+    (position_group) while the detailed positions stay separately reported.
     """
-    wanted = spec.get("position_content") or {}
+    # Groups first: a granular position with too few logs of its own defers to its
+    # group's result (entry key "defer_to_group"), so the group must already be measured.
+    groups = spec.get("position_group_content") or {}
+    if groups and "position_group" in _columns(con, "players"):
+        _position_content(con, league, groups, "position_group", "B/position-group", out)
+    _position_content(con, league, spec.get("position_content") or {}, "position", "B/position-content", out,
+                      missing_declaration=True)
+
+
+def _deferred_to_group(entry, out, position, detail):
+    """A granular position too thin to judge alone is covered by its group's PASS.
+
+    Never a pass by default: only when the entry names a group AND that group's own
+    check PASSED on a sufficient sample. A FAIL or UNVERIFIED group keeps this
+    position UNVERIFIED. A thin sample is not bad data; it is a smaller sample.
+    """
+    group = entry.get("defer_to_group") if isinstance(entry, dict) else None
+    if not group:
+        return None
+    for row in out.rows:
+        state, check, text = row[0], row[-2], row[-1]   # (state, [league,] check, detail)
+        if check == "B/position-group[%s]" % group and state == PASS:
+            return ("%s; stat coverage is validated on the %s group instead (%s)"
+                    % (detail, group, text))
+    return None
+
+
+def _position_content(con, league, wanted, column, label, out, missing_declaration=False):
     if not wanted:
-        out.add(UNVERIFIED, league, "B/position-content",
-                "no position_content declared -- nobody has said what this "
-                "league's positions must record")
+        if missing_declaration:
+            out.add(UNVERIFIED, league, "B/position-content",
+                    "no position_content declared -- nobody has said what this "
+                    "league's positions must record")
         return
     for position, entry in sorted(wanted.items()):
         if isinstance(entry, dict):
@@ -115,10 +150,14 @@ def check_position_content(con, league, spec, out):
             # declaration is measurable instead of forever UNVERIFIED by a
             # position join that can never match.
             all_logs = bool(entry.get("all_logs", False))
+            min_sample = int(entry.get("min_sample", 0))
+            qualify = entry.get("qualify_nonzero")
         else:
             keys = entry
             floor = _POSITION_CONTENT_FLOOR
             all_logs = False
+            min_sample = 0
+            qualify = None
         if all_logs:
             rows = con.execute(
                 "SELECT l.stats FROM player_game_logs l "
@@ -126,16 +165,32 @@ def check_position_content(con, league, spec, out):
                 "WHERE l.league=? LIMIT 500", (league,)).fetchall()
         else:
             rows = con.execute(
-                """SELECT l.stats FROM player_game_logs l
+                f"""SELECT l.stats FROM player_game_logs l
                    JOIN players p ON p.id = l.player_id
-                   WHERE l.league=? AND UPPER(TRIM(p.position))=? LIMIT 500""",
+                   WHERE l.league=? AND UPPER(TRIM(p.{column}))=? LIMIT 500""",
                 (league, position.upper()),
             ).fetchall()
         if not rows:
-            out.add(UNVERIFIED, league, f"B/position-content[{position}]",
-                    "no game logs at all for this position -- cannot confirm "
-                    "its stats are recorded")
+            msg = "no game logs at all for this position -- cannot confirm its stats are recorded"
+            covered = _deferred_to_group(entry, out, position, msg)
+            out.add(PASS if covered else UNVERIFIED, league, f"{label}[{position}]", covered or msg)
             continue
+        total_rows = len(rows)
+        if qualify:
+            kept = []
+            for row in rows:
+                try:
+                    value = json.loads(row[0]).get(qualify)
+                    if value is not None and float(value) > 0:
+                        kept.append(row)
+                except (TypeError, ValueError, AttributeError):
+                    continue
+            rows = kept
+            if not rows:
+                out.add(UNVERIFIED, league, f"{label}[{position}]",
+                        f"{total_rows} logs found but none with {qualify} above zero -- "
+                        "no actual appearance to measure")
+                continue
         sampled = len(rows)
         # Each entry is a list of acceptable spellings for ONE stat; a log
         # records the stat when any spelling carries a non-null value.
@@ -159,14 +214,19 @@ def check_position_content(con, league, spec, out):
                                           100.0 * filled[i] / sampled)
                   for i, alts in enumerate(keys)]
         low = [c for i, c in enumerate(counts) if filled[i] < floors[i] * sampled]
+        basis = f"{sampled} qualifying of {total_rows} logs sampled" if qualify else f"{sampled} logs sampled"
         if low:
-            out.add(FAIL, league, f"B/position-content[{position}]",
-                    "%d logs sampled, below the declared floor: %s"
-                    % (sampled, "; ".join(low)))
+            out.add(FAIL, league, f"{label}[{position}]",
+                    "%s, below the declared floor: %s" % (basis, "; ".join(low)))
+        elif sampled < min_sample:
+            msg = ("insufficient sample: %s, need at least %d to call it a pass (coverage "
+                   "of what exists: %s)" % (basis, min_sample, ", ".join(counts)))
+            covered = _deferred_to_group(entry, out, position, msg)
+            out.add(PASS if covered else UNVERIFIED, league, f"{label}[{position}]", covered or msg)
         else:
-            out.add(PASS, league, f"B/position-content[{position}]",
-                    "%d logs sampled, all recorded at >=%.0f%%: %s"
-                    % (sampled, 100 * min(floors), ", ".join(counts)))
+            out.add(PASS, league, f"{label}[{position}]",
+                    "%s, all recorded at >=%.0f%%: %s"
+                    % (basis, 100 * min(floors), ", ".join(counts)))
 
 def check_single_vocabulary(con, league, spec, out):
     """C. One categorical column, one vocabulary.
@@ -387,7 +447,7 @@ def check_identity_crosswalk(con, league, spec, out):
 
     `players` is the spine: one row per person, carrying our `id` plus one
     external id per publisher (`espn_id`, `mlbam_id`, `nfl_gsis_id`, `nhl_id`,
-    `nba_id`). Everything else joins on `players.id`. So a publisher can only
+    `hoopr_id`). Everything else joins on `players.id`. So a publisher can only
     contribute to a league if the spine carries ITS id -- and a league's entire
     character is decided by that one fact, silently, at ingest time.
 
@@ -396,7 +456,7 @@ def check_identity_crosswalk(con, league, spec, out):
       NFL   18,697 espn_id + 25,007 gsis, 16,774 rows carry BOTH.  Healthy.
             Team, position, ranks, news and ADP all work because two publishers
             can reach the same row.
-      NBA   521 espn_id, 541 nba_id, **0 rows carry both.**  Two disjoint
+      NBA   521 espn_id, 541 hoopr_id, **0 rows carry both.**  Two disjoint
             populations, 269 athletes split across two `players.id` rows -- one
             holding the historical stats, the other the current game logs.
       MLB   2,747 mlbam_id, **0 espn_id.**  ESPN is what publishes team and
@@ -418,7 +478,7 @@ def check_identity_crosswalk(con, league, spec, out):
     before the damage.
     """
     columns = _columns(con, "players")
-    legacy = [c for c in ("mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id") if c in columns]
+    legacy = [c for c in ("mlbam_id", "nfl_gsis_id", "nhl_id", "nba_id", "hoopr_id") if c in columns]
     if "espn_id" not in columns or not legacy:
         out.add(UNVERIFIED, league, "F/identity-crosswalk",
                 "players carries no external id columns to cross-check")
@@ -475,6 +535,139 @@ def check_identity_crosswalk(con, league, spec, out):
         out.add(PASS, league, "F/identity-crosswalk",
                 "publishers cross-referenced (%s)" % ", ".join(notes))
 
+def _nba_com_official_names(con):
+    """{NBA.com PLAYER_ID: name} exactly as nba.com published it on its team pages.
+
+    Read from the stored official roster snapshots (source 'nba.com:team-roster'),
+    oldest first so the newest spelling wins. This is offline on purpose: a gate
+    must not call a publisher. hoopR/SportsDataverse cannot serve this check for
+    the current season: its newest release is 2025-26, so every 2026-27 rookie and
+    signing is outside its map.
+    """
+    if not {"roster_snapshots", "roster_memberships"} <= {
+            r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'")}:
+        return {}
+    names = {}
+    for key, name in con.execute(
+            "SELECT m.source_player_key, m.display_name FROM roster_memberships m "
+            "JOIN roster_snapshots s ON s.id = m.snapshot_id "
+            "WHERE s.source = 'nba.com:team-roster' AND s.league = 'nba' "
+            "AND m.source_player_key IS NOT NULL AND m.display_name IS NOT NULL "
+            "ORDER BY s.id, m.id"):
+        names[str(key)] = name
+    # Reviewed ids: nba.com ids bound by name on an nba.com box score plus an
+    # ESPN/nba.com birth-date match. The name is nba.com's own, from its player page.
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "data", "nba-identity-reviewed.json")
+    try:
+        with open(path, encoding="utf-8") as handle:
+            reviewed = json.load(handle).get("nba", {})
+    except (OSError, ValueError):
+        reviewed = {}
+    for key, entry in reviewed.items():
+        if str(key) not in names and isinstance(entry, dict) and entry.get("name"):
+            names[str(key)] = entry["name"]
+    return names
+
+
+def _check_nba_com_identity(con, league, out):
+    """G for NBA: each player's official NBA.com id must carry that player's name.
+
+    hoopR ids (players.hoopr_id) are ESPN athlete ids and are a different
+    namespace; they are not checked here. The official ids live in
+    player_source_ids(source='nba.com'). A wrong pairing FAILS. A current-season
+    player with no official id, or whose id nba.com never published a name for,
+    is UNVERIFIED, never PASS.
+    """
+    names = _nba_com_official_names(con)
+    if not names:
+        out.add(UNVERIFIED, league, "G/published-identity",
+                "no stored nba.com roster snapshot -- run ingest_nba_roster.py")
+        return
+    ids = {}
+    for pid, key in con.execute(
+            "SELECT player_id, source_player_key FROM player_source_ids "
+            "WHERE league='nba' AND source='nba.com'"):
+        ids.setdefault(int(pid), set()).add(str(key))
+    checked = skipped = wrong = 0
+    examples = []
+    players = {int(r[0]): r[1] for r in con.execute(
+        "SELECT id, name FROM players WHERE league='nba'")}
+    # data/name-aliases.json records accepted same-person spellings keyed by the
+    # ESPN/hoopR athlete id, not by the nba.com id, so look the alias up by those.
+    pcols = _columns(con, "players")
+    alias_keys = {}
+    for r in con.execute("SELECT id, espn_id%s FROM players WHERE league='nba'"
+                         % (", hoopr_id" if "hoopr_id" in pcols else "")):
+        alias_keys[int(r[0])] = [str(k) for k in r[1:] if k not in (None, "", 0)]
+    for pid, keys in ids.items():
+        name = players.get(pid)
+        if name is None:
+            continue
+        for key in keys:
+            truth = names.get(key)
+            if truth is None:
+                skipped += 1
+                continue
+            checked += 1
+            if _identity_name_key(truth) != _identity_name_key(name) \
+                    and not any(name_aliases.matches_published(league, k, name, truth)
+                                for k in [key] + alias_keys.get(pid, [])):
+                wrong += 1
+                if len(examples) < 3:
+                    examples.append(f"id={pid} '{name}' has nba.com id {key} "
+                                    f"which nba.com publishes as '{truth}'")
+    season = con.execute(
+        "SELECT MAX(season) FROM player_game_logs WHERE league='nba'").fetchone()[0]
+    used = {int(r[0]) for r in con.execute(
+        "SELECT DISTINCT player_id FROM player_game_logs "
+        "WHERE league='nba' AND season=? AND player_id IS NOT NULL", (season,))}
+    no_id = sorted(p for p in used if p in players and p not in ids)
+    outside = sorted(p for p in used if p in ids and not any(k in names for k in ids[p]))
+    orphan = sorted(p for p in used if p not in players)
+    # Participation coverage is reported beside identity coverage, never instead of
+    # it: who actually played (minutes above zero) versus who was only listed.
+    played = set()
+    for pid, stats in con.execute(
+            "SELECT player_id, stats FROM player_game_logs WHERE league='nba' AND season=? "
+            "AND player_id IS NOT NULL", (season,)):
+        try:
+            minutes = json.loads(stats).get("MIN")
+            if minutes is not None and float(minutes) > 0:
+                played.add(int(pid))
+        except (TypeError, ValueError, AttributeError):
+            continue
+    unverified = set(no_id) | set(outside)
+    verified_used = len(used) - len(unverified) - len(orphan)
+    played_unverified = sorted(p for p in (unverified | set(orphan)) if p in played)
+    note = (f"nba.com ids checked={checked}, no published name={skipped}; "
+            f"current season={season}; IDENTITY coverage: {verified_used} of {len(used)} used "
+            f"players verified (without an nba.com id={len(no_id)}, id not in nba.com names="
+            f"{len(outside)}, orphan player_ids={len(orphan)}); PARTICIPATION coverage: "
+            f"{len(played) - len(played_unverified)} of {len(played)} players with minutes "
+            f"verified, {len(unverified | set(orphan)) - len(played_unverified)} unverified players never "
+            f"had minutes this season")
+    if wrong:
+        out.add(FAIL, league, "G/published-identity",
+                f"{wrong} of {checked} rows carry an nba.com id belonging to a different "
+                f"player: {'; '.join(examples)}; {note}")
+    elif not checked:
+        out.add(UNVERIFIED, league, "G/published-identity",
+                f"no nba.com id matched a published name; {note}")
+    elif played_unverified or orphan:
+        # Blocking: a player who actually played (minutes above zero) without a
+        # verified nba.com id, or a game log whose player_id has no players row.
+        shown = ", ".join(f"{p}:{players.get(p)}" for p in played_unverified[:5])
+        out.add(UNVERIFIED, league, "G/published-identity",
+                f"players who played cannot be verified against nba.com "
+                f"(e.g. {shown}; orphan player_ids={len(orphan)}); {note}")
+    else:
+        out.add(PASS, league, "G/published-identity",
+                f"all {checked} checked nba.com ids carry the published name and every "
+                f"player who played is verified; non-blocking coverage of players who never "
+                f"had minutes: {len(unverified)} unverified; {note}")
+
+
 def check_published_identity(con, league, spec, out):
     """G. Does each external id point at the person whose name is on the row?
 
@@ -504,6 +697,8 @@ def check_published_identity(con, league, spec, out):
     positives, which is how a real signal gets dismissed as noise. What it must
     NOT tolerate is a different person.
     """
+    if league == "nba":
+        return _check_nba_com_identity(con, league, out)
     published = _published_identity_names(league)
     if not published:
         out.add(UNVERIFIED, league, "G/published-identity",
@@ -513,6 +708,8 @@ def check_published_identity(con, league, spec, out):
 
     id_column, names = published["id_column"], published["names"]
     player_columns = _columns(con, "players")
+    if id_column in ("nba_id", "hoopr_id"):  # the same column before/after the rename
+        id_column = "hoopr_id" if "hoopr_id" in player_columns else "nba_id"
     if id_column not in player_columns:
         out.add(UNVERIFIED, league, "G/published-identity",
                 f"players carries no {id_column} to check")

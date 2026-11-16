@@ -136,7 +136,7 @@ def _init_db():
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL, team TEXT, league TEXT NOT NULL,
           espn_id TEXT, mlbam_id INTEGER, nfl_gsis_id TEXT,
-          nhl_id INTEGER, nba_id INTEGER,
+          nhl_id INTEGER, hoopr_id INTEGER,
           active INTEGER DEFAULT 1, position TEXT, updated_at TEXT,
           UNIQUE(espn_id, league));
         CREATE TABLE IF NOT EXISTS prop_games(
@@ -836,16 +836,25 @@ _NFL_MARKET_STAT = {
     "receptions":      ("receptions",      "nflverse"),
 }
 
-# NBA: espn source, real JSON keys confirmed: PTS,REB,AST,STL,BLK,TO,3PM.
-# MIN/FGM/FGA/FTM/FTA/PRA also present but are not bovada prop markets.
+# NBA: ESPN publishes all requested player prop keys in its boxscore lines.
 _NBA_MARKET_STAT = {
     "points":    ("PTS", "espn"),
     "rebounds":  ("REB", "espn"),
     "assists":   ("AST", "espn"),
     "threes":    ("3PM", "espn"),
+    "total_made_3_points_shots": ("3PM", "espn"),
+    "total_made_3_point_shots": ("3PM", "espn"),
     "blocks":    ("BLK", "espn"),
     "steals":    ("STL", "espn"),
     "turnovers": ("TO",  "espn"),
+    "pra": ("PRA", "espn"),
+    "points_rebounds_assists": ("PRA", "espn"),
+    "field_goals_made": ("FGM", "espn"),
+    "total_field_goals_made": ("FGM", "espn"),
+    "fgm": ("FGM", "espn"),
+    "free_throws_made": ("FTM", "espn"),
+    "total_free_throws_made": ("FTM", "espn"),
+    "ftm": ("FTM", "espn"),
 }
 
 # NHL: the current season is published by the gamecenter boxscore; every season
@@ -888,12 +897,15 @@ def _query_game_log_values(player_id: int, market: str, line: float, league: str
     # endpoints mid-history still has one continuous series behind it.
     sources = (source,) if isinstance(source, str) else tuple(source)
     placeholders = ",".join("?" for _ in sources)
+    played_only = (" AND COALESCE(json_extract(stats, '$.MIN'), 1) != 0"
+                   if league == "nba" else "")
     with closing(_db()) as con:
         rows = con.execute(
             f"""SELECT json_extract(stats, ?) AS val
                FROM player_game_logs
                WHERE player_id = ? AND league = ? AND source IN ({placeholders})
                  AND json_extract(stats, ?) IS NOT NULL
+                 {played_only}
                ORDER BY game_date DESC
                LIMIT ?""",
             (f"$.{stat_key}", player_id, league, *sources, f"$.{stat_key}",
@@ -1071,7 +1083,45 @@ def _folded_name_index(con, league: str) -> dict:
 
 
 def _resolve_player_for_ingest(con, player_name: str, team: str, league: str, source: str = "props",
-                               game_id=None):
+                               game_id=None, as_of=None):
+    """Resolve a player name to (player_id, confidence). See _resolve_player_for_ingest_legacy for the steps.
+
+    With the MLS cutover enabled (mls_resolution.cutover_enabled()), MLS and Leagues Cup names are answered by
+    membership: a person is resolved only if they are on the club as of `as_of` (today when None). Otherwise the
+    legacy steps run unchanged.
+    """
+    import mls_resolution
+    if mls_resolution.cutover_enabled() and league in ("mls", "lcup"):
+        if as_of is None and game_id is not None:
+            as_of = _game_as_of(con, game_id)
+            if as_of is _GAME_DAY_UNKNOWN:
+                return (None, None)  # a named game whose day cannot be established: fail closed, never guess today
+        return mls_resolution.resolve(con, player_name, team, league, as_of, _resolve_player_for_ingest_legacy)
+    return _resolve_player_for_ingest_legacy(con, player_name, team, league, source=source, game_id=game_id)
+
+
+_GAME_DAY_UNKNOWN = object()
+
+
+def _game_as_of(con, game_id):
+    """The day a prop's game was played, when that day is already past.
+
+    None when the game is today or later (the current membership answers it). _GAME_DAY_UNKNOWN when the game is named
+    but its day cannot be established, so the caller must fail closed.
+    """
+    import datetime as _dt
+    row = con.execute("SELECT date FROM prop_games WHERE id=?", (game_id,)).fetchone()
+    if row is None:
+        return _GAME_DAY_UNKNOWN
+    try:
+        day = _dt.date.fromisoformat(str(row[0] or "")[:10])
+    except ValueError:
+        return _GAME_DAY_UNKNOWN
+    return day if day < _dt.date.today() else None
+
+
+def _resolve_player_for_ingest_legacy(con, player_name: str, team: str, league: str, source: str = "props",
+                                      game_id=None):
     """Resolve a player name to players.id via the identity spine.
 
     Resolution order (deterministic, and a create only ever carries a publisher id):

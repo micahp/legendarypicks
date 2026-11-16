@@ -1,0 +1,2151 @@
+{
+ "b3_elo": {
+  "2020": {
+   "n": 952,
+   "raw_cascade": {
+    "n": 952,
+    "tier_usage": {
+     "ml": 0.06407563025210083,
+     "cover": 0.8686974789915967,
+     "total": 0.0,
+     "fallback": 0.06722689075630252
+    },
+    "tier_counts": {
+     "ml": 61,
+     "cover": 827,
+     "total": 0,
+     "fallback": 64
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.06407563025210083,
+      "n_games": 61,
+      "hit_rate": 0.6885245901639344,
+      "brier": 0.21372711852644208,
+      "mean_prob": 0.6736086655893202
+     },
+     "cover": {
+      "frequency": 0.8686974789915967,
+      "n_games": 827,
+      "hit_rate": 0.6698911729141476,
+      "brier": 0.21939776791711232,
+      "mean_prob": 0.6974537977529857
+     }
+    },
+    "acc": 0.6711711711711712,
+    "coverage": 0.9327731092436975,
+    "fallback_rate": 0.06722689075630252
+   },
+   "recalibrated_cascade": {
+    "n": 952,
+    "tier_usage": {
+     "ml": 0.22478991596638656,
+     "cover": 0.7710084033613446,
+     "total": 0.0,
+     "fallback": 0.004201680672268907
+    },
+    "tier_counts": {
+     "ml": 214,
+     "cover": 734,
+     "total": 0,
+     "fallback": 4
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.22478991596638656,
+      "n_games": 214,
+      "hit_rate": 0.6962616822429907,
+      "brier": 0.21422487961524392,
+      "mean_prob": 0.6374428452842479
+     },
+     "cover": {
+      "frequency": 0.7710084033613446,
+      "n_games": 734,
+      "hit_rate": 0.6839237057220708,
+      "brier": 0.21405596799169696,
+      "mean_prob": 0.6780545638342158
+     }
+    },
+    "acc": 0.6867088607594937,
+    "coverage": 0.9957983193277311,
+    "fallback_rate": 0.004201680672268907
+   },
+   "always_ml": {
+    "n": 952,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 952,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 952,
+      "hit_rate": 0.5861344537815126,
+      "brier": 0.23755601434837623,
+      "mean_prob": 0.5659003066788816
+     }
+    },
+    "acc": 0.5861344537815126,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6785714285714286,
+   "always_away_cover_brier": 0.218219832945105,
+   "base_constant_cover_pred": 0.6889438943894389,
+   "base_constant_cover_brier": 0.218219832945105,
+   "always_ml_hit_rate": 0.5861344537815126,
+   "always_ml_brier": 0.24324358272526955,
+   "thresholds_raw": [
+    0.6500000000000001,
+    0.6250000000000001,
+    0.5750000000000001
+   ],
+   "thresholds_rec": [
+    0.6000000000000001,
+    0.6000000000000001,
+    0.55
+   ]
+  },
+  "2021": {
+   "n": 1396,
+   "raw_cascade": {
+    "n": 1396,
+    "tier_usage": {
+     "ml": 0.2714899713467049,
+     "cover": 0.7285100286532952,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 379,
+     "cover": 1017,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.2714899713467049,
+      "n_games": 379,
+      "hit_rate": 0.7097625329815304,
+      "brier": 0.20970509239864174,
+      "mean_prob": 0.6402629712586272
+     },
+     "cover": {
+      "frequency": 0.7285100286532952,
+      "n_games": 1017,
+      "hit_rate": 0.6293018682399213,
+      "brier": 0.2388068652404253,
+      "mean_prob": 0.7034686438305044
+     }
+    },
+    "acc": 0.6511461318051576,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "recalibrated_cascade": {
+    "n": 1396,
+    "tier_usage": {
+     "ml": 0.2714899713467049,
+     "cover": 0.7156160458452722,
+     "total": 0.0,
+     "fallback": 0.012893982808022923
+    },
+    "tier_counts": {
+     "ml": 379,
+     "cover": 999,
+     "total": 0,
+     "fallback": 18
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.2714899713467049,
+      "n_games": 379,
+      "hit_rate": 0.7097625329815304,
+      "brier": 0.20970509239864174,
+      "mean_prob": 0.6402629712586272
+     },
+     "cover": {
+      "frequency": 0.7156160458452722,
+      "n_games": 999,
+      "hit_rate": 0.6316316316316316,
+      "brier": 0.2343826656967947,
+      "mean_prob": 0.6756656796024697
+     }
+    },
+    "acc": 0.6531204644412192,
+    "coverage": 0.9871060171919771,
+    "fallback_rate": 0.012893982808022923
+   },
+   "always_ml": {
+    "n": 1396,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1396,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1396,
+      "hit_rate": 0.6217765042979942,
+      "brier": 0.2338776657398113,
+      "mean_prob": 0.571624815526044
+     }
+    },
+    "acc": 0.6217765042979942,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6611747851002865,
+   "always_away_cover_brier": 0.22456120667729929,
+   "base_constant_cover_pred": 0.6843807763401109,
+   "base_constant_cover_brier": 0.22456120667729929,
+   "always_ml_hit_rate": 0.6217765042979942,
+   "always_ml_brier": 0.2431009486734266,
+   "thresholds_raw": [
+    0.6000000000000001,
+    0.55,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.6000000000000001,
+    0.6000000000000001,
+    0.55
+   ]
+  },
+  "2022": {
+   "n": 1400,
+   "raw_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.30857142857142855,
+     "cover": 0.6914285714285714,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 432,
+     "cover": 968,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.30857142857142855,
+      "n_games": 432,
+      "hit_rate": 0.6666666666666666,
+      "brier": 0.22017614668752342,
+      "mean_prob": 0.6467473914830634
+     },
+     "cover": {
+      "frequency": 0.6914285714285714,
+      "n_games": 968,
+      "hit_rate": 0.6518595041322314,
+      "brier": 0.22831196512260726,
+      "mean_prob": 0.7010598524143195
+     }
+    },
+    "acc": 0.6564285714285715,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "recalibrated_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.30857142857142855,
+     "cover": 0.6371428571428571,
+     "total": 0.0,
+     "fallback": 0.054285714285714284
+    },
+    "tier_counts": {
+     "ml": 432,
+     "cover": 892,
+     "total": 0,
+     "fallback": 76
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.30857142857142855,
+      "n_games": 432,
+      "hit_rate": 0.6666666666666666,
+      "brier": 0.22017614668752342,
+      "mean_prob": 0.6467473914830634
+     },
+     "cover": {
+      "frequency": 0.6371428571428571,
+      "n_games": 892,
+      "hit_rate": 0.6569506726457399,
+      "brier": 0.22268675365770196,
+      "mean_prob": 0.6651641137970247
+     }
+    },
+    "acc": 0.6601208459214502,
+    "coverage": 0.9457142857142857,
+    "fallback_rate": 0.054285714285714284
+   },
+   "always_ml": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1400,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1400,
+      "hit_rate": 0.5942857142857143,
+      "brier": 0.23728238267245083,
+      "mean_prob": 0.57821081371026
+     }
+    },
+    "acc": 0.5942857142857143,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6842857142857143,
+   "always_away_cover_brier": 0.21611986221075982,
+   "base_constant_cover_pred": 0.6752808988764045,
+   "base_constant_cover_brier": 0.21611986221075982,
+   "always_ml_hit_rate": 0.5942857142857143,
+   "always_ml_brier": 0.2479022723943531,
+   "thresholds_raw": [
+    0.6000000000000001,
+    0.55,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.6000000000000001,
+    0.6000000000000001,
+    0.5750000000000001
+   ]
+  },
+  "2023": {
+   "n": 1400,
+   "raw_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.33,
+     "cover": 0.67,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 462,
+     "cover": 938,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.33,
+      "n_games": 462,
+      "hit_rate": 0.6688311688311688,
+      "brier": 0.2178398950929202,
+      "mean_prob": 0.6496253738050697
+     },
+     "cover": {
+      "frequency": 0.67,
+      "n_games": 938,
+      "hit_rate": 0.6535181236673774,
+      "brier": 0.2262078387306373,
+      "mean_prob": 0.7012294767737569
+     }
+    },
+    "acc": 0.6585714285714286,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "recalibrated_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.33,
+     "cover": 0.6357142857142857,
+     "total": 0.0,
+     "fallback": 0.03428571428571429
+    },
+    "tier_counts": {
+     "ml": 462,
+     "cover": 890,
+     "total": 0,
+     "fallback": 48
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.33,
+      "n_games": 462,
+      "hit_rate": 0.6688311688311688,
+      "brier": 0.2178398950929202,
+      "mean_prob": 0.6496253738050697
+     },
+     "cover": {
+      "frequency": 0.6357142857142857,
+      "n_games": 890,
+      "hit_rate": 0.6595505617977528,
+      "brier": 0.2219037939467803,
+      "mean_prob": 0.6653155474941633
+     }
+    },
+    "acc": 0.6627218934911243,
+    "coverage": 0.9657142857142857,
+    "fallback_rate": 0.03428571428571429
+   },
+   "always_ml": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1400,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1400,
+      "hit_rate": 0.5892857142857143,
+      "brier": 0.2357443939144598,
+      "mean_prob": 0.5803155420241851
+     }
+    },
+    "acc": 0.5892857142857143,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6685714285714286,
+   "always_away_cover_brier": 0.22166925728407907,
+   "base_constant_cover_pred": 0.6778225806451613,
+   "base_constant_cover_brier": 0.22166925728407907,
+   "always_ml_hit_rate": 0.5892857142857143,
+   "always_ml_brier": 0.24578072227763,
+   "thresholds_raw": [
+    0.6000000000000001,
+    0.55,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.6000000000000001,
+    0.5750000000000001,
+    0.55
+   ]
+  },
+  "2024": {
+   "n": 1393,
+   "raw_cascade": {
+    "n": 1393,
+    "tier_usage": {
+     "ml": 0.3079684134960517,
+     "cover": 0.6920315865039484,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 429,
+     "cover": 964,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.3079684134960517,
+      "n_games": 429,
+      "hit_rate": 0.6946386946386947,
+      "brier": 0.21424643133065746,
+      "mean_prob": 0.648734086738442
+     },
+     "cover": {
+      "frequency": 0.6920315865039484,
+      "n_games": 964,
+      "hit_rate": 0.6556016597510373,
+      "brier": 0.2273552703006223,
+      "mean_prob": 0.7012745740907979
+     }
+    },
+    "acc": 0.6676238334529792,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "recalibrated_cascade": {
+    "n": 1393,
+    "tier_usage": {
+     "ml": 0.3079684134960517,
+     "cover": 0.6310122038765255,
+     "total": 0.0,
+     "fallback": 0.061019382627422826
+    },
+    "tier_counts": {
+     "ml": 429,
+     "cover": 879,
+     "total": 0,
+     "fallback": 85
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.3079684134960517,
+      "n_games": 429,
+      "hit_rate": 0.6946386946386947,
+      "brier": 0.21424643133065746,
+      "mean_prob": 0.648734086738442
+     },
+     "cover": {
+      "frequency": 0.6310122038765255,
+      "n_games": 879,
+      "hit_rate": 0.6575654152445961,
+      "brier": 0.22634140654493803,
+      "mean_prob": 0.6688395798028215
+     }
+    },
+    "acc": 0.6697247706422018,
+    "coverage": 0.9389806173725772,
+    "fallback_rate": 0.061019382627422826
+   },
+   "always_ml": {
+    "n": 1393,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1393,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1393,
+      "hit_rate": 0.5900933237616655,
+      "brier": 0.2375454869774358,
+      "mean_prob": 0.5773383294726917
+     }
+    },
+    "acc": 0.5900933237616655,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6424982053122756,
+   "always_away_cover_brier": 0.23080234964455373,
+   "base_constant_cover_pred": 0.6757861635220126,
+   "base_constant_cover_brier": 0.23080234964455373,
+   "always_ml_hit_rate": 0.5900933237616655,
+   "always_ml_brier": 0.24424570027267004,
+   "thresholds_raw": [
+    0.6000000000000001,
+    0.55,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.6000000000000001,
+    0.6000000000000001,
+    0.55
+   ]
+  },
+  "2025": {
+   "n": 1394,
+   "raw_cascade": {
+    "n": 1394,
+    "tier_usage": {
+     "ml": 0.20946915351506457,
+     "cover": 0.787661406025825,
+     "total": 0.0,
+     "fallback": 0.0028694404591104736
+    },
+    "tier_counts": {
+     "ml": 292,
+     "cover": 1098,
+     "total": 0,
+     "fallback": 4
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.20946915351506457,
+      "n_games": 292,
+      "hit_rate": 0.6198630136986302,
+      "brier": 0.23817404907510048,
+      "mean_prob": 0.635025028096991
+     },
+     "cover": {
+      "frequency": 0.787661406025825,
+      "n_games": 1098,
+      "hit_rate": 0.7003642987249544,
+      "brier": 0.2102442736066232,
+      "mean_prob": 0.7025874444566489
+     }
+    },
+    "acc": 0.6834532374100719,
+    "coverage": 0.9971305595408895,
+    "fallback_rate": 0.0028694404591104736
+   },
+   "recalibrated_cascade": {
+    "n": 1394,
+    "tier_usage": {
+     "ml": 0.20946915351506457,
+     "cover": 0.7711621233859397,
+     "total": 0.0,
+     "fallback": 0.019368723098995694
+    },
+    "tier_counts": {
+     "ml": 292,
+     "cover": 1075,
+     "total": 0,
+     "fallback": 27
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.20946915351506457,
+      "n_games": 292,
+      "hit_rate": 0.6198630136986302,
+      "brier": 0.23817404907510048,
+      "mean_prob": 0.635025028096991
+     },
+     "cover": {
+      "frequency": 0.7711621233859397,
+      "n_games": 1075,
+      "hit_rate": 0.7013953488372093,
+      "brier": 0.2108781239411922,
+      "mean_prob": 0.6675821865887374
+     }
+    },
+    "acc": 0.6839795171909291,
+    "coverage": 0.9806312769010043,
+    "fallback_rate": 0.019368723098995694
+   },
+   "always_ml": {
+    "n": 1394,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1394,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1394,
+      "hit_rate": 0.5387374461979914,
+      "brier": 0.24838979415949458,
+      "mean_prob": 0.5628293496616509
+     }
+    },
+    "acc": 0.5387374461979914,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.703012912482066,
+   "always_away_cover_brier": 0.20988850709755316,
+   "base_constant_cover_pred": 0.6698052366825745,
+   "base_constant_cover_brier": 0.20988850709755316,
+   "always_ml_hit_rate": 0.5387374461979914,
+   "always_ml_brier": 0.2509349825491859,
+   "thresholds_raw": [
+    0.6000000000000001,
+    0.6500000000000001,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.6000000000000001,
+    0.6000000000000001,
+    0.5750000000000001
+   ]
+  }
+ },
+ "b5_xg": {
+  "2020": {
+   "n": 952,
+   "raw_cascade": {
+    "n": 952,
+    "tier_usage": {
+     "ml": 0.20378151260504201,
+     "cover": 0.7773109243697479,
+     "total": 0.0010504201680672268,
+     "fallback": 0.017857142857142856
+    },
+    "tier_counts": {
+     "ml": 194,
+     "cover": 740,
+     "total": 1,
+     "fallback": 17
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.20378151260504201,
+      "n_games": 194,
+      "hit_rate": 0.6804123711340206,
+      "brier": 0.22271607316697942,
+      "mean_prob": 0.5961968204486882
+     },
+     "cover": {
+      "frequency": 0.7773109243697479,
+      "n_games": 740,
+      "hit_rate": 0.7094594594594594,
+      "brier": 0.20481447364972438,
+      "mean_prob": 0.7102010517277457
+     },
+     "total": {
+      "frequency": 0.0010504201680672268,
+      "n_games": 1,
+      "hit_rate": 1.0,
+      "brier": 0.1987510688818345,
+      "mean_prob": 0.554184938700099
+     }
+    },
+    "acc": 0.7037433155080214,
+    "coverage": 0.9821428571428571,
+    "fallback_rate": 0.017857142857142856
+   },
+   "recalibrated_cascade": {
+    "n": 952,
+    "tier_usage": {
+     "ml": 0.06512605042016807,
+     "cover": 0.8813025210084033,
+     "total": 0.0031512605042016808,
+     "fallback": 0.05042016806722689
+    },
+    "tier_counts": {
+     "ml": 62,
+     "cover": 839,
+     "total": 3,
+     "fallback": 48
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.06512605042016807,
+      "n_games": 62,
+      "hit_rate": 0.7419354838709677,
+      "brier": 0.20524560654019058,
+      "mean_prob": 0.6193646514711796
+     },
+     "cover": {
+      "frequency": 0.8813025210084033,
+      "n_games": 839,
+      "hit_rate": 0.700834326579261,
+      "brier": 0.20876868917858615,
+      "mean_prob": 0.6861544799026206
+     },
+     "total": {
+      "frequency": 0.0031512605042016808,
+      "n_games": 3,
+      "hit_rate": 0.3333333333333333,
+      "brier": 0.2720775507221788,
+      "mean_prob": 0.5539480504538533
+     }
+    },
+    "acc": 0.702433628318584,
+    "coverage": 0.9495798319327731,
+    "fallback_rate": 0.05042016806722689
+   },
+   "always_ml": {
+    "n": 952,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 952,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 952,
+      "hit_rate": 0.5504201680672269,
+      "brier": 0.24392268950462503,
+      "mean_prob": 0.5495385939412072
+     }
+    },
+    "acc": 0.5504201680672269,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6785714285714286,
+   "always_away_cover_brier": 0.218219832945105,
+   "base_constant_cover_pred": 0.6889438943894389,
+   "base_constant_cover_brier": 0.218219832945105,
+   "always_ml_hit_rate": 0.5504201680672269,
+   "always_ml_brier": 0.2448721077946899,
+   "thresholds_raw": [
+    0.5750000000000001,
+    0.6750000000000002,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.6000000000000001,
+    0.6250000000000001,
+    0.55
+   ]
+  },
+  "2021": {
+   "n": 1396,
+   "raw_cascade": {
+    "n": 1396,
+    "tier_usage": {
+     "ml": 0.22349570200573066,
+     "cover": 0.7277936962750716,
+     "total": 0.0071633237822349575,
+     "fallback": 0.04154727793696275
+    },
+    "tier_counts": {
+     "ml": 312,
+     "cover": 1016,
+     "total": 10,
+     "fallback": 58
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.22349570200573066,
+      "n_games": 312,
+      "hit_rate": 0.6602564102564102,
+      "brier": 0.22842280938897774,
+      "mean_prob": 0.5955507374443048
+     },
+     "cover": {
+      "frequency": 0.7277936962750716,
+      "n_games": 1016,
+      "hit_rate": 0.6515748031496063,
+      "brier": 0.2288525562128209,
+      "mean_prob": 0.7080684889292885
+     },
+     "total": {
+      "frequency": 0.0071633237822349575,
+      "n_games": 10,
+      "hit_rate": 0.6,
+      "brier": 0.2422029392376924,
+      "mean_prob": 0.5517941494432582
+     }
+    },
+    "acc": 0.6532137518684604,
+    "coverage": 0.9584527220630372,
+    "fallback_rate": 0.04154727793696275
+   },
+   "recalibrated_cascade": {
+    "n": 1396,
+    "tier_usage": {
+     "ml": 0.06948424068767908,
+     "cover": 0.8846704871060171,
+     "total": 0.0064469914040114614,
+     "fallback": 0.03939828080229226
+    },
+    "tier_counts": {
+     "ml": 97,
+     "cover": 1235,
+     "total": 9,
+     "fallback": 55
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.06948424068767908,
+      "n_games": 97,
+      "hit_rate": 0.6804123711340206,
+      "brier": 0.22258739239354536,
+      "mean_prob": 0.614940949639974
+     },
+     "cover": {
+      "frequency": 0.8846704871060171,
+      "n_games": 1235,
+      "hit_rate": 0.6493927125506073,
+      "brier": 0.2245734755348351,
+      "mean_prob": 0.6733154700538118
+     },
+     "total": {
+      "frequency": 0.0064469914040114614,
+      "n_games": 9,
+      "hit_rate": 0.6666666666666666,
+      "brier": 0.23661343633944018,
+      "mean_prob": 0.5535901271772834
+     }
+    },
+    "acc": 0.6517524235645041,
+    "coverage": 0.9606017191977078,
+    "fallback_rate": 0.03939828080229226
+   },
+   "always_ml": {
+    "n": 1396,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1396,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1396,
+      "hit_rate": 0.5802292263610315,
+      "brier": 0.24266826468473024,
+      "mean_prob": 0.5490239624778879
+     }
+    },
+    "acc": 0.5802292263610315,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6611747851002865,
+   "always_away_cover_brier": 0.22456120667729929,
+   "base_constant_cover_pred": 0.6843807763401109,
+   "base_constant_cover_brier": 0.22456120667729929,
+   "always_ml_hit_rate": 0.5802292263610315,
+   "always_ml_brier": 0.24392783380190658,
+   "thresholds_raw": [
+    0.5750000000000001,
+    0.6750000000000002,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.6000000000000001,
+    0.6000000000000001,
+    0.55
+   ]
+  },
+  "2022": {
+   "n": 1400,
+   "raw_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.26,
+     "cover": 0.6607142857142857,
+     "total": 0.012142857142857143,
+     "fallback": 0.06714285714285714
+    },
+    "tier_counts": {
+     "ml": 364,
+     "cover": 925,
+     "total": 17,
+     "fallback": 94
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.26,
+      "n_games": 364,
+      "hit_rate": 0.6510989010989011,
+      "brier": 0.22848948563691274,
+      "mean_prob": 0.6018811053869083
+     },
+     "cover": {
+      "frequency": 0.6607142857142857,
+      "n_games": 925,
+      "hit_rate": 0.6832432432432433,
+      "brier": 0.21620618332887154,
+      "mean_prob": 0.7058989321767393
+     },
+     "total": {
+      "frequency": 0.012142857142857143,
+      "n_games": 17,
+      "hit_rate": 0.29411764705882354,
+      "brier": 0.2751684926815341,
+      "mean_prob": 0.5555985357857843
+     }
+    },
+    "acc": 0.669218989280245,
+    "coverage": 0.9328571428571428,
+    "fallback_rate": 0.06714285714285714
+   },
+   "recalibrated_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.26,
+     "cover": 0.6571428571428571,
+     "total": 0.0,
+     "fallback": 0.08285714285714285
+    },
+    "tier_counts": {
+     "ml": 364,
+     "cover": 920,
+     "total": 0,
+     "fallback": 116
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.26,
+      "n_games": 364,
+      "hit_rate": 0.6510989010989011,
+      "brier": 0.22848948563691274,
+      "mean_prob": 0.6018811053869083
+     },
+     "cover": {
+      "frequency": 0.6571428571428571,
+      "n_games": 920,
+      "hit_rate": 0.6902173913043478,
+      "brier": 0.211447358275999,
+      "mean_prob": 0.6709304371825775
+     }
+    },
+    "acc": 0.6791277258566978,
+    "coverage": 0.9171428571428571,
+    "fallback_rate": 0.08285714285714285
+   },
+   "always_ml": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1400,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1400,
+      "hit_rate": 0.5607142857142857,
+      "brier": 0.24377193386322565,
+      "mean_prob": 0.5526972363270947
+     }
+    },
+    "acc": 0.5607142857142857,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6842857142857143,
+   "always_away_cover_brier": 0.21611986221075982,
+   "base_constant_cover_pred": 0.6752808988764045,
+   "base_constant_cover_brier": 0.21611986221075982,
+   "always_ml_hit_rate": 0.5607142857142857,
+   "always_ml_brier": 0.2458064078224049,
+   "thresholds_raw": [
+    0.5750000000000001,
+    0.6750000000000002,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.5750000000000001,
+    0.6000000000000001,
+    0.5750000000000001
+   ]
+  },
+  "2023": {
+   "n": 1400,
+   "raw_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.22,
+     "cover": 0.71,
+     "total": 0.0,
+     "fallback": 0.07
+    },
+    "tier_counts": {
+     "ml": 308,
+     "cover": 994,
+     "total": 0,
+     "fallback": 98
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.22,
+      "n_games": 308,
+      "hit_rate": 0.685064935064935,
+      "brier": 0.22203017625595503,
+      "mean_prob": 0.5977940843983065
+     },
+     "cover": {
+      "frequency": 0.71,
+      "n_games": 994,
+      "hit_rate": 0.6659959758551308,
+      "brier": 0.22438752896816447,
+      "mean_prob": 0.7070566624449004
+     }
+    },
+    "acc": 0.6705069124423964,
+    "coverage": 0.93,
+    "fallback_rate": 0.07
+   },
+   "recalibrated_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.22,
+     "cover": 0.7157142857142857,
+     "total": 0.0,
+     "fallback": 0.06428571428571428
+    },
+    "tier_counts": {
+     "ml": 308,
+     "cover": 1002,
+     "total": 0,
+     "fallback": 90
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.22,
+      "n_games": 308,
+      "hit_rate": 0.685064935064935,
+      "brier": 0.22203017625595503,
+      "mean_prob": 0.5977940843983065
+     },
+     "cover": {
+      "frequency": 0.7157142857142857,
+      "n_games": 1002,
+      "hit_rate": 0.6766467065868264,
+      "brier": 0.21772289635895417,
+      "mean_prob": 0.6797975543337327
+     }
+    },
+    "acc": 0.6786259541984733,
+    "coverage": 0.9357142857142857,
+    "fallback_rate": 0.06428571428571428
+   },
+   "always_ml": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1400,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1400,
+      "hit_rate": 0.5657142857142857,
+      "brier": 0.24258302077268223,
+      "mean_prob": 0.5489527819502457
+     }
+    },
+    "acc": 0.5657142857142857,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6685714285714286,
+   "always_away_cover_brier": 0.22166925728407907,
+   "base_constant_cover_pred": 0.6778225806451613,
+   "base_constant_cover_brier": 0.22166925728407907,
+   "always_ml_hit_rate": 0.5657142857142857,
+   "always_ml_brier": 0.24426318005121012,
+   "thresholds_raw": [
+    0.5750000000000001,
+    0.6750000000000002,
+    0.5750000000000001
+   ],
+   "thresholds_rec": [
+    0.5750000000000001,
+    0.6000000000000001,
+    0.5750000000000001
+   ]
+  },
+  "2024": {
+   "n": 1393,
+   "raw_cascade": {
+    "n": 1393,
+    "tier_usage": {
+     "ml": 0.23689877961234745,
+     "cover": 0.7128499641062455,
+     "total": 0.00574300071787509,
+     "fallback": 0.04450825556353195
+    },
+    "tier_counts": {
+     "ml": 330,
+     "cover": 993,
+     "total": 8,
+     "fallback": 62
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.23689877961234745,
+      "n_games": 330,
+      "hit_rate": 0.6696969696969697,
+      "brier": 0.22358447237381282,
+      "mean_prob": 0.5986764354303917
+     },
+     "cover": {
+      "frequency": 0.7128499641062455,
+      "n_games": 993,
+      "hit_rate": 0.6606243705941591,
+      "brier": 0.22608157445152618,
+      "mean_prob": 0.707423081437307
+     },
+     "total": {
+      "frequency": 0.00574300071787509,
+      "n_games": 8,
+      "hit_rate": 0.375,
+      "brier": 0.26613610543764266,
+      "mean_prob": 0.5528728193258255
+     }
+    },
+    "acc": 0.6611570247933884,
+    "coverage": 0.955491744436468,
+    "fallback_rate": 0.04450825556353195
+   },
+   "recalibrated_cascade": {
+    "n": 1393,
+    "tier_usage": {
+     "ml": 0.23689877961234745,
+     "cover": 0.6963388370423547,
+     "total": 0.0007178750897343862,
+     "fallback": 0.06604450825556353
+    },
+    "tier_counts": {
+     "ml": 330,
+     "cover": 970,
+     "total": 1,
+     "fallback": 92
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.23689877961234745,
+      "n_games": 330,
+      "hit_rate": 0.6696969696969697,
+      "brier": 0.22358447237381282,
+      "mean_prob": 0.5986764354303917
+     },
+     "cover": {
+      "frequency": 0.6963388370423547,
+      "n_games": 970,
+      "hit_rate": 0.6494845360824743,
+      "brier": 0.22690885258692142,
+      "mean_prob": 0.6802785726917603
+     },
+     "total": {
+      "frequency": 0.0007178750897343862,
+      "n_games": 1,
+      "hit_rate": 1.0,
+      "brier": 0.16959344201093743,
+      "mean_prob": 0.5881827565400674
+     }
+    },
+    "acc": 0.6548808608762491,
+    "coverage": 0.9339554917444365,
+    "fallback_rate": 0.06604450825556353
+   },
+   "always_ml": {
+    "n": 1393,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1393,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1393,
+      "hit_rate": 0.5800430725053841,
+      "brier": 0.2409927317170607,
+      "mean_prob": 0.5497282649091193
+     }
+    },
+    "acc": 0.5800430725053841,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6424982053122756,
+   "always_away_cover_brier": 0.23080234964455373,
+   "base_constant_cover_pred": 0.6757861635220126,
+   "base_constant_cover_brier": 0.23080234964455373,
+   "always_ml_hit_rate": 0.5800430725053841,
+   "always_ml_brier": 0.24161784208715004,
+   "thresholds_raw": [
+    0.5750000000000001,
+    0.6750000000000002,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.5750000000000001,
+    0.6000000000000001,
+    0.5750000000000001
+   ]
+  },
+  "2025": {
+   "n": 1394,
+   "raw_cascade": {
+    "n": 1394,
+    "tier_usage": {
+     "ml": 0.21305595408895264,
+     "cover": 0.723816355810617,
+     "total": 0.007173601147776184,
+     "fallback": 0.05595408895265423
+    },
+    "tier_counts": {
+     "ml": 297,
+     "cover": 1009,
+     "total": 10,
+     "fallback": 78
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.21305595408895264,
+      "n_games": 297,
+      "hit_rate": 0.6127946127946128,
+      "brier": 0.2356013821769536,
+      "mean_prob": 0.5981494328867556
+     },
+     "cover": {
+      "frequency": 0.723816355810617,
+      "n_games": 1009,
+      "hit_rate": 0.6937561942517344,
+      "brier": 0.21319030318793752,
+      "mean_prob": 0.706363499555814
+     },
+     "total": {
+      "frequency": 0.007173601147776184,
+      "n_games": 10,
+      "hit_rate": 0.5,
+      "brier": 0.25156236394908355,
+      "mean_prob": 0.5526204272495701
+     }
+    },
+    "acc": 0.6740121580547113,
+    "coverage": 0.9440459110473458,
+    "fallback_rate": 0.05595408895265423
+   },
+   "recalibrated_cascade": {
+    "n": 1394,
+    "tier_usage": {
+     "ml": 0.21305595408895264,
+     "cover": 0.742467718794835,
+     "total": 0.0,
+     "fallback": 0.04447632711621234
+    },
+    "tier_counts": {
+     "ml": 297,
+     "cover": 1035,
+     "total": 0,
+     "fallback": 62
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.21305595408895264,
+      "n_games": 297,
+      "hit_rate": 0.6127946127946128,
+      "brier": 0.2356013821769536,
+      "mean_prob": 0.5981494328867556
+     },
+     "cover": {
+      "frequency": 0.742467718794835,
+      "n_games": 1035,
+      "hit_rate": 0.6975845410628019,
+      "brier": 0.21111386135204033,
+      "mean_prob": 0.6736676348858375
+     }
+    },
+    "acc": 0.6786786786786787,
+    "coverage": 0.9555236728837877,
+    "fallback_rate": 0.04447632711621234
+   },
+   "always_ml": {
+    "n": 1394,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1394,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1394,
+      "hit_rate": 0.5523672883787661,
+      "brier": 0.2464574489830876,
+      "mean_prob": 0.5495494915874635
+     }
+    },
+    "acc": 0.5523672883787661,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.703012912482066,
+   "always_away_cover_brier": 0.20988850709755316,
+   "base_constant_cover_pred": 0.6698052366825745,
+   "base_constant_cover_brier": 0.20988850709755316,
+   "always_ml_hit_rate": 0.5523672883787661,
+   "always_ml_brier": 0.2482894106492386,
+   "thresholds_raw": [
+    0.5750000000000001,
+    0.6750000000000002,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.5750000000000001,
+    0.6000000000000001,
+    0.5750000000000001
+   ]
+  }
+ },
+ "b7_elo_xg": {
+  "2020": {
+   "n": 952,
+   "raw_cascade": {
+    "n": 952,
+    "tier_usage": {
+     "ml": 0.17331932773109243,
+     "cover": 0.8266806722689075,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 165,
+     "cover": 787,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.17331932773109243,
+      "n_games": 165,
+      "hit_rate": 0.7333333333333333,
+      "brier": 0.19965010891485413,
+      "mean_prob": 0.6587278955373218
+     },
+     "cover": {
+      "frequency": 0.8266806722689075,
+      "n_games": 787,
+      "hit_rate": 0.6772554002541296,
+      "brier": 0.21725743624294824,
+      "mean_prob": 0.6955758847484689
+     }
+    },
+    "acc": 0.6869747899159664,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "recalibrated_cascade": {
+    "n": 952,
+    "tier_usage": {
+     "ml": 0.08928571428571429,
+     "cover": 0.8728991596638656,
+     "total": 0.0021008403361344537,
+     "fallback": 0.03571428571428571
+    },
+    "tier_counts": {
+     "ml": 85,
+     "cover": 831,
+     "total": 2,
+     "fallback": 34
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.08928571428571429,
+      "n_games": 85,
+      "hit_rate": 0.788235294117647,
+      "brier": 0.17857619201299738,
+      "mean_prob": 0.6793583211167179
+     },
+     "cover": {
+      "frequency": 0.8728991596638656,
+      "n_games": 831,
+      "hit_rate": 0.6678700361010831,
+      "brier": 0.21918204764447904,
+      "mean_prob": 0.6685049356452172
+     },
+     "total": {
+      "frequency": 0.0021008403361344537,
+      "n_games": 2,
+      "hit_rate": 1.0,
+      "brier": 0.19664340418910076,
+      "mean_prob": 0.5565550831434808
+     }
+    },
+    "acc": 0.6797385620915033,
+    "coverage": 0.9642857142857143,
+    "fallback_rate": 0.03571428571428571
+   },
+   "always_ml": {
+    "n": 952,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 952,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 952,
+      "hit_rate": 0.5997899159663865,
+      "brier": 0.23591263801398937,
+      "mean_prob": 0.5714752616613581
+     }
+    },
+    "acc": 0.5997899159663865,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6785714285714286,
+   "always_away_cover_brier": 0.218219832945105,
+   "base_constant_cover_pred": 0.6889438943894389,
+   "base_constant_cover_brier": 0.218219832945105,
+   "always_ml_hit_rate": 0.5997899159663865,
+   "always_ml_brier": 0.24257751142147782,
+   "thresholds_raw": [
+    0.6250000000000001,
+    0.55,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.6500000000000001,
+    0.5750000000000001,
+    0.55
+   ]
+  },
+  "2021": {
+   "n": 1396,
+   "raw_cascade": {
+    "n": 1396,
+    "tier_usage": {
+     "ml": 0.21060171919770773,
+     "cover": 0.7893982808022922,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 294,
+     "cover": 1102,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.21060171919770773,
+      "n_games": 294,
+      "hit_rate": 0.7074829931972789,
+      "brier": 0.2077305390148422,
+      "mean_prob": 0.6656361186508729
+     },
+     "cover": {
+      "frequency": 0.7893982808022922,
+      "n_games": 1102,
+      "hit_rate": 0.6206896551724138,
+      "brier": 0.23901759628726632,
+      "mean_prob": 0.6887150869485433
+     }
+    },
+    "acc": 0.6389684813753582,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "recalibrated_cascade": {
+    "n": 1396,
+    "tier_usage": {
+     "ml": 0.21060171919770773,
+     "cover": 0.6905444126074498,
+     "total": 0.01002865329512894,
+     "fallback": 0.08882521489971347
+    },
+    "tier_counts": {
+     "ml": 294,
+     "cover": 964,
+     "total": 14,
+     "fallback": 124
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.21060171919770773,
+      "n_games": 294,
+      "hit_rate": 0.7074829931972789,
+      "brier": 0.2077305390148422,
+      "mean_prob": 0.6656361186508729
+     },
+     "cover": {
+      "frequency": 0.6905444126074498,
+      "n_games": 964,
+      "hit_rate": 0.6286307053941909,
+      "brier": 0.2339932325121945,
+      "mean_prob": 0.6710090197825052
+     },
+     "total": {
+      "frequency": 0.01002865329512894,
+      "n_games": 14,
+      "hit_rate": 0.5,
+      "brier": 0.2531767171635605,
+      "mean_prob": 0.5544330470707182
+     }
+    },
+    "acc": 0.6454402515723271,
+    "coverage": 0.9111747851002865,
+    "fallback_rate": 0.08882521489971347
+   },
+   "always_ml": {
+    "n": 1396,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1396,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1396,
+      "hit_rate": 0.6253581661891118,
+      "brier": 0.2326112019208269,
+      "mean_prob": 0.5792953388120157
+     }
+    },
+    "acc": 0.6253581661891118,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6611747851002865,
+   "always_away_cover_brier": 0.22456120667729929,
+   "base_constant_cover_pred": 0.6843807763401109,
+   "base_constant_cover_brier": 0.22456120667729929,
+   "always_ml_hit_rate": 0.6253581661891118,
+   "always_ml_brier": 0.2448055057923883,
+   "thresholds_raw": [
+    0.6250000000000001,
+    0.55,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.6250000000000001,
+    0.6000000000000001,
+    0.55
+   ]
+  },
+  "2022": {
+   "n": 1400,
+   "raw_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.5021428571428571,
+     "cover": 0.4542857142857143,
+     "total": 0.0,
+     "fallback": 0.04357142857142857
+    },
+    "tier_counts": {
+     "ml": 703,
+     "cover": 636,
+     "total": 0,
+     "fallback": 61
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.5021428571428571,
+      "n_games": 703,
+      "hit_rate": 0.6500711237553343,
+      "brier": 0.22458736782616967,
+      "mean_prob": 0.6370510353103853
+     },
+     "cover": {
+      "frequency": 0.4542857142857143,
+      "n_games": 636,
+      "hit_rate": 0.6650943396226415,
+      "brier": 0.22364243447844553,
+      "mean_prob": 0.7069032283817053
+     }
+    },
+    "acc": 0.6572068707991038,
+    "coverage": 0.9564285714285714,
+    "fallback_rate": 0.04357142857142857
+   },
+   "recalibrated_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.2642857142857143,
+     "cover": 0.66,
+     "total": 0.012142857142857143,
+     "fallback": 0.06357142857142857
+    },
+    "tier_counts": {
+     "ml": 370,
+     "cover": 924,
+     "total": 17,
+     "fallback": 89
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.2642857142857143,
+      "n_games": 370,
+      "hit_rate": 0.6891891891891891,
+      "brier": 0.21096289908598498,
+      "mean_prob": 0.671264705287015
+     },
+     "cover": {
+      "frequency": 0.66,
+      "n_games": 924,
+      "hit_rate": 0.6601731601731602,
+      "brier": 0.22350745178779824,
+      "mean_prob": 0.6547443299853548
+     },
+     "total": {
+      "frequency": 0.012142857142857143,
+      "n_games": 17,
+      "hit_rate": 0.6470588235294118,
+      "brier": 0.23642633875202168,
+      "mean_prob": 0.5537946805412775
+     }
+    },
+    "acc": 0.6681922196796338,
+    "coverage": 0.9364285714285714,
+    "fallback_rate": 0.06357142857142857
+   },
+   "always_ml": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1400,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1400,
+      "hit_rate": 0.6035714285714285,
+      "brier": 0.2357135879546561,
+      "mean_prob": 0.5868893957733767
+     }
+    },
+    "acc": 0.6035714285714285,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6842857142857143,
+   "always_away_cover_brier": 0.21611986221075982,
+   "base_constant_cover_pred": 0.6752808988764045,
+   "base_constant_cover_brier": 0.21611986221075982,
+   "always_ml_hit_rate": 0.6035714285714285,
+   "always_ml_brier": 0.24808887128646867,
+   "thresholds_raw": [
+    0.5750000000000001,
+    0.6750000000000002,
+    0.5750000000000001
+   ],
+   "thresholds_rec": [
+    0.6250000000000001,
+    0.5750000000000001,
+    0.55
+   ]
+  },
+  "2023": {
+   "n": 1400,
+   "raw_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.49714285714285716,
+     "cover": 0.5028571428571429,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 696,
+     "cover": 704,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.49714285714285716,
+      "n_games": 696,
+      "hit_rate": 0.6537356321839081,
+      "brier": 0.22120899723406096,
+      "mean_prob": 0.6365789762805384
+     },
+     "cover": {
+      "frequency": 0.5028571428571429,
+      "n_games": 704,
+      "hit_rate": 0.6803977272727273,
+      "brier": 0.21698899958253454,
+      "mean_prob": 0.7054651540724106
+     }
+    },
+    "acc": 0.6671428571428571,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "recalibrated_cascade": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 0.24857142857142858,
+     "cover": 0.6964285714285714,
+     "total": 0.010714285714285714,
+     "fallback": 0.04428571428571428
+    },
+    "tier_counts": {
+     "ml": 348,
+     "cover": 975,
+     "total": 15,
+     "fallback": 62
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.24857142857142858,
+      "n_games": 348,
+      "hit_rate": 0.7126436781609196,
+      "brier": 0.20248425056125427,
+      "mean_prob": 0.6750841972518489
+     },
+     "cover": {
+      "frequency": 0.6964285714285714,
+      "n_games": 975,
+      "hit_rate": 0.6676923076923077,
+      "brier": 0.22098855276400825,
+      "mean_prob": 0.6590876929587396
+     },
+     "total": {
+      "frequency": 0.010714285714285714,
+      "n_games": 15,
+      "hit_rate": 0.7333333333333333,
+      "brier": 0.2273663902628374,
+      "mean_prob": 0.5535746548696886
+     }
+    },
+    "acc": 0.680119581464873,
+    "coverage": 0.9557142857142857,
+    "fallback_rate": 0.04428571428571428
+   },
+   "always_ml": {
+    "n": 1400,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1400,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1400,
+      "hit_rate": 0.5971428571428572,
+      "brier": 0.23456744280127143,
+      "mean_prob": 0.585942484990647
+     }
+    },
+    "acc": 0.5971428571428572,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6685714285714286,
+   "always_away_cover_brier": 0.22166925728407907,
+   "base_constant_cover_pred": 0.6778225806451613,
+   "base_constant_cover_brier": 0.22166925728407907,
+   "always_ml_hit_rate": 0.5971428571428572,
+   "always_ml_brier": 0.24614201411575248,
+   "thresholds_raw": [
+    0.5750000000000001,
+    0.55,
+    0.55
+   ],
+   "thresholds_rec": [
+    0.6250000000000001,
+    0.5750000000000001,
+    0.55
+   ]
+  },
+  "2024": {
+   "n": 1393,
+   "raw_cascade": {
+    "n": 1393,
+    "tier_usage": {
+     "ml": 0.24120603015075376,
+     "cover": 0.7408470926058865,
+     "total": 0.0,
+     "fallback": 0.017946877243359655
+    },
+    "tier_counts": {
+     "ml": 336,
+     "cover": 1032,
+     "total": 0,
+     "fallback": 25
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.24120603015075376,
+      "n_games": 336,
+      "hit_rate": 0.7172619047619048,
+      "brier": 0.204257158845824,
+      "mean_prob": 0.6713557909127746
+     },
+     "cover": {
+      "frequency": 0.7408470926058865,
+      "n_games": 1032,
+      "hit_rate": 0.6356589147286822,
+      "brier": 0.2336341083143155,
+      "mean_prob": 0.690242153841402
+     }
+    },
+    "acc": 0.6557017543859649,
+    "coverage": 0.9820531227566404,
+    "fallback_rate": 0.017946877243359655
+   },
+   "recalibrated_cascade": {
+    "n": 1393,
+    "tier_usage": {
+     "ml": 0.24120603015075376,
+     "cover": 0.7229002153625269,
+     "total": 0.007178750897343862,
+     "fallback": 0.028715003589375447
+    },
+    "tier_counts": {
+     "ml": 336,
+     "cover": 1007,
+     "total": 10,
+     "fallback": 40
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.24120603015075376,
+      "n_games": 336,
+      "hit_rate": 0.7172619047619048,
+      "brier": 0.204257158845824,
+      "mean_prob": 0.6713557909127746
+     },
+     "cover": {
+      "frequency": 0.7229002153625269,
+      "n_games": 1007,
+      "hit_rate": 0.6415094339622641,
+      "brier": 0.23115178778025877,
+      "mean_prob": 0.66082438395262
+     },
+     "total": {
+      "frequency": 0.007178750897343862,
+      "n_games": 10,
+      "hit_rate": 0.5,
+      "brier": 0.2531539952246098,
+      "mean_prob": 0.55369386296486
+     }
+    },
+    "acc": 0.6592756836659276,
+    "coverage": 0.9712849964106246,
+    "fallback_rate": 0.028715003589375447
+   },
+   "always_ml": {
+    "n": 1393,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1393,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1393,
+      "hit_rate": 0.5951184493898062,
+      "brier": 0.23598034468681175,
+      "mean_prob": 0.5822631764665912
+     }
+    },
+    "acc": 0.5951184493898062,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.6424982053122756,
+   "always_away_cover_brier": 0.23080234964455373,
+   "base_constant_cover_pred": 0.6757861635220126,
+   "base_constant_cover_brier": 0.23080234964455373,
+   "always_ml_hit_rate": 0.5951184493898062,
+   "always_ml_brier": 0.24286224843956902,
+   "thresholds_raw": [
+    0.6250000000000001,
+    0.6250000000000001,
+    0.5750000000000001
+   ],
+   "thresholds_rec": [
+    0.6250000000000001,
+    0.5750000000000001,
+    0.55
+   ]
+  },
+  "2025": {
+   "n": 1394,
+   "raw_cascade": {
+    "n": 1394,
+    "tier_usage": {
+     "ml": 0.25107604017216645,
+     "cover": 0.7245337159253945,
+     "total": 0.0,
+     "fallback": 0.024390243902439025
+    },
+    "tier_counts": {
+     "ml": 350,
+     "cover": 1010,
+     "total": 0,
+     "fallback": 34
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.25107604017216645,
+      "n_games": 350,
+      "hit_rate": 0.6142857142857143,
+      "brier": 0.2347956391877977,
+      "mean_prob": 0.6402277808004172
+     },
+     "cover": {
+      "frequency": 0.7245337159253945,
+      "n_games": 1010,
+      "hit_rate": 0.693069306930693,
+      "brier": 0.2114367323552027,
+      "mean_prob": 0.6996299706124474
+     }
+    },
+    "acc": 0.6727941176470589,
+    "coverage": 0.975609756097561,
+    "fallback_rate": 0.024390243902439025
+   },
+   "recalibrated_cascade": {
+    "n": 1394,
+    "tier_usage": {
+     "ml": 0.14705882352941177,
+     "cover": 0.8350071736011477,
+     "total": 0.0,
+     "fallback": 0.017934002869440458
+    },
+    "tier_counts": {
+     "ml": 205,
+     "cover": 1164,
+     "total": 0,
+     "fallback": 25
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 0.14705882352941177,
+      "n_games": 205,
+      "hit_rate": 0.6634146341463415,
+      "brier": 0.22352770855075932,
+      "mean_prob": 0.6601691175845623
+     },
+     "cover": {
+      "frequency": 0.8350071736011477,
+      "n_games": 1164,
+      "hit_rate": 0.6941580756013745,
+      "brier": 0.21203387796081424,
+      "mean_prob": 0.6620527720764217
+     }
+    },
+    "acc": 0.6895544192841491,
+    "coverage": 0.9820659971305595,
+    "fallback_rate": 0.017934002869440458
+   },
+   "always_ml": {
+    "n": 1394,
+    "tier_usage": {
+     "ml": 1.0,
+     "cover": 0.0,
+     "total": 0.0,
+     "fallback": 0.0
+    },
+    "tier_counts": {
+     "ml": 1394,
+     "cover": 0,
+     "total": 0,
+     "fallback": 0
+    },
+    "tiers": {
+     "ml": {
+      "frequency": 1.0,
+      "n_games": 1394,
+      "hit_rate": 0.5401721664275466,
+      "brier": 0.24632611384632883,
+      "mean_prob": 0.5682297291516867
+     }
+    },
+    "acc": 0.5401721664275466,
+    "coverage": 1.0,
+    "fallback_rate": 0.0
+   },
+   "always_away_cover_hit_rate": 0.703012912482066,
+   "always_away_cover_brier": 0.20988850709755316,
+   "base_constant_cover_pred": 0.6698052366825745,
+   "base_constant_cover_brier": 0.20988850709755316,
+   "always_ml_hit_rate": 0.5401721664275466,
+   "always_ml_brier": 0.25084652287692916,
+   "thresholds_raw": [
+    0.6000000000000001,
+    0.6500000000000001,
+    0.5750000000000001
+   ],
+   "thresholds_rec": [
+    0.6250000000000001,
+    0.5750000000000001,
+    0.5750000000000001
+   ]
+  }
+ }
+}

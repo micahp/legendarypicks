@@ -20,6 +20,7 @@ import argparse
 import hashlib
 import json
 import os
+import dataclasses
 import sqlite3
 import sys
 from dataclasses import dataclass
@@ -40,7 +41,7 @@ PLAYER_COLUMNS = (
     "mlbam_id",
     "nfl_gsis_id",
     "nhl_id",
-    "nba_id",
+    "hoopr_id",
     "active",
     "position",
     "updated_at",
@@ -139,6 +140,12 @@ def _require_contract_parity(
 ) -> None:
     source_contract = migrate_schema.table_columns(source, table)
     target_contract = migrate_schema.table_columns(target, table)
+    if table == "players":
+        # The hoopR id column is nba_id until migrate_players_hoopr_id.py runs.
+        for contract in (source_contract, target_contract):
+            if "hoopr_id" not in contract and "nba_id" in contract:
+                contract["hoopr_id"] = dataclasses.replace(
+                    contract["nba_id"], name="hoopr_id")
     for column in columns:
         if source_contract[column] != target_contract[column]:
             raise LogMigrationError(
@@ -150,6 +157,31 @@ def _require_contract_parity(
 
 def _select_columns(columns: Iterable[str]) -> str:
     return ", ".join(f'"{column}"' for column in columns)
+
+
+def _players_select(connection: sqlite3.Connection) -> str:
+    """PLAYER_COLUMNS, reading the legacy hoopR id under either column name.
+
+    Dev may already say hoopr_id while prod still says nba_id (see
+    migrate_players_hoopr_id.py). Both are read and written as hoopr_id here.
+    """
+    actual = migrate_schema.table_columns(connection, "players")
+    parts = []
+    for column in PLAYER_COLUMNS:
+        if column == "hoopr_id" and "hoopr_id" not in actual and "nba_id" in actual:
+            parts.append('"nba_id" AS "hoopr_id"')
+        else:
+            parts.append(f'"{column}"')
+    return ", ".join(parts)
+
+
+def _players_insert_columns(connection: sqlite3.Connection) -> str:
+    actual = migrate_schema.table_columns(connection, "players")
+    return ", ".join(
+        '"nba_id"' if column == "hoopr_id" and "hoopr_id" not in actual
+        and "nba_id" in actual else f'"{column}"'
+        for column in PLAYER_COLUMNS
+    )
 
 
 def _identity(row: sqlite3.Row) -> tuple[str, str]:
@@ -181,7 +213,7 @@ def _stable_keys(row: sqlite3.Row) -> tuple[tuple[str, str], ...]:
         "mlbam_id",
         "nfl_gsis_id",
         "nhl_id",
-        "nba_id",
+        "hoopr_id",
     ):
         value = row[column]
         if value is None or str(value).strip() in ("", "0"):
@@ -224,7 +256,10 @@ def build_plan(
     ) as target:
         for connection in (source, target):
             _require_columns(
-                connection, "players", PLAYER_COLUMNS
+                connection, "players",
+                [c for c in PLAYER_COLUMNS if c != "hoopr_id"]
+                + ["hoopr_id" if "hoopr_id" in migrate_schema.table_columns(
+                    connection, "players") else "nba_id"],
             )
             _require_columns(
                 connection, "player_game_logs", LOG_COLUMNS
@@ -244,13 +279,13 @@ def build_plan(
         source_players = {
             row["id"]: row
             for row in source.execute(
-                f"SELECT {_select_columns(PLAYER_COLUMNS)} FROM players"
+                f"SELECT {_players_select(source)} FROM players"
             )
         }
         target_players = {
             row["id"]: row
             for row in target.execute(
-                f"SELECT {_select_columns(PLAYER_COLUMNS)} FROM players"
+                f"SELECT {_players_select(target)} FROM players"
             )
         }
         source_log_player_ids = {
@@ -472,7 +507,7 @@ def apply_plan(
             placeholders = ", ".join("?" for _ in PLAYER_COLUMNS)
             connection.executemany(
                 f"INSERT INTO players "
-                f"({_select_columns(PLAYER_COLUMNS)}) "
+                f"({_players_insert_columns(connection)}) "
                 f"VALUES ({placeholders})",
                 plan.missing_players,
             )

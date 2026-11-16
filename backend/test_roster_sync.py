@@ -782,3 +782,228 @@ class RosterSyncFreshnessTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+NBA_TEAMS = [{"abbrev": "LAL"}, {"abbrev": "ATL"}]
+
+
+class RosterSyncNbaIdentityGuardTests(unittest.TestCase):
+    """The real NBA writer: every assignment or insert goes through the resolver."""
+
+    def setUp(self):
+        handle = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        handle.close()
+        self.db_path = handle.name
+        self.con = sqlite3.connect(self.db_path)
+        self.con.row_factory = sqlite3.Row
+        self.con.executescript(
+            "CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, "
+            "league TEXT NOT NULL, team TEXT, position TEXT, espn_id TEXT, hoopr_id TEXT, "
+            "nfl_gsis_id TEXT, active INTEGER DEFAULT 1, updated_at TEXT);"
+            "CREATE TABLE player_source_ids(player_id INT, league TEXT, source TEXT, source_player_key TEXT);")
+        self.con.execute("INSERT INTO players(id,name,league,team,active) VALUES(63170,'William Kyle','nba','LAL',0)")
+        self.con.execute("INSERT INTO player_source_ids VALUES(63170,'nba','nba.com','1643759')")
+        self.con.execute("INSERT INTO players(id,name,league,team,espn_id,active) VALUES(1,'Other Guy','nba','ATL','55',1)")
+        create_roster_schema(self.con)
+        self.con.commit()
+        self.expected = roster_sync._EXPECTED_TEAM_COUNTS["nba"]
+        roster_sync._EXPECTED_TEAM_COUNTS["nba"] = 2
+        self.crosswalk = {}
+
+    def tearDown(self):
+        roster_sync._EXPECTED_TEAM_COUNTS["nba"] = self.expected
+        self.con.close()
+        os.unlink(self.db_path)
+
+    def run_sync(self, lal_players):
+        def roster(_league, team):
+            return {"LAL": lal_players,
+                    "ATL": [{"player_id": "55", "name": "Other Guy", "position": "F"}]}[team]
+        with patch.object(roster_sync.espn, "team_strength", side_effect=lambda _l: NBA_TEAMS), \
+             patch.object(roster_sync.espn, "roster", side_effect=roster), \
+             patch.object(roster_sync.nba_identity_resolve, "_reviewed_pairs",
+                          return_value=self.crosswalk):
+            return roster_sync.sync_league(self.con, "nba")
+
+    def count(self):
+        return self.con.execute("SELECT COUNT(*) FROM players WHERE league='nba'").fetchone()[0]
+
+    def espn_of(self, pid):
+        return self.con.execute("SELECT espn_id FROM players WHERE id=?", (pid,)).fetchone()[0]
+
+    def kyle(self, name="William Kyle III", eid="5107258"):
+        return [{"player_id": eid, "name": name, "position": "G"}]
+
+    def reasons(self, result):
+        return [f["reason"] for f in (result.get("failures") or [])]
+
+    def test_william_kyle_iii_reuses_63170_through_the_verified_nba_com_id(self):
+        self.crosswalk["5107258"] = {"1643759"}
+        before = self.count()
+        with patch.object(roster_sync.nba_identity_resolve, "resolve",
+                          wraps=roster_sync.nba_identity_resolve.resolve) as spy:
+            self.run_sync(self.kyle())
+        self.assertEqual(self.count(), before)
+        self.assertEqual(self.espn_of(63170), "5107258")
+        # the decision came from the nba.com source id, not from the name
+        kyle_calls = [c for c in spy.call_args_list if c.args[2] == "William Kyle III"]
+        self.assertEqual(len(kyle_calls), 1)
+        self.assertEqual(kyle_calls[0].kwargs["nba_com_id"], "1643759")
+
+    def test_same_normalised_name_without_id_evidence_is_held_not_bound(self):
+        before = self.count()
+        result = self.run_sync(self.kyle())          # no crosswalk
+        self.assertEqual(self.count(), before)
+        self.assertIsNone(self.espn_of(63170))
+        self.assertTrue(any("nba_identity_hold" in r for r in self.reasons(result)), result)
+
+    def test_two_different_players_sharing_a_normalised_name_are_not_merged(self):
+        self.con.execute("UPDATE players SET espn_id='4001' WHERE id=63170")
+        self.con.commit()
+        before = self.count()
+        result = self.run_sync(self.kyle("William Kyle", "4002"))   # a different person
+        self.assertEqual(self.count(), before)
+        self.assertEqual(self.espn_of(63170), "4001")
+        self.assertTrue(any("nba_identity_hold" in r for r in self.reasons(result)), result)
+
+    def test_conflicting_crosswalk_is_held(self):
+        self.con.execute("UPDATE players SET espn_id='4001' WHERE id=63170")   # owner has another ESPN id
+        self.con.commit()
+        self.crosswalk["5107258"] = {"1643759"}
+        before = self.count()
+        result = self.run_sync(self.kyle())
+        self.assertEqual(self.count(), before)
+        self.assertEqual(self.espn_of(63170), "4001")
+        self.assertTrue(any("nba_identity_hold" in r for r in self.reasons(result)), result)
+
+    def test_existing_espn_id_owner_is_still_checked_against_the_crosswalk(self):
+        # Row 63170 already owns ESPN 5107258 but carries a DIFFERENT nba.com id than
+        # the verified crosswalk says: the fast path must not update it silently.
+        self.con.execute("UPDATE players SET espn_id='5107258' WHERE id=63170")
+        self.con.execute("UPDATE player_source_ids SET source_player_key='1111111' WHERE player_id=63170")
+        self.con.commit()
+        self.crosswalk["5107258"] = {"1643759"}
+        result = self.run_sync(self.kyle())
+        self.assertTrue(any("conflicts with the nba.com crosswalk" in r for r in self.reasons(result)), result)
+        self.assertEqual(self.con.execute("SELECT team FROM players WHERE id=63170").fetchone()[0], "LAL")
+
+    def test_hoopr_id_owner_with_a_different_espn_id_is_held(self):
+        self.con.execute("UPDATE players SET hoopr_id='5107258', espn_id='4001' WHERE id=63170")
+        self.con.commit()
+        before = self.count()
+        result = self.run_sync(self.kyle("Bill Kyle", "5107258"))
+        self.assertEqual(self.count(), before)
+        self.assertEqual(self.espn_of(63170), "4001")
+        self.assertTrue(any("hoopr_id owner carries a different ESPN id" in r for r in self.reasons(result)), result)
+
+    def test_hoopr_id_owner_with_no_espn_id_is_reused(self):
+        self.con.execute("UPDATE players SET hoopr_id='5107258' WHERE id=63170")
+        self.con.commit()
+        before = self.count()
+        self.run_sync(self.kyle("Bill Kyle", "5107258"))
+        self.assertEqual(self.count(), before)
+        self.assertEqual(self.espn_of(63170), "5107258")
+
+    def test_two_nba_com_ids_for_one_espn_id_is_held(self):
+        self.crosswalk["5107258"] = {"1643759", "1999999"}
+        before = self.count()
+        result = self.run_sync(self.kyle())
+        self.assertEqual(self.count(), before)
+        self.assertTrue(any("conflicting nba.com crosswalk" in r for r in self.reasons(result)), result)
+
+    def test_repeated_syncs_create_no_duplicate_identities(self):
+        brand_new = [{"player_id": "777", "name": "Brand New Rookie", "position": "G"}]
+        self.run_sync(brand_new)
+        after_first = self.count()
+        self.run_sync(brand_new)
+        self.run_sync(brand_new)
+        self.assertEqual(self.count(), after_first)
+        self.assertEqual(self.con.execute(
+            "SELECT COUNT(*) FROM players WHERE league='nba' AND espn_id='777'").fetchone()[0], 1)
+
+    def test_espn_only_sync_keeps_players_on_the_official_nba_com_roster_active(self):
+        self.con.execute("INSERT INTO roster_snapshots(id,league,season,source,captured_at,published_at,"
+                         "source_checksum,source_payload,team_count,player_count,status) "
+                         "VALUES(900,'nba',2027,'nba.com:team-roster','t','t','c','{}',30,1,'published')")
+        self.con.execute("INSERT INTO roster_memberships(snapshot_id,player_id,source_player_key,team,position,"
+                         "jersey,roster_status,display_name) VALUES(900,63170,'1643759','LAL','G','','active','William Kyle')")
+        self.con.execute("UPDATE players SET active=1 WHERE id=63170")
+        self.con.commit()
+        self.run_sync([{"player_id": "888", "name": "Zed Newcomer", "position": "F"}])  # ESPN omits Kyle
+        self.assertEqual(self.con.execute("SELECT active FROM players WHERE id=63170").fetchone()[0], 1)
+
+    def test_espn_only_sync_reactivates_an_inactive_player_on_the_official_nba_com_roster(self):
+        self.con.execute("INSERT INTO roster_snapshots(id,league,season,source,captured_at,published_at,"
+                         "source_checksum,source_payload,team_count,player_count,status) "
+                         "VALUES(900,'nba',2027,'nba.com:team-roster','t','t','c','{}',30,1,'published')")
+        self.con.execute("INSERT INTO roster_memberships(snapshot_id,player_id,source_player_key,team,position,"
+                         "jersey,roster_status,display_name) VALUES(900,63170,'1643759','LAL','G','','active','William Kyle')")
+        self.con.execute("UPDATE players SET active=0 WHERE id=63170")
+        self.con.commit()
+        self.run_sync([{"player_id": "888", "name": "Zed Newcomer", "position": "F"}])  # ESPN omits Kyle
+        self.assertEqual(self.con.execute("SELECT active FROM players WHERE id=63170").fetchone()[0], 1)
+
+    def test_a_non_nba_club_player_cannot_enter_the_nba_spine_through_the_writer(self):
+        before = self.count()
+        result = self.run_sync([{"player_id": "3133629", "name": "Keenan Evans",
+                                 "position": "G", "team_id": "134478"}])
+        self.assertEqual(self.count(), before)
+        self.assertEqual(self.con.execute(
+            "SELECT COUNT(*) FROM players WHERE league='nba' AND espn_id='3133629'").fetchone()[0], 0)
+        self.assertTrue(any("non-NBA club" in r for r in self.reasons(result)), result)
+
+    def test_espn_only_sync_still_deactivates_players_absent_from_every_roster(self):
+        self.con.execute("UPDATE players SET active=1 WHERE id=63170")
+        self.con.commit()
+        self.run_sync([{"player_id": "888", "name": "Zed Newcomer", "position": "F"}])
+        self.assertEqual(self.con.execute("SELECT active FROM players WHERE id=63170").fetchone()[0], 0)
+
+    def test_a_genuinely_new_player_is_still_created(self):
+        before = self.count()
+        self.run_sync([{"player_id": "888", "name": "Zed Newcomer", "position": "F"}])
+        self.assertEqual(self.count(), before + 1)
+
+
+class RosterSyncOtherLeaguesUnchangedTests(unittest.TestCase):
+    """NFL, NHL and MLB still bind a unique name, exactly as before the NBA change."""
+
+    def run_league(self, league):
+        handle = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        handle.close()
+        con = sqlite3.connect(handle.name)
+        con.row_factory = sqlite3.Row
+        con.executescript(
+            "CREATE TABLE players(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, "
+            "league TEXT NOT NULL, team TEXT, position TEXT, espn_id TEXT, hoopr_id TEXT, "
+            "nfl_gsis_id TEXT, pitcher_role TEXT, active INTEGER DEFAULT 1, updated_at TEXT);")
+        con.execute("INSERT INTO players(id,name,league,team,active) VALUES(10,'Unique Name',?,'OLD',1)", (league,))
+        con.execute("INSERT INTO players(id,name,league,team,espn_id,active) VALUES(11,'Anchor Player',?,'OLD','55',1)", (league,))
+        create_roster_schema(con)
+        con.commit()
+        old = roster_sync._EXPECTED_TEAM_COUNTS[league]
+        roster_sync._EXPECTED_TEAM_COUNTS[league] = 2
+
+        codes = {"nfl": ("ARI", "ATL"), "nhl": ("BOS", "NYR"), "mlb": ("NYY", "BOS")}[league]
+
+        def roster(_l, team):
+            return {codes[0]: [{"player_id": "999", "name": "Unique Name", "position": "C"}],
+                    codes[1]: [{"player_id": "55", "name": "Anchor Player", "position": "C"}]}[team]
+        try:
+            with patch.object(roster_sync.espn, "team_strength",
+                              side_effect=lambda _l: [{"abbrev": codes[0]}, {"abbrev": codes[1]}]), \
+                 patch.object(roster_sync.espn, "roster", side_effect=roster), \
+                 patch.object(roster_sync, "load_espn_to_gsis", return_value=({}, set())):
+                result = roster_sync.sync_league(con, league)
+            self.assertEqual(result.get('status'), 'complete', result)
+            return con.execute("SELECT espn_id FROM players WHERE id=10").fetchone()[0], \
+                con.execute("SELECT COUNT(*) FROM players WHERE league=?", (league,)).fetchone()[0]
+        finally:
+            roster_sync._EXPECTED_TEAM_COUNTS[league] = old
+            con.close()
+            os.unlink(handle.name)
+
+    def test_unique_name_still_binds_for_nfl_nhl_mlb(self):
+        for league in ("nfl", "nhl", "mlb"):
+            with self.subTest(league=league):
+                espn_id, count = self.run_league(league)
+                self.assertEqual(espn_id, "999")
+                self.assertEqual(count, 2)

@@ -55,18 +55,23 @@ Valid ESPN season types are:
 - `2`: regular season
 - `3`: postseason
 
-NCAAF uses its published calendar boundaries for the game read. A direct ESPN
-`week=1` request was measured at only 25 events on 2026-08-24 even with
-`limit=1000`; the same published Week 1 date window with `groups=80` returned
-99. NCAAF therefore requests the bounded calendar date range and then verifies
-every returned event against season, season type, and week. Its CFP calendar
-entry uses ESPN's special week value `999`, which the endpoint accepts only
-when that key exists in the catalog. Season type `4` is off-season and omitted.
+NCAAF games are read from our stored slates, one calendar day at a time, using
+the published calendar boundaries of the requested week. A day we hold is served
+from the store. A day we have never read that has already started is requested
+from ESPN once, and a finished one is stored. A day that has not started and was
+never read is not requested: its date is listed in `unread_days` and it adds no
+games. `unread_days` is present on NCAAF responses only.
+
+ESPN's own `week=` query caps NCAAF at 25 events (measured 2026-08-24), and its
+date-range query returned HTTP 400 for NCAAF by 2026-10-24, so neither is used.
+Games are kept only when their start falls inside the published week window and
+their season type matches the request. Its CFP calendar entry uses ESPN's
+special week value `999`, which the endpoint accepts only when that key exists
+in the catalog. Season type `4` is off-season and omitted.
 
 The endpoint verifies the requested phase/week against the catalog before
-fetching games. ESPN results are also filtered by season, season type, and week
-so a broad or malformed upstream response cannot leak games from another
-slate.
+reading games. A day that cannot be read fails the request with HTTP 502 rather
+than returning a week with that day missing.
 
 ## Frontend behavior
 

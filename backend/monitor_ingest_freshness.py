@@ -58,6 +58,16 @@ def _newest(con, target):
     return _parse_when(con.execute(sql).fetchone()[0])
 
 
+def _age_text(age_seconds):
+    """Format a freshness age at useful precision for short capture intervals."""
+    age_seconds = max(0, age_seconds)
+    if age_seconds < 3600:
+        return "{}m ago".format(int(age_seconds // 60))
+    if age_seconds < 86400:
+        return "{:.1f}h ago".format(age_seconds / 3600.0)
+    return "{:.1f}d ago".format(age_seconds / 86400.0)
+
+
 def _against_publisher(con, env, label, target, newest, now):
     """Stale means behind what the publisher has finished, not merely old.
 
@@ -124,17 +134,29 @@ def check(env, db_path, targets, now=None):
                     env, label, target["table"])))
                 continue
             age_h = (now - newest).total_seconds() / 3600.0
+            age = _age_text((now - newest).total_seconds())
             threshold = target["stale_hours"]
             if target.get("published"):
                 out.append(_against_publisher(con, env, label, target, newest, now))
                 continue
             if age_h > threshold:
-                out.append(("ALERT", "[{}] {} STALE: newest {} is {}, {:.1f}h old "
-                            "(threshold {}h)".format(env, label, target["date_column"],
-                                                     newest.isoformat(), age_h, threshold)))
+                if target.get("age_label"):
+                    message = "[{}] {} STALE: {} {} (threshold {}h)".format(
+                        env, label, target["age_label"], age, threshold)
+                else:
+                    message = ("[{}] {} STALE: newest {} is {}, {} "
+                               "(threshold {}h)").format(
+                                   env, label, target["date_column"], newest.isoformat(),
+                                   age, threshold)
+                out.append(("ALERT", message))
             else:
-                out.append(("OK", "[{}] {} fresh: newest {} ({:.1f}h, threshold {}h)".format(
-                    env, label, newest.isoformat(), age_h, threshold)))
+                if target.get("age_label"):
+                    message = "[{}] {} fresh: {} {} (threshold {}h)".format(
+                        env, label, target["age_label"], age, threshold)
+                else:
+                    message = "[{}] {} fresh: newest {} ({}, threshold {}h)".format(
+                        env, label, newest.isoformat(), age, threshold)
+                out.append(("OK", message))
     finally:
         con.close()
     return out

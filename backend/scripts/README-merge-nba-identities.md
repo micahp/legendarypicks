@@ -8,7 +8,7 @@ week's audit rediscovered from the symptom end.
 ## What it fixes
 
 hoopR's `athlete_id` **is** ESPN's athlete id. Legacy imports wrote that value to
-`players.nba_id`; current roster and game-log jobs write it to `players.espn_id`.
+`players.hoopr_id`; current roster and game-log jobs write it to `players.espn_id`.
 When the two land on different `players.id` rows, one real player is split — his
 historical stats belong to one person and his current game logs to another, and no
 join will ever reunite them.

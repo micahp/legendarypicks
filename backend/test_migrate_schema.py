@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import sqlite3
 import tempfile
@@ -11,6 +12,7 @@ import unittest
 
 import migrate_schema
 from ingest_nfl_logs import ensure_table
+import scripts_split_provider_logs
 
 
 LEGACY_LOG_DDL = """
@@ -78,6 +80,16 @@ CREATE TABLE prop_games (
     start_time TEXT
 )
 """
+LEGACY_TENNIS_GRADES_DDL = """
+CREATE TABLE tennis_model_grades (
+    league TEXT NOT NULL CHECK(league IN ('atp','wta')),
+    game_id TEXT NOT NULL,
+    winner TEXT NOT NULL CHECK(winner IN ('correct','incorrect')),
+    total_games_error REAL,
+    graded_at TEXT NOT NULL,
+    PRIMARY KEY(league, game_id)
+)
+"""
 
 
 class SchemaMigrationTests(unittest.TestCase):
@@ -93,28 +105,73 @@ class SchemaMigrationTests(unittest.TestCase):
     def _create_legacy(self):
         with sqlite3.connect(self.db_path) as connection:
             connection.execute(LEGACY_LOG_DDL)
+            connection.executescript(scripts_split_provider_logs.DDL_TABLE)
             connection.execute(LEGACY_TEAM_STATS_DDL)
             connection.execute(LEGACY_NEWS_ITEMS_DDL)
             connection.execute(LEGACY_TEAM_GAME_RESULTS_DDL)
             connection.execute(LEGACY_PREDICTIONS_DDL)
             connection.execute(LEGACY_PROP_GAMES_DDL)
+            connection.execute(LEGACY_TENNIS_GRADES_DDL)
 
     def _create_current(self):
         with sqlite3.connect(self.db_path) as connection:
             ensure_table(connection)
+            connection.executescript(scripts_split_provider_logs.DDL_TABLE)
             connection.execute(LEGACY_TEAM_STATS_DDL)
             connection.execute(LEGACY_NEWS_ITEMS_DDL)
             connection.execute(LEGACY_TEAM_GAME_RESULTS_DDL)
             connection.execute(LEGACY_PREDICTIONS_DDL)
             connection.execute(LEGACY_PROP_GAMES_DDL)
+            connection.execute(LEGACY_TENNIS_GRADES_DDL)
             for migration in migrate_schema.MIGRATIONS:
-                if migration.table in ("player_game_logs", "app_schema_migrations"):
+                if migration.migration_id == "20260728_001_player_game_logs_game_type" \
+                        or migration.table == "app_schema_migrations":
                     continue
+                if (migration.create_sql and not migrate_schema._table_exists(
+                        connection, migration.table)):
+                    connection.execute(migration.create_sql)
                 for addition in migration.additions:
-                    connection.execute(addition.sql)
+                    names = {
+                        row[1] for row in connection.execute(
+                            f'PRAGMA table_info("{migration.table}")'
+                        )
+                    }
+                    if addition.contract.name not in names:
+                        connection.execute(addition.sql)
+                for item in migration.objects:
+                    actual = migrate_schema._schema_object_sql(
+                        connection, item.object_type, item.name)
+                    if actual is not None and item.object_type == "view":
+                        # A later migration may replace a view; current is its last one.
+                        connection.execute(f"DROP VIEW {item.name}")
+                        actual = None
+                    if actual is None:
+                        connection.execute(item.sql)
 
     def _backup(self, name):
         return os.path.join(self.tempdir.name, name)
+
+    def test_legacy_migration_checksums_stay_stable(self):
+        for migration in migrate_schema.MIGRATIONS:
+            if migration.create_sql is not None or migration.objects or migration.required_columns:
+                continue
+            payload = {
+                "migration_id": migration.migration_id,
+                "table": migration.table,
+                "additions": [
+                    {
+                        "contract": migrate_schema.asdict(addition.contract),
+                        "sql": " ".join(addition.sql.split()),
+                    }
+                    for addition in migration.additions
+                ],
+            }
+            expected = hashlib.sha256(
+                json.dumps(
+                    payload, sort_keys=True, separators=(",", ":")
+                ).encode("utf-8")
+            ).hexdigest()
+            self.assertEqual(migration.checksum, expected, migration.migration_id)
 
     def test_fresh_database_applies_all_migrations_once(self):
         self._create_current()
@@ -168,6 +225,77 @@ class SchemaMigrationTests(unittest.TestCase):
             columns["game_type"],
             migrate_schema.ColumnContract("game_type", "TEXT"),
         )
+
+    def test_home_cache_and_tennis_grade_guards_are_versioned(self):
+        self._create_legacy()
+        _, statuses = migrate_schema.apply_database(
+            self.db_path,
+            backup_destination=self._backup("sports-schema.bak"),
+        )
+        by_id = {status.migration_id: status.state for status in statuses}
+        self.assertEqual(by_id["20261017_001_home_prop_cache"], "applied")
+        self.assertEqual(by_id["20261017_002_tennis_grade_provenance"], "applied")
+        with sqlite3.connect(self.db_path) as connection:
+            columns = {
+                row[1] for row in connection.execute(
+                    'PRAGMA table_info("tennis_model_grades")'
+                )
+            }
+            for name in (
+                "result_source", "result_game_date", "result_fetched_at",
+                "result_payload_sha256",
+            ):
+                self.assertIn(name, columns)
+            connection.execute(
+                "INSERT INTO tennis_model_grades(league,game_id,winner,graded_at) "
+                "VALUES('atp','fixture','correct','now')"
+            )
+            with self.assertRaises(sqlite3.IntegrityError):
+                connection.execute(
+                    "UPDATE tennis_model_grades SET winner='incorrect' "
+                    "WHERE game_id='fixture'"
+                )
+            with self.assertRaises(sqlite3.IntegrityError):
+                connection.execute(
+                    "DELETE FROM tennis_model_grades WHERE game_id='fixture'"
+                )
+
+    def test_nba_sportsdataverse_migration_creates_empty_tables_and_replaces_view(self):
+        import player_game_logs_view
+        import scripts_split_provider_logs
+
+        with sqlite3.connect(self.db_path) as connection:
+            ensure_table(connection)
+            connection.executescript(scripts_split_provider_logs.DDL_TABLE)
+            connection.executescript(player_game_logs_view.PREVIOUS_DDL_VIEW)
+
+        migration = next(
+            item for item in migrate_schema.MIGRATIONS
+            if item.migration_id == "20261020_001_nba_sportsdataverse_history_view"
+        )
+        migrate_schema.apply_database(
+            self.db_path,
+            migrations=(migration,),
+            backup_destination=self._backup("nba-sdv.bak"),
+        )
+        with sqlite3.connect(self.db_path) as connection:
+            for table in (
+                "nba_sportsdataverse_releases",
+                "nba_sportsdataverse_games",
+                "player_game_logs_sportsdataverse",
+            ):
+                self.assertEqual(
+                    connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0],
+                    0,
+                    table,
+                )
+            view_columns = {
+                row[1] for row in connection.execute(
+                    "PRAGMA table_info(player_game_logs_all)"
+                )
+            }
+            self.assertIn("sportsdataverse_stats", view_columns)
+            self.assertIn("appearance_status", view_columns)
 
     def test_correct_unregistered_schema_is_adopted(self):
         self._create_current()

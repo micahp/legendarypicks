@@ -17,7 +17,7 @@ import re as _re
 import espn_client
 
 # ---------------------------------------------------------------------------
-# Major tournament filter -- only Grand Slams, Masters/WTA 1000, and year-end Finals.
+# Major tournament filter -- Grand Slams, Masters/1000s, 500s, 250s and year-end Finals. Singles only.
 # Substrings matched case-insensitively against ESPN's event shortName.
 # ---------------------------------------------------------------------------
 # Canonical keys -- each tuple is (canonical_name, espn_name_substrings)
@@ -41,6 +41,56 @@ _ATP_MAJORS = [
     # ATP 500s Kalshi lists and the competition trades. ATP China Open (Beijing) is a 500, so the
     # 1000-only list dropped it while WTA's China Open (a 1000) passed: added 2026-10-04.
     ("China Open",             ["China Open"]),
+    # ATP 500 singles, 2026 (16 events). The tier comes from the ATP calendar as reported by
+    # toomanyrackets.com/atp-500-tournaments; each alias is the ESPN shortName observed on the
+    # scoreboard for that week on 2026-02-10 to 2026-10-27. Added 2026-10-18 with the multi-draw store.
+    ("Dallas Open",            ["Nexo Dallas Open"]),
+    ("Rotterdam Open",         ["ABN Amro Open"]),
+    ("Qatar ExxonMobil Open",  ["Qatar ExxonMobil Open"]),
+    ("Rio Open",               ["Rio Open"]),
+    ("Acapulco Open",          ["Abierto Mexicano Telcel"]),
+    ("Dubai",                  ["Dubai Duty Free Tennis Championships"]),
+    ("Barcelona Open",         ["Barcelona Open"]),
+    ("Munich Open",            ["BMW Open"]),
+    ("Hamburg Open",           ["Hamburg Open"]),
+    ("Halle Open",             ["Terra Wortmann Open"]),
+    ("Queen's Club",           ["HSBC Championships"]),
+    ("Washington",             ["Mubadala DC Open"]),
+    ("Tokyo Open",             ["Kinoshita Group Japan Open"]),
+    ("Vienna Open",            ["Erste Bank Open"]),
+    ("Basel",                  ["Swiss Indoors Basel"]),
+    # ATP 250 singles, 2026 (29 events). Tiers from the ATP's 2026 calendar (atptour.com, "what is the 2026
+    # atp tour calendar"). Each alias is the ESPN shortName on the 2026 ATP season list. An event on the same
+    # ESPN id as a 500 or a WTA event shares its canonical name. Added 2026-10-21; docs/TENNIS-COVERAGE.md section 2c.
+    ("Brisbane International",  ["Brisbane International presented by ANZ"]),
+    ("Hong Kong Tennis Open",   ["Bank of China Hong Kong Tennis Open"]),
+    ("Adelaide International",  ["Adelaide International"]),
+    ("ASB Classic",             ["ASB Classic"]),
+    ("Open Occitanie",          ["Open Occitanie"]),
+    ("Argentina Open",          ["IEB+ Argentina Open"]),
+    ("Delray Beach Open",       ["Delray Beach Open"]),
+    ("Chile Open",              ["BCI Seguros Chile Open"]),
+    ("Tiriac Open",             ["Tiriac Open presented by UniCredit Bank"]),
+    ("US Men's Clay Court Championship", ["Fayez Sarofim & Co. U.S. Men's Clay Court Championship"]),
+    ("Grand Prix Hassan II",    ["Grand Prix Hassan II"]),
+    ("Geneva Open",             ["Gonet Geneva Open"]),
+    ("Boss Open",               ["Boss Open"]),
+    ("Libéma Open",             ["Libéma Open"]),
+    ("Mallorca Championships",  ["Vanda Pharmaceuticals Mallorca Championships"]),
+    ("Eastbourne Open",         ["Lexus Eastbourne Open"]),
+    ("Nordea Open",             ["Nordea Open"]),
+    ("Gstaad Open",             ["EFG Swiss Open Gstaad"]),
+    ("Umag Open",               ["Plava Laguna Croatia Open Umag"]),
+    ("Generali Open",           ["Generali Open"]),
+    ("Estoril Open",            ["Millennium Estoril Open"]),
+    ("Mifel Tennis Open",       ["Mifel Tennis Open by Telcel Oppo"]),
+    ("Winston-Salem Open",      ["Winston-Salem Open"]),
+    ("Chengdu Open",            ["Chengdu Open"]),
+    ("Hangzhou Open",           ["AITO Hangzhou Open"]),
+    ("Almaty Open",             ["Almaty Open"]),
+    ("Brussels Open",           ["BNP Paribas Fortis European Open"]),
+    ("Lyon Open",               ["Grand Prix Auvergne-Rhône-Alpes"]),
+    ("Stockholm Open",          ["Bybit Stockholm Open"]),
     # Finals
     ("ATP Finals",             ["ATP Finals", "Nitto ATP Finals", "ATP World Tour Finals"]),
 ]
@@ -62,20 +112,78 @@ _WTA_MAJORS = [
     ("Cincinnati Open",        ["Cincinnati Open"]),
     ("China Open",             ["China Open"]),
     ("Wuhan Open",             ["Wuhan Open"]),
+    # WTA 500 singles, 2026 (17 events). The tier comes from tennis-db.com/wta/tournaments.md and the WTA's
+    # 2026 calendar announcement. Each alias is the ESPN shortName observed on the scoreboard for that week
+    # (2026-01-05 to 2026-10-27). Washington shares ESPN's event id with the ATP 500, so its alias matches both.
+    ("Brisbane International",  ["Brisbane International"]),
+    ("Adelaide International",  ["Adelaide International"]),
+    ("Abu Dhabi Open",          ["Abu Dhabi Open"]),
+    ("Mérida Open",             ["Mérida Open"]),
+    ("Charleston Open",         ["Charleston Open"]),
+    ("Linz Open",               ["Upper Austria Ladies Linz"]),
+    ("Stuttgart Open",          ["Porsche Tennis Grand Prix"]),
+    ("Strasbourg Open",         ["Internationaux de Strasbourg"]),
+    ("Queen's Club",            ["The HSBC Championships"]),
+    ("Berlin Open",             ["Berlin Tennis Open"]),
+    ("Bad Homburg Open",        ["Bad Homburg Open"]),
+    ("Washington",              ["Mubadala DC Open"]),
+    ("Monterrey Open",          ["Abierto GNP Seguros"]),
+    ("Guadalajara Open",        ["Guadalajara Open"]),
+    ("Singapore Tennis Open",   ["Singapore Tennis Open"]),
+    ("Ningbo Open",             ["Ningbo Open"]),
+    ("Pan Pacific Open",        ["Toray Pan Pacific Open"]),
+    # WTA 250 singles, 2026 (22 events). Tiers from the Wikipedia 2026 WTA Tour calendar and tennis-db's WTA list,
+    # which agree on all 22. Jiangxi Open is on tennis-db only, and ESPN does not publish a November Jiangxi
+    # event in 2026, so it is not tracked. Each alias is the ESPN shortName on the 2026 WTA season list.
+    # Added 2026-10-21; docs/TENNIS-COVERAGE.md section 2c.
+    ("ASB Classic",             ["ASB Classic"]),
+    ("Hobart International",    ["Hobart International"]),
+    ("Ostrava Open",            ["Ostrava Open"]),
+    ("Transylvania Open",       ["Transylvania Open powered by Kaufland"]),
+    ("ATX Open",                ["ATX Open"]),
+    ("Bogotá Open",             ["Copa Colsanitas Colsubsidio"]),
+    ("Rouen Open",              ["Open Capfinances Rouen Métropole"]),
+    ("Morocco Open",            ["Grand Prix Son Altesse Royale"]),
+    ("Libéma Open",             ["Libéma Open"]),
+    ("Nottingham Open",         ["Lexus Nottingham Open"]),
+    ("Eastbourne Open",         ["Lexus Eastbourne Open"]),
+    ("Iași Open",               ["Unicredit Iasi Open"]),
+    ("Athens Open",             ["Vanda Pharmaceuticals Athens Open"]),
+    ("Hamburg Ladies Open",     ["MSC Hamburg Ladies Open"]),
+    ("Prague Open",             ["Livesport Prague Open"]),
+    ("Memphis Classic",         ["Memphis Classic"]),
+    ("São Paulo Open",          ["SP Open"]),
+    ("Korea Open",              ["Korea Open"]),
+    ("Japan Women's Open",      ["Kinoshita Group Japan Open"]),
+    ("Guangzhou Open",          ["Guangzhou Open"]),
+    ("Hong Kong Open",          ["Prudential Hong Kong Tennis Open"]),
+    ("Chennai Open",            ["Chennai Open"]),
     # Finals
     ("WTA Finals",             ["WTA Finals", "WTA Championships"]),
 ]
 
 
-def _is_major(league: str, event_short_name: str) -> bool:
-    """True if this ESPN event is a Grand Slam, Masters/1000, or Finals."""
+def major_for_event(league: str, event_short_name):
+    """Canonical name of the tracked major this ESPN event is, or None.
+
+    The single source of truth for what we cover. `_is_major` and the projection
+    surface map both go through here, so the coverage list and the surface list
+    cannot drift apart.
+    """
+    if league not in ("atp", "wta"):
+        return None
     maj = _ATP_MAJORS if league == "atp" else _WTA_MAJORS
     name_lower = (event_short_name or "").lower()
-    for _, aliases in maj:
+    for canonical, aliases in maj:
         for alias in aliases:
             if alias.lower() in name_lower:
-                return True
-    return False
+                return canonical
+    return None
+
+
+def _is_major(league: str, event_short_name: str) -> bool:
+    """True if this ESPN event is one of the tracked tournaments in the lists above."""
+    return major_for_event(league, event_short_name) is not None
 
 
 def _num(x):
@@ -339,6 +447,8 @@ def _tennis_game(event, grouping, comp):
             # draw, not the ATP/WTA world ranking. Unseeded players stay null.
             "seed": seed,
         }
+        if "winner" in competitor:
+            players[competitor.get("homeAway")]["winner"] = competitor["winner"]
     for competitor in comp.get("competitors", []) or []:
         linescores = competitor.get("linescores", []) or []
         per_set = [int(value.get("value")) for value in linescores
@@ -365,6 +475,7 @@ def _tennis_game(event, grouping, comp):
         "game_id": comp.get("id"),
         "date": comp.get("date") or event.get("date"),
         "state": status_type.get("state"),
+        "completed": status_type.get("completed") is True,
         "status": status_type.get("description") or score_text or "",
         "period": status.get("period"),
         "clock": status.get("displayClock"),
@@ -431,27 +542,39 @@ def tennis_draws_from_payload(league, payload):
     return draws
 
 
-def current_tennis_draw(draws):
-    """The one draw a tour's bracket shows when ESPN publishes several at once.
+def _match_final(match):
+    """Final only when the publisher says so. A suspended match is posted but not completed."""
+    return match.get("state") == "post" and match.get("completed") is not False
 
-    ESPN lists every tournament whose event window covers the date. On 2026-10-06
-    the ATP feed carried the China Open (event window 09-27..10-12, because the
-    WTA half runs longer; men's final that day) beside Shanghai (R1 under way).
-    The tournament in progress finishes before the next one takes the bracket:
-    among draws with a match not yet final, the one whose last match is soonest;
-    when every draw is complete, the one that finished last.
+
+def _draw_last_date(draw):
+    return max((m.get("date") or "" for m in draw["matches"]), default="")
+
+
+def order_tennis_draws(draws):
+    """Every draw in display order. Nothing is dropped.
+
+    ESPN publishes several major singles draws at once: 500s overlap Masters and each other, so one
+    tour can have two or three brackets live in the same week. The old rule kept one draw, the one
+    finishing soonest, and that rule cannot be a storage gate any more. It is now the display order:
+    draws with a match not yet final come first, soonest-finishing first, then finished draws, most
+    recently finished first. Ties break on tournament id so the order is stable across refreshes.
     """
     draws = list(draws or [])
-    if len(draws) <= 1:
-        return draws
+    open_draws = [d for d in draws if any(not _match_final(m) for m in d["matches"])]
+    open_ids = {id(d) for d in open_draws}
+    closed_draws = [d for d in draws if id(d) not in open_ids]
+    open_draws.sort(key=lambda d: (_draw_last_date(d), str(d["tournament_id"])))
+    closed_draws.sort(key=lambda d: (_draw_last_date(d), str(d["tournament_id"])), reverse=True)
+    return open_draws + closed_draws
 
-    def last(draw):
-        return max(m.get("date") or "" for m in draw["matches"])
 
-    open_draws = [d for d in draws if any(m.get("state") != "post" for m in d["matches"])]
-    if open_draws:
-        return [min(open_draws, key=lambda d: (last(d), str(d["tournament_id"])))]
-    return [max(draws, key=lambda d: (last(d), str(d["tournament_id"])))]
+def current_tennis_draw(draws):
+    """The first draw in display order, for a consumer that shows one bracket.
+
+    Storage does not use this: every complete draw is stored. See order_tennis_draws.
+    """
+    return order_tennis_draws(draws)[:1]
 
 
 def tennis_rankings_from_payload(league, payload):
@@ -663,6 +786,11 @@ def _games_from_payload(league, date, d):
                     "event_id": str(event.get("id") or ""),
                     "date": comp.get("date") or event_date,
                     "state": st.get("state"),
+                    # A postponed competition can also have state="post".
+                    # Keep ESPN's completion bit in the durable snapshot so
+                    # settlement can distinguish a completed bout from one
+                    # that never took place.
+                    "completed": st.get("completed") is True,
                     "status": st.get("description") or weight_class or "",
                     "period": status.get("period"),
                     "clock": status.get("displayClock"),

@@ -1,0 +1,14 @@
+{
+ "blocked_never_complete": true,
+ "checker_illegal": [],
+ "checker_legal": 300,
+ "complete_regulation": 293,
+ "matches_frozen_survey": 300,
+ "matrix_fail_rows": 0,
+ "mismatches_vs_frozen": [],
+ "seeds": 300,
+ "status": {
+  "blocked": 7,
+  "complete_regulation": 293
+ }
+}

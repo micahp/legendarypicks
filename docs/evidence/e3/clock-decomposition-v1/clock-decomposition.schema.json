@@ -1,0 +1,267 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "additionalProperties": false,
+ "description": "Each derived value carries a label (observed, inferred or unresolvable) and the rule that decided it. An unresolvable value is null, never imputed.",
+ "properties": {
+  "bdb_gameId": {
+   "type": "string"
+  },
+  "bdb_playId": {
+   "type": "string"
+  },
+  "defense": {
+   "type": "string"
+  },
+  "distance": {
+   "type": "string"
+  },
+  "down": {
+   "type": "string"
+  },
+  "flag_out_of_bounds": {
+   "type": "string"
+  },
+  "flag_penalty": {
+   "type": "string"
+  },
+  "flag_timeout": {
+   "type": "string"
+  },
+  "game_clock_delta_label": {
+   "enum": [
+    "inferred",
+    "unresolvable"
+   ],
+   "type": "string"
+  },
+  "game_clock_delta_rule": {
+   "enum": [
+    "R4 inferred: game_seconds_remaining minus the next same-quarter play",
+    "R4u1 no same-quarter next row",
+    "R4u2 quarter-end marker: runoff censored at the boundary",
+    "R4u3 negative runoff"
+   ],
+   "type": "string"
+  },
+  "game_clock_delta_s": {
+   "type": "string"
+  },
+  "in_play_label": {
+   "enum": [
+    "inferred",
+    "unresolvable"
+   ],
+   "type": "string"
+  },
+  "in_play_rule": {
+   "enum": [
+    "R2u no play-ending event at or after the snap",
+    "R3 inferred: R2 minus R1"
+   ],
+   "type": "string"
+  },
+  "in_play_s": {
+   "type": "string"
+  },
+  "late_half_snap": {
+   "type": "string"
+  },
+  "lp_game_id": {
+   "type": "string"
+  },
+  "lp_play_id": {
+   "type": "string"
+  },
+  "offense": {
+   "type": "string"
+  },
+  "offense_score_diff_pre_snap": {
+   "type": "string"
+  },
+  "outcome_type": {
+   "enum": [
+    "fumble",
+    "interception",
+    "other",
+    "pass_complete",
+    "pass_incomplete",
+    "run",
+    "sack",
+    "touchdown"
+   ],
+   "type": "string"
+  },
+  "penalty_clock_stop": {
+   "type": "string"
+  },
+  "penalty_label": {
+   "enum": [
+    "unresolvable"
+   ],
+   "type": "string"
+  },
+  "penalty_rule": {
+   "enum": [
+    "R11u the penalty flag gives no stoppage duration or clock-stop mechanics"
+   ],
+   "type": "string"
+  },
+  "quarter": {
+   "type": "string"
+  },
+  "quarter_clock_at_snap_s": {
+   "type": "string"
+  },
+  "real_snap_label": {
+   "enum": [
+    "inferred",
+    "unresolvable"
+   ],
+   "type": "string"
+  },
+  "real_snap_rule": {
+   "enum": [
+    "R6 inferred: next verified play R1 minus R1",
+    "R6u next play is not a verified tracked play",
+    "R6u no same-quarter next play"
+   ],
+   "type": "string"
+  },
+  "real_snap_to_next_snap_s": {
+   "type": "string"
+  },
+  "residual_label": {
+   "enum": [
+    "inferred",
+    "unresolvable"
+   ],
+   "type": "string"
+  },
+  "residual_rule": {
+   "enum": [
+    "R5 inferred: R4 minus R3",
+    "R5u (R3 unresolvable)",
+    "R5u (R4 unresolvable)"
+   ],
+   "type": "string"
+  },
+  "residual_s": {
+   "type": "string"
+  },
+  "snap_time": {
+   "type": "string"
+  },
+  "stoppage_context": {
+   "enum": [
+    "incomplete_pass",
+    "none_observed",
+    "out_of_bounds",
+    "penalty",
+    "sack",
+    "timeout",
+    "touchdown",
+    "turnover"
+   ],
+   "type": "string"
+  },
+  "stoppage_label": {
+   "enum": [
+    "observed"
+   ],
+   "type": "string"
+  },
+  "stoppage_rule": {
+   "enum": [
+    "R9 observed: flags from the nflverse parquet and the play-by-play"
+   ],
+   "type": "string"
+  },
+  "terminal_event": {
+   "type": "string"
+  },
+  "terminal_time": {
+   "type": "string"
+  },
+  "timeouts_label": {
+   "enum": [
+    "unresolvable"
+   ],
+   "type": "string"
+  },
+  "timeouts_remaining": {
+   "type": "string"
+  },
+  "timeouts_rule": {
+   "enum": [
+    "R10u no per-play remaining counts in either source"
+   ],
+   "type": "string"
+  },
+  "two_minute_warning_event": {
+   "type": "string"
+  },
+  "warning_label": {
+   "enum": [
+    "unresolvable"
+   ],
+   "type": "string"
+  },
+  "warning_rule": {
+   "enum": [
+    "R12u the warning is not identifiable in the play-by-play; the late-half state is observed"
+   ],
+   "type": "string"
+  },
+  "week": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "bdb_gameId",
+  "bdb_playId",
+  "lp_game_id",
+  "lp_play_id",
+  "week",
+  "quarter",
+  "down",
+  "distance",
+  "offense",
+  "defense",
+  "outcome_type",
+  "offense_score_diff_pre_snap",
+  "quarter_clock_at_snap_s",
+  "late_half_snap",
+  "snap_time",
+  "terminal_event",
+  "terminal_time",
+  "in_play_s",
+  "in_play_label",
+  "in_play_rule",
+  "game_clock_delta_s",
+  "game_clock_delta_label",
+  "game_clock_delta_rule",
+  "residual_s",
+  "residual_label",
+  "residual_rule",
+  "real_snap_to_next_snap_s",
+  "real_snap_label",
+  "real_snap_rule",
+  "flag_out_of_bounds",
+  "flag_timeout",
+  "flag_penalty",
+  "stoppage_context",
+  "stoppage_label",
+  "stoppage_rule",
+  "timeouts_remaining",
+  "timeouts_label",
+  "timeouts_rule",
+  "penalty_clock_stop",
+  "penalty_label",
+  "penalty_rule",
+  "two_minute_warning_event",
+  "warning_label",
+  "warning_rule"
+ ],
+ "title": "E3 clock decomposition, one row per tracking-verified play",
+ "type": "object"
+}

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Publish non-ESPN ATP and WTA player identities into ``players``.
 
-ATP identities come from TennisExplorer's paginated 2026 ranking pages. The
-player URL slug is the publisher ID. WTA identities come from the WTA ranked
-players API, which publishes its own numeric player ID and full name.
+ATP identities come from TennisExplorer's paginated 2026 ranking pages, with
+two reviewed player-profile supplements omitted from those pages. The player
+URL slug is the publisher ID. WTA identities come from the WTA ranked players
+API, which publishes its own numeric player ID and full name.
 
 Player rows are never created from sportsbook names. A publisher identity is
 matched to an existing row by its normalized full name or a previously bound
@@ -43,18 +44,66 @@ DB = os.environ.get("LP_DB_PATH", str(DEV_DB))
 LEAGUES = ("atp", "wta")
 ATP_PUBLISHER = "tennisexplorer.com"
 WTA_PUBLISHER = "wtatennis.com"
-# The WTA profile's canonical name is Camila Osorio (ID 325898). Its official
-# profile also publishes the full form Maria Camila Osorio Serrano. Bovada's
-# "Maria Camila Osorio" is therefore a reviewed alias for that publisher ID.
+# Reviewed display variants mapped to the publisher profile ID named in each
+# key. Each URL identifies the canonical source profile used for review.
+# ATP profiles: https://www.tennisexplorer.com/player/{publisher_id}/
+# WTA profiles use the IDs and canonical slugs in the corresponding URL below.
 PUBLISHER_NAME_ALIASES = {
+    ("atp", "shelbayh"): ("Abdullah Shelbayh",),
+    ("atp", "meligeni-rodrigues-alves"): ("Felipe Meligeni Alves",),
+    ("atp", "miyoshi-3eaae"): ("Kenta (2004) Miyoshi",),
+    ("atp", "fancutt"): ("Thomas Fancutt",),
+    ("atp", "yunchaokete"): ("Yunchaokete Bu",),
+    ("atp", "wong-d3ead"): ("Chak Lam Coleman Wong",),
+    ("atp", "auger-aliassime"): ("Felix Auger-Aliassime",),
+    ("atp", "wolf-e839f"): ("J.J. Wolf",),
+    ("atp", "damm-4f98a"): ("Martin Damm Jr",),
+    ("wta", "321157"): ("Irene Burillo Escorihuela",),
+    ("wta", "326735"): ("Leylah Annie Fernandez",),
+    ("wta", "330894"): ("Lucija Ciric-Bagaric",),
+    ("wta", "329464"): ("Maria Camila Torres Murcia",),
+    ("wta", "322638"): ("Maria Carle",),
+    ("wta", "323119"): ("Miriam Bianca Bulgaru",),
+    ("wta", "325725"): ("Catherine McNally",),
+    ("wta", "324830"): ("En Shuo Liang",),
+    ("wta", "325338"): ("Yulia Starodubtseva",),
     ("wta", "325898"): ("Maria Camila Osorio",),
 }
+# WTA alias evidence, in the same order as their IDs above:
+# https://www.wtatennis.com/players/321157/irene-burillo
+# https://www.wtatennis.com/players/326735/leylah-fernandez
+# https://www.wtatennis.com/players/330894/lucija-ciric-bagaric
+# https://www.wtatennis.com/players/329464/maria-torres-murcia
+# https://www.wtatennis.com/players/322638/maria-lourdes-carle
+# https://www.wtatennis.com/players/323119/miriam-bulgaru
+# https://www.wtatennis.com/players/325725/caty-mcnally
+# https://www.wtatennis.com/players/324830/en-shuo-liang
+# https://www.wtatennis.com/players/325338/yuliia-starodubtseva
+# https://www.wtatennis.com/players/325898/camila-osorio
+# TennisExplorer profile records omitted from the current ranked page scrape.
+# Nishikori's profile reports rank 436 although ATP page 9 omitted him. Truong's
+# profile has 2026 lower-level results but no current rank. The slugs are
+# publisher identities, not Underdog or Bovada IDs.
+ATP_PROFILE_SUPPLEMENTS = (
+    {
+        "publisher_id": "nishikori",
+        "name": "Kei Nishikori",
+        "active": True,
+        "profile_url": "https://www.tennisexplorer.com/player/nishikori/",
+    },
+    {
+        "publisher_id": "truong-914c5",
+        "name": "Thanh Minh Truong",
+        "active": True,
+        "profile_url": "https://www.tennisexplorer.com/player/truong-914c5/",
+    },
+)
 ATP_HOST = "www.tennisexplorer.com"
 WTA_HOST = "api.wtatennis.com"
 ATP_PAGE_SIZE = 50
 WTA_PAGE_SIZE = 100
 MIN_ATP_INTERVAL = 2.0
-MIN_WTA_INTERVAL = 0.25
+MIN_WTA_INTERVAL = 2.0
 MAX_PAGES = 100
 
 ATP_URL = "https://www.tennisexplorer.com/ranking/atp-men/{year}/?page={page}"
@@ -272,6 +321,39 @@ def _publisher_aliases(league: str, publisher_id: str) -> tuple[str, ...]:
     return PUBLISHER_NAME_ALIASES.get((league, str(publisher_id)), ())
 
 
+def _append_atp_profile_supplements(players: list[dict]) -> tuple[int, int]:
+    """Add reviewed TennisExplorer profile identities missing from its ranking pages."""
+    by_id = {str(player["publisher_id"]): player for player in players}
+    by_name = {normalize_name(player["name"]): player for player in players}
+    already_ranked = added = 0
+    for supplement in ATP_PROFILE_SUPPLEMENTS:
+        publisher_id = supplement["publisher_id"]
+        name_key = normalize_name(supplement["name"])
+        existing_id = by_id.get(publisher_id)
+        if existing_id is not None:
+            if normalize_name(existing_id["name"]) != name_key:
+                raise TennisSpineError(
+                    f"TennisExplorer profile {publisher_id} changed its published name"
+                )
+            already_ranked += 1
+            continue
+        existing_name = by_name.get(name_key)
+        if existing_name is not None:
+            raise TennisSpineError(
+                f"TennisExplorer profile {publisher_id} duplicates publisher name "
+                f"{supplement['name']!r} under ID {existing_name['publisher_id']}"
+            )
+        player = {
+            key: supplement[key]
+            for key in ("publisher_id", "name", "active")
+        }
+        players.append(player)
+        by_id[publisher_id] = player
+        by_name[name_key] = player
+        added += 1
+    return already_ranked, added
+
+
 def fetch_atp_population(
     *, year: int, fetch_page: Callable[[str], object] | None = None,
     request_counts: collections.Counter | None = None,
@@ -345,9 +427,18 @@ def fetch_atp_population(
             f"ATP TennisExplorer exceeded the {MAX_PAGES}-page safety bound"
         )
 
+    ranked_rows = len(players)
+    _validate_population("atp", players, ATP_PUBLISHER)
+    profile_supplements_ranked, profile_supplements_added = (
+        _append_atp_profile_supplements(players)
+    )
     _validate_population("atp", players, ATP_PUBLISHER)
     return {
         "players": players,
+        "ranked_rows": ranked_rows,
+        "profile_supplements_total": len(ATP_PROFILE_SUPPLEMENTS),
+        "profile_supplements_ranked": profile_supplements_ranked,
+        "profile_supplements_added": profile_supplements_added,
         "pages": page_count,
         "requests": request_counts[ATP_HOST],
         "publisher": ATP_PUBLISHER,
@@ -608,13 +699,26 @@ def _plan_publication(
                 "publisher": publisher,
             })
 
-    source_by_name = {
-        league: {
-            normalize_name(item["player"]["name"]): item
-            for item in plans[league]
-        }
-        for league in plans
-    }
+    source_by_name: dict[str, dict[str, dict]] = {}
+    for league in plans:
+        source_by_name[league] = {}
+        for item in plans[league]:
+            player = item["player"]
+            keys = {
+                normalize_name(player["name"]),
+                *(
+                    normalize_name(alias)
+                    for alias in _publisher_aliases(league, player["publisher_id"])
+                ),
+            }
+            for name_key in keys:
+                owner = source_by_name[league].get(name_key)
+                if owner is not None and owner["player"]["publisher_id"] != player["publisher_id"]:
+                    raise TennisSpineError(
+                        f"{league} canonical or reviewed alias name {name_key!r} "
+                        "matches multiple publisher identities"
+                    )
+                source_by_name[league][name_key] = item
     underdog_bindings: dict[str, list[dict]] = {league: [] for league in LEAGUES}
     for league in populations:
         for key, source_player in underdog_groups[league].items():
@@ -968,6 +1072,10 @@ def refresh(
                 "unique_names": len({normalize_name(p["name"]) for p in source_players}),
                 "pages": population["pages"],
                 "requests": population["requests"],
+                "ranked_rows": population.get("ranked_rows", len(source_players)),
+                "profile_supplements_total": population.get("profile_supplements_total", 0),
+                "profile_supplements_ranked": population.get("profile_supplements_ranked", 0),
+                "profile_supplements_added": population.get("profile_supplements_added", 0),
                 "matched_existing": existing,
                 "inserted": inserted,
                 "publisher_id_backfilled": sum(
@@ -1038,10 +1146,22 @@ def _print_results(results: dict) -> None:
         result = results[league]
         source_count = result["source_rows"]
         print(
-            f"{league} source {result['publisher']}: {source_count} of {source_count} "
-            f"ranked player rows across {result['pages']} of {result['pages']} pages; "
+            f"{league} source {result['publisher']}: {result['ranked_rows']} of "
+            f"{result['ranked_rows']} ranked player rows across "
+            f"{result['pages']} of {result['pages']} pages; "
             f"{result['requests']} requests for {result['pages']} pages"
         )
+        if result["profile_supplements_total"]:
+            included = (
+                result["profile_supplements_ranked"]
+                + result["profile_supplements_added"]
+            )
+            print(
+                f"  publisher profile supplements included {included} of "
+                f"{result['profile_supplements_total']} "
+                f"({result['profile_supplements_ranked']} already ranked, "
+                f"{result['profile_supplements_added']} added)"
+            )
         print(
             f"  publisher IDs {result['unique_ids']} of {source_count}; resolver-safe names "
             f"{result['unique_names']} of {source_count}"
@@ -1136,7 +1256,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"database: {db_path}{' (apply)' if args.apply else ' (dry run)'}")
     print(
         "source request plan: ATP paginated at 2 seconds apart; "
-        "WTA ranked API at 0.25 seconds apart; no per-player requests"
+        "WTA ranked API at 2 seconds apart; no per-player requests"
     )
     try:
         results = refresh(

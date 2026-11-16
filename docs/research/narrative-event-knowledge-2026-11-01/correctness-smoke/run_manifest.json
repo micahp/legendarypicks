@@ -1,0 +1,336 @@
+{
+  "agent_rating_summary": {
+    "human_ratings": 0,
+    "limitations": [
+      "One evaluator authored the candidate systems and scored the smoke; anonymity reduces label anchoring but is not independent human blinding.",
+      "This compares event-only and event-plus-player-facts candidates only. It does not compare the production DeepSeek generator.",
+      "A positive score difference is a screening signal only; it does not satisfy the human-rating adoption gate."
+    ],
+    "means": {
+      "nba": {
+        "combined_with_player_form": {
+          "factual_accuracy_1_to_5": 5.0,
+          "readability_1_to_5": 3.7,
+          "relevance_1_to_5": 4.0,
+          "specificity_1_to_5": 4.0
+        },
+        "event_facts_only": {
+          "factual_accuracy_1_to_5": 5.0,
+          "readability_1_to_5": 4.0,
+          "relevance_1_to_5": 3.0,
+          "specificity_1_to_5": 3.0
+        }
+      },
+      "nfl": {
+        "combined_with_player_form": {
+          "factual_accuracy_1_to_5": 5.0,
+          "readability_1_to_5": 4.0,
+          "relevance_1_to_5": 3.3,
+          "specificity_1_to_5": 3.9
+        },
+        "event_facts_only": {
+          "factual_accuracy_1_to_5": 5.0,
+          "readability_1_to_5": 4.0,
+          "relevance_1_to_5": 3.0,
+          "specificity_1_to_5": 3.0
+        }
+      }
+    },
+    "review_type": "agent-only blinded-to-source-label screening; not human grading; target/candidate bodies presented under anonymous IDs before reading crosswalk"
+  },
+  "as_of": "2026-11-01T06:15:52Z",
+  "baseline": "production DeepSeek generator not called; cached stories excluded because their complete evidence manifests are unavailable",
+  "candidate_definitions": {
+    "combined_with_player_form": "same matchup/cutoff and full retrieved local context, including eligible player_outlier facts",
+    "event_facts_only": "same matchup/cutoff, same complete retrieved evidence manifest, selector excludes player_outlier facts"
+  },
+  "candidate_variants": [
+    "event_facts_only",
+    "combined_with_player_form"
+  ],
+  "claim_count": 59,
+  "claim_cutoff_checks": {
+    "available_before_cutoff": 59,
+    "occurred_before_target_start": 59,
+    "total": 59
+  },
+  "claim_source_row_checks": {
+    "matched": 59,
+    "mismatched": 0
+  },
+  "complete_blind_pairs": 20,
+  "coverage": {
+    "database_mode": "read_only_query_only",
+    "nba": {
+      "complete_play_by_play_status": "not_stored_locally; scoring_plays contains scoring events only",
+      "complete_play_by_play_tables_confirmed": [],
+      "nba_schedule": {
+        "first_game_date": "2026-10-03",
+        "games": 1273,
+        "last_game_date": "2027-04-11",
+        "rows": 1273,
+        "scored_games": 88
+      },
+      "nba_sportsdataverse_games": {
+        "completed_games": 1322,
+        "first_game_date": "2025-10-21",
+        "games": 1322,
+        "last_game_date": "2026-06-13",
+        "max_ingested_at": "2026-10-26T03:50:15.161496+00:00",
+        "min_ingested_at": "2026-10-26T03:50:15.161496+00:00",
+        "rows": 1322
+      },
+      "play_by_play_named_tables": [],
+      "player_game_logs": {
+        "first_game_date": "2025-10-21",
+        "games": 1480,
+        "last_game_date": "2026-10-31",
+        "max_ingested_at": "2026-11-01 05:43:27",
+        "min_ingested_at": "2026-06-26 16:03:43",
+        "rows": 34974,
+        "rows_with_player_id": 34974,
+        "rows_with_stats_json": 34974,
+        "rows_with_team": 34974
+      },
+      "scoring_plays": {
+        "first_capture": "2026-06-09T18:10:34.772805+00:00",
+        "first_period": 1,
+        "games": 5,
+        "last_capture": "2026-06-29T19:36:32.666829+00:00",
+        "last_period": 4,
+        "rows": 2490,
+        "rows_with_capture_time": 2490
+      },
+      "scoring_plays_missing_fields": [
+        "non_scoring possessions",
+        "defensive events",
+        "rebounds/turnovers between scores",
+        "complete event sequence"
+      ],
+      "team_game_stats": {
+        "first_capture": "2026-08-02T21:17:22.716458+00:00",
+        "games": 1233,
+        "last_capture": "2026-08-31T02:36:34.830386+00:00",
+        "rows": 2466,
+        "rows_with_assists": 2462,
+        "rows_with_blocks": 2462,
+        "rows_with_capture_time": 2466,
+        "rows_with_fg_pct": 0,
+        "rows_with_fouls": 0,
+        "rows_with_ft_pct": 0,
+        "rows_with_largest_lead": 0,
+        "rows_with_lead_changes": 0,
+        "rows_with_rebounds": 2462,
+        "rows_with_steals": 2462,
+        "rows_with_tp_pct": 0,
+        "rows_with_turnovers": 2462
+      }
+    },
+    "nfl": {
+      "drive_reconstruction_tables": [],
+      "nfl_pbp": {
+        "first_game_date": "2010-09-09",
+        "fourth_down_rows": 65829,
+        "games": 4283,
+        "interceptions": 7144,
+        "last_game_date": "2026-10-29",
+        "lost_fumbles": 4686,
+        "rows": 756043,
+        "rows_with_down": 637041,
+        "rows_with_drive": 747266,
+        "rows_with_series_result": 756005,
+        "rows_with_success": 747399,
+        "touchdown_rows": 21858
+      },
+      "nfl_pbp_fields": [
+        "game_id",
+        "play_id",
+        "season",
+        "week",
+        "posteam",
+        "defteam",
+        "home_team",
+        "away_team",
+        "game_date",
+        "qtr",
+        "down",
+        "ydstogo",
+        "yardline_100",
+        "game_seconds_remaining",
+        "play_type",
+        "epa",
+        "wpa",
+        "qb_epa",
+        "air_yards",
+        "yards_gained",
+        "cpoe",
+        "passer_player_id",
+        "rusher_player_id",
+        "receiver_player_id",
+        "pass_location",
+        "run_location",
+        "run_gap",
+        "complete_pass",
+        "touchdown",
+        "series",
+        "series_result",
+        "drive",
+        "success",
+        "shotgun",
+        "sack",
+        "two_point_attempt",
+        "pass_attempt",
+        "rush_attempt",
+        "passing_yards",
+        "rushing_yards",
+        "receiving_yards",
+        "pass_touchdown",
+        "rush_touchdown",
+        "interception",
+        "lateral_receiver_player_id",
+        "lateral_receiver_player_name",
+        "lateral_receiving_yards",
+        "lateral_rusher_player_id",
+        "lateral_rusher_player_name",
+        "lateral_rushing_yards",
+        "qb_hit",
+        "qb_scramble",
+        "qb_dropback",
+        "no_huddle",
+        "penalty",
+        "penalty_team",
+        "fumble_lost",
+        "fumble",
+        "xpass",
+        "pass_oe"
+      ],
+      "nfl_pbp_missing_event_fields": [
+        "field_goal_result",
+        "extra_point_result",
+        "two_point_conv_result",
+        "posteam_score_post",
+        "defteam_score_post",
+        "fixed_drive_result"
+      ],
+      "nfl_snap_counts": {
+        "first_season": 2024,
+        "last_season": 2026,
+        "players": 2970,
+        "rows": 60647,
+        "rows_with_player_id": 60647,
+        "team_weeks": 1302
+      },
+      "per_play_capture_timestamp": "missing",
+      "player_game_logs": {
+        "first_game_date": "2010-09-09",
+        "games": 4471,
+        "last_game_date": "2026-10-29",
+        "max_ingested_at": "2026-10-30 09:10:11",
+        "min_ingested_at": "2026-06-26 15:47:48",
+        "rows": 294359,
+        "rows_with_player_id": 294264,
+        "rows_with_stats_json": 294359,
+        "rows_with_team": 294359
+      },
+      "schedule": {
+        "completed_games": 4471,
+        "first_game_date": "2010-09-09",
+        "games": 4635,
+        "last_game_date": "2027-01-10",
+        "rows": 4635
+      },
+      "score_snapshot_fields": "missing",
+      "team_game_results": {
+        "first_game_date": "2010-09-09",
+        "games": 4635,
+        "last_game_date": "2027-01-10",
+        "max_ingested_at": "2026-10-11 20:23:29",
+        "min_ingested_at": "2026-07-14 21:21:07",
+        "rows": 9270
+      },
+      "team_game_stats": {
+        "first_capture": "2026-07-14T21:21:07.286888+00:00",
+        "games": 285,
+        "last_capture": "2026-08-04T22:17:39.913718+00:00",
+        "rows": 570,
+        "rows_with_capture_time": 570
+      }
+    }
+  },
+  "database_mode": "SQLite mode=ro; PRAGMA query_only=ON",
+  "database_path": "/root/legendarypicks/backend/data/picks.dev.db",
+  "database_writes": 0,
+  "eligible_targets_with_both_outputs": {
+    "nba": 39,
+    "nfl": 14
+  },
+  "eligible_targets_with_distinct_outputs": {
+    "nba": 39,
+    "nfl": 10
+  },
+  "final_code_smoke_recheck": {
+    "candidate_outputs_recomputed": 40,
+    "database_mode": "SQLite mode=ro; PRAGMA query_only=ON",
+    "database_writes": 0,
+    "mismatched_pairs": 0,
+    "network_requests": 0,
+    "pairs_rechecked": 20
+  },
+  "focused_regression_tests": {
+    "command": "python -m unittest test_research_narrative_event_knowledge test_narrative_event_knowledge",
+    "failed": 0,
+    "passed": 38
+  },
+  "identical_pairs": {
+    "nfl": 1
+  },
+  "limitations": [
+    "agent-only ratings are not human evaluation",
+    "sample is purposive and not held out",
+    "event_only vs combined variants are research candidates, not the production baseline",
+    "NFL kickoff lacks UTC time locally; a conservative midnight UTC date boundary was used and the shared cutoff is six days before the first sampled NFL slate"
+  ],
+  "local_event_fact_counts": {
+    "nfl:snap_workload": 1283
+  },
+  "nba_recent_event_games": 88,
+  "network_requests": 0,
+  "nfl_recent_event_games": 59,
+  "numeric_scan_note": "A number-string scan is only a screen; the claim audit independently recomputes player averages and streaks from supporting local rows.",
+  "player_fact_counts": {
+    "nba:player_outlier": 457,
+    "nfl:player_outlier": 193
+  },
+  "production_changes": 0,
+  "renderer_wording_revision": "fact and date explicit; player claim names its source-game team and reports the prior average with stat units",
+  "selected_claim_categories": {
+    "nba:player_outlier": 10,
+    "nba:recent_streak": 20,
+    "nfl:player_outlier": 9,
+    "nfl:recent_streak": 20
+  },
+  "smoke_pairs": {
+    "nba": 10,
+    "nfl": 10
+  },
+  "source_revision_sha256": "bca819f37c1c310373ff02c1852ffd6fcab3ee2dd3077d6222e009de2cf1f359",
+  "source_revision_sha256_scope": "SHA-256 of backend/research_narrative_event_knowledge.py at final code; narrative_event_knowledge.py SHA-256: 7e05816fb01df92d78dc12a1717d7b66261db6820f993eecb657c626bf077f9f",
+  "source_tables": [
+    "nfl_schedule",
+    "nfl_pbp",
+    "nfl_snap_counts",
+    "team_game_stats",
+    "team_game_results",
+    "nba_schedule",
+    "nba_sportsdataverse_games",
+    "player_game_logs",
+    "players",
+    "nfl_teams",
+    "nba_teams"
+  ],
+  "surface_claim_checks": {
+    "renderer_matches": 59,
+    "total": 59
+  },
+  "unsupported_numeric_claims": 0
+}

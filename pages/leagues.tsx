@@ -4,6 +4,7 @@ import {
   leagueNavigationLabel,
   useSportNavigation,
 } from '../components/Navigation/sports'
+import { defaultLeagueTab, useLeagueTabPreferences } from '../components/Leagues/leagueTabPreferences'
 import SportIcon from '../components/SportIcon'
 
 const LEAGUE_CARDS: Record<string, { desc: string }> = {
@@ -29,6 +30,7 @@ function leagueRank(league: string): number {
 
 export default function LeaguesPage() {
   const { groups, loading, error } = useSportNavigation('leagues')
+  const tabPreferences = useLeagueTabPreferences()
   const leagues = groups
     .flatMap(group => group.competitions)
     .filter((competition, index, all) => all.findIndex(item => item.league === competition.league) === index)
@@ -53,13 +55,15 @@ export default function LeaguesPage() {
         ) : (
           <div aria-label="League directory" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {leagues.map(competition => {
+              const league = competition.league
+              const destinationTab = tabPreferences[league] ?? defaultLeagueTab(league)
               const card = LEAGUE_CARDS[competition.league] || {
                 desc: `${leagueNavigationLabel(competition.league)} coverage and schedules`,
               }
               return (
                 <Link
-                  key={competition.league}
-                  href={`/leagues/${competition.league}`}
+                  key={league}
+                  href={`/leagues/${league}?tab=${encodeURIComponent(destinationTab)}`}
                   className="group rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition-colors hover:border-emerald-500/30 hover:bg-zinc-900/80"
                 >
                   <div className="flex items-start gap-3">

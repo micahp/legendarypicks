@@ -61,5 +61,20 @@ class StoreOutputs(unittest.TestCase):
         self.assertNotIn("lock_week", open(job.__file__).read().replace("nfl_lock.lock_week and", ""))
 
 
+
+class ScoresOption(unittest.TestCase):
+    def test_each_scores_option_has_its_own_model_version(self):
+        self.assertEqual(job.MODEL_VERSIONS, {"placeholder": "nfl-playoff-odds-v1.2",
+                                              "history": "nfl-playoff-odds-v1.3"})
+        import nfl_sim
+        self.assertEqual(job.MODEL_VERSION, job.MODEL_VERSIONS[nfl_sim.DEFAULT_SCORES])
+
+    def test_unknown_scores_option_is_refused_before_any_write(self):
+        con = sqlite3.connect(":memory:")
+        with self.assertRaises(ValueError):
+            job.run(con, season=2026, week=6, n=10, scores="normal")
+        self.assertEqual(con.execute("SELECT COUNT(*) FROM sqlite_master").fetchone()[0], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

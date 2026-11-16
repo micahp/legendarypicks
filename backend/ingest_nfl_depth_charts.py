@@ -163,10 +163,13 @@ def run(year: int, cache_dir: str, dry_run: bool = False) -> int:
     if not dry_run:
         ensure_table(con)
 
-    # Two resolution paths, because players.nfl_gsis_id mixes id schemes: 651
-    # active players carry an ESPN-style synthetic key ('LOV121782') in a column
-    # named for gsis, and every one of them has zero game logs. They are exactly
-    # the rookies this ingest exists to cover, so a gsis-only join would miss the
+    # Two resolution paths, because players.nfl_gsis_id once mixed id schemes: 651
+    # active players carried an ESB id (Elias, register column esb_id, e.g. 'LOV121782')
+    # in a column named for gsis, and every one of them had zero game logs. Repaired
+    # 2026-10-20 by backend/scripts/nfl_identity_repair.py (ESB ids kept in
+    # player_source_ids as source 'esb'); the espn_id path below still covers any GSIS
+    # the column lacks. Those players were exactly the rookies this ingest exists to
+    # cover, so a gsis-only join would miss the
     # whole point -- Jeremiyah Love (ADP 17.5) resolved by neither name nor gsis.
     # espn_id bridges them: 619 of the 651 map to a real gsis in this artifact.
     # See docs/ROADMAP.md B7 for repairing the spine itself.

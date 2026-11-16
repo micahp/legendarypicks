@@ -49,6 +49,15 @@ a {
 .amber-edge {
   border-left: 3px solid rgb(245 158 11 / 0.5);
 }
+.graded-edge {
+  border-left: 3px solid rgb(16 185 129 / 0.6);
+  transition: border-color 300ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .graded-edge {
+    transition: none;
+  }
+}
 
 /* Thin dark scrollbar for scrolling areas inside panels (10-08: the slate's prop list showed the
    browser default). Firefox uses scrollbar-*, Chromium/Safari the ::-webkit-scrollbar rules. */

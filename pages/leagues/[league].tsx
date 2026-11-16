@@ -1,6 +1,6 @@
 import Head from 'next/head'
-import Link from 'next/link'
 import { useEffect } from 'react'
+import LeagueSwitcher from '../../components/Leagues/LeagueSwitcher'
 import ScheduleTab from '../../components/Leagues/ScheduleTab'
 import StandingsTab from '../../components/Leagues/StandingsTab'
 import StatsTab from '../../components/Leagues/StatsTab'
@@ -13,6 +13,13 @@ import NflMockDraftCard from '../../components/Leagues/NflMockDraftCard'
 import NflDraftBoardSurface from '../../components/Leagues/NflDraftBoardSurface'
 import NflScheduleTab from '../../components/Leagues/NflScheduleTab'
 import NflModelTab from '../../components/Leagues/NflModelTab'
+import NflPlayoffOddsTab from '../../components/Leagues/NflPlayoffOddsTab'
+import ComingSoonModelTab from '../../components/Leagues/ComingSoonModelTab';
+import FbsModelTab from '../../components/Leagues/FbsModelTab';
+import NbaModelTab from '../../components/Leagues/NbaModelTab';
+import PlayoffTrackerTab from '../../components/Leagues/PlayoffTrackerTab';
+import CfbPlayoffTrackerTab from '../../components/Leagues/CfbPlayoffTrackerTab';
+import NhlModelTab from '../../components/Leagues/NhlModelTab';
 import { useLeagueRouteState } from '../../components/Leagues/hooks/useLeagueRouteState'
 import { useScheduleData } from '../../components/Leagues/hooks/useScheduleData'
 import { useScheduleAutoDate } from '../../components/Leagues/hooks/useScheduleAutoDate'
@@ -27,7 +34,6 @@ import { useNflTransactions } from '../../components/Leagues/hooks/useNflTransac
 import {
   LEAGUE_NAMES,
   leagueLabel,
-  orderLeagues,
   localToday,
 } from '../../components/Leagues/presentation'
 import SportIcon from '../../components/SportIcon'
@@ -44,6 +50,9 @@ const TAB_LABELS: Record<HubTab, string> = {
   stats: 'Stats',
   schedule: 'Schedule',
   model: 'Model',
+  'playoff-odds': 'Playoff Odds',
+  'playoff-tracker': 'Playoff Tracker',
+  'cfb-playoff': 'CFB Playoff',
   news: 'News',
   rankings: 'Rankings',
   predict: 'Predict',
@@ -154,6 +163,10 @@ export default function LeagueHubPage() {
     <>
       <Head>
         <title>{leagueName} — Legendary Picks</title>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block&icon_names=neurology"
+        />
       </Head>
 
       <div className="space-y-4">
@@ -161,14 +174,6 @@ export default function LeagueHubPage() {
         <div className="flex items-center gap-3">
           <SportIcon league={route.league} className="h-6 w-6 shrink-0 text-zinc-100" />
           <h1 className="text-3xl font-extrabold tracking-tight">{leagueName}</h1>
-          {isNFL && (
-            <Link
-              href="/nfl/playoff-odds"
-              className="ml-auto whitespace-nowrap text-sm text-zinc-400 transition-colors hover:text-emerald-400"
-            >
-              Playoff odds
-            </Link>
-          )}
         </div>
         {!route.offerable && !route.coverageLoading ? (
           <LeagueUnavailable league={route.league} />
@@ -256,6 +261,7 @@ export default function LeagueHubPage() {
             games={footballSchedule.games}
             gamesLoading={footballSchedule.gamesLoading}
             gamesError={footballSchedule.gamesError}
+            unreadDays={footballSchedule.unreadDays}
             catalogLoading={footballSchedule.catalogLoading}
             catalogError={footballSchedule.catalogError}
             onSelectWeek={route.selectScheduleWeek}
@@ -284,6 +290,13 @@ export default function LeagueHubPage() {
         )}
 
         {route.activeTab === 'model' && isNFL && <NflModelTab />}
+        {route.activeTab === 'playoff-odds' && isNFL && <NflPlayoffOddsTab showIntro={false} />}
+        {route.activeTab === 'playoff-tracker' && route.league === 'ncaaf' && <PlayoffTrackerTab />}
+        {route.activeTab === 'cfb-playoff' && route.league === 'ncaaf' && <CfbPlayoffTrackerTab week={9} />}
+        {route.activeTab === 'model' && route.league === 'nhl' && <NhlModelTab />}
+        {route.activeTab === 'model' && route.league === 'ncaaf' && <FbsModelTab />}
+        {route.activeTab === 'model' && route.league === 'nba' && <NbaModelTab />}
+        {route.activeTab === 'model' && ['mlb', 'ufc'].includes(route.league) && <ComingSoonModelTab />}
 
         {route.activeTab === 'news' && (
           <NewsTab
@@ -336,44 +349,6 @@ function LeagueHubSkeleton() {
   )
 }
 
-function LeagueSwitcher({ activeLeague }: { activeLeague: string }) {
-  // Built from the coverage registry, not from a constant. A league appears here only
-  // once something verified a season of it against the publisher — the same mechanism
-  // as ESPN's season dropdown, which lists exactly the seasons it can fill.
-  //
-  // While coverage is loading we show nothing rather than a hardcoded fallback: an
-  // optimistic list that later shrinks is worse than a list that arrives late, and a
-  // fallback is how the gate quietly stops being the gate.
-  const { loading, offeredLeagues } = useCoverage()
-  const leagues = orderLeagues(
-    // The league being viewed stays reachable in the nav even mid-load, so the current
-    // page never lacks its own tab.
-    offeredLeagues.includes(activeLeague) || !activeLeague
-      ? offeredLeagues
-      : [...offeredLeagues, activeLeague],
-  )
-
-  if (loading || !leagues.length) return <nav aria-label="Leagues" className="h-5" />
-
-  return (
-    <nav
-      aria-label="Leagues"
-      className="-mx-4 flex items-center gap-3 overflow-x-auto overflow-y-hidden px-4 text-sm sm:gap-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    >
-      {leagues.map(league => (
-        <Link
-          key={league}
-          href={`/leagues/${league}`}
-          aria-current={activeLeague === league ? 'page' : undefined}
-          className="whitespace-nowrap text-zinc-500 transition-colors hover:text-emerald-400"
-        >
-          {leagueLabel(league)}
-        </Link>
-      ))}
-    </nav>
-  )
-}
-
 /**
  * What a league we cannot vouch for renders instead of a hub full of numbers.
  *
@@ -412,12 +387,16 @@ function HubTabs({
   onSelect: (tab: HubTab) => void
   labels: Record<HubTab, string>
 }) {
+  const orderedTabs: HubTab[] = tabs.includes('model')
+    ? ['model', ...tabs.filter(tab => tab !== 'model')]
+    : tabs
+
   return (
     // `overflow-x-auto` alone makes the box scrollable on BOTH axes, and the buttons'
     // `-mb-px` against a `border-b-2` leaves it about a pixel of vertical overflow —
     // enough that the strip drags up and down under a thumb. Pin the y axis.
     <div className="flex gap-0 overflow-x-auto overflow-y-hidden border-b border-zinc-800 -mx-4 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {tabs.map(tab => (
+      {orderedTabs.map(tab => (
         <button
           key={tab}
           type="button"

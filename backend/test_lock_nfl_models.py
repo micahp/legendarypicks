@@ -38,9 +38,11 @@ class Due(unittest.TestCase):
         self._tmp.cleanup()
 
     def lock_as(self, version, model="m"):
-        nl.start_run(self.con, "r-" + version[:6], 2026, 5, version, {}, model=model)
-        nl.lock_week(self.con, "r-" + version[:6], 2026, 5, lambda h, a, n: (20.0, 17.0, 0.6),
+        run_id = "r-" + version[:6]
+        nl.start_run(self.con, run_id, 2026, 5, version, {}, model=model)
+        nl.lock_week(self.con, run_id, 2026, 5, lambda h, a, n: (20.0, 17.0, 0.6),
                      now=dt.datetime(2026, 10, 11, 15, 31, tzinfo=UTC), min_lead=lm.LEAD)
+        nl.finish_run(self.con, run_id, "ok")
 
     def test_a_game_is_due_for_every_model_inside_the_window_and_for_none_outside(self):
         inside = lm.due_by_model(self.con, dt.datetime(2026, 10, 11, 15, 30, tzinfo=UTC))
@@ -83,6 +85,15 @@ class Isolation(unittest.TestCase):
         with mock.patch.object(lm, "DB", "/x/backend/data/picks.db"):
             with self.assertRaises(SystemExit):
                 lm.main([])
+
+    def test_production_database_requires_the_explicit_allow_flag(self):
+        with self.assertRaisesRegex(SystemExit, "without --allow-prod"):
+            lm.validate_db_target("/x/backend/data/picks.db")
+        lm.validate_db_target("/x/backend/data/picks.db", allow_prod=True)
+
+    def test_allow_prod_cannot_accidentally_target_the_dev_database(self):
+        with self.assertRaisesRegex(SystemExit, "requires LP_DB_PATH to end in picks.db"):
+            lm.validate_db_target("/x/backend/data/picks.dev.db", allow_prod=True)
 
 
 if __name__ == "__main__":

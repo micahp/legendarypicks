@@ -10,6 +10,7 @@ from settlement.boxscore_extract import (
     _find_player_stat,
     _find_player_compound_stat,
     _player_appeared,
+    _player_did_not_play,
 )
 import sys
 
@@ -17,12 +18,15 @@ from settlement.mlb_api import _fetch_mlb_gamepk, _fetch_mlb_final
 from settlement.mlb_settle import _settle_mlb_props
 from settlement.ufc_settle import (
     _settle_ufc_props,
+    _ufcstats_game_is_final,
 )
 from settlement.mls_settle import _settle_mls_props
 from settlement.tennis_settle import _settle_tennis_props, _tennis_snapshot
 from settlement.wc_settle import _settle_wc_props
 from settlement.ncaaf_settle import _settle_ncaaf_props
+from settlement.nba_settle import settle_from_sportsdataverse
 from settlement import stored_summary
+import nba_sportsdataverse
 
 # The soccer competitions that grade off the roster-stat surface.
 _SOCCER_LEAGUES = ("mls", "lcup", "ligamx")
@@ -229,8 +233,33 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                     "errors": 0, "msg": f"game {game_id}: no unsettled props"}
         return _settle_wc_props(con, espn_event_id, props)
 
+    # A completed SportsDataverse game is an authoritative finality record and
+    # already carries its published score. It can settle NBA props without an
+    # ESPN scoreboard snapshot or ESPN player boxscore.
+    nba_source_game = (
+        nba_sportsdataverse.current_source_game(con, espn_event_id)
+        if league == "nba" and espn_event_id else None
+    )
+    if nba_source_game is not None and game["final_home"] is None:
+        con.execute(
+            "UPDATE prop_games SET final_home=?,final_away=? WHERE id=?",
+            (nba_source_game["home_score"], nba_source_game["away_score"], game_id),
+        )
+        con.commit()
+        game = {key: game[key] for key in game.keys()}
+        game["final_home"] = nba_source_game["home_score"]
+        game["final_away"] = nba_source_game["away_score"]
+
+    # UFCStats publishes completed bouts only. When every fighter with a numeric
+    # prop has one unambiguous, result-bearing row, that source is sufficient
+    # finality evidence and settlement does not need a scoreboard snapshot.
+    ufcstats_final = (
+        league == "ufc"
+        and _ufcstats_game_is_final(con, game_id, game["date"])
+    )
+
     # ── Is the game actually over? ──────────────────────────────────────────────
-    if game["final_home"] is None:
+    if game["final_home"] is None and not ufcstats_final:
         snapshot = _latest_scoreboard_snapshot(con, league, espn_event_id)
         if not snapshot:
             return _pending_result(
@@ -345,6 +374,22 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             boxscore_loader=lambda: stored_summary.boxscore(
                 con, league, espn_event_id))
 
+    if league == "nba":
+        props = con.execute("""
+            SELECT p.id,p.market,p.line,p.side,p.player_id
+              FROM props p
+              LEFT JOIN prop_results pr ON pr.prop_id=p.id
+             WHERE p.game_id=? AND pr.prop_id IS NULL
+        """, (game_id,)).fetchall()
+        if not props:
+            return {"settled": 0, "void": 0, "unmappable": 0, "pending": 0,
+                    "errors": 0, "msg": f"game {game_id}: no unsettled props"}
+        sourced = settle_from_sportsdataverse(
+            con, game_id, str(espn_event_id), props
+        )
+        if sourced is not None:
+            return sourced
+
     box = stored_summary.boxscore(con, league, espn_event_id)
     if not box:
         return _pending_result(
@@ -373,6 +418,13 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
             unmappable += 1
             continue
 
+        if not prop["espn_id"]:
+            # Name only: no player-ID match. The box-score section is found by the stored club, and that club is
+            # today's club, not the club the player was on in this game. Leave it pending. See
+            # docs/issues/settlement-name-only-pending.md.
+            pending += 1
+            continue
+
         category, stat_key = mapping
 
         # Handle compound stats
@@ -386,11 +438,11 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
                 [component[0] for component in components],
                 [component[1] for component in components],
                 espn_id=prop["espn_id"],
-                missing_as_zero=league in ("ncaaf", "nfl"))
+                missing_as_zero=league in ("ncaaf", "nfl"), league=league)
         else:
             actual = _find_player_stat(
                 box, prop["player_name"], prop["player_team"],
-                category, stat_key, espn_id=prop["espn_id"])
+                category, stat_key, espn_id=prop["espn_id"], league=league)
 
         # ESPN omits a player from a category when his result there is zero.
         # Grade that omission as zero only when another boxscore category
@@ -400,8 +452,23 @@ def settle_game(con: sqlite3.Connection, game_id: int) -> dict:
         if (actual is None and league in ("ncaaf", "nfl")
                 and _player_appeared(
                     box, prop["player_name"], prop["player_team"],
-                    espn_id=prop["espn_id"])):
+                    espn_id=prop["espn_id"], league=league)):
             actual = 0.0
+
+        # A missing player stat is not a zero. For NBA, only ESPN's explicit
+        # didNotPlay marker is sufficient evidence to settle as a void.
+        if (actual is None and league == "nba"
+                and _player_did_not_play(
+                    box, prop["player_name"], prop["player_team"],
+                    espn_id=prop["espn_id"], league=league)):
+            try:
+                con.execute(
+                    "INSERT INTO prop_results(prop_id, actual_value, hit, settled_at) "
+                    "VALUES (?,NULL,NULL,?)", (prop["id"], now))
+                void += 1
+            except Exception:
+                errors += 1
+            continue
 
         if actual is None:
             pending += 1

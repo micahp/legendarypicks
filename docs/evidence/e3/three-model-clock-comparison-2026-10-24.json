@@ -1,0 +1,253 @@
+{
+ "T1_play_timing_runoff": {
+  "interception": {
+   "A": {
+    "draw_median": 8.0,
+    "w1_seconds": 0.81
+   },
+   "B": {
+    "draw_median": 8.0,
+    "w1_seconds": 1.2
+   },
+   "C": {
+    "draw_median": 7.7,
+    "w1_seconds": 1.06
+   },
+   "n": 36,
+   "observed_median": 9.0
+  },
+  "pass_complete": {
+   "A": {
+    "draw_median": 36.0,
+    "w1_seconds": 0.29
+   },
+   "B": {
+    "draw_median": 36.0,
+    "w1_seconds": 0.29
+   },
+   "C": {
+    "draw_median": 36.4,
+    "w1_seconds": 0.44
+   },
+   "n": 2008,
+   "observed_median": 36.0
+  },
+  "pass_incomplete": {
+   "A": {
+    "draw_median": 5.0,
+    "w1_seconds": 0.08
+   },
+   "B": {
+    "draw_median": 5.0,
+    "w1_seconds": 0.06
+   },
+   "C": {
+    "draw_median": 4.7,
+    "w1_seconds": 0.31
+   },
+   "n": 1051,
+   "observed_median": 5.0
+  },
+  "run": {
+   "A": {
+    "draw_median": 38.0,
+    "w1_seconds": 0.52
+   },
+   "B": {
+    "draw_median": 38.0,
+    "w1_seconds": 0.25
+   },
+   "C": {
+    "draw_median": 38.1,
+    "w1_seconds": 0.41
+   },
+   "n": 2560,
+   "observed_median": 38.0
+  },
+  "sack": {
+   "A": {
+    "draw_median": 40.0,
+    "w1_seconds": 3.35
+   },
+   "B": {
+    "draw_median": 41.0,
+    "w1_seconds": 0.94
+   },
+   "C": {
+    "draw_median": 41.1,
+    "w1_seconds": 0.76
+   },
+   "n": 185,
+   "observed_median": 40.0
+  },
+  "touchdown": {
+   "A": {
+    "draw_median": 5.0,
+    "w1_seconds": 0.31
+   },
+   "B": {
+    "draw_median": 5.0,
+    "w1_seconds": 0.23
+   },
+   "C": {
+    "draw_median": 5.2,
+    "w1_seconds": 0.38
+   },
+   "n": 192,
+   "observed_median": 6.0
+  }
+ },
+ "T1b_C_in_play_vs_tracking": {
+  "fumble": {
+   "C_draw_median": 5.1,
+   "n": 37,
+   "observed_median": 4.8,
+   "w1_seconds": 0.83
+  },
+  "interception": {
+   "C_draw_median": 4.6,
+   "n": 63,
+   "observed_median": 4.7,
+   "w1_seconds": 0.16
+  },
+  "other": {
+   "C_draw_median": 0.7,
+   "n": 64,
+   "observed_median": 0.8,
+   "w1_seconds": 0.09
+  },
+  "pass_complete": {
+   "C_draw_median": 5.4,
+   "n": 2119,
+   "observed_median": 5.4,
+   "w1_seconds": 0.02
+  },
+  "pass_incomplete": {
+   "C_draw_median": 4.4,
+   "n": 1090,
+   "observed_median": 4.5,
+   "w1_seconds": 0.06
+  },
+  "run": {
+   "C_draw_median": 4.4,
+   "n": 2613,
+   "observed_median": 4.4,
+   "w1_seconds": 0.02
+  },
+  "sack": {
+   "C_draw_median": 4.3,
+   "n": 237,
+   "observed_median": 4.3,
+   "w1_seconds": 0.11
+  },
+  "touchdown": {
+   "C_draw_median": 4.4,
+   "n": 262,
+   "observed_median": 4.55,
+   "w1_seconds": 0.14
+  }
+ },
+ "T2_end_of_quarter": {
+  "A": {
+   "share_reaching_quarter_end": 0.1432
+  },
+  "B": {
+   "share_reaching_quarter_end": 0.0473
+  },
+  "C": {
+   "share_reaching_quarter_end": 0.0452
+  },
+  "n_plays": 609,
+  "observed_share_reaching_quarter_end": 0.0246
+ },
+ "T3_drive_duration": {
+  "A": {
+   "mean_abs_error_s": 29.7,
+   "median_s": 135.9
+  },
+  "B": {
+   "mean_abs_error_s": 20.0,
+   "median_s": 128.9
+  },
+  "C": {
+   "mean_abs_error_s": 20.1,
+   "median_s": 128.2
+  },
+  "n_drives": 1007,
+  "observed_median_s": 128.0,
+  "skipped": {
+   "crosses a quarter": 111,
+   "fewer than 3 plays": 71,
+   "unresolved or censored runoff": 5
+  }
+ },
+ "T4_complete_game_realism": {
+  "A": {
+   "game_total_median_s": 20.0,
+   "game_total_p10_s": -162.0,
+   "game_total_p90_s": 286.5,
+   "mean_abs_error_s": 79.9,
+   "median_error_s": -7.8,
+   "overshoot_share": 0.48
+  },
+  "B": {
+   "game_total_median_s": 25.0,
+   "game_total_p10_s": -127.5,
+   "game_total_p90_s": 310.5,
+   "mean_abs_error_s": 56.3,
+   "median_error_s": 1.8,
+   "overshoot_share": 0.4922
+  },
+  "C": {
+   "game_total_median_s": 26.9,
+   "game_total_p10_s": -140.5,
+   "game_total_p90_s": 320.4,
+   "mean_abs_error_s": 56.6,
+   "median_error_s": 0.8,
+   "overshoot_share": 0.5067
+  },
+  "games_with_four_quarters": 51,
+  "n_quarters": 218,
+  "skipped": {
+   "no quarter-end marker after the last play": 1,
+   "unresolved runoff": 5
+  }
+ },
+ "common_plays_all_models_draw": 6032,
+ "consistency_with_audit": {
+  "audit plays": 15768,
+  "late-half flag agrees": 15768,
+  "outcome agrees": 15768,
+  "stop context agrees": 15768
+ },
+ "design": {
+  "draws_per_play": 100,
+  "fit_weeks": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "min_pool": 50,
+  "promotion": "not a promotion test; no model is adopted or rejected on this comparison alone",
+  "seed": 20261025,
+  "test_weeks": [
+   6,
+   7,
+   8,
+   9
+  ],
+  "test_weeks_previously_examined": true
+ },
+ "inputs": {
+  "audit_csv_sha_prefix": "11f8dc2b",
+  "flags_csv_sha_prefix": "00f38a10"
+ },
+ "refused_modelled_plays": {
+  "A": 506,
+  "B": 170,
+  "C": 240
+ },
+ "test_plays_total": 9379
+}

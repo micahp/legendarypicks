@@ -1,0 +1,57 @@
+{
+ "columns": [
+  "season",
+  "season_type",
+  "week",
+  "game_id",
+  "play_id",
+  "scorer",
+  "kind",
+  "result",
+  "made",
+  "qtr",
+  "quarter_seconds_remaining",
+  "game_seconds_remaining",
+  "period",
+  "margin",
+  "opening_drive",
+  "first_td",
+  "first_score",
+  "defensive_td",
+  "skipped_no_play_rows",
+  "scorer_coach"
+ ],
+ "exclusions": {
+  "canceled_extra_point_rows (penalty nullified the kick; no attempt flag)": {
+   "POST": 1,
+   "REG": 11
+  },
+  "diagnostics": {
+   "eligible_try_after_penalty_flagged_td": 97,
+   "max_rows_skipped_before_try": 4,
+   "touchdown_rows": 5687,
+   "try_linked_across_kickoff_row": 1
+  },
+  "unlinked_try_rows": {
+   "touchdown_without_try:POST:next=none": 1,
+   "touchdown_without_try:REG:next=no_play": 8,
+   "touchdown_without_try:REG:next=none": 23
+  }
+ },
+ "generator": "scripts/nfl_sequence/build_try_situation.py",
+ "generator_sha256": "fcb948c6061bf29e41111ced61c78f2ed22d6a6f1a9e017137d16a4599fbc419",
+ "output": {
+  "path": "docs/fixtures/e2/try_situation_2022_2025.csv",
+  "postseason_rows": 287,
+  "regular_season_rows": 5368,
+  "rows": 5655,
+  "sha256": "1ae11f0788508158cf822814157b5df09073fa6954f45e5829bacfa6cfd98864"
+ },
+ "sources": {
+  "play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+  "play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+  "play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+  "play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+ },
+ "window": "season 2022-2025, season_type REG and POST (week <= 18 for REG)"
+}

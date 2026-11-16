@@ -75,6 +75,21 @@ FEATURE_TABLES = {
     "team_game_results": "team-stats proof feature",
     "settlement_attempts": "NCAAF CFBD settler (repair order step 5) -- durable attempt audit on DEV and PROD",
     "history_refresh_state": "environment-local scheduler state (prod-only)",
+    "nfl_player_birth_dates": "dev-only NFL age research; no released app reader",
+    "tennis_points": "Flashscore point-sequence archive for tennis research; no released app reader",
+    "tennis_model_lock_distributions": "CP4 frozen count and total-games distributions; dev-only by design (the lock sweep creates it on picks.dev.db only); research reader only",
+    "tennis_model_lock_distributions": "CP4 frozen count and total-games distributions; dev-only by design (the lock sweep creates it on picks.dev.db only); research reader only",
+    "nba_sportsdataverse_games": "NBA SportsDataverse (hoopR) ingest -- not deployed to prod this release",
+    "nba_sportsdataverse_releases": "NBA SportsDataverse (hoopR) ingest -- not deployed to prod this release",
+    "player_game_logs_sportsdataverse": "NBA SportsDataverse (hoopR) ingest -- not deployed to prod this release",
+    "nba_player_boxes_nbacom": "NBA.com box-score ingest; no released app reader",
+    "nfl_game_context": "NFL game-information research data; no released app reader",
+    "nfl_game_info_load_log": "NFL game-information research load log; no released app reader",
+    "nfl_game_officials": "NFL crew research data; no released app reader",
+    "nfl_game_officials_raw": "NFL crew source capture for research; no released app reader",
+    "nfl_game_xwalk": "NFL game-information research crosswalk; no released app reader",
+    "nfl_pbp_penalty": "NFL retrospective penalty research; no released app reader",
+    "referee_check": "NFL referee research audit; no released app reader",
 }
 
 # Columns on shared tables that belong to the team-stats feature and are
@@ -86,8 +101,32 @@ FEATURE_COLUMNS = {
     ("team_game_stats", "source"): "team-stats ingest feature",
 }
 
+# Season windows on shared tables that are dev-only research backfill, not a
+# promotion that did not happen. prod deliberately serves only the live window;
+# the historical seasons exist on dev for research and are built DEV-only by
+# scripts/nfl-availability.sh. A season under the threshold is FEATURE
+# (advisory), the same decision as FEATURE tables.
+FEATURE_SEASONS_BEFORE = {
+    ("player_game_availability", "nfl"): (
+        2024,
+        "pre-2024 NFL availability is dev-only player-splits research; prod serves 2024+",
+    ),
+}
+
 BLOCKING_PREFIXES = ("SCHEMA", "SEASONS")
 ADVISORY_PREFIXES = ("VOLUME", "FEATURE")
+
+
+def _feature_season_reason(table, league, season):
+    """Reason a (table, league, season) is dev-only research, or None."""
+    entry = FEATURE_SEASONS_BEFORE.get((table, league))
+    if not entry:
+        return None
+    threshold, reason = entry
+    try:
+        return reason if int(season) < threshold else None
+    except (TypeError, ValueError):
+        return None
 
 
 def _open(path):
@@ -124,6 +163,42 @@ def _seasons(con, table):
             f'SELECT DISTINCT league, season FROM "{table}"')
         if r[0] is not None and r[1] is not None
     }
+
+
+def _scoreboard_only_coverage(con, table, league, season):
+    """Explain coverage markers that do not represent a team-stats population.
+
+    The release season gate compares product data populations. A manually
+    recorded scoreboard progress marker for a league with no teams or paired
+    stats is useful telemetry, but there is no team-stats season to promote.
+    Keep the exception narrow and data-backed; complete/reconciled coverage
+    rows remain blocking when they are missing from the other database.
+    """
+    if table != "team_stats_coverage":
+        return None
+    columns = _columns(con, table)
+    required = {
+        "league", "season", "status", "source", "expected_teams",
+        "fetched_teams", "paired_stat_games",
+    }
+    if not required.issubset(columns):
+        return None
+    rows = con.execute(
+        "SELECT status, source, expected_teams, fetched_teams, paired_stat_games "
+        "FROM team_stats_coverage WHERE LOWER(league)=LOWER(?) "
+        "AND CAST(season AS TEXT)=?",
+        (league, str(season)),
+    ).fetchall()
+    if rows and all(
+        status == "in_progress"
+        and source == "scoreboard_snapshots"
+        and expected_teams == 0
+        and fetched_teams == 0
+        and paired_stat_games == 0
+        for status, source, expected_teams, fetched_teams, paired_stat_games in rows
+    ):
+        return "scoreboard progress only; no team-stat population"
+    return None
 
 
 def main(argv=None) -> int:
@@ -189,6 +264,18 @@ def main(argv=None) -> int:
         if ps is None or ds is None:
             continue
         for league, season in sorted(ds - ps):
+            telemetry = _scoreboard_only_coverage(dev, table, league, season)
+            if telemetry:
+                findings.append(
+                    f"FEATURE  {table}: ({league}, {season}) in DEV, missing from "
+                    f"PROD ({telemetry})")
+                continue
+            feature_reason = _feature_season_reason(table, league, season)
+            if feature_reason:
+                findings.append(
+                    f"FEATURE  {table}: ({league}, {season}) in DEV, missing from "
+                    f"PROD ({feature_reason})")
+                continue
             if table in FEATURE_TABLES:
                 findings.append(
                     f"FEATURE  {table}: ({league}, {season}) in DEV, missing from "
@@ -197,6 +284,18 @@ def main(argv=None) -> int:
             findings.append(
                 f"SEASONS  {table}: ({league}, {season}) in DEV, missing from PROD")
         for league, season in sorted(ps - ds):
+            telemetry = _scoreboard_only_coverage(prod, table, league, season)
+            if telemetry:
+                findings.append(
+                    f"FEATURE  {table}: ({league}, {season}) in PROD, missing from "
+                    f"DEV ({telemetry})")
+                continue
+            feature_reason = _feature_season_reason(table, league, season)
+            if feature_reason:
+                findings.append(
+                    f"FEATURE  {table}: ({league}, {season}) in PROD, missing from "
+                    f"DEV ({feature_reason})")
+                continue
             if table in FEATURE_TABLES:
                 findings.append(
                     f"FEATURE  {table}: ({league}, {season}) in PROD, missing from "

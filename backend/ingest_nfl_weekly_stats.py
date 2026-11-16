@@ -56,10 +56,13 @@ DB = os.environ.get("LP_DB_PATH") or os.path.join(
 
 SOURCE = "nflverse_weekly"
 CACHE_MAX_AGE_S = 6 * 3600
-# nflverse's player crosswalk (gsis_id, espn_id, ...). players.nfl_gsis_id mixes id schemes:
-# rookies carry an ESPN-style key ('BRA531428'), so a gsis-only join left 186 2026 players
-# (498 rows: Zachariah Branch, Jeremiyah Love, Kenyon Sadiq) with no player_id on 10-05.
-# gsis -> espn_id -> players.espn_id bridges them by ID, as ingest_nfl_depth_charts does.
+# nflverse's player crosswalk (gsis_id, espn_id, ...). On 10-05 players.nfl_gsis_id held
+# ESB ids (Elias, register column esb_id, e.g. Zachariah Branch's 'BRA531428') for rookies,
+# so a gsis-only join left 186 2026 players (498 rows: Branch, Jeremiyah Love, Kenyon Sadiq)
+# with no player_id. Repaired 2026-10-20 (backend/scripts/nfl_identity_repair.py; the ESB ids now
+# live in player_source_ids as source 'esb'). 3-letter+6-digit values that remain are real
+# GSIS ids of historic players. gsis -> espn_id -> players.espn_id still bridges by ID, as
+# ingest_nfl_depth_charts does, for any player whose GSIS the column lacks.
 PLAYERS_URL = ("https://github.com/nflverse/nflverse-data/releases/download/"
                "players/players.parquet")
 URL = ("https://github.com/nflverse/nflverse-data/releases/download/"
@@ -278,9 +281,14 @@ def build_rows(path: str, all_positions: bool = False):
         sac = _num(row["sacks_suffered"]) or 0
         car = _num(row["carries"]) or 0
         tgt = _num(row["targets"]) or 0
+        # A post-catch lateral is credited to the player who ends the play with
+        # receiving yards and any touchdown but no target and no reception, so
+        # target volume cannot gate the receiving fields or those yards vanish.
+        rec_yds = _num(row["receiving_yards"]) or 0
+        rec_td = _num(row["receiving_tds"]) or 0
         converted_two_point = any(_num(row[key]) for key in _TWO_POINT_COLS)
         if not all_positions and not (
-            att or sac or car or tgt or converted_two_point
+            att or sac or car or tgt or rec_yds or rec_td or converted_two_point
         ):
             continue
 
@@ -304,7 +312,7 @@ def build_rows(path: str, all_positions: bool = False):
         pat_att_val = _num(row["pat_att"]) or 0
         is_kicker = bool(fg_att or pat_att_val)
         groups = ((_PASS_KEYS, att or sac), (_RUSH_KEYS, car),
-                  (_RECV_KEYS, tgt), (_KICK_KEYS, is_kicker))
+                  (_RECV_KEYS, tgt or rec_yds or rec_td), (_KICK_KEYS, is_kicker))
         for keys, active in groups:
             if not active:
                 continue

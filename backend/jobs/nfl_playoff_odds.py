@@ -4,8 +4,10 @@
 Writes team_ratings and playoff_odds for one run (read by /api/nfl/playoff-odds and /api/nfl/ratings).
 It does NOT lock projections or grade them: locking is nfl_lock.lock_week and grading is
 grade_nfl_locks.py, the one shared path, so this job cannot lock a week by accident.
-Simulation is nfl_sim as on dev (played games keep their results; scores of simulated games are the
-documented placeholder split), seeded by nfl_seeding's published tiebreak procedure.
+Simulation is nfl_sim (played games keep their results), seeded by nfl_seeding's published tiebreak
+procedure. --scores picks how simulated games are scored: "placeholder" (the margin split around 40,
+model version v1.2) or "history" (outcome from the calibrated probability with real ties, score an
+actual historical final, nfl_sim_scores; model version v1.3). The default is nfl_sim.DEFAULT_SCORES.
 
 The job fails before simulation if the schedule is stale. It never calls ESPN or mutates the
 schedule ingest.
@@ -32,7 +34,9 @@ from check_nfl_schedule_scores import GRACE_HOURS, overdue_unscored
 
 DB = os.environ.get("LP_DB_PATH") or os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "picks.dev.db")
-MODEL_VERSION = "nfl-playoff-odds-v1.2"
+MODEL_VERSIONS = {"placeholder": "nfl-playoff-odds-v1.2", "history": "nfl-playoff-odds-v1.3"}
+SIMULATION_LABELS = {"placeholder": "placeholder-split-40", "history": "history-outcome-first"}
+MODEL_VERSION = MODEL_VERSIONS[nfl_sim.DEFAULT_SCORES]
 SIMULATIONS = 20_000
 MIN_AVAILABLE_KIB = 1_572_864
 MIN_SWAP_FREE_KIB = 262_144
@@ -91,12 +95,12 @@ def resource_state():
     return state
 
 
-def _previous_odds(con, season, week):
+def _previous_odds(con, season, week, model_version=None):
     row = con.execute(
         "SELECT o.run_id,o.week FROM playoff_odds o JOIN model_runs r ON r.run_id=o.run_id "
         "WHERE o.league='nfl' AND o.season=? AND o.week<? AND r.model_version=? "
         "AND r.status='ok' ORDER BY o.week DESC,o.as_of DESC LIMIT 1",
-        (season, week, MODEL_VERSION)).fetchone()
+        (season, week, model_version or MODEL_VERSION)).fetchone()
     if row is None:
         return None, {}
     rows = con.execute("SELECT team,p_playoffs FROM playoff_odds WHERE run_id=? AND league='nfl'",
@@ -104,7 +108,7 @@ def _previous_odds(con, season, week):
     return row[1], {team: float(prob) for team, prob in rows}
 
 
-def store_outputs(con, run_id, season, week, as_of, inp, out):
+def store_outputs(con, run_id, season, week, as_of, inp, out, model_version=None):
     fit = inp["fit"]
     standings = nfl_standings.build(inp["tmap"], inp["played"])
     for team in sorted(fit.o):
@@ -114,7 +118,7 @@ def store_outputs(con, run_id, season, week, as_of, inp, out):
             (run_id, "nfl", season, week, team, fit.o[team], fit.d[team],
              fit.o[team] - fit.d[team], len(standings[team].results), as_of))
 
-    previous = _previous_odds(con, season, week)
+    previous = _previous_odds(con, season, week, model_version)
     seed_columns = ["p_seed_%d" % seed for seed in range(1, 8)]
     columns = ["run_id", "league", "season", "week", "team", "p_playoffs", "p_division",
                "p_bye"] + seed_columns + ["wins_mean", "wins_p10", "wins_p90", "d_playoffs", "as_of"]
@@ -132,27 +136,33 @@ def store_outputs(con, run_id, season, week, as_of, inp, out):
     return previous
 
 
-def run(con, season=None, week=None, n=SIMULATIONS, k=0.0, seed=None):
+def run(con, season=None, week=None, n=SIMULATIONS, k=0.0, seed=None, scores=None):
+    scores = nfl_sim.DEFAULT_SCORES if scores is None else scores
+    if scores not in MODEL_VERSIONS:
+        raise ValueError("scores must be one of %s" % sorted(MODEL_VERSIONS))
+    model_version = MODEL_VERSIONS[scores]
     migration.migrate(con)
     season = selected_season(con, season)
     week = selected_week(con, season, week)
     seed = random.SystemRandom().randrange(1, 2**31) if seed is None else int(seed)
-    params = {"n": n, "k": k, "seed": seed, "simulation": "placeholder-split-40",
-              "rating": dict(nfl_sim.FROZEN)}
+    params = {"n": n, "k": k, "seed": seed, "simulation": SIMULATION_LABELS[scores],
+              "scores": scores, "rating": dict(nfl_sim.FROZEN)}
+    if scores == "history":
+        params["history_k"] = nfl_sim.HISTORY_K
     run_id = "nfl-weekly-%d-w%d-%s" % (season, week, uuid.uuid4().hex[:10])
     as_of = dt.datetime.now(dt.timezone.utc).isoformat()
-    nfl_lock.start_run(con, run_id, season, week, MODEL_VERSION, params, model="nfl-playoff-odds")
+    nfl_lock.start_run(con, run_id, season, week, model_version, params, model="nfl-playoff-odds")
     started = time.monotonic()
     try:
         checked = assert_schedule_fresh(con)
-        inp = nfl_sim.inputs(con, season)
+        inp = nfl_sim.inputs(con, season, scores=scores)
         if not inp["remaining"]:
             raise ValueError("no remaining regular-season games to simulate")
         resources = resource_state()
         result = nfl_sim.run(inp, n, k=k, seed=seed)
         conference_of = {team: conf for team, (conf, _) in inp["tmap"].items()}
         nfl_sim.sanity(result, conference_of)
-        store_outputs(con, run_id, season, week, as_of, inp, result)
+        store_outputs(con, run_id, season, week, as_of, inp, result, model_version)
         elapsed = round(time.monotonic() - started, 3)
         result_params = dict(params)
         result_params["results"] = {
@@ -163,11 +173,13 @@ def run(con, season=None, week=None, n=SIMULATIONS, k=0.0, seed=None):
             "coin_flips": result["coin_flips"],
             "elapsed_seconds": elapsed,
         }
+        if scores == "history":
+            result_params["results"]["history"] = inp["sampler"].info
         con.execute("UPDATE model_runs SET params_json=? WHERE run_id=?",
                     (json.dumps(result_params, sort_keys=True), run_id))
         nfl_lock.finish_run(con, run_id, "ok")
         print("OK run_id=%s season=%d week=%d model=%s simulations=%d runtime=%.3fs teams=%d "
-              "coin_flips=%d" % (run_id, season, week, MODEL_VERSION, n, elapsed,
+              "coin_flips=%d" % (run_id, season, week, model_version, n, elapsed,
                                  len(result["teams"]), result["coin_flips"]))
         return {"run_id": run_id, "season": season, "week": week, "result": result,
                 "elapsed_seconds": elapsed}
@@ -185,6 +197,8 @@ def main(argv=None):
     parser.add_argument("--n", type=int, default=SIMULATIONS)
     parser.add_argument("--k", type=float, default=0.0)
     parser.add_argument("--seed", type=int)
+    parser.add_argument("--scores", choices=sorted(MODEL_VERSIONS), default=None,
+                        help="how simulated games are scored (default: nfl_sim.DEFAULT_SCORES)")
     args = parser.parse_args(argv)
     if args.n <= 0:
         parser.error("--n must be > 0")
@@ -192,7 +206,7 @@ def main(argv=None):
         parser.error("--k must be >= 0")
     con = sqlite3.connect(DB, timeout=30)
     try:
-        run(con, args.season, args.week, args.n, args.k, args.seed)
+        run(con, args.season, args.week, args.n, args.k, args.seed, args.scores)
         return 0
     finally:
         con.close()

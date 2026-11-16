@@ -1,0 +1,29 @@
+{
+  "release_tags": {
+    "team_boxscores": "espn_nba_team_boxscores",
+    "schedules": "nba_stats_schedules"
+  },
+  "season_key": "ending_year",
+  "assets": [
+    {"file":"team_box_2017.parquet","kind":"team_box","season":2017,"bytes":144516,"sha256":"c296120a0c98238ee23cc83d7ffe849e2ce87fcdd85a82721a24d3ca469783ea"},
+    {"file":"nba_schedule_2017.parquet","kind":"schedule","season":2017,"bytes":23465,"sha256":"9d0e3e31133e8cbc7672234172d26950e44c6ac455c076732f09f185f2f51527"},
+    {"file":"team_box_2018.parquet","kind":"team_box","season":2018,"bytes":127967,"sha256":"9e58866f324bb49c880db4b57e323d0bb5c3d94f9006f55e63d5337cbbcdd4ca"},
+    {"file":"nba_schedule_2018.parquet","kind":"schedule","season":2018,"bytes":23284,"sha256":"0b8bd8690aede3b58b71a32b067ea476bc64a1b0afe27aaed65b8593623ab673"},
+    {"file":"team_box_2019.parquet","kind":"team_box","season":2019,"bytes":152257,"sha256":"3f3f15ccfd1f676e0aaf5bfbdb8fd5cd69f9a21a4961cd4f6337d857593c788a"},
+    {"file":"nba_schedule_2019.parquet","kind":"schedule","season":2019,"bytes":23368,"sha256":"3990c1f0b284b6ef3ed009d3a9b42e4ed4e5a2e3fcf6f0951301bf701fcc0afa"},
+    {"file":"team_box_2020.parquet","kind":"team_box","season":2020,"bytes":136914,"sha256":"e96bec73056f08ce21bce63ca6d329fc1cf62d7229608d949bfce102df01b56a"},
+    {"file":"nba_schedule_2020.parquet","kind":"schedule","season":2020,"bytes":20341,"sha256":"6fb45790190b0ce2d3f97cd920c5c8a33ba5f8b1df041cc12ba00ca800fc3156"},
+    {"file":"team_box_2021.parquet","kind":"team_box","season":2021,"bytes":123317,"sha256":"56e59fe9062942933c708ae4ba2172ec4dda055de9c6a3409f0816ac363fdd58"},
+    {"file":"nba_schedule_2021.parquet","kind":"schedule","season":2021,"bytes":20860,"sha256":"a2f694a8ea19e4f1418350d45bd6684c3ac15b0ddb589ca693c84383ad09cc73"},
+    {"file":"team_box_2022.parquet","kind":"team_box","season":2022,"bytes":136075,"sha256":"f8185936836a81240d6f170ec7afeab47e3e736a718fe2c9f72999e681434b7f"},
+    {"file":"nba_schedule_2022.parquet","kind":"schedule","season":2022,"bytes":23371,"sha256":"e7a968c6f56a9ef0cb2c89d8a315154b6982beb68b42a7fe3e0a4c1464b77bb7"},
+    {"file":"team_box_2023.parquet","kind":"team_box","season":2023,"bytes":136082,"sha256":"b86bb087fe57eeeacead4e27965a20d1e67fdb39a3ee2ca36294a0b7d014e9b6"},
+    {"file":"nba_schedule_2023.parquet","kind":"schedule","season":2023,"bytes":23782,"sha256":"44e826e8b432b863ddec3976a1c72eb2e5ce345af32e8d0c8b84a6137f6d2164"},
+    {"file":"team_box_2024.parquet","kind":"team_box","season":2024,"bytes":135889,"sha256":"5e4d1b7a2ccc287f212f65888dcd674e370adec8a0e32d7ae0825eecacaaa8a9"},
+    {"file":"nba_schedule_2024.parquet","kind":"schedule","season":2024,"bytes":23502,"sha256":"2d2cd6e93a462a61981e59db5e12132bf4b21bb946fc4f83b75f58bd650f9aa4"},
+    {"file":"team_box_2025.parquet","kind":"team_box","season":2025,"bytes":136502,"sha256":"f735bf3b743618e50987f3e3e296734e1dba43c450a21af848d7c34f23bf2aee"},
+    {"file":"nba_schedule_2025.parquet","kind":"schedule","season":2025,"bytes":23421,"sha256":"959fdff85cf5892f83166d90cc84964075e13440ada5cff2a6bbe0bd9d4052fa"},
+    {"file":"team_box_2026.parquet","kind":"team_box","season":2026,"bytes":140628,"sha256":"db846dfb39b0f75eee50ad91b1b5b7a7a62dd31d3ec0bb066a0a3bb08e366f7e"},
+    {"file":"nba_schedule_2026.parquet","kind":"schedule","season":2026,"bytes":23506,"sha256":"1604c62a6d0a03dace9f1b8238c1374ecf87efeb6455175514a2d3d064fe520e"}
+  ]
+}

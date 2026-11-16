@@ -36,6 +36,9 @@ data/*.db
 data/*.db-wal
 data/*.db-shm
 data/*.bak*
+data/*.sqlite*
 *.db
 *.bak
 *.bak-*
+# Runtime data is bind-mounted at /app/data by docker-compose; the image never needs the host copy.
+data

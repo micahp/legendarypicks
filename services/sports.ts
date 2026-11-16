@@ -697,4 +697,6 @@ export interface NflScheduleWeekResponse {
   season: number
   selected_week: NflWeekEntry
   games: any[]
+  // NCAAF only: days in the week we have not read yet (YYYY-MM-DD).
+  unread_days?: string[]
 }

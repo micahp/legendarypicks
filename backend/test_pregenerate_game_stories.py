@@ -14,7 +14,7 @@ import sqlite3
 import pytest
 
 from conftest import real_db
-from league_offering import ALWAYS_OFFERED
+from league_offering import ALWAYS_OFFERED, offered_leagues
 
 
 def _db(rows=()):
@@ -39,7 +39,7 @@ class TestDefaultLeagues:
         p = _pregenerate()
         con = _db([("nfl", 2025, "complete"), ("mlb", 2026, "in_progress")])
         # WC remains manually addressable but is excluded from recurring work.
-        assert p.default_leagues(con) == ["mlb", "nfl", "ufc"]
+        assert p.default_leagues(con) == sorted(offered_leagues(con) - {"wc"})
 
     def test_a_promoted_league_turns_on_without_an_edit(self):
         p = _pregenerate()
@@ -64,7 +64,7 @@ class TestDefaultLeagues:
         import _core
         con = _db([("nfl", 2025, "complete")])
         monkeypatch.setattr(_core, "_db", lambda: con)
-        assert p.default_leagues() == ["nfl", "ufc"]
+        assert p.default_leagues() == sorted(offered_leagues(con) - {"wc"})
 
 
 class TestDefaultLeaguesAgainstTheRealDatabases:

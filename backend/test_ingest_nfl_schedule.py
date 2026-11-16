@@ -189,5 +189,87 @@ class Write(unittest.TestCase):
         ).fetchone()[0], 0)
 
 
+class Versions(unittest.TestCase):
+    """Field history: what a pregame snapshot is rebuilt from as of a time."""
+
+    def setUp(self):
+        import ingest_nfl_schedule as mod
+        self.mod = mod
+        self.tmp = tempfile.mkdtemp()
+        self.con = _db()
+        self.mod.ensure_schema(self.con)
+
+    def _load(self, *rows):
+        got = self.mod.read_games(_csv(self.tmp, *rows), {2026})
+        with redirect_stdout(io.StringIO()):
+            return self.mod.write(self.con, got)
+
+    def test_first_write_records_first_observed_and_one_version(self):
+        self._load(UNPLAYED)
+        first, ingested = self.con.execute(
+            "SELECT first_observed, ingested_at FROM nfl_schedule").fetchone()
+        self.assertEqual(first, ingested)
+        self.assertEqual(self.con.execute(
+            "SELECT observed_at FROM nfl_schedule_versions").fetchall(), [(first,)])
+
+    def test_unchanged_refresh_keeps_first_observed_and_adds_no_version(self):
+        self._load(UNPLAYED)
+        self.con.execute("UPDATE nfl_schedule SET first_observed='2026-07-27 16:09:05', "
+                         "ingested_at='2026-07-27 16:09:05'")
+        self._load(UNPLAYED)
+        first, ingested = self.con.execute(
+            "SELECT first_observed, ingested_at FROM nfl_schedule").fetchone()
+        self.assertEqual(first, "2026-07-27 16:09:05")
+        self.assertNotEqual(ingested, "2026-07-27 16:09:05")
+        self.assertEqual(self.con.execute(
+            "SELECT COUNT(*) FROM nfl_schedule_versions").fetchone()[0], 1)
+
+    def test_changed_field_adds_a_version_and_keeps_the_earlier_one(self):
+        self._load(UNPLAYED)
+        first = self.con.execute("SELECT first_observed FROM nfl_schedule").fetchone()[0]
+        self.con.execute("UPDATE nfl_schedule_versions SET observed_at='2026-10-20 12:00:00'")
+        self._load(UNPLAYED.replace(",20:20,", ",21:00,"))
+        self.assertEqual(self.con.execute(
+            "SELECT first_observed, gametime FROM nfl_schedule").fetchone(), (first, "21:00"))
+        self.assertEqual(sorted(r[0] for r in self.con.execute(
+            "SELECT gametime FROM nfl_schedule_versions")), ["20:20", "21:00"])
+        self.assertEqual(self.con.execute(
+            "SELECT gametime FROM nfl_schedule_versions "
+            "WHERE observed_at='2026-10-20 12:00:00'").fetchone(), ("20:20",))
+
+    def test_version_at_returns_the_row_in_force_at_the_cutoff(self):
+        gid = "2026_01_NE_SEA"
+        self._load(UNPLAYED)
+        self.con.execute("UPDATE nfl_schedule_versions SET observed_at='2026-10-25 21:31:39'")
+        self._load(UNPLAYED.replace(",20:20,", ",21:00,"))
+        self.con.execute("UPDATE nfl_schedule_versions SET observed_at='2026-10-26 10:00:01' "
+                         "WHERE gametime='21:00'")
+        self.assertIsNone(self.mod.version_at(self.con, gid, "2026-10-25 21:31:38"))
+        self.assertEqual(self.mod.version_at(self.con, gid, "2026-10-25 21:31:39")["gametime"], "20:20")
+        self.assertEqual(self.mod.version_at(self.con, gid, "2026-10-26 10:00:00")["gametime"], "20:20")
+        self.assertEqual(self.mod.version_at(self.con, gid, "2026-10-26 10:00:01")["gametime"], "21:00")
+
+    def test_rows_from_before_the_migration_stay_unknown_not_invented(self):
+        """A database created before this change has no history. Its rows get no
+        first_observed, and a snapshot as of an earlier time is refused, not built
+        from the current row."""
+        old = sqlite3.connect(":memory:")
+        cols = ",".join("{} {}".format(n, k) for n, k in self.mod.COLUMNS)
+        old.execute("CREATE TABLE nfl_schedule ({}, source TEXT, "
+                    "ingested_at TEXT DEFAULT (datetime('now')))".format(
+                        cols.replace("game_id TEXT", "game_id TEXT PRIMARY KEY", 1)))
+        old.execute("INSERT INTO nfl_schedule (game_id, season, gameday, source, ingested_at) "
+                    "VALUES ('2026_01_NE_SEA', 2026, '2026-09-09', 'nflverse_games', "
+                    "'2026-07-27 16:09:05')")
+        self.mod.ensure_schema(old)
+        self.assertIsNone(old.execute("SELECT first_observed FROM nfl_schedule").fetchone()[0])
+        self.assertIsNone(self.mod.version_at(old, "2026_01_NE_SEA", "2026-07-28 00:00:00"))
+        with redirect_stdout(io.StringIO()):
+            self.mod.write(old, self.mod.read_games(_csv(self.tmp, UNPLAYED), {2026}),
+                           schedule_only=True)
+        self.assertIsNone(old.execute("SELECT first_observed FROM nfl_schedule").fetchone()[0])
+        self.assertEqual(old.execute("SELECT COUNT(*) FROM nfl_schedule_versions").fetchone()[0], 1)
+
+
 if __name__ == "__main__":
     unittest.main()

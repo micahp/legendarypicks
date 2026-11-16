@@ -1,0 +1,10 @@
+[Unit]
+Description=Generate NHL forecasts every 30 minutes
+
+[Timer]
+OnCalendar=*:0/30
+Persistent=true
+Unit=legendarypicks-nhl-forecast.service
+
+[Install]
+WantedBy=timers.target

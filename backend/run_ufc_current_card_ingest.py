@@ -8,6 +8,7 @@ then applies one short additive transaction. Backups are never deleted here.
 from __future__ import annotations
 
 import datetime as dt
+import fcntl
 import os
 import sys
 from typing import Callable, Optional
@@ -34,6 +35,23 @@ def _connect_readonly(db_path: str):
 
 
 def run(
+    db_path: str,
+    now: Optional[dt.datetime] = None,
+    emit: Callable[[str], None] = print,
+    apply: bool = True,
+) -> dict:
+    # Two timers call this at the same minute: legendarypicks-ufc-fight-stats-prod and
+    # the UFC job of legendarypicks-history-prod (both 05,11,17,23:17). On 2026-11-15
+    # they wrote the same rows at once, the second failed on a UNIQUE constraint and
+    # kept its 3.4 GB backup, and the disk reached 100%. One at a time: the second run
+    # then finds the history current and makes no backup.
+    lock_path = os.path.join(os.path.dirname(os.path.abspath(db_path)), ".ufc-run.lock")
+    with open(lock_path, "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        return _run(db_path, now=now, emit=emit, apply=apply)
+
+
+def _run(
     db_path: str,
     now: Optional[dt.datetime] = None,
     emit: Callable[[str], None] = print,
@@ -66,6 +84,7 @@ def run(
                 inserted = roster.apply_harvest(con, harvest)
         finally:
             con.close()
+        common.discard_backup(harvest_backup)
         emit("  harvested {} new UFC fighters from the card".format(inserted))
     elif harvest.mutations:
         emit("  dry run: {} new UFC fighters would be harvested".format(harvest.mutations))
@@ -150,6 +169,7 @@ def run(
 
     backup_path = common.backup_database(db_path, "ufc-timer", now=now)
     result = apply_ufcstats_plan(db_path, plan)
+    common.discard_backup(backup_path)
     emit(
         "Applied UFCStats timer plan: {} logs, {} updates, {} source mappings".format(
             result["inserted_logs"],

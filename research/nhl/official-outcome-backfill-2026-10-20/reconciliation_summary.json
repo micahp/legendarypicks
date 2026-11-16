@@ -1,0 +1,66 @@
+{
+  "archive_goalie_rows": 10416,
+  "archive_or_official_identity_issues": 5,
+  "archive_skater_rows": 175433,
+  "archive_zero_icetime_goalie_rows": 2,
+  "canonical_frame_games": 4876,
+  "canonical_only_game_ids": [
+    2022020001,
+    2022020002,
+    2022020175,
+    2022020185
+  ],
+  "goalie_reconciliation_aggregate": {
+    "SAVES_archive_only": 2,
+    "SAVES_archive_rows": 10416,
+    "SAVES_exact_matches": 10136,
+    "SAVES_official_only": 5,
+    "SAVES_official_rows": 10419,
+    "SAVES_shared_player_games": 10414,
+    "SAVES_union_player_games": 10421,
+    "SAVES_value_mismatches": 278
+  },
+  "goalie_reconciliation_status_counts": {
+    "ARCHIVE_ONLY": 2,
+    "OFFICIAL_ONLY": 5,
+    "VALUE_MISMATCH": 278
+  },
+  "market_evaluation_performed": false,
+  "max_prop_side_flip": {
+    "line": 24.5,
+    "market": "SAVES",
+    "scorable_player_games": 2301,
+    "season": 2019,
+    "shared_player_games": 2301,
+    "side_flip_share": 0.0047805302042590175,
+    "side_flips": 11,
+    "unscorable_player_games": 0
+  },
+  "max_prop_side_flip_share": 0.0047805302042590175,
+  "model_fitting_performed": false,
+  "official_canonical_score_conflicts": 0,
+  "official_goalie_rows_including_zero_toi": 19506,
+  "official_played_goalie_rows": 10419,
+  "official_skater_rows": 175490,
+  "official_zero_toi_goalie_slots": 9087,
+  "potential_name_crosscheck_goalie_rows": 0,
+  "potential_name_crosscheck_ids": 5,
+  "potential_name_crosscheck_sog_rows": 151,
+  "production_data_written": false,
+  "sbr_market_games": 4872,
+  "sog_reconciliation_aggregate": {
+    "SOG_archive_only": 55,
+    "SOG_archive_rows": 175433,
+    "SOG_exact_matches": 174798,
+    "SOG_official_only": 112,
+    "SOG_official_rows": 175490,
+    "SOG_shared_player_games": 175378,
+    "SOG_union_player_games": 175545,
+    "SOG_value_mismatches": 580
+  },
+  "sog_reconciliation_status_counts": {
+    "ARCHIVE_ONLY": 55,
+    "OFFICIAL_ONLY": 112,
+    "VALUE_MISMATCH": 580
+  }
+}

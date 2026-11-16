@@ -22,6 +22,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
 
+import team_codes
+
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent  # manifest lives in backend/, scripts are repo-root-relative
@@ -101,9 +103,12 @@ def _probe_nfl_td_columns(con: sqlite3.Connection) -> str:
 
 
 def _probe_nfl_team_vocabulary(con: sqlite3.Connection) -> str:
+    # Every legacy NFL spelling backend/team_codes.py knows (it listed four by hand before 2026-11-04).
+    legacy = sorted(team_codes.ALIASES["nfl"])
     return _no_rows(
         con,
-        "SELECT COUNT(*) FROM players WHERE league='nfl' AND team IN ('STL','SD','LA','AZ')",
+        "SELECT COUNT(*) FROM players WHERE league='nfl' AND team IN (%s)" % ",".join("?" * len(legacy)),
+        legacy,
     )
 
 
@@ -269,6 +274,20 @@ def _make_registered(migration_id: str) -> Callable[[sqlite3.Connection], str]:
     return lambda con: _probe_registered(con, migration_id)
 
 
+def _probe_players_hoopr_id(con: sqlite3.Connection) -> str:
+    """players.nba_id was renamed to players.hoopr_id (v10.1.5)."""
+    columns = _columns(con, "players")
+    if not columns:
+        return "unknown: players table missing"
+    if "hoopr_id" in columns and "nba_id" in columns:
+        return "unknown: players has both hoopr_id and nba_id"
+    if "hoopr_id" in columns:
+        return "applied"
+    if "nba_id" in columns:
+        return "not_applied: players still has nba_id"
+    return "unknown: players has neither hoopr_id nor nba_id"
+
+
 def _probe_merge_nba_identities(con: sqlite3.Connection) -> str:
     """Whether the NBA identity merge's durable postcondition holds.
 
@@ -278,8 +297,9 @@ def _probe_merge_nba_identities(con: sqlite3.Connection) -> str:
     no ESPN/legacy bridge split and no duplicate ESPN owner is the state this
     migration exists to establish.
     """
-    required = {"id", "league", "espn_id", "nba_id"}
     columns = _columns(con, "players")
+    legacy = "hoopr_id" if "hoopr_id" in columns else "nba_id"
+    required = {"id", "league", "espn_id", legacy}
     if not required <= columns:
         missing = sorted(required - columns)
         return "unknown: players lacks columns " + ", ".join(missing)
@@ -287,11 +307,11 @@ def _probe_merge_nba_identities(con: sqlite3.Connection) -> str:
         con,
         """SELECT COUNT(*) FROM players e JOIN players h
               ON h.league='nba' AND e.league='nba' AND e.id<>h.id
-             AND CAST(e.espn_id AS TEXT)=CAST(h.nba_id AS TEXT)
+             AND CAST(e.espn_id AS TEXT)=CAST(h.{legacy} AS TEXT)
             WHERE e.espn_id IS NOT NULL
               AND TRIM(CAST(e.espn_id AS TEXT))!=''
-              AND h.nba_id IS NOT NULL
-              AND TRIM(CAST(h.nba_id AS TEXT))!=''""",
+              AND h.{legacy} IS NOT NULL
+              AND TRIM(CAST(h.{legacy} AS TEXT))!=''""".replace("{legacy}", legacy),
     )
     if split:
         return f"unknown: {split} NBA identities remain split across rows"
@@ -467,6 +487,13 @@ LEGACY_MIGRATIONS: tuple[LegacyMigration, ...] = (
         description="merge split NBA espn_id/nba_id rows",
         probe=_probe_merge_nba_identities,
         note="269 split athletes fixed on prod 2026-08-05; dev was already clean",
+    ),
+    LegacyMigration(
+        migration_id="legacy_migrate_players_hoopr_id",
+        script="backend/migrate_players_hoopr_id.py",
+        description="rename players.nba_id to players.hoopr_id",
+        probe=_probe_players_hoopr_id,
+        note="applied by hand on dev and prod 2026-11-12 (v10.1.5); rollback: --rollback",
     ),
 )
 

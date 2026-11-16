@@ -204,3 +204,105 @@ enrichment work, not a reason to derive box scores from PBP.
    2024 and 2025 and nothing else.
 6. **Play retention stays additive and separate.** It supports the play-level class of
    analysis without becoming a second, disagreeing box-score implementation.
+
+---
+
+## 7. Projections: what exists and what is not connected
+
+Read 2026-10-16 from `picks.dev.db` (read-only) and the code on `dev`. The Spec B player work
+is on `scratch/spec-b-rebase`, which is not merged into `dev`. Its numbers are labeled as
+branch results.
+
+### 7.1 Live on `dev`
+
+| Projection | Predicts | Produced by | Stored in | Read by | Measured |
+|---|---|---|---|---|---|
+| v1 points (frozen) | Win probability, margin, total | `lock_nfl_models.py`, locked no earlier than 90 minutes before kickoff | `game_projections` | Model tab (`routers/nfl_model.py`), home (`routers/home.py`) | Pooled 2010 to 2025, 3,909 games: Brier 0.2244 against 0.2105 for the de-vigged market ([PLAN-nfl-features-2026-10-11.md](PLAN-nfl-features-2026-10-11.md)) |
+| v2 EPA | Win probability, margin, total | `lock_nfl_epa.py`, `nfl_epa_model.py` | `game_projections` | Model tab | 2025 Brier 0.2291 against v1's 0.2288 ([RESULTS-A9-nfl-epa-v2-backtest-2026-10-11.md](RESULTS-A9-nfl-epa-v2-backtest-2026-10-11.md)) |
+| v1 + Elo | Win probability, margin | `lock_nfl_elo.py`, `nfl_elo_replica.py` | `game_projections` | Model tab | 2011 to 2023 Brier 0.2197 against 0.2229 for recalibrated v1; gap interval -0.0050 to -0.0014 ([RESULTS-nfl-elo-and-era-2026-10-13.md](RESULTS-nfl-elo-and-era-2026-10-13.md)) |
+| Playoff odds | Make playoffs, seeding | `jobs/nfl_playoff_odds.py`, `nfl_sim.py` | `playoff_odds`, `team_ratings` | `pages/nfl/playoff-odds.tsx` | No grade found |
+| ESPN 2026 season projection | Season totals per player | `ingest_nfl_projections.py`, from a pinned ESPN snapshot | `nfl_player_projections` (11,515 rows, 2026 only) | Offseason board (`routers/nfl_offseason/board.py`), mock draft pool (`routers/nfl_mock_draft/pool.py`) | No grade found |
+| Marcel-lite, per game | Recency-weighted mean, median, floor and ceiling for each stat; P(over) for a line | `analytics/projections.py`, served at `/api/projections/player/{id}` | Computed per request from `player_game_logs`; nothing stored | Player pages and the prop chart (`pages/props.tsx`) | Baseline for every branch comparison below. No grade of its P(over) found |
+
+Unlocked previews (`locked = 0`) also land in `game_projections`, written by
+`nfl_projection_preview.py`.
+
+### 7.2 On `scratch/spec-b-rebase`, not merged
+
+The v2 player engine (`backend/nfl_player_projection_v2.py`, job `nfl_player_projections_job.py`)
+projects targets, receptions, receiving yards and TDs, carries, rushing, and QB passing. It
+returns a mean, p10, p90 and P(over). The v2 job and the ESPN weekly capture both write
+`player_projections` on the dev DB (17,860 rows).
+
+2025, weeks 3 to 18, RB/WR/TE with 3+ earlier games (n = 3,945). MAE from the 2026-10-12 run,
+against Marcel-lite, which is the live route:
+
+| Stat | v2 | Marcel-lite | Read |
+|---|---|---|---|
+| Targets | 1.578 | 1.589 | tie |
+| Receptions | 1.216 | 1.237 | small gain; interval touches zero |
+| Receiving yards | 15.910 | 16.431 | gain; interval excludes zero |
+| Carries | 1.182 | 1.108 | worse |
+| Rushing yards | 6.602 | 6.536 | tie |
+
+The 2026-10-13 re-run on the re-ingested DB gave receiving yards 15.832 against 16.431 for
+Marcel-lite. The gate still passes.
+
+- v2 under-projects every stat, by about 3.5 receiving yards per player-game. Not investigated
+  or fixed.
+- Quarterback passing (slice 4.5): gate passed on 403 QB-games, and every stat beats
+  Marcel-lite. Rushing is not published.
+- Prop probabilities (v2 default engine, 2026 weeks 2 to 5, walk-forward, not captured before
+  kickoff): 32,810 items on 902 player-games. Brier 0.2746 against 0.2458 for the market. The
+  observed over rate barely moves across our probability bins. Items on one player-game are
+  alternate lines, so they are not independent.
+- ESPN weekly benchmark (2025, 2,427 player-games): v2 is level with ESPN on receptions and
+  receiving yards, worse on targets, and better on TDs. It does not beat ESPN.
+
+### 7.3 Spec B tables on `dev` that no dev code reads
+
+The branch's code wrote these to the dev DB. No dev code reads them.
+
+| Table | Rows | Written by | Read by dev code |
+|---|---|---|---|
+| `player_game_availability` | 67,179 | branch code (`migrate_player_game_availability.py` holds the schema) | none |
+| `player_game_shares` | 53,458 | `build_player_game_shares.py` (branch) | none |
+| `nfl_team_game_totals` | 700 | `build_player_game_shares.py` (branch) | none |
+| `nfl_snap_team_sources` | 1,218 | `ingest_nfl_snap_counts.py` (branch) | none |
+| `player_projections` | 17,860 | `nfl_player_projections_job.py`, `capture_espn_weekly_projections.py` (branch) | none |
+| `player_projection_grades` | 0 | `grade_nfl_player_projections.py` (branch) | none |
+| `player_team_shares` | 4,984 | `build_player_shares.py` (dev) | no projection |
+
+### 7.4 How they are not connected
+
+1. **Team models stop at the game.** `game_projections` holds one row per game: projected score,
+   margin, total and win probability. No code turns those into player lines. The player code
+   reads its own logs and team-share history, never `game_projections`.
+2. **Player volume ignores the game script.** The v2 engine's team volume comes from observed
+   team shares. A margin-based game-script adjustment was tested on the branch and not adopted,
+   because 2025 team and player MAE rose.
+3. **Availability is not in any live projection.** The live route reads only `player_game_logs`.
+   The availability and snap tables that would feed a projection are branch-only (7.3).
+4. **The live props page runs on Marcel-lite.** Its P(over) comes from the same route. The graded
+   prop numbers in 7.2 are from the unmerged v2 engine. No grade of the live probabilities is
+   recorded in these docs.
+5. **The ESPN season projection feeds only the offseason pages.** The in-season player page and
+   the props page do not read `nfl_player_projections`. ESPN's weekly projections are captured
+   only on the branch.
+6. **No grade spans both levels.** Team models are graded on game results. Player models are
+   graded on stat MAE and prop Brier. Nothing checks that a player forecast agrees with the team
+   forecast for the same game.
+7. **The branch has open decisions before merge.** Merging lets the installed availability
+   timer's snap ingest create `nfl_snap_team_sources` on PROD. The branch's status doc lists that
+   as a decision to make first. Switching `/api/projections/player/{id}` to v2 is Micah's call,
+   and so is mean versus median. The median version (P_LOG) fixed bias and RMSE but worsened MAE,
+   so it was not adopted under the MAE gate. Browser checks of the branch's pages are not done.
+
+### 7.5 What replacing the live player projections needs
+
+- The merge decision in 7.4 item 7, then browser checks of `/nfl/projections`, the Without
+  control, and the projection record panel.
+- Micah's call on mean or median, and on switching the live route.
+- Rushing stays on Marcel-lite, because the carries gate failed.
+- A pre-kickoff capture of the v2 numbers, graded after the week finishes. The 2026 prop numbers
+  above are walk-forward, not captured before kickoff.

@@ -1,3 +1,4 @@
+import json
 import sqlite3
 
 import espn_client
@@ -107,6 +108,20 @@ def _boxscore():
     }]}
 
 
+def _store_summary(con, boxscore=None):
+    from settlement import stored_summary
+
+    stored_summary.ensure_table(con)
+    payload = json.dumps({"boxscore": boxscore or _boxscore()})
+    con.execute(
+        "INSERT OR REPLACE INTO game_summaries "
+        "(league,espn_event_id,payload,state,completed,fetched_at,source) "
+        "VALUES('ncaaf','401858202',?,'post',1,'now','test')",
+        (payload,),
+    )
+    con.commit()
+
+
 def test_total_passing_touchdowns_alias_resolves_and_settles(monkeypatch):
     """Bovada's total_passing_touchdowns grades as the passing TD market."""
     from settlement.market_mapping import resolve_market
@@ -114,6 +129,7 @@ def test_total_passing_touchdowns_alias_resolves_and_settles(monkeypatch):
     assert resolve_market("ncaaf", "total_passing_touchdowns") == ("passing", "TD")
 
     con = _database()
+    _store_summary(con)
     monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
     con.execute("INSERT INTO props VALUES (20, 1, 'total_passing_touchdowns', 1.5, 'over', 10)")
 
@@ -123,8 +139,27 @@ def test_total_passing_touchdowns_alias_resolves_and_settles(monkeypatch):
     assert tuple(row) == (2.0, 1)
 
 
+def test_receiving_touchdowns_settle_from_the_cfbd_line():
+    from settlement.market_mapping import resolve_market
+
+    assert resolve_market("ncaaf", "receiving_touchdowns") == ("receiving", "TD")
+    con = _database()
+    _add_cfbd_line(con, "1002", '{"rec_td":1}')
+    con.execute("DELETE FROM props WHERE id != 9")
+    con.execute(
+        "UPDATE props SET market='receiving_touchdowns',line=0.5 WHERE id=9")
+
+    result = settlement.settle_game(con, 1)
+
+    assert result["settled"] == 1
+    assert tuple(con.execute(
+        "SELECT actual_value, hit FROM prop_results WHERE prop_id=9"
+    ).fetchone()) == (1.0, 1)
+
+
 def test_all_ingested_ncaaf_markets_settle_from_published_boxscore(monkeypatch):
     con = _database()
+    _store_summary(con)
     monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
 
     assert settlement.settle_game(con, 1) == {
@@ -201,9 +236,10 @@ def test_total_passing_touchdowns_alias_grades_from_cfbd(monkeypatch):
         "SELECT actual_value FROM prop_results WHERE prop_id=4").fetchone()[0] == 2.0
 
 
-def test_cfbd_row_missing_stat_falls_back_to_espn(monkeypatch):
-    """A row without the market's key is not evidence of zero: ESPN decides."""
+def test_cfbd_row_missing_stat_falls_back_to_stored_boxscore(monkeypatch):
+    """A row without the market's key is not evidence of zero: the stored summary decides."""
     con = _database()
+    _store_summary(con)
     _add_cfbd_line(con, "1002", '{"rush_yds":60,"rush_td":1}')
     monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
     con.execute("DELETE FROM props WHERE id != 9")  # receiving_yards for 1002
@@ -221,6 +257,7 @@ def test_cfbd_row_missing_stat_falls_back_to_espn(monkeypatch):
 
 def test_athlete_absent_from_boxscore_stays_pending_with_reason(monkeypatch):
     con = _database()
+    _store_summary(con)
     monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
     con.execute("DELETE FROM props WHERE id != 19")  # bench player, no CFBD row
 
@@ -235,6 +272,7 @@ def test_markets_cfbd_does_not_publish_stay_on_the_fallback(monkeypatch):
     """No kicking group, no completions, no carries, no return-TD components:
     those markets never grade from the stored line even when the row exists."""
     con = _database()
+    _store_summary(con)
     _add_cfbd_line(con, "1002",
                    '{"att":2,"pass_yds":8,"rush_yds":60,"rush_td":1,'
                    '"rec":3,"rec_yds":30,"rec_td":1}')
@@ -252,6 +290,7 @@ def test_markets_cfbd_does_not_publish_stay_on_the_fallback(monkeypatch):
 def test_repeat_pending_attempt_writes_nothing_new(monkeypatch):
     """Durable reasons must not grow a row per pass for an unchanged state."""
     con = _database()
+    _store_summary(con)
     monkeypatch.setattr(espn_client, "boxscore", lambda *_args: _boxscore())
     con.execute("DELETE FROM props WHERE id != 19")
 

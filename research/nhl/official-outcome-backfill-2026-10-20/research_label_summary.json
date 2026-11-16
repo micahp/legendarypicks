@@ -1,0 +1,330 @@
+{
+  "adjudication": {
+    "corrected_official_values": 0,
+    "goalie_arithmetic_explanation": "Stats REST and historical Game Summary repeat each original goalie line. PBP independently counts the saves and goals and the opponent's team SOG matches published shots against, but one goal event per game has no shotType. The evidence does not establish whether that goal belongs in shots against or which published field causes the failed identity. Preserve and expose every original value, quarantine saves/SA/GA for both goalies, and do not derive saves by subtraction.",
+    "goalie_case_rows": 2,
+    "issues_by_season": {
+      "2018": {
+        "PLAYER_SOG_SUM_VS_TEAM_TOTAL": 2
+      },
+      "2019": {
+        "PLAYER_SOG_SUM_VS_TEAM_TOTAL": 5
+      },
+      "2020": {
+        "PLAYER_SOG_SUM_VS_TEAM_TOTAL": 6
+      },
+      "2021": {
+        "PLAYER_SOG_SUM_VS_TEAM_TOTAL": 6
+      },
+      "2022": {
+        "GOALIE_TOTAL_IDENTITY_MISMATCH": 2,
+        "PLAYER_SOG_SUM_VS_TEAM_TOTAL": 1
+      }
+    },
+    "issues_by_type": {
+      "GOALIE_TOTAL_IDENTITY_MISMATCH": {
+        "adjudicated": 0,
+        "found": 2,
+        "quarantined": 2
+      },
+      "PLAYER_SOG_SUM_VS_TEAM_TOTAL": {
+        "adjudicated": 20,
+        "found": 20,
+        "quarantined": 0
+      }
+    },
+    "original_issue_count": 22,
+    "quarantined_goalie_stat_fields": 6,
+    "sog_player_event_rows": 380,
+    "source_value_mutations": 0,
+    "unresolved_goalie_arithmetic_records": 2
+  },
+  "base_commit": "c91ae36c39b57f86c7c839a2e424eec3ee9330a0",
+  "derived_output_sha256": {
+    "adjudication_ledger.csv": "b92e23e8f3a3b2de2d1560625bb66805d61f342ee0d7f7f792e59853fa07cf73",
+    "goalie_event_reconciliation.csv": "935056eee8263db163ba76ac5be50ef8629279f783f88592c8dc74f0e8073398",
+    "research_label_quality.csv": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c",
+    "sog_event_reconciliation.csv": "195b158e22250c41ee6bfba1a829a08834e8f60478d8f52ea325188d872326cd"
+  },
+  "label_artifact": {
+    "bytes": 84283212,
+    "filename": "research_label_quality.csv",
+    "git_tracked": false,
+    "sha256": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c",
+    "storage_path": "/root/lp-data/nhl-official-outcome-quality-adjudication-2026-10-20/research_label_quality.csv"
+  },
+  "labels": {
+    "by_season_and_statistic": {
+      "2018:GOALS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 2720,
+        "ELIGIBLE_GRADING": 2720,
+        "ELIGIBLE_TRAINING": 2720,
+        "NOT_APPLICABLE": 2364,
+        "VERIFIED": 2720
+      },
+      "2018:SAVES": {
+        "ELIGIBLE_EVALUATION": 2720,
+        "ELIGIBLE_GRADING": 2720,
+        "ELIGIBLE_TRAINING": 2720,
+        "NOT_APPLICABLE": 2364,
+        "VERIFIED": 2720
+      },
+      "2018:SHOTS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 2720,
+        "ELIGIBLE_GRADING": 2720,
+        "ELIGIBLE_TRAINING": 2720,
+        "NOT_APPLICABLE": 2364,
+        "VERIFIED": 2720
+      },
+      "2018:SOG": {
+        "ADJUDICATED": 36,
+        "ELIGIBLE_EVALUATION": 45755,
+        "ELIGIBLE_GRADING": 45755,
+        "ELIGIBLE_TRAINING": 45755,
+        "NOT_APPLICABLE": 1,
+        "VERIFIED": 45719
+      },
+      "2019:GOALS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 2306,
+        "ELIGIBLE_GRADING": 2306,
+        "ELIGIBLE_TRAINING": 2306,
+        "NOT_APPLICABLE": 2023,
+        "VERIFIED": 2306
+      },
+      "2019:SAVES": {
+        "ELIGIBLE_EVALUATION": 2306,
+        "ELIGIBLE_GRADING": 2306,
+        "ELIGIBLE_TRAINING": 2306,
+        "NOT_APPLICABLE": 2023,
+        "VERIFIED": 2306
+      },
+      "2019:SHOTS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 2306,
+        "ELIGIBLE_GRADING": 2306,
+        "ELIGIBLE_TRAINING": 2306,
+        "NOT_APPLICABLE": 2023,
+        "VERIFIED": 2306
+      },
+      "2019:SOG": {
+        "ADJUDICATED": 90,
+        "ELIGIBLE_EVALUATION": 38949,
+        "ELIGIBLE_GRADING": 38949,
+        "ELIGIBLE_TRAINING": 38949,
+        "NOT_APPLICABLE": 2,
+        "VERIFIED": 38859
+      },
+      "2020:GOALS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 1852,
+        "ELIGIBLE_GRADING": 1852,
+        "ELIGIBLE_TRAINING": 1852,
+        "NOT_APPLICABLE": 1620,
+        "VERIFIED": 1852
+      },
+      "2020:SAVES": {
+        "ELIGIBLE_EVALUATION": 1852,
+        "ELIGIBLE_GRADING": 1852,
+        "ELIGIBLE_TRAINING": 1852,
+        "NOT_APPLICABLE": 1620,
+        "VERIFIED": 1852
+      },
+      "2020:SHOTS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 1852,
+        "ELIGIBLE_GRADING": 1852,
+        "ELIGIBLE_TRAINING": 1852,
+        "NOT_APPLICABLE": 1620,
+        "VERIFIED": 1852
+      },
+      "2020:SOG": {
+        "ADJUDICATED": 108,
+        "ELIGIBLE_EVALUATION": 31226,
+        "ELIGIBLE_GRADING": 31226,
+        "ELIGIBLE_TRAINING": 31226,
+        "NOT_APPLICABLE": 2,
+        "VERIFIED": 31118
+      },
+      "2021:GOALS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 2818,
+        "ELIGIBLE_GRADING": 2818,
+        "ELIGIBLE_TRAINING": 2818,
+        "NOT_APPLICABLE": 2431,
+        "VERIFIED": 2818
+      },
+      "2021:SAVES": {
+        "ELIGIBLE_EVALUATION": 2818,
+        "ELIGIBLE_GRADING": 2818,
+        "ELIGIBLE_TRAINING": 2818,
+        "NOT_APPLICABLE": 2431,
+        "VERIFIED": 2818
+      },
+      "2021:SHOTS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 2818,
+        "ELIGIBLE_GRADING": 2818,
+        "ELIGIBLE_TRAINING": 2818,
+        "NOT_APPLICABLE": 2431,
+        "VERIFIED": 2818
+      },
+      "2021:SOG": {
+        "ADJUDICATED": 108,
+        "ELIGIBLE_EVALUATION": 47208,
+        "ELIGIBLE_GRADING": 47208,
+        "ELIGIBLE_TRAINING": 47208,
+        "NOT_APPLICABLE": 3,
+        "VERIFIED": 47100
+      },
+      "2022:GOALS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 721,
+        "ELIGIBLE_GRADING": 721,
+        "ELIGIBLE_TRAINING": 721,
+        "NOT_APPLICABLE": 649,
+        "QUARANTINED": 2,
+        "VERIFIED": 721
+      },
+      "2022:SAVES": {
+        "ELIGIBLE_EVALUATION": 721,
+        "ELIGIBLE_GRADING": 721,
+        "ELIGIBLE_TRAINING": 721,
+        "NOT_APPLICABLE": 649,
+        "QUARANTINED": 2,
+        "VERIFIED": 721
+      },
+      "2022:SHOTS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 721,
+        "ELIGIBLE_GRADING": 721,
+        "ELIGIBLE_TRAINING": 721,
+        "NOT_APPLICABLE": 649,
+        "QUARANTINED": 2,
+        "VERIFIED": 721
+      },
+      "2022:SOG": {
+        "ADJUDICATED": 18,
+        "ELIGIBLE_EVALUATION": 12344,
+        "ELIGIBLE_GRADING": 12344,
+        "ELIGIBLE_TRAINING": 12344,
+        "VERIFIED": 12326
+      }
+    },
+    "by_statistic": {
+      "GOALS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 10417,
+        "ELIGIBLE_GRADING": 10417,
+        "ELIGIBLE_TRAINING": 10417,
+        "NOT_APPLICABLE": 9087,
+        "QUARANTINED": 2,
+        "VERIFIED": 10417
+      },
+      "SAVES": {
+        "ELIGIBLE_EVALUATION": 10417,
+        "ELIGIBLE_GRADING": 10417,
+        "ELIGIBLE_TRAINING": 10417,
+        "NOT_APPLICABLE": 9087,
+        "QUARANTINED": 2,
+        "VERIFIED": 10417
+      },
+      "SHOTS_AGAINST": {
+        "ELIGIBLE_EVALUATION": 10417,
+        "ELIGIBLE_GRADING": 10417,
+        "ELIGIBLE_TRAINING": 10417,
+        "NOT_APPLICABLE": 9087,
+        "QUARANTINED": 2,
+        "VERIFIED": 10417
+      },
+      "SOG": {
+        "ADJUDICATED": 360,
+        "ELIGIBLE_EVALUATION": 175482,
+        "ELIGIBLE_GRADING": 175482,
+        "ELIGIBLE_TRAINING": 175482,
+        "NOT_APPLICABLE": 8,
+        "VERIFIED": 175122
+      }
+    },
+    "eligible_counts_are_field_rows_not_games": true,
+    "not_applicable_total": 27269,
+    "quarantined_total": 6,
+    "total_rows": 234008
+  },
+  "populations": {
+    "canonical_games_by_start_season": {
+      "2018": 1271,
+      "2019": 1082,
+      "2020": 868,
+      "2021": 1312,
+      "2022": 343
+    },
+    "canonical_official_frame_games": 4876,
+    "denominators_are_independent": true,
+    "existing_goalie_preregistration_unchanged": true,
+    "goalie_prereg_complete_case_rows": 4763,
+    "goalie_prereg_out_of_fold_evaluation_games": 3509,
+    "sbr_market_subset_games": 4872
+  },
+  "quality_vocabulary": [
+    "VERIFIED",
+    "ADJUDICATED",
+    "QUARANTINED",
+    "NOT_APPLICABLE"
+  ],
+  "research_limitations": [
+    "The 2022-23 canonical frame is a 343-game partial-season slice; SBR market coverage is 339 games.",
+    "The 4,763 complete-case goalie preregistration and 3,509 OOF denominator remain separate and unchanged.",
+    "Outcome labels do not certify historical sportsbook settlement, grading-rule versions, or stat-correction timing.",
+    "A quality-approved label is not evidence of player-prop price availability or profitable market evaluation."
+  ],
+  "schema_version": 1,
+  "scope": "NHL official SOG, goalie saves, shots against, goals against; no fitting, ROI, or model promotion.",
+  "source_integrity": {
+    "external_evidence_hashes": {
+      "game-summaries/2022020158.html": "cb8343d126dfd66fbf4ea7c673522acf8c175ee5bc118bffc120661872f72865",
+      "game-summaries/2022020276.html": "4c4861678187f65c70f9fe34798063c30fdb7e3eab916dcfd4fa70312a0c66ab",
+      "goalie-stats/2022020158.json": "aeaaf9b270831db0bfe6c0f1b9c58b00b916a39cd113c6085c2067d888bb2f89",
+      "goalie-stats/2022020276.json": "a5b887f94529896018d0aa3c66a1ca771da00045aa4edf9326f34fe437a7debb",
+      "play-by-play/2018020160.json": "47ef05805b028ec458e3f8d4a52d977fcbc70d4afecff595d6781b9282326ac5",
+      "play-by-play/2018020755.json": "e9e5a36e0e8c71856fcb15e9ac7cd6c4b14ee2b4771057517abc5e8e0396f1d7",
+      "play-by-play/2019020076.json": "4a759b4a6d707794fa9e2242037323833e9a8f1a6a7dc0c26584bd0359da86ab",
+      "play-by-play/2019020106.json": "f23e56958adbaf62e183a26408989a58b7ddf99051a572d62b12ffe543df6156",
+      "play-by-play/2019020623.json": "929388fcd99b54ba2c306120db148cb5539938136da50d26d4ab2d8f407a6a21",
+      "play-by-play/2019020684.json": "a9bb6245f66873528e16f660520e610df4cc828d925a9d5fc80d552d4548f7e3",
+      "play-by-play/2019020951.json": "7ee8ec619ad2ac8d77a9021eaf2ea1f59bfdc5f06179a581f2c68cb1899eaf98",
+      "play-by-play/2020020266.json": "e16986a6a0482f92389744c6d582e06abdca2dea715cd825bda35cc60044b6bd",
+      "play-by-play/2020020373.json": "9de8e6b7427b75809b7ac1bb8a89bfa44e8eed7ad941b819d52d9a15ecc8fdfd",
+      "play-by-play/2020020468.json": "da17c4e560db2656298c7eaa2319d55110a9aff7f80c8591db09902f1255b5ec",
+      "play-by-play/2020020491.json": "d05166b023763a433a215af9f9772bbd0dcb41122d9f62eb705d9fecdd7d0281",
+      "play-by-play/2020020613.json": "10a45e517ccabdea0780de244daa7056e4453cc6886540efe70b98dada41cd9c",
+      "play-by-play/2020020791.json": "95307f937388785240020d6484676005ee05fa11b7cdab18c2f95ae7673b352c",
+      "play-by-play/2021020065.json": "44e2aa129203ca954ffc0affc633550c51f68d7319aebaf5edd58d75ae2264ee",
+      "play-by-play/2021020405.json": "481939379b999bfd7ed03461a6262b1b909b9bda90e45c11e5977f9df26bdf33",
+      "play-by-play/2021020555.json": "3ce79dfad12e832122c5045b90040aa13d2ab5219c39bfa6c30fa89064216086",
+      "play-by-play/2021020677.json": "665a59aedd13226935b8de208b732129014b6be0bc54bbc19ef8ea81183fa007",
+      "play-by-play/2021020769.json": "0b6bf2579dc484ff19ed03b6d83949e78dc523061defeaaf809a1b639d32a548",
+      "play-by-play/2021021278.json": "7689ed4eeb47dcde60b34f6e14093a64fe3dc4644546c87d1ba34d59dbb83ed0",
+      "play-by-play/2022020158.json": "24808726be5e6c861ca4c995532d36c0f5165f4c4ab6c557518d416cea50292d",
+      "play-by-play/2022020222.json": "f7ed4ef5ca51f2a4630a3e9b7d5fe2de384bb07213caa27fbe99e3546131e6f1",
+      "play-by-play/2022020276.json": "e251c1bd310491e508b3c3ddeb3ac20aeaf8bd9810d04958551ae3170936cac4"
+    },
+    "input_hashes": {
+      "COVERAGE.md": "2f6c2ec4e09bba2025b24345941c5769b7bdb9422f8c79c2e7a6ccd5c7a87257",
+      "RECONCILIATION.md": "62e960176b8da8e2ba2f23bbb11bfaf8302463e08a3a058e86935af842cec13a",
+      "archive_goalie_discrepancies.csv": "c8e1f9d13b35c1dcb2c095b33b712bf7d25a8e7f3747a644df93402869cabeee",
+      "archive_identity_issues.csv": "13435b9370de25a1d7787c7e4ad06b376abaf298e3ef10c70aafdb09f8a04472",
+      "archive_name_crosscheck.csv": "c28bddc459e1a278ca0ac44b0ea04f3f26c2dfd40b74ae944d2d8b1868bff7db",
+      "archive_nonappearing_goalie_slots.csv": "df1332f387d0d78d3a47671bd0af0e064ce46eda46bccfb9d4e485b5b71a6c9e",
+      "archive_sog_discrepancies.csv": "508b7e60f7e5bf5cae2b195517466e6df25013a5bf51e57f383ded64c94e562f",
+      "artifact_verification.json": "3cdba4f777c9ce332ddf4f6faafa9b443a55452950e12eecc2bd53dfff90c066",
+      "canonical_frame.csv": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+      "game_summary_evidence_manifest.csv": "f38d4d5e4635d12e3d914d78eb7155a96cbd6345d7923194bc89d76a0b57423c",
+      "goalie_stats_evidence_manifest.csv": "a68d75280b4bde6fb5facda345933acb294264a7861613f4529fcb4d49c8c036",
+      "manifest.jsonl": "0ba44bcebefecb0a8eefbea995e8f5370583600eec77d0be12be574f308d71a2",
+      "official_canonical_score_conflicts.csv": "025b3dadeb4ac21f7b952fcc1beb0793feea28237511ff7b684d5298600af453",
+      "official_coverage_summary.json": "035a7edb3029c563e904eb47b789dbc6ddf3edb347a53282c761573dcdb0a5a4",
+      "official_game_sides.csv": "782c9f44a113c2857947a6a7f178ddf3d6e26a59544bf3973685135d809a5f33",
+      "official_goalie_outcomes.csv": "7e5d0cca6783839dca938ba04e15ee2b686873170e319f816060271555a2ca66",
+      "official_quality_issues.csv": "01974afa665e026966cecdafd31428762ed00fa750be4b58adaa9444ccba9cd0",
+      "official_skater_outcomes.csv": "b1249d74e0f38c599e7a88a67f438ceedb187e35a6ba6b66908b77e04208094d",
+      "official_team_sog_validation.csv": "46c8c732c4bcb4965c8eff9a4c7a5b06a03096059e2e58d5a489ab3597213038",
+      "play_by_play_evidence_manifest.csv": "e10462686a3600f2340f88053903011d44e1ee775dc4f8687472e3cf6753adaf",
+      "played_goalie_one_sided_rows.csv": "7ed72a453e5e6083ad578b55758020e44e3cb8d1197383547f0f39ca3dc50286",
+      "reconciliation_by_season.csv": "5f61837a412384784c8aa02925ef99840126fe60247fd1c3e1de437b59cefbf2",
+      "zero_toi_goalie_slots.csv": "7941304eaa258974d088c15e9ea70e5ff18d8fa551c0de0f9b2602e3b69fb328"
+    },
+    "raw_external_evidence_kept_outside_git": true
+  }
+}

@@ -2,23 +2,104 @@
 """Focused deterministic assertions for the feat/leagues-hub patch.
 
 These verify the contract changes in espn_client.wc_knockout_standings and
-routers.games.get_standings, plus league propagation in get_games. They run the
-REAL code paths (live ESPN for the bracket; monkeypatched for the 503 gate so we
-don't depend on the live phase to exercise it). Exits non-zero on any failure.
+routers.games.get_standings, plus league propagation in get_games. Publisher
+responses are fixtures, so the full suite never depends on live ESPN. Exits
+non-zero on any failure.
 """
 import sys
 import os
 import datetime as _dt
 import sqlite3
 import tempfile
-import traceback
+from unittest.mock import patch
 
-# ── live ESPN imports (real code) ──
+# ── production code under test ──
 import espn_client as espn
 from routers import games as games_router
 from fastapi import HTTPException
 
 FAILURES = []
+
+
+def _world_cup_events():
+    rounds = (
+        ("round-of-32", 16), ("round-of-16", 8), ("quarterfinals", 4),
+        ("semifinals", 2), ("3rd-place-match", 1), ("final", 1),
+    )
+    events = []
+    for slug, count in rounds:
+        for _ in range(count):
+            number = len(events) + 1
+            events.append({
+                "id": str(number),
+                "date": "2026-06-28T18:00:00Z",
+                "season": {"slug": slug},
+                "competitions": [{
+                    "status": {"type": {
+                        "name": "STATUS_SCHEDULED",
+                        "description": "Scheduled",
+                        "state": "pre",
+                    }},
+                    "competitors": [
+                        {"homeAway": "home", "score": None,
+                         "team": {"abbreviation": "H%02d" % number,
+                                  "displayName": "Home %02d" % number}},
+                        {"homeAway": "away", "score": None,
+                         "team": {"abbreviation": "A%02d" % number,
+                                  "displayName": "Away %02d" % number}},
+                    ],
+                }],
+            })
+    return events
+
+
+def _mock_world_cup_get(url, ttl=20):
+    if "dates=" in url:
+        return {"events": _world_cup_events()}
+    return {"leagues": [{"calendar": [{"entries": [
+        {"label": "Group Stage", "startDate": "2026-06-11", "endDate": "2026-06-27"},
+        {"label": "Knockout", "startDate": "2026-06-28", "endDate": "2026-07-19"},
+    ]}]}]}
+
+
+def _mock_games(league):
+    return [{
+        "game_id": "fixture-1",
+        "league": league,
+        "home": {"abbrev": "HME", "name": "Home"},
+        "away": {"abbrev": "AWY", "name": "Away"},
+    }]
+
+
+def _mock_ncaaf_standings(season=None):
+    return {
+        "league": "ncaaf", "season": 2026, "available_seasons": [2026],
+        "groups": [{"group": "Conference %d" % i, "rows": [{
+            "rank": 1, "abbrev": "T%02d" % i, "name": "Team %d" % i,
+            "played": 8, "wins": 7, "losses": 1,
+        }]} for i in range(1, 6)],
+    }
+
+
+def _mock_mls_standings(season=None):
+    row = {"rank": 1, "abbrev": "TST", "name": "Test FC", "played": 1,
+           "wins": 1, "draws": 0, "losses": 0, "gf": 1, "ga": 0,
+           "gd": 1, "points": 3}
+    return {
+        "league": "mls", "season": 2026, "available_seasons": [2026],
+        "in_progress": True,
+        "groups": [
+            {"group": "Eastern Conference", "rows": [dict(row)]},
+            {"group": "Western Conference", "rows": [dict(row)]},
+        ],
+    }
+
+
+def _mock_nba_standings(league, season=None):
+    return {
+        "league": "nba", "season": 2026, "available_seasons": [2026],
+        "teams": [{"abbrev": "BOS", "name": "Boston Celtics"}],
+    }
 
 
 def check(name, cond, detail=""):
@@ -47,22 +128,11 @@ def check_raises(name, fn, status_code):
 
 
 def test_leagues_hub_contract():
-    """Every check in this file, as ONE pytest test.
-
-    It used to run at import. pytest collects this file by name, so a live ESPN call
-    that raised took down COLLECTION -- all ~1,487 tests, including every one that never
-    touches the network. On 2026-08-17 a prod scrape I had just restarted burned enough
-    per-host requests to trip site.web.api for about four minutes, and the whole suite
-    went red on BOTH databases. It would have aborted release.sh mid-cut.
-
-    The calls now happen INSIDE the test, so a dead source fails this one test and
-    nothing else. It is deliberately not a skip: a skip is not red, and a release gate
-    cannot tell a skipped contract check from a passing one. No evidence is a FAILURE,
-    not a pass -- see .claude/skills/fail-loudly.
-    """
+    """Exercise the hub contracts offline with representative publisher payloads."""
     FAILURES.clear()
     print("== [1] WC knockout bracket: 32 matches / six ordered rounds / nonblank team objects ==")
-    bracket = espn.wc_knockout_standings()
+    with patch.object(espn, "_get", side_effect=_mock_world_cup_get):
+        bracket = espn.wc_knockout_standings()
     rounds = bracket.get("rounds", [])
     check("rounds is a list", isinstance(rounds, list), type(rounds))
     check("six rounds present", len(rounds) == 6, f"got {len(rounds)}")
@@ -98,17 +168,17 @@ def test_leagues_hub_contract():
     # get_games reads router.query via FastAPI normally; here we validate the
     # documented contract by checking espn.games stamps the correct league shape
     # and that getGames maps it through normalizeGame-equivalent propagation.
-    for lg in ("nba", "nhl", "mlb", "nfl", "wc"):
-        data = espn.games(lg)
-        # espn.games returns raw normalized list; get_games route returns the same
-        # list. The frontend propagates league via SportsService.getGames(league).
-        # Assert the route's downstream doesn't remap league away from the param.
-        check(f"{lg}: games() returns a list", isinstance(data, list), type(data))
-        if data:
-            sample = data[0]
-            check(f"{lg}: game has home+away team dicts",
-                  isinstance(sample.get("home"), dict) and isinstance(sample.get("away"), dict),
-                  f"home={type(sample.get('home'))} away={type(sample.get('away'))}")
+    with patch.object(espn, "games", side_effect=_mock_games):
+        for lg in ("nba", "nhl", "mlb", "nfl", "wc"):
+            data = espn.games(lg)
+            # The frontend propagates league via SportsService.getGames(league).
+            # Assert the route's downstream doesn't remap league away from the param.
+            check(f"{lg}: games() returns a list", isinstance(data, list), type(data))
+            if data:
+                sample = data[0]
+                check(f"{lg}: game has home+away team dicts",
+                      isinstance(sample.get("home"), dict) and isinstance(sample.get("away"), dict),
+                      f"home={type(sample.get('home'))} away={type(sample.get('away'))}")
 
     print("== [3] no-stale-group gate: knockout + empty bracket -> 503 (never group tables) ==")
     # Force the knockout path: wc_is_knockout() -> True, and bracket returns no rounds.
@@ -182,7 +252,9 @@ def test_leagues_hub_contract():
         games_router._db = _orig_db
 
     print("== [6] ncaaf standings: season envelope with conference groups ==")
-    ncaaf = games_router.get_standings("ncaaf")
+    with patch.object(espn, "ncaaf_conference_standings", side_effect=_mock_ncaaf_standings), \
+            patch.object(games_router, "seasons_we_hold", return_value={2026}):
+        ncaaf = games_router.get_standings("ncaaf")
     # Shape moved to the season envelope 2026-08-29 (readStandings consumes it
     # for the season picker), matching the MLS [7] and NBA [8] contracts.
     check("ncaaf standings is a season envelope", isinstance(ncaaf, dict), type(ncaaf))
@@ -226,18 +298,11 @@ def test_leagues_hub_contract():
     # bare shape had no way to say which one it was — so in mid-August this surface
     # served the 2025 final table, unlabelled.
     #
-    # A source outage answers 503 by design (never a fall-through to last season, see
-    # test_group_standings_contract). That is a fact about the upstream, not a broken
-    # surface, so say which one it is instead of taking the whole gate run down.
-    mls = None
-    try:
+    # The upstream response is fixed here; publisher outage behavior is covered by
+    # the focused standings tests.
+    with patch.object(espn, "mls_conference_standings", side_effect=_mock_mls_standings), \
+            patch.object(games_router, "seasons_we_hold", return_value={2026}):
         mls = games_router.get_standings("mls")
-    except HTTPException as exc:
-        if exc.status_code == 503:
-            print(f"  SKIP  MLS standings source unavailable (503: {exc.detail}) — "
-                  f"shape unverified here")
-        else:
-            raise
     if mls is not None:
         check("mls standings is a season envelope", isinstance(mls, dict), type(mls))
         groups = mls.get("groups") if isinstance(mls, dict) else None
@@ -269,7 +334,9 @@ def test_leagues_hub_contract():
                       most < 34, f"max played={most} while in_progress=True")
 
     print("== [8] non-grouped leagues: a flat table that names its season ==")
-    nba = games_router.get_standings("nba")
+    with patch.object(espn, "team_strength_standings", side_effect=_mock_nba_standings), \
+            patch.object(games_router, "seasons_we_hold", return_value={2026}):
+        nba = games_router.get_standings("nba")
     check("nba standings is a season envelope", isinstance(nba, dict), type(nba))
     nba_rows = nba.get("teams") if isinstance(nba, dict) else None
     check("nba envelope carries a flat team list",

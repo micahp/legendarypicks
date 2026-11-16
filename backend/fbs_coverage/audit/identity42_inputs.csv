@@ -1,0 +1,43 @@
+season,game_id,start_date_utc,home_team,away_team,home_score,away_score,y,coverage_status,identity_check,play_count,home_team_id,away_team_id,et_date
+2022,401441993,2022-12-16T16:30:00Z,UAB,Miami (OH),24,20,1.0,has_plays,teams_only_source_date_missing,169,5,193,20221216
+2022,401441994,2022-12-16T20:00:00Z,Troy,UTSA,18,12,1.0,has_plays,teams_only_source_date_missing,176,2653,2636,20221216
+2022,401441995,2022-12-17T16:00:00Z,Louisville,Cincinnati,24,7,1.0,has_plays,teams_only_source_date_missing,150,97,2132,20221217
+2022,401441999,2022-12-17T19:30:00Z,Oregon State,Florida,30,3,1.0,has_plays,teams_only_source_date_missing,164,204,57,20221217
+2022,401442038,2022-12-17T20:30:00Z,Fresno State,Washington State,29,6,1.0,has_plays,teams_only_source_date_missing,163,278,265,20221217
+2022,401442041,2022-12-17T22:45:00Z,Southern Miss,Rice,38,24,1.0,has_plays,teams_only_source_date_missing,173,2572,242,20221217
+2022,401441997,2022-12-18T00:30:00Z,BYU,SMU,24,23,1.0,has_plays,teams_only_source_date_missing,173,252,2567,20221217
+2022,401442001,2022-12-18T02:15:00Z,Boise State,North Texas,35,32,1.0,has_plays,teams_only_source_date_missing,192,68,249,20221217
+2022,401442003,2022-12-19T19:30:00Z,UConn,Marshall,14,28,0.0,has_plays,teams_only_source_date_missing,173,41,276,20221219
+2022,401442004,2022-12-20T20:30:00Z,San José State,Eastern Michigan,27,41,0.0,has_plays,teams_only_source_date_missing,179,23,2199,20221220
+2022,401442006,2022-12-21T00:30:00Z,Toledo,Liberty,21,19,1.0,has_plays,teams_only_source_date_missing,163,2649,2335,20221220
+2022,401442039,2022-12-22T02:00:00Z,South Alabama,Western Kentucky,23,44,0.0,has_plays,teams_only_source_date_missing,209,6,98,20221221
+2022,401442007,2022-12-23T23:30:00Z,Missouri,Wake Forest,17,27,0.0,has_plays,teams_only_source_date_missing,197,142,154,20221223
+2022,401442040,2022-12-23T00:30:00Z,Air Force,Baylor,30,15,1.0,has_plays,teams_only_source_date_missing,158,2005,239,20221222
+2022,401442042,2022-12-23T20:00:00Z,Houston,Louisiana,23,16,1.0,has_plays,teams_only_source_date_missing,162,248,309,20221223
+2022,401442009,2022-12-25T01:00:00Z,San Diego State,Middle Tennessee,23,25,0.0,has_plays,teams_only_source_date_missing,198,21,2393,20221224
+2022,401442037,2022-12-26T19:30:00Z,Bowling Green,New Mexico State,19,24,0.0,has_plays,teams_only_source_date_missing,162,189,166,20221226
+2022,401441998,2022-12-27T17:00:00Z,Buffalo,Georgia Southern,23,21,1.0,has_plays,teams_only_source_date_missing,188,2084,290,20221227
+2022,401442000,2022-12-27T20:15:00Z,Utah State,Memphis,10,38,0.0,has_plays,teams_only_source_date_missing,175,328,235,20221227
+2022,401442002,2022-12-27T23:45:00Z,East Carolina,Coastal Carolina,53,29,1.0,has_plays,teams_only_source_date_missing,176,151,324,20221227
+2022,401442005,2022-12-28T03:15:00Z,Oklahoma State,Wisconsin,17,24,0.0,has_plays,teams_only_source_date_missing,168,197,275,20221227
+2022,401442008,2022-12-28T19:00:00Z,Duke,UCF,30,13,1.0,has_plays,teams_only_source_date_missing,172,150,2116,20221228
+2022,401442030,2022-12-28T22:30:00Z,Arkansas,Kansas,55,53,1.0,has_plays,teams_only_source_date_missing,220,8,2305,20221228
+2022,401442031,2022-12-29T02:00:00Z,Ole Miss,Texas Tech,25,42,0.0,has_plays,teams_only_source_date_missing,203,145,2641,20221228
+2022,401442032,2022-12-29T19:00:00Z,Minnesota,Syracuse,28,20,1.0,has_plays,teams_only_source_date_missing,175,135,183,20221229
+2022,401442033,2022-12-29T22:30:00Z,Florida State,Oklahoma,35,32,1.0,has_plays,teams_only_source_date_missing,196,52,201,20221229
+2022,401470891,2022-12-29T01:00:00Z,North Carolina,Oregon,27,28,0.0,has_plays,teams_only_source_date_missing,172,153,2483,20221228
+2022,401442034,2022-12-30T02:00:00Z,Washington,Texas,27,20,1.0,has_plays,teams_only_source_date_missing,191,264,251,20221229
+2022,401442035,2022-12-30T17:00:00Z,NC State,Maryland,12,16,0.0,has_plays,teams_only_source_date_missing,196,152,120,20221230
+2022,401442036,2022-12-30T20:30:00Z,South Carolina,Notre Dame,38,45,0.0,has_plays,teams_only_source_date_missing,188,2579,87,20221230
+2022,401443542,2022-12-30T19:00:00Z,UCLA,Pittsburgh,35,37,0.0,has_plays,teams_only_source_date_missing,195,26,221,20221230
+2022,401443543,2022-12-30T21:30:00Z,Wyoming,Ohio,27,30,0.0,has_plays,teams_only_source_date_missing,184,2751,195,20221230
+2022,401442016,2022-12-31T21:00:00Z,Michigan,TCU,45,51,0.0,has_plays,teams_only_source_date_missing,198,130,2628,20221231
+2022,401442017,2022-12-31T17:00:00Z,Kentucky,Iowa,0,21,0.0,has_plays,teams_only_source_date_missing,151,96,2294,20221231
+2022,401442018,2022-12-31T17:00:00Z,Kansas State,Alabama,20,45,0.0,has_plays,teams_only_source_date_missing,169,2306,333,20221231
+2022,401442019,2022-12-31T01:00:00Z,Clemson,Tennessee,14,31,0.0,has_plays,teams_only_source_date_missing,215,228,2633,20221230
+2022,401442015,2023-01-01T01:00:00Z,Georgia,Ohio State,42,41,1.0,has_plays,teams_only_source_date_missing,175,61,194,20221231
+2022,401442011,2023-01-02T17:00:00Z,Illinois,Mississippi State,10,19,0.0,has_plays,teams_only_source_date_missing,169,356,344,20230102
+2022,401442012,2023-01-02T18:00:00Z,Purdue,LSU,7,63,0.0,has_plays,teams_only_source_date_missing,179,2509,99,20230102
+2022,401442013,2023-01-02T18:00:00Z,USC,Tulane,45,46,0.0,has_plays,teams_only_source_date_missing,175,30,2655,20230102
+2022,401442014,2023-01-02T22:00:00Z,Utah,Penn State,21,35,0.0,has_plays,teams_only_source_date_missing,172,254,213,20230102
+2022,401442010,2023-01-10T00:30:00Z,Georgia,TCU,65,7,1.0,has_plays,teams_only_source_date_missing,158,61,2628,20230109

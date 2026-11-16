@@ -1,0 +1,41 @@
+{
+  "counts": {
+    "game_sequence_rows": 24071,
+    "matches": 1097,
+    "matches_by_invalid_game_row_count": {
+      "0": 1045,
+      "1": 43,
+      "2": 9
+    },
+    "matches_with_any_invalid_game_row": 52,
+    "matches_with_at_least_one_strict_valid_game": 1097,
+    "matches_with_every_game_row_strict_valid": 1045,
+    "rows_failing_each_check": {
+      "game_winner_code": 3,
+      "initial_point": 11,
+      "parse": 0,
+      "server_code": 0,
+      "terminal_point": 26,
+      "within_game_transition": 26
+    },
+    "strict_inferred_point_outcomes": 154887,
+    "strict_valid_game_rows": 24010,
+    "within_set_server_transitions": {
+      "alternating": 21478,
+      "observed": 21484
+    }
+  },
+  "criteria": {
+    "initial_point": "The first displayed score advances exactly one point from 0-0.",
+    "point_count": "One inferred point for each displayed state, plus one terminal point inferred from HK.",
+    "server_and_winner": "Raw HG and HK codes are present and each is 1 or 2.",
+    "terminal_point": "The last displayed score gives HK a game point, so the inferred terminal winner is unambiguous.",
+    "within_game_transition": "Every successive score advances one point under standard tennis scoring, including deuce/advantage returns."
+  },
+  "limitations": [
+    "154,887 is a strict, high-confidence lower bound; invalid game rows are excluded even when some internal point transitions might still be recoverable.",
+    "A complete set or match history is not established by valid game rows; tiebreak point sequences and missing source rows need separate validation.",
+    "No inferred point rows were written to the canonical archives or substituted for the retained raw game-sequence records."
+  ],
+  "scope": "Read-only audit of tennis_points records with record_kind=game_sequence."
+}

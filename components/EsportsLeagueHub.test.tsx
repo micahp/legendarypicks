@@ -256,20 +256,21 @@ async function flush() {
 }
 
 describe('esports league hub — header and EWC-first center', () => {
-  it('renders the league header, EWC tournament center, and Club Championship rail by default', async () => {
+  it('renders the league header, EWC tournament center, and Club Championship rail', async () => {
     const fetchMock = renderHub(true)
 
-    expect(screen.getByText('Leagues').closest('a')?.getAttribute('href')).toBe('/leagues')
     expect(screen.getByRole('heading', { name: 'Esports' })).toBeTruthy()
     expect(screen.getByText('Live esports →').closest('a')?.getAttribute('href')).toBe('/esports')
 
-    // EWC tournament center (default tab) — event focus, live, today, results.
+    // EWC tournament center — event focus and live; the games catalog owns the
+    // schedule and results, so the center must never repeat them.
+    fireEvent.click(screen.getByRole('button', { name: 'EWC' }))
     await waitFor(() => expect(screen.getByText('EWC 2026')).toBeTruthy())
     expect(screen.getByText('Esports World Cup 2026')).toBeTruthy()
     expect(screen.getAllByText('Team Falcons').length).toBeGreaterThanOrEqual(2)
-    expect(screen.getByText('Gentle Mates')).toBeTruthy()
-    expect(screen.getByText('Today across titles')).toBeTruthy()
-    expect(screen.getByText('EWC results')).toBeTruthy()
+    expect(screen.getAllByText('Gentle Mates').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Today across titles')).toBeNull()
+    expect(screen.queryByText('EWC results')).toBeNull()
     expect(screen.getByText('G2 Esports')).toBeTruthy()
 
     // Club Championship rail — rows, tabular points, source; desktop requests ten rows.
@@ -531,6 +532,7 @@ describe('esports league hub — responsive standings limit', () => {
   it('mobile requests five rows and expands to ten on demand', async () => {
     const fetchMock = renderHub(false)
 
+    fireEvent.click(screen.getByRole('button', { name: 'EWC' }))
     await waitFor(() => expect(screen.getByText('Club Championship')).toBeTruthy())
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('club-standings?limit=5'))).toBe(true)
 
@@ -549,6 +551,7 @@ describe('esports league hub — data states', () => {
       if (url.includes('/club-standings')) return standings('unavailable')
       return defaultRespond(url)
     })
+    fireEvent.click(screen.getByRole('button', { name: 'EWC' }))
     await waitFor(() => expect(screen.getByText('Standings unavailable')).toBeTruthy())
     expect(screen.queryByText('Twisted Minds')).toBeNull()
     expect(screen.queryByText('2600')).toBeNull()
@@ -560,6 +563,7 @@ describe('esports league hub — data states', () => {
       if (url.includes('/club-standings')) return standings('stale')
       return defaultRespond(url)
     })
+    fireEvent.click(screen.getByRole('button', { name: 'EWC' }))
     await waitFor(() => expect(screen.getByText('Stale')).toBeTruthy())
     await flush()
   })
@@ -573,6 +577,7 @@ describe('esports league hub — data states', () => {
     mockMatchMedia(true)
     render(<EsportsLeaguePage />)
 
+    fireEvent.click(screen.getByRole('button', { name: 'EWC' }))
     await waitFor(() => expect(screen.getByText(/Couldn't load the EWC tournament center/)).toBeTruthy())
 
     failing = false
@@ -582,15 +587,16 @@ describe('esports league hub — data states', () => {
     await flush()
   })
 
-  it('shows an honest empty state when the EWC event has no matches', async () => {
+  it('shows the Club Championship when the EWC event has no matches', async () => {
     renderHub(true, (url) => {
       if (url === '/api/esports/events/ewc-2026') {
         return { eventId: 'ewc-2026', eventName: 'Esports World Cup 2026', active: false, asOf: null, matches: { live: [], upcoming: [], completed: [] } }
       }
       return defaultRespond(url)
     })
-    await waitFor(() => expect(screen.getByText(/No active EWC 2026 matches right now/)).toBeTruthy())
-    expect(screen.queryByText('EWC 2026')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'EWC' }))
+    await waitFor(() => expect(screen.getByText('Club Championship')).toBeTruthy())
+    expect(screen.getByText('Twisted Minds')).toBeTruthy()
     await flush()
   })
 

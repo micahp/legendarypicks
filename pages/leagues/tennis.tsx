@@ -4,13 +4,15 @@ import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
 import GameCard from '../../components/Scores/GameCard'
 import HorizontalScrollRail from '../../components/HorizontalScrollRail'
+import LeagueSwitcher from '../../components/Leagues/LeagueSwitcher'
 import NewsTab from '../../components/Leagues/NewsTab'
+import TennisModelTab from '../../components/Leagues/TennisModelTab'
 import { useNewsData } from '../../components/Leagues/hooks/useNewsData'
 import { combineTennisNews } from '../../components/News/LeagueSection'
 import { SportsService } from '../../services/sports'
 import type { Game } from '../../services/sports'
 
-type HubTab = 'scores' | 'draws' | 'rankings' | 'news'
+type HubTab = 'scores' | 'draws' | 'rankings' | 'model' | 'news'
 type Tour = 'all' | 'atp' | 'wta'
 
 type DrawMatch = {
@@ -26,6 +28,7 @@ type DrawMatch = {
 
 type Draw = {
   league: 'atp' | 'wta'
+  tournament_id?: string
   event_name: string
   draw_type?: string
   bracket_url?: string
@@ -61,6 +64,7 @@ type RankingResponse = {
 }
 
 const TABS: { key: HubTab; label: string }[] = [
+  { key: 'model', label: 'Model' },
   { key: 'scores', label: 'Scores' },
   { key: 'draws', label: 'Draws' },
   { key: 'rankings', label: 'Rankings' },
@@ -177,6 +181,7 @@ export default function TennisLeaguePage() {
     <>
       <Head><title>Tennis — Legendary Picks</title></Head>
       <div className="space-y-6">
+        <LeagueSwitcher activeLeague="tennis" />
         <header>
           <h1 className="text-3xl font-extrabold tracking-tight">Tennis</h1>
         </header>
@@ -212,6 +217,7 @@ export default function TennisLeaguePage() {
         )}
         {tab === 'draws' && <DrawsPanel data={draws} error={drawsError} />}
         {tab === 'rankings' && <RankingsPanel data={rankings} error={rankingsError} />}
+        {tab === 'model' && <TennisModelTab tour={tour} />}
         {tab === 'news' && (
           <NewsTab
             league="tennis"
@@ -280,7 +286,7 @@ function ScoresPanel({ date, setDate, games, loading, error, tour }: {
                   {item.toUpperCase()}
                 </h2>
                 <div className="grid gap-3 md:grid-cols-2">
-                  {tourGames.map(game => <GameCard key={`${game.league}-${game.gameId}`} {...game} />)}
+                  {tourGames.map(game => <div key={`${game.league}-${game.gameId}`} className="rounded-xl bg-zinc-900 px-4 py-1 shadow"><GameCard {...game} /></div>)}
                 </div>
               </section>
             )
@@ -295,7 +301,8 @@ function DrawsPanel({ data, error }: { data: DrawResponse | null; error: string 
   if (error) return <Unavailable text={error} />
   if (!data) return <Loading />
   if (!data.available || !data.tours.length) return <Unavailable text={data.reason || 'No verified major draw has been published yet.'} />
-  return <div className="space-y-8">{data.tours.map(draw => <DrawTournament key={`${draw.league}-${draw.event_name}`} draw={draw} />)}</div>
+  // One entry per tournament: a tour can have several brackets live at once, so the key is the tournament.
+  return <div className="space-y-8">{data.tours.map(draw => <DrawTournament key={`${draw.league}-${draw.tournament_id || draw.event_name}`} draw={draw} />)}</div>
 }
 
 function DrawTournament({ draw }: { draw: Draw }) {

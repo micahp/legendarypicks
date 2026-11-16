@@ -31,8 +31,10 @@ backup marker: `picks.db.pre-schema-...bak` and `picks.db.bak-...` both group
 under `picks.db`; `picks.dev.db.*` under `picks.dev.db`; JSON caches under
 their own name.
 
-Run it by hand when convenient, or wire it into a nightly cron. Dry run by
-default; `--apply` deletes:
+It runs daily at 06:30 (`legendarypicks-prune-backups.timer`, after the 05:19 and
+05:23 timer backups; units in `ops/systemd/`). Until 2026-10-21 nothing scheduled it,
+and the disk reached 99%. `-wal`/`-shm` sidecars are not backups: they are pruned with
+their backup and never take a retention slot. Dry run by default; `--apply` deletes:
 
 ```bash
 cd backend

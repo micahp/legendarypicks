@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import { localToday, validScheduleDate } from '../presentation'
+import { rememberLeagueTab } from '../leagueTabPreferences'
 import { useCoverage, isVouched } from './useCoverage'
 import type { HubTab } from '../types'
 
@@ -38,12 +39,18 @@ export function useLeagueRouteState() {
   // UFC has 1 conversation / 2 narratives / 12 granular. Only the World Cup is
   // left out: dormant hub, and its key returns nothing.
   const validTabs: HubTab[] = isUFC
-    ? ['rankings', 'schedule', 'predict', 'optimizer', 'news']
+    ? ['rankings', 'schedule', 'predict', 'optimizer', 'model', 'news']
     : isWorldCup
       ? ['standings', 'stats', 'schedule']
       : isNFL
-        ? ['camp', 'standings', 'stats', 'schedule', 'model', 'news']
-        : ['standings', 'stats', 'schedule', 'news']
+        ? ['camp', 'standings', 'stats', 'schedule', 'model', 'playoff-odds', 'news']
+        : league === 'nhl'
+          ? ['standings', 'stats', 'schedule', 'model', 'news']
+        : league === 'ncaaf'
+          ? ['standings', 'stats', 'schedule', 'model', 'playoff-tracker', 'cfb-playoff', 'news']
+        : league === 'mlb' || league === 'nba'
+          ? ['standings', 'stats', 'schedule', 'model', 'news']
+          : ['standings', 'stats', 'schedule', 'news']
 
   const [activeTab, setActiveTab] = useState<HubTab>('standings')
   const [scheduleDate, setScheduleDate] = useState(() => localToday())
@@ -72,6 +79,7 @@ export function useLeagueRouteState() {
     const nextTab = validTabs.includes(queryTab as HubTab)
       ? queryTab as HubTab
       : validTabs[0]
+    rememberLeagueTab(league, nextTab)
     const urlDate = typeof router.query.date === 'string' ? router.query.date : null
     const usesWeek = league === 'nfl' || league === 'ncaaf'
 
@@ -153,6 +161,7 @@ export function useLeagueRouteState() {
 
   const selectTab = (tab: HubTab) => {
     setActiveTab(tab)
+    rememberLeagueTab(league, tab)
     updateRoute(tab, tab === 'schedule' ? scheduleDate : undefined, dateIntent)
   }
 

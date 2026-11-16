@@ -1,0 +1,10 @@
+[Unit]
+Description=Precompute tennis projections for the next three UTC days (PROD)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/legendarypicks/backend
+Environment=LP_DB_PATH=/root/legendarypicks/backend/data/picks.db
+ExecStart=/root/legendarypicks/backend/venv/bin/python tennis_precompute.py --days 3
+TimeoutStartSec=900
+Nice=10

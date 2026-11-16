@@ -64,7 +64,9 @@ class WithoutFilter(unittest.TestCase):
             CREATE TABLE prop_results(prop_id INTEGER, actual_value REAL, hit INTEGER, settled_at TEXT);
         """)
         import scripts_split_provider_logs as split
+        import nba_sportsdataverse
         split.ensure_espn_columns(con)
+        nba_sportsdataverse.ensure_schema(con)
         con.executescript(split.DDL_TABLE)
         con.executescript(split.DDL_VIEW)
         con.execute("INSERT INTO players VALUES(1,'P Receiver','NO','nfl','WR')")

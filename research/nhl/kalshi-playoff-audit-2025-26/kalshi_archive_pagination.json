@@ -1,0 +1,52 @@
+{
+  "retrieved_at_utc": "2026-10-14T05:16:17.781554+00:00",
+  "endpoint": "https://external-api.kalshi.com/trade-api/v2/historical/markets",
+  "query": {
+    "series_ticker": "KXNHLGAME",
+    "limit": 1000
+  },
+  "pages": [
+    {
+      "page": 1,
+      "http_status": 200,
+      "count": 1000,
+      "first_ticker": "KXNHLGAME-26JUN14CARVGK-VGK",
+      "last_ticker": "KXNHLGAME-26FEB04MINNSH-MIN",
+      "has_next_cursor": true
+    },
+    {
+      "page": 2,
+      "http_status": 200,
+      "count": 1000,
+      "first_ticker": "KXNHLGAME-26FEB04CHICBJ-CHI",
+      "last_ticker": "KXNHLGAME-25NOV29DETBOS-BOS",
+      "has_next_cursor": true
+    },
+    {
+      "page": 3,
+      "http_status": 200,
+      "count": 1000,
+      "first_ticker": "KXNHLGAME-25NOV29EDMSEA-SEA",
+      "last_ticker": "KXNHLGAME-25APR29EDMLAK-EDM",
+      "has_next_cursor": true
+    },
+    {
+      "page": 4,
+      "http_status": 200,
+      "count": 76,
+      "first_ticker": "KXNHLGAME-25APR30MTLWSH-WSH",
+      "last_ticker": "KXNHLGAME-25APR21MTLWSH-MTL",
+      "has_next_cursor": false
+    }
+  ],
+  "archive_contract_count": 3076,
+  "unique_ticker_count": 3076,
+  "cursor_chain_terminated": true,
+  "historical_cutoff_http_status": 200,
+  "historical_cutoff": {
+    "market_positions_last_updated_ts": "2026-08-14T00:00:00Z",
+    "market_settled_ts": "2026-08-14T00:00:00Z",
+    "orders_updated_ts": "2026-09-29T00:00:00Z",
+    "trades_created_ts": "2026-08-14T00:00:00Z"
+  }
+}

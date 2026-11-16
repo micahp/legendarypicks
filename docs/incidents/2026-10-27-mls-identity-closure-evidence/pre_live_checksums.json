@@ -1,0 +1,45 @@
+{
+ "db": "/root/mls-snapshot-check/integrate/migrated_dev.db",
+ "players": {
+  "rows": 61408,
+  "sha256": "46babb95506f56bda976e561db82bcd21c343db6a0dbd15204dd12567a1ad051"
+ },
+ "player_source_ids": {
+  "rows": 14642,
+  "sha256": "e35e723657d7db1adf302dc3b99a14b03e32a6f2969597a56eeade49360b17bd"
+ },
+ "roster_snapshots": {
+  "rows": 903,
+  "sha256": "fb2b42fc85da3eccf2b0de4c9513bbe16563b2b8326ebfbf80239ab30792a9bd"
+ },
+ "roster_memberships": {
+  "rows": 734458,
+  "sha256": "ffedc22d48bfe6d964ec7344857024177d81bdde7759fe49c9b00093d550d8b9"
+ },
+ "identity_evidence": "absent",
+ "identity_onboarding_queue": "absent",
+ "player_game_logs": {
+  "rows": 584137,
+  "sha256": "8846eeab9bf4e4e24513f06c1a2bcb2ff289a490e7f8e08001ed93a94dde860c"
+ },
+ "props": {
+  "rows": 924755,
+  "sha256": "ae8b25a40010a79b7ca6a9d9df4d393b399a64a02f88947e8888e720e33439e8"
+ },
+ "prop_results": {
+  "rows": 740340,
+  "sha256": "23e86bdd8661904076ae06574f4e3a408daf8362a051780c2f775cd5a31947ec"
+ },
+ "settlement_attempts": {
+  "rows": 183734,
+  "sha256": "6e3cc2c0ed1ab2627b78f896e51b99c35f588d29ee3c9645b34e74ecd8a24168"
+ },
+ "team_game_results": {
+  "rows": 20798,
+  "sha256": "0c444336009629dccc8efeb3fee9e065045a904c025dba19d1ae2a86864aa502"
+ },
+ "prop_games": {
+  "rows": 3944,
+  "sha256": "e668c727445897dd44625fdb5a2c5a20aaf09c396de66c04935c70ec6a3322e0"
+ }
+}

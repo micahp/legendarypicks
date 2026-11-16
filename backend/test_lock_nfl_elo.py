@@ -60,6 +60,7 @@ class Window(unittest.TestCase):
         nl.start_run(self.con, "r", 2026, 5, le.version_for(2026), {}, model=le.MODEL)
         out = nl.lock_week(self.con, "r", 2026, 5, lambda h, a, n: (20.0, 17.0, 0.6),
                            now=dt.datetime(2026, 10, 11, 15, 31, tzinfo=UTC), min_lead=le.LEAD)
+        nl.finish_run(self.con, "r", "ok")
         self.assertEqual(out["new_locks"], 1)          # only `early` is inside its window
         self.assertEqual(out["too_early"], ["late", "night"])
         self.assertEqual(self.ids(dt.datetime(2026, 10, 11, 15, 40, tzinfo=UTC)), [])
@@ -68,6 +69,7 @@ class Window(unittest.TestCase):
         nl.start_run(self.con, "r", 2026, 5, "nfl-v1 other", {})
         nl.lock_week(self.con, "r", 2026, 5, lambda h, a, n: (20.0, 17.0, 0.6),
                      now=dt.datetime(2026, 10, 11, 15, 31, tzinfo=UTC))
+        nl.finish_run(self.con, "r", "ok")
         self.assertEqual(self.ids(dt.datetime(2026, 10, 11, 15, 40, tzinfo=UTC)), ["early"])
 
     def test_a_missing_gameday_is_not_scanned_and_the_week_lock_would_refuse_it(self):

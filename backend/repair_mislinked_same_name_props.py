@@ -26,6 +26,7 @@ import sqlite3
 import sys
 from collections import defaultdict
 
+import hoopr_column
 from link_prop_games import _TEAM_MAPS
 
 DB = os.environ.get("LP_DB_PATH", "data/picks.db")
@@ -56,6 +57,8 @@ def plan(con):
         idcol = _LEAGUE_ID_COL.get(d["league"])
         if not idcol:
             continue
+        if idcol == "nba_id":  # renamed to hoopr_id by migrate_players_hoopr_id.py
+            idcol = hoopr_column.hoopr_column(con) or idcol
         rows = con.execute(
             f"SELECT id, team, {idcol} AS pub_id, "
             "(SELECT COUNT(*) FROM props x WHERE x.player_id=players.id) AS props "

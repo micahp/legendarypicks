@@ -46,6 +46,31 @@ def fetch_events(sport: str, league: str) -> list:
             events.append(ev)
     return events
 
+def tennis_tour_events(tour: str, data: list) -> list:
+    """Events of one tour (`atp` or `wta`) from the bare `tennis` coupon.
+
+    Bovada files tennis by tour and tournament: /tennis/atp/shanghai/... Matching the tour prefix
+    keeps the lane alive across tournaments, unlike a hard-coded tournament path that goes stale
+    when the event ends.
+    """
+    prefix = "/tennis/%s/" % tour
+    out = []
+    for group in data:
+        for ev in group.get("events", []):
+            if str(ev.get("link") or "").startswith(prefix):
+                out.append(ev)
+    return out
+
+
+def fetch_tennis_tour(tour: str) -> list:
+    """Read-only GET of the bare tennis coupon, filtered to one tour."""
+    url = f"{BOVADA}/tennis?lang=en"
+    req = urllib.request.Request(url, headers=HDR)
+    with urllib.request.urlopen(req, timeout=20) as r:
+        data = json.loads(r.read().decode())
+    return tennis_tour_events(tour, data)
+
+
 def parse_player_props(event: dict, league: str) -> list:
     """Extract all player props from a single Bovada event."""
     if league in ("mls", "lcup"):

@@ -1,0 +1,12 @@
+season,game_id,date,schedule_home,schedule_away,schedule_start_utc,frame_home_team_id,frame_away_team_id,frame_home_score,frame_away_score,frame_result_known,espn_date_utc,espn_season,espn_home,espn_away,espn_home_id,espn_away_id,espn_home_score,espn_away_score,espn_completed,teams_match,ids_match,names_match,date_match,season_match,scores_match,verdict
+2026,401856720,20261017,LSU,Mississippi State,2026-10-17T16:00:00Z,99,344,31,0,True,2026-10-17T16:00Z,2026,LSU,Mississippi State,99,344,31,0,True,True,True,True,True,True,True,confirmed
+2026,401856724,20261017,Texas,Florida,2026-10-17T16:00:00Z,251,57,24,27,True,2026-10-17T16:00Z,2026,Texas,Florida,251,57,24,27,True,True,True,True,True,True,True,confirmed
+2026,401856829,20261017,West Virginia,Cincinnati,2026-10-17T16:00:00Z,277,2132,45,42,True,2026-10-17T16:00Z,2026,West Virginia,Cincinnati,277,2132,45,42,True,True,True,True,True,True,True,confirmed
+2026,401856830,20261017,Kansas State,Kansas,2026-10-17T16:00:00Z,2306,2305,35,24,True,2026-10-17T16:00Z,2026,Kansas State,Kansas,2306,2305,35,24,True,True,True,True,True,True,True,confirmed
+2026,401858267,20261017,Boston College,Pittsburgh,2026-10-17T16:00:00Z,103,221,27,21,True,2026-10-17T16:00Z,2026,Boston College,Pittsburgh,103,221,27,21,True,True,True,True,True,True,True,confirmed
+2026,401858268,20261017,SMU,Virginia,2026-10-17T16:00:00Z,2567,258,23,13,True,2026-10-17T16:00Z,2026,SMU,Virginia,2567,258,23,13,True,True,True,True,True,True,True,confirmed
+2026,401858488,20261017,Indiana,Ohio State,2026-10-17T16:00:00Z,84,194,15,19,True,2026-10-17T16:00Z,2026,Indiana,Ohio State,84,194,15,19,True,True,True,True,True,True,True,confirmed
+2026,401858491,20261017,Michigan State,Northwestern,2026-10-17T16:00:00Z,127,77,21,24,True,2026-10-17T16:00Z,2026,Michigan State,Northwestern,127,77,21,24,True,True,True,True,True,True,True,confirmed
+2026,401862802,20261017,Army,Florida Atlantic,2026-10-17T16:00:00Z,349,2226,56,24,True,2026-10-17T16:00Z,2026,Army,Florida Atlantic,349,2226,56,24,True,True,True,True,True,True,True,confirmed
+2026,401866441,20261017,Bowling Green,Ball State,2026-10-17T16:00:00Z,189,2050,31,32,True,2026-10-17T16:00Z,2026,Bowling Green,Ball State,189,2050,31,32,True,True,True,True,True,True,True,confirmed
+2026,401869957,20261017,James Madison,Georgia State,2026-10-17T16:00:00Z,256,2247,49,22,True,2026-10-17T16:00Z,2026,James Madison,Georgia State,256,2247,49,22,True,True,True,True,True,True,True,confirmed

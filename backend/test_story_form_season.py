@@ -99,7 +99,7 @@ class TestAgainstTheRealDatabases:
             # NCAAF 2026 logs spanning 2026-08-29..2026-09-06. Same shape as the MLS line
             # above: the expectation had begun asserting history rather than behaviour.
             ("ncaaf", 2026, False),
-            ("nfl", 2026, True),    # logs stop at 2025, 2026 preseason underway
+            ("nfl", 2026, False),   # was True ("logs stop at 2025"); 2026 logs now run 2026-09-09..2026-10-26
             ("mlb", 2026, False),   # 2026 logs exist
             ("nba", 2026, False),   # 2026 logs exist
             ("nhl", 2026, False),   # 2026 logs exist

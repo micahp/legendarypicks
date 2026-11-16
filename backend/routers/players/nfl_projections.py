@@ -9,6 +9,7 @@ For each (game, player, stat, scenario, model_version) the latest run is shown. 
 player playing; p_plays is how likely that is. Nothing here computes a projection on a request except the P(over),
 which is simulated from the stored means with a fixed seed.
 """
+import math
 import sqlite3
 from contextlib import closing
 from typing import Optional
@@ -21,6 +22,28 @@ MARKET_STAT = {"receiving_yards": "rec_yds", "receptions": "rec", "receiving_tds
 PASS_MARKET_STAT = {"passing_yards": "pass_yds", "pass_attempts": "att", "pass_completions": "cmp",
                     "passing_touchdowns": "pass_td"}
 V2, MARCEL, ESPN = "v2", "marcel-lite", "espn-weekly"
+MODELS = (V2, "v2-platt")
+
+
+def _calibration_map(con, season, week, model="v2-platt"):
+    """(a, b) for the week's forward Platt map, or None when there is no map (serve the raw number)."""
+    try:
+        row = con.execute(
+            "SELECT a, b, n_items, fitted_at_utc FROM nfl_prop_calibration "
+            "WHERE season=? AND week=? AND model_version=?", (season, week, model)).fetchone()
+    except sqlite3.OperationalError:
+        return None
+    return {"a": row[0], "b": row[1], "n_items": row[2], "fitted_at_utc": row[3]} if row else None
+
+
+def _logistic(a, b, p):
+    """Platt map on the logit scale: sigmoid(a * logit(p) + b)."""
+    p = min(max(p, 1e-9), 1 - 1e-9)
+    z = a * math.log(p / (1.0 - p)) + b
+    if z >= 0:
+        return 1.0 / (1.0 + math.exp(-z))
+    e = math.exp(z)
+    return e / (1.0 + e)
 
 
 def _db_pkg():
@@ -45,7 +68,10 @@ def _line(row):
 
 @router.get("/api/nfl/projections/player/{player_id}")
 def nfl_player_projection(player_id: int, week: Optional[int] = Query(None), season: Optional[int] = Query(None),
-                          market: Optional[str] = Query(None), line: Optional[float] = Query(None)):
+                          market: Optional[str] = Query(None), line: Optional[float] = Query(None),
+                          model: str = V2):
+    if model not in MODELS:
+        raise HTTPException(400, "unknown model %r; choose one of %s" % (model, ", ".join(MODELS)))
     with closing(_db_pkg()) as con:
         player = con.execute("SELECT id, name, team FROM players WHERE id=? AND league='nfl'", (player_id,)).fetchone()
         if not player:
@@ -101,6 +127,17 @@ def nfl_player_projection(player_id: int, week: Optional[int] = Query(None), sea
                     out["prob_over"] = {"market": market, "line": line, "p_over": round(
                         eng.summarize(draws, {"cmp": 0, "pass_yds": 1, "pass_td": 2, "att": 3}[pstat], line)["p_over"], 4),
                         "given": "plays"}
+        po = out.get("prob_over")
+        if po is not None and model == "v2-platt":
+            cmap = _calibration_map(con, season, week)
+            po["p_over_raw"] = po["p_over"]
+            if cmap:
+                po["p_over"] = round(_logistic(cmap["a"], cmap["b"], po["p_over"]), 4)
+                po["calibration"] = dict(cmap, status="applied")
+            else:
+                po["calibration"] = {"status": "raw_no_map",
+                                     "note": "no earlier graded week to fit on; served raw, not calibrated"}
+        out["model"] = model
         return out
 
 

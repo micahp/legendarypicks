@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import TennisLeaguePage from '../pages/leagues/tennis'
 import { SportsService } from '../services/sports'
 
@@ -17,6 +17,26 @@ jest.mock('../components/Leagues/hooks/useNewsData', () => ({
 }))
 
 const getGames = SportsService.getGamesByLocalDate as jest.Mock
+const leagueNavigation = {
+  leagues: [
+    { league: 'nba', sport: 'basketball' },
+    { league: 'nfl', sport: 'football' },
+    { league: 'ncaaf', sport: 'football' },
+    { league: 'nhl', sport: 'hockey' },
+    { league: 'mlb', sport: 'baseball' },
+    { league: 'ufc', sport: 'mma' },
+    { league: 'soccer', sport: 'soccer' },
+    { league: 'tennis', sport: 'tennis' },
+    { league: 'esports', sport: 'esports' },
+  ],
+}
+
+function mockFetchResponses(fallback: unknown) {
+  ;(global as any).fetch = jest.fn((url: string) => Promise.resolve({
+    ok: true,
+    json: async () => url === '/api/navigation/sports' ? leagueNavigation : fallback,
+  }))
+}
 
 function clickLink(name: string) {
   const link = screen.getByRole('link', { name })
@@ -28,9 +48,10 @@ describe('Tennis league hub', () => {
   beforeEach(() => {
     mockRouter.query = {}
     mockRouter.push.mockReset()
+    window.localStorage.clear()
     getGames.mockReset()
     getGames.mockResolvedValue([])
-    ;(global as any).fetch = jest.fn()
+    mockFetchResponses([])
   })
 
   it('defaults to all tours and offers only the measured product tabs', async () => {
@@ -38,6 +59,10 @@ describe('Tennis league hub', () => {
 
     expect(screen.queryByText('Major tournament coverage')).toBeNull()
     expect(screen.queryByText(/ATP and WTA scores/)).toBeNull()
+    const sections = screen.getByRole('navigation', { name: 'Tennis sections' })
+    expect(within(sections).getAllByRole('link').map(link => link.textContent)).toEqual([
+      'Model', 'Scores', 'Draws', 'Rankings', 'News',
+    ])
     const tour = screen.getByRole('combobox', { name: 'Tour' }) as HTMLSelectElement
     expect(tour.value).toBe('all')
     expect(screen.getByRole('option', { name: 'All' })).toBeTruthy()
@@ -54,6 +79,20 @@ describe('Tennis league hub', () => {
     expect(screen.getByRole('button', { name: 'Next day' }).className).toContain('h-10 w-10')
     expect(screen.queryByRole('button', { name: 'Jump to today' })).toBeNull()
     await waitFor(() => expect(getGames).toHaveBeenCalledTimes(2))
+    const leagueNav = screen.getByRole('navigation', { name: 'Leagues' })
+    const tennisLink = await within(leagueNav).findByRole('link', { name: 'Tennis' })
+    expect(tennisLink.getAttribute('aria-current')).toBe('page')
+    expect(tennisLink.getAttribute('href')).toBe('/leagues/tennis?tab=model')
+    expect(within(leagueNav).getByRole('link', { name: 'NBA' }).getAttribute('href')).toBe('/leagues/nba?tab=model')
+    expect(within(leagueNav).getByRole('link', { name: 'NFL' }).getAttribute('href')).toBe('/leagues/nfl?tab=model')
+    expect(within(leagueNav).getByRole('link', { name: 'NCAAF' }).getAttribute('href')).toBe('/leagues/ncaaf?tab=model')
+    expect(within(leagueNav).getByRole('link', { name: 'NHL' }).getAttribute('href')).toBe('/leagues/nhl?tab=model')
+    expect(within(leagueNav).getByRole('link', { name: 'MLB' }).getAttribute('href')).toBe('/leagues/mlb?tab=schedule')
+    expect(within(leagueNav).getByRole('link', { name: 'UFC' }).getAttribute('href')).toBe('/leagues/ufc?tab=schedule')
+    expect(within(leagueNav).getByRole('link', { name: 'Soccer' }).getAttribute('href')).toBe('/leagues/soccer?tab=scores')
+    expect(within(leagueNav).getByRole('link', { name: 'Esports' }).getAttribute('href')).toBe('/leagues/esports?tab=live')
+    expect(within(leagueNav).getByRole('link', { name: 'Soccer' })).toBeTruthy()
+    expect(within(leagueNav).getByRole('link', { name: 'UFC' })).toBeTruthy()
     expect(await screen.findByText('No covered ATP or WTA matches were published for this date.')).toBeTruthy()
     expect(getGames.mock.calls.map(call => call[0]).sort()).toEqual(['atp', 'wta'])
     await act(async () => { fireEvent.change(tour, { target: { value: 'atp' } }) })
@@ -65,11 +104,17 @@ describe('Tennis league hub', () => {
     )
   })
 
+  it('keeps the remembered league tab ahead of its default tab', async () => {
+    window.localStorage.setItem('lp.league-tab-preferences.v1', JSON.stringify({ nba: 'stats' }))
+    await act(async () => { render(<TennisLeaguePage />) })
+    await screen.findByText('No covered ATP or WTA matches were published for this date.')
+
+    const leagueNav = screen.getByRole('navigation', { name: 'Leagues' })
+    expect(within(leagueNav).getByRole('link', { name: 'NBA' }).getAttribute('href')).toBe('/leagues/nba?tab=stats')
+  })
+
   it('shows the persisted unavailable reason instead of an empty bracket', async () => {
-    ;(global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => ({ available: false, tours: [], reason: 'No verified major draw has been published yet.' }),
-    })
+    mockFetchResponses({ available: false, tours: [], reason: 'No verified major draw has been published yet.' })
     await act(async () => { render(<TennisLeaguePage />) })
     await screen.findByText('No covered ATP or WTA matches were published for this date.')
     clickLink('Draws')
@@ -105,16 +150,13 @@ describe('Tennis league hub', () => {
   })
 
   it('renders published rounds, future TBD slots, and the official bracket link', async () => {
-    ;(global.fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        available: true,
-        tours: [{
-          league: 'atp', event_name: 'US Open', draw_type: "Men's Singles",
-          bracket_url: 'https://www.espn.com/tennis/bracket/test', fetched_at: '2026-08-24T12:00:00Z',
-          matches: [{ game_id: 'm1', round: 'First Round', status: 'Scheduled', home: { athlete_id: '1001', name: 'Player One', seed: 12 }, away: { athlete_id: '1002', name: 'Player Two' } }],
-        }],
-      }),
+    mockFetchResponses({
+      available: true,
+      tours: [{
+        league: 'atp', event_name: 'US Open', draw_type: "Men's Singles",
+        bracket_url: 'https://www.espn.com/tennis/bracket/test', fetched_at: '2026-08-24T12:00:00Z',
+        matches: [{ game_id: 'm1', round: 'First Round', status: 'Scheduled', home: { athlete_id: '1001', name: 'Player One', seed: 12 }, away: { athlete_id: '1002', name: 'Player Two' } }],
+      }],
     })
     await act(async () => { render(<TennisLeaguePage />) })
     await screen.findByText('No covered ATP or WTA matches were published for this date.')
@@ -130,19 +172,43 @@ describe('Tennis league hub', () => {
     expect(screen.getByRole('link', { name: /Official bracket/ }).getAttribute('href')).toContain('espn.com')
   })
 
-  it('renders id-keyed world rankings separately from tournament seeds', async () => {
+  it('renders every concurrent tournament for one tour, each with its own bracket link', async () => {
+    const bracket = (tournament_id: string, event_name: string, round: string) => ({
+      league: 'wta', tournament_id, event_name, draw_type: "Women's Singles",
+      bracket_url: `https://www.espn.com/tennis/bracket/${tournament_id}`, fetched_at: '2026-10-18T12:00:00Z',
+      matches: [{ game_id: `${tournament_id}-1`, round, status: 'Scheduled', home: { athlete_id: '1', name: 'Player A' }, away: { athlete_id: '2', name: 'Player B' } }],
+    })
     ;(global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       json: async () => ({
         available: true,
-        tours: [{
-          tour: 'atp', captured_at: '2026-08-25T12:00:00Z',
-          rankings: [{
-            espn_athlete_id: '3623', player_id: 7, player_name: 'Jannik Sinner',
-            rank: 1, previous_rank: 2, points: 12800,
-          }],
-        }],
+        tours: [bracket('381', 'Dongfeng Voyah Wuhan Open', 'Second Round'), bracket('963', 'BNB Ningbo Open', 'First Round')],
       }),
+    })
+    await act(async () => { render(<TennisLeaguePage />) })
+    await screen.findByText('No covered ATP or WTA matches were published for this date.')
+    clickLink('Draws')
+
+    expect(await screen.findByText('Dongfeng Voyah Wuhan Open')).toBeTruthy()
+    expect(screen.getByText('BNB Ningbo Open')).toBeTruthy()
+    const links = screen.getAllByRole('link', { name: /Official bracket/ })
+    expect(links.map(link => link.getAttribute('href'))).toEqual([
+      'https://www.espn.com/tennis/bracket/381', 'https://www.espn.com/tennis/bracket/963',
+    ])
+    expect(screen.getByText('Second Round')).toBeTruthy()
+    expect(screen.getByText('First Round')).toBeTruthy()
+  })
+
+  it('renders id-keyed world rankings separately from tournament seeds', async () => {
+    mockFetchResponses({
+      available: true,
+      tours: [{
+        tour: 'atp', captured_at: '2026-08-25T12:00:00Z',
+        rankings: [{
+          espn_athlete_id: '3623', player_id: 7, player_name: 'Jannik Sinner',
+          rank: 1, previous_rank: 2, points: 12800,
+        }],
+      }],
     })
     await act(async () => { render(<TennisLeaguePage />) })
     await screen.findByText('No covered ATP or WTA matches were published for this date.')

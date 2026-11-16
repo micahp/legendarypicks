@@ -5,6 +5,7 @@ import os
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -30,7 +31,9 @@ _core._init_db()
 
 
 def _insert(headline, league, layer, url, body="", source="test", key_player=None,
-            published="2026-08-06T12:00:00Z", conv_id=None):
+            published=None, conv_id=None):
+    if published is None:
+        published = datetime.now(timezone.utc).isoformat()
     con = sqlite3.connect(_TEST_DB.name)
     con.execute(
         """INSERT INTO news_items(league, layer, source, headline, body, url, published, key_player, conv_id)
@@ -274,9 +277,8 @@ class NewsApiTests(unittest.TestCase):
     def test_bluesky_not_served(self):
         # social posts are signal for the AI conversation, never displayed
         _insert("[@user] Dodgers salary cap chatter", "mlb", "narrative", "http://bsky/1",
-                source="bluesky", published="2026-08-06T23:00:00Z")
-        _insert("Dodgers salary cap debate", "mlb", "narrative", "http://x/1",
-                published="2026-08-06T12:00:00Z")
+                source="bluesky")
+        _insert("Dodgers salary cap debate", "mlb", "narrative", "http://x/1")
         data = news.news_catch_all(league=None)
         self.assertTrue(all(i["source"] != "bluesky"
                             for i in data["leagues"]["mlb"]["narratives"]))

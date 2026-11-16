@@ -71,6 +71,7 @@ def test_plan_is_read_only_and_finds_the_published_event_holder():
 def test_apply_folds_games_and_preserves_every_prop_and_source_mapping():
     connection = _connection()
     actions, _ = repair.plan(connection)
+    connection.commit()
 
     repair.apply(connection, actions)
 

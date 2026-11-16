@@ -1,0 +1,86 @@
+{
+ "closed_as": "documented residuals with guards. Each is traced to its source. None is cleared by an invented value or by a change to the contract. The document is not pregame_full_game conformant, and valid_full_game stays false.",
+ "contract": "shared_v1.py, unchanged in this revision",
+ "count": 9,
+ "record": {
+  "file": "docs/evidence/e2-successor/seed1-game-successor.json",
+  "model_version": "dfef3e8e40ab9702c1f021ff726e3959d6f9d63b",
+  "rules_version": "5ea4eecd2fa94e24c4efa857c35f2aa20724e37b85e5adb49b69a84de875fb7a",
+  "sha256": "e13f060ddb95f3cf9d5d8d69a1c19448686b212100f5d72cbabc2b793fdad169"
+ },
+ "residuals": [
+  {
+   "fixed": false,
+   "gridiron_text": null,
+   "guard_test": "test_shared_v1_residuals.Guards.test_duration_guard_fires",
+   "id": "V-duration-seconds",
+   "source": "shared_v1.check_document",
+   "why_not_sourced": "the published play-by-play has no play duration; tracking in-play time exists only for the 15,768 verified plays, not for the sampled plays the engine draws"
+  },
+  {
+   "fixed": false,
+   "gridiron_text": "Gridiron: \"mode is not pregame_full_game\"",
+   "guard_test": "test_shared_v1_residuals.Guards.test_mode_guard_fires",
+   "id": "V-mode",
+   "source": "shared_v1.check_document",
+   "why_not_sourced": "the record is a sampled legal game state, not a pregame full-game snapshot; the contract mode is pregame_full_game"
+  },
+  {
+   "fixed": false,
+   "gridiron_text": "Gridiron: \"missing real home/away team identities\"",
+   "guard_test": "test_shared_v1_residuals.Guards.test_teams_guard_fires",
+   "id": "V-teams-unresolved",
+   "source": "gridiron adapter audit (no LP check)",
+   "why_not_sourced": "the home and away teams are authored labels A and B; no real identity is sampled"
+  },
+  {
+   "fixed": false,
+   "gridiron_text": "Gridiron: \"missing or invalid top-level as_of_utc before scheduled_kickoff_utc\"",
+   "guard_test": "test_shared_v1_residuals.Guards.test_as_of_guard_fires",
+   "id": "V-unresolved-as_of_utc",
+   "source": "shared_v1.check_document",
+   "why_not_sourced": "no as-of time: the sampled plays are 2022-2025 outcomes with no pregame cutoff"
+  },
+  {
+   "fixed": false,
+   "gridiron_text": "Gridiron: \"missing stable game_id\"",
+   "guard_test": "test_shared_v1_residuals.Guards.test_game_id_guard_fires",
+   "id": "V-unresolved-game_id",
+   "source": "shared_v1.check_document",
+   "why_not_sourced": "a sampled game has no scheduled game key; no game identity is attached to a sampled play"
+  },
+  {
+   "fixed": false,
+   "gridiron_text": "Gridiron: \"missing eligible roster snapshot\"",
+   "guard_test": "test_shared_v1_residuals.Guards.test_roster_guard_fires",
+   "id": "V-unresolved-roster_snapshot_id",
+   "source": "shared_v1.check_document",
+   "why_not_sourced": "no roster or lineup snapshot: participants are the sampled observed plays' players"
+  },
+  {
+   "fixed": false,
+   "gridiron_text": "Gridiron: \"missing or invalid top-level as_of_utc before scheduled_kickoff_utc\"",
+   "guard_test": "test_shared_v1_residuals.Guards.test_kickoff_guard_fires",
+   "id": "V-unresolved-scheduled_kickoff_utc",
+   "source": "shared_v1.check_document",
+   "why_not_sourced": "no scheduled kickoff: the record is retrospective, not a pregame simulation"
+  },
+  {
+   "fixed": false,
+   "gridiron_text": null,
+   "guard_test": "test_shared_v1_residuals.Guards.test_snapshot_guard_fires",
+   "id": "V-unresolved-snapshot_hash",
+   "source": "shared_v1.check_document",
+   "why_not_sourced": "no pregame snapshot exists for a sampled game, so there is nothing to hash"
+  },
+  {
+   "fixed": false,
+   "gridiron_text": "Gridiron: \"record.valid_full_game is not true\"",
+   "guard_test": "test_shared_v1_residuals.Guards.test_valid_guard_fires",
+   "id": "V-valid-full-game",
+   "source": "gridiron adapter audit (no LP check)",
+   "why_not_sourced": "valid_full_game is false: this legal_game_state_first_piece record is not a pregame_full_game; unresolved contract inputs and unsupported transitions prevent certification"
+  }
+ ],
+ "valid_full_game": false
+}

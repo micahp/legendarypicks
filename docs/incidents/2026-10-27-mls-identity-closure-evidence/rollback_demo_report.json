@@ -1,0 +1,68 @@
+{
+ "copy": "/root/mls-snapshot-check/integrate/rollback_demo.db",
+ "cycle": {
+  "outcome": "published",
+  "coverage": "verified",
+  "onboarded_players": [
+   71985
+  ]
+ },
+ "plan": {
+  "since": "2026-10-29T09:00:00+00:00",
+  "created_players": [
+   71985
+  ],
+  "created_bindings": 2,
+  "rekey_bindings": 0,
+  "cutover_snapshots": [
+   1
+  ],
+  "restore_snapshot": null,
+  "evidence_rows": 2,
+  "queue_rows": 0,
+  "refused_referenced_players": [],
+  "refused": false
+ },
+ "rolled_back": {
+  "created_players_removed": [
+   71985
+  ],
+  "bindings_removed": 2,
+  "snapshots_restored": null
+ },
+ "checksums_before": {
+  "players": "af18a1f214a6d1fe",
+  "player_source_ids": "2d927659c70e3f6a",
+  "roster_snapshots": "e3b0c44298fc1c14",
+  "roster_memberships": "e3b0c44298fc1c14",
+  "player_game_logs": "9f4c0d817e7a3e22",
+  "props": "fadd21d8bd897ffc",
+  "prop_results": "5c1cfdf20d1329c0",
+  "settlement_attempts": "dd5a72a1664e26ec",
+  "team_game_results": "dca409594c5d2dcd"
+ },
+ "checksums_during_cutover": {
+  "players": "854030bfcf26c98f",
+  "player_source_ids": "1183da96fe5ee678",
+  "roster_snapshots": "73dc30446c860877",
+  "roster_memberships": "450752d1cc830abf",
+  "player_game_logs": "9f4c0d817e7a3e22",
+  "props": "fadd21d8bd897ffc",
+  "prop_results": "5c1cfdf20d1329c0",
+  "settlement_attempts": "dd5a72a1664e26ec",
+  "team_game_results": "dca409594c5d2dcd"
+ },
+ "checksums_after_rollback": {
+  "players": "af18a1f214a6d1fe",
+  "player_source_ids": "2d927659c70e3f6a",
+  "roster_snapshots": "e3b0c44298fc1c14",
+  "roster_memberships": "e3b0c44298fc1c14",
+  "player_game_logs": "9f4c0d817e7a3e22",
+  "props": "fadd21d8bd897ffc",
+  "prop_results": "5c1cfdf20d1329c0",
+  "settlement_attempts": "dd5a72a1664e26ec",
+  "team_game_results": "dca409594c5d2dcd"
+ },
+ "identity_and_snapshot_tables_equal_before": true,
+ "protected_history_equal_before": true
+}

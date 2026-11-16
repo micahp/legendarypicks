@@ -1,0 +1,409 @@
+{
+ "consistency": {
+  "SNAP frame and ball_snap label agree (both present)": 15706,
+  "SNAP frame and ball_snap label both present": 15706,
+  "SNAP frame with no ball_snap label": 62,
+  "clock agrees with BDB": 15768,
+  "largest SNAP vs ball_snap gap, seconds x100": 0,
+  "quarter agrees with BDB": 15768,
+  "verified plays": 15768
+ },
+ "denominator_reconciliation": {
+  "current_verified": 15768,
+  "current_verified_set_real_drives_only": {
+   "complete": 790,
+   "none": 43,
+   "partial": 2013
+  },
+  "earlier_classified_total_2849_reproduced_with_old_pairs_including_null": {
+   "complete": 789,
+   "none": 46,
+   "partial": 2014
+  },
+  "earlier_classified_total_without_null_groups_old_pairs": {
+   "complete": 789,
+   "none": 43,
+   "partial": 2014
+  },
+  "groups_with_a_run_pass_punt_or_fg": 2849,
+  "lp_game_drive_groups_including_null_drive": 3091,
+  "null_drive_groups (one per game)": 136,
+  "of_which_null_drive_groups": 3,
+  "old_pairs": 15765,
+  "real_drives (drive not null)": 2955
+ },
+ "labels": {
+  "game_clock_delta_s": {
+   "inferred": 15377,
+   "unresolvable": 391
+  },
+  "in_play_s": {
+   "inferred": 15706,
+   "unresolvable": 62
+  },
+  "penalty_clock_stop": {
+   "unresolvable": 15768
+  },
+  "real_snap_to_next_snap_s": {
+   "inferred": 11181,
+   "unresolvable": 4587
+  },
+  "residual_s": {
+   "inferred": 15315,
+   "unresolvable": 453
+  },
+  "stoppage_context": {
+   "observed": 15768
+  },
+  "timeouts_remaining": {
+   "unresolvable": 15768
+  },
+  "two_minute_warning_event": {
+   "unresolvable": 15768
+  }
+ },
+ "late_half_snap_counts": {
+  "late half (second or fourth quarter, quarter clock at or below 120 s)": 1961,
+  "otherwise": 13807
+ },
+ "outcome_summary_seconds": {
+  "fumble": {
+   "game_clock_delta_s": {
+    "median": 8.0,
+    "n": 98,
+    "p10": 4.0,
+    "p90": 12.0
+   },
+   "in_play_s": {
+    "median": 4.95,
+    "n": 100,
+    "p10": 2.7,
+    "p90": 8.4
+   },
+   "real_snap_to_next_snap_s": {
+    "median": 104.65,
+    "n": 82,
+    "p10": 60.8,
+    "p90": 205.2
+   },
+   "residual_s": {
+    "median": 3.1,
+    "n": 98,
+    "p10": -0.2,
+    "p90": 5.9
+   }
+  },
+  "interception": {
+   "game_clock_delta_s": {
+    "median": 8.0,
+    "n": 165,
+    "p10": 5.0,
+    "p90": 12.0
+   },
+   "in_play_s": {
+    "median": 4.7,
+    "n": 168,
+    "p10": 3.7,
+    "p90": 7.0
+   },
+   "real_snap_to_next_snap_s": {
+    "median": 88.65,
+    "n": 136,
+    "p10": 60.3,
+    "p90": 202.9
+   },
+   "residual_s": {
+    "median": 2.8,
+    "n": 165,
+    "p10": 0.1,
+    "p90": 7.1
+   }
+  },
+  "other": {
+   "game_clock_delta_s": {
+    "median": 22.0,
+    "n": 90,
+    "p10": 0.0,
+    "p90": 42.0
+   },
+   "in_play_s": {
+    "median": 0.7,
+    "n": 180,
+    "p10": 0.5,
+    "p90": 1.2
+   },
+   "real_snap_to_next_snap_s": {
+    "median": 37.8,
+    "n": 40,
+    "p10": 23.8,
+    "p90": 42.0
+   },
+   "residual_s": {
+    "median": 21.35,
+    "n": 90,
+    "p10": -0.8,
+    "p90": 41.3
+   }
+  },
+  "pass_complete": {
+   "game_clock_delta_s": {
+    "median": 36.0,
+    "n": 5009,
+    "p10": 9.0,
+    "p90": 45.0
+   },
+   "in_play_s": {
+    "median": 5.4,
+    "n": 5117,
+    "p10": 4.0,
+    "p90": 7.5
+   },
+   "real_snap_to_next_snap_s": {
+    "median": 40.2,
+    "n": 3948,
+    "p10": 25.9,
+    "p90": 60.0
+   },
+   "residual_s": {
+    "median": 30.7,
+    "n": 5009,
+    "p10": 3.1,
+    "p90": 38.9
+   }
+  },
+  "pass_incomplete": {
+   "game_clock_delta_s": {
+    "median": 5.0,
+    "n": 2821,
+    "p10": 3.0,
+    "p90": 7.0
+   },
+   "in_play_s": {
+    "median": 4.4,
+    "n": 2782,
+    "p10": 3.1,
+    "p90": 6.5
+   },
+   "real_snap_to_next_snap_s": {
+    "median": 42.5,
+    "n": 1761,
+    "p10": 36.0,
+    "p90": 60.5
+   },
+   "residual_s": {
+    "median": 0.2,
+    "n": 2771,
+    "p10": -0.7,
+    "p90": 1.2
+   }
+  },
+  "run": {
+   "game_clock_delta_s": {
+    "median": 38.0,
+    "n": 6059,
+    "p10": 19.0,
+    "p90": 45.0
+   },
+   "in_play_s": {
+    "median": 4.4,
+    "n": 6205,
+    "p10": 3.3,
+    "p90": 6.3
+   },
+   "real_snap_to_next_snap_s": {
+    "median": 40.3,
+    "n": 4966,
+    "p10": 31.8,
+    "p90": 58.5
+   },
+   "residual_s": {
+    "median": 33.6,
+    "n": 6049,
+    "p10": 14.6,
+    "p90": 40.0
+   }
+  },
+  "sack": {
+   "game_clock_delta_s": {
+    "median": 40.0,
+    "n": 528,
+    "p10": 8.0,
+    "p90": 46.0
+   },
+   "in_play_s": {
+    "median": 4.3,
+    "n": 545,
+    "p10": 3.2,
+    "p90": 6.3
+   },
+   "real_snap_to_next_snap_s": {
+    "median": 43.65,
+    "n": 248,
+    "p10": 35.6,
+    "p90": 84.0
+   },
+   "residual_s": {
+    "median": 35.25,
+    "n": 526,
+    "p10": 3.3,
+    "p90": 41.1
+   }
+  },
+  "touchdown": {
+   "game_clock_delta_s": {
+    "median": 5.0,
+    "n": 607,
+    "p10": 3.0,
+    "p90": 9.0
+   },
+   "in_play_s": {
+    "median": 4.5,
+    "n": 609,
+    "p10": 2.8,
+    "p90": 7.8
+   },
+   "residual_s": {
+    "median": 0.6,
+    "n": 607,
+    "p10": -0.7,
+    "p90": 2.1
+   }
+  }
+ },
+ "paired_real_snap_gap_minus_game_clock_delta": {
+  "fumble": {
+   "median_real_minus_clock_s": 93.15,
+   "n": 82,
+   "p10": 53.6,
+   "p90": 200.0,
+   "share_clock_exceeds_real_by_over_5s": 0.0,
+   "share_real_exceeds_clock_by_over_5s": 1.0
+  },
+  "interception": {
+   "median_real_minus_clock_s": 77.8,
+   "n": 136,
+   "p10": 51.1,
+   "p90": 196.2,
+   "share_clock_exceeds_real_by_over_5s": 0.0,
+   "share_real_exceeds_clock_by_over_5s": 1.0
+  },
+  "other": {
+   "median_real_minus_clock_s": 0.5,
+   "n": 40,
+   "p10": -0.6,
+   "p90": 38.7,
+   "share_clock_exceeds_real_by_over_5s": 0.0,
+   "share_real_exceeds_clock_by_over_5s": 0.275
+  },
+  "pass_complete": {
+   "median_real_minus_clock_s": 0.4,
+   "n": 3947,
+   "p10": -0.5,
+   "p90": 39.6,
+   "share_clock_exceeds_real_by_over_5s": 0.0,
+   "share_real_exceeds_clock_by_over_5s": 0.251
+  },
+  "pass_incomplete": {
+   "median_real_minus_clock_s": 37.8,
+   "n": 1761,
+   "p10": 31.7,
+   "p90": 55.1,
+   "share_clock_exceeds_real_by_over_5s": 0.0,
+   "share_real_exceeds_clock_by_over_5s": 1.0
+  },
+  "run": {
+   "median_real_minus_clock_s": 0.2,
+   "n": 4965,
+   "p10": -0.6,
+   "p90": 37.7,
+   "share_clock_exceeds_real_by_over_5s": 0.0,
+   "share_real_exceeds_clock_by_over_5s": 0.156
+  },
+  "sack": {
+   "median_real_minus_clock_s": 0.2,
+   "n": 248,
+   "p10": -0.5,
+   "p90": 69.1,
+   "share_clock_exceeds_real_by_over_5s": 0.0,
+   "share_real_exceeds_clock_by_over_5s": 0.206
+  }
+ },
+ "pairs_input": {
+  "file": "docs/evidence/e3/inputs/e3-tracking-join-pairs-2026-10-24.csv",
+  "rows_by_status": {
+   "overtime_unverified": 134,
+   "unverified": 222,
+   "verified": 15768
+  }
+ },
+ "scope": {
+  "included": 15768,
+  "overtime (quarter 5), not in the verified set": 134,
+  "spot side NA, not in the verified set": 222
+ },
+ "stoppage_context_counts": {
+  "incomplete_pass": 2794,
+  "none_observed": 9757,
+  "out_of_bounds": 1614,
+  "penalty": 211,
+  "sack": 523,
+  "timeout": 36,
+  "touchdown": 599,
+  "turnover": 234
+ },
+ "terminal_events_used": {
+  "fumble_defense_recovered": 76,
+  "out_of_bounds": 1687,
+  "pass_outcome_incomplete": 2781,
+  "pass_outcome_interception": 180,
+  "pass_outcome_touchdown": 182,
+  "qb_kneel": 160,
+  "qb_sack": 509,
+  "qb_slide": 118,
+  "qb_spike": 21,
+  "qb_strip_sack": 54,
+  "tackle": 9533,
+  "touchback": 2,
+  "touchdown": 403
+ },
+ "tracking_label_counts_for_terminal_events": {
+  "fumble_defense_recovered": 2277,
+  "out_of_bounds": 39628,
+  "pass_outcome_incomplete": 63986,
+  "pass_outcome_interception": 4163,
+  "pass_outcome_touchdown": 4186,
+  "qb_kneel": 3680,
+  "qb_sack": 11753,
+  "qb_slide": 2714,
+  "qb_spike": 483,
+  "qb_strip_sack": 1265,
+  "tackle": 225768,
+  "touchback": 483,
+  "touchdown": 9867
+ },
+ "unresolvable_by_rule": {
+  "game_clock_delta_s": {
+   "R4u1": 6,
+   "R4u2": 374,
+   "R4u3": 11
+  },
+  "in_play_s": {
+   "R2u": 62
+  },
+  "penalty_clock_stop": {
+   "R11u": 15768
+  },
+  "real_snap_to_next_snap_s": {
+   "R6u": 4587
+  },
+  "residual_s": {
+   "R5u": 453
+  },
+  "timeouts_remaining": {
+   "R10u": 15768
+  },
+  "two_minute_warning_event": {
+   "R12u": 15768
+  }
+ }
+}

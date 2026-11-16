@@ -1,0 +1,1049 @@
+{
+  "approved_label_reconciliation": {
+    "GOALS_AGAINST": {
+      "eligible": 646,
+      "matches": 646,
+      "mismatches": 0,
+      "not_applicable": 554,
+      "quarantined": 0
+    },
+    "SAVES": {
+      "eligible": 646,
+      "matches": 644,
+      "mismatches": 2,
+      "not_applicable": 554,
+      "quarantined": 0
+    },
+    "SHOTS_AGAINST": {
+      "eligible": 646,
+      "matches": 644,
+      "mismatches": 2,
+      "not_applicable": 554,
+      "quarantined": 0
+    },
+    "SOG": {
+      "eligible": 10797,
+      "matches": 10795,
+      "mismatches": 2,
+      "not_applicable": 0,
+      "quarantined": 0
+    }
+  },
+  "contradictions": {
+    "games_with_any": 45,
+    "issue_game_counts": {
+      "DUPLICATE_SHIFT_CHART": 2,
+      "GOALIE_LABEL_MISMATCH": 2,
+      "GOALIE_OFF_SHIFT_AT_EVENT": 4,
+      "GOALIE_SHIFT_TOI": 5,
+      "SHOOTER_OFF_SHIFT_AT_EVENT": 1,
+      "SITUATION_SHIFT_COUNT_MISMATCH": 33,
+      "SOG_FEED_VS_OFFICIAL": 2,
+      "SOG_PLAYER_LABEL_MISMATCH": 2,
+      "TOI_SHIFT_VS_OFFICIAL": 14
+    },
+    "issue_occurrences_by_season": [
+      {
+        "games": 1,
+        "issue": "GOALIE_OFF_SHIFT_AT_EVENT",
+        "season": 2018
+      },
+      {
+        "games": 1,
+        "issue": "SITUATION_SHIFT_COUNT_MISMATCH",
+        "season": 2018
+      },
+      {
+        "games": 1,
+        "issue": "GOALIE_LABEL_MISMATCH",
+        "season": 2019
+      },
+      {
+        "games": 1,
+        "issue": "GOALIE_OFF_SHIFT_AT_EVENT",
+        "season": 2019
+      },
+      {
+        "games": 1,
+        "issue": "GOALIE_SHIFT_TOI",
+        "season": 2019
+      },
+      {
+        "games": 1,
+        "issue": "SHOOTER_OFF_SHIFT_AT_EVENT",
+        "season": 2019
+      },
+      {
+        "games": 11,
+        "issue": "SITUATION_SHIFT_COUNT_MISMATCH",
+        "season": 2019
+      },
+      {
+        "games": 1,
+        "issue": "SOG_FEED_VS_OFFICIAL",
+        "season": 2019
+      },
+      {
+        "games": 1,
+        "issue": "SOG_PLAYER_LABEL_MISMATCH",
+        "season": 2019
+      },
+      {
+        "games": 1,
+        "issue": "TOI_SHIFT_VS_OFFICIAL",
+        "season": 2019
+      },
+      {
+        "games": 1,
+        "issue": "GOALIE_OFF_SHIFT_AT_EVENT",
+        "season": 2020
+      },
+      {
+        "games": 1,
+        "issue": "GOALIE_SHIFT_TOI",
+        "season": 2020
+      },
+      {
+        "games": 16,
+        "issue": "SITUATION_SHIFT_COUNT_MISMATCH",
+        "season": 2020
+      },
+      {
+        "games": 5,
+        "issue": "TOI_SHIFT_VS_OFFICIAL",
+        "season": 2020
+      },
+      {
+        "games": 2,
+        "issue": "DUPLICATE_SHIFT_CHART",
+        "season": 2021
+      },
+      {
+        "games": 1,
+        "issue": "GOALIE_LABEL_MISMATCH",
+        "season": 2021
+      },
+      {
+        "games": 1,
+        "issue": "GOALIE_OFF_SHIFT_AT_EVENT",
+        "season": 2021
+      },
+      {
+        "games": 3,
+        "issue": "GOALIE_SHIFT_TOI",
+        "season": 2021
+      },
+      {
+        "games": 4,
+        "issue": "SITUATION_SHIFT_COUNT_MISMATCH",
+        "season": 2021
+      },
+      {
+        "games": 1,
+        "issue": "SOG_FEED_VS_OFFICIAL",
+        "season": 2021
+      },
+      {
+        "games": 1,
+        "issue": "SOG_PLAYER_LABEL_MISMATCH",
+        "season": 2021
+      },
+      {
+        "games": 7,
+        "issue": "TOI_SHIFT_VS_OFFICIAL",
+        "season": 2021
+      },
+      {
+        "games": 1,
+        "issue": "SITUATION_SHIFT_COUNT_MISMATCH",
+        "season": 2022
+      },
+      {
+        "games": 1,
+        "issue": "TOI_SHIFT_VS_OFFICIAL",
+        "season": 2022
+      }
+    ]
+  },
+  "derived_output_sha256": {
+    "event_field_by_season.csv": "179c65d790969fdb6b9f25538b95d98e31b9193eb191aa94dfd35ea0095ab5e9",
+    "event_field_exceptions.csv": "302737cc40a4c5f64f43771a6493895f50f0431d23001c2cd10e6232899f256b",
+    "event_field_game_quality.csv": "4a6f984f0640616ffc7e51a67a2bae249c434ad6559bd6ebc15e74d149a20c67",
+    "goalie_outcome_reconciliation.csv": "d7e5ff6b2a79316bd1f785265b68d52da3f9fac4c8172bde6d537908fec7ae20",
+    "player_sog_reconciliation.csv": "dec7279ff7873b60fc01f236fce5318bdc945f07c0d96395c3c8af436af14311"
+  },
+  "estimated_full_frame_event_bodies": {
+    "compressed_bytes_by_linear_sample_scaling": 122973776,
+    "minimum_request_spacing_minutes_at_1_1s": 178.77,
+    "minimum_request_spacing_seconds_at_1_1s": 10726.1,
+    "requests": 9752,
+    "uncompressed_bytes_by_linear_sample_scaling": 1944014000
+  },
+  "event_bodies_verified": {
+    "compressed_bytes": 7566065,
+    "expected_body_count": 600,
+    "uncompressed_bytes": 119607096,
+    "verified_body_count": 600
+  },
+  "event_field_exception_counts": {
+    "exception_event_rows": 8580,
+    "missing_fields": {
+      "location_xy": 2,
+      "shot_type": 8471
+    },
+    "on_target_goalie_id_status": {
+      "EXPECTED_EMPTY_NET": 108,
+      "UNEXPLAINED": 1
+    }
+  },
+  "event_time_shift_alignment": {
+    "goalie_boundary_ambiguous": 85,
+    "goalie_events_tested": 18782,
+    "goalie_off_ice": 36,
+    "goalie_on_ice": 18661,
+    "shooter_boundary_ambiguous": 2858,
+    "shooter_events_tested": 34363,
+    "shooter_off_ice": 1,
+    "shooter_on_ice": 31504,
+    "situation_boundary_ambiguous": 863,
+    "situation_events_compared": 33500,
+    "situation_matches": 33204,
+    "situation_mismatches": 296
+  },
+  "field_completeness": {
+    "game_clock": {
+      "missing": 0,
+      "pct": 100.0,
+      "present": 34508
+    },
+    "location_xy": {
+      "missing": 2,
+      "pct": 99.994204,
+      "present": 34506
+    },
+    "period": {
+      "missing": 0,
+      "pct": 100.0,
+      "present": 34508
+    },
+    "period_and_clock": {
+      "missing": 0,
+      "pct": 100.0,
+      "present": 34508
+    },
+    "shooter_id_direct": {
+      "missing": 1833,
+      "pct": 94.688188,
+      "present": 32675
+    },
+    "shooter_id_goal_scorer_only": {
+      "missing": 32675,
+      "pct": 5.311812,
+      "present": 1833
+    },
+    "shot_player_id_attributed": {
+      "missing": 0,
+      "pct": 100.0,
+      "present": 34508
+    },
+    "shot_type": {
+      "missing": 8471,
+      "pct": 75.452069,
+      "present": 26037
+    },
+    "situation_code": {
+      "missing": 0,
+      "pct": 100.0,
+      "present": 34508
+    }
+  },
+  "frame_games": 4876,
+  "games_missing_pbp": 0,
+  "games_missing_shift_chart": 0,
+  "input_hashes": {
+    "canonical_frame_sha256": "f417a1272b2bb4adff5757dae398dd1000dd2284f43b6ccb7dd28eaae99edf2b",
+    "event_manifest_sha256": "559b67ce1ccb5a7796ee9d7db7bde9319339469339a3ae5df16f0ac00d99ee07",
+    "official_game_sides_sha256": "782c9f44a113c2857947a6a7f178ddf3d6e26a59544bf3973685135d809a5f33",
+    "official_goalie_outcomes_sha256": "7e5d0cca6783839dca938ba04e15ee2b686873170e319f816060271555a2ca66",
+    "official_skater_outcomes_sha256": "b1249d74e0f38c599e7a88a67f438ceedb187e35a6ba6b66908b77e04208094d",
+    "research_label_quality_sha256": "cc9be34586dc16701f162bbc04cf256a9fd0c4c3c823625ecb02ff24eed1f60c",
+    "research_label_summary_sha256": "89d88064b2b01582ca2b21fe3e5d6324875042a74cd206833dd039283e282f74",
+    "sample_games_sha256": "5ea249cf070eea5bfc0552a55959080207ed67c2a0b971fc9f2fe6d90a4b537f"
+  },
+  "label_quality_status_counts_in_sample": {
+    "GOALS_AGAINST:NOT_APPLICABLE": 554,
+    "GOALS_AGAINST:VERIFIED": 646,
+    "SAVES:NOT_APPLICABLE": 554,
+    "SAVES:VERIFIED": 646,
+    "SHOTS_AGAINST:NOT_APPLICABLE": 554,
+    "SHOTS_AGAINST:VERIFIED": 646,
+    "SOG:ADJUDICATED": 18,
+    "SOG:VERIFIED": 10779
+  },
+  "on_target_identity": {
+    "events_regulation_ot": 18891,
+    "missing_goalie_id": 109,
+    "missing_goalie_id_expected_empty_net": 108,
+    "missing_goalie_id_unexplained": 1,
+    "missing_shooter_id": 0
+  },
+  "quality_by_season": [
+    {
+      "approved_ga_labels": 127,
+      "approved_ga_mismatches": 0,
+      "approved_sa_labels": 127,
+      "approved_sa_mismatches": 0,
+      "approved_saves_labels": 127,
+      "approved_saves_mismatches": 0,
+      "approved_sog_labels": 2160,
+      "approved_sog_mismatches": 0,
+      "base_contradiction_count": 2,
+      "base_goal_games_match": 60,
+      "base_sog_games_match": 60,
+      "blocked_shot_events": 1810,
+      "blocked_shot_type": 0,
+      "game_clock_missing": 0,
+      "game_clock_pct": 100.0,
+      "game_clock_present": 7066,
+      "games_missing_any_tracked_shot_field": 60,
+      "games_missing_game_clock": 0,
+      "games_missing_location_xy": 1,
+      "games_missing_pbp": 0,
+      "games_missing_period": 0,
+      "games_missing_period_and_clock": 0,
+      "games_missing_shift_chart": 0,
+      "games_missing_shooter_id_direct": 60,
+      "games_missing_shooter_id_goal_scorer_only": 60,
+      "games_missing_shot_player_id_attributed": 0,
+      "games_missing_shot_type": 60,
+      "games_missing_situation_code": 0,
+      "games_sampled": 60,
+      "games_with_any_contradiction": 1,
+      "games_with_goalie_substitution": 7,
+      "games_with_outcome_conflict": 0,
+      "games_with_shift_conflict": 1,
+      "goalie_shift_boundary_ambiguous": 15,
+      "goalie_shift_off_ice": 1,
+      "goalie_shift_on_ice": 3772,
+      "goalie_substitution_teams": 7,
+      "location_xy_missing": 1,
+      "location_xy_pct": 99.985848,
+      "location_xy_present": 7065,
+      "on_target_events": 3825,
+      "on_target_goalie_id": 3802,
+      "on_target_shooter_id": 3825,
+      "on_target_without_goalie_expected_empty_net": 23,
+      "on_target_without_goalie_id": 23,
+      "on_target_without_goalie_unexplained": 0,
+      "on_target_without_shooter_id": 0,
+      "period_and_clock_missing": 0,
+      "period_and_clock_pct": 100.0,
+      "period_and_clock_present": 7066,
+      "period_missing": 0,
+      "period_pct": 100.0,
+      "period_present": 7066,
+      "played_goalies": 127,
+      "played_goalies_with_shift_rows": 127,
+      "season": 2018,
+      "shooter_id_direct_missing": 352,
+      "shooter_id_direct_pct": 95.018398,
+      "shooter_id_direct_present": 6714,
+      "shooter_id_goal_scorer_only_missing": 6714,
+      "shooter_id_goal_scorer_only_pct": 4.981602,
+      "shooter_id_goal_scorer_only_present": 352,
+      "shooter_shift_boundary_ambiguous": 526,
+      "shooter_shift_off_ice": 0,
+      "shooter_shift_on_ice": 6524,
+      "shot_events": 7066,
+      "shot_player_id_attributed_missing": 0,
+      "shot_player_id_attributed_pct": 100.0,
+      "shot_player_id_attributed_present": 7066,
+      "shot_type_missing": 1811,
+      "shot_type_pct": 74.370224,
+      "shot_type_present": 5255,
+      "situation_code_missing": 0,
+      "situation_code_pct": 100.0,
+      "situation_code_present": 7066,
+      "situation_shift_boundary_ambiguous": 152,
+      "situation_shift_compared": 6898,
+      "situation_shift_matches": 6891,
+      "situation_shift_mismatches": 7,
+      "unblocked_shot_events": 5256,
+      "unblocked_shot_type": 5255,
+      "unusable_for_goalie_event_targets": 0,
+      "unusable_for_player_sog_events": 0,
+      "unusable_for_shift_features": 1
+    },
+    {
+      "approved_ga_labels": 129,
+      "approved_ga_mismatches": 0,
+      "approved_sa_labels": 129,
+      "approved_sa_mismatches": 1,
+      "approved_saves_labels": 129,
+      "approved_saves_mismatches": 1,
+      "approved_sog_labels": 2160,
+      "approved_sog_mismatches": 1,
+      "base_contradiction_count": 18,
+      "base_goal_games_match": 60,
+      "base_sog_games_match": 59,
+      "blocked_shot_events": 1598,
+      "blocked_shot_type": 0,
+      "game_clock_missing": 0,
+      "game_clock_pct": 100.0,
+      "game_clock_present": 6784,
+      "games_missing_any_tracked_shot_field": 60,
+      "games_missing_game_clock": 0,
+      "games_missing_location_xy": 1,
+      "games_missing_pbp": 0,
+      "games_missing_period": 0,
+      "games_missing_period_and_clock": 0,
+      "games_missing_shift_chart": 0,
+      "games_missing_shooter_id_direct": 60,
+      "games_missing_shooter_id_goal_scorer_only": 60,
+      "games_missing_shot_player_id_attributed": 0,
+      "games_missing_shot_type": 60,
+      "games_missing_situation_code": 0,
+      "games_sampled": 60,
+      "games_with_any_contradiction": 14,
+      "games_with_goalie_substitution": 8,
+      "games_with_outcome_conflict": 1,
+      "games_with_shift_conflict": 13,
+      "goalie_shift_boundary_ambiguous": 16,
+      "goalie_shift_off_ice": 24,
+      "goalie_shift_on_ice": 3719,
+      "goalie_substitution_teams": 9,
+      "location_xy_missing": 1,
+      "location_xy_pct": 99.985259,
+      "location_xy_present": 6783,
+      "on_target_events": 3813,
+      "on_target_goalie_id": 3795,
+      "on_target_shooter_id": 3813,
+      "on_target_without_goalie_expected_empty_net": 17,
+      "on_target_without_goalie_id": 18,
+      "on_target_without_goalie_unexplained": 1,
+      "on_target_without_shooter_id": 0,
+      "period_and_clock_missing": 0,
+      "period_and_clock_pct": 100.0,
+      "period_and_clock_present": 6784,
+      "period_missing": 0,
+      "period_pct": 100.0,
+      "period_present": 6784,
+      "played_goalies": 129,
+      "played_goalies_with_shift_rows": 129,
+      "season": 2019,
+      "shooter_id_direct_missing": 363,
+      "shooter_id_direct_pct": 94.649175,
+      "shooter_id_direct_present": 6421,
+      "shooter_id_goal_scorer_only_missing": 6421,
+      "shooter_id_goal_scorer_only_pct": 5.350825,
+      "shooter_id_goal_scorer_only_present": 363,
+      "shooter_shift_boundary_ambiguous": 594,
+      "shooter_shift_off_ice": 1,
+      "shooter_shift_on_ice": 6152,
+      "shot_events": 6784,
+      "shot_player_id_attributed_missing": 0,
+      "shot_player_id_attributed_pct": 100.0,
+      "shot_player_id_attributed_present": 6784,
+      "shot_type_missing": 1599,
+      "shot_type_pct": 76.429835,
+      "shot_type_present": 5185,
+      "situation_code_missing": 0,
+      "situation_code_pct": 100.0,
+      "situation_code_present": 6784,
+      "situation_shift_boundary_ambiguous": 228,
+      "situation_shift_compared": 6519,
+      "situation_shift_matches": 6301,
+      "situation_shift_mismatches": 218,
+      "unblocked_shot_events": 5186,
+      "unblocked_shot_type": 5185,
+      "unusable_for_goalie_event_targets": 2,
+      "unusable_for_player_sog_events": 1,
+      "unusable_for_shift_features": 13
+    },
+    {
+      "approved_ga_labels": 132,
+      "approved_ga_mismatches": 0,
+      "approved_sa_labels": 132,
+      "approved_sa_mismatches": 0,
+      "approved_saves_labels": 132,
+      "approved_saves_mismatches": 0,
+      "approved_sog_labels": 2159,
+      "approved_sog_mismatches": 0,
+      "base_contradiction_count": 23,
+      "base_goal_games_match": 60,
+      "base_sog_games_match": 60,
+      "blocked_shot_events": 1589,
+      "blocked_shot_type": 0,
+      "game_clock_missing": 0,
+      "game_clock_pct": 100.0,
+      "game_clock_present": 6738,
+      "games_missing_any_tracked_shot_field": 60,
+      "games_missing_game_clock": 0,
+      "games_missing_location_xy": 0,
+      "games_missing_pbp": 0,
+      "games_missing_period": 0,
+      "games_missing_period_and_clock": 0,
+      "games_missing_shift_chart": 0,
+      "games_missing_shooter_id_direct": 60,
+      "games_missing_shooter_id_goal_scorer_only": 60,
+      "games_missing_shot_player_id_attributed": 0,
+      "games_missing_shot_type": 60,
+      "games_missing_situation_code": 0,
+      "games_sampled": 60,
+      "games_with_any_contradiction": 18,
+      "games_with_goalie_substitution": 11,
+      "games_with_outcome_conflict": 0,
+      "games_with_shift_conflict": 18,
+      "goalie_shift_boundary_ambiguous": 17,
+      "goalie_shift_off_ice": 10,
+      "goalie_shift_on_ice": 3709,
+      "goalie_substitution_teams": 12,
+      "location_xy_missing": 0,
+      "location_xy_pct": 100.0,
+      "location_xy_present": 6738,
+      "on_target_events": 3778,
+      "on_target_goalie_id": 3754,
+      "on_target_shooter_id": 3778,
+      "on_target_without_goalie_expected_empty_net": 24,
+      "on_target_without_goalie_id": 24,
+      "on_target_without_goalie_unexplained": 0,
+      "on_target_without_shooter_id": 0,
+      "period_and_clock_missing": 0,
+      "period_and_clock_pct": 100.0,
+      "period_and_clock_present": 6738,
+      "period_missing": 0,
+      "period_pct": 100.0,
+      "period_present": 6738,
+      "played_goalies": 132,
+      "played_goalies_with_shift_rows": 132,
+      "season": 2020,
+      "shooter_id_direct_missing": 359,
+      "shooter_id_direct_pct": 94.672009,
+      "shooter_id_direct_present": 6379,
+      "shooter_id_goal_scorer_only_missing": 6379,
+      "shooter_id_goal_scorer_only_pct": 5.327991,
+      "shooter_id_goal_scorer_only_present": 359,
+      "shooter_shift_boundary_ambiguous": 562,
+      "shooter_shift_off_ice": 0,
+      "shooter_shift_on_ice": 6156,
+      "shot_events": 6738,
+      "shot_player_id_attributed_missing": 0,
+      "shot_player_id_attributed_pct": 100.0,
+      "shot_player_id_attributed_present": 6738,
+      "shot_type_missing": 1589,
+      "shot_type_pct": 76.417335,
+      "shot_type_present": 5149,
+      "situation_code_missing": 0,
+      "situation_code_pct": 100.0,
+      "situation_code_present": 6738,
+      "situation_shift_boundary_ambiguous": 172,
+      "situation_shift_compared": 6546,
+      "situation_shift_matches": 6484,
+      "situation_shift_mismatches": 62,
+      "unblocked_shot_events": 5149,
+      "unblocked_shot_type": 5149,
+      "unusable_for_goalie_event_targets": 0,
+      "unusable_for_player_sog_events": 0,
+      "unusable_for_shift_features": 18
+    },
+    {
+      "approved_ga_labels": 132,
+      "approved_ga_mismatches": 0,
+      "approved_sa_labels": 132,
+      "approved_sa_mismatches": 1,
+      "approved_saves_labels": 132,
+      "approved_saves_mismatches": 1,
+      "approved_sog_labels": 2159,
+      "approved_sog_mismatches": 1,
+      "base_contradiction_count": 20,
+      "base_goal_games_match": 60,
+      "base_sog_games_match": 59,
+      "blocked_shot_events": 1654,
+      "blocked_shot_type": 0,
+      "game_clock_missing": 0,
+      "game_clock_pct": 100.0,
+      "game_clock_present": 6826,
+      "games_missing_any_tracked_shot_field": 60,
+      "games_missing_game_clock": 0,
+      "games_missing_location_xy": 0,
+      "games_missing_pbp": 0,
+      "games_missing_period": 0,
+      "games_missing_period_and_clock": 0,
+      "games_missing_shift_chart": 0,
+      "games_missing_shooter_id_direct": 60,
+      "games_missing_shooter_id_goal_scorer_only": 60,
+      "games_missing_shot_player_id_attributed": 0,
+      "games_missing_shot_type": 60,
+      "games_missing_situation_code": 0,
+      "games_sampled": 60,
+      "games_with_any_contradiction": 10,
+      "games_with_goalie_substitution": 13,
+      "games_with_outcome_conflict": 1,
+      "games_with_shift_conflict": 9,
+      "goalie_shift_boundary_ambiguous": 18,
+      "goalie_shift_off_ice": 1,
+      "goalie_shift_on_ice": 3751,
+      "goalie_substitution_teams": 13,
+      "location_xy_missing": 0,
+      "location_xy_pct": 100.0,
+      "location_xy_present": 6826,
+      "on_target_events": 3817,
+      "on_target_goalie_id": 3797,
+      "on_target_shooter_id": 3817,
+      "on_target_without_goalie_expected_empty_net": 20,
+      "on_target_without_goalie_id": 20,
+      "on_target_without_goalie_unexplained": 0,
+      "on_target_without_shooter_id": 0,
+      "period_and_clock_missing": 0,
+      "period_and_clock_pct": 100.0,
+      "period_and_clock_present": 6826,
+      "period_missing": 0,
+      "period_pct": 100.0,
+      "period_present": 6826,
+      "played_goalies": 132,
+      "played_goalies_with_shift_rows": 132,
+      "season": 2021,
+      "shooter_id_direct_missing": 388,
+      "shooter_id_direct_pct": 94.315851,
+      "shooter_id_direct_present": 6438,
+      "shooter_id_goal_scorer_only_missing": 6438,
+      "shooter_id_goal_scorer_only_pct": 5.684149,
+      "shooter_id_goal_scorer_only_present": 388,
+      "shooter_shift_boundary_ambiguous": 574,
+      "shooter_shift_off_ice": 0,
+      "shooter_shift_on_ice": 6217,
+      "shot_events": 6826,
+      "shot_player_id_attributed_missing": 0,
+      "shot_player_id_attributed_pct": 100.0,
+      "shot_player_id_attributed_present": 6826,
+      "shot_type_missing": 1654,
+      "shot_type_pct": 75.769118,
+      "shot_type_present": 5172,
+      "situation_code_missing": 0,
+      "situation_code_pct": 100.0,
+      "situation_code_present": 6826,
+      "situation_shift_boundary_ambiguous": 147,
+      "situation_shift_compared": 6644,
+      "situation_shift_matches": 6636,
+      "situation_shift_mismatches": 8,
+      "unblocked_shot_events": 5172,
+      "unblocked_shot_type": 5172,
+      "unusable_for_goalie_event_targets": 1,
+      "unusable_for_player_sog_events": 1,
+      "unusable_for_shift_features": 9
+    },
+    {
+      "approved_ga_labels": 126,
+      "approved_ga_mismatches": 0,
+      "approved_sa_labels": 126,
+      "approved_sa_mismatches": 0,
+      "approved_saves_labels": 126,
+      "approved_saves_mismatches": 0,
+      "approved_sog_labels": 2159,
+      "approved_sog_mismatches": 0,
+      "base_contradiction_count": 2,
+      "base_goal_games_match": 60,
+      "base_sog_games_match": 60,
+      "blocked_shot_events": 1818,
+      "blocked_shot_type": 0,
+      "game_clock_missing": 0,
+      "game_clock_pct": 100.0,
+      "game_clock_present": 7094,
+      "games_missing_any_tracked_shot_field": 60,
+      "games_missing_game_clock": 0,
+      "games_missing_location_xy": 0,
+      "games_missing_pbp": 0,
+      "games_missing_period": 0,
+      "games_missing_period_and_clock": 0,
+      "games_missing_shift_chart": 0,
+      "games_missing_shooter_id_direct": 60,
+      "games_missing_shooter_id_goal_scorer_only": 60,
+      "games_missing_shot_player_id_attributed": 0,
+      "games_missing_shot_type": 60,
+      "games_missing_situation_code": 0,
+      "games_sampled": 60,
+      "games_with_any_contradiction": 2,
+      "games_with_goalie_substitution": 6,
+      "games_with_outcome_conflict": 0,
+      "games_with_shift_conflict": 2,
+      "goalie_shift_boundary_ambiguous": 19,
+      "goalie_shift_off_ice": 0,
+      "goalie_shift_on_ice": 3710,
+      "goalie_substitution_teams": 6,
+      "location_xy_missing": 0,
+      "location_xy_pct": 100.0,
+      "location_xy_present": 7094,
+      "on_target_events": 3787,
+      "on_target_goalie_id": 3763,
+      "on_target_shooter_id": 3787,
+      "on_target_without_goalie_expected_empty_net": 24,
+      "on_target_without_goalie_id": 24,
+      "on_target_without_goalie_unexplained": 0,
+      "on_target_without_shooter_id": 0,
+      "period_and_clock_missing": 0,
+      "period_and_clock_pct": 100.0,
+      "period_and_clock_present": 7094,
+      "period_missing": 0,
+      "period_pct": 100.0,
+      "period_present": 7094,
+      "played_goalies": 126,
+      "played_goalies_with_shift_rows": 126,
+      "season": 2022,
+      "shooter_id_direct_missing": 371,
+      "shooter_id_direct_pct": 94.770228,
+      "shooter_id_direct_present": 6723,
+      "shooter_id_goal_scorer_only_missing": 6723,
+      "shooter_id_goal_scorer_only_pct": 5.229772,
+      "shooter_id_goal_scorer_only_present": 371,
+      "shooter_shift_boundary_ambiguous": 602,
+      "shooter_shift_off_ice": 0,
+      "shooter_shift_on_ice": 6455,
+      "shot_events": 7094,
+      "shot_player_id_attributed_missing": 0,
+      "shot_player_id_attributed_pct": 100.0,
+      "shot_player_id_attributed_present": 7094,
+      "shot_type_missing": 1818,
+      "shot_type_pct": 74.372709,
+      "shot_type_present": 5276,
+      "situation_code_missing": 0,
+      "situation_code_pct": 100.0,
+      "situation_code_present": 7094,
+      "situation_shift_boundary_ambiguous": 164,
+      "situation_shift_compared": 6893,
+      "situation_shift_matches": 6892,
+      "situation_shift_mismatches": 1,
+      "unblocked_shot_events": 5276,
+      "unblocked_shot_type": 5276,
+      "unusable_for_goalie_event_targets": 0,
+      "unusable_for_player_sog_events": 0,
+      "unusable_for_shift_features": 2
+    }
+  ],
+  "research_label_quality_bytes": 84283212,
+  "sample_by_season": {
+    "2018": 60,
+    "2019": 60,
+    "2020": 60,
+    "2021": 60,
+    "2022": 60
+  },
+  "sample_games": 300,
+  "season_field_completeness": [
+    {
+      "game_clock": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7066
+      },
+      "location_xy": {
+        "missing": 1,
+        "pct": 99.985848,
+        "present": 7065
+      },
+      "period": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7066
+      },
+      "period_and_clock": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7066
+      },
+      "season": 2018,
+      "shooter_id_direct": {
+        "missing": 352,
+        "pct": 95.018398,
+        "present": 6714
+      },
+      "shooter_id_goal_scorer_only": {
+        "missing": 6714,
+        "pct": 4.981602,
+        "present": 352
+      },
+      "shot_events": 7066,
+      "shot_player_id_attributed": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7066
+      },
+      "shot_type": {
+        "missing": 1811,
+        "pct": 74.370224,
+        "present": 5255
+      },
+      "situation_code": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7066
+      }
+    },
+    {
+      "game_clock": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6784
+      },
+      "location_xy": {
+        "missing": 1,
+        "pct": 99.985259,
+        "present": 6783
+      },
+      "period": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6784
+      },
+      "period_and_clock": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6784
+      },
+      "season": 2019,
+      "shooter_id_direct": {
+        "missing": 363,
+        "pct": 94.649175,
+        "present": 6421
+      },
+      "shooter_id_goal_scorer_only": {
+        "missing": 6421,
+        "pct": 5.350825,
+        "present": 363
+      },
+      "shot_events": 6784,
+      "shot_player_id_attributed": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6784
+      },
+      "shot_type": {
+        "missing": 1599,
+        "pct": 76.429835,
+        "present": 5185
+      },
+      "situation_code": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6784
+      }
+    },
+    {
+      "game_clock": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6738
+      },
+      "location_xy": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6738
+      },
+      "period": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6738
+      },
+      "period_and_clock": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6738
+      },
+      "season": 2020,
+      "shooter_id_direct": {
+        "missing": 359,
+        "pct": 94.672009,
+        "present": 6379
+      },
+      "shooter_id_goal_scorer_only": {
+        "missing": 6379,
+        "pct": 5.327991,
+        "present": 359
+      },
+      "shot_events": 6738,
+      "shot_player_id_attributed": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6738
+      },
+      "shot_type": {
+        "missing": 1589,
+        "pct": 76.417335,
+        "present": 5149
+      },
+      "situation_code": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6738
+      }
+    },
+    {
+      "game_clock": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6826
+      },
+      "location_xy": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6826
+      },
+      "period": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6826
+      },
+      "period_and_clock": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6826
+      },
+      "season": 2021,
+      "shooter_id_direct": {
+        "missing": 388,
+        "pct": 94.315851,
+        "present": 6438
+      },
+      "shooter_id_goal_scorer_only": {
+        "missing": 6438,
+        "pct": 5.684149,
+        "present": 388
+      },
+      "shot_events": 6826,
+      "shot_player_id_attributed": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6826
+      },
+      "shot_type": {
+        "missing": 1654,
+        "pct": 75.769118,
+        "present": 5172
+      },
+      "situation_code": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 6826
+      }
+    },
+    {
+      "game_clock": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7094
+      },
+      "location_xy": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7094
+      },
+      "period": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7094
+      },
+      "period_and_clock": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7094
+      },
+      "season": 2022,
+      "shooter_id_direct": {
+        "missing": 371,
+        "pct": 94.770228,
+        "present": 6723
+      },
+      "shooter_id_goal_scorer_only": {
+        "missing": 6723,
+        "pct": 5.229772,
+        "present": 371
+      },
+      "shot_events": 7094,
+      "shot_player_id_attributed": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7094
+      },
+      "shot_type": {
+        "missing": 1818,
+        "pct": 74.372709,
+        "present": 5276
+      },
+      "situation_code": {
+        "missing": 0,
+        "pct": 100.0,
+        "present": 7094
+      }
+    }
+  ],
+  "shot_events": 34508,
+  "shot_type_split": {
+    "blocked": {
+      "events": 8469,
+      "with_type": 0
+    },
+    "unblocked": {
+      "events": 26039,
+      "with_type": 26037
+    }
+  },
+  "strength_state_events_excluding_shootouts": {
+    "EN_away_pulled": {
+      "events": 1201,
+      "games": 166
+    },
+    "EN_home_pulled": {
+      "events": 1155,
+      "games": 172
+    },
+    "EV_3v3": {
+      "events": 852,
+      "games": 69
+    },
+    "EV_4v4": {
+      "events": 1287,
+      "games": 154
+    },
+    "EV_5v5": {
+      "events": 75114,
+      "games": 300
+    },
+    "PP_away_4v3": {
+      "events": 72,
+      "games": 17
+    },
+    "PP_away_5v3": {
+      "events": 133,
+      "games": 31
+    },
+    "PP_away_5v4": {
+      "events": 6045,
+      "games": 295
+    },
+    "PP_home_4v3": {
+      "events": 104,
+      "games": 23
+    },
+    "PP_home_5v3": {
+      "events": 172,
+      "games": 40
+    },
+    "PP_home_5v4": {
+      "events": 6621,
+      "games": 298
+    },
+    "both_pulled": {
+      "events": 33,
+      "games": 33
+    }
+  },
+  "team_event_reconciliation": {
+    "games_goal_counts_match_after_shootout_rule": 300,
+    "games_team_sog_match": 298
+  },
+  "unusable_game_counts": {
+    "goalie_event_target_reconstruction": 3,
+    "player_sog_event_reconstruction": 2,
+    "shift_features": 43
+  },
+  "zero_toi_backups_eligible_as_goalie_targets": 0
+}

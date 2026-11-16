@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh NBA research forecasts every 15 minutes
+
+[Timer]
+OnCalendar=*-*-* *:07/15:00
+Persistent=true
+Unit=legendarypicks-nba-model-preview.service
+
+[Install]
+WantedBy=timers.target

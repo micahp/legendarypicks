@@ -20,6 +20,9 @@ from pathlib import Path
 from typing import Iterable, Sequence
 from urllib.parse import quote
 
+import nba_sportsdataverse as nba_sdv_schema
+import player_game_logs_view
+
 
 REGISTRY_TABLE = "app_schema_migrations"
 REGISTRY_SQL = """
@@ -53,10 +56,21 @@ class ColumnAddition:
 
 
 @dataclass(frozen=True)
+class SchemaObject:
+    object_type: str
+    name: str
+    sql: str
+    previous_sql: str | None = None
+
+
+@dataclass(frozen=True)
 class Migration:
     migration_id: str
     table: str
     additions: tuple[ColumnAddition, ...]
+    create_sql: str | None = None
+    objects: tuple[SchemaObject, ...] = ()
+    required_columns: tuple[ColumnContract, ...] = ()
 
     @property
     def checksum(self) -> str:
@@ -71,6 +85,25 @@ class Migration:
                 for addition in self.additions
             ],
         }
+        # Keep checksums for the original column-only migrations byte-for-byte
+        # stable. New schema features are included only when they are used.
+        if self.create_sql is not None:
+            payload["create_sql"] = " ".join(self.create_sql.split())
+        if self.objects:
+            payload["objects"] = [
+                {
+                    "object_type": item.object_type,
+                    "name": item.name,
+                    "sql": " ".join(item.sql.split()),
+                    **({"previous_sql": " ".join(item.previous_sql.split())}
+                       if item.previous_sql is not None else {}),
+                }
+                for item in self.objects
+            ]
+        if self.required_columns:
+            payload["required_columns"] = [
+                asdict(contract) for contract in self.required_columns
+            ]
         return hashlib.sha256(
             json.dumps(
                 payload, sort_keys=True, separators=(",", ":")
@@ -204,6 +237,112 @@ MIGRATIONS: tuple[Migration, ...] = (
                 sql=f"ALTER TABLE prop_games ADD COLUMN {name} TEXT",
             )
             for name in ("cancelled_at", "cancel_reason", "cancel_source")
+        ),
+    ),
+    Migration(
+        migration_id="20261017_001_home_prop_cache",
+        table="home_prop_cache",
+        additions=(),
+        required_columns=(
+            ColumnContract("id", "INTEGER", primary_key=1),
+            ColumnContract("generated_at", "TEXT", not_null=True),
+            ColumnContract("payload", "TEXT", not_null=True),
+        ),
+        create_sql=(
+            "CREATE TABLE home_prop_cache ("
+            "id INTEGER PRIMARY KEY CHECK (id = 1), "
+            "generated_at TEXT NOT NULL, payload TEXT NOT NULL)"
+        ),
+        objects=(
+            SchemaObject(
+                "table",
+                "home_prop_cache",
+                "CREATE TABLE home_prop_cache ("
+                "id INTEGER PRIMARY KEY CHECK (id = 1), "
+                "generated_at TEXT NOT NULL, payload TEXT NOT NULL)",
+            ),
+        ),
+    ),
+    Migration(
+        migration_id="20261017_002_tennis_grade_provenance",
+        table="tennis_model_grades",
+        additions=tuple(
+            ColumnAddition(
+                contract=ColumnContract(name, "TEXT"),
+                sql=f"ALTER TABLE tennis_model_grades ADD COLUMN {name} TEXT",
+            )
+            for name in (
+                "result_source",
+                "result_game_date",
+                "result_fetched_at",
+                "result_payload_sha256",
+            )
+        ),
+        required_columns=(
+            ColumnContract("league", "TEXT", not_null=True, primary_key=1),
+            ColumnContract("game_id", "TEXT", not_null=True, primary_key=2),
+            ColumnContract("winner", "TEXT", not_null=True),
+            ColumnContract("total_games_error", "REAL"),
+            ColumnContract("graded_at", "TEXT", not_null=True),
+            ColumnContract("result_source", "TEXT"),
+            ColumnContract("result_game_date", "TEXT"),
+            ColumnContract("result_fetched_at", "TEXT"),
+            ColumnContract("result_payload_sha256", "TEXT"),
+        ),
+        create_sql=(
+            "CREATE TABLE tennis_model_grades ("
+            "league TEXT NOT NULL CHECK(league IN ('atp','wta')), "
+            "game_id TEXT NOT NULL, "
+            "winner TEXT NOT NULL CHECK(winner IN ('correct','incorrect')), "
+            "total_games_error REAL, graded_at TEXT NOT NULL, "
+            "result_source TEXT, result_game_date TEXT, result_fetched_at TEXT, "
+            "result_payload_sha256 TEXT, PRIMARY KEY(league, game_id))"
+        ),
+        objects=(
+            SchemaObject(
+                "trigger",
+                "tennis_model_grades_immutable_update",
+                """CREATE TRIGGER tennis_model_grades_immutable_update
+                   BEFORE UPDATE ON tennis_model_grades BEGIN
+                     SELECT RAISE(ABORT, 'tennis model grades are immutable');
+                   END""",
+            ),
+            SchemaObject(
+                "trigger",
+                "tennis_model_grades_immutable_delete",
+                """CREATE TRIGGER tennis_model_grades_immutable_delete
+                   BEFORE DELETE ON tennis_model_grades BEGIN
+                     SELECT RAISE(ABORT, 'tennis model grades are immutable');
+                   END""",
+            ),
+        ),
+    ),
+    Migration(
+        migration_id="20261020_001_nba_sportsdataverse_history_view",
+        table="player_game_logs",
+        additions=(),
+        objects=tuple(
+            SchemaObject(*item) for item in nba_sdv_schema.MIGRATION_OBJECTS
+        ) + (
+            SchemaObject(
+                "view",
+                player_game_logs_view.VIEW,
+                player_game_logs_view.SDV_SUBQUERY_DDL_VIEW,
+                previous_sql=player_game_logs_view.PREVIOUS_DDL_VIEW,
+            ),
+        ),
+    ),
+    Migration(
+        migration_id="20261021_001_player_game_logs_view_indexed_sdv_join",
+        table="player_game_logs",
+        additions=(),
+        objects=(
+            SchemaObject(
+                "view",
+                player_game_logs_view.VIEW,
+                player_game_logs_view.DDL_VIEW,
+                previous_sql=player_game_logs_view.SDV_SUBQUERY_DDL_VIEW,
+            ),
         ),
     ),
 )
@@ -354,6 +493,87 @@ def _verify_table_contract(
     return errors
 
 
+def _normalize_sql(sql: str) -> str:
+    return " ".join(sql.strip().rstrip(";").lower().split())
+
+
+def _schema_object_sql(
+    connection: sqlite3.Connection, object_type: str, name: str
+) -> str | None:
+    row = connection.execute(
+        "SELECT sql FROM sqlite_master WHERE type=? AND name=?",
+        (object_type, name),
+    ).fetchone()
+    return None if row is None else str(row[0] or "")
+
+
+def _superseding_views(migration: Migration) -> dict[str, set[str]]:
+    """View definitions that LATER migrations install, by view name.
+
+    A later migration may replace a view an earlier one created (it names the earlier text
+    as `previous_sql`). The earlier migration is still re-verified on every run, and the
+    replaced text is no longer in the database, so its view passes when a later migration
+    declares exactly what is there. Only later ones: an old definition never satisfies a
+    newer migration.
+    """
+    ids = [item.migration_id for item in MIGRATIONS]
+    if migration.migration_id not in ids:
+        return {}
+    later: dict[str, set[str]] = {}
+    for item in MIGRATIONS[ids.index(migration.migration_id) + 1:]:
+        for obj in item.objects:
+            if obj.object_type == "view":
+                later.setdefault(obj.name, set()).add(_normalize_sql(obj.sql))
+    return later
+
+
+def _verify_schema_objects(
+    connection: sqlite3.Connection, objects: Iterable[SchemaObject],
+    superseded: dict[str, set[str]] | None = None,
+) -> tuple[list[str], list[str]]:
+    missing = []
+    wrong = []
+    for item in objects:
+        actual = _schema_object_sql(connection, item.object_type, item.name)
+        label = f"{item.object_type} {item.name}"
+        if actual is None:
+            missing.append(label)
+        elif (item.object_type == "view" and superseded
+                and _normalize_sql(actual) in superseded.get(item.name, ())):
+            continue
+        elif _normalize_sql(actual) != _normalize_sql(item.sql):
+            if (item.previous_sql is not None
+                    and _normalize_sql(actual)
+                    == _normalize_sql(item.previous_sql)):
+                missing.append(label)
+            else:
+                wrong.append(label)
+    return missing, wrong
+
+
+def _verify_migration_contract(
+    connection: sqlite3.Connection, migration: Migration
+) -> list[str]:
+    expected = {
+        contract.name: contract for contract in migration.required_columns
+    }
+    expected.update({
+        addition.contract.name: addition.contract
+        for addition in migration.additions
+    })
+    errors = _verify_table_contract(
+        connection,
+        migration.table,
+        expected.values(),
+    )
+    missing, wrong = _verify_schema_objects(
+        connection, migration.objects, _superseding_views(migration)
+    )
+    errors.extend(f"missing {item}" for item in missing)
+    errors.extend(f"wrong definition for {item}" for item in wrong)
+    return errors
+
+
 def _registry_rows(
     connection: sqlite3.Connection,
 ) -> dict[str, str]:
@@ -385,6 +605,7 @@ def inspect_connection(
     statuses = []
     for migration in migrations:
         existing = table_columns(connection, migration.table)
+        registered = registry.get(migration.migration_id)
         if not existing:
             if migration.table == REGISTRY_TABLE:
                 # The registry is bootstrapped by the runner itself
@@ -398,6 +619,15 @@ def inspect_connection(
                     )
                 )
                 continue
+            if migration.create_sql is not None and registered is None:
+                statuses.append(
+                    MigrationStatus(
+                        migration.migration_id,
+                        "pending",
+                        f"migration required; create table {migration.table!r}",
+                    )
+                )
+                continue
             statuses.append(
                 MigrationStatus(
                     migration.migration_id,
@@ -407,44 +637,57 @@ def inspect_connection(
             )
             continue
 
+        expected_columns = {
+            contract.name: contract for contract in migration.required_columns
+        }
+        expected_columns.update({
+            addition.contract.name: addition.contract
+            for addition in migration.additions
+        })
         missing = []
         wrong = []
-        for addition in migration.additions:
-            actual = existing.get(addition.contract.name)
+        for contract in expected_columns.values():
+            actual = existing.get(contract.name)
             if actual is None:
-                missing.append(addition.contract.name)
+                missing.append(contract.name)
                 continue
-            difference = _contract_difference(
-                actual, addition.contract
-            )
+            difference = _contract_difference(actual, contract)
             if difference:
                 wrong.append(
-                    f"{migration.table}.{addition.contract.name}: "
+                    f"{migration.table}.{contract.name}: "
                     f"{difference}"
                 )
 
-        registered = registry.get(migration.migration_id)
+        missing_objects, wrong_objects = _verify_schema_objects(
+            connection, migration.objects, _superseding_views(migration)
+        )
         if wrong:
             state, detail = "error", (
                 "wrong column contract: " + "; ".join(wrong)
+            )
+        elif wrong_objects:
+            state, detail = "error", (
+                "wrong schema object definition: " + "; ".join(wrong_objects)
             )
         elif registered is not None and registered != migration.checksum:
             state, detail = "error", (
                 f"checksum mismatch: database has {registered}, "
                 f"code has {migration.checksum}"
             )
-        elif registered is not None and missing:
+        elif registered is not None and (missing or missing_objects):
+            absent = missing + [f"{item} missing" for item in missing_objects]
             state, detail = "error", (
                 "registered migration is missing schema: "
-                + ", ".join(missing)
+                + ", ".join(absent)
             )
         elif registered is not None:
             state, detail = "applied", (
                 f"checksum={migration.checksum}"
             )
-        elif missing:
+        elif missing or missing_objects:
+            absent = missing + [f"{item} missing" for item in missing_objects]
             state, detail = "pending", (
-                "migration required; missing " + ", ".join(missing)
+                "migration required; missing " + ", ".join(absent)
             )
         else:
             state, detail = "adopt", (
@@ -574,14 +817,7 @@ def apply_database(
                     raise MigrationError(
                         f"{migration.migration_id}: checksum mismatch"
                     )
-                errors = _verify_table_contract(
-                    connection,
-                    migration.table,
-                    (
-                        addition.contract
-                        for addition in migration.additions
-                    ),
-                )
+                errors = _verify_migration_contract(connection, migration)
                 if errors:
                     raise MigrationError(
                         f"{migration.migration_id}: "
@@ -598,11 +834,16 @@ def apply_database(
 
             existing = table_columns(connection, migration.table)
             if not existing:
-                raise MigrationError(
-                    f"{migration.migration_id}: required table "
-                    f"{migration.table!r} is missing"
-                )
-            changed = False
+                if migration.create_sql is None:
+                    raise MigrationError(
+                        f"{migration.migration_id}: required table "
+                        f"{migration.table!r} is missing"
+                    )
+                connection.execute(migration.create_sql)
+                existing = table_columns(connection, migration.table)
+                changed = True
+            else:
+                changed = False
             for addition in migration.additions:
                 actual = existing.get(addition.contract.name)
                 if actual is not None:
@@ -620,14 +861,38 @@ def apply_database(
                 connection.execute(addition.sql)
                 changed = True
 
-            errors = _verify_table_contract(
-                connection,
-                migration.table,
-                (
-                    addition.contract
-                    for addition in migration.additions
-                ),
-            )
+            superseded = _superseding_views(migration)
+            for item in migration.objects:
+                actual = _schema_object_sql(
+                    connection, item.object_type, item.name
+                )
+                if actual is None:
+                    connection.execute(item.sql)
+                    changed = True
+                elif (item.object_type == "view"
+                        and _normalize_sql(actual) in superseded.get(item.name, ())):
+                    continue
+                elif _normalize_sql(actual) != _normalize_sql(item.sql):
+                    if (item.previous_sql is not None
+                            and _normalize_sql(actual)
+                            == _normalize_sql(item.previous_sql)):
+                        if item.object_type != "view":
+                            raise MigrationError(
+                                f"{migration.migration_id}: only views may "
+                                "declare a replaceable previous definition"
+                            )
+                        connection.execute(
+                            f"DROP VIEW IF EXISTS {_quote_identifier(item.name)}"
+                        )
+                        connection.execute(item.sql)
+                        changed = True
+                    else:
+                        raise MigrationError(
+                            f"{migration.migration_id}: wrong definition for "
+                            f"{item.object_type} {item.name}"
+                        )
+
+            errors = _verify_migration_contract(connection, migration)
             if errors:
                 raise MigrationError(
                     f"{migration.migration_id}: " + "; ".join(errors)

@@ -1,0 +1,444 @@
+{
+  "benchmark": "ESPN-linked AP/Data Skrive editorial seed benchmark",
+  "benchmark_date_utc": "2026-11-04",
+  "lp_run_at_utc": "2026-11-03T16:54:59Z",
+  "lp_engine_sha256": "2791cd0fd723de721859b5d64dacd50646b6b6aed7697d5dedc24b1fa1924e92",
+  "method": "Replay the five frozen LP fact bundles with the current PR story renderer, independently audit claims, and compare with short paraphrases of the five cited wire pages.",
+  "limitations": [
+    "All five pages are AP/Data Skrive/Sportradar syndications; none is an ESPN staff-authored preview.",
+    "Source publication timestamps predate the LP run, but pages were reviewed on 2026-11-04; immutable page captures and modified timestamps are unavailable, so exact historical page contents at the LP cutoff cannot be proven.",
+    "Editorial comparison was unblinded and performed as a static review; no human preference ratings were collected.",
+    "The sample is five curated NBA matchups and is not representative of NFL, all NBA slates, or audience preference.",
+    "Injury claims are source-reported but were absent from the deterministic story-engine input bundles and were not independently verified against an injury feed."
+  ],
+  "summary": {
+    "matched_games": 5,
+    "source_class_counts": {
+      "ap_data_skrive_wire": 5,
+      "espn_staff_preview": 0
+    },
+    "source_pages_published_before_lp_generation": 5,
+    "source_pages_with_immutable_cutoff_snapshot": 0,
+    "source_modified_timestamps_available": 0,
+    "lp_story_replay_matches": 5,
+    "independent_lp_audit_checks_passed": 50,
+    "independent_lp_audit_checks_total": 50,
+    "lp_stories_all_claim_checks_pass": true,
+    "primary_hook_alignment": {
+      "same": 2,
+      "partial": 2,
+      "different": 1
+    },
+    "h2h_or_rematch_mentions_in_wire": 3,
+    "h2h_or_rematch_selected_by_lp": 0,
+    "injury_lists_in_wire_pages": 5,
+    "injury_data_present_in_lp_input_bundles": 0,
+    "human_blind_ratings": 0,
+    "interpretation": "Small, curated, unblinded editorial seed comparison. Descriptive only; no preference claim.",
+    "wire_primary_hook_numeric_claims_crosschecked": 5,
+    "injury_lists_independently_crosschecked": 0
+  },
+  "games": [
+    {
+      "espn_event_id": "401909929",
+      "league": "nba",
+      "away": "CLE",
+      "home": "OKC",
+      "native_db_game_id": "0022600180",
+      "kickoff_utc": "2026-11-05T01:00:00Z",
+      "lp_generated_at_utc": "2026-11-03T16:54:59Z",
+      "lp_cutoff_utc": "2026-11-03T16:54:59Z",
+      "lp_engine_sha256": "2791cd0fd723de721859b5d64dacd50646b6b6aed7697d5dedc24b1fa1924e92",
+      "lp_story": "Cleveland brings a 4-3 record into Oklahoma City, where the 5-2 Thunder look to protect home court. Oklahoma City's Shai Gilgeous-Alexander has scored at least 23 in four of his last five.",
+      "lp_story_angle": {
+        "kind": "records",
+        "lead_team": "OKC",
+        "teams": [
+          "CLE",
+          "OKC"
+        ]
+      },
+      "lp_selected_fact_descriptions": [
+        "Cleveland Cavaliers record 4-3",
+        "Oklahoma City Thunder record 5-2",
+        "Shai Gilgeous-Alexander recent form"
+      ],
+      "replay_matches_frozen_story": true,
+      "independent_lp_claim_audit": {
+        "nonempty_story": true,
+        "selected_facts_have_linked_source_rows": true,
+        "team_record_and_streak_claims_recompute": true,
+        "head_to_head_claims_recompute": true,
+        "league_rank_claims_recompute": true,
+        "player_stat_claims_recompute": true,
+        "player_team_attribution_matches_prose": true,
+        "all_input_evidence_is_cutoff_safe": true,
+        "target_game_absent_from_prior_evidence": true,
+        "player_team_codes_match_matchup": true
+      },
+      "source": {
+        "url": "https://www.foxsports.com/articles/nba/gilgeousalexander-leads-oklahoma-city-against-cleveland-after-43point-game",
+        "outlet": "FOX Sports",
+        "source_class": "ap_data_skrive_wire",
+        "credit": "Associated Press; pages attribute use of Data Skrive technology and Sportradar data",
+        "published_local": "2026-11-03 02:02 ET",
+        "published_at_utc": "2026-11-03T07:02:00Z",
+        "published_before_lp_cutoff": true,
+        "reviewed_on_utc_date": "2026-11-04",
+        "exact_capture_time_exposed": false,
+        "modified_at_exposed": false,
+        "full_text_archived": false,
+        "paraphrased_focus": "Shai Gilgeous-Alexander scored 43 in Oklahoma City’s 117-112 win over Cleveland before the teams met again.",
+        "primary_hook_numeric_claims_crosschecked_against_lp_cutoff_facts": true,
+        "crosschecked_claims": "Shai Gilgeous-Alexander 43 points and Oklahoma City 117-112 over Cleveland.",
+        "injury_claims_independently_crosschecked": false
+      },
+      "editorial_comparison": {
+        "primary_hook_alignment": "different",
+        "standout_player": "LP names Shai and his consistent scoring, but does not surface the 43-point latest game as the story.",
+        "recent_game_result": "wire_advantage",
+        "head_to_head_or_rematch": "wire_advantage",
+        "opponent_specific_context": "wire_advantage_injuries_not_in_engine_input",
+        "fan_readability": "LP is cleaner conversational prose; the wire has the stronger immediate hook.",
+        "gap_diagnosis": [
+          {
+            "fact": "Shai 43-point latest game",
+            "diagnosis": "candidate_not_extracted",
+            "input_status": "present in cutoff-safe player log"
+          },
+          {
+            "fact": "same-opponent 117-112 rematch",
+            "diagnosis": "candidate_not_extracted",
+            "input_status": "present in cutoff-safe team result rows"
+          },
+          {
+            "fact": "injury availability",
+            "diagnosis": "missing_data",
+            "input_status": "absent from story-engine input bundle"
+          }
+        ],
+        "human_blind_rating": null
+      }
+    },
+    {
+      "espn_event_id": "401909927",
+      "league": "nba",
+      "away": "IND",
+      "home": "MEM",
+      "native_db_game_id": "0022600178",
+      "kickoff_utc": "2026-11-05T01:00:00Z",
+      "lp_generated_at_utc": "2026-11-03T16:54:59Z",
+      "lp_cutoff_utc": "2026-11-03T16:54:59Z",
+      "lp_engine_sha256": "2791cd0fd723de721859b5d64dacd50646b6b6aed7697d5dedc24b1fa1924e92",
+      "lp_story": "Indianapolis has dropped five straight at 2-6 entering its matchup with Memphis, which is 6-1. Indianapolis's Tyrese Haliburton is averaging 8.8 assists over his last five, while Grizzlies star Ty Jerome is averaging 24.8 points and 5.6 assists over his last five games, including a 40-point outing.",
+      "lp_story_angle": {
+        "kind": "losing_streak",
+        "lead_team": "IND",
+        "teams": [
+          "IND",
+          "MEM"
+        ]
+      },
+      "lp_selected_fact_descriptions": [
+        "Indiana Pacers record 2-6",
+        "Memphis Grizzlies record 6-1",
+        "Indiana Pacers 5-game losing streak",
+        "Tyrese Haliburton recent form",
+        "Ty Jerome recent form"
+      ],
+      "replay_matches_frozen_story": true,
+      "independent_lp_claim_audit": {
+        "nonempty_story": true,
+        "selected_facts_have_linked_source_rows": true,
+        "team_record_and_streak_claims_recompute": true,
+        "head_to_head_claims_recompute": true,
+        "league_rank_claims_recompute": true,
+        "player_stat_claims_recompute": true,
+        "player_team_attribution_matches_prose": true,
+        "all_input_evidence_is_cutoff_safe": true,
+        "target_game_absent_from_prior_evidence": true,
+        "player_team_codes_match_matchup": true
+      },
+      "source": {
+        "url": "https://www.foxsports.com/articles/nba/jerome-leads-memphis-against-indiana-after-40point-game",
+        "outlet": "FOX Sports",
+        "source_class": "ap_data_skrive_wire",
+        "credit": "Associated Press; pages attribute use of Data Skrive technology and Sportradar data",
+        "published_local": "2026-11-03 02:02 ET",
+        "published_at_utc": "2026-11-03T07:02:00Z",
+        "published_before_lp_cutoff": true,
+        "reviewed_on_utc_date": "2026-11-04",
+        "exact_capture_time_exposed": false,
+        "modified_at_exposed": false,
+        "full_text_archived": false,
+        "paraphrased_focus": "Ty Jerome’s 40-point game came in Memphis’s 134-135 overtime loss to New Orleans.",
+        "score_order_note": "The syndication page gives 135-134 in winner-first order; Memphis team-perspective is 134-135. The NBA game summary independently confirms Pelicans 135, Grizzlies 134, and Jerome 40 points.",
+        "official_result_crosscheck": "https://www.nba.com/game/nop-vs-mem-0022600165",
+        "primary_hook_numeric_claims_crosschecked_against_lp_cutoff_facts": true,
+        "crosschecked_claims": "Ty Jerome 40 points and Memphis 134-135 team-perspective loss to New Orleans; NBA.com confirms overtime.",
+        "injury_claims_independently_crosschecked": false
+      },
+      "editorial_comparison": {
+        "primary_hook_alignment": "partial",
+        "standout_player": "Both mention Jerome’s 40; LP buries it after Indiana’s losing streak and a five-game average.",
+        "recent_game_result": "wire_advantage",
+        "head_to_head_or_rematch": "not_applicable",
+        "opponent_specific_context": "wire_advantage_injuries_not_in_engine_input",
+        "fan_readability": "LP is understandable but “Indianapolis’s Tyrese Haliburton” is awkward; the wire leads with the standout night.",
+        "gap_diagnosis": [
+          {
+            "fact": "Jerome 40-point game tied to 134-135 loss",
+            "diagnosis": "candidate_not_extracted",
+            "input_status": "player score and same-date team result are present but not joined in prose"
+          },
+          {
+            "fact": "overtime context",
+            "diagnosis": "missing_data",
+            "input_status": "period/overtime field absent from story-engine input bundle"
+          },
+          {
+            "fact": "injury availability",
+            "diagnosis": "missing_data",
+            "input_status": "absent from story-engine input bundle"
+          }
+        ],
+        "human_blind_rating": null
+      }
+    },
+    {
+      "espn_event_id": "401909922",
+      "league": "nba",
+      "away": "PHI",
+      "home": "DET",
+      "native_db_game_id": "0022600173",
+      "kickoff_utc": "2026-11-05T00:00:00Z",
+      "lp_generated_at_utc": "2026-11-03T16:54:59Z",
+      "lp_cutoff_utc": "2026-11-03T16:54:59Z",
+      "lp_engine_sha256": "2791cd0fd723de721859b5d64dacd50646b6b6aed7697d5dedc24b1fa1924e92",
+      "lp_story": "Two of the NBA's top four teams meet in Detroit, where the 6-1 Pistons host the 7-1 76ers. Cade Cunningham is averaging 25.6 points and 6.8 assists over his last five for Detroit, while Philadelphia's Tyrese Maxey has scored at least 23 in each of his last five, including a 38-point night.",
+      "lp_story_angle": {
+        "kind": "top_four",
+        "lead_team": "DET",
+        "teams": [
+          "PHI",
+          "DET"
+        ]
+      },
+      "lp_selected_fact_descriptions": [
+        "Philadelphia 76ers record 7-1",
+        "Detroit Pistons record 6-1",
+        "Philadelphia ranks 2 of 30",
+        "Detroit ranks 4 of 30",
+        "Cade Cunningham recent form",
+        "Tyrese Maxey recent form"
+      ],
+      "replay_matches_frozen_story": true,
+      "independent_lp_claim_audit": {
+        "nonempty_story": true,
+        "selected_facts_have_linked_source_rows": true,
+        "team_record_and_streak_claims_recompute": true,
+        "head_to_head_claims_recompute": true,
+        "league_rank_claims_recompute": true,
+        "player_stat_claims_recompute": true,
+        "player_team_attribution_matches_prose": true,
+        "all_input_evidence_is_cutoff_safe": true,
+        "target_game_absent_from_prior_evidence": true,
+        "player_team_codes_match_matchup": true
+      },
+      "source": {
+        "url": "https://6abc.com/post/pistons-set-play-76ers-wednesday/20010737/",
+        "outlet": "6abc Philadelphia",
+        "source_class": "ap_data_skrive_wire",
+        "credit": "Associated Press; pages attribute use of Data Skrive technology and Sportradar data",
+        "published_local": "2026-11-03 07:07 ET",
+        "published_at_utc": "2026-11-03T12:07:00Z",
+        "published_before_lp_cutoff": true,
+        "reviewed_on_utc_date": "2026-11-04",
+        "exact_capture_time_exposed": false,
+        "modified_at_exposed": false,
+        "full_text_archived": false,
+        "paraphrased_focus": "Eastern Conference leaders meet after Detroit’s 106-93 win over Philadelphia on Oct. 25; the brief also lists injuries.",
+        "primary_hook_numeric_claims_crosschecked_against_lp_cutoff_facts": true,
+        "crosschecked_claims": "Detroit 106-93 over Philadelphia on Oct. 25.",
+        "injury_claims_independently_crosschecked": false
+      },
+      "editorial_comparison": {
+        "primary_hook_alignment": "same",
+        "standout_player": "LP gives both teams’ current player form; the wire gives the leading scorers from the previous meeting.",
+        "recent_game_result": "wire_advantage",
+        "head_to_head_or_rematch": "wire_advantage",
+        "opponent_specific_context": "wire_advantage_injuries_not_in_engine_input",
+        "fan_readability": "LP is more conversational and gives the matchup a clear top-four lead.",
+        "gap_diagnosis": [
+          {
+            "fact": "Oct. 25 head-to-head, Detroit 106-93",
+            "diagnosis": "candidate_not_extracted",
+            "input_status": "present in cutoff-safe team result rows"
+          },
+          {
+            "fact": "injury availability",
+            "diagnosis": "missing_data",
+            "input_status": "absent from story-engine input bundle"
+          }
+        ],
+        "human_blind_rating": null
+      }
+    },
+    {
+      "espn_event_id": "401909925",
+      "league": "nba",
+      "away": "CHA",
+      "home": "BKN",
+      "native_db_game_id": "0022600176",
+      "kickoff_utc": "2026-11-05T00:30:00Z",
+      "lp_generated_at_utc": "2026-11-03T16:54:59Z",
+      "lp_cutoff_utc": "2026-11-03T16:54:59Z",
+      "lp_engine_sha256": "2791cd0fd723de721859b5d64dacd50646b6b6aed7697d5dedc24b1fa1924e92",
+      "lp_story": "Charlotte has dropped four straight at 3-5 entering its matchup with Brooklyn, which is 1-6.",
+      "lp_story_angle": {
+        "kind": "losing_streak",
+        "lead_team": "CHA",
+        "teams": [
+          "CHA",
+          "BKN"
+        ]
+      },
+      "lp_selected_fact_descriptions": [
+        "Charlotte Hornets record 3-5",
+        "Brooklyn Nets record 1-6",
+        "Charlotte Hornets 4-game losing streak"
+      ],
+      "replay_matches_frozen_story": true,
+      "independent_lp_claim_audit": {
+        "nonempty_story": true,
+        "selected_facts_have_linked_source_rows": true,
+        "team_record_and_streak_claims_recompute": true,
+        "head_to_head_claims_recompute": true,
+        "league_rank_claims_recompute": true,
+        "player_stat_claims_recompute": true,
+        "player_team_attribution_matches_prose": true,
+        "all_input_evidence_is_cutoff_safe": true,
+        "target_game_absent_from_prior_evidence": true,
+        "player_team_codes_match_matchup": true
+      },
+      "source": {
+        "url": "https://www.foxsports.com/articles/nba/charlotte-takes-on-brooklyn-aims-to-halt-4game-slide",
+        "outlet": "FOX Sports",
+        "source_class": "ap_data_skrive_wire",
+        "credit": "Associated Press; pages attribute use of Data Skrive technology and Sportradar data",
+        "published_local": "2026-11-03 02:02 ET",
+        "published_at_utc": "2026-11-03T07:02:00Z",
+        "published_before_lp_cutoff": true,
+        "reviewed_on_utc_date": "2026-11-04",
+        "exact_capture_time_exposed": false,
+        "modified_at_exposed": false,
+        "full_text_archived": false,
+        "paraphrased_focus": "Charlotte tries to end its four-game slide; the clubs previously played a 110-103 game on Oct. 21, and the brief lists injuries.",
+        "primary_hook_numeric_claims_crosschecked_against_lp_cutoff_facts": true,
+        "crosschecked_claims": "Charlotte 110-103 over Brooklyn on Oct. 21.",
+        "injury_claims_independently_crosschecked": false
+      },
+      "editorial_comparison": {
+        "primary_hook_alignment": "same",
+        "standout_player": "Neither lead depends on a standout player; LP gives a concise team-form preview.",
+        "recent_game_result": "wire_advantage",
+        "head_to_head_or_rematch": "wire_advantage",
+        "opponent_specific_context": "wire_advantage_injuries_not_in_engine_input",
+        "fan_readability": "Similar concise, natural losing-streak lead.",
+        "gap_diagnosis": [
+          {
+            "fact": "Oct. 21 head-to-head, Charlotte 110-103",
+            "diagnosis": "candidate_not_extracted",
+            "input_status": "present in cutoff-safe team result rows"
+          },
+          {
+            "fact": "injury availability",
+            "diagnosis": "missing_data",
+            "input_status": "absent from story-engine input bundle"
+          }
+        ],
+        "human_blind_rating": null
+      }
+    },
+    {
+      "espn_event_id": "401909934",
+      "league": "nba",
+      "away": "LAL",
+      "home": "SAC",
+      "native_db_game_id": "0022600185",
+      "kickoff_utc": "2026-11-05T03:00:00Z",
+      "lp_generated_at_utc": "2026-11-03T16:54:59Z",
+      "lp_cutoff_utc": "2026-11-03T16:54:59Z",
+      "lp_engine_sha256": "2791cd0fd723de721859b5d64dacd50646b6b6aed7697d5dedc24b1fa1924e92",
+      "lp_story": "The 6-2 Lakers bring a two-game winning streak to Sacramento, where the Kings sit at 1-6. Darius Acuff Jr. is averaging 27.6 points and 7.4 assists over his last five for Sacramento, while Los Angeles's Luka Doncic has scored 42 and 45 in his last two.",
+      "lp_story_angle": {
+        "kind": "records",
+        "lead_team": "SAC",
+        "teams": [
+          "LAL",
+          "SAC"
+        ]
+      },
+      "lp_selected_fact_descriptions": [
+        "Los Angeles Lakers record 6-2",
+        "Sacramento Kings record 1-6",
+        "Los Angeles Lakers 2-game winning streak",
+        "Darius Acuff Jr. recent form",
+        "Luka Doncic recent form"
+      ],
+      "replay_matches_frozen_story": true,
+      "independent_lp_claim_audit": {
+        "nonempty_story": true,
+        "selected_facts_have_linked_source_rows": true,
+        "team_record_and_streak_claims_recompute": true,
+        "head_to_head_claims_recompute": true,
+        "league_rank_claims_recompute": true,
+        "player_stat_claims_recompute": true,
+        "player_team_attribution_matches_prose": true,
+        "all_input_evidence_is_cutoff_safe": true,
+        "target_game_absent_from_prior_evidence": true,
+        "player_team_codes_match_matchup": true
+      },
+      "source": {
+        "url": "https://abc7.com/post/sacramento-hosts-los-angeles-doncics-42-point-game/20010733/",
+        "outlet": "ABC7 Los Angeles",
+        "source_class": "ap_data_skrive_wire",
+        "credit": "Associated Press; pages attribute use of Data Skrive technology and Sportradar data",
+        "published_local": "2026-11-03 07:06 PT",
+        "published_at_utc": "2026-11-03T15:06:00Z",
+        "published_before_lp_cutoff": true,
+        "reviewed_on_utc_date": "2026-11-04",
+        "exact_capture_time_exposed": false,
+        "modified_at_exposed": false,
+        "full_text_archived": false,
+        "paraphrased_focus": "Luka Doncic’s 42-point latest game, a 138-117 win over Miami, leads the preview.",
+        "primary_hook_numeric_claims_crosschecked_against_lp_cutoff_facts": true,
+        "crosschecked_claims": "Luka Doncic 42 points and the Lakers 138-117 win over Miami.",
+        "injury_claims_independently_crosschecked": false
+      },
+      "editorial_comparison": {
+        "primary_hook_alignment": "partial",
+        "standout_player": "LP includes Luka’s 42 and 45 in his last two and adds Sacramento’s Darius Acuff Jr.",
+        "recent_game_result": "wire_advantage",
+        "head_to_head_or_rematch": "not_applicable",
+        "opponent_specific_context": "wire_advantage_injuries_not_in_engine_input",
+        "fan_readability": "Both are readable; LP adds records and a second player, while the wire keeps the latest star performance central.",
+        "gap_diagnosis": [
+          {
+            "fact": "Luka 42-point game against Miami, 138-117 result",
+            "diagnosis": "candidate_not_extracted",
+            "input_status": "player score and same-date Lakers result are present but not joined in prose"
+          },
+          {
+            "fact": "injury availability",
+            "diagnosis": "missing_data",
+            "input_status": "absent from story-engine input bundle"
+          }
+        ],
+        "human_blind_rating": null
+      }
+    }
+  ],
+  "frozen_story_run_pr_head": "cc5695849a9454c58ca7bfd78031dde8552ded9f",
+  "benchmark_rerender_pr_head": "88abf4b12c6fb3021c1e636ef0c3d05a6ba06a06"
+}

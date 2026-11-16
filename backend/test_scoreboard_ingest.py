@@ -489,6 +489,7 @@ class TestThePastIsNeverAsked:
     def test_a_finished_day_we_do_not_hold_says_so_instead_of_asking(self, monkeypatch):
         from fastapi.testclient import TestClient
         import sports_service
+        TestDayNavigation._point_router_at_the_fixture(monkeypatch)
         self._no_publisher(monkeypatch)
         client = TestClient(sports_service.app)
         yesterday = (dt.date.today() - dt.timedelta(days=3)).isoformat()
@@ -500,6 +501,7 @@ class TestThePastIsNeverAsked:
     def test_a_finished_day_we_do_hold_is_served_from_the_store(self, monkeypatch):
         from fastapi.testclient import TestClient
         import sports_service
+        TestDayNavigation._point_router_at_the_fixture(monkeypatch)
         self._no_publisher(monkeypatch)
         past = (dt.date.today() - dt.timedelta(days=4)).isoformat()
         scoreboard_store.save("nhl", past, [
@@ -718,3 +720,69 @@ class TestAFutureSlateIsNotRepolled:
         scoreboard_store.save("mlb", tomorrow, [])
         wanted, reason = scoreboard_store.needs_refresh("mlb", tomorrow)
         assert not wanted and "no games" in reason, reason
+
+
+class TestASuspendedGameKeepsTheDayOpen:
+    """`state='post'` is not the same as finished.
+
+    ESPN reports a suspended match as posted but not completed. Counting state
+    alone declared the day finished, retired the refresh, and served a
+    mid-match snapshot as the permanent record -- observed 2026-10-18, when the
+    Shanghai final stayed "Suspended" on the board for fourteen hours after the
+    publisher had it.
+    """
+
+    def _finished(self, gid):
+        return {"game_id": gid, "date": "2026-10-18T08:40Z", "state": "post",
+                "status": "Final", "completed": True,
+                "home": {"abbrev": "AAA"}, "away": {"abbrev": "BBB"}}
+
+    def _terminal(self, gid, status):
+        return {"game_id": gid, "date": "2026-10-18T08:40Z", "state": "post",
+                "status": status, "completed": False,
+                "home": {"abbrev": "AAA"}, "away": {"abbrev": "BBB"}}
+
+    def test_a_suspended_final_does_not_close_the_day(self):
+        scoreboard_store.save("atp", "2026-10-18", [self._terminal("final", "Suspended")])
+        wanted, reason = scoreboard_store.needs_refresh("atp", "2026-10-18")
+        assert wanted, reason
+        assert "not final" in reason, reason
+
+    def test_a_delayed_game_does_not_close_the_day(self):
+        scoreboard_store.save("atp", "2026-10-18", [self._terminal("g1", "Delayed")])
+        wanted, reason = scoreboard_store.needs_refresh("atp", "2026-10-18")
+        assert wanted and "not final" in reason, reason
+
+    def test_every_completed_game_still_closes_the_day(self):
+        scoreboard_store.save("atp", "2026-10-18", [self._finished("final")])
+        wanted, reason = scoreboard_store.needs_refresh("atp", "2026-10-18")
+        assert not wanted and reason == "every game final", reason
+
+    def test_a_postponed_game_is_terminal_and_closes_the_day(self):
+        """Postponed will never produce a score, so it must not hold the day
+        open -- otherwise every postponement costs a request per cycle forever."""
+        scoreboard_store.save("atp", "2026-10-18", [self._terminal("g1", "Postponed")])
+        wanted, reason = scoreboard_store.needs_refresh("atp", "2026-10-18")
+        assert not wanted and reason == "every game final", reason
+
+
+def test_scoreboard_ingestion_requests_deterministic_evidence_refresh(monkeypatch):
+    import core_stories
+    import ingest_scoreboards
+
+    games = [{"game_id": "nba-game", "state": "pre",
+              "home": {"abbrev": "BOS"}, "away": {"abbrev": "ATL"}}]
+    kicks = []
+    monkeypatch.setattr(ingest_scoreboards.espn, "games", lambda league, date: games)
+    monkeypatch.setattr(ingest_scoreboards.espn, "scoreboard_raw", lambda league, date: {})
+    monkeypatch.setattr(ingest_scoreboards.scoreboard_store, "save",
+                        lambda league, date, rows, source: len(rows))
+    monkeypatch.setattr(ingest_scoreboards.league_activity, "record_from_payload",
+                        lambda league, payload: True)
+    monkeypatch.setattr(core_stories, "kick_game_stories",
+                        lambda league, rows, **kwargs: kicks.append((league, rows, kwargs)))
+
+    written, error = ingest_scoreboards._refresh("nba", "2026-11-04", verbose=False)
+
+    assert (written, error) == (1, None)
+    assert kicks == [("nba", games, {"refresh_evidence": True})]

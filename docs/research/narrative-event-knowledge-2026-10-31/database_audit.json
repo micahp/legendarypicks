@@ -1,0 +1,1156 @@
+{
+  "espn_news_metadata_counts": [
+    [
+      "nba",
+      "espn",
+      23,
+      23
+    ],
+    [
+      "nba",
+      "espn singapore",
+      3,
+      3
+    ],
+    [
+      "nba",
+      "espn-nba",
+      744,
+      744
+    ],
+    [
+      "nba",
+      "espn-ncaaf",
+      6,
+      6
+    ],
+    [
+      "nba",
+      "espn-nhl",
+      2,
+      2
+    ],
+    [
+      "nfl",
+      "espn",
+      15,
+      15
+    ],
+    [
+      "nfl",
+      "espn philippines",
+      1,
+      1
+    ],
+    [
+      "nfl",
+      "espn singapore",
+      1,
+      1
+    ],
+    [
+      "nfl",
+      "espn-mlb",
+      149,
+      149
+    ],
+    [
+      "nfl",
+      "espn-mls",
+      3,
+      3
+    ],
+    [
+      "nfl",
+      "espn-nba",
+      2,
+      2
+    ],
+    [
+      "nfl",
+      "espn-ncaaf",
+      127,
+      127
+    ],
+    [
+      "nfl",
+      "espn-nfl",
+      1569,
+      1569
+    ],
+    [
+      "nfl",
+      "espn-nhl",
+      88,
+      88
+    ],
+    [
+      "nfl",
+      "espn.com",
+      1,
+      1
+    ]
+  ],
+  "nba": {
+    "columns": [
+      "league",
+      "game_id",
+      "story",
+      "generated_at",
+      "has_form",
+      "has_stakes",
+      "form_suppressed",
+      "facts_as_of",
+      "deterministic"
+    ],
+    "current_counts": [
+      [
+        "nba",
+        151,
+        0,
+        29
+      ]
+    ],
+    "indexes": [
+      [
+        0,
+        "sqlite_autoindex_game_story_1",
+        1,
+        "pk",
+        0
+      ]
+    ]
+  },
+  "nfl": {
+    "columns": [
+      "league",
+      "game_id",
+      "story",
+      "generated_at",
+      "has_form",
+      "has_stakes",
+      "form_suppressed",
+      "facts_as_of",
+      "deterministic"
+    ],
+    "current_counts": [
+      [
+        "nfl",
+        169,
+        0,
+        1
+      ]
+    ],
+    "indexes": [
+      [
+        0,
+        "sqlite_autoindex_game_story_1",
+        1,
+        "pk",
+        0
+      ]
+    ]
+  },
+  "sample_story_rows": [
+    {
+      "deterministic": 0,
+      "game_id": "401872964",
+      "generated_at": "2026-10-02 03:46:13",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872966",
+      "generated_at": "2026-10-06 03:52:05",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872967",
+      "generated_at": "2026-10-06 03:52:31",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872978",
+      "generated_at": "2026-10-06 03:52:52",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872968",
+      "generated_at": "2026-10-06 03:52:13",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872965",
+      "generated_at": "2026-10-06 03:51:46",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872976",
+      "generated_at": "2026-10-06 03:52:41",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872977",
+      "generated_at": "2026-10-06 03:52:47",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872970",
+      "generated_at": "2026-10-06 03:52:10",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872974",
+      "generated_at": "2026-10-06 03:52:38",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872971",
+      "generated_at": "2026-10-06 03:51:48",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872973",
+      "generated_at": "2026-10-06 03:52:23",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872979",
+      "generated_at": "2026-10-06 03:31:16",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872980",
+      "generated_at": "2026-10-09 03:20:14",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872993",
+      "generated_at": "2026-10-12 03:49:10",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872990",
+      "generated_at": "2026-10-11 20:08:16",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872983",
+      "generated_at": "2026-10-11 20:13:15",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872989",
+      "generated_at": "2026-10-11 23:18:17",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872991",
+      "generated_at": "2026-10-11 23:29:19",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872984",
+      "generated_at": "2026-10-11 19:55:17",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872985",
+      "generated_at": "2026-10-11 20:10:07",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872986",
+      "generated_at": "2026-10-11 20:07:14",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872987",
+      "generated_at": "2026-10-11 19:54:15",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872981",
+      "generated_at": "2026-10-11 17:15:18",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872992",
+      "generated_at": "2026-10-11 23:43:22",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872994",
+      "generated_at": "2026-10-11 05:00:31",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872995",
+      "generated_at": "2026-10-17 01:02:56",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873004",
+      "generated_at": "2026-10-18 23:01:21",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872997",
+      "generated_at": "2026-10-18 19:57:19",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872998",
+      "generated_at": "2026-10-18 20:27:17",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872999",
+      "generated_at": "2026-10-18 20:19:16",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873007",
+      "generated_at": "2026-10-19 03:48:19",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401872996",
+      "generated_at": "2026-10-18 16:49:20",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873006",
+      "generated_at": "2026-10-18 23:27:20",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873000",
+      "generated_at": "2026-10-18 20:27:18",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873002",
+      "generated_at": "2026-10-18 20:44:49",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873003",
+      "generated_at": "2026-10-18 20:10:14",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873008",
+      "generated_at": "2026-10-20 03:22:17",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873010",
+      "generated_at": "2026-10-23 03:24:22",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873012",
+      "generated_at": "2026-10-25 19:58:25",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873013",
+      "generated_at": "2026-10-25 20:09:30",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873020",
+      "generated_at": "2026-10-25 23:32:27",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873014",
+      "generated_at": "2026-10-25 19:48:15",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873022",
+      "generated_at": "2026-10-26 03:17:22",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873021",
+      "generated_at": "2026-10-25 23:36:29",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873015",
+      "generated_at": "2026-10-25 19:59:14",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873016",
+      "generated_at": "2026-10-25 20:22:14",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873017",
+      "generated_at": "2026-10-25 20:11:20",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873018",
+      "generated_at": "2026-10-25 19:49:19",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": 0,
+      "game_id": "401873009",
+      "generated_at": "2026-10-27 03:19:18",
+      "has_form": 1,
+      "has_stakes": 0,
+      "league": "nfl",
+      "prior_preview_recoverable": false,
+      "stored_version_count": 1
+    },
+    {
+      "deterministic": null,
+      "game_id": "401809243",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401809952",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401809975",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401809504",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810016",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401809773",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810055",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810080",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810096",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810120",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810136",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401809812",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810163",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810188",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810213",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401809837",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810232",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810257",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401809242",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810302",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810327",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810351",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810376",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810402",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810427",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401809248",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810485",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810512",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810536",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810560",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810585",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810610",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810635",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810660",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810685",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810709",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810734",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810759",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810784",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810809",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810833",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810856",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810882",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810907",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810932",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810956",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401810981",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401811005",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401811030",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    },
+    {
+      "deterministic": null,
+      "game_id": "401811055",
+      "generated_at": null,
+      "has_form": null,
+      "has_stakes": null,
+      "league": "nba",
+      "prior_preview_recoverable": null,
+      "stored_version_count": 0
+    }
+  ]
+}

@@ -17,7 +17,12 @@ from .constants import (_CONTEXT_CONTRACT, _DRAFT_BOARD_CONTRACT, _CURRENT_SEASO
 from . import router
 from .cache import _database_cache_token, _draft_board_cache_get, _draft_board_cache_put  # noqa: E402
 from .context import _roster_freshness, _table_columns, _today  # noqa: E402
-from .aggregates import _dst_aggregates, _pk_aggregates, _regular_season_aggregates  # noqa: E402
+from .aggregates import (  # noqa: E402
+    _dst_aggregates,
+    _latest_completed_log_season,
+    _pk_aggregates,
+    _regular_season_aggregates,
+)
 
 
 def _pkg__dst_aggregates(*args, **kwargs):
@@ -197,10 +202,7 @@ def nfl_draft_board(
         if cached is not None:
             return cached
 
-        season_row = connection.execute(
-            "SELECT MAX(season) FROM player_game_logs WHERE league='nfl'"
-        ).fetchone()
-        season = season_row[0] if season_row else None
+        season = _latest_completed_log_season(connection)
         if season is None:
             raise HTTPException(503, "NFL draft board data unavailable: no reference season")
 

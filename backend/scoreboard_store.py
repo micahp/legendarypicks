@@ -83,6 +83,39 @@ CREATE TABLE IF NOT EXISTS scoreboard_snapshots(
 );
 CREATE INDEX IF NOT EXISTS idx_scoreboard_live
   ON scoreboard_snapshots(state, start_time);
+CREATE TABLE IF NOT EXISTS tennis_model_locks(
+  league TEXT NOT NULL,
+  game_date TEXT NOT NULL,
+  game_id TEXT NOT NULL,
+  start_time TEXT NOT NULL,
+  locked_at TEXT NOT NULL,
+  projection TEXT NOT NULL,
+  model_version TEXT,
+  PRIMARY KEY(league, game_id)
+);
+CREATE TABLE IF NOT EXISTS tennis_match_stats_overrides(
+  league       TEXT NOT NULL CHECK(league IN ('atp','wta')),
+  game_date    TEXT NOT NULL,
+  game_id      TEXT NOT NULL,
+  home_aces    INTEGER NOT NULL,
+  away_aces    INTEGER NOT NULL,
+  source       TEXT NOT NULL,
+  source_url   TEXT NOT NULL,
+  verified_at  TEXT NOT NULL,
+  PRIMARY KEY(league, game_date, game_id)
+);
+CREATE TABLE IF NOT EXISTS tennis_model_grades(
+  league             TEXT NOT NULL CHECK(league IN ('atp','wta')),
+  game_id            TEXT NOT NULL,
+  winner             TEXT NOT NULL CHECK(winner IN ('correct','incorrect')),
+  total_games_error  REAL,
+  graded_at          TEXT NOT NULL,
+  result_source      TEXT,
+  result_game_date   TEXT,
+  result_fetched_at  TEXT,
+  result_payload_sha256 TEXT,
+  PRIMARY KEY(league, game_id)
+);
 CREATE TABLE IF NOT EXISTS scoreboard_refresh(
   league     TEXT NOT NULL,
   game_date  TEXT NOT NULL,
@@ -92,14 +125,15 @@ CREATE TABLE IF NOT EXISTS scoreboard_refresh(
   PRIMARY KEY(league, game_date)
 );
 CREATE TABLE IF NOT EXISTS tennis_draw_snapshots(
-  league        TEXT PRIMARY KEY,
+  league        TEXT NOT NULL,
   tournament_id TEXT NOT NULL,
   event_name    TEXT NOT NULL,
   bracket_url   TEXT,
   payload       TEXT NOT NULL,
   match_count   INTEGER NOT NULL,
   fetched_at    TEXT NOT NULL,
-  source        TEXT
+  source        TEXT,
+  PRIMARY KEY(league, tournament_id)
 );
 CREATE TABLE IF NOT EXISTS tennis_ranking_snapshots(
   tour             TEXT NOT NULL,
@@ -150,13 +184,51 @@ def _db():
     return con
 
 
+# Research (CP4): pre-match count and total-games distributions frozen when a lock is created.
+# Written only by tennis_count_distributions.store_distributions, once per new lock. Old locks
+# have no rows here and are never backfilled. Rows are immutable once written.
+# Dev-only: init() does not create this table. ensure_distribution_schema() creates it, and
+# tennis_lock_sweep calls that only for the dev database (see tennis_lock_sweep.prepare_distributions).
+DISTRIBUTION_SCHEMA = """
+CREATE TABLE IF NOT EXISTS tennis_model_lock_distributions(
+  league        TEXT NOT NULL CHECK(league IN ('atp','wta')),
+  game_id       TEXT NOT NULL,
+  cell          TEXT NOT NULL CHECK(cell IN ('aces','double_faults','total_games')),
+  side          TEXT NOT NULL CHECK(side IN ('home','away','match')),
+  model_version TEXT NOT NULL,
+  locked_at     TEXT NOT NULL,
+  parameters    TEXT NOT NULL,
+  support_start INTEGER NOT NULL,
+  pmf           TEXT NOT NULL,
+  trimmed_mass  REAL NOT NULL,
+  PRIMARY KEY(league, game_id, cell, side)
+);
+CREATE TRIGGER IF NOT EXISTS tennis_model_lock_distributions_immutable_update
+BEFORE UPDATE ON tennis_model_lock_distributions
+BEGIN
+  SELECT RAISE(ABORT, 'frozen lock distributions are immutable');
+END;
+CREATE TRIGGER IF NOT EXISTS tennis_model_lock_distributions_immutable_delete
+BEFORE DELETE ON tennis_model_lock_distributions
+BEGIN
+  SELECT RAISE(ABORT, 'frozen lock distributions are immutable');
+END;
+"""
+
+
+def ensure_distribution_schema(con):
+    con.executescript(DISTRIBUTION_SCHEMA)
+
+
 def init(con=None):
     if con is not None:
         con.executescript(SCHEMA)
+        _migrate_draw_snapshot_key(con)
         return
     with closing(_db()) as own:
         own.executescript(SCHEMA)
         own.commit()
+        _migrate_draw_snapshot_key(own)
 
 
 def _now():
@@ -324,12 +396,91 @@ def read(league, game_date, con=None):
             con.close()
 
 
-def save_tennis_draws(league, draws, source="espn", con=None):
-    """Replace one tour's current major draw after validating it in full.
+def _draw_key_columns(con):
+    """Primary-key columns of tennis_draw_snapshots, in key order; empty if the table is absent."""
+    rows = con.execute("PRAGMA table_info(tennis_draw_snapshots)").fetchall()
+    return [row[1] for row in sorted((row for row in rows if row[5]), key=lambda row: row[5])]
 
-    Empty and ambiguous publisher responses leave the last good snapshot alone.
-    The ingest treats those conditions as errors; this store never turns them
-    into an apparently valid empty bracket.
+
+def _migrate_draw_snapshot_key(con):
+    """Key tennis_draw_snapshots on (league, tournament_id). Idempotent.
+
+    The old table was keyed on league alone, so a second concurrent draw for a tour could not be
+    stored. The rebuild runs in one IMMEDIATE transaction, keeps every row, and checks the row count
+    before the old table is dropped. Shanghai and Wuhan survive with their values unchanged.
+    """
+    keys = _draw_key_columns(con)
+    if keys in ([], ["league", "tournament_id"]):
+        return
+    if keys != ["league"]:
+        raise RuntimeError(f"tennis_draw_snapshots has an unexpected key {keys}; refusing to migrate")
+    if con.in_transaction:
+        con.commit()
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        if _draw_key_columns(con) != ["league"]:
+            con.execute("COMMIT")
+            return
+        before = con.execute("SELECT COUNT(*) FROM tennis_draw_snapshots").fetchone()[0]
+        con.execute("""CREATE TABLE tennis_draw_snapshots_keyed(
+  league        TEXT NOT NULL,
+  tournament_id TEXT NOT NULL,
+  event_name    TEXT NOT NULL,
+  bracket_url   TEXT,
+  payload       TEXT NOT NULL,
+  match_count   INTEGER NOT NULL,
+  fetched_at    TEXT NOT NULL,
+  source        TEXT,
+  PRIMARY KEY(league, tournament_id)
+)""")
+        con.execute(
+            "INSERT INTO tennis_draw_snapshots_keyed"
+            " (league, tournament_id, event_name, bracket_url, payload, match_count, fetched_at, source)"
+            " SELECT league, tournament_id, event_name, bracket_url, payload, match_count, fetched_at, source"
+            " FROM tennis_draw_snapshots")
+        after = con.execute("SELECT COUNT(*) FROM tennis_draw_snapshots_keyed").fetchone()[0]
+        if after != before:
+            raise RuntimeError(f"tennis_draw_snapshots migration copied {after} of {before} rows")
+        con.execute("DROP TABLE tennis_draw_snapshots")
+        con.execute("ALTER TABLE tennis_draw_snapshots_keyed RENAME TO tennis_draw_snapshots")
+        con.execute("COMMIT")
+    except Exception:
+        con.execute("ROLLBACK")
+        raise
+
+
+def _draw_match_in_progress(match):
+    """A match being played, or suspended: posted but not completed. Either keeps its draw open."""
+    return match.get("state") == "in" or (match.get("state") == "post" and match.get("completed") is False)
+
+
+def _draw_retired(payload_text, observed_on):
+    """True when a stored draw's own matches are all in the past and none is in progress.
+
+    observed_on is the date the publisher was asked about. A draw with a match still scheduled on or
+    after that date is never retired, even if the publisher omitted it, because the publisher should still
+    list it. A draw with no readable match date is kept: the store does not guess.
+    """
+    try:
+        matches = json.loads(payload_text).get("matches") or []
+    except (TypeError, ValueError, AttributeError):
+        return False
+    dates = [str(match.get("date") or "")[:10] for match in matches if match.get("date")]
+    if not dates or max(dates) >= observed_on:
+        return False
+    return not any(_draw_match_in_progress(match) for match in matches)
+
+
+def save_tennis_draws(league, draws, source="espn", con=None, observed_on=None):
+    """Store every complete major draw the publisher listed for one tour.
+
+    One row per tournament, keyed on (league, tournament_id). Every draw is validated before anything is
+    written, and one malformed draw rejects the whole response, as before. An empty response changes
+    nothing, so an empty or ambiguous publisher reply never looks like an empty bracket.
+
+    observed_on is the date the publisher was asked about. When it is given, a stored tournament that
+    the publisher no longer lists is removed, but only if `_draw_retired` says its matches are finished.
+    Without observed_on nothing is removed.
     """
     league = str(league or "").lower()
     if league not in ("atp", "wta"):
@@ -337,38 +488,63 @@ def save_tennis_draws(league, draws, source="espn", con=None):
     draws = list(draws or [])
     if not draws:
         return 0
-    if len(draws) != 1:
-        raise ValueError(f"expected one current {league} draw, got {len(draws)}")
-    draw = draws[0]
-    matches = list(draw.get("matches") or [])
-    ids = [str(match.get("game_id") or "") for match in matches]
-    if (not draw.get("tournament_id") or not draw.get("event_name") or not matches
-            or int(draw.get("match_count") or 0) != len(matches)
-            or any(not game_id for game_id in ids) or len(set(ids)) != len(ids)
-            or any(not match.get("round") for match in matches)):
-        raise ValueError(f"invalid {league} draw snapshot")
+    seen_tournaments = set()
+    total_matches = 0
+    for draw in draws:
+        matches = list(draw.get("matches") or [])
+        ids = [str(match.get("game_id") or "") for match in matches]
+        if (not draw.get("tournament_id") or not draw.get("event_name") or not matches
+                or int(draw.get("match_count") or 0) != len(matches)
+                or any(not game_id for game_id in ids) or len(set(ids)) != len(ids)
+                or any(not match.get("round") for match in matches)):
+            raise ValueError(f"invalid {league} draw snapshot")
+        tournament_id = str(draw["tournament_id"])
+        if tournament_id in seen_tournaments:
+            raise ValueError(f"duplicate {league} draw tournament id {tournament_id}")
+        seen_tournaments.add(tournament_id)
+        total_matches += len(matches)
 
     own = con is None
     con = con or _db()
     try:
         init(con)
         fetched_at = _iso(_now())
-        con.execute(
-            "INSERT INTO tennis_draw_snapshots"
-            " (league, tournament_id, event_name, bracket_url, payload,"
-            "  match_count, fetched_at, source) VALUES (?,?,?,?,?,?,?,?)"
-            " ON CONFLICT(league) DO UPDATE SET"
-            " tournament_id=excluded.tournament_id, event_name=excluded.event_name,"
-            " bracket_url=excluded.bracket_url, payload=excluded.payload,"
-            " match_count=excluded.match_count, fetched_at=excluded.fetched_at,"
-            " source=excluded.source",
-            (league, str(draw["tournament_id"]), str(draw["event_name"]),
-             draw.get("bracket_url"), json.dumps(draw), len(matches),
-             fetched_at, source),
-        )
-        if own:
+        if con.in_transaction:
             con.commit()
-        return len(matches)
+        con.execute("BEGIN IMMEDIATE")
+        try:
+            for draw in draws:
+                matches = list(draw.get("matches") or [])
+                con.execute(
+                    "INSERT INTO tennis_draw_snapshots"
+                    " (league, tournament_id, event_name, bracket_url, payload,"
+                    "  match_count, fetched_at, source) VALUES (?,?,?,?,?,?,?,?)"
+                    " ON CONFLICT(league, tournament_id) DO UPDATE SET"
+                    " event_name=excluded.event_name, bracket_url=excluded.bracket_url,"
+                    " payload=excluded.payload, match_count=excluded.match_count,"
+                    " fetched_at=excluded.fetched_at, source=excluded.source",
+                    (league, str(draw["tournament_id"]), str(draw["event_name"]),
+                     draw.get("bracket_url"), json.dumps(draw), len(matches),
+                     fetched_at, source),
+                )
+            retired = []
+            if observed_on is not None:
+                for stored_id, stored_payload in con.execute(
+                        "SELECT tournament_id, payload FROM tennis_draw_snapshots WHERE league=?",
+                        (league,)).fetchall():
+                    if stored_id in seen_tournaments:
+                        continue
+                    if _draw_retired(stored_payload, str(observed_on)):
+                        con.execute("DELETE FROM tennis_draw_snapshots WHERE league=? AND tournament_id=?",
+                                    (league, stored_id))
+                        retired.append(stored_id)
+            con.execute("COMMIT")
+        except Exception:
+            con.execute("ROLLBACK")
+            raise
+        if retired:
+            print(f"[scoreboard_store] retired {league} draws no longer published: {', '.join(retired)}")
+        return total_matches
     finally:
         if own:
             con.close()
@@ -390,7 +566,7 @@ def read_tennis_draws(tour=None, con=None):
         if tour:
             sql += " WHERE league=?"
             params = (tour,)
-        sql += " ORDER BY league"
+        sql += " ORDER BY league, tournament_id"
         rows = con.execute(sql, params).fetchall()
         result = []
         now = _now()
@@ -461,13 +637,24 @@ def save_tennis_ranking_spine(tour, identities, con=None):
                     raise ValueError(f"duplicate existing {tour} ESPN id {source_id}")
                 by_id[source_id] = row
             by_name.setdefault(_tennis_name_key(row["name"]), []).append(row)
+        # A new ESPN id may claim exactly one same-name row that has no ESPN id yet: the
+        # publisher roster ingest (ingest_tennis_players) creates those for players outside
+        # the top 150 and binds the other way by the same unique-name rule. Refusing here
+        # failed every DEV run once such a player (Djere, Andreescu on 2026-10-20) entered
+        # the top 150. A row already holding a different ESPN id, or two candidate rows,
+        # is still a conflict: that is a duplicate for spine_merge, not a binding.
+        adopted = set()
         for source_id, name in zip(ids, names):
             current = by_id.get(source_id)
             conflicts = [
                 row for row in by_name.get(_tennis_name_key(name), [])
                 if current is None or row["id"] != current["id"]
             ]
-            if conflicts:
+            if (current is None and len(conflicts) == 1
+                    and not str(conflicts[0]["espn_id"] or "")):
+                by_id[source_id] = conflicts[0]
+                adopted.add(source_id)
+            elif conflicts:
                 raise ValueError(
                     f"{tour} ESPN id {source_id} conflicts with another stored identity by name"
                 )
@@ -479,8 +666,10 @@ def save_tennis_ranking_spine(tour, identities, con=None):
             current = by_id.get(source_id)
             if current:
                 con.execute(
-                    "UPDATE players SET name=?,team=NULL,active=?,updated_at=? WHERE id=?",
-                    (identity["name"], int(identity["active"]), updated_at, current["id"]),
+                    "UPDATE players SET name=?,team=NULL,espn_id=?,active=?,updated_at=?"
+                    " WHERE id=?",
+                    (identity["name"], source_id, int(identity["active"]), updated_at,
+                     current["id"]),
                 )
             else:
                 con.execute(
@@ -495,7 +684,8 @@ def save_tennis_ranking_spine(tour, identities, con=None):
             raise ValueError(f"{tour} active spine count mismatch after publication")
         if own:
             con.commit()
-        return {"published": 150, "inserted": sum(1 for value in ids if value not in by_id)}
+        return {"published": 150, "inserted": sum(1 for value in ids if value not in by_id),
+                "adopted": len(adopted)}
     finally:
         if own:
             con.close()
@@ -782,6 +972,38 @@ def live_targets(now=None, con=None):
             con.close()
 
 
+RESUMABLE_STATUS = ("suspended", "delayed", "interrupted", "rain")
+
+
+def _resumable_post_games(con, league, game_date):
+    """Count games the store calls finished that the publisher has not finished.
+
+    ESPN reports a suspended match as `state='post'` with `completed=false`.
+    Counting state alone therefore ends the refresh for the whole day and freezes
+    the snapshot mid-match -- which is how a suspended Shanghai final sat on the
+    board for fourteen hours as the permanent record of that day.
+
+    Only resumable statuses count. Postponed, canceled and abandoned are terminal:
+    no later request will produce a score, so those must not hold a day open.
+    """
+    count = 0
+    for (payload,) in con.execute(
+        "SELECT payload FROM scoreboard_snapshots"
+        " WHERE league=? AND game_date=? AND state='post'",
+        (league, game_date),
+    ):
+        try:
+            game = json.loads(payload)
+        except (TypeError, ValueError):
+            continue
+        if game.get("completed") is not False:
+            continue
+        status = str(game.get("status") or game.get("status_detail") or "").lower()
+        if any(marker in status for marker in RESUMABLE_STATUS):
+            count += 1
+    return count
+
+
 def needs_refresh(league, game_date, empty_backoff=EMPTY_BACKOFF, con=None,
                   future_backoff=FUTURE_BACKOFF):
     """Should the schedule run spend a request on this (league, date)?
@@ -837,6 +1059,10 @@ def needs_refresh(league, game_date, empty_backoff=EMPTY_BACKOFF, con=None,
             " WHERE league=? AND game_date=? AND (state IS NULL OR state != 'post')",
             (league, game_date),
         ).fetchone()[0]
+        # state='post' is not the same as finished: a suspended match is posted
+        # but not completed, and treating it as done ends the day's refresh and
+        # freezes the snapshot mid-match.
+        unfinished += _resumable_post_games(con, league, game_date)
         if unfinished:
             started = con.execute(
                 "SELECT COUNT(*) FROM scoreboard_snapshots"

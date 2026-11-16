@@ -1,0 +1,302 @@
+import React from 'react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import NbaModelTab from './NbaModelTab'
+
+const models = [
+  { id: 'G1', label: 'G1 Elo', version: 'g1-version', projects_scores: false, note: 'Elo model' },
+  { id: 'G2', label: 'G2 Efficiency', version: 'g2-version', projects_scores: true, note: 'Efficiency model' },
+  { id: 'G3', label: 'G3 Joint scores', version: 'g3-version', projects_scores: true, note: 'Joint score model' },
+]
+
+function dateInDays(days: number, hour = 19) {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  date.setHours(hour, 0, 0, 0)
+  return date.toISOString()
+}
+
+function dayLabel(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
+}
+
+function previewGame(gameId: string, scheduled: string, away: string, home: string) {
+  return {
+    game_id: gameId,
+    scheduled_start_utc: scheduled,
+    home_team: home,
+    away_team: away,
+    status: 'preview' as const,
+    locked_at_utc: null,
+    result: null,
+    models: {
+      G1: {
+        model_version: 'g1-version', home_win_probability: 0.55,
+        projected_home_points: null, projected_away_points: null, score_forecast_available: false,
+      },
+      G2: {
+        model_version: 'nba-g2-efficiency-v1-ewma08-reg50-hca2', home_win_probability: 0.57,
+        projected_home_points: 111.2, projected_away_points: 108.4, score_forecast_available: true,
+      },
+      G3: {
+        model_version: 'g3-version', home_win_probability: 0.58,
+        projected_home_points: 112.1, projected_away_points: 108.9, score_forecast_available: true,
+      },
+    },
+  }
+}
+
+const firstGameDay = dateInDays(1, 18)
+const secondGameDay = dateInDays(1, 21)
+const nextGameDay = dateInDays(2, 19)
+
+const payload = {
+  season: 2027,
+  state: 'available',
+  default_model: 'G3',
+  models,
+  records: {
+    G1: { pick: { win: 0, loss: 0, push: 0 }, locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
+    G2: { pick: { win: 0, loss: 0, push: 0 }, locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
+    G3: { pick: { win: 0, loss: 0, push: 0 }, locked: 0, graded: 0, awaiting: 0, missed: 0, winner_brier: null, winner_log_loss: null },
+  },
+  games: [
+    previewGame('game-1', firstGameDay, 'BOS', 'DET'),
+    previewGame('game-2', secondGameDay, 'NYK', 'PHI'),
+    previewGame('game-3', nextGameDay, 'LAL', 'CHI'),
+  ],
+  benchmark: {
+    eligible_games: { train: 5800, validation: 2460, test: 2460 },
+    metrics: {
+      validation: {
+        G1: { games: 2460, winner_brier: 0.22, winner_log_loss: 0.64, winner_accuracy: 0.64, calibration: { ece_10_bin: 0.03 } },
+      },
+      test: {
+        G1: { games: 2460, winner_brier: 0.21, winner_log_loss: 0.61, winner_accuracy: 0.65, calibration: { ece_10_bin: 0.04 } },
+        G2: { games: 2460, winner_brier: 0.21, winner_log_loss: 0.62, winner_accuracy: 0.65, calibration: { ece_10_bin: 0.05 }, team_points_mae: 9.7, spread_mae: 11.2, total_mae: 15.8 },
+        G3: { games: 2460, winner_brier: 0.21, winner_log_loss: 0.61, winner_accuracy: 0.65, calibration: { ece_10_bin: 0.03 }, team_points_mae: 9.7, spread_mae: 11.2, total_mae: 15.8 },
+      },
+    },
+  },
+}
+
+beforeEach(() => {
+  ;(global as any).fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve(payload) }))
+})
+
+afterEach(cleanup)
+
+describe('NBA model tab', () => {
+  it('shows projections grouped under day headings and removes the research header', async () => {
+    render(<NbaModelTab />)
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Projections · G3 Joint scores' })).toBeTruthy())
+
+    expect(screen.getByText('DET win probability 58.0%').className).toContain('text-emerald-300')
+    expect(screen.getByText('PHI win probability 58.0%')).toBeTruthy()
+    expect(screen.getByText('CHI win probability 58.0%')).toBeTruthy()
+    expect(screen.queryByText('Preview, not locked')).toBeNull()
+    expect(screen.queryByText('Locked before tipoff')).toBeNull()
+    const projectedScoreGroups = screen.getAllByRole('group', { name: 'Projected score' })
+    expect(projectedScoreGroups).toHaveLength(3)
+    expect(within(projectedScoreGroups[0]).getByText('BOS')).toBeTruthy()
+    expect(within(projectedScoreGroups[0]).getByText('108.9')).toBeTruthy()
+    expect(within(projectedScoreGroups[0]).getByText('DET')).toBeTruthy()
+    expect(within(projectedScoreGroups[0]).getByText('112.1')).toBeTruthy()
+    expect(screen.queryByText(/2026–27 projections/)).toBeNull()
+    expect(screen.getAllByRole('heading', { name: dayLabel(firstGameDay) })).toHaveLength(1)
+    expect(screen.getAllByRole('heading', { name: dayLabel(nextGameDay) })).toHaveLength(1)
+    expect(screen.queryByText('Upcoming forecasts')).toBeNull()
+    expect(screen.queryByText('Research candidates')).toBeNull()
+    expect(screen.queryByText('Research only')).toBeNull()
+    expect(screen.queryByText('NBA game model · 2026–27')).toBeNull()
+    expect(screen.queryByText(/Brier/)).toBeNull()
+    expect(screen.queryByText(/SportsDataverse/)).toBeNull()
+  })
+
+  it('shows one held-out accuracy row per model without split labels or sample counts', async () => {
+    render(<NbaModelTab />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Model accuracy' })).toBeTruthy())
+    expect(screen.queryByText('Brier ↓')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Model accuracy' }))
+    expect(screen.getByRole('tooltip')).toBeTruthy()
+    const accuracy = screen.getByRole('region', { name: 'Model accuracy details' })
+    expect(within(accuracy).getByText('Brier ↓')).toBeTruthy()
+    expect(within(accuracy).getAllByRole('row')).toHaveLength(models.length + 1)
+    expect(within(accuracy).getByText('G3 Joint scores')).toBeTruthy()
+    expect(within(accuracy).getAllByText('0.2100')).toHaveLength(models.length)
+    expect(within(accuracy).queryByText(/n=/)).toBeNull()
+    expect(within(accuracy).queryByText(/Validation|Test|Prospective/)).toBeNull()
+    expect(within(accuracy).getByText(/Current-season locked forecasts are shown in Record/)).toBeTruthy()
+  })
+
+  it('lists model-specific locked forecasts in Record and excludes unlocked preview grades', async () => {
+    const lockedGame = {
+      ...previewGame('locked-game', '2026-10-20T23:00:00Z', 'BOS', 'DET'),
+      status: 'graded' as const,
+      result: { home_score: 109, away_score: 102 },
+      models: {
+        ...previewGame('locked-game', '2026-10-20T23:00:00Z', 'BOS', 'DET').models,
+        G3: {
+          ...previewGame('locked-game', '2026-10-20T23:00:00Z', 'BOS', 'DET').models.G3,
+          locked_at_utc: '2026-10-20T21:30:00Z',
+          grade: { home_score: 109, away_score: 102, home_win: true, winner_brier: 0.16 },
+        },
+      },
+    }
+    const secondLockedBase = previewGame('locked-game-2', '2026-10-20T20:00:00Z', 'NYK', 'PHI')
+    const secondLockedGame = {
+      ...secondLockedBase,
+      status: 'graded' as const,
+      result: { home_score: 105, away_score: 98 },
+      models: {
+        ...secondLockedBase.models,
+        G3: {
+          ...secondLockedBase.models.G3,
+          home_win_probability: 0.4,
+          locked_at_utc: '2026-10-20T18:30:00Z',
+          grade: { home_score: 105, away_score: 98, home_win: true, winner_brier: 0.18 },
+        },
+      },
+    }
+    const unlockedGame = {
+      ...previewGame('unlocked-game', '2026-10-19T23:00:00Z', 'PHI', 'NYK'),
+      status: 'unlocked' as const,
+      result: { home_score: 118, away_score: 111 },
+      models: {
+        ...previewGame('unlocked-game', '2026-10-19T23:00:00Z', 'PHI', 'NYK').models,
+        G3: {
+          ...previewGame('unlocked-game', '2026-10-19T23:00:00Z', 'PHI', 'NYK').models.G3,
+          grade: { home_score: 118, away_score: 111, home_win: true, winner_brier: 0.09 },
+        },
+      },
+    }
+    const olderBase = previewGame('older-game', '2026-10-19T23:00:00Z', 'LAL', 'CHI')
+    const olderGame = {
+      ...olderBase,
+      status: 'graded' as const,
+      result: { home_score: 112, away_score: 106 },
+      models: {
+        ...olderBase.models,
+        G3: {
+          ...olderBase.models.G3,
+          locked_at_utc: '2026-10-19T21:30:00Z',
+          grade: { home_score: 112, away_score: 106, home_win: true, winner_brier: 0.14 },
+        },
+      },
+    }
+    const recordPayload = {
+      ...payload,
+      records: {
+        ...payload.records,
+        G3: { pick: { win: 1, loss: 1, push: 0 }, locked: 2, graded: 2, awaiting: 0, missed: 1, winner_brier: 0.17, winner_log_loss: 0.5 },
+      },
+      games: [lockedGame, secondLockedGame, unlockedGame],
+    }
+    const firstPage = {
+      season: 2027, model: 'G3', games: [lockedGame, secondLockedGame],
+      record: recordPayload.records.G3, has_more: true, next_before: '2026-10-20',
+    }
+    const olderPage = {
+      season: 2027, model: 'G3', games: [olderGame],
+      record: recordPayload.records.G3, has_more: false, next_before: null,
+    }
+    ;(global as any).fetch = jest.fn((url: string) => {
+      const isRecordRequest = String(url).includes('/api/nba/model/record?')
+      const responsePayload = !isRecordRequest
+        ? payload
+        : String(url).includes('before=') ? olderPage : firstPage
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(responsePayload) })
+    })
+
+    render(<NbaModelTab />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Record' })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }))
+    await waitFor(() => expect(screen.getAllByRole('group', { name: 'Projected' }).length).toBeGreaterThan(0))
+
+    expect(screen.getByRole('heading', { name: '2026–27 record · G3 Joint scores' })).toBeTruthy()
+    expect(screen.getByText('1-1-0')).toBeTruthy()
+    expect(screen.queryByText('Model Pick')).toBeNull()
+    expect(screen.queryByText(/Only this model’s forecasts/)).toBeNull()
+    expect(screen.getByText('BOS at DET')).toBeTruthy()
+    expect(screen.getByText('DET win probability 58.0%')).toBeTruthy()
+    const projectedGroup = screen.getAllByRole('group', { name: 'Projected' })[0]
+    expect(within(projectedGroup).getByText('BOS')).toBeTruthy()
+    expect(within(projectedGroup).getByText('108.9').className).toContain('text-right')
+    expect(within(projectedGroup).getByText('DET')).toBeTruthy()
+    expect(within(projectedGroup).getByText('112.1').className).toContain('text-right')
+    const finalGroup = screen.getAllByRole('group', { name: 'Final' })[0]
+    expect(within(finalGroup).getByText('BOS').className).toContain('text-zinc-400')
+    expect(within(finalGroup).getByText('102').className).toContain('text-zinc-400')
+    expect(within(finalGroup).getByText('DET').className).toContain('font-semibold')
+    expect(within(finalGroup).getByText('109').className).toContain('font-semibold')
+    expect(screen.queryByText('DET won')).toBeNull()
+    expect(screen.queryByText(/· Locked \d/)).toBeNull()
+    const recordDay = screen.getByRole('heading', { name: dayLabel(lockedGame.scheduled_start_utc) })
+    expect(screen.getAllByRole('heading', { name: dayLabel(lockedGame.scheduled_start_utc) })).toHaveLength(1)
+    const recordArticles = within(recordDay.parentElement as HTMLElement).getAllByRole('article')
+    expect(recordArticles[0].className).toContain('gap-x-6 gap-y-6')
+    expect(within(recordArticles[0]).getByRole('group', { name: 'Projected' })).toBeTruthy()
+    expect(within(recordArticles[1]).getByRole('group', { name: 'Projected' })).toBeTruthy()
+    const lockedGameTime = new Date(lockedGame.scheduled_start_utc).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+    expect(within(recordArticles[0]).queryByText(lockedGameTime)).toBeNull()
+    const wins = screen.getAllByText('Won')
+    expect(wins).toHaveLength(1)
+    expect(wins[0].className).toContain('text-emerald-300')
+    const loss = screen.getByText('Lost')
+    expect(loss.className).toContain('text-red-300')
+    expect(screen.queryByText('Graded')).toBeNull()
+    expect(within(screen.getAllByRole('group', { name: 'Final' })[1]).getByText('PHI').className).toContain('font-semibold')
+    expect(screen.queryByText('PHI won')).toBeNull()
+    expect(screen.queryByText(/Brier/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Load older dates' }))
+    await waitFor(() => expect(screen.getByRole('heading', { name: dayLabel(olderGame.scheduled_start_utc) })).toBeTruthy())
+    expect(screen.getByRole('heading', { name: dayLabel(olderGame.scheduled_start_utc) })).toBeTruthy()
+    expect(screen.getAllByText('Won')).toHaveLength(2)
+  })
+
+  it('loads published Almanac team stats in Team Ratings', async () => {
+    const almanac = {
+      edition: '2026–27',
+      season: '2025–26',
+      source: {
+        title: '2026–2027 NBA Almanac', compiled_by: 'Niku Mistry (@MistryNBA)',
+        pages: '51–60, 64–65', pdf_sha256: 'source-hash', coverage: '30 NBA teams',
+        data_note: 'Radar charts without printed team values are not converted into estimates.',
+      },
+      sections: [{ id: 'efficiency', label: 'Efficiency', source_page: 51 }],
+      section: {
+        id: 'efficiency', label: 'Efficiency', source_page: 51,
+        columns: [{ key: 'ortg', label: 'ORtg' }],
+        teams: [{ team: 'Atlanta', conference: 'East', stats: { ortg: { value: '115.0', rank: 14, qualifier: null } } }],
+      },
+    }
+    ;(global as any).fetch = jest.fn((url: string) => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(String(url).includes('/api/nba/model/team-ratings') ? almanac : payload),
+    }))
+
+    render(<NbaModelTab />)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Team Ratings' })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Team Ratings' }))
+    await waitFor(() => expect(screen.getByText('Atlanta')).toBeTruthy())
+
+    expect(screen.getByText('2025–26 team stats')).toBeTruthy()
+    expect(screen.queryByText('Published team values from the 2026–27 Almanac. Parenthesized ranks are shown as printed.')).toBeNull()
+    expect(screen.queryByText(/Almanac p\./)).toBeNull()
+    expect(screen.getByText('ORtg')).toBeTruthy()
+    expect(screen.getByRole('row', { name: /Atlanta/ }).textContent).toContain('115.0 (14)')
+    expect(screen.getByText('Eastern Conference')).toBeTruthy()
+    expect(screen.getByText('Radar charts without printed team values are not converted into estimates.')).toBeTruthy()
+  })
+
+  it('updates projections and record content when a different model is selected', async () => {
+    render(<NbaModelTab />)
+    await waitFor(() => expect(screen.getByLabelText('Model')).toBeTruthy())
+    fireEvent.change(screen.getByLabelText('Model'), { target: { value: 'G1' } })
+    expect(screen.getByRole('heading', { name: 'Projections · G1 Elo' })).toBeTruthy()
+    expect(screen.getAllByText(/No score projection/)).toHaveLength(3)
+    fireEvent.change(screen.getByLabelText('Model'), { target: { value: 'G2' } })
+    expect(screen.getByRole('heading', { name: 'Projections · G2 Efficiency' })).toBeTruthy()
+    expect(screen.queryByText('nba-g2-efficiency-v1-ewma08-reg50-hca2')).toBeNull()
+  })
+})

@@ -1,3 +1,5 @@
+import json
+import os
 import datetime as dt
 import pytest
 
@@ -19,8 +21,8 @@ def test_acquired_from_reads_the_published_move():
     assert nba.acquired_from(None) is None
 
 
-def _row(pid, team, nba_id=None):
-    return {"id": pid, "name": "Same Name", "team": team, "position": "G", "nba_id": nba_id}
+def _row(pid, team, hoopr_id=None):
+    return {"id": pid, "name": "Same Name", "team": team, "position": "G", "hoopr_id": hoopr_id}
 
 
 def test_a_name_binds_only_with_team_or_acquired_from_evidence():
@@ -88,7 +90,7 @@ def test_a_dated_move_after_our_last_roster_explains_a_different_team():
 
 def test_birth_date_breaks_a_sole_name_tie_and_a_mismatch_stays_unproven():
     import datetime as dt
-    row = {"id": 12, "name": "Same Name", "team": "UTAH", "position": "C", "espn_id": 4432827, "nba_id": 4432827}
+    row = {"id": 12, "name": "Same Name", "team": "UTAH", "position": "C", "espn_id": 4432827, "hoopr_id": 4432827}
     member = {"team": "HOU", "how_acquired": "Signed on 07/24/26", "birth_date": "NOV 27, 1999"}
     since = dt.date(2026, 8, 4)                       # the move predates our snapshot: dates alone fail
     same = lambda espn_id: dt.date(1999, 11, 27)
@@ -105,14 +107,16 @@ def test_reviewed_birth_dates_are_read_from_checked_file(tmp_path):
 
 
 def test_shipped_reviewed_file_parses():
-    assert len(nba._reviewed_birth_dates()) == 7
+    entries = json.load(open(nba.REVIEWED_PATH))["nba"]
+    valid = [e for e in entries.values() if e.get("espn_id") and e.get("espn_birth_date")]
+    assert len(nba._reviewed_birth_dates()) == len(valid) > 0
 
 
 def test_last_logged_team_binds_a_stale_sole_candidate():
     import sqlite3
     con = sqlite3.connect(":memory:")
     con.row_factory = sqlite3.Row
-    con.execute("CREATE TABLE p(id INT, name TEXT, team TEXT, espn_id TEXT, nba_id TEXT)")
+    con.execute("CREATE TABLE p(id INT, name TEXT, team TEXT, espn_id TEXT, hoopr_id TEXT)")
     con.execute("INSERT INTO p VALUES (25589,'Bradley Beal','WSH',NULL,'6580')")
     row = con.execute("SELECT * FROM p").fetchone()
     member = {"team": "LAC", "how_acquired": "Signed on 07/18/25", "birth_date": "JUN 28, 1993"}
@@ -137,3 +141,21 @@ def test_position_group_comes_from_the_published_hierarchy():
     assert nba._position_group("FC") == "Center"
     assert nba._position_group("GF") == "Guard-Forward"
     assert nba._position_group(None) is None
+
+
+def test_reviewed_birth_dates_skips_entries_without_a_birth_date_in_the_real_file():
+    real = os.path.join(os.path.dirname(__file__), "data", "nba-identity-reviewed.json")
+    entries = json.load(open(real))["nba"]
+    missing = [e for e in entries.values() if not e.get("espn_birth_date") or not e.get("espn_id")]
+    assert missing, "fixture no longer exercises the missing-birth-date case"
+    got = nba._reviewed_birth_dates(real)          # must not raise
+    assert len(got) == len(entries) - len(missing)
+
+
+def test_reviewed_birth_dates_tolerates_empty_and_malformed_entries(tmp_path):
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps({"nba": {"1": {"espn_id": 5, "espn_birth_date": ""},
+                                        "2": {"espn_id": 6},
+                                        "3": {"espn_id": 7, "espn_birth_date": "not-a-date"},
+                                        "4": {"espn_id": 8, "espn_birth_date": "2000-01-02"}}}))
+    assert nba._reviewed_birth_dates(str(path)) == {"8": dt.date(2000, 1, 2)}

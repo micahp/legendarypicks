@@ -78,7 +78,7 @@ def _body(response):
 def test_stored_slate_uses_nearest_day_and_supports_soccer_draw(tmp_path):
     path = tmp_path / "predict.db"
     _create_db(path)
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime(2026, 10, 30, 12, 0, tzinfo=dt.timezone.utc)
     first = now + dt.timedelta(hours=2)
     later = now + dt.timedelta(days=1)
     with closing(_connection(path)) as con:
@@ -114,7 +114,7 @@ def test_prop_fallback_requires_exact_publisher_event_id(tmp_path):
 def test_slate_includes_live_games_and_nearest_upcoming_day(tmp_path):
     path = tmp_path / "predict.db"
     _create_db(path)
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime(2026, 10, 30, 12, 0, tzinfo=dt.timezone.utc)
     live_start = now - dt.timedelta(minutes=30)
     next_start = now + dt.timedelta(hours=2)
     later_start = now + dt.timedelta(days=1)

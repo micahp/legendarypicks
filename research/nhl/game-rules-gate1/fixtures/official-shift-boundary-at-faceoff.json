@@ -1,0 +1,28 @@
+{
+  "fixture_kind": "official_shift_chart_observed_boundary",
+  "shift_source": {
+    "provider": "NHL Stats shiftcharts archive",
+    "url": "https://api.nhle.com/stats/rest/en/shiftcharts?cayenneExp=gameId=2021020001",
+    "game_id": "2021020001",
+    "manifest_path_outside_repository": "/root/lp-data/nhl-fullframe-event-audit-2026-10-21/manifests/hardened-v1/shifts_verified_manifest.csv",
+    "compressed_body_path_outside_repository": "/root/lp-data/nhl-fullframe-event-audit-2026-10-21/raw/shifts/2021020001.json.gz",
+    "manifest_sha256": "deba1a38d9f9c969139dc15ac57e7085988c05bcab36db43bd87fe5805f1c6f5",
+    "compressed_body_sha256": "5a4c39469b9fa290c2b81a3516f42b6c4515ed690063f320bf4c7f639991a750",
+    "compressed_bytes": 15018
+  },
+  "pbp_reference": {
+    "provider": "NHL GameCenter play-by-play",
+    "url": "https://api-web.nhle.com/v1/gamecenter/2021020001/play-by-play",
+    "manifest_sha256": "d87e40a3387f014429377cc8dfb010cec8ca2d0e4d03d0b5bdbfacd8de9ca990",
+    "compressed_body_sha256": "a06cd9d2dedcbdae814381a3a50aac9d2e9d2e411a234ee1564a4b7ce1a4e06b",
+    "faceoff_index_zero_based": 181,
+    "faceoff_event_id": 295,
+    "period": 2,
+    "time_in_period": "12:56"
+  },
+  "observed_shift_boundaries": [
+    {"team": "PIT", "player_id": 8470604, "player_name": "Jeff Carter", "start_time": "12:41", "end_time": "12:56", "shift_number": 13},
+    {"team": "PIT", "player_id": 8475208, "player_name": "Brian Dumoulin", "start_time": "12:56", "end_time": "13:27", "shift_number": 7}
+  ],
+  "scope_note": "Records one official shift end and another start at the same period-clock value as a GameCenter faceoff. The fixture does not establish the full on-ice lineup, a complete legal line-change sequence, or the referee's whistle/bench ruling."
+}

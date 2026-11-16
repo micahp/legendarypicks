@@ -29,7 +29,7 @@ class NBAMergeTests(unittest.TestCase):
               league TEXT NOT NULL,
               team TEXT,
               espn_id TEXT,
-              nba_id TEXT
+              hoopr_id TEXT
             );
             CREATE TABLE player_game_logs(
               id INTEGER PRIMARY KEY,
@@ -57,7 +57,7 @@ class NBAMergeTests(unittest.TestCase):
         )
         connection.executemany(
             """INSERT INTO players(
-                 id,name,league,team,espn_id,nba_id
+                 id,name,league,team,espn_id,hoopr_id
                ) VALUES(?,?,?,?,?,?)""",
             [
                 (1, "Current Name", "nba", "BOS", "101", None),
@@ -105,7 +105,7 @@ class NBAMergeTests(unittest.TestCase):
         connection = sqlite3.connect(self.path)
         self.assertEqual(
             connection.execute(
-                "SELECT id,name,espn_id,nba_id FROM players ORDER BY id"
+                "SELECT id,name,espn_id,hoopr_id FROM players ORDER BY id"
             ).fetchall(),
             [
                 (1, "Current Name", "101", "101"),

@@ -1,0 +1,188 @@
+{
+  "source_database_read_only": "/root/nhl_database_2025-26-playoffs.duckdb",
+  "canonical_games": 23222,
+  "venue_corrections": 115,
+  "winner_label_corrections": 2,
+  "team_log_score_corrections": 8,
+  "missing_shot_game_reconciled": 1,
+  "tied_team_log_games_classified": 2140,
+  "tied_situation_counts": {
+    "SO": 2139,
+    "REG": 1
+  },
+  "tied_team_log_class_counts": {
+    "shootout_tie_matches_team_log": 2139,
+    "regulation_game_with_team_log_tie_conflict": 1
+  },
+  "tied_official_winner_counts": {
+    "BUF": 79,
+    "STL": 77,
+    "NSH": 79,
+    "MTL": 74,
+    "NYR": 71,
+    "NJD": 62,
+    "ATL": 16,
+    "MIN": 75,
+    "PIT": 74,
+    "ANA": 76,
+    "SJS": 76,
+    "DET": 74,
+    "COL": 78,
+    "WSH": 71,
+    "TOR": 60,
+    "VAN": 75,
+    "CHI": 76,
+    "TBL": 64,
+    "CBJ": 76,
+    "EDM": 57,
+    "LAK": 72,
+    "BOS": 65,
+    "CAR": 52,
+    "NYI": 74,
+    "FLA": 79,
+    "OTT": 65,
+    "DAL": 68,
+    "PHI": 68,
+    "PHX": 38,
+    "CGY": 57,
+    "WPG": 43,
+    "ARI": 32,
+    "VGK": 26,
+    "SEA": 10,
+    "UTA": 1
+  },
+  "leakage_assertions": "passed: excluded same-date/current game; all declared source game dates precede target date",
+  "feature_policy": "rolling last 10 prior games; at least 5 valid values; strict prior calendar date; cross-season history retained; exclude xG/shot observations from games whose team-log score conflicts with official canonical goals",
+  "season_feature_coverage": [
+    {
+      "season": 2008,
+      "canonical_games": 1314,
+      "complete_required_features": 1233,
+      "trainable_games": 1233
+    },
+    {
+      "season": 2009,
+      "canonical_games": 1318,
+      "complete_required_features": 1318,
+      "trainable_games": 1318
+    },
+    {
+      "season": 2010,
+      "canonical_games": 1318,
+      "complete_required_features": 1318,
+      "trainable_games": 1318
+    },
+    {
+      "season": 2011,
+      "canonical_games": 1316,
+      "complete_required_features": 1311,
+      "trainable_games": 1311
+    },
+    {
+      "season": 2012,
+      "canonical_games": 806,
+      "complete_required_features": 806,
+      "trainable_games": 806
+    },
+    {
+      "season": 2013,
+      "canonical_games": 1323,
+      "complete_required_features": 1323,
+      "trainable_games": 1323
+    },
+    {
+      "season": 2014,
+      "canonical_games": 1319,
+      "complete_required_features": 1314,
+      "trainable_games": 1314
+    },
+    {
+      "season": 2015,
+      "canonical_games": 1321,
+      "complete_required_features": 1321,
+      "trainable_games": 1321
+    },
+    {
+      "season": 2016,
+      "canonical_games": 1317,
+      "complete_required_features": 1317,
+      "trainable_games": 1317
+    },
+    {
+      "season": 2017,
+      "canonical_games": 1355,
+      "complete_required_features": 1350,
+      "trainable_games": 1350
+    },
+    {
+      "season": 2018,
+      "canonical_games": 1358,
+      "complete_required_features": 1358,
+      "trainable_games": 1358
+    },
+    {
+      "season": 2019,
+      "canonical_games": 1212,
+      "complete_required_features": 1212,
+      "trainable_games": 1212
+    },
+    {
+      "season": 2020,
+      "canonical_games": 952,
+      "complete_required_features": 952,
+      "trainable_games": 952
+    },
+    {
+      "season": 2021,
+      "canonical_games": 1401,
+      "complete_required_features": 1396,
+      "trainable_games": 1396
+    },
+    {
+      "season": 2022,
+      "canonical_games": 1400,
+      "complete_required_features": 1400,
+      "trainable_games": 1400
+    },
+    {
+      "season": 2023,
+      "canonical_games": 1400,
+      "complete_required_features": 1400,
+      "trainable_games": 1400
+    },
+    {
+      "season": 2024,
+      "canonical_games": 1398,
+      "complete_required_features": 1393,
+      "trainable_games": 1393
+    },
+    {
+      "season": 2025,
+      "canonical_games": 1394,
+      "complete_required_features": 1394,
+      "trainable_games": 1394
+    }
+  ],
+  "artifacts": {
+    "canonical_games": {
+      "path": "canonical_games_v1_7cd2fc9a6e84470c.csv",
+      "sha256": "7cd2fc9a6e84470c177b704aa56ba328ad67522698244ce1f182ddcb9e439f52"
+    },
+    "pregame_rolling_features": {
+      "path": "pregame_rolling_features_v1_62dcceb77085bc59.csv",
+      "sha256": "62dcceb77085bc59fcad3ca9a0a981e0e462909cd09815cde98e45b7e9caf458"
+    },
+    "corrections": {
+      "path": "historical_corrections_v1_c475b9e4b7db7e63.csv",
+      "sha256": "c475b9e4b7db7e635d0584c4cf79a9d5423f4690277f2c90aa0288578cc9e771"
+    },
+    "tied_classifications": {
+      "path": "tied_team_log_classification_v1_84364ac00db68b98.csv",
+      "sha256": "84364ac00db68b988bde00d6bff36efb98b0d7e07e9ced4fb7128675aa016c63"
+    },
+    "official_schedule_evidence": {
+      "path": "official_nhl_schedule_evidence.jsonl",
+      "sha256": "aa1eb36857f333efb80e04e8753b1a5723e0643ed6112267de3fd0290a7b7876"
+    }
+  }
+}

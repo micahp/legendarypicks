@@ -1,0 +1,10 @@
+[Unit]
+Description=Check every 5 minutes for unlocked NFL games in the production database
+
+[Timer]
+OnCalendar=*-*-* *:00/5:00
+Persistent=false
+Unit=legendarypicks-nfl-lock-prod.service
+
+[Install]
+WantedBy=timers.target
