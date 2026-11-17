@@ -205,6 +205,33 @@ def apply_recovery_endpoint(st, side, endpoint):
              'togo': togo_left, 'yl': end}, None, flags)
 
 
+RULES_ENGINE_SCHEMA = 'lp-nfl-rules-engine-1'
+
+
+def rules_engine_manifest(own_end_zone, recovery_model, geometry_filter):
+    """Name the own-end-zone rule a run used. Every run records it, so a result says which football rules made it.
+
+    frozen_refuse: the V1.6 rule. Any loss past the own goal line raises, and a run fumble there credits an ordinary
+    turnover. The frozen V1.6 results depend on this, so it is kept as it was.
+    resolve_unmodelled_fumbles_halt: V1.6 with the corrected rules. A tackle past the own goal line is a safety. A
+    fumble there halts the seed unless a recovery model resolves it. The geometry filter must be on, so cross-goal
+    fumble rows are never drawn as ordinary turnovers.
+    resolve_with_recovery_model: the same rules, with the V1.7 recovery model drawing the fumble outcome.
+    """
+    if own_end_zone not in ('refuse', 'resolve'):
+        raise ValueError(f'own_end_zone must be refuse or resolve (got {own_end_zone!r})')
+    if own_end_zone == 'refuse':
+        if recovery_model:
+            raise ValueError('the recovery model needs own_end_zone=resolve')
+        policy = 'frozen_refuse'
+    else:
+        if not geometry_filter:
+            raise ValueError('own_end_zone=resolve needs the geometry filter')
+        policy = 'resolve_with_recovery_model' if recovery_model else 'resolve_unmodelled_fumbles_halt'
+    return {'schema': RULES_ENGINE_SCHEMA, 'policy': policy, 'own_end_zone': own_end_zone,
+            'geometry_filter': bool(geometry_filter), 'recovery_model': bool(recovery_model)}
+
+
 def apply_play(st, event, yards, spot=None, kick_outcome=None, recovery=None, own_end_zone='refuse'):
     """Apply one sampled play. Returns (after, terminal, flags).
 
@@ -218,6 +245,9 @@ def apply_play(st, event, yards, spot=None, kick_outcome=None, recovery=None, ow
     if own_end_zone not in ('refuse', 'resolve'):
         raise ValueError(f'own_end_zone must be refuse or resolve (got {own_end_zone!r})')
     _validate_state(st)
+    if event == 'fumble_lost' and own_end_zone == 'resolve' and type(yards) in (int, float) and st['yl'] - yards > 100:
+        # A run fumble past the own goal line has the same unknown recovery as a sack fumble. It is not an ordinary turnover.
+        return _resolve_own_end_zone(st, event, recovery)
     if event in ('run', 'pass_complete', 'pass_incomplete', 'sack', 'sack_fumble_lost'):
         if (type(yards) not in (int, float) or not math.isfinite(yards)):
             raise ValueError(f'{event} needs a finite yards-gained result (got {yards!r})')
