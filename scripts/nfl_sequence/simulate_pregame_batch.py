@@ -134,6 +134,11 @@ def _reproduction_command(args, seed):
         command.extend(['--slc-fg-ordinary-cutoff', str(args.slc_fg_ordinary_cutoff)])
     if args.slc_profile != 'custom':
         command.extend(['--slc-profile', args.slc_profile])
+    command.extend(['--own-end-zone', args.own_end_zone])
+    if args.geometry_filter:
+        command.append('--geometry-filter')
+    if args.recovery_model:
+        command.extend(['--recovery-model', '--recovery-model-old-weight', str(args.recovery_model_old_weight)])
     if args.playcall_pass_label_mode != 'legacy':
         command.extend(['--playcall-pass-label-mode', args.playcall_pass_label_mode])
     if args.slc_materialized_history:
@@ -1137,6 +1142,10 @@ def run_batch(args):
             'status': 'research_only_not_release_validated',
         }
     profile_manifest = slc_config.build_manifest(resolved_profile, playcall_description, snapshot, input_provenance)
+    # The model hash stays as it was, so frozen V1.6 keeps its identity. The effective hash adds the rules policy.
+    profile_manifest['rules_engine'] = rules_engine
+    profile_manifest['effective_run_hash'] = _canonical_sha({
+        'configuration_hash': profile_manifest['configuration_hash'], 'rules_engine': rules_engine})
 
     baseline_files = {name: hashlib.sha256((REPO / name).read_bytes()).hexdigest() for name in V1_FILES}
     baseline_started = time.monotonic()
@@ -1288,6 +1297,7 @@ def run_batch(args):
             'slc_profile': profile_manifest['profile'],
             'configuration_hash': profile_manifest['configuration_hash'],
             'rules_engine': rules_engine,
+            'effective_run_hash': profile_manifest['effective_run_hash'],
             'evaluation_class': profile_manifest['evaluation_class'],
             'prospective': profile_manifest['prospective'],
             'seed_start': args.seed_start, 'seed_end_inclusive': seed_values[-1],
