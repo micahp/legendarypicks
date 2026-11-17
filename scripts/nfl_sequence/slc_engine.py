@@ -896,6 +896,20 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
     return {'status': 'passed', 'plays_checked': len(plays)}
 
 
+def _roster_names(record):
+    """gsis_id -> player_name from the record's pregame rosters. An id with no roster row maps to None, not a guess."""
+    rosters = ((record or {}).get('pregame_snapshot') or {}).get('rosters') or {}
+    return {str(player['gsis_id']): player.get('player_name')
+            for roster in rosters.values() for player in roster.get('players', [])}
+
+
+def _named_selection(entry, names):
+    """A participant selection with a name beside every gsis_id it mentions."""
+    ids = set(entry['candidates']) | set(entry['population_weights']) | {entry['selected']}
+    return {**entry, 'selected_name': names.get(entry['selected']),
+            'names': {player: names.get(player) for player in sorted(ids)}}
+
+
 def summary(decisions, record=None):
     target_decisions = [d for d in decisions if d.get('qb_target_role') is not None]
     fallbacks = Counter()
@@ -1007,12 +1021,14 @@ def summary(decisions, record=None):
     selections = [(d.get('participants') or {}).get('participant_selection') for d in decisions]
     selections = [entry for entry in selections if entry is not None]
     if selections:
+        names = _roster_names(record)
         selection_counts = Counter((entry['team'], entry['role'], entry['group'], entry['selected'])
                                    for entry in selections)
         result['participant_selection_counts'] = [
-            {'team': team, 'role': role, 'group': group, 'player': player, 'count': count}
+            {'team': team, 'role': role, 'group': group, 'player': player, 'player_name': names.get(player),
+             'count': count}
             for (team, role, group, player), count in sorted(selection_counts.items())]
-        result['participant_selections'] = selections
+        result['participant_selections'] = [_named_selection(entry, names) for entry in selections]
     fixes = sorted({fix for decision in decisions for fix in decision.get('blocker_fixes', [])})
     if fixes:
         result['blocker_resolution'] = _blocker_resolution_summary(decisions, fixes, record)
