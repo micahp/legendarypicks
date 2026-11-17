@@ -104,6 +104,21 @@ class Summary(unittest.TestCase):
         self.assertEqual(result['fallback_events'], {})
         self.assertEqual(result['layer_execution']['score_clock_playcalling'], 4)
 
+    def test_participant_selections_carry_the_roster_name_beside_every_id(self):
+        record = {'pregame_snapshot': {'rosters': {
+            'home': {'team': 'KC', 'players': [{'gsis_id': '00-1', 'player_name': 'Ann Ball'},
+                                               {'gsis_id': '00-2', 'player_name': 'Bo Catch'}]},
+            'away': {'team': 'DEN', 'players': [{'gsis_id': '00-3', 'player_name': 'Cy Rush'}]}}}}
+        selection = {'team': 'KC', 'role': 'receive', 'group': 'WR', 'selected': '00-2',
+                     'candidates': ['00-2'], 'population_weights': {'00-1': 0.4, '00-2': 0.6}}
+        decisions = [{'intent': 'dropback', 'participants': {'participant_selection': selection}}]
+        result = se.summary(decisions, record)
+        self.assertEqual(result['participant_selection_counts'][0]['player_name'], 'Bo Catch')
+        named = result['participant_selections'][0]
+        self.assertEqual((named['selected'], named['selected_name']), ('00-2', 'Bo Catch'))
+        self.assertEqual(named['names'], {'00-1': 'Ann Ball', '00-2': 'Bo Catch'})
+        self.assertNotIn('selected_name', selection)
+
     def test_score_clock_execution_count_excludes_historical_cell_baseline_draws(self):
         decisions = [
             {'intent': 'run', 'score_clock_playcalling_applied': True},
