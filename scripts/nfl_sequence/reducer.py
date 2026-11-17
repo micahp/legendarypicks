@@ -65,21 +65,17 @@ class UnmodelledOutcome(ValueError):
 def _resolve_own_end_zone(st, event, recovery):
     """Resolve a loss that puts the ball in the offense's own end zone.
 
-    A tackle behind the goal line is a safety. A fumble that becomes dead there turns on who
-    recovers it: the offense recovering its own fumble is still a safety, the defense recovering
-    it is a touchdown. The recovery role must be supplied; without it the reducer will not
-    invent an end-zone turnover, it raises UnmodelledOutcome so the caller classifies the seed.
+    A tackle behind the goal line is a safety. A fumble that becomes dead there is not resolved
+    by this reducer: a turnover event says the offense lost possession, not where the ball was
+    recovered, so neither a defensive touchdown nor an offense safety can be read from it. Any
+    recovery role is refused, and an unknown recovery raises UnmodelledOutcome so the caller
+    classifies the seed. Nothing here invents an end-zone turnover.
     """
     flags = _no_flags()
     if event in TURNOVER_EVENTS:
-        if recovery is None:
-            raise UnmodelledOutcome('own_end_zone_fumble_recovery_unresolved')
-        if recovery not in ('offense', 'defense'):
-            raise ValueError(f"recovery must be 'offense' or 'defense' (got {recovery!r})")
-        if recovery == 'defense':
-            flags['touchdown'] = True
-            flags['scoring_team'] = st['defense']
-            return None, 'touchdown', flags
+        if recovery is not None:
+            raise ValueError(f'{event} does not represent recovery location (got recovery={recovery!r})')
+        raise UnmodelledOutcome('own_end_zone_fumble_recovery_unresolved')
     flags['safety'] = True
     flags['scoring_team'] = st['defense']
     return None, 'safety', flags

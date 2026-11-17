@@ -40,16 +40,12 @@ class ReducerOwnEndZoneScenarios(unittest.TestCase):
         self.assertEqual(terminal, 'safety')
         self.assertTrue(flags['safety'])
 
-    def test_fumble_recovered_by_offense_in_own_end_zone_is_a_safety(self):
-        _after, terminal, flags = self.resolve('sack_fumble_lost', -3, recovery='offense')
-        self.assertEqual(terminal, 'safety')
-        self.assertTrue(flags['safety'])
-
-    def test_fumble_recovered_by_defense_in_own_end_zone_is_a_defensive_touchdown(self):
-        _after, terminal, flags = self.resolve('sack_fumble_lost', -3, recovery='defense')
-        self.assertEqual(terminal, 'touchdown')
-        self.assertTrue(flags['touchdown'])
-        self.assertEqual(flags['scoring_team'], 'B')
+    def test_turnover_with_a_recovery_role_is_refused_because_the_event_has_no_recovery_location(self):
+        # A sack_fumble_lost says possession was lost, not where the ball was recovered.
+        # Offense-recovery safety and defense-recovery touchdown cannot be read from it.
+        for recovery in ('offense', 'defense'):
+            with self.assertRaises(ValueError):
+                self.resolve('sack_fumble_lost', -3, recovery=recovery)
 
     def test_fumble_with_unknown_recovery_is_an_explicit_block(self):
         with self.assertRaises(reducer.UnmodelledOutcome) as caught:
