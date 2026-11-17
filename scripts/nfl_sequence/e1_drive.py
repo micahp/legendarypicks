@@ -341,7 +341,7 @@ def _pre_snap_penalty_play(st, resolved, simulation_id, sequence, direction):
 
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
              score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None,
-             penalty_controller=None, own_end_zone='refuse'):
+             penalty_controller=None, own_end_zone='refuse', geometry_filter=False):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
@@ -416,7 +416,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
         source_cell = pool.get(key, [])
         geometry_rejections = 0
-        if penalty_controller is not None:
+        geometry_on = penalty_controller is not None or geometry_filter
+        if geometry_on:
             # Sample only turnover outcomes whose original net gain remains
             # in the field of play in this *simulated* situation. This is a
             # V1.7 research conditional, never a silent V1.6 change.
@@ -425,7 +426,9 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             geometry_rejections = len(source_cell) - len(legal_cell)
         else:
             legal_cell = source_cell
-        if penalty_controller is not None and not legal_cell and source_cell:
+        if geometry_on and geometry_rejections and sampling_policy is not None and hasattr(sampling_policy, 'geometry_excluded'):
+            sampling_policy.geometry_excluded['turnover_source_rows'] += geometry_rejections
+        if geometry_on and not legal_cell and source_cell:
             return halt('goal_line_fumble_source_cell_has_no_geometrically_legal_outcome')
         cell = sampling_guard.filter_cell(legal_cell, st) if sampling_guard is not None else legal_cell
         if not cell and source_cell:
@@ -449,7 +452,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                               'field_goal_feasibility': field_goal_distance,
                               '_source_cell_filtered': cell is not source_cell or
                               geometry_rejections > 0}
-            if penalty_controller is not None:
+            if geometry_on:
                 def source_row_filter(sample, target_state):
                     return (_turnover_geometry_eligible(sample, target_state)
                             and (sampling_guard is None or
@@ -464,7 +467,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             except SamplingUnavailable as unavailable:
                 return halt(str(unavailable))
         event = selected_event
-        if penalty_controller is not None and not _turnover_geometry_eligible(
+        if geometry_on and not _turnover_geometry_eligible(
                 (selected_event, row, runoff, spot), st):
             return halt('goal_line_fumble_geometry_requires_source_conditional')
         if sampling_guard is not None:

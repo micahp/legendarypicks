@@ -84,6 +84,47 @@ class GoalLineFumbleGeometryTests(unittest.TestCase):
         with self.assertRaises(football_assertions.FootballAssertionError):
             e1.simulate(st, 61, pool, 'test-fumble-v17', sampling_policy=ChooseFirst())
 
+    def own_seven_pool(self, include_legal=True):
+        # Offense at its own 7 (yl = 93). An incompatible sack fumble losing 9 yards
+        # would carry the ball past its own goal line.
+        bad = {'game_id': '2024_01_WAS_NYG', 'play_id': 21, 'game_date': '2024-09-08',
+               'play_type': 'pass', 'yards_gained': -9, 'touchdown': 0,
+               'sack': 1, 'fumble_lost': 1, 'penalty': 0}
+        good = {'game_id': '2024_01_WAS_NYG', 'play_id': 22, 'game_date': '2024-09-08',
+                'play_type': 'punt', 'yards_gained': 0, 'touchdown': 0,
+                'sack': 0, 'fumble_lost': 0, 'penalty': 0}
+        st = {'quarter': 4, 'clock': 420, 'offense': 'A', 'defense': 'B',
+              'yl': 93, 'down': 4, 'togo': 1, 'dir': 1}
+        key = (4, e0.ydstogo_bucket(1), e0.yardline_bucket(93))
+        rows = [('sack_fumble_lost', bad, 8, 20)]
+        if include_legal:
+            rows.append(('punt', good, 8, 75))
+        return st, {key: rows}
+
+    def test_v17_geometry_filter_excludes_the_incompatible_sack_fumble_without_penalties(self):
+        st, pool = self.own_seven_pool()
+        policy = ChooseFirst()
+        policy.geometry_excluded = Counter()
+        plays, terminal = e1.simulate(st, 61, pool, 'test-v17-own7', sampling_policy=policy,
+                                      geometry_filter=True)
+        self.assertEqual(terminal, 'punt')
+        self.assertEqual(policy.geometry_excluded['turnover_source_rows'], 1)
+
+    def test_frozen_v16_default_still_takes_the_incompatible_sack_fumble(self):
+        st, pool = self.own_seven_pool()
+        with self.assertRaises(football_assertions.FootballAssertionError):
+            e1.simulate(st, 61, pool, 'test-v16-own7', sampling_policy=ChooseFirst())
+
+    def test_v17_no_legal_outcome_blocks_instead_of_inventing_a_result(self):
+        st, pool = self.own_seven_pool(include_legal=False)
+        policy = ChooseFirst()
+        policy.geometry_excluded = Counter()
+        out = e1.simulate(st, 61, pool, 'test-v17-noleg', sampling_policy=policy,
+                          geometry_filter=True)
+        _plays, terminal = out
+        self.assertEqual(terminal, 'goal_line_fumble_source_cell_has_no_geometrically_legal_outcome')
+        self.assertEqual(policy.geometry_excluded['turnover_source_rows'], 1)
+
     def test_sack_fumble_defensive_score_is_not_mislabeled_as_clean_turnover(self):
         row = dict(self.source_pool()[1][(
             4, e0.ydstogo_bucket(1), e0.yardline_bucket(99))][0][1])

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import argparse
 import copy
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 import hashlib
 import gzip
@@ -1071,6 +1071,9 @@ def run_batch(args):
                 contextual_min_effective_games=args.context_min_source_games,
                 safety_kick_table=safety_kick_table)
     ref.own_end_zone = args.own_end_zone
+    ref.geometry_filter = args.geometry_filter
+    if getattr(ref, 'contextual_sampler', None) is not None:
+        ref.contextual_sampler.geometry_excluded = Counter()
     penalty_paths = [args.slc_penalty_model, args.slc_penalty_manifest,
                      args.slc_penalty_source_manifest, args.slc_penalty_rulings]
     if args.slc_profile != 'v1_7_candidate' and any(penalty_paths):
@@ -1369,6 +1372,9 @@ def run_batch(args):
         print(f'wrote {out}: {summary["valid_full_games"]}/{args.games} valid games, '
               f'{summary["tied_at_regulation_end"]} regulation ties, '
               f'{summary["blocked_before_regulation_end"]} blocked before regulation')
+    _geo = getattr(getattr(ref, 'contextual_sampler', None), 'geometry_excluded', None)
+    if _geo is not None:
+        print(f'geometry filter: {ref.geometry_filter}; turnover source rows excluded (per decision): {dict(_geo)}')
     if args.register_dir:
         entry = sim_run_registry.register(payload, args.register_dir)
         print(f"registered {entry['run_id']} at {entry['path']}; exploratory={entry['exploratory']}"
@@ -1494,6 +1500,8 @@ def main(argv=None):
     ap.add_argument('--playcall-artifact',
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')
+    ap.add_argument('--geometry-filter', action=argparse.BooleanOptionalAction, default=False,
+                    help='exclude turnover source rows that cross a goal line for the simulated field position (V1.7)')
     ap.add_argument('--own-end-zone', choices=('refuse', 'resolve'), default='refuse',
                     help='own-end-zone fumble rule: refuse (frozen V1.6 behaviour) or resolve (V1.7 repair)')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],

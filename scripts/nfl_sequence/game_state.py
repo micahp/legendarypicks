@@ -1498,7 +1498,8 @@ class _Game:
                                       paired_random_streams=self.paired_random_streams,
                                       sampling_guard=timeout_guard,
                                       penalty_controller=self.penalty_controller,
-                                      own_end_zone=getattr(self.ref, 'own_end_zone', 'refuse'), **research)
+                                      own_end_zone=getattr(self.ref, 'own_end_zone', 'refuse'),
+                                      geometry_filter=getattr(self.ref, 'geometry_filter', False), **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
