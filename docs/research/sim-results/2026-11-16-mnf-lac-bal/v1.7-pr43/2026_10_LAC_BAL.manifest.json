@@ -1,0 +1,27 @@
+{
+ "arm": "v1.7-pr43",
+ "game": "2026_10_LAC_BAL",
+ "seeds": 1000,
+ "configuration_hash": "fddbc1b894028917dfd26d58c9f51c1f420a4aa6228b9836f4820769ba7201d2",
+ "source_commit": null,
+ "source_files": [
+  "2026_10_LAC_BAL-seed-300001-300250.boxscores.jsonl",
+  "2026_10_LAC_BAL-seed-300251-300500.boxscores.jsonl",
+  "2026_10_LAC_BAL-seed-300501-300750.boxscores.jsonl",
+  "2026_10_LAC_BAL-seed-300751-301000.boxscores.jsonl"
+ ],
+ "stats": [
+  "att",
+  "cmp",
+  "pass_td",
+  "pass_yds",
+  "rec",
+  "rec_td",
+  "rec_yds",
+  "rush_att",
+  "rush_td",
+  "rush_yds",
+  "tgt"
+ ],
+ "players": 38
+}
