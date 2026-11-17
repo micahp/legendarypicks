@@ -518,15 +518,21 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                                            'credited_yards_gained': yards}
         try:
             if recovery_draw is not None and recovery_draw[1] == 'continuation':
-                side = 'defense' if recovery_draw[0] == 'defense_recovers_in_field' else 'offense'
+                category = recovery_draw[0]
+                side = 'defense' if category == 'defense_recovers_in_field' else 'offense'
+                # Stage one: where the recovery happens. A field recovery uses its audited spot; an end-zone one, the fumble spot.
+                base = (recovery_model.field_recovery_spot(recovery_rng, category)
+                        if category in recovery_model.field_spots else fumble_spot)
                 restricted = recovery_endpoint.is_restricted(st['down'], st['quarter'], st['clock'])
                 teammate = side == 'offense' and restricted and recovery_model.teammate_draw(recovery_rng)
-                endpoint = recovery_model.endpoint_draw(recovery_rng, side, fumble_spot, teammate)
-                recovery_detail = {'recovering_side': side, 'restricted': restricted,
+                # Stage two: the endpoint measured from that recovery spot.
+                endpoint = recovery_model.endpoint_draw(recovery_rng, side, base, teammate, fumble_spot=fumble_spot)
+                recovery_detail = {'recovering_side': side, 'restricted': restricted, 'recovery_spot': base,
                                    'teammate_recovery': bool(teammate), 'endpoint': endpoint}
                 after, play_terminal, flags = reducer.apply_recovery_endpoint(st, side, endpoint)
             elif recovery_draw is not None:
-                after, play_terminal, flags = reducer.apply_modeled_recovery(st, recovery_draw[1])
+                side = 'defense' if recovery_draw[0] == 'defense_recovers_in_field' else 'offense'
+                after, play_terminal, flags = reducer.apply_modeled_recovery(st, recovery_draw[1], side)
             else:
                 after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome,
                                                                  own_end_zone=own_end_zone)

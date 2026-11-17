@@ -35,6 +35,13 @@ CATEGORIES = {
         'support': ('safety', 'continuation'), 'rule': None},
 }
 OUTCOMES = ('touchdown', 'safety', 'continuation')
+# Stage one of the two-stage model: where the recovery happens, for the continuing categories. Taken from the audited
+# goal-line denominator, excluding the two replay reversals (2006 DAL-SEA, one reversed defensive touchdown).
+DEFENSE_FIELD_SPOTS = (0, 90, 97, 97) + (100,) * 27
+OFFENSE_FIELD_SPOTS = (99,) + (100,) * 16
+# These categories are resolved entirely by the endpoint (stage two), so their audited outcome split is not used.
+ENDPOINT_CATEGORIES = ('offense_recovers_in_own_end_zone', 'offense_recovers_in_field', 'defense_recovers_in_field')
+FIELD_SPOTS = {'defense_recovers_in_field': DEFENSE_FIELD_SPOTS, 'offense_recovers_in_field': OFFENSE_FIELD_SPOTS}
 DEFAULT_OLD_WEIGHT = 0.5  # discount for 1999-2009 evidence; 1.0 is the fully pooled sensitivity check
 
 
@@ -52,6 +59,7 @@ class RecoveryModel:
         if not 0 <= old_weight <= 1:
             raise ValueError(f'old_weight must be between 0 and 1 (got {old_weight})')
         self.old_weight = old_weight
+        self.field_spots = FIELD_SPOTS
         self.category_alpha = {}
         self.outcome_probability = {}
         for name, spec in CATEGORIES.items():
@@ -61,7 +69,9 @@ class RecoveryModel:
         for name, spec in CATEGORIES.items():
             alpha = {o: 1.0 + old_weight * spec['old'].get(o, 0) + spec['new'].get(o, 0) for o in spec['support']}
             norm = sum(alpha.values())
-            if spec['rule'] is not None:
+            if name in ENDPOINT_CATEGORIES:
+                self.outcome_probability[name] = {o: (1.0 if o == 'continuation' else 0.0) for o in OUTCOMES}
+            elif spec['rule'] is not None:
                 self.outcome_probability[name] = {o: (1.0 if o == spec['rule'] else 0.0) for o in OUTCOMES}
             else:
                 self.outcome_probability[name] = {o: (alpha[o] / norm if o in alpha else 0.0) for o in OUTCOMES}
@@ -74,9 +84,14 @@ class RecoveryModel:
         """Share of fumbles at the goal line that stay live and need an endpoint."""
         return sum(self.category_probability[c] * self.outcome_probability[c]['continuation'] for c in CATEGORIES)
 
-    def endpoint_draw(self, rng, side, base, restricted_teammate):
+    def field_recovery_spot(self, rng, category):
+        """Stage one: the recovery spot for a continuing category, sampled from the audited spots."""
+        return rng.choice(FIELD_SPOTS[category])
+
+    def endpoint_draw(self, rng, side, base, restricted_teammate, fumble_spot=None):
         """Post-recovery endpoint from the observed pool. Tests may replace this with a fixed endpoint."""
-        return recovery_endpoint.pool().draw(rng, side, base, restricted_teammate=restricted_teammate)
+        return recovery_endpoint.pool().draw(rng, side, base, restricted_teammate=restricted_teammate,
+                                             fumble_spot=fumble_spot)
 
     def teammate_draw(self, rng):
         """True when a teammate of the fumbler recovered (the fumbler recovers about 43 percent of the time)."""

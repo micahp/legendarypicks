@@ -22,6 +22,10 @@ class ForcedRecovery:
     """Stands in for the model: a fixed category and outcome, and a fixed endpoint when the outcome continues."""
 
     old_weight = 0.5
+    field_spots = rm.FIELD_SPOTS
+
+    def field_recovery_spot(self, rng, category):
+        return rng.choice(rm.FIELD_SPOTS[category])
 
     def __init__(self, category, outcome, endpoint=None, teammate=False):
         self.category, self.outcome, self.endpoint, self.teammate = category, outcome, endpoint, teammate
@@ -32,9 +36,10 @@ class ForcedRecovery:
     def teammate_draw(self, rng):
         return self.teammate
 
-    def endpoint_draw(self, rng, side, base, restricted_teammate):
+    def endpoint_draw(self, rng, side, base, restricted_teammate, fumble_spot=None):
         if restricted_teammate:
-            return {'terminal': 'restricted_dead', 'end_yl': base, 'source': 'forced'}
+            spot = base if fumble_spot is None else max(base, fumble_spot)
+            return {'terminal': 'restricted_dead', 'end_yl': spot, 'source': 'forced'}
         return dict(self.endpoint, source='forced')
 
 
@@ -196,20 +201,49 @@ class EndpointTransitions(unittest.TestCase):
         after, terminal, flags = reducer.apply_recovery_endpoint(self.st(), 'defense', {'terminal': 'spot', 'end_yl': 100})
         self.assertEqual((terminal, flags['scoring_team']), ('touchdown', 'B'))
 
-    def test_a_defensive_return_into_its_own_end_zone_is_named_not_invented(self):
-        with self.assertRaises(reducer.UnmodelledOutcome) as caught:
-            reducer.apply_recovery_endpoint(self.st(), 'defense', {'terminal': 'spot', 'end_yl': 0})
-        self.assertEqual(caught.exception.reason, 'defensive_return_into_defense_end_zone_not_modelled')
+    def test_a_defensive_run_out_of_bounds_behind_its_own_goal_line_is_a_safety_for_the_offense(self):
+        _after, terminal, flags = reducer.apply_recovery_endpoint(self.st(), 'defense',
+                                                                  {'terminal': 'out_of_bounds', 'end_yl': 0})
+        self.assertEqual((terminal, flags['scoring_team']), ('safety', 'A'))
+
+    def test_a_defensive_player_dead_in_its_own_end_zone_is_a_touchback_at_the_defense_20(self):
+        after, terminal, flags = reducer.apply_recovery_endpoint(self.st(), 'defense', {'terminal': 'spot', 'end_yl': 0})
+        self.assertEqual((terminal, flags['touchback']), ('turnover', True))
+        self.assertEqual((after['offense'], after['yl'], after['down']), ('B', 80, 1))
+
+    def test_a_teammate_recovery_under_a_restriction_is_dead_at_the_further_back_of_the_two_spots(self):
+        rng = random.Random(4)
+        e = rm.load().endpoint_draw(rng, 'offense', 100, True, fumble_spot=102)
+        self.assertEqual((e['terminal'], e['end_yl']), ('restricted_dead', 102))
 
     def test_an_offense_endpoint_in_its_own_end_zone_is_a_safety(self):
         _after, terminal, flags = reducer.apply_recovery_endpoint(self.st(), 'offense',
                                                                   {'terminal': 'spot', 'end_yl': 101})
         self.assertEqual((terminal, flags['scoring_team']), ('safety', 'B'))
 
-    def test_an_incomplete_pass_from_the_own_end_zone_stays_named_because_the_record_says_no_score(self):
+    def test_a_legal_incomplete_pass_returns_the_ball_to_the_previous_spot_with_the_down_used(self):
+        after, terminal, _ = reducer.apply_recovery_endpoint(self.st(down=2, togo=7, yl=96), 'offense',
+                                                             {'terminal': 'incomplete', 'end_yl': 102})
+        self.assertIsNone(terminal)
+        self.assertEqual((after['offense'], after['down'], after['togo'], after['yl']), ('A', 3, 7, 96))
+
+    def test_an_incomplete_pass_on_fourth_down_is_a_turnover_on_downs_at_the_previous_spot(self):
+        after, terminal, flags = reducer.apply_recovery_endpoint(self.st(down=4, togo=3, yl=83), 'offense',
+                                                                 {'terminal': 'incomplete', 'end_yl': 100})
+        self.assertEqual((terminal, flags['turnover_on_downs']), ('turnover', True))
+        self.assertEqual((after['offense'], after['yl']), ('B', 17))
+
+    def test_a_dead_ball_exactly_on_the_goal_line_is_named_not_placed_by_guess(self):
         with self.assertRaises(reducer.UnmodelledOutcome) as caught:
-            reducer.apply_recovery_endpoint(self.st(), 'offense', {'terminal': 'incomplete', 'end_yl': 102})
-        self.assertEqual(caught.exception.reason, 'incomplete_pass_from_own_end_zone_unverified')
+            reducer.apply_recovery_endpoint(self.st(), 'offense', {'terminal': 'spot', 'end_yl': 100})
+        self.assertEqual(caught.exception.reason, 'dead_on_goal_line_placement_unverified')
+
+    def test_stage_one_spots_come_only_from_the_audited_lists(self):
+        rng = random.Random(9)
+        m = rm.load()
+        for category in ('defense_recovers_in_field', 'offense_recovers_in_field'):
+            spots = {m.field_recovery_spot(rng, category) for _ in range(200)}
+            self.assertTrue(spots <= set(rm.FIELD_SPOTS[category]))
 
 
 class FullGameCompletion(unittest.TestCase):
@@ -238,6 +272,16 @@ class FullGameCompletion(unittest.TestCase):
         record = play_game_with(ForcedRecovery('out_of_bounds_in_offense_end_zone', 'safety'))
         self.assertCompleted(record)
         self.assertTrue(fumble_play(record)['outcome']['safety'])
+
+    def test_defensive_run_into_its_own_end_zone_is_a_safety_for_the_offense_then_the_defense_kicks(self):
+        model = ForcedRecovery('defense_recovers_in_field', 'continuation',
+                               endpoint={'terminal': 'out_of_bounds', 'end_yl': 0})
+        record = play_game_with(model)
+        self.assertCompleted(record)
+        play = fumble_play(record)
+        self.assertEqual(play['outcome']['scoring_team'], 'A')
+        self.assertGreaterEqual(record['points']['A'], 2)
+        self.assertEqual(next_drive_offense(record, play), 'A')
 
     def test_offense_recovers_and_advances_to_the_next_down_through_regulation(self):
         model = ForcedRecovery('offense_recovers_in_own_end_zone', 'continuation',

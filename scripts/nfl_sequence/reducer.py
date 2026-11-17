@@ -81,7 +81,7 @@ def _resolve_own_end_zone(st, event, recovery):
     return None, 'safety', flags
 
 
-def apply_modeled_recovery(st, outcome):
+def apply_modeled_recovery(st, outcome, side='offense'):
     """Apply a recovery-model outcome (V1.7) at a fumble at or past the offense goal line.
 
     Only the scoring outcomes are applied here. 'unresolved' is refused, because the ball stays live and no endpoint
@@ -94,7 +94,7 @@ def apply_modeled_recovery(st, outcome):
         return None, 'touchdown', flags
     if outcome == 'safety':
         flags['safety'] = True
-        flags['scoring_team'] = st['defense']
+        flags['scoring_team'] = st['defense'] if side == 'offense' else st['offense']
         return None, 'safety', flags
     if outcome == 'continuation':
         raise UnmodelledOutcome('continuation_requires_endpoint')
@@ -116,11 +116,22 @@ def apply_recovery_endpoint(st, side, endpoint):
         flags['scoring_team'] = st['offense'] if side == 'offense' else st['defense']
         return None, 'touchdown', flags
     if term == 'safety':
-        if side != 'offense':
-            raise UnmodelledOutcome('defensive_recovery_safety_not_modelled')
         flags['safety'] = True
-        flags['scoring_team'] = st['defense']
+        flags['scoring_team'] = st['defense'] if side == 'offense' else st['offense']
         return None, 'safety', flags
+    if term == 'incomplete':
+        if side != 'offense':
+            raise UnmodelledOutcome('defensive_incomplete_pass_not_modelled')
+        # A legal incomplete forward pass returns the ball to the previous spot (Rule 8-1-4); the down is used. Fourth
+        # down is a turnover on downs at that spot. The offense has not crossed the line in this branch.
+        if st['down'] == 4:
+            flags['turnover_on_downs'] = True
+            flags['turnover'] = True
+            new_yl = 100 - st['yl']
+            return ({'offense': st['defense'], 'defense': st['offense'], 'down': 1,
+                     'togo': min(10, new_yl), 'yl': new_yl}, 'turnover', flags)
+        return ({'offense': st['offense'], 'defense': st['defense'], 'down': st['down'] + 1,
+                 'togo': st['togo'], 'yl': st['yl']}, None, flags)
     if end is None:
         raise UnmodelledOutcome(f'endpoint_missing_spot:{term}')
     if side == 'defense':
@@ -128,8 +139,18 @@ def apply_recovery_endpoint(st, side, endpoint):
             flags['touchdown'] = True
             flags['scoring_team'] = st['defense']
             return None, 'touchdown', flags
+        if end <= 0 and term in ('out_of_bounds', 'safety'):
+            # The defense sent the ball out of bounds behind its own goal line: a safety for the offense (Rule 11-5-1b).
+            flags['safety'] = True
+            flags['scoring_team'] = st['offense']
+            return None, 'safety', flags
         if end <= 0:
-            raise UnmodelledOutcome('defensive_return_into_defense_end_zone_not_modelled')
+            # The defender's momentum carried him into his own end zone where the ball is dead in his team's possession:
+            # a touchback, and the defense takes over at its 20 (Rule 11-5-1b exc. 2; Rule 11-6).
+            flags['turnover'] = True
+            flags['touchback'] = True
+            return ({'offense': st['defense'], 'defense': st['offense'], 'down': 1,
+                     'togo': 10, 'yl': 80}, 'turnover', flags)
         new_yl = 100 - end
         flags['turnover'] = True
         return ({'offense': st['defense'], 'defense': st['offense'], 'down': 1,
@@ -137,7 +158,10 @@ def apply_recovery_endpoint(st, side, endpoint):
     if term == 'incomplete' and end >= 100:
         # The official record marks these plays as no score (no safety flag), so the reducer does not decide them.
         raise UnmodelledOutcome('incomplete_pass_from_own_end_zone_unverified')
-    if end >= 100:
+    if end == 100:
+        # Dead exactly on the goal line, not in the end zone. The placement of the next snap is not verified.
+        raise UnmodelledOutcome('dead_on_goal_line_placement_unverified')
+    if end > 100:
         # Dead in the offense's own end zone through the offense's own action: a safety (the stated rule).
         flags['safety'] = True
         flags['scoring_team'] = st['defense']

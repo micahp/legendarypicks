@@ -58,10 +58,15 @@ class EndpointPool:
             return near
         raise EndpointUnavailable(f'{side} recoveries near spot {base}: {len(near)} observed, floor {MIN_ROWS}')
 
-    def draw(self, rng, side, base, restricted_teammate=False):
-        """Return a dict: terminal, end_yl (offense frame, or None), source. `base` is the recovery spot."""
+    def draw(self, rng, side, base, restricted_teammate=False, fumble_spot=None):
+        """Return a dict: terminal, end_yl (offense frame, or None), source. `base` is the recovery spot.
+
+        A teammate recovery under a restriction makes the ball dead, and the next snap is at the fumble spot, or at the
+        recovery spot if that is further back (Rule 8-7-5c and 8-7-6c). Further back is a larger yardline value.
+        """
         if restricted_teammate:
-            return {'terminal': 'restricted_dead', 'end_yl': base, 'source': 'rule_fourth_down_or_two_minute'}
+            spot = base if fumble_spot is None else max(base, fumble_spot)
+            return {'terminal': 'restricted_dead', 'end_yl': spot, 'source': 'rule_fourth_down_or_two_minute'}
         pool = self.candidates(side, base)
         row = pool[rng.randrange(len(pool))]
         if row['terminal'] == 'touchdown':

@@ -53,6 +53,7 @@ import slc_engine  # noqa: E402
 import slc_config  # noqa: E402
 import slc_outputs  # noqa: E402
 import historical_archive  # noqa: E402
+import recovery_model  # noqa: E402
 import source_preflight  # noqa: E402
 import football_assertions  # noqa: E402
 import seed_selection  # noqa: E402
@@ -1072,6 +1073,8 @@ def run_batch(args):
                 safety_kick_table=safety_kick_table)
     ref.own_end_zone = args.own_end_zone
     ref.geometry_filter = args.geometry_filter
+    # The recovery model draws the outcome of a fumble at the goal line (V1.7). Off by default; V1.6 is unchanged.
+    ref.recovery_model = recovery_model.load(args.recovery_model_old_weight) if args.recovery_model else None
     if getattr(ref, 'contextual_sampler', None) is not None:
         ref.contextual_sampler.geometry_excluded = Counter()
     penalty_paths = [args.slc_penalty_model, args.slc_penalty_manifest,
@@ -1502,6 +1505,11 @@ def main(argv=None):
                          'the weeks before the game. Omit for the S0 control')
     ap.add_argument('--geometry-filter', action=argparse.BooleanOptionalAction, default=False,
                     help='exclude turnover source rows that cross a goal line for the simulated field position (V1.7)')
+    ap.add_argument('--recovery-model', action=argparse.BooleanOptionalAction, default=False,
+                    help='V1.7: draw the recovery outcome of a fumble at the goal line from the audited model and '
+                         'its observed endpoint pool; needs --own-end-zone resolve and --geometry-filter')
+    ap.add_argument('--recovery-model-old-weight', type=float, default=recovery_model.DEFAULT_OLD_WEIGHT,
+                    help='discount for 1999-2009 counts in the recovery model (0 = 2010-2025 only, 1 = fully pooled)')
     ap.add_argument('--own-end-zone', choices=('refuse', 'resolve'), default='refuse',
                     help='own-end-zone fumble rule: refuse (frozen V1.6 behaviour) or resolve (V1.7 repair)')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],

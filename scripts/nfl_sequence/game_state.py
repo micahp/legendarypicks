@@ -1614,7 +1614,10 @@ class _Game:
             drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
             self._continue(('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
         elif terminal == 'safety':
-            scorer = self.defense
+            # The two points go to the team named by the outcome: the defense on an offensive safety, the offense on a
+            # defensive one. The team scored upon kicks the free kick.
+            scorer = plays[-1]['outcome'].get('scoring_team') or self.defense
+            kicker = other(scorer, self.ledger.teams)
             self.points[scorer] += SAFETY_POINTS
             drive['points_scored_on_drive'] = {'team': scorer, 'points': SAFETY_POINTS, 'try': None}
             quarter_boundary_safety_kick = ('safety_free_kick_boundaries' in getattr(self.ref, 'blocker_fixes', ())
@@ -1627,7 +1630,7 @@ class _Game:
             else:
                 # Time left on the clock means the free kick is due now, sampled from the observed safety-kick table. At a
                 # Q2/Q4 boundary no safety kick is due before halftime or the end of regulation; the post-score rule skips it.
-                self._continue(('kick', 'safety_free_kick', self.offense, scorer))
+                self._continue(('kick', 'safety_free_kick', kicker, scorer))
         else:
             self.block(f'unhandled_terminal:{terminal}')
 
