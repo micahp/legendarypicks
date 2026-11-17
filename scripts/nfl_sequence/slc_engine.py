@@ -861,6 +861,15 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                         or (score_team is not None and score_team != expected_scorer)):
                     fail(index, decision, scoring_play,
                          'a blocked-kick safety scorer must match its classified recovery outcome')
+            elif event in reducer.FUMBLE_EVENTS and outcome.get('recovery_model') is not None:
+                # The safety goes to the team the recovery outcome names: the offense when the defense recovered (the
+                # defense is in its own end zone), the defense when the offense recovered or the ball went out of bounds.
+                expected_scorer = (before.get('offense_team') if reducer.lost_to_defense(event, outcome)
+                                   else before.get('defense_team'))
+                if (not outcome.get('safety') or outcome.get('scoring_team') != expected_scorer
+                        or (score_team is not None and score_team != expected_scorer)):
+                    fail(index, decision, scoring_play,
+                         'a modeled fumble safety must credit the team its recovery outcome names')
             else:
                 fail(index, decision, scoring_play,
                      f'safety event {event!r} has no supported scoring transition',
