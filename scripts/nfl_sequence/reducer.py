@@ -213,6 +213,8 @@ def rules_engine_manifest(own_end_zone, recovery_model, geometry_filter):
 
     frozen_refuse: the V1.6 rule. Any loss past the own goal line raises, and a run fumble there credits an ordinary
     turnover. The frozen V1.6 results depend on this, so it is kept as it was.
+    frozen_refuse_geometry_filtered: the same refusal, with the geometry filter on. The filter removes cross-goal
+    fumble rows from the draw, so the sampled games differ and the policy name must differ too.
     resolve_unmodelled_fumbles_halt: V1.6 with the corrected rules. A tackle past the own goal line is a safety. A
     fumble there halts the seed unless a recovery model resolves it. The geometry filter must be on, so cross-goal
     fumble rows are never drawn as ordinary turnovers.
@@ -223,7 +225,7 @@ def rules_engine_manifest(own_end_zone, recovery_model, geometry_filter):
     if own_end_zone == 'refuse':
         if recovery_model:
             raise ValueError('the recovery model needs own_end_zone=resolve')
-        policy = 'frozen_refuse'
+        policy = 'frozen_refuse_geometry_filtered' if geometry_filter else 'frozen_refuse'
     else:
         if not geometry_filter:
             raise ValueError('own_end_zone=resolve needs the geometry filter')

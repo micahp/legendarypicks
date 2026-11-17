@@ -30,6 +30,11 @@ class RulesEnginePolicy(unittest.TestCase):
         self.assertEqual(manifest['policy'], 'frozen_refuse')
         self.assertEqual(manifest['schema'], reducer.RULES_ENGINE_SCHEMA)
 
+    def test_refuse_with_the_geometry_filter_is_a_different_policy(self):
+        manifest = reducer.rules_engine_manifest('refuse', False, True)
+        self.assertEqual(manifest['policy'], 'frozen_refuse_geometry_filtered')
+        self.assertNotEqual(manifest['policy'], reducer.rules_engine_manifest('refuse', False, False)['policy'])
+
     def test_resolve_without_a_recovery_model_halts_the_unmodelled_fumbles(self):
         manifest = reducer.rules_engine_manifest('resolve', False, True)
         self.assertEqual(manifest['policy'], 'resolve_unmodelled_fumbles_halt')
