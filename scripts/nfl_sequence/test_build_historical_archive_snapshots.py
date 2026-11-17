@@ -60,7 +60,8 @@ class DefensiveFrontFallback(unittest.TestCase):
         self.assertEqual(chosen['gsis_id'], 'biggers')
 
     def test_fallback_fails_when_no_eligible_compatible_front_backup_exists(self):
-        players = [{'gsis_id': 'edge', 'group': 'Base 4-3 D', 'pos_abb': 'RDE', 'pos_rank': 2,
+        # A safety is not an interior backup, and the second-choice family for interior is edge, so use a safety here.
+        players = [{'gsis_id': 'safety', 'group': 'Base 4-3 D', 'pos_abb': 'FS', 'pos_rank': 2,
                     'unit': 'defense', 'roster_eligible': True, 'starter': False}]
         with self.assertRaisesRegex(ValueError, 'no eligible compatible defensive-front backup'):
             builder._cross_role_front_backup(players, group='Base 4-3 D', pos='LDT',
