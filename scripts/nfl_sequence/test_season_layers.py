@@ -78,7 +78,8 @@ class ShiftBlend(unittest.TestCase):
 
 class NoCurrentSeason(unittest.TestCase):
     def test_every_table_is_left_as_it_was(self):
-        tables = {name: object() for name in ('team_outcomes', 'role_table', 'decision_table', 'playbook_table',
+        tables = {name: object() for name in ('team_outcomes', 'transition_strength', 'role_table', 'decision_table',
+                                              'playbook_table',
                                               'qb_decision_table', 'player_outcome_table', 'share_table', 'point_shifts',
                                               'streak_shifts', 'streak_league')}
         sampler = SimpleNamespace(season_team_down=None, score_clock_playcalling_enabled=True, **tables)

@@ -24,7 +24,9 @@ class FullStackProfile(unittest.TestCase):
     def test_profile_enumerates_every_intended_layer_and_excludes_fixed_share_adapter(self):
         self.assertEqual(set(self.resolved['enabled_layers']), set(config.ENGINE_LAYER_KEYS))
         for layer in config.ENGINE_LAYER_KEYS:
-            expected = layer not in ('fixed_player_target_carry_shares', 'qb_run_role_style')
+            # Joint team transitions are an opt-in alternative to the event-only team outcomes the profile loads.
+            expected = layer not in ('fixed_player_target_carry_shares', 'qb_run_role_style',
+                                     'team_offense_defense_transitions')
             self.assertEqual(self.resolved['enabled_layers'][layer], expected, layer)
         self.assertTrue(self.resolved['enabled_layers']['decision_row_filter'])
         self.assertTrue(self.resolved['enabled_layers']['current_streak_context'])

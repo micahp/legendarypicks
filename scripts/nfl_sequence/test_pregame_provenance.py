@@ -14,7 +14,8 @@ GAME = '2026_08_BBB_AAA'
 CUTOFF = '2026-10-20T12:00:00Z'
 
 
-def make_db(tmp, schedule_observed='2026-10-01 00:00:00', depth_snapshot='2026-10-01T12:00:00Z', gameday='2026-10-29'):
+def make_db(tmp, schedule_observed='2026-10-01 00:00:00', depth_snapshot='2026-10-01T12:00:00Z', gameday='2026-10-29',
+            depth_ingested='2026-10-27 22:39:53'):
     db = str(Path(tmp) / 'nfl.sqlite3')
     con = sqlite3.connect(db)
     con.execute('CREATE TABLE nfl_schedule_versions (game_id TEXT, season INTEGER, game_type TEXT, week INTEGER, '
@@ -23,11 +24,11 @@ def make_db(tmp, schedule_observed='2026-10-01 00:00:00', depth_snapshot='2026-1
     con.execute("INSERT INTO nfl_schedule_versions VALUES (?, 2026, 'REG', 8, ?, 'Thursday', '20:15', 'BBB', 'AAA', 'Home', "
                 "NULL, NULL, NULL, NULL, 'test', ?)", (GAME, gameday, schedule_observed))
     con.execute('CREATE TABLE nfl_depth_chart (season INTEGER, team TEXT, player_id TEXT, gsis_id TEXT, player_name TEXT, '
-                'pos_abb TEXT, pos_rank INTEGER, snapshot_at TEXT, source TEXT)')
+                'pos_abb TEXT, pos_rank INTEGER, snapshot_at TEXT, source TEXT, ingested_at TEXT)')
     for team in ('AAA', 'BBB'):
         for pos in ('QB', 'RB', 'WR'):
-            con.execute("INSERT INTO nfl_depth_chart VALUES (2026, ?, ?, ?, ?, ?, 1, ?, 'nflverse_depth_charts')",
-                        (team, f'{team}{pos}', f'g{team}{pos}', f'{team} {pos}', pos, depth_snapshot))
+            con.execute("INSERT INTO nfl_depth_chart VALUES (2026, ?, ?, ?, ?, ?, 1, ?, 'nflverse_depth_charts', ?)",
+                        (team, f'{team}{pos}', f'g{team}{pos}', f'{team} {pos}', pos, depth_snapshot, depth_ingested))
     con.commit()
     con.close()
     return db
@@ -40,8 +41,10 @@ class BacktestFailsClosed(unittest.TestCase):
                 ps.build(make_db(tmp), GAME, CUTOFF)
             message = str(caught.exception)
             self.assertIn('backtest refused', message)
-            self.assertIn('artifact date', message)      # depth provenance
-            self.assertIn('loader import', message)      # schedule provenance
+            # Availability is our ingest time: the depth rows arrived after the cutoff, the schedule version before it.
+            self.assertIn('away depth: rows were ingested after the cutoff', message)
+            self.assertIn('home depth: rows were ingested after the cutoff', message)
+            self.assertNotIn('schedule:', message)
 
     def test_an_exploratory_replay_is_built_and_labelled_unverified(self):
         with tempfile.TemporaryDirectory() as tmp:

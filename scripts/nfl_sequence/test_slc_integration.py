@@ -26,8 +26,9 @@ class Game(unittest.TestCase):
         import pregame_snapshot as ps
         import slc_engine as se
         snapshot = ps.load_frozen_snapshot(str(SNAPSHOT))
+        # The default blocker fixes include run_scramble_backoff, whose QB model manifest records a source commit.
         ref, _excluded = se.load_reference(DB, snapshot, str(ARTIFACT), team_outcomes=True, formation=True,
-                                           coverage=True)
+                                           coverage=True, source_commit='integration-test')
         snapshot['model_reference']['observed_reference'] = ref.model_inputs
         cls.record, cls.decisions = se.play(1, ref, snapshot)
         cls.plays = [p for d in cls.record['drives'] for p in d['plays']]
@@ -62,10 +63,13 @@ class Game(unittest.TestCase):
         self.assertTrue(all(d.get('formation_conditioned') for d in scrimmage))
 
     def test_every_dropback_names_a_known_coverage_before_its_outcome(self):
-        dropbacks = [d for d in self.decisions if d['intent'] == 'dropback']
+        # A QB scramble is a called dropback whose outcome is sampled as a run, so it carries no coverage.
+        dropbacks = [d for d in self.decisions if d['intent'] == 'dropback' and d.get('qb_action') != 'scramble']
+        scrambles = [d for d in self.decisions if d['intent'] == 'dropback' and d.get('qb_action') == 'scramble']
         self.assertTrue(dropbacks)
         self.assertTrue(all(d.get('coverage') not in (None, 'UNKNOWN') for d in dropbacks))
         self.assertTrue(all(d.get('coverage_conditioned') for d in dropbacks))
+        self.assertTrue(all(d.get('coverage') is None and not d.get('coverage_conditioned') for d in scrambles))
         self.assertTrue(all(d.get('coverage') is None for d in self.decisions if d['intent'] == 'run'))
 
     def test_a_pass_or_run_names_its_participants_before_the_outcome_and_the_play_carries_them(self):
