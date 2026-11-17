@@ -66,13 +66,11 @@ class GoalLineFumbleGeometryTests(unittest.TestCase):
             plays[0]['sampling']['research_turnover_geometry_rejected_source_rows'], 1)
         self.assertEqual(e1.check_drive(plays, terminal)['punts'], 1)
 
-    def test_frozen_v16_own_end_zone_fumble_is_a_named_block(self):
-        # Own-end-zone fumble with unknown recovery: no longer a refusal. It is an explicit,
-        # named unmodeled outcome, so the seed cannot quietly invent a result.
+    def test_frozen_v16_still_exposes_the_incompatible_sample(self):
         st, pool = self.source_pool()
-        out = e1.simulate(st, 61, pool, 'test-fumble-v16',
-                          sampling_policy=ChooseFirst())
-        self.assertEqual(out, (None, 'own_end_zone_fumble_recovery_unresolved'))
+        with self.assertRaises(football_assertions.FootballAssertionError):
+            e1.simulate(st, 61, pool, 'test-fumble-v16',
+                        sampling_policy=ChooseFirst())
 
     def test_sack_fumble_defensive_score_is_not_mislabeled_as_clean_turnover(self):
         row = dict(self.source_pool()[1][(
