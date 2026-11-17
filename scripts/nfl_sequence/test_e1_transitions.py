@@ -157,7 +157,7 @@ class FieldBoundarySampling(unittest.TestCase):
             reducer.apply_play(state, 'run', 6)
         # A loss into its own end zone is a scoring terminal now, not a rejection.
         own = {**state, 'yl': 95, 'togo': 5}
-        after, terminal, flags = reducer.apply_play(own, 'sack', -6)
+        after, terminal, flags = reducer.apply_play(own, 'sack', -6, own_end_zone='resolve')
         self.assertIsNone(after)
         self.assertEqual(terminal, 'safety')
         self.assertTrue(flags['safety'])
@@ -208,21 +208,23 @@ class OwnEndZoneResolution(unittest.TestCase):
 
     STATE = {'offense': 'OFF', 'defense': 'DEF', 'down': 3, 'togo': 10, 'yl': 93}
 
+    # The default rule is the frozen V1.6 refusal. These tests exercise the corrected rule, which is opt-in.
+
     def test_tackle_in_the_end_zone_is_a_safety(self):
-        after, terminal, flags = reducer.apply_play(self.STATE, 'sack', -9)
+        after, terminal, flags = reducer.apply_play(self.STATE, 'sack', -9, own_end_zone='resolve')
         self.assertIsNone(after)
         self.assertEqual(terminal, 'safety')
         self.assertTrue(flags['safety'])
         self.assertEqual(flags['scoring_team'], 'DEF')
 
     def test_run_loss_into_the_end_zone_is_a_safety(self):
-        _, terminal, flags = reducer.apply_play(self.STATE, 'run', -9)
+        _, terminal, flags = reducer.apply_play(self.STATE, 'run', -9, own_end_zone='resolve')
         self.assertEqual(terminal, 'safety')
         self.assertTrue(flags['safety'])
 
     def test_defense_recovering_a_fumble_in_the_end_zone_is_a_touchdown(self):
-        after, terminal, flags = reducer.apply_play(self.STATE, 'sack_fumble_lost', -9,
-                                                    recovery='defense')
+        # The recovery is a modeled outcome, applied after the fumble. apply_play refuses a recovery role.
+        after, terminal, flags = reducer.apply_modeled_recovery(self.STATE, 'touchdown', side='defense')
         self.assertIsNone(after)
         self.assertEqual(terminal, 'touchdown')
         self.assertTrue(flags['touchdown'])
@@ -230,20 +232,19 @@ class OwnEndZoneResolution(unittest.TestCase):
         self.assertEqual(flags['scoring_team'], 'DEF')
 
     def test_offense_recovering_its_own_fumble_in_the_end_zone_is_a_safety(self):
-        _, terminal, flags = reducer.apply_play(self.STATE, 'sack_fumble_lost', -9,
-                                               recovery='offense')
+        _, terminal, flags = reducer.apply_modeled_recovery(self.STATE, 'safety', side='offense')
         self.assertEqual(terminal, 'safety')
         self.assertTrue(flags['safety'])
         self.assertEqual(flags['scoring_team'], 'DEF')
 
     def test_unknown_recovery_is_a_named_block_not_a_crash(self):
         with self.assertRaises(reducer.UnmodelledOutcome) as caught:
-            reducer.apply_play(self.STATE, 'sack_fumble_lost', -9)
+            reducer.apply_play(self.STATE, 'sack_fumble_lost', -9, own_end_zone='resolve')
         self.assertEqual(caught.exception.reason, 'own_end_zone_fumble_recovery_unresolved')
 
-    def test_bad_recovery_role_is_rejected(self):
-        with self.assertRaisesRegex(ValueError, "recovery must be 'offense' or 'defense'"):
-            reducer.apply_play(self.STATE, 'sack_fumble_lost', -9, recovery='defence')
+    def test_a_recovery_role_passed_to_apply_play_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'does not represent recovery location'):
+            reducer.apply_play(self.STATE, 'sack_fumble_lost', -9, recovery='defence', own_end_zone='resolve')
 
     def test_loss_that_stops_at_the_goal_line_is_not_an_end_zone_score(self):
         # 93 - (-7) = 100 exactly: the ball is dead on the goal line, so the existing
