@@ -112,19 +112,7 @@ def build_answer(db_path, today, store=None):
                     'next_slate': None, 'warnings': ['no unplayed NFL game on or after today'],
                     'last_sim_run': last_sim_run(entries), 'sim_index_problems': problems}
         season, week, game_type = slate['season'], slate['week'], slate['game_type']
-        games = []
-        for row in conn.execute('SELECT * FROM nfl_schedule WHERE season = ? AND week = ? AND game_type = ? '
-                                'ORDER BY gameday, gametime, game_id', (season, week, game_type)):
-            game_id = row['game_id']
-            game_sims = [s for s in slate_sim_runs(entries, season, week) if s['game_id'] == game_id]
-            games.append({
-                'game_id': game_id, 'gameday': row['gameday'], 'gametime': row['gametime'],
-                'away': row['away_team'], 'home': row['home_team'], 'played': row['home_score'] is not None,
-                'schedule_source': row['source'], 'schedule_first_observed': row['first_observed'],
-                'schedule_ingested_at': row['ingested_at'], 'schedule_versions': _schedule_versions(conn, game_id),
-                'line': _latest_line(conn, game_id), 'projections': _projections(conn, game_id),
-                'sim_runs': game_sims,
-            })
+        games = slate_games(conn, entries, season, week, game_type)
         unplayed = [g for g in games if not g['played']]
         statuses = [g['projections']['status'] for g in games if not g['played']]
         runs = model_runs(conn, season, week)
@@ -145,6 +133,93 @@ def build_answer(db_path, today, store=None):
         }
     finally:
         conn.close()
+
+
+def slate_games(conn, entries, season, week, game_type):
+    """One summary per game of a slate, in kickoff order."""
+    games = []
+    for row in conn.execute('SELECT * FROM nfl_schedule WHERE season = ? AND week = ? AND game_type = ? '
+                            'ORDER BY gameday, gametime, game_id', (season, week, game_type)):
+        game_id = row['game_id']
+        games.append({
+            'game_id': game_id, 'gameday': row['gameday'], 'gametime': row['gametime'],
+            'away': row['away_team'], 'home': row['home_team'], 'played': row['home_score'] is not None,
+            'away_score': row['away_score'], 'home_score': row['home_score'],
+            'schedule_source': row['source'], 'schedule_first_observed': row['first_observed'],
+            'schedule_ingested_at': row['ingested_at'], 'schedule_versions': _schedule_versions(conn, game_id),
+            'line': _latest_line(conn, game_id), 'projections': _projections(conn, game_id),
+            'sim_runs': [s for s in slate_sim_runs(entries, season, week) if s['game_id'] == game_id],
+        })
+    return games
+
+
+def full_slate(db_path, today, season=None, week=None, store=None):
+    """Every game of one slate. The next slate when season and week are not given. None when there is no such slate."""
+    conn = connect(db_path)
+    try:
+        if season is None or week is None:
+            slate, _stale = next_slate(conn, today)
+            if slate is None:
+                return None
+            season, week = slate['season'], slate['week']
+        found = conn.execute('SELECT game_type FROM nfl_schedule WHERE season = ? AND week = ? LIMIT 1',
+                             (season, week)).fetchone()
+        if found is None:
+            return None
+        game_type = found['game_type']
+        entries, problems = read_sim_index(store)
+        games = slate_games(conn, entries, season, week, game_type)
+        unplayed = [g for g in games if not g['played']]
+        statuses = [g['projections']['status'] for g in unplayed]
+        return {
+            'season': season, 'week': week, 'game_type': game_type, 'games_total': len(games),
+            'unplayed': len(unplayed), 'projection_status': {s: statuses.count(s) for s in ('none', 'preview', 'locked')},
+            'model_runs': model_runs(conn, season, week), 'sim_runs': slate_sim_runs(entries, season, week),
+            'games': games, 'sim_index_problems': problems,
+        }
+    finally:
+        conn.close()
+
+
+def game_detail(db_path, game_id, store=None):
+    """Every stored fact about one game: the schedule row, its version history, line captures, projection rows, and the
+    sim runs and model runs for its week. None when the game is not in the schedule."""
+    conn = connect(db_path)
+    try:
+        row = conn.execute('SELECT * FROM nfl_schedule WHERE game_id = ?', (game_id,)).fetchone()
+        if row is None:
+            return None
+        schedule = dict(row)
+        entries, problems = read_sim_index(store)
+        return {
+            'as_of_utc': datetime.now(timezone.utc).isoformat(), 'game_id': game_id, 'schedule': schedule,
+            'schedule_versions': [dict(r) for r in conn.execute(
+                'SELECT * FROM nfl_schedule_versions WHERE game_id = ? ORDER BY observed_at', (game_id,))],
+            'lines': [dict(r) for r in conn.execute(
+                'SELECT * FROM nfl_line_snapshots WHERE league = ? AND game_id = ? ORDER BY captured_at',
+                (LEAGUE, game_id))],
+            'projection_status': _projections(conn, game_id),
+            'projections': [dict(r) for r in conn.execute(
+                'SELECT * FROM game_projections WHERE league = ? AND game_id = ? ORDER BY locked_at, run_id',
+                (LEAGUE, game_id))],
+            'model_runs_for_week': model_runs(conn, schedule['season'], schedule['week']),
+            'sim_runs': [_sim_summary(e) for e in sorted(
+                (e for e in entries if e.get('game_id') == game_id),
+                key=lambda e: e.get('created_at_utc') or '', reverse=True)],
+            'sim_index_problems': problems,
+        }
+    finally:
+        conn.close()
+
+
+def render_slate_text(slate):
+    lines = [f"{slate['season']} week {slate['week']} ({slate['game_type']}): "
+             f"{slate['unplayed']} of {slate['games_total']} games unplayed."]
+    for g in slate['games']:
+        result = f"final {g['away_score']}-{g['home_score']}" if g['played'] else 'unplayed'
+        lines.append(f"{g['game_id']}  {g['gameday']} {g['gametime']}  {g['away']} at {g['home']}  {result}  "
+                     f"projections={g['projections']['status']}  sim_runs={len(g['sim_runs'])}")
+    return '\n'.join(lines)
 
 
 def render_text(answer):
@@ -192,7 +267,26 @@ def main(argv=None):
     parser.add_argument('--today', default=datetime.now(timezone.utc).date().isoformat(),
                         help='YYYY-MM-DD; the first unplayed game on or after this day is the next game')
     parser.add_argument('--json', action='store_true', help='print the answer as JSON')
+    parser.add_argument('--slate', action='store_true',
+                        help='every game of the next slate, or of --season and --week when given')
+    parser.add_argument('--season', type=int, help='with --slate: the season to list')
+    parser.add_argument('--week', type=int, help='with --slate: the week to list')
+    parser.add_argument('--game', metavar='GAME_ID', help='every stored fact about one game, as JSON')
     args = parser.parse_args(argv)
+    if args.game:
+        detail = game_detail(args.db, args.game, args.index_store)
+        if detail is None:
+            print(f'unknown game_id: {args.game}', file=sys.stderr)
+            return 2
+        print(json.dumps(detail, indent=2, sort_keys=True, default=str))
+        return 0
+    if args.slate:
+        slate = full_slate(args.db, args.today, args.season, args.week, args.index_store)
+        if slate is None:
+            print('no such slate', file=sys.stderr)
+            return 2
+        print(json.dumps(slate, indent=2, sort_keys=True, default=str) if args.json else render_slate_text(slate))
+        return 0
     answer = build_answer(args.db, args.today, args.index_store)
     print(json.dumps(answer, indent=2, sort_keys=True, default=str) if args.json else render_text(answer))
     return 0

@@ -10,7 +10,8 @@ import oracle  # noqa: E402
 
 SCHEMA = """
 CREATE TABLE nfl_schedule (game_id TEXT, season INTEGER, game_type TEXT, week INTEGER, gameday TEXT, gametime TEXT,
-    away_team TEXT, home_team TEXT, home_score INTEGER, source TEXT, ingested_at TEXT, first_observed TEXT);
+    away_team TEXT, home_team TEXT, away_score INTEGER, home_score INTEGER, source TEXT, ingested_at TEXT,
+    first_observed TEXT);
 CREATE TABLE nfl_schedule_versions (game_id TEXT, observed_at TEXT, content_sha256 TEXT);
 CREATE TABLE nfl_line_snapshots (snapshot_id INTEGER PRIMARY KEY, league TEXT, game_id TEXT, source TEXT,
     captured_at TEXT, spread_line REAL, total_line REAL);
@@ -24,7 +25,7 @@ CREATE TABLE model_runs (run_id TEXT, league TEXT, season INTEGER, week INTEGER,
 def make_db(path, schedule=(), projections=(), lines=(), runs=()):
     conn = sqlite3.connect(path)
     conn.executescript(SCHEMA)
-    conn.executemany('INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', schedule)
+    conn.executemany('INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', schedule)
     conn.executemany('INSERT INTO game_projections (run_id, league, game_id, season, week, locked, locked_at) '
                      'VALUES (?,?,?,?,?,?,?)', projections)
     conn.executemany('INSERT INTO nfl_line_snapshots (league, game_id, source, captured_at, spread_line, total_line) '
@@ -36,7 +37,9 @@ def make_db(path, schedule=(), projections=(), lines=(), runs=()):
 
 
 def game(game_id, season, week, gameday, home_score=None, away='AAA', home='BBB'):
-    return (game_id, season, 'REG', week, gameday, '13:00', away, home, home_score, 'nflverse_games', None, None)
+    away_score = None if home_score is None else home_score - 3
+    return (game_id, season, 'REG', week, gameday, '13:00', away, home, away_score, home_score, 'nflverse_games',
+            None, None)
 
 
 @pytest.fixture
@@ -104,3 +107,44 @@ def test_no_unplayed_game_on_or_after_today_says_so(tmp_path):
     answer = oracle.build_answer(path, '2026-11-17', store=str(tmp_path / 'no-store'))
     assert answer['next_slate'] is None
     assert 'no unplayed NFL game' in oracle.render_text(answer)
+
+
+def test_full_slate_lists_every_game_of_the_next_slate_in_kickoff_order(season_db):
+    slate = oracle.full_slate(season_db, '2026-11-17')
+    assert (slate['season'], slate['week'], slate['games_total'], slate['unplayed']) == (2026, 11, 2, 2)
+    assert [g['game_id'] for g in slate['games']] == ['2026_11_EEE_FFF', '2026_11_CCC_DDD']
+
+
+def test_full_slate_of_a_named_week_ignores_today_and_shows_scores(season_db):
+    slate = oracle.full_slate(season_db, '2026-11-17', season=2026, week=10)
+    assert slate['games_total'] == 1
+    assert slate['games'][0]['played'] is True
+    assert slate['games'][0]['home_score'] == 20
+
+
+def test_full_slate_of_a_week_with_no_games_is_none(season_db):
+    assert oracle.full_slate(season_db, '2026-11-17', season=2026, week=18) is None
+
+
+def test_game_detail_returns_every_stored_fact_for_one_game(tmp_path):
+    schedule = [game('2026_11_EEE_FFF', 2026, 11, '2026-11-19', away='EEE', home='FFF')]
+    projections = [('preview-run', 'nfl', '2026_11_EEE_FFF', 2026, 11, 0, None)]
+    lines = [('nfl', '2026_11_EEE_FFF', 'odds_api', '2026-11-18T12:00:00Z', -3.5, 47.5)]
+    runs = [('preview-run', 'nfl', 2026, 11, 'nfl-v1', 'v1', '2026-11-17T17:00:00Z', None, 'preview')]
+    path = make_db(tmp_path / 'picks.db', schedule=schedule, projections=projections, lines=lines, runs=runs)
+    conn = sqlite3.connect(path)
+    conn.execute('INSERT INTO nfl_schedule_versions VALUES (?,?,?)', ('2026_11_EEE_FFF', '2026-11-16 09:00:00', 'abc'))
+    conn.commit()
+    conn.close()
+    detail = oracle.game_detail(path, '2026_11_EEE_FFF', store=str(tmp_path / 'no-store'))
+    assert detail['schedule']['away_team'] == 'EEE'
+    assert detail['schedule_versions'][0]['content_sha256'] == 'abc'
+    assert detail['lines'][0]['spread_line'] == -3.5
+    assert detail['projection_status']['status'] == 'preview'
+    assert detail['projections'][0]['run_id'] == 'preview-run'
+    assert detail['model_runs_for_week'][0]['model'] == 'nfl-v1'
+    assert detail['sim_runs'] == []
+
+
+def test_an_unknown_game_id_has_no_detail(season_db):
+    assert oracle.game_detail(season_db, '2099_01_XXX_YYY', store='/nonexistent') is None
