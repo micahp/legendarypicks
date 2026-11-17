@@ -265,7 +265,7 @@ def _credit_field_boundary_yards(event, sampled_yards, yardline):
     return sampled_yards, None
 
 
-def _turnover_geometry_eligible(sample, state):
+def _turnover_geometry_eligible(sample, state, modeled_recovery=False):
     """Reject turnover samples whose implied net gain crosses a goal line.
 
     A clean next-offense snap does NOT identify the fumble spot/recovery in
@@ -283,6 +283,10 @@ def _turnover_geometry_eligible(sample, state):
     if type(yards) not in (int, float):
         return False
     destination = yl - yards
+    if modeled_recovery:
+        # The recovery model resolves a fumble at or past the goal line, so only a destination behind the
+        # defense's goal line stays excluded.
+        return destination > 0
     return 0 < destination < 100
 
 
@@ -341,7 +345,7 @@ def _pre_snap_penalty_play(st, resolved, simulation_id, sequence, direction):
 
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
              score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None,
-             penalty_controller=None, own_end_zone='refuse', geometry_filter=False):
+             penalty_controller=None, own_end_zone='refuse', geometry_filter=False, recovery_model=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
@@ -416,13 +420,15 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         key = (st['down'], e0.ydstogo_bucket(st['togo']), e0.yardline_bucket(st['yl']))
         source_cell = pool.get(key, [])
         geometry_rejections = 0
-        geometry_on = penalty_controller is not None or geometry_filter
+        geometry_on = penalty_controller is not None or geometry_filter or recovery_model is not None
+        modeled = recovery_model is not None
+        recovery_draw = None
         if geometry_on:
             # Sample only turnover outcomes whose original net gain remains
             # in the field of play in this *simulated* situation. This is a
             # V1.7 research conditional, never a silent V1.6 change.
             legal_cell = [sample for sample in source_cell
-                          if _turnover_geometry_eligible(sample, st)]
+                          if _turnover_geometry_eligible(sample, st, modeled)]
             geometry_rejections = len(source_cell) - len(legal_cell)
         else:
             legal_cell = source_cell
@@ -454,7 +460,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                               geometry_rejections > 0}
             if geometry_on:
                 def source_row_filter(sample, target_state):
-                    return (_turnover_geometry_eligible(sample, target_state)
+                    return (_turnover_geometry_eligible(sample, target_state, modeled)
                             and (sampling_guard is None or
                                  not sampling_guard.requires_source_filter or
                                  sampling_guard.permits(sample, target_state)))
@@ -468,7 +474,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                 return halt(str(unavailable))
         event = selected_event
         if geometry_on and not _turnover_geometry_eligible(
-                (selected_event, row, runoff, spot), st):
+                (selected_event, row, runoff, spot), st, modeled):
             return halt('goal_line_fumble_geometry_requires_source_conditional')
         if sampling_guard is not None:
             selected_sample = (selected_event, row, runoff, spot)
@@ -496,9 +502,23 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         yardage_boundary_adjustment = None
         if sampled_yards is not None:
             yards, yardage_boundary_adjustment = _credit_field_boundary_yards(event, sampled_yards, st['yl'])
+        if modeled and event in ('fumble_lost', 'sack_fumble_lost') and st['yl'] - yards >= 100:
+            # Fumble at or past the offense goal line: the recovery model draws the outcome. This is a simulated
+            # draw from audited frequencies, not an observed play.
+            recovery_rng = (paired_random_streams.rng('e1_recovery', drive_index, play_index)
+                            if paired_random_streams is not None
+                            else random.Random(f'{simulation_id}:{drive_index}:{play_index}:recovery'))
+            recovery_draw = recovery_model.draw(recovery_rng)
+            # The recorded gain stops at the own goal line, as the runs do; the source sample is kept for audit.
+            yards = st['yl'] - 100
+            yardage_boundary_adjustment = {'boundary': 'own_goal_line', 'sampled_yards_gained': sampled_yards,
+                                           'credited_yards_gained': yards}
         try:
-            after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome,
-                                                             own_end_zone=own_end_zone)
+            if recovery_draw is not None:
+                after, play_terminal, flags = reducer.apply_modeled_recovery(st, recovery_draw[1])
+            else:
+                after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome,
+                                                                 own_end_zone=own_end_zone)
         except reducer.UnmodelledOutcome as blocked:
             return halt(blocked.reason)
         except (AssertionError, ValueError) as invalid:
@@ -665,6 +685,10 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'punt': flags['punt'], 'punt_attempt': flags['punt_attempt'],
                         'field_goal_attempt': flags['field_goal_attempt'],
                         'safety': flags['safety'], 'scoring_team': flags.get('scoring_team'),
+                        'recovery_model': (None if recovery_draw is None else {
+                            'category': recovery_draw[0], 'outcome': recovery_draw[1],
+                            'old_weight': recovery_model.old_weight,
+                            'source': 'simulated_from_audited_frequencies'}),
                         'first_down': (flags.get('first_down', False) or bool(
                             penalty_info and penalty_info.enforcement.get('accepted')
                             and penalty_info.enforcement.get('automatic_first_down'))),

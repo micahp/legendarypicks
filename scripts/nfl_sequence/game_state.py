@@ -1492,6 +1492,7 @@ class _Game:
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
                                       self.simulation_id, special_teams=special_teams, partial=attempt,
                                       sampling_policy=self.ref.contextual_sampler,
+                                      recovery_model=getattr(self.ref, 'recovery_model', None),
                                       score_diff=self.points[self.offense] - self.points[self.defense],
                                       play_index_start=self.next_play_sequence,
                                       drive_index=len(self.drives) + 1,

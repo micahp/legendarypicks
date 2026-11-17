@@ -81,6 +81,26 @@ def _resolve_own_end_zone(st, event, recovery):
     return None, 'safety', flags
 
 
+def apply_modeled_recovery(st, outcome):
+    """Apply a recovery-model outcome (V1.7) at a fumble at or past the offense goal line.
+
+    Only the scoring outcomes are applied here. 'unresolved' is refused, because the ball stays live and no endpoint
+    model exists yet. The reducer never invents a spot or a score for it.
+    """
+    flags = _no_flags()
+    if outcome == 'touchdown':
+        flags['touchdown'] = True
+        flags['scoring_team'] = st['defense']
+        return None, 'touchdown', flags
+    if outcome == 'safety':
+        flags['safety'] = True
+        flags['scoring_team'] = st['defense']
+        return None, 'safety', flags
+    if outcome == 'unresolved':
+        raise UnmodelledOutcome('recovery_continuation_endpoint_unmodeled')
+    raise ValueError(f'unknown recovery outcome {outcome!r}')
+
+
 def apply_play(st, event, yards, spot=None, kick_outcome=None, recovery=None, own_end_zone='refuse'):
     """Apply one sampled play. Returns (after, terminal, flags).
 
