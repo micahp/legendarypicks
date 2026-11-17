@@ -83,7 +83,8 @@ class EveryReadPathRefusesTheHoldout(unittest.TestCase):
             con.execute("INSERT INTO nfl_schedule VALUES ('2026_08_AAA_BBB', 2026, 'REG', 8, '2026-10-29', '20:15', "
                         "'AAA', 'BBB', 'Home', 'test', '2026-10-01 00:00:00')")
             con.execute('CREATE TABLE nfl_depth_chart (season INTEGER, team TEXT, player_id TEXT, gsis_id TEXT, '
-                        'player_name TEXT, pos_abb TEXT, pos_rank INTEGER, snapshot_at TEXT, source TEXT)')
+                        'player_name TEXT, pos_abb TEXT, pos_rank INTEGER, snapshot_at TEXT, source TEXT, '
+                        'ingested_at TEXT)')
             con.commit()
             con.close()
             # 2026 is readable with a cutoff, so the build reaches the depth chart and must still refuse a missing one

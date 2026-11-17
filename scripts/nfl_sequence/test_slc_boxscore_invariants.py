@@ -8,6 +8,7 @@ import json
 import io
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
@@ -21,6 +22,11 @@ def build(record, seed=17):
     outcome = {'seed': seed, 'status': 'complete', 'valid_full_game': True,
                'complete_game': True, 'tied_at_regulation_end': False}
     return outputs.build_boxscore(seed, outcome, record, SNAPSHOT, PROFILE)
+
+
+def slc_ref():
+    # _simulate_seed sets the tracing flag on an SLC reference's sampler before play.
+    return SimpleNamespace(contextual_sampler=SimpleNamespace())
 
 
 class BoxscoreHardInvariants(unittest.TestCase):
@@ -59,7 +65,7 @@ class BoxscoreHardInvariants(unittest.TestCase):
                 patch.object(batch.gs, 'validate_game', side_effect=ValueError('invalid game')), \
                 patch.object(batch.slc_engine, 'summary', side_effect=RuntimeError('summary failed')):
             with self.assertRaisesRegex(RuntimeError, 'summary failed'):
-                batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, failure_dir=tmp)
+                batch._simulate_seed(17, slc_ref(), SNAPSHOT, PROFILE, failure_dir=tmp)
             paths = list(Path(tmp).glob('*.json.gz'))
             self.assertEqual(len(paths), 1)
             with gzip.open(paths[0], 'rt', encoding='utf-8') as handle:
@@ -203,7 +209,7 @@ class BoxscoreHardInvariants(unittest.TestCase):
                 patch.object(batch, '_record_outcome', return_value=valid.copy()), \
                 patch.object(batch.slc_outputs, 'build_boxscore', return_value={
                     'reconciliation': {'status': 'passed'}}) as build_boxscore:
-            outcome, contribution = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, export_boxscores=False)
+            outcome, contribution = batch._simulate_seed(17, slc_ref(), SNAPSHOT, PROFILE, export_boxscores=False)
 
         build_boxscore.assert_called_once()
         self.assertTrue(outcome['valid_full_game'])
@@ -222,7 +228,7 @@ class BoxscoreHardInvariants(unittest.TestCase):
                 patch.object(batch, '_record_outcome', side_effect=[good, failed]), \
                 patch.object(batch.slc_outputs, 'build_boxscore', return_value={
                     'reconciliation': {'status': 'failed', 'failure_class': 'STAT_ACCOUNTING'}}) as build_boxscore:
-            outcome, contribution = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, export_boxscores=False)
+            outcome, contribution = batch._simulate_seed(17, slc_ref(), SNAPSHOT, PROFILE, export_boxscores=False)
 
         build_boxscore.assert_called_once()
         self.assertFalse(outcome['valid_full_game'])
@@ -248,7 +254,7 @@ class BoxscoreHardInvariants(unittest.TestCase):
                 patch.object(batch.slc_engine, 'play', return_value=(record, decisions)), \
                 patch.object(batch.gs, 'validate_game', side_effect=AssertionError(
                     'drive 1 play 1 has an illegal clock transition')):
-            outcome, contribution = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, export_boxscores=False)
+            outcome, contribution = batch._simulate_seed(17, slc_ref(), SNAPSHOT, PROFILE, export_boxscores=False)
 
         self.assertEqual(outcome['status'], 'validation_error')
         self.assertIsNone(contribution)
