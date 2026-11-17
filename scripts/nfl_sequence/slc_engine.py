@@ -832,6 +832,13 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                         or (score_team is not None and score_team != expected_scorer)):
                     fail(index, decision, scoring_play,
                          'a blocked-kick touchdown scorer must match its classified recovery outcome')
+            elif _defensive_scoring_fumble(event, outcome):
+                expected_scorer = outcome.get('scoring_team')
+                if (expected_scorer != before.get('defense_team')
+                        or drive.get('touchdown_scored_by') != expected_scorer
+                        or (score_team is not None and score_team != expected_scorer)):
+                    fail(index, decision, scoring_play,
+                         'a defensive fumble-return touchdown must credit the recovering defense')
             else:
                 fail(index, decision, scoring_play,
                      f'touchdown event {event!r} has no supported scorer attribution',
