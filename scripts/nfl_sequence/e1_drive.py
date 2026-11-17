@@ -341,7 +341,7 @@ def _pre_snap_penalty_play(st, resolved, simulation_id, sequence, direction):
 
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
              score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None,
-             penalty_controller=None):
+             penalty_controller=None, own_end_zone='refuse'):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
@@ -494,7 +494,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         if sampled_yards is not None:
             yards, yardage_boundary_adjustment = _credit_field_boundary_yards(event, sampled_yards, st['yl'])
         try:
-            after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome)
+            after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome,
+                                                             own_end_zone=own_end_zone)
         except reducer.UnmodelledOutcome as blocked:
             return halt(blocked.reason)
         except (AssertionError, ValueError) as invalid:

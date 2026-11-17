@@ -72,6 +72,18 @@ class GoalLineFumbleGeometryTests(unittest.TestCase):
             e1.simulate(st, 61, pool, 'test-fumble-v16',
                         sampling_policy=ChooseFirst())
 
+    def test_v17_own_end_zone_fumble_resolves_to_a_named_block(self):
+        # V1.7 opts in to the repair. The same sample now ends in an explicit unmodeled outcome.
+        st, pool = self.source_pool()
+        out = e1.simulate(st, 61, pool, 'test-fumble-v17',
+                          sampling_policy=ChooseFirst(), own_end_zone='resolve')
+        self.assertEqual(out, (None, 'own_end_zone_fumble_recovery_unresolved'))
+
+    def test_default_own_end_zone_rule_is_the_frozen_refusal(self):
+        st, pool = self.source_pool()
+        with self.assertRaises(football_assertions.FootballAssertionError):
+            e1.simulate(st, 61, pool, 'test-fumble-v17', sampling_policy=ChooseFirst())
+
     def test_sack_fumble_defensive_score_is_not_mislabeled_as_clean_turnover(self):
         row = dict(self.source_pool()[1][(
             4, e0.ydstogo_bucket(1), e0.yardline_bucket(99))][0][1])

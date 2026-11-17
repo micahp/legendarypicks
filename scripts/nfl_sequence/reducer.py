@@ -85,7 +85,7 @@ def _resolve_own_end_zone(st, event, recovery):
     return None, 'safety', flags
 
 
-def apply_play(st, event, yards, spot=None, kick_outcome=None, recovery=None):
+def apply_play(st, event, yards, spot=None, kick_outcome=None, recovery=None, own_end_zone='refuse'):
     """Apply one sampled play. Returns (after, terminal, flags).
 
     `after` is the state at the next snap, or None when the drive ends with no next snap (touchdown, safety,
@@ -95,6 +95,8 @@ def apply_play(st, event, yards, spot=None, kick_outcome=None, recovery=None):
     """
     if event not in EVENT_VOCABULARY:
         raise ValueError(f'unknown event {event!r}; the reducer refuses to guess')
+    if own_end_zone not in ('refuse', 'resolve'):
+        raise ValueError(f'own_end_zone must be refuse or resolve (got {own_end_zone!r})')
     _validate_state(st)
     if event in ('run', 'pass_complete', 'pass_incomplete', 'sack', 'sack_fumble_lost'):
         if (type(yards) not in (int, float) or not math.isfinite(yards)):
@@ -105,7 +107,9 @@ def apply_play(st, event, yards, spot=None, kick_outcome=None, recovery=None):
             if yards > st['yl']:
                 raise ValueError(f'{event} gain {yards} exceeds the {st["yl"]} yards to the goal line')
             if st['yl'] - yards > 100:
-                return _resolve_own_end_zone(st, event, recovery)
+                if own_end_zone == 'resolve':
+                    return _resolve_own_end_zone(st, event, recovery)
+                raise ValueError(f'{event} loss {yards} carries the ball past its own goal line')
         if event in ('sack', 'sack_fumble_lost') and yards > 0:
             raise ValueError('a sack cannot produce positive yardage')
     flags = _no_flags()

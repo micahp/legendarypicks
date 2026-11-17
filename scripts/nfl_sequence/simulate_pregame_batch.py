@@ -1070,6 +1070,7 @@ def run_batch(args):
                 contextual_bandwidth=args.context_bandwidth,
                 contextual_min_effective_games=args.context_min_source_games,
                 safety_kick_table=safety_kick_table)
+    ref.own_end_zone = args.own_end_zone
     penalty_paths = [args.slc_penalty_model, args.slc_penalty_manifest,
                      args.slc_penalty_source_manifest, args.slc_penalty_rulings]
     if args.slc_profile != 'v1_7_candidate' and any(penalty_paths):
@@ -1493,6 +1494,8 @@ def main(argv=None):
     ap.add_argument('--playcall-artifact',
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')
+    ap.add_argument('--own-end-zone', choices=('refuse', 'resolve'), default='refuse',
+                    help='own-end-zone fumble rule: refuse (frozen V1.6 behaviour) or resolve (V1.7 repair)')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
                     help='SLC blocker fix (all fixes default on with --playcall-artifact)')
     ap.add_argument('--slc-disable-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
