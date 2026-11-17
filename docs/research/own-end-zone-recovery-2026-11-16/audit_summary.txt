@@ -1,0 +1,50 @@
+DENOMINATOR: fumble spot at or past offense goal line, by era
+official   none  safety  touchback  touchdown  All
+era                                               
+1999-2009     3      31          1         25   60
+2010-2021    10      25          0         25   60
+2022-2025     0       3          0          5    8
+All          13      59          1         55  128
+
+DENOMINATOR by category x official (all eras)
+official                             none  safety  touchback  touchdown  All
+cat                                                                         
+defense_recovers_in_field_or_own_EZ     3       1          0         28   32
+defense_recovers_in_offense_EZ          0       0          0         27   27
+offense_recovers_in_field_or_opp_EZ     6      10          1          0   17
+offense_recovers_in_own_EZ              4      19          0          0   23
+out_of_bounds_no_recovery               0      29          0          0   29
+All                                    13      59          1         55  128
+
+OWN END ZONE RECOVERIES (recovery spot beyond offense goal line), by era
+official                                  none  safety  touchback  touchdown  All
+era       cat                                                                    
+1999-2009 defense_recovers_in_offense_EZ     2       0          1          9   12
+          offense_recovers_in_own_EZ         2       7          2          0   11
+2010-2021 defense_recovers_in_offense_EZ     1       0          0         19   20
+          offense_recovers_in_own_EZ         8      14          0          0   22
+2022-2025 defense_recovers_in_offense_EZ     0       0          0          7    7
+          offense_recovers_in_own_EZ         1       2          0          1    4
+All                                         14      23          3         36   76
+
+DIRICHLET POSTERIOR MEAN for outcome given fumble at or past goal line, prior = 1 each
+             era   n  touchdown_n  safety_n  none_n  touchback_n  touchdown_p  safety_p  none_p  touchback_p
+       1999-2009  60           25        31       3            1        0.406     0.500   0.062        0.031
+       2010-2021  60           25        25      10            0        0.406     0.406   0.172        0.016
+       2022-2025   8            5         3       0            0        0.500     0.333   0.083        0.083
+1999-2025 pooled 128           55        59      13            1        0.424     0.455   0.106        0.015
+2010-2025 modern  68           30        28      10            0        0.431     0.403   0.153        0.014
+
+PARSE COVERAGE by era (rows with a recovery spot read)
+era
+1999-2009    8160/8878
+2010-2021    7373/8141
+2022-2025    2342/2582
+
+RECONCILIATION (expected from recovery spot vs official flags, parsed rows)
+official         none  safety  touchback  touchdown
+expected                                           
+return_or_none  16884      22         72        730
+safety             11      23          2          1
+touchback          14       1         38          3
+touchdown           4       1          1         68

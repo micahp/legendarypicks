@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import argparse
 import copy
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 import hashlib
 import gzip
@@ -53,6 +53,7 @@ import slc_engine  # noqa: E402
 import slc_config  # noqa: E402
 import slc_outputs  # noqa: E402
 import historical_archive  # noqa: E402
+import recovery_model  # noqa: E402
 import source_preflight  # noqa: E402
 import football_assertions  # noqa: E402
 import seed_selection  # noqa: E402
@@ -1070,6 +1071,12 @@ def run_batch(args):
                 contextual_bandwidth=args.context_bandwidth,
                 contextual_min_effective_games=args.context_min_source_games,
                 safety_kick_table=safety_kick_table)
+    ref.own_end_zone = args.own_end_zone
+    ref.geometry_filter = args.geometry_filter
+    # The recovery model draws the outcome of a fumble at the goal line (V1.7). Off by default; V1.6 is unchanged.
+    ref.recovery_model = recovery_model.load(args.recovery_model_old_weight) if args.recovery_model else None
+    if getattr(ref, 'contextual_sampler', None) is not None:
+        ref.contextual_sampler.geometry_excluded = Counter()
     penalty_paths = [args.slc_penalty_model, args.slc_penalty_manifest,
                      args.slc_penalty_source_manifest, args.slc_penalty_rulings]
     if args.slc_profile != 'v1_7_candidate' and any(penalty_paths):
@@ -1368,6 +1375,9 @@ def run_batch(args):
         print(f'wrote {out}: {summary["valid_full_games"]}/{args.games} valid games, '
               f'{summary["tied_at_regulation_end"]} regulation ties, '
               f'{summary["blocked_before_regulation_end"]} blocked before regulation')
+    _geo = getattr(getattr(ref, 'contextual_sampler', None), 'geometry_excluded', None)
+    if _geo is not None:
+        print(f'geometry filter: {ref.geometry_filter}; turnover source rows excluded (per decision): {dict(_geo)}')
     if args.register_dir:
         entry = sim_run_registry.register(payload, args.register_dir)
         print(f"registered {entry['run_id']} at {entry['path']}; exploratory={entry['exploratory']}"
@@ -1493,6 +1503,15 @@ def main(argv=None):
     ap.add_argument('--playcall-artifact',
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')
+    ap.add_argument('--geometry-filter', action=argparse.BooleanOptionalAction, default=False,
+                    help='exclude turnover source rows that cross a goal line for the simulated field position (V1.7)')
+    ap.add_argument('--recovery-model', action=argparse.BooleanOptionalAction, default=False,
+                    help='V1.7: draw the recovery outcome of a fumble at the goal line from the audited model and '
+                         'its observed endpoint pool; needs --own-end-zone resolve and --geometry-filter')
+    ap.add_argument('--recovery-model-old-weight', type=float, default=recovery_model.DEFAULT_OLD_WEIGHT,
+                    help='discount for 1999-2009 counts in the recovery model (0 = 2010-2025 only, 1 = fully pooled)')
+    ap.add_argument('--own-end-zone', choices=('refuse', 'resolve'), default='refuse',
+                    help='own-end-zone fumble rule: refuse (frozen V1.6 behaviour) or resolve (V1.7 repair)')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
                     help='SLC blocker fix (all fixes default on with --playcall-artifact)')
     ap.add_argument('--slc-disable-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],

@@ -155,11 +155,16 @@ class FieldBoundarySampling(unittest.TestCase):
         self.assertTrue(flags['touchdown'])
         with self.assertRaisesRegex(ValueError, 'exceeds the 5 yards to the goal line'):
             reducer.apply_play(state, 'run', 6)
-        with self.assertRaisesRegex(ValueError, 'past its own goal line'):
-            reducer.apply_play({**state, 'yl': 95, 'togo': 5}, 'sack', -6)
+        # A loss into its own end zone is a scoring terminal now, not a rejection.
+        own = {**state, 'yl': 95, 'togo': 5}
+        after, terminal, flags = reducer.apply_play(own, 'sack', -6)
+        self.assertIsNone(after)
+        self.assertEqual(terminal, 'safety')
+        self.assertTrue(flags['safety'])
+        self.assertEqual(flags['scoring_team'], 'DEF')
         with self.assertRaisesRegex(ValueError, 'down must be 1 through 4'):
             reducer.apply_play({**state, 'down': 5}, 'run', 1)
-        with self.assertRaisesRegex(ValueError, 'distance must be 1 through the distance to goal'):
+        with self.assertRaisesRegex(ValueError, 'distance must be positive through goal'):
             reducer.apply_play({**state, 'togo': 6}, 'run', 1)
 
     def test_goal_line_overruns_are_credited_at_the_boundary_with_raw_sample_preserved(self):
@@ -191,6 +196,61 @@ class FieldBoundarySampling(unittest.TestCase):
                 else:
                     self.assertIsNone(outcome['yardage_boundary_adjustment'])
                 e1.check_drive(plays, terminal)
+
+
+class OwnEndZoneResolution(unittest.TestCase):
+    """A loss that reaches the offense's own end zone is a score, not a crash.
+
+    The Week 10 v1.7 batches lost two seeds (HOU_CLE 300055, JAX_TEN 300088) to a bare
+    ValueError here: sack_fumble_lost for -9 from own 7. The reducer now resolves the
+    end-zone outcome, and still refuses to invent a recovery it was not told about.
+    """
+
+    STATE = {'offense': 'OFF', 'defense': 'DEF', 'down': 3, 'togo': 10, 'yl': 93}
+
+    def test_tackle_in_the_end_zone_is_a_safety(self):
+        after, terminal, flags = reducer.apply_play(self.STATE, 'sack', -9)
+        self.assertIsNone(after)
+        self.assertEqual(terminal, 'safety')
+        self.assertTrue(flags['safety'])
+        self.assertEqual(flags['scoring_team'], 'DEF')
+
+    def test_run_loss_into_the_end_zone_is_a_safety(self):
+        _, terminal, flags = reducer.apply_play(self.STATE, 'run', -9)
+        self.assertEqual(terminal, 'safety')
+        self.assertTrue(flags['safety'])
+
+    def test_defense_recovering_a_fumble_in_the_end_zone_is_a_touchdown(self):
+        after, terminal, flags = reducer.apply_play(self.STATE, 'sack_fumble_lost', -9,
+                                                    recovery='defense')
+        self.assertIsNone(after)
+        self.assertEqual(terminal, 'touchdown')
+        self.assertTrue(flags['touchdown'])
+        self.assertFalse(flags['safety'])
+        self.assertEqual(flags['scoring_team'], 'DEF')
+
+    def test_offense_recovering_its_own_fumble_in_the_end_zone_is_a_safety(self):
+        _, terminal, flags = reducer.apply_play(self.STATE, 'sack_fumble_lost', -9,
+                                               recovery='offense')
+        self.assertEqual(terminal, 'safety')
+        self.assertTrue(flags['safety'])
+        self.assertEqual(flags['scoring_team'], 'DEF')
+
+    def test_unknown_recovery_is_a_named_block_not_a_crash(self):
+        with self.assertRaises(reducer.UnmodelledOutcome) as caught:
+            reducer.apply_play(self.STATE, 'sack_fumble_lost', -9)
+        self.assertEqual(caught.exception.reason, 'own_end_zone_fumble_recovery_unresolved')
+
+    def test_bad_recovery_role_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, "recovery must be 'offense' or 'defense'"):
+            reducer.apply_play(self.STATE, 'sack_fumble_lost', -9, recovery='defence')
+
+    def test_loss_that_stops_at_the_goal_line_is_not_an_end_zone_score(self):
+        # 93 - (-7) = 100 exactly: the ball is dead on the goal line, so the existing
+        # own-goal-line safety convention still applies rather than a fumble ruling.
+        _, terminal, flags = reducer.apply_play(self.STATE, 'sack', -7)
+        self.assertEqual(terminal, 'safety')
+        self.assertTrue(flags['safety'])
 
 
 class QuarterTransitions(unittest.TestCase):
