@@ -382,5 +382,54 @@ class RunReport(unittest.TestCase):
             self.assertEqual(result['status_counts']['blocked'], 1)
 
 
+class SeedBuckets(unittest.TestCase):
+    def test_ranges_ids_and_every_requested_seed_is_accounted_for(self):
+        with tempfile.TemporaryDirectory() as temp:
+            run_dir = Path(temp) / 'run'
+            run_dir.mkdir()
+            make_run(run_dir)
+
+            result = report.analyze_run(run_dir)
+
+            buckets = {row['outcome']: row for row in result['seed_buckets']}
+            self.assertEqual(buckets['success']['ranges'], [[1, 1], [4, 4]])
+            self.assertEqual(buckets['blocked']['seeds'], [2])
+            self.assertEqual(buckets['error']['seeds'], [3])
+            self.assertEqual(buckets['not_reported']['count'], 0)
+            self.assertTrue(result['all_seeds_accounted'])
+            self.assertEqual(result['error_details'][0]['error'], 'ValueError: injected failure')
+            self.assertFalse(result['error_details'][0]['trace_recorded'])
+
+    def test_a_traced_error_keeps_its_full_trace_and_a_missing_seed_is_named(self):
+        with tempfile.TemporaryDirectory() as temp:
+            run_dir = Path(temp) / 'run'
+            run_dir.mkdir()
+            trace = 'Traceback (most recent call last):\n  File "x.py", line 1\nValueError: boom'
+            write_jsonl(run_dir / 'worker-01.seeds.jsonl', [
+                {'header': {'schema': 'lp.nfl.seed-ledger.v1', 'game_id': '2026_08_AAA_BBB',
+                            'seed_start': 1, 'requested_games': 3}},
+                {'seed': 1, 'outcome': {'seed': 1, 'status': 'complete_regulation', 'valid_full_game': True,
+                                        'complete_game': True}},
+                {'seed': 2, 'outcome': {'seed': 2, 'status': 'simulation_error', 'valid_full_game': False,
+                                        'complete_game': False, 'error': 'ValueError: boom',
+                                        'traceback': trace}},
+            ])
+
+            result = report.analyze_run(run_dir)
+
+            buckets = {row['outcome']: row for row in result['seed_buckets']}
+            self.assertEqual(buckets['not_reported']['seeds'], [3])
+            self.assertTrue(result['all_seeds_accounted'])
+            detail = result['error_details'][0]
+            self.assertEqual(detail['seed'], 2)
+            self.assertEqual(detail['traceback'], trace)
+            self.assertTrue(detail['trace_recorded'])
+            self.assertIn('ValueError: boom', report.render_markdown([result]))
+
+    def test_seed_ranges_collapse_runs(self):
+        self.assertEqual(report._seed_ranges([1, 2, 3, 5, 7, 8]), [[1, 3], [5, 5], [7, 8]])
+        self.assertEqual(report._seed_ranges([]), [])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -32,6 +32,7 @@ import shlex
 import sqlite3
 import sys
 import time
+import traceback
 
 HERE = Path(__file__).resolve().parent
 # SLC v2 (--slc-v2): the pinned tables each v2 layer loads unless the run names another (amendments 6 and 7).
@@ -439,7 +440,7 @@ def _record_outcome(seed, record=None, error=None, validation_error=False):
         return {'seed': seed, 'status': 'simulation_error', 'blocker': None,
                 'valid_full_game': False, 'complete_game': False, 'regulation_end_reached': False,
                 'tied_at_regulation_end': False, 'home_points': None, 'away_points': None,
-                'score_scope': 'none', 'error': str(error)[:500]}
+                'score_scope': 'none', 'error': str(error)}
     blocker = record.get('blocker')
     regulation_end = bool(record.get('regulation_end_reached') or (
         blocker == 'overtime_not_modelled' and record.get('final_quarter') == 4
@@ -457,7 +458,7 @@ def _record_outcome(seed, record=None, error=None, validation_error=False):
         'home_points': record.get('points', {}).get('A'), 'away_points': record.get('points', {}).get('B'),
         'score_scope': 'valid_final' if valid else 'regulation_end_only' if regulation_end else 'partial',
         'unsupported_rules': record.get('unsupported_rules', []),
-        'error': str(error)[:500] if error else None,
+        'error': str(error) if error else None,
     }
     if 'research_integration' in record:  # present only with a research flag on; flags-off rows are unchanged
         row['research_integration'] = record['research_integration']
@@ -537,6 +538,7 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
     record = None
     error = None
     caught_exception = None
+    trace = None
     validation_error = False
     decisions = None
     try:
@@ -551,8 +553,11 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
     except Exception as exc:  # every requested seed gets an outcome row, including generator/validator failures
         error = f'{type(exc).__name__}: {exc}'
         caught_exception = exc
+        trace = traceback.format_exc()
         validation_error = record is not None
     outcome = _record_outcome(seed, record, error, validation_error)
+    if trace is not None:
+        outcome['traceback'] = trace
     if record and record.get('paired_random_streams'):
         outcome['paired_random_streams'] = record['paired_random_streams']
     if caught_exception is not None:
@@ -607,6 +612,7 @@ def _simulate_seed(seed, ref, snapshot, profile_manifest=None, archive_validatio
                               f'source_artifact_hashes={hashes}')
             if outcome['status'] not in ERROR_STATUSES:
                 outcome = _record_outcome(seed, record, boxscore_error, validation_error=True)
+                outcome['traceback'] = traceback.format_exc()
                 if decisions is not None:
                     outcome['playcall'] = slc_engine.summary(decisions, record)
             # Preserve an auditable error line even when strict roster identity or reconciliation fails.

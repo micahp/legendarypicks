@@ -170,6 +170,30 @@ def _record_for(records, seed):
     return records.setdefault(seed, {'priorities': {'outcome': -1, 'boxscore': -1}})
 
 
+def _seed_ranges(seeds):
+    """Collapse seed IDs into inclusive [first, last] runs, so any group of seeds is listed without writing each one."""
+    runs = []
+    for seed in sorted(seeds):
+        if runs and seed == runs[-1][1] + 1:
+            runs[-1][1] = seed
+        else:
+            runs.append([seed, seed])
+    return runs
+
+
+def _error_detail(seed, outcome):
+    """Exact error text, full traceback, and saved failing record for one errored seed, for reproduction."""
+    trace = outcome.get('traceback')
+    return {
+        'seed': seed, 'status': outcome.get('status'),
+        'error': outcome.get('error') or outcome.get('boxscore_error') or None,
+        'trace_recorded': trace is not None, 'traceback': trace,
+        'assertion_failure': outcome.get('assertion_failure'),
+        'failed_record': outcome.get('failed_record'),
+        'failed_record_unavailable': outcome.get('failed_record_unavailable'),
+    }
+
+
 def _compact_player(player):
     keep = ('stable_player_id', 'player_id', 'name', 'team', 'position', 'starter', 'starter_basis', 'attribution')
     compact = {key: player[key] for key in keep if key in player}
@@ -231,7 +255,8 @@ def _set_outcome(records, outcome, priority):
     if priority >= row['priorities']['outcome']:
         row['outcome'] = {key: outcome[key] for key in (
             'seed', 'status', 'valid_full_game', 'complete_game', 'blocker', 'error',
-            'boxscore_error', 'final_tie', 'tied', 'home_points', 'away_points', 'playcall') if key in outcome}
+            'boxscore_error', 'final_tie', 'tied', 'home_points', 'away_points', 'playcall', 'traceback',
+            'assertion_failure', 'failed_record', 'failed_record_unavailable') if key in outcome}
         row['priorities']['outcome'] = priority
     box = outcome.get('boxscore')
     if isinstance(box, dict):
@@ -253,6 +278,7 @@ def _set_boxscore(records, boxscore, priority):
 def _read_artifacts(path: Path):
     records = {}
     requested_by_worker = {}
+    seed_start_by_worker = {}
     input_hashes = {}
     worker_names = set()
     game_ids = set()
@@ -266,6 +292,8 @@ def _read_artifacts(path: Path):
                     header = row['header'] or {}
                     if header.get('requested_games') is not None:
                         requested_by_worker.setdefault(name.split('.')[0], int(header['requested_games']))
+                    if header.get('seed_start') is not None:
+                        seed_start_by_worker.setdefault(name.split('.')[0], int(header['seed_start']))
                     if header.get('game_id'):
                         game_ids.add(header['game_id'])
                 elif name.endswith('.seeds.jsonl'):
@@ -288,13 +316,23 @@ def _read_artifacts(path: Path):
         requested = simulation.get('requested_games', summary.get('requested_games'))
         if requested is not None:
             requested_by_worker.setdefault(name.split('.')[0], int(requested))
+        if simulation.get('seed_start') is not None:
+            seed_start_by_worker.setdefault(name.split('.')[0], int(simulation['seed_start']))
         for outcome in summary.get('outcomes') or []:
             _set_outcome(records, outcome, 2)
         worker = summary = simulation = None
     requested = sum(requested_by_worker.values()) if requested_by_worker else len(records)
     if len(game_ids) > 1:
         raise ValueError(f'input contains multiple game IDs {sorted(game_ids)}; pass one matchup/run per --run')
-    return records, requested, input_hashes, sorted(worker_names), sorted(game_ids)
+    # Requested seeds per worker are consecutive from that worker's seed_start. Without a start for every
+    # worker, the requested seed IDs are unknown and missing seeds can only be counted, not named.
+    expected_seeds = None
+    if requested_by_worker and set(requested_by_worker) <= set(seed_start_by_worker):
+        expected_seeds = set()
+        for worker, count in requested_by_worker.items():
+            start = seed_start_by_worker[worker]
+            expected_seeds.update(range(start, start + count))
+    return records, requested, expected_seeds, input_hashes, sorted(worker_names), sorted(game_ids)
 
 
 def _mean_median(values):
@@ -463,11 +501,13 @@ def _player_metric_values(player):
 
 
 def _analyze(path: Path):
-    records, requested, input_hashes, workers, game_ids = _read_artifacts(path)
+    records, requested, expected_seeds, input_hashes, workers, game_ids = _read_artifacts(path)
     statuses = Counter()
     blockers = defaultdict(list)
     blocker_details = defaultdict(set)
     errors = defaultdict(list)
+    error_details = []
+    success_seeds, blocked_seeds, incomplete_seeds = [], [], []
     successful = []
     boxscore_count = 0
     final_ties = 0
@@ -475,13 +515,19 @@ def _analyze(path: Path):
         outcome, box = row.get('outcome') or {}, row.get('boxscore') or {}
         status = _normalize_status(outcome, box)
         statuses[status] += 1
+        if status == 'success':
+            success_seeds.append(seed)
+        if status == 'incomplete':
+            incomplete_seeds.append(seed)
         if status == 'blocked':
+            blocked_seeds.append(seed)
             reason, detail = _blocker_reason(outcome.get('blocker') or box.get('blocker'))
             blockers[reason].append(seed)
             if detail:
                 blocker_details[reason].add(detail)
         if status == 'error':
             errors[str(outcome.get('error') or outcome.get('boxscore_error') or outcome.get('status') or 'unspecified')].append(seed)
+            error_details.append(_error_detail(seed, outcome))
         if box:
             boxscore_count += 1
         if status == 'success' and box:
@@ -673,16 +719,36 @@ def _analyze(path: Path):
     for (team, metric), values in scores_by_team.items():
         if metric == 'points':
             score_summary[team] = _mean_median(values)
-    blocker_rows = [{'reason': reason, 'count': len(seeds), 'seeds': sorted(seeds),
+    blocker_rows = [{'reason': reason, 'count': len(seeds), 'ranges': _seed_ranges(seeds), 'seeds': sorted(seeds),
                      'details': sorted(blocker_details[reason])}
                     for reason, seeds in sorted(blockers.items())]
-    error_rows = [{'reason': reason, 'count': len(seeds), 'seeds': sorted(seeds)}
+    error_rows = [{'reason': reason, 'count': len(seeds), 'ranges': _seed_ranges(seeds), 'seeds': sorted(seeds)}
                   for reason, seeds in sorted(errors.items())]
+    # Every requested seed lands in exactly one bucket. Seeds with no artifact row are named only when the
+    # requested seed IDs are known (see _read_artifacts).
+    not_reported = sorted(expected_seeds - set(records)) if expected_seeds is not None else None
+    error_seeds = [detail['seed'] for detail in error_details]
+    seed_buckets = [
+        {'outcome': 'success', 'count': len(success_seeds), 'ranges': _seed_ranges(success_seeds)},
+        {'outcome': 'blocked', 'count': len(blocked_seeds), 'ranges': _seed_ranges(blocked_seeds),
+         'seeds': sorted(blocked_seeds)},
+        {'outcome': 'error', 'count': len(error_seeds), 'ranges': _seed_ranges(error_seeds),
+         'seeds': sorted(error_seeds)},
+        {'outcome': 'incomplete', 'count': len(incomplete_seeds), 'ranges': _seed_ranges(incomplete_seeds),
+         'seeds': sorted(incomplete_seeds)},
+        {'outcome': 'not_reported',
+         'count': len(not_reported) if not_reported is not None else max(0, requested - len(records)),
+         'ranges': _seed_ranges(not_reported) if not_reported is not None else None,
+         'seeds': not_reported},
+    ]
     return {
         'schema': 'lp.nfl.slc-run-report.v1', 'run': str(path),
         'game_ids': game_ids, 'workers': workers, 'input_sha256': input_hashes,
         'requested_seed_count': requested, 'processed_seed_count': len(records),
         'unreported_seed_count': max(0, requested - len(records)), 'status_counts': status_counts,
+        'seed_buckets': seed_buckets,
+        'all_seeds_accounted': sum(bucket['count'] for bucket in seed_buckets) == requested,
+        'error_details': error_details,
         'final_tie_count': final_ties, 'boxscore_games': boxscore_count,
         'scored_games': len(successful), 'scores': score_summary,
         'blockers': blocker_rows, 'errors': error_rows,
@@ -772,6 +838,14 @@ def render_markdown(results):
         for label in ('success', 'blocked', 'error', 'incomplete'):
             lines.append(f"| {label.title()} | {result['status_counts'][label]} |")
         lines.append(f"| Final overtime ties | {result['final_tie_count']} |")
+        lines.extend(['', '### Seed buckets', '', '| Outcome | Count | Seed ranges | Seed IDs |', '|---|---:|---|---|'])
+        for bucket in result['seed_buckets']:
+            ranges = ('unknown: requested seed IDs not recorded' if bucket['ranges'] is None
+                      else ', '.join(f'{first}-{last}' if first != last else str(first)
+                                     for first, last in bucket['ranges']) or '—')
+            ids = ', '.join(map(str, bucket.get('seeds') or [])) or '—'
+            lines.append(f"| {bucket['outcome']} | {bucket['count']} | {ranges} | {ids} |")
+        lines.append(f"All requested seeds accounted for: {'yes' if result['all_seeds_accounted'] else 'NO'}")
         lines.extend(['', f"Fallback counters available for {result.get('fallback_seeds_observed', 0)} seeds; missing counters are unknown.",
                       f"Fallback events: {result.get('fallback_events') or {}}",
                       'Success includes completed games with unverified inputs. Player statistics are sampled allocations; starter is a frozen depth-chart role. Targets assign a receiver to every modeled pass attempt. Lineup appearances cover skill positions only and are not full snaps.'])
@@ -793,6 +867,20 @@ def render_markdown(results):
                 if len(item['seeds']) > 30:
                     seeds += f" … (+{len(item['seeds']) - 30})"
                 lines.append(f"| `{item['reason']}` | {item['count']} | {seeds} |")
+        if result['error_details']:
+            lines.extend(['', '### Errored seeds: exact error and trace', ''])
+            for detail in result['error_details']:
+                lines.extend([f"#### Seed {detail['seed']} · {detail['status']}", '',
+                              '```text', str(detail['error'] or 'error text not recorded'), '```'])
+                if detail['trace_recorded']:
+                    lines.extend(['```text', detail['traceback'].rstrip(), '```'])
+                else:
+                    lines.append('Traceback not recorded: this artifact predates trace capture.')
+                if detail['failed_record']:
+                    lines.extend(['', f"Failing record: {detail['failed_record']}"])
+                elif detail['failed_record_unavailable']:
+                    lines.extend(['', f"Failing record unavailable: {detail['failed_record_unavailable']}"])
+                lines.append('')
         if result['period_scores']:
             lines.extend(['', '### Quarter-by-quarter points', '',
                           '| Team | Period | Mean | Median | Games |', '|---|---|---:|---:|---:|'])
