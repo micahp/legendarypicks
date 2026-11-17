@@ -54,6 +54,7 @@ import slc_config  # noqa: E402
 import slc_outputs  # noqa: E402
 import historical_archive  # noqa: E402
 import recovery_model  # noqa: E402
+import reducer  # noqa: E402
 import source_preflight  # noqa: E402
 import football_assertions  # noqa: E402
 import seed_selection  # noqa: E402
@@ -1073,6 +1074,8 @@ def run_batch(args):
                 safety_kick_table=safety_kick_table)
     ref.own_end_zone = args.own_end_zone
     ref.geometry_filter = args.geometry_filter
+    # Fails before any game runs if the rules and the recovery model do not fit together.
+    rules_engine = reducer.rules_engine_manifest(args.own_end_zone, args.recovery_model, args.geometry_filter)
     # The recovery model draws the outcome of a fumble at the goal line (V1.7). Off by default; V1.6 is unchanged.
     ref.recovery_model = recovery_model.load(args.recovery_model_old_weight) if args.recovery_model else None
     if getattr(ref, 'contextual_sampler', None) is not None:
@@ -1284,6 +1287,7 @@ def run_batch(args):
             'resolved_model_id': profile_manifest['model_id'],
             'slc_profile': profile_manifest['profile'],
             'configuration_hash': profile_manifest['configuration_hash'],
+            'rules_engine': rules_engine,
             'evaluation_class': profile_manifest['evaluation_class'],
             'prospective': profile_manifest['prospective'],
             'seed_start': args.seed_start, 'seed_end_inclusive': seed_values[-1],
