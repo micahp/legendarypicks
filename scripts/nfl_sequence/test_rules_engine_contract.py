@@ -5,12 +5,20 @@ two modes are the same function, so a score change between them can only come fr
 
 Run: PYTHONPATH=scripts/nfl_sequence python3 -m unittest scripts/nfl_sequence/test_rules_engine_contract.py
 """
+import argparse
 import sys
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import reducer  # noqa: E402
+import simulate_pregame_batch as batch  # noqa: E402
+
+
+def cli(profile='custom', own_end_zone=None, geometry_filter=None, recovery_model=None):
+    return batch.apply_rules_defaults(argparse.Namespace(slc_profile=profile, own_end_zone=own_end_zone,
+                                                         geometry_filter=geometry_filter,
+                                                         recovery_model=recovery_model))
 
 
 def state(yl):
@@ -99,6 +107,41 @@ class OwnEndZoneTransitions(unittest.TestCase):
     def test_frozen_v16_still_refuses_a_sack_fumble_past_the_own_goal_line(self):
         with self.assertRaises(ValueError):
             reducer.apply_play(state(99), 'sack_fumble_lost', -5, 20, own_end_zone='refuse')
+
+
+class RulesDefaultsByProfile(unittest.TestCase):
+    def test_frozen_v16_defaults_to_the_refusal_with_every_rules_flag_off(self):
+        args = cli('v1_6_candidate')
+        self.assertEqual((args.own_end_zone, args.geometry_filter, args.recovery_model), ('refuse', False, False))
+
+    def test_v17_defaults_to_the_corrected_rules_with_the_recovery_model_on(self):
+        args = cli('v1_7_candidate')
+        self.assertEqual((args.own_end_zone, args.geometry_filter, args.recovery_model), ('resolve', True, True))
+
+    def test_v17_can_turn_the_recovery_model_off_explicitly(self):
+        args = cli('v1_7_candidate', recovery_model=False)
+        self.assertEqual((args.own_end_zone, args.geometry_filter, args.recovery_model), ('resolve', True, False))
+
+    def test_v17_refusing_its_own_end_zone_conflicts_with_its_recovery_model(self):
+        with self.assertRaises(ValueError):
+            cli('v1_7_candidate', own_end_zone='refuse')
+
+    def test_the_recovery_flag_implies_resolve_and_the_geometry_filter_on_v16(self):
+        args = cli('v1_6_candidate', recovery_model=True)
+        self.assertEqual((args.own_end_zone, args.geometry_filter, args.recovery_model), ('resolve', True, True))
+
+    def test_rules_fix_is_v16_with_resolve_and_the_geometry_filter_and_no_recovery_model(self):
+        args = cli('v1_6_rules_fix')
+        self.assertEqual(args.slc_profile, 'v1_6_candidate')
+        self.assertEqual((args.own_end_zone, args.geometry_filter, args.recovery_model), ('resolve', True, False))
+        self.assertEqual(reducer.rules_engine_manifest(args.own_end_zone, args.recovery_model,
+                                                       args.geometry_filter)['policy'],
+                         'resolve_unmodelled_fumbles_halt')
+
+    def test_rules_fix_conflicts_are_refused(self):
+        for kwargs in ({'own_end_zone': 'refuse'}, {'geometry_filter': False}, {'recovery_model': True}):
+            with self.subTest(**kwargs), self.assertRaises(ValueError):
+                cli('v1_6_rules_fix', **kwargs)
 
 
 if __name__ == '__main__':
