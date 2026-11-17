@@ -113,6 +113,10 @@ No LP live forecast/lock/grading updates, production writes, shared engine chang
   worktree unless the change is small: `git worktree add /root/lp-<task> -b feat/<task> dev`. A small
   change may go directly on `dev` in this checkout. Never `git switch`; never
   `git checkout -- <path>`; never `git add -A` (stage named files); never push without Micah.
+- Python dependencies and the project environment are in `backend/venv/`. Use
+  `backend/venv/bin/python` for Python scripts and tests. In SLC worktrees without a local
+  `backend/venv/`, use the shared `/root/legendarypicks/backend/venv/bin/python`. Do not assume
+  PATH `python` or `python3` is the project interpreter; verify `sys.executable` when needed.
 - Never run `npm`, `npx` or `yarn` from a worktree: its `node_modules` is a symlink to the main one
   and npm prunes it (took the site down 07-27). Use `/root/legendarypicks/node_modules/.bin/<tool>`.
   If `next: not found`, stop and report; recovery is `npm ci` in the main repo, by a human's call.
