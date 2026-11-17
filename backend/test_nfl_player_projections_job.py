@@ -75,10 +75,10 @@ class Db(unittest.TestCase):
                 model TEXT NOT NULL, model_version TEXT NOT NULL, started_at TEXT NOT NULL, finished_at TEXT,
                 params_json TEXT NOT NULL, status TEXT NOT NULL, error TEXT);
             CREATE TABLE nfl_schedule (game_id TEXT, season INTEGER, week INTEGER, game_type TEXT,
-                away_team TEXT, home_team TEXT, home_score INTEGER, away_score INTEGER);
+                away_team TEXT, home_team TEXT, home_score INTEGER, away_score INTEGER, gameday TEXT);
         """)
         mig.migrate(self.con)
-        self.con.execute("INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,NULL,NULL)",
+        self.con.execute("INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,NULL,NULL,NULL)",
                          (gid(4), 2025, 4, "REG", "A", "B"))
 
     def test_migration_is_idempotent_and_needs_model_runs(self):
@@ -100,6 +100,18 @@ class Db(unittest.TestCase):
         self.assertTrue(all(set(e["scenarios"]) == {"base"} for e in mine))
         self.assertTrue(all(e["p_plays"] == 1.0 for e in mine))
         self.assertEqual(0, summary["skipped_final"])
+
+    def test_next_week_is_the_week_of_the_earliest_unplayed_game_not_yet_started(self):
+        self.con.execute("UPDATE nfl_schedule SET gameday='2025-11-20'")
+        self.con.executemany("INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,?,?,?)", [
+            ("2025_03_A_B", 2025, 3, "REG", "A", "B", 20, 17, "2025-11-16"),
+            ("2025_03_C_D", 2025, 3, "REG", "C", "D", None, None, "2025-11-16"),   # stale: dated before today
+            ("2025_04_C_D", 2025, 4, "REG", "C", "D", 24, 10, "2025-11-20"),       # Thursday, already final
+            ("2025_04_E_F", 2025, 4, "REG", "E", "F", None, None, "2025-11-23"),   # Sunday, still to play
+        ])
+        self.assertEqual(4, job.next_week(self.con, 2025, "2025-11-18"))   # Tuesday
+        self.assertEqual(4, job.next_week(self.con, 2025, "2025-11-23"))   # Sunday refresh: same week
+        self.assertIsNone(job.next_week(self.con, 2025, "2025-11-30"))     # nothing left to play
 
     def test_final_game_is_skipped_and_counted(self):
         entries, summary = self.week_rows(final=True)

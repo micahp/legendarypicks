@@ -254,10 +254,11 @@ def write_week(con, season, week, entries, as_of, params):
     return run_id, len(rows)
 
 
-def next_week(con, season):
+def next_week(con, season, today):
+    # The week of the earliest unplayed game dated on or after today. An older game with no score is stale, not upcoming.
     row = con.execute(
-        "SELECT MIN(week) FROM nfl_schedule WHERE season=? AND game_type='REG' AND home_score IS NULL",
-        (season,)).fetchone()
+        "SELECT MIN(week) FROM nfl_schedule WHERE season=? AND game_type='REG' AND home_score IS NULL "
+        "AND gameday >= ?", (season, today)).fetchone()
     return row[0]
 
 
@@ -292,7 +293,7 @@ def main(argv=None):
         print("2025 Questionable n=%d: Brier with the 2024 rate %.3f = %.4f, with flat 0.70 = %.4f" % (
             len(q25), r24, brier(r24, q25), brier(0.70, q25)))
         return
-    week = a.week or next_week(con, a.season)
+    week = a.week or next_week(con, a.season, dt.date.today().isoformat())
     if week is None:
         raise SystemExit("no unplayed regular-season week in %d" % a.season)
     if a.fit_calibration:
