@@ -28,6 +28,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import e0_single_play as e0  # noqa: E402
 import holdout  # noqa: E402
+import recovery_endpoint  # noqa: E402  post-recovery endpoint pool (V1.7)
 import reducer  # noqa: E402  the shared reducer
 import field_goal_feasibility as fg_feasibility  # noqa: E402
 import football_assertions  # noqa: E402
@@ -423,6 +424,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         geometry_on = penalty_controller is not None or geometry_filter or recovery_model is not None
         modeled = recovery_model is not None
         recovery_draw = None
+        recovery_detail = None
         if geometry_on:
             # Sample only turnover outcomes whose original net gain remains
             # in the field of play in this *simulated* situation. This is a
@@ -509,18 +511,29 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                             if paired_random_streams is not None
                             else random.Random(f'{simulation_id}:{drive_index}:{play_index}:recovery'))
             recovery_draw = recovery_model.draw(recovery_rng)
+            fumble_spot = st['yl'] - yards   # the destination of the fumble, before the boundary credit below
             # The recorded gain stops at the own goal line, as the runs do; the source sample is kept for audit.
             yards = st['yl'] - 100
             yardage_boundary_adjustment = {'boundary': 'own_goal_line', 'sampled_yards_gained': sampled_yards,
                                            'credited_yards_gained': yards}
         try:
-            if recovery_draw is not None:
+            if recovery_draw is not None and recovery_draw[1] == 'continuation':
+                side = 'defense' if recovery_draw[0] == 'defense_recovers_in_field' else 'offense'
+                restricted = recovery_endpoint.is_restricted(st['down'], st['quarter'], st['clock'])
+                teammate = side == 'offense' and restricted and recovery_model.teammate_draw(recovery_rng)
+                endpoint = recovery_model.endpoint_draw(recovery_rng, side, fumble_spot, teammate)
+                recovery_detail = {'recovering_side': side, 'restricted': restricted,
+                                   'teammate_recovery': bool(teammate), 'endpoint': endpoint}
+                after, play_terminal, flags = reducer.apply_recovery_endpoint(st, side, endpoint)
+            elif recovery_draw is not None:
                 after, play_terminal, flags = reducer.apply_modeled_recovery(st, recovery_draw[1])
             else:
                 after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome,
                                                                  own_end_zone=own_end_zone)
         except reducer.UnmodelledOutcome as blocked:
             return halt(blocked.reason)
+        except recovery_endpoint.EndpointUnavailable as unavailable:
+            return halt(f'recovery_endpoint_unavailable: {unavailable}')
         except (AssertionError, ValueError) as invalid:
             policy_decisions = getattr(sampling_policy, 'decisions', None)
             sampled_decision = policy_decisions[-1] if isinstance(policy_decisions, list) and policy_decisions else None
@@ -688,7 +701,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                         'recovery_model': (None if recovery_draw is None else {
                             'category': recovery_draw[0], 'outcome': recovery_draw[1],
                             'old_weight': recovery_model.old_weight,
-                            'source': 'simulated_from_audited_frequencies'}),
+                            'source': 'simulated_from_audited_frequencies',
+                            'endpoint': recovery_detail}),
                         'first_down': (flags.get('first_down', False) or bool(
                             penalty_info and penalty_info.enforcement.get('accepted')
                             and penalty_info.enforcement.get('automatic_first_down'))),

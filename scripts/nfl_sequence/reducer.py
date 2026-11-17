@@ -96,9 +96,70 @@ def apply_modeled_recovery(st, outcome):
         flags['safety'] = True
         flags['scoring_team'] = st['defense']
         return None, 'safety', flags
-    if outcome == 'unresolved':
-        raise UnmodelledOutcome('recovery_continuation_endpoint_unmodeled')
+    if outcome == 'continuation':
+        raise UnmodelledOutcome('continuation_requires_endpoint')
     raise ValueError(f'unknown recovery outcome {outcome!r}')
+
+
+def apply_recovery_endpoint(st, side, endpoint):
+    """Resolve a post-recovery endpoint (V1.7). Returns (after, terminal, flags).
+
+    `side` is who recovered ('offense' or 'defense'). `endpoint` comes from recovery_endpoint.draw: terminal and end_yl
+    in the offense's frame. Downs and possession follow the state: the fumbled play used the current down, so the
+    next snap is down+1 with the remaining distance, unless the offense gained the first down. Fourth down that does
+    not reach the line is a turnover on downs at the endpoint.
+    """
+    flags = _no_flags()
+    term, end = endpoint['terminal'], endpoint.get('end_yl')
+    if term == 'touchdown':
+        flags['touchdown'] = True
+        flags['scoring_team'] = st['offense'] if side == 'offense' else st['defense']
+        return None, 'touchdown', flags
+    if term == 'safety':
+        if side != 'offense':
+            raise UnmodelledOutcome('defensive_recovery_safety_not_modelled')
+        flags['safety'] = True
+        flags['scoring_team'] = st['defense']
+        return None, 'safety', flags
+    if end is None:
+        raise UnmodelledOutcome(f'endpoint_missing_spot:{term}')
+    if side == 'defense':
+        if end >= 100:
+            flags['touchdown'] = True
+            flags['scoring_team'] = st['defense']
+            return None, 'touchdown', flags
+        if end <= 0:
+            raise UnmodelledOutcome('defensive_return_into_defense_end_zone_not_modelled')
+        new_yl = 100 - end
+        flags['turnover'] = True
+        return ({'offense': st['defense'], 'defense': st['offense'], 'down': 1,
+                 'togo': min(10, new_yl), 'yl': new_yl}, 'turnover', flags)
+    if term == 'incomplete' and end >= 100:
+        # The official record marks these plays as no score (no safety flag), so the reducer does not decide them.
+        raise UnmodelledOutcome('incomplete_pass_from_own_end_zone_unverified')
+    if end >= 100:
+        # Dead in the offense's own end zone through the offense's own action: a safety (the stated rule).
+        flags['safety'] = True
+        flags['scoring_team'] = st['defense']
+        return None, 'safety', flags
+    if end <= 0:
+        flags['touchdown'] = True
+        flags['scoring_team'] = st['offense']
+        return None, 'touchdown', flags
+    gained = st['yl'] - end
+    togo_left = st['togo'] - gained
+    if togo_left <= 0:
+        flags['first_down'] = True
+        return ({'offense': st['offense'], 'defense': st['defense'], 'down': 1,
+                 'togo': min(10, end), 'yl': end}, None, flags)
+    if st['down'] == 4:
+        flags['turnover_on_downs'] = True
+        flags['turnover'] = True
+        new_yl = 100 - end
+        return ({'offense': st['defense'], 'defense': st['offense'], 'down': 1,
+                 'togo': min(10, new_yl), 'yl': new_yl}, 'turnover', flags)
+    return ({'offense': st['offense'], 'defense': st['defense'], 'down': st['down'] + 1,
+             'togo': togo_left, 'yl': end}, None, flags)
 
 
 def apply_play(st, event, yards, spot=None, kick_outcome=None, recovery=None, own_end_zone='refuse'):

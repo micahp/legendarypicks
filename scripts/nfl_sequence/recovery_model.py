@@ -8,12 +8,14 @@ from the audit with a discounted prior from 1999 to 2009.
 Outcomes:
 - touchdown: the defense scores (6 points, then the try and the scoring team's kickoff).
 - safety: the defense scores 2 points (then a safety free kick).
-- unresolved: the ball stays live, or the play ends with no score the model can place. The drive loop refuses it with a
-  named block. No endpoint is invented.
+- continuation: the ball stays live after the recovery. The post-recovery endpoint comes from
+  recovery_endpoint.py (observed movement from the recovery spot) and is resolved by the reducer. No spot is invented.
 
 This module does not touch V1.6. The drive loop uses it only when a recovery model is supplied.
 """
 import random
+
+import recovery_endpoint
 
 # Counts from the audit, split by era. Old = 1999-2009, new = 2010-2025 (primary).
 # Support lists the only outcomes each category can produce.
@@ -21,18 +23,18 @@ CATEGORIES = {
     'defense_recovers_in_offense_end_zone': {
         'old': {'touchdown': 8}, 'new': {'touchdown': 19}, 'support': ('touchdown',), 'rule': 'touchdown'},
     'offense_recovers_in_own_end_zone': {
-        'old': {'safety': 6, 'unresolved': 1}, 'new': {'safety': 13, 'unresolved': 3},
-        'support': ('safety', 'unresolved'), 'rule': None},
+        'old': {'safety': 6, 'continuation': 1}, 'new': {'safety': 13, 'continuation': 3},
+        'support': ('safety', 'continuation'), 'rule': None},
     'out_of_bounds_in_offense_end_zone': {
         'old': {'safety': 17}, 'new': {'safety': 12}, 'support': ('safety',), 'rule': 'safety'},
     'defense_recovers_in_field': {
-        'old': {'touchdown': 17, 'safety': 1}, 'new': {'touchdown': 11, 'unresolved': 3},
-        'support': ('touchdown', 'safety', 'unresolved'), 'rule': None},
+        'old': {'touchdown': 17, 'safety': 1}, 'new': {'touchdown': 11, 'continuation': 3},
+        'support': ('touchdown', 'safety', 'continuation'), 'rule': None},
     'offense_recovers_in_field': {
-        'old': {'safety': 7, 'unresolved': 3}, 'new': {'safety': 3, 'unresolved': 4},
-        'support': ('safety', 'unresolved'), 'rule': None},
+        'old': {'safety': 7, 'continuation': 3}, 'new': {'safety': 3, 'continuation': 4},
+        'support': ('safety', 'continuation'), 'rule': None},
 }
-OUTCOMES = ('touchdown', 'safety', 'unresolved')
+OUTCOMES = ('touchdown', 'safety', 'continuation')
 DEFAULT_OLD_WEIGHT = 0.5  # discount for 1999-2009 evidence; 1.0 is the fully pooled sensitivity check
 
 
@@ -68,9 +70,17 @@ class RecoveryModel:
         """Old counts count at old_weight. Used to report how much evidence sits behind each probability."""
         return {name: self.old_weight * _total(spec['old']) + _total(spec['new']) for name, spec in CATEGORIES.items()}
 
-    def unresolved_probability(self):
-        """Share of fumbles at the goal line that reach the named unresolved block."""
-        return sum(self.category_probability[c] * self.outcome_probability[c]['unresolved'] for c in CATEGORIES)
+    def continuation_probability(self):
+        """Share of fumbles at the goal line that stay live and need an endpoint."""
+        return sum(self.category_probability[c] * self.outcome_probability[c]['continuation'] for c in CATEGORIES)
+
+    def endpoint_draw(self, rng, side, base, restricted_teammate):
+        """Post-recovery endpoint from the observed pool. Tests may replace this with a fixed endpoint."""
+        return recovery_endpoint.pool().draw(rng, side, base, restricted_teammate=restricted_teammate)
+
+    def teammate_draw(self, rng):
+        """True when a teammate of the fumbler recovered (the fumbler recovers about 43 percent of the time)."""
+        return rng.random() >= recovery_endpoint.pool().fumbler_share
 
     def draw(self, rng):
         """Return (category, outcome). The random stream is the caller's, so the draw is reproducible."""
