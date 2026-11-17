@@ -31,6 +31,23 @@ def _no_flags():
     return {flag: False for flag in FLAGS}
 
 
+FUMBLE_EVENTS = ('fumble_lost', 'sack_fumble_lost')
+
+
+def lost_to_defense(event, outcome):
+    """True when the offense lost a fumble to the defense. This is a statistic, not a possession change.
+
+    A defensive fumble-return touchdown or safety has no next-snap possession change, but the offense still lost the
+    ball. Modeled recoveries set `fumble_lost_to_defense` on the play outcome. Ordinary turnover plays do not carry the
+    key, and for them a fumble turnover always means the defense recovered, so the turnover flag decides.
+    """
+    if event not in FUMBLE_EVENTS:
+        return False
+    if 'fumble_lost_to_defense' in outcome:
+        return bool(outcome['fumble_lost_to_defense'])
+    return bool(outcome.get('turnover'))
+
+
 def _validate_state(st):
     if not isinstance(st, dict):
         raise ValueError('play state must be an offense-relative mapping')
@@ -88,6 +105,7 @@ def apply_modeled_recovery(st, outcome, side='offense'):
     model exists yet. The reducer never invents a spot or a score for it.
     """
     flags = _no_flags()
+    flags['fumble_lost_to_defense'] = side == 'defense'
     if outcome == 'touchdown':
         flags['touchdown'] = True
         flags['scoring_team'] = st['defense']
@@ -110,6 +128,7 @@ def apply_recovery_endpoint(st, side, endpoint):
     not reach the line is a turnover on downs at the endpoint.
     """
     flags = _no_flags()
+    flags['fumble_lost_to_defense'] = side == 'defense'
     term, end = endpoint['terminal'], endpoint.get('end_yl')
     if term == 'touchdown':
         flags['touchdown'] = True

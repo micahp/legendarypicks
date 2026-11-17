@@ -519,7 +519,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
         try:
             if recovery_draw is not None and recovery_draw[1] == 'continuation':
                 category = recovery_draw[0]
-                side = 'defense' if category == 'defense_recovers_in_field' else 'offense'
+                side = 'defense' if category.startswith('defense_recovers') else 'offense'
                 # Stage one: where the recovery happens. A field recovery uses its audited spot; an end-zone one, the fumble spot.
                 base = (recovery_model.field_recovery_spot(recovery_rng, category)
                         if category in recovery_model.field_spots else fumble_spot)
@@ -531,7 +531,7 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                                    'teammate_recovery': bool(teammate), 'endpoint': endpoint}
                 after, play_terminal, flags = reducer.apply_recovery_endpoint(st, side, endpoint)
             elif recovery_draw is not None:
-                side = 'defense' if recovery_draw[0] == 'defense_recovers_in_field' else 'offense'
+                side = 'defense' if recovery_draw[0].startswith('defense_recovers') else 'offense'
                 after, play_terminal, flags = reducer.apply_modeled_recovery(st, recovery_draw[1], side)
             else:
                 after, play_terminal, flags = reducer.apply_play(st, event, yards, spot, kick_outcome,
@@ -732,6 +732,9 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                       'after': {'dir': after_dir,
                                 'los': e0.los(after_dir, yl_after) if after_has_position else None}},
         }
+        if recovery_draw is not None:
+            # Only modeled recoveries carry the key, so ordinary turnover outcomes keep their existing shape.
+            play['outcome']['fumble_lost_to_defense'] = bool(flags.get('fumble_lost_to_defense', False))
         if penalty_info is not None:
             play['outcome']['penalty'] = True
             play['outcome']['penalty_resolved'] = True
@@ -862,7 +865,8 @@ def check_drive(plays, terminal):
         and p['outcome']['yards_gained'] >= p['state_before']['yards_to_go']))
     return {'plays': len(plays), 'yards': sum(p['outcome']['yards_gained'] or 0 for p in plays),
             'first_downs': first_downs, 'terminal': terminal, 'touchdown': plays[-1]['outcome']['touchdown'],
-            'turnovers': sum(1 for p in plays if p['outcome']['turnover']),
+            'turnovers': sum(1 for p in plays if p['outcome']['turnover']
+                             or reducer.lost_to_defense(p['event_type'], p['outcome'])),
             'punts': sum(1 for p in plays if p['outcome']['punt']),
             'field_goal_attempts': sum(1 for p in plays if p['outcome']['field_goal_attempt']),
             'quarter_changes': sum(1 for p in plays if p['outcome']['quarter_change']),

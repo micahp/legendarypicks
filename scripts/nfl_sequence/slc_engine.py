@@ -28,6 +28,7 @@ import e0_single_play as e0  # noqa: E402
 import game_state as gs  # noqa: E402
 import playcall_model as pm  # noqa: E402
 import pre_event  # noqa: E402
+import reducer  # noqa: E402
 import slc_playcall as slc  # noqa: E402
 import football_assertions  # noqa: E402
 import nfl_team_codes  # noqa: E402
@@ -337,6 +338,12 @@ def scramble_bounds_from_pool(pool):
 
 def is_slc(ref):
     return isinstance(getattr(ref, 'contextual_sampler', None), slc.PlayCallSampler)
+
+
+def _defensive_scoring_fumble(event, outcome):
+    """A modeled fumble that the defense recovered and scored on (a fumble-return touchdown or a safety)."""
+    return (reducer.lost_to_defense(event, outcome) and outcome.get('recovery_model') is not None
+            and bool(outcome.get('touchdown') or outcome.get('safety')))
 
 
 def _legal_turnover_on_downs(play, outcome):
@@ -717,6 +724,26 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                    for field in ('passing_yards', 'receiving_yards')):
                 fail(index, decision, play,
                      'an interception cannot credit passing or receiving yards to the intended target')
+        elif event in ('fumble_lost', 'sack_fumble_lost') and _defensive_scoring_fumble(event, outcome):
+            # The defense recovered and scored: the offense still lost the ball, but there is no next-snap possession
+            # change. The score, the scoring team and the kickoff that follows are checked by the game state.
+            before = play.get('state_before') or {}
+            if outcome.get('touchdown'):
+                if outcome.get('scoring_team') != before.get('defense_team'):
+                    fail(index, decision, play, 'a defensive fumble-return touchdown must credit the recovering defense')
+            elif outcome.get('scoring_team') != before.get('offense_team'):
+                fail(index, decision, play, 'a defensive-recovery safety must credit the offense')
+            if outcome.get('turnover') or outcome.get('punt'):
+                fail(index, decision, play, 'a scoring fumble return has no next-snap change of possession to flag')
+        elif event in ('fumble_lost', 'sack_fumble_lost') and outcome.get('recovery_model') is not None:
+            # A modeled recovery by the offense: the offense keeps the ball unless the endpoint is a turnover on downs.
+            before = play.get('state_before') or {}
+            if outcome.get('touchdown') and outcome.get('scoring_team') != before.get('offense_team'):
+                fail(index, decision, play, 'an offense-recovered touchdown must credit the offense')
+            if outcome.get('safety') and outcome.get('scoring_team') != before.get('defense_team'):
+                fail(index, decision, play, 'an offense-recovered safety must credit the defense')
+            if outcome.get('turnover') and not outcome.get('turnover_on_downs'):
+                fail(index, decision, play, 'an offense-recovered fumble can end in a turnover only on downs')
         elif event in ('fumble_lost', 'sack_fumble_lost'):
             if not outcome.get('turnover'):
                 fail(index, decision, play, 'a fumble_lost event must establish a recovered change of possession')

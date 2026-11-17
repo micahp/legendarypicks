@@ -14,8 +14,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import e0_single_play as e0  # noqa: E402
 import e1_drive as e1  # noqa: E402
 import football_assertions  # noqa: E402
+import game_state as gs  # noqa: E402
+import game_stats  # noqa: E402
+import reducer  # noqa: E402
 from test_penalty_goal_line_fumble import ChooseFirst  # noqa: E402
-from test_recovery_model import ForcedRecovery  # noqa: E402
+from test_recovery_model import ForcedRecovery, ScriptedPlays, play_game_with  # noqa: E402
 
 OWN_ONE = {'quarter': 4, 'clock': 420, 'offense': 'A', 'defense': 'B', 'yl': 99, 'down': 4, 'togo': 1, 'dir': 1}
 OWN_EIGHT = dict(OWN_ONE, yl=92, down=1, togo=10)
@@ -127,6 +130,105 @@ class V17ForcedOwnEndZoneTransitions(unittest.TestCase):
             plays, terminal = drive(MIDFIELD, 'fumble_lost', row, own_end_zone='resolve', geometry_filter=True,
                                     recovery_model=model)
             self.assertEqual(terminal, 'turnover')
+
+
+
+class FieldFumbleFirst(ScriptedPlays):
+    """The first offensive play is an ordinary fumble that the defense recovers in the field. No recovery model."""
+
+    def __init__(self):
+        super().__init__(fumble_first=False, fumble_on_fourth=False)
+
+    def get(self, key, default=None):
+        if self.calls == 0:
+            self.calls += 1
+            row = {'game_id': 'G1', 'play_id': 1, 'game_date': '2025-01-01', 'yards_gained': -2, 'touchdown': 0,
+                   'play_type': 'run', 'sack': 0, 'fumble_lost': 1}
+            return [('fumble_lost', row, self.runoff, 60)] * 60
+        return super().get(key, default)
+
+
+def first_event(record, event):
+    return next(p for d in record['drives'] for p in d['plays'] if p['event_type'] == event)
+
+
+class LostFumbleAccountingSemantics(unittest.TestCase):
+    """A lost fumble is a statistic. A possession change is a separate flag. The two can differ."""
+
+    def test_the_helper_reads_the_key_when_present_and_the_turnover_flag_otherwise(self):
+        self.assertTrue(reducer.lost_to_defense('sack_fumble_lost', {'fumble_lost_to_defense': True,
+                                                                     'turnover': False}))
+        self.assertFalse(reducer.lost_to_defense('sack_fumble_lost', {'fumble_lost_to_defense': False,
+                                                                      'turnover': True}))
+        self.assertTrue(reducer.lost_to_defense('fumble_lost', {'turnover': True}))  # ordinary turnover, no key
+        self.assertFalse(reducer.lost_to_defense('interception', {'turnover': True}))
+        self.assertFalse(reducer.lost_to_defense('run', {'fumble_lost_to_defense': True}))
+
+    def test_a_defensive_recovery_touchdown_is_a_lost_fumble_without_a_possession_change(self):
+        _after, terminal, flags = reducer.apply_modeled_recovery(dict(OWN_ONE), 'touchdown', side='defense')
+        self.assertEqual(terminal, 'touchdown')
+        self.assertTrue(flags['fumble_lost_to_defense'])
+        self.assertFalse(flags['turnover'])
+        self.assertEqual(flags['scoring_team'], 'B')
+
+    def test_an_offensive_recovery_safety_is_not_a_lost_fumble(self):
+        _after, terminal, flags = reducer.apply_modeled_recovery(dict(OWN_ONE), 'safety', side='offense')
+        self.assertEqual(terminal, 'safety')
+        self.assertFalse(flags['fumble_lost_to_defense'])
+        self.assertEqual(flags['scoring_team'], 'B')
+
+    def test_an_offensive_recovery_that_continues_is_not_a_lost_fumble(self):
+        after, terminal, flags = reducer.apply_recovery_endpoint(dict(OWN_EIGHT), 'offense',
+                                                                 {'terminal': 'spot', 'end_yl': 90})
+        self.assertIsNone(terminal)
+        self.assertFalse(flags['fumble_lost_to_defense'])
+        self.assertFalse(flags['turnover'])
+        self.assertEqual(after['offense'], 'A')
+
+
+class FullGameFumbleAccounting(unittest.TestCase):
+    def assertCompleted(self, record):
+        self.assertIn(record['status'], ('complete_regulation', 'complete_overtime'), record.get('blocker'))
+        gs.validate_game(record)
+
+    def team(self, record, name):
+        return game_stats.team_stats(record['drives'], record['points'])[name]
+
+    def test_defensive_recovery_touchdown_is_a_turnover_for_the_offense_and_the_game_completes(self):
+        record = play_game_with(ForcedRecovery('defense_recovers_in_offense_end_zone', 'touchdown'))
+        self.assertCompleted(record)
+        fumbles = [p for d in record['drives'] for p in d['plays'] if p['event_type'] == 'sack_fumble_lost']
+        self.assertTrue(fumbles)  # the scripted pool fumbles on each fourth down at the own one-yard line
+        for play in fumbles:
+            self.assertTrue(play['outcome']['fumble_lost_to_defense'])
+            self.assertFalse(play['outcome']['turnover'])  # no next-snap possession change
+            self.assertEqual(play['outcome']['scoring_team'], play['state_before']['defense_team'])
+        for team in ('A', 'B'):
+            lost = sum(1 for play in fumbles if play['state_before']['offense_team'] == team)
+            self.assertEqual(self.team(record, team).get('fumbles_lost', 0), lost)
+            self.assertEqual(self.team(record, team).get('turnovers', 0), lost)
+
+    def test_offensive_recovery_safety_is_not_counted_as_a_lost_fumble(self):
+        record = play_game_with(ForcedRecovery('offense_recovers_in_own_end_zone', 'safety'))
+        self.assertCompleted(record)
+        self.assertFalse(first_event(record, 'sack_fumble_lost')['outcome']['fumble_lost_to_defense'])
+        self.assertEqual(self.team(record, 'A').get('fumbles_lost', 0), 0)
+        self.assertEqual(self.team(record, 'A').get('turnovers', 0), 0)
+
+    def test_out_of_bounds_in_the_end_zone_is_not_counted_as_a_lost_fumble(self):
+        record = play_game_with(ForcedRecovery('out_of_bounds_in_offense_end_zone', 'safety'))
+        self.assertCompleted(record)
+        self.assertEqual(self.team(record, 'A').get('fumbles_lost', 0), 0)
+        self.assertEqual(self.team(record, 'A').get('turnovers', 0), 0)
+
+    def test_an_ordinary_field_fumble_keeps_its_legacy_turnover_count_and_outcome_shape(self):
+        record = play_game_with(None, pool=FieldFumbleFirst())
+        self.assertCompleted(record)
+        play = first_event(record, 'fumble_lost')
+        self.assertTrue(play['outcome']['turnover'])
+        self.assertNotIn('fumble_lost_to_defense', play['outcome'])  # no modeled recovery, so no new key
+        self.assertEqual(self.team(record, 'A').get('fumbles_lost', 0), 1)
+        self.assertEqual(self.team(record, 'A').get('turnovers', 0), 1)
 
 
 if __name__ == '__main__':
