@@ -3,6 +3,8 @@
 This is an explicit-ruling adapter, not an acceptance-choice model or a
 full-game clock/statistics driver. The normal game engine remains opt-in.
 """
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass
 
 from penalty_enforcement import DownState, enforce
