@@ -1,0 +1,471 @@
+"""Answers about the NFL slate, its inputs, and what has already run. Read-only.
+
+    python backend/oracle.py --db <picks.db>             the next slate, as text
+    python backend/oracle.py --db <picks.db> --json      the same answer as JSON
+    python backend/oracle.py --db <picks.db> --snapshot GAME_ID --as-of TS [--out FILE]
+                                                         a frozen pregame snapshot for one game
+    python backend/oracle.py --snap-counts --season S --through-week W --raw DIR --players-csv CSV --out FILE
+                                                         participation snap counts, from nflverse files
+
+Every field comes from a stored table or the sim-run index. A value the store does not hold is None, never a guess.
+The database is opened read-only. Projection status is read from game_projections and model_runs. Sim runs are read from
+the registry index, through the same verified reader the SLC code uses.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import sqlite3
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+DEFAULT_DB = Path(os.environ.get('LP_DB_PATH') or HERE / 'data' / 'picks.db')
+LEAGUE = 'nfl'
+
+
+def connect(db_path):
+    conn = sqlite3.connect(f'file:{Path(db_path)}?mode=ro', uri=True)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def read_sim_index(store=None):
+    """Entries from the sim-run registry index that pass its own hash check, and the lines that fail it."""
+    registry_dir = str(HERE.parent / 'scripts' / 'nfl_sequence')
+    if registry_dir not in sys.path:
+        sys.path.insert(0, registry_dir)
+    import sim_run_registry
+    entries, problems = sim_run_registry.read_index(store or sim_run_registry.DEFAULT_STORE)
+    return entries, problems
+
+
+def next_slate(conn, today):
+    """The week of the first unplayed game on or after `today`. Unplayed games dated before `today` are returned too."""
+    first = conn.execute(
+        'SELECT season, week, game_type FROM nfl_schedule WHERE home_score IS NULL AND gameday >= ? '
+        'ORDER BY gameday, gametime, game_id LIMIT 1', (today,)).fetchone()
+    stale = [dict(row) for row in conn.execute(
+        'SELECT game_id, season, week, gameday, away_team, home_team FROM nfl_schedule '
+        'WHERE home_score IS NULL AND gameday < ? ORDER BY gameday, game_id', (today,))]
+    return (dict(first) if first else None), stale
+
+
+def _latest_line(conn, game_id):
+    row = conn.execute(
+        'SELECT captured_at, source, spread_line, total_line FROM nfl_line_snapshots '
+        'WHERE league = ? AND game_id = ? ORDER BY captured_at DESC LIMIT 1', (LEAGUE, game_id)).fetchone()
+    return dict(row) if row else None
+
+
+def _schedule_versions(conn, game_id):
+    row = conn.execute(
+        'SELECT COUNT(*) AS versions, MIN(observed_at) AS first_seen, MAX(observed_at) AS last_seen '
+        'FROM nfl_schedule_versions WHERE game_id = ?', (game_id,)).fetchone()
+    return dict(row)
+
+
+def _projections(conn, game_id):
+    row = conn.execute(
+        'SELECT COUNT(*) AS rows_, SUM(locked) AS locked_rows, MAX(locked_at) AS last_locked_at, '
+        'COUNT(DISTINCT run_id) AS runs FROM game_projections WHERE league = ? AND game_id = ?',
+        (LEAGUE, game_id)).fetchone()
+    rows, locked = row['rows_'], row['locked_rows'] or 0
+    status = 'none' if rows == 0 else 'locked' if locked else 'preview'
+    return {'status': status, 'runs': row['runs'], 'rows': rows, 'locked_rows': locked,
+            'last_locked_at': row['last_locked_at']}
+
+
+def model_runs(conn, season, week):
+    return [dict(row) for row in conn.execute(
+        'SELECT run_id, model, model_version, status, started_at, finished_at FROM model_runs '
+        'WHERE league = ? AND season = ? AND week = ? ORDER BY started_at DESC', (LEAGUE, season, week))]
+
+
+def _sim_summary(entry):
+    if entry is None:
+        return None
+    return {'run_id': entry.get('run_id'), 'season': entry.get('season'), 'week': entry.get('week'),
+            'game_id': entry.get('game_id'), 'created_at_utc': entry.get('created_at_utc'),
+            'requested_games': entry.get('requested_games'), 'valid_full_games': entry.get('valid_full_games'),
+            'exploratory': entry.get('exploratory'), 'status': entry.get('status')}
+
+
+def last_sim_run(entries):
+    """The most recent registered run, of any game. None when the index is empty."""
+    if not entries:
+        return None
+    return _sim_summary(max(entries, key=lambda entry: entry.get('created_at_utc') or ''))
+
+
+def slate_sim_runs(entries, season, week):
+    """Every registered run for this slate, newest first."""
+    runs = [e for e in entries if e.get('season') == season and e.get('week') == week]
+    return [_sim_summary(e) for e in sorted(runs, key=lambda e: e.get('created_at_utc') or '', reverse=True)]
+
+
+def build_answer(db_path, today, store=None):
+    conn = connect(db_path)
+    try:
+        slate, stale = next_slate(conn, today)
+        entries, problems = read_sim_index(store)
+        if slate is None:
+            return {'as_of_utc': datetime.now(timezone.utc).isoformat(), 'today': today, 'db': str(db_path),
+                    'next_slate': None, 'warnings': ['no unplayed NFL game on or after today'],
+                    'last_sim_run': last_sim_run(entries), 'sim_index_problems': problems}
+        season, week, game_type = slate['season'], slate['week'], slate['game_type']
+        games = slate_games(conn, entries, season, week, game_type)
+        unplayed = [g for g in games if not g['played']]
+        statuses = [g['projections']['status'] for g in games if not g['played']]
+        runs = model_runs(conn, season, week)
+        return {
+            'as_of_utc': datetime.now(timezone.utc).isoformat(), 'today': today, 'db': str(db_path),
+            'next_slate': {
+                'season': season, 'week': week, 'game_type': game_type,
+                'games': len(games), 'unplayed': len(unplayed),
+                'first_game': unplayed[0] if unplayed else None,
+                'projection_status': {s: statuses.count(s) for s in ('none', 'preview', 'locked')},
+                'model_runs': runs,
+                'sim_runs': slate_sim_runs(entries, season, week),
+                'games_detail': games,
+            },
+            'last_sim_run': last_sim_run(entries),
+            'warnings': [f"unplayed game dated before today: {s['game_id']} ({s['gameday']})" for s in stale],
+            'sim_index_problems': problems,
+        }
+    finally:
+        conn.close()
+
+
+def slate_games(conn, entries, season, week, game_type):
+    """One summary per game of a slate, in kickoff order."""
+    games = []
+    for row in conn.execute('SELECT * FROM nfl_schedule WHERE season = ? AND week = ? AND game_type = ? '
+                            'ORDER BY gameday, gametime, game_id', (season, week, game_type)):
+        game_id = row['game_id']
+        games.append({
+            'game_id': game_id, 'gameday': row['gameday'], 'gametime': row['gametime'],
+            'away': row['away_team'], 'home': row['home_team'], 'played': row['home_score'] is not None,
+            'away_score': row['away_score'], 'home_score': row['home_score'],
+            'schedule_source': row['source'], 'schedule_first_observed': row['first_observed'],
+            'schedule_ingested_at': row['ingested_at'], 'schedule_versions': _schedule_versions(conn, game_id),
+            'line': _latest_line(conn, game_id), 'projections': _projections(conn, game_id),
+            'sim_runs': [s for s in slate_sim_runs(entries, season, week) if s['game_id'] == game_id],
+        })
+    return games
+
+
+def full_slate(db_path, today, season=None, week=None, store=None):
+    """Every game of one slate. The next slate when season and week are not given. None when there is no such slate."""
+    conn = connect(db_path)
+    try:
+        if season is None or week is None:
+            slate, _stale = next_slate(conn, today)
+            if slate is None:
+                return None
+            season, week = slate['season'], slate['week']
+        found = conn.execute('SELECT game_type FROM nfl_schedule WHERE season = ? AND week = ? LIMIT 1',
+                             (season, week)).fetchone()
+        if found is None:
+            return None
+        game_type = found['game_type']
+        entries, problems = read_sim_index(store)
+        games = slate_games(conn, entries, season, week, game_type)
+        unplayed = [g for g in games if not g['played']]
+        statuses = [g['projections']['status'] for g in unplayed]
+        return {
+            'season': season, 'week': week, 'game_type': game_type, 'games_total': len(games),
+            'unplayed': len(unplayed), 'projection_status': {s: statuses.count(s) for s in ('none', 'preview', 'locked')},
+            'model_runs': model_runs(conn, season, week), 'sim_runs': slate_sim_runs(entries, season, week),
+            'games': games, 'sim_index_problems': problems,
+        }
+    finally:
+        conn.close()
+
+
+def game_detail(db_path, game_id, store=None):
+    """Every stored fact about one game: the schedule row, its version history, line captures, projection rows, and the
+    sim runs and model runs for its week. None when the game is not in the schedule."""
+    conn = connect(db_path)
+    try:
+        row = conn.execute('SELECT * FROM nfl_schedule WHERE game_id = ?', (game_id,)).fetchone()
+        if row is None:
+            return None
+        schedule = dict(row)
+        entries, problems = read_sim_index(store)
+        return {
+            'as_of_utc': datetime.now(timezone.utc).isoformat(), 'game_id': game_id, 'schedule': schedule,
+            'schedule_versions': [dict(r) for r in conn.execute(
+                'SELECT * FROM nfl_schedule_versions WHERE game_id = ? ORDER BY observed_at', (game_id,))],
+            'lines': [dict(r) for r in conn.execute(
+                'SELECT * FROM nfl_line_snapshots WHERE league = ? AND game_id = ? ORDER BY captured_at',
+                (LEAGUE, game_id))],
+            'projection_status': _projections(conn, game_id),
+            'projections': [dict(r) for r in conn.execute(
+                'SELECT * FROM game_projections WHERE league = ? AND game_id = ? ORDER BY locked_at, run_id',
+                (LEAGUE, game_id))],
+            'model_runs_for_week': model_runs(conn, schedule['season'], schedule['week']),
+            'sim_runs': [_sim_summary(e) for e in sorted(
+                (e for e in entries if e.get('game_id') == game_id),
+                key=lambda e: e.get('created_at_utc') or '', reverse=True)],
+            'sim_index_problems': problems,
+        }
+    finally:
+        conn.close()
+
+
+SCOREBOARD = 'https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard'
+
+
+def _et_to_utc(gameday, gametime):
+    """The schedule's kickoff, read as Eastern time, in UTC. The scoreboard check below is what proves that reading."""
+    import pytz
+    local = pytz.timezone('America/New_York').localize(datetime.strptime(f'{gameday} {gametime}', '%Y-%m-%d %H:%M'))
+    return local.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def scoreboard_kickoff(fetch, row):
+    """The verified kickoff for one scheduled game, from the NFL scoreboard: (UTC datetime, scoreboard URL).
+
+    Refuses unless the scoreboard lists the same home and away teams on the schedule's ET day, at the time the schedule
+    holds. A missing or ambiguous event is refused too, never guessed."""
+    url = f"{SCOREBOARD}?dates={row['gameday'].replace('-', '')}"
+    matches = []
+    for event in fetch.json(url).get('events', []):
+        teams = {c['homeAway']: c['team']['abbreviation'] for c in event['competitions'][0]['competitors']}
+        if teams.get('home') == row['home_team'] and teams.get('away') == row['away_team']:
+            matches.append(datetime.strptime(event['date'], '%Y-%m-%dT%H:%MZ'))
+    if len(matches) != 1:
+        raise ValueError(f"{row['game_id']}: scoreboard has {len(matches)} matching events at {url}")
+    expected = _et_to_utc(row['gameday'], row['gametime'])
+    if matches[0] != expected:
+        raise ValueError(f"{row['game_id']}: scoreboard kickoff {matches[0]:%Y-%m-%dT%H:%MZ} differs from schedule "
+                         f"{row['gametime']} ET = {expected:%Y-%m-%dT%H:%MZ}")
+    return matches[0], url
+
+
+def build_snapshot(db_path, game_id, as_of, fetch=None):
+    """A frozen pregame snapshot for one game, in the form the SLC batch reads. Built by the SLC code; the kickoff comes
+    from the scoreboard and is checked against the schedule first."""
+    import paced_http
+    _nfl_sequence_modules()
+    import pregame_snapshot
+    conn = connect(db_path)
+    try:
+        row = conn.execute('SELECT * FROM nfl_schedule WHERE game_id = ?', (game_id,)).fetchone()
+    finally:
+        conn.close()
+    if row is None:
+        raise ValueError(f'unknown game_id: {game_id}')
+    fetch = fetch or paced_http.Fetcher(min_interval=3.0, host_budget=20, on_exhausted='refuse')
+    kickoff, url = scoreboard_kickoff(fetch, dict(row))
+    return pregame_snapshot.build(str(db_path), game_id, as_of, kickoff_utc=f'{kickoff:%Y-%m-%dT%H:%M:%SZ}',
+                                  kickoff_source_url=url)
+
+
+def _nfl_sequence_modules():
+    """Put the SLC scripts on the import path. Oracle calls their builders; it does not copy their logic."""
+    for path in (HERE.parent / 'scripts', HERE.parent / 'scripts' / 'nfl_sequence'):
+        if str(path) not in sys.path:
+            sys.path.insert(0, str(path))
+
+
+def build_snap_counts(raw_dir, players_csv, season, through_week):
+    """The participation snap counts the SLC engine reads (--participation-snap-counts), for one season through one week.
+
+    Built from the nflverse release files by the SLC loader; this only keeps the weeks played. Refuses when no week of
+    the season is at or before `through_week`."""
+    _nfl_sequence_modules()
+    import snap_update
+    data = snap_update.load_published(raw_dir, season, players_csv)
+    data['team_snaps'] = [row for row in data['team_snaps'] if row[1] <= through_week]
+    data['player_snaps'] = [row for row in data['player_snaps'] if row[1] <= through_week]
+    data['active'] = [row for row in data['active'] if row[1] <= through_week]
+    data['through_week'] = through_week
+    if not data['team_snaps']:
+        raise ValueError(f'no published snap counts for {season} through week {through_week}')
+    return data
+
+
+NFLVERSE_TEAM = {'LAR': 'LA', 'WSH': 'WAS'}  # the streak files use nflverse codes; the database uses these two
+
+
+def _streak(results):
+    """Current run of wins (W) or losses (L) in game order, e.g. 'W3' or 'L1'. Ties are neither. '' when none."""
+    decided = [r for r in results if r in ('W', 'L')]
+    if not decided:
+        return ''
+    last, count = decided[-1], 0
+    for r in reversed(decided):
+        if r != last:
+            break
+        count += 1
+    return f'{last}{count}'
+
+
+def build_streaks(db_path, cutoff, target_game_id, season=2026):
+    """The win-loss streak file the SLC v1_full_stack profile reads, as of a UTC cutoff.
+
+    A regular-season game counts when its result was available at the cutoff: kickoff plus 10 hours is at or before it.
+    The target game never counts. Kickoff is the schedule's America/New_York local time. Returns (payload, games used)."""
+    import pytz
+    eastern = pytz.timezone('America/New_York')
+    conn = connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT game_id, gameday, gametime, home_team, away_team, home_score, away_score FROM nfl_schedule "
+            "WHERE season = ? AND game_type = 'REG' AND gameday IS NOT NULL AND gametime IS NOT NULL",
+            (season,)).fetchall()
+    finally:
+        conn.close()
+    results, used = {}, []
+    for row in sorted(rows, key=lambda r: (r['gameday'], r['gametime'], r['game_id'])):
+        if row['game_id'] == target_game_id or row['home_score'] is None or row['away_score'] is None:
+            continue
+        kickoff = eastern.localize(datetime.strptime(f"{row['gameday']} {row['gametime']}", '%Y-%m-%d %H:%M'))
+        if kickoff.astimezone(timezone.utc) + timedelta(hours=10) > cutoff:
+            continue
+        used.append(row['game_id'])
+        home, away = row['home_score'], row['away_score']
+        for team, mine, theirs in ((row['home_team'], home, away), (row['away_team'], away, home)):
+            results.setdefault(NFLVERSE_TEAM.get(team, team), []).append(
+                'W' if mine > theirs else 'L' if mine < theirs else 'T')
+    payload = {'as_of_utc': cutoff.strftime('%Y-%m-%dT%H:%M:%SZ'),
+               'source': 'nfl_schedule scores in the database, regular season, read-only build',
+               'teams': {team: {'streak': _streak(r)} for team, r in sorted(results.items())}}
+    return payload, used
+
+
+def render_slate_text(slate):
+    lines = [f"{slate['season']} week {slate['week']} ({slate['game_type']}): "
+             f"{slate['unplayed']} of {slate['games_total']} games unplayed."]
+    for g in slate['games']:
+        result = f"final {g['away_score']}-{g['home_score']}" if g['played'] else 'unplayed'
+        lines.append(f"{g['game_id']}  {g['gameday']} {g['gametime']}  {g['away']} at {g['home']}  {result}  "
+                     f"projections={g['projections']['status']}  sim_runs={len(g['sim_runs'])}")
+    return '\n'.join(lines)
+
+
+def render_text(answer):
+    slate = answer['next_slate']
+    lines = []
+    if slate is None:
+        lines.append('No unplayed NFL game on or after ' + answer['today'] + '.')
+    else:
+        first = slate['first_game']
+        lines.append(f"Next slate: {slate['season']} week {slate['week']} ({slate['game_type']}), "
+                     f"{slate['unplayed']} of {slate['games']} games unplayed.")
+        if first:
+            lines.append(f"Next game: {first['away']} at {first['home']}, {first['gameday']} {first['gametime']}.")
+        counts = slate['projection_status']
+        lines.append(f"Projections: {counts['locked']} game(s) locked, {counts['preview']} preview only, "
+                     f"{counts['none']} none.")
+        if slate['model_runs']:
+            latest = slate['model_runs'][0]
+            lines.append(f"Latest model run for this week: {latest['model']} ({latest['status']}), "
+                         f"started {latest['started_at']}.")
+        else:
+            lines.append('Model runs for this week: none.')
+        if slate['sim_runs']:
+            lines.append(f"Sim runs for this week: {len(slate['sim_runs'])}, newest {slate['sim_runs'][0]['run_id']}.")
+        else:
+            lines.append('Sim runs for this week: none.')
+    last = answer['last_sim_run']
+    if last:
+        lines.append(f"Last sim run: {last['run_id']}, season {last['season']} week {last['week']}, "
+                     f"{last['requested_games']} requested, exploratory={last['exploratory']}, "
+                     f"created {last['created_at_utc']}.")
+    else:
+        lines.append('Last sim run: none in the index.')
+    for warning in answer['warnings']:
+        lines.append('Warning: ' + warning)
+    for problem in answer['sim_index_problems']:
+        lines.append('Sim index problem: ' + json.dumps(problem, sort_keys=True))
+    return '\n'.join(lines)
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--db', default=str(DEFAULT_DB), help='picks database (opened read-only)')
+    parser.add_argument('--index-store', default=None, help='sim-run registry store (default: the SLC default)')
+    parser.add_argument('--today', default=datetime.now(timezone.utc).date().isoformat(),
+                        help='YYYY-MM-DD; the first unplayed game on or after this day is the next game')
+    parser.add_argument('--json', action='store_true', help='print the answer as JSON')
+    parser.add_argument('--slate', action='store_true',
+                        help='every game of the next slate, or of --season and --week when given')
+    parser.add_argument('--season', type=int, help='with --slate: the season to list')
+    parser.add_argument('--week', type=int, help='with --slate: the week to list')
+    parser.add_argument('--game', metavar='GAME_ID', help='every stored fact about one game, as JSON')
+    parser.add_argument('--snapshot', metavar='GAME_ID', help='a frozen pregame snapshot for one game, as JSON')
+    parser.add_argument('--as-of', help='with --snapshot: the cutoff, timezone-qualified, before the kickoff')
+    parser.add_argument('--out', help='with --snapshot or --snap-counts: write the file here instead of stdout')
+    parser.add_argument('--snap-counts', action='store_true',
+                        help='participation snap counts for --season through --through-week, as a file (needs --out)')
+    parser.add_argument('--through-week', type=int, help='with --snap-counts: the last week to include')
+    parser.add_argument('--raw', type=Path, help='with --snap-counts: the nflverse raw directory')
+    parser.add_argument('--players-csv', type=Path, help='with --snap-counts: nflverse players.csv')
+    parser.add_argument('--streaks', action='store_true',
+                        help='win-loss streak file for --season as of --cutoff, target game excluded (needs --cutoff, '
+                             '--target, --out)')
+    parser.add_argument('--cutoff', help='with --streaks: UTC cutoff, e.g. 2026-11-17T12:00:00Z')
+    parser.add_argument('--target', metavar='GAME_ID', help='with --streaks: the game the file is built for')
+    args = parser.parse_args(argv)
+    if args.streaks:
+        missing = [name for name, value in (('--cutoff', args.cutoff), ('--target', args.target),
+                                            ('--out', args.out)) if value is None]
+        if missing:
+            parser.error('--streaks needs ' + ', '.join(missing))
+        cutoff = datetime.strptime(args.cutoff, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
+        payload, used = build_streaks(args.db, cutoff, args.target, args.season or 2026)
+        Path(args.out).write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n')
+        print(json.dumps({'out': args.out, 'sha256': hashlib.sha256(Path(args.out).read_bytes()).hexdigest(),
+                          'games_used': len(used), 'teams': len(payload['teams'])}, sort_keys=True))
+        return 0
+    if args.snap_counts:
+        missing = [name for name, value in (('--season', args.season), ('--through-week', args.through_week),
+                                            ('--raw', args.raw), ('--players-csv', args.players_csv),
+                                            ('--out', args.out)) if value is None]
+        if missing:
+            parser.error('--snap-counts needs ' + ', '.join(missing))
+        data = build_snap_counts(args.raw, args.players_csv, args.season, args.through_week)
+        text = json.dumps(data, separators=(',', ':'), sort_keys=True) + '\n'
+        Path(args.out).write_text(text, encoding='utf-8')
+        print(json.dumps({'out': args.out, 'sha256': hashlib.sha256(text.encode('utf-8')).hexdigest(),
+                          'weeks': sorted({row[1] for row in data['team_snaps']}),
+                          'team_games': len(data['team_snaps']), 'player_rows': len(data['player_snaps']),
+                          'coverage_all_weeks': data['coverage']}, sort_keys=True))
+        return 0
+    if args.snapshot:
+        if not args.as_of:
+            parser.error('--snapshot needs --as-of')
+        snapshot = build_snapshot(args.db, args.snapshot, args.as_of)
+        text = json.dumps(snapshot, indent=2, sort_keys=True, default=str) + '\n'
+        if args.out:
+            Path(args.out).write_text(text)
+        else:
+            sys.stdout.write(text)
+        return 0
+    if args.game:
+        detail = game_detail(args.db, args.game, args.index_store)
+        if detail is None:
+            print(f'unknown game_id: {args.game}', file=sys.stderr)
+            return 2
+        print(json.dumps(detail, indent=2, sort_keys=True, default=str))
+        return 0
+    if args.slate:
+        slate = full_slate(args.db, args.today, args.season, args.week, args.index_store)
+        if slate is None:
+            print('no such slate', file=sys.stderr)
+            return 2
+        print(json.dumps(slate, indent=2, sort_keys=True, default=str) if args.json else render_slate_text(slate))
+        return 0
+    answer = build_answer(args.db, args.today, args.index_store)
+    print(json.dumps(answer, indent=2, sort_keys=True, default=str) if args.json else render_text(answer))
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
