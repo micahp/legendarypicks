@@ -5,6 +5,7 @@ import unittest
 import migrate_player_projection_tables as mig
 import nfl_player_projection_v2 as eng
 import nfl_player_projections_job as job
+import nfl_prop_calibration as cal
 
 P = {"H": 1e9, "K_S": 0.0, "K_T": 0.0, "OTHER": 0.0,
      "K_CR": 0.0, "K_YPT": 0.0, "K_TDT": 0.0, "K_YPC": 0.0, "K_TDC": 0.0}
@@ -67,6 +68,58 @@ class Passer(unittest.TestCase):
         self.assertEqual(set(job.QB_STATS), set(qbs[0]["marcel"]))
 
 
+class ForwardLines(unittest.TestCase):
+    def props_db(self):
+        con = sqlite3.connect(":memory:")
+        con.executescript("""
+            CREATE TABLE nfl_schedule (game_id TEXT, season INTEGER, week INTEGER, game_type TEXT,
+                away_team TEXT, home_team TEXT, home_score INTEGER, away_score INTEGER, gameday TEXT);
+            CREATE TABLE prop_games (id INTEGER PRIMARY KEY, league TEXT, date TEXT, home TEXT, away TEXT);
+            CREATE TABLE props (id INTEGER PRIMARY KEY, game_id INTEGER, player_id INTEGER, market TEXT,
+                line REAL, side TEXT, source TEXT, odds INTEGER, captured_at TEXT);
+        """)
+        con.execute("INSERT INTO nfl_schedule VALUES ('2026_11_A_B',2026,11,'REG','A','B',NULL,NULL,'2026-11-19')")
+        con.execute("INSERT INTO prop_games VALUES (1,'nfl','2026-11-19','B','A')")
+        con.executemany("INSERT INTO props (game_id, player_id, market, line, side, source, odds, captured_at) "
+                        "VALUES (1,?,?,?,?,?,?,'t1')", [
+            (7, "receiving_yards", 4.5, "over", "rotowire:prizepicks", -110),
+            (7, "receiving_yards", 4.5, "under", "rotowire:prizepicks", -110),
+            (7, "receiving_yards", 4.5, "over", "rotowire:underdog", -120),
+            (7, "receiving_yards", 4.5, "under", "rotowire:underdog", 100),
+            (7, "receiving_yards", 6.5, "over", "rotowire:sleeper", 150),
+            (7, "receiving_yards", 6.5, "under", "rotowire:sleeper", -180),
+            (7, "some_other_market", 1.5, "over", "rotowire:sleeper", -110),
+            (8, "receptions", 3.5, "over", "rotowire:underdog", -110),
+            (8, "receptions", 3.5, "under", "rotowire:underdog", -110)])
+        return con
+
+    def test_p_over_counts_draws_strictly_above_the_line(self):
+        draws = [(0, 1.0, 0, 1), (0, 2.0, 0, 1), (0, 3.0, 0, 1)]
+        self.assertAlmostEqual(2 / 3, job.p_over(draws, 1, 1.5))
+        self.assertAlmostEqual(1 / 3, job.p_over(draws, 1, 2.0))   # a draw on the line is not an over
+
+    def test_prop_offers_pairs_both_sides_per_book_and_line(self):
+        offers = job.prop_offers(self.props_db(), 2026, 11)
+        got = sorted((o["line"], o["source"], o["over_odds"], o["under_odds"]) for o in offers[("2026_11_A_B", 7, "rec_yds")])
+        self.assertEqual([(4.5, "rotowire:prizepicks", -110, -110), (4.5, "rotowire:underdog", -120, 100),
+                          (6.5, "rotowire:sleeper", 150, -180)], got)
+        self.assertEqual([3.5], [o["line"] for o in offers[("2026_11_A_B", 8, "rec")]])
+
+    def test_forward_rows_use_the_even_odds_line_not_the_projection_and_apply_the_map(self):
+        draws = [(0, 1.0, 0, 1), (0, 6.0, 0, 1), (0, 7.0, 0, 1), (0, 9.0, 0, 1)]
+        for mean in (5.0, 7.0):                               # the projection does not move the selected line
+            entries = [{"game_id": "2026_11_A_B", "player_id": 7, "team": "A", "draws": draws,
+                        "scenarios": {"base": {"rec_yds": (mean, None, None, None)}}}]
+            rows = job.forward_rows(self.props_db(), 2026, 11, entries, (0.5, 0.0))
+            self.assertEqual(1, len(rows))
+            self.assertEqual(4.5, rows[0]["chosen"]["line"])           # prizepicks prices 4.5 at -110 / -110, exactly even
+            self.assertEqual("rotowire:prizepicks", rows[0]["chosen"]["source"])
+            self.assertEqual(2, rows[0]["chosen"]["books_at_line"])
+            self.assertAlmostEqual(0.75, rows[0]["p_raw"])             # 6, 7, 9 are over 4.5
+            self.assertAlmostEqual(cal.apply_map(0.5, 0.0, 0.75), rows[0]["p_platt"])
+        self.assertEqual([], job.forward_rows(self.props_db(), 2026, 11, entries, None))
+
+
 class Db(unittest.TestCase):
     def setUp(self):
         self.con = sqlite3.connect(":memory:")
@@ -75,10 +128,10 @@ class Db(unittest.TestCase):
                 model TEXT NOT NULL, model_version TEXT NOT NULL, started_at TEXT NOT NULL, finished_at TEXT,
                 params_json TEXT NOT NULL, status TEXT NOT NULL, error TEXT);
             CREATE TABLE nfl_schedule (game_id TEXT, season INTEGER, week INTEGER, game_type TEXT,
-                away_team TEXT, home_team TEXT, home_score INTEGER, away_score INTEGER);
+                away_team TEXT, home_team TEXT, home_score INTEGER, away_score INTEGER, gameday TEXT);
         """)
         mig.migrate(self.con)
-        self.con.execute("INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,NULL,NULL)",
+        self.con.execute("INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,NULL,NULL,NULL)",
                          (gid(4), 2025, 4, "REG", "A", "B"))
 
     def test_migration_is_idempotent_and_needs_model_runs(self):
@@ -100,6 +153,18 @@ class Db(unittest.TestCase):
         self.assertTrue(all(set(e["scenarios"]) == {"base"} for e in mine))
         self.assertTrue(all(e["p_plays"] == 1.0 for e in mine))
         self.assertEqual(0, summary["skipped_final"])
+
+    def test_next_week_is_the_week_of_the_earliest_unplayed_game_not_yet_started(self):
+        self.con.execute("UPDATE nfl_schedule SET gameday='2025-11-20'")
+        self.con.executemany("INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,?,?,?)", [
+            ("2025_03_A_B", 2025, 3, "REG", "A", "B", 20, 17, "2025-11-16"),
+            ("2025_03_C_D", 2025, 3, "REG", "C", "D", None, None, "2025-11-16"),   # stale: dated before today
+            ("2025_04_C_D", 2025, 4, "REG", "C", "D", 24, 10, "2025-11-20"),       # Thursday, already final
+            ("2025_04_E_F", 2025, 4, "REG", "E", "F", None, None, "2025-11-23"),   # Sunday, still to play
+        ])
+        self.assertEqual(4, job.next_week(self.con, 2025, "2025-11-18"))   # Tuesday
+        self.assertEqual(4, job.next_week(self.con, 2025, "2025-11-23"))   # Sunday refresh: same week
+        self.assertIsNone(job.next_week(self.con, 2025, "2025-11-30"))     # nothing left to play
 
     def test_final_game_is_skipped_and_counted(self):
         entries, summary = self.week_rows(final=True)

@@ -1,0 +1,80 @@
+{
+  "_comment": "Week 10 WAS-NYG-era family, as on research/week10-family-2026-11-15. Paths are fast-host paths.",
+  "out_dir": "/root/ot-sim-out/week10-family-2026-11-15",
+  "db": "/root/legendarypicks/backend/data/picks.dev.db",
+  "snapshot_dir": "/root/cutoff-captures/snapshots/week-10",
+  "game_glob": "2026_10_*",
+  "source_repo": "/root/lp-slc-v2",
+  "models": [
+    {
+      "name": "v1",
+      "ref": "origin/slc-v1",
+      "extra_args": []
+    },
+    {
+      "name": "v1.5",
+      "ref": "origin/slc-v1.5",
+      "extra_args": []
+    },
+    {
+      "name": "v1.6",
+      "ref": "origin/slc-v1.6",
+      "extra_args": []
+    },
+    {
+      "name": "v2",
+      "ref": "origin/slc-v2",
+      "extra_args": [
+        "--slc-v2",
+        "--rng-protocol",
+        "v2",
+        "--playcall-pass-label-mode",
+        "conditional",
+        "--playcall-decision",
+        "--playcall-fg-kicker",
+        "/root/cutoff-captures/snapshots/week-10/inputs/kicker-table-through-week10-la.json",
+        "--playcall-fg-kicker-sha256",
+        "b330b9666be5a9c0fe3e8a66c305fc079c8a20df46aadba2413a9ecd8c319257",
+        "--participation-snap-counts",
+        "/root/ot-sim-out/slc-v2-tnf-10-2026-11-12/docs/research/slc-was-nyg-tnf-2026-11-12/participation-snap-counts-through-week9.json",
+        "--participation-snap-counts-sha256",
+        "4e35e2b6d6da0f43edd971ee18b0887c55531564f763e8a17692c1425ca25d98",
+        "--no-export-plays"
+      ]
+    }
+  ],
+  "shared_args": [
+    "--slc-profile",
+    "v1_full_stack",
+    "--playcall-artifact",
+    "docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+    "--playcall-streak-file",
+    "/root/slc-was-nyg-tnf-2026-11-12-final-0013Z/run-inputs/wl-streaks-through-week9.json",
+    "--progress-every",
+    "250",
+    "--export-boxscores"
+  ],
+  "blocker_fixes": [
+    "run_scramble_backoff",
+    "long_field_goal_feasibility",
+    "blocked_kick_source_audit",
+    "blocked_kick_geometry",
+    "safety_free_kick_boundaries"
+  ],
+  "pinned_files": [
+    {
+      "path": "/root/cutoff-captures/snapshots/week-10/inputs/kicker-table-through-week10-la.json",
+      "sha256": "b330b9666be5a9c0fe3e8a66c305fc079c8a20df46aadba2413a9ecd8c319257"
+    },
+    {
+      "path": "/root/ot-sim-out/slc-v2-tnf-10-2026-11-12/docs/research/slc-was-nyg-tnf-2026-11-12/participation-snap-counts-through-week9.json",
+      "sha256": "4e35e2b6d6da0f43edd971ee18b0887c55531564f763e8a17692c1425ca25d98"
+    }
+  ],
+  "seeds": {
+    "start": 300001,
+    "total": 1000,
+    "chunk": 250
+  },
+  "concurrency": 4
+}

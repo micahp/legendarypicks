@@ -174,3 +174,17 @@ backend/data/parlay_board.json
 # radio_blackout_check.py output (rewritten every 5 minutes)
 backend/data/radio-blackouts.json*
 backend/data/radio-blackouts.log
+
+# Large and generated backend/data artifacts (added 2026-11-17)
+backend/data/tennis_point_archives/
+backend/data/http-spend.jsonl.1
+backend/data/*.sqlite3
+backend/data/backups-*/
+backend/data/nba-model-source/
+backend/data/stories/
+backend/data/.ufc-run.lock
+backend/data/preimage_*.csv
+backend/data/audit_unresolved_stale_nba_*.csv
+backend/data/simbt_*.json
+backend/data/sim_2026_*.json
+backend/data/nfl_projections_legacy_backup.json

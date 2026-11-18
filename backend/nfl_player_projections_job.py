@@ -35,9 +35,13 @@ import sqlite3
 import sys
 import zlib
 
+import canonical_line
 import nfl_player_projection_v2 as eng
+import nfl_prop_calibration as cal
 
 MODEL_VERSION = "v2"
+FORWARD_VERSION = "v2-platt"
+CANONICAL_SELECTION = "nearest_even_odds"
 MARCEL_VERSION = "marcel-lite"
 # Spec B 4.4, P(plays | final injury report designation). PRE-REGISTERED 2026-10-13 before it was run:
 #   rate = played / (played known) over player_game_availability rows of REG games in 2024 and 2025 whose
@@ -80,6 +84,10 @@ RECV_POS = ("RB", "WR", "TE")
 MIN_EARLIER_GAMES = 3
 STATS = ("tgt", "rec", "rec_yds", "rec_td")
 QB_STATS = ("att", "cmp", "pass_yds", "pass_td")
+# Prop market for each stat, and the column of the simulated draws that holds it.
+MARKET = {"tgt": "targets", "rec": "receptions", "rec_yds": "receiving_yards", "rec_td": "receiving_touchdowns",
+          "att": "pass_attempts", "cmp": "pass_completions", "pass_yds": "passing_yards", "pass_td": "passing_touchdowns"}
+DRAW_COL = {"rec": 0, "rec_yds": 1, "rec_td": 2, "tgt": 3, "cmp": 0, "pass_yds": 1, "pass_td": 2, "att": 3}
 
 
 @contextlib.contextmanager
@@ -157,7 +165,7 @@ def _qb_entry(hist, season, week, gid, team, opp, pid, report, n_sims):
     rep = report.get(pid, (None, None))[0]
     entry = {"game_id": gid, "player_id": pid, "team": team, "pos": "QB",
              "p_plays": P_PLAYS.get(rep, 1.0),
-             "scenarios": {"base": rows}, "marcel": {}, "rules": {"att": "expected_passer"}}
+             "scenarios": {"base": rows}, "marcel": {}, "rules": {"att": "expected_passer"}, "draws": draws}
     for stat in QB_STATS:
         m = eng.marcel(hist, season, week, pid, stat)
         if m is not None:
@@ -212,8 +220,10 @@ def project_week(con, season, week, n_sims=1000, hist=None):
                                           "if_plays": _stat_rows(plays, d_plays),
                                           "if_out": _stat_rows(gone, d_gone)}
                     entry["questionable_teammates"] = mates
+                    entry["draws"] = mix
                 else:
                     entry["scenarios"] = {"base": _stat_rows(plays, d_plays)}
+                    entry["draws"] = d_plays
                 for stat in STATS:
                     m = eng.marcel(hist, season, week, pid, stat)
                     if m is not None:
@@ -226,6 +236,76 @@ def project_week(con, season, week, n_sims=1000, hist=None):
                 if qe is not None:
                     out.append(qe)
     return out, {"games": len(games), "skipped_final": skipped_final, "player_games": len(out)}
+
+
+def p_over(draws, col, line):
+    """Share of simulated draws above the line. A draw exactly on the line is not an over."""
+    return sum(1 for d in draws if d[col] > line) / len(draws)
+
+
+def prop_offers(con, season, week):
+    """{(game_id, player_id, stat): [offer]} from the props table, one offer per book and line with both sides priced."""
+    stat_of = {market: stat for stat, market in MARKET.items()}
+    pairs = {}
+    rows = con.execute(
+        "SELECT s.game_id, p.player_id, p.market, p.line, p.source, p.side, p.odds, p.captured_at FROM props p "
+        "JOIN prop_games g ON g.id = p.game_id "
+        "JOIN nfl_schedule s ON s.season = ? AND s.week = ? AND s.game_type = 'REG' "
+        "AND s.gameday = g.date AND s.home_team = g.home AND s.away_team = g.away "
+        "WHERE g.league = 'nfl' AND p.player_id IS NOT NULL AND p.line IS NOT NULL "
+        "AND p.market IN (%s)" % ",".join("?" * len(stat_of)),
+        (season, week) + tuple(stat_of)).fetchall()
+    for gid, pid, market, line, source, side, odds, captured in rows:
+        offer = pairs.setdefault((gid, pid, stat_of[market], line, source),
+                                 {"line": line, "source": source, "over_odds": None, "under_odds": None,
+                                  "captured_at": captured})
+        offer["%s_odds" % side] = odds
+    out = {}
+    for (gid, pid, stat, _line, _source), offer in pairs.items():
+        out.setdefault((gid, pid, stat), []).append(offer)
+    return out
+
+
+def forward_rows(con, season, week, entries, ab):
+    """One row per player and market: the canonical book line and the chance of going over it, raw and after the map.
+
+    The line is chosen from sportsbook prices alone (canonical_line.select), never from our projection. The projection
+    mean is kept beside it for reference only. `ab` is the week's forward Platt map; with no map there are no rows.
+    """
+    if ab is None:
+        return []
+    offers = prop_offers(con, season, week)
+    rows = []
+    for e in entries:
+        if not e.get("draws"):
+            continue
+        for stat, (mean, *_rest) in e["scenarios"]["base"].items():
+            chosen = canonical_line.select(offers.get((e["game_id"], e["player_id"], stat), []))
+            if chosen is None:
+                continue
+            raw = p_over(e["draws"], DRAW_COL[stat], chosen["line"])
+            rows.append({"game_id": e["game_id"], "player_id": e["player_id"], "team": e["team"], "stat": stat,
+                         "market": MARKET[stat], "chosen": chosen, "mean": mean, "p_raw": raw,
+                         "p_platt": cal.apply_map(ab[0], ab[1], raw)})
+    return rows
+
+
+def write_forward(con, run_id, season, week, rows, as_of):
+    con.execute(
+        "CREATE TABLE IF NOT EXISTS player_forward_platt (run_id TEXT NOT NULL, season INTEGER NOT NULL, "
+        "week INTEGER NOT NULL, game_id TEXT NOT NULL, player_id INTEGER NOT NULL, team TEXT, market TEXT NOT NULL, "
+        "line REAL NOT NULL, source TEXT NOT NULL, over_odds INTEGER, under_odds INTEGER, p_over_fair REAL NOT NULL, "
+        "books_at_line INTEGER NOT NULL, captured_at TEXT, reference_mean REAL, p_over_raw REAL NOT NULL, "
+        "p_over_platt REAL NOT NULL, selection TEXT NOT NULL, model_version TEXT NOT NULL, as_of TEXT NOT NULL, "
+        "PRIMARY KEY (run_id, game_id, player_id, market))")
+    con.executemany(
+        "INSERT INTO player_forward_platt VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        [(run_id, season, week, r["game_id"], r["player_id"], r["team"], r["market"], r["chosen"]["line"],
+          r["chosen"]["source"], r["chosen"]["over_odds"], r["chosen"]["under_odds"], r["chosen"]["p_over_fair"],
+          r["chosen"]["books_at_line"], r["chosen"]["captured_at"], r["mean"], r["p_raw"], r["p_platt"],
+          CANONICAL_SELECTION, FORWARD_VERSION, as_of) for r in rows])
+    con.commit()
+    return len(rows)
 
 
 def write_week(con, season, week, entries, as_of, params):
@@ -254,10 +334,11 @@ def write_week(con, season, week, entries, as_of, params):
     return run_id, len(rows)
 
 
-def next_week(con, season):
+def next_week(con, season, today):
+    # The week of the earliest unplayed game dated on or after today. An older game with no score is stale, not upcoming.
     row = con.execute(
-        "SELECT MIN(week) FROM nfl_schedule WHERE season=? AND game_type='REG' AND home_score IS NULL",
-        (season,)).fetchone()
+        "SELECT MIN(week) FROM nfl_schedule WHERE season=? AND game_type='REG' AND home_score IS NULL "
+        "AND gameday >= ?", (season, today)).fetchone()
     return row[0]
 
 
@@ -292,13 +373,12 @@ def main(argv=None):
         print("2025 Questionable n=%d: Brier with the 2024 rate %.3f = %.4f, with flat 0.70 = %.4f" % (
             len(q25), r24, brier(r24, q25), brier(0.70, q25)))
         return
-    week = a.week or next_week(con, a.season)
+    week = a.week or next_week(con, a.season, dt.date.today().isoformat())
     if week is None:
         raise SystemExit("no unplayed regular-season week in %d" % a.season)
     if a.fit_calibration:
         # Refit on the graded weeks so far, then store the maps the reader applies for `model=v2-platt`.
         # A week with no earlier graded week gets no row and is served raw, which the response reports.
-        import nfl_prop_calibration as cal
         got = cal.map_for_week(con, a.season, week)
         if got is None:
             print("calibration: no earlier graded week; week %d will be served raw and labelled raw_no_map" % week)
@@ -308,6 +388,12 @@ def main(argv=None):
                   % (week, got[0], got[1], got[2], got[3]))
     entries, summary = project_week(con, a.season, week, n_sims=a.sims)
     print("season %d week %d: %s" % (a.season, week, summary))
+    ab = cal.read(con, a.season, week)
+    fwd = forward_rows(con, a.season, week, entries, ab)
+    if ab is None:
+        print("forward Platt: no map for week %d; no forward rows" % week)
+    else:
+        print("forward Platt: %d player-stat rows with a posted line" % len(fwd))
     if a.dry_run:
         for e in entries[:5]:
             print(e["game_id"], e["player_id"], e["pos"], {k: round(v[0], 2) for k, v in e["scenarios"]["base"].items()})
@@ -316,6 +402,7 @@ def main(argv=None):
     run_id, n = write_week(con, a.season, week, entries, as_of, {"sims": a.sims, "p_plays_questionable": P_PLAYS_QUESTIONABLE,
                                                                  "constants": eng.DEFAULTS, "dist": eng.DIST})
     print("wrote %d rows under %s" % (n, run_id))
+    print("wrote %d forward Platt rows under %s" % (write_forward(con, run_id, a.season, week, fwd, as_of), run_id))
 
 
 if __name__ == "__main__":

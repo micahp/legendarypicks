@@ -248,3 +248,22 @@ class FrozenSnapshotFile(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class InputProvenance(unittest.TestCase):
+    def test_a_captured_schedule_and_captured_depth_chart_are_verified(self):
+        game = {'availability_classification': 'captured_before_cutoff'}
+        rosters = {'home': {'source': 'nflverse_depth_charts_capture'}, 'away': {'source': 'nflverse_depth_charts_capture'}}
+        self.assertEqual([], snapshot_module.input_provenance(game, rosters)['unverified'])
+
+    def test_the_loader_import_time_and_the_nflverse_artifact_date_are_not_verified(self):
+        game = {'availability_classification': 'versioned_as_of'}
+        rosters = {'home': {'source': 'nflverse_depth_charts'}}
+        unverified = snapshot_module.input_provenance(game, rosters)['unverified']
+        self.assertEqual(2, len(unverified))
+        self.assertIn('loader import time', unverified[0])
+        self.assertIn('nflverse artifact date', unverified[1])
+
+    def test_a_missing_availability_class_is_treated_as_the_loader_import_time(self):
+        unverified = snapshot_module.input_provenance({}, {'home': {'source': 'nflverse_depth_charts_capture'}})['unverified']
+        self.assertEqual(['schedule: observed_at is a loader import time, not a capture time'], unverified)
