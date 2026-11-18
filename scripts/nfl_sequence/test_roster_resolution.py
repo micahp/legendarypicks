@@ -243,5 +243,16 @@ class RegressionFromReview(unittest.TestCase):
             resolve([bare], [qb1()])
 
 
+class MultiPosition(unittest.TestCase):
+    def test_a_player_in_two_depth_rows_can_fill_both_roles_in_different_groups(self):
+        roster = [dict(row('WRKR', 'Two Way', 'WR', depth=1), positions=[('WR', 1), ('KR', 1)])]
+        roles = [{'role': 'WR1', 'positions': ['WR'], 'required': True, 'group': 'WR'},
+                 {'role': 'KR', 'positions': ['KR'], 'required': True}]
+        result = resolve(roster, roles)
+        self.assertEqual('WRKR', role_of(result, 'WR1')['gsis_id'])
+        self.assertEqual('WRKR', role_of(result, 'KR')['gsis_id'])
+        self.assertEqual([], result['blocks'])
+
+
 if __name__ == '__main__':
     unittest.main()

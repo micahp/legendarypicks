@@ -196,12 +196,14 @@ def resolve_team(game_id, team, as_of, roster, events, roles, inactives=(), inac
         if reasons:
             blocks.add('contradictory_membership')
         eligible, flags, reason = _eligibility(row, membership, inactives)
-        player = {'gsis_id': gsis, 'name': row['name'], 'pos': row['pos'], 'depth_rank': row.get('depth_rank'),
-                  'membership': membership, 'official_eligible': eligible, 'projected_participant': eligible,
-                  'projection_status': None, 'flags': sorted(flags + reasons), 'exclusion_reason': reason,
-                  'events_applied': applied}
-        players.append(player)
-        by_id[gsis] = player
+        # one record per depth position: a player may appear in several rows (e.g. WR and KR), each with its own rank
+        for pos, rank in row.get('positions') or [(row['pos'], row.get('depth_rank'))]:
+            player = {'gsis_id': gsis, 'name': row['name'], 'pos': pos, 'depth_rank': rank,
+                      'membership': membership, 'official_eligible': eligible, 'projected_participant': eligible,
+                      'projection_status': None, 'flags': sorted(flags + reasons), 'exclusion_reason': reason,
+                      'events_applied': applied}
+            players.append(player)
+            by_id.setdefault(gsis, []).append(player)
     roles_out = []
     taken = {}
     for role in sorted(roles, key=lambda r: r['role']):
@@ -212,8 +214,9 @@ def resolve_team(game_id, team, as_of, roster, events, roles, inactives=(), inac
         if gsis_id is not None and group is not None:
             taken.setdefault(group, set()).add(gsis_id)
         if status == 'PROJECTED':
-            by_id[gsis_id]['projected_participant'] = True
-            by_id[gsis_id]['projection_status'] = 'PROJECTED_ELEVATION'
+            for record in by_id[gsis_id]:
+                record['projected_participant'] = True
+                record['projection_status'] = 'PROJECTED_ELEVATION'
             if forecast_class == 'GAMEDAY_FINAL':
                 blocks.add('gameday_final_unverified_elevation')
         roles_out.append({'role': role['role'], 'kind': role.get('kind'), 'group': group,
