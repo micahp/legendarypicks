@@ -1,0 +1,74 @@
+{
+ "v1.5-vfg": {
+  "games_done": 24,
+  "valid_full_games": null,
+  "requested": null,
+  "home_mean": 26.17,
+  "away_mean": 24.54,
+  "home_win_rate": 0.583,
+  "mean_margin_home": 1.62
+ },
+ "v1.5": {
+  "games_done": 100,
+  "valid_full_games": 0,
+  "requested": 100,
+  "home_mean": 24.76,
+  "away_mean": 22.43,
+  "home_win_rate": 0.58,
+  "mean_margin_home": 2.33
+ },
+ "v1.6-vfg": {
+  "games_done": 54,
+  "valid_full_games": null,
+  "requested": null,
+  "home_mean": 25.74,
+  "away_mean": 24.76,
+  "home_win_rate": 0.537,
+  "mean_margin_home": 0.98
+ },
+ "v1.6": {
+  "games_done": 100,
+  "valid_full_games": 0,
+  "requested": 100,
+  "home_mean": 23.83,
+  "away_mean": 22.71,
+  "home_win_rate": 0.52,
+  "mean_margin_home": 1.12
+ },
+ "v1.7-vfg": {
+  "games_done": 57,
+  "valid_full_games": null,
+  "requested": null,
+  "home_mean": 24.26,
+  "away_mean": 22.56,
+  "home_win_rate": 0.632,
+  "mean_margin_home": 1.7
+ },
+ "v1.7": {
+  "games_done": 100,
+  "valid_full_games": 0,
+  "requested": 100,
+  "home_mean": 25.03,
+  "away_mean": 23.29,
+  "home_win_rate": 0.57,
+  "mean_margin_home": 1.74
+ },
+ "v1": {
+  "games_done": 100,
+  "valid_full_games": 0,
+  "requested": 100,
+  "home_mean": 24.82,
+  "away_mean": 23.2,
+  "home_win_rate": 0.56,
+  "mean_margin_home": 1.62
+ },
+ "v2-pbp-2026-11-17": {
+  "games_done": 100,
+  "valid_full_games": 100,
+  "requested": 100,
+  "home_mean": 22.12,
+  "away_mean": 18.34,
+  "home_win_rate": 0.63,
+  "mean_margin_home": 3.78
+ }
+}
