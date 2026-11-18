@@ -1,6 +1,6 @@
 # PBV1 package sampler: what we have and why on and off did not change
 
-Status: partial. Week 10 has two games still running (WAS at NYG, LA at ARI). This report will be updated when they finish.
+Status: partial. Two week 10 games are still running (WAS at NYG, LA at ARI). This report will be updated when they finish.
 
 ## What ran
 
