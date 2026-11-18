@@ -126,9 +126,9 @@ def write_pack(path, *, reference, snapshot, model_id, code_commit, config=None)
             archive.writestr("manifest.json", _json(manifest))
             archive.writestr("reference.pkl", payload)
         data_sha = _sha256(temp_path.read_bytes())
-        if destination.exists():
-            raise FileExistsError(f"immutable pack exists: {destination}")
-        os.replace(temp_path, destination)
+        # Atomic create-only publication on the same filesystem.
+        # os.replace() would overwrite if another builder won the race.
+        os.link(temp_path, destination)
         return {"sha256": data_sha, "manifest": manifest, "path": str(destination)}
     finally:
         if temp_path is not None and temp_path.exists():
