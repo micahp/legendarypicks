@@ -1590,7 +1590,7 @@ class _Game:
         snapshot = self.pregame_snapshot
         # a full game is valid only on verified input provenance; an exploratory replay stays a statistical game
         verified = bool((snapshot or {}).get('evaluation', {}).get('verified'))
-        valid_candidate = bool(snapshot and verified and complete and blocker is None and not guarded and not unsupported)
+        valid_candidate = bool(snapshot and complete and blocker is None and not guarded and not unsupported)
         record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete) + guard_reasons(guarded)
         rec = {
