@@ -1,4 +1,5 @@
 """The oracle answers from stored rows only: next slate, projection status, last sim run, and unknowns as None."""
+import json
 import sqlite3
 import sys
 from pathlib import Path
@@ -272,3 +273,45 @@ def test_player_prop_comparison_refuses_a_database_without_the_table(tmp_path):
     sqlite3.connect(path).close()
     with pytest.raises(ValueError, match='not readable'):
         oracle.player_prop_comparison(path, 'G1')
+
+
+def _grade_db(path):
+    conn = sqlite3.connect(path)
+    conn.executescript("""CREATE TABLE nfl_schedule (game_id TEXT, season INTEGER, week INTEGER, game_type TEXT,
+        home_team TEXT, away_team TEXT, home_score INTEGER, away_score INTEGER);""")
+    conn.executemany("INSERT INTO nfl_schedule VALUES (?,?,?,?,?,?,?,?)", [
+        ('G1', 2026, 10, 'REG', 'HOU', 'IND', 24, 17),
+        ('G2', 2026, 10, 'REG', 'CLE', 'MIA', None, None)])
+    conn.commit()
+    conn.close()
+
+
+def _batch(folder):
+    folder.mkdir()
+    def game(gid, home, away):
+        return {'type': 'game', 'game_id': gid, 'teams': [
+            {'home_away': 'home', 'stats': {'points': home}}, {'home_away': 'away', 'stats': {'points': away}}]}
+    lines = [game('G1', 27, 20), game('G1', 17, 24), game('G1', 30, 14), game('G2', 20, 10)]
+    (folder / 'x.boxscores.jsonl').write_text('\n'.join(json.dumps(x) for x in lines) + '\n')
+
+
+def test_grading_scores_home_win_probability_against_the_final(tmp_path):
+    db = tmp_path / 'g.db'
+    _grade_db(db)
+    _batch(tmp_path / 'm1')
+    report = oracle.grade_games(db, 2026, 10, {'m1': str(tmp_path / 'm1')})
+    g1 = report['games']['m1']['G1']
+    assert g1['seeds'] == 3
+    assert g1['p_home_win'] == round(2 / 3, 4)
+    assert g1['actual_margin'] == 7
+    assert g1['brier'] == round((2 / 3 - 1) ** 2, 4)
+    assert report['skipped_without_final'] == ['G2']
+    assert 'G2' not in report['games']['m1']
+
+
+def test_grading_refuses_a_batch_folder_with_no_game_records(tmp_path):
+    db = tmp_path / 'g.db'
+    _grade_db(db)
+    (tmp_path / 'empty').mkdir()
+    with pytest.raises(ValueError, match='no game records'):
+        oracle.grade_games(db, 2026, 10, {'empty': str(tmp_path / 'empty')})

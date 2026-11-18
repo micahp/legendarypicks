@@ -367,6 +367,67 @@ def player_prop_comparison(db_path, game_id):
     return out
 
 
+def grade_games(db_path, season, week, batches):
+    """Grade simulated game results against the finals for one week.
+
+    batches maps a model name to a folder of boxscore JSONL files (one game record per seed). For each model and game:
+    the home win probability is the share of seeds the home side wins; the Brier score and log loss use the final
+    winner; the margin and total errors use the mean simulated values against the final. Games without a final score
+    are skipped and listed. Read-only. Raises when a batch folder holds no game records."""
+    import glob, math
+    conn = connect(db_path)
+    try:
+        finals = {r['game_id']: r for r in conn.execute(
+            'SELECT game_id, home_team, away_team, home_score, away_score FROM nfl_schedule '
+            'WHERE season = ? AND week = ? AND game_type = ?', (season, week, 'REG'))}
+    finally:
+        conn.close()
+    graded, skipped = {}, []
+    for model, folder in sorted(batches.items()):
+        games = {}
+        for path in sorted(glob.glob(os.path.join(folder, '*.boxscores.jsonl'))):
+            for line in open(path):
+                rec = json.loads(line)
+                if rec.get('type') != 'game':
+                    continue
+                games.setdefault(rec['game_id'], []).append(rec)
+        if not games:
+            raise ValueError(f'{model}: no game records under {folder}')
+        graded[model] = {}
+        for game_id, seeds in sorted(games.items()):
+            final = finals.get(game_id)
+            if final is None or final['home_score'] is None:
+                skipped.append(game_id)
+                continue
+            home_wins = margins = totals = 0
+            for rec in seeds:
+                pts = {t['home_away']: t['stats']['points'] for t in rec['teams']}
+                margins += pts['home'] - pts['away']
+                totals += pts['home'] + pts['away']
+                home_wins += pts['home'] > pts['away']
+            n = len(seeds)
+            p = home_wins / n
+            outcome = 1.0 if final['home_score'] > final['away_score'] else 0.0
+            p_clip = min(max(p, 1e-6), 1 - 1e-6)
+            graded[model][game_id] = {
+                'seeds': n, 'p_home_win': round(p, 4), 'brier': round((p - outcome) ** 2, 4),
+                'log_loss': round(-(outcome * math.log(p_clip) + (1 - outcome) * math.log(1 - p_clip)), 4),
+                'mean_margin': round(margins / n, 2), 'actual_margin': final['home_score'] - final['away_score'],
+                'margin_error': round(margins / n - (final['home_score'] - final['away_score']), 2),
+                'mean_total': round(totals / n, 2), 'actual_total': final['home_score'] + final['away_score'],
+            }
+    summary = {}
+    for model, rows in graded.items():
+        vals = list(rows.values())
+        if vals:
+            summary[model] = {'games': len(vals),
+                              'brier': round(sum(v['brier'] for v in vals) / len(vals), 4),
+                              'log_loss': round(sum(v['log_loss'] for v in vals) / len(vals), 4),
+                              'mean_abs_margin_error': round(sum(abs(v['margin_error']) for v in vals) / len(vals), 2),
+                              'mean_abs_total_error': round(sum(abs(v['mean_total'] - v['actual_total']) for v in vals) / len(vals), 2)}
+    return {'season': season, 'week': week, 'summary': summary, 'games': graded, 'skipped_without_final': sorted(set(skipped))}
+
+
 def render_slate_text(slate):
     lines = [f"{slate['season']} week {slate['week']} ({slate['game_type']}): "
              f"{slate['unplayed']} of {slate['games_total']} games unplayed."]
@@ -441,6 +502,9 @@ def main(argv=None):
     parser.add_argument('--cutoff', help='with --streaks: UTC cutoff, e.g. 2026-11-17T12:00:00Z')
     parser.add_argument('--target', metavar='GAME_ID', help='with --streaks: the game the file is built for')
     parser.add_argument('--props', metavar='GAME_ID', help='forward Platt player projections next to the market')
+    parser.add_argument('--grade-week', type=int, metavar='WEEK', help='grade simulated games against the finals')
+    parser.add_argument('--batch', action='append', default=[], metavar='MODEL=FOLDER',
+                        help='with --grade-week: a model and its batch folder; repeat for each model')
     args = parser.parse_args(argv)
     if args.streaks:
         missing = [name for name, value in (('--cutoff', args.cutoff), ('--target', args.target),
@@ -466,6 +530,13 @@ def main(argv=None):
                           'weeks': sorted({row[1] for row in data['team_snaps']}),
                           'team_games': len(data['team_snaps']), 'player_rows': len(data['player_snaps']),
                           'coverage_all_weeks': data['coverage']}, sort_keys=True))
+        return 0
+    if args.grade_week is not None:
+        if not args.batch:
+            parser.error('--grade-week needs at least one --batch MODEL=FOLDER')
+        batches = dict(item.split('=', 1) for item in args.batch)
+        report = grade_games(args.db, args.season or 2026, args.grade_week, batches)
+        print(json.dumps(report, indent=2, sort_keys=True))
         return 0
     if args.props:
         rows = player_prop_comparison(args.db, args.props)
