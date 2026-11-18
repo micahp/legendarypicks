@@ -56,3 +56,14 @@ Seth McGowan, Laquon Treadwell and David Montgomery in the simulation, not marke
   (Miami and Buffalo) was not used for this game.
 - The kicker table is a derived scratch file.
 - The raw seed files stay on the fast host. They are compressed there, not in git.
+
+## Forward Platt projections next to the market (run pp-2026-w11-20261118T031444)
+
+- Source: `player_forward_platt` in the slow database, read with `oracle.py --props 2026_11_IND_HOU --json`.
+- 42 lines, one per player, market and line, each at the sportsbook line nearest even odds. Every line has a player name.
+- Mean absolute edge 0.049. Largest gaps: Anthony Gould targets (market 0.44, model 0.20), Gould receptions (0.48 vs
+  0.25), Gould receiving yards (0.50 vs 0.35), Daniel Jones passing yards (0.50 vs 0.62).
+- The forward Platt model also gives the Indianapolis receivers low usage, as the simulation does. That agreement is a
+  check on the workload inputs, not a sign the market is wrong.
+
+File: `prop-comparison-forward-platt.json`.
