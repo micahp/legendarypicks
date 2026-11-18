@@ -200,7 +200,8 @@ def resolve_team(game_id, team, as_of, roster, events, roles, inactives=(), inac
         for pos, rank in row.get('positions') or [(row['pos'], row.get('depth_rank'))]:
             player = {'gsis_id': gsis, 'name': row['name'], 'pos': pos, 'depth_rank': rank,
                       'membership': membership, 'official_eligible': eligible, 'projected_participant': eligible,
-                      'projection_status': None, 'flags': sorted(flags + reasons), 'exclusion_reason': reason,
+                      'projection_status': None, 'flags': sorted(flags + reasons + list(row.get('extra_flags', []))),
+                      'exclusion_reason': reason,
                       'events_applied': applied}
             players.append(player)
             by_id.setdefault(gsis, []).append(player)

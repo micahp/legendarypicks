@@ -254,5 +254,14 @@ class MultiPosition(unittest.TestCase):
         self.assertEqual([], result['blocks'])
 
 
+class ExtraFlags(unittest.TestCase):
+    def test_a_source_flag_on_a_row_reaches_the_player_record_without_changing_eligibility(self):
+        roster = [dict(row('B', 'B', 'DB', depth=1), extra_flags=['week10_ruled_out_no_week11_report'])]
+        result = resolve(roster, [{'role': 'DB1', 'positions': ['DB'], 'required': True}])
+        record = player_of(result, 'B')
+        self.assertIn('week10_ruled_out_no_week11_report', record['flags'])
+        self.assertTrue(record['official_eligible'])
+
+
 if __name__ == '__main__':
     unittest.main()
