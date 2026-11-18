@@ -66,4 +66,12 @@ Seth McGowan, Laquon Treadwell and David Montgomery in the simulation, not marke
 - The forward Platt model also gives the Indianapolis receivers low usage, as the simulation does. That agreement is a
   check on the workload inputs, not a sign the market is wrong.
 
-File: `prop-comparison-forward-platt.json`.
+File: `prop-comparison-forward-platt.json`.\n
+## PBV1 paired run (v2 code, v1 profile, 100 seeds)
+
+- Off: the v2 code on the v1 profile with no package sampler. On: the same run with `--playcall-pbv1-package` and the
+  frozen training table (`pbv1_training_plays.csv`, sha256 ab875384...).
+- Result: identical. Every one of the 100 seeds gives the same points for both teams in both runs.
+- The sampler ran. The PBV1-on run records 134 package draws in the first game record, mostly package 11.
+- Likely cause, not yet confirmed in code: the package label feeds the personnel label in `pre_event.py`, and the
+  outcome layers in this profile do not read it. Next step: check the outcome layers for the label.
