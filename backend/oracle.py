@@ -2,6 +2,10 @@
 
     python backend/oracle.py --db <picks.db>             the next slate, as text
     python backend/oracle.py --db <picks.db> --json      the same answer as JSON
+    python backend/oracle.py --db <picks.db> --snapshot GAME_ID --as-of TS [--out FILE]
+                                                         a frozen pregame snapshot for one game
+    python backend/oracle.py --snap-counts --season S --through-week W --raw DIR --players-csv CSV --out FILE
+                                                         participation snap counts, from nflverse files
 
 Every field comes from a stored table or the sim-run index. A value the store does not hold is None, never a guess.
 The database is opened read-only. Projection status is read from game_projections and model_runs. Sim runs are read from
@@ -10,11 +14,12 @@ the registry index, through the same verified reader the SLC code uses.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sqlite3
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -212,6 +217,128 @@ def game_detail(db_path, game_id, store=None):
         conn.close()
 
 
+SCOREBOARD = 'https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard'
+
+
+def _et_to_utc(gameday, gametime):
+    """The schedule's kickoff, read as Eastern time, in UTC. The scoreboard check below is what proves that reading."""
+    import pytz
+    local = pytz.timezone('America/New_York').localize(datetime.strptime(f'{gameday} {gametime}', '%Y-%m-%d %H:%M'))
+    return local.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def scoreboard_kickoff(fetch, row):
+    """The verified kickoff for one scheduled game, from the NFL scoreboard: (UTC datetime, scoreboard URL).
+
+    Refuses unless the scoreboard lists the same home and away teams on the schedule's ET day, at the time the schedule
+    holds. A missing or ambiguous event is refused too, never guessed."""
+    url = f"{SCOREBOARD}?dates={row['gameday'].replace('-', '')}"
+    matches = []
+    for event in fetch.json(url).get('events', []):
+        teams = {c['homeAway']: c['team']['abbreviation'] for c in event['competitions'][0]['competitors']}
+        if teams.get('home') == row['home_team'] and teams.get('away') == row['away_team']:
+            matches.append(datetime.strptime(event['date'], '%Y-%m-%dT%H:%MZ'))
+    if len(matches) != 1:
+        raise ValueError(f"{row['game_id']}: scoreboard has {len(matches)} matching events at {url}")
+    expected = _et_to_utc(row['gameday'], row['gametime'])
+    if matches[0] != expected:
+        raise ValueError(f"{row['game_id']}: scoreboard kickoff {matches[0]:%Y-%m-%dT%H:%MZ} differs from schedule "
+                         f"{row['gametime']} ET = {expected:%Y-%m-%dT%H:%MZ}")
+    return matches[0], url
+
+
+def build_snapshot(db_path, game_id, as_of, fetch=None):
+    """A frozen pregame snapshot for one game, in the form the SLC batch reads. Built by the SLC code; the kickoff comes
+    from the scoreboard and is checked against the schedule first."""
+    import paced_http
+    _nfl_sequence_modules()
+    import pregame_snapshot
+    conn = connect(db_path)
+    try:
+        row = conn.execute('SELECT * FROM nfl_schedule WHERE game_id = ?', (game_id,)).fetchone()
+    finally:
+        conn.close()
+    if row is None:
+        raise ValueError(f'unknown game_id: {game_id}')
+    fetch = fetch or paced_http.Fetcher(min_interval=3.0, host_budget=20, on_exhausted='refuse')
+    kickoff, url = scoreboard_kickoff(fetch, dict(row))
+    return pregame_snapshot.build(str(db_path), game_id, as_of, kickoff_utc=f'{kickoff:%Y-%m-%dT%H:%M:%SZ}',
+                                  kickoff_source_url=url)
+
+
+def _nfl_sequence_modules():
+    """Put the SLC scripts on the import path. Oracle calls their builders; it does not copy their logic."""
+    for path in (HERE.parent / 'scripts', HERE.parent / 'scripts' / 'nfl_sequence'):
+        if str(path) not in sys.path:
+            sys.path.insert(0, str(path))
+
+
+def build_snap_counts(raw_dir, players_csv, season, through_week):
+    """The participation snap counts the SLC engine reads (--participation-snap-counts), for one season through one week.
+
+    Built from the nflverse release files by the SLC loader; this only keeps the weeks played. Refuses when no week of
+    the season is at or before `through_week`."""
+    _nfl_sequence_modules()
+    import snap_update
+    data = snap_update.load_published(raw_dir, season, players_csv)
+    data['team_snaps'] = [row for row in data['team_snaps'] if row[1] <= through_week]
+    data['player_snaps'] = [row for row in data['player_snaps'] if row[1] <= through_week]
+    data['active'] = [row for row in data['active'] if row[1] <= through_week]
+    data['through_week'] = through_week
+    if not data['team_snaps']:
+        raise ValueError(f'no published snap counts for {season} through week {through_week}')
+    return data
+
+
+NFLVERSE_TEAM = {'LAR': 'LA', 'WSH': 'WAS'}  # the streak files use nflverse codes; the database uses these two
+
+
+def _streak(results):
+    """Current run of wins (W) or losses (L) in game order, e.g. 'W3' or 'L1'. Ties are neither. '' when none."""
+    decided = [r for r in results if r in ('W', 'L')]
+    if not decided:
+        return ''
+    last, count = decided[-1], 0
+    for r in reversed(decided):
+        if r != last:
+            break
+        count += 1
+    return f'{last}{count}'
+
+
+def build_streaks(db_path, cutoff, target_game_id, season=2026):
+    """The win-loss streak file the SLC v1_full_stack profile reads, as of a UTC cutoff.
+
+    A regular-season game counts when its result was available at the cutoff: kickoff plus 10 hours is at or before it.
+    The target game never counts. Kickoff is the schedule's America/New_York local time. Returns (payload, games used)."""
+    import pytz
+    eastern = pytz.timezone('America/New_York')
+    conn = connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT game_id, gameday, gametime, home_team, away_team, home_score, away_score FROM nfl_schedule "
+            "WHERE season = ? AND game_type = 'REG' AND gameday IS NOT NULL AND gametime IS NOT NULL",
+            (season,)).fetchall()
+    finally:
+        conn.close()
+    results, used = {}, []
+    for row in sorted(rows, key=lambda r: (r['gameday'], r['gametime'], r['game_id'])):
+        if row['game_id'] == target_game_id or row['home_score'] is None or row['away_score'] is None:
+            continue
+        kickoff = eastern.localize(datetime.strptime(f"{row['gameday']} {row['gametime']}", '%Y-%m-%d %H:%M'))
+        if kickoff.astimezone(timezone.utc) + timedelta(hours=10) > cutoff:
+            continue
+        used.append(row['game_id'])
+        home, away = row['home_score'], row['away_score']
+        for team, mine, theirs in ((row['home_team'], home, away), (row['away_team'], away, home)):
+            results.setdefault(NFLVERSE_TEAM.get(team, team), []).append(
+                'W' if mine > theirs else 'L' if mine < theirs else 'T')
+    payload = {'as_of_utc': cutoff.strftime('%Y-%m-%dT%H:%M:%SZ'),
+               'source': 'nfl_schedule scores in the database, regular season, read-only build',
+               'teams': {team: {'streak': _streak(r)} for team, r in sorted(results.items())}}
+    return payload, used
+
+
 def render_slate_text(slate):
     lines = [f"{slate['season']} week {slate['week']} ({slate['game_type']}): "
              f"{slate['unplayed']} of {slate['games_total']} games unplayed."]
@@ -272,7 +399,55 @@ def main(argv=None):
     parser.add_argument('--season', type=int, help='with --slate: the season to list')
     parser.add_argument('--week', type=int, help='with --slate: the week to list')
     parser.add_argument('--game', metavar='GAME_ID', help='every stored fact about one game, as JSON')
+    parser.add_argument('--snapshot', metavar='GAME_ID', help='a frozen pregame snapshot for one game, as JSON')
+    parser.add_argument('--as-of', help='with --snapshot: the cutoff, timezone-qualified, before the kickoff')
+    parser.add_argument('--out', help='with --snapshot or --snap-counts: write the file here instead of stdout')
+    parser.add_argument('--snap-counts', action='store_true',
+                        help='participation snap counts for --season through --through-week, as a file (needs --out)')
+    parser.add_argument('--through-week', type=int, help='with --snap-counts: the last week to include')
+    parser.add_argument('--raw', type=Path, help='with --snap-counts: the nflverse raw directory')
+    parser.add_argument('--players-csv', type=Path, help='with --snap-counts: nflverse players.csv')
+    parser.add_argument('--streaks', action='store_true',
+                        help='win-loss streak file for --season as of --cutoff, target game excluded (needs --cutoff, '
+                             '--target, --out)')
+    parser.add_argument('--cutoff', help='with --streaks: UTC cutoff, e.g. 2026-11-17T12:00:00Z')
+    parser.add_argument('--target', metavar='GAME_ID', help='with --streaks: the game the file is built for')
     args = parser.parse_args(argv)
+    if args.streaks:
+        missing = [name for name, value in (('--cutoff', args.cutoff), ('--target', args.target),
+                                            ('--out', args.out)) if value is None]
+        if missing:
+            parser.error('--streaks needs ' + ', '.join(missing))
+        cutoff = datetime.strptime(args.cutoff, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
+        payload, used = build_streaks(args.db, cutoff, args.target, args.season or 2026)
+        Path(args.out).write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n')
+        print(json.dumps({'out': args.out, 'sha256': hashlib.sha256(Path(args.out).read_bytes()).hexdigest(),
+                          'games_used': len(used), 'teams': len(payload['teams'])}, sort_keys=True))
+        return 0
+    if args.snap_counts:
+        missing = [name for name, value in (('--season', args.season), ('--through-week', args.through_week),
+                                            ('--raw', args.raw), ('--players-csv', args.players_csv),
+                                            ('--out', args.out)) if value is None]
+        if missing:
+            parser.error('--snap-counts needs ' + ', '.join(missing))
+        data = build_snap_counts(args.raw, args.players_csv, args.season, args.through_week)
+        text = json.dumps(data, separators=(',', ':'), sort_keys=True) + '\n'
+        Path(args.out).write_text(text, encoding='utf-8')
+        print(json.dumps({'out': args.out, 'sha256': hashlib.sha256(text.encode('utf-8')).hexdigest(),
+                          'weeks': sorted({row[1] for row in data['team_snaps']}),
+                          'team_games': len(data['team_snaps']), 'player_rows': len(data['player_snaps']),
+                          'coverage_all_weeks': data['coverage']}, sort_keys=True))
+        return 0
+    if args.snapshot:
+        if not args.as_of:
+            parser.error('--snapshot needs --as-of')
+        snapshot = build_snapshot(args.db, args.snapshot, args.as_of)
+        text = json.dumps(snapshot, indent=2, sort_keys=True, default=str) + '\n'
+        if args.out:
+            Path(args.out).write_text(text)
+        else:
+            sys.stdout.write(text)
+        return 0
     if args.game:
         detail = game_detail(args.db, args.game, args.index_store)
         if detail is None:
