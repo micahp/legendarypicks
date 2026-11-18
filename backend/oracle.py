@@ -339,6 +339,34 @@ def build_streaks(db_path, cutoff, target_game_id, season=2026):
     return payload, used
 
 
+def player_prop_comparison(db_path, game_id):
+    """Forward Platt player projections next to the market, one row per player, market and line.
+
+    Each line is the sportsbook line nearest even odds; the market probability is the vig-free over probability, and
+    the model's is the Platt-calibrated one. Read-only. Returns [] when the game has no rows. Raises when the table is
+    missing, so an absent job is never read as an empty comparison."""
+    conn = connect(db_path)
+    try:
+        try:
+            rows = conn.execute(
+                """SELECT f.run_id, f.team, f.player_id, p.name AS player, f.market, f.line, f.source,
+                          f.over_odds, f.under_odds, f.p_over_fair, f.p_over_raw, f.p_over_platt, f.books_at_line,
+                          f.selection, f.model_version, f.as_of
+                     FROM player_forward_platt f LEFT JOIN players p ON p.id = f.player_id
+                    WHERE f.game_id = ? ORDER BY f.market, f.player_id, f.line""", (game_id,)).fetchall()
+        except sqlite3.OperationalError as exc:
+            raise ValueError(f'player_forward_platt is not readable: {exc}') from exc
+    finally:
+        conn.close()
+    out = []
+    for row in rows:
+        d = dict(row)
+        d['edge_platt'] = None if d['p_over_fair'] is None or d['p_over_platt'] is None else round(
+            d['p_over_platt'] - d['p_over_fair'], 4)
+        out.append(d)
+    return out
+
+
 def render_slate_text(slate):
     lines = [f"{slate['season']} week {slate['week']} ({slate['game_type']}): "
              f"{slate['unplayed']} of {slate['games_total']} games unplayed."]
@@ -412,6 +440,7 @@ def main(argv=None):
                              '--target, --out)')
     parser.add_argument('--cutoff', help='with --streaks: UTC cutoff, e.g. 2026-11-17T12:00:00Z')
     parser.add_argument('--target', metavar='GAME_ID', help='with --streaks: the game the file is built for')
+    parser.add_argument('--props', metavar='GAME_ID', help='forward Platt player projections next to the market')
     args = parser.parse_args(argv)
     if args.streaks:
         missing = [name for name, value in (('--cutoff', args.cutoff), ('--target', args.target),
@@ -437,6 +466,15 @@ def main(argv=None):
                           'weeks': sorted({row[1] for row in data['team_snaps']}),
                           'team_games': len(data['team_snaps']), 'player_rows': len(data['player_snaps']),
                           'coverage_all_weeks': data['coverage']}, sort_keys=True))
+        return 0
+    if args.props:
+        rows = player_prop_comparison(args.db, args.props)
+        if args.json:
+            print(json.dumps(rows, indent=2, sort_keys=True, default=str))
+        else:
+            for r in rows:
+                print(f"{r['player']}\t{r['market']}\t{r['line']}\tmarket {r['p_over_fair']}\tmodel {r['p_over_platt']}\tedge {r['edge_platt']}")
+            print(f'{len(rows)} lines')
         return 0
     if args.snapshot:
         if not args.as_of:

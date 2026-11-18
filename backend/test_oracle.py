@@ -243,3 +243,32 @@ def test_streak_file_counts_only_games_available_at_the_cutoff(tmp_path):
     assert payload['teams']['LA'] == {'streak': 'W1'}
     assert payload['teams']['WAS'] == {'streak': 'L1'}
     assert 'DEN' not in payload['teams']
+
+
+def test_player_prop_comparison_reads_the_forward_platt_rows(tmp_path):
+    path = tmp_path / 'props.db'
+    conn = sqlite3.connect(path)
+    conn.executescript("""CREATE TABLE players (id INTEGER PRIMARY KEY, name TEXT);
+        CREATE TABLE player_forward_platt (run_id TEXT, game_id TEXT, team TEXT, player_id INTEGER, market TEXT,
+            line REAL, source TEXT, over_odds INTEGER, under_odds INTEGER, p_over_fair REAL, p_over_raw REAL,
+            p_over_platt REAL, books_at_line INTEGER, selection TEXT, model_version TEXT, as_of TEXT);""")
+    conn.execute("INSERT INTO players VALUES (1, 'Pat Test')")
+    conn.executemany("INSERT INTO player_forward_platt VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [
+        ('r1', 'G1', 'IND', 1, 'receptions', 4.5, 'rotowire:fanduel', -110, -110, 0.5, 0.45, 0.6, 2,
+         'nearest_even_odds', 'v2-platt', 't'),
+        ('r1', 'G1', 'IND', 1, 'rushing_yards', 40.5, 'rotowire:fanduel', -115, -105, 0.51, 0.5, 0.48, 1,
+         'nearest_even_odds', 'v2-platt', 't')])
+    conn.commit()
+    conn.close()
+    rows = oracle.player_prop_comparison(path, 'G1')
+    assert [r['market'] for r in rows] == ['receptions', 'rushing_yards']
+    assert rows[0]['player'] == 'Pat Test'
+    assert rows[0]['edge_platt'] == 0.1
+    assert oracle.player_prop_comparison(path, 'NOPE') == []
+
+
+def test_player_prop_comparison_refuses_a_database_without_the_table(tmp_path):
+    path = tmp_path / 'empty.db'
+    sqlite3.connect(path).close()
+    with pytest.raises(ValueError, match='not readable'):
+        oracle.player_prop_comparison(path, 'G1')
