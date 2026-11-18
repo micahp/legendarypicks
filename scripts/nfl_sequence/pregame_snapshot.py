@@ -215,9 +215,34 @@ def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenanc
     return reseal(snapshot)
 
 
+CAPTURED_SCHEDULE = 'captured_before_cutoff'
+# the raw file is hash-pinned, acquired before the cutoff, and its publisher time precedes our acquisition (pregame_capture)
+VERIFIED_CAPTURE_SOURCES = {'nflverse_depth_charts_capture': 'captured raw depth charts'}
+
+
+def input_provenance(game, rosters):
+    """The pregame inputs with no verified availability time. A backtest needs none; an exploratory replay records them."""
+    unverified = []
+    availability = game.get('availability_classification', 'versioned_as_of')
+    if availability == CAPTURED_SCHEDULE:
+        pass  # a hash-pinned capture acquired before the cutoff
+    elif availability != 'versioned_as_of':
+        unverified.append('schedule: no versioned row observed by the cutoff; the current row was used')
+    else:
+        unverified.append('schedule: observed_at is a loader import time, not a capture time')
+    for side, roster in rosters.items():
+        if roster['source'] in VERIFIED_CAPTURE_SOURCES:
+            continue
+        if roster['source'] == 'nflverse_depth_charts':
+            unverified.append(f'{side} depth: snapshot_at is the nflverse artifact date, not a capture time')
+        else:
+            unverified.append(f"{side} depth: source {roster['source']!r} has no verified capture time")
+    return {'unverified': unverified}
+
+
 def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
           kickoff_source_url: str | None = None,
-          allow_unverified_current_schedule_exploratory: bool = False) -> dict:
+          allow_unverified_current_schedule_exploratory: bool = False, evaluation: str | None = None) -> dict:
     cutoff = parse_as_of(as_of)
     scheduled_start = parse_as_of(kickoff_utc) if kickoff_utc else None
     if bool(scheduled_start) != bool(kickoff_source_url):
@@ -294,8 +319,13 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
     finally:
         con.close()
 
+    provenance = input_provenance(game, rosters)
+    if evaluation == 'backtest' and provenance['unverified']:
+        raise ValueError(f"{game_id}: backtest refused; unverified pregame inputs: " + '; '.join(provenance['unverified']))
     snapshot = {
         'schema': SCHEMA,
+        'evaluation': {'class': evaluation, 'verified': not provenance['unverified'],
+                       'unverified_inputs': provenance['unverified']},
         'as_of': cutoff.isoformat().replace('+00:00', 'Z'),
         'roster_snapshot_id': f"nfl-depth-chart:{_canonical_hash(rosters)}",
         'schedule': {
