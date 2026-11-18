@@ -1,7 +1,6 @@
 # TNF 2026-11-19, IND at HOU: family batch and player prop comparison
 
-Status: v2 is complete. The corrected v1 runs (validity without the verified-snapshot gate) were still running when this
-was compiled. Their rows below are partial and will be updated when they finish.
+Status: complete. All 100 seeds finished for all nine runs.
 
 ## Inputs
 
@@ -19,18 +18,18 @@ was compiled. Their rows below are partial and will be updated when they finish.
 | model | games done | valid full games | home mean | away mean | home win rate |
 |---|---|---|---|---|---|
 | v2-pbp-2026-11-17 | 100 | 100 of 100 | 22.12 | 18.34 | 0.63 |
+| v1-vfg | 100 | 100 of 100 | 23.45 | 21.43 | 0.51 |
+| v1.5-vfg | 100 | 100 of 100 | 24.06 | 24.38 | 0.51 |
+| v1.6-vfg | 100 | 100 of 100 | 26.81 | 25.83 | 0.52 |
+| v1.7-vfg | 100 | 100 of 100 | 25.08 | 23.62 | 0.57 |
 | v1 | 100 | 0 of 100 | 24.82 | 23.2 | 0.56 |
 | v1.5 | 100 | 0 of 100 | 24.76 | 22.43 | 0.58 |
 | v1.6 | 100 | 0 of 100 | 23.83 | 22.71 | 0.52 |
 | v1.7 | 100 | 0 of 100 | 25.03 | 23.29 | 0.57 |
-| v1.5-vfg | 24 | in progress | 26.17 | 24.54 | 0.583 |
-| v1.6-vfg | 54 | in progress | 25.74 | 24.76 | 0.537 |
-| v1.7-vfg | 57 | in progress | 24.26 | 22.56 | 0.632 |
 
-- v2 is the only family member with full-game validity: 100 of 100.
-- The original v1 family runs score regulation only. Their 0 valid games come from the verified-snapshot gate, which
-  this snapshot does not meet.
-- The corrected v1 runs remove that gate, so they can produce valid full games. They are in progress.
+- v2 and the corrected v1 family (validity without the verified-snapshot gate) all score 100 of 100 valid full games.
+- The original v1 family runs score regulation only. Their 0 valid games come from the verified-snapshot gate, which this
+  snapshot does not meet. The corrected runs are on branches feat/v1*-valid-full-games-2026-11-18, not pushed.
 
 ## Player prop comparison (v2, 100 seeds)
 
@@ -45,7 +44,10 @@ was compiled. Their rows below are partial and will be updated when they finish.
 - The simulation output leaves the starter and roster-status fields empty for these players. The workload inputs look
   incomplete. Treat these gaps as input problems until they are checked.
 
-Full comparison: `prop-comparison-v2.json`. Summary by model: `summary-by-model.json`.
+Full comparison: `prop-comparison-v2.json` (v2) and `prop-comparison-v1-vfg.json` (corrected v1). Summary by model: `summary-by-model.json`.
+
+Corrected v1 (v1-vfg): 656 lines, mean absolute edge 0.271. The largest gaps are the same kind as v2: low usage for
+Seth McGowan, Laquon Treadwell and David Montgomery in the simulation, not market edges.
 
 ## Known gaps
 
