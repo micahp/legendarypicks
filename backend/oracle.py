@@ -333,6 +333,11 @@ def build_streaks(db_path, cutoff, target_game_id, season=2026):
         for team, mine, theirs in ((row['home_team'], home, away), (row['away_team'], away, home)):
             results.setdefault(NFLVERSE_TEAM.get(team, team), []).append(
                 'W' if mine > theirs else 'L' if mine < theirs else 'T')
+    # the batch names teams by database code (LAR, WSH); the file is keyed by nflverse code. Write both spellings so the
+    # preflight finds the target team either way.
+    for db_code, nfl_code in NFLVERSE_TEAM.items():
+        if nfl_code in results and db_code not in results:
+            results[db_code] = results[nfl_code]
     payload = {'as_of_utc': cutoff.strftime('%Y-%m-%dT%H:%M:%SZ'),
                'source': 'nfl_schedule scores in the database, regular season, read-only build',
                'teams': {team: {'streak': _streak(r)} for team, r in sorted(results.items())}}
