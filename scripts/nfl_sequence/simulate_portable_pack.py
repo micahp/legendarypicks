@@ -9,7 +9,9 @@ SHA-256 lock. Produces JSON results and optional per-seed player box statistics.
 from __future__ import annotations
 
 import argparse
+import builtins
 import copy
+import io
 from collections import defaultdict
 import importlib
 import json
@@ -27,10 +29,28 @@ from portable_model_pack import load_pack, ModelPackError
 
 
 def _forbid_source_table_reads():
-    """Raise if any runtime code attempts to reconnect to historical model data."""
+    """Block DB connections AND external model fixture/table file opens."""
     def refused(*_args, **_kwargs):
         raise RuntimeError("PORTABLE_RUNTIME_SOURCE_TABLE_ACCESS")
     sqlite3.connect = refused
+
+    original_builtin_open = builtins.open
+    original_io_open = io.open
+
+    def guard(original):
+        def checked(file, mode="r", *args, **kwargs):
+            # The compiled pack is always allowed. Source/training material is not.
+            if isinstance(file, (str, bytes, Path)) and "r" in str(mode):
+                name = str(file).replace("\\", "/").lower()
+                suffix = Path(name).suffix
+                if (suffix in {".db", ".sqlite", ".sqlite3", ".csv", ".parquet"}
+                        or "/docs/fixtures/" in name or "/docs/research/" in name):
+                    raise RuntimeError("PORTABLE_RUNTIME_SOURCE_FILE_ACCESS: " + name)
+            return original(file, mode, *args, **kwargs)
+        return checked
+
+    builtins.open = guard(original_builtin_open)
+    io.open = guard(original_io_open)
 
 
 def _code_commit(root):
@@ -67,10 +87,11 @@ def main(argv=None):
     sys.path.insert(0, str(engine_root / "scripts" / "nfl_sequence"))
     sys.path.insert(1, str(engine_root / "backend"))
     commit = _code_commit(engine_root)
+    # Fail if an import/unpickle tries to reach an original source table.
+    _forbid_source_table_reads()
     # Loading validates the externally pinned entire pack BEFORE unpickling.
     reference, snapshot, manifest, _config = load_pack(
         args.pack, expected_sha256=args.pack_sha256, expected_code_commit=commit)
-    _forbid_source_table_reads()
     gs = importlib.import_module("game_state")
     try:
         slc_engine = importlib.import_module("slc_engine")
