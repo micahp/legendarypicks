@@ -112,10 +112,13 @@ def _eligibility(row, membership, inactives):
     return True, flags, None
 
 
-def _pick(role, players):
+def _pick(role, players, taken):
     """(status, gsis_id, basis, extra, block). Explicit starters first, then depth rank, then the unique candidate, then
-    the practice-squad emergency rule. Never ordered by name, jersey or id."""
-    pool = [p for p in players if p['pos'] in role['positions']]
+    the practice-squad emergency rule. Never ordered by name, jersey or id. `taken` holds players already filling a role
+    in this role group, so one person cannot fill two starter slots of the same group."""
+    if role.get('announced_starter') in taken:
+        return 'UNRESOLVED', None, 'announced_starter_already_assigned', None, 'duplicate_role_assignment'
+    pool = [p for p in players if p['pos'] in role['positions'] and p['gsis_id'] not in taken]
     eligible = [p for p in pool if p['official_eligible']]
     announced = role.get('announced_starter')
     if announced:
@@ -159,31 +162,63 @@ def _block(role):
 
 def resolve_team(game_id, team, as_of, roster, events, roles, inactives=(), inactives_verified=False,
                  forecast_class='PROVISIONAL'):
-    """One team's resolved roster for one game at one cutoff. Returns a dict with a content_hash."""
+    """One team's resolved roster for one game at one cutoff. Returns a dict with a content_hash.
+
+    A roster row must carry observed_utc at or before the cutoff; a missing or later one raises. A signing for a player
+    who is not on the roster adds him, when the event carries name and pos; any other transaction for an unknown player
+    blocks the roster."""
     _check_inputs(as_of, events, forecast_class)
     used = _visible(events, as_of)
     blocks = set()
+    known = {}
+    for row in roster:
+        if 'observed_utc' not in row:
+            raise ValueError(f"roster row {row['gsis_id']} has no observed_utc")
+        _check_timestamp(row['observed_utc'], f"roster row {row['gsis_id']} observed_utc")
+        if row['observed_utc'] > as_of:
+            raise ValueError(f"roster row {row['gsis_id']} was observed after the cutoff {as_of}; refuse, do not drop")
+        known[row['gsis_id']] = row
+    for event in used:
+        if event['gsis_id'] in known:
+            continue
+        if event['kind'].startswith('signing_') and event.get('name') and event.get('pos'):
+            known[event['gsis_id']] = {'gsis_id': event['gsis_id'], 'name': event['name'], 'pos': event['pos'],
+                                       'membership': 'UNKNOWN', 'depth_rank': None, 'injury': None,
+                                       'observed_utc': event['observed_utc']}
+        else:
+            blocks.add('transaction_for_unidentified_player')
     players = []
-    for row in sorted(roster, key=lambda r: r['gsis_id']):
-        mine = [e for e in used if e['gsis_id'] == row['gsis_id']]
+    by_id = {}
+    for gsis in sorted(known):
+        row = known[gsis]
+        mine = [e for e in used if e['gsis_id'] == gsis]
         membership, applied, reasons = _membership(row, mine)
         if reasons:
             blocks.add('contradictory_membership')
         eligible, flags, reason = _eligibility(row, membership, inactives)
-        players.append({'gsis_id': row['gsis_id'], 'name': row['name'], 'pos': row['pos'],
-                        'depth_rank': row.get('depth_rank'), 'membership': membership,
-                        'official_eligible': eligible, 'projected_participant': eligible,
-                        'flags': sorted(flags + reasons), 'exclusion_reason': reason,
-                        'events_applied': applied})
+        player = {'gsis_id': gsis, 'name': row['name'], 'pos': row['pos'], 'depth_rank': row.get('depth_rank'),
+                  'membership': membership, 'official_eligible': eligible, 'projected_participant': eligible,
+                  'projection_status': None, 'flags': sorted(flags + reasons), 'exclusion_reason': reason,
+                  'events_applied': applied}
+        players.append(player)
+        by_id[gsis] = player
     roles_out = []
+    taken = {}
     for role in sorted(roles, key=lambda r: r['role']):
-        status, gsis_id, basis, extra, block = _pick(role, players)
+        group = role.get('group')
+        status, gsis_id, basis, extra, block = _pick(role, players, taken.get(group, set()))
         if block:
             blocks.add(block)
-        if status == 'PROJECTED' and forecast_class == 'GAMEDAY_FINAL':
-            blocks.add('gameday_final_unverified_elevation')
-        roles_out.append({'role': role['role'], 'kind': role.get('kind'), 'required': bool(role.get('required')),
-                          'status': status, 'gsis_id': gsis_id, 'basis': basis, 'extra': extra or {}})
+        if gsis_id is not None and group is not None:
+            taken.setdefault(group, set()).add(gsis_id)
+        if status == 'PROJECTED':
+            by_id[gsis_id]['projected_participant'] = True
+            by_id[gsis_id]['projection_status'] = 'PROJECTED_ELEVATION'
+            if forecast_class == 'GAMEDAY_FINAL':
+                blocks.add('gameday_final_unverified_elevation')
+        roles_out.append({'role': role['role'], 'kind': role.get('kind'), 'group': group,
+                          'required': bool(role.get('required')), 'status': status, 'gsis_id': gsis_id,
+                          'basis': basis, 'extra': extra or {}})
     if forecast_class == 'GAMEDAY_FINAL' and not inactives_verified:
         blocks.add('gameday_final_unverified_inactives')
     body = {'schema': SCHEMA, 'resolver_version': RESOLVER_VERSION, 'game_id': game_id, 'team': team,

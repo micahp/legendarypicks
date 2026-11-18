@@ -10,13 +10,14 @@ import roster_resolution as rr  # noqa: E402
 AS_OF = '2026-11-17T22:00:00Z'
 
 
-def row(gsis, name, pos, membership='ACTIVE_ROSTER', depth=None, injury=None):
-    return {'gsis_id': gsis, 'name': name, 'pos': pos, 'membership': membership, 'depth_rank': depth, 'injury': injury}
+def row(gsis, name, pos, membership='ACTIVE_ROSTER', depth=None, injury=None, observed='2026-11-16T12:00:00Z'):
+    return {'gsis_id': gsis, 'name': name, 'pos': pos, 'membership': membership, 'depth_rank': depth, 'injury': injury,
+            'observed_utc': observed}
 
 
-def event(eid, gsis, kind, effective='2026-11-16T15:00:00Z', observed=None):
-    return {'id': eid, 'gsis_id': gsis, 'kind': kind, 'effective_utc': effective,
-            'observed_utc': observed or effective}
+def event(eid, gsis, kind, effective='2026-11-16T15:00:00Z', observed=None, **extra):
+    return dict({'id': eid, 'gsis_id': gsis, 'kind': kind, 'effective_utc': effective,
+                 'observed_utc': observed or effective}, **extra)
 
 
 def qb1():
@@ -198,6 +199,48 @@ class MiamiBuffalo(unittest.TestCase):
         mia = resolve([row('X', 'X', 'QB')], [qb1()])
         buf = rr.resolve_team('2026_11_MIA_BUF', 'BUF', AS_OF, [row('X', 'X', 'QB')], [], [qb1()])
         self.assertEqual(['double_membership'], rr.check_matchup([mia, buf]))
+
+
+class RegressionFromReview(unittest.TestCase):
+    """Each test here failed on the first slice, before the review fixes."""
+
+    def test_a_signing_for_a_player_not_on_the_roster_adds_him(self):
+        result = resolve([], [qb1()], [event('e1', 'NEW', 'signing_active', name='New Signee', pos='QB')])
+        self.assertEqual('ACTIVE_ROSTER', player_of(result, 'NEW')['membership'])
+        self.assertEqual('NEW', role_of(result, 'QB1')['gsis_id'])
+
+    def test_a_transaction_for_an_unknown_player_without_identity_blocks_the_roster(self):
+        result = resolve([], [qb1()], [event('e1', 'GHOST', 'signing_active')])
+        self.assertIn('transaction_for_unidentified_player', result['blocks'])
+        result = resolve([], [qb1()], [event('e2', 'GHOST', 'release')])
+        self.assertIn('transaction_for_unidentified_player', result['blocks'])
+
+    def test_a_projected_kicker_is_marked_as_a_projected_participant(self):
+        result = resolve(MIA_ROSTER, [qb1(), pk(), DL1], MIA_EVENTS)
+        carlson = player_of(result, 'CARLSON')
+        self.assertFalse(carlson['official_eligible'])
+        self.assertTrue(carlson['projected_participant'])
+        self.assertEqual('PROJECTED_ELEVATION', carlson['projection_status'])
+
+    def test_roles_in_one_group_never_fill_two_slots_with_the_same_player(self):
+        roster = [row('A', 'A', 'WR', depth=1), row('B', 'B', 'WR', depth=2)]
+        roles = [{'role': 'WR1', 'positions': ['WR'], 'required': True, 'group': 'WR'},
+                 {'role': 'WR2', 'positions': ['WR'], 'required': True, 'group': 'WR'},
+                 {'role': 'WR3', 'positions': ['WR'], 'required': True, 'group': 'WR'}]
+        result = resolve(roster, roles)
+        self.assertEqual(['A', 'B'], sorted(r['gsis_id'] for r in result['roles'] if r['gsis_id']))
+        self.assertEqual('UNRESOLVED', role_of(result, 'WR3')['status'])
+        self.assertIn('unresolved_WR3', result['blocks'])
+
+    def test_a_roster_row_observed_after_the_cutoff_is_refused(self):
+        with self.assertRaises(ValueError):
+            resolve([row('COOK', 'Brady Cook', 'QB', observed='2026-11-18T09:00:00Z')], [qb1()])
+
+    def test_a_roster_row_without_an_observed_time_is_refused(self):
+        bare = {'gsis_id': 'COOK', 'name': 'Brady Cook', 'pos': 'QB', 'membership': 'ACTIVE_ROSTER',
+                'depth_rank': None, 'injury': None}
+        with self.assertRaises(ValueError):
+            resolve([bare], [qb1()])
 
 
 if __name__ == '__main__':
