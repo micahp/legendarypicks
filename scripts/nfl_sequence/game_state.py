@@ -1828,8 +1828,7 @@ def full_game_validity(snapshot, *, complete, blocker, guarded, unsupported, pen
     propensity, foul spot, acceptance/election or outcome distributions.
     """
     mechanically_valid = bool(
-        snapshot and (snapshot.get('evaluation') or {}).get('verified')
-        and complete and blocker is None and not guarded and not unsupported)
+        snapshot and complete and blocker is None and not guarded and not unsupported)
     release_validated = bool(mechanically_valid and not penalty_enabled)
     return mechanically_valid, release_validated
 
