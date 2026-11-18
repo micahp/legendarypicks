@@ -33,8 +33,8 @@ def _forbid_source_table_reads():
     sqlite3.connect = refused
 
 
-def _code_commit():
-    return subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip()
+def _code_commit(root):
+    return subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
 
 
 def _run(seed, reference, snapshot, gs, slc_engine=None):
@@ -48,6 +48,7 @@ def _run(seed, reference, snapshot, gs, slc_engine=None):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--engine-root", default=str(REPO), help="pinned engine checkout for this model")
     ap.add_argument("--pack", required=True)
     ap.add_argument("--pack-sha256", required=True, help="independent pack hash from trusted build manifest")
     ap.add_argument("--games", type=int, required=True)
@@ -58,7 +59,14 @@ def main(argv=None):
     args = ap.parse_args(argv)
     if args.games < 1 or args.seed_start < 0:
         ap.error("games must be positive and seed-start nonnegative")
-    commit = _code_commit()
+    engine_root = Path(args.engine_root).resolve()
+    if not (engine_root / "scripts" / "nfl_sequence" / "game_state.py").exists():
+        ap.error("--engine-root must identify an SLC source checkout")
+    # The runner is shipped separately; each compiled model uses its own
+    # original code tree. Install that tree before pickle import resolution.
+    sys.path.insert(0, str(engine_root / "scripts" / "nfl_sequence"))
+    sys.path.insert(1, str(engine_root / "backend"))
+    commit = _code_commit(engine_root)
     # Loading validates the externally pinned entire pack BEFORE unpickling.
     reference, snapshot, manifest, _config = load_pack(
         args.pack, expected_sha256=args.pack_sha256, expected_code_commit=commit)
