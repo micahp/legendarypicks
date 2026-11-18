@@ -3,6 +3,42 @@
 Status: implementation target; branch `feat/slc-portable-model-packs-2026-11-18`. **Do not claim a model is portable until an isolated runtime succeeds.**
 Owner decision: model loading is a one-time build concern, not a per-simulation requirement. Every supported full-game model must include overtime. No change to `dev` or production until validated.
 
+## Current implementation status (2026-11-18)
+
+**Prototype, NOT production ready.** This feature branch now contains:
+- `portable_model_pack.py`: trusted, externally SHA-pinned one-file archive of an already loaded in-memory reference and frozen snapshot; build-time checks for play/kickoff/safety/overtime pools.
+- `compile_portable_pack.py`: adapter for the existing data-host batch entrypoint using the exact model's source checkout; captures its fully loaded Reference after a one-seed smoke build.
+- `simulate_portable_pack.py`: offline runner using the packed reference and matching model-code checkout; rejects SQLite connections and file reads from model/training CSV, parquet and research fixtures.
+- `test_portable_model_pack.py`: format/full-game preflight regression tests.
+
+**Not yet done:** No real model pack was built because the slow-host database and fixture directory are not available in this environment. Tests have been authored but not executed against the real model checkout. No per-seed parity, player-prop parity, no-table cold-start, or comprehensive dependency-closure audit has passed yet. V1.7 penalties and V2 PBP must be verified from their actual source checkout, not inferred from the model ID. Do not merge or deploy before the gate below.
+
+### Prototype usage
+
+On the data host, with the original model code checkout and the exact existing successful batch arguments:
+
+```sh
+python3 scripts/nfl_sequence/compile_portable_pack.py \
+  --engine-root /path/to/pinned-model-code \
+  --model-id v1.7-penalties-on \
+  --out /path/packs/2026_11_IND_HOU-v1.7.slcpack \
+  -- --snapshot-file /path/to/frozen-game.json --db /path/to/source.sqlite \
+     [all normal, pinned args for that exact model]
+```
+
+This produces `<pack>.sha256` outside the pack. In the fast-host environment with the corresponding pinned code checkout (but no source DB or fixtures):
+
+```sh
+python3 scripts/nfl_sequence/simulate_portable_pack.py \
+  --engine-root /path/to/pinned-model-code \
+  --pack /path/packs/2026_11_IND_HOU-v1.7.slcpack \
+  --pack-sha256 "$(cut -d' ' -f1 /path/packs/2026_11_IND_HOU-v1.7.slcpack.sha256)" \
+  --games 1000 --seed-start 300001 --with-player-lines \
+  --out /path/results/2026_11_IND_HOU-v1.7.json
+```
+
+The bracketed model-specific build arguments above are explanatory placeholders, not literal runnable switches. After acceptance, replace them with a single centrally maintained model-pack registry and automated whole-family builds.
+
 ## Goal
 
 The slow/data host has SQLite tables and the pinned research fixtures. Use them **once** to build a self-contained, immutable model artifact; thereafter a simulation runner needs only the model artifact, an immutable pregame snapshot (possibly embedded), the code/runtime matching the artifact, seed range and output path. It must never open the source SQLite database, refit historical features, read a loose fixture, or silently omit a model layer. Retain the legacy table-loading path for reproducibility and validation, but make portable execution the normal deployment path.
