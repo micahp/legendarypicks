@@ -259,8 +259,6 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
         import pbv1_package
         ref.contextual_sampler.pbv1_model = pbv1_package.load(pbv1_table, pbv1_package.TABLE_SHA256, season)
     if participation_field:  # research flag: skill lineups that carry from snap to snap, (path, expected sha256)
-        if pbv1_table:
-            raise ValueError('the participation field sets the personnel label itself; it cannot run with PBV1')
         import participation_field as pf
         field = pf.Field.load(*participation_field)
         if not field.seasons or max(field.seasons) >= season:

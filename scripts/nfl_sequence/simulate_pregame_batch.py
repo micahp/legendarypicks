@@ -1645,8 +1645,6 @@ def main(argv=None):
         if not args.participation_snap_counts:
             ap.error('--slc-v2 requires --participation-snap-counts and --participation-snap-counts-sha256 '
                      '(docs/research/participation-model-2026-11-02/build_snap_counts.py for the game season)')
-        if args.playcall_pbv1_package:
-            ap.error('--slc-v2 sets the personnel label from the lineup; it cannot run with --playcall-pbv1-package')
         args.playcall_season_adapt = True
         args.rng_protocol = rng_protocol.V2
         for flag, (path, sha) in SLC_V2_TABLES.items():
@@ -1664,8 +1662,6 @@ def main(argv=None):
             ap.error('--participation-field requires --participation-field-sha256')
         if args.rng_protocol != rng_protocol.V2:
             ap.error('--participation-field requires --rng-protocol v2')
-        if args.playcall_pbv1_package:
-            ap.error('--participation-field cannot run with --playcall-pbv1-package; both set the personnel label')
         if not args.playcall_artifact:
             ap.error('--participation-field requires --playcall-artifact (the SLC engine)')
     if args.participation_snap_counts:
@@ -1673,6 +1669,11 @@ def main(argv=None):
             ap.error('--participation-snap-counts requires --participation-field')
         if not args.participation_snap_counts_sha256:
             ap.error('--participation-snap-counts requires --participation-snap-counts-sha256')
+    if args.playcall_pbv1_package:
+        if not args.participation_field:
+            ap.error('--playcall-pbv1-package requires --participation-field so package draws constrain player participation')
+        if args.rng_protocol != rng_protocol.V2:
+            ap.error('--playcall-pbv1-package requires --rng-protocol v2')
     if args.playcall_fg_kicker:
         if not args.playcall_fg_kicker_sha256:
             ap.error('--playcall-fg-kicker requires --playcall-fg-kicker-sha256')

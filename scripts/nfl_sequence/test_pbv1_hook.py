@@ -65,6 +65,25 @@ class RealModelDraw(unittest.TestCase):
         self.assertIn(on['personnel'], model.distribution(('pass', '1', 'd10_14', 0)))
         self.assertEqual(draws.usage['drawn'], 1)
 
+    def test_real_pbv1_package_controls_lineup_and_player_eligibility(self):
+        import participation_field as pf
+        from test_participation_field_hook import FIELD, SNAPSHOT as REAL_ROSTERS
+
+        model = pp.load(TABLE, pp.TABLE_SHA256, 2026)
+        draws = pp.Draws(model)
+        chooser = pe.chooser(REAL_ROSTERS, 19, seed_root='b' * 64, field=FIELD, pbv1=draws)
+        states = [dict(STATE, down=1 + i % 3, togo=(i % 4) + 1, yl=40) for i in range(30)]
+        decisions = [chooser('run' if i % 2 else 'dropback', 'A', state) for i, state in enumerate(states)]
+        self.assertEqual(draws.usage['drawn'], len(decisions))
+        self.assertGreater(len({d['lineup']['group'] for d in decisions}), 1)
+        for decision in decisions:
+            lineup = decision['lineup']
+            self.assertEqual(decision['personnel'], lineup['group'])
+            for role in ('rusher', 'receiver'):
+                player = decision.get(role)
+                if player is not None and player['pos_abb'] in pf.SKILL:
+                    self.assertIn(player['gsis_id'], lineup['on_field'])
+
 
 if __name__ == '__main__':
     unittest.main()
