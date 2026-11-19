@@ -290,6 +290,128 @@ def build_snap_counts(raw_dir, players_csv, season, through_week):
     return data
 
 
+def roster_parquet_from_archive(rds_path, out_path):
+    """Write one dated archive's weekly roster as parquet, the form the kicker builder reads. Reads the .rds with pyreadr.
+    Refuses to overwrite. Returns the parquet's sha256."""
+    import pyreadr
+    out = Path(out_path)
+    if out.exists():
+        raise FileExistsError(f'{out} exists; a walk-forward input is written once')
+    frames = pyreadr.read_r(str(rds_path))
+    if len(frames) != 1:
+        raise ValueError(f'{rds_path}: expected one object, found {len(frames)}')
+    frame = list(frames.values())[0]
+    frame.to_parquet(out, index=False)
+    return hashlib.sha256(out.read_bytes()).hexdigest()
+
+
+def archive_roster_for_week(archive_root, week):
+    """The earliest dated archive whose weekly roster holds `week`: (roster .rds path, archive folder date as YYYY-MM-DD).
+
+    The archives are saved at about 12:00 to 13:00 UTC on their folder date, so the caller uses that time as the roster's
+    published bound. Raises when no archive holds the week, so a missing week is never filled in."""
+    import re
+    import pyreadr
+    dated = sorted(p for p in Path(archive_root).glob('archive-*') if re.fullmatch(r'archive-\d{4}-\d{2}-\d{2}', p.name))
+    for folder in dated:
+        rds = folder / 'roster_weekly_2026.rds'
+        if not rds.exists():
+            continue
+        frame = list(pyreadr.read_r(str(rds)).values())[0]
+        if (frame['week'] == week).any():
+            return rds, folder.name.removeprefix('archive-')
+    raise ValueError(f'no dated archive under {archive_root} holds the 2026 roster for week {week}')
+
+
+def week_first_kickoff(db_path, season, week):
+    """The earliest regular-season kickoff of one week, in UTC, from the schedule's Eastern local times."""
+    conn = connect(db_path)
+    try:
+        rows = conn.execute("SELECT gameday, gametime FROM nfl_schedule WHERE season = ? AND week = ? AND game_type = 'REG' "
+                            "AND gameday IS NOT NULL AND gametime IS NOT NULL", (season, week)).fetchall()
+    finally:
+        conn.close()
+    if not rows:
+        raise ValueError(f'no scheduled games for {season} week {week}')
+    return min(_et_to_utc(r['gameday'], r['gametime']) for r in rows)
+
+
+def kicker_week_assignments(roster_path, season, week, continuity_from=None):
+    """Each team's kicker for one week, read from the weekly roster under the kicker table's assignment rule.
+
+    The one ACT kicker is the team's kicker. A team with no ACT kicker takes its one DEV (practice-squad) kicker. A team
+    with more than one ACT kicker keeps last week's kicker if he is one of them (`continuity_from`, a dict of team to
+    gsis_id); otherwise it is left unresolved, so the engine refuses that team's game. Returns (rows, unresolved,
+    continuity), rows as [season, week, team, gsis_id]."""
+    from collections import defaultdict
+    import pyarrow.parquet as pq
+    t = pq.read_table(str(roster_path), columns=['season', 'week', 'team', 'position', 'status', 'gsis_id']).to_pydict()
+    active, practice, teams = defaultdict(set), defaultdict(set), set()
+    for i in range(len(t['week'])):
+        if int(t['week'][i]) != week or int(t['season'][i]) != season:
+            continue
+        teams.add(t['team'][i])
+        if t['position'][i] != 'K':
+            continue
+        if t['status'][i] == 'ACT':
+            active[t['team'][i]].add(t['gsis_id'][i])
+        elif t['status'][i] == 'DEV':
+            practice[t['team'][i]].add(t['gsis_id'][i])
+    rows, unresolved, continuity = [], [], []
+    for team in sorted(teams):
+        prev = (continuity_from or {}).get(team)
+        if len(active[team]) > 1 and prev in active[team]:
+            active[team] = {prev}
+            continuity.append(team)
+        if len(active[team]) > 1:
+            unresolved.append(team)
+        elif active[team]:
+            rows.append([season, week, team, next(iter(active[team]))])
+        elif len(practice[team]) == 1:
+            rows.append([season, week, team, next(iter(practice[team]))])
+        else:
+            unresolved.append(team)
+    return rows, unresolved, continuity
+
+
+def build_week_kicker_table(base_path, roster_path, season, week, out_path, published_utc, kickoff_utc):
+    """The kicker table for one week of a walk-forward test: the base table's assignments for weeks before `week`, plus
+    this week's rows from the weekly roster. Assignments for later weeks are dropped, so no future week reaches the engine.
+
+    Refuses when the roster was published after the week's first kickoff (a later roster can show a change not known
+    pregame), when `out_path` exists, and when the base holds no assignments before `week`. Each team with no row is
+    listed as unresolved, so the engine refuses that team's game. Continuity for two ACT kickers reads last week's
+    assignment from the base table."""
+    if published_utc > kickoff_utc:
+        raise ValueError(f'roster published {published_utc:%Y-%m-%dT%H:%MZ} is after week {week} kickoff '
+                         f'{kickoff_utc:%Y-%m-%dT%H:%MZ}')
+    out = Path(out_path)
+    if out.exists():
+        raise FileExistsError(f'{out} exists; a walk-forward input is written once')
+    base_text = Path(base_path).read_text()
+    base = json.loads(base_text)
+    before = [row for row in base['assignments'] if row[0] != season or row[1] < week]
+    this_season = [row for row in before if row[0] == season]
+    if not this_season:
+        raise ValueError(f'base table {base_path} has no {season} assignments before week {week}')
+    prev_week = max(row[1] for row in this_season)
+    continuity_from = {row[2]: row[3] for row in this_season if row[1] == prev_week}
+    rows, unresolved, continuity = kicker_week_assignments(roster_path, season, week, continuity_from)
+    table = dict(base)
+    table['assignments'] = before + rows
+    table['walkforward_week'] = {
+        'season': season, 'week': week, 'rule': 'kicker_week_assignments on the weekly roster',
+        'roster_sha256': hashlib.sha256(Path(roster_path).read_bytes()).hexdigest(),
+        'roster_published_utc': f'{published_utc:%Y-%m-%dT%H:%M:%SZ}',
+        'kickoff_utc': f'{kickoff_utc:%Y-%m-%dT%H:%M:%SZ}',
+        'base_sha256': hashlib.sha256(base_text.encode()).hexdigest(),
+        'base_weeks_dropped': sorted({row[1] for row in base['assignments'] if row[0] == season and row[1] >= week}),
+        'rows': len(rows), 'unresolved_teams': unresolved, 'continuity_resolved': continuity,
+    }
+    out.write_text(json.dumps(table, indent=1, sort_keys=True) + '\n')
+    return table['walkforward_week']
+
+
 NFLVERSE_TEAM = {'LAR': 'LA', 'WSH': 'WAS'}  # the streak files use nflverse codes; the database uses these two
 
 
