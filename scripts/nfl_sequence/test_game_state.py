@@ -1413,7 +1413,6 @@ class OvertimeChoice(unittest.TestCase):
     TD = {'outcome': 'touchdown', 'duration': 120, 'points_offense': 6, 'points_defense': 0, 'next_offense': None,
           'next_yardline': None, 'try_kind': None, 'try_made': None, 'turnover_kind': 'other', 'game_id': 'fixture', 'drive': 1}
 
-    @unittest.skipUnless(gs.OVERTIME_PLAY_MODEL, 'overtime has no play model: its possessions are rows with no plays')
     def test_a_receive_gives_the_first_possession_to_the_toss_winner(self):
         record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD],
                                      overtime_choice='receive'), winner_choice='receive', max_drives=80)
@@ -1421,7 +1420,6 @@ class OvertimeChoice(unittest.TestCase):
         self.assertEqual(ot['first_possession_choice'], 'receive')
         self.assertEqual(ot['possessions'][0], ot['toss_winner'])
 
-    @unittest.skipUnless(gs.OVERTIME_PLAY_MODEL, 'overtime has no play model: its possessions are rows with no plays')
     def test_a_kick_gives_the_first_possession_to_the_other_team(self):
         record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD],
                                      overtime_choice='kick'), winner_choice='receive', max_drives=80)
@@ -1430,7 +1428,6 @@ class OvertimeChoice(unittest.TestCase):
         self.assertNotEqual(ot['possessions'][0], ot['toss_winner'])
         self.assertEqual(ot['choice_source'], 'forced decision (labelled control)')
 
-    @unittest.skipUnless(gs.OVERTIME_PLAY_MODEL, 'overtime has no play model: its possessions are rows with no plays')
     def test_the_observed_rate_draws_the_choice_from_a_seeded_bernoulli(self):
         record_a = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[self.TD],
                                        overtime_p_kick=1.0), winner_choice='receive', max_drives=80)
@@ -1965,7 +1962,6 @@ class SafetyFreeKickSampled(unittest.TestCase):
 class ScopeRefusals(unittest.TestCase):
     """Overtime and rare kick outcomes are scoped out, and the validator refuses any record that calls them complete."""
 
-    @unittest.skipUnless(gs.OVERTIME_PLAY_MODEL, 'overtime has no play model: its possessions are rows with no plays')
     def test_a_tie_described_as_complete_without_its_overtime_period_is_refused(self):
         # R07, adversarial: a 0-0 tie described as a complete regulation game, with its overtime period taken away.
         record = gs.play_game(1, ref(StaticPool('run', 0, 450), kickoff_pool(), overtime_pool=[PERIOD_END_OVERTIME]),

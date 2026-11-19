@@ -441,5 +441,26 @@ class BatchAggregation(unittest.TestCase):
             self.assertLessEqual(result['snapshot_cutoff_offset_seconds'], 0)
 
 
+class OvertimePreflight(unittest.TestCase):
+    """A reference without its observed overtime inputs is refused before any seed runs, named by what is missing."""
+
+    def reference(self, pool=(), try_table=None, choice=None):
+        from types import SimpleNamespace
+        return SimpleNamespace(overtime_pool=None if pool is None else list(pool),
+                               overtime_try_p_two=try_table, overtime_p_kick=choice)
+
+    def test_a_complete_overtime_reference_passes(self):
+        batch.require_overtime_reference(self.reference(pool=[{'outcome': 'run'}], try_table={'a': 0.5}, choice=0.3))
+
+    def test_a_missing_drive_pool_is_refused_by_name(self):
+        ref = self.reference(pool=None, try_table={'a': 0.5}, choice=0.3)
+        with self.assertRaisesRegex(batch.OvertimeReferenceMissing, 'overtime drive pool'):
+            batch.require_overtime_reference(ref)
+
+    def test_every_missing_input_is_named(self):
+        with self.assertRaisesRegex(batch.OvertimeReferenceMissing, 'overtime try table, overtime kick-or-receive model'):
+            batch.require_overtime_reference(self.reference(pool=[{'outcome': 'run'}]))
+
+
 if __name__ == '__main__':
     unittest.main()

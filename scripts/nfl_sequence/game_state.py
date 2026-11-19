@@ -57,9 +57,6 @@ NORMAL_MODE = 'normal_nfl_game'
 EXCEPTION_MODE = 'explicit_exception_scenario'
 PREGAME_USAGE_VERSION = 'pregame-role-usage-v1'
 QUARTER_LENGTH = 900
-# On: an overtime possession is played by the regulation play simulator, so it has plays the legality checks can read.
-# Off: a regulation tie is blocked as overtime_not_modelled, and the observed overtime rows (no plays) are not used.
-OVERTIME_PLAY_MODEL = True
 # Overtime fourth downs: the share of eligible fourth downs taken as a field-goal attempt. Calibrated on the observed
 # 2022-2025 overtime drives (even rows, 0.9: field goals 33.3% against 35.7% observed; odd rows held out: 32.9%
 # against 28.6%). Regulation is unchanged.
@@ -811,7 +808,7 @@ class _Game:
         """The clock ran out at the end of regulation or of overtime. A tie after regulation goes to overtime (Rule 16)."""
         if self.quarter == 5:
             self._end_overtime(self._points_leader())
-        elif self.points['A'] == self.points['B'] and self.ref.overtime_pool is not None and OVERTIME_PLAY_MODEL:
+        elif self.points['A'] == self.points['B'] and self.ref.overtime_pool is not None:
             self._begin_overtime()
         else:
             self.status = 'complete_regulation'
@@ -1438,8 +1435,6 @@ class _Game:
             self._continue(('possession', other(offense, self.ledger.teams), sample['next_yardline']))
 
     def _drive_body(self):
-        if self.quarter == 5 and not OVERTIME_PLAY_MODEL:
-            return self._observed_overtime_drive()
         start = {'quarter': self.quarter, 'clock': self.clock, 'offense': self.offense, 'defense': self.defense,
                  'yl': self.yl, 'down': self.down, 'togo': self.togo,
                  'dir': self.ledger.attacks_x100(self.offense, self.quarter)}

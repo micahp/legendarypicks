@@ -99,10 +99,10 @@ def main():
     ap.add_argument('--seed-start', type=int, default=1)
     ap.add_argument('--snapshot', default=str(PINNED))
     ap.add_argument('--db', default=e1.DEFAULT_DB, help='SQLite database opened read-only')
+    ap.add_argument('--no-overtime-table', action='store_true',
+                    help='retired: refused. Kept so old command lines fail with a named reason, not an unknown flag')
     ap.add_argument('--no-safety-table', action='store_true',
                     help='control arm: keep the safety free-kick block instead of sampling the observed table')
-    ap.add_argument('--no-overtime-table', action='store_true',
-                    help='leave out the observed overtime drive table: a regulation tie is then overtime_not_modelled')
     ap.add_argument('--overtime-toss', choices=('A', 'B'), default=None,
                     help='sensitivity: force the overtime first possession instead of the seeded uniform draw')
     ap.add_argument('--overtime-choice', choices=('kick', 'receive'), default=None,
@@ -130,7 +130,9 @@ def main():
     snapshot = load_pinned(args.snapshot)
     pinned_sha = snapshot['snapshot_sha256']
     table = not args.no_safety_table
-    ot_table = not args.no_overtime_table
+    if args.no_overtime_table:
+        raise SystemExit('--no-overtime-table is retired: overtime is played in every full game')
+    ot_table = True
     registry, registry_sha = rr.load_registry()
     regime = dict(kickoff_regime_season=args.target_season, kickoff_before=args.kickoff_before) if args.kickoff_regime else {}
     ref, excluded = er.load(args.db, safety_kick_table=table, overtime_table=ot_table, overtime_toss=args.overtime_toss, overtime_choice=args.overtime_choice, **regime) if policy is None else er.load(
