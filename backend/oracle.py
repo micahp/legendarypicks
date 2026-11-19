@@ -399,9 +399,9 @@ def build_week_kicker_table(base_path, roster_path, season, week, out_path, publ
     base = json.loads(base_text)
     before = [row for row in base['assignments'] if row[0] != season or row[1] < week]
     this_season = [row for row in before if row[0] == season]
-    if not this_season:
+    if not this_season and week != 1:
         raise ValueError(f'base table {base_path} has no {season} assignments before week {week}')
-    prev_week = max(row[1] for row in this_season)
+    prev_week = max((row[1] for row in this_season), default=0)
     continuity_from = {row[2]: row[3] for row in this_season if row[1] == prev_week}
     rows, unresolved, continuity = kicker_week_assignments(roster_path, season, week, continuity_from)
     after_kickoff = published_utc > kickoff_utc
@@ -464,7 +464,10 @@ def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z', extra_parq
     """{team: {observed UTC datetime: [row dict]}} of depth-chart rows from every dated archive, from `since` on.
 
     Each archive repeats the full history, so a (team, timestamp) is taken from the first archive that holds it. Rows keep
-    the gsis_id, name, position and rank; rows without a gsis_id or a rank are dropped."""
+    the gsis_id, name, position and rank, and `captured_utc`: the capture time of the file they came from. For a dated
+    archive that is its latest depth timestamp, read from the file (a lower bound on when it was saved). For the extra
+    parquet files the caller gives the acquisition time as `extra_captured` in their place. Rows without a gsis_id or a
+    rank are dropped."""
     import re
     from collections import defaultdict
     import pyreadr
@@ -474,13 +477,16 @@ def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z', extra_parq
     floor = pd.Timestamp(since)
     alias = {'LA': 'LAR', 'WAS': 'WSH'}  # the archives use nflverse codes; the schedule sources use either spelling
     dated = sorted(p for p in Path(archive_root).glob('archive-*') if re.fullmatch(r'archive-\d{4}-\d{2}-\d{2}', p.name))
-    sources = [folder / 'depth_charts_2026.rds' for folder in dated] + [Path(x) for x in extra_parquet]
-    for path in sources:
+    extra = [(Path(x[0]), x[1]) if isinstance(x, tuple) else (Path(x), None) for x in extra_parquet]
+    sources = [(folder / 'depth_charts_2026.rds', None) for folder in dated] + extra
+    for path, captured in sources:
         if not path.exists():
             continue
         d = (pd.read_parquet(path) if path.suffix == '.parquet' else list(pyreadr.read_r(str(path)).values())[0])
         d = d[d['gsis_id'].notna() & d['pos_rank'].notna()]
         d = d.assign(_dt=pd.to_datetime(d['dt'], utc=True))
+        if captured is None:
+            captured = d['_dt'].max().to_pydatetime()
         d = d[d['_dt'] >= floor]
         for (team, dt), group in d.groupby(['team', '_dt']):
             if (team, dt) in seen:
@@ -488,7 +494,7 @@ def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z', extra_parq
             seen.add((team, dt))
             rows = [
                 {'gsis_id': str(r.gsis_id), 'player_name': str(r.player_name), 'pos_abb': str(r.pos_abb),
-                 'pos_rank': int(float(r.pos_rank))} for r in group.itertuples()]
+                 'pos_rank': int(float(r.pos_rank)), 'captured_utc': captured} for r in group.itertuples()]
             for name in {team, alias.get(team, team)}:
                 out[name][dt.to_pydatetime()] = rows
     return {team: dict(times) for team, times in out.items()}
@@ -523,6 +529,7 @@ def rotowire_injury_report(db_path, cutoff, window_days=10):
     maps to the engine's words (IR, PUP, reserve and INACTIVE read as Out). Refuses when no status is in the window."""
     start = cutoff - timedelta(days=window_days)
     fmt = '%Y-%m-%dT%H:%M:%S+00:00'
+    import nfl_news
     conn = connect(db_path)
     try:
         ids, counts = {}, {}
@@ -534,22 +541,28 @@ def rotowire_injury_report(db_path, cutoff, window_days=10):
                                      "WHERE source = 'rotowire' AND league = 'nfl'"):
             links.setdefault(key, set()).add(pid)
         rows = conn.execute(
-            "SELECT n.rotowire_player_id, n.player_id, n.team, n.first_name, n.last_name, n.injury_status, n.published_utc "
+            "SELECT n.rotowire_player_id, n.player_id, n.team, n.position, n.first_name, n.last_name, n.injury_status, n.published_utc "
             "FROM nfl_player_news_updates n WHERE n.injury_status <> '' AND n.published_utc >= ? AND n.published_utc <= ? "
             "ORDER BY n.published_utc", (start.strftime(fmt), cutoff.strftime(fmt))).fetchall()
+        if not rows:
+            raise ValueError(f'no RotoWire injury status published between {start:%Y-%m-%d} and {cutoff.isoformat()}')
+        latest, unmatched = {}, []
+        for r in rows:
+            player_ids = {r['player_id']} if r['player_id'] is not None else links.get(str(r['rotowire_player_id']), set())
+            if not player_ids:
+                # no stored link: the news resolver's own rule (name, team and position, unique candidate only)
+                item = {'first_name': r['first_name'], 'last_name': r['last_name'], 'team': r['team'], 'position': r['position']}
+                resolved = nfl_news.resolve_source_player(conn, item)
+                if resolved['player_id'] is not None:
+                    player_ids = {resolved['player_id']}
+            gsis_ids = {ids[pid] for pid in player_ids if pid in ids and counts.get(ids[pid]) == 1}
+            if len(gsis_ids) != 1:
+                unmatched.append({'team': r['team'], 'name': f"{r['first_name']} {r['last_name']}", 'status': r['injury_status'],
+                                  'rotowire_player_id': r['rotowire_player_id'], 'published_utc': r['published_utc']})
+                continue
+            latest[gsis_ids.pop()] = (ROTOWIRE_TO_ENGINE[r['injury_status']], r['published_utc'])
     finally:
         conn.close()
-    if not rows:
-        raise ValueError(f'no RotoWire injury status published between {start:%Y-%m-%d} and {cutoff.isoformat()}')
-    latest, unmatched = {}, []
-    for r in rows:
-        player_ids = {r['player_id']} if r['player_id'] is not None else links.get(str(r['rotowire_player_id']), set())
-        gsis_ids = {ids[pid] for pid in player_ids if pid in ids and counts.get(ids[pid]) == 1}
-        if len(gsis_ids) != 1:
-            unmatched.append({'team': r['team'], 'name': f"{r['first_name']} {r['last_name']}", 'status': r['injury_status'],
-                              'rotowire_player_id': r['rotowire_player_id'], 'published_utc': r['published_utc']})
-            continue
-        latest[gsis_ids.pop()] = (ROTOWIRE_TO_ENGINE[r['injury_status']], r['published_utc'])
     players = [{'gsis_id': gsis, 'report_status': status} for gsis, (status, _) in latest.items()]
     return {'players': players, 'listed': len(players), 'rows': len(rows), 'window_days': window_days,
             'source': 'rotowire nfl_player_news_updates'}, unmatched
@@ -821,6 +834,59 @@ def render_text(answer):
     return '\n'.join(lines)
 
 
+def batch_report(arm_dirs):
+    """Summary of simulated games for each arm, and seed-by-seed comparisons between arms. Read-only.
+
+    arm_dirs maps an arm name to a folder of box-score files (one game record per seed, `*.boxscores.jsonl`). The arms are
+    compared on the seeds they share. Per arm: seed count, home win share, tie share, home margin mean and 10th and 90th
+    percentiles, and total mean. Per pair: common seeds, mean margin difference (first arm minus second), and the share of
+    common seeds where both arms pick the same winner. Refuses when an arm folder holds no game records."""
+    import glob
+    import statistics
+    games = {}
+    for name, folder in arm_dirs.items():
+        rows = {}
+        for path in sorted(glob.glob(os.path.join(folder, '*.boxscores.jsonl'))):
+            with open(path) as handle:
+                for line in handle:
+                    record = json.loads(line)
+                    if record.get('type') != 'game':
+                        continue
+                    points = {team['home_away']: float(team['stats'].get('points') or 0) for team in record['teams']}
+                    rows[int(record['seed'])] = {'home': points['home'], 'away': points['away'],
+                                                 'home_team': record['home_team'], 'away_team': record['away_team']}
+        if not rows:
+            raise ValueError(f'{name}: no game records under {folder}')
+        games[name] = rows
+    arms, paired = {}, {}
+    for name, rows in games.items():
+        margins = [r['home'] - r['away'] for r in rows.values()]
+        totals = [r['home'] + r['away'] for r in rows.values()]
+        deciles = statistics.quantiles(margins, n=10)
+        sample = next(iter(rows.values()))
+        arms[name] = {'seeds': len(margins), 'home_team': sample['home_team'], 'away_team': sample['away_team'],
+                      'home_win_share': round(sum(1 for m in margins if m > 0) / len(margins), 3),
+                      'tie_share': round(sum(1 for m in margins if m == 0) / len(margins), 3),
+                      'home_margin_mean': round(statistics.fmean(margins), 2),
+                      'home_margin_p10': round(deciles[0], 1), 'home_margin_p90': round(deciles[8], 1),
+                      'total_mean': round(statistics.fmean(totals), 2)}
+    names = list(games)
+    for i, first in enumerate(names):
+        for second in names[i + 1:]:
+            common = sorted(set(games[first]) & set(games[second]))
+            if not common:
+                continue
+            diffs = [(games[first][s]['home'] - games[first][s]['away'])
+                     - (games[second][s]['home'] - games[second][s]['away']) for s in common]
+            same = sum(1 for s in common
+                       if (games[first][s]['home'] > games[first][s]['away'])
+                       == (games[second][s]['home'] > games[second][s]['away'])) / len(common)
+            paired[f'{first} vs {second}'] = {'common_seeds': len(common),
+                                              'mean_margin_diff': round(statistics.fmean(diffs), 2),
+                                              'same_winner_share': round(same, 3)}
+    return {'arms': arms, 'paired': paired}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--db', default=str(DEFAULT_DB), help='picks database (opened read-only)')
@@ -848,6 +914,9 @@ def main(argv=None):
     parser.add_argument('--target', metavar='GAME_ID', help='with --streaks: the game the file is built for')
     parser.add_argument('--props', metavar='GAME_ID', help='forward Platt player projections next to the market')
     parser.add_argument('--grade-week', type=int, metavar='WEEK', help='grade simulated games against the finals')
+    parser.add_argument('--batch-report', action='append', default=[], metavar='ARM=FOLDER',
+                        help='summarize simulated games for each arm and compare the arms seed by seed; repeat per arm')
+    parser.add_argument('--batch-out', metavar='PATH', help='with --batch-report: write the JSON here instead of printing it')
     parser.add_argument('--batch', action='append', default=[], metavar='MODEL=FOLDER',
                         help='with --grade-week: a model and its batch folder; repeat for each model')
     args = parser.parse_args(argv)
@@ -882,6 +951,15 @@ def main(argv=None):
         batches = dict(item.split('=', 1) for item in args.batch)
         report = grade_games(args.db, args.season or 2026, args.grade_week, batches)
         print(json.dumps(report, indent=2, sort_keys=True))
+        return 0
+    if args.batch_report:
+        arm_dirs = dict(item.split('=', 1) for item in args.batch_report)
+        report = json.dumps(batch_report(arm_dirs), indent=2, sort_keys=True)
+        if args.batch_out:
+            Path(args.batch_out).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.batch_out).write_text(report + '\n')
+        else:
+            print(report)
         return 0
     if args.props:
         rows = player_prop_comparison(args.db, args.props)
