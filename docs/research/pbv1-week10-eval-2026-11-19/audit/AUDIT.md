@@ -199,7 +199,9 @@ Arm B shows the same pattern.
 - The snaps-but-no-log rows point to gaps in the log table. The simulation may be right for those players.
 - The 142 carries with no published source either way are not explained by these checks.
 
-### 11b. High-volume starters: snap share and carries per snap
+### 11b. (Superseded by 11c) High-volume starters: snap share and carries per snap
+
+The denominator in this table was wrong. It used the sum of all player snaps, not team offensive plays. The relative-rate column built on it is withdrawn. The text below is kept for the record. Use 11c.
 
 Six starters, one game each, from the log rows. Snap share is the player's snaps over team snaps. Carry share is carries over team carries. Relative rate is carry share divided by snap share. A value of 1.0 means carries in proportion to snaps.
 
@@ -223,9 +225,61 @@ Readings:
 - **Selection on the field.** In arms B and C, the six are picked as rusher on 0.88 to 0.95 of run plays while they are on the field. So the shortfall is not in choosing among on-field players.
 - **What is left.** The low carries per snap probably come from how often runs are called while the player is on the field. The records do not yet split that out. Splitting it needs one more pass over the choice records.
 
+### 11c. Corrected decomposition (investigation v2)
+
+**Denominator.** Team offensive plays come from `nfl_pbp`: run, pass, no-play, QB kneel and QB spike, per team per game. `team_game_stats` has no Week 10 rows. Simulated plays come from the choice records. For arm B, these match the box score plays exactly (mean gap 0.0 per team-game). Simulated plays average 67.9 per team-game; actual averages 66.5.
+
+**Snap rate.** Player offensive snaps over team offensive plays. The highest actual rate is now 0.96. The earlier version went above 1, which was the first sign of the bad denominator.
+
+**Decomposition.** Carries = P × F × R × S, where:
+
+- P = team offensive plays
+- F = probability the player is on the field for a play
+- R = probability of a run given the player is on the field
+- S = probability the player is chosen as rusher, given a run and on the field
+
+For the simulation, all four factors are observed. For actuals, F is observed, but R and S cannot be split per player from public data. The product R × S (carries per on-field play) is observed. Using the team run rate for R gave S above 1 for several players, so the actual split is not identified and is not reported.
+
+**Six named starters** (one game each). Carries per on-field play equals R × S.
+
+| Player | P act / B / C | F act / B / C | Carries per on-field play act / B / C | Carries act / B / C |
+|---|---|---|---|---|
+| Bijan Robinson | 76 / 69.4 / 70.8 | .671 / .479 / .532 | .31 / .39 / .42 | 16 / 12.9 / 15.8 |
+| Jahmyr Gibbs | 72 / 66.0 / 67.7 | .681 / .515 / .538 | .45 / .39 / .39 | 22 / 13.2 / 14.1 |
+| Derrick Henry | 71 / 70.3 / 67.7 | .535 / .422 / .470 | .26 / .43 / .43 | 10 / 12.8 / 13.5 |
+| Christian McCaffrey | 67 / 64.8 / 65.4 | .582 / .456 / .478 | .33 / .37 / .38 | 13 / 10.9 / 11.8 |
+| Jonathan Taylor | 61 / 63.9 / 65.0 | .656 / .518 / .537 | .40 / .40 / .33 | 16 / 13.2 / 11.6 |
+| Zach Charbonnet | 57 / 65.9 / 70.2 | .719 / .435 / .517 | .49 / .41 / .48 | 20 / 11.8 / 17.4 |
+
+- **On-field rate is the main gap for these six.** F falls by 0.14 to 0.29 in arm B.
+- **Carries per on-field play do not fall.** Henry and Robinson are above actual in both field arms. Charbonnet and Gibbs are below. Selection once on the field is not the common cause.
+- **All 29 high-volume player-games:** on-field rate is 0.578 actual, 0.337 in B and 0.344 in C. The named six are 0.639 actual, 0.470 in B and 0.512 in C.
+- **Largest on-field gaps in arm B:** Emmett Johnson (KC, 22 actual carries; F 0.851 actual, 0.125 in B), Ollie Gordon II (MIA; 0.700 actual, 0.259 in B), and Kaleb Johnson (GB; 0.246 actual, 0.068 in B).
+- **QB runs sit outside the lineup model.** The simulation gives some QBs carries with on-field rate 0 (for example Jayden Daniels, 5.5 carries in B). These are not RB opportunity errors.
+
+**Correction.** The earlier claim that the simulation "does not separate high-volume runners once on the field" came from the bad denominator. It is withdrawn. The corrected data shows the gap is mostly in how often they are on the field.
+
+**Out or Doubtful carriers (availability).** The rule used here: a team injury article, published in the 7 days up to the game's snapshot cutoff, that names the player and carries an out status as a whole word. "Out of practice" does not count. Snapshot cutoffs differ by game (2026-11-11, 11-14 and 11-15).
+
+| Arm | Players verified | Carries verified | Players not verified | Carries not verified |
+|---|---|---|---|---|
+| B | 2 | 0.25 | 19 | 39.3 |
+| C | 2 | 0.15 | 20 | 36.7 |
+
+- Verified: Terrance Ferguson (LA, "ruled out", 11-13), Mo Alie-Cox (IND, placed on IR, 11-14), and Zachariah Branch (ATL, "out", 11-13, arm C).
+- Not verified includes Sam Darnold (SEA, 5.1 carries in B). Articles on 11-09 and 11-10 say Drew Lock started in place of an injured Darnold. The rule does not match "injured," so this needs a manual read before any conclusion.
+- The injury report table holds all 347 Week 10 rows, ingested 2026-11-17. That is after every cutoff, and the table has no designation timestamp. The report designations cannot be dated before the cutoff from the database.
+- The snapshot for KC_ATL is marked `verified: False`. I did not check the other 13.
+
+**Conclusion.** The 36.8 carries are not labeled avoidable. Only 0.15 to 0.25 carries have verified pre-cutoff evidence. The rest need a manual read of dated injury sources.
+
 ## Limitations
 
-- Choice records cover arms B and C only. Arm A's allocation comes from box scores only.
+- Choice records cover arms B and C only.
+- Arm A's box score has snap data for only 2 of 39 players in the game checked, so the control cannot be compared on snap share.
+- Actual R and S cannot be split per player. Only R × S is observed.
+- The six named starters come from one game each.
+- The availability rule matches article titles only. Darnold and the other unverified players need a manual read. Arm A's allocation comes from box scores only.
 - Shared-draw comparison uses the first call per key. 73,535 keys repeat within a run.
 - The no-log-row cause is established for Achane only. I did not trace the causes for the other players, which may include injuries, inactives, or depth-chart entries.
 - Starter means snap share at least 0.5 in the actual logs.
