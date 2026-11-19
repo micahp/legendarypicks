@@ -1,0 +1,37 @@
+{
+  "game": "2026_11_IND_HOU",
+  "seeds_compared": [
+    300001,
+    300002,
+    300003
+  ],
+  "per_seed": [
+    {
+      "seed": 300001,
+      "players_identical": true,
+      "outcome_fields_that_differ": [
+        "research_integration"
+      ],
+      "pbv1_package_draws_in_on_run": 134
+    },
+    {
+      "seed": 300002,
+      "players_identical": true,
+      "outcome_fields_that_differ": [
+        "research_integration"
+      ],
+      "pbv1_package_draws_in_on_run": 144
+    },
+    {
+      "seed": 300003,
+      "players_identical": true,
+      "outcome_fields_that_differ": [
+        "research_integration"
+      ],
+      "pbv1_package_draws_in_on_run": 148
+    }
+  ],
+  "on_command": "/usr/bin/python3 scripts/nfl_sequence/simulate_pregame_batch.py --snapshot-file /root/tnf-batch/snapshots/2026_11_IND_HOU/prospective-1.json --db /root/tnf-batch/picks.frozen.db --slc-profile v1_full_stack --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --progress-every 250 --export-boxscores --playcall-streak-file /root/tnf-batch/streaks.json --export-plays --games 3 --seed-start ",
+  "off_command": "/usr/bin/python3 scripts/nfl_sequence/simulate_pregame_batch.py --snapshot-file /root/tnf-batch/snapshots/2026_11_IND_HOU/prospective-1.json --db /root/tnf-batch/picks.frozen.db --slc-profile v1_full_stack --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --progress-every 250 --export-boxscores --playcall-streak-file /root/tnf-batch/streaks.json --export-plays --games 3 --seed-start ",
+  "note": "Seed-level comparison. Only research_integration differs; players and all other outcome fields match."
+}
