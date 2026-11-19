@@ -1,0 +1,120 @@
+{
+  "game": "2026_11_IND_HOU",
+  "seeds": [
+    300001,
+    300002,
+    300003
+  ],
+  "runs": {
+    "pbv1-off": {
+      "command": "/usr/bin/python3 scripts/nfl_sequence/simulate_pregame_batch.py --snapshot-file /root/tnf-batch/snapshots/2026_11_IND_HOU/prospective-1.json --db /root/tnf-batch/picks.frozen.db --slc-profile v1_full_stack --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --progress-every 250 --export-boxscores --playcall-streak-file /root/tnf-batch/streaks.json --export-plays --games 3 --seed-start 300001 --out /root/tnf-batch/out-pbv1-plays/runs/pbv1-off/2026_11_IND_HOU-seed-300001-300003.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries",
+      "argv": [
+        "/usr/bin/python3",
+        "scripts/nfl_sequence/simulate_pregame_batch.py",
+        "--snapshot-file",
+        "/root/tnf-batch/snapshots/2026_11_IND_HOU/prospective-1.json",
+        "--db",
+        "/root/tnf-batch/picks.frozen.db",
+        "--slc-profile",
+        "v1_full_stack",
+        "--playcall-artifact",
+        "docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+        "--progress-every",
+        "250",
+        "--export-boxscores",
+        "--playcall-streak-file",
+        "/root/tnf-batch/streaks.json",
+        "--export-plays",
+        "--games",
+        "3",
+        "--seed-start",
+        "300001",
+        "--out",
+        "/root/tnf-batch/out-pbv1-plays/runs/pbv1-off/2026_11_IND_HOU-seed-300001-300003.json",
+        "--slc-blocker-fix",
+        "run_scramble_backoff",
+        "--slc-blocker-fix",
+        "long_field_goal_feasibility",
+        "--slc-blocker-fix",
+        "blocked_kick_source_audit",
+        "--slc-blocker-fix",
+        "blocked_kick_geometry",
+        "--slc-blocker-fix",
+        "safety_free_kick_boundaries"
+      ],
+      "ref": "feat/slc-v2-pbp-release-2026-11-17",
+      "ref_commit": "78d4e5ccf8ba1539ad7ba71184d2b451a7c488fe",
+      "config_sha256": "eedeb028aba9aea012e4cb70bd5e26c12f7714ce31c32251feb6e6384b40c488",
+      "pins": [
+        {
+          "path": "/root/tnf-batch/streaks.json",
+          "sha256": "9f68e682ce0edc478cd181061fe3adc5fc7a15bb1e85f651725e8e76343afef2"
+        }
+      ],
+      "returncode": 0,
+      "raw_file_sha256": {
+        "2026_11_IND_HOU-seed-300001-300003.boxscores.jsonl": "7dab7cfe6f3f5fea878fda9dcab73a937deaf8ab5e171c7931f293343518c452",
+        "2026_11_IND_HOU-seed-300001-300003.inputs.20261118T234727Z-1795045647740876891.json": "0216ebe96cf2b6599e5d4b06adb7cf803d1eeee62bee35fd5155d2575e9f2aca",
+        "2026_11_IND_HOU-seed-300001-300003.json": "d69bbad5386de54fff7ae9d991d5b169e7fed4c9c32c078d506d8a750acce607",
+        "2026_11_IND_HOU-seed-300001-300003.log": "30fc564d5decf6fa7fa28d002744bd15179e32e9f6562da327abec8a4bae2f39",
+        "2026_11_IND_HOU-seed-300001-300003.seeds.jsonl": "8b64588b897a311a36e2de09fa22e3c62165f59a4430c80942f12f2a9a1f45b3"
+      }
+    },
+    "pbv1-on": {
+      "command": "/usr/bin/python3 scripts/nfl_sequence/simulate_pregame_batch.py --snapshot-file /root/tnf-batch/snapshots/2026_11_IND_HOU/prospective-1.json --db /root/tnf-batch/picks.frozen.db --slc-profile v1_full_stack --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --progress-every 250 --export-boxscores --playcall-streak-file /root/tnf-batch/streaks.json --export-plays --games 3 --seed-start 300001 --out /root/tnf-batch/out-pbv1-plays/runs/pbv1-on/2026_11_IND_HOU-seed-300001-300003.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --playcall-pbv1-package docs/research/pbv1-package-integration-2026-11-02/pbv1_training_plays.csv",
+      "argv": [
+        "/usr/bin/python3",
+        "scripts/nfl_sequence/simulate_pregame_batch.py",
+        "--snapshot-file",
+        "/root/tnf-batch/snapshots/2026_11_IND_HOU/prospective-1.json",
+        "--db",
+        "/root/tnf-batch/picks.frozen.db",
+        "--slc-profile",
+        "v1_full_stack",
+        "--playcall-artifact",
+        "docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+        "--progress-every",
+        "250",
+        "--export-boxscores",
+        "--playcall-streak-file",
+        "/root/tnf-batch/streaks.json",
+        "--export-plays",
+        "--games",
+        "3",
+        "--seed-start",
+        "300001",
+        "--out",
+        "/root/tnf-batch/out-pbv1-plays/runs/pbv1-on/2026_11_IND_HOU-seed-300001-300003.json",
+        "--slc-blocker-fix",
+        "run_scramble_backoff",
+        "--slc-blocker-fix",
+        "long_field_goal_feasibility",
+        "--slc-blocker-fix",
+        "blocked_kick_source_audit",
+        "--slc-blocker-fix",
+        "blocked_kick_geometry",
+        "--slc-blocker-fix",
+        "safety_free_kick_boundaries",
+        "--playcall-pbv1-package",
+        "docs/research/pbv1-package-integration-2026-11-02/pbv1_training_plays.csv"
+      ],
+      "ref": "feat/slc-v2-pbp-release-2026-11-17",
+      "ref_commit": "78d4e5ccf8ba1539ad7ba71184d2b451a7c488fe",
+      "config_sha256": "eedeb028aba9aea012e4cb70bd5e26c12f7714ce31c32251feb6e6384b40c488",
+      "pins": [
+        {
+          "path": "/root/tnf-batch/streaks.json",
+          "sha256": "9f68e682ce0edc478cd181061fe3adc5fc7a15bb1e85f651725e8e76343afef2"
+        }
+      ],
+      "returncode": 0,
+      "raw_file_sha256": {
+        "2026_11_IND_HOU-seed-300001-300003.boxscores.jsonl": "7dab7cfe6f3f5fea878fda9dcab73a937deaf8ab5e171c7931f293343518c452",
+        "2026_11_IND_HOU-seed-300001-300003.inputs.20261118T234727Z-1795045647718092609.json": "ddba10d852626622015a65b4e3216ab62d0630a8f009ec28fb78268a9efbb6bc",
+        "2026_11_IND_HOU-seed-300001-300003.json": "551caa75a844fe19cd43005d64f6b1c4e9205d07952746148325149e76926137",
+        "2026_11_IND_HOU-seed-300001-300003.log": "7bc3004d24c78ae34e4347b56b90d0200a449851f663c9e9935ca8f6f94d0df5",
+        "2026_11_IND_HOU-seed-300001-300003.seeds.jsonl": "e001ebde4e59d3fa75a22bdf16e0bf89e3b36053a87f4fdd563f33ab11ed9a11"
+      }
+    }
+  }
+}
