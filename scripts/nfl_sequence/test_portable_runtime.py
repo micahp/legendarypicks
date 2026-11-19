@@ -1,5 +1,8 @@
 """Offline integration test: execute only code and state carried in a pack."""
 import json
+import os
+import subprocess
+import sys
 import hashlib
 import sqlite3
 import tempfile
@@ -10,6 +13,31 @@ import unittest
 from portable_model_pack import write_pack
 import simulate_portable_pack
 from slc_model_registry import get_model
+
+
+def _run_main_isolated(argv, probe_file=None):
+    """Run simulate_portable_pack.main in a fresh interpreter. The runtime guard it installs is process-wide, so each run
+    gets its own process. Returns 0. Raises with the child's stderr when it fails.
+
+    With probe_file, the child also checks that the guard refuses a database connection and a source-file read."""
+    probe = ""
+    if probe_file is not None:
+        probe = ("import sqlite3\n"
+                 "try:\n    sqlite3.connect(':memory:')\nexcept RuntimeError:\n    pass\n"
+                 "else:\n    sys.exit(3)\n"
+                 "try:\n    open(sys.argv[2], 'r')\nexcept RuntimeError as exc:\n"
+                 "    assert 'PORTABLE_RUNTIME_SOURCE_FILE_ACCESS' in str(exc)\n"
+                 "else:\n    sys.exit(4)\n")
+    code = ("import json, sys\n"
+            "import simulate_portable_pack as m\n"
+            "status = m.main(json.loads(sys.argv[1]))\n" + probe + "sys.exit(status)\n")
+    here = str(Path(__file__).resolve().parent)
+    extra = [str(probe_file)] if probe_file is not None else []
+    result = subprocess.run([sys.executable, "-c", code, json.dumps(argv)] + extra, cwd=here,
+                            env={**os.environ, "PYTHONPATH": here}, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"exit {result.returncode}: {result.stderr[-1200:]}")
+    return 0
 
 
 class PortableRuntime(unittest.TestCase):
@@ -113,13 +141,13 @@ class PortableRuntime(unittest.TestCase):
             ).encode("utf-8")).hexdigest()
             snapshot_path.write_text(json.dumps({"pregame_snapshot": runtime_snapshot,
                                                  "runtime_model_inputs": model_inputs}))
-            status = simulate_portable_pack.main([
+            status = _run_main_isolated([
                 "--model", "v1", "--game", "2026_12_NYG_DAL",
                 "--pack", str(pack_path), "--pack-sha256", pack["sha256"],
                 "--snapshot", str(snapshot_path),
                 "--games", "2", "--seed-start", "51", "--out", str(report_path),
                 "--records-out", str(records_path),
-            ])
+            ], probe_file=root / "research.csv")
             report = json.loads(report_path.read_text())
             rows = [json.loads(line) for line in records_path.read_text().splitlines()]
             self.assertEqual(status, 0)
@@ -137,7 +165,7 @@ class PortableRuntime(unittest.TestCase):
             self.assertEqual(report["simulation"]["valid_full_games"], 2)
 
             v2_report_path = root / "v2-run.json"
-            v2_status = simulate_portable_pack.main([
+            v2_status = _run_main_isolated([
                 "--model", "v1", "--game", "2026_12_NYG_DAL",
                 "--pack", str(pack_path), "--pack-sha256", pack["sha256"],
                 "--snapshot", str(snapshot_path), "--games", "1", "--seed-start", "71",
@@ -149,17 +177,13 @@ class PortableRuntime(unittest.TestCase):
                              {"scheme": "v2", "pregame_state_sha256": "b" * 64,
                               "stream_root_sha256": "d" * 64})
             with self.assertRaisesRegex(Exception, "EXPECTED_STREAM_ROOT_MISMATCH"):
-                simulate_portable_pack.main([
+                _run_main_isolated([
                     "--model", "v1", "--game", "2026_12_NYG_DAL",
                     "--pack", str(pack_path), "--pack-sha256", pack["sha256"],
                     "--snapshot", str(snapshot_path), "--games", "1", "--seed-start", "71",
                     "--rng-protocol", "v2", "--expected-stream-root-sha256", "e" * 64,
                     "--out", str(root / "wrong-root.json"),
                 ])
-            with self.assertRaises(RuntimeError):
-                sqlite3.connect(":memory:")
-            with self.assertRaisesRegex(RuntimeError, "PORTABLE_RUNTIME_SOURCE_FILE_ACCESS"):
-                open(root / "research.csv", "r")
 
 
 if __name__ == "__main__":
