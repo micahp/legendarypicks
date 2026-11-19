@@ -68,11 +68,15 @@ def _forbid_source_table_reads():
     os.open = checked_os_open
 
 
-def _run_seed(seed, reference, snapshot, gs, slc_engine=None):
+def _run_seed(seed, reference, snapshot, gs, slc_engine=None, rng_plan=None):
     if slc_engine is not None and slc_engine.is_slc(reference):
-        record, _decisions = slc_engine.play(seed, reference, copy.deepcopy(snapshot))
+        record, _decisions = slc_engine.play(
+            seed, reference, copy.deepcopy(snapshot),
+            paired_randomness=rng_plan.paired, rng_plan=rng_plan)
     else:
-        record = gs.play_game(seed, reference, pregame_snapshot=copy.deepcopy(snapshot))
+        record = gs.play_game(
+            seed, reference, pregame_snapshot=copy.deepcopy(snapshot),
+            paired_randomness=rng_plan.paired, seed_root=rng_plan.seed_root(snapshot))
     gs.validate_game(record)
     return record
 
@@ -116,12 +120,18 @@ def _run(args, engine_dir):
     if not model["build_supported"]:
         raise ModelPackError("MODEL_PACKAGE_NOT_ENABLED: " + args.model)
     engine_root = Path(engine_dir)
-    reference, snapshot, manifest, _config = load_pack(
+    reference, snapshot, manifest, config = load_pack(
         args.pack, expected_sha256=args.pack_sha256,
         expected_code_commit=model["code_commit"], engine_dir=engine_root)
     if manifest["model_id"] != args.model:
         raise ModelPackError("MODEL_ID_MISMATCH")
     snapshot_loader = importlib.import_module("pregame_snapshot")
+    try:
+        snapshot_payload = json.loads(args.snapshot.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ModelPackError("RUNTIME_SNAPSHOT_UNREADABLE: " + str(exc)) from exc
+    runtime_model_inputs = (snapshot_payload.get("runtime_model_inputs")
+                            if isinstance(snapshot_payload, dict) else None)
     runtime_snapshot = snapshot_loader.load_frozen_snapshot(args.snapshot)
     runtime_schedule = runtime_snapshot["schedule"]
     if runtime_schedule["game_id"] != args.game:
@@ -147,7 +157,8 @@ def _run(args, engine_dir):
             raise ModelPackError("PACKED_CURRENT_STREAK_SAMPLER_MISSING")
         streak_splits = importlib.import_module("streak_splits")
         team_codes = importlib.import_module("nfl_team_codes")
-        sampler.current_streak = current_streaks_for_snapshot(snapshot, team_codes, streak_splits)
+        sampler.current_streak = current_streaks_for_snapshot(
+            snapshot, team_codes, streak_splits, runtime_model_inputs)
         streak_context = snapshot["model_reference"]["current_streak_context"]
         optional_hashes = getattr(sampler, "optional_input_sha256", None)
         if not isinstance(optional_hashes, dict) or not streak_context.get("source_sha256"):
@@ -163,6 +174,25 @@ def _run(args, engine_dir):
         snapshot["model_reference"]["observed_reference"] = reference.model_inputs
         snapshot["model_reference"]["pool_scope"] = reference.pool_scope
         snapshot_loader.reseal(snapshot)
+    rng_protocol = importlib.import_module("rng_protocol")
+    configured_rng = (config.get("rng_protocol") or {}).get("scheme") or rng_protocol.V1
+    scheme = args.rng_protocol or configured_rng
+    playcall_description = slc_engine.describe(reference) if slc_engine is not None else None
+    rng_plan = rng_protocol.plan(scheme, snapshot["snapshot_sha256"], reference,
+                                 playcall_description)
+    rng_manifest = rng_plan.manifest()
+    if (args.expected_stream_root_sha256 is not None
+            and rng_manifest.get("stream_root_sha256") != args.expected_stream_root_sha256):
+        reference_digest = getattr(rng_protocol, "reference_data_sha256", lambda _ref: "unavailable")
+        layer_digest = getattr(rng_protocol, "layer_table_sha256", lambda _description: "unavailable")
+        raise ModelPackError(
+            "EXPECTED_STREAM_ROOT_MISMATCH: expected="
+            + str(args.expected_stream_root_sha256)
+            + " actual=" + str(rng_manifest.get("stream_root_sha256"))
+            + " pregame_state_sha256=" + str(rng_manifest.get("pregame_state_sha256"))
+            + " model_input_sha256=" + str(rng_manifest.get("model_input_sha256"))
+            + " reference_data_sha256=" + reference_digest(reference)
+            + " layer_tables_sha256=" + layer_digest(playcall_description))
     aggregation = importlib.import_module("pregame_batch")
     rows = []
     details = []
@@ -171,7 +201,7 @@ def _run(args, engine_dir):
         record = None
         record_error = None
         try:
-            record = _run_seed(seed, reference, snapshot, gs, slc_engine)
+            record = _run_seed(seed, reference, snapshot, gs, slc_engine, rng_plan)
             status = record.get("status", "unknown")
             blocker = record.get("blocker")
             valid = bool(record.get("valid_full_game") and record.get("complete_game"))
@@ -232,6 +262,7 @@ def _run(args, engine_dir):
                  "build_snapshot_sha256": manifest["snapshot_sha256"]},
         "game_id": args.game, "as_of_utc": snapshot["as_of"],
         "snapshot_sha256": snapshot["snapshot_sha256"],
+        "rng_protocol": rng_manifest,
         "simulation": {"requested_games": args.games, "valid_full_games": summary["valid_full_games"],
                        "seed_start": args.seed_start, "seed_end_inclusive": args.seed_start + args.games - 1},
         "summary": summary,
@@ -259,11 +290,15 @@ def main(argv=None):
     ap.add_argument("--model", required=True, help="registered model ID")
     ap.add_argument("--game", required=True, help="game ID for this simulation")
     ap.add_argument("--snapshot", type=Path, required=True,
-                    help="hash-pinned pregame roster/injury snapshot for this matchup")
+                    help="hash-pinned pregame snapshot, optionally wrapped with frozen runtime_model_inputs")
     ap.add_argument("--pack", required=True)
     ap.add_argument("--pack-sha256", required=True, help="independent pack hash from trusted build manifest")
     ap.add_argument("--games", type=int, required=True)
     ap.add_argument("--seed-start", type=int, default=0)
+    ap.add_argument("--rng-protocol", choices=("v1", "v2"), default=None,
+                    help="override the pack's recorded RNG scheme; V1 default remains unchanged")
+    ap.add_argument("--expected-stream-root-sha256", default=None,
+                    help="for RNG v2, reject the run before seeds if its computed stream root differs")
     ap.add_argument("--out", required=True)
     ap.add_argument("--with-player-lines", action="store_true",
                     help="retain player box stats for each seed in output")

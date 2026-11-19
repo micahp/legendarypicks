@@ -1,5 +1,6 @@
 """Offline integration test: execute only code and state carried in a pack."""
 import json
+import hashlib
 import sqlite3
 import tempfile
 from pathlib import Path
@@ -54,20 +55,32 @@ class PortableRuntime(unittest.TestCase):
             "scripts/nfl_sequence/pregame_snapshot.py": (
                 "import json\n"
                 "def load_frozen_snapshot(path):\n"
-                "    with open(path) as handle:\n        return json.load(handle)\n"
+                "    with open(path) as handle:\n        payload=json.load(handle)\n"
+                "    return payload.get('pregame_snapshot', payload)\n"
             ).encode(),
             "scripts/nfl_sequence/slc_engine.py": (
                 "def is_slc(reference): return True\n"
                 "def side_teams(snapshot): return {'A': snapshot['schedule']['home_team'], 'B': snapshot['schedule']['away_team']}\n"
-                "def play(seed, reference, snapshot):\n"
+                "def describe(reference): return {'artifact_sha256': 'a'*64, 'enabled_layers': {}, 'layer_artifact_sha256': {}}\n"
+                "def play(seed, reference, snapshot, paired_randomness=False, rng_plan=None):\n"
+                "    assert paired_randomness == rng_plan.paired\n"
                 "    import game_state\n"
                 "    return game_state.play_game(seed, reference, snapshot), []\n"
+            ).encode(),
+            "scripts/nfl_sequence/rng_protocol.py": (
+                "class Plan:\n"
+                "    def __init__(self, scheme): self.scheme=scheme; self.paired=(scheme=='v2'); self.root=('d'*64 if self.paired else None)\n"
+                "    def seed_root(self, snapshot): return self.root\n"
+                "    def manifest(self): return {'scheme':self.scheme, **({'stream_root_sha256':self.root} if self.root else {})}\n"
+                "V1='v1'\n"
+                "def plan(scheme, pregame_state_sha256, ref, description): return Plan(scheme)\n"
             ).encode(),
             "scripts/nfl_sequence/streak_splits.py": (
                 "BUCKETS = ('L5+', 'L4', 'L3', 'L2', 'L1', 'NONE', 'W1', 'W2', 'W3', 'W4', 'W5+')\n"
             ).encode(),
             "scripts/nfl_sequence/nfl_team_codes.py": (
                 "def to_pbp_team_code(team): return team\n"
+                "def to_nflverse_team_code(team): return team\n"
             ).encode(),
         }
         with tempfile.TemporaryDirectory() as dirname:
@@ -92,7 +105,14 @@ class PortableRuntime(unittest.TestCase):
                                     "source_sha256": "c" * 64,
                                 }}}
             snapshot_path = root / "pregame.json"
-            snapshot_path.write_text(json.dumps(runtime_snapshot))
+            model_inputs = {"schema": "lp-slc-runtime-model-inputs-1",
+                            "current_streak": {"NYG": "W3", "DAL": "L2"},
+                            "source_sha256": "c" * 64}
+            model_inputs["sha256"] = hashlib.sha256(json.dumps(
+                model_inputs, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+            ).encode("utf-8")).hexdigest()
+            snapshot_path.write_text(json.dumps({"pregame_snapshot": runtime_snapshot,
+                                                 "runtime_model_inputs": model_inputs}))
             status = simulate_portable_pack.main([
                 "--model", "v1", "--game", "2026_12_NYG_DAL",
                 "--pack", str(pack_path), "--pack-sha256", pack["sha256"],
@@ -105,6 +125,7 @@ class PortableRuntime(unittest.TestCase):
             self.assertEqual(status, 0)
             self.assertEqual(report["simulation"]["valid_full_games"], 2, {"report": report, "rows": rows})
             self.assertEqual(report["snapshot_sha256"], "b" * 64)
+            self.assertEqual(report["rng_protocol"], {"scheme": "v1"})
             self.assertEqual(report["game_id"], "2026_12_NYG_DAL")
             self.assertEqual(report["simulation"]["valid_full_games"], 2)
             self.assertEqual([row["seed"] for row in rows], [51, 52])
@@ -114,6 +135,26 @@ class PortableRuntime(unittest.TestCase):
                              {"seed": 51, "home_points": 7, "away_points": 7})
             # Incomplete snapshot evidence does not invalidate completed game results.
             self.assertEqual(report["simulation"]["valid_full_games"], 2)
+
+            v2_report_path = root / "v2-run.json"
+            v2_status = simulate_portable_pack.main([
+                "--model", "v1", "--game", "2026_12_NYG_DAL",
+                "--pack", str(pack_path), "--pack-sha256", pack["sha256"],
+                "--snapshot", str(snapshot_path), "--games", "1", "--seed-start", "71",
+                "--rng-protocol", "v2", "--expected-stream-root-sha256", "d" * 64,
+                "--out", str(v2_report_path),
+            ])
+            self.assertEqual(v2_status, 0)
+            self.assertEqual(json.loads(v2_report_path.read_text())["rng_protocol"],
+                             {"scheme": "v2", "stream_root_sha256": "d" * 64})
+            with self.assertRaisesRegex(Exception, "EXPECTED_STREAM_ROOT_MISMATCH"):
+                simulate_portable_pack.main([
+                    "--model", "v1", "--game", "2026_12_NYG_DAL",
+                    "--pack", str(pack_path), "--pack-sha256", pack["sha256"],
+                    "--snapshot", str(snapshot_path), "--games", "1", "--seed-start", "71",
+                    "--rng-protocol", "v2", "--expected-stream-root-sha256", "e" * 64,
+                    "--out", str(root / "wrong-root.json"),
+                ])
             with self.assertRaises(RuntimeError):
                 sqlite3.connect(":memory:")
             with self.assertRaisesRegex(RuntimeError, "PORTABLE_RUNTIME_SOURCE_FILE_ACCESS"):

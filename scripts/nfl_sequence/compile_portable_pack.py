@@ -153,6 +153,8 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
                     "model_profile": profile,
                     "rules_policy": model_spec["rules_policy"],
                     "enabled_layers": sorted(k for k, v in (profile.get("enabled_layers") or {}).items() if v),
+                    "rng_protocol": result.get("simulation", {}).get("rng_protocol") or {
+                        "scheme": _forwarded_option(forwarded_args, "--rng-protocol") or "v1"},
                     "experimental_flags": model_spec["experimental_flags"],
                     "training_cutoff": {"eligible_before": [
                         int(result["pregame_snapshot"]["schedule"]["season"]), 1]},

@@ -7,6 +7,7 @@ from pathlib import Path
 
 
 SCHEMA = "lp-slc-current-streak-context-1"
+MODEL_INPUT_SCHEMA = "lp-slc-runtime-model-inputs-1"
 
 
 def _utc(value):
@@ -56,7 +57,38 @@ def freeze_current_streak_context(path, snapshot, streak_splits, team_codes):
     }
 
 
-def current_streaks_for_snapshot(snapshot, team_codes, streak_splits):
+def freeze_current_streak_model_inputs(path, snapshot, streak_splits, team_codes):
+    """Freeze the exact legacy streak table beside, but outside, the hashed pregame snapshot."""
+    raw = Path(path).read_bytes()
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("CURRENT_STREAK_FILE_INVALID_JSON") from exc
+    context = ((snapshot.get("model_reference") or {}).get("current_streak_context"))
+    if not isinstance(context, dict) or context.get("schema") != SCHEMA:
+        raise ValueError("CURRENT_STREAK_CONTEXT_MISSING")
+    if hashlib.sha256(raw).hexdigest() != context.get("source_sha256"):
+        raise ValueError("CURRENT_STREAK_SOURCE_HASH_MISMATCH")
+    records = payload.get("teams")
+    if not isinstance(records, dict):
+        raise ValueError("CURRENT_STREAK_TEAMS_MISSING")
+    # Match the pinned loader exactly: keep original source keys and None buckets.
+    teams = {team: streak_splits.bucket_from_text(
+        record.get("streak", "") if isinstance(record, dict) else "")
+        for team, record in records.items()}
+    required = {team_codes.to_nflverse_team_code(snapshot["schedule"][key])
+                for key in ("home_team", "away_team")}
+    available = {team_codes.to_nflverse_team_code(team) for team in teams}
+    if not required.issubset(available):
+        raise ValueError("CURRENT_STREAK_REQUIRED_TEAMS_MISSING: " + ", ".join(sorted(required - available)))
+    result = {"schema": MODEL_INPUT_SCHEMA, "current_streak": teams,
+              "source_sha256": context["source_sha256"]}
+    result["sha256"] = hashlib.sha256(json.dumps(
+        result, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
+    return result
+
+
+def current_streaks_for_snapshot(snapshot, team_codes, streak_splits, model_inputs=None):
     context = ((snapshot.get("model_reference") or {}).get("current_streak_context"))
     if not isinstance(context, dict) or context.get("schema") != SCHEMA:
         raise ValueError("RUNTIME_CURRENT_STREAK_CONTEXT_MISSING")
@@ -68,11 +100,23 @@ def current_streaks_for_snapshot(snapshot, team_codes, streak_splits):
     source_cutoff = context.get("source_cutoff_utc")
     if not source_cutoff or _utc(source_cutoff) > _utc(snapshot.get("as_of")):
         raise ValueError("RUNTIME_CURRENT_STREAK_SOURCE_CUTOFF_INVALID")
-    required = {team_codes.to_pbp_team_code(schedule[key]) for key in ("home_team", "away_team")}
-    teams = context.get("teams")
-    if not isinstance(teams, dict) or not required.issubset(teams):
+    if not isinstance(model_inputs, dict) or model_inputs.get("schema") != MODEL_INPUT_SCHEMA:
+        raise ValueError("RUNTIME_CURRENT_STREAK_MODEL_INPUT_MISSING")
+    expected_digest = model_inputs.get("sha256")
+    body = {key: value for key, value in model_inputs.items() if key != "sha256"}
+    actual_digest = hashlib.sha256(json.dumps(
+        body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")).hexdigest()
+    if expected_digest != actual_digest:
+        raise ValueError("RUNTIME_CURRENT_STREAK_MODEL_INPUT_HASH_MISMATCH")
+    if model_inputs.get("source_sha256") != context.get("source_sha256"):
+        raise ValueError("RUNTIME_CURRENT_STREAK_SOURCE_HASH_MISMATCH")
+    teams = model_inputs.get("current_streak")
+    if not isinstance(teams, dict):
         raise ValueError("RUNTIME_CURRENT_STREAK_TEAMS_MISSING")
-    result = {team: teams[team] for team in required}
-    if any(bucket not in streak_splits.BUCKETS for bucket in result.values()):
+    required = {team_codes.to_nflverse_team_code(schedule[key]) for key in ("home_team", "away_team")}
+    if not required.issubset({team_codes.to_nflverse_team_code(team) for team in teams}):
+        raise ValueError("RUNTIME_CURRENT_STREAK_TEAMS_MISSING")
+    result = dict(teams)
+    if any(bucket is not None and bucket not in streak_splits.BUCKETS for bucket in result.values()):
         raise ValueError("RUNTIME_CURRENT_STREAK_BUCKET_INVALID")
     return result
