@@ -27,8 +27,8 @@ First divergent play, per seed:
 - **The arms do not ask for the same draws.** Arm B adds `field:group` and `field:advance` draws. Arm C adds
   `field:advance` but not `field:group`, because the PBV1 package sets the grouping. Changed lineups and changed game
   states change which later draws are requested.
-- **The first divergent play comes after play 20.** Before that, the plays match between arms. This fits the arms sharing
-  draws until a decision changes.
+- **The first divergent play is at play 20 or later in every seed.** Before that, the plays match between arms. This fits
+  the arms sharing draws until a decision changes.
 
 ## What this does not show
 
