@@ -386,6 +386,21 @@ def _player_projections(snapshot, totals, games):
     }
 
 
+def require_overtime_reference(ref):
+    """Refuse before any seed runs when the observed overtime references are missing. Overtime is part of every full game,
+    so a reference without it would only produce regulation-only predictions."""
+    missing = [name for name, value in (('overtime drive pool', ref.overtime_pool),
+                                         ('overtime try table', ref.overtime_try_p_two),
+                                         ('overtime kick-or-receive model', ref.overtime_p_kick)) if value is None]
+    if missing:
+        raise OvertimeReferenceMissing('overtime is played in every full game; the reference has no '
+                                       + ', '.join(missing) + '. Refusing to run regulation-only predictions.')
+
+
+class OvertimeReferenceMissing(RuntimeError):
+    """The observed overtime references did not load. Raised at preflight, before any seed is simulated."""
+
+
 def _record_outcome(seed, record=None, error=None, validation_error=False):
     if record is None:
         return {'seed': seed, 'status': 'simulation_error', 'blocker': None,
@@ -880,6 +895,7 @@ def run_batch(args):
                 contextual_bandwidth=args.context_bandwidth,
                 contextual_min_effective_games=args.context_min_source_games,
                 safety_kick_table=safety_kick_table)
+    require_overtime_reference(ref)
     reference_seconds = time.monotonic() - reference_started
     snapshot['model_reference']['observed_reference'] = ref.model_inputs
     snapshot['model_reference']['pool_scope'] = ref.pool_scope
