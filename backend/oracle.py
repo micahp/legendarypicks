@@ -374,6 +374,13 @@ def kicker_week_assignments(roster_path, season, week, continuity_from=None):
     return rows, unresolved, continuity
 
 
+def week_injury_report(archive_root, capture_path, season, week):
+    """(injury report for the engine, copy label) for one week: the copy from injury_copy_for_week, read by
+    injury_report_for_week. The label names the archive or the capture, so the snapshot records where it came from."""
+    path, label = injury_copy_for_week(archive_root, capture_path, season, week)
+    return injury_report_for_week(path, season, week), label
+
+
 def build_week_kicker_table(base_path, roster_path, season, week, out_path, published_utc, kickoff_utc,
                             earlier_roster_path=None):
     """The kicker table for one week of a walk-forward test: the base table's assignments for weeks before `week`, plus
