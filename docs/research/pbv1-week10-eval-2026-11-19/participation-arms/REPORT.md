@@ -197,3 +197,21 @@ Likely reasons, not yet tested:
 - Players with no earlier game use the table rate. That mixes two scales in one draw.
 
 Conclusion: the current-season entry signal works as coded but does not fix the lead RB's first-play share. It changes the lead RB's on-field rate only slightly.
+
+### Where the lead RB's exits come from (all arms)
+
+`code/exit_split.py` counts each time the lead RB goes from on-field to off-field. The cause comes from that play's advance calls: a hazard leave (`leavers`) or a forced personnel removal (`count_removed`). Results: `results/exit_split.json`.
+
+| Arm | Exits per 100 on-field plays | Hazard share | Forced share | Hazard per 100 on-field plays | Forced per 100 on-field plays |
+|---|---|---|---|---|---|
+| B | 28.8 | 85% | 15% | 24.5 | 4.3 |
+| C | 27.6 | 88% | 12% | 24.1 | 3.4 |
+| H | 24.3 | 89% | 11% | 21.6 | 2.8 |
+| HS | 17.1 | 83% | 17% | 14.3 | 2.8 |
+| HP | 24.8 | 92% | 8% | 22.7 | 2.1 |
+| HSP | 16.5 | 87% | 13% | 14.3 | 2.1 |
+| HE | 18.4 | 84% | 16% | 15.5 | 2.9 |
+
+Most exits are hazard leaves in every arm. HE raises total exits from 17.1 to 18.4 per 100 on-field plays, almost all from hazard leaves. So HE's gain on entry is partly cancelled by more exits.
+
+We cannot yet say whether about 15 hazard exits per 100 on-field plays is too high. The database has no real stint data to compare against.
