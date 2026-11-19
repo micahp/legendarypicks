@@ -41,7 +41,7 @@ Lower is better. Week 1 is a tie by construction, because there is no previous 2
 
 As a secondary, descriptive check: the player with the highest modeled first-entry weight was also the actual top RB/HB/FB offensive-snap player in **160/272 historical**, **183/272 HS**, and **199/272 HE** team-games, respectively. This is **not** a graded game-start probability or a directly comparable simulation outcome.
 
-These results were computed directly against repository source blobs in week-scoped batches. The nine stored snap-count cuts were also checked against the Week 9 master: all three data arrays (`team_snaps`, `player_snaps`, `active`) in every cut match the complete source filtered to weeks at or before the cut, byte-equivalent after JSON parsing. This confirms the cuts' **week selection**, but **not** their historical publication times.
+These results were computed directly against repository source blobs in week-scoped batches. The nine stored snap-count cuts were also checked against the Week 9 master: all three data arrays (`team_snaps`, `player_snaps`, `active`) in every cut match the complete source filtered to weeks at or before the cut, identical after JSON parsing. This confirms the cuts' **week selection**, but **not** their historical publication times.
 
 The standalone `audit_rb_entry_2026.py` script included on this branch reproduces the same calculation from repository files. It has **not been run end-to-end on the user's simulation host** in this review, and its emitted outputs should be compared with the above independent totals. No Monte Carlo simulations were run.
 
