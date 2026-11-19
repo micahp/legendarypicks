@@ -1,0 +1,56 @@
+{
+ "B": {
+  "lead_on_field_plays": 13571,
+  "hazard_departures_per_100_on_plays": 24.46,
+  "forced_removals_per_100_on_plays": 4.28,
+  "first_play_team_seeds": 560,
+  "first_play_rb_slot_filled_share": 0.9982,
+  "first_play_lead_entered_given_slot": 0.5009,
+  "first_play_lead_on_field_given_slot": 0.5009
+ },
+ "C": {
+  "lead_on_field_plays": 13970,
+  "hazard_departures_per_100_on_plays": 24.11,
+  "forced_removals_per_100_on_plays": 3.44,
+  "first_play_team_seeds": 560,
+  "first_play_rb_slot_filled_share": 0.9929,
+  "first_play_lead_entered_given_slot": 0.5036,
+  "first_play_lead_on_field_given_slot": 0.5036
+ },
+ "H": {
+  "lead_on_field_plays": 17213,
+  "hazard_departures_per_100_on_plays": 21.57,
+  "forced_removals_per_100_on_plays": 2.75,
+  "first_play_team_seeds": 560,
+  "first_play_rb_slot_filled_share": 0.9982,
+  "first_play_lead_entered_given_slot": 0.5063,
+  "first_play_lead_on_field_given_slot": 0.5063
+ },
+ "HS": {
+  "lead_on_field_plays": 19357,
+  "hazard_departures_per_100_on_plays": 14.29,
+  "forced_removals_per_100_on_plays": 2.84,
+  "first_play_team_seeds": 560,
+  "first_play_rb_slot_filled_share": 0.9964,
+  "first_play_lead_entered_given_slot": 0.4534,
+  "first_play_lead_on_field_given_slot": 0.4534
+ },
+ "HP": {
+  "lead_on_field_plays": 16996,
+  "hazard_departures_per_100_on_plays": 22.66,
+  "forced_removals_per_100_on_plays": 2.09,
+  "first_play_team_seeds": 560,
+  "first_play_rb_slot_filled_share": 0.9929,
+  "first_play_lead_entered_given_slot": 0.509,
+  "first_play_lead_on_field_given_slot": 0.509
+ },
+ "HSP": {
+  "lead_on_field_plays": 19877,
+  "hazard_departures_per_100_on_plays": 14.33,
+  "forced_removals_per_100_on_plays": 2.14,
+  "first_play_team_seeds": 560,
+  "first_play_rb_slot_filled_share": 0.9946,
+  "first_play_lead_entered_given_slot": 0.4901,
+  "first_play_lead_on_field_given_slot": 0.4901
+ }
+}

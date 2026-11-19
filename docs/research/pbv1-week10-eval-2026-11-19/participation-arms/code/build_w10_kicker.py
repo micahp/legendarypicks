@@ -30,10 +30,15 @@ for i in range(len(t['week'])):
         active[t['team'][i]].add(t['gsis_id'][i])
     elif t['status'][i] == 'DEV':
         practice[t['team'][i]].add(t['gsis_id'][i])
-rows, unresolved = [], []
+prev = {team: pid for season, week, team, pid in pinned['assignments'] if week == 9}
+rows, unresolved, continuity = [], [], []
 for team in sorted(teams):
+    if len(active[team]) > 1 and prev.get(team) in active[team]:
+        # Two active kickers: keep last week's kicker if he is one of them (continuity rule, stated in the report).
+        active[team] = {prev[team]}
+        continuity.append(team)
     if len(active[team]) > 1:
-        unresolved.append(team)  # two active kickers: no row, so the engine refuses that team's game
+        unresolved.append(team)  # two active kickers and no continuity: no row, so the engine refuses that game
     elif active[team]:
         rows.append([2026, 10, team, next(iter(active[team]))])
     elif len(practice[team]) == 1:
@@ -45,6 +50,6 @@ table = dict(pinned)
 table['assignments'] = pinned['assignments'] + rows
 table['week10_extension'] = {'week': 10, 'rule': 'build_kicker_table.py assignment rule on the weekly roster',
                              'roster_sha256': sha(ROSTER), 'roster_last_modified_utc': '2026-11-11T07:04:34Z',
-                             'base_sha256': sha(BASE), 'rows': len(rows), 'unresolved_teams': unresolved}
+                             'base_sha256': sha(BASE), 'rows': len(rows), 'unresolved_teams': unresolved, 'continuity_resolved': continuity}
 OUT.write_text(json.dumps(table, indent=1, sort_keys=True) + '\n')
-print(f'wrote {OUT} sha256 {sha(OUT)} rows {len(rows)} unresolved {unresolved or "none"}')
+print(f'wrote {OUT} sha256 {sha(OUT)} rows {len(rows)} unresolved {unresolved or "none"} continuity {continuity}')

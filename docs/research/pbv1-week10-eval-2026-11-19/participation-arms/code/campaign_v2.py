@@ -7,7 +7,7 @@ import campaign as c
 
 OUT = c.OUT + '/V2P'
 KICKER = '/root/tnf-batch/kicker/kicker_table_through_2026_w10.json'
-KICKER_SHA = '7d53cda1cd27774eb67e6a59219955657e26f27f5fed008f2d89ddf86383b13f'
+KICKER_SHA = 'dd68b2729dc6f6e21f821080c05634887d76e2b36fd082174a8d09a12d9e047f'
 
 
 def v2_argv(argv):
@@ -35,6 +35,10 @@ def job(game, games=None, out_root=OUT):
 
 
 if __name__ == '__main__':
+    if sys.argv[1] == 'la':
+        g, rc, secs, err = job('2026_10_LA_ARI')
+        print('LA_ARI rc', rc, secs, 's')
+        print(err)
     if sys.argv[1] == 'smoke':
         g, rc, secs, err = job('2026_10_KC_ATL', games=2, out_root='/root/tnf-batch/camp/V2Psmoke')
         print('smoke rc', rc, secs, 's')
