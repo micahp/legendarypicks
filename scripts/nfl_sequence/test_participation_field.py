@@ -211,5 +211,32 @@ class OneOffensiveIdentity(unittest.TestCase):
         self.assertEqual(roles_used, {'RB', 'WR'})  # both roles occur over the draws; one slot per snap is tested above
 
 
+class EntryWeight(unittest.TestCase):
+    """The bench-draw weight: the table rate unless the research flag is on and a current-season share exists."""
+
+    def test_flag_off_keeps_the_table_rate(self):
+        f = _field()
+        f.entry_share[('ARI', '00-1')] = 0.9
+        self.assertEqual(f.rate('00-1', 'ARI', '11', 'RB'), f.entry_weight('00-1', 'ARI', '11', 'RB'))
+
+    def test_flag_on_uses_the_current_share_when_present(self):
+        f = _field()
+        f.entry_current = True
+        f.entry_share[('ARI', '00-1')] = 0.42
+        self.assertEqual(0.42, f.entry_weight('00-1', 'ARI', '11', 'RB'))
+
+    def test_flag_on_falls_back_to_the_table_rate_when_absent(self):
+        f = _field()
+        f.entry_current = True
+        self.assertEqual(f.rate('00-1', 'ARI', '11', 'RB'), f.entry_weight('00-1', 'ARI', '11', 'RB'))
+
+    def test_the_leave_rate_is_not_changed_by_the_entry_flag(self):
+        f = _field()
+        before = f.rate('00-1', 'ARI', '11', 'RB')
+        f.entry_current = True
+        f.entry_share[('ARI', '00-1')] = 0.9
+        self.assertEqual(before, f.rate('00-1', 'ARI', '11', 'RB'))
+
+
 if __name__ == '__main__':
     unittest.main()
