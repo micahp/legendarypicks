@@ -460,7 +460,7 @@ def archive_schedule_rows(archive_root, season=2026):
     return dict(out)
 
 
-def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z'):
+def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z', extra_parquet=()):
     """{team: {observed UTC datetime: [row dict]}} of depth-chart rows from every dated archive, from `since` on.
 
     Each archive repeats the full history, so a (team, timestamp) is taken from the first archive that holds it. Rows keep
@@ -474,11 +474,11 @@ def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z'):
     floor = pd.Timestamp(since)
     alias = {'LA': 'LAR', 'WAS': 'WSH'}  # the archives use nflverse codes; the schedule sources use either spelling
     dated = sorted(p for p in Path(archive_root).glob('archive-*') if re.fullmatch(r'archive-\d{4}-\d{2}-\d{2}', p.name))
-    for folder in dated:
-        path = folder / 'depth_charts_2026.rds'
+    sources = [folder / 'depth_charts_2026.rds' for folder in dated] + [Path(x) for x in extra_parquet]
+    for path in sources:
         if not path.exists():
             continue
-        d = list(pyreadr.read_r(str(path)).values())[0]
+        d = (pd.read_parquet(path) if path.suffix == '.parquet' else list(pyreadr.read_r(str(path)).values())[0])
         d = d[d['gsis_id'].notna() & d['pos_rank'].notna()]
         d = d.assign(_dt=pd.to_datetime(d['dt'], utc=True))
         d = d[d['_dt'] >= floor]
@@ -492,6 +492,53 @@ def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z'):
             for name in {team, alias.get(team, team)}:
                 out[name][dt.to_pydatetime()] = rows
     return {team: dict(times) for team, times in out.items()}
+
+
+def injury_report_from_db(db_path, season, week):
+    """The injury report from the database's injury_reports rows, in the engine's shape. The rows carry no publish time
+    for 2026, so the caller must decide the copy is usable. Refuses when no row has a status."""
+    conn = connect(db_path)
+    try:
+        rows = conn.execute('SELECT gsis_id, report_status FROM injury_reports WHERE league = ? AND season = ? AND week = ?',
+                            ('nfl', season, week)).fetchall()
+    finally:
+        conn.close()
+    listed = [r for r in rows if r['report_status'] is not None]
+    if not listed:
+        raise ValueError(f'injury_reports holds no status for {season} week {week}')
+    players = [{'gsis_id': str(r['gsis_id']), 'report_status': str(r['report_status'])} for r in listed]
+    return {'players': players, 'listed': len(players), 'rows': len(rows)}
+
+
+def injury_copies_for_week(archive_root, capture_path, db_path, season, week):
+    """The injury copies for one week: {'full': (report, label) or None, 'partial': (report, label) or None}.
+
+    'full' is the first copy that holds the week's statuses, in this order: the archive dated the next Thursday, the capture,
+    the database rows. 'partial' is the archive dated the week's own Thursday, which holds the statuses known at that time
+    (it is a partial list). A copy with no statuses is skipped, never read as an empty report."""
+    thursday = datetime(season, 9, 10) + timedelta(days=7 * (week - 1))
+    full = None
+    for label, path in ((f'archive-{(thursday + timedelta(days=7)):%Y-%m-%d}', Path(archive_root) / f'archive-{(thursday + timedelta(days=7)):%Y-%m-%d}' / 'injuries_2026.rds'),
+                        ('capture', Path(capture_path))):
+        if path.exists():
+            try:
+                full = (injury_report_for_week(path, season, week), label)
+                break
+            except ValueError:
+                continue
+    if full is None:
+        try:
+            full = (injury_report_from_db(db_path, season, week), 'database injury_reports (ingested 2026-11-17)')
+        except ValueError:
+            full = None
+    partial = None
+    own = Path(archive_root) / f'archive-{thursday:%Y-%m-%d}' / 'injuries_2026.rds'
+    if own.exists():
+        try:
+            partial = (injury_report_for_week(own, season, week), f'archive-{thursday:%Y-%m-%d}')
+        except ValueError:
+            partial = None
+    return {'full': full, 'partial': partial}
 
 
 def injury_copy_for_week(archive_root, capture_path, season, week, first_thursday=(9, 10)):
