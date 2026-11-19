@@ -1,0 +1,21 @@
+{
+ "as_of_utc": "2026-09-13T18:25:00Z",
+ "source": "nfl_schedule scores in the database, regular season, read-only build",
+ "teams": {
+  "LA": {
+   "streak": "L1"
+  },
+  "LAR": {
+   "streak": "L1"
+  },
+  "NE": {
+   "streak": "L1"
+  },
+  "SEA": {
+   "streak": "W1"
+  },
+  "SF": {
+   "streak": "W1"
+  }
+ }
+}
