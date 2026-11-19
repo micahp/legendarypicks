@@ -1,20 +1,22 @@
 # SLC portable model packs: table-free runtime contract (2026-11-18)
 
-Status: implementation target; branch `feat/slc-portable-model-packs-2026-11-18`. **Do not claim a model is portable until an isolated runtime succeeds.**
+Status: implementation and initial V1 parity evidence; branch `feat/slc-portable-model-packs-2026-11-18`. One frozen WAS–NYG seed now has exact portable-versus-legacy parity. V1 has not passed the multi-seed acceptance gate.
 Owner decision: model loading is a one-time build concern, not a per-simulation requirement. Every supported full-game model must include overtime. No change to `dev` or production until validated.
 
-## Current implementation status (2026-11-18)
+## Current implementation status (updated 2026-11-19)
 
 **Executable V1 package implementation; not yet parity-certified.** The pushed branch contains:
 - `portable_model_pack.py`: SHA-256 checked archive containing bundled Python engine code and schema-defined JSON model state, with full-game dependency preflight.
 - `slc_model_registry.py` and `slc_cli.py`: central pinned model policies and build/run commands. V1 is the only enabled builder. `slc pack build --all` now fails before writing anything while any family remains unsupported.
-- `compile_portable_pack.py`: captures the initialized reference from the pinned legacy loader, strips memoized and current-game streak context from reusable reference state, and freezes the build game's streaks into its hash-sealed snapshot.
-- `simulate_portable_pack.py`: loads executable code from the package and blocks database and external research-table reads. For models with the streak layer, it requires and applies the new game's streak context from that game's hash-pinned snapshot before running seeds.
+- `compile_portable_pack.py`: captures the initialized reference from the pinned legacy loader and strips memoized and current-game streak context from reusable reference state.
+- `simulate_portable_pack.py`: loads executable code from the package and blocks database and external research-table reads. For models with the streak layer, it requires a snapshot envelope containing the hash-pinned pregame snapshot and checksummed `runtime_model_inputs` with the full frozen streak table.
 - `capture_legacy_parity.py` and `compare_portable_parity.py`: full-record legacy capture and per-seed comparison tooling.
 
-**Acceptance status:** The exact pinned V1 source commit is available and was checked out in an isolated temporary tree. The matching build database, required play-call/streak artifacts, and two hash-pinned game snapshots are not available here, so no real package or two-game, 100-seed parity run has been produced. V1.5, V1.6, V1.7, V2, and PBV1 remain disabled. The implementation is not ready for promotion; do not merge to `dev` until every variant passes the parity and isolation gates below.
+**Acceptance status:** An earlier V1 artifact was compared against legacy V1 for 10 matching seeds on two frozen games; both comparisons failed exact full-record parity (WAS–NYG: 50 field mismatches; JAX–BAL: 70). After matching RNG v2 and the complete frozen model inputs, a separate WAS–NYG run using seed `300001` matched the legacy full record exactly. This is one-seed evidence, not completion of the multi-seed acceptance gate. V1 is not parity-certified. V1.5, V1.6, V1.7, V2, and PBV1 remain disabled. Do not merge to `dev` until every variant passes parity and isolation gates.
 
-The executable CLI requires model-specific build inputs on the data host. `slc simulate --model ...` uses the installed package plus the new game's snapshot; that snapshot must include a cutoff-matched `model_reference.current_streak_context` whenever the selected package enables the current-streak layer.
+See the [V1 portable runtime/model card](SLC-V1-PORTABLE-RUNTIME-MODEL-CARD-2026-11-19.md) for artifact hashes, size, dependencies, and validation evidence.
+
+The executable CLI requires model-specific build inputs on the data host. `slc simulate --model ...` uses the installed package plus a new game's snapshot. When the selected package enables the current-streak layer, the snapshot envelope must include a cutoff-matched `model_reference.current_streak_context` and its checksummed `runtime_model_inputs` table. See the [project context note](SLC-PORTABLE-MODEL-PACKS-CONTEXT-2026-11-19.md) for the envelope format and latest parity evidence.
 
 ## Goal
 
