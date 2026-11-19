@@ -1,0 +1,24 @@
+A-control vs B-field
+  draws 2825 vs 3599; shared keys 1210; shared keys with equal value 1210
+  keys only in A-control: 1615; top names [('stream:e1_event_selection', 303), ('stream:e1_source_row', 303), ('stream:e1_playcall', 303), ('stream:e1_special_teams', 303)]
+  keys only in B-field: 2389; top names [('field:group', 413), ('field:advance', 413), ('stream:e1_source_row', 295), ('stream:e1_event_selection', 295)]
+  seed 300001: plays 145 vs 160; first divergent play 21
+  seed 300002: plays 153 vs 152; first divergent play 33
+  seed 300003: plays 162 vs 140; first divergent play 20
+
+B-field vs C-field-pbv1
+  draws 3599 vs 3162; shared keys 1840; shared keys with equal value 1840
+  keys only in B-field: 1759; top names [('field:group', 413), ('stream:e1_source_row', 262), ('stream:e1_event_selection', 262), ('stream:e1_playcall', 262)]
+  keys only in C-field-pbv1: 1322; top names [('stream:e1_special_teams', 255), ('stream:e1_playcall', 255), ('stream:e1_source_row', 255), ('stream:e1_event_selection', 255)]
+  seed 300001: plays 160 vs 153; first divergent play 49
+  seed 300002: plays 152 vs 154; first divergent play 46
+  seed 300003: plays 140 vs 138; first divergent play 20
+
+A-control vs C-field-pbv1
+  draws 2825 vs 3162; shared keys 1242; shared keys with equal value 1242
+  keys only in A-control: 1583; top names [('stream:e1_event_selection', 308), ('stream:e1_source_row', 308), ('stream:e1_playcall', 308), ('stream:e1_special_teams', 308)]
+  keys only in C-field-pbv1: 1920; top names [('field:advance', 414), ('stream:e1_special_teams', 293), ('stream:e1_source_row', 293), ('stream:e1_event_selection', 293)]
+  seed 300001: plays 145 vs 153; first divergent play 21
+  seed 300002: plays 153 vs 154; first divergent play 33
+  seed 300003: plays 162 vs 138; first divergent play 51
+
