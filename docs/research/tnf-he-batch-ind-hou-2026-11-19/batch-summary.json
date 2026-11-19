@@ -1,0 +1,20 @@
+{
+  "game_id": "2026_11_IND_HOU",
+  "model_arm": "HE on the participation stack (v1_full_stack, participation field v4, week-9 snap counts JSON); not the PBV1 package",
+  "seeds": {"start": 300001, "count": 1000},
+  "valid_games": 1000,
+  "final_ties": 6,
+  "home_team": "HOU",
+  "home_win_share": 0.556,
+  "home_margin_mean": 1.34,
+  "home_margin_p10": -14,
+  "home_margin_p90": 17,
+  "total_mean": 44.76,
+  "errors": 0,
+  "fallback_events": 553569,
+  "snap_counts_file": "snap_counts_through_week9.json",
+  "snap_counts_sha256": "69b7e3cfeba1fd244e9c7462caab2a32da48daae619a2451979894e72a38aa7b",
+  "participation_field_sha256": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41",
+  "db_sha256": "e997951b0a8ceb8acc82eef01520797e053da9033527b8f3693af0f7ecdf3939",
+  "large_outputs_kept_on_host": ["2026_11_IND_HOU-he-1000.json (489 MB)", "2026_11_IND_HOU-he-1000.seeds.jsonl (345 MB)", "2026_11_IND_HOU-he-1000.boxscores.jsonl (199 MB)"]
+}

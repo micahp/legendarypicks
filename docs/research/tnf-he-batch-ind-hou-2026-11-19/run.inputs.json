@@ -1,0 +1,211 @@
+{
+  "files_changed_during_run": [],
+  "finished_at_utc": "2026-11-19T22:57:50.321253Z",
+  "git_head": "01cbc8208ebc98998284b94aa971ffce8ac8e637",
+  "inputs_after": {
+    "db": {
+      "hash_status": "skipped_large_input",
+      "mtime_ns": 1795124382354456471,
+      "mtime_utc": "2026-11-19T21:39:42.354456Z",
+      "path": "/root/tnf-batch/picks.frozen.db",
+      "sha256": null,
+      "size_bytes": 4193959936,
+      "status": "file"
+    },
+    "participation_field": {
+      "expected_sha256_from_command": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41",
+      "hash_status": "computed",
+      "mtime_ns": 1795125515839553404,
+      "mtime_utc": "2026-11-19T21:58:35.839553Z",
+      "path": "/root/tnf-batch/he/participation-field-v4.json",
+      "sha256": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41",
+      "size_bytes": 3348137,
+      "status": "file"
+    },
+    "participation_snap_counts": {
+      "expected_sha256_from_command": "69b7e3cfeba1fd244e9c7462caab2a32da48daae619a2451979894e72a38aa7b",
+      "hash_status": "computed",
+      "mtime_ns": 1795032910761663976,
+      "mtime_utc": "2026-11-18T20:15:10.761664Z",
+      "path": "/root/tnf-batch/w10/snap_counts_through_week9.json",
+      "sha256": "69b7e3cfeba1fd244e9c7462caab2a32da48daae619a2451979894e72a38aa7b",
+      "size_bytes": 339024,
+      "status": "file"
+    },
+    "playcall_artifact": {
+      "hash_status": "computed",
+      "mtime_ns": 1795125407000000000,
+      "mtime_utc": "2026-11-19T21:56:47Z",
+      "path": "/root/tnf-batch/he/he-runtime/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+      "sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+      "size_bytes": 9062,
+      "status": "file"
+    },
+    "playcall_streak_file": {
+      "hash_status": "computed",
+      "mtime_ns": 1794998113904173072,
+      "mtime_utc": "2026-11-18T10:35:13.904173Z",
+      "path": "/root/tnf-batch/streaks.json",
+      "sha256": "9f68e682ce0edc478cd181061fe3adc5fc7a15bb1e85f651725e8e76343afef2",
+      "size_bytes": 1447,
+      "status": "file"
+    },
+    "snapshot_file": {
+      "hash_status": "computed",
+      "mtime_ns": 1794998113555183622,
+      "mtime_utc": "2026-11-18T10:35:13.555184Z",
+      "path": "/root/tnf-batch/snapshots/2026_11_IND_HOU/prospective-1.json",
+      "sha256": "d1f33d8ac1ba59ba5f0923f2f5b6d5d136bb3e839d28a986010f344336ecbd13",
+      "size_bytes": 13645,
+      "status": "file"
+    }
+  },
+  "inputs_before": {
+    "db": {
+      "hash_status": "skipped_large_input",
+      "mtime_ns": 1795124382354456471,
+      "mtime_utc": "2026-11-19T21:39:42.354456Z",
+      "path": "/root/tnf-batch/picks.frozen.db",
+      "sha256": null,
+      "size_bytes": 4193959936,
+      "status": "file"
+    },
+    "participation_field": {
+      "expected_sha256_from_command": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41",
+      "hash_status": "computed",
+      "mtime_ns": 1795125515839553404,
+      "mtime_utc": "2026-11-19T21:58:35.839553Z",
+      "path": "/root/tnf-batch/he/participation-field-v4.json",
+      "sha256": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41",
+      "size_bytes": 3348137,
+      "status": "file"
+    },
+    "participation_snap_counts": {
+      "expected_sha256_from_command": "69b7e3cfeba1fd244e9c7462caab2a32da48daae619a2451979894e72a38aa7b",
+      "hash_status": "computed",
+      "mtime_ns": 1795032910761663976,
+      "mtime_utc": "2026-11-18T20:15:10.761664Z",
+      "path": "/root/tnf-batch/w10/snap_counts_through_week9.json",
+      "sha256": "69b7e3cfeba1fd244e9c7462caab2a32da48daae619a2451979894e72a38aa7b",
+      "size_bytes": 339024,
+      "status": "file"
+    },
+    "playcall_artifact": {
+      "hash_status": "computed",
+      "mtime_ns": 1795125407000000000,
+      "mtime_utc": "2026-11-19T21:56:47Z",
+      "path": "/root/tnf-batch/he/he-runtime/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+      "sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+      "size_bytes": 9062,
+      "status": "file"
+    },
+    "playcall_streak_file": {
+      "hash_status": "computed",
+      "mtime_ns": 1794998113904173072,
+      "mtime_utc": "2026-11-18T10:35:13.904173Z",
+      "path": "/root/tnf-batch/streaks.json",
+      "sha256": "9f68e682ce0edc478cd181061fe3adc5fc7a15bb1e85f651725e8e76343afef2",
+      "size_bytes": 1447,
+      "status": "file"
+    },
+    "snapshot_file": {
+      "hash_status": "computed",
+      "mtime_ns": 1794998113555183622,
+      "mtime_utc": "2026-11-18T10:35:13.555184Z",
+      "path": "/root/tnf-batch/snapshots/2026_11_IND_HOU/prospective-1.json",
+      "sha256": "d1f33d8ac1ba59ba5f0923f2f5b6d5d136bb3e839d28a986010f344336ecbd13",
+      "size_bytes": 13645,
+      "status": "file"
+    }
+  },
+  "model_identity_from_result": {
+    "configuration_hash": "89423141750c269dbfa2b39fdab9e68ba4741869ae0fe09f20de2a478a820785",
+    "integration_code_sha256": {
+      "../nfl_team_codes.py": "3533636e2f9679210a6292cc594aa8ace7584896bc82f0cdcb44e245c43d5f91",
+      "clock_d.py": "093d410cd199c77d6d791a72271c4fc9c4e27383e15eeb344acf5726ecbbb5c6",
+      "decision_layer.py": "ffab0e69f2400d3d8c1ce36457a72ddb8120098a9f2dcb3bcbfa5c80fdb23a0e",
+      "defense_layer.py": "d25574f41a314ad6670baa96629f37d29d3e4d3cf1cd9b171a64bb242bceb4b3",
+      "e1_drive.py": "4129bc60a18cf056f0319281fc52bc15e88bd630c8ec41ef955fa25ccd3da0ab",
+      "e2_reference.py": "fc56befb650cfa387d467391e7f0c4ced02b06fba42b8344f8a0d8722fdc42b7",
+      "fit_cache.py": "525850b9bf49d6f2c9be3b04bc15c4e91129481a5008d13fabd7b30818729825",
+      "formation_layer.py": "34ad0f35c1d2921d1caff421d1eed43001d1243d0a1d6524e10257e1ae9c3412",
+      "game_state.py": "cd80cac2c0fb78195ab651cae4d175a4bd4b8e85d346e8add1f2d9dc35bb18b0",
+      "game_stats.py": "9823a9f1fbb6275d90be3ba1ba0b5fb98fe8ee35146856b8f75984792fcfd306",
+      "paired_random_streams.py": "812d5db06156d7adf73e93b2d4e8ba4ffd58c4966f3618e2822fb362575fd8b5",
+      "pass_label_outcomes.py": "6e2a18dfc757012e1c37ac86c2bf20dd47faf8bc8a5870317f2e819b21329120",
+      "playbook_prior.py": "c632cd84c99ba13d144de03d7f8548f494e10032f19475d9bfe1ce10c5ddb72b",
+      "playcall_model.py": "a5cbdce79ac91a419340270ea8250952ff0c17811e7eb2242801f33471daa0ad",
+      "player_outcomes.py": "2393e0cc103655423a801ea2ce34cf781ccc0a639fac7752711df476e937b363",
+      "player_shares.py": "2dbb494fb2099f2b28ee21aae12a61394b914ef26e2253d557a8ebbae3c093a2",
+      "point_splits.py": "3b055e2c8d2e8b4f10772aa842682dfa99d0057b84f5148ea5a85dbbca41a672",
+      "pre_event.py": "14eb6c1b1f9e39e6c1f0e20fc9e6a9020e4ad3e0161542dc62f97200cd48f5ff",
+      "qb_decisions.py": "119474a2b15d75bfc71a702af105798cb623116329b3912bbfca7f0de8480e3e",
+      "run_slc_game.py": "0e0a32d5b71c724f385c17138244e414d6e400b69864d3c0e8db05eab6561090",
+      "share_distributions.py": "36be0889061675fec672cfcdc4ab8b1714a6fe8086b71b809d642b0c5ba1cef6",
+      "simulate_pregame_batch.py": "f0bf2adfe8f26da60faaa3805b715c4c7f7a0ae814ab65f0f91ce41d772b7072",
+      "slc_engine.py": "00f74b77f2a861459436d3a432a2cc603994042a40e1ce6e81676649e745e405",
+      "slc_playcall.py": "722d929ceeb135d7cb22bbddd8cde8bffa668103ded4ab75f77fde85234176bd",
+      "source_preflight.py": "5daafd61b66d1e3b3407e90c02601029f7bb4d432b052ab417f29d5193e3b2ae",
+      "streak_splits.py": "21f15cd32668b0dbc35ae6f3ed1ff75ba4d7f67f874f633caf0d9a1f68f7233c",
+      "target_roles.py": "753af3f3e6061523d8cb47a6181c76f317d688906485b9d607b188af9f39992f",
+      "team_tendency.py": "5b4822a2d9793070b9961fde728d3ccd643b98b44af5775b332987f46bd1af8e",
+      "transition_strength.py": "e570cf732eb5acb09f332b77b0e01bf970e374ea318a25c06c4d0fc80de47ce8"
+    },
+    "model_id": "SLC_v1_full_stack",
+    "optional_input_sha256": {
+      "current_streak_file": "9f68e682ce0edc478cd181061fe3adc5fc7a15bb1e85f651725e8e76343afef2",
+      "decision_source:play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+      "decision_source:play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+      "decision_source:play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+      "decision_source:play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29",
+      "decision_source:players.parquet": "44867006413eac856c5f4529e0d263ce44a6dbcfe6d8166e8e353bfb680bd630",
+      "playbook:ARI-2025.json": "5db6c3905d2eecd802fb4771eb351fc0bc97d101e01837a831e0416d8dd8fddd",
+      "playbook:ATL-2025.json": "416f3c69d92c4acbeca68f265863ab04679669ff67fa729569e47d51f39b60b3",
+      "playbook:BAL-2025.json": "d53d68103f375735acd0b8de842720a9014b95d73516551aa026644ab2d49280",
+      "playbook:BUF-2025.json": "13a7f6655d16d2a414cf9e9610fcf1c99878eec55d66677213cef9dec7346f66",
+      "playbook:CAR-2025.json": "6cb299f08f8c825f16767c7f707b0ce8bea310369d29e6992d9193d21460df52",
+      "playbook:CHI-2025.json": "3c11d39efddce4dc4a43d9f0945310391954ef099263469b68ce5ee7705eabf0",
+      "playbook:CIN-2025.json": "ff05ea9e63a39b85c64e18e0ff51c9a5ecce4449c2c6623ae7a8e8c6022bf49e",
+      "playbook:CLE-2025.json": "f473bf7558b30d2cf54fe656fd0a3e6b6b6a7f64310a8ef0f588848afdcf7207",
+      "playbook:DAL-2025.json": "1e64a89b934225bc697ac58938e45e101185c07ba3932121f61130bfc5ac49a8",
+      "playbook:DEN-2025.json": "3d9383a4cb09b3d9006561a92cc4c6c6be0574810fe599de7515ce5b1b211e38",
+      "playbook:DET-2025.json": "255f0e57149f0d71969c723800c12204efb49477e84585a6be15108462a6bfd1",
+      "playbook:GB-2025.json": "5deb39e413090e25107cdc1f74b34e1e618bf55ae348a369eef99c6fcef01ec0",
+      "playbook:HOU-2025.json": "1b3992aca9303e6d95e3670e4e9c6cf7a951e5a0534c82c025e470a2ecfe9ae0",
+      "playbook:IND-2025.json": "5832ca6130a7a9c80a1dea075ccc0c5d353eb012949681807cb3ce54bae9ab6f",
+      "playbook:JAX-2025.json": "5a97a13c59df33192fb0b9f12f928c0802fc1827420d4de1ecb8d416f1227b43",
+      "playbook:KC-2025.json": "458a069421e5899d18646d88387086c9719eae1cf048eb962456d254ce94a801",
+      "playbook:LA-2025.json": "8786b899acff0b6d8567051ea4a31af42e39db05dc1a0e15b1acb3c6da81eae4",
+      "playbook:LAC-2025.json": "836e6c9c9d0439f98a023bc4452e1e6feb3939e250a8c1c7b62d6d533f3f26ad",
+      "playbook:LV-2025.json": "f1999101df3d026a1ed11ad43f262ede2f6dbd853198d5bd354ee253ff2078b7",
+      "playbook:MIA-2025.json": "5450261c4382b8b9bc5bdaed82e450e79b21d51f9ecd697e8f0b34be4e345603",
+      "playbook:MIN-2025.json": "dab90f02421d945a538745a255c0170681e4ff499aec8d9828c798cbc2692352",
+      "playbook:NE-2025.json": "96e2716054f58205493c9f0c503da0a7317c810360836a33d23bfef5e143e031",
+      "playbook:NO-2025.json": "addc893a3a30c7885c7c9ded718543c7a35ce866065efb0e012003c38ec1776c",
+      "playbook:NYG-2025.json": "83bc36cd41084c55e15d0a06be2e11835215e16d3186fd71bf061db8c0562ad1",
+      "playbook:NYJ-2025.json": "a46f78b62f5193716af302ed7aaff36c229e00514fb0997fad12d9f3633d5cef",
+      "playbook:PHI-2025.json": "b2e68a63a1be3d1940c49f157964f1773d83ea5d3dc0e67f7bf3a71a125d7b87",
+      "playbook:PIT-2025.json": "5cda43b13ceef5e2f16fbe2b4fbac1a001dfa9d91e865c7d4b79477e4267f9d2",
+      "playbook:SEA-2025.json": "ccc0fe3a06a9415b31414386a767b9d3ef4a3b199111a9fe884a1ffadd70ed55",
+      "playbook:SF-2025.json": "607fc086bfb89d0be47cc225bf0027e61fc41a1d41214d74454a5602ee3353d7",
+      "playbook:TB-2025.json": "fa1be735ac512be053c1b405b591099f9529b5cec24af443a818fa5ed3199ccd",
+      "playbook:TEN-2025.json": "7b4aa89df7f59488e07c20167f07db84408c272d544d82a07f9b4fd732818ac3",
+      "playbook:WAS-2025.json": "2a21f829880baf3825495c97bbf75725fe92b7c6a55791380f19e0c2146fb698"
+    },
+    "playcall_artifact_sha256": "27c02afd6d9f6f80a38b3bc7ae278b1efebcc7caa5664688c64c55bc0c698ac7",
+    "reference_sha256": "955284ce9d7058c0d52de4dab3a558dcea4a5ec270a478f6c00157ace11f071f",
+    "snapshot_sha256": "855ea061bbf4fcffe0856c464a09eb221491a07243528afdcfef652805fa3137",
+    "source_cutoff": {
+      "eligible_before": [
+        2026,
+        1
+      ]
+    }
+  },
+  "note": "mtime is not source publication time; large inputs are not hashed by this diagnostic; model-specific input checks remain unchanged.",
+  "output": "/root/tnf-batch/out-he/2026_11_IND_HOU-he-1000.json",
+  "purpose": "observation_only_no_new_model_or_rng_gate",
+  "schema": "lp-nfl-slc-input-inventory-1",
+  "started_at_utc": "2026-11-19T22:06:27.539741Z",
+  "status": "completed"
+}
