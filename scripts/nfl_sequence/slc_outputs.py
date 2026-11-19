@@ -470,6 +470,8 @@ def play_rows(record):
              'decision_type': (play.get('decision') or {}).get('type'),
              'yards_gained': (play.get('outcome') or {}).get('yards_gained'),
              'state_before': play.get('state_before'), 'state_after': play.get('state_after'),
+             'pre_event_personnel': ((play.get('outcome') or {}).get('pre_event') or {}).get('personnel'),
+             'pre_event_formation': ((play.get('outcome') or {}).get('pre_event') or {}).get('formation'),
              'first_down_source': game_stats.first_down_result(play),
              'first_down_sources': game_stats.first_down_results(play),
              'third_down_attempt': (play.get('state_before') or {}).get('down') == 3
