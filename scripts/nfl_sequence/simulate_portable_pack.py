@@ -133,6 +133,10 @@ def _run(args, engine_dir):
     runtime_model_inputs = (snapshot_payload.get("runtime_model_inputs")
                             if isinstance(snapshot_payload, dict) else None)
     runtime_snapshot = snapshot_loader.load_frozen_snapshot(args.snapshot)
+    # RNG v2's pregame identity is captured before the reference attaches or
+    # reseals model metadata. Keep the supplied snapshot hash for the RNG plan;
+    # the mutable snapshot below may be resealed to record the loaded reference.
+    pregame_state_sha256 = runtime_snapshot["snapshot_sha256"]
     runtime_schedule = runtime_snapshot["schedule"]
     if runtime_schedule["game_id"] != args.game:
         raise ModelPackError("RUNTIME_SNAPSHOT_GAME_ID_MISMATCH")
@@ -164,6 +168,13 @@ def _run(args, engine_dir):
         if not isinstance(optional_hashes, dict) or not streak_context.get("source_sha256"):
             raise ModelPackError("PACKED_CURRENT_STREAK_PROVENANCE_MISSING")
         optional_hashes["current_streak_file"] = streak_context["source_sha256"]
+    if slc_engine is not None and slc_engine.is_slc(reference):
+        # The legacy loader builds this manifest after binding the matchup to
+        # the play-call sampler. A pack carries the build game's manifest, so
+        # refresh its matchup-specific metadata before resealing the snapshot.
+        describe_sampler = getattr(reference.contextual_sampler, "describe", None)
+        if callable(describe_sampler):
+            reference.contextual_pool_manifest = describe_sampler()
     # Legacy loading fingerprints the fully resolved reference after attaching
     # matchup context, then binds that fingerprint into the frozen snapshot.
     # Reproduce that step without reopening any historical source tables.
@@ -178,7 +189,7 @@ def _run(args, engine_dir):
     configured_rng = (config.get("rng_protocol") or {}).get("scheme") or rng_protocol.V1
     scheme = args.rng_protocol or configured_rng
     playcall_description = slc_engine.describe(reference) if slc_engine is not None else None
-    rng_plan = rng_protocol.plan(scheme, snapshot["snapshot_sha256"], reference,
+    rng_plan = rng_protocol.plan(scheme, pregame_state_sha256, reference,
                                  playcall_description)
     rng_manifest = rng_plan.manifest()
     if (args.expected_stream_root_sha256 is not None

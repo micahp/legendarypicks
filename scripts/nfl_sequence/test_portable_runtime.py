@@ -69,11 +69,11 @@ class PortableRuntime(unittest.TestCase):
             ).encode(),
             "scripts/nfl_sequence/rng_protocol.py": (
                 "class Plan:\n"
-                "    def __init__(self, scheme): self.scheme=scheme; self.paired=(scheme=='v2'); self.root=('d'*64 if self.paired else None)\n"
+                "    def __init__(self, scheme, pregame): self.scheme=scheme; self.pregame=pregame; self.paired=(scheme=='v2'); self.root=('d'*64 if self.paired else None)\n"
                 "    def seed_root(self, snapshot): return self.root\n"
-                "    def manifest(self): return {'scheme':self.scheme, **({'stream_root_sha256':self.root} if self.root else {})}\n"
+                "    def manifest(self): return {'scheme':self.scheme, 'pregame_state_sha256':self.pregame, **({'stream_root_sha256':self.root} if self.root else {})}\n"
                 "V1='v1'\n"
-                "def plan(scheme, pregame_state_sha256, ref, description): return Plan(scheme)\n"
+                "def plan(scheme, pregame_state_sha256, ref, description): return Plan(scheme, pregame_state_sha256)\n"
             ).encode(),
             "scripts/nfl_sequence/streak_splits.py": (
                 "BUCKETS = ('L5+', 'L4', 'L3', 'L2', 'L1', 'NONE', 'W1', 'W2', 'W3', 'W4', 'W5+')\n"
@@ -125,7 +125,7 @@ class PortableRuntime(unittest.TestCase):
             self.assertEqual(status, 0)
             self.assertEqual(report["simulation"]["valid_full_games"], 2, {"report": report, "rows": rows})
             self.assertEqual(report["snapshot_sha256"], "b" * 64)
-            self.assertEqual(report["rng_protocol"], {"scheme": "v1"})
+            self.assertEqual(report["rng_protocol"], {"scheme": "v1", "pregame_state_sha256": "b" * 64})
             self.assertEqual(report["game_id"], "2026_12_NYG_DAL")
             self.assertEqual(report["simulation"]["valid_full_games"], 2)
             self.assertEqual([row["seed"] for row in rows], [51, 52])
@@ -146,7 +146,8 @@ class PortableRuntime(unittest.TestCase):
             ])
             self.assertEqual(v2_status, 0)
             self.assertEqual(json.loads(v2_report_path.read_text())["rng_protocol"],
-                             {"scheme": "v2", "stream_root_sha256": "d" * 64})
+                             {"scheme": "v2", "pregame_state_sha256": "b" * 64,
+                              "stream_root_sha256": "d" * 64})
             with self.assertRaisesRegex(Exception, "EXPECTED_STREAM_ROOT_MISMATCH"):
                 simulate_portable_pack.main([
                     "--model", "v1", "--game", "2026_12_NYG_DAL",
