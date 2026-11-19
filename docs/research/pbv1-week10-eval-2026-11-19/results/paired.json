@@ -1,0 +1,80 @@
+{
+ "A-control vs B-field": {
+  "paired_seeds": 60,
+  "per_game": {
+   "2026_10_BUF_NYJ": {
+    "players_differ": 20,
+    "plays_differ": 17,
+    "score_differs": 15,
+    "seeds": 20
+   },
+   "2026_10_CAR_NO": {
+    "players_differ": 20,
+    "plays_differ": 18,
+    "score_differs": 17,
+    "seeds": 20
+   },
+   "2026_10_HOU_CLE": {
+    "players_differ": 20,
+    "plays_differ": 20,
+    "score_differs": 18,
+    "seeds": 20
+   }
+  },
+  "players_differ": 60,
+  "plays_differ": 55,
+  "score_differs": 50
+ },
+ "A-control vs C-field-pbv1": {
+  "paired_seeds": 60,
+  "per_game": {
+   "2026_10_BUF_NYJ": {
+    "players_differ": 20,
+    "plays_differ": 20,
+    "score_differs": 18,
+    "seeds": 20
+   },
+   "2026_10_CAR_NO": {
+    "players_differ": 20,
+    "plays_differ": 20,
+    "score_differs": 19,
+    "seeds": 20
+   },
+   "2026_10_HOU_CLE": {
+    "players_differ": 20,
+    "plays_differ": 20,
+    "score_differs": 19,
+    "seeds": 20
+   }
+  },
+  "players_differ": 60,
+  "plays_differ": 60,
+  "score_differs": 56
+ },
+ "B-field vs C-field-pbv1": {
+  "paired_seeds": 60,
+  "per_game": {
+   "2026_10_BUF_NYJ": {
+    "players_differ": 20,
+    "plays_differ": 20,
+    "score_differs": 18,
+    "seeds": 20
+   },
+   "2026_10_CAR_NO": {
+    "players_differ": 20,
+    "plays_differ": 20,
+    "score_differs": 19,
+    "seeds": 20
+   },
+   "2026_10_HOU_CLE": {
+    "players_differ": 20,
+    "plays_differ": 19,
+    "score_differs": 18,
+    "seeds": 20
+   }
+  },
+  "players_differ": 60,
+  "plays_differ": 59,
+  "score_differs": 55
+ }
+}
