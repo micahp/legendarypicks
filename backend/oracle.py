@@ -374,17 +374,17 @@ def kicker_week_assignments(roster_path, season, week, continuity_from=None):
     return rows, unresolved, continuity
 
 
-def build_week_kicker_table(base_path, roster_path, season, week, out_path, published_utc, kickoff_utc):
+def build_week_kicker_table(base_path, roster_path, season, week, out_path, published_utc, kickoff_utc,
+                            earlier_roster_path=None):
     """The kicker table for one week of a walk-forward test: the base table's assignments for weeks before `week`, plus
     this week's rows from the weekly roster. Assignments for later weeks are dropped, so no future week reaches the engine.
 
-    Refuses when the roster was published after the week's first kickoff (a later roster can show a change not known
-    pregame), when `out_path` exists, and when the base holds no assignments before `week`. Each team with no row is
-    listed as unresolved, so the engine refuses that team's game. Continuity for two ACT kickers reads last week's
-    assignment from the base table."""
-    if published_utc > kickoff_utc:
-        raise ValueError(f'roster published {published_utc:%Y-%m-%dT%H:%MZ} is after week {week} kickoff '
-                         f'{kickoff_utc:%Y-%m-%dT%H:%MZ}')
+    A roster published after the week's first kickoff is allowed, and the record says so. Then the kicker rows must match
+    `earlier_roster_path`, a copy published before kickoff, when one exists: a difference refuses, because the kicker
+    would then depend on a change made after the games were set. With no earlier copy, the record says the rows are
+    unchecked against one. Refuses when `out_path` exists and when the base holds no assignments before `week`. Each team
+    with no row is listed as unresolved, so the engine refuses that team's game. Continuity for two ACT kickers reads
+    last week's assignment from the base table."""
     out = Path(out_path)
     if out.exists():
         raise FileExistsError(f'{out} exists; a walk-forward input is written once')
@@ -397,13 +397,25 @@ def build_week_kicker_table(base_path, roster_path, season, week, out_path, publ
     prev_week = max(row[1] for row in this_season)
     continuity_from = {row[2]: row[3] for row in this_season if row[1] == prev_week}
     rows, unresolved, continuity = kicker_week_assignments(roster_path, season, week, continuity_from)
+    after_kickoff = published_utc > kickoff_utc
+    if not after_kickoff:
+        timing_check = 'published before kickoff'
+    elif earlier_roster_path is None:
+        timing_check = 'published after kickoff; no copy published before kickoff to compare'
+    else:
+        earlier = kicker_week_assignments(earlier_roster_path, season, week, continuity_from)[0]
+        changed = sorted(set(map(tuple, rows)) ^ set(map(tuple, earlier)))
+        if changed:
+            raise ValueError(f'week {week} kicker rows differ between the copy published before kickoff and the copy '
+                             f'published {published_utc:%Y-%m-%dT%H:%MZ}: {changed}')
+        timing_check = 'published after kickoff; kicker rows match the copy published before kickoff'
     table = dict(base)
     table['assignments'] = before + rows
     table['walkforward_week'] = {
         'season': season, 'week': week, 'rule': 'kicker_week_assignments on the weekly roster',
         'roster_sha256': hashlib.sha256(Path(roster_path).read_bytes()).hexdigest(),
         'roster_published_utc': f'{published_utc:%Y-%m-%dT%H:%M:%SZ}',
-        'kickoff_utc': f'{kickoff_utc:%Y-%m-%dT%H:%M:%SZ}',
+        'kickoff_utc': f'{kickoff_utc:%Y-%m-%dT%H:%M:%SZ}', 'timing_check': timing_check,
         'base_sha256': hashlib.sha256(base_text.encode()).hexdigest(),
         'base_weeks_dropped': sorted({row[1] for row in base['assignments'] if row[0] == season and row[1] >= week}),
         'rows': len(rows), 'unresolved_teams': unresolved, 'continuity_resolved': continuity,
