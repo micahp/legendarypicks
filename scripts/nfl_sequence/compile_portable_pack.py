@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Compile a trusted SLC portable reference by reusing an existing model's own loader.
+"""Compile a versioned SLC executable package through the model's own loader.
 
 The expensive build runs once on the data host. The model's original
 simulate_pregame_batch entrypoint resolves all of its flags and source
-fixtures. This adapter captures the fully initialized Reference and the
-final frozen snapshot and emits a portable pack. The CLI deliberately
-accepts the ORIGINAL runner arguments after --, so V1/V1.5/V1.6/V1.7/V2/
-PBV1 keep their own real code paths and policies.
+fixtures. This adapter captures the fully initialized Reference, pinned code,
+and final build snapshot. V1 currently has a supported adapter; other families
+stay gated until their exact policies and loaders are wired.
 
 This first-stage compiler runs a one-seed ordinary build as a smoke test.
 The final no-DB parity gate is separate and mandatory before production.
@@ -24,7 +23,8 @@ import tempfile
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
-from portable_model_pack import write_pack, ModelPackError
+from portable_model_pack import write_pack, collect_engine_files, ModelPackError
+from slc_model_registry import get_model
 
 
 def _commit(root):
@@ -34,16 +34,25 @@ def _commit(root):
 def _clean(root):
     # Prevent a pack from claiming a code commit different from its build.
     return not subprocess.check_output(["git", "-C", str(root), "status", "--porcelain",
-                                        "--untracked-files=no"], text=True).strip()
+                                        "--untracked-files=all"], text=True).strip()
 
 
 def compile_model(engine_root, pack_path, model_id, forwarded_args):
+    model_spec = get_model(model_id)
+    if not model_spec["build_supported"]:
+        raise ModelPackError("MODEL_PACKAGE_NOT_ENABLED: " + model_id)
     root = Path(engine_root).resolve()
     if not (root / "scripts" / "nfl_sequence" / "simulate_pregame_batch.py").exists():
         raise ModelPackError("ENGINE_SIMULATOR_ENTRYPOINT_MISSING")
     if not _clean(root):
         raise ModelPackError("DIRTY_MODEL_CODE: commit or stash tracked changes before compilation")
     commit = _commit(root)
+    if commit != model_spec["code_commit"]:
+        raise ModelPackError("MODEL_REGISTRY_CODE_COMMIT_MISMATCH")
+    lock_path = Path(str(pack_path) + ".sha256")
+    if Path(pack_path).exists() or lock_path.exists():
+        raise FileExistsError(f"immutable pack or lock already exists: {pack_path}")
+    engine_files = collect_engine_files(root, commit)
     sys.path.insert(0, str(root / "scripts" / "nfl_sequence"))
     sys.path.insert(1, str(root / "backend"))
     batch = importlib.import_module("simulate_pregame_batch")
@@ -84,6 +93,11 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
         reference = captured.get("reference")
         if reference is None:
             raise ModelPackError("BATCH_DID_NOT_LOAD_REFERENCE")
+        profile = result.get("slc_profile_manifest") or {}
+        if profile.get("profile") != model_spec["profile"]:
+            raise ModelPackError("MODEL_PROFILE_DOES_NOT_MATCH_REGISTRY")
+        if profile.get("disabled_layers"):
+            raise ModelPackError("STANDARD_PACKAGE_HAS_DISABLED_LAYERS")
         sampler = getattr(reference, "contextual_sampler", None)
         if sampler is not None:
             if getattr(sampler, "participant_chooser", None) is not None:
@@ -101,15 +115,25 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
             snapshot=result["pregame_snapshot"],
             model_id=model_id,
             code_commit=commit,
+            engine_files=engine_files,
             config={"build_args": forwarded_args, "build_result_model": result.get("simulation", {}).get("model"),
                     "reference_sha256": reference.model_inputs.get("sha256"),
                     "source": result.get("source"),
-                    "model_profile": result.get("slc_profile")},
+                    "model_profile": profile,
+                    "rules_policy": model_spec["rules_policy"],
+                    "enabled_layers": sorted(k for k, v in (profile.get("enabled_layers") or {}).items() if v),
+                    "experimental_flags": model_spec["experimental_flags"],
+                    "training_cutoff": {"eligible_before": [
+                        int(result["pregame_snapshot"]["schedule"]["season"]), 1]},
+                    "runtime_dependencies": None},
         )
-        lock_path = Path(str(pack_path) + ".sha256")
-        if lock_path.exists():
-            raise FileExistsError(f"pack lock already exists: {lock_path}")
-        lock_path.write_text(pack["sha256"] + "  " + Path(pack_path).name + "\n")
+        lock_tmp = lock_path.with_name(lock_path.name + ".tmp")
+        try:
+            lock_tmp.write_text(pack["sha256"] + "  " + Path(pack_path).name + "\n")
+            import os
+            os.link(lock_tmp, lock_path)
+        finally:
+            lock_tmp.unlink(missing_ok=True)
         print(json.dumps({"pack": str(pack_path), "pack_sha256": pack["sha256"],
                           "model_id": model_id, "code_commit": commit,
                           "reference_sha256": reference.model_inputs.get("sha256")}, indent=2))

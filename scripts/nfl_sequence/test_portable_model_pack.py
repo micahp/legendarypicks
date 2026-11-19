@@ -1,5 +1,5 @@
 """Offline portable model-pack tests. No SLC database or fixture files required."""
-import hashlib
+import json
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -12,12 +12,25 @@ def _reference():
     return SimpleNamespace(
         pool={(1, 2, 3): [("run", {"play_id": "fixture"}, 8, 55)]},
         kickoff_pool=[{"spot": 70}],
-        kicks={"field_goal": [1]},
+        kicks={"field_goal": [1], "field_goal_outcomes": {"short": (1, 1, 0)},
+               "extra_point": [1], "two_point": [1]},
+        participants={("g", "p"): {}},
+        missed_field_goal_pool={"short": [{"spot_adjustment_yards": 0}]},
         safety_kick_pool=[{"spot": 40}],
         overtime_pool=[{"winning_drive": True}],
+        overtime_try_p_two={key: 0.05 for key in ("<=-9", "-8..-5", "-4..-1", "0", "1..4", "5..8", ">=9")},
+        overtime_p_kick=0.0,
+        blocked_kicks={"rates": {"punt_blocked": {"rate": 0.01},
+                                  "field_goal_blocked_by_snap_bucket": {"short": {"rate": 0.01}}},
+                       "records": {"punt": [{"spot": 50}], "field_goal": []}},
         model_inputs={"sha256": "f" * 64},
         contextual_sampler=None,
     )
+
+
+def _engine_files():
+    return {"scripts/nfl_sequence/game_state.py": b"# pinned engine\n",
+            "scripts/nfl_sequence/slc_engine.py": b"# pinned SLC engine\n"}
 
 
 def _snapshot():
@@ -35,14 +48,20 @@ class PortablePack(unittest.TestCase):
             path = Path(dirname) / "v1.slcpack"
             original = _reference()
             result = write_pack(path, reference=original, snapshot=_snapshot(),
-                                model_id="v1", code_commit="123456")
+                                model_id="v1", code_commit="1" * 40, engine_files=_engine_files())
             assert result["manifest"]["full_game_capable"]
+            engine_dir = Path(dirname) / "engine"
             ref, snapshot, manifest, config = load_pack(
-                path, expected_sha256=result["sha256"], expected_code_commit="123456")
+                path, expected_sha256=result["sha256"], expected_code_commit="1" * 40, engine_dir=engine_dir)
             self.assertEqual(ref.overtime_pool, original.overtime_pool)
             self.assertEqual(ref.model_inputs, original.model_inputs)
             self.assertEqual(snapshot["schedule"]["game_id"], "2026_11_IND_HOU")
             self.assertEqual(manifest["checks"]["overtime_pool_samples"], 1)
+            self.assertEqual((engine_dir / "scripts/nfl_sequence/game_state.py").read_bytes(),
+                             _engine_files()["scripts/nfl_sequence/game_state.py"])
+            with __import__("zipfile").ZipFile(path) as archive:
+                self.assertIn("reference.json", archive.namelist())
+                self.assertNotIn("reference.pkl", archive.namelist())
             self.assertEqual(config, {})
 
     def test_missing_overtime_fails_during_build(self):
@@ -51,7 +70,8 @@ class PortablePack(unittest.TestCase):
         with tempfile.TemporaryDirectory() as dirname:
             with self.assertRaisesRegex(ModelPackError, "MISSING_REQUIRED_OVERTIME_POOL"):
                 write_pack(Path(dirname) / "bad.slcpack", reference=ref,
-                           snapshot=_snapshot(), model_id="v2", code_commit="123456")
+                           snapshot=_snapshot(), model_id="v2", code_commit="1" * 40,
+                           engine_files=_engine_files())
 
     def test_missing_safety_kick_fails_during_build(self):
         ref = _reference()
@@ -59,32 +79,72 @@ class PortablePack(unittest.TestCase):
         with tempfile.TemporaryDirectory() as dirname:
             with self.assertRaisesRegex(ModelPackError, "MISSING_REQUIRED_SAFETY_KICK_POOL"):
                 write_pack(Path(dirname) / "bad.slcpack", reference=ref,
-                           snapshot=_snapshot(), model_id="v2", code_commit="123456")
+                           snapshot=_snapshot(), model_id="v2", code_commit="1" * 40,
+                           engine_files=_engine_files())
 
-    def test_wrong_external_hash_blocks_unpickle(self):
+    def test_missing_missed_field_goal_return_support_fails_during_build(self):
+        ref = _reference()
+        ref.missed_field_goal_pool = {}
+        with tempfile.TemporaryDirectory() as dirname:
+            with self.assertRaisesRegex(ModelPackError, "MISSING_REQUIRED_MISSED_FIELD_GOAL_POOL"):
+                write_pack(Path(dirname) / "bad.slcpack", reference=ref,
+                           snapshot=_snapshot(), model_id="v1", code_commit="1" * 40,
+                           engine_files=_engine_files())
+
+    def test_incomplete_kick_outcomes_fail_during_build(self):
+        ref = _reference()
+        ref.kicks["extra_point"] = None
+        with tempfile.TemporaryDirectory() as dirname:
+            with self.assertRaisesRegex(ModelPackError, "INCOMPLETE_REQUIRED_KICK_OUTCOMES"):
+                write_pack(Path(dirname) / "bad.slcpack", reference=ref,
+                           snapshot=_snapshot(), model_id="v1", code_commit="1" * 40,
+                           engine_files=_engine_files())
+
+    def test_missing_overtime_policy_fails_during_build(self):
+        ref = _reference()
+        ref.overtime_try_p_two = None
+        ref.overtime_p_kick = None
+        with tempfile.TemporaryDirectory() as dirname:
+            with self.assertRaisesRegex(ModelPackError, "MISSING_REQUIRED_OVERTIME_TRY_FALLBACK"):
+                write_pack(Path(dirname) / "bad.slcpack", reference=ref,
+                           snapshot=_snapshot(), model_id="v1", code_commit="1" * 40,
+                           engine_files=_engine_files())
+
+    def test_state_codec_round_trips_typed_containers(self):
+        from collections import Counter, defaultdict
+        from portable_model_pack import _decode_state, _encode_state
+
+        value = {("home", 1): Counter({"pass": 2}), "groups": defaultdict(list, {"11": [1, 2]}),
+                 "unordered": {3, 1, 2}}
+        restored = _decode_state(_encode_state(value))
+        self.assertEqual(restored, value)
+        self.assertIsInstance(restored[("home", 1)], Counter)
+        self.assertIsInstance(restored["groups"], defaultdict)
+
+    def test_wrong_external_hash_blocks_package_load(self):
         with tempfile.TemporaryDirectory() as dirname:
             path = Path(dirname) / "v1.slcpack"
             write_pack(path, reference=_reference(), snapshot=_snapshot(),
-                       model_id="v1", code_commit="123456")
+                       model_id="v1", code_commit="1" * 40, engine_files=_engine_files())
             with self.assertRaisesRegex(ModelPackError, "PACK_SHA256_MISMATCH"):
-                load_pack(path, expected_sha256="0" * 64, expected_code_commit="123456")
+                load_pack(path, expected_sha256="0" * 64, expected_code_commit="1" * 40)
 
     def test_wrong_code_commit_is_rejected(self):
         with tempfile.TemporaryDirectory() as dirname:
             path = Path(dirname) / "v1.slcpack"
             result = write_pack(path, reference=_reference(), snapshot=_snapshot(),
-                                model_id="v1", code_commit="123456")
+                                model_id="v1", code_commit="1" * 40, engine_files=_engine_files())
             with self.assertRaisesRegex(ModelPackError, "MODEL_CODE_COMMIT_MISMATCH"):
-                load_pack(path, expected_sha256=result["sha256"], expected_code_commit="654321")
+                load_pack(path, expected_sha256=result["sha256"], expected_code_commit="2" * 40)
 
     def test_cannot_overwrite_immutable_pack(self):
         with tempfile.TemporaryDirectory() as dirname:
             path = Path(dirname) / "v1.slcpack"
             write_pack(path, reference=_reference(), snapshot=_snapshot(),
-                       model_id="v1", code_commit="123456")
+                       model_id="v1", code_commit="1" * 40, engine_files=_engine_files())
             with self.assertRaises(FileExistsError):
                 write_pack(path, reference=_reference(), snapshot=_snapshot(),
-                           model_id="v1", code_commit="123456")
+                           model_id="v1", code_commit="1" * 40, engine_files=_engine_files())
 
 
 if __name__ == "__main__":
