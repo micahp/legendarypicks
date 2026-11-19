@@ -362,6 +362,9 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
             formation_priors, intent, state['down'], state['togo'], f'{base}:formation', team=team)
     if pbv1 is not None and state is not None:
         package = pbv1.draw(intent, state['down'], state['togo'], state['yl'], f'{base}:pbv1')
+        import os as _probe_os  # probe only: force one package to test whether the label changes outcomes
+        if _probe_os.environ.get('LP_PBV1_FORCE_PACKAGE'):
+            package = _probe_os.environ['LP_PBV1_FORCE_PACKAGE']
         if package is not None:
             chosen['personnel'] = package
     if on_field is not None:
