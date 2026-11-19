@@ -1,80 +1,111 @@
 {
- "arms": {
-  "pbv1-off": {
-   "away_team": "IND",
-   "home_margin_mean": 1.37,
-   "home_margin_p10": -14.0,
-   "home_margin_p90": 17.0,
-   "home_team": "HOU",
-   "home_win_share": 0.532,
-   "seeds": 1000,
-   "tie_share": 0.009,
-   "total_mean": 44.87
+  "arms": {
+    "he-participation": {
+      "away_team": "IND",
+      "home_margin_mean": 1.34,
+      "home_margin_p10": -14.0,
+      "home_margin_p90": 17.0,
+      "home_team": "HOU",
+      "home_win_share": 0.556,
+      "seeds": 1000,
+      "tie_share": 0.006,
+      "total_mean": 44.76
+    },
+    "pbv1-off": {
+      "away_team": "IND",
+      "home_margin_mean": 1.37,
+      "home_margin_p10": -14.0,
+      "home_margin_p90": 17.0,
+      "home_team": "HOU",
+      "home_win_share": 0.532,
+      "seeds": 1000,
+      "tie_share": 0.009,
+      "total_mean": 44.87
+    },
+    "pbv1-on": {
+      "away_team": "IND",
+      "home_margin_mean": 1.43,
+      "home_margin_p10": -13.0,
+      "home_margin_p90": 17.0,
+      "home_team": "HOU",
+      "home_win_share": 0.532,
+      "seeds": 869,
+      "tie_share": 0.01,
+      "total_mean": 44.86
+    },
+    "v1-vfg": {
+      "away_team": "IND",
+      "home_margin_mean": 1.0,
+      "home_margin_p10": -14.0,
+      "home_margin_p90": 17.0,
+      "home_team": "HOU",
+      "home_win_share": 0.519,
+      "seeds": 1000,
+      "tie_share": 0.0,
+      "total_mean": 45.96
+    },
+    "v2-pbp": {
+      "away_team": "IND",
+      "home_margin_mean": 3.77,
+      "home_margin_p10": -11.0,
+      "home_margin_p90": 20.0,
+      "home_team": "HOU",
+      "home_win_share": 0.632,
+      "seeds": 1000,
+      "tie_share": 0.007,
+      "total_mean": 40.25
+    }
   },
-  "pbv1-on": {
-   "away_team": "IND",
-   "home_margin_mean": 1.43,
-   "home_margin_p10": -13.0,
-   "home_margin_p90": 17.0,
-   "home_team": "HOU",
-   "home_win_share": 0.532,
-   "seeds": 869,
-   "tie_share": 0.01,
-   "total_mean": 44.86
-  },
-  "v1-vfg": {
-   "away_team": "IND",
-   "home_margin_mean": 1.0,
-   "home_margin_p10": -14.0,
-   "home_margin_p90": 17.0,
-   "home_team": "HOU",
-   "home_win_share": 0.519,
-   "seeds": 1000,
-   "tie_share": 0.0,
-   "total_mean": 45.96
-  },
-  "v2-pbp": {
-   "away_team": "IND",
-   "home_margin_mean": 3.77,
-   "home_margin_p10": -11.0,
-   "home_margin_p90": 20.0,
-   "home_team": "HOU",
-   "home_win_share": 0.632,
-   "seeds": 1000,
-   "tie_share": 0.007,
-   "total_mean": 40.25
+  "paired": {
+    "pbv1-off vs he-participation": {
+      "common_seeds": 1000,
+      "mean_margin_diff": 0.03,
+      "same_winner_share": 0.508
+    },
+    "pbv1-off vs pbv1-on": {
+      "common_seeds": 869,
+      "mean_margin_diff": 0.0,
+      "same_winner_share": 1.0
+    },
+    "pbv1-off vs v1-vfg": {
+      "common_seeds": 1000,
+      "mean_margin_diff": 0.36,
+      "same_winner_share": 0.513
+    },
+    "pbv1-off vs v2-pbp": {
+      "common_seeds": 1000,
+      "mean_margin_diff": -2.4,
+      "same_winner_share": 0.496
+    },
+    "pbv1-on vs he-participation": {
+      "common_seeds": 869,
+      "mean_margin_diff": 0.21,
+      "same_winner_share": 0.498
+    },
+    "pbv1-on vs v1-vfg": {
+      "common_seeds": 869,
+      "mean_margin_diff": 0.37,
+      "same_winner_share": 0.51
+    },
+    "pbv1-on vs v2-pbp": {
+      "common_seeds": 869,
+      "mean_margin_diff": -2.4,
+      "same_winner_share": 0.497
+    },
+    "v1-vfg vs he-participation": {
+      "common_seeds": 1000,
+      "mean_margin_diff": -0.34,
+      "same_winner_share": 0.485
+    },
+    "v1-vfg vs v2-pbp": {
+      "common_seeds": 1000,
+      "mean_margin_diff": -2.76,
+      "same_winner_share": 0.503
+    },
+    "v2-pbp vs he-participation": {
+      "common_seeds": 1000,
+      "mean_margin_diff": 2.42,
+      "same_winner_share": 0.536
+    }
   }
- },
- "paired": {
-  "pbv1-off vs pbv1-on": {
-   "common_seeds": 869,
-   "mean_margin_diff": 0.0,
-   "same_winner_share": 1.0
-  },
-  "pbv1-off vs v1-vfg": {
-   "common_seeds": 1000,
-   "mean_margin_diff": 0.36,
-   "same_winner_share": 0.513
-  },
-  "pbv1-off vs v2-pbp": {
-   "common_seeds": 1000,
-   "mean_margin_diff": -2.4,
-   "same_winner_share": 0.496
-  },
-  "pbv1-on vs v1-vfg": {
-   "common_seeds": 869,
-   "mean_margin_diff": 0.37,
-   "same_winner_share": 0.51
-  },
-  "pbv1-on vs v2-pbp": {
-   "common_seeds": 869,
-   "mean_margin_diff": -2.4,
-   "same_winner_share": 0.497
-  },
-  "v1-vfg vs v2-pbp": {
-   "common_seeds": 1000,
-   "mean_margin_diff": -2.76,
-   "same_winner_share": 0.503
-  }
- }
 }
