@@ -77,3 +77,76 @@ Margin is not accuracy. These numbers show that the arms differ. They do not sho
 - `code/campaign_v2.py`: the SLC v2 arm (smoke test on KC_ATL).
 - `code/build_w10_kicker.py`: builds the Week 10 kicker rows from the 07:04 UTC roster.
 - Raw run outputs stay on the fast host at `/root/tnf-batch/camp/`, not in git.
+
+## Follow-up: departures, first-play entry, and the lead RB's weight
+
+Scripts are in `code/`. Results are in `results/advance_analysis.json`, `results/entry_weights.json` and `results/entry_group.json`. Arms B and C use the advance-log re-runs (`B2`, `C2`). Arms H, HS, HP and HSP use the campaign runs.
+
+### Departures: hazard or forced
+
+Per 100 on-field plays, for the lead RB:
+
+| Arm | Hazard departures | Forced removals |
+|---|---|---|
+| B | 24.5 | 4.3 |
+| C | 24.1 | 3.4 |
+| H | 21.6 | 2.8 |
+| HS | 14.3 | 2.8 |
+| HP | 22.7 | 2.1 |
+| HSP | 14.3 | 2.1 |
+
+Almost all departures are hazard departures. Forced removals are small in every arm.
+
+### First play: entry by bench weight
+
+At each team's first offensive play, an RB slot is almost always filled (99% or more). The lead RB enters in about half the cases:
+
+| Arm | Lead RB enters at first play |
+|---|---|
+| B | 50.1% |
+| C | 50.4% |
+| H | 50.6% |
+| HS | 45.3% |
+| HP | 50.9% |
+| HSP | 49.0% |
+
+The entry draw follows the weights. In every weight band, the lead RB's pick rate matches his average weight share. So the first-play gap comes from the weights.
+
+### First play by personnel group
+
+Mean lead RB weight share, and how often he was picked, for the most common groups:
+
+| Group | Arm | Cases | Lead weight share | Lead picked |
+|---|---|---|---|---|
+| 11 | B | 220 | 0.47 | 0.47 |
+| 11 | HSP | 308 | 0.51 | 0.46 |
+| 12 | B | 200 | 0.53 | 0.55 |
+| 12 | HSP | 183 | 0.50 | 0.52 |
+| 21 | B | 51 | 0.42 | 0.35 |
+| 21 | HSP | 21 | 0.40 | 0.29 |
+
+Group 11 is the main case. The lead RB gets under half the bench weight.
+
+### Why the lead's weight is low in group 11
+
+The weight formula reproduces all 933 logged RB weights in arm B exactly (`group11_rates.py`). The weight is the rate built from 2022 to 2025 history.
+
+- The lead RB's average rate is 0.28. A backup's average is 0.09.
+- But the lead has the highest rate in only 116 of 220 group-11 cases (53%).
+
+Current-season snap share (weeks 1 to 9, `current_share.py`) says something different:
+
+- The lead RB's share is 0.50. A backup's share is 0.16.
+- The lead has the highest share in 151 of 220 cases (69%).
+
+So the 2022 to 2025 history puts a backup ahead of the lead in about half the cases. The current season does not.
+
+### Open item
+
+In arm HS, the lead's group-11 weight share is still about 0.48. The snap-count update should move the weight toward the lead, but it does not do so enough. The next check is how `snap_update.apply()` changes the weights for these same cases. That check has not been run yet.
+
+### Limits
+
+- The lead RB is the player with the most actual Week 10 carries. This is used only to score. The simulation does not use it as an input.
+- Current-season shares use weeks 1 to 9 only.
+- Twenty seeds per game is exploratory.
