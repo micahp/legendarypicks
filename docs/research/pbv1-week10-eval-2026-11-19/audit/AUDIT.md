@@ -7,7 +7,7 @@ Carries and targets below are per game, averaged over 20 seeds. Actual values co
 ## Short answer
 
 - The field arms do change who gets carries. Among players who have an actual log row, the share error falls about 7% in both field arms.
-- Most of the simulated carries go to players who did not play in the game. Those players are about 26% of simulated carries. The cause is the pregame roster input, not the allocation rule.
+- About a quarter (22 to 27%) of simulated carries go to players with no log row in the real game. Only one cause is confirmed: Achane's pregame snapshot has no availability status. Most of the others have no published source either way (section 11a).
 - The field arms cut carries to high-volume runners by much more than the MAE shows. Their signed error goes from -68 to about -190 carries per 14 games.
 - Scores do not differ measurably between arms. Every confidence interval includes zero.
 
@@ -27,7 +27,7 @@ Targets follow the same pattern. Simulated targets were 1029.7, 1020.5 and 1018.
 
 The actual totals reconcile exactly with the logs: 742 carries and 881 targets, all in the rows above.
 
-**Players with no log row are not an ID mismatch.** I checked the names. None of these players appears in the game's logs under another ID. The example is De'Von Achane (MIA, MIA_IND, seed 300001). He is in the simulated box score with 12 carries, but has no log row for that game. His entry in the pregame snapshot (`rosters/away/players[6]`) comes from `nflverse_depth_charts`, and the snapshot has no injury or availability field. The box score's roster status fields are null, so the simulation had no way to exclude him.
+**Players with no log row are not an ID mismatch.** I checked the names. None of these players appears in the game's logs under another ID. The example is De'Von Achane (MIA, MIA_IND, seed 300001). He is in the simulated box score with 12 carries, but has no log row for that game. His entry in the pregame snapshot (`rosters/away/players[6]`) comes from `nflverse_depth_charts`, and the snapshot has no injury or availability field. The box score's roster status fields are null, so the output cannot show why he was included.
 
 **Roster omissions:** 14 player-games had actual touches that the simulation never listed. I did not trace these individually.
 
@@ -176,6 +176,52 @@ The arms differ in most individual seeds, but the average difference is small an
 - 73,535 keys occur more than once within one run. The comparison uses the first call only.
 
 Most shared draws select a different player because the candidate list differs. That is expected once the lineup differs.
+
+## 11. Follow-up: unlogged carriers and high-volume starters
+
+Scripts: `code/investigate.py`. Output: `results/investigation.json`.
+
+### 11a. Players with no log row who got carries (arm C)
+
+Checked against published week 10 sources: `nfl_snap_counts` and `injury_reports`.
+
+| Class | Player-games | Carries | Share of carries |
+|---|---|---|---|
+| No snap row and no injury row | 81 | 142.1 | 65% |
+| Injury report: Out, Doubtful or IR | 22 | 36.8 | 17% |
+| Injury report: other status (for example Questionable) | 11 | 14.7 | 7% |
+| Snap count file shows snaps, but no log row | 24 | 12.8 | 6% |
+| Snap count file shows zero snaps, no injury row | 4 | 13.6 | 6% |
+
+Arm B shows the same pattern.
+
+- The Out, Doubtful and IR rows should have been removed by the availability rule. The rule only acts when the snapshot carries a designation. The snapshot has none, so the rule never fired.
+- The snaps-but-no-log rows point to gaps in the log table. The simulation may be right for those players.
+- The 142 carries with no published source either way are not explained by these checks.
+
+### 11b. High-volume starters: snap share and carries per snap
+
+Six starters, one game each, from the log rows. Snap share is the player's snaps over team snaps. Carry share is carries over team carries. Relative rate is carry share divided by snap share. A value of 1.0 means carries in proportion to snaps.
+
+| Player | Actual snap % | B snap % | C snap % | Actual carry % | B carry % | C carry % | Actual rel. | B rel. | C rel. |
+|---|---|---|---|---|---|---|---|---|---|
+| Bijan Robinson | 8.0 | 8.0 | 8.9 | 80.0 | 44.3 | 52.7 | 10.0 | 5.5 | 5.9 |
+| Jahmyr Gibbs | 10.5 | 8.7 | 9.0 | 64.7 | 50.6 | 48.7 | 6.1 | 5.9 | 5.4 |
+| Derrick Henry | 7.0 | 7.1 | 7.8 | 66.7 | 36.5 | 38.8 | 9.5 | 5.2 | 5.0 |
+| Christian McCaffrey | 10.1 | 7.6 | 8.0 | 44.8 | 38.7 | 41.2 | 4.5 | 5.1 | 5.2 |
+| Jonathan Taylor | 8.8 | 8.7 | 9.0 | 47.1 | 46.0 | 43.8 | 5.4 | 5.3 | 4.9 |
+| Zach Charbonnet | 12.6 | 7.3 | 8.6 | 57.1 | 36.1 | 46.6 | 4.5 | 5.0 | 5.4 |
+
+Control (A) carry share for the same six is 76% to 89%. That is above the actual 45% to 80%. Arm B is 36% to 51%. The control overshoots and the field arm undershoots.
+
+Arm A's box score has snap data for only 2 of 39 players in one game I checked. The snap split therefore cannot compare A with the field arms.
+
+Readings:
+
+- **Snap share.** Arm B matches the actual snap share for Robinson, Henry and Taylor. It is lower for Gibbs, McCaffrey and Charbonnet. Arm C is closer on all six.
+- **Carries per snap.** Actual relative rates run from 4.5 to 10.0. Both field arms give every player 4.9 to 5.9. The simulation does not separate the high-volume runners from the others once they are on the field.
+- **Selection on the field.** In arms B and C, the six are picked as rusher on 0.88 to 0.95 of run plays while they are on the field. So the shortfall is not in choosing among on-field players.
+- **What is left.** The low carries per snap probably come from how often runs are called while the player is on the field. The records do not yet split that out. Splitting it needs one more pass over the choice records.
 
 ## Limitations
 
