@@ -27,15 +27,18 @@ class PortableRuntime(unittest.TestCase):
             blocked_kicks={"rates": {"punt_blocked": {"rate": 0.01},
                                       "field_goal_blocked_by_snap_bucket": {"short": {"rate": 0.01}}},
                            "records": {"punt": [], "field_goal": []}},
-            model_inputs={"sha256": "f" * 64}, contextual_sampler=None)
+            model_inputs={"sha256": "f" * 64},
+            contextual_sampler=SimpleNamespace(current_streak={"OLD": "W1"}, side_teams=None))
         snapshot = {"snapshot_sha256": "a" * 64, "as_of": "2026-11-18T22:00:00Z",
                     "verified": False, "verification_status": "incomplete_evidence",
+                    "model_reference": {},
                     "schedule": {"game_id": "2026_11_IND_HOU", "season": 2026, "week": 11,
                                  "home_team": "IND", "away_team": "HOU"},
                     "rosters": {"home": {}, "away": {}}}
         engine_files = {
             "scripts/nfl_sequence/game_state.py": (
                 "def play_game(seed, ref, pregame_snapshot=None):\n"
+                "    assert ref.contextual_sampler.current_streak == {'NYG': 'W3', 'DAL': 'L2'}\n"
                 "    return {'status': 'complete', 'blocker': None, 'valid_full_game': True,\n"
                 "            'complete_game': True, 'regulation_end_reached': True,\n"
                 "            'points': {'A': 10, 'B': 7}, 'stats': {'player': []},\n"
@@ -52,6 +55,19 @@ class PortableRuntime(unittest.TestCase):
                 "def load_frozen_snapshot(path):\n"
                 "    with open(path) as handle:\n        return json.load(handle)\n"
             ).encode(),
+            "scripts/nfl_sequence/slc_engine.py": (
+                "def is_slc(reference): return True\n"
+                "def side_teams(snapshot): return {'A': snapshot['schedule']['home_team'], 'B': snapshot['schedule']['away_team']}\n"
+                "def play(seed, reference, snapshot):\n"
+                "    import game_state\n"
+                "    return game_state.play_game(seed, reference, snapshot), []\n"
+            ).encode(),
+            "scripts/nfl_sequence/streak_splits.py": (
+                "BUCKETS = ('L5+', 'L4', 'L3', 'L2', 'L1', 'NONE', 'W1', 'W2', 'W3', 'W4', 'W5+')\n"
+            ).encode(),
+            "scripts/nfl_sequence/nfl_team_codes.py": (
+                "def to_pbp_team_code(team): return team\n"
+            ).encode(),
         }
         with tempfile.TemporaryDirectory() as dirname:
             root = Path(dirname)
@@ -59,12 +75,21 @@ class PortableRuntime(unittest.TestCase):
             pack = write_pack(pack_path, reference=reference, snapshot=snapshot,
                               model_id="v1", code_commit=model["code_commit"],
                               engine_files=engine_files,
-                              config={"training_cutoff": {"eligible_before": [2026, 1]}})
+                              config={"training_cutoff": {"eligible_before": [2026, 1]},
+                                      "enabled_layers": ["current_streak_context"]})
             report_path, records_path = root / "run.json", root / "records.jsonl"
             runtime_snapshot = {**snapshot, "snapshot_sha256": "b" * 64,
                                 "schedule": {"game_id": "2026_12_NYG_DAL", "season": 2026, "week": 12,
                                              "home_team": "NYG", "away_team": "DAL"},
-                                "rosters": {"home": {"updated": True}, "away": {}}}
+                                "rosters": {"home": {"updated": True}, "away": {}},
+                                "model_reference": {"current_streak_context": {
+                                    "schema": "lp-slc-current-streak-context-1",
+                                    "game_id": "2026_12_NYG_DAL",
+                                    "cutoff_utc": "2026-11-18T22:00:00Z",
+                                    "source_cutoff_utc": "2026-11-18T21:59:00Z",
+                                    "teams": {"NYG": "W3", "DAL": "L2"},
+                                    "source_sha256": "c" * 64,
+                                }}}
             snapshot_path = root / "pregame.json"
             snapshot_path.write_text(json.dumps(runtime_snapshot))
             status = simulate_portable_pack.main([

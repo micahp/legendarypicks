@@ -43,17 +43,22 @@ def _snapshot_season(path):
 
 
 def build(args):
+    if args.all:
+        unsupported = [model_id for model_id, spec in MODELS.items() if not spec["build_supported"]]
+        if unsupported:
+            raise RuntimeError("BUILD_ALL_INCOMPLETE: no packages built; unsupported models: "
+                               + ", ".join(unsupported))
+        selected = list(MODELS)
+    else:
+        selected = [args.model]
+        if not get_model(args.model)["build_supported"]:
+            raise RuntimeError("MODEL_BUILD_NOT_IMPLEMENTED: " + args.model)
+
     snapshot = _env_path("SLC_GAME_SNAPSHOT", required=not args.snapshot)
     if args.snapshot:
         snapshot = args.snapshot.resolve()
     if not snapshot.is_file():
         raise RuntimeError(f"GAME_SNAPSHOT_NOT_FOUND: {snapshot}")
-    selected = ([model_id for model_id, spec in MODELS.items() if spec["build_supported"]]
-                if args.all else [args.model])
-    unsupported = ([model_id for model_id, spec in MODELS.items() if not spec["build_supported"]]
-                   if args.all else [model_id for model_id in selected if not get_model(model_id)["build_supported"]])
-    if unsupported and not args.all:
-        raise RuntimeError("MODEL_BUILD_NOT_IMPLEMENTED: " + ", ".join(unsupported))
     database = _env_path("SLC_SOURCE_DB")
     output = args.out_dir.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -115,8 +120,6 @@ def build(args):
     temp_index.write_text(json.dumps(index, sort_keys=True, indent=2) + "\n")
     os.replace(temp_index, index_path)
     print(f"registered {len(selected)} package(s) in {index_path}")
-    if unsupported:
-        print("not yet buildable: " + ", ".join(unsupported))
 
 
 def simulate(args):

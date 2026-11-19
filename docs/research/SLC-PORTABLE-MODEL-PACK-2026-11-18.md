@@ -5,39 +5,16 @@ Owner decision: model loading is a one-time build concern, not a per-simulation 
 
 ## Current implementation status (2026-11-18)
 
-**Prototype, NOT production ready.** This feature branch now contains:
-- `portable_model_pack.py`: trusted, externally SHA-pinned one-file archive of an already loaded in-memory reference and frozen snapshot; build-time checks for play/kickoff/safety/overtime pools.
-- `compile_portable_pack.py`: adapter for the existing data-host batch entrypoint using the exact model's source checkout; captures its fully loaded Reference after a one-seed smoke build.
-- `simulate_portable_pack.py`: offline runner using the packed reference and matching model-code checkout; rejects SQLite connections and file reads from model/training CSV, parquet and research fixtures.
-- `test_portable_model_pack.py`: format/full-game preflight regression tests.
+**Executable V1 package implementation; not yet parity-certified.** The pushed branch contains:
+- `portable_model_pack.py`: SHA-256 checked archive containing bundled Python engine code and schema-defined JSON model state, with full-game dependency preflight.
+- `slc_model_registry.py` and `slc_cli.py`: central pinned model policies and build/run commands. V1 is the only enabled builder. `slc pack build --all` now fails before writing anything while any family remains unsupported.
+- `compile_portable_pack.py`: captures the initialized reference from the pinned legacy loader, strips memoized and current-game streak context from reusable reference state, and freezes the build game's streaks into its hash-sealed snapshot.
+- `simulate_portable_pack.py`: loads executable code from the package and blocks database and external research-table reads. For models with the streak layer, it requires and applies the new game's streak context from that game's hash-pinned snapshot before running seeds.
+- `capture_legacy_parity.py` and `compare_portable_parity.py`: full-record legacy capture and per-seed comparison tooling.
 
-**Not yet done:** No real model pack was built because the slow-host database and fixture directory are not available in this environment. Tests have been authored but not executed against the real model checkout. No per-seed parity, player-prop parity, no-table cold-start, or comprehensive dependency-closure audit has passed yet. V1.7 penalties and V2 PBP must be verified from their actual source checkout, not inferred from the model ID. Do not merge or deploy before the gate below.
+**Acceptance status:** The exact pinned V1 source commit is available and was checked out in an isolated temporary tree. The matching build database, required play-call/streak artifacts, and two hash-pinned game snapshots are not available here, so no real package or two-game, 100-seed parity run has been produced. V1.5, V1.6, V1.7, V2, and PBV1 remain disabled. The implementation is not ready for promotion; do not merge to `dev` until every variant passes the parity and isolation gates below.
 
-### Prototype usage
-
-On the data host, with the original model code checkout and the exact existing successful batch arguments:
-
-```sh
-python3 scripts/nfl_sequence/compile_portable_pack.py \
-  --engine-root /path/to/pinned-model-code \
-  --model-id v1.7-penalties-on \
-  --out /path/packs/2026_11_IND_HOU-v1.7.slcpack \
-  -- --snapshot-file /path/to/frozen-game.json --db /path/to/source.sqlite \
-     [all normal, pinned args for that exact model]
-```
-
-This produces `<pack>.sha256` outside the pack. In the fast-host environment with the corresponding pinned code checkout (but no source DB or fixtures):
-
-```sh
-python3 scripts/nfl_sequence/simulate_portable_pack.py \
-  --engine-root /path/to/pinned-model-code \
-  --pack /path/packs/2026_11_IND_HOU-v1.7.slcpack \
-  --pack-sha256 "$(cut -d' ' -f1 /path/packs/2026_11_IND_HOU-v1.7.slcpack.sha256)" \
-  --games 1000 --seed-start 300001 --with-player-lines \
-  --out /path/results/2026_11_IND_HOU-v1.7.json
-```
-
-The bracketed model-specific build arguments above are explanatory placeholders, not literal runnable switches. After acceptance, replace them with a single centrally maintained model-pack registry and automated whole-family builds.
+The executable CLI requires model-specific build inputs on the data host. `slc simulate --model ...` uses the installed package plus the new game's snapshot; that snapshot must include a cutoff-matched `model_reference.current_streak_context` whenever the selected package enables the current-streak layer.
 
 ## Goal
 

@@ -1,6 +1,9 @@
 import unittest
+import tempfile
+from pathlib import Path
 
 from slc_model_registry import MODELS, get_model
+import slc_cli
 
 
 class Registry(unittest.TestCase):
@@ -18,6 +21,13 @@ class Registry(unittest.TestCase):
         self.assertTrue(get_model("v1")["build_supported"])
         self.assertFalse(any(MODELS[model]["build_supported"]
                              for model in ("v1.5", "v1.6", "v1.7", "v2", "pbv1")))
+
+    def test_build_all_fails_before_creating_any_package_while_models_are_gated(self):
+        with tempfile.TemporaryDirectory() as temp:
+            out_dir = Path(temp)
+            with self.assertRaisesRegex(RuntimeError, "BUILD_ALL_INCOMPLETE.*v1.5.*pbv1"):
+                slc_cli.main(["pack", "build", "--all", "--out-dir", str(out_dir)])
+            self.assertEqual(list(out_dir.iterdir()), [])
 
 
 if __name__ == "__main__":

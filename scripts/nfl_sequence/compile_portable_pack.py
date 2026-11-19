@@ -25,6 +25,7 @@ REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 from portable_model_pack import write_pack, collect_engine_files, ModelPackError
 from slc_model_registry import get_model
+from slc_pregame_context import freeze_current_streak_context
 
 
 def _commit(root):
@@ -35,6 +36,15 @@ def _clean(root):
     # Prevent a pack from claiming a code commit different from its build.
     return not subprocess.check_output(["git", "-C", str(root), "status", "--porcelain",
                                         "--untracked-files=all"], text=True).strip()
+
+
+def _forwarded_option(args, name):
+    for index, value in enumerate(args):
+        if value == name and index + 1 < len(args):
+            return args[index + 1]
+        if value.startswith(name + "="):
+            return value.split("=", 1)[1]
+    return None
 
 
 def compile_model(engine_root, pack_path, model_id, forwarded_args):
@@ -101,10 +111,29 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
         if profile.get("disabled_layers"):
             raise ModelPackError("STANDARD_PACKAGE_HAS_DISABLED_LAYERS")
         sampler = getattr(reference, "contextual_sampler", None)
+        enabled_layers = profile.get("enabled_layers") or {}
+        if enabled_layers.get("current_streak_context") and sampler is None:
+            raise ModelPackError("CURRENT_STREAK_SAMPLER_MISSING_FOR_ENABLED_LAYER")
         if sampler is not None:
             if getattr(sampler, "participant_chooser", None) is not None:
                 raise ModelPackError("MODEL_STILL_HAS_ACTIVE_PARTICIPANT_CHOOSER")
-            # Strip memoized, per-game draws; all model parameters remain.
+            if enabled_layers.get("current_streak_context"):
+                streak_path = _forwarded_option(forwarded_args, "--playcall-streak-file")
+                if not streak_path:
+                    raise ModelPackError("CURRENT_STREAK_FILE_REQUIRED_FOR_ENABLED_LAYER")
+                if not hasattr(sampler, "current_streak"):
+                    raise ModelPackError("CURRENT_STREAK_SAMPLER_STATE_MISSING")
+                streak_splits = importlib.import_module("streak_splits")
+                team_codes = importlib.import_module("nfl_team_codes")
+                freeze_current_streak_context(streak_path, result["pregame_snapshot"],
+                                              streak_splits, team_codes)
+                # This field came from the build game's streak file. Keep the fitted
+                # streak distributions, but make the context itself a game overlay.
+                sampler.current_streak = {}
+                reference.model_inputs = batch.er._reference_fingerprint(reference)
+                result["pregame_snapshot"]["model_reference"]["observed_reference"] = reference.model_inputs
+                importlib.import_module("pregame_snapshot").reseal(result["pregame_snapshot"])
+            # Strip memoized, per-game draws; all reusable model parameters remain.
             if hasattr(sampler, "decisions"):
                 sampler.decisions.clear()
             if hasattr(sampler, "_cells"):

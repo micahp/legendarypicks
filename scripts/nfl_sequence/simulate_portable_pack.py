@@ -27,6 +27,7 @@ sys.path.insert(0, str(HERE))
 
 from portable_model_pack import load_pack, ModelPackError
 from slc_model_registry import get_model
+from slc_pregame_context import current_streaks_for_snapshot
 
 
 def _forbid_source_table_reads():
@@ -106,6 +107,13 @@ def _run(args, engine_dir):
         slc_engine = None
     if slc_engine is not None and slc_engine.is_slc(reference):
         reference.contextual_sampler.side_teams = slc_engine.side_teams(snapshot)
+    if "current_streak_context" in manifest.get("enabled_layers", []):
+        sampler = getattr(reference, "contextual_sampler", None)
+        if sampler is None or not hasattr(sampler, "current_streak"):
+            raise ModelPackError("PACKED_CURRENT_STREAK_SAMPLER_MISSING")
+        streak_splits = importlib.import_module("streak_splits")
+        team_codes = importlib.import_module("nfl_team_codes")
+        sampler.current_streak = current_streaks_for_snapshot(snapshot, team_codes, streak_splits)
     aggregation = importlib.import_module("pregame_batch")
     rows = []
     details = []
