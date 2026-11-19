@@ -1470,10 +1470,14 @@ def main(argv=None):
                          '--participation-field and --participation-snap-counts-sha256')
     ap.add_argument('--participation-snap-counts-sha256', default=None,
                     help='the expected SHA-256 of the --participation-snap-counts file; a different file is refused')
-    ap.add_argument('--participation-entry-current-season', action='store_true',
-                    help='research flag (off by default): the bench draw weights each player by his current-season share of '
-                         'team snaps from --participation-snap-counts, and falls back to the table rate when he has no earlier '
-                         'active game. Leave hazards are unchanged.')
+    ap.add_argument('--participation-entry-current-season', dest='participation_entry_current_season',
+                    action='store_true', default=True,
+                    help='default on (HE): the bench draw weights each player by his current-season share of team snaps '
+                         'from --participation-snap-counts, and falls back to the table rate when he has no earlier active '
+                         'game. Needs --participation-snap-counts; without that file it is off. Leave hazards are unchanged.')
+    ap.add_argument('--no-participation-entry-current-season', dest='participation_entry_current_season',
+                    action='store_false',
+                    help='the table-rate bench draw (HS/historical), instead of HE')
     ap.add_argument('--playcall-fg-kicker', type=Path, default=None,
                     help='SLC v2 research flag (off by default): field goals by the team kicker: distance +18, 76-yard '
                          'record ceiling, kick share weighted by yard line, kicker make offset (kicker_field_goals.py). '
@@ -1669,8 +1673,6 @@ def main(argv=None):
             ap.error('--participation-field requires --rng-protocol v2')
         if not args.playcall_artifact:
             ap.error('--participation-field requires --playcall-artifact (the SLC engine)')
-    if args.participation_entry_current_season and not args.participation_snap_counts:
-        ap.error('--participation-entry-current-season requires --participation-snap-counts')
     if args.participation_snap_counts:
         if not args.participation_field:
             ap.error('--participation-snap-counts requires --participation-field')
