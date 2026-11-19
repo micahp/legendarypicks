@@ -41,6 +41,8 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
     model_spec = get_model(model_id)
     if not model_spec["build_supported"]:
         raise ModelPackError("MODEL_PACKAGE_NOT_ENABLED: " + model_id)
+    if "--no-overtime-table" in forwarded_args:
+        raise ModelPackError("OVERTIME_DISABLED_PROFILE_RETIRED: standard packages require full-game overtime support")
     root = Path(engine_root).resolve()
     if not (root / "scripts" / "nfl_sequence" / "simulate_pregame_batch.py").exists():
         raise ModelPackError("ENGINE_SIMULATOR_ENTRYPOINT_MISSING")

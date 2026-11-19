@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import unittest
 
 from portable_model_pack import ModelPackError, load_pack, write_pack
+from compile_portable_pack import compile_model
 
 
 def _reference():
@@ -43,6 +44,10 @@ def _snapshot():
 
 
 class PortablePack(unittest.TestCase):
+    def test_regulation_only_build_option_is_rejected_by_name(self):
+        with self.assertRaisesRegex(ModelPackError, "OVERTIME_DISABLED_PROFILE_RETIRED"):
+            compile_model("/does/not/matter", "/tmp/unused.slcpack", "v1", ["--no-overtime-table"])
+
     def test_round_trip_without_model_tables(self):
         with tempfile.TemporaryDirectory() as dirname:
             path = Path(dirname) / "v1.slcpack"
@@ -106,6 +111,34 @@ class PortablePack(unittest.TestCase):
         ref.overtime_p_kick = None
         with tempfile.TemporaryDirectory() as dirname:
             with self.assertRaisesRegex(ModelPackError, "MISSING_REQUIRED_OVERTIME_TRY_FALLBACK"):
+                write_pack(Path(dirname) / "bad.slcpack", reference=ref,
+                           snapshot=_snapshot(), model_id="v1", code_commit="1" * 40,
+                           engine_files=_engine_files())
+
+    def test_empty_overtime_pool_fails_during_build(self):
+        ref = _reference()
+        ref.overtime_pool = []
+        with tempfile.TemporaryDirectory() as dirname:
+            with self.assertRaisesRegex(ModelPackError, "EMPTY_REQUIRED_OVERTIME_POOL"):
+                write_pack(Path(dirname) / "bad.slcpack", reference=ref,
+                           snapshot=_snapshot(), model_id="v1", code_commit="1" * 40,
+                           engine_files=_engine_files())
+
+    def test_forced_choice_does_not_replace_observed_kick_model(self):
+        ref = _reference()
+        ref.overtime_p_kick = None
+        ref.overtime_choice = "receive"
+        with tempfile.TemporaryDirectory() as dirname:
+            with self.assertRaisesRegex(ModelPackError, "MISSING_OR_INVALID_REQUIRED_OVERTIME_KICK_MODEL"):
+                write_pack(Path(dirname) / "bad.slcpack", reference=ref,
+                           snapshot=_snapshot(), model_id="v1", code_commit="1" * 40,
+                           engine_files=_engine_files())
+
+    def test_invalid_overtime_try_probability_fails_during_build(self):
+        ref = _reference()
+        ref.overtime_try_p_two["0"] = float("nan")
+        with tempfile.TemporaryDirectory() as dirname:
+            with self.assertRaisesRegex(ModelPackError, "INVALID_REQUIRED_OVERTIME_TRY_FALLBACK"):
                 write_pack(Path(dirname) / "bad.slcpack", reference=ref,
                            snapshot=_snapshot(), model_id="v1", code_commit="1" * 40,
                            engine_files=_engine_files())

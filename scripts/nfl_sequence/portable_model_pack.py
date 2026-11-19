@@ -236,8 +236,14 @@ def _required_reference(reference):
     """Validate the minimum full-game closure before serializing or simulating."""
     missing = []
     overtime = getattr(reference, "overtime_pool", None)
-    if not overtime:
+    if overtime is None:
         missing.append("MISSING_REQUIRED_OVERTIME_POOL")
+    else:
+        try:
+            if len(overtime) == 0:
+                missing.append("EMPTY_REQUIRED_OVERTIME_POOL")
+        except TypeError:
+            missing.append("INVALID_REQUIRED_OVERTIME_POOL")
     safety = getattr(reference, "safety_kick_pool", None)
     if not safety:
         missing.append("MISSING_REQUIRED_SAFETY_KICK_POOL")
@@ -259,10 +265,16 @@ def _required_reference(reference):
     required_try_buckets = {"<=-9", "-8..-5", "-4..-1", "0", "1..4", "5..8", ">=9"}
     if not isinstance(try_fallback, dict) or not required_try_buckets.issubset(try_fallback):
         missing.append("MISSING_REQUIRED_OVERTIME_TRY_FALLBACK")
-    if (getattr(reference, "overtime_choice", None) is None
-            and getattr(reference, "overtime_toss", None) is None
-            and getattr(reference, "overtime_p_kick", None) is None):
-        missing.append("MISSING_REQUIRED_OVERTIME_CHOICE_POLICY")
+    elif any(not isinstance(try_fallback[key], (int, float))
+             or not math.isfinite(float(try_fallback[key]))
+             or not 0.0 <= float(try_fallback[key]) <= 1.0
+             for key in required_try_buckets):
+        missing.append("INVALID_REQUIRED_OVERTIME_TRY_FALLBACK")
+    choice_probability = getattr(reference, "overtime_p_kick", None)
+    if (not isinstance(choice_probability, (int, float))
+            or not math.isfinite(float(choice_probability))
+            or not 0.0 <= float(choice_probability) <= 1.0):
+        missing.append("MISSING_OR_INVALID_REQUIRED_OVERTIME_KICK_MODEL")
     blocked = getattr(reference, "blocked_kicks", None) or {}
     rates = blocked.get("rates") or {}
     records = blocked.get("records") or {}

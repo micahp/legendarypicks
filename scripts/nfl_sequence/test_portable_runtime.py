@@ -29,6 +29,7 @@ class PortableRuntime(unittest.TestCase):
                            "records": {"punt": [], "field_goal": []}},
             model_inputs={"sha256": "f" * 64}, contextual_sampler=None)
         snapshot = {"snapshot_sha256": "a" * 64, "as_of": "2026-11-18T22:00:00Z",
+                    "verified": False, "verification_status": "incomplete_evidence",
                     "schedule": {"game_id": "2026_11_IND_HOU", "season": 2026, "week": 11,
                                  "home_team": "IND", "away_team": "HOU"},
                     "rosters": {"home": {}, "away": {}}}
@@ -37,9 +38,9 @@ class PortableRuntime(unittest.TestCase):
                 "def play_game(seed, ref, pregame_snapshot=None):\n"
                 "    return {'status': 'complete', 'blocker': None, 'valid_full_game': True,\n"
                 "            'complete_game': True, 'regulation_end_reached': True,\n"
-                "            'points': {'A': 7, 'B': 3}, 'stats': {'player': []},\n"
+                "            'points': {'A': 10, 'B': 7}, 'stats': {'player': []},\n"
                 "            'drives': [], 'kickoffs': [], 'boundaries': [], 'ledger': [],\n"
-                "            'overtime': None, 'tied': False}\n"
+                "            'overtime': {'regulation_points': {'A': 7, 'B': 7}}, 'tied': False}\n"
                 "def validate_game(record):\n    return None\n"
             ).encode(),
             "scripts/nfl_sequence/pregame_batch.py": (
@@ -79,8 +80,14 @@ class PortableRuntime(unittest.TestCase):
             self.assertEqual(report["simulation"]["valid_full_games"], 2, {"report": report, "rows": rows})
             self.assertEqual(report["snapshot_sha256"], "b" * 64)
             self.assertEqual(report["game_id"], "2026_12_NYG_DAL")
+            self.assertEqual(report["simulation"]["valid_full_games"], 2)
             self.assertEqual([row["seed"] for row in rows], [51, 52])
-            self.assertEqual(rows[0]["record"]["points"], {"A": 7, "B": 3})
+            self.assertEqual(rows[0]["record"]["points"], {"A": 10, "B": 7})
+            self.assertEqual(report["regulation_end_diagnostics"]["games_tied_at_regulation_end"], 2)
+            self.assertEqual(report["regulation_end_diagnostics"]["regulation_scores_by_seed"][0],
+                             {"seed": 51, "home_points": 7, "away_points": 7})
+            # Incomplete snapshot evidence does not invalidate completed game results.
+            self.assertEqual(report["simulation"]["valid_full_games"], 2)
             with self.assertRaises(RuntimeError):
                 sqlite3.connect(":memory:")
             with self.assertRaisesRegex(RuntimeError, "PORTABLE_RUNTIME_SOURCE_FILE_ACCESS"):

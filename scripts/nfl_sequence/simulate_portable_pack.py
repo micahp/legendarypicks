@@ -119,11 +119,22 @@ def _run(args, engine_dir):
             blocker = record.get("blocker")
             valid = bool(record.get("valid_full_game") and record.get("complete_game"))
             reached_reg = bool(record.get("regulation_end_reached"))
-            tied_reg = bool(blocker == "overtime_not_modelled" and reached_reg)
+            # The overtime subrecord captures the score at the end of regulation.
+            # Keep that diagnostic independent from the final, possibly overtime,
+            # score and from snapshot evidence classification.
+            regulation_points = ((record.get("overtime") or {}).get("regulation_points")
+                                 or record.get("points", {}))
+            regulation_home = regulation_points.get("A")
+            regulation_away = regulation_points.get("B")
+            tied_reg = bool(reached_reg and regulation_home is not None
+                            and regulation_away is not None
+                            and regulation_home == regulation_away)
             row = {
                 "seed": seed, "status": status, "blocker": blocker,
                 "valid_full_game": valid, "complete_game": bool(record.get("complete_game")),
                 "regulation_end_reached": reached_reg, "tied_at_regulation_end": tied_reg,
+                "regulation_home_points": regulation_home,
+                "regulation_away_points": regulation_away,
                 "home_points": record["points"]["A"], "away_points": record["points"]["B"],
                 "score_scope": "valid_final" if valid else "regulation_end_only" if reached_reg else "partial"
             }
@@ -138,6 +149,7 @@ def _run(args, engine_dir):
                 "seed": seed, "status": "simulation_error", "blocker": None,
                 "valid_full_game": False, "complete_game": False,
                 "regulation_end_reached": False, "tied_at_regulation_end": False,
+                "regulation_home_points": None, "regulation_away_points": None,
                 "home_points": None, "away_points": None, "score_scope": "none",
                 "error": f"{type(exc).__name__}: {str(exc)[:500]}",
             }
@@ -145,6 +157,15 @@ def _run(args, engine_dir):
         if args.records_out:
             records.append({"seed": seed, "record": record, "error": record_error})
     summary = aggregation.summarize_outcomes(rows, args.games)
+    regulation_diagnostics = {
+        "games_reaching_regulation_end": sum(row["regulation_end_reached"] for row in rows),
+        "games_tied_at_regulation_end": sum(row["tied_at_regulation_end"] for row in rows),
+        "regulation_scores_by_seed": [
+            {"seed": row["seed"], "home_points": row["regulation_home_points"],
+             "away_points": row["regulation_away_points"]}
+            for row in rows if row["regulation_end_reached"]
+        ],
+    }
     payload = {
         "schema": "lp-slc-portable-simulation-1",
         "pack": {"sha256": args.pack_sha256, "model_id": manifest["model_id"],
@@ -157,6 +178,7 @@ def _run(args, engine_dir):
         "simulation": {"requested_games": args.games, "valid_full_games": summary["valid_full_games"],
                        "seed_start": args.seed_start, "seed_end_inclusive": args.seed_start + args.games - 1},
         "summary": summary,
+        "regulation_end_diagnostics": regulation_diagnostics,
     }
     if args.with_player_lines:
         payload["player_boxscores_by_seed"] = details
