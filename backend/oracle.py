@@ -472,6 +472,7 @@ def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z'):
     out = defaultdict(dict)
     seen = set()
     floor = pd.Timestamp(since)
+    alias = {'LA': 'LAR', 'WAS': 'WSH'}  # the archives use nflverse codes; the schedule sources use either spelling
     dated = sorted(p for p in Path(archive_root).glob('archive-*') if re.fullmatch(r'archive-\d{4}-\d{2}-\d{2}', p.name))
     for folder in dated:
         path = folder / 'depth_charts_2026.rds'
@@ -485,9 +486,11 @@ def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z'):
             if (team, dt) in seen:
                 continue
             seen.add((team, dt))
-            out[team][dt.to_pydatetime()] = [
+            rows = [
                 {'gsis_id': str(r.gsis_id), 'player_name': str(r.player_name), 'pos_abb': str(r.pos_abb),
                  'pos_rank': int(float(r.pos_rank))} for r in group.itertuples()]
+            for name in {team, alias.get(team, team)}:
+                out[name][dt.to_pydatetime()] = rows
     return {team: dict(times) for team, times in out.items()}
 
 
@@ -529,6 +532,8 @@ def injury_report_for_week(path, season, week):
     if frame.empty:
         raise ValueError(f'{path} holds no {season} week {week} injury rows')
     listed = frame[frame['report_status'].notna()]
+    if listed.empty:
+        raise ValueError(f'{path} holds {len(frame)} {season} week {week} rows and no status on any: a pre-report copy, not an empty report')
     players = [{'gsis_id': str(r.gsis_id), 'report_status': str(r.report_status)} for r in listed.itertuples()]
     return {'players': players, 'listed': len(players), 'rows': len(frame)}
 
