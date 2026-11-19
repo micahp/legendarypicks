@@ -1460,7 +1460,7 @@ def main(argv=None):
     ap.add_argument('--participation-field', type=Path, default=None,
                     help='SLC v2 research flag (off by default): skill lineups carry from snap to snap and the runner and '
                          'receiver come only from players on the field (participation_field.py). Needs '
-                         '--participation-field-sha256 and --rng-protocol v2; cannot run with --playcall-pbv1-package')
+                         '--participation-field-sha256 and --rng-protocol v2. --playcall-pbv1-package requires it.')
     ap.add_argument('--participation-field-sha256', default=None,
                     help='the expected SHA-256 of the --participation-field table; a different file is refused')
     ap.add_argument('--participation-snap-counts', type=Path, default=None,
@@ -1474,7 +1474,8 @@ def main(argv=None):
                     action='store_true', default=True,
                     help='default on (HE): the bench draw weights each player by his current-season share of team snaps '
                          'from --participation-snap-counts, and falls back to the table rate when he has no earlier active '
-                         'game. Needs --participation-snap-counts; without that file it is off. Leave hazards are unchanged.')
+                         'game. Applies only with --participation-field and --participation-snap-counts; without both, the '
+                         'draw is the table rate. Leave hazards are unchanged.')
     ap.add_argument('--no-participation-entry-current-season', dest='participation_entry_current_season',
                     action='store_false',
                     help='the table-rate bench draw (HS/historical), instead of HE')
