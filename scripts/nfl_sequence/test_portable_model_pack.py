@@ -1,5 +1,6 @@
 """Offline portable model-pack tests. No SLC database or fixture files required."""
 import json
+import io
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -145,14 +146,56 @@ class PortablePack(unittest.TestCase):
 
     def test_state_codec_round_trips_typed_containers(self):
         from collections import Counter, defaultdict
-        from portable_model_pack import _decode_state, _encode_state
+        from portable_model_pack import (_StateJSONReader, _decode_state, _encode_state,
+                                         _iter_state_json, _write_state_payload)
+        import numpy as np
 
         value = {("home", 1): Counter({"pass": 2}), "groups": defaultdict(list, {"11": [1, 2]}),
-                 "unordered": {3, 1, 2}}
+                 "counter_groups": defaultdict(Counter, {"team": Counter({"run": 3})}),
+                 "weights": defaultdict(float, {"pass": 0.75}), "unordered": {3, 1, 2},
+                 "array": np.asarray([[1, 2], [3, 4]], dtype=np.int16), "object": SimpleNamespace(x=1)}
         restored = _decode_state(_encode_state(value))
-        self.assertEqual(restored, value)
+        for key in ("home", "groups", "counter_groups", "weights", "unordered", "object"):
+            if key == "home":
+                self.assertEqual(restored[("home", 1)], value[("home", 1)])
+            else:
+                self.assertEqual(restored[key], value[key])
+        np.testing.assert_array_equal(restored["array"], value["array"])
         self.assertIsInstance(restored[("home", 1)], Counter)
         self.assertIsInstance(restored["groups"], defaultdict)
+        self.assertEqual(restored["counter_groups"]["missing"], Counter())
+        self.assertEqual(restored["weights"]["missing"], 0.0)
+        streamed = _StateJSONReader(io.StringIO("".join(_iter_state_json(value))), {"types"}).read()
+        self.assertEqual(streamed["counter_groups"]["team"], Counter({"run": 3}))
+        self.assertEqual(streamed["groups"]["11"], [1, 2])
+        self.assertEqual(streamed["object"].x, 1)
+        np.testing.assert_array_equal(streamed["array"], value["array"])
+
+        payload = io.BytesIO()
+        digest, size = _write_state_payload(payload, _reference(), _snapshot(), {})
+        encoded = payload.getvalue()
+        self.assertEqual(size, len(encoded))
+        self.assertEqual(digest, __import__("hashlib").sha256(encoded).hexdigest())
+        decoded = _StateJSONReader(io.StringIO(encoded.decode("utf-8")), {"types"}).read()
+        self.assertEqual(decoded["schema"], "lp-slc-model-state-1")
+        self.assertEqual(decoded["reference"].overtime_pool, _reference().overtime_pool)
+
+    def test_stream_reader_does_not_accept_numeric_prefixes_at_chunk_boundaries(self):
+        from portable_model_pack import _StateJSONReader
+
+        class ChunkedText:
+            def __init__(self, value):
+                self.value = value
+                self.offset = 0
+
+            def read(self, size):
+                end = min(self.offset + 1, len(self.value))
+                chunk = self.value[self.offset:end]
+                self.offset = end
+                return chunk
+
+        parsed = _StateJSONReader(ChunkedText('{"decimal":1.25,"integer":123}'), set()).read()
+        self.assertEqual(parsed, {"decimal": 1.25, "integer": 123})
 
     def test_wrong_external_hash_blocks_package_load(self):
         with tempfile.TemporaryDirectory() as dirname:

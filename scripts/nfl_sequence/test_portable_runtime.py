@@ -28,7 +28,8 @@ class PortableRuntime(unittest.TestCase):
                                       "field_goal_blocked_by_snap_bucket": {"short": {"rate": 0.01}}},
                            "records": {"punt": [], "field_goal": []}},
             model_inputs={"sha256": "f" * 64},
-            contextual_sampler=SimpleNamespace(current_streak={"OLD": "W1"}, side_teams=None))
+            contextual_sampler=SimpleNamespace(current_streak={"OLD": "W1"}, side_teams=None,
+                                               optional_input_sha256={}))
         snapshot = {"snapshot_sha256": "a" * 64, "as_of": "2026-11-18T22:00:00Z",
                     "verified": False, "verification_status": "incomplete_evidence",
                     "model_reference": {},

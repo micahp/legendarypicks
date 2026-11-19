@@ -77,6 +77,40 @@ def _run_seed(seed, reference, snapshot, gs, slc_engine=None):
     return record
 
 
+def _fingerprint_frozen_reference(reference, reference_loader):
+    """Recompute legacy identity while reusing the pack's pinned fixture hash."""
+    extras_hash = (getattr(reference, "model_inputs", None) or {}).get("play_extras_sha256")
+    if not isinstance(extras_hash, str) or len(extras_hash) != 64:
+        raise ModelPackError("PACKED_PLAY_EXTRAS_HASH_MISSING")
+    original_hashlib = reference_loader.hashlib
+    original_extras = reference_loader.PLAY_EXTRAS
+    marker = b"portable-runtime-frozen-play-extras"
+
+    class _FrozenDigest:
+        def hexdigest(self):
+            return extras_hash
+
+    class _HashlibProxy:
+        @staticmethod
+        def sha256(data=b""):
+            if data == marker:
+                return _FrozenDigest()
+            return original_hashlib.sha256(data)
+
+    class _FrozenExtras:
+        @staticmethod
+        def read_bytes():
+            return marker
+
+    reference_loader.hashlib = _HashlibProxy
+    reference_loader.PLAY_EXTRAS = _FrozenExtras
+    try:
+        return reference_loader._reference_fingerprint(reference)
+    finally:
+        reference_loader.hashlib = original_hashlib
+        reference_loader.PLAY_EXTRAS = original_extras
+
+
 def _run(args, engine_dir):
     model = get_model(args.model)
     if not model["build_supported"]:
@@ -114,6 +148,21 @@ def _run(args, engine_dir):
         streak_splits = importlib.import_module("streak_splits")
         team_codes = importlib.import_module("nfl_team_codes")
         sampler.current_streak = current_streaks_for_snapshot(snapshot, team_codes, streak_splits)
+        streak_context = snapshot["model_reference"]["current_streak_context"]
+        optional_hashes = getattr(sampler, "optional_input_sha256", None)
+        if not isinstance(optional_hashes, dict) or not streak_context.get("source_sha256"):
+            raise ModelPackError("PACKED_CURRENT_STREAK_PROVENANCE_MISSING")
+        optional_hashes["current_streak_file"] = streak_context["source_sha256"]
+    # Legacy loading fingerprints the fully resolved reference after attaching
+    # matchup context, then binds that fingerprint into the frozen snapshot.
+    # Reproduce that step without reopening any historical source tables.
+    packed_inputs = getattr(reference, "model_inputs", None) or {}
+    if "play_extras_sha256" in packed_inputs:
+        reference_loader = importlib.import_module("e2_reference")
+        reference.model_inputs = _fingerprint_frozen_reference(reference, reference_loader)
+        snapshot["model_reference"]["observed_reference"] = reference.model_inputs
+        snapshot["model_reference"]["pool_scope"] = reference.pool_scope
+        snapshot_loader.reseal(snapshot)
     aggregation = importlib.import_module("pregame_batch")
     rows = []
     details = []

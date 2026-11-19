@@ -92,10 +92,17 @@ def _encode_state(value, active=None):
         if isinstance(value, defaultdict):
             factory = value.default_factory
             name = getattr(factory, "__name__", None) if factory else None
-            if factory is not None and (getattr(factory, "__module__", None) != "builtins"
-                                        or name not in {"int", "list", "set", "dict"}):
-                raise ModelPackError("DEFAULT_FACTORY_UNSUPPORTED")
-            return {"$type": "defaultdict", "factory": name,
+            module = getattr(factory, "__module__", None) if factory else None
+            if factory is None:
+                factory_tag = None
+            elif module == "builtins" and name in {"int", "float", "list", "set", "dict"}:
+                factory_tag = name
+            elif factory is Counter:
+                factory_tag = "collections.Counter"
+            else:
+                factory_label = (module + "." + getattr(factory, "__qualname__", name or "<unknown>"))
+                raise ModelPackError("DEFAULT_FACTORY_UNSUPPORTED: " + factory_label)
+            return {"$type": "defaultdict", "factory": factory_tag,
                     "items": [[_encode_state(k, active), _encode_state(v, active)]
                               for k, v in value.items()]}
         if isinstance(value, dict):
@@ -118,6 +125,164 @@ def _encode_state(value, active=None):
                 "attrs": _encode_state(attrs, active)}
     finally:
         active.remove(identity)
+
+
+def _iter_state_json(value, active=None):
+    """Yield the tagged state JSON incrementally to avoid a second model-sized copy."""
+    if active is None:
+        active = set()
+    if value is None or isinstance(value, (str, bool, int)):
+        yield json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+        return
+    if isinstance(value, float):
+        if math.isfinite(value):
+            yield json.dumps(value, separators=(",", ":"))
+        else:
+            token = "nan" if math.isnan(value) else "inf" if value > 0 else "-inf"
+            yield '{"$type":"float","value":' + json.dumps(token) + '}'
+        return
+    identity = id(value)
+    if identity in active:
+        raise ModelPackError("MODEL_STATE_CYCLE_UNSUPPORTED")
+    active.add(identity)
+    try:
+        if isinstance(value, bytes):
+            yield '{"$type":"bytes","value":'
+            yield json.dumps(base64.b64encode(value).decode("ascii"))
+            yield '}'
+            return
+        if isinstance(value, Path):
+            yield '{"$type":"path","value":' + json.dumps(str(value), ensure_ascii=False) + '}'
+            return
+        if isinstance(value, enum.Enum):
+            yield '{"$type":"enum","class":'
+            yield json.dumps(value.__class__.__module__ + ":" + value.__class__.__qualname__)
+            yield ',"value":'
+            yield from _iter_state_json(value.value, active)
+            yield '}'
+            return
+        try:
+            import numpy as np
+        except ImportError:
+            np = None
+        if np is not None and isinstance(value, np.ndarray):
+            if value.dtype.hasobject:
+                raise ModelPackError("OBJECT_NUMPY_ARRAY_UNSUPPORTED")
+            contiguous = np.ascontiguousarray(value)
+            yield '{"$type":"ndarray","dtype":' + json.dumps(contiguous.dtype.str)
+            yield ',"shape":' + json.dumps(list(contiguous.shape), separators=(",", ":"))
+            yield ',"value":'
+            yield json.dumps(base64.b64encode(contiguous.tobytes()).decode("ascii"))
+            yield '}'
+            return
+        if np is not None and isinstance(value, np.generic):
+            yield '{"$type":"numpy_scalar","dtype":' + json.dumps(value.dtype.str)
+            yield ',"value":'
+            yield from _iter_state_json(value.item(), active)
+            yield '}'
+            return
+        if isinstance(value, (Counter, defaultdict, dict)):
+            if isinstance(value, Counter):
+                tag, entries = "counter", value.items()
+            elif isinstance(value, defaultdict):
+                factory = value.default_factory
+                name = getattr(factory, "__name__", None) if factory else None
+                module = getattr(factory, "__module__", None) if factory else None
+                if factory is None:
+                    factory_tag = None
+                elif module == "builtins" and name in {"int", "float", "list", "set", "dict"}:
+                    factory_tag = name
+                elif factory is Counter:
+                    factory_tag = "collections.Counter"
+                else:
+                    factory_label = module + "." + getattr(factory, "__qualname__", name or "<unknown>")
+                    raise ModelPackError("DEFAULT_FACTORY_UNSUPPORTED: " + factory_label)
+                tag, entries = "defaultdict", value.items()
+            else:
+                tag, entries = "dict", value.items()
+            yield '{"$type":' + json.dumps(tag)
+            if isinstance(value, defaultdict):
+                yield ',"factory":' + json.dumps(factory_tag)
+            yield ',"items":['
+            for index, (key, item) in enumerate(entries):
+                if index:
+                    yield ','
+                yield '['
+                yield from _iter_state_json(key, active)
+                yield ','
+                yield from _iter_state_json(item, active)
+                yield ']'
+            yield ']}'
+            return
+        if isinstance(value, (tuple, list, set, frozenset)):
+            if isinstance(value, tuple):
+                tag, items = "tuple", value
+            elif isinstance(value, list):
+                tag, items = "list", value
+            elif isinstance(value, frozenset):
+                tag, items = "frozenset", sorted(value, key=repr)
+            else:
+                tag, items = "set", sorted(value, key=repr)
+            yield '{"$type":' + json.dumps(tag) + ',"items":['
+            for index, item in enumerate(items):
+                if index:
+                    yield ','
+                yield from _iter_state_json(item, active)
+            yield ']}'
+            return
+        if isinstance(value, deque):
+            yield '{"$type":"deque","items":['
+            for index, item in enumerate(value):
+                if index:
+                    yield ','
+                yield from _iter_state_json(item, active)
+            yield '],"maxlen":'
+            yield from _iter_state_json(value.maxlen, active)
+            yield '}'
+            return
+        attrs = getattr(value, "__dict__", None)
+        if attrs is None:
+            raise ModelPackError("MODEL_STATE_TYPE_UNSUPPORTED: " + type(value).__module__ + "." + type(value).__qualname__)
+        cls = type(value)
+        yield '{"$type":"object","attrs":'
+        yield from _iter_state_json(attrs, active)
+        yield ',"class":' + json.dumps(cls.__module__ + ":" + cls.__qualname__)
+        yield '}'
+    finally:
+        active.remove(identity)
+
+
+def _write_state_payload(stream, reference, snapshot, config):
+    digest = hashlib.sha256()
+    size = 0
+    pending = bytearray()
+
+    def flush():
+        nonlocal size
+        if pending:
+            size += len(pending)
+            if size > MAX_PAYLOAD_BYTES:
+                raise ModelPackError("PAYLOAD_TOO_LARGE")
+            digest.update(pending)
+            stream.write(pending)
+            pending.clear()
+
+    # Match the canonical key order used by _json(sort_keys=True).
+    chunks = iter((
+        '{"config":', json.dumps(config, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
+        ',"reference":',
+    ))
+    for chunk in chunks:
+        pending.extend(chunk.encode("utf-8"))
+    for chunk in _iter_state_json(reference):
+        pending.extend(chunk.encode("utf-8"))
+        if len(pending) >= 1 << 20:
+            flush()
+    pending.extend(b',"schema":"lp-slc-model-state-1","snapshot":')
+    pending.extend(json.dumps(snapshot, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))
+    pending.extend(b'}\n')
+    flush()
+    return digest.hexdigest(), size
 
 
 def _resolve_class(name, allowed_modules=None):
@@ -159,7 +324,11 @@ def _decode_state(value, allowed_modules=None):
         if kind == "counter":
             return Counter(dict(items))
         if kind == "defaultdict":
-            factory = getattr(builtins, value["factory"]) if value.get("factory") else None
+            tag = value.get("factory")
+            if tag == "collections.Counter":
+                factory = Counter
+            else:
+                factory = getattr(builtins, tag) if tag else None
             return defaultdict(factory, dict(items))
         return dict(items)
     if kind == "tuple":
@@ -181,6 +350,267 @@ def _decode_state(value, allowed_modules=None):
     raise ModelPackError("MODEL_STATE_TYPE_UNKNOWN: " + str(kind))
 
 
+class _HashingRawReader(io.RawIOBase):
+    """Hash an uncompressed archive member as its streaming JSON parser reads it."""
+    def __init__(self, source):
+        self.source = source
+        self.digest = hashlib.sha256()
+        self.size = 0
+
+    def readable(self):
+        return True
+
+    def readinto(self, target):
+        chunk = self.source.read(len(target))
+        if not chunk:
+            return 0
+        self.digest.update(chunk)
+        self.size += len(chunk)
+        if self.size > MAX_PAYLOAD_BYTES:
+            raise ModelPackError("PAYLOAD_TOO_LARGE")
+        target[:len(chunk)] = chunk
+        return len(chunk)
+
+
+class _StateJSONReader:
+    """Incrementally parse tagged state JSON directly into runtime objects."""
+    def __init__(self, stream, allowed_modules):
+        self.stream = stream
+        self.allowed_modules = allowed_modules
+        self.decoder = json.JSONDecoder()
+        self.buffer = ""
+        self.pos = 0
+        self.eof = False
+
+    def _fill(self):
+        if self.pos:
+            self.buffer = self.buffer[self.pos:]
+            self.pos = 0
+        chunk = self.stream.read(65536)
+        if chunk:
+            self.buffer += chunk
+        else:
+            self.eof = True
+
+    def _peek(self):
+        while self.pos >= len(self.buffer) and not self.eof:
+            self._fill()
+        return self.buffer[self.pos] if self.pos < len(self.buffer) else ""
+
+    def _take(self, expected):
+        self._skip_ws()
+        if self._peek() != expected:
+            raise ModelPackError("MODEL_STATE_JSON_INVALID: expected %r, got %r" %
+                                 (expected, self._peek()))
+        self.pos += 1
+
+    def _skip_ws(self):
+        while True:
+            ch = self._peek()
+            if ch and ch in " \t\r\n":
+                self.pos += 1
+            else:
+                return
+
+    def _scalar(self):
+        while True:
+            self._skip_ws()
+            try:
+                value, end = self.decoder.raw_decode(self.buffer, self.pos)
+            except json.JSONDecodeError:
+                if self.eof:
+                    raise ModelPackError("MODEL_STATE_JSON_INVALID")
+                self._fill()
+                continue
+            # JSONDecoder accepts a numeric prefix (`1` in `1.25`) when the
+            # following byte is already buffered. Do not accept it until the
+            # number's delimiter is visible. Also wait at chunk edges because
+            # the next byte may continue the token.
+            number_continuation = (end < len(self.buffer)
+                                   and isinstance(value, (int, float))
+                                   and not isinstance(value, bool)
+                                   and self.buffer[end] in ".eE0123456789")
+            if not self.eof and (end == len(self.buffer) or number_continuation):
+                self._fill()
+                continue
+            self.pos = end
+            return value
+
+    def _field(self, expected):
+        self._take(",")
+        key = self._scalar()
+        if key != expected:
+            raise ModelPackError("MODEL_STATE_FIELD_ORDER_INVALID")
+        self._take(":")
+
+    def _array(self, convert=None):
+        self._take("[")
+        values = [] if convert is None else convert()
+        self._skip_ws()
+        if self._peek() == "]":
+            self.pos += 1
+            return values
+        while True:
+            value = self._value()
+            if convert is None:
+                values.append(value)
+            else:
+                convert(values, value)
+            self._skip_ws()
+            ch = self._peek()
+            if ch == "]":
+                self.pos += 1
+                return values
+            self._take(",")
+
+    def _pairs(self, target):
+        self._take("[")
+        self._skip_ws()
+        if self._peek() == "]":
+            self.pos += 1
+            return target
+        while True:
+            self._take("[")
+            key = self._value()
+            self._take(",")
+            value = self._value()
+            self._take("]")
+            target[key] = value
+            self._skip_ws()
+            ch = self._peek()
+            if ch == "]":
+                self.pos += 1
+                return target
+            self._take(",")
+
+    def _object(self):
+        self._take("{")
+        self._skip_ws()
+        if self._peek() == "}":
+            self.pos += 1
+            return {}
+        first_key = self._scalar()
+        self._take(":")
+        if first_key == "$type":
+            return self._typed(self._scalar())
+        result = {first_key: self._value()}
+        self._skip_ws()
+        while self._peek() == ",":
+            self.pos += 1
+            key = self._scalar()
+            self._take(":")
+            if key in result:
+                raise ModelPackError("MODEL_STATE_DUPLICATE_JSON_KEY")
+            result[key] = self._value()
+            self._skip_ws()
+        self._take("}")
+        return result
+
+    def _typed(self, kind):
+        if kind == "float":
+            self._field("value")
+            token = self._scalar()
+            self._take("}")
+            if token not in {"nan", "inf", "-inf"}:
+                raise ModelPackError("MODEL_STATE_FLOAT_INVALID")
+            return {"nan": float("nan"), "inf": float("inf"), "-inf": -float("inf")}[token]
+        if kind in {"bytes", "path"}:
+            self._field("value")
+            value = self._scalar()
+            self._take("}")
+            return base64.b64decode(value, validate=True) if kind == "bytes" else Path(value)
+        if kind == "enum":
+            self._field("class")
+            class_name = self._scalar()
+            self._field("value")
+            value = self._value()
+            self._take("}")
+            return _resolve_class(class_name, self.allowed_modules)(value)
+        if kind == "ndarray":
+            self._field("dtype")
+            dtype = self._scalar()
+            self._field("shape")
+            shape = self._array()
+            self._field("value")
+            value = self._scalar()
+            self._take("}")
+            import numpy as np
+            array = np.frombuffer(base64.b64decode(value, validate=True), dtype=np.dtype(dtype))
+            return array.reshape(tuple(shape)).copy()
+        if kind == "numpy_scalar":
+            self._field("dtype")
+            dtype = self._scalar()
+            self._field("value")
+            value = self._value()
+            self._take("}")
+            import numpy as np
+            return np.asarray(value, dtype=np.dtype(dtype))[()]
+        if kind in {"dict", "counter", "defaultdict"}:
+            factory_tag = None
+            if kind == "defaultdict":
+                self._field("factory")
+                factory_tag = self._scalar()
+            self._field("items")
+            if kind == "counter":
+                result = Counter()
+            elif kind == "defaultdict":
+                factories = {"int": int, "float": float, "list": list, "set": set,
+                             "dict": dict, "collections.Counter": Counter}
+                if factory_tag is not None and factory_tag not in factories:
+                    raise ModelPackError("DEFAULT_FACTORY_TAG_INVALID")
+                result = defaultdict(factories.get(factory_tag) if factory_tag else None)
+            else:
+                result = {}
+            self._pairs(result)
+            self._take("}")
+            return result
+        if kind in {"list", "tuple", "set", "frozenset"}:
+            self._field("items")
+            items = self._array()
+            self._take("}")
+            if kind == "tuple":
+                return tuple(items)
+            if kind == "set":
+                return set(items)
+            if kind == "frozenset":
+                return frozenset(items)
+            return items
+        if kind == "deque":
+            self._field("items")
+            items = self._array()
+            self._field("maxlen")
+            maxlen = self._value()
+            self._take("}")
+            return deque(items, maxlen=maxlen)
+        if kind == "object":
+            self._field("attrs")
+            attrs = self._value()
+            self._field("class")
+            class_name = self._scalar()
+            self._take("}")
+            cls = _resolve_class(class_name, self.allowed_modules)
+            instance = types.SimpleNamespace() if cls is types.SimpleNamespace else object.__new__(cls)
+            for key, value in attrs.items():
+                object.__setattr__(instance, key, value)
+            return instance
+        raise ModelPackError("MODEL_STATE_TYPE_UNKNOWN: " + str(kind))
+
+    def _value(self):
+        ch = self._peek()
+        if ch == "{":
+            return self._object()
+        if ch == "[":
+            return self._array()
+        return self._scalar()
+
+    def read(self):
+        value = self._value()
+        self._skip_ws()
+        if self._peek():
+            raise ModelPackError("MODEL_STATE_TRAILING_DATA")
+        return value
+
+
 def collect_engine_files(engine_root, code_commit):
     """Read the pinned Python runtime tree from git, never from a dirty checkout."""
     root = Path(engine_root).resolve()
@@ -197,6 +627,7 @@ def collect_engine_files(engine_root, code_commit):
     ).splitlines()
     selected = [name for name in names if
                 (name.startswith("scripts/nfl_sequence/") and name.endswith(".py")) or
+                (PurePosixPath(name).parent == PurePosixPath("scripts") and name.endswith(".py")) or
                 (name.startswith("backend/") and name.endswith(".py")) or
                 name.startswith("docs/rules/")]
     if not any(name == "scripts/nfl_sequence/game_state.py" for name in selected):
@@ -211,6 +642,14 @@ def collect_engine_files(engine_root, code_commit):
 
 def _sha256(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
+
+
+def _sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _json(value) -> bytes:
@@ -321,37 +760,12 @@ def write_pack(path, *, reference, snapshot, model_id, code_commit, config=None,
         raise ModelPackError("REFERENCE_FINGERPRINT_INVALID")
     # A game overlay is part of this execution pack, preventing an accidentally
     # reused week/roster from being treated as the same fitted reference.
-    payload = _json({"schema": "lp-slc-model-state-1", "reference": _encode_state(reference),
-                     "snapshot": snapshot, "config": config or {}})
-    if len(payload) > MAX_PAYLOAD_BYTES:
-        raise ModelPackError("PAYLOAD_TOO_LARGE")
+    config = config or {}
     engine_files = engine_files or {}
     if not engine_files or "scripts/nfl_sequence/game_state.py" not in engine_files:
         raise ModelPackError("BUNDLED_ENGINE_CODE_REQUIRED")
     engine_hashes = {name: _sha256(data) for name, data in sorted(engine_files.items())}
     source_hashes = _hash_fields(config or {})
-    manifest = {
-        "schema": SCHEMA,
-        "model_id": str(model_id),
-        "model_code_commit": str(code_commit),
-        "game_id": snapshot["schedule"]["game_id"],
-        "as_of_utc": snapshot["as_of"],
-        "snapshot_sha256": snapshot["snapshot_sha256"],
-        "reference_sha256": ref_hash,
-        "python_abi": list(sys.version_info[:2]),
-        "full_game_capable": True,
-        "checks": checks,
-        "payload_sha256": _sha256(payload),
-        "payload_bytes": len(payload),
-        "engine_files_sha256": engine_hashes,
-        "rules_policy": (config or {}).get("rules_policy"),
-        "enabled_layers": (config or {}).get("enabled_layers", []),
-        "experimental_flags": (config or {}).get("experimental_flags", {}),
-        "training_cutoff": (config or {}).get("training_cutoff"),
-        "runtime_dependencies": (config or {}).get("runtime_dependencies") or runtime_dependencies(),
-        "source_artifact_sha256": source_hashes,
-        "layer_manifest": (config or {}).get("model_profile", {}).get("layers", {}),
-    }
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists():
@@ -364,11 +778,35 @@ def write_pack(path, *, reference, snapshot, model_id, code_commit, config=None,
             temp_path = Path(handle.name)
         with zipfile.ZipFile(temp_path, "w", compression=zipfile.ZIP_DEFLATED,
                              compresslevel=6, allowZip64=True) as archive:
+            with archive.open("reference.json", "w") as payload_stream:
+                payload_sha256, payload_bytes = _write_state_payload(
+                    payload_stream, reference, snapshot, config)
+            manifest = {
+                "schema": SCHEMA,
+                "model_id": str(model_id),
+                "model_code_commit": str(code_commit),
+                "game_id": snapshot["schedule"]["game_id"],
+                "as_of_utc": snapshot["as_of"],
+                "snapshot_sha256": snapshot["snapshot_sha256"],
+                "reference_sha256": ref_hash,
+                "python_abi": list(sys.version_info[:2]),
+                "full_game_capable": True,
+                "checks": checks,
+                "payload_sha256": payload_sha256,
+                "payload_bytes": payload_bytes,
+                "engine_files_sha256": engine_hashes,
+                "rules_policy": config.get("rules_policy"),
+                "enabled_layers": config.get("enabled_layers", []),
+                "experimental_flags": config.get("experimental_flags", {}),
+                "training_cutoff": config.get("training_cutoff"),
+                "runtime_dependencies": config.get("runtime_dependencies") or runtime_dependencies(),
+                "source_artifact_sha256": source_hashes,
+                "layer_manifest": config.get("model_profile", {}).get("layers", {}),
+            }
             archive.writestr("manifest.json", _json(manifest))
-            archive.writestr("reference.json", payload)
             for name, data in sorted(engine_files.items()):
                 archive.writestr("engine/" + name, data)
-        data_sha = _sha256(temp_path.read_bytes())
+        data_sha = _sha256_file(temp_path)
         # Atomic create-only publication on the same filesystem.
         # os.replace() would overwrite if another builder won the race.
         os.link(temp_path, destination)
@@ -386,10 +824,9 @@ def load_pack(path, *, expected_sha256, expected_code_commit, engine_dir=None):
         raise ModelPackError("EXPECTED_CODE_COMMIT_REQUIRED")
     if Path(path).stat().st_size > MAX_ARCHIVE_BYTES:
         raise ModelPackError("PACK_TOO_LARGE")
-    package = Path(path).read_bytes()
-    if _sha256(package) != expected_sha256:
+    if _sha256_file(path) != expected_sha256:
         raise ModelPackError("PACK_SHA256_MISMATCH")
-    with zipfile.ZipFile(io.BytesIO(package)) as archive:
+    with zipfile.ZipFile(path) as archive:
         entries = archive.namelist()
         if len(entries) < 3 or len(entries) != len(set(entries)):
             raise ModelPackError("PACK_ENTRIES_UNEXPECTED")
@@ -439,17 +876,22 @@ def load_pack(path, *, expected_sha256, expected_code_commit, engine_dir=None):
             target = extracted_root.joinpath(*relative.parts)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
-        payload = archive.read("reference.json")
-        if len(payload) != manifest.get("payload_bytes") or _sha256(payload) != manifest.get("payload_sha256"):
+        if engine_dir is not None:
+            engine_root = Path(engine_dir)
+            sys.path.insert(0, str(engine_root / "scripts" / "nfl_sequence"))
+            sys.path.insert(1, str(engine_root / "scripts"))
+            sys.path.insert(2, str(engine_root / "backend"))
+        allowed_modules = {PurePosixPath(name).stem for name in manifest["engine_files_sha256"]
+                           if name.endswith(".py") and name.startswith(("scripts/", "backend/"))}
+        allowed_modules.add("types")
+        with archive.open("reference.json", "r") as payload_stream:
+            hashing_stream = _HashingRawReader(payload_stream)
+            with io.BufferedReader(hashing_stream) as buffered:
+                with io.TextIOWrapper(buffered, encoding="utf-8") as text_stream:
+                    loaded = _StateJSONReader(text_stream, allowed_modules).read()
+        if (hashing_stream.size != manifest.get("payload_bytes")
+                or hashing_stream.digest.hexdigest() != manifest.get("payload_sha256")):
             raise ModelPackError("PACK_PAYLOAD_HASH_MISMATCH")
-    if engine_dir is not None:
-        engine_root = Path(engine_dir)
-        sys.path.insert(0, str(engine_root / "scripts" / "nfl_sequence"))
-        sys.path.insert(1, str(engine_root / "backend"))
-    allowed_modules = {PurePosixPath(name).stem for name in manifest["engine_files_sha256"]
-                       if name.endswith(".py") and name.startswith(("scripts/nfl_sequence/", "backend/"))}
-    allowed_modules.add("types")
-    loaded = json.loads(payload)
     if loaded.get("schema") != "lp-slc-model-state-1":
         raise ModelPackError("MODEL_STATE_SCHEMA_MISMATCH")
     if set(loaded) != {"schema", "reference", "snapshot", "config"}:

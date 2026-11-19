@@ -43,18 +43,22 @@ def main(argv=None):
     original_game = batch.gs.play_game
     original_slc = batch.slc_engine.play
 
-    def capture_game(seed, *positional, **keywords):
-        record = original_game(seed, *positional, **keywords)
-        records.append({"seed": seed, "record": record})
-        return record
-
     def capture_slc(seed, *positional, **keywords):
         record, decisions = original_slc(seed, *positional, **keywords)
         records.append({"seed": seed, "record": record})
         return record, decisions
 
-    batch.gs.play_game = capture_game
-    batch.slc_engine.play = capture_slc
+    # slc_engine.play delegates into game_state.play_game. Hooking both layers
+    # records every SLC seed twice, which makes an otherwise valid comparison
+    # fail on duplicate seed IDs.
+    if spec.get("enabled_layers"):
+        batch.slc_engine.play = capture_slc
+    else:
+        def capture_game(seed, *positional, **keywords):
+            record = original_game(seed, *positional, **keywords)
+            records.append({"seed": seed, "record": record})
+            return record
+        batch.gs.play_game = capture_game
     try:
         batch.main(args.legacy_args)
     finally:
