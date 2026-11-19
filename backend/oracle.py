@@ -510,6 +510,51 @@ def injury_report_from_db(db_path, season, week):
     return {'players': players, 'listed': len(players), 'rows': len(rows)}
 
 
+ROTOWIRE_TO_ENGINE = {'OUT': 'Out', 'DOUBTFUL': 'Doubtful', 'QUESTIONABLE': 'Questionable', 'IR': 'Out', 'IR-R': 'Out',
+                      'PUP-R': 'Out', 'RESERVE-DNR': 'Out', 'RESERVE-EX': 'Out', 'INACTIVE': 'Out'}
+
+
+def rotowire_injury_report(db_path, cutoff, window_days=10):
+    """The injury states known at a UTC cutoff, from RotoWire player news (nfl_player_news_updates), in the engine's shape.
+
+    Each player's state is the newest status published in the window before the cutoff. Publish times are exact. A player
+    is matched to a GSIS id only through the stored links: the news row's own player_id, or the player_source_ids row for
+    the RotoWire id. A status with no link is returned in `unmatched`, never matched by name. A status that RotoWire names
+    maps to the engine's words (IR, PUP, reserve and INACTIVE read as Out). Refuses when no status is in the window."""
+    start = cutoff - timedelta(days=window_days)
+    fmt = '%Y-%m-%dT%H:%M:%S+00:00'
+    conn = connect(db_path)
+    try:
+        ids, counts = {}, {}
+        for pid, gsis in conn.execute('SELECT id, nfl_gsis_id FROM players WHERE nfl_gsis_id IS NOT NULL'):
+            ids[pid] = gsis
+            counts[gsis] = counts.get(gsis, 0) + 1
+        links = {}
+        for key, pid in conn.execute("SELECT source_player_key, player_id FROM player_source_ids "
+                                     "WHERE source = 'rotowire' AND league = 'nfl'"):
+            links.setdefault(key, set()).add(pid)
+        rows = conn.execute(
+            "SELECT n.rotowire_player_id, n.player_id, n.team, n.first_name, n.last_name, n.injury_status, n.published_utc "
+            "FROM nfl_player_news_updates n WHERE n.injury_status <> '' AND n.published_utc >= ? AND n.published_utc <= ? "
+            "ORDER BY n.published_utc", (start.strftime(fmt), cutoff.strftime(fmt))).fetchall()
+    finally:
+        conn.close()
+    if not rows:
+        raise ValueError(f'no RotoWire injury status published between {start:%Y-%m-%d} and {cutoff.isoformat()}')
+    latest, unmatched = {}, []
+    for r in rows:
+        player_ids = {r['player_id']} if r['player_id'] is not None else links.get(str(r['rotowire_player_id']), set())
+        gsis_ids = {ids[pid] for pid in player_ids if pid in ids and counts.get(ids[pid]) == 1}
+        if len(gsis_ids) != 1:
+            unmatched.append({'team': r['team'], 'name': f"{r['first_name']} {r['last_name']}", 'status': r['injury_status'],
+                              'rotowire_player_id': r['rotowire_player_id'], 'published_utc': r['published_utc']})
+            continue
+        latest[gsis_ids.pop()] = (ROTOWIRE_TO_ENGINE[r['injury_status']], r['published_utc'])
+    players = [{'gsis_id': gsis, 'report_status': status} for gsis, (status, _) in latest.items()]
+    return {'players': players, 'listed': len(players), 'rows': len(rows), 'window_days': window_days,
+            'source': 'rotowire nfl_player_news_updates'}, unmatched
+
+
 def injury_copies_for_week(archive_root, capture_path, db_path, season, week):
     """The injury copies for one week: {'full': (report, label) or None, 'partial': (report, label) or None}.
 
