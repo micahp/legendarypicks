@@ -19,17 +19,33 @@ For retrospective Weeks 8 and 9, we compared the resulting one-slot probability 
 
 **These two distributions are not identical quantities.** A first-play RB entry is not a whole-game RB snap-share projection, and changing participation weights may also change later substitution, group choice, carry and target assignment, and score. This is a diagnostic proxy, **not** a calibrated loss for predicted player/game outcomes. No sim seeds were run.
 
-## Corrected results
+## Corrected results: all available target weeks
 
-| Target Week | Graded team-games | Historical field | HS current-snap blend | HE current-season entry |
+All **150 game snapshots** (300 team-game inputs) were inspected. Of these, **136 games in Weeks 1–9** have observed RB/HB/FB offensive-snap outcomes (**272 team-games**). The **14 Week 10 games** have no Week 10 snap-count outcome file, so they remain input-only. Each week's pregame features were filtered to strictly earlier weeks.
+
+| Week | Evaluable team-games | Historical | HS | HE |
 |---|---:|---:|---:|---:|
-| Week 8 | 28 | 0.4043 | 0.3419 | **0.2365** |
-| Week 9 | 30 | 0.4462 | 0.3603 | **0.2544** |
-| **Pooled, Weeks 8–9** | **58** | **0.4259** | **0.3514** | **0.2458** |
+| 1 | 32 | 0.4194 | 0.4194 | 0.4194 |
+| 2 | 32 | 0.4362 | 0.3470 | **0.2000** |
+| 3 | 32 | 0.4123 | 0.3033 | **0.1810** |
+| 4 | 32 | 0.4088 | 0.2933 | **0.1897** |
+| 5 | 30 | 0.4067 | 0.2893 | **0.2494** |
+| 6 | 28 | 0.4272 | 0.3117 | **0.2282** |
+| 7 | 28 | 0.3899 | 0.3334 | **0.2443** |
+| 8 | 28 | 0.4043 | 0.3419 | **0.2365** |
+| 9 | 30 | 0.4462 | 0.3603 | **0.2544** |
+| **All Weeks 1–9** | **272** | **0.4170** | **0.3336** | **0.2450** |
+| **Weeks 2–9 only** | **240** | **0.4167** | **0.3221** | **0.2218** |
 
-Weeks 1–7 and Week 10 have been supplied. The reproducible script below can score **all 150 snapshots** (Week 10 has no ground-truth Week 10 snap cut, so it produces input-only output for that week). The script has been authored but **was not run end-to-end in this review environment**. The above Week 8/9 results were computed independently by directly reading the source blobs.
+Lower is better. Week 1 is a tie by construction, because there is no previous 2026 usage. **HE has the lowest first-slot distribution error in every evaluated week after Week 1.** On the complete 272-team-game proxy, HE is **41.2% lower** than historical, while HS improves but remains behind HE.
 
-The earlier Week 8/9 27-team/29-team calculations were **incomplete**: they omitted players whose raw snap position was `HB`, including Cincinnati. The corrected 28/30-team results above supersede those numbers.
+As a secondary, descriptive check: the player with the highest modeled first-entry weight was also the actual top RB/HB/FB offensive-snap player in **160/272 historical**, **183/272 HS**, and **199/272 HE** team-games, respectively. This is **not** a graded game-start probability or a directly comparable simulation outcome.
+
+These results were computed directly against repository source blobs in week-scoped batches. The nine stored snap-count cuts were also checked against the Week 9 master: all three data arrays (`team_snaps`, `player_snaps`, `active`) in every cut match the complete source filtered to weeks at or before the cut, byte-equivalent after JSON parsing. This confirms the cuts' **week selection**, but **not** their historical publication times.
+
+The standalone `audit_rb_entry_2026.py` script included on this branch reproduces the same calculation from repository files. It has **not been run end-to-end on the user's simulation host** in this review, and its emitted outputs should be compared with the above independent totals. No Monte Carlo simulations were run.
+
+The earlier incomplete 27-team/29-team Week 8/9 calculations omitted raw `HB` snap rows. The corrected 28/30-team Week 8/9 results above supersede those numbers.
 
 ## Confirmed `HB` source-label bug
 
