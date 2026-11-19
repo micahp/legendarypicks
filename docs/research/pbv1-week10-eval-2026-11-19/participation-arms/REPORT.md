@@ -150,3 +150,20 @@ In arm HS, the lead's group-11 weight share is still about 0.48. The snap-count 
 - The lead RB is the player with the most actual Week 10 carries. This is used only to score. The simulation does not use it as an input.
 - Current-season shares use weeks 1 to 9 only.
 - Twenty seeds per game is exploratory.
+
+### What the snap-count update does to the weights
+
+`snap_update.player_weights()` sets each player's weight to his current-season snap share blended with his history rate, divided by that history rate. `Field.rate()` multiplies the rate by this weight. (`PLAYER_N0 = 1.0`, `WEIGHT_RANGE = (0.02, 50)`.)
+
+`code/snap_effect.py` compares arm B2 (no update) with arm HS (update). At each team's first play, both arms start from the same empty lineup, so the candidates are the same. The comparison uses the 189 group-11 cases where both arms have the same candidates:
+
+| Measure | Value |
+|---|---|
+| Lead RB share of bench weight, B2 | 0.44 |
+| Lead RB share of bench weight, HS | 0.48 |
+| Lead RB weight ratio, HS to B2 (median) | 2.04 |
+| Backup RB weight ratio, HS to B2 (median) | 1.78 |
+
+Every RB weight roughly doubles. The lead gains little against the backups, because each player's weight is scaled by his own share-to-history ratio, and those ratios are similar for the lead and the backups. The update does not change the ranking enough to fix group 11. The mean ratio is skewed, so the medians are the reliable figures.
+
+This is a finding, not a fix. The update has not been changed or tuned.
