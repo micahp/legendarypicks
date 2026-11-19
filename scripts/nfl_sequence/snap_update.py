@@ -36,7 +36,7 @@ def snap_team(code):
     return pf.nfl_team_codes.to_nflverse(code)
 
 
-SNAP_CLASS = {'RB': 'RB', 'FB': 'RB', 'TE': 'TE', 'WR': 'WR'}
+SNAP_CLASS = {'RB': 'RB', 'HB': 'RB', 'FB': 'RB', 'TE': 'TE', 'WR': 'WR'}  # nflverse snap position HB is a running back
 TEAM_MIX_PRIOR_PLAYS = 50.0  # pseudo-plays of the league mix in a team's table mix (the tilt's reference mix)
 GROUP_N0 = 8.0  # selected on 2019 to 2021 (weekly_backtest.py, arm A2)
 PLAYER_N0 = 1.0  # selected on 2019 to 2021, the smallest of the grid (weekly_player_backtest.py); None turns it off
