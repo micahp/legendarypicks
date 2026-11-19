@@ -424,6 +424,108 @@ def build_week_kicker_table(base_path, roster_path, season, week, out_path, publ
     return table['walkforward_week']
 
 
+def archive_schedule_rows(archive_root, season=2026):
+    """{game_id: [(observed_at UTC, schedule row), ...]} from every dated archive that holds games.rds.
+
+    Each archive's observed time is its own latest depth-chart timestamp, measured from the file (the depth charts are
+    saved in the same run). A row is the game as that archive listed it, so a game's schedule is known from the archive's
+    time onward. Only regular-season games are kept, as strings where the snapshot builder reads dates and times."""
+    import re
+    from collections import defaultdict
+    import pyreadr
+    import pandas as pd
+    out = defaultdict(list)
+    dated = sorted(p for p in Path(archive_root).glob('archive-*') if re.fullmatch(r'archive-\d{4}-\d{2}-\d{2}', p.name))
+    for folder in dated:
+        games_rds, depth_rds = folder / 'games.rds', folder / 'depth_charts_2026.rds'
+        if not (games_rds.exists() and depth_rds.exists()):
+            continue
+        dt = pd.to_datetime(list(pyreadr.read_r(str(depth_rds)).values())[0]['dt'], utc=True)
+        observed = dt.max().to_pydatetime().replace(tzinfo=timezone.utc)
+        games = list(pyreadr.read_r(str(games_rds)).values())[0]
+        games = games[(games['season'] == season) & (games['game_type'] == 'REG')]
+        for row in games.to_dict('records'):
+            row = {k: (None if pd.isna(v) else v) for k, v in row.items()}
+            row['season'], row['week'] = int(row['season']), int(row['week'])
+            row['gameday'], row['gametime'] = str(row['gameday'])[:10], str(row['gametime'])[:5]
+            row['game_type'] = str(row['game_type'])
+            out[row['game_id']].append((observed, row))
+    return dict(out)
+
+
+def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z'):
+    """{team: {observed UTC datetime: [row dict]}} of depth-chart rows from every dated archive, from `since` on.
+
+    Each archive repeats the full history, so a (team, timestamp) is taken from the first archive that holds it. Rows keep
+    the gsis_id, name, position and rank; rows without a gsis_id or a rank are dropped."""
+    import re
+    from collections import defaultdict
+    import pyreadr
+    import pandas as pd
+    out = defaultdict(dict)
+    seen = set()
+    floor = pd.Timestamp(since)
+    dated = sorted(p for p in Path(archive_root).glob('archive-*') if re.fullmatch(r'archive-\d{4}-\d{2}-\d{2}', p.name))
+    for folder in dated:
+        path = folder / 'depth_charts_2026.rds'
+        if not path.exists():
+            continue
+        d = list(pyreadr.read_r(str(path)).values())[0]
+        d = d[d['gsis_id'].notna() & d['pos_rank'].notna()]
+        d = d.assign(_dt=pd.to_datetime(d['dt'], utc=True))
+        d = d[d['_dt'] >= floor]
+        for (team, dt), group in d.groupby(['team', '_dt']):
+            if (team, dt) in seen:
+                continue
+            seen.add((team, dt))
+            out[team][dt.to_pydatetime()] = [
+                {'gsis_id': str(r.gsis_id), 'player_name': str(r.player_name), 'pos_abb': str(r.pos_abb),
+                 'pos_rank': int(float(r.pos_rank))} for r in group.itertuples()]
+    return {team: dict(times) for team, times in out.items()}
+
+
+def injury_copy_for_week(archive_root, capture_path, season, week, first_thursday=(9, 10)):
+    """The injury-report copy used for one week of a walk-forward test: (path, label).
+
+    The Thursday archive of week k holds only a partial report for week k (the archives show 2 of 138 players for week 4).
+    The full report is in the archive dated the next Thursday, which is after kickoff. This uses that archive, and records
+    its date. The publish time is the Friday before kickoff, which the caller must check. When no later archive exists,
+    the capture is used and labelled as such. Raises when neither holds the week."""
+    import re
+    y, m, d = season, *first_thursday
+    thursday = datetime(y, m, d) + timedelta(days=7 * (week - 1))
+    target = thursday + timedelta(days=7)
+    folder = Path(archive_root) / f'archive-{target:%Y-%m-%d}'
+    rds = folder / 'injuries_2026.rds'
+    if rds.exists():
+        return rds, f'archive-{target:%Y-%m-%d}'
+    if Path(capture_path).exists():
+        import pyarrow.parquet as pq
+        weeks = set(pq.read_table(str(capture_path), columns=['week']).column('week').to_pylist())
+        if week in weeks:
+            return Path(capture_path), 'capture'
+    raise ValueError(f'no injury copy holds week {week}: no archive {target:%Y-%m-%d} and the capture has no week {week}')
+
+
+def injury_report_for_week(path, season, week):
+    """The injury report the engine reads, for one week: {'players': [{'gsis_id', 'report_status'}], 'listed': n}.
+
+    Only players with a status on the report are listed. Refuses when the copy holds no rows for the week, because an
+    empty report would make every player eligible."""
+    if str(path).endswith('.rds'):
+        import pyreadr
+        frame = list(pyreadr.read_r(str(path)).values())[0]
+    else:
+        import pandas as pd
+        frame = pd.read_parquet(path)
+    frame = frame[(frame['season'] == season) & (frame['week'] == week)]
+    if frame.empty:
+        raise ValueError(f'{path} holds no {season} week {week} injury rows')
+    listed = frame[frame['report_status'].notna()]
+    players = [{'gsis_id': str(r.gsis_id), 'report_status': str(r.report_status)} for r in listed.itertuples()]
+    return {'players': players, 'listed': len(players), 'rows': len(frame)}
+
+
 NFLVERSE_TEAM = {'LAR': 'LA', 'WSH': 'WAS'}  # the streak files use nflverse codes; the database uses these two
 
 
