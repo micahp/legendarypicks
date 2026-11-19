@@ -1,0 +1,144 @@
+{
+ "arms": [
+  "B",
+  "C",
+  "H",
+  "HS",
+  "HE"
+ ],
+ "games": [
+  "2026_10_BUF_NYJ",
+  "2026_10_CAR_NO",
+  "2026_10_HOU_CLE",
+  "2026_10_JAX_TEN",
+  "2026_10_KC_ATL",
+  "2026_10_LAC_BAL",
+  "2026_10_LA_ARI",
+  "2026_10_MIA_IND",
+  "2026_10_MIN_GB",
+  "2026_10_NE_DET",
+  "2026_10_PIT_CIN",
+  "2026_10_SEA_LV",
+  "2026_10_SF_DAL",
+  "2026_10_WAS_NYG"
+ ],
+ "n_games": 14,
+ "metrics": {
+  "B": {
+   "lead_onfield_rate": 0.3583,
+   "lead_initial_on": 0.5,
+   "slot11_occupancy": 0.3382,
+   "departures_per_100_on_plays": 28.745,
+   "mean_plays_off_before_return": 4.91,
+   "spells_not_ended_by_return": 353,
+   "lead_carries_sim_per_game": 8.97,
+   "lead_carries_actual_per_game": 14.68
+  },
+  "C": {
+   "lead_onfield_rate": 0.3695,
+   "lead_initial_on": 0.5,
+   "slot11_occupancy": 0.3652,
+   "departures_per_100_on_plays": 27.552,
+   "mean_plays_off_before_return": 4.66,
+   "spells_not_ended_by_return": 350,
+   "lead_carries_sim_per_game": 9.46,
+   "lead_carries_actual_per_game": 14.68
+  },
+  "H": {
+   "lead_onfield_rate": 0.4596,
+   "lead_initial_on": 0.5054,
+   "slot11_occupancy": 0.4469,
+   "departures_per_100_on_plays": 24.319,
+   "mean_plays_off_before_return": 3.77,
+   "spells_not_ended_by_return": 316,
+   "lead_carries_sim_per_game": 11.42,
+   "lead_carries_actual_per_game": 14.68
+  },
+  "HS": {
+   "lead_onfield_rate": 0.5102,
+   "lead_initial_on": 0.4518,
+   "slot11_occupancy": 0.5053,
+   "departures_per_100_on_plays": 17.131,
+   "mean_plays_off_before_return": 4.65,
+   "spells_not_ended_by_return": 270,
+   "lead_carries_sim_per_game": 12.63,
+   "lead_carries_actual_per_game": 14.68
+  },
+  "HE": {
+   "lead_onfield_rate": 0.522,
+   "lead_initial_on": 0.4857,
+   "slot11_occupancy": 0.5068,
+   "departures_per_100_on_plays": 18.397,
+   "mean_plays_off_before_return": 4.39,
+   "spells_not_ended_by_return": 259,
+   "lead_carries_sim_per_game": 12.94,
+   "lead_carries_actual_per_game": 14.68
+  }
+ },
+ "margin_vs": {
+  "B minus C": {
+   "paired_seeds": 280,
+   "mean": 1.486,
+   "ci95_by_game": [
+    -0.725,
+    3.743
+   ]
+  },
+  "C minus B": {
+   "paired_seeds": 280,
+   "mean": -1.486,
+   "ci95_by_game": [
+    -3.796,
+    0.675
+   ]
+  },
+  "H minus B": {
+   "paired_seeds": 280,
+   "mean": -1.354,
+   "ci95_by_game": [
+    -2.182,
+    -0.418
+   ]
+  },
+  "H minus C": {
+   "paired_seeds": 280,
+   "mean": 0.132,
+   "ci95_by_game": [
+    -1.846,
+    2.146
+   ]
+  },
+  "HS minus B": {
+   "paired_seeds": 280,
+   "mean": -0.254,
+   "ci95_by_game": [
+    -1.679,
+    1.229
+   ]
+  },
+  "HS minus C": {
+   "paired_seeds": 280,
+   "mean": 1.232,
+   "ci95_by_game": [
+    -0.789,
+    3.221
+   ]
+  },
+  "HE minus B": {
+   "paired_seeds": 280,
+   "mean": -0.182,
+   "ci95_by_game": [
+    -1.529,
+    1.214
+   ]
+  },
+  "HE minus C": {
+   "paired_seeds": 280,
+   "mean": 1.304,
+   "ci95_by_game": [
+    -0.518,
+    3.118
+   ]
+  }
+ }
+}

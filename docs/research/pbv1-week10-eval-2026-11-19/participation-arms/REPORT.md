@@ -167,3 +167,33 @@ In arm HS, the lead's group-11 weight share is still about 0.48. The snap-count 
 Every RB weight roughly doubles. The lead gains little against the backups, because each player's weight is scaled by his own share-to-history ratio, and those ratios are similar for the lead and the backups. The update does not change the ranking enough to fix group 11. The mean ratio is skewed, so the medians are the reliable figures.
 
 This is a finding, not a fix. The update has not been changed or tuned.
+
+### Arm HE: current-season entry weight (one change from HS)
+
+Change: the bench draw weights each player by his current-season share of team snaps (weeks 1 to 9). Players with no earlier active game keep the table rate. Leave hazards still use the table rate. The flag is `--participation-entry-current-season`, off by default. Code: `participation_field.entry_weight()`, `snap_update.apply()`, `slc_engine`, `simulate_pregame_batch`. Driver: `code/he_campaign.py`. Results: `results/he_report.json`, `results/entry_group_he.json`.
+
+Check: for players with earlier games, the HE weight equals the current snap share (for example Kenneth Walker III: weight 0.743, share 0.743).
+
+| Measure | HS | HE |
+|---|---|---|
+| Lead RB on-field rate | 0.510 | 0.522 |
+| Lead RB in 11 personnel | 0.505 | 0.507 |
+| Departures per 100 on-field plays | 17.1 | 18.4 |
+| Lead RB carries per game | 12.6 | 12.9 |
+
+Paired margin, HE minus B: -0.18 (interval -1.53 to 1.21). HE minus C: 1.30 (interval -0.52 to 3.12).
+
+First play, group 11 (`results/entry_group_he.json`):
+
+| Arm | Lead RB weight share (all candidates) | Lead RB picked |
+|---|---|---|
+| HS | 0.48 | 0.44 |
+| HE | 0.43 | 0.45 |
+
+Among RB candidates only (`code/rb_only_share.py`, 198 cases): the lead's share is 0.49 in HS and 0.46 in HE. The current-season share did not favor the lead on the first play.
+
+Likely reasons, not yet tested:
+- The lead RB is the player with the most actual Week 10 carries. In many cases a backup has a higher current share.
+- Players with no earlier game use the table rate. That mixes two scales in one draw.
+
+Conclusion: the current-season entry signal works as coded but does not fix the lead RB's first-play share. It changes the lead RB's on-field rate only slightly.
