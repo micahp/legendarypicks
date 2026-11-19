@@ -44,6 +44,17 @@ def parse_as_of(value: str) -> datetime:
     return parsed.astimezone(timezone.utc)
 
 
+def check_source_artifacts(source_artifacts, cutoff):
+    """Each nflverse input needs a SHA-256 pin and a publisher last-modified time at or before the cutoff. The publisher's
+    time decides what existed at the cutoff. Our download time (acquired_at_utc) can be hours later than the publication
+    and must not reject the file."""
+    for artifact in source_artifacts:
+        if not artifact.get('sha256') or len(artifact['sha256']) != 64:
+            raise ValueError('nflverse source artifact is missing a SHA-256 pin')
+        if _utc(artifact.get('last_modified_utc'), 'source last_modified_utc') > cutoff:
+            raise ValueError('nflverse source artifact was published after the frozen pregame cutoff')
+
+
 def _utc(value: str | None, label: str) -> datetime:
     if not value:
         raise ValueError(f'{label} is missing')
@@ -153,13 +164,7 @@ def apply_full_depth_roster_snapshot(snapshot: dict, roster_path: str, provenanc
     source_artifacts = provenance.get('source_artifacts', [])
     if len(source_artifacts) != 2:
         raise ValueError('full depth provenance must pin both nflverse input artifacts')
-    for artifact in source_artifacts:
-        if not artifact.get('sha256') or len(artifact['sha256']) != 64:
-            raise ValueError('nflverse source artifact is missing a SHA-256 pin')
-        if artifact.get('acquired_at_utc') and _utc(artifact['acquired_at_utc'], 'source acquired_at_utc') > cutoff:
-            raise ValueError('nflverse source artifact was acquired after the frozen pregame cutoff')
-        if _utc(artifact.get('last_modified_utc'), 'source last_modified_utc') > cutoff:
-            raise ValueError('nflverse source artifact was published after the frozen pregame cutoff')
+    check_source_artifacts(source_artifacts, cutoff)
 
     sides = {'away': snapshot['schedule']['away_team'], 'home': snapshot['schedule']['home_team']}
     min_rows = {'away': 22, 'home': 21}
