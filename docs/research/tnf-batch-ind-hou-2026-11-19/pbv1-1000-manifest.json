@@ -1,0 +1,37 @@
+{
+  "arm": "pbv1-1000",
+  "game_id": "2026_11_IND_HOU",
+  "game_label": "IND at HOU, 2026-11-19 (TNF)",
+  "model": "PBV1 package with participation field and week-9 snap counts (HE on by default)",
+  "code": {
+    "repo": "legendarypicks",
+    "branch": "research/pbv1-pbp-fully-enabled-2026-11-18",
+    "commit": "63997fc5",
+    "note": "The host runtime was built from this tree. Its own git commit (0bd0102d) is a local init on the host, not the source commit."
+  },
+  "command": "simulate_pregame_batch.py --snapshot-file /root/tnf-batch/current/snapshots/2026_11_IND_HOU/prospective-1.json --db /root/tnf-batch/picks.frozen.db --slc-profile v1_full_stack --playcall-artifact docs/research/SLC-PLAYCALL-ARTIFACT-v1.json --progress-every 100 --export-boxscores --playcall-streak-file /root/tnf-batch/current/streaks/2026_11_IND_HOU.json --games 1000 --seed-start 300001 --rng-protocol v2 --participation-field /root/tnf-batch/he/participation-field-v4.json --participation-field-sha256 9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41 --participation-snap-counts /root/tnf-batch/w10/snap_counts_through_week9.json --participation-snap-counts-sha256 69b7e3cfeba1fd244e9c7462caab2a32da48daae619a2451979894e72a38aa7b --out /root/tnf-batch/pbv1arm/out/2026_11_IND_HOU-pbv1-1000.json --slc-blocker-fix run_scramble_backoff --slc-blocker-fix long_field_goal_feasibility --slc-blocker-fix blocked_kick_source_audit --slc-blocker-fix blocked_kick_geometry --slc-blocker-fix safety_free_kick_boundaries --playcall-pbv1-package docs/research/pbv1-package-integration-2026-11-02/pbv1_training_plays.csv",
+  "inputs": {
+    "snapshot_file": {"sha256": "5b9adaa4aaa3540f2ed01edc7ec272e77f646e2cf05017e130bd476b42bc7785", "size_bytes": 93596},
+    "db": {"sha256": "e997951b0a8ceb8acc82eef01520797e053da9033527b8f3693af0f7ecdf3939", "size_bytes": 4193959936, "note": "checked on the host at restore, 22:39 UTC; not re-hashed in the run inventory"},
+    "playcall_streak_file": {"sha256": "97176792b0ccc3b2bbf9ac558974514a67536480ac417738fd685280e2b3680c", "size_bytes": 1286},
+    "participation_field": {"sha256": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41", "size_bytes": 3348137},
+    "participation_snap_counts": {"sha256": "69b7e3cfeba1fd244e9c7462caab2a32da48daae619a2451979894e72a38aa7b", "size_bytes": 339024, "note": "weeks 1 to 9; no week-10 snap counts exist"},
+    "playcall_artifact": {"sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5", "size_bytes": 9062},
+    "playcall_pbv1_package": {"sha256": "ab875384a82ea1d6472e12007d0e1f79316508861a1843730253f40253d8a993", "size_bytes": 5981820}
+  },
+  "seeds": {"start": 300001, "end": 301000, "count": 1000, "unique": 1000, "list": "every seed from 300001 to 301000 inclusive, one record each"},
+  "validation": {
+    "valid_full_game": 1000,
+    "errors": 0,
+    "final_ties": 8,
+    "blocked_before_regulation": 0,
+    "preflight": "passed (database read-only; season 2026 tables; 5 decision parquets; 32 playbooks; 16 play-call score sources)",
+    "run_status": "all 1000 seeds completed; the run exited without writing its summary JSON"
+  },
+  "outputs": {
+    "seeds_jsonl": {"lines": 1001, "note": "1,000 seed records and one header line"},
+    "boxscores_jsonl": {"sha256": null, "note": "not hashed; 1,000 game records used for the report"},
+    "summary_json": {"status": "missing", "note": "not written; the report statistics were rebuilt from the box-score records with oracle.batch_report"}
+  },
+  "reported_stats": {"home_win_share": 0.55, "home_margin_mean": 1.33, "tie_share": 0.008, "total_mean": 45.24}
+}
