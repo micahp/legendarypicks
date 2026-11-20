@@ -11,6 +11,17 @@
       "tie_share": 0.006,
       "total_mean": 44.76
     },
+    "pbv1-1000": {
+      "away_team": "IND",
+      "home_margin_mean": 1.33,
+      "home_margin_p10": -14.0,
+      "home_margin_p90": 15.9,
+      "home_team": "HOU",
+      "home_win_share": 0.55,
+      "seeds": 1000,
+      "tie_share": 0.008,
+      "total_mean": 45.24
+    },
     "pbv1-off": {
       "away_team": "IND",
       "home_margin_mean": 1.37,
@@ -57,10 +68,20 @@
     }
   },
   "paired": {
+    "he-participation vs pbv1-1000": {
+      "common_seeds": 1000,
+      "mean_margin_diff": 0.01,
+      "same_winner_share": 0.51
+    },
     "pbv1-off vs he-participation": {
       "common_seeds": 1000,
       "mean_margin_diff": 0.03,
       "same_winner_share": 0.508
+    },
+    "pbv1-off vs pbv1-1000": {
+      "common_seeds": 1000,
+      "mean_margin_diff": 0.04,
+      "same_winner_share": 0.644
     },
     "pbv1-off vs pbv1-on": {
       "common_seeds": 869,
@@ -82,6 +103,11 @@
       "mean_margin_diff": 0.21,
       "same_winner_share": 0.498
     },
+    "pbv1-on vs pbv1-1000": {
+      "common_seeds": 869,
+      "mean_margin_diff": -0.35,
+      "same_winner_share": 0.638
+    },
     "pbv1-on vs v1-vfg": {
       "common_seeds": 869,
       "mean_margin_diff": 0.37,
@@ -97,6 +123,11 @@
       "mean_margin_diff": -0.34,
       "same_winner_share": 0.485
     },
+    "v1-vfg vs pbv1-1000": {
+      "common_seeds": 1000,
+      "mean_margin_diff": -0.33,
+      "same_winner_share": 0.505
+    },
     "v1-vfg vs v2-pbp": {
       "common_seeds": 1000,
       "mean_margin_diff": -2.76,
@@ -106,6 +137,11 @@
       "common_seeds": 1000,
       "mean_margin_diff": 2.42,
       "same_winner_share": 0.536
+    },
+    "v2-pbp vs pbv1-1000": {
+      "common_seeds": 1000,
+      "mean_margin_diff": 2.43,
+      "same_winner_share": 0.52
     }
   }
 }
