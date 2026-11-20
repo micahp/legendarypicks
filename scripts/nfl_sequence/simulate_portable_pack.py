@@ -69,7 +69,7 @@ def _forbid_source_table_reads():
     os.open = checked_os_open
 
 
-def _run_seed(seed, reference, snapshot, gs, slc_engine=None, rng_plan=None):
+def _run_seed(seed, reference, snapshot, gs, slc_engine=None, rng_plan=None, decisions_out=None):
     if slc_engine is not None and slc_engine.is_slc(reference):
         play = slc_engine.play
         kwargs = {"paired_randomness": rng_plan.paired, "rng_plan": rng_plan}
@@ -77,7 +77,9 @@ def _run_seed(seed, reference, snapshot, gs, slc_engine=None, rng_plan=None):
             raise ModelPackError("PORTABLE_RNG_PROTOCOL_UNSUPPORTED_BY_ENGINE")
         kwargs = {key: value for key, value in kwargs.items()
                   if key in inspect.signature(play).parameters}
-        record, _decisions = play(seed, reference, copy.deepcopy(snapshot), **kwargs)
+        record, decisions = play(seed, reference, copy.deepcopy(snapshot), **kwargs)
+        if decisions_out is not None:
+            decisions_out.extend(decisions)
     else:
         play = gs.play_game
         kwargs = {"pregame_snapshot": copy.deepcopy(snapshot),
@@ -299,11 +301,20 @@ def _run(args, engine_dir):
     rows = []
     details = []
     records = []
+    decision_records = []
+    if getattr(args, "decisions_out", None):
+        sampler = getattr(reference, "contextual_sampler", None)
+        if sampler is None:
+            raise ModelPackError("DECISION_TRACE_SAMPLER_MISSING")
+        if hasattr(sampler, "trace_outcome_probabilities"):
+            sampler.trace_outcome_probabilities = True
     for seed in range(args.seed_start, args.seed_start + args.games):
         record = None
         record_error = None
+        seed_decisions = []
         try:
-            record = _run_seed(seed, reference, snapshot, gs, slc_engine, rng_plan)
+            record = _run_seed(seed, reference, snapshot, gs, slc_engine, rng_plan,
+                               seed_decisions if getattr(args, "decisions_out", None) else None)
             status = record.get("status", "unknown")
             blocker = record.get("blocker")
             valid = bool(record.get("valid_full_game") and record.get("complete_game"))
@@ -343,6 +354,9 @@ def _run(args, engine_dir):
                 "error": f"{type(exc).__name__}: {str(exc)[:500]}",
             }
         rows.append(row)
+        if getattr(args, "decisions_out", None):
+            decision_records.append({"seed": seed, "model_id": args.model,
+                                     "decisions": seed_decisions, "error": record_error})
         if args.records_out:
             records.append({"seed": seed, "record": record, "error": record_error})
     summary = aggregation.summarize_outcomes(rows, args.games)
@@ -378,6 +392,12 @@ def _run(args, engine_dir):
         if records_path.exists():
             raise FileExistsError(f"immutable records file exists: {records_path}")
         records_path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in records))
+    if getattr(args, "decisions_out", None):
+        decisions_path = Path(args.decisions_out)
+        decisions_path.parent.mkdir(parents=True, exist_ok=True)
+        with decisions_path.open("x") as stream:
+            for row in decision_records:
+                stream.write(json.dumps(row, sort_keys=True) + "\n")
     output = Path(args.out)
     output.parent.mkdir(parents=True, exist_ok=True)
     if output.exists():
@@ -406,6 +426,8 @@ def main(argv=None):
                     help="retain player box stats for each seed in output")
     ap.add_argument("--records-out", type=Path,
                     help="write each full per-seed game record as JSONL for exact parity checks")
+    ap.add_argument("--decisions-out", type=Path,
+                    help="write per-seed play-call decisions and available probability stages as JSONL")
     args = ap.parse_args(argv)
     if args.games < 1 or args.seed_start < 0:
         ap.error("games must be positive and seed-start nonnegative")
