@@ -75,3 +75,38 @@ Value counts above are from the 100-game run. The category totals match the 2,00
 - Label fallbacks are 88% of all fallback events in this run.
 - Flag labels (F to I) and count labels (J to N) are the largest groups.
 - Player and target history misses are small. They are about 1,400 events in 100 games.
+
+## 3. Why each label fallback happened (100 games, 36,596 events)
+
+Each label fallback is one of three cases:
+
+- **absent_from_cell:** no row in the cell's original candidates has the drawn value. Missing observations.
+- **removed_by_non_label_filter:** the value was in the cell, but formation, coverage, streak, or scramble filters removed it.
+- **removed_by_earlier_label:** the value was in the cell, but an earlier label filter in category order removed it.
+
+| Reason | Events | Share |
+|---|---|---|
+| removed_by_earlier_label | 22,271 | 60.9% |
+| removed_by_non_label_filter | 13,566 | 37.1% |
+| absent_from_cell | 759 | 2.1% |
+
+By category (absent / non-label filter / earlier label):
+
+| Category | absent | non-label | earlier label |
+|---|---|---|---|
+| A | 194 | 579 | 0 |
+| B | 4 | 75 | 0 |
+| C | 12 | 133 | 348 |
+| D | 206 | 278 | 346 |
+| E | 191 | 632 | 937 |
+| F | 25 | 2,974 | 1,201 |
+| G | 3 | 404 | 836 |
+| H | 5 | 449 | 2,050 |
+| I | 2 | 503 | 1,815 |
+| J | 32 | 4,472 | 685 |
+| K | 8 | 697 | 3,954 |
+| L | 47 | 811 | 2,731 |
+| M | 26 | 988 | 5,090 |
+| N | 4 | 571 | 2,278 |
+
+Reading: the main problem is over-conditioning, not missing data. Earlier label filters remove most values that exist in the cell. Non-label filters (mostly J and F, the alignment and shotgun filters) remove another large share.
