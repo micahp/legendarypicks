@@ -738,7 +738,7 @@ class PlayCallSampler:
                     candidates = matched
                     labels_matched.append(cat)
                 else:
-                    labels_unmatched.append(cat)
+                    labels_unmatched.append(f'{cat}={value}')  # the category and the drawn value no source row has
         qb_target_role_conditioned = False
         qb_target_role_fallback = None
         if (self.qb_decision_table is not None and called_intent == 'dropback' and not scramble and qb_decision
