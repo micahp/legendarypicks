@@ -4,6 +4,33 @@ Run: IND at HOU, PBV1 package with participation field and week-9 snap counts, s
 
 Each label fallback means: the cell's past plays have no row with the drawn value for that category. The engine keeps the rows it had and skips that filter. The play still runs.
 
+## 0. What each label category means
+
+Each category is one fact about the play. The source is the play's charting or play-by-play data. The model draws a value for each category, then looks for past plays with the same value.
+
+| Category | What it measures | Values | Source | Type |
+|---|---|---|---|---|
+| A | Who got the ball on a pass (receiver role) | RB, WR, TE, Other | play data | pass |
+| B | Who got the ball on a non-pass (runner role) | RB, QB, WR_TE, Other | play data | run |
+| C | Which gap the run went through | guard, tackle, end | play data | run |
+| D | How far the pass was thrown | short, deep | play data | pass |
+| E | Which side the pass went to | left, middle, right | play data | pass |
+| F | Shotgun formation | yes, no | play data | pre-snap |
+| G | Play action fake | yes, no | play data | pass |
+| H | Pre-snap motion | yes, no | FTN charting | pre-snap |
+| I | Blitz (at least one blitzer) | yes, no | play data | pass |
+| J | Where the QB lined up | S, U, P | FTN charting | pre-snap alignment |
+| K | Which hash the ball was placed on | L, M, R (left, middle, right) | FTN charting | pre-snap alignment |
+| L | Players in the backfield on offense | 0, 1, 2, 3+ | FTN charting | pre-snap alignment |
+| M | Defenders in the box | <=5, 6, 7, 8+ | FTN charting | pre-snap alignment |
+| N | Pass rushers on a pass play | 3-4, 5+ | play data | pass |
+
+Notes:
+
+- The code writes J, K, L, and M from the FTN charting columns `qb_location`, `starting_hash`, `n_offense_backfield`, and `n_defense_box` (`backend/load_nfl_history.py`, `scripts/nfl_sequence/decision_layer.py` lines 102 to 113).
+- J's codes S, U, and P are the FTN values. I have not confirmed their exact meanings against the FTN dictionary. The likely reading is shotgun, under center, and pistol.
+- Categories F to M are "pre-snap alignment" in the code (`ALIGN_CATS`). They are drawn on either a pass or a run.
+
 ## 1. Label fallbacks (36,596 events, 39 exact values)
 
 | Category | Label values (events) | Category total |
