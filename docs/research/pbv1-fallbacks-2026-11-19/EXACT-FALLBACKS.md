@@ -28,7 +28,7 @@ Each category is one fact about the play. The source is the play's charting or p
 Notes:
 
 - The code writes J, K, L, and M from the FTN charting columns `qb_location`, `starting_hash`, `n_offense_backfield`, and `n_defense_box` (`backend/load_nfl_history.py`, `scripts/nfl_sequence/decision_layer.py` lines 102 to 113).
-- J's codes S, U, and P are the FTN values. I have not confirmed their exact meanings against the FTN dictionary. The likely reading is shotgun, under center, and pistol.
+- J's codes S, U, and P are the FTN values. The repo has no code dictionary for them. Counts in the local parity database's FTN table: S 94,451, U 44,101, P 7,681, 0 34,111 (never used), blank 4,870. S is the most common, which fits shotgun. U fits under center and P fits pistol. This is an inference from counts, not from the FTN dictionary.
 - Categories F to M are "pre-snap alignment" in the code (`ALIGN_CATS`). They are drawn on either a pass or a run.
 
 ## 1. Label fallbacks (36,596 events, 39 exact values)
