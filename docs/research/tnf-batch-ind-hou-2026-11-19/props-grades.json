@@ -1,0 +1,44 @@
+{
+  "prop_game_id": 30693,
+  "source_lines": "project database props + prop_results (settled); line = consensus over-line from the comparison script",
+  "graded_lines_per_arm": 80,
+  "rows_without_result": 48,
+  "baseline_always_under_accuracy": 0.637,
+  "arms": {
+    "pbv1-1000": {
+      "lines": 80,
+      "brier": 0.371,
+      "call_accuracy": 0.463,
+      "mean_sim_p_over": 0.426,
+      "actual_over_rate": 0.362
+    },
+    "he-participation": {
+      "lines": 80,
+      "brier": 0.367,
+      "call_accuracy": 0.463,
+      "mean_sim_p_over": 0.331,
+      "actual_over_rate": 0.362
+    },
+    "pbv1-off": {
+      "lines": 80,
+      "brier": 0.361,
+      "call_accuracy": 0.487,
+      "mean_sim_p_over": 0.365,
+      "actual_over_rate": 0.362
+    },
+    "v2-pbp": {
+      "lines": 80,
+      "brier": 0.396,
+      "call_accuracy": 0.4,
+      "mean_sim_p_over": 0.423,
+      "actual_over_rate": 0.362
+    },
+    "v1-vfg": {
+      "lines": 80,
+      "brier": 0.366,
+      "call_accuracy": 0.475,
+      "mean_sim_p_over": 0.367,
+      "actual_over_rate": 0.362
+    }
+  }
+}
