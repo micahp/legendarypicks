@@ -1,0 +1,13 @@
+{
+  "engine_version": "postgame-v0.3",
+  "freeze": "before capture and before reviewing held-out story outputs",
+  "seed": "20261111-postgame-heldout-v03",
+  "sha256": {
+    "capture_postgame_holdout.py": "d39ac067c63430ca4b73d0d545c7333ecfd2d04db6bbbf9ed2fe8490276b6a49",
+    "postgame_feed_adapter.py": "7440c0aafd565e2435ba3c70ddaae75de1024678678402ef915795a509c118f3",
+    "postgame_rubric.py": "ef38de4a2145b0d1542a6ae5bfb06cce5f71d5db6050ee5cc3382a68ddec3eb6",
+    "postgame_story_audit.py": "5b7f4782b75c007baee39272e939d77951eaf7b56704e77a5c5b3eb054db7674",
+    "postgame_story_engine.py": "56963211480ae1b8acedcc489f5bc228231f3ec46f09a7c74ee048e8ee81d8c3",
+    "postgame_story_events.py": "72d58102af6bdd66cfa6c47cc8130866925f21b8d10c4f6520952bb1f3311c9d"
+  }
+}
