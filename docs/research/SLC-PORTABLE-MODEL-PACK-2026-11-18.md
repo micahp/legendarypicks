@@ -3,16 +3,18 @@
 Status: implementation and initial V1 parity evidence; branch `feat/slc-portable-model-packs-2026-11-18`. One frozen WAS–NYG seed now has exact portable-versus-legacy parity. V1 has not passed the multi-seed acceptance gate.
 Owner decision: model loading is a one-time build concern, not a per-simulation requirement. Every supported full-game model must include overtime. No change to `dev` or production until validated.
 
-## Current implementation status (updated 2026-11-19)
+## Current implementation status (updated 2026-11-20)
 
-**Executable V1 package implementation; not yet parity-certified.** The pushed branch contains:
+**Portable packages are built and registered for V1, V1.5, V1.6, V1.7, V2, PBV1 label-only, and PBV1-off. None has passed the full-family parity gate.** The feature branch contains:
 - `portable_model_pack.py`: SHA-256 checked archive containing bundled Python engine code and schema-defined JSON model state, with full-game dependency preflight.
-- `slc_model_registry.py` and `slc_cli.py`: central pinned model policies and build/run commands. V1 is the only enabled builder. `slc pack build --all` now fails before writing anything while any family remains unsupported.
-- `compile_portable_pack.py`: captures the initialized reference from the pinned legacy loader and strips memoized and current-game streak context from reusable reference state.
-- `simulate_portable_pack.py`: loads executable code from the package and blocks database and external research-table reads. For models with the streak layer, it requires a snapshot envelope containing the hash-pinned pregame snapshot and checksummed `runtime_model_inputs` with the full frozen streak table.
+- `slc_model_registry.py` and `slc_cli.py`: central policies pinned to each overtime-required commit, including the distinct V1.7 penalty policy and PBV1 variants. `slc pack build --all` requests every registered variant and reports build failures.
+- `compile_portable_pack.py`: captures initialized references from each pinned legacy loader, validates the complete overtime dependency set, and serializes the V1.7 penalty sampler as model state.
+- `simulate_portable_pack.py`: loads executable code from the package and blocks database and external research-table reads. Every registered variant has a one-seed full-game build smoke. V1 and V1.7 also completed an offline-runner smoke with source-access guards enabled. For models with the streak layer, runtime inputs use the hash-pinned snapshot envelope and checksummed frozen streak table.
 - `capture_legacy_parity.py` and `compare_portable_parity.py`: full-record legacy capture and per-seed comparison tooling.
 
-**Acceptance status:** An earlier V1 artifact was compared against legacy V1 for 10 matching seeds on two frozen games; both comparisons failed exact full-record parity (WAS–NYG: 50 field mismatches; JAX–BAL: 70). After matching RNG v2 and the complete frozen model inputs, a separate WAS–NYG run using seed `300001` matched the legacy full record exactly. This is one-seed evidence, not completion of the multi-seed acceptance gate. V1 is not parity-certified. V1.5, V1.6, V1.7, V2, and PBV1 remain disabled. Do not merge to `dev` until every variant passes parity and isolation gates.
+The compiler uses commit- and cutoff-scoped play-call frame caches. Their source fingerprint includes the pinned frame-builder code, season range, score-source hashes, and frozen database identity; a mismatch rebuilds the cache. V1.6 packages also record the game-week training cutoff. PBV1-off and PBV1 label-only preserve the Week 10 family-run distinction: the V1 full-stack profile on V2 code, with only the PBV1 package hook enabled in the on variant.
+
+**Acceptance status:** An earlier V1 artifact failed exact full-record parity for 10 seeds on WAS–NYG and 10 on JAX–BAL. A separate one-seed WAS–NYG comparison using matched RNG v2 and frozen inputs matched exactly; that result does not certify the newly built V1 package. The current V1 package has only a one-seed offline execution smoke. V1.7 has a one-seed offline smoke, but its pinned penalty fit manifest remains `research_only_not_release_validated`; its registry preserves the `research` ruling policy. V1.5, V1.6, V2, PBV1 label-only, and PBV1-off have build and isolated smoke evidence recorded on the data host. Portable-versus-legacy parity, including the 100-seed gate and physically unavailable source-data run, remains outstanding for all variants. Do not merge to `dev` until those gates pass.
 
 See the [V1 portable runtime/model card](SLC-V1-PORTABLE-RUNTIME-MODEL-CARD-2026-11-19.md) for artifact hashes, size, dependencies, and validation evidence.
 

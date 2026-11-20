@@ -14,6 +14,7 @@ import copy
 import io
 from collections import defaultdict
 import importlib
+import inspect
 import json
 import os
 from pathlib import Path
@@ -70,13 +71,23 @@ def _forbid_source_table_reads():
 
 def _run_seed(seed, reference, snapshot, gs, slc_engine=None, rng_plan=None):
     if slc_engine is not None and slc_engine.is_slc(reference):
-        record, _decisions = slc_engine.play(
-            seed, reference, copy.deepcopy(snapshot),
-            paired_randomness=rng_plan.paired, rng_plan=rng_plan)
+        play = slc_engine.play
+        kwargs = {"paired_randomness": rng_plan.paired, "rng_plan": rng_plan}
+        if rng_plan.scheme != "v1" and "rng_plan" not in inspect.signature(play).parameters:
+            raise ModelPackError("PORTABLE_RNG_PROTOCOL_UNSUPPORTED_BY_ENGINE")
+        kwargs = {key: value for key, value in kwargs.items()
+                  if key in inspect.signature(play).parameters}
+        record, _decisions = play(seed, reference, copy.deepcopy(snapshot), **kwargs)
     else:
-        record = gs.play_game(
-            seed, reference, pregame_snapshot=copy.deepcopy(snapshot),
-            paired_randomness=rng_plan.paired, seed_root=rng_plan.seed_root(snapshot))
+        play = gs.play_game
+        kwargs = {"pregame_snapshot": copy.deepcopy(snapshot),
+                  "paired_randomness": rng_plan.paired,
+                  "seed_root": rng_plan.seed_root(snapshot)}
+        parameters = inspect.signature(play).parameters
+        if rng_plan.scheme != "v1" and "seed_root" not in parameters:
+            raise ModelPackError("PORTABLE_RNG_PROTOCOL_UNSUPPORTED_BY_ENGINE")
+        kwargs = {key: value for key, value in kwargs.items() if key in parameters}
+        record = play(seed, reference, **kwargs)
     gs.validate_game(record)
     return record
 
@@ -115,9 +126,57 @@ def _fingerprint_frozen_reference(reference, reference_loader):
         reference_loader.PLAY_EXTRAS = original_extras
 
 
+def _attach_runtime_adapters(reference, config, model_id):
+    adapters = config.get("runtime_adapters") or {}
+    penalty = adapters.get("v1_7_penalty")
+    if model_id != "v1.7":
+        if penalty is not None:
+            raise ModelPackError("UNEXPECTED_V17_PENALTY_RUNTIME_ADAPTER")
+        return
+    if not isinstance(penalty, dict):
+        raise ModelPackError("PACKED_V17_PENALTY_RUNTIME_MISSING")
+    sampler_attr = penalty.get("sampler_attribute")
+    sampler = getattr(reference, sampler_attr, None) if isinstance(sampler_attr, str) else None
+    if sampler is None:
+        raise ModelPackError("PACKED_V17_PENALTY_SAMPLER_MISSING")
+    if getattr(reference, "penalty_controller_factory", None) is not None:
+        raise ModelPackError("PACKED_V17_CONTAINS_NONPORTABLE_PENALTY_FACTORY")
+    from penalty_game import PenaltyGameController, PenaltyResolutionUnavailable
+    from penalty_rulings import ResearchPenaltyRulingPolicy
+
+    ruling_policy = penalty.get("ruling_policy")
+    rulings_attr = penalty.get("rulings_attribute")
+    rulings_by_key = getattr(reference, rulings_attr, None) if isinstance(rulings_attr, str) else None
+    if ruling_policy == "pinned" and not isinstance(rulings_by_key, dict):
+        raise ModelPackError("PACKED_V17_PINNED_RULING_BOOK_MISSING")
+    if ruling_policy not in ("research", "pinned"):
+        raise ModelPackError("PACKED_V17_RULING_POLICY_INVALID")
+
+    def penalty_factory(*, seed, snapshot, ledger):
+        if ruling_policy == "research":
+            provider = ResearchPenaltyRulingPolicy(seed)
+        else:
+            def provider(proposal, *, phase, state, event, after):
+                key = (seed, proposal.opportunity_key, phase)
+                matched = rulings_by_key.get(key)
+                if matched is None:
+                    return None
+                if matched[0] != proposal.outcome:
+                    raise PenaltyResolutionUnavailable("pinned ruling outcome mismatch: " + repr(key))
+                return dict(matched[1])
+
+        return PenaltyGameController(
+            sampler=sampler, game_seed=seed,
+            team_identity={"A": snapshot["schedule"]["home_team"],
+                           "B": snapshot["schedule"]["away_team"]},
+            ruling_provider=provider, rule_era=int(snapshot["schedule"]["season"]))
+
+    reference.penalty_controller_factory = penalty_factory
+
+
 def _run(args, engine_dir):
     model = get_model(args.model)
-    if not model["build_supported"]:
+    if not model.get("runtime_supported", False):
         raise ModelPackError("MODEL_PACKAGE_NOT_ENABLED: " + args.model)
     engine_root = Path(engine_dir)
     reference, snapshot, manifest, config = load_pack(
@@ -125,6 +184,7 @@ def _run(args, engine_dir):
         expected_code_commit=model["code_commit"], engine_dir=engine_root)
     if manifest["model_id"] != args.model:
         raise ModelPackError("MODEL_ID_MISMATCH")
+    _attach_runtime_adapters(reference, config, args.model)
     snapshot_loader = importlib.import_module("pregame_snapshot")
     try:
         snapshot_payload = json.loads(args.snapshot.read_text())
@@ -144,6 +204,8 @@ def _run(args, engine_dir):
     eligible_before = cutoff.get("eligible_before") or []
     if len(eligible_before) != 2 or int(runtime_schedule["season"]) != int(eligible_before[0]):
         raise ModelPackError("RUNTIME_SNAPSHOT_TRAINING_SEASON_MISMATCH")
+    if int(runtime_schedule["week"]) < int(eligible_before[1]):
+        raise ModelPackError("RUNTIME_SNAPSHOT_BEFORE_TRAINING_CUTOFF")
     snapshot = runtime_snapshot
     # The model implementation is imported only from the extracted package tree.
     gs = importlib.import_module("game_state")
@@ -185,7 +247,36 @@ def _run(args, engine_dir):
         snapshot["model_reference"]["observed_reference"] = reference.model_inputs
         snapshot["model_reference"]["pool_scope"] = reference.pool_scope
         snapshot_loader.reseal(snapshot)
-    rng_protocol = importlib.import_module("rng_protocol")
+    try:
+        rng_protocol = importlib.import_module("rng_protocol")
+    except ModuleNotFoundError as exc:
+        if exc.name != "rng_protocol":
+            raise
+        # Older pinned engines predate the optional RNG v2 module. Their exact
+        # legacy behavior is v1: seed-local draws key directly from the snapshot.
+        class _LegacyRngProtocol:
+            V1 = "v1"
+
+            @staticmethod
+            def plan(scheme, _pregame_sha, _reference, _description):
+                if scheme != "v1":
+                    raise ModelPackError("PORTABLE_RNG_PROTOCOL_UNSUPPORTED_BY_ENGINE")
+
+                class _Plan:
+                    scheme = "v1"
+                    paired = False
+
+                    @staticmethod
+                    def seed_root(_snapshot):
+                        return None
+
+                    @staticmethod
+                    def manifest():
+                        return {"scheme": "v1", "stream_key": "snapshot_sha256 (legacy engine behavior)"}
+
+                return _Plan()
+
+        rng_protocol = _LegacyRngProtocol
     configured_rng = (config.get("rng_protocol") or {}).get("scheme") or rng_protocol.V1
     scheme = args.rng_protocol or configured_rng
     playcall_description = slc_engine.describe(reference) if slc_engine is not None else None

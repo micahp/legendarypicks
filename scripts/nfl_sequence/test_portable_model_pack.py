@@ -7,7 +7,9 @@ from types import SimpleNamespace
 import unittest
 
 from portable_model_pack import ModelPackError, load_pack, write_pack
-from compile_portable_pack import compile_model
+from compile_portable_pack import (_default_frame_cache_args, _portable_runtime_adapters,
+                                   compile_model)
+from simulate_portable_pack import _attach_runtime_adapters, _run_seed
 
 
 def _reference():
@@ -45,6 +47,64 @@ def _snapshot():
 
 
 class PortablePack(unittest.TestCase):
+    def test_v17_penalty_factory_is_frozen_as_model_state_not_a_closure(self):
+        sampler = object()
+        ruling_book = None
+
+        def make_factory(penalty_sampler, pinned_ruling_book):
+            def factory(*, seed, snapshot, ledger):
+                return penalty_sampler, pinned_ruling_book
+            return factory
+
+        reference = SimpleNamespace(penalty_controller_factory=make_factory(sampler, ruling_book))
+        adapters = _portable_runtime_adapters(
+            reference, {"family": "v1.7", "experimental_flags": {"penalty_ruling_policy": "research"}})
+        self.assertIsNone(reference.penalty_controller_factory)
+        self.assertIs(reference.portable_v1_7_penalty_sampler, sampler)
+        self.assertEqual(adapters["v1_7_penalty"]["sampler_attribute"],
+                         "portable_v1_7_penalty_sampler")
+        self.assertEqual(adapters["v1_7_penalty"]["ruling_policy"], "research")
+        json.dumps(adapters)
+
+    def test_v17_runtime_rejects_missing_penalty_model_state(self):
+        with self.assertRaisesRegex(ModelPackError, "PACKED_V17_PENALTY_RUNTIME_MISSING"):
+            _attach_runtime_adapters(SimpleNamespace(), {}, "v1.7")
+
+    def test_compiler_uses_a_commit_and_cutoff_scoped_default_frame_cache(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            snapshot = root / "snapshot.json"
+            snapshot.write_text(json.dumps({"schedule": {"season": 2026}}))
+            args = ["--snapshot-file", str(snapshot), "--db", str(root / "frozen.db")]
+            spec = {"use_playcall_frame_cache": True, "code_commit": "a" * 40}
+            actual = _default_frame_cache_args(spec, args)
+            self.assertEqual(actual[-2], "--playcall-point-splits-cache")
+            self.assertEqual(actual[-1], str(root / "frozen.db.playcall-frame-aaaaaaaaaaaa-2010-2025.npz"))
+
+    def test_legacy_rng_runs_with_pinned_engine_api_without_rng_plan_parameter(self):
+        seen = {}
+
+        def legacy_play(seed, reference, snapshot, *, paired_randomness=False):
+            seen.update(seed=seed, snapshot=snapshot, paired=paired_randomness)
+            return {"status": "complete_regulation"}, []
+
+        engine = SimpleNamespace(is_slc=lambda _reference: True, play=legacy_play)
+        game_state = SimpleNamespace(validate_game=lambda _record: None)
+        plan = SimpleNamespace(scheme="v1", paired=False, seed_root=lambda _snapshot: None)
+        record = _run_seed(17, object(), {"schedule": {}}, game_state, engine, plan)
+        self.assertEqual(record["status"], "complete_regulation")
+        self.assertEqual(seen, {"seed": 17, "snapshot": {"schedule": {}}, "paired": False})
+
+    def test_rng_v2_fails_by_name_when_pinned_engine_has_no_rng_plan_api(self):
+        def legacy_play(seed, reference, snapshot, *, paired_randomness=False):
+            raise AssertionError("must fail before calling the engine")
+
+        engine = SimpleNamespace(is_slc=lambda _reference: True, play=legacy_play)
+        game_state = SimpleNamespace(validate_game=lambda _record: None)
+        plan = SimpleNamespace(scheme="v2", paired=True, seed_root=lambda _snapshot: "root")
+        with self.assertRaisesRegex(ModelPackError, "PORTABLE_RNG_PROTOCOL_UNSUPPORTED_BY_ENGINE"):
+            _run_seed(17, object(), {"schedule": {}}, game_state, engine, plan)
+
     def test_regulation_only_build_option_is_rejected_by_name(self):
         with self.assertRaisesRegex(ModelPackError, "OVERTIME_DISABLED_PROFILE_RETIRED"):
             compile_model("/does/not/matter", "/tmp/unused.slcpack", "v1", ["--no-overtime-table"])

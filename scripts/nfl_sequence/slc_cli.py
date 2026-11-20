@@ -42,6 +42,18 @@ def _snapshot_season(path):
     return int(payload["schedule"]["season"])
 
 
+def _check_python(model_id, spec, version_info=None):
+    minimum = spec.get("minimum_python")
+    if minimum is None:
+        return
+    current = tuple(version_info or sys.version_info[:2])
+    required = tuple(minimum)
+    if current < required:
+        raise RuntimeError(
+            "MODEL_PYTHON_VERSION_UNSUPPORTED: model={} requires Python {}.{}+, got {}.{}"
+            .format(model_id, required[0], required[1], current[0], current[1]))
+
+
 def build(args):
     if args.all:
         unsupported = [model_id for model_id, spec in MODELS.items() if not spec["build_supported"]]
@@ -72,19 +84,29 @@ def build(args):
 
     for model_id in selected:
         spec = get_model(model_id)
+        _check_python(model_id, spec)
         if (model_id, build_season) in entries:
             raise FileExistsError(f"model package is already registered: {(model_id, build_season)}")
         source_root = _env_path(spec["source_root_env"])
-        artifact = _env_path("SLC_V1_PLAYCALL_ARTIFACT")
-        streak = _env_path("SLC_V1_STREAK_FILE")
         with tempfile.TemporaryDirectory(prefix="slc-pack-smoke-") as temp:
             pack_path = output / (model_id + "--season-" + str(build_season) + ".slcpkg")
             forwarded = [
                 "--snapshot-file", str(snapshot), "--db", str(database),
-                "--slc-profile", spec["profile"], "--playcall-artifact", str(artifact),
-                "--playcall-streak-file", str(streak), "--games", "1", "--seed-start", "300001",
-                "--out", str(Path(temp) / "build-smoke.json"),
+                "--slc-profile", spec["profile"],
             ]
+            for item in spec.get("build_inputs", []):
+                if item.get("kind") == "value":
+                    value = os.environ.get(item["env"])
+                    if not value:
+                        raise RuntimeError(f"BUILD_CONFIGURATION_MISSING: set {item['env']}")
+                else:
+                    value = _env_path(item["env"])
+                    if not value.is_file():
+                        raise RuntimeError(f"BUILD_INPUT_FILE_NOT_FOUND: {item['env']}={value}")
+                forwarded.extend([item["flag"], str(value)])
+            forwarded.extend(spec.get("build_args", []))
+            forwarded += ["--games", "1", "--seed-start", "300001",
+                          "--out", str(Path(temp) / "build-smoke.json")]
             subprocess.run([
                 sys.executable, str(HERE / "compile_portable_pack.py"),
                 "--engine-root", str(source_root), "--model-id", model_id,

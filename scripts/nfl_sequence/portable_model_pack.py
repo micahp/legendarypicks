@@ -629,7 +629,9 @@ def collect_engine_files(engine_root, code_commit):
                 (name.startswith("scripts/nfl_sequence/") and name.endswith(".py")) or
                 (PurePosixPath(name).parent == PurePosixPath("scripts") and name.endswith(".py")) or
                 (name.startswith("backend/") and name.endswith(".py")) or
-                name.startswith("docs/rules/")]
+                name.startswith("docs/rules/") or
+                (name.startswith("docs/espn-") and
+                 name.endswith("-codes-2026-07-27.json"))]
     if not any(name == "scripts/nfl_sequence/game_state.py" for name in selected):
         raise ModelPackError("BUNDLED_ENGINE_ENTRYPOINT_MISSING")
     result = {}

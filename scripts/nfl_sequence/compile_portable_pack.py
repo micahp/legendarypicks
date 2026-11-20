@@ -4,8 +4,8 @@
 The expensive build runs once on the data host. The model's original
 simulate_pregame_batch entrypoint resolves all of its flags and source
 fixtures. This adapter captures the fully initialized Reference, pinned code,
-and final build snapshot. V1 currently has a supported adapter; other families
-stay gated until their exact policies and loaders are wired.
+and final build snapshot. V1, V1.5, and V1.6 currently share this adapter;
+the registry enables each family only after its exact policy inputs are wired.
 
 This first-stage compiler runs a one-seed ordinary build as a smoke test.
 The final no-DB parity gate is separate and mandatory before production.
@@ -47,12 +47,80 @@ def _forwarded_option(args, name):
     return None
 
 
+def _default_frame_cache_args(model_spec, forwarded_args):
+    if not model_spec.get("use_playcall_frame_cache") or _forwarded_option(
+            forwarded_args, "--playcall-point-splits-cache"):
+        return list(forwarded_args)
+    database = _forwarded_option(forwarded_args, "--db")
+    snapshot_path = _forwarded_option(forwarded_args, "--snapshot-file")
+    if not database or not snapshot_path:
+        raise ModelPackError("PLAYCALL_FRAME_CACHE_NEEDS_DATABASE_AND_SNAPSHOT")
+    payload = json.loads(Path(snapshot_path).read_text())
+    snapshot = payload.get("pregame_snapshot", payload)
+    season = int(snapshot["schedule"]["season"])
+    cache = Path(str(Path(database).resolve()) + ".playcall-frame-{}-2010-{}.npz".format(
+        model_spec["code_commit"][:12], season - 1))
+    return list(forwarded_args) + ["--playcall-point-splits-cache", str(cache)]
+
+
+def _prepare_frame_cache(engine_root, forwarded_args):
+    cache_path = _forwarded_option(forwarded_args, "--playcall-point-splits-cache")
+    if not cache_path or Path(cache_path).is_file():
+        return
+    database = _forwarded_option(forwarded_args, "--db")
+    snapshot_path = _forwarded_option(forwarded_args, "--snapshot-file")
+    snapshot_payload = json.loads(Path(snapshot_path).read_text())
+    snapshot = snapshot_payload.get("pregame_snapshot", snapshot_payload)
+    cutoff_season = int(snapshot["schedule"]["season"])
+    playcall_model = importlib.import_module("playcall_model")
+    if not hasattr(playcall_model, "load_frame_cached"):
+        raise ModelPackError("PINNED_ENGINE_FRAME_CACHE_BUILDER_MISSING")
+    playcall_model.load_frame_cached(
+        Path(cache_path), range(2010, cutoff_season), db=database)
+
+
+def _portable_runtime_adapters(reference, model_spec):
+    """Replace run-local factories with data that the bundled runtime can rebind."""
+    if model_spec["family"] != "v1.7":
+        return {}
+    factory = getattr(reference, "penalty_controller_factory", None)
+    closure = getattr(factory, "__closure__", None)
+    names = getattr(getattr(factory, "__code__", None), "co_freevars", ())
+    values = {}
+    for name, cell in zip(names, closure or ()):
+        try:
+            values[name] = cell.cell_contents
+        except ValueError:
+            continue
+    sampler = values.get("penalty_sampler")
+    if sampler is None:
+        raise ModelPackError("V17_PENALTY_SAMPLER_CAPTURE_MISSING")
+    ruling_book = values.get("ruling_book")
+    ruling_policy = model_spec["experimental_flags"].get("penalty_ruling_policy")
+    if ruling_policy not in ("research", "pinned"):
+        raise ModelPackError("V17_PENALTY_RULING_POLICY_UNREGISTERED")
+    if ruling_policy == "pinned" and not isinstance(getattr(ruling_book, "by_key", None), dict):
+        raise ModelPackError("V17_PINNED_RULING_BOOK_CAPTURE_MISSING")
+    reference.penalty_controller_factory = None
+    reference.portable_v1_7_penalty_sampler = sampler
+    rulings_by_key = getattr(ruling_book, "by_key", None)
+    if rulings_by_key is not None:
+        reference.portable_v1_7_penalty_rulings_by_key = rulings_by_key
+    return {"v1_7_penalty": {
+        "ruling_policy": ruling_policy,
+        "sampler_attribute": "portable_v1_7_penalty_sampler",
+        "rulings_attribute": ("portable_v1_7_penalty_rulings_by_key"
+                              if rulings_by_key is not None else None),
+    }}
+
+
 def compile_model(engine_root, pack_path, model_id, forwarded_args):
     model_spec = get_model(model_id)
     if not model_spec["build_supported"]:
         raise ModelPackError("MODEL_PACKAGE_NOT_ENABLED: " + model_id)
     if "--no-overtime-table" in forwarded_args:
         raise ModelPackError("OVERTIME_DISABLED_PROFILE_RETIRED: standard packages require full-game overtime support")
+    forwarded_args = _default_frame_cache_args(model_spec, forwarded_args)
     root = Path(engine_root).resolve()
     if not (root / "scripts" / "nfl_sequence" / "simulate_pregame_batch.py").exists():
         raise ModelPackError("ENGINE_SIMULATOR_ENTRYPOINT_MISSING")
@@ -102,12 +170,19 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
         result = original_run_batch(args)
         if not isinstance(result, dict) or not isinstance(result.get("pregame_snapshot"), dict):
             raise ModelPackError("BATCH_DID_NOT_RETURN_FROZEN_SNAPSHOT")
+        summary = result.get("summary")
+        valid_games = summary.get("valid_full_games") if isinstance(summary, dict) else None
+        if not isinstance(valid_games, int) or valid_games < 1:
+            raise ModelPackError("BUILD_SMOKE_NO_VALID_FULL_GAMES")
         reference = captured.get("reference")
         if reference is None:
             raise ModelPackError("BATCH_DID_NOT_LOAD_REFERENCE")
         profile = result.get("slc_profile_manifest") or {}
         if profile.get("profile") != model_spec["profile"]:
             raise ModelPackError("MODEL_PROFILE_DOES_NOT_MATCH_REGISTRY")
+        if (model_spec.get("profile_model_id")
+                and profile.get("model_id") != model_spec["profile_model_id"]):
+            raise ModelPackError("MODEL_VARIANT_DOES_NOT_MATCH_REGISTRY")
         if profile.get("disabled_layers"):
             raise ModelPackError("STANDARD_PACKAGE_HAS_DISABLED_LAYERS")
         sampler = getattr(reference, "contextual_sampler", None)
@@ -140,6 +215,7 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
                 sampler._cells.clear()
             if hasattr(sampler, "_backoff_index"):
                 sampler._backoff_index = None
+        runtime_adapters = _portable_runtime_adapters(reference, model_spec)
         pack = write_pack(
             pack_path,
             reference=reference,
@@ -157,7 +233,10 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
                         "scheme": _forwarded_option(forwarded_args, "--rng-protocol") or "v1"},
                     "experimental_flags": model_spec["experimental_flags"],
                     "training_cutoff": {"eligible_before": [
-                        int(result["pregame_snapshot"]["schedule"]["season"]), 1]},
+                        int(result["pregame_snapshot"]["schedule"]["season"]),
+                        (int(result["pregame_snapshot"]["schedule"]["week"])
+                         if model_spec.get("training_cutoff_scope") == "before_game_week" else 1)]},
+                    "runtime_adapters": runtime_adapters,
                     "runtime_dependencies": None},
         )
         lock_tmp = lock_path.with_name(lock_path.name + ".tmp")
@@ -173,6 +252,7 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
         return result
 
     batch.run_batch = capture_run_batch
+    _prepare_frame_cache(root, forwarded_args)
     # One build-time seed is a smoke check and does NOT train anything.
     with tempfile.TemporaryDirectory(prefix="lp-slc-pack-build-") as temp:
         argv = list(forwarded_args)

@@ -1,6 +1,6 @@
 # SLC Portable Model Packs — Project Context
 
-Updated 2026-11-19
+Updated 2026-11-20
 
 ## Goal
 
@@ -12,7 +12,9 @@ Every standard package must support full games, including overtime. Preserve eac
 
 The portable runtime bundles pinned engine code and JSON-serialized model state in a checksum-protected package. Its runner blocks database connections and research-table or fixture reads.
 
-**V1 is the only enabled package builder so far.** V1.5, V1.6, V1.7, V2, and PBV1 remain gated pending their exact loaders, policies, artifacts, and parity work. Full-family export is not complete.
+**All registered variants now have portable packages and one-seed build smokes:** V1, V1.5, V1.6, V1.7, V2, PBV1 label-only, and PBV1-off. V1 and V1.7 also completed an offline-runner smoke with source-access guards enabled. This is execution evidence only; full portable-versus-legacy parity remains incomplete for every variant. V1.7's pinned penalty fit is marked research-only, and its candidate penalty layer and research ruling policy remain explicit in the package.
+
+The registry pins the overtime-required release commits. Build-time play-call frame caches are scoped to code commit and season cutoff and are reused only after the pinned loader validates their source fingerprint. V1.6, V1.7, and V2 record a before-game-week cutoff; the runtime rejects snapshots earlier than the package cutoff. PBV1-off and PBV1 label-only are separate variants on the V2 code with the original V1 full-stack profile.
 
 Regulation-only execution is retired as a normal profile. Regulation-end data remains available for diagnostics. `regulation_only=True` remains a historical reference-pool filter and does not disable overtime. Missing overtime dependencies fail before seeds execute.
 
@@ -40,7 +42,7 @@ The runner validates the model-input digest and its source hash against the comp
 
 ## Verification achieved
 
-For WAS–NYG, seed `300001`:
+Historical WAS–NYG comparison, seed `300001`:
 
 - Pack SHA-256: `9403c9f63e764720799c8a4bd43a67f3fd3554716abc7692a1c4f39bd2078514`; reference SHA-256: `168b59885d1cc5cbe6a60e4560a8017942afad8e26bf4057d2ea1ab7b58019b5`.
 - RNG v2 stream root matched legacy: `6d1979d6404e6cbc9cfd383fd02a041710c6790173a194c50b11e4c5e8fddc0f`.
@@ -48,7 +50,7 @@ For WAS–NYG, seed `300001`:
 - The complete portable game record matched the legacy record exactly, including transitions, score, and statistics.
 - Portable source-read guards were active during execution.
 
-Focused verification passed: 5 tests, Python compilation, and `git diff --check`. This establishes one-seed WAS–NYG parity. It does **not** complete the two-game, 10-seed, 100-seed, or full-family parity gates.
+Focused verification for that earlier change passed: 5 tests, Python compilation, and `git diff --check`. It establishes one-seed WAS–NYG parity for the package from that run; it does **not** establish parity for the newly built V1 package or complete the two-game, 10-seed, 100-seed, or full-family gates.
 
 ## Branch and working tree
 
