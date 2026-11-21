@@ -18,6 +18,7 @@ import sqlite3
 import argparse
 import importlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -48,6 +49,47 @@ def _forwarded_option(args, name):
         if value.startswith(name + "="):
             return value.split("=", 1)[1]
     return None
+
+
+def _require_registered_build_inputs(model_spec, forwarded_args, environ=None):
+    """Resolve required source artifacts before the historical loader runs.
+
+    slc_cli already forwards these from environment variables, but direct
+    compile_portable_pack invocations must enforce the same registry contract.
+    Per-game streak values are still a separately frozen runtime overlay.
+    """
+    env = os.environ if environ is None else environ
+    result = list(forwarded_args)
+    if result and result[0] == "--":
+        result = result[1:]
+    for item in model_spec.get("build_inputs", ()):
+        flag, variable = item["flag"], item["env"]
+        count = sum(arg == flag or arg.startswith(flag + "=") for arg in result)
+        if count > 1:
+            raise ModelPackError("DUPLICATE_REQUIRED_BUILD_INPUT: " + flag)
+        value = _forwarded_option(result, flag)
+        if value is None:
+            value = env.get(variable)
+            if not value:
+                raise ModelPackError("REQUIRED_MODEL_BUILD_INPUT_MISSING: " + flag + " (" + variable + ")")
+            result.extend((flag, str(value)))
+        if item.get("kind") != "value" and not Path(value).is_file():
+            raise ModelPackError("REQUIRED_MODEL_BUILD_FILE_MISSING: " + flag + " (" + variable + ")")
+    return result
+
+
+def _export_enabled_layers(profile, model_spec, runtime_adapters):
+    """Keep runtime-only layers, notably V1.7 penalties, visible in the pack."""
+    layers = {name for name, on in (profile.get("enabled_layers") or {}).items() if on}
+    if ("current_streak_context" in model_spec.get("enabled_layers", ())
+            and "current_streak_context" not in layers):
+        raise ModelPackError("REQUIRED_CURRENT_STREAK_LAYER_NOT_ENABLED")
+    if model_spec.get("family") == "v1.7":
+        penalty = (runtime_adapters or {}).get("v1_7_penalty")
+        if not isinstance(penalty, dict):
+            raise ModelPackError("REQUIRED_V17_PENALTY_ADAPTER_NOT_CAPTURED")
+        layers.add("penalty_proposal_and_enforcement")
+    return sorted(layers)
 
 
 def _default_frame_cache_args(model_spec, forwarded_args):
@@ -145,6 +187,7 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
         raise ModelPackError("MODEL_PACKAGE_NOT_ENABLED: " + model_id)
     if "--no-overtime-table" in forwarded_args:
         raise ModelPackError("OVERTIME_DISABLED_PROFILE_RETIRED: standard packages require full-game overtime support")
+    forwarded_args = _require_registered_build_inputs(model_spec, forwarded_args)
     forwarded_args = _default_frame_cache_args(model_spec, forwarded_args)
     root = Path(engine_root).resolve()
     if not (root / "scripts" / "nfl_sequence" / "simulate_pregame_batch.py").exists():
@@ -242,6 +285,7 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
                 sampler._backoff_index = None
         _freeze_backoff_support(sampler)
         runtime_adapters = _portable_runtime_adapters(reference, model_spec)
+        export_layers = _export_enabled_layers(profile, model_spec, runtime_adapters)
         pack = write_pack(
             pack_path,
             reference=reference,
@@ -254,7 +298,7 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
                     "source": result.get("source"),
                     "model_profile": profile,
                     "rules_policy": model_spec["rules_policy"],
-                    "enabled_layers": sorted(k for k, v in (profile.get("enabled_layers") or {}).items() if v),
+                    "enabled_layers": export_layers,
                     "rng_protocol": result.get("simulation", {}).get("rng_protocol") or {
                         "scheme": _forwarded_option(forwarded_args, "--rng-protocol") or "v1"},
                     "experimental_flags": model_spec["experimental_flags"],
