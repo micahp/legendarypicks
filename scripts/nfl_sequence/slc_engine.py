@@ -149,7 +149,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
                    streak_league=False, target_roles=False, decision=False, decision_filter=True, dirichlet_shares=False,
                    playbook=False, source_commit=None, qb_decisions=False, player_outcomes=False,
                    player_outcomes_receiver_only=False, blocker_fixes=None, fg_ordinary_cutoff=60,
-                   qb_run_role_style=None, score_clock_playcalling=True, season_adapt=False, season_adapt_n0=4.0,
+                   qb_run_role_style=None, score_clock_playcalling=True, personnel_first=True, season_adapt=False, season_adapt_n0=4.0,
                    pbv1_table=None, participation_field=None, participation_snap_counts=None, fg_kicker=None,
                    workload_adaptive=None, experimental_workload_estimator=None, pass_label_mode='legacy'):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
@@ -183,6 +183,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
                    playcall_player_outcomes=player_outcomes, blocker_fixes=fixes,
                    fg_ordinary_cutoff=fg_ordinary_cutoff, fingerprint=False)  # fingerprinted below, after the pool exclusions and the adapters
     ref.contextual_sampler.score_clock_playcalling_enabled = bool(score_clock_playcalling)
+    ref.contextual_sampler.personnel_first = bool(personnel_first)
     ref.pool, lateral_source_filter = exclude_unmodeled_lateral_rows(ref.pool, ref.participants)
     ref.pool, pass_yardage_source_filter = exclude_inconsistent_pass_yardage_rows(ref.pool, ref.participants)
     ref.pool_scope = dict(ref.pool_scope or {})
@@ -1157,6 +1158,7 @@ def _describe_layer(ref):
     decision_enabled = bool(sampler.decision_outcomes)
     enabled_layers = {
         'score_clock_playcalling': score_clock_enabled,
+        'personnel_first': bool(getattr(sampler, 'personnel_first', True)),
         'team_offense_defense_outcomes': sampler.team_outcomes is not None,
         'team_offense_defense_transitions': sampler.transition_strength is not None,
         'formation_personnel_outcomes': bool(sampler.formation_outcomes),

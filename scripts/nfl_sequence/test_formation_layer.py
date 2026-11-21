@@ -144,5 +144,32 @@ class PreEventChoice(unittest.TestCase):
         self.assertNotIn('formation', chosen)
 
 
+class PersonnelFirstDraft(unittest.TestCase):
+    """draft() draws personnel, then formation, then the call. Its joint must be the call-first joint of choose()."""
+    TABLE = {'cells': {}, 'team_cells': {}, 'strength': 25.0, 'league': {
+        'run': {'personnel': collections.Counter({'11': 6, '12': 4}),
+                'formation': collections.Counter({'SHOTGUN': 3, 'UNDER CENTER': 7})},
+        'dropback': {'personnel': collections.Counter({'11': 2, '12': 8}),
+                     'formation': collections.Counter({'SHOTGUN': 9, 'UNDER CENTER': 1})}}}
+
+    def test_the_personnel_first_draw_has_the_call_first_joint(self):
+        p, n = 0.6, 20000
+        seen = collections.Counter()
+        for seed in range(n):
+            personnel, formation, p_dropback = fl.draft(self.TABLE, p, 1, 10, f'seed:{seed}')
+            call = 'dropback' if random.Random(f'call:{seed}').random() < p_dropback else 'run'
+            seen[(call, personnel, formation)] += 1 / n
+        for call, weight in (('run', 1 - p), ('dropback', p)):
+            for personnel, share_p in fl._known_shares(self.TABLE, call, 1, 10, 'personnel', None).items():
+                for formation, share_f in fl._known_shares(self.TABLE, call, 1, 10, 'formation', None).items():
+                    self.assertAlmostEqual(seen[(call, personnel, formation)], weight * share_p * share_f, delta=0.02)
+
+    def test_a_certain_call_is_never_reversed(self):
+        for seed in range(50):
+            personnel, formation, p_dropback = fl.draft(self.TABLE, 1.0, 1, 10, f'seed:{seed}')
+            self.assertEqual(p_dropback, 1.0)
+            self.assertIn(personnel, ('11', '12'))
+
+
 if __name__ == '__main__':
     unittest.main()

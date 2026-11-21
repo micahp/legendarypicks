@@ -122,7 +122,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
            share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None,
            scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False, pbv1=None, seed_root=None,
-           field=None, lineup_state=None):
+           field=None, lineup_state=None, prepared=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares.
@@ -358,8 +358,11 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                                     _draw(f'{base}:rusher:player'))
     if formation_priors is not None and state is not None:
         import formation_layer  # local: the formation layer is optional
-        chosen['formation'], chosen['personnel'] = formation_layer.choose(
-            formation_priors, intent, state['down'], state['togo'], f'{base}:formation', team=team)
+        if prepared is not None and 'formation' in prepared:  # drawn before the call, by prepare()
+            chosen['formation'], chosen['personnel'] = prepared['formation'], prepared['personnel']
+        else:
+            chosen['formation'], chosen['personnel'] = formation_layer.choose(
+                formation_priors, intent, state['down'], state['togo'], f'{base}:formation', team=team)
     if pbv1 is not None and state is not None:
         package = pbv1.draw(intent, state['down'], state['togo'], state['yl'], f'{base}:pbv1')
         if package is not None:
@@ -413,9 +416,30 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
     lineups = {side: {'lineup': {}, 'group': None} for side in ('home', 'away')}
     share_cache = {}  # one game and seed: each team's Dirichlet draw is made once and reused by every play
 
-    def pick(intent, offense, state=None):
+    def prepare(offense, state, p_dropback):
+        """Personnel first, before the call is drawn: this play's index and, with the formation prior, the personnel, the
+        formation and P(dropback | them) (formation_layer.draft). The caller draws the call and passes this to pick."""
+        if field is not None or pbv1 is not None:
+            raise ValueError('personnel first does not cover the participation field or PBV1 yet; turn it off for these runs')
         index = counter['index']
         counter['index'] += 1
+        prepared = {'index': index}
+        if formation_priors is not None and state is not None:
+            import formation_layer
+            side = 'home' if offense == 'A' else 'away'
+            root = snapshot['snapshot_sha256'] if seed_root is None else seed_root
+            personnel, formation, p_given = formation_layer.draft(
+                formation_priors, p_dropback, state['down'], state['togo'], f'{root}:{seed}:{index}:formation',
+                team=snapshot['rosters'][side]['team'])
+            prepared.update(personnel=personnel, formation=formation, p_dropback=p_given)
+        return prepared
+
+    def pick(intent, offense, state=None, prepared=None):
+        if prepared is None:
+            index = counter['index']
+            counter['index'] += 1
+        else:
+            index = prepared['index']
         side = 'home' if offense == 'A' else 'away'
         return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state,
                       player_shares=player_shares, defense_priors=defense_priors, role_table=role_table,
@@ -424,7 +448,8 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
                       scramble_backoff_enabled=scramble_backoff_enabled,
                       qb_receiver_package=qb_receiver_package,
                       qb_run_role_style_enabled=qb_run_role_style_enabled, pbv1=pbv1, seed_root=seed_root,
-                      field=field, lineup_state=lineups[side] if field is not None else None)
+                      field=field, lineup_state=lineups[side] if field is not None else None, prepared=prepared)
+    pick.prepare = prepare
     return pick
 
 

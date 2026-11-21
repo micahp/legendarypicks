@@ -217,6 +217,8 @@ class PlayCallSampler:
         # research flag (kicker_field_goals, amendment 6): {'table': KickerTable, 'kickers': {side label: gsis_id}}, None off
         self.fg_kicker = None
         self.participant_chooser = None  # set per game by slc_engine: chooses the rusher or target before the outcome is drawn
+        # personnel first: the personnel and formation are drawn before the run or dropback call, which is then drawn given them
+        self.personnel_first = True
         # a team_tendency.TeamTendencies from prior seasons: reweights the outcome drawn within the intent (None: no split)
         self.team_outcomes = None
         # Joint event and yardage strength model. Replaces team_outcomes when enabled.
@@ -408,6 +410,12 @@ class PlayCallSampler:
                 return candidates, level
         return None, None
 
+    def _prepare_play(self, offense, state, p):
+        prepare = getattr(self.participant_chooser, 'prepare', None)  # a plain callable has no personnel step
+        if not self.personnel_first or prepare is None:
+            return None
+        return prepare(offense, state, p)
+
     def _dropback_probability(self, entry, state, team):
         if self.score_clock_playcalling_enabled:
             p = self.layer.p_dropback(state['down'], state['togo'], state['yl'], state['score_diff'], state['quarter'],
@@ -484,15 +492,19 @@ class PlayCallSampler:
             p = point_splits.adjust(p, league_streak_shift)  # the league's streak tendency, in log-odds
         elif self.streak_league is not None:
             split_fallbacks.append('league_streak_split_missing_context')
+        prepared = None
         if kick_keys and rng.random() < kick_share:
             intent, fallback = KICK_INTENT, ('kick decision: historical share of this situation cell (not yet modelled)'
                                              if fg_rule is None else
                                              'kick decision: historical share of this cell weighted by yard line')
         else:
-            intent = 'dropback' if rng.random() < p else 'run'
+            prepared = self._prepare_play(offense, state, p)  # personnel first: the call is drawn given it
+            intent = 'dropback' if rng.random() < (prepared.get('p_dropback', p) if prepared else p) else 'run'
             fallback = None
         called_intent = intent
-        pre_event = self.participant_chooser(called_intent, offense, state) if self.participant_chooser is not None else None
+        choose_kwargs = {'prepared': prepared} if prepared is not None else {}
+        pre_event = (self.participant_chooser(called_intent, offense, state, **choose_kwargs)
+                     if self.participant_chooser is not None else None)
         qb_decision = pre_event.get('qb_decision') if pre_event else None
         scramble = bool(qb_decision and qb_decision.get('action') == 'scramble')
         outcome_intent = 'run' if scramble else called_intent

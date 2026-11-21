@@ -145,6 +145,51 @@ def choose(priors_table, intent, down, togo, seed_text, team=None):
     return result['formation'], result['personnel']
 
 
+CALLS = ('run', 'dropback')
+
+
+def _known_shares(priors_table, call, down, togo, field, team):
+    """The known labels' shares for one call, renormalised (the same rule as choose)."""
+    shares = {label: share for label, share in distribution(priors_table, call, down, togo, field, team).items()
+              if label != UNKNOWN and share > 0}
+    total = sum(shares.values())
+    return {label: share / total for label, share in shares.items()} if total else {}
+
+
+def draft(priors_table, p_dropback, down, togo, seed_text, team=None):
+    """Personnel first, then formation, then the call: the same joint law as choose() after the call.
+
+    choose() draws formation and personnel from their own distributions given the call, so given the call they are
+    independent: P(call) P(personnel | call) P(formation | call). This draws the personnel from its marginal over the call,
+    the formation from its posterior given that personnel, and returns P(dropback | personnel, formation). The caller draws
+    the call from that probability. Only the order of the draws changes. Returns (personnel, formation, p_dropback)."""
+    weights = {'run': 1.0 - p_dropback, 'dropback': p_dropback}
+    shares = {field: {call: _known_shares(priors_table, call, down, togo, field, team) for call in CALLS}
+              for field in ('personnel', 'formation')}
+    rng = random.Random(int.from_bytes(hashlib.sha256(seed_text.encode()).digest()[:8], 'big'))
+    personnel = _draw(rng, _mixture(weights, shares['personnel']))
+    call_given_personnel = {call: weights[call] * shares['personnel'][call].get(personnel, 0.0) for call in CALLS}
+    total = sum(call_given_personnel.values())
+    formation = _draw(rng, _mixture({call: call_given_personnel[call] / total for call in CALLS}, shares['formation']))
+    joint = {call: weights[call] * shares['personnel'][call].get(personnel, 0.0) * shares['formation'][call].get(formation, 0.0)
+             for call in CALLS}
+    return personnel, formation, joint['dropback'] / sum(joint.values())
+
+
+def _mixture(mass, shares_by_call):
+    """sum over calls of mass[call] * shares[call][label], as a distribution over labels."""
+    out = Counter()
+    for call, weight in mass.items():
+        for label, share in shares_by_call[call].items():
+            out[label] += weight * share
+    return out
+
+
+def _draw(rng, probs):
+    labels = sorted(label for label in probs if probs[label] > 0)
+    return rng.choices(labels, weights=[probs[label] for label in labels], k=1)[0]
+
+
 def attach(rows, participation):
     """Set row['formation'] and row['personnel'] on each play row from the participation join (UNKNOWN when unmatched)."""
     for row in rows:
