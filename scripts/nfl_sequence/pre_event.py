@@ -122,7 +122,7 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
            role_table=None, decision_table=None, trick_passer_rate=TRICK_PASSER_RATE, qb_receiver_rate=QB_RECEIVER_RATE,
            share_table=None, playbook_table=None, share_cache=None, qb_decision_table=None,
            scramble_backoff_enabled=False, qb_receiver_package=False, qb_run_role_style_enabled=False, pbv1=None, seed_root=None,
-           field=None, lineup_state=None):
+           field=None, lineup_state=None, prepared=None):
     """{'passer': ..., 'receiver': ...} for a dropback, {'rusher': ...} for a run, None otherwise. Chosen before the outcome.
 
     With formation priors and the situation, also the formation and personnel grouping, from the historical shares.
@@ -149,11 +149,17 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     root = snapshot['snapshot_sha256'] if seed_root is None else seed_root
     base = f"{root}:{seed}:{index}"
     chosen = {'side': side, 'team': team}
-    pbv1_package = pbv1.draw(intent, state['down'], state['togo'], state['yl'], f'{base}:pbv1') \
-        if pbv1 is not None and state is not None else None
-    on_field = _advance_lineup(field, lineup_state, team, available_players, state, base, chosen, intent,
-                               group_override=pbv1_package) \
-        if field is not None else None
+    pbv1_package = None
+    if prepared is None and pbv1 is not None and state is not None:  # call-first order: the package given the call
+        pbv1_package = pbv1.draw(intent, state['down'], state['togo'], state['yl'], f'{base}:pbv1')
+    if prepared is not None and 'lineup' in prepared:  # advanced before the call, by prepare()
+        chosen['lineup'] = prepared['lineup']
+        on_field = set(prepared['lineup']['on_field'])
+    elif field is not None:
+        on_field = _advance_lineup(field, lineup_state, team, available_players, state, base, chosen, intent,
+                                   group_override=pbv1_package)
+    else:
+        on_field = None
 
     def on(candidates):  # the flag-off path returns the list unchanged
         if on_field is None:
@@ -364,8 +370,11 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
                                                     _draw(f'{base}:rusher:player'))
     if formation_priors is not None and state is not None:
         import formation_layer  # local: the formation layer is optional
-        chosen['formation'], chosen['personnel'] = formation_layer.choose(
-            formation_priors, intent, state['down'], state['togo'], f'{base}:formation', team=team)
+        if prepared is not None and 'formation' in prepared:  # drawn before the call, by prepare()
+            chosen['formation'], chosen['personnel'] = prepared['formation'], prepared['personnel']
+        else:
+            chosen['formation'], chosen['personnel'] = formation_layer.choose(
+                formation_priors, intent, state['down'], state['togo'], f'{base}:formation', team=team)
     if pbv1_package is not None:
         chosen['personnel'] = pbv1_package
     if on_field is not None:
@@ -417,9 +426,68 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
     lineups = {side: {'lineup': {}, 'group': None} for side in ('home', 'away')}
     share_cache = {}  # one game and seed: each team's Dirichlet draw is made once and reused by every play
 
-    def pick(intent, offense, state=None):
+    last = {'offense': None, 'half': None, 'personnel': None}  # the last scrimmage play's personnel, for the next in the drive
+
+    def prepare(offense, state, p_dropback):
+        """Personnel first, before the call is drawn: this play's index and, with the formation prior, the personnel, the
+        formation and P(dropback | them) (formation_layer.personnel_first). The caller draws the call and passes this to
+        pick. The previous personnel is the same offense's last play in the same half; any other play starts a drive.
+
+        With the participation field, the lineup is advanced here, from the field's transition that does not see the
+        call, and its grouping is the personnel. The formation and the call are then drawn given it.
+
+        With PBV1, the package is drawn here from PBV1's cell with the run and pass families pooled, so it does not see
+        the call either. It sets the personnel (and the lineup grouping with the field). A play PBV1 cannot draw (a named,
+        counted fallback) keeps the personnel-first draw above."""
+        if (field is not None or pbv1 is not None) and formation_priors is None:
+            raise ValueError('personnel first with the participation field or PBV1 needs the formation priors (the call tables)')
         index = counter['index']
         counter['index'] += 1
+        prepared = {'index': index}
+        if formation_priors is not None and state is not None:
+            import formation_layer
+            side = 'home' if offense == 'A' else 'away'
+            roster = snapshot['rosters'][side]
+            team = roster['team']
+            root = snapshot['snapshot_sha256'] if seed_root is None else seed_root
+            base = f'{root}:{seed}:{index}'
+            package = (pbv1.draw(None, state['down'], state['togo'], state['yl'], f'{base}:pbv1')
+                       if pbv1 is not None else None)  # from the situation alone: no call yet
+            if package is not None:
+                prepared['pbv1_package'] = package
+            if field is not None:
+                import share_distributions
+                available = share_distributions.eligible_players(roster['players'], roster.get('injury_report'))
+                record = {}
+                _advance_lineup(field, lineups[side], team, available, state, base, record, intent=None,
+                                group_override=package)
+                personnel = record['lineup']['group'].split('-')[0]  # '12-OL6' is 1 RB and 2 TE, as the formation layer codes it
+                formation = formation_layer._draw(_draw(f'{base}:formation'),
+                                                  formation_layer.formation_distribution(formation_priors, state, personnel, team))
+                p_given = formation_layer.dropback_given(formation_priors, p_dropback, state, personnel, formation, team)
+                prepared.update(lineup=record['lineup'], personnel=personnel, formation=formation, p_dropback=p_given)
+                return prepared
+            half = min(3, (int(state['quarter']) + 1) // 2)
+            previous = (last['personnel'] if (last['offense'], last['half']) == (offense, half)
+                        else formation_layer.START)
+            if package is not None:
+                personnel = package
+                formation = formation_layer._draw(_draw(f'{base}:formation'),
+                                                  formation_layer.formation_distribution(formation_priors, state, personnel, team))
+                p_given = formation_layer.dropback_given(formation_priors, p_dropback, state, personnel, formation, team)
+            else:
+                personnel, formation, p_given = formation_layer.personnel_first(
+                    formation_priors, p_dropback, state, previous, f'{base}:formation', team=team)
+            last.update(offense=offense, half=half, personnel=personnel)
+            prepared.update(personnel=personnel, formation=formation, p_dropback=p_given, previous_personnel=previous)
+        return prepared
+
+    def pick(intent, offense, state=None, prepared=None):
+        if prepared is None:
+            index = counter['index']
+            counter['index'] += 1
+        else:
+            index = prepared['index']
         side = 'home' if offense == 'A' else 'away'
         return choose(snapshot, side, intent, seed, index, formation_priors=formation_priors, state=state,
                       player_shares=player_shares, defense_priors=defense_priors, role_table=role_table,
@@ -428,7 +496,8 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
                       scramble_backoff_enabled=scramble_backoff_enabled,
                       qb_receiver_package=qb_receiver_package,
                       qb_run_role_style_enabled=qb_run_role_style_enabled, pbv1=pbv1, seed_root=seed_root,
-                      field=field, lineup_state=lineups[side] if field is not None else None)
+                      field=field, lineup_state=lineups[side] if field is not None else None, prepared=prepared)
+    pick.prepare = prepare
     return pick
 
 

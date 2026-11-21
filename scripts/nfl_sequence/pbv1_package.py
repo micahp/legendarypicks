@@ -21,6 +21,7 @@ TRAINING_TABLE = 'docs/research/pbv1-package-integration-2026-11-02/pbv1_trainin
 TABLE_SHA256 = 'ab875384a82ea1d6472e12007d0e1f79316508861a1843730253f40253d8a993'  # pbv1_training_manifest.json csv_sha256
 DISTANCE_BUCKETS = ((1, 2, 'd1_2'), (3, 4, 'd3_4'), (5, 6, 'd5_6'), (7, 9, 'd7_9'), (10, 14, 'd10_14'), (15, 99, 'd15p'))
 RED_ZONE_YARDS = 20  # HPV1: red zone is yardline_100 <= 20
+POOLED = 'any'  # the family of a draw made before the call (personnel first): run and pass counts together
 
 
 def distance_bucket(togo):
@@ -47,8 +48,10 @@ def load(path, expected_sha256, cutoff_season, target='package'):
         if int(row['season']) >= int(cutoff_season):
             continue
         key = (row['family'], row['down'], row['distance'], int(row['red_zone']))
-        cell[key][row[target]] += 1
-        parent[key[:2]][row[target]] += 1
+        for family in (row['family'], POOLED):  # POOLED: both families, for a draw made before the call
+            key = (family,) + key[1:]
+            cell[key][row[target]] += 1
+            parent[key[:2]][row[target]] += 1
         fitted += 1
     if not fitted:
         raise ValueError(f'PBV1 has no training plays before the {cutoff_season} season')
@@ -91,8 +94,9 @@ class Draws:
         self.packages = collections.Counter()
 
     def draw(self, intent, down, togo, yardline_100, seed_text):
-        """A package code for this play, or None (counted) when the cell cannot be drawn."""
-        family = 'run' if intent == 'run' else 'pass'
+        """A package code for this play, or None (counted) when the cell cannot be drawn. With intent None (personnel
+        first, the call not yet drawn) the cell pools the run and pass families."""
+        family = POOLED if intent is None else 'run' if intent == 'run' else 'pass'
         bucket = distance_bucket(togo)
         if bucket is None:
             self.usage['fallback_distance_outside_buckets'] += 1

@@ -85,5 +85,63 @@ class RealModelDraw(unittest.TestCase):
                     self.assertIn(player['gsis_id'], lineup['on_field'])
 
 
+class PersonnelFirst(unittest.TestCase):
+    """With personnel first, prepare() draws the PBV1 package before the call, from the pooled cell; the lineup takes it as
+    its grouping, and the call is drawn given it. pick() keeps it and does not draw PBV1 again."""
+
+    def setUp(self):
+        import formation_layer
+        from test_formation_layer import personnel_first_table
+        from test_participation_field_hook import FIELD, SNAPSHOT as REAL_ROSTERS
+        self.fl, self.table, self.field, self.snapshot = formation_layer, personnel_first_table(), FIELD, REAL_ROSTERS
+        self.model = pp.load(TABLE, pp.TABLE_SHA256, 2026)
+
+    def _game(self, p_dropback, recorder=None):
+        draws = recorder or pp.Draws(self.model)
+        chooser = pe.chooser(self.snapshot, 19, seed_root='b' * 64, field=self.field, pbv1=draws,
+                             formation_priors=self.table)
+        out = []
+        for i in range(30):
+            state = dict(STATE, down=1 + i % 3, togo=(i % 4) + 1, yl=40)
+            prepared = chooser.prepare('A', state, p_dropback)
+            out.append((state, prepared, chooser('dropback', 'A', state, prepared=prepared)))
+        return draws, out
+
+    def test_the_package_does_not_see_the_call(self):
+        _, low = self._game(0.1)
+        _, high = self._game(0.9)
+        self.assertEqual([p['pbv1_package'] for _, p, _ in low], [p['pbv1_package'] for _, p, _ in high])
+
+    def test_the_package_is_the_lineup_grouping_and_is_drawn_once_per_play(self):
+        draws, plays = self._game(0.5)
+        self.assertEqual(draws.usage['drawn'], len(plays))
+        for state, prepared, chosen in plays:
+            self.assertEqual(chosen['lineup']['group'], prepared['pbv1_package'])
+            self.assertEqual(chosen['personnel'], prepared['pbv1_package'])
+            self.assertIn(prepared['pbv1_package'], self.model.distribution(
+                (pp.POOLED, str(state['down']), pp.distance_bucket(state['togo']), 0)))
+
+    def test_the_call_is_drawn_given_the_package(self):
+        _, plays = self._game(0.5)
+        for state, prepared, _ in plays:
+            self.assertAlmostEqual(prepared['p_dropback'], self.fl.dropback_given(
+                self.table, 0.5, state, prepared['personnel'], prepared['formation'], self.snapshot['rosters']['home']['team']))
+
+    def test_the_prepare_draw_has_no_call(self):
+        seen = []
+
+        class Recording(pp.Draws):
+            def draw(self, intent, *args):
+                seen.append(intent)
+                return super().draw(intent, *args)
+        self._game(0.5, Recording(self.model))
+        self.assertEqual(set(seen), {None})
+
+    def test_pbv1_without_the_call_tables_is_refused(self):
+        chooser = pe.chooser(self.snapshot, 19, seed_root='b' * 64, field=self.field, pbv1=pp.Draws(self.model))
+        with self.assertRaises(ValueError):
+            chooser.prepare('A', STATE, 0.5)
+
+
 if __name__ == '__main__':
     unittest.main()

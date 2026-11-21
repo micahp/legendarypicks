@@ -401,6 +401,8 @@ def build_manifest(resolved, description, snapshot, input_provenance):
         'model_id': resolved['model_id'],
         'enabled_layers': dict(resolved['enabled_layers']),
         'disabled_layers': list(resolved['disabled_layers']),
+        # the draw order is not a profile layer: read it from the loaded engine, so the two orders never share a hash
+        'personnel_first': (desc.get('enabled_layers') or {}).get('personnel_first'),
         'layers': layers,
         'playcall_artifact_sha256': artifact_sha,
         'reference_sha256': reference_sha,

@@ -156,6 +156,14 @@ class FullStackProfile(unittest.TestCase):
                                          {'mode': 'retrospective_archive_reconstruction',
                                           'archive_validation': {'prospective': False}})
         self.assertEqual(len(manifest['configuration_hash']), 64)
+        call_first = dict(description, enabled_layers=dict(description['enabled_layers'], personnel_first=False))
+        personnel_first = dict(description, enabled_layers=dict(description['enabled_layers'], personnel_first=True))
+        hashes = {config.build_manifest(self.resolved, d, {'snapshot_sha256': '1' * 64, 'as_of': '2026-10-09T10:00:00Z',
+                                                          'evaluation': {}, 'schedule': {}},
+                                        {'mode': 'retrospective_archive_reconstruction',
+                                         'archive_validation': {'prospective': False}})['configuration_hash']
+                  for d in (call_first, personnel_first)}
+        self.assertEqual(len(hashes), 2)  # the draw order changes the configuration identity
         self.assertEqual(set(manifest['layers']), set(config.ENGINE_LAYER_KEYS))
         for layer in manifest['layers'].values():
             self.assertIn('enabled', layer)

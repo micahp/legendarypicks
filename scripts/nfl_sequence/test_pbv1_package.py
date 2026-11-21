@@ -116,6 +116,14 @@ class TableAndSupport(unittest.TestCase):
         self.assertEqual(first, again)
         self.assertIn(first, model.distribution(('pass', '1', 'd10_14', 0)))
 
+    def test_a_draw_before_the_call_pools_both_families(self):
+        model = pp.load(TABLE, pp.TABLE_SHA256, 2026)
+        for key in (('1', 'd10_14', 0), ('3', 'd1_2', 1)):
+            pooled = model.cell[(pp.POOLED,) + key]
+            self.assertEqual(pooled, model.cell[('run',) + key] + model.cell[('pass',) + key])
+        package = pp.Draws(model).draw(None, 1, 10, 50, 'snap:1:0:pbv1')
+        self.assertIn(package, model.distribution((pp.POOLED, '1', 'd10_14', 0)))
+
     def test_fallbacks_are_counted_by_reason(self):
         draws = pp.Draws(pp.load(TABLE, pp.TABLE_SHA256, 2026))
         self.assertIsNone(draws.draw('run', 1, 0, 50, 'x'))  # no distance bucket

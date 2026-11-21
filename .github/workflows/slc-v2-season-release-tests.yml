@@ -1,0 +1,30 @@
+name: SLC V2 2026 season PBP release pin
+on:
+  push:
+    paths:
+      - 'scripts/nfl_sequence/season_layers.py'
+      - 'scripts/nfl_sequence/test_season_layers.py'
+      - '.github/workflows/slc-v2-season-release-tests.yml'
+  pull_request:
+    branches:
+      - slc-v2
+    paths:
+      - 'scripts/nfl_sequence/season_layers.py'
+      - 'scripts/nfl_sequence/test_season_layers.py'
+      - '.github/workflows/slc-v2-season-release-tests.yml'
+permissions:
+  contents: read
+jobs:
+  season-reference-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install standalone model test dependencies
+        run: python -m pip install numpy==1.26.4 scipy==1.14.1 pandas==2.2.3 pytz==2024.2 pyarrow==22.0.0
+      - name: Source-path and current-season adaptation contract
+        run: |
+          python -m py_compile scripts/nfl_sequence/season_layers.py
+          PYTHONPATH=scripts/nfl_sequence python -m unittest -v test_season_layers
