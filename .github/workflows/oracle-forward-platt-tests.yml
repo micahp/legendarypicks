@@ -21,4 +21,4 @@ jobs:
       - name: Install test dependency
         run: python -m pip install pytest
       - name: Run Oracle SQLite contract suite
-        run: python -m pytest backend/test_oracle.py -q
+        run: python -m pytest backend/test_oracle.py -q --noconftest
