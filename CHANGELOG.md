@@ -1,18 +1,3 @@
-## v11.0.0
-
-### SLC model family
-
-- One release for the whole SLC model family: v1, v1.5, v1.6, v1.7 and v2.
-- v2 before the switch is kept as its own call-first version. v2 now draws personnel and formation before the run or pass call.
-- The personnel draw is fitted from play data, not a reorder of the old draws.
-- A per-play debug trace (`--trace-dir`) and `step_trace.py` let you step through a game play by play.
-- PBV1 and the participation field draw personnel first. `--no-personnel-first` runs the older order.
-
-### Fixes
-
-- The season frame records the score file it actually read.
-- The configuration hash includes the draw order, so the two orders never share an identity.
-
 ## v10.3.0
 
 ### NFL box score
