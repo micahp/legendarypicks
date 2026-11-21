@@ -50,8 +50,11 @@ class KickerTable:
         return cls(json.loads(Path(path).read_text()), actual)
 
     def kicker(self, season, week, team):
-        """The team's active kicker for the week. Refuses when the roster has none."""
-        pid = self.assignments.get((int(season), int(week), team))
+        """Resolve database codes (WSH, LAR) to nflverse assignment codes (WAS, LA).
+
+        Unknown teams still fail explicitly; no guess or fallback kicker is supplied.
+        """
+        pid = self.assignments.get((int(season), int(week), nfl_team_codes.to_nflverse_team_code(team)))
         if pid is None:
             raise ValueError(f'kicker table has no active kicker for {team} in {season} week {week}')
         return pid
