@@ -2,6 +2,7 @@
 import sys
 import unittest
 import copy
+import types
 from pathlib import Path
 from unittest.mock import patch
 
@@ -10,6 +11,9 @@ sys.path.insert(0, str(HERE))
 import simulate_pregame_batch as batch  # noqa: E402
 import slc_outputs as outputs  # noqa: E402
 from test_slc_outputs import PROFILE, SNAPSHOT, game_record  # noqa: E402
+
+# The per-seed path reads ref.contextual_sampler, so a bare object() fails before the game runs.
+STUB_REF = types.SimpleNamespace(contextual_sampler=types.SimpleNamespace())
 
 
 def build(record, seed=17):
@@ -30,7 +34,7 @@ class BoxscoreHardInvariants(unittest.TestCase):
                 patch.object(batch.slc_outputs, 'build_boxscore', return_value={
                     'reconciliation': {'status': 'passed'}}):
             outcome, _ = batch._simulate_seed(
-                17, object(), SNAPSHOT, PROFILE, export_boxscores=False, paired_randomness=True)
+                17, STUB_REF, SNAPSHOT, PROFILE, export_boxscores=False, paired_randomness=True)
 
         play_game.assert_called_once()
         self.assertTrue(play_game.call_args.kwargs['paired_randomness'])
@@ -45,7 +49,7 @@ class BoxscoreHardInvariants(unittest.TestCase):
                 patch.object(batch.gs, 'play_game', return_value=record), \
                 patch.object(batch.gs, 'validate_game'):
             outcome, contribution = batch._simulate_seed(
-                17, object(), snapshot, PROFILE, export_boxscores=False)
+                17, STUB_REF, snapshot, PROFILE, export_boxscores=False)
 
         self.assertEqual(outcome['status'], 'validation_error')
         self.assertFalse(outcome['valid_full_game'])
@@ -74,7 +78,7 @@ class BoxscoreHardInvariants(unittest.TestCase):
         with patch.object(batch.slc_engine, 'is_slc', return_value=False), \
                 patch.object(batch.gs, 'play_game', return_value=record), \
                 patch.object(batch.gs, 'validate_game'):
-            outcome, contribution = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, export_boxscores=False)
+            outcome, contribution = batch._simulate_seed(17, STUB_REF, SNAPSHOT, PROFILE, export_boxscores=False)
 
         self.assertEqual(outcome['status'], 'blocked')
         self.assertFalse(outcome['valid_full_game'])
@@ -125,7 +129,7 @@ class BoxscoreHardInvariants(unittest.TestCase):
                 patch.object(batch, '_record_outcome', return_value=valid.copy()), \
                 patch.object(batch.slc_outputs, 'build_boxscore', return_value={
                     'reconciliation': {'status': 'passed'}}) as build_boxscore:
-            outcome, contribution = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, export_boxscores=False)
+            outcome, contribution = batch._simulate_seed(17, STUB_REF, SNAPSHOT, PROFILE, export_boxscores=False)
 
         build_boxscore.assert_called_once()
         self.assertTrue(outcome['valid_full_game'])
@@ -144,7 +148,7 @@ class BoxscoreHardInvariants(unittest.TestCase):
                 patch.object(batch, '_record_outcome', side_effect=[good, failed]), \
                 patch.object(batch.slc_outputs, 'build_boxscore', return_value={
                     'reconciliation': {'status': 'failed', 'failure_class': 'STAT_ACCOUNTING'}}) as build_boxscore:
-            outcome, contribution = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, export_boxscores=False)
+            outcome, contribution = batch._simulate_seed(17, STUB_REF, SNAPSHOT, PROFILE, export_boxscores=False)
 
         build_boxscore.assert_called_once()
         self.assertFalse(outcome['valid_full_game'])
@@ -170,7 +174,7 @@ class BoxscoreHardInvariants(unittest.TestCase):
                 patch.object(batch.slc_engine, 'play', return_value=(record, decisions)), \
                 patch.object(batch.gs, 'validate_game', side_effect=AssertionError(
                     'drive 1 play 1 has an illegal clock transition')):
-            outcome, contribution = batch._simulate_seed(17, object(), SNAPSHOT, PROFILE, export_boxscores=False)
+            outcome, contribution = batch._simulate_seed(17, STUB_REF, SNAPSHOT, PROFILE, export_boxscores=False)
 
         self.assertEqual(outcome['status'], 'validation_error')
         self.assertIsNone(contribution)

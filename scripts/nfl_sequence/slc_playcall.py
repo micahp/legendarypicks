@@ -128,7 +128,7 @@ class PlayCallLayer:
         return cls(json.loads(Path(path).read_text()))
 
     def logit(self, down, togo, yl, score_diff, quarter, clock, team=None):
-        return self.logit_of_buckets(int(down) - 1, pm.distance_bucket(int(togo)), pm.field_bucket(int(yl)),
+        return self.logit_of_buckets(int(down) - 1, pm.distance_bucket(togo), pm.field_bucket(yl),
                                      pm.score_bucket(int(score_diff)),
                                      pm.clock_bucket(int(quarter), None if clock is None else int(clock)), team)
 
@@ -334,7 +334,7 @@ class PlayCallSampler:
                 rejected += 1
                 continue
             yards = int(yards)
-            resulting_yardline = int(state['yl']) - yards
+            resulting_yardline = float(state['yl']) - yards
             if ((max_gain is not None and yards > max_gain)
                     or (max_loss is not None and yards < -max_loss)
                     or resulting_yardline < 0 or resulting_yardline > 100):
@@ -829,7 +829,7 @@ class PlayCallSampler:
                                      if use_player_outcomes else []),
             'player_outcome_support': self._player_support(pre_event) if use_player_outcomes else None,
             'state': {'quarter': int(state['quarter']), 'clock': int(state['clock']), 'down': int(state['down']),
-                      'togo': int(state['togo']), 'yardline_100': int(state['yl']),
+                      'togo': state['togo'], 'yardline_100': state['yl'],
                       'score_diff': int(state['score_diff']), 'offense': offense, 'defense': defense, 'team': team},
             'component': ARTIFACT_ID, 'artifact_sha256': self.layer.artifact['sha256'],
             'score_clock_playcalling_applied': self.score_clock_playcalling_enabled,
@@ -880,7 +880,7 @@ class PlayCallSampler:
                 fg_rejected_distance=fg_rejected_distance,
                 fg_long_range_exception=bool(fg_long_range_exception and event == 'field_goal_attempt'),
                 fg_rejection_reason=('beyond_observed_maximum' if fg_rejected_distance and
-                                     min(99, int(state['yl']) + 7) + 10 > float(
+                                     min(99, float(state['yl']) + 7) + 10 > float(
                                          self.field_goal_distance_model['max_observed_attempt_yards'])
                                      else 'beyond_ordinary_cutoff' if fg_rejected_distance else None),
                 fg_fallback_level=None,
@@ -969,7 +969,7 @@ class PlayCallSampler:
         kick_events = {key[1] for key in entry['base'] if key[0] == KICK_INTENT}
         if 'field_goal_attempt' not in kick_events:
             return kick_events, False, False
-        distance = min(99, int(state['yl']) + 7) + 10
+        distance = min(99, float(state['yl']) + 7) + 10
         model = getattr(self, 'field_goal_distance_model', None)
         maximum = float(model['max_observed_attempt_yards']) if model else 0.0
         ordinary = float(self.fg_ordinary_cutoff)

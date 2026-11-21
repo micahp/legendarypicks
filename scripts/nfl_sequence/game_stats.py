@@ -8,6 +8,9 @@ Yards credited on a touchdown are capped at the distance to the goal line in the
 the observed play, not the simulated spot, and a line that said otherwise would contradict the field.
 """
 from collections import defaultdict
+import math
+
+import reducer
 
 QUARTER_LENGTH = 900
 ATTRIBUTION = 'sampled_observed_play'
@@ -71,11 +74,13 @@ def team_stats(drives, points):
                         t['pass_yds'] += _credited(play, _player_yards(play, 'passing_yards', yards))
                         if 'receiving_yards' in (part.get('sampled_play_context') or {}):
                             t['receiving_yds'] += _credited(play, _player_yards(play, 'receiving_yards', yards))
-            if out['turnover'] and ev in ('interception', 'fumble_lost', 'sack_fumble_lost'):
+            # A fumble the offense lost to the defense is a turnover even when the defense scores on it (no possession
+            # change). An interception needs the turnover flag, as before.
+            if (out['turnover'] and ev == 'interception') or reducer.lost_to_defense(ev, out):
                 t['turnovers'] += 1
             if ev == 'interception':
                 t['interceptions'] += 1
-            if ev in ('fumble_lost', 'sack_fumble_lost'):
+            if reducer.lost_to_defense(ev, out):
                 t['fumbles_lost'] += 1
             # Regular punts set `punt`; `punt_attempt` is only present on some
             # special-team outcomes (notably blocked kicks). Count either flag
@@ -126,12 +131,21 @@ def team_stats(drives, points):
 
 
 def _credited(play, yards):
-    """Credit only the distance the ball can legally travel before becoming dead at either goal line."""
+    """One integer stat credit for both player and team, from a legal field state.
+
+    The V1.7 transition engine retains fractional yardlines after half-distance
+    enforcement, while official box-score yardage is integral. Resolve the
+    boundary distance ONCE per play with symmetric half-away-from-zero rounding.
+    Never independently truncate team totals and player totals after summing.
+    """
     if play['outcome']['touchdown']:
-        return min(yards, play['state_before']['yardline_100'])
-    if play['outcome'].get('safety'):
-        return max(yards, play['state_before']['yardline_100'] - 100)
-    return yards
+        yards = min(yards, play['state_before']['yardline_100'])
+    elif play['outcome'].get('safety'):
+        yards = max(yards, play['state_before']['yardline_100'] - 100)
+    if type(yards) not in (int, float) or not math.isfinite(yards):
+        raise ValueError('cannot credit a nonfinite or nonnumeric play yardage')
+    magnitude = math.floor(abs(yards) + 0.5)
+    return magnitude if yards >= 0 else -magnitude
 
 
 def _player_yards(play, field, fallback):
@@ -170,7 +184,7 @@ def player_lines(drives):
                 r['att'] += 1
                 r['yds'] += _credited(play, _player_yards(play, 'rushing_yards', yards))
                 r['td'] += int(ev == 'run' and td)
-            if ev in ('fumble_lost', 'sack_fumble_lost'):
+            if reducer.lost_to_defense(ev, out):
                 role = 'rusher' if part.get('rusher_id') else 'passer'
                 fumbler = part.get(f'{role}_id')
                 if fumbler:

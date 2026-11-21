@@ -38,6 +38,7 @@ Kickoff convention in the published nfl_pbp (measured 2026-10-24): on a kickoff 
 import copy
 import random
 import hashlib
+import math
 from collections import Counter, defaultdict
 from pathlib import Path
 import sys
@@ -235,6 +236,29 @@ def missed_field_goal_spot(kick_spot_yardline_100):
     """
     spot = 100 - kick_spot_yardline_100
     return 80 if spot > 80 else spot
+
+
+def valid_missed_field_goal_sample(result, baseline):
+    """Check the observed missed-FG spot adjustment, including fractional snaps.
+
+    Foul enforcement may leave a fractional kick spot. The sampled historical
+    next-possession adjustment remains whole yards; reject forged source data,
+    out-of-field spots and inconsistent arithmetic rather than integer-casting.
+    """
+    if not isinstance(result, dict):
+        return False
+    spot = result.get('receiving_start_yardline_100')
+    adjustment = result.get('spot_adjustment_yards')
+    source = result.get('source')
+    return bool(
+        result.get('status') == 'sampled_historical_next_drive_spot'
+        and type(spot) in (int, float) and math.isfinite(spot) and 1 <= spot <= 99
+        and type(adjustment) is int
+        and type(baseline) in (int, float) and math.isfinite(baseline)
+        and math.isclose(spot, baseline + adjustment, rel_tol=0, abs_tol=1e-9)
+        and isinstance(source, dict) and source.get('game_id')
+        and type(source.get('play_id')) is int
+        and type(source.get('next_play_id')) is int)
 
 
 def quarter_end_kind(quarter):
@@ -1468,12 +1492,15 @@ class _Game:
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
                                       self.simulation_id, special_teams=special_teams, partial=attempt,
                                       sampling_policy=self.ref.contextual_sampler,
+                                      recovery_model=getattr(self.ref, 'recovery_model', None),
                                       score_diff=self.points[self.offense] - self.points[self.defense],
                                       play_index_start=self.next_play_sequence,
                                       drive_index=len(self.drives) + 1,
                                       paired_random_streams=self.paired_random_streams,
                                       sampling_guard=timeout_guard,
-                                      penalty_controller=self.penalty_controller, **research)
+                                      penalty_controller=self.penalty_controller,
+                                      own_end_zone=getattr(self.ref, 'own_end_zone', 'refuse'),
+                                      geometry_filter=getattr(self.ref, 'geometry_filter', False), **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
@@ -1587,7 +1614,10 @@ class _Game:
             drive['points_scored_on_drive'] = {'team': scorer, 'points': TD_POINTS + try_points, 'try': try_record}
             self._continue(('kick', 'post_score', scorer, other(scorer, self.ledger.teams)))
         elif terminal == 'safety':
-            scorer = self.defense
+            # The two points go to the team named by the outcome: the defense on an offensive safety, the offense on a
+            # defensive one. The team scored upon kicks the free kick.
+            scorer = plays[-1]['outcome'].get('scoring_team') or self.defense
+            kicker = other(scorer, self.ledger.teams)
             self.points[scorer] += SAFETY_POINTS
             drive['points_scored_on_drive'] = {'team': scorer, 'points': SAFETY_POINTS, 'try': None}
             quarter_boundary_safety_kick = ('safety_free_kick_boundaries' in getattr(self.ref, 'blocker_fixes', ())
@@ -1600,7 +1630,7 @@ class _Game:
             else:
                 # Time left on the clock means the free kick is due now, sampled from the observed safety-kick table. At a
                 # Q2/Q4 boundary no safety kick is due before halftime or the end of regulation; the post-score rule skips it.
-                self._continue(('kick', 'safety_free_kick', self.offense, scorer))
+                self._continue(('kick', 'safety_free_kick', kicker, scorer))
         else:
             self.block(f'unhandled_terminal:{terminal}')
 
@@ -1629,12 +1659,13 @@ class _Game:
         snapshot = self.pregame_snapshot
         # a full game is valid only on verified input provenance; an exploratory replay stays a statistical game
         verified = bool((snapshot or {}).get('evaluation', {}).get('verified'))
-        # Mechanically complete penalty games remain research-only until
-        # kick-foul population and ruling-disposition/spot calibration are verified.
+        # Keep the rule-consistent full-game validity independent from
+        # calibration of the penalty occurrence/election/spot model.
         penalty_layer = self.penalty_controller is not None
-        penalty_release_verified = not penalty_layer
-        valid_candidate = bool(snapshot and verified and complete and blocker is None
-                               and not guarded and not unsupported and penalty_release_verified)
+        valid_candidate, forecast_release_validated = full_game_validity(
+            snapshot, complete=complete, blocker=blocker,
+            guarded=guarded, unsupported=unsupported,
+            penalty_enabled=penalty_layer)
         record_mode = ('pregame_full_game' if valid_candidate else 'pregame_statistical_game') if snapshot else 'legal_game_state_first_piece'
         scope_out = scope_out_reasons(blocker, complete) + guard_reasons(guarded)
         rec = {
@@ -1671,6 +1702,7 @@ class _Game:
             'unmodelled_transitions': guarded,
             'two_minute_warnings': two_minute_warnings(self.drives, self.events),
             'valid_full_game': valid_candidate,
+            'forecast_release_validated': forecast_release_validated,
             'unsupported_rules': unsupported,
             'rule_capability_limitations': list(UNSUPPORTED_RULES),
             'guards': {r: dict(GUARDS[r]) for r in UNSUPPORTED_RULES},
@@ -1788,6 +1820,20 @@ def active_unsupported_rules(guarded, blocker):
     return sorted(active)
 
 
+def full_game_validity(snapshot, *, complete, blocker, guarded, unsupported, penalty_enabled):
+    """Separate legal/mechanical validity from release-ready forecasting.
+
+    A fitted-but-uncalibrated research penalty model can finish a valid game
+    under its declared single-foul rule scope. That is NOT validation of its
+    propensity, foul spot, acceptance/election or outcome distributions.
+    """
+    mechanically_valid = bool(
+        snapshot and (snapshot.get('evaluation') or {}).get('verified')
+        and complete and blocker is None and not guarded and not unsupported)
+    release_validated = bool(mechanically_valid and not penalty_enabled)
+    return mechanically_valid, release_validated
+
+
 def play_game(seed, ref, winner_choice=None, max_drives=80, winner=None, pregame_snapshot=None,
               paired_randomness=False, paired_seed_snapshot_sha256=None):
     """Play one game under the normal-game policy. Returns a record; it never raises for a branch.
@@ -1879,20 +1925,17 @@ def _validate_game_impl(record):
                 raise AssertionError(f"missed field goal in drive {drive['index']} has an invalid period-expiry transition")
             continue
         spot = result.get('receiving_start_yardline_100')
-        adjustment = result.get('spot_adjustment_yards')
-        source = result.get('source')
-        if (result.get('status') != 'sampled_historical_next_drive_spot'
-                or not isinstance(spot, int) or not 1 <= spot <= 99
-                or not isinstance(adjustment, int) or spot != baseline + adjustment
-                or not isinstance(source, dict) or not source.get('game_id')
-                or not isinstance(source.get('play_id'), int) or not isinstance(source.get('next_play_id'), int)):
+        if not valid_missed_field_goal_sample(result, baseline):
             raise AssertionError(f"missed field goal in drive {drive['index']} has an invalid sampled spot")
         if index + 1 < len(record['drives']) and not (
                 drive['end_clock'] == 0 and drive['end_quarter'] in (2, 4)):
             next_drive = record['drives'][index + 1]
             expected_offense = play['state_after']['defense_team']
             got_spot = next_drive['plays'][0]['state_before']['yardline_100']
-            if next_drive['offense_team'] != expected_offense or got_spot != spot:
+            if (next_drive['offense_team'] != expected_offense
+                    or type(got_spot) not in (int, float)
+                    or not math.isfinite(got_spot)
+                    or not math.isclose(got_spot, spot, rel_tol=0, abs_tol=1e-9)):
                 raise AssertionError(f"missed field goal in drive {drive['index']} disagrees with the next possession")
     snapshot = record.get('pregame_snapshot') or {}
     observed_reference = (snapshot.get('model_reference') or {}).get('observed_reference', {})

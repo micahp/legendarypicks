@@ -28,6 +28,7 @@ import e0_single_play as e0  # noqa: E402
 import game_state as gs  # noqa: E402
 import playcall_model as pm  # noqa: E402
 import pre_event  # noqa: E402
+import reducer  # noqa: E402
 import slc_playcall as slc  # noqa: E402
 import football_assertions  # noqa: E402
 import nfl_team_codes  # noqa: E402
@@ -339,6 +340,12 @@ def is_slc(ref):
     return isinstance(getattr(ref, 'contextual_sampler', None), slc.PlayCallSampler)
 
 
+def _defensive_scoring_fumble(event, outcome):
+    """A modeled fumble that the defense recovered and scored on (a fumble-return touchdown or a safety)."""
+    return (reducer.lost_to_defense(event, outcome) and outcome.get('recovery_model') is not None
+            and bool(outcome.get('touchdown') or outcome.get('safety')))
+
+
 def _legal_turnover_on_downs(play, outcome):
     before = play.get('state_before') or {}
     after = play.get('state_after') or {}
@@ -555,6 +562,22 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
 
     for offset, (decision, play) in enumerate(zip(decisions[len(plays):], partial_plays), len(plays) + 1):
         event = play.get('event_type')
+        if event == 'penalty':
+            # A blocked drive can contain a live-ball accepted foul before its
+            # unresolved final snap. That nullified play has a legitimate
+            # pre-outcome decision but no credited football outcome.
+            result = play.get('outcome') or {}
+            enforcement = result.get('penalty_enforcement') or {}
+            cancelled = result.get('cancelled_event')
+            if (not cancelled or not result.get('penalty_resolved')
+                    or not _decision_resolves_to_event(decision, cancelled)
+                    or enforcement.get('accepted') is not True
+                    or enforcement.get('play_counts')
+                    or result.get('yards_gained') is not None
+                    or result.get('touchdown') or result.get('safety')):
+                fail(offset, decision, play,
+                     'blocked-attempt nullified penalty lacks a legal source decision or credits a play')
+            continue
         if event not in gs.reducer.EVENT_VOCABULARY:
             fail(offset, decision, play, f'blocked-attempt play event {event!r} is outside the supported SLC rules vocabulary',
                  failure_class='UNSUPPORTED_RULE')
@@ -701,6 +724,26 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                    for field in ('passing_yards', 'receiving_yards')):
                 fail(index, decision, play,
                      'an interception cannot credit passing or receiving yards to the intended target')
+        elif event in ('fumble_lost', 'sack_fumble_lost') and _defensive_scoring_fumble(event, outcome):
+            # The defense recovered and scored: the offense still lost the ball, but there is no next-snap possession
+            # change. The score, the scoring team and the kickoff that follows are checked by the game state.
+            before = play.get('state_before') or {}
+            if outcome.get('touchdown'):
+                if outcome.get('scoring_team') != before.get('defense_team'):
+                    fail(index, decision, play, 'a defensive fumble-return touchdown must credit the recovering defense')
+            elif outcome.get('scoring_team') != before.get('offense_team'):
+                fail(index, decision, play, 'a defensive-recovery safety must credit the offense')
+            if outcome.get('turnover') or outcome.get('punt'):
+                fail(index, decision, play, 'a scoring fumble return has no next-snap change of possession to flag')
+        elif event in ('fumble_lost', 'sack_fumble_lost') and outcome.get('recovery_model') is not None:
+            # A modeled recovery by the offense: the offense keeps the ball unless the endpoint is a turnover on downs.
+            before = play.get('state_before') or {}
+            if outcome.get('touchdown') and outcome.get('scoring_team') != before.get('offense_team'):
+                fail(index, decision, play, 'an offense-recovered touchdown must credit the offense')
+            if outcome.get('safety') and outcome.get('scoring_team') != before.get('defense_team'):
+                fail(index, decision, play, 'an offense-recovered safety must credit the defense')
+            if outcome.get('turnover') and not outcome.get('turnover_on_downs'):
+                fail(index, decision, play, 'an offense-recovered fumble can end in a turnover only on downs')
         elif event in ('fumble_lost', 'sack_fumble_lost'):
             if not outcome.get('turnover'):
                 fail(index, decision, play, 'a fumble_lost event must establish a recovered change of possession')
@@ -789,6 +832,13 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                         or (score_team is not None and score_team != expected_scorer)):
                     fail(index, decision, scoring_play,
                          'a blocked-kick touchdown scorer must match its classified recovery outcome')
+            elif _defensive_scoring_fumble(event, outcome):
+                expected_scorer = outcome.get('scoring_team')
+                if (expected_scorer != before.get('defense_team')
+                        or drive.get('touchdown_scored_by') != expected_scorer
+                        or (score_team is not None and score_team != expected_scorer)):
+                    fail(index, decision, scoring_play,
+                         'a defensive fumble-return touchdown must credit the recovering defense')
             else:
                 fail(index, decision, scoring_play,
                      f'touchdown event {event!r} has no supported scorer attribution',
@@ -811,6 +861,15 @@ def validate_decision_outcomes(record, decisions, *, seed, snapshot=None):
                         or (score_team is not None and score_team != expected_scorer)):
                     fail(index, decision, scoring_play,
                          'a blocked-kick safety scorer must match its classified recovery outcome')
+            elif event in reducer.FUMBLE_EVENTS and outcome.get('recovery_model') is not None:
+                # The safety goes to the team the recovery outcome names: the offense when the defense recovered (the
+                # defense is in its own end zone), the defense when the offense recovered or the ball went out of bounds.
+                expected_scorer = (before.get('offense_team') if reducer.lost_to_defense(event, outcome)
+                                   else before.get('defense_team'))
+                if (not outcome.get('safety') or outcome.get('scoring_team') != expected_scorer
+                        or (score_team is not None and score_team != expected_scorer)):
+                    fail(index, decision, scoring_play,
+                         'a modeled fumble safety must credit the team its recovery outcome names')
             else:
                 fail(index, decision, scoring_play,
                      f'safety event {event!r} has no supported scoring transition',
@@ -841,8 +900,8 @@ def summary(decisions, record=None):
                 action = 'field_goal'
             else:
                 action = 'other'
-            distance = pm.DISTANCE_BUCKETS[pm.distance_bucket(int(state['togo']))][2]
-            field = pm.FIELD_BUCKETS[pm.field_bucket(int(state['yardline_100']))]
+            distance = pm.DISTANCE_BUCKETS[pm.distance_bucket(state['togo'])][2]
+            field = pm.FIELD_BUCKETS[pm.field_bucket(state['yardline_100'])]
             score = pm.SCORE_BUCKETS[pm.score_bucket(int(state['score_diff']))]
             clock = pm.CLOCK_BUCKETS[pm.clock_bucket(int(state['quarter']), int(state['clock']))]
             situational_counts[(str(state['team']), int(state['quarter']), int(state['down']), distance,

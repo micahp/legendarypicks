@@ -9,6 +9,11 @@ Decisions:
 - Turnovers (interception, fumble lost) and punts start the next offense at `spot`, the published position of that
   offense's next snap. `yards_gained` does not encode the spot for these events.
 - A field-goal attempt is a terminal with no result. Made or missed is not in the published columns.
+- A loss that carries the ball into the offense's own end zone is a scoring terminal, not an error. A
+  tackle there is a safety; a fumble that becomes dead there is a safety when the offense recovers and a
+  touchdown when the defense recovers. `recovery` carries that role ('offense' or 'defense'); when it is
+  unknown the reducer refuses to guess and raises UnmodelledOutcome, which the drive loop records as a
+  named block instead of a simulation error.
 """
 
 import math
@@ -24,6 +29,23 @@ FLAGS = ('touchdown', 'safety', 'turnover', 'turnover_on_downs', 'punt', 'punt_a
 
 def _no_flags():
     return {flag: False for flag in FLAGS}
+
+
+FUMBLE_EVENTS = ('fumble_lost', 'sack_fumble_lost')
+
+
+def lost_to_defense(event, outcome):
+    """True when the offense lost a fumble to the defense. This is a statistic, not a possession change.
+
+    A defensive fumble-return touchdown or safety has no next-snap possession change, but the offense still lost the
+    ball. Modeled recoveries set `fumble_lost_to_defense` on the play outcome. Ordinary turnover plays do not carry the
+    key, and for them a fumble turnover always means the defense recovered, so the turnover flag decides.
+    """
+    if event not in FUMBLE_EVENTS:
+        return False
+    if 'fumble_lost_to_defense' in outcome:
+        return bool(outcome['fumble_lost_to_defense'])
+    return bool(outcome.get('turnover'))
 
 
 def _validate_state(st):
@@ -57,7 +79,162 @@ class UnmodelledOutcome(ValueError):
         self.reason = reason
 
 
-def apply_play(st, event, yards, spot=None, kick_outcome=None):
+def _resolve_own_end_zone(st, event, recovery):
+    """Resolve a loss that puts the ball in the offense's own end zone.
+
+    A tackle behind the goal line is a safety. A fumble that becomes dead there is not resolved
+    by this reducer: a turnover event says the offense lost possession, not where the ball was
+    recovered, so neither a defensive touchdown nor an offense safety can be read from it. Any
+    recovery role is refused, and an unknown recovery raises UnmodelledOutcome so the caller
+    classifies the seed. Nothing here invents an end-zone turnover.
+    """
+    flags = _no_flags()
+    if event in TURNOVER_EVENTS:
+        if recovery is not None:
+            raise ValueError(f'{event} does not represent recovery location (got recovery={recovery!r})')
+        raise UnmodelledOutcome('own_end_zone_fumble_recovery_unresolved')
+    flags['safety'] = True
+    flags['scoring_team'] = st['defense']
+    return None, 'safety', flags
+
+
+def apply_modeled_recovery(st, outcome, side='offense'):
+    """Apply a recovery-model outcome (V1.7) at a fumble at or past the offense goal line.
+
+    Only the scoring outcomes are applied here. 'unresolved' is refused, because the ball stays live and no endpoint
+    model exists yet. The reducer never invents a spot or a score for it.
+    """
+    flags = _no_flags()
+    flags['fumble_lost_to_defense'] = side == 'defense'
+    if outcome == 'touchdown':
+        flags['touchdown'] = True
+        flags['scoring_team'] = st['defense']
+        return None, 'touchdown', flags
+    if outcome == 'safety':
+        flags['safety'] = True
+        flags['scoring_team'] = st['defense'] if side == 'offense' else st['offense']
+        return None, 'safety', flags
+    if outcome == 'continuation':
+        raise UnmodelledOutcome('continuation_requires_endpoint')
+    raise ValueError(f'unknown recovery outcome {outcome!r}')
+
+
+def apply_recovery_endpoint(st, side, endpoint):
+    """Resolve a post-recovery endpoint (V1.7). Returns (after, terminal, flags).
+
+    `side` is who recovered ('offense' or 'defense'). `endpoint` comes from recovery_endpoint.draw: terminal and end_yl
+    in the offense's frame. Downs and possession follow the state: the fumbled play used the current down, so the
+    next snap is down+1 with the remaining distance, unless the offense gained the first down. Fourth down that does
+    not reach the line is a turnover on downs at the endpoint.
+    """
+    flags = _no_flags()
+    flags['fumble_lost_to_defense'] = side == 'defense'
+    term, end = endpoint['terminal'], endpoint.get('end_yl')
+    if term == 'touchdown':
+        flags['touchdown'] = True
+        flags['scoring_team'] = st['offense'] if side == 'offense' else st['defense']
+        return None, 'touchdown', flags
+    if term == 'safety':
+        flags['safety'] = True
+        flags['scoring_team'] = st['defense'] if side == 'offense' else st['offense']
+        return None, 'safety', flags
+    if term == 'incomplete':
+        if side != 'offense':
+            raise UnmodelledOutcome('defensive_incomplete_pass_not_modelled')
+        # A legal incomplete forward pass returns the ball to the previous spot (Rule 8-1-4); the down is used. Fourth
+        # down is a turnover on downs at that spot. The offense has not crossed the line in this branch.
+        if st['down'] == 4:
+            flags['turnover_on_downs'] = True
+            flags['turnover'] = True
+            new_yl = 100 - st['yl']
+            return ({'offense': st['defense'], 'defense': st['offense'], 'down': 1,
+                     'togo': min(10, new_yl), 'yl': new_yl}, 'turnover', flags)
+        return ({'offense': st['offense'], 'defense': st['defense'], 'down': st['down'] + 1,
+                 'togo': st['togo'], 'yl': st['yl']}, None, flags)
+    if end is None:
+        raise UnmodelledOutcome(f'endpoint_missing_spot:{term}')
+    if side == 'defense':
+        if end >= 100:
+            flags['touchdown'] = True
+            flags['scoring_team'] = st['defense']
+            return None, 'touchdown', flags
+        if end <= 0 and term in ('out_of_bounds', 'safety'):
+            # The defense sent the ball out of bounds behind its own goal line: a safety for the offense (Rule 11-5-1b).
+            flags['safety'] = True
+            flags['scoring_team'] = st['offense']
+            return None, 'safety', flags
+        if end <= 0:
+            # The defender's momentum carried him into his own end zone where the ball is dead in his team's possession:
+            # a touchback, and the defense takes over at its 20 (Rule 11-5-1b exc. 2; Rule 11-6).
+            flags['turnover'] = True
+            flags['touchback'] = True
+            return ({'offense': st['defense'], 'defense': st['offense'], 'down': 1,
+                     'togo': 10, 'yl': 80}, 'turnover', flags)
+        new_yl = 100 - end
+        flags['turnover'] = True
+        return ({'offense': st['defense'], 'defense': st['offense'], 'down': 1,
+                 'togo': min(10, new_yl), 'yl': new_yl}, 'turnover', flags)
+    if term == 'incomplete' and end >= 100:
+        # The official record marks these plays as no score (no safety flag), so the reducer does not decide them.
+        raise UnmodelledOutcome('incomplete_pass_from_own_end_zone_unverified')
+    if end == 100:
+        # Dead exactly on the goal line, not in the end zone. The placement of the next snap is not verified.
+        raise UnmodelledOutcome('dead_on_goal_line_placement_unverified')
+    if end > 100:
+        # Dead in the offense's own end zone through the offense's own action: a safety (the stated rule).
+        flags['safety'] = True
+        flags['scoring_team'] = st['defense']
+        return None, 'safety', flags
+    if end <= 0:
+        flags['touchdown'] = True
+        flags['scoring_team'] = st['offense']
+        return None, 'touchdown', flags
+    gained = st['yl'] - end
+    togo_left = st['togo'] - gained
+    if togo_left <= 0:
+        flags['first_down'] = True
+        return ({'offense': st['offense'], 'defense': st['defense'], 'down': 1,
+                 'togo': min(10, end), 'yl': end}, None, flags)
+    if st['down'] == 4:
+        flags['turnover_on_downs'] = True
+        flags['turnover'] = True
+        new_yl = 100 - end
+        return ({'offense': st['defense'], 'defense': st['offense'], 'down': 1,
+                 'togo': min(10, new_yl), 'yl': new_yl}, 'turnover', flags)
+    return ({'offense': st['offense'], 'defense': st['defense'], 'down': st['down'] + 1,
+             'togo': togo_left, 'yl': end}, None, flags)
+
+
+RULES_ENGINE_SCHEMA = 'lp-nfl-rules-engine-1'
+
+
+def rules_engine_manifest(own_end_zone, recovery_model, geometry_filter):
+    """Name the own-end-zone rule a run used. Every run records it, so a result says which football rules made it.
+
+    frozen_refuse: the V1.6 rule. Any loss past the own goal line raises, and a run fumble there credits an ordinary
+    turnover. The frozen V1.6 results depend on this, so it is kept as it was.
+    frozen_refuse_geometry_filtered: the same refusal, with the geometry filter on. The filter removes cross-goal
+    fumble rows from the draw, so the sampled games differ and the policy name must differ too.
+    resolve_unmodelled_fumbles_halt: V1.6 with the corrected rules. A tackle past the own goal line is a safety. A
+    fumble there halts the seed unless a recovery model resolves it. The geometry filter must be on, so cross-goal
+    fumble rows are never drawn as ordinary turnovers.
+    resolve_with_recovery_model: the same rules, with the V1.7 recovery model drawing the fumble outcome.
+    """
+    if own_end_zone not in ('refuse', 'resolve'):
+        raise ValueError(f'own_end_zone must be refuse or resolve (got {own_end_zone!r})')
+    if own_end_zone == 'refuse':
+        if recovery_model:
+            raise ValueError('the recovery model needs own_end_zone=resolve')
+        policy = 'frozen_refuse_geometry_filtered' if geometry_filter else 'frozen_refuse'
+    else:
+        if not geometry_filter:
+            raise ValueError('own_end_zone=resolve needs the geometry filter')
+        policy = 'resolve_with_recovery_model' if recovery_model else 'resolve_unmodelled_fumbles_halt'
+    return {'schema': RULES_ENGINE_SCHEMA, 'policy': policy, 'own_end_zone': own_end_zone,
+            'geometry_filter': bool(geometry_filter), 'recovery_model': bool(recovery_model)}
+
+
+def apply_play(st, event, yards, spot=None, kick_outcome=None, recovery=None, own_end_zone='refuse'):
     """Apply one sampled play. Returns (after, terminal, flags).
 
     `after` is the state at the next snap, or None when the drive ends with no next snap (touchdown, safety,
@@ -67,7 +244,12 @@ def apply_play(st, event, yards, spot=None, kick_outcome=None):
     """
     if event not in EVENT_VOCABULARY:
         raise ValueError(f'unknown event {event!r}; the reducer refuses to guess')
+    if own_end_zone not in ('refuse', 'resolve'):
+        raise ValueError(f'own_end_zone must be refuse or resolve (got {own_end_zone!r})')
     _validate_state(st)
+    if event == 'fumble_lost' and own_end_zone == 'resolve' and type(yards) in (int, float) and st['yl'] - yards > 100:
+        # A run fumble past the own goal line has the same unknown recovery as a sack fumble. It is not an ordinary turnover.
+        return _resolve_own_end_zone(st, event, recovery)
     if event in ('run', 'pass_complete', 'pass_incomplete', 'sack', 'sack_fumble_lost'):
         if (type(yards) not in (int, float) or not math.isfinite(yards)):
             raise ValueError(f'{event} needs a finite yards-gained result (got {yards!r})')
@@ -77,6 +259,8 @@ def apply_play(st, event, yards, spot=None, kick_outcome=None):
             if yards > st['yl']:
                 raise ValueError(f'{event} gain {yards} exceeds the {st["yl"]} yards to the goal line')
             if st['yl'] - yards > 100:
+                if own_end_zone == 'resolve':
+                    return _resolve_own_end_zone(st, event, recovery)
                 raise ValueError(f'{event} loss {yards} carries the ball past its own goal line')
         if event in ('sack', 'sack_fumble_lost') and yards > 0:
             raise ValueError('a sack cannot produce positive yardage')

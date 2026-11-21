@@ -146,6 +146,22 @@ class PenaltyGameController:
         if after is not None and after.get("down") is not None and after.get("yl") is not None:
             after_state = DownState(after["down"], after["togo"], after["yl"],
                                     self.teams[after["offense"]])
+            if (ruling["accepted"] and phase == "live_ball"
+                    and proposal.foul_type == "roughing_passer"
+                    and ruling.get("pass_outcome") == "complete"
+                    and event == "pass_complete"
+                    and state.get("sampled_event_terminal") == "turnover_on_downs"
+                    and after["offense"] == state["defense"]):
+                # The reducer has flipped to the defense because the completed
+                # fourth-down pass was short. Roughing gives the offense an
+                # automatic first down: apply 15 yards at the END OF RUN in
+                # the original offense's coordinates, not at the flipped spot.
+                original_end_yardline = 100.0 - after["yl"]
+                if not 0 < original_end_yardline < 100:
+                    raise PenaltyResolutionUnavailable(
+                        "roughing on a completed fourth-down pass needs a non-scoring end-of-run spot")
+                after_state = DownState(before_state.down, before_state.to_go,
+                                        original_end_yardline, before_state.possession)
         else:
             after_state = before_state
         if (ruling["accepted"] and phase == "live_ball" and after is None

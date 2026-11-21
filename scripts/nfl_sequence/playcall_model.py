@@ -52,10 +52,21 @@ GROUP_SIZES = {'down_dist': DOWN_COUNT * len(DISTANCE_BUCKETS), 'field': len(FIE
 
 
 def distance_bucket(ydstogo):
-    for low, high, label in DISTANCE_BUCKETS:
-        if low <= ydstogo <= high:
-            return DISTANCE_BUCKETS.index((low, high, label))
-    raise ValueError(f'distance {ydstogo} is outside the buckets')
+    # The historical fit uses whole-yard to-go cells.  A penalty can leave
+    # a positive fractional distance; round UP solely for the cell label,
+    # never for the actual down-and-distance state or its audit record.
+    # In particular, 0.5 yards is first-and-short, not an illegal zero.
+    try:
+        value = float(ydstogo)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f'distance {ydstogo!r} is outside the buckets') from exc
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError(f'distance {ydstogo!r} is outside the buckets')
+    effective_yards = math.ceil(value)
+    for index, (low, high, _label) in enumerate(DISTANCE_BUCKETS):
+        if low <= effective_yards <= high:
+            return index
+    raise ValueError(f'distance {ydstogo!r} is outside the buckets')
 
 
 def field_bucket(yardline_100):

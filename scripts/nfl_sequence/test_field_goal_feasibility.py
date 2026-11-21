@@ -39,7 +39,8 @@ class FieldGoalDistance(unittest.TestCase):
         self.assertEqual(max(distances), feasibility.MAX_HISTORICAL_KICK_DISTANCE_YARDS)
 
     def test_invalid_snap_spots_fail_closed(self):
-        for spot in (0, 100, True, 38.0, None):
+        # 38.0 is a legal fractional-capable spot now (penalty half-distance), so the invalid set uses NaN instead.
+        for spot in (0, 100, True, float('nan'), None):
             with self.subTest(spot=spot), self.assertRaises(ValueError):
                 feasibility.evaluate(spot)
 
