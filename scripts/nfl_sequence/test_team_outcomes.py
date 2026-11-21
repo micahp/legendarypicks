@@ -73,7 +73,7 @@ class TeamOutcomeSplits(unittest.TestCase):
         sampler.outcome_backoff_enabled = True
         backoff_rows = [POOL[1]] * 8 + [POOL[2]] * 12
         sampler._outcome_rows = lambda *_args: []
-        sampler._backoff_candidates = lambda *_args: (backoff_rows, 'league_intent')
+        sampler._backoff_candidates = lambda *_args, **_kwargs: (backoff_rows, 'league_intent')
 
         event, _row, _runoff, _spot = sampler.sample(random.Random(11), POOL, 'A', 'B', state=STATE)
 

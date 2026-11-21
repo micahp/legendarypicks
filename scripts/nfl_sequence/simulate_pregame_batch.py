@@ -54,6 +54,7 @@ import slc_config  # noqa: E402
 import slc_outputs  # noqa: E402
 import historical_archive  # noqa: E402
 import recovery_model  # noqa: E402
+import reducer  # noqa: E402
 import source_preflight  # noqa: E402
 import football_assertions  # noqa: E402
 import seed_selection  # noqa: E402
@@ -133,6 +134,11 @@ def _reproduction_command(args, seed):
         command.extend(['--slc-fg-ordinary-cutoff', str(args.slc_fg_ordinary_cutoff)])
     if args.slc_profile != 'custom':
         command.extend(['--slc-profile', args.slc_profile])
+    command.extend(['--own-end-zone', args.own_end_zone])
+    if args.geometry_filter:
+        command.append('--geometry-filter')
+    if args.recovery_model:
+        command.extend(['--recovery-model', '--recovery-model-old-weight', str(args.recovery_model_old_weight)])
     if args.playcall_pass_label_mode != 'legacy':
         command.extend(['--playcall-pass-label-mode', args.playcall_pass_label_mode])
     if args.slc_materialized_history:
@@ -1073,6 +1079,8 @@ def run_batch(args):
                 safety_kick_table=safety_kick_table)
     ref.own_end_zone = args.own_end_zone
     ref.geometry_filter = args.geometry_filter
+    # Fails before any game runs if the rules and the recovery model do not fit together.
+    rules_engine = reducer.rules_engine_manifest(args.own_end_zone, args.recovery_model, args.geometry_filter)
     # The recovery model draws the outcome of a fumble at the goal line (V1.7). Off by default; V1.6 is unchanged.
     ref.recovery_model = recovery_model.load(args.recovery_model_old_weight) if args.recovery_model else None
     if getattr(ref, 'contextual_sampler', None) is not None:
@@ -1134,6 +1142,10 @@ def run_batch(args):
             'status': 'research_only_not_release_validated',
         }
     profile_manifest = slc_config.build_manifest(resolved_profile, playcall_description, snapshot, input_provenance)
+    # The model hash stays as it was, so frozen V1.6 keeps its identity. The effective hash adds the rules policy.
+    profile_manifest['rules_engine'] = rules_engine
+    profile_manifest['effective_run_hash'] = _canonical_sha({
+        'configuration_hash': profile_manifest['configuration_hash'], 'rules_engine': rules_engine})
 
     baseline_files = {name: hashlib.sha256((REPO / name).read_bytes()).hexdigest() for name in V1_FILES}
     baseline_started = time.monotonic()
@@ -1284,6 +1296,8 @@ def run_batch(args):
             'resolved_model_id': profile_manifest['model_id'],
             'slc_profile': profile_manifest['profile'],
             'configuration_hash': profile_manifest['configuration_hash'],
+            'rules_engine': rules_engine,
+            'effective_run_hash': profile_manifest['effective_run_hash'],
             'evaluation_class': profile_manifest['evaluation_class'],
             'prospective': profile_manifest['prospective'],
             'seed_start': args.seed_start, 'seed_end_inclusive': seed_values[-1],
@@ -1386,6 +1400,34 @@ def run_batch(args):
     return payload
 
 
+def apply_rules_defaults(args):
+    """Fill the own-end-zone flags that were not given. An explicit flag always wins.
+
+    V1.7 defaults to the corrected rules: resolve, the geometry filter and the recovery model. Frozen V1.6 defaults to
+    refuse, with the geometry filter and the recovery model off. v1_6_rules_fix runs the V1.6 model (v1_6_candidate)
+    with resolve and the geometry filter, and no recovery model. The model hash does not change with these flags. The
+    final mix is checked by reducer.rules_engine_manifest, which raises ValueError for an invalid one.
+    """
+    rules_fix = args.slc_profile == 'v1_6_rules_fix'
+    if rules_fix:
+        if args.own_end_zone not in (None, 'resolve'):
+            raise ValueError('v1_6_rules_fix needs own_end_zone resolve (or no flag)')
+        if args.geometry_filter is False:
+            raise ValueError('v1_6_rules_fix needs the geometry filter (or no flag)')
+        if args.recovery_model:
+            raise ValueError('v1_6_rules_fix has no recovery model; use v1_7_candidate for the recovery model')
+        args.slc_profile = 'v1_6_candidate'
+    if args.recovery_model is None:
+        args.recovery_model = args.slc_profile == 'v1_7_candidate'
+    if args.own_end_zone is None:
+        v17 = args.slc_profile == 'v1_7_candidate'
+        args.own_end_zone = 'resolve' if rules_fix or v17 or args.recovery_model else 'refuse'
+    if args.geometry_filter is None:
+        args.geometry_filter = args.own_end_zone == 'resolve'
+    reducer.rules_engine_manifest(args.own_end_zone, args.recovery_model, args.geometry_filter)
+    return args
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--game-id', help='published nfl_schedule game_id; required unless --snapshot-file is used')
@@ -1396,8 +1438,10 @@ def main(argv=None):
                     help=('explicitly use the current schedule row when no as-of version exists; preserves its real '
                           'ingestion timestamp and classifies the v1 comparison as exploratory'))
     ap.add_argument('--snapshot-file', help='hash-pinned pregame snapshot JSON or game payload containing one')
-    ap.add_argument('--slc-profile', choices=('custom', 's0', 'v1_full_stack', 'v1_6_candidate', 'v1_7_candidate'), default='custom',
-                    help='named fail-closed layer configuration; custom preserves the legacy manual feature flags')
+    ap.add_argument('--slc-profile', choices=('custom', 's0', 'v1_full_stack', 'v1_6_candidate', 'v1_6_rules_fix',
+                                              'v1_7_candidate'), default='custom',
+                    help='named fail-closed layer configuration; custom preserves the legacy manual feature flags. '
+                         'v1_6_rules_fix is the V1.6 model with the corrected own-end-zone rules')
     ap.add_argument('--slc-penalty-model', type=Path,
                     help='V1.7 fitted penalty occurrence model artifact (research only)')
     ap.add_argument('--slc-penalty-manifest', type=Path,
@@ -1503,15 +1547,17 @@ def main(argv=None):
     ap.add_argument('--playcall-artifact',
                     help='SLC v1: the frozen score-clock play-call artifact, fitted before the game season; the pool is cut to '
                          'the weeks before the game. Omit for the S0 control')
-    ap.add_argument('--geometry-filter', action=argparse.BooleanOptionalAction, default=False,
-                    help='exclude turnover source rows that cross a goal line for the simulated field position (V1.7)')
-    ap.add_argument('--recovery-model', action=argparse.BooleanOptionalAction, default=False,
+    ap.add_argument('--geometry-filter', action=argparse.BooleanOptionalAction, default=None,
+                    help='exclude turnover source rows that cross a goal line for the simulated field position. '
+                         'Default: on for V1.7 and v1_6_rules_fix, off for frozen V1.6')
+    ap.add_argument('--recovery-model', action=argparse.BooleanOptionalAction, default=None,
                     help='V1.7: draw the recovery outcome of a fumble at the goal line from the audited model and '
-                         'its observed endpoint pool; needs --own-end-zone resolve and --geometry-filter')
+                         'its observed endpoint pool. Default: on for V1.7, off otherwise; it implies resolve')
     ap.add_argument('--recovery-model-old-weight', type=float, default=recovery_model.DEFAULT_OLD_WEIGHT,
                     help='discount for 1999-2009 counts in the recovery model (0 = 2010-2025 only, 1 = fully pooled)')
-    ap.add_argument('--own-end-zone', choices=('refuse', 'resolve'), default='refuse',
-                    help='own-end-zone fumble rule: refuse (frozen V1.6 behaviour) or resolve (V1.7 repair)')
+    ap.add_argument('--own-end-zone', choices=('refuse', 'resolve'), default=None,
+                    help='own-end-zone fumble rule: refuse (frozen V1.6 behaviour) or resolve (corrected rules). '
+                         'Default: resolve for V1.7 and v1_6_rules_fix, refuse otherwise')
     ap.add_argument('--slc-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
                     help='SLC blocker fix (all fixes default on with --playcall-artifact)')
     ap.add_argument('--slc-disable-blocker-fix', action='append', choices=er.BLOCKER_FIXES, default=[],
@@ -1549,6 +1595,10 @@ def main(argv=None):
                                                   'context: venue capacity, kickoff, forecast, referee status and '
                                                   'broadcast. The model does not read it.'))
     args = ap.parse_args(argv)
+    try:
+        apply_rules_defaults(args)
+    except ValueError as exc:
+        ap.error(str(exc))
     if args.seed_list_file:
         try:
             selection = seed_selection.load_seed_selection(args.seed_list_file)

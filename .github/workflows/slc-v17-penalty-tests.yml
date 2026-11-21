@@ -45,6 +45,12 @@ jobs:
             test_penalty_research_rulings test_penalty_research_summary \
             test_penalty_goal_line_fumble test_penalty_fractional_state \
             test_penalty_v17_failure_repairs
+      - name: Explicit frozen-versus-corrected rules contract and transitions
+        run: |
+          PYTHONPATH=scripts/nfl_sequence python -m unittest -v \
+            test_rules_engine_contract test_e1_transitions \
+            test_field_goal_feasibility test_slc_boxscore_invariants \
+            test_team_outcomes test_build_historical_archive_snapshots
       - name: Full game reducer, player and team accounting, and box-score regression suites
         run: |
           PYTHONPATH=scripts/nfl_sequence python -m unittest -v \
