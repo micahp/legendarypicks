@@ -78,3 +78,38 @@ Keep the joint offense/defense predictor as the owner of conditional event proba
 ### V1.6 materialized-history fallback
 
 The earlier V1.6 package reached a sparse source cell and attempted a SQLite lookup during execution. The compiler now freezes the variant-specific support groups, and the runner resolves candidate IDs from those groups before the pinned sampler restores source-pool order. Rebuilt package `28358756` completed seed 300001 with the offline guards active. Washington won 41–24 in regulation, and the runner classified the game as valid. The [full-game result](slc-play-selection-audit/v1.6-full-game.json) records the source commit, snapshot hash and fitted-reference hash. This test exercised the previously failing seed. Promotion still requires the separate multi-game legacy parity gate.
+
+## V1.6 source results (added after the first push)
+
+Status: still incomplete. These results come from the v1.6 source at commit `1bb3bd50`, not from the v1.6 pack. The pack rebuild is still running.
+
+Inputs: WAS at NYG snapshot (`docs/research/walkforward-2026/snapshots/w10/2026_10_WAS_NYG.json`), the local parity database (sha256 `266db021...`), and the week-9 streak file with team codes translated (WAS to WSH, LA to LAR; values unchanged). Engine: `v1_full_stack`.
+
+### One-play trace, seed 300001
+
+Files: `slc-play-selection-audit/v1.6-source-trace-control.json` and `v1.6-source-trace-filter-off.json`.
+
+| Run | Chosen event | Function calls | Sampler changes |
+|---|---|---|---|
+| Control (row filter on) | run | 124 | 41 |
+| Filter off | run | 124 | 21 |
+
+The filter changes the sampler's step count, not the chosen play, on this one play. One play is not evidence of a general effect.
+
+### 50-seed comparison, seeds 300001 to 300050
+
+File: `slc-play-selection-audit/v1.6-source-50seed-summary.json`.
+
+| Run | Valid games | Mean total | Mean home margin | Home win share | Fallbacks per game |
+|---|---|---|---|---|---|
+| Control (row filter on) | 50 of 50 | 50.3 | +1.6 | 62% | 379.2 |
+| Filter off | 50 of 50 | 46.7 | -3.2 | 36% | 34.0 |
+
+Reading: the filter removes most fallbacks, as designed. Turning it off moved the mean home margin by about 5 points and the home win share by about 26 points. With 50 seeds that is about 1.7 standard errors. The runs were not paired in this summary, and the sample is small. Do not treat this as a finding until the 1,000-seed runs are done.
+
+### Still open
+
+- v1.6 pack rebuild (running; needed for the pack-based trace).
+- v1.6 rows in the ownership matrix.
+- Per-version execution graph.
+- 1,000-seed runs with the row filter on and off.
