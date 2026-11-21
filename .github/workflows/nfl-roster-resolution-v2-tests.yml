@@ -1,0 +1,30 @@
+name: NFL roster resolution V2 contracts
+on:
+  push:
+    paths:
+      - 'scripts/nfl_sequence/roster_resolution.py'
+      - 'scripts/nfl_sequence/resolved_roster_adapter.py'
+      - 'scripts/nfl_sequence/test_roster_resolution.py'
+      - 'scripts/nfl_sequence/test_resolved_roster_adapter.py'
+      - '.github/workflows/nfl-roster-resolution-v2-tests.yml'
+  pull_request:
+    paths:
+      - 'scripts/nfl_sequence/roster_resolution.py'
+      - 'scripts/nfl_sequence/resolved_roster_adapter.py'
+      - 'scripts/nfl_sequence/test_roster_resolution.py'
+      - 'scripts/nfl_sequence/test_resolved_roster_adapter.py'
+      - '.github/workflows/nfl-roster-resolution-v2-tests.yml'
+jobs:
+  roster-resolution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile standalone resolver and adapter
+        run: python -m py_compile scripts/nfl_sequence/roster_resolution.py scripts/nfl_sequence/resolved_roster_adapter.py
+      - name: Roster resolver and converter regression tests
+        run: |
+          python -m unittest discover -s scripts/nfl_sequence -p 'test_roster_resolution.py' -v
+          python -m unittest discover -s scripts/nfl_sequence -p 'test_resolved_roster_adapter.py' -v
