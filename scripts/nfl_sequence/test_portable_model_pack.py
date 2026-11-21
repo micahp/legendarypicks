@@ -9,7 +9,7 @@ import unittest
 
 from portable_model_pack import ModelPackError, load_pack, write_pack
 from compile_portable_pack import (_default_frame_cache_args, _freeze_backoff_support, _portable_runtime_adapters,
-                                   compile_model)
+                                   _require_registered_build_inputs, _export_enabled_layers, compile_model)
 from simulate_portable_pack import _attach_runtime_adapters, _run_seed
 
 
@@ -84,6 +84,52 @@ class PortablePack(unittest.TestCase):
     def test_v17_runtime_rejects_missing_penalty_model_state(self):
         with self.assertRaisesRegex(ModelPackError, "PACKED_V17_PENALTY_RUNTIME_MISSING"):
             _attach_runtime_adapters(SimpleNamespace(), {}, "v1.7")
+
+    def test_v16_streak_file_is_auto_forwarded_from_registered_environment(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            streak = Path(dirname) / "frozen-streaks.json"
+            streak.write_text('{"teams": {}}')
+            model = {"family": "v1.6", "enabled_layers": ["current_streak_context"],
+                     "build_inputs": [{"flag": "--playcall-streak-file", "env": "SLC_V1_6_STREAK_FILE"}]}
+            flags = _require_registered_build_inputs(
+                model, ["--snapshot-file", "snap.json"],
+                {"SLC_V1_6_STREAK_FILE": str(streak)})
+            self.assertEqual(flags[-2:], ["--playcall-streak-file", str(streak)])
+            self.assertEqual(_require_registered_build_inputs(model, flags, {}),
+                             flags)
+
+    def test_required_streak_file_fails_before_model_build_if_missing(self):
+        model = {"family": "v1.6", "build_inputs": [
+            {"flag": "--playcall-streak-file", "env": "SLC_V1_6_STREAK_FILE"}]}
+        with self.assertRaisesRegex(ModelPackError, "REQUIRED_MODEL_BUILD_INPUT_MISSING"):
+            _require_registered_build_inputs(model, [], {})
+        with self.assertRaisesRegex(ModelPackError, "REQUIRED_MODEL_BUILD_FILE_MISSING"):
+            _require_registered_build_inputs(
+                model, ["--playcall-streak-file", "/no/such/frozen-streaks.json"], {})
+        with tempfile.TemporaryDirectory() as dirname:
+            streak = Path(dirname) / "streak.json"
+            streak.write_text("{}")
+            with self.assertRaisesRegex(ModelPackError, "DUPLICATE_REQUIRED_BUILD_INPUT"):
+                _require_registered_build_inputs(
+                    model, ["--playcall-streak-file", str(streak),
+                            "--playcall-streak-file", str(streak)], {})
+
+    def test_v17_export_lists_penalties_and_rejects_missing_adapter(self):
+        profile = {"enabled_layers": {"score_clock_playcalling": True,
+                                      "current_streak_context": True}}
+        spec = {"family": "v1.7", "enabled_layers": [
+            "current_streak_context", "penalty_proposal_and_enforcement"]}
+        adapter = {"v1_7_penalty": {"ruling_policy": "research"}}
+        self.assertEqual(_export_enabled_layers(profile, spec, adapter), [
+            "current_streak_context", "penalty_proposal_and_enforcement",
+            "score_clock_playcalling"])
+        with self.assertRaisesRegex(ModelPackError, "REQUIRED_V17_PENALTY_ADAPTER_NOT_CAPTURED"):
+            _export_enabled_layers(profile, spec, {})
+
+    def test_v16_package_cannot_omit_current_streak_layer(self):
+        spec = {"family": "v1.6", "enabled_layers": ["current_streak_context"]}
+        with self.assertRaisesRegex(ModelPackError, "REQUIRED_CURRENT_STREAK_LAYER_NOT_ENABLED"):
+            _export_enabled_layers({"enabled_layers": {}}, spec, {})
 
     def test_compiler_uses_a_commit_and_cutoff_scoped_default_frame_cache(self):
         with tempfile.TemporaryDirectory() as dirname:
