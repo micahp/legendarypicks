@@ -1,0 +1,154 @@
+{
+  "as_of_utc": "2026-11-11T12:00:00Z",
+  "game_id": "2026_10_WAS_NYG",
+  "pack": {
+    "build_game_id": "2026_10_WAS_NYG",
+    "build_snapshot_sha256": "fb5850ec06a18ab7047c2fb697af607ec8229f8cce4da82588f1e5e9782b6f96",
+    "model_id": "v1.6",
+    "reference_sha256": "aa5b9c9327bec43e20eb78376f796027e4c124930d1a0839951fed06f7721ee5",
+    "sha256": "28358756f481e47f61f341f427fb64ecf92ea3b1c9c2788346f6348bda8887d5",
+    "source_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254"
+  },
+  "regulation_end_diagnostics": {
+    "games_reaching_regulation_end": 1,
+    "games_tied_at_regulation_end": 0,
+    "regulation_scores_by_seed": [
+      {
+        "away_points": 41,
+        "home_points": 24,
+        "seed": 300001
+      }
+    ]
+  },
+  "rng_protocol": {
+    "scheme": "v1",
+    "stream_key": "snapshot_sha256 (legacy engine behavior)"
+  },
+  "schema": "lp-slc-portable-simulation-1",
+  "simulation": {
+    "requested_games": 1,
+    "seed_end_inclusive": 300001,
+    "seed_start": 300001,
+    "valid_full_games": 1
+  },
+  "snapshot_sha256": "3799f1ba1d08a34d62889785239fbbd9e654de71fe0b8212106a385c8097a70c",
+  "summary": {
+    "blocked_before_regulation_end": 0,
+    "blocker_counts": {},
+    "final_ties": 0,
+    "outcomes": [
+      {
+        "away_points": 41,
+        "blocker": null,
+        "complete_game": true,
+        "home_points": 24,
+        "regulation_away_points": 41,
+        "regulation_end_reached": true,
+        "regulation_home_points": 24,
+        "score_scope": "valid_final",
+        "seed": 300001,
+        "status": "complete_regulation",
+        "tied_at_regulation_end": false,
+        "valid_full_game": true
+      }
+    ],
+    "regulation_end_guarded": 0,
+    "regulation_end_reached": 1,
+    "regulation_end_reached_distribution": {
+      "home_minus_away": {
+        "mean": -17.0,
+        "median": -17.0,
+        "p10": -17.0,
+        "p90": -17.0
+      },
+      "market_settlement": null,
+      "most_frequent_exact_score": {
+        "away": 41,
+        "count": 1,
+        "home": 24,
+        "probability": 1.0
+      },
+      "sample_games": 1,
+      "scores": {
+        "away": {
+          "mean": 41.0,
+          "median": 41.0,
+          "p10": 41.0,
+          "p90": 41.0
+        },
+        "home": {
+          "mean": 24.0,
+          "median": 24.0,
+          "p10": 24.0,
+          "p90": 24.0
+        }
+      },
+      "total": {
+        "mean": 65.0,
+        "median": 65.0,
+        "p10": 65.0,
+        "p90": 65.0
+      },
+      "win_probability": {
+        "away": 1.0,
+        "away_wins": 1,
+        "home": 0.0,
+        "home_wins": 0,
+        "tie": 0.0,
+        "ties": 0
+      }
+    },
+    "requested_games": 1,
+    "simulation_or_validation_errors": 0,
+    "status_counts": {
+      "complete_regulation": 1
+    },
+    "tied_at_regulation_end": 0,
+    "valid_full_game_coverage": 1.0,
+    "valid_full_game_distribution": {
+      "home_minus_away": {
+        "mean": -17.0,
+        "median": -17.0,
+        "p10": -17.0,
+        "p90": -17.0
+      },
+      "market_settlement": null,
+      "most_frequent_exact_score": {
+        "away": 41,
+        "count": 1,
+        "home": 24,
+        "probability": 1.0
+      },
+      "sample_games": 1,
+      "scores": {
+        "away": {
+          "mean": 41.0,
+          "median": 41.0,
+          "p10": 41.0,
+          "p90": 41.0
+        },
+        "home": {
+          "mean": 24.0,
+          "median": 24.0,
+          "p10": 24.0,
+          "p90": 24.0
+        }
+      },
+      "total": {
+        "mean": 65.0,
+        "median": 65.0,
+        "p10": 65.0,
+        "p90": 65.0
+      },
+      "win_probability": {
+        "away": 1.0,
+        "away_wins": 1,
+        "home": 0.0,
+        "home_wins": 0,
+        "tie": 0.0,
+        "ties": 0
+      }
+    },
+    "valid_full_games": 1
+  }
+}

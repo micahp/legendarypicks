@@ -1,0 +1,179 @@
+{
+  "component": "slc-opponent-adjusted-conditional-multinomial-v0-research",
+  "commit": "8856e1d187a68617e2d1f3ee638906e43be551cd",
+  "sources": {
+    "2022": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+    "2023": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+    "2024": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+    "2025": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+  },
+  "fit": {
+    "model": "slc-opponent-adjusted-conditional-multinomial-v0-research",
+    "target_season": 2025,
+    "fit_seasons": [
+      2022,
+      2023,
+      2024
+    ],
+    "plays": 38983,
+    "games": 815,
+    "context_count": 108,
+    "contexts_with_support": 82,
+    "prior_observations": 40.0,
+    "ridge_strength": 60.0,
+    "min_context_support": 20,
+    "iterations": 16,
+    "outcomes": [
+      "fumble_lost",
+      "loss",
+      "zero",
+      "short",
+      "chain",
+      "explosive_short",
+      "explosive_chain"
+    ],
+    "offense_team_support": {
+      "ARI": 1205,
+      "ATL": 1433,
+      "BAL": 1383,
+      "BUF": 1205,
+      "CAR": 1195,
+      "CHI": 1295,
+      "CIN": 1002,
+      "CLE": 1289,
+      "DAL": 1302,
+      "DEN": 1173,
+      "DET": 1392,
+      "GB": 1296,
+      "HOU": 1149,
+      "IND": 1274,
+      "JAX": 1168,
+      "KC": 1058,
+      "LA": 1229,
+      "LAC": 1137,
+      "LV": 1111,
+      "MIA": 1168,
+      "MIN": 1107,
+      "NE": 1135,
+      "NO": 1277,
+      "NYG": 1185,
+      "NYJ": 1043,
+      "PHI": 1455,
+      "PIT": 1359,
+      "SEA": 1037,
+      "SF": 1311,
+      "TB": 1150,
+      "TEN": 1225,
+      "WAS": 1235
+    },
+    "defense_team_support": {
+      "ARI": 1273,
+      "ATL": 1287,
+      "BAL": 1057,
+      "BUF": 1092,
+      "CAR": 1419,
+      "CHI": 1272,
+      "CIN": 1180,
+      "CLE": 1242,
+      "DAL": 1270,
+      "DEN": 1179,
+      "DET": 1099,
+      "GB": 1228,
+      "HOU": 1321,
+      "IND": 1382,
+      "JAX": 1204,
+      "KC": 1100,
+      "LA": 1204,
+      "LAC": 1194,
+      "LV": 1229,
+      "MIA": 1111,
+      "MIN": 1155,
+      "NE": 1255,
+      "NO": 1266,
+      "NYG": 1302,
+      "NYJ": 1341,
+      "PHI": 1119,
+      "PIT": 1169,
+      "SEA": 1327,
+      "SF": 1099,
+      "TB": 1121,
+      "TEN": 1217,
+      "WAS": 1269
+    },
+    "fit_sha256": "0ad1be6f37d3a3f7dcc3ace6345d181592dccca5aae86946eecdd65405051d17"
+  },
+  "observation": {
+    "season": 2025,
+    "game_id": "2025_01_NYG_WAS",
+    "play_id": 88,
+    "offense": "WAS",
+    "defense": "NYG",
+    "context": "run|2|6-9|70-79",
+    "outcome": "short"
+  },
+  "probabilities": {
+    "league": {
+      "fumble_lost": 0.006145864732553153,
+      "loss": 0.0932356127333138,
+      "zero": 0.04536534367596532,
+      "short": 0.6467368938906818,
+      "chain": 0.07149591626763997,
+      "explosive_short": 0.0002576062346613801,
+      "explosive_chain": 0.13676276246518462
+    },
+    "offense": {
+      "fumble_lost": 0.0061206367218117775,
+      "loss": 0.0830864393735571,
+      "zero": 0.04486676202006923,
+      "short": 0.6549781535557767,
+      "chain": 0.07743971249128127,
+      "explosive_short": 0.00025118762616815524,
+      "explosive_chain": 0.13325710821133582
+    },
+    "defense": {
+      "fumble_lost": 0.006508367906734054,
+      "loss": 0.0990317508520332,
+      "zero": 0.0402691126859877,
+      "short": 0.6070143369107213,
+      "chain": 0.07888846266640412,
+      "explosive_short": 0.0002759790357902155,
+      "explosive_chain": 0.1680119899423294
+    },
+    "matchup": {
+      "fumble_lost": 0.006489890721148723,
+      "loss": 0.08836381524767692,
+      "zero": 0.03987716415273427,
+      "short": 0.6155308293366382,
+      "chain": 0.08555544834254578,
+      "explosive_short": 0.0002694447015853265,
+      "explosive_chain": 0.1639134074976709
+    }
+  },
+  "calls": [
+    [
+      "predict",
+      167,
+      4
+    ],
+    [
+      "<listcomp>",
+      179,
+      4
+    ],
+    [
+      "_softmax",
+      41,
+      4
+    ],
+    [
+      "<listcomp>",
+      43,
+      4
+    ],
+    [
+      "<genexpr>",
+      45,
+      32
+    ]
+  ]
+}
