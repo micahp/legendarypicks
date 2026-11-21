@@ -131,7 +131,7 @@ def _fingerprint_frozen_reference(reference, reference_loader):
 def _attach_runtime_adapters(reference, config, model_id):
     adapters = config.get("runtime_adapters") or {}
     penalty = adapters.get("v1_7_penalty")
-    if model_id != "v1.7":
+    if get_model(model_id)["family"] != "v1.7":
         if penalty is not None:
             raise ModelPackError("UNEXPECTED_V17_PENALTY_RUNTIME_ADAPTER")
         return
@@ -187,9 +187,9 @@ def _run(args, engine_dir):
     if manifest["model_id"] != args.model:
         raise ModelPackError("MODEL_ID_MISMATCH")
     enabled = set(manifest.get("enabled_layers") or ())
-    if args.model == "v1.7" and "penalty_proposal_and_enforcement" not in enabled:
+    if model["family"] == "v1.7" and "penalty_proposal_and_enforcement" not in enabled:
         raise ModelPackError("PACKED_V17_PENALTY_LAYER_MISSING: rebuild package")
-    if args.model == "v1.6" and "current_streak_context" not in enabled:
+    if model["family"] == "v1.6" and "current_streak_context" not in enabled:
         raise ModelPackError("PACKED_V16_STREAK_LAYER_MISSING: rebuild package")
     sampler = getattr(reference, "contextual_sampler", None)
     if getattr(sampler, "source_support_artifact", None):
