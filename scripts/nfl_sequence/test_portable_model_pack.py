@@ -191,6 +191,22 @@ class PortablePack(unittest.TestCase):
                 self.assertNotIn("reference.pkl", archive.namelist())
             self.assertEqual(config, {})
 
+    def test_v17_writer_rejects_pack_without_penalty_layer_and_sampler(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            with self.assertRaisesRegex(ModelPackError, "V17_PENALTY_EXPORT_INCOMPLETE"):
+                write_pack(Path(dirname) / "bad.slcpack", reference=_reference(),
+                           snapshot=_snapshot(), model_id="v1.7", code_commit="1" * 40,
+                           engine_files=_engine_files(),
+                           config={"enabled_layers": ["score_clock_playcalling"]})
+
+    def test_v16_writer_rejects_missing_streak_game_overlay(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            with self.assertRaisesRegex(ModelPackError, "V16_STREAK_EXPORT_INCOMPLETE"):
+                write_pack(Path(dirname) / "bad.slcpack", reference=_reference(),
+                           snapshot=_snapshot(), model_id="v1.6", code_commit="1" * 40,
+                           engine_files=_engine_files(),
+                           config={"enabled_layers": ["current_streak_context"]})
+
     def test_missing_overtime_fails_during_build(self):
         ref = _reference()
         ref.overtime_pool = None
