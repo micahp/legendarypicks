@@ -1,0 +1,28 @@
+name: NFL finalized roster recovery offline contracts
+on:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - 'backend/recover_finalized_nfl_game_rosters.py'
+      - 'backend/test_recover_finalized_nfl_game_rosters.py'
+      - '.github/workflows/nfl-finalized-roster-recovery-tests.yml'
+  push:
+    paths:
+      - 'backend/recover_finalized_nfl_game_rosters.py'
+      - 'backend/test_recover_finalized_nfl_game_rosters.py'
+      - '.github/workflows/nfl-finalized-roster-recovery-tests.yml'
+permissions:
+  contents: read
+jobs:
+  postgame-roster-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile retrospective roster extractor
+        run: python -m py_compile backend/recover_finalized_nfl_game_rosters.py
+      - name: Test offline page sections, emergency 3QB and source hashes
+        run: python -m unittest discover -s backend -p test_recover_finalized_nfl_game_rosters.py -v
