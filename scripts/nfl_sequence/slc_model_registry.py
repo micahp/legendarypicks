@@ -63,7 +63,7 @@ MODELS = {
         "use_playcall_frame_cache": True,
     },
     "v1.6": {
-        "family": "v1.6", "code_commit": "1bb3bd50c4df5896e4d693245e48329c20c63254",
+        "family": "v1.6", "code_commit": "a109bacfcba08dc68bf2b12cd3d0ac2d55306d16",
         "source_root_env": "SLC_V1_6_SOURCE_ROOT", "profile": "v1_6_candidate",
         "profile_model_id": "SLC_v1_6_candidate",
         "build_inputs": [
