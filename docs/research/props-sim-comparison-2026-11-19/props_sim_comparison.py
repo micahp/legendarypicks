@@ -63,6 +63,8 @@ def load_arm(directory):
                         series = values[market][pid]
                         series.extend([0.0] * (seeds - 1 - len(series)))  # a player absent from earlier seeds scored 0
                         series.append(fn(per_player[pid]) if pid in per_player else 0.0)
+    if seeds == 0:
+        raise ValueError(f'no simulated game records in {directory}')
     return values, seeds
 
 
