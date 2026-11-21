@@ -19,6 +19,16 @@ def evidence(team_games, game_ids=('g1',), n0=4.0):
     return sl.Evidence(2026, CUTOFF, 'target', game_ids, team_games, n0=n0)
 
 
+class PBPReleasePin(unittest.TestCase):
+    def test_week10_release_only_changes_2026_source(self):
+        self.assertEqual(sl.release_path(2026),
+                         '/root/lp-snapshots/nfl-backfill-2026-11-17/raw/pbp/play_by_play_2026.parquet')
+        self.assertEqual(sl.release_path(2025),
+                         '/root/lp-snapshots/nfl-backfill-2026-11-03/raw/pbp/play_by_play_2025.parquet')
+        self.assertEqual(sl.release_path(2022),
+                         '/root/lp-snapshots/nfl-backfill-2026-11-03/raw/pbp/play_by_play_2022.parquet')
+
+
 class Weight(unittest.TestCase):
     def test_the_weight_on_history_is_n0_over_n0_plus_games(self):
         ev = evidence({'AAA': 7, 'BBB': 0})
