@@ -25,4 +25,4 @@ jobs:
       - name: Compile retrospective roster extractor
         run: python -m py_compile backend/recover_finalized_nfl_game_rosters.py
       - name: Test offline page sections, emergency 3QB and source hashes
-        run: python -m unittest discover -s backend -p test_recover_finalized_nfl_game_rosters.py -v
+        run: PYTHONPATH=backend python -m unittest -v test_recover_finalized_nfl_game_rosters
