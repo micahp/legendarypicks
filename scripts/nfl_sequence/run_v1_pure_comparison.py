@@ -17,7 +17,6 @@ from pathlib import Path
 import shlex
 import subprocess
 import sys
-from datetime import datetime, timezone
 
 BLOCKER_FIXES = (
     "run_scramble_backoff",
@@ -85,7 +84,6 @@ def main(argv=None):
         "v1_pure": [
             "--slc-profile", "custom",
             "--playcall-dirichlet-shares",
-            "--playcall-exact-yardline",
         ],
     }
     plan = {
@@ -93,7 +91,7 @@ def main(argv=None):
         "status": "planned",
         "model_identity": {
             "v1_original": "historical v1_full_stack, unmodified",
-            "v1_pure": "research: score-clock + historical event sampler + Dirichlet usage + exact red-zone yardline; all other optional statistical layers off",
+            "v1_pure": "research: score-clock + historical event sampler + Dirichlet usage; all other optional statistical layers off",
         },
         "game_id": game_id,
         "snapshot_declared_sha256": snapshot.get("snapshot_sha256"),
