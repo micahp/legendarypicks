@@ -113,3 +113,20 @@ Reading: the filter removes most fallbacks, as designed. Turning it off moved th
 - v1.6 rows in the ownership matrix.
 - Per-version execution graph.
 - 1,000-seed runs with the row filter on and off.
+
+## Paired 50-seed comparison (V1.6 source)
+
+File: `slc-play-selection-audit/v1.6-source-50seed-paired.json`.
+
+The two runs use the same seeds (300001 to 300050) and the same inputs. Each seed is compared with itself.
+
+| Metric | Mean difference (filter on minus filter off) | Standard error | 95% range |
+|---|---|---|---|
+| Home margin | +4.82 points | 2.13 | +0.65 to +8.99 |
+| Total points | +3.58 points | 2.40 | -1.13 to +8.29 |
+
+Only 50% of seeds end with the same home winner in both runs.
+
+Reading: the margin difference is just above zero. The total difference includes zero. This is a weak signal. The 1,000-seed paired run is needed before any conclusion about the filter.
+
+Still open: the first-divergence row trace, the finished V1.6 ownership matrix, and the 1,000-seed paired run.

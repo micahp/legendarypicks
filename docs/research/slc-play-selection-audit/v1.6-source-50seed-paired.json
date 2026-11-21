@@ -1,0 +1,23 @@
+{
+  "design": "paired by seed; control (row filter on) minus filter-off; same seeds, same inputs",
+  "seeds": 50,
+  "seed_range": "300001-300050",
+  "home_margin_diff": {
+    "mean": 4.82,
+    "se": 2.13,
+    "ci95": [
+      0.65,
+      8.99
+    ]
+  },
+  "total_diff": {
+    "mean": 3.58,
+    "se": 2.4,
+    "ci95": [
+      -1.13,
+      8.29
+    ]
+  },
+  "same_home_winner_share": 0.5,
+  "source_summary": "v1.6-source-50seed-summary.json"
+}
