@@ -109,14 +109,15 @@ def test_no_unplayed_game_on_or_after_today_says_so(tmp_path):
     assert 'no unplayed NFL game' in oracle.render_text(answer)
 
 
-def test_full_slate_lists_every_game_of_the_next_slate_in_kickoff_order(season_db):
-    slate = oracle.full_slate(season_db, '2026-11-17')
+def test_full_slate_lists_every_game_of_the_next_slate_in_kickoff_order(season_db, tmp_path):
+    slate = oracle.full_slate(season_db, '2026-11-17', store=str(tmp_path / 'no-store'))
     assert (slate['season'], slate['week'], slate['games_total'], slate['unplayed']) == (2026, 11, 2, 2)
     assert [g['game_id'] for g in slate['games']] == ['2026_11_EEE_FFF', '2026_11_CCC_DDD']
 
 
-def test_full_slate_of_a_named_week_ignores_today_and_shows_scores(season_db):
-    slate = oracle.full_slate(season_db, '2026-11-17', season=2026, week=10)
+def test_full_slate_of_a_named_week_ignores_today_and_shows_scores(season_db, tmp_path):
+    slate = oracle.full_slate(season_db, '2026-11-17', season=2026, week=10,
+                              store=str(tmp_path / 'no-store'))
     assert slate['games_total'] == 1
     assert slate['games'][0]['played'] is True
     assert slate['games'][0]['home_score'] == 20
