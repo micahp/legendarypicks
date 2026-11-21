@@ -2,12 +2,13 @@
 import json
 import io
 import tempfile
+import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
 
 from portable_model_pack import ModelPackError, load_pack, write_pack
-from compile_portable_pack import (_default_frame_cache_args, _portable_runtime_adapters,
+from compile_portable_pack import (_default_frame_cache_args, _freeze_backoff_support, _portable_runtime_adapters,
                                    compile_model)
 from simulate_portable_pack import _attach_runtime_adapters, _run_seed
 
@@ -47,6 +48,20 @@ def _snapshot():
 
 
 class PortablePack(unittest.TestCase):
+    def test_backoff_freeze_preserves_group_membership_and_variant(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "support.sqlite"
+            with sqlite3.connect(str(path)) as db:
+                db.execute("CREATE TABLE support(variant,level,outcome_class,lookup_key,game_id,play_id)")
+                db.executemany("INSERT INTO support VALUES (?,?,?,?,?,?)", [
+                    ("11", "down_field", "run", '[1,"own"]', "A", 8),
+                    ("00", "down_field", "run", '[1,"own"]', "A", 3),
+                    ("11", "down_field", "run", '[1,"own"]', "B", 2)])
+            sampler = SimpleNamespace(source_support_artifact=str(path), source_support_variant="11")
+            _freeze_backoff_support(sampler)
+            self.assertEqual(sampler.portable_backoff_groups,
+                             {("down_field", "run", (1, "own")): [("A", 8), ("B", 2)]})
+
     def test_v17_penalty_factory_is_frozen_as_model_state_not_a_closure(self):
         sampler = object()
         ruling_book = None

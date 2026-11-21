@@ -186,6 +186,19 @@ def _run(args, engine_dir):
         expected_code_commit=model["code_commit"], engine_dir=engine_root)
     if manifest["model_id"] != args.model:
         raise ModelPackError("MODEL_ID_MISMATCH")
+    sampler = getattr(reference, "contextual_sampler", None)
+    if getattr(sampler, "source_support_artifact", None):
+        groups = getattr(sampler, "portable_backoff_groups", None)
+        if not groups:
+            raise ModelPackError("MATERIALIZED_BACKOFF_SUPPORT_MISSING: rebuild package")
+        history = importlib.import_module("slc_materialized_history")
+
+        def bundled_backoff_ids(artifact, variant, level, outcome_class, key):
+            if (artifact, variant) != (sampler.source_support_artifact, sampler.source_support_variant):
+                raise ModelPackError("MATERIALIZED_BACKOFF_VARIANT_MISMATCH")
+            return groups.get((level, outcome_class, key), ())
+
+        history.backoff_ids = bundled_backoff_ids
     _attach_runtime_adapters(reference, config, args.model)
     snapshot_loader = importlib.import_module("pregame_snapshot")
     try:

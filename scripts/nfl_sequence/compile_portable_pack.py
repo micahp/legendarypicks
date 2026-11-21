@@ -12,6 +12,9 @@ The final no-DB parity gate is separate and mandatory before production.
 """
 from __future__ import annotations
 
+from collections import defaultdict
+from contextlib import closing
+import sqlite3
 import argparse
 import importlib
 import json
@@ -112,6 +115,28 @@ def _portable_runtime_adapters(reference, model_spec):
         "rulings_attribute": ("portable_v1_7_penalty_rulings_by_key"
                               if rulings_by_key is not None else None),
     }}
+
+
+def _freeze_backoff_support(sampler):
+    artifact = getattr(sampler, "source_support_artifact", None)
+    if not artifact:
+        return
+    # The pinned engine tests membership before indexing its cache. Install
+    # a bundle-backed provider at load time for both populated and empty keys.
+    groups = defaultdict(list)
+    uri = Path(artifact).resolve(strict=True).as_uri() + "?mode=ro"
+    with closing(sqlite3.connect(uri, uri=True)) as connection:
+        rows = connection.execute(
+            "SELECT level, outcome_class, lookup_key, game_id, play_id "
+            "FROM support WHERE variant=? ORDER BY rowid", (sampler.source_support_variant,))
+        for level, outcome, encoded, game, play in rows:
+            key = json.loads(encoded)
+            groups[level, outcome, tuple(key) if isinstance(key, list) else key].append((game, play))
+    if not groups:
+        raise ModelPackError("EMPTY_MATERIALIZED_BACKOFF_SUPPORT")
+    sampler.portable_backoff_groups = dict(groups)
+    sampler._source_support_ids = {}
+    sampler._source_support_lookup = None
 
 
 def compile_model(engine_root, pack_path, model_id, forwarded_args):
@@ -215,6 +240,7 @@ def compile_model(engine_root, pack_path, model_id, forwarded_args):
                 sampler._cells.clear()
             if hasattr(sampler, "_backoff_index"):
                 sampler._backoff_index = None
+        _freeze_backoff_support(sampler)
         runtime_adapters = _portable_runtime_adapters(reference, model_spec)
         pack = write_pack(
             pack_path,
