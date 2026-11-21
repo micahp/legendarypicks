@@ -144,31 +144,106 @@ class PreEventChoice(unittest.TestCase):
         self.assertNotIn('formation', chosen)
 
 
-class PersonnelFirstDraft(unittest.TestCase):
-    """draft() draws personnel, then formation, then the call. Its joint must be the call-first joint of choose()."""
-    TABLE = {'cells': {}, 'team_cells': {}, 'strength': 25.0, 'league': {
-        'run': {'personnel': collections.Counter({'11': 6, '12': 4}),
-                'formation': collections.Counter({'SHOTGUN': 3, 'UNDER CENTER': 7})},
-        'dropback': {'personnel': collections.Counter({'11': 2, '12': 8}),
-                     'formation': collections.Counter({'SHOTGUN': 9, 'UNDER CENTER': 1})}}}
+def personnel_first_table(**overrides):
+    """Personnel-first counts for one cell (1st and 10) and the league. 12 after 12 is sticky; 12 under center runs."""
+    C = collections.Counter
+    table = {'strength': 25.0, 'personnel_league': C({'11': 60, '12': 40}),
+             'personnel_cells': {(False, 1, '7-10', '12'): C({'12': 90, '11': 10}),
+                                 (False, 1, '7-10', fl.START): C({'11': 60, '12': 40})},
+             'personnel_previous': {}, 'personnel_situation': {}, 'personnel_team': {},
+             'formation_cells': {}, 'formation_league': {'11': C({'SHOTGUN': 1}), '12': C({'UNDER CENTER': 1})},
+             'formation_team': {},
+             'call_cells': {('12', 'UNDER CENTER', 1, '7-10'): C({'run': 80, 'dropback': 20}),
+                            ('11', 'SHOTGUN', 1, '7-10'): C({'run': 30, 'dropback': 70})},
+             'call_league': {}, 'call_team': {}, 'call_situation': {(1, '7-10'): C({'run': 50, 'dropback': 50})},
+             'call_situation_team': {}, 'call_overall': C({'run': 50, 'dropback': 50})}
+    table.update(overrides)
+    return {'personnel_first': table}
 
-    def test_the_personnel_first_draw_has_the_call_first_joint(self):
-        p, n = 0.6, 20000
-        seen = collections.Counter()
-        for seed in range(n):
-            personnel, formation, p_dropback = fl.draft(self.TABLE, p, 1, 10, f'seed:{seed}')
-            call = 'dropback' if random.Random(f'call:{seed}').random() < p_dropback else 'run'
-            seen[(call, personnel, formation)] += 1 / n
-        for call, weight in (('run', 1 - p), ('dropback', p)):
-            for personnel, share_p in fl._known_shares(self.TABLE, call, 1, 10, 'personnel', None).items():
-                for formation, share_f in fl._known_shares(self.TABLE, call, 1, 10, 'formation', None).items():
-                    self.assertAlmostEqual(seen[(call, personnel, formation)], weight * share_p * share_f, delta=0.02)
+
+FIRST_AND_TEN = {'down': 1, 'togo': 10, 'quarter': 1, 'clock': 600}
+
+
+class PersonnelFirst(unittest.TestCase):
+    """personnel_first() draws personnel from the situation and the previous personnel, then formation, then the call."""
+
+    def test_the_personnel_does_not_see_the_call_probability(self):
+        for seed in range(200):
+            low = fl.personnel_first(personnel_first_table(), 0.1, FIRST_AND_TEN, fl.START, f'seed:{seed}')
+            high = fl.personnel_first(personnel_first_table(), 0.9, FIRST_AND_TEN, fl.START, f'seed:{seed}')
+            self.assertEqual(low[:2], high[:2])
+
+    def test_the_previous_personnel_in_the_drive_moves_the_draw(self):
+        n = 4000
+        after_12 = sum(fl.personnel_first(personnel_first_table(), 0.5, FIRST_AND_TEN, '12', f's:{i}')[0] == '12'
+                       for i in range(n)) / n
+        at_start = sum(fl.personnel_first(personnel_first_table(), 0.5, FIRST_AND_TEN, fl.START, f's:{i}')[0] == '12'
+                       for i in range(n)) / n
+        self.assertAlmostEqual(at_start, 0.40, delta=0.03)
+        self.assertGreater(after_12, 0.75)
+
+    def test_the_call_is_shifted_by_the_personnel_and_formation(self):
+        runs = {}
+        for seed in range(400):
+            personnel, formation, p = fl.personnel_first(personnel_first_table(), 0.5, FIRST_AND_TEN, fl.START, f's:{seed}')
+            runs[(personnel, formation)] = p
+        self.assertLess(runs[('12', 'UNDER CENTER')], 0.35)
+        self.assertGreater(runs[('11', 'SHOTGUN')], 0.55)
 
     def test_a_certain_call_is_never_reversed(self):
         for seed in range(50):
-            personnel, formation, p_dropback = fl.draft(self.TABLE, 1.0, 1, 10, f'seed:{seed}')
-            self.assertEqual(p_dropback, 1.0)
-            self.assertIn(personnel, ('11', '12'))
+            for p in (0.0, 1.0):
+                self.assertEqual(fl.personnel_first(personnel_first_table(), p, FIRST_AND_TEN, fl.START, f's:{seed}')[2], p)
+
+    def test_old_priors_without_the_tables_refuse(self):
+        with self.assertRaises(ValueError):
+            fl.personnel_first(priors({'SHOTGUN': 1}, {'SHOTGUN': 1}), 0.5, FIRST_AND_TEN, fl.START, 's')
+
+    def test_the_fit_chains_personnel_within_a_drive_and_skips_unknown(self):
+        import sqlite3
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            db = f'{folder}/fixture.db'
+            con = sqlite3.connect(db)
+            con.execute('CREATE TABLE nfl_pbp (game_id, play_id, season, week, posteam, drive, qtr, game_seconds_remaining, '
+                        'down, ydstogo, play_type)')
+            con.execute('CREATE TABLE nfl_hist_participation (nflverse_game_id, play_id, season, offense_formation, '
+                        'offense_personnel)')
+            plays = [(1, 1, 'run', '1 RB, 2 TE, 2 WR'), (2, 1, 'pass', '1 RB, 2 TE, 2 WR'), (3, 1, 'pass', None),
+                     (4, 1, 'run', '1 RB, 1 TE, 3 WR'), (5, 2, 'pass', '1 RB, 1 TE, 3 WR')]
+            for play_id, drive, play_type, personnel in plays:
+                con.execute('INSERT INTO nfl_pbp VALUES (?, ?, 2020, 1, ?, ?, 1, 3000, 1, 10, ?)',
+                            ('g', play_id, 'KC', drive, play_type))
+                con.execute('INSERT INTO nfl_hist_participation VALUES (?, ?, 2020, ?, ?)',
+                            ('g', play_id, 'SHOTGUN', personnel))
+            con.commit()
+            con.close()
+            table = fl.personnel_first_priors(db, 2021)
+        cells = table['personnel_cells']
+        self.assertEqual(cells[(False, 1, '7-10', fl.START)], collections.Counter({'12': 1, '11': 1}))  # plays 1 and 5
+        self.assertEqual(cells[(False, 1, '7-10', '12')], collections.Counter({'12': 1}))  # play 2
+        self.assertNotIn((False, 1, '7-10', fl.UNKNOWN), cells)  # play 4 follows an unknown play: no transition
+        self.assertEqual(table['personnel_league'], collections.Counter({'12': 2, '11': 2}))
+        self.assertEqual(table['call_cells'][('12', 'SHOTGUN', 1, '7-10')], collections.Counter({'run': 1, 'dropback': 1}))
+
+
+class PersonnelFirstChooser(unittest.TestCase):
+    def test_the_previous_personnel_carries_within_a_drive_and_resets_on_a_change_of_offense(self):
+        from test_pre_event import SNAPSHOT
+        seen = []
+        original = fl.personnel_first
+
+        def recording(table, p, state, previous, seed_text, team=None):
+            seen.append(previous)
+            return '12', 'UNDER CENTER', p
+        fl.personnel_first = recording
+        try:
+            prepare = pe.chooser(SNAPSHOT, 7, formation_priors=personnel_first_table()).prepare
+            for offense, quarter in (('A', 1), ('A', 1), ('B', 1), ('B', 3)):
+                prepare(offense, dict(FIRST_AND_TEN, quarter=quarter), 0.5)
+        finally:
+            fl.personnel_first = original
+        self.assertEqual(seen, [fl.START, '12', fl.START, fl.START])
 
 
 if __name__ == '__main__':

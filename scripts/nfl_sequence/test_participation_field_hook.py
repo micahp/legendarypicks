@@ -220,5 +220,48 @@ class Loading(unittest.TestCase):
         self.assertIn('LAR', FIELD.teams)  # nfl_team_codes.TeamKeyed: either spelling finds the Rams
 
 
+class PersonnelFirst(unittest.TestCase):
+    """prepare() advances the lineup before the call, from the transition that does not see it, then the formation and
+    the call given the grouping. pick() keeps that lineup; it does not advance it again."""
+
+    def setUp(self):
+        from test_formation_layer import personnel_first_table
+        import formation_layer
+        self.fl = formation_layer
+        self.table = personnel_first_table()
+        self.field = pf.Field.load(V4_TABLE, V4_SHA256)
+
+    def _game(self, p_dropback, plays=60):
+        pick = pe.chooser(SNAPSHOT, 41, seed_root='r' * 64, field=self.field, formation_priors=self.table)
+        out = []
+        for state in states(plays, 41):
+            prepared = pick.prepare('A', state, p_dropback)
+            out.append((state, prepared, pick('dropback', 'A', state, prepared=prepared)))
+        return out
+
+    def test_the_lineup_does_not_see_the_call(self):
+        low, high = self._game(0.1), self._game(0.9)
+        self.assertEqual([p['lineup']['on_field'] for _, p, _ in low], [p['lineup']['on_field'] for _, p, _ in high])
+
+    def test_pick_keeps_the_prepared_lineup_and_labels_its_grouping(self):
+        plays = self._game(0.5)
+        for (_, prepared, chosen), (_, after, _) in zip(plays, plays[1:]):
+            self.assertIs(chosen['lineup'], prepared['lineup'])
+            self.assertEqual(chosen['personnel'], prepared['lineup']['group'])
+            self.assertEqual(prepared['personnel'], prepared['lineup']['group'].split('-')[0])
+        groups = [p['lineup']['group'] for _, p, _ in plays]
+        self.assertGreater(len(set(groups)), 1)
+
+    def test_the_call_is_drawn_given_the_grouping_and_formation(self):
+        for state, prepared, _ in self._game(0.5):
+            self.assertAlmostEqual(prepared['p_dropback'], self.fl.dropback_given(
+                self.table, 0.5, state, prepared['personnel'], prepared['formation'], SNAPSHOT['rosters']['home']['team']))
+
+    def test_the_field_without_call_tables_is_refused(self):
+        pick = pe.chooser(SNAPSHOT, 41, seed_root='r' * 64, field=self.field)
+        with self.assertRaises(ValueError):
+            pick.prepare('A', states(1)[0], 0.5)
+
+
 if __name__ == '__main__':
     unittest.main()

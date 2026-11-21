@@ -146,8 +146,13 @@ def choose(snapshot, side, intent, seed, index, formation_priors=None, state=Non
     root = snapshot['snapshot_sha256'] if seed_root is None else seed_root
     base = f"{root}:{seed}:{index}"
     chosen = {'side': side, 'team': team}
-    on_field = _advance_lineup(field, lineup_state, team, available_players, state, base, chosen, intent) \
-        if field is not None else None
+    if prepared is not None and 'lineup' in prepared:  # advanced before the call, by prepare()
+        chosen['lineup'] = prepared['lineup']
+        on_field = set(prepared['lineup']['on_field'])
+    elif field is not None:
+        on_field = _advance_lineup(field, lineup_state, team, available_players, state, base, chosen, intent)
+    else:
+        on_field = None
 
     def on(candidates):  # the flag-off path returns the list unchanged
         if on_field is None:
@@ -416,22 +421,47 @@ def chooser(snapshot, seed, formation_priors=None, player_shares=None, defense_p
     lineups = {side: {'lineup': {}, 'group': None} for side in ('home', 'away')}
     share_cache = {}  # one game and seed: each team's Dirichlet draw is made once and reused by every play
 
+    last = {'offense': None, 'half': None, 'personnel': None}  # the last scrimmage play's personnel, for the next in the drive
+
     def prepare(offense, state, p_dropback):
         """Personnel first, before the call is drawn: this play's index and, with the formation prior, the personnel, the
-        formation and P(dropback | them) (formation_layer.draft). The caller draws the call and passes this to pick."""
-        if field is not None or pbv1 is not None:
-            raise ValueError('personnel first does not cover the participation field or PBV1 yet; turn it off for these runs')
+        formation and P(dropback | them) (formation_layer.personnel_first). The caller draws the call and passes this to
+        pick. The previous personnel is the same offense's last play in the same half; any other play starts a drive.
+
+        With the participation field, the lineup is advanced here, from the field's transition that does not see the
+        call, and its grouping is the personnel. The formation and the call are then drawn given it."""
+        if pbv1 is not None:
+            raise ValueError('personnel first does not cover PBV1 yet; turn it off for these runs')
+        if field is not None and formation_priors is None:
+            raise ValueError('personnel first with the participation field needs the formation priors (the call tables)')
         index = counter['index']
         counter['index'] += 1
         prepared = {'index': index}
         if formation_priors is not None and state is not None:
             import formation_layer
             side = 'home' if offense == 'A' else 'away'
+            roster = snapshot['rosters'][side]
+            team = roster['team']
             root = snapshot['snapshot_sha256'] if seed_root is None else seed_root
-            personnel, formation, p_given = formation_layer.draft(
-                formation_priors, p_dropback, state['down'], state['togo'], f'{root}:{seed}:{index}:formation',
-                team=snapshot['rosters'][side]['team'])
-            prepared.update(personnel=personnel, formation=formation, p_dropback=p_given)
+            base = f'{root}:{seed}:{index}'
+            if field is not None:
+                import share_distributions
+                available = share_distributions.eligible_players(roster['players'], roster.get('injury_report'))
+                record = {}
+                _advance_lineup(field, lineups[side], team, available, state, base, record, intent=None)
+                personnel = record['lineup']['group'].split('-')[0]  # '12-OL6' is 1 RB and 2 TE, as the formation layer codes it
+                formation = formation_layer._draw(_draw(f'{base}:formation'),
+                                                  formation_layer.formation_distribution(formation_priors, state, personnel, team))
+                p_given = formation_layer.dropback_given(formation_priors, p_dropback, state, personnel, formation, team)
+                prepared.update(lineup=record['lineup'], personnel=personnel, formation=formation, p_dropback=p_given)
+                return prepared
+            half = min(3, (int(state['quarter']) + 1) // 2)
+            previous = (last['personnel'] if (last['offense'], last['half']) == (offense, half)
+                        else formation_layer.START)
+            personnel, formation, p_given = formation_layer.personnel_first(
+                formation_priors, p_dropback, state, previous, f'{base}:formation', team=team)
+            last.update(offense=offense, half=half, personnel=personnel)
+            prepared.update(personnel=personnel, formation=formation, p_dropback=p_given, previous_personnel=previous)
         return prepared
 
     def pick(intent, offense, state=None, prepared=None):
