@@ -262,7 +262,13 @@ def adapt_shares(table, db, evidence):
     return {**table, 'base': base}, {'teams_blended': dict(teams_blended)}
 
 
+# Keep frozen earlier-season reference source stable when advancing current-season PBP.
 PBP_RELEASE = '/root/lp-snapshots/nfl-backfill-2026-11-03/raw/pbp/play_by_play_{season}.parquet'
+PBP_RELEASE_2026 = '/root/lp-snapshots/nfl-backfill-2026-11-17/raw/pbp/play_by_play_2026.parquet'
+
+
+def release_path(season):
+    return PBP_RELEASE_2026 if int(season) == 2026 else PBP_RELEASE.format(season=season)
 SHIFT_STRENGTH = 25.0  # the point and streak splits' own prior strength, used for the score-clock offset too
 
 
@@ -270,7 +276,7 @@ def release_scores(season, path=None):
     """((game_id, play_id) -> pre-play scores, file SHA-256) from the nflverse play-by-play release. The pinned raw files of
     earlier seasons do not cover the current season, so its file is identified by the hash recorded here."""
     import pyarrow.parquet as pq
-    path = path or PBP_RELEASE.format(season=season)
+    path = path or release_path(season)
     with open(path, 'rb') as source:
         sha = hashlib.sha256(source.read()).hexdigest()
     table = pq.read_table(path, columns=['game_id', 'play_id', 'season_type', 'posteam_score', 'defteam_score',
