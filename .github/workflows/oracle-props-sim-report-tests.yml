@@ -1,0 +1,26 @@
+name: Oracle props-vs-simulation utility tests
+on:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - 'docs/research/props-sim-comparison-2026-11-19/**'
+      - '.github/workflows/oracle-props-sim-report-tests.yml'
+  push:
+    paths:
+      - 'docs/research/props-sim-comparison-2026-11-19/**'
+      - '.github/workflows/oracle-props-sim-report-tests.yml'
+permissions:
+  contents: read
+jobs:
+  props-sim-report-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify self-contained SQLite and simulation fixture
+        run: |
+          python -m py_compile docs/research/props-sim-comparison-2026-11-19/props_sim_comparison.py
+          python -m unittest discover -s docs/research/props-sim-comparison-2026-11-19 -p 'test_props_sim_comparison.py' -v
