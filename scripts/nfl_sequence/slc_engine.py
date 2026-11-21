@@ -151,7 +151,7 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
                    player_outcomes_receiver_only=False, blocker_fixes=None, fg_ordinary_cutoff=60,
                    qb_run_role_style=None, score_clock_playcalling=True, personnel_first=True, season_adapt=False, season_adapt_n0=4.0,
                    pbv1_table=None, participation_field=None, participation_snap_counts=None, fg_kicker=None,
-                   workload_adaptive=None, experimental_workload_estimator=None, pass_label_mode='legacy'):
+                   workload_adaptive=None, experimental_workload_estimator=None, pass_label_mode='legacy', season_scores=None):
     """(Reference, excluded_kickoffs) for one snapshot. The play pool holds only prior seasons: no outcome from the game's own
     season is used, so a 2026 forecast draws on 2022 to 2025 and not on the 2026 results before it.
 
@@ -172,6 +172,13 @@ def load_reference(db, snapshot, artifact_path, team_outcomes=False, transition_
         import season_layers
         kickoff = datetime.strptime(schedule['scheduled_kickoff_utc'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=pytz.utc)
         season_evidence = season_layers.Evidence.for_target(db, season, schedule['game_id'], kickoff, n0=season_adapt_n0)
+        # fail fast: the score file must cover every available game, checked now and not after the tables load
+        season_layers.check_score_source(db, season_evidence, *(season_scores or (None, None)))
+    if fg_kicker:  # fail fast: both teams need an active kicker for the game week, checked before the tables load
+        import kicker_field_goals
+        early = kicker_field_goals.KickerTable.load(*fg_kicker)
+        for team in side_teams(snapshot).values():
+            early.kicker(season, int(schedule['week']), team)
     ref, excluded = er.load(db, eligible_before=(season, 1), playcall_artifact=str(artifact_path),
                    playcall_teams=side_teams(snapshot), playcall_team_outcomes=team_outcomes,
                    playcall_transition_strength=transition_strength,

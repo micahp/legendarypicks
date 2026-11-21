@@ -31,8 +31,46 @@ class PBPReleasePin(unittest.TestCase):
     def test_the_manifest_names_the_file_the_scores_were_read_from(self):
         import inspect
         source = inspect.getsource(sl.apply)  # apply() needs a full reference to run; the recorded path is pinned here
-        self.assertIn("'score_source': release_path(evidence.season)", source)
+        self.assertIn("release_scores(evidence.season, evidence.score_file)", source)
+        self.assertIn("'score_source': evidence.score_file}", source)
         self.assertNotIn("'score_source': PBP_RELEASE.format(", source)
+
+
+class ScoreSourcePreflight(unittest.TestCase):
+    """check_score_source refuses, before any table loads, a score file that lacks a game available at the cutoff."""
+
+    def setUp(self):
+        import os
+        import sqlite3
+        import tempfile
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+        self.folder = tempfile.mkdtemp()
+        self.db = os.path.join(self.folder, 'db.sqlite')
+        con = sqlite3.connect(self.db)
+        con.execute('CREATE TABLE nfl_pbp (game_id TEXT, season INTEGER, week INTEGER)')
+        con.executemany('INSERT INTO nfl_pbp VALUES (?, 2026, ?)', [('g1', 1), ('g2', 11)])
+        con.commit()
+        con.close()
+        self.scores = os.path.join(self.folder, 'pbp.parquet')
+        pq.write_table(pa.table({'game_id': ['g1'], 'season_type': ['REG']}), self.scores)
+
+    def sha(self, path):
+        import hashlib
+        return hashlib.sha256(open(path, 'rb').read()).hexdigest()
+
+    def test_a_game_missing_from_the_score_file_is_named_and_refused(self):
+        with self.assertRaisesRegex(ValueError, r"no scores for 1 game\(s\).*'g2'"):
+            sl.check_score_source(self.db, evidence({}, game_ids=('g1', 'g2')), self.scores, self.sha(self.scores))
+
+    def test_a_covering_file_passes_and_becomes_the_evidence_source(self):
+        ev = evidence({}, game_ids=('g1',))
+        result = sl.check_score_source(self.db, ev, self.scores, self.sha(self.scores))
+        self.assertEqual((result['games_checked'], ev.score_file, ev.score_sha256), (1, self.scores, self.sha(self.scores)))
+
+    def test_a_file_with_another_hash_is_refused(self):
+        with self.assertRaisesRegex(ValueError, 'expected'):
+            sl.check_score_source(self.db, evidence({}, game_ids=('g1',)), self.scores, '0' * 64)
 
 
 class Weight(unittest.TestCase):

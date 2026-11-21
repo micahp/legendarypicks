@@ -158,7 +158,8 @@ def _reproduction_command(args, seed):
         command.append('--slc-v2')
     for flag, sha in (('participation_field', 'participation_field_sha256'),
                       ('participation_snap_counts', 'participation_snap_counts_sha256'),
-                      ('playcall_fg_kicker', 'playcall_fg_kicker_sha256')):  # research tables, so a replay runs the same model
+                      ('playcall_fg_kicker', 'playcall_fg_kicker_sha256'),
+                      ('season_score_file', 'season_score_file_sha256')):  # data inputs, so a replay runs the same model
         if getattr(args, flag, None):
             command.extend([f"--{flag.replace('_', '-')}", str(getattr(args, flag)),
                             f"--{sha.replace('_', '-')}", getattr(args, sha)])
@@ -1001,6 +1002,9 @@ def run_batch(args):
                                                                if args.participation_snap_counts else None),
                                                            fg_kicker=((args.playcall_fg_kicker, args.playcall_fg_kicker_sha256)
                                                                       if args.playcall_fg_kicker else None),
+                                                           season_scores=((args.season_score_file,
+                                                                           args.season_score_file_sha256)
+                                                                          if args.season_score_file else None),
                                                            qb_decisions=args.playcall_qb_decisions,
                                                            player_outcomes=args.playcall_player_outcomes,
                                                            player_outcomes_receiver_only=args.playcall_player_outcomes_receiver_only,
@@ -1490,6 +1494,11 @@ def main(argv=None):
                          '--participation-field and --participation-snap-counts-sha256')
     ap.add_argument('--participation-snap-counts-sha256', default=None,
                     help='the expected SHA-256 of the --participation-snap-counts file; a different file is refused')
+    ap.add_argument('--season-score-file', type=Path, default=None,
+                    help='the nflverse play-by-play release that supplies current-season pre-play scores, with '
+                         '--season-score-file-sha256. A data input, not code: without it the pinned default release is '
+                         'used, and the run stops before loading anything if that file lacks a game available at the cutoff')
+    ap.add_argument('--season-score-file-sha256', default=None)
     ap.add_argument('--playcall-fg-kicker', type=Path, default=None,
                     help='SLC v2 research flag (off by default): field goals by the team kicker: distance +18, 76-yard '
                          'record ceiling, kick share weighted by yard line, kicker make offset (kicker_field_goals.py). '
@@ -1698,6 +1707,8 @@ def main(argv=None):
             ap.error('--participation-snap-counts requires --participation-field')
         if not args.participation_snap_counts_sha256:
             ap.error('--participation-snap-counts requires --participation-snap-counts-sha256')
+    if bool(args.season_score_file) != bool(args.season_score_file_sha256):
+        ap.error('--season-score-file and --season-score-file-sha256 go together')
     if args.playcall_fg_kicker:
         if not args.playcall_fg_kicker_sha256:
             ap.error('--playcall-fg-kicker requires --playcall-fg-kicker-sha256')
