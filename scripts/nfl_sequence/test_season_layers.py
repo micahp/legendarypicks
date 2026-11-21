@@ -28,6 +28,12 @@ class PBPReleasePin(unittest.TestCase):
         self.assertEqual(sl.release_path(2022),
                          '/root/lp-snapshots/nfl-backfill-2026-11-03/raw/pbp/play_by_play_2022.parquet')
 
+    def test_the_manifest_names_the_file_the_scores_were_read_from(self):
+        import inspect
+        source = inspect.getsource(sl.apply)  # apply() needs a full reference to run; the recorded path is pinned here
+        self.assertIn("'score_source': release_path(evidence.season)", source)
+        self.assertNotIn("'score_source': PBP_RELEASE.format(", source)
+
 
 class Weight(unittest.TestCase):
     def test_the_weight_on_history_is_n0_over_n0_plus_games(self):

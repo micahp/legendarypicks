@@ -441,7 +441,7 @@ def apply(ref, db, evidence, adapt_workload=True):
             scores, scores_sha = release_scores(evidence.season)
             frame = season_frame(db, evidence, scores)
             manifest['season_frame'] = {'plays': len(frame), 'games': len(frame.games), 'score_source_sha256': scores_sha,
-                                        'score_source': PBP_RELEASE.format(season=evidence.season)}
+                                        'score_source': release_path(evidence.season)}  # the file release_scores read
             cutoff = evidence.season + 1  # the frame holds only the current season
             team_index = sampler.layer.team_index  # the key space every shift lookup uses
             if sampler.point_shifts is not None:
