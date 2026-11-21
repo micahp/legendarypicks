@@ -262,7 +262,7 @@ def adapt_shares(table, db, evidence):
     return {**table, 'base': base}, {'teams_blended': dict(teams_blended)}
 
 
-PBP_RELEASE = '/root/lp-snapshots/nfl-backfill-2026-11-03/raw/pbp/play_by_play_{season}.parquet'
+PBP_RELEASE = '/root/lp-snapshots/nfl-backfill-2026-11-17/raw/pbp/play_by_play_{season}.parquet'
 SHIFT_STRENGTH = 25.0  # the point and streak splits' own prior strength, used for the score-clock offset too
 
 
