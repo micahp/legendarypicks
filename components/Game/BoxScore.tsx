@@ -269,6 +269,27 @@ export function MLBBoxScore({ data }: { data: BoxScoreData }) {
 }
 
 // ── NFL box score (passing / rushing / receiving tables + defense) ──
+// A team's total for one box-score column, or '' when the column does not add up.
+// Counts add. LONG is the team's longest. "a/b" (C/ATT) and "a-b" (SACKS) add each part. Averages, rates and ratings
+// are not sums, so they stay blank rather than show a number nobody published.
+const NOT_ADDITIVE = ['AVG', 'PCT', 'RATE', 'RTG', 'QBR', 'YDS/G', 'Y/A', 'Y/C', 'Y/R', 'CMP%']
+export function columnTotal(column: string, values: string[]): string {
+  const name = (column || '').toUpperCase()
+  if (NOT_ADDITIVE.some(k => name.includes(k))) return ''
+  const present = values.map(v => (v ?? '').trim()).filter(v => v !== '' && v !== '-' && v !== '--')
+  if (present.length === 0) return ''
+  for (const [sep, pattern] of [['/', /^\d+\/\d+$/], ['-', /^\d+-\d+$/]] as [string, RegExp][]) {
+    if (present.every(v => pattern.test(v))) {
+      const parts = present.map(v => v.split(sep).map(n => parseInt(n)))
+      return `${parts.reduce((t, p) => t + p[0], 0)}${sep}${parts.reduce((t, p) => t + p[1], 0)}`
+    }
+  }
+  if (!present.every(v => /^-?\d+$/.test(v))) return ''
+  const numbers = present.map(v => parseInt(v))
+  if (name === 'LONG' || name === 'LNG') return String(Math.max(...numbers))
+  return String(numbers.reduce((t, n) => t + n, 0))
+}
+
 export function NFLBoxScore({ data }: { data: BoxScoreData }) {
   if (!data.available || !data.players || data.players.length === 0) {
     return (
@@ -278,20 +299,24 @@ export function NFLBoxScore({ data }: { data: BoxScoreData }) {
     )
   }
 
-  // Group by stat group name — use column detection if group name is empty
+  // The backend names each group from ESPN's own name (Passing, Interceptions, Kick Returns, ...). A payload saved
+  // before that fix has empty names, so the group is read from its columns. INT, YDS, TD alone is the
+  // interceptions group, not passing; a column set we cannot place keeps its own heading rather than merge.
   function detectGroupType(grp: typeof data.players[0]): string {
     if (grp.group && grp.group !== '') return grp.group
     const cols = (grp.columns || []).map(c => c.toUpperCase())
-    if (cols.some(c => ['C/ATT', 'CMP'].includes(c)) || (cols.includes('YDS') && cols.includes('TD') && cols.includes('INT'))) return 'Passing'
+    if (cols.some(c => ['C/ATT', 'CMP'].includes(c))) return 'Passing'
+    if (cols.length === 3 && cols[0] === 'INT' && cols.includes('YDS') && cols.includes('TD')) return 'Interceptions'
+    if (cols.includes('FUM') && cols.includes('LOST')) return 'Fumbles'
+    if (cols.includes('FG') && cols.includes('XP')) return 'Kicking'
+    if (cols.includes('TB') && cols.includes('IN 20')) return 'Punting'
     if (cols.some(c => ['ATT', 'CAR'].includes(c)) && cols.includes('YDS') && cols.includes('TD') && !cols.includes('C/ATT')) return 'Rushing'
     if (cols.some(c => ['REC', 'TGT'].includes(c)) && cols.includes('YDS') && cols.includes('TD')) return 'Receiving'
     if (cols.some(c => ['TACK', 'TOT', 'SOLO', 'SACK'].includes(c))) return 'Defense'
-    return grp.group || 'Stats'
+    return `Stats (${(grp.columns || []).join(', ')})`
   }
 
   const players = data.players.map(g => ({ ...g, group: detectGroupType(g) }))
-
-  // Group by stat group name
   const groups: Record<string, typeof players> = {}
   for (const g of players) {
     if (!groups[g.group]) groups[g.group] = []
@@ -301,153 +326,77 @@ export function NFLBoxScore({ data }: { data: BoxScoreData }) {
   const awayAbbrev = data.teams?.[0]?.abbrev || ''
   const homeAbbrev = data.teams?.[1]?.abbrev || ''
 
-  // For NFL, each group might be team-specific (like MLB)
-  function getTeamRows(grpSet: typeof players, teamAbbrev: string) {
-    return grpSet.flatMap(g => (g.team === teamAbbrev ? g.rows : []))
-  }
-
-  function renderMiniTable(grpSet: typeof players) {
+  function renderTable(key: string, grpSet: typeof players) {
     const grp = grpSet[0]
-    if (!grp || !grp.rows || grp.rows.length === 0) return null
+    if (!grp || grpSet.every(g => !g.rows || g.rows.length === 0)) return null  // neither team has a row
     const cols = grp.columns || []
-    const awayRows = getTeamRows(grpSet, awayAbbrev)
-    const homeRows = getTeamRows(grpSet, homeAbbrev)
-
-    // If all rows are from same team (team field might be empty), split evenly
-    const allRows = awayRows.length > 0 || homeRows.length > 0 
-      ? { away: awayRows, home: homeRows }
-      : { away: grp.rows.slice(0, Math.ceil(grp.rows.length / 2)), home: grp.rows.slice(Math.ceil(grp.rows.length / 2)) }
-
-    function computeSums(rows: { stats: string[] }[]): string[] {
-      const sums: string[] = []
-      for (let ci = 0; ci < cols.length; ci++) {
-        const colName = (cols[ci] || '').toLowerCase()
-        if (colName.includes('avg') || colName.includes('pct') || colName.includes('rate')) {
-          sums.push('')
-        } else {
-          let total = 0
-          for (const r of rows) {
-            const parts = (r.stats[ci] || '').split('/')
-            if (parts.length === 2) total += parseInt(parts[0]) || 0
-            else total += parseInt(r.stats[ci]) || 0
-          }
-          sums.push(String(total))
-        }
-      }
-      return sums
-    }
+    const byTeam = (abbrev: string) => grpSet.flatMap(g => (g.team === abbrev ? g.rows : []))
+    const known = byTeam(awayAbbrev).length > 0 || byTeam(homeAbbrev).length > 0
+    // A group with no team on its rows is shown as one block with no team split: the split cannot be read, so it is not guessed.
+    const sides = known
+      ? [{ team: awayAbbrev || 'Away', rows: byTeam(awayAbbrev) }, { team: homeAbbrev || 'Home', rows: byTeam(homeAbbrev) }]
+      : [{ team: '', rows: grpSet.flatMap(g => g.rows) }]
 
     return (
-      <div className="mb-6">
-        {/* Group eyebrow */}
-        <div className="text-[10px] tracking-widest text-zinc-500 uppercase mb-1.5 text-center">{grp.group}</div>
-
-        <div className="overflow-x-auto">
-          {/* Column headers */}
-          <div className="grid border-b border-zinc-700 pb-1 mb-1"
-               style={{ gridTemplateColumns: `minmax(100px,1fr) repeat(${cols.length}, minmax(44px, auto))` }}>
-            <span></span>
-            {cols.map((c, i) => (
-              <span key={i} className="text-[10px] tracking-widest text-zinc-500 uppercase text-center">{c}</span>
+      <section key={key} className="border-t border-zinc-800 pt-4 first:border-0 first:pt-0">
+        <h3 className="text-[10px] tracking-widest text-zinc-500 uppercase mb-2">{grp.group}</h3>
+        <div className="overflow-x-auto min-w-0">
+          <table className="w-full text-xs tabular-nums">
+            <thead>
+              <tr className="border-b border-zinc-700 text-[10px] tracking-widest text-zinc-500 uppercase">
+                <th className="sticky left-0 bg-zinc-900 text-left font-normal pb-1 pr-3 w-full"></th>
+                {cols.map((c, i) => (
+                  <th key={i} className="text-right font-normal pb-1 pl-2 sm:pl-3 whitespace-nowrap">{c}</th>
+                ))}
+              </tr>
+            </thead>
+            {sides.filter(side => side.rows.length > 0).map(side => (
+              <tbody key={side.team || 'all'}>
+                {side.team && (
+                  <tr>
+                    <td colSpan={cols.length + 1} className="pt-3 pb-1 text-[10px] text-zinc-500 uppercase tracking-wider">
+                      {side.team}
+                    </td>
+                  </tr>
+                )}
+                {side.rows.map((r, i) => (
+                  <tr key={i} className="border-b border-zinc-800/40">
+                    <td className="sticky left-0 bg-zinc-900 py-1 pr-3 text-zinc-200 whitespace-nowrap">{r.name}</td>
+                    {cols.map((c, j) => {
+                      const value = r.stats[j] ?? ''
+                      const isTD = ['TD', 'TDS'].includes((c || '').toUpperCase()) && parseInt(value) > 0
+                      return (
+                        <td key={j} className={`py-1 pl-2 sm:pl-3 text-right font-mono ${isTD ? 'text-amber-400' : 'text-zinc-300'}`}>
+                          {value}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+                <tr className="font-semibold text-zinc-100">
+                  <td className="sticky left-0 bg-zinc-900 py-1.5 pr-3">{side.team ? `${side.team} total` : 'Total'}</td>
+                  {cols.map((c, j) => (
+                    <td key={j} className="py-1.5 pl-2 sm:pl-3 text-right font-mono">
+                      {columnTotal(c, side.rows.map(r => r.stats[j]))}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
             ))}
-          </div>
-
-          {/* Away players */}
-          {allRows.away.length > 0 && (
-            <>
-              <div className="text-[10px] text-zinc-500 uppercase tracking-wider py-1.5 text-center">{awayAbbrev || 'AWAY'}</div>
-              {allRows.away.map((r, i) => (
-                <div key={`a-${i}`} className="grid py-1 border-b border-zinc-800/20 text-xs"
-                     style={{ gridTemplateColumns: `minmax(100px,1fr) repeat(${cols.length}, minmax(44px, auto))` }}>
-                  <span className="text-zinc-200 truncate pr-1">{r.name}</span>
-                  {r.stats.map((s, j) => {
-                    const colName = (cols[j] || '').toUpperCase()
-                    const isTD = ['TD', 'TDS'].includes(colName) && parseInt(s) > 0
-                    return (
-                      <span key={j} className={`font-mono tabular-nums text-center text-zinc-300 ${isTD ? 'text-amber-400' : ''}`}>
-                        {s}
-                      </span>
-                    )
-                  })}
-                </div>
-              ))}
-            </>
-          )}
-
-          {/* Home players */}
-          {allRows.home.length > 0 && (
-            <>
-              <div className="text-[10px] text-zinc-500 uppercase tracking-wider py-1.5 text-center">{homeAbbrev || 'HOME'}</div>
-              {allRows.home.map((r, i) => (
-                <div key={`h-${i}`} className="grid py-1 border-b border-zinc-800/20 text-xs"
-                     style={{ gridTemplateColumns: `minmax(100px,1fr) repeat(${cols.length}, minmax(44px, auto))` }}>
-                  <span className="text-zinc-200 truncate pr-1">{r.name}</span>
-                  {r.stats.map((s, j) => {
-                    const colName = (cols[j] || '').toUpperCase()
-                    const isTD = ['TD', 'TDS'].includes(colName) && parseInt(s) > 0
-                    return (
-                      <span key={j} className={`font-mono tabular-nums text-center text-zinc-300 ${isTD ? 'text-amber-400' : ''}`}>
-                        {s}
-                      </span>
-                    )
-                  })}
-                </div>
-              ))}
-            </>
-          )}
-
-          {/* Totals */}
-          <div className="grid py-1.5 border-t border-zinc-700 font-bold text-zinc-100 text-xs"
-               style={{ gridTemplateColumns: `minmax(100px,1fr) repeat(${cols.length}, minmax(44px, auto))` }}>
-            <span className="text-center">Totals</span>
-            {computeSums([...allRows.away, ...allRows.home]).map((t, j) => (
-              <span key={j} className="font-mono tabular-nums text-center">{t}</span>
-            ))}
-          </div>
+          </table>
         </div>
-      </div>
+      </section>
     )
   }
 
-  // Order: Passing, Rushing, Receiving, Defense
-  const displayOrder = ['Passing', 'Rushing', 'Receiving', 'Defense', 'Defensive', 'Kicking', 'Punting', 'Returns']
-  const offenseKeys = displayOrder.filter(k => k !== 'Defense' && k !== 'Defensive' && k !== 'Kicking' && k !== 'Punting' && k !== 'Returns' && k !== 'Stats')
-  const defenseKeys = displayOrder.filter(k => k === 'Defense' || k === 'Defensive' || k === 'Kicking' || k === 'Punting' || k === 'Returns')
-
+  // One table per group, full width, in reading order. Side by side, the tables overflowed the card and their
+  // columns could not line up.
+  const displayOrder = ['Passing', 'Rushing', 'Receiving', 'Fumbles', 'Defense', 'Interceptions', 'Kick Returns',
+                        'Punt Returns', 'Kicking', 'Punting']
+  const ordered = [...displayOrder.filter(k => groups[k]), ...Object.keys(groups).filter(k => !displayOrder.includes(k))]
   return (
-    <div>
-      {/* Desktop: 3-column grid for offensive stats */}
-      <div className="hidden lg:grid lg:grid-cols-[1fr_1fr_1fr] lg:gap-4">
-        {offenseKeys.flatMap(key => {
-          const grpSet = groups[key]
-          if (!grpSet) return []
-          return [renderMiniTable(grpSet)]
-        })}
-      </div>
-
-      {/* Mobile: stack vertically */}
-      <div className="lg:hidden space-y-0">
-        {offenseKeys.map(key => {
-          const grpSet = groups[key]
-          if (!grpSet) return null
-          return (
-            <div key={key} className="border-t border-zinc-800 pt-4 mt-4 first:border-0 first:pt-0 first:mt-0">
-              {renderMiniTable(grpSet)}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Defense / special teams — full width below */}
-      {defenseKeys.map(key => {
-        const grpSet = groups[key]
-        if (!grpSet) return null
-        return (
-          <div key={key} className="mt-6 pt-6 border-t border-zinc-800">
-            {renderMiniTable(grpSet)}
-          </div>
-        )
-      })}
+    <div className="space-y-6">
+      {ordered.map(key => renderTable(key, groups[key]))}
     </div>
   )
 }

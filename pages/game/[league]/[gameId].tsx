@@ -397,7 +397,7 @@ export default function GameDetailPage() {
           <TabBar active={tab} onChange={setTab} tabs={tabDefs} />
 
           {/* Tab content card */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 sm:p-6">
             {tab === 'boxscore' && (
               usesDetail ? (
                 // NBA/NHL: existing detail path
