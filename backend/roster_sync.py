@@ -597,8 +597,13 @@ def _sync_league(con: sqlite3.Connection, league: str) -> dict:
     except Exception:
         con.rollback()
         raise
+    # A player this sync inserted has a position and no group. Fill it from the published vocabulary now, so the
+    # stats audit never meets a new player with a blank group (v10.3.0, 2026-11-21).
+    import backfill_position_group
+    position_groups = backfill_position_group.fill_blank_groups(con, league)
     active_now = con.execute("SELECT COUNT(*) FROM players WHERE league=? AND active=1", (league,)).fetchone()[0]
     return {"status": "complete", "teams": len(rosters), "expected_teams": expected_teams,
+            "position_groups": position_groups,
             "matched": matched, "inserted": inserted,
             "espn_id_filled": updated_espn, "active_now": active_now,
             "verified_at": verified_at, "snapshot_id": snapshot_id,

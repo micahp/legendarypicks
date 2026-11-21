@@ -65,6 +65,7 @@ class RosterSyncFreshnessTests(unittest.TestCase):
         }[team]
 
     def test_complete_population_updates_active_state_and_verification_time(self):
+        self.connection.execute("ALTER TABLE players ADD COLUMN position_group TEXT")
         with patch.object(roster_sync.espn, "team_strength", side_effect=lambda _league: self.teams()), \
              patch.object(roster_sync.espn, "roster", side_effect=self.complete_roster):
             result = roster_sync.sync_league(self.connection, "nfl")
@@ -82,6 +83,10 @@ class RosterSyncFreshnessTests(unittest.TestCase):
         self.assertEqual(by_name["New Receiver"]["team"], "ATL")
         self.assertEqual(by_name["New Receiver"]["active"], 1)
         self.assertEqual(by_name["Departed Player"]["active"], 0)
+        # a new player gets ESPN's published group, so the stats audit never meets a blank one
+        groups = dict(self.connection.execute("SELECT name, position_group FROM players").fetchall())
+        self.assertEqual(groups["New Receiver"], "Offense")
+        self.assertEqual(result["position_groups"]["filled"], 3)
         self.assertTrue(all(row["updated_at"] == result["verified_at"] for row in rows))
         snapshot = self.connection.execute(
             """SELECT id,league,season,source,source_checksum,source_payload,
