@@ -84,6 +84,8 @@ class PortablePack(unittest.TestCase):
     def test_v17_runtime_rejects_missing_penalty_model_state(self):
         with self.assertRaisesRegex(ModelPackError, "PACKED_V17_PENALTY_RUNTIME_MISSING"):
             _attach_runtime_adapters(SimpleNamespace(), {}, "v1.7")
+        with self.assertRaisesRegex(ModelPackError, "PACKED_V17_PENALTY_RUNTIME_MISSING"):
+            _attach_runtime_adapters(SimpleNamespace(), {}, "v1.7-penalties-on")
 
     def test_v16_streak_file_is_auto_forwarded_from_registered_environment(self):
         with tempfile.TemporaryDirectory() as dirname:
