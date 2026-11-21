@@ -339,14 +339,14 @@ export function NFLBoxScore({ data }: { data: BoxScoreData }) {
 
     return (
       <section key={key} className="border-t border-zinc-800 pt-4 first:border-0 first:pt-0">
-        <h3 className="text-[10px] tracking-widest text-zinc-500 uppercase mb-2">{grp.group}</h3>
+        <h3 className="text-sm font-semibold text-zinc-100 mb-2">{grp.group}</h3>
         <div className="overflow-x-auto min-w-0">
-          <table className="w-full text-xs tabular-nums">
+          <table className="text-xs sm:text-sm tabular-nums">
             <thead>
-              <tr className="border-b border-zinc-700 text-[10px] tracking-widest text-zinc-500 uppercase">
-                <th className="sticky left-0 bg-zinc-900 text-left font-normal pb-1 pr-3 w-full"></th>
+              <tr className="border-b border-zinc-700 text-xs text-zinc-500">
+                <th className="sticky left-0 bg-zinc-900 text-left font-normal pb-1 pr-3 sm:pr-4 sm:w-52 sm:min-w-[11rem]"></th>
                 {cols.map((c, i) => (
-                  <th key={i} className="text-right font-normal pb-1 pl-2 sm:pl-3 whitespace-nowrap">{c}</th>
+                  <th key={i} className="text-right font-normal pb-1 pl-2 sm:w-14 sm:min-w-[3.25rem] whitespace-nowrap">{c}</th>
                 ))}
               </tr>
             </thead>
@@ -354,19 +354,19 @@ export function NFLBoxScore({ data }: { data: BoxScoreData }) {
               <tbody key={side.team || 'all'}>
                 {side.team && (
                   <tr>
-                    <td colSpan={cols.length + 1} className="pt-3 pb-1 text-[10px] text-zinc-500 uppercase tracking-wider">
+                    <td colSpan={cols.length + 1} className="sticky left-0 pt-3 pb-1 text-xs font-medium text-zinc-400">
                       {side.team}
                     </td>
                   </tr>
                 )}
                 {side.rows.map((r, i) => (
                   <tr key={i} className="border-b border-zinc-800/40">
-                    <td className="sticky left-0 bg-zinc-900 py-1 pr-3 text-zinc-200 whitespace-nowrap">{r.name}</td>
+                    <td className="sticky left-0 bg-zinc-900 py-1 pr-4 text-zinc-200 whitespace-nowrap">{r.name}</td>
                     {cols.map((c, j) => {
                       const value = r.stats[j] ?? ''
                       const isTD = ['TD', 'TDS'].includes((c || '').toUpperCase()) && parseInt(value) > 0
                       return (
-                        <td key={j} className={`py-1 pl-2 sm:pl-3 text-right font-mono ${isTD ? 'text-amber-400' : 'text-zinc-300'}`}>
+                        <td key={j} className={`py-1 pl-2 text-right ${isTD ? 'text-amber-400' : 'text-zinc-300'}`}>
                           {value}
                         </td>
                       )
@@ -374,9 +374,9 @@ export function NFLBoxScore({ data }: { data: BoxScoreData }) {
                   </tr>
                 ))}
                 <tr className="font-semibold text-zinc-100">
-                  <td className="sticky left-0 bg-zinc-900 py-1.5 pr-3">{side.team ? `${side.team} total` : 'Total'}</td>
+                  <td className="sticky left-0 bg-zinc-900 py-1.5 pr-4">{side.team ? `${side.team} total` : 'Total'}</td>
                   {cols.map((c, j) => (
-                    <td key={j} className="py-1.5 pl-2 sm:pl-3 text-right font-mono">
+                    <td key={j} className="py-1.5 pl-2 text-right">
                       {columnTotal(c, side.rows.map(r => r.stats[j]))}
                     </td>
                   ))}
