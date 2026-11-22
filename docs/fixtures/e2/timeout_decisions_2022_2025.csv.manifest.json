@@ -1,0 +1,38 @@
+{
+ "counts": {
+  "games 2022": 271,
+  "games 2023": 272,
+  "games 2024": 272,
+  "games 2025": 272,
+  "skipped team: no timeouts left": 4804,
+  "skipped: next snap is a kickoff or a try": 9455,
+  "skipped: next snap is in another quarter": 2133,
+  "timeouts by a team not in the game (excluded)": 0,
+  "timeouts called": 6649,
+  "timeouts with no team (excluded)": 0
+ },
+ "generator": "scripts/nfl_sequence/build_timeout_decisions.py",
+ "generator_sha256": "93e8102b4194a8dcee30eb8ab78789a1f4fba7b6d2f46223561e86afb00d18ee",
+ "key": [
+  "period",
+  "clock",
+  "clock_state",
+  "score",
+  "timeouts_left",
+  "role"
+ ],
+ "output": {
+  "cells": 599,
+  "path": "docs/fixtures/e2/timeout_decisions_2022_2025.csv",
+  "sha256": "bea1da011e5cc3fefa1bfefe28a83bddeb99124bca54a88bf1fcf681163f2518",
+  "team_snaps": 264972,
+  "timeouts_called": 6548
+ },
+ "sources": {
+  "play_by_play_2022.parquet": "931121d8897779d7944e2a293e92ed8799c8e5cceef84096ac42339003fedc09",
+  "play_by_play_2023.parquet": "bd3484731408def6b0ec93225bba2bd7b2c65769ca707a2b9444d891abdc6776",
+  "play_by_play_2024.parquet": "3fd2896bc0b911b615142d2f1fabae54a4bbba5ab7b73b28187b118ef8af6a3b",
+  "play_by_play_2025.parquet": "c6ecedd6d678cc37ed316b23ef84ee1ec6abb69c514bb11868a7ebd5a367df29"
+ },
+ "window": "season 2022-2025, season_type REG, week <= 18"
+}
