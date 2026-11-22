@@ -19,7 +19,6 @@ import subprocess
 import sys
 
 BLOCKER_FIXES = (
-    "run_scramble_backoff",
     "long_field_goal_feasibility",
     "blocked_kick_source_audit",
     "blocked_kick_geometry",
@@ -80,6 +79,8 @@ def main(argv=None):
         "v1_original": [
             "--slc-profile", "v1_full_stack",
             "--playcall-streak-file", str(args.playcall_streak_file.resolve()),
+            # run_scramble_backoff loads the QB decision table, a layer V1-Pure turns off; only the control keeps it
+            "--slc-blocker-fix", "run_scramble_backoff",
         ],
         "v1_pure": [
             "--slc-profile", "custom",
