@@ -1,8 +1,8 @@
 # 2026 pregame snapshot index
 
-Generated 2026-11-22 23:28 UTC by `scripts/nfl_sequence/snapshot_index.py`. Do not edit by hand.
+Generated 2026-11-22 23:53 UTC by `scripts/nfl_sequence/snapshot_index.py`. Do not edit by hand.
 
-Games: 161 OK, 0 MISSING, 111 upcoming.
+Games: 161 OK, 1 MISSING, 110 upcoming.
 
 - **cutoff**: the 90-minute cutoff job (`/root/cutoff-captures` on the fast host), copied to `cutoff-snapshots-2026/`. Backfilled ones were built after the game: their depth chart is the capture before the cutoff, but injury and roster data are `FETCHED_AFTER_CUTOFF`.
 - **RUN ON**: the model-format snapshot to run on for that game. Use this one.
@@ -133,7 +133,7 @@ Games: 161 OK, 0 MISSING, 111 upcoming.
 | 8 | 2026_08_NE_MIA | 2026-11-01T21:25Z | OK | [walkforward-2026/snapshots/w08/2026_08_NE_MIA.json](walkforward-2026/snapshots/w08/2026_08_NE_MIA.json) | [5.7h backfilled](cutoff-snapshots-2026/week-08/2026_08_NE_MIA.json) | - | [5.2h](walkforward-2026/snapshots/w08/2026_08_NE_MIA.json) |
 | 8 | 2026_08_PHI_WAS | 2026-11-02T01:20Z | OK | [walkforward-2026/snapshots/w08/2026_08_PHI_WAS.json](walkforward-2026/snapshots/w08/2026_08_PHI_WAS.json) | [9.6h backfilled](cutoff-snapshots-2026/week-08/2026_08_PHI_WAS.json) | - | [9.1h](walkforward-2026/snapshots/w08/2026_08_PHI_WAS.json) |
 | 8 | 2026_08_CHI_SEA | 2026-11-03T01:15Z | OK | [walkforward-2026/snapshots/w08/2026_08_CHI_SEA.json](walkforward-2026/snapshots/w08/2026_08_CHI_SEA.json) | [6.7h backfilled](cutoff-snapshots-2026/week-08/2026_08_CHI_SEA.json) | - | [6.2h](walkforward-2026/snapshots/w08/2026_08_CHI_SEA.json) |
-| 9 | 2026_09_JAX_BAL | 2026-11-06T01:15Z | OK | [walkforward-2026/snapshots/w09/2026_09_JAX_BAL.json](walkforward-2026/snapshots/w09/2026_09_JAX_BAL.json) | [8.4h backfilled](cutoff-snapshots-2026/week-09/2026_09_JAX_BAL.json) | - | [7.9h](walkforward-2026/snapshots/w09/2026_09_JAX_BAL.json) |
+| 9 | 2026_09_JAX_BAL | 2026-11-06T01:15Z | OK | [model-snapshots-2026/week-09/2026_09_JAX_BAL.json](model-snapshots-2026/week-09/2026_09_JAX_BAL.json) | [8.4h backfilled](cutoff-snapshots-2026/week-09/2026_09_JAX_BAL.json) | [8.4h](model-snapshots-2026/week-09/2026_09_JAX_BAL.json) | [7.9h](walkforward-2026/snapshots/w09/2026_09_JAX_BAL.json) |
 | 9 | 2026_09_CIN_ATL | 2026-11-08T14:30Z | OK | [model-snapshots-2026/week-09/2026_09_CIN_ATL.json](model-snapshots-2026/week-09/2026_09_CIN_ATL.json) | [6.0h backfilled](cutoff-snapshots-2026/week-09/2026_09_CIN_ATL.json) | [6.0h](model-snapshots-2026/week-09/2026_09_CIN_ATL.json) | [5.5h](walkforward-2026/snapshots/w09/2026_09_CIN_ATL.json) |
 | 9 | 2026_09_CLE_NO | 2026-11-08T18:00Z | OK | [model-snapshots-2026/week-09/2026_09_CLE_NO.json](model-snapshots-2026/week-09/2026_09_CLE_NO.json) | [2.3h backfilled](cutoff-snapshots-2026/week-09/2026_09_CLE_NO.json) | [2.3h](model-snapshots-2026/week-09/2026_09_CLE_NO.json) | [1.8h](walkforward-2026/snapshots/w09/2026_09_CLE_NO.json) |
 | 9 | 2026_09_DAL_IND | 2026-11-08T18:00Z | OK | [model-snapshots-2026/week-09/2026_09_DAL_IND.json](model-snapshots-2026/week-09/2026_09_DAL_IND.json) | [2.3h backfilled](cutoff-snapshots-2026/week-09/2026_09_DAL_IND.json) | [2.3h](model-snapshots-2026/week-09/2026_09_DAL_IND.json) | [1.8h](walkforward-2026/snapshots/w09/2026_09_DAL_IND.json) |
@@ -173,7 +173,7 @@ Games: 161 OK, 0 MISSING, 111 upcoming.
 | 11 | 2026_11_NYJ_LAC | 2026-11-22T21:05Z | OK | [model-snapshots-2026/week-11/2026_11_NYJ_LAC.json](model-snapshots-2026/week-11/2026_11_NYJ_LAC.json) | [4.4h backfilled](cutoff-snapshots-2026/week-11/2026_11_NYJ_LAC.json) | [4.4h](model-snapshots-2026/week-11/2026_11_NYJ_LAC.json) | - |
 | 11 | 2026_11_JAX_NYG | 2026-11-22T21:25Z | OK | [model-snapshots-2026/week-11/2026_11_JAX_NYG.json](model-snapshots-2026/week-11/2026_11_JAX_NYG.json) | [4.7h backfilled](cutoff-snapshots-2026/week-11/2026_11_JAX_NYG.json) | [4.7h](model-snapshots-2026/week-11/2026_11_JAX_NYG.json) | - |
 | 11 | 2026_11_LV_DEN | 2026-11-22T21:25Z | OK | [model-snapshots-2026/week-11/2026_11_LV_DEN.json](model-snapshots-2026/week-11/2026_11_LV_DEN.json) | [4.7h backfilled](cutoff-snapshots-2026/week-11/2026_11_LV_DEN.json) | [4.7h](model-snapshots-2026/week-11/2026_11_LV_DEN.json) | - |
-| 11 | 2026_11_MIN_SF | 2026-11-23T01:20Z | UPCOMING | - | - | - | - |
+| 11 | 2026_11_MIN_SF | 2026-11-23T01:20Z | MISSING | - | - | - | - |
 | 11 | 2026_11_CIN_WAS | 2026-11-24T01:15Z | UPCOMING | - | - | - | - |
 | 12 | 2026_12_GB_LA | 2026-11-26T01:00Z | UPCOMING | - | - | - | - |
 | 12 | 2026_12_CHI_DET | 2026-11-26T18:00Z | UPCOMING | - | - | - | - |

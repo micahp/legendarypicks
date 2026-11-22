@@ -35,10 +35,10 @@
    "away": {
     "as_of_utc": "2026-11-22T19:35:00Z",
     "blocks": [],
-    "content_hash": "d9c88bb198c6f17999eb7811705876ad8c6053a48d3217fff0a765e2f42702d9",
+    "content_hash": "21842095fcc6c7562bfe095c9414ab890a5be772a38e1eecac4932fafe6f6653",
     "forecast_class": "PROVISIONAL",
     "game_id": "2026_11_NYJ_LAC",
-    "input_fingerprint": "b768fd5341c19addab11a5fbbcabe4f06314f8390de881a595a11f0ed6f137c1",
+    "input_fingerprint": "ee90bc0a9e239e77cec548300014d63ca91e33592484b5beca3bd78c3f8c7be0",
     "players": [
      {
       "depth_rank": 1,
@@ -71,23 +71,23 @@
      {
       "depth_rank": 7,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_practice_squad",
       "flags": [],
       "gsis_id": "00-0032385",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "PRACTICE_SQUAD",
       "name": "Sterling Shepard",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "WR",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": "injury_out",
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0033051",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "David Onyemata",
       "official_eligible": false,
       "pos": "RDT",
@@ -188,6 +188,19 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0035000",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Quinton Bell",
+      "official_eligible": false,
+      "pos": "DL",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 2,
       "events_applied": [],
       "exclusion_reason": null,
@@ -198,6 +211,19 @@
       "official_eligible": true,
       "pos": "WLB",
       "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0036300",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Mykal Walker",
+      "official_eligible": false,
+      "pos": "LB",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -305,6 +331,32 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0036843",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Isaiahh Loudermilk",
+      "official_eligible": false,
+      "pos": "DL",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0036859",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Jimmy Morrissey",
+      "official_eligible": false,
+      "pos": "OL",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 2,
       "events_applied": [],
       "exclusion_reason": null,
@@ -372,27 +424,27 @@
      {
       "depth_rank": 4,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0037431",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Kingsley Jonathan",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "RDE",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0037526",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Marcelino McCrary-Ball",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "WLB",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -435,16 +487,29 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0037830",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Samuel Womack",
+      "official_eligible": false,
+      "pos": "DB",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0038114",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Max Mitchell",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "LT",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -474,6 +539,19 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0038194",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Kohl Levao",
+      "official_eligible": false,
+      "pos": "OL",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 2,
       "events_applied": [],
       "exclusion_reason": null,
@@ -500,6 +578,19 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0039152",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Will Levis",
+      "official_eligible": false,
+      "pos": "QB",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 2,
       "events_applied": [],
       "exclusion_reason": null,
@@ -515,14 +606,14 @@
      {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0039284",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Braiden McGregor",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "RDE",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -699,14 +790,14 @@
      {
       "depth_rank": 4,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0039886",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "T'Vondre Sweat",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "LDT",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -720,6 +811,19 @@
       "official_eligible": true,
       "pos": "WR",
       "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040034",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Brant Banks",
+      "official_eligible": false,
+      "pos": "OL",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -764,27 +868,40 @@
      {
       "depth_rank": 2,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0040186",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Kiko Mauigoa",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "SLB",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
       "depth_rank": 4,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0040196",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Tyler Baron",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "LDE",
-      "projected_participant": true,
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040397",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Jordan Clark",
+      "official_eligible": false,
+      "pos": "DB",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -801,29 +918,42 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040405",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Jamaal Pritchett",
+      "official_eligible": false,
+      "pos": "WR",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0040582",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Arian Smith",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "KR",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
       "depth_rank": 8,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0040582",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Arian Smith",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "WR",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -837,6 +967,45 @@
       "official_eligible": true,
       "pos": "TE",
       "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040793",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Paschal Ekeji",
+      "official_eligible": false,
+      "pos": "LB",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040956",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Amari McNeill",
+      "official_eligible": false,
+      "pos": "DL",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040979",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Nick Dawkins",
+      "official_eligible": false,
+      "pos": "OL",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -894,14 +1063,14 @@
      {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0041097",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Anez Cooper",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "LG",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -918,16 +1087,29 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0041196",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Mory Bamba",
+      "official_eligible": false,
+      "pos": "DB",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 5,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0041239",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Chip Trayanum",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "RB",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -941,6 +1123,19 @@
       "official_eligible": true,
       "pos": "WR",
       "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0041294",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Joseph Manjack",
+      "official_eligible": false,
+      "pos": "WR",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1079,14 +1274,14 @@
     "schema": "lp-nfl-resolved-roster-2",
     "team": "NYJ"
    },
-   "content_hash": "44373e642cdd06739ad635957f0f7d58ed10c82fc8314e2338d813ccada77bcd",
+   "content_hash": "d135e76b3a4364df83ec79c1056c59802448596abae14fa93e10f9256667b885",
    "home": {
     "as_of_utc": "2026-11-22T19:35:00Z",
     "blocks": [],
-    "content_hash": "e2d4cc2080aea23e0d6b30992fc96d913060e02ade3869ad892d2eace3d62202",
+    "content_hash": "276ab8787cdb70f3484ca7227985b9e0baa0f2f238aeae28cc89067445d6282a",
     "forecast_class": "PROVISIONAL",
     "game_id": "2026_11_NYJ_LAC",
-    "input_fingerprint": "ae9da2088d1a1ad38e168ca2b9f0db380de8344cca40fd856e53154934a0c099",
+    "input_fingerprint": "c5ed250d9acbd0aa8bc9b50e3c0a18acd3fc15e141f0ce8e21ae497625b38fd0",
     "players": [
      {
       "depth_rank": 1,
@@ -1221,27 +1416,40 @@
      {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0034790",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Derwin James Jr.",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "SS",
-      "projected_participant": true,
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0035100",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Jake Browning",
+      "official_eligible": false,
+      "pos": "QB",
+      "projected_participant": false,
       "projection_status": null
      },
      {
       "depth_rank": 2,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0035125",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Alec Ingold",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "FB",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1260,16 +1468,27 @@
      {
       "depth_rank": 1,
       "events_applied": [],
-      "exclusion_reason": null,
-      "flags": [
-       "game_status_questionable"
-      ],
+      "exclusion_reason": "membership_reserve",
+      "flags": [],
       "gsis_id": "00-0035688",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Trey Pipkins III",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "LG",
-      "projected_participant": true,
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0035946",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Myles Adams",
+      "official_eligible": false,
+      "pos": "DL",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1283,6 +1502,19 @@
       "official_eligible": true,
       "pos": "LDE",
       "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0036332",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Josiah Deguara",
+      "official_eligible": false,
+      "pos": "TE",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1314,14 +1546,14 @@
      {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0036376",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Tyler Biadasz",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "C",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1353,27 +1585,27 @@
      {
       "depth_rank": 2,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0037009",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Rashawn Slater",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "LT",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0037012",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Trey Lance",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "QB",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1392,27 +1624,40 @@
      {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0037241",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Trevor Penning",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "RG",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
       "depth_rank": 5,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0037241",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Trevor Penning",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "LG",
-      "projected_participant": true,
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0037242",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Kaiir Elam",
+      "official_eligible": false,
+      "pos": "DB",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1459,14 +1704,27 @@
      {
       "depth_rank": 2,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_practice_squad",
       "flags": [],
       "gsis_id": "00-0038119",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "PRACTICE_SQUAD",
       "name": "Jalyn Armour-Davis",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "LCB",
-      "projected_participant": true,
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0038381",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Kyu Blu Kelly",
+      "official_eligible": false,
+      "pos": "DB",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1587,6 +1845,32 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0038801",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Andre Carter II",
+      "official_eligible": false,
+      "pos": "LB",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": null,
+      "flags": [],
+      "gsis_id": "00-0038851",
+      "membership": "ACTIVE_ROSTER",
+      "name": "Caleb Murphy",
+      "official_eligible": true,
+      "pos": "LB",
+      "projected_participant": true,
+      "projection_status": null
+     },
+     {
       "depth_rank": 1,
       "events_applied": [],
       "exclusion_reason": null,
@@ -1597,6 +1881,19 @@
       "official_eligible": true,
       "pos": "WLB",
       "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0039346",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Junior Colson",
+      "official_eligible": false,
+      "pos": "LB",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1654,6 +1951,19 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0039397",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Tejhaun Palmer",
+      "official_eligible": false,
+      "pos": "WR",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 1,
       "events_applied": [],
       "exclusion_reason": null,
@@ -1707,6 +2017,45 @@
       "official_eligible": true,
       "pos": "WR",
       "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0039932",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Laekin Vakalahi",
+      "official_eligible": false,
+      "pos": "OL",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040039",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Amar Johnson",
+      "official_eligible": false,
+      "pos": "RB",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040044",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Zion Childress",
+      "official_eligible": false,
+      "pos": "DB",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1792,14 +2141,14 @@
      {
       "depth_rank": 4,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0040212",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Branson Taylor",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "LG",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1829,6 +2178,19 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040331",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Patrick Herbert",
+      "official_eligible": false,
+      "pos": "TE",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 2,
       "events_applied": [],
       "exclusion_reason": null,
@@ -1842,6 +2204,19 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040461",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Luke Grimm",
+      "official_eligible": false,
+      "pos": "WR",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 2,
       "events_applied": [],
       "exclusion_reason": null,
@@ -1852,6 +2227,19 @@
       "official_eligible": true,
       "pos": "QB",
       "projected_participant": true,
+      "projection_status": null
+     },
+     {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0040467",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Josh Kaltenberger",
+      "official_eligible": false,
+      "pos": "OL",
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -1959,6 +2347,19 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0041372",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Lander Barton",
+      "official_eligible": false,
+      "pos": "LB",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 3,
       "events_applied": [],
       "exclusion_reason": "injury_out",
@@ -1985,16 +2386,29 @@
       "projection_status": null
      },
      {
+      "depth_rank": null,
+      "events_applied": [],
+      "exclusion_reason": "membership_practice_squad",
+      "flags": [],
+      "gsis_id": "00-0041386",
+      "membership": "PRACTICE_SQUAD",
+      "name": "Terry Webb",
+      "official_eligible": false,
+      "pos": "DL",
+      "projected_participant": false,
+      "projection_status": null
+     },
+     {
       "depth_rank": 3,
       "events_applied": [],
-      "exclusion_reason": null,
+      "exclusion_reason": "membership_reserve",
       "flags": [],
       "gsis_id": "00-0041387",
-      "membership": "ACTIVE_ROSTER",
+      "membership": "RESERVE",
       "name": "Isaiah World",
-      "official_eligible": true,
+      "official_eligible": false,
       "pos": "LT",
-      "projected_participant": true,
+      "projected_participant": false,
       "projection_status": null
      },
      {
@@ -4775,11 +5189,651 @@
        "report_status": "Out",
        "rotowire_status": "IR",
        "team": "SF"
+      },
+      {
+       "gsis_id": "00-0032385",
+       "reason": "membership_practice_squad",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0037431",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0037526",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0038114",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0039284",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0039886",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0040186",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0040196",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0040582",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0041097",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0041239",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
       }
      ],
+     "roster_exclusions_added": 11,
      "rows": 1799,
      "source": "rotowire nfl_player_news_updates",
      "window_days": 10
+    },
+    "membership": {
+     "players": [
+      {
+       "gsis_id": "00-0029607",
+       "name": "Demario Davis",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0030565",
+       "name": "Geno Smith",
+       "position": "QB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0032385",
+       "name": "Sterling Shepard",
+       "position": "WR",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0033051",
+       "name": "David Onyemata",
+       "position": "DL",
+       "status": "RES",
+       "status_description": "R48"
+      },
+      {
+       "gsis_id": "00-0033260",
+       "name": "Thomas Hennessy",
+       "position": "LS",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0033375",
+       "name": "Tim Patrick",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0034768",
+       "name": "Chukwuma Okorafor",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0034782",
+       "name": "Harrison Phillips",
+       "position": "DL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0034789",
+       "name": "Minkah Fitzpatrick",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0034794",
+       "name": "Jason Sanders",
+       "position": "K",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0034959",
+       "name": "Andrew Beck",
+       "position": "RB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0035000",
+       "name": "Quinton Bell",
+       "position": "DL",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0035617",
+       "name": "Troy Reeder",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036300",
+       "name": "Mykal Walker",
+       "position": "LB",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0036500",
+       "name": "Jamien Sherwood",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036604",
+       "name": "Jordan Meredith",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036622",
+       "name": "Josh Myers",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036788",
+       "name": "Jack Heflin",
+       "position": "DL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036842",
+       "name": "Kene Nwangwu",
+       "position": "RB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036843",
+       "name": "Isaiahh Loudermilk",
+       "position": "DL",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0036859",
+       "name": "Jimmy Morrissey",
+       "position": "OL",
+       "status": "DEV",
+       "status_description": "P06"
+      },
+      {
+       "gsis_id": "00-0036902",
+       "name": "Joseph Ossai",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036986",
+       "name": "Nahshon Wright",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036987",
+       "name": "Brandon Stephens",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0037083",
+       "name": "Kingsley Enagbare",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0037255",
+       "name": "Dylan Parham",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0037431",
+       "name": "Kingsley Jonathan",
+       "position": "DL",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0037526",
+       "name": "Marcelino McCrary-Ball",
+       "position": "LB",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0037740",
+       "name": "Garrett Wilson",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0037755",
+       "name": "Jelani Woods",
+       "position": "TE",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0037805",
+       "name": "Jeremy Ruckert",
+       "position": "TE",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0037830",
+       "name": "Samuel Womack",
+       "position": "DB",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0038114",
+       "name": "Max Mitchell",
+       "position": "OL",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0038120",
+       "name": "Breece Hall",
+       "position": "RB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038123",
+       "name": "Dane Belton",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038194",
+       "name": "Kohl Levao",
+       "position": "OL",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0039142",
+       "name": "Will McDonald IV",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039145",
+       "name": "Joe Tippmann",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039152",
+       "name": "Will Levis",
+       "position": "QB",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0039158",
+       "name": "Blake Freeland",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039284",
+       "name": "Braiden McGregor",
+       "position": "LB",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0039347",
+       "name": "Trevin Wallace",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039372",
+       "name": "Jarvis Brownlee Jr.",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039431",
+       "name": "Jowon Briggs",
+       "position": "DL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039447",
+       "name": "Nate Lynn",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039451",
+       "name": "Isaiah Williams",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039634",
+       "name": "Austin McNamara",
+       "position": "P",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039789",
+       "name": "Qwan'tez Stiggers",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039790",
+       "name": "Olumuyiwa Fashanu",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039794",
+       "name": "Braelon Allen",
+       "position": "RB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039798",
+       "name": "Isaiah Davis",
+       "position": "RB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039886",
+       "name": "T'Vondre Sweat",
+       "position": "DL",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0039890",
+       "name": "Adonai Mitchell",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040034",
+       "name": "Brant Banks",
+       "position": "OL",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0040123",
+       "name": "Armand Membou",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040133",
+       "name": "Azareye'h Thomas",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040165",
+       "name": "Malachi Moore",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040186",
+       "name": "Francisco Mauigoa",
+       "position": "LB",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0040196",
+       "name": "Tyler Baron",
+       "position": "LB",
+       "status": "RES",
+       "status_description": "R04"
+      },
+      {
+       "gsis_id": "00-0040397",
+       "name": "Jordan Clark",
+       "position": "DB",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0040404",
+       "name": "Payton Page",
+       "position": "DL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040405",
+       "name": "Jamaal Pritchett",
+       "position": "WR",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0040582",
+       "name": "Arian Smith",
+       "position": "WR",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0040736",
+       "name": "Mason Taylor",
+       "position": "TE",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040793",
+       "name": "Paschal Ekeji",
+       "position": "LB",
+       "status": "DEV",
+       "status_description": "P03"
+      },
+      {
+       "gsis_id": "00-0040956",
+       "name": "Amari McNeill",
+       "position": "DL",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0040979",
+       "name": "Nick Dawkins",
+       "position": "OL",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0041026",
+       "name": "David Bailey",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041032",
+       "name": "Kenyon Sadiq",
+       "position": "TE",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041038",
+       "name": "D'Angelo Ponds",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041056",
+       "name": "Cade Klubnik",
+       "position": "QB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041097",
+       "name": "Anez Cooper",
+       "position": "OL",
+       "status": "RES",
+       "status_description": "R48"
+      },
+      {
+       "gsis_id": "00-0041120",
+       "name": "VJ Payne",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041196",
+       "name": "Mory Bamba",
+       "position": "DB",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0041202",
+       "name": "Nathan Voorhis",
+       "position": "LB",
+       "status": "CUT",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0041239",
+       "name": "Chip Trayanum",
+       "position": "RB",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0041267",
+       "name": "Malik McClain",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041294",
+       "name": "Joseph Manjack",
+       "position": "WR",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0041410",
+       "name": "Jaden Keller",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041511",
+       "name": "Omar Cooper Jr.",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041549",
+       "name": "Darrell Jackson Jr.",
+       "position": "DL",
+       "status": "ACT",
+       "status_description": "A01"
+      }
+     ],
+     "source": "roster_weekly_2026.parquet sha256 c43582ebed715bb6bddf7735fe49dd70b6a30f896489efd1046ff74011790ea4",
+     "week": 11
     },
     "players": [
      {
@@ -8198,11 +9252,638 @@
        "report_status": "Out",
        "rotowire_status": "IR",
        "team": "SF"
+      },
+      {
+       "gsis_id": "00-0034790",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0035125",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0035688",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0036376",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0037009",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0037012",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0037241",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0038119",
+       "reason": "membership_practice_squad",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0040212",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
+      },
+      {
+       "gsis_id": "00-0041387",
+       "reason": "membership_reserve",
+       "report_status": "Out",
+       "source": "roster_resolution"
       }
      ],
+     "roster_exclusions_added": 10,
      "rows": 1799,
      "source": "rotowire nfl_player_news_updates",
      "window_days": 10
+    },
+    "membership": {
+     "players": [
+      {
+       "gsis_id": "00-0028845",
+       "name": "Josh Harris",
+       "position": "LS",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0030294",
+       "name": "Tony Jefferson",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0031040",
+       "name": "Khalil Mack",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0032103",
+       "name": "Denzel Perryman",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0032146",
+       "name": "Bud Dupree",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0033221",
+       "name": "Daniel Brunskill",
+       "position": "OL",
+       "status": "CUT",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0033546",
+       "name": "Dalvin Tomlinson",
+       "position": "DL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0033885",
+       "name": "David Njoku",
+       "position": "TE",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0034162",
+       "name": "J.K. Scott",
+       "position": "P",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0034356",
+       "name": "Donte Jackson",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0034790",
+       "name": "Derwin James",
+       "position": "DB",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0035100",
+       "name": "Jake Browning",
+       "position": "QB",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0035125",
+       "name": "Alec Ingold",
+       "position": "RB",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0035202",
+       "name": "Del'Shawn Phillips",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0035688",
+       "name": "Trey Pipkins",
+       "position": "OL",
+       "status": "RES",
+       "status_description": "R48"
+      },
+      {
+       "gsis_id": "00-0035946",
+       "name": "Myles Adams",
+       "position": "DL",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0036181",
+       "name": "Teair Tart",
+       "position": "DL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036332",
+       "name": "Josiah Deguara",
+       "position": "TE",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0036338",
+       "name": "Troy Dye",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036355",
+       "name": "Justin Herbert",
+       "position": "QB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036376",
+       "name": "Tyler Biadasz",
+       "position": "OL",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0036736",
+       "name": "Kayode Awosika",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0036992",
+       "name": "Elijah Molden",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0037009",
+       "name": "Rashawn Slater",
+       "position": "OL",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0037012",
+       "name": "Trey Lance",
+       "position": "QB",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0037224",
+       "name": "Cameron Dicker",
+       "position": "K",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0037241",
+       "name": "Trevor Penning",
+       "position": "OL",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0037242",
+       "name": "Kaiir Elam",
+       "position": "DB",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0037320",
+       "name": "Deane Leonard",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038046",
+       "name": "Charlie Kolar",
+       "position": "TE",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038103",
+       "name": "Cole Strange",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038119",
+       "name": "Jalyn Armour-Davis",
+       "position": "DB",
+       "status": "DEV",
+       "status_description": "P07"
+      },
+      {
+       "gsis_id": "00-0038381",
+       "name": "Kyu Blu Kelly",
+       "position": "DB",
+       "status": "DEV",
+       "status_description": "P06"
+      },
+      {
+       "gsis_id": "00-0038414",
+       "name": "Kendall Williamson",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038454",
+       "name": "Keaton Mitchell",
+       "position": "RB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038544",
+       "name": "Quentin Johnston",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038553",
+       "name": "Daiyan Henley",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038573",
+       "name": "Derius Davis",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038614",
+       "name": "Scott Matlock",
+       "position": "RB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0038801",
+       "name": "Andre Carter II",
+       "position": "LB",
+       "status": "DEV",
+       "status_description": "P06"
+      },
+      {
+       "gsis_id": "00-0038851",
+       "name": "Caleb Murphy",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039111",
+       "name": "Tuli Tuipulotu",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039346",
+       "name": "Junior Colson",
+       "position": "LB",
+       "status": "DEV",
+       "status_description": "P06"
+      },
+      {
+       "gsis_id": "00-0039366",
+       "name": "Tarheeb Still",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039369",
+       "name": "Cam Hart",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039391",
+       "name": "Kimani Vidal",
+       "position": "RB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039397",
+       "name": "Tejhaun Palmer",
+       "position": "WR",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0039835",
+       "name": "Justin Eboigbe",
+       "position": "DL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039897",
+       "name": "Joe Alt",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039915",
+       "name": "Ladd McConkey",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0039932",
+       "name": "Laekin Vakalahi",
+       "position": "OL",
+       "status": "DEV",
+       "status_description": "P03"
+      },
+      {
+       "gsis_id": "00-0040039",
+       "name": "Amar Johnson",
+       "position": "RB",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0040044",
+       "name": "Zion Childress",
+       "position": "DB",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0040065",
+       "name": "Isas Waxter",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040144",
+       "name": "Jamaree Caldwell",
+       "position": "DL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040184",
+       "name": "KeAndre Lambert-Smith",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040189",
+       "name": "Oronde Gadsden II",
+       "position": "TE",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040212",
+       "name": "Branson Taylor",
+       "position": "OL",
+       "status": "RES",
+       "status_description": "R01"
+      },
+      {
+       "gsis_id": "00-0040221",
+       "name": "R.J. Mickens",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040311",
+       "name": "Theo Wease Jr.",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040331",
+       "name": "Patrick Herbert",
+       "position": "TE",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0040460",
+       "name": "Marlowe Wax",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040461",
+       "name": "Luke Grimm",
+       "position": "WR",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0040464",
+       "name": "DJ Uiagalelei",
+       "position": "QB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040467",
+       "name": "Josh Kaltenberger",
+       "position": "OL",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0040666",
+       "name": "Omarion Hampton",
+       "position": "RB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0040727",
+       "name": "Tre Harris",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041058",
+       "name": "Travis Burke",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041064",
+       "name": "Genesis Smith",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041072",
+       "name": "Nick Barrett",
+       "position": "DL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041105",
+       "name": "Logan Taylor",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041107",
+       "name": "Alex Harkey",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041372",
+       "name": "Lander Barton",
+       "position": "LB",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0041381",
+       "name": "Rodney Shelley",
+       "position": "DB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041383",
+       "name": "Jacob Spomer",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041386",
+       "name": "Terry Webb",
+       "position": "DL",
+       "status": "DEV",
+       "status_description": "P01"
+      },
+      {
+       "gsis_id": "00-0041387",
+       "name": "Isaiah World",
+       "position": "OL",
+       "status": "RES",
+       "status_description": "R05"
+      },
+      {
+       "gsis_id": "00-0041392",
+       "name": "Jake Slaughter",
+       "position": "OL",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041544",
+       "name": "Akheem Mesidor",
+       "position": "LB",
+       "status": "ACT",
+       "status_description": "A01"
+      },
+      {
+       "gsis_id": "00-0041550",
+       "name": "Brenen Thompson",
+       "position": "WR",
+       "status": "ACT",
+       "status_description": "A01"
+      }
+     ],
+     "source": "roster_weekly_2026.parquet sha256 c43582ebed715bb6bddf7735fe49dd70b6a30f896489efd1046ff74011790ea4",
+     "week": 11
     },
     "players": [
      {
@@ -9031,7 +10712,7 @@
    "week": 11
   },
   "schema": "lp-nfl-pregame-snapshot-1",
-  "snapshot_sha256": "2c6318fd967bcc26160e17423426d28c15873270cbd6a473fbab5bbadbafab3e"
+  "snapshot_sha256": "952997cf9e72894ab0cdc3b91778900b37dcf38a545401c0fcfaf7113617951d"
  },
  "runtime_model_inputs": {
   "current_streak": {
