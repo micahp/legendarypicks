@@ -529,7 +529,11 @@ def rotowire_injury_report(db_path, cutoff, window_days=10):
     Each player's state is the newest status published in the window before the cutoff. Publish times are exact. A player
     is matched to a GSIS id only through the stored links: the news row's own player_id, or the player_source_ids row for
     the RotoWire id. A status with no link is returned in `unmatched`, never matched by name. A status that RotoWire names
-    maps to the engine's words (IR, PUP, reserve and INACTIVE read as Out). Refuses when no status is in the window."""
+    maps to the engine's words (IR, PUP, reserve and INACTIVE read as Out). Refuses when no status is in the window.
+
+    Each listed player keeps the status's published_utc, the RotoWire status and its team. A game designation (OUT,
+    DOUBTFUL, QUESTIONABLE, INACTIVE) published before that team's last kickoff before the cutoff was for an earlier game:
+    it is dropped and listed in `obsolete`, not carried into this one. Reserve statuses (IR, PUP, reserve lists) persist."""
     start = cutoff - timedelta(days=window_days)
     fmt = '%Y-%m-%dT%H:%M:%S+00:00'
     import nfl_news
@@ -563,12 +567,57 @@ def rotowire_injury_report(db_path, cutoff, window_days=10):
                 unmatched.append({'team': r['team'], 'name': f"{r['first_name']} {r['last_name']}", 'status': r['injury_status'],
                                   'rotowire_player_id': r['rotowire_player_id'], 'published_utc': r['published_utc']})
                 continue
-            latest[gsis_ids.pop()] = (ROTOWIRE_TO_ENGINE[r['injury_status']], r['published_utc'])
+            latest[gsis_ids.pop()] = (r['injury_status'], r['published_utc'], r['team'])
+        last_kickoff = _last_kickoffs(conn, cutoff)
     finally:
         conn.close()
-    players = [{'gsis_id': gsis, 'report_status': status} for gsis, (status, _) in latest.items()]
+    players, obsolete = split_obsolete(latest, last_kickoff)
     return {'players': players, 'listed': len(players), 'rows': len(rows), 'window_days': window_days,
-            'source': 'rotowire nfl_player_news_updates'}, unmatched
+            'source': 'rotowire nfl_player_news_updates', 'obsolete': obsolete}, unmatched
+
+
+GAME_DESIGNATIONS = ('OUT', 'DOUBTFUL', 'QUESTIONABLE', 'INACTIVE')  # one game's status; reserve lists persist
+
+
+def split_obsolete(latest, last_kickoff):
+    """(players, obsolete) from {gsis: (RotoWire status, published_utc, RotoWire team)} and {team: last kickoff before the
+    cutoff}. A game designation published before the team's last kickoff was for that earlier game: it goes to obsolete."""
+    fmt = '%Y-%m-%dT%H:%M:%S+00:00'
+    players, obsolete = [], []
+    for gsis, (raw, published, team) in sorted(latest.items()):
+        row = {'gsis_id': gsis, 'report_status': ROTOWIRE_TO_ENGINE[raw], 'rotowire_status': raw,
+               'published_utc': published, 'team': team}
+        previous = last_kickoff.get(_db_team(team))
+        if raw in GAME_DESIGNATIONS and previous is not None and published < previous.strftime(fmt):
+            obsolete.append(dict(row, previous_kickoff_utc=previous.strftime(fmt)))
+            continue
+        players.append(row)
+    return players, obsolete
+
+
+def _db_team(code):
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import team_codes
+    try:
+        return team_codes.normalize('nfl', code)
+    except Exception:
+        return None
+
+
+def _last_kickoffs(conn, cutoff):
+    """{team: the UTC kickoff of its last game before the cutoff}, from nfl_schedule (gametime is US Eastern)."""
+    import pytz
+    eastern = pytz.timezone('America/New_York')
+    out = {}
+    for row in conn.execute("SELECT gameday, gametime, home_team, away_team FROM nfl_schedule "
+                            "WHERE gameday IS NOT NULL AND gametime IS NOT NULL"):
+        kick = eastern.localize(datetime.strptime(f"{row['gameday']} {row['gametime']}", '%Y-%m-%d %H:%M')).astimezone(timezone.utc)
+        if kick >= cutoff:
+            continue
+        for team in (_db_team(row['home_team']), _db_team(row['away_team'])):
+            if team and (team not in out or kick > out[team]):
+                out[team] = kick
+    return out
 
 
 def injury_copies_for_week(archive_root, capture_path, db_path, season, week):
