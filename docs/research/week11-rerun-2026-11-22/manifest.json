@@ -1,0 +1,161 @@
+{
+ "schema": "slc-rerun-snapshots-1",
+ "games": [
+  {
+   "game_id": "2026_11_ARI_KC",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_ARI_KC.json",
+   "file_sha256": "a00c039b668691490bd30abc0b365855b9bc49b05da836fec5c8bcf3cf02a342",
+   "kickoff_utc": "2026-11-22T18:00:00Z",
+   "cutoff_utc": "2026-11-22T16:30:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_ARI_KC.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_BAL_CAR",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_BAL_CAR.json",
+   "file_sha256": "0073e4676a79efbeb291cb76362ba3bced7e5178fca7c3b686bf5a1107d9f942",
+   "kickoff_utc": "2026-11-22T18:00:00Z",
+   "cutoff_utc": "2026-11-22T16:30:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_BAL_CAR.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_IND_HOU",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_IND_HOU.json",
+   "file_sha256": "7d2275d63d2a4f27c73af4d884d9f15344b2852e48440dad75b97b709f034c41",
+   "kickoff_utc": "2026-11-20T01:15:00Z",
+   "cutoff_utc": "2026-11-19T23:45:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-19T16:30:49Z",
+    "home": "2026-11-19T16:30:49Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_IND_HOU.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_JAX_NYG",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_JAX_NYG.json",
+   "file_sha256": "2927afd4592553671530b2910b79df8127080fccd822d4f682c34a206af78e93",
+   "kickoff_utc": "2026-11-22T21:25:00Z",
+   "cutoff_utc": "2026-11-22T19:55:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_JAX_NYG.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_LV_DEN",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_LV_DEN.json",
+   "file_sha256": "b8df307a0da495592d6c80a9eabd426436bc082e78e0f0beec011aa5dcf5c5a2",
+   "kickoff_utc": "2026-11-22T21:25:00Z",
+   "cutoff_utc": "2026-11-22T19:55:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_LV_DEN.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_MIA_BUF",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_MIA_BUF.json",
+   "file_sha256": "693349f9d6f7a6e716e28bd58bc1955b9694b48a47102efaa452b2de70fef5ac",
+   "kickoff_utc": "2026-11-22T18:00:00Z",
+   "cutoff_utc": "2026-11-22T16:30:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_MIA_BUF.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_NO_CHI",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_NO_CHI.json",
+   "file_sha256": "7e5c5b6133cb8adbff159a7f8c98302ca3665c567bc70f5d1834e51667c11918",
+   "kickoff_utc": "2026-11-22T18:00:00Z",
+   "cutoff_utc": "2026-11-22T16:30:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_NO_CHI.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_NYJ_LAC",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_NYJ_LAC.json",
+   "file_sha256": "8d009b17165fe4a36b7f4105c0d0aaed8fc0e9a7cdb6142f896463614b4bae03",
+   "kickoff_utc": "2026-11-22T21:05:00Z",
+   "cutoff_utc": "2026-11-22T19:35:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_NYJ_LAC.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_PIT_PHI",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_PIT_PHI.json",
+   "file_sha256": "13d8ab6de0795e2c41e97ba147a015242654b5c69da68abec7c5cf84f1722bca",
+   "kickoff_utc": "2026-11-22T18:00:00Z",
+   "cutoff_utc": "2026-11-22T16:30:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_PIT_PHI.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_TB_DET",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_TB_DET.json",
+   "file_sha256": "9ef278d83ec8d1a2c74570cd0e5ef2275cac03ad392bf91289a0746129161f1c",
+   "kickoff_utc": "2026-11-22T18:00:00Z",
+   "cutoff_utc": "2026-11-22T16:30:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_TB_DET.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_TEN_DAL",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_TEN_DAL.json",
+   "file_sha256": "9b0f5d7dbeb255dffcc11799f94f945815fac2ca0f8f70be655639c969fb8c47",
+   "kickoff_utc": "2026-11-22T18:00:00Z",
+   "cutoff_utc": "2026-11-22T16:30:00Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "docs/research/model-snapshots-2026/week-11/2026_11_TEN_DAL.json (dev b7447a06)"
+  },
+  {
+   "game_id": "2026_11_MIN_SF",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_MIN_SF.json",
+   "file_sha256": "088385eff2806d55d71b8daa963bda72341a4041e7b08809dfb002456c4f3538",
+   "kickoff_utc": "2026-11-23T01:20:00Z",
+   "cutoff_utc": "2026-11-22T22:54:43Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "build_current_snapshots.py at build time (before the 90-minute cutoff)"
+  },
+  {
+   "game_id": "2026_11_CIN_WAS",
+   "path": "/root/runs/week-11/snapshots/rerun-2026-11-22/2026_11_CIN_WAS.json",
+   "file_sha256": "6df65fa575927d68005d0471b1cf8e25a7ef1acbf45b56a58c194a9e869e87ad",
+   "kickoff_utc": "2026-11-24T01:15:00Z",
+   "cutoff_utc": "2026-11-22T22:54:43Z",
+   "depth_chart_at": {
+    "away": "2026-11-22T15:12:52Z",
+    "home": "2026-11-22T15:12:52Z"
+   },
+   "source": "build_current_snapshots.py at build time (before the 90-minute cutoff)"
+  }
+ ]
+}
