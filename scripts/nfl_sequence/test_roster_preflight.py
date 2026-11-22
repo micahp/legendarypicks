@@ -1,0 +1,136 @@
+"""The shared roster preflight: the depth chart is not the game-day roster.
+
+Regression cases from week 11 2026: an Out QB1 who still has a prop line (Carson Beck, ARI), several QBs with lines, an
+injury status from a previous game, a starter on two teams, and an Out receiver who still gets simulated targets.
+"""
+import sys
+import unittest
+from datetime import datetime, timezone
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+sys.path[:0] = [str(HERE), str(HERE.parents[1] / 'backend')]
+import game_state  # noqa: E402
+import oracle  # noqa: E402
+import roster_preflight as rp  # noqa: E402
+
+CUTOFF = '2026-11-22T16:30:00Z'
+BECK, JOHNSON, AGUILAR, MINSHEW = '00-0041561', '00-0026300', '00-0041203', '00-0035289'
+
+
+def player(gsis, name, pos, rank, team):
+    return {'gsis_id': gsis, 'player_name': name, 'pos_abb': pos, 'pos_rank': rank, 'team': team,
+            'snapshot_at': '2026-11-22T15:12:52Z'}
+
+
+def team_rows(team, prefix, qbs):
+    rows = [player(g, n, 'QB', r, team) for g, n, r in qbs]
+    rows += [player(f'{prefix}-RB1', f'{team} RB', 'RB', 1, team), player(f'{prefix}-WR1', f'{team} WR1', 'WR', 1, team),
+             player(f'{prefix}-WR2', f'{team} WR2', 'WR', 2, team), player(f'{prefix}-WR3', f'{team} WR3', 'WR', 3, team),
+             player(f'{prefix}-TE1', f'{team} TE', 'TE', 1, team), player(f'{prefix}-PK', f'{team} K', 'PK', 1, team)]
+    return rows
+
+
+def snapshot(injuries, away_qbs=None, home_extra=()):
+    away_qbs = away_qbs or [(BECK, 'Carson Beck', 1), (JOHNSON, 'Josh Johnson', 2), (AGUILAR, 'Joey Aguilar', 3),
+                            (MINSHEW, 'Gardner Minshew II', 4)]
+    report = {'players': [{'gsis_id': g, 'report_status': s, 'published_utc': '2026-11-21T19:25:31+00:00'}
+                          for g, s in injuries.items()], 'obsolete': []}
+    return {'as_of': CUTOFF, 'snapshot_sha256': 'x',
+            'schedule': {'game_id': '2026_11_ARI_KC', 'away_team': 'ARI', 'home_team': 'KC'},
+            'rosters': {'away': {'team': 'ARI', 'snapshot_at': '2026-11-22T15:12:52Z', 'injury_report': report,
+                                 'players': team_rows('ARI', 'ARI', away_qbs)},
+                        'home': {'team': 'KC', 'snapshot_at': '2026-11-22T15:12:52Z', 'injury_report': report,
+                                 'players': team_rows('KC', 'KC', [('00-0033873', 'Patrick Mahomes', 1)]) + list(home_extra)}}}
+
+
+def result(rows, name):
+    return next(r for r in rows if r[0] == name)
+
+
+class OutQuarterback(unittest.TestCase):
+    def test_an_out_qb1_with_a_prop_line_is_excluded_and_the_backup_promoted(self):
+        snap = snapshot({BECK: 'Out', AGUILAR: 'Out', MINSHEW: 'Out'})
+        rows, resolved = rp.check(snap, {'ARI': {BECK, JOHNSON}, 'KC': {'00-0033873'}})
+        self.assertEqual(rp.resolved_qb1(resolved['away']), JOHNSON)
+        self.assertEqual(result(rows, 'ARI resolved eligible QB1')[1], 'PASS')
+        self.assertIn('promoted over Carson Beck [injury_out]', result(rows, 'ARI resolved eligible QB1')[2])
+        self.assertEqual(result(rows, 'ARI resolved QB1 has a passing-yards prop')[1], 'PASS')
+        role = next(r for r in resolved['away']['roles'] if r['role'] == 'QB1')
+        self.assertEqual(role['extra']['excluded_ranked_ahead'], [BECK])
+        beck = next(p for p in resolved['away']['players'] if p['gsis_id'] == BECK)
+        self.assertEqual((beck['depth_rank'], beck['exclusion_reason']), (1, 'injury_out'))  # original rank kept
+
+    def test_a_prop_line_on_the_out_qb_does_not_validate_the_game(self):
+        # only Beck is priced: the resolved starter (Johnson) has no line, so the market check fails
+        rows, _ = rp.check(snapshot({BECK: 'Out'}), {'ARI': {BECK}, 'KC': {'00-0033873'}})
+        self.assertEqual(result(rows, 'ARI resolved QB1 has a passing-yards prop')[1], 'FAIL')
+
+    def test_no_eligible_qb_blocks(self):
+        snap = snapshot({BECK: 'Out', JOHNSON: 'Out', AGUILAR: 'Out', MINSHEW: 'Out'})
+        rows, resolved = rp.check(snap)
+        self.assertEqual(result(rows, 'ARI resolved eligible QB1')[1], 'FAIL')
+        self.assertIn('unresolved_QB1', resolved['away']['blocks'])
+
+    def test_an_injury_report_without_publish_times_fails(self):
+        snap = snapshot({BECK: 'Out'})
+        for p in snap['rosters']['away']['injury_report']['players']:
+            del p['published_utc']
+        rows, _ = rp.check(snap)
+        self.assertEqual(result(rows, 'ARI injury report applies to this game')[1], 'FAIL')
+
+
+class ObsoleteStatus(unittest.TestCase):
+    def test_a_game_status_from_the_previous_game_is_dropped_and_a_reserve_status_is_kept(self):
+        last = {'ARI': datetime(2026, 11, 15, 21, 5, tzinfo=timezone.utc)}
+        latest = {AGUILAR: ('INACTIVE', '2026-11-15T19:51:13+00:00', 'ARZ'),
+                  BECK: ('OUT', '2026-11-21T19:25:31+00:00', 'ARZ'),
+                  MINSHEW: ('IR', '2026-11-10T04:40:51+00:00', 'ARZ')}
+        players, obsolete = oracle.split_obsolete(latest, last)
+        self.assertEqual(sorted(p['gsis_id'] for p in players), sorted([BECK, MINSHEW]))
+        self.assertEqual([p['gsis_id'] for p in obsolete], [AGUILAR])
+
+
+class Membership(unittest.TestCase):
+    def test_a_starter_listed_on_both_teams_blocks(self):
+        traded = player(JOHNSON, 'Josh Johnson', 'QB', 2, 'KC')
+        rows, _ = rp.check(snapshot({BECK: 'Out'}, home_extra=[traded]))
+        self.assertEqual(result(rows, 'conflicting player-team memberships')[1], 'FAIL')
+
+
+class Postflight(unittest.TestCase):
+    def test_an_out_receiver_with_simulated_targets_fails(self):
+        snap = snapshot({BECK: 'Out', 'ARI-WR1': 'Out'})
+        run = {'player_boxscores_by_seed': [{'seed': 1, 'players': [
+            {'player_id': JOHNSON, 'player_name': 'Josh Johnson', 'player_team': 'ARI', 'passing': {'att': 30}},
+            {'player_id': '00-0033873', 'player_name': 'Patrick Mahomes', 'player_team': 'KC', 'passing': {'att': 35}},
+            {'player_id': 'ARI-WR1', 'player_name': 'ARI WR1', 'player_team': 'ARI', 'receiving': {'tgt': 4}}]}]}
+        rows = rp.postflight(snap, run)
+        self.assertEqual(result(rows, 'excluded players receiving stats')[1], 'FAIL')
+        self.assertEqual(result(rows, 'ARI simulated passer is the resolved QB1')[1], 'PASS')
+
+    def test_a_simulated_passer_who_is_not_the_resolved_qb1_fails(self):
+        snap = snapshot({BECK: 'Out'})
+        run = {'player_boxscores_by_seed': [{'seed': 1, 'players': [
+            {'player_id': BECK, 'player_name': 'Carson Beck', 'player_team': 'ARI', 'passing': {'att': 30}},
+            {'player_id': '00-0033873', 'player_name': 'Patrick Mahomes', 'player_team': 'KC', 'passing': {'att': 35}}]}]}
+        rows = rp.postflight(snap, run)
+        self.assertEqual(result(rows, 'ARI simulated passer is the resolved QB1')[1], 'FAIL')
+        self.assertEqual(result(rows, 'excluded players receiving stats')[1], 'FAIL')
+
+
+class EngineSelection(unittest.TestCase):
+    def test_the_engine_never_picks_an_out_qb1_as_passer(self):
+        snap = snapshot({BECK: 'Out'})
+        snap['roster_resolution'] = rp.resolve(snap)
+        ref = game_state.Reference.__new__(game_state.Reference)
+        ref.participants = {}
+        play = {'event_type': 'pass_incomplete', 'sequence': 1,
+                'outcome': {'sampled_from': {'game_id': 'g', 'play_id': 1}}}
+        snap['model_reference'] = {}
+        out = ref.participants_for(play, offense_team='B', snapshot=snap, seed=1)
+        self.assertEqual(out['passer_id'], JOHNSON)
+
+
+if __name__ == '__main__':
+    unittest.main()

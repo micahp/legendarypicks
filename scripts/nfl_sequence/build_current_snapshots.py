@@ -5,9 +5,13 @@ Every run downloads the published nflverse depth chart and schedule, so it never
   - the schedule row comes from the fetched nfldata games.csv; the kickoff is checked against the NFL scoreboard
   - each team's depth chart is the newest capture at or before the cutoff (the build time); pregame_snapshot.build
     refuses one older than 24 hours (STALE_DEPTH_CHART)
-  - injuries are the RotoWire news in --db; refused when its newest status is older than 24 hours (STALE_INJURY_NEWS)
-  - each team's QB1 must be the QB the market prices: a passing-yards prop in --props-db, joined on the GSIS id.
-    A different QB is refused (QB1_NOT_MARKET_QB), and so is a game with no QB prop yet (NO_MARKET_QB): it cannot be checked
+  - injuries are the RotoWire news in --db, each with its publish time; a game status from a team's previous game is
+    dropped (oracle.rotowire_injury_report)
+  - roster_preflight resolves each team's playable roster (Out and inactive players excluded, the next eligible player
+    promoted, reasons recorded) and writes it into the snapshot as roster_resolution, so every model reads one roster.
+    Any preflight FAIL refuses the game: depth chart over 24 hours old, injury report without publish times, no
+    eligible QB1, an unresolved required role, a player on both teams, or a resolved QB1 with no passing-yards prop in
+    --props-db (joined on the GSIS id; a game with no QB prop yet cannot be checked and is refused)
 Nothing is written unless every requested game passes. The manifest records each source, its capture time and hash.
 
 Usage:
@@ -30,12 +34,12 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT / 'backend'), str(ROOT / 'scripts' / 'nfl_sequence'), str(ROOT)]
 import oracle  # noqa: E402
 import pregame_snapshot  # noqa: E402
+import roster_preflight  # noqa: E402
 from paced_http import Fetcher  # noqa: E402
 from scripts import nfl_team_codes  # noqa: E402
 
 DEPTH_URL = 'https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_{season}.parquet'
 GAMES_URL = 'https://github.com/nflverse/nfldata/raw/master/data/games.csv'
-MAX_INJURY_NEWS_AGE = timedelta(hours=24)
 
 
 def download(url, path):
@@ -77,22 +81,6 @@ def market_qbs(props_db, game_id, gameday):
     return out
 
 
-def check_qbs(snapshot, qbs):
-    """Refusal strings for this snapshot's QB1s against the market QBs; empty when both match."""
-    problems = []
-    for side in ('away', 'home'):
-        roster = snapshot['rosters'][side]
-        team = nfl_team_codes.to_db(roster['team'])
-        qb1 = [p for p in roster['players'] if p['pos_abb'] == 'QB' and p['pos_rank'] == 1][0]
-        priced = qbs.get(team)
-        if not priced:
-            problems.append(f"NO_MARKET_QB {snapshot['schedule']['game_id']}: no passing-yards prop for {team} yet")
-        elif qb1['gsis_id'] not in priced:
-            problems.append(f"QB1_NOT_MARKET_QB {snapshot['schedule']['game_id']}: {team} depth QB1 {qb1['player_name']} "
-                            f"({qb1['gsis_id']}) is not the priced QB {sorted(priced)}")
-    return problems
-
-
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--db', required=True, help='database with players and RotoWire news (nfl_player_news_updates)')
@@ -121,13 +109,7 @@ def main(argv=None):
         raise SystemExit(f'NOT_IN_SCHEDULE: {missing}')
 
     injury, unmatched = oracle.rotowire_injury_report(args.db, now)
-    con = sqlite3.connect(f'file:{args.db}?mode=ro', uri=True)
-    newest_news = con.execute("SELECT max(published_utc) FROM nfl_player_news_updates WHERE injury_status <> ''").fetchone()[0]
-    con.close()
-    news_at = datetime.fromisoformat(newest_news.replace('Z', '+00:00'))
-    if now - news_at > MAX_INJURY_NEWS_AGE:
-        raise SystemExit(f'STALE_INJURY_NEWS: newest RotoWire status in {args.db} is {newest_news}, '
-                         f'more than {MAX_INJURY_NEWS_AGE} before {cutoff}')
+    newest_news = max(p['published_utc'] for p in injury['players'])
 
     fetch = Fetcher(min_interval=3.0, host_budget=len(wanted) + 5, on_exhausted='refuse')
     built, refused = [], []
@@ -144,14 +126,14 @@ def main(argv=None):
         except ValueError as exc:
             refused.append(str(exc))
             continue
-        problems = check_qbs(snap, market_qbs(args.props_db, game_id, row['gameday']))
-        if problems:
-            refused.extend(problems)
+        rows, resolved = roster_preflight.check(snap, market_qbs(args.props_db, game_id, row['gameday']))
+        print(roster_preflight.render(f'PREFLIGHT {game_id}', rows))
+        bad = roster_preflight.failed(rows)
+        if bad:
+            refused.extend(f'{game_id}: {name}: {detail}' for name, _, detail in bad)
             continue
-        built.append((game_id, snap))
-    for game_id, snap in built:
-        print(f"OK {game_id}: depth {snap['rosters']['away']['team']} {snap['rosters']['away']['snapshot_at']}, "
-              f"{snap['rosters']['home']['team']} {snap['rosters']['home']['snapshot_at']}")
+        snap['roster_resolution'] = resolved
+        built.append((game_id, pregame_snapshot.reseal(snap)))
     if refused:
         print('\n'.join(f'REFUSED {line}' for line in refused))
         raise SystemExit(f'{len(refused)} refusals, {len(built)} of {len(wanted)} games passed; nothing written')
@@ -162,9 +144,9 @@ def main(argv=None):
                                             'path': str(depth_path), 'sha256': depth_sha},
                             'schedule': {'url': GAMES_URL, 'fetched_utc': cutoff, 'path': str(games_path), 'sha256': games_sha},
                             'injury_news': {'table': 'nfl_player_news_updates', 'newest_published_utc': newest_news,
-                                            'players_listed': injury['listed'], 'unmatched': len(unmatched)}},
-                'max_depth_chart_age_hours': pregame_snapshot.MAX_DEPTH_CHART_AGE.total_seconds() / 3600,
-                'max_injury_news_age_hours': MAX_INJURY_NEWS_AGE.total_seconds() / 3600, 'games': []}
+                                            'players_listed': injury['listed'], 'obsolete_dropped': len(injury['obsolete']),
+                                            'unmatched': len(unmatched)}},
+                'max_depth_chart_age_hours': pregame_snapshot.MAX_DEPTH_CHART_AGE.total_seconds() / 3600, 'games': []}
     for game_id, snap in built:
         path = args.out / f'{game_id}.json'
         with path.open('x') as handle:
@@ -173,7 +155,8 @@ def main(argv=None):
         loaded = pregame_snapshot.load_frozen_snapshot(str(path))
         manifest['games'].append({'game_id': game_id, 'path': str(path), 'snapshot_sha256': loaded['snapshot_sha256'],
                                   'kickoff_utc': loaded['schedule']['scheduled_kickoff_utc'],
-                                  'depth_chart_at': {s: loaded['rosters'][s]['snapshot_at'] for s in ('away', 'home')}})
+                                  'depth_chart_at': {s: loaded['rosters'][s]['snapshot_at'] for s in ('away', 'home')},
+                                  'roster_resolution_hash': loaded['roster_resolution']['content_hash']})
     (args.out / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
     print(f'BUILT {len(built)} snapshots in {args.out}')
     return 0

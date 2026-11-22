@@ -11,7 +11,9 @@ For each docs/research/cutoff-snapshots-2026/week-NN/<game_id>.json, pregame_sna
     the portable pack runner checks them
 The output is the file the pack runner reads: {"pregame_snapshot": ..., "runtime_model_inputs": ...}, plus the streak
 source file it hashes, beside it as <game_id>.streak.json.
-The 24-hour depth chart rule in pregame_snapshot.build applies. Writes docs/research/model-snapshots-2026/week-NN/<game_id>.json
+The 24-hour depth chart rule in pregame_snapshot.build applies. roster_preflight then resolves each team's playable roster
+(Out and inactive players excluded, the next eligible player promoted) and writes it into the snapshot as
+roster_resolution; any preflight FAIL refuses the game. A game status from a team's previous game is not used. Writes docs/research/model-snapshots-2026/week-NN/<game_id>.json
 and never overwrites one. Prints every refusal.
 
 Usage: python3 scripts/nfl_sequence/cutoff_to_model_snapshot.py --db picks.dev.db --archive-schedule archive_schedule_2026.json
@@ -28,6 +30,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT / 'backend'), str(ROOT / 'scripts' / 'nfl_sequence'), str(ROOT)]
 import oracle  # noqa: E402
 import pregame_snapshot  # noqa: E402
+import roster_preflight  # noqa: E402
 import slc_pregame_context  # noqa: E402
 from scripts import nfl_team_codes  # noqa: E402
 
@@ -100,6 +103,12 @@ def main(argv=None):
         except ValueError as exc:
             refused.append(f'{game_id}: {exc}')
             continue
+        rows, resolved = roster_preflight.check(snap)
+        bad = roster_preflight.failed(rows)
+        if bad:
+            refused.extend(f'{game_id}: {name}: {detail}' for name, _, detail in bad)
+            continue
+        snap['roster_resolution'] = resolved
         snap['cutoff_capture'] = {'path': str(path.relative_to(ROOT)), 'fetched_at_utc': capture['fetched_at_utc'],
                                   'backfilled': 'backfilled' in capture}
         out.parent.mkdir(parents=True, exist_ok=True)

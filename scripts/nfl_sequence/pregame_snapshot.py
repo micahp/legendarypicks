@@ -109,6 +109,13 @@ def load_frozen_snapshot(path: str) -> dict:
     kickoff = schedule.get('scheduled_kickoff_utc')
     if kickoff and cutoff >= parse_as_of(kickoff):
         raise ValueError('frozen pregame snapshot cutoff is not before scheduled kickoff')
+    frozen = snapshot.get('roster_resolution')
+    if frozen is not None:
+        # the resolved roster must be the one these rosters and injury reports give today, or every model would not
+        # read the same playable roster
+        import roster_preflight
+        if roster_preflight.resolve(snapshot)['content_hash'] != frozen.get('content_hash'):
+            raise ValueError('frozen roster resolution does not match the snapshot rosters and injury reports')
     return snapshot
 
 
