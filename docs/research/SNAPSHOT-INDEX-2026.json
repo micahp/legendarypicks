@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-11-22T23:53:30Z",
+ "generated_utc": "2026-11-22T23:54:08Z",
  "max_depth_age_hours": 24,
  "games": [
   {
@@ -4879,9 +4879,29 @@
    "week": 11,
    "kickoff_utc": "2026-11-23T01:20Z",
    "cutoff_passed": true,
-   "status": "MISSING",
-   "run_on": null,
-   "snapshots": []
+   "status": "OK",
+   "run_on": "docs/research/model-snapshots-2026/week-11/2026_11_MIN_SF.json",
+   "snapshots": [
+    {
+     "set": "cutoff",
+     "path": "docs/research/cutoff-snapshots-2026/week-11/2026_11_MIN_SF.json",
+     "cutoff_utc": "2026-11-22T23:50:00Z",
+     "depth_age_hours": 8.6,
+     "stale": false,
+     "backfilled": false,
+     "labels": [
+      "FETCHED_AT_CAPTURE",
+      "VERIFIED"
+     ]
+    },
+    {
+     "set": "model",
+     "path": "docs/research/model-snapshots-2026/week-11/2026_11_MIN_SF.json",
+     "cutoff_utc": "2026-11-22T23:50:00Z",
+     "depth_age_hours": 8.6,
+     "stale": false
+    }
+   ]
   },
   {
    "game_id": "2026_11_CIN_WAS",
@@ -5874,8 +5894,6 @@
    "snapshots": []
   }
  ],
- "missing": [
-  "2026_11_MIN_SF"
- ],
+ "missing": [],
  "snapshots_for_games_not_in_schedule": []
 }

@@ -1,8 +1,8 @@
 # 2026 pregame snapshot index
 
-Generated 2026-11-22 23:53 UTC by `scripts/nfl_sequence/snapshot_index.py`. Do not edit by hand.
+Generated 2026-11-22 23:54 UTC by `scripts/nfl_sequence/snapshot_index.py`. Do not edit by hand.
 
-Games: 161 OK, 1 MISSING, 110 upcoming.
+Games: 162 OK, 0 MISSING, 110 upcoming.
 
 - **cutoff**: the 90-minute cutoff job (`/root/cutoff-captures` on the fast host), copied to `cutoff-snapshots-2026/`. Backfilled ones were built after the game: their depth chart is the capture before the cutoff, but injury and roster data are `FETCHED_AFTER_CUTOFF`.
 - **RUN ON**: the model-format snapshot to run on for that game. Use this one.
@@ -173,7 +173,7 @@ Games: 161 OK, 1 MISSING, 110 upcoming.
 | 11 | 2026_11_NYJ_LAC | 2026-11-22T21:05Z | OK | [model-snapshots-2026/week-11/2026_11_NYJ_LAC.json](model-snapshots-2026/week-11/2026_11_NYJ_LAC.json) | [4.4h backfilled](cutoff-snapshots-2026/week-11/2026_11_NYJ_LAC.json) | [4.4h](model-snapshots-2026/week-11/2026_11_NYJ_LAC.json) | - |
 | 11 | 2026_11_JAX_NYG | 2026-11-22T21:25Z | OK | [model-snapshots-2026/week-11/2026_11_JAX_NYG.json](model-snapshots-2026/week-11/2026_11_JAX_NYG.json) | [4.7h backfilled](cutoff-snapshots-2026/week-11/2026_11_JAX_NYG.json) | [4.7h](model-snapshots-2026/week-11/2026_11_JAX_NYG.json) | - |
 | 11 | 2026_11_LV_DEN | 2026-11-22T21:25Z | OK | [model-snapshots-2026/week-11/2026_11_LV_DEN.json](model-snapshots-2026/week-11/2026_11_LV_DEN.json) | [4.7h backfilled](cutoff-snapshots-2026/week-11/2026_11_LV_DEN.json) | [4.7h](model-snapshots-2026/week-11/2026_11_LV_DEN.json) | - |
-| 11 | 2026_11_MIN_SF | 2026-11-23T01:20Z | MISSING | - | - | - | - |
+| 11 | 2026_11_MIN_SF | 2026-11-23T01:20Z | OK | [model-snapshots-2026/week-11/2026_11_MIN_SF.json](model-snapshots-2026/week-11/2026_11_MIN_SF.json) | [8.6h](cutoff-snapshots-2026/week-11/2026_11_MIN_SF.json) | [8.6h](model-snapshots-2026/week-11/2026_11_MIN_SF.json) | - |
 | 11 | 2026_11_CIN_WAS | 2026-11-24T01:15Z | UPCOMING | - | - | - | - |
 | 12 | 2026_12_GB_LA | 2026-11-26T01:00Z | UPCOMING | - | - | - | - |
 | 12 | 2026_12_CHI_DET | 2026-11-26T18:00Z | UPCOMING | - | - | - | - |
