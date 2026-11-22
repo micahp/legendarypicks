@@ -1,0 +1,78 @@
+{
+  "files_changed_during_run": [],
+  "git_head": "0bd0102dbda8adab14d56bf3c943e2dc3f8e3cef",
+  "inputs_after": null,
+  "inputs_before": {
+    "db": {
+      "hash_status": "skipped_large_input",
+      "mtime_ns": 1795124382354456471,
+      "mtime_utc": "2026-11-19T21:39:42.354456Z",
+      "path": "/root/tnf-batch/picks.frozen.db",
+      "sha256": null,
+      "size_bytes": 4193959936,
+      "status": "file"
+    },
+    "participation_field": {
+      "expected_sha256_from_command": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41",
+      "hash_status": "computed",
+      "mtime_ns": 1795125515839553404,
+      "mtime_utc": "2026-11-19T21:58:35.839553Z",
+      "path": "/root/tnf-batch/he/participation-field-v4.json",
+      "sha256": "9aaf7e57ce45bc525393de105c2b803673d441b589588a279a28e57ce2880a41",
+      "size_bytes": 3348137,
+      "status": "file"
+    },
+    "participation_snap_counts": {
+      "expected_sha256_from_command": "69b7e3cfeba1fd244e9c7462caab2a32da48daae619a2451979894e72a38aa7b",
+      "hash_status": "computed",
+      "mtime_ns": 1795032910761663976,
+      "mtime_utc": "2026-11-18T20:15:10.761664Z",
+      "path": "/root/tnf-batch/w10/snap_counts_through_week9.json",
+      "sha256": "69b7e3cfeba1fd244e9c7462caab2a32da48daae619a2451979894e72a38aa7b",
+      "size_bytes": 339024,
+      "status": "file"
+    },
+    "playcall_artifact": {
+      "hash_status": "computed",
+      "mtime_ns": 1795132927000000000,
+      "mtime_utc": "2026-11-20T00:02:07Z",
+      "path": "/root/tnf-batch/pbv1cls/runtime/docs/research/SLC-PLAYCALL-ARTIFACT-v1.json",
+      "sha256": "c8f16540931f6fddc61b6e62797ecd71dfff11897c393c531033eef623328ce5",
+      "size_bytes": 9062,
+      "status": "file"
+    },
+    "playcall_pbv1_package": {
+      "hash_status": "computed",
+      "mtime_ns": 1795132927000000000,
+      "mtime_utc": "2026-11-20T00:02:07Z",
+      "path": "/root/tnf-batch/pbv1cls/runtime/docs/research/pbv1-package-integration-2026-11-02/pbv1_training_plays.csv",
+      "sha256": "ab875384a82ea1d6472e12007d0e1f79316508861a1843730253f40253d8a993",
+      "size_bytes": 5981820,
+      "status": "file"
+    },
+    "playcall_streak_file": {
+      "hash_status": "computed",
+      "mtime_ns": 1795105201282651076,
+      "mtime_utc": "2026-11-19T16:20:01.282651Z",
+      "path": "/root/tnf-batch/current/streaks/2026_11_IND_HOU.json",
+      "sha256": "97176792b0ccc3b2bbf9ac558974514a67536480ac417738fd685280e2b3680c",
+      "size_bytes": 1286,
+      "status": "file"
+    },
+    "snapshot_file": {
+      "hash_status": "computed",
+      "mtime_ns": 1795105216863186685,
+      "mtime_utc": "2026-11-19T16:20:16.863187Z",
+      "path": "/root/tnf-batch/current/snapshots/2026_11_IND_HOU/prospective-1.json",
+      "sha256": "5b9adaa4aaa3540f2ed01edc7ec272e77f646e2cf05017e130bd476b42bc7785",
+      "size_bytes": 93596,
+      "status": "file"
+    }
+  },
+  "note": "mtime is not source publication time; large inputs are not hashed by this diagnostic; model-specific input checks remain unchanged.",
+  "output": "/root/tnf-batch/pbv1arm/out/2026_11_IND_HOU-pbv1-1000.json",
+  "purpose": "observation_only_no_new_model_or_rng_gate",
+  "schema": "lp-nfl-slc-input-inventory-1",
+  "started_at_utc": "2026-11-20T00:50:53.992425Z",
+  "status": "started"
+}

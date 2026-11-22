@@ -96,6 +96,10 @@ The active cross-repository brief is [Gridiron Physics Football-first Agent Dire
 No LP live forecast/lock/grading updates, production writes, shared engine changes or unapproved merges. Coordinate through committed, hashed research manifests and one integrator, not unverified cross-agent status messages.
 
 ## Before you start
+- Before any NFL simulation run, find each game's snapshot in `docs/research/SNAPSHOT-INDEX-2026.md`.
+  Never run on a snapshot marked STALE (depth chart over 24 hours old at the cutoff). Build new
+  ones with `scripts/nfl_sequence/build_current_snapshots.py`; refresh the index with
+  `scripts/nfl_sequence/snapshot_index.py`.
 - Run `scripts/prior_art.py "<terms>"` before writing a new script or reporting a finding (0a).
 - Load the skills in `.claude/skills/` for your task: `published-first` (anything derived, incl.
   schedules and join keys), `fail-loudly` (ingests, joins, best-effort steps), `falsify-before-merge`

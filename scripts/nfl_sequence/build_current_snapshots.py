@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""Build pregame snapshots for upcoming NFL games from data fetched now. One command; refuses rather than build stale.
+
+Every run downloads the published nflverse depth chart and schedule, so it never reads an old local copy. Then, per game:
+  - the schedule row comes from the fetched nfldata games.csv; the kickoff is checked against the NFL scoreboard
+  - each team's depth chart is the newest capture at or before the cutoff (the build time); pregame_snapshot.build
+    refuses one older than 24 hours (STALE_DEPTH_CHART)
+  - injuries are the RotoWire news in --db; refused when its newest status is older than 24 hours (STALE_INJURY_NEWS)
+  - each team's QB1 must be the QB the market prices: a passing-yards prop in --props-db, joined on the GSIS id.
+    A different QB is refused (QB1_NOT_MARKET_QB), and so is a game with no QB prop yet (NO_MARKET_QB): it cannot be checked
+Nothing is written unless every requested game passes. The manifest records each source, its capture time and hash.
+
+Usage:
+  python3 scripts/nfl_sequence/build_current_snapshots.py --db picks.db --week 11 --out DIR [--games 2026_11_CIN_WAS ...]
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import io
+import json
+import sqlite3
+import sys
+import urllib.request
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path[:0] = [str(ROOT / 'backend'), str(ROOT / 'scripts' / 'nfl_sequence'), str(ROOT)]
+import oracle  # noqa: E402
+import pregame_snapshot  # noqa: E402
+from paced_http import Fetcher  # noqa: E402
+from scripts import nfl_team_codes  # noqa: E402
+
+DEPTH_URL = 'https://github.com/nflverse/nflverse-data/releases/download/depth_charts/depth_charts_{season}.parquet'
+GAMES_URL = 'https://github.com/nflverse/nfldata/raw/master/data/games.csv'
+MAX_INJURY_NEWS_AGE = timedelta(hours=24)
+
+
+def download(url, path):
+    with urllib.request.urlopen(url, timeout=120) as response:
+        data = response.read()
+    path.write_bytes(data)
+    return hashlib.sha256(data).hexdigest()
+
+
+def schedule_rows(path, season, week, fetched_at):
+    """{game_id: [(fetched_at, row)]} for the regular-season week, in the shape pregame_snapshot reads from archives."""
+    out = {}
+    with open(path, newline='') as handle:
+        for row in csv.DictReader(handle):
+            if row['season'] != str(season) or row['week'] != str(week) or row['game_type'] != 'REG':
+                continue
+            keep = {k: (row[k] or None) for k in row}
+            keep['season'], keep['week'] = int(row['season']), int(row['week'])
+            out[row['game_id']] = [(fetched_at, keep)]
+    return out
+
+
+def market_qbs(props_db, game_id, gameday):
+    """{team: {gsis ids with a passing-yards prop}} for one game, from props joined to players on the GSIS id."""
+    away, home = (nfl_team_codes.to_db(code) for code in nfl_team_codes.teams_from_game_id(game_id))
+    con = sqlite3.connect(f'file:{props_db}?mode=ro', uri=True)
+    try:
+        rows = con.execute(
+            "SELECT pl.team, pl.nfl_gsis_id FROM prop_games g JOIN props p ON p.game_id = g.id "
+            "JOIN players pl ON pl.id = p.player_id WHERE g.league = 'nfl' AND g.away = ? AND g.home = ? "
+            "AND g.date BETWEEN date(?, '-1 day') AND date(?, '+1 day') AND p.market = 'passing_yards'",
+            (away, home, gameday, gameday)).fetchall()
+    finally:
+        con.close()
+    out = {}
+    for team, gsis in rows:
+        if gsis:
+            out.setdefault(nfl_team_codes.to_db(team), set()).add(gsis)
+    return out
+
+
+def check_qbs(snapshot, qbs):
+    """Refusal strings for this snapshot's QB1s against the market QBs; empty when both match."""
+    problems = []
+    for side in ('away', 'home'):
+        roster = snapshot['rosters'][side]
+        team = nfl_team_codes.to_db(roster['team'])
+        qb1 = [p for p in roster['players'] if p['pos_abb'] == 'QB' and p['pos_rank'] == 1][0]
+        priced = qbs.get(team)
+        if not priced:
+            problems.append(f"NO_MARKET_QB {snapshot['schedule']['game_id']}: no passing-yards prop for {team} yet")
+        elif qb1['gsis_id'] not in priced:
+            problems.append(f"QB1_NOT_MARKET_QB {snapshot['schedule']['game_id']}: {team} depth QB1 {qb1['player_name']} "
+                            f"({qb1['gsis_id']}) is not the priced QB {sorted(priced)}")
+    return problems
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--db', required=True, help='database with players and RotoWire news (nfl_player_news_updates)')
+    ap.add_argument('--props-db', help='database with props and prop_games; default --db')
+    ap.add_argument('--season', type=int, default=2026)
+    ap.add_argument('--week', type=int, required=True)
+    ap.add_argument('--games', nargs='*', help='game ids; default every game in the week that has not started')
+    ap.add_argument('--out', type=Path, required=True)
+    args = ap.parse_args(argv)
+    args.props_db = args.props_db or args.db
+
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    cutoff = now.strftime('%Y-%m-%dT%H:%M:%SZ')
+    sources = args.out / 'sources'
+    sources.mkdir(parents=True, exist_ok=True)
+    depth_path = sources / f'depth_charts_{args.season}.{now:%Y%m%dT%H%M%SZ}.parquet'
+    games_path = sources / f'games.{now:%Y%m%dT%H%M%SZ}.csv'
+    depth_sha = download(DEPTH_URL.format(season=args.season), depth_path)
+    games_sha = download(GAMES_URL, games_path)
+    depth = oracle.archive_depth_by_team(sources / 'no-archives', since=f'{args.season}-08-01T00:00:00Z',
+                                         extra_parquet=[(depth_path, now)])
+    schedule = schedule_rows(games_path, args.season, args.week, now)
+    wanted = args.games or sorted(schedule)
+    missing = [g for g in wanted if g not in schedule]
+    if missing:
+        raise SystemExit(f'NOT_IN_SCHEDULE: {missing}')
+
+    injury, unmatched = oracle.rotowire_injury_report(args.db, now)
+    con = sqlite3.connect(f'file:{args.db}?mode=ro', uri=True)
+    newest_news = con.execute("SELECT max(published_utc) FROM nfl_player_news_updates WHERE injury_status <> ''").fetchone()[0]
+    con.close()
+    news_at = datetime.fromisoformat(newest_news.replace('Z', '+00:00'))
+    if now - news_at > MAX_INJURY_NEWS_AGE:
+        raise SystemExit(f'STALE_INJURY_NEWS: newest RotoWire status in {args.db} is {newest_news}, '
+                         f'more than {MAX_INJURY_NEWS_AGE} before {cutoff}')
+
+    fetch = Fetcher(min_interval=3.0, host_budget=len(wanted) + 5, on_exhausted='refuse')
+    built, refused = [], []
+    for game_id in wanted:
+        row = schedule[game_id][0][1]
+        db_row = dict(row, home_team=nfl_team_codes.to_db(row['home_team']), away_team=nfl_team_codes.to_db(row['away_team']))
+        try:
+            kickoff, url = oracle.scoreboard_kickoff(fetch, db_row)
+            if kickoff.replace(tzinfo=timezone.utc) <= now:
+                raise ValueError(f'GAME_ALREADY_STARTED {game_id}')
+            snap = pregame_snapshot.build(args.db, game_id, cutoff, kickoff_utc=f'{kickoff:%Y-%m-%dT%H:%M:%SZ}',
+                                          kickoff_source_url=url, archive_schedule=schedule, archive_depth=depth,
+                                          injury_report=injury)
+        except ValueError as exc:
+            refused.append(str(exc))
+            continue
+        problems = check_qbs(snap, market_qbs(args.props_db, game_id, row['gameday']))
+        if problems:
+            refused.extend(problems)
+            continue
+        built.append((game_id, snap))
+    for game_id, snap in built:
+        print(f"OK {game_id}: depth {snap['rosters']['away']['team']} {snap['rosters']['away']['snapshot_at']}, "
+              f"{snap['rosters']['home']['team']} {snap['rosters']['home']['snapshot_at']}")
+    if refused:
+        print('\n'.join(f'REFUSED {line}' for line in refused))
+        raise SystemExit(f'{len(refused)} refusals, {len(built)} of {len(wanted)} games passed; nothing written')
+
+    manifest = {'schema': 'lp-nfl-current-snapshot-build-1', 'cutoff_utc': cutoff, 'db': args.db,
+                'db_sha256': hashlib.sha256(Path(args.db).read_bytes()).hexdigest(), 'props_db': args.props_db,
+                'sources': {'depth_chart': {'url': DEPTH_URL.format(season=args.season), 'fetched_utc': cutoff,
+                                            'path': str(depth_path), 'sha256': depth_sha},
+                            'schedule': {'url': GAMES_URL, 'fetched_utc': cutoff, 'path': str(games_path), 'sha256': games_sha},
+                            'injury_news': {'table': 'nfl_player_news_updates', 'newest_published_utc': newest_news,
+                                            'players_listed': injury['listed'], 'unmatched': len(unmatched)}},
+                'max_depth_chart_age_hours': pregame_snapshot.MAX_DEPTH_CHART_AGE.total_seconds() / 3600,
+                'max_injury_news_age_hours': MAX_INJURY_NEWS_AGE.total_seconds() / 3600, 'games': []}
+    for game_id, snap in built:
+        path = args.out / f'{game_id}.json'
+        with path.open('x') as handle:
+            json.dump(snap, handle, indent=1, sort_keys=True)
+            handle.write('\n')
+        loaded = pregame_snapshot.load_frozen_snapshot(str(path))
+        manifest['games'].append({'game_id': game_id, 'path': str(path), 'snapshot_sha256': loaded['snapshot_sha256'],
+                                  'kickoff_utc': loaded['schedule']['scheduled_kickoff_utc'],
+                                  'depth_chart_at': {s: loaded['rosters'][s]['snapshot_at'] for s in ('away', 'home')}})
+    (args.out / 'manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n')
+    print(f'BUILT {len(built)} snapshots in {args.out}')
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

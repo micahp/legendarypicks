@@ -11,13 +11,16 @@ import hashlib
 import json
 import sqlite3
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts import nfl_team_codes
 
 SCHEMA = 'lp-nfl-pregame-snapshot-1'
+# A team's newest depth chart must be captured no more than this long before the cutoff. nflverse publishes the depth
+# chart twice a day in season, so an older one means the builder read a stale copy (week 11 2026 used a 30-day-old one).
+MAX_DEPTH_CHART_AGE = timedelta(hours=24)
 # Reviewed builder versions of build_full_depth_roster_snapshot.py. The week-7 fixture pins the first; the second is the
 # same builder with --jersey-week (default 7). The running builder and the provenance must both be one of these.
 REVIEWED_FULL_BUILDER_SHA256 = {
@@ -240,9 +243,53 @@ def input_provenance(game, rosters):
     return {'unverified': unverified}
 
 
+def schedule_from_archive(observations, cutoff):
+    """The schedule row from the newest dated archive observed on or before the cutoff, or None.
+
+    `observations` is a list of (observed_at UTC datetime, row dict) for one game, taken from the dated nflverse archives
+    (games.rds). The observed time is the archive's own run time, measured by the caller."""
+    seen = [(at, row) for at, row in observations if at <= cutoff]
+    if not seen:
+        return None
+    at, row = max(seen, key=lambda item: item[0])
+    out = dict(row)
+    out['ingested_at'] = at.strftime('%Y-%m-%d %H:%M:%S')
+    out['source'] = f"nflverse-archive-games:{at:%Y-%m-%d}"
+    out['availability_classification'] = 'dated_archive_snapshot'
+    return out
+
+
+def archive_depth_rows(con, archive_depth, team, cutoff):
+    """The newest archived depth chart for one team observed by the cutoff, in the shape the depth query returns.
+
+    `archive_depth` maps team to {observed UTC datetime: [row dict]}, built from the dated archives. Each row carries the
+    gsis_id, name, position and rank. The LP player id comes from the players table. A gsis_id that maps to more than
+    one player id is left out, not guessed, so it cannot join to the wrong player."""
+    seen = [at for at in archive_depth.get(team, {}) if at <= cutoff]
+    if not seen:
+        return []
+    at = max(seen)
+    ids, counts = {}, {}
+    for player_id, gsis in con.execute('SELECT id, nfl_gsis_id FROM players WHERE nfl_gsis_id IS NOT NULL'):
+        ids[gsis] = player_id
+        counts[gsis] = counts.get(gsis, 0) + 1
+    stamp = at.strftime('%Y-%m-%dT%H:%M:%SZ')
+    out = []
+    for row in archive_depth[team][at]:
+        gsis = row['gsis_id']
+        if row['pos_rank'] <= 0 or counts.get(gsis) != 1:
+            continue
+        out.append({'player_id': ids[gsis], 'gsis_id': gsis, 'player_name': row['player_name'], 'team': team,
+                    'pos_abb': row['pos_abb'], 'pos_rank': row['pos_rank'], 'snapshot_at': stamp,
+                    'source': f"nflverse-archive-depth:{at:%Y-%m-%d}", 'ingested_at': stamp})
+    return out
+
+
 def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
           kickoff_source_url: str | None = None,
-          allow_unverified_current_schedule_exploratory: bool = False, evaluation: str | None = None) -> dict:
+          allow_unverified_current_schedule_exploratory: bool = False, evaluation: str | None = None,
+          archive_schedule: dict | None = None, archive_depth: dict | None = None,
+          injury_report: dict | None = None) -> dict:
     cutoff = parse_as_of(as_of)
     scheduled_start = parse_as_of(kickoff_utc) if kickoff_utc else None
     if bool(scheduled_start) != bool(kickoff_source_url):
@@ -257,9 +304,9 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
         except sqlite3.OperationalError as exc:
             if 'nfl_schedule_versions' not in str(exc):
                 raise
-            if not allow_unverified_current_schedule_exploratory:
-                raise ValueError('historical schedule versions are unavailable; refusing to backdate the current row') from exc
             game = None
+        if game is None and archive_schedule and game_id in archive_schedule:
+            game = schedule_from_archive(archive_schedule[game_id], cutoff)
         if game is None and allow_unverified_current_schedule_exploratory:
             row = con.execute(
                 """SELECT game_id, season, game_type, week, gameday, gametime, away_team, home_team,
@@ -283,22 +330,28 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
             raise ValueError(f'{game_id}: schedule must contain two distinct team abbreviations')
         rosters = {}
         for side, team in teams.items():
-            rows = con.execute(
-                """SELECT player_id, gsis_id, player_name, team, pos_abb, pos_rank,
-                          snapshot_at, source
-                     FROM nfl_depth_chart
-                    WHERE season=? AND team=? AND player_id IS NOT NULL
-                      AND gsis_id IS NOT NULL AND pos_rank > 0
-                      AND snapshot_at IS NOT NULL
-                    ORDER BY snapshot_at DESC, pos_abb, pos_rank, gsis_id""",
-                (game['season'], team),
-            ).fetchall()
+            if archive_depth is not None:
+                rows = archive_depth_rows(con, archive_depth, team, cutoff)
+            else:
+                rows = con.execute(
+                    """SELECT player_id, gsis_id, player_name, team, pos_abb, pos_rank,
+                              snapshot_at, source
+                         FROM nfl_depth_chart
+                        WHERE season=? AND team=? AND player_id IS NOT NULL
+                          AND gsis_id IS NOT NULL AND pos_rank > 0
+                          AND snapshot_at IS NOT NULL
+                        ORDER BY snapshot_at DESC, pos_abb, pos_rank, gsis_id""",
+                    (game['season'], team),
+                ).fetchall()
             eligible = [row for row in rows if _utc(row['snapshot_at'], f'{team} snapshot_at') <= cutoff]
             if not eligible:
                 raise ValueError(f'{game_id}: no pregame depth-chart rows for {team} by {cutoff.isoformat()}')
             latest_time = max(_utc(row['snapshot_at'], f'{team} snapshot_at') for row in eligible)
             latest = next(row['snapshot_at'] for row in eligible
                           if _utc(row['snapshot_at'], f'{team} snapshot_at') == latest_time)
+            if cutoff - latest_time > MAX_DEPTH_CHART_AGE:
+                raise ValueError(f'STALE_DEPTH_CHART {game_id}: {team} newest depth chart is {latest}, more than '
+                                 f'{MAX_DEPTH_CHART_AGE} before the cutoff {cutoff.isoformat()}; fetch the current one')
             selected = [dict(row) for row in eligible
                         if _utc(row['snapshot_at'], f'{team} snapshot_at') == latest_time]
             positions = {row['pos_abb'] for row in selected}
@@ -318,6 +371,10 @@ def build(db: str, game_id: str, as_of: str, kickoff_utc: str | None = None,
             }
     finally:
         con.close()
+
+    if injury_report is not None:
+        for side in rosters:
+            rosters[side]['injury_report'] = injury_report
 
     provenance = input_provenance(game, rosters)
     if evaluation == 'backtest' and provenance['unverified']:

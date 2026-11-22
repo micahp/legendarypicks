@@ -1,0 +1,2913 @@
+{
+ "as_of": "2026-11-08T16:00:00Z",
+ "evaluation": {
+  "class": null,
+  "unverified_inputs": [
+   "schedule: observed_at is a loader import time, not a capture time",
+   "away depth: source 'nflverse-archive-depth:2026-11-08' has no verified capture time",
+   "home depth: source 'nflverse-archive-depth:2026-11-08' has no verified capture time"
+  ],
+  "verified": false
+ },
+ "model_reference": {
+  "participant_assignment_version": "pregame-role-usage-v1",
+  "play_pool": "nfl_pbp seasons 2022-2025, weeks 1-18; empirical E1 cell sampler",
+  "rule_version": "NFL-2026-GAME-STATE-RULES.md / E2 successor rules matrix"
+ },
+ "roster_snapshot_id": "nfl-depth-chart:e1bcdcf67a4d4b692cb875c16357f63d48a00ae8ad8c85bd629602ea9f0a1197",
+ "rosters": {
+  "away": {
+   "injury_report": {
+    "listed": 154,
+    "players": [
+     {
+      "gsis_id": "00-0037157",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038571",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039807",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039808",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040706",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041113",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036990",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037746",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038580",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040432",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040578",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040687",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0041044",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0034796",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0035993",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036302",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039232",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040888",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033904",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0035667",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036988",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037428",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038679",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040192",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0035687",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036417",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036934",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036968",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039242",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040541",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041063",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039071",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040236",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041060",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036231",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039752",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033131",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0033537",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033093",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037247",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037801",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038041",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038547",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038556",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039167",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039352",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041537",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036221",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036564",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037799",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038106",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039371",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040134",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0034384",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036335",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036963",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037297",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037667",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038896",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039018",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039364",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0034431",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0035133",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036932",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037076",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038589",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038685",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039811",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039819",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0035685",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037130",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036298",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040139",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040163",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041043",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037235",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040719",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038519",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040748",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0041543",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0041545",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0032228",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0036244",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036349",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036672",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037191",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037195",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039751",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040737",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0032103",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0033885",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0036736",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0037320",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038414",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0041550",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0037262",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040641",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036682",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039874",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041096",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0035228",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036259",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037301",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038578",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041104",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0029685",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0031330",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033090",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033132",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033555",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0034778",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0035676",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037205",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040734",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037250",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038601",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040125",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041029",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041326",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038576",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040715",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0034782",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036902",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036986",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037740",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039347",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0041120",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0032580",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036501",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036912",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037132",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038393",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038400",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040708",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0031933",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0034342",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0034350",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0034869",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037545",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037821",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038694",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040061",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0031408",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0032775",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0034391",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0034775",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0035719",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036871",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040152",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039068",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040129",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036626",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037742",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039906",
+      "report_status": "Questionable"
+     }
+    ],
+    "rows": 362
+   },
+   "players": [
+    {
+     "gsis_id": "00-0037236",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 10755,
+     "player_name": "Aidan Hutchinson",
+     "pos_abb": "LDE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036624",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 15111,
+     "player_name": "Alim McNeill",
+     "pos_abb": "LDT",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0040672",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24359,
+     "player_name": "Tyleik Williams",
+     "pos_abb": "RDT",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0038940",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 13016,
+     "player_name": "Tyler Lacy",
+     "pos_abb": "RDE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036964",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 1259,
+     "player_name": "Derrick Barnes",
+     "pos_abb": "WLB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036643",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 2601,
+     "player_name": "K.J. Britt",
+     "pos_abb": "MLB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0037289",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 19046,
+     "player_name": "Malcolm Rodriguez",
+     "pos_abb": "SLB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0034384",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 18412,
+     "player_name": "D.J. Reed",
+     "pos_abb": "LCB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039141",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 2449,
+     "player_name": "Brian Branch",
+     "pos_abb": "SS",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0033294",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 4142,
+     "player_name": "Chuck Clark",
+     "pos_abb": "FS",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039862",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 18222,
+     "player_name": "Ennis Rakestraw Jr.",
+     "pos_abb": "RCB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0038125",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 14725,
+     "player_name": "Roger McCreary",
+     "pos_abb": "NB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0041441",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 15762,
+     "player_name": "Derrick Moore",
+     "pos_abb": "LDE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0041447",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 8041,
+     "player_name": "Skyler Gill-Howard",
+     "pos_abb": "LDT",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036954",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 16905,
+     "player_name": "Levi Onwuzurike",
+     "pos_abb": "RDT",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036335",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24681,
+     "player_name": "DJ Wonnum",
+     "pos_abb": "RDE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0035895",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 973,
+     "player_name": "Joe Bachie",
+     "pos_abb": "WLB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036716",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 16761,
+     "player_name": "Amen Ogbongbemiga",
+     "pos_abb": "MLB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0035707",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 23773,
+     "player_name": "Devin White",
+     "pos_abb": "SLB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036124",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 6012,
+     "player_name": "Khalil Dorsey",
+     "pos_abb": "LCB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0041445",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 144,
+     "player_name": "Keith Abney II",
+     "pos_abb": "SS",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0037667",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 12213,
+     "player_name": "Kerby Joseph",
+     "pos_abb": "FS",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0035637",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24927,
+     "player_name": "Rock Ya-Sin",
+     "pos_abb": "RCB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0038820",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 10922,
+     "player_name": "Christian Izien",
+     "pos_abb": "NB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0041459",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 16701,
+     "player_name": "Eric O'Neill",
+     "pos_abb": "LDE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039396",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24582,
+     "player_name": "Mekhi Wingo",
+     "pos_abb": "LDT",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0038660",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 16619,
+     "player_name": "Trevor Nowaske",
+     "pos_abb": "RDE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0041442",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 19107,
+     "player_name": "Jimmy Rolder",
+     "pos_abb": "WLB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039018",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 3546,
+     "player_name": "Jack Campbell",
+     "pos_abb": "MLB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039660",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 9236,
+     "player_name": "Thomas Harper",
+     "pos_abb": "SS",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0034377",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 14016,
+     "player_name": "Avonte Maddox",
+     "pos_abb": "FS",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0038841",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 23862,
+     "player_name": "Nick Whiteside",
+     "pos_abb": "RCB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036926",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 22660,
+     "player_name": "Payton Turner",
+     "pos_abb": "LDE",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0040761",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 9513,
+     "player_name": "Ahmed Hassanein",
+     "pos_abb": "RDE",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0037281",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 4148,
+     "player_name": "Damone Clark",
+     "pos_abb": "WLB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0019730",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 13851,
+     "player_name": "Anthony Lucas",
+     "pos_abb": "RDE",
+     "pos_rank": 5,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039172",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 1399,
+     "player_name": "Jake Bates",
+     "pos_abb": "PK",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0035156",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 7402,
+     "player_name": "Jack Fox",
+     "pos_abb": "P",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0035156",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 7402,
+     "player_name": "Jack Fox",
+     "pos_abb": "H",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0031763",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 3755,
+     "player_name": "DeAndre Carter",
+     "pos_abb": "PR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0031763",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 3755,
+     "player_name": "DeAndre Carter",
+     "pos_abb": "KR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039445",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 9537,
+     "player_name": "Hogan Hatten",
+     "pos_abb": "LS",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036963",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 21011,
+     "player_name": "Amon-Ra St. Brown",
+     "pos_abb": "PR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0038896",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 19639,
+     "player_name": "Jacob Saylors",
+     "pos_abb": "KR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0037524",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 14279,
+     "player_name": "Tay Martin",
+     "pos_abb": "PR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039364",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 22788,
+     "player_name": "Sione Vaki",
+     "pos_abb": "KR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0035544",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 12510,
+     "player_name": "Tom Kennedy",
+     "pos_abb": "PR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0035544",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 12510,
+     "player_name": "Tom Kennedy",
+     "pos_abb": "KR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036963",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 21011,
+     "player_name": "Amon-Ra St. Brown",
+     "pos_abb": "WR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036880",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 19968,
+     "player_name": "Penei Sewell",
+     "pos_abb": "LT",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039408",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 14058,
+     "player_name": "Christian Mahogany",
+     "pos_abb": "LG",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0038936",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 19872,
+     "player_name": "Juice Scruggs",
+     "pos_abb": "C",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0040728",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 18300,
+     "player_name": "Tate Ratledge",
+     "pos_abb": "RG",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0011237",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 15351,
+     "player_name": "Blake Miller",
+     "pos_abb": "RT",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0033106",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 8156,
+     "player_name": "Jared Goff",
+     "pos_abb": "QB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039065",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 12998,
+     "player_name": "Sam LaPorta",
+     "pos_abb": "TE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039139",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 7979,
+     "player_name": "Jahmyr Gibbs",
+     "pos_abb": "RB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0037240",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24164,
+     "player_name": "Jameson Williams",
+     "pos_abb": "WR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039362",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 14161,
+     "player_name": "Giovanni Manu",
+     "pos_abb": "LT",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036272",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 1340,
+     "player_name": "Ben Bartch",
+     "pos_abb": "LG",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0040374",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 15029,
+     "player_name": "Seth McLaughlin",
+     "pos_abb": "C",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0040193",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 7495,
+     "player_name": "Miles Frazier",
+     "pos_abb": "RG",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036905",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 2216,
+     "player_name": "Larry Borom",
+     "pos_abb": "RT",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0033949",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 5918,
+     "player_name": "Joshua Dobbs",
+     "pos_abb": "QB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0036754",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24820,
+     "player_name": "Brock Wright",
+     "pos_abb": "TE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039364",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 22788,
+     "player_name": "Sione Vaki",
+     "pos_abb": "RB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0040669",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 21849,
+     "player_name": "Isaac TeSlaa",
+     "pos_abb": "WR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0037297",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 14532,
+     "player_name": "Cade Mays",
+     "pos_abb": "C",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0034270",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 4589,
+     "player_name": "Tyler Conklin",
+     "pos_abb": "TE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0038896",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 19639,
+     "player_name": "Jacob Saylors",
+     "pos_abb": "RB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0037524",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 14279,
+     "player_name": "Tay Martin",
+     "pos_abb": "WR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0040390",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 15179,
+     "player_name": "Jackson Meeks",
+     "pos_abb": "TE",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0039652",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 20459,
+     "player_name": "Jabari Small",
+     "pos_abb": "RB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0031763",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 3755,
+     "player_name": "DeAndre Carter",
+     "pos_abb": "WR",
+     "pos_rank": 5,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0037197",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 17050,
+     "player_name": "Isiah Pacheco",
+     "pos_abb": "RB",
+     "pos_rank": 5,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0035544",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 12510,
+     "player_name": "Tom Kennedy",
+     "pos_abb": "WR",
+     "pos_rank": 6,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    },
+    {
+     "gsis_id": "00-0041446",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 13210,
+     "player_name": "Kendrick Law",
+     "pos_abb": "WR",
+     "pos_rank": 7,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "DET"
+    }
+   ],
+   "snapshot_at": "2026-11-08T14:14:26Z",
+   "source": "nflverse-archive-depth:2026-11-08",
+   "team": "DET"
+  },
+  "home": {
+   "injury_report": {
+    "listed": 154,
+    "players": [
+     {
+      "gsis_id": "00-0037157",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038571",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039807",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039808",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040706",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041113",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036990",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037746",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038580",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040432",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040578",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040687",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0041044",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0034796",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0035993",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036302",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039232",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040888",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033904",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0035667",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036988",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037428",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038679",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040192",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0035687",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036417",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036934",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036968",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039242",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040541",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041063",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039071",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040236",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041060",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036231",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039752",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033131",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0033537",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033093",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037247",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037801",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038041",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038547",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038556",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039167",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039352",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041537",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036221",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036564",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037799",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038106",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039371",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040134",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0034384",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036335",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036963",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037297",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037667",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038896",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039018",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039364",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0034431",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0035133",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036932",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037076",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038589",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038685",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039811",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039819",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0035685",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037130",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036298",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040139",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040163",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041043",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037235",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040719",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038519",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040748",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0041543",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0041545",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0032228",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0036244",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036349",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036672",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037191",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0037195",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039751",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040737",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0032103",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0033885",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0036736",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0037320",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038414",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0041550",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0037262",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040641",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036682",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039874",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041096",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0035228",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036259",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037301",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038578",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041104",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0029685",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0031330",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033090",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033132",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0033555",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0034778",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0035676",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037205",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040734",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037250",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0038601",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040125",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041029",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0041326",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038576",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040715",
+      "report_status": "Doubtful"
+     },
+     {
+      "gsis_id": "00-0034782",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036902",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036986",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037740",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039347",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0041120",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0032580",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036501",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036912",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037132",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038393",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038400",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040708",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0031933",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0034342",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0034350",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0034869",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037545",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037821",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0038694",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040061",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0031408",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0032775",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0034391",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0034775",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0035719",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0036871",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0040152",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0039068",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0040129",
+      "report_status": "Questionable"
+     },
+     {
+      "gsis_id": "00-0036626",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0037742",
+      "report_status": "Out"
+     },
+     {
+      "gsis_id": "00-0039906",
+      "report_status": "Questionable"
+     }
+    ],
+    "rows": 362
+   },
+   "players": [
+    {
+     "gsis_id": "00-0039911",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 18907,
+     "player_name": "Chop Robinson",
+     "pos_abb": "LDE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0031557",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 17598,
+     "player_name": "Jordan Phillips",
+     "pos_abb": "LDT",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0034285",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 20198,
+     "player_name": "Zach Sieler",
+     "pos_abb": "RDT",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0036159",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 22718,
+     "player_name": "Josh Uche",
+     "pos_abb": "RDE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0036409",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 2675,
+     "player_name": "Jordyn Brooks",
+     "pos_abb": "WLB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041522",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 19044,
+     "player_name": "Jacob Rodriguez",
+     "pos_abb": "MLB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0036362",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 7884,
+     "player_name": "Willie Gay Jr.",
+     "pos_abb": "SLB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0040178",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 14248,
+     "player_name": "Jason Marshall Jr.",
+     "pos_abb": "LCB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0040182",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 22446,
+     "player_name": "Dante Trader Jr.",
+     "pos_abb": "SS",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041528",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 21628,
+     "player_name": "Michael Taaffe",
+     "pos_abb": "FS",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039156",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 2525,
+     "player_name": "JuJu Brents",
+     "pos_abb": "RCB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041533",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 11456,
+     "player_name": "Chris Johnson",
+     "pos_abb": "NB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0036682",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 9878,
+     "player_name": "Malik Herring",
+     "pos_abb": "LDE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0040127",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 8391,
+     "player_name": "Kenneth Grant",
+     "pos_abb": "LDT",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0040248",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 1866,
+     "player_name": "Zeek Biggers",
+     "pos_abb": "RDT",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041159",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 14907,
+     "player_name": "Rodney McGraw",
+     "pos_abb": "RDE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0038890",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 9924,
+     "player_name": "Shaka Heyward",
+     "pos_abb": "WLB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0040066",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24696,
+     "player_name": "Jackson Woodard",
+     "pos_abb": "SLB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039383",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 20296,
+     "player_name": "Jaylin Simpson",
+     "pos_abb": "LCB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041527",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 13790,
+     "player_name": "Kyle Louis",
+     "pos_abb": "SS",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0036677",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 670,
+     "player_name": "Zayne Anderson",
+     "pos_abb": "FS",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039390",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 5765,
+     "player_name": "Marcellas Dial Jr.",
+     "pos_abb": "RCB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0038521",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 21813,
+     "player_name": "Reese Taylor",
+     "pos_abb": "NB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041136",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 12828,
+     "player_name": "Rene Konga",
+     "pos_abb": "RDT",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039461",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 12918,
+     "player_name": "Jamree Kromah",
+     "pos_abb": "RDE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0034779",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 9426,
+     "player_name": "Ronnie Harrison Jr.",
+     "pos_abb": "WLB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041526",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 15850,
+     "player_name": "Trey Moore",
+     "pos_abb": "SLB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0037549",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 1050,
+     "player_name": "Darrell Baker Jr.",
+     "pos_abb": "LCB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039532",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24688,
+     "player_name": "Julius Wood",
+     "pos_abb": "FS",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0033862",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 8206,
+     "player_name": "Zane Gonzalez",
+     "pos_abb": "PK",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0032065",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 17690,
+     "player_name": "Bradley Pinion",
+     "pos_abb": "P",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0032065",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 17690,
+     "player_name": "Bradley Pinion",
+     "pos_abb": "H",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039880",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 23387,
+     "player_name": "Malik Washington",
+     "pos_abb": "PR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039874",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24845,
+     "player_name": "Jaylen Wright",
+     "pos_abb": "KR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0037686",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 239,
+     "player_name": "Tucker Addington",
+     "pos_abb": "LS",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041529",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 4441,
+     "player_name": "Kevin Coleman Jr.",
+     "pos_abb": "PR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039880",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 23387,
+     "player_name": "Malik Washington",
+     "pos_abb": "KR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041529",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 4441,
+     "player_name": "Kevin Coleman Jr.",
+     "pos_abb": "KR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039880",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 23387,
+     "player_name": "Malik Washington",
+     "pos_abb": "WR",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039899",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 17300,
+     "player_name": "Patrick Paul",
+     "pos_abb": "LT",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041521",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 18058,
+     "player_name": "Kadyn Proctor",
+     "pos_abb": "LG",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0036171",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 2531,
+     "player_name": "Aaron Brewer",
+     "pos_abb": "C",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0040742",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 19623,
+     "player_name": "Jonah Savaiinaea",
+     "pos_abb": "RG",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0036248",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 10944,
+     "player_name": "Austin Jackson",
+     "pos_abb": "RT",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0038128",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24412,
+     "player_name": "Malik Willis",
+     "pos_abb": "QB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0037252",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 6202,
+     "player_name": "Greg Dulcich",
+     "pos_abb": "TE",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0040198",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 8276,
+     "player_name": "Ollie Gordon II",
+     "pos_abb": "RB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041436",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 9858,
+     "player_name": "DJ Herman",
+     "pos_abb": "FB",
+     "pos_rank": 1,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041523",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 6041,
+     "player_name": "Caleb Douglas",
+     "pos_abb": "WR",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039174",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 8144,
+     "player_name": "Chukwuebuka Godrick",
+     "pos_abb": "LT",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039832",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 12669,
+     "player_name": "Jarrett Kingston",
+     "pos_abb": "LG",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039485",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 15274,
+     "player_name": "Andrew Meyer",
+     "pos_abb": "C",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039839",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 9631,
+     "player_name": "Christian Haynes",
+     "pos_abb": "RG",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039863",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 23172,
+     "player_name": "Caedan Wallace",
+     "pos_abb": "RT",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0040014",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 14678,
+     "player_name": "Kyle McCord",
+     "pos_abb": "QB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041524",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 12274,
+     "player_name": "Will Kacmarek",
+     "pos_abb": "TE",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039874",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 24845,
+     "player_name": "Jaylen Wright",
+     "pos_abb": "RB",
+     "pos_rank": 2,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041525",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 1583,
+     "player_name": "Chris Bell",
+     "pos_abb": "WR",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039863",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 23172,
+     "player_name": "Caedan Wallace",
+     "pos_abb": "LG",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039832",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 12669,
+     "player_name": "Jarrett Kingston",
+     "pos_abb": "RG",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039174",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 8144,
+     "player_name": "Chukwuebuka Godrick",
+     "pos_abb": "RT",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041579",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 22457,
+     "player_name": "Seydou Traore",
+     "pos_abb": "TE",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041096",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 470,
+     "player_name": "Kaytron Allen",
+     "pos_abb": "RB",
+     "pos_rank": 3,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041529",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 4441,
+     "player_name": "Kevin Coleman Jr.",
+     "pos_abb": "WR",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0041077",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 11847,
+     "player_name": "Justin Joly",
+     "pos_abb": "TE",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0038930",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 23349,
+     "player_name": "Carlos Washington Jr.",
+     "pos_abb": "RB",
+     "pos_rank": 4,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0037666",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 22346,
+     "player_name": "Jalen Tolbert",
+     "pos_abb": "WR",
+     "pos_rank": 5,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0037078",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 22654,
+     "player_name": "Cole Turner",
+     "pos_abb": "TE",
+     "pos_rank": 5,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0039040",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 159,
+     "player_name": "De'Von Achane",
+     "pos_abb": "RB",
+     "pos_rank": 5,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    },
+    {
+     "gsis_id": "00-0038728",
+     "ingested_at": "2026-11-08T14:14:26Z",
+     "player_id": 23507,
+     "player_name": "Jared Wayne",
+     "pos_abb": "WR",
+     "pos_rank": 6,
+     "snapshot_at": "2026-11-08T14:14:26Z",
+     "source": "nflverse-archive-depth:2026-11-08",
+     "team": "MIA"
+    }
+   ],
+   "snapshot_at": "2026-11-08T14:14:26Z",
+   "source": "nflverse-archive-depth:2026-11-08",
+   "team": "MIA"
+  }
+ },
+ "schedule": {
+  "availability_classification": "versioned_as_of",
+  "away_team": "DET",
+  "game_id": "2026_09_DET_MIA",
+  "game_type": "REG",
+  "gameday": "2026-11-08",
+  "gametime": "13:00",
+  "gametime_timezone": null,
+  "home_team": "MIA",
+  "ingested_at": "2026-11-08 13:59:03",
+  "kickoff_source_url": "nflverse-archive-games",
+  "scheduled_kickoff_utc": "2026-11-08T18:00:00Z",
+  "season": 2026,
+  "source": "nflverse_games",
+  "week": 9
+ },
+ "schema": "lp-nfl-pregame-snapshot-1",
+ "snapshot_sha256": "208f467b74c194ebe8c7861526e4577749b8498b6503a585c012978b0c97dfda"
+}
