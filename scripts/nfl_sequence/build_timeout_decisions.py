@@ -75,7 +75,10 @@ def clock_state(play_type, incomplete, out_of_bounds, turnover):
 def observations(rows, counts):
     """(key, called) per team for one game's rows in play order."""
     snaps = [i for i, r in enumerate(rows) if r['play_type'] in NEXT_SCRIMMAGE or r['play_type'] in ('kickoff', 'extra_point')]
-    for here, there in zip(snaps, snaps[1:]):
+    gaps = list(zip(snaps, snaps[1:]))
+    row_callers = [{r['timeout_team'] for r in rows[a + 1:b] if r['timeout'] == 1 and r['play_type'] == 'no_play'}
+                   for a, b in gaps]
+    for g, (here, there) in enumerate(gaps):
         row, nxt = rows[here], rows[there]
         if row['play_type'] not in SNAPS:
             continue
@@ -97,6 +100,18 @@ def observations(rows, counts):
             first = next((r for r in timeout_rows if r['timeout_team'] == team), None)
             if first is not None and first[f'{side}_timeouts_remaining'] is not None:
                 left[team] = first[f'{side}_timeouts_remaining'] + 1
+        # Some timeouts have no row: the team's count drops between the two snaps and the team has no timeout row in this
+        # gap or the gaps next to it (nflverse sometimes shows a recorded timeout's drop one snap early or late).
+        after = {home: nxt['home_timeouts_remaining'], away: nxt['away_timeouts_remaining']}
+        nearby = set().union(*row_callers[max(0, g - 1):g + 2])
+        for team in (home, away):
+            before_count = row['home_timeouts_remaining'] if team == home else row['away_timeouts_remaining']
+            if before_count is None or after[team] is None or team in nearby:
+                continue
+            inferred = max(0, int(before_count - after[team]))
+            if inferred:
+                callers[team] += inferred
+                counts['timeouts inferred from a count drop (no timeout row)'] += inferred
         score = {home: nxt['total_home_score'] - nxt['total_away_score'], away: nxt['total_away_score'] - nxt['total_home_score']}
         state = clock_state(row['play_type'], row['incomplete_pass'] == 1, row['out_of_bounds'] == 1,
                             row['interception'] == 1 or row['fumble_lost'] == 1)
