@@ -470,7 +470,6 @@ def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z', extra_parq
     rank are dropped."""
     import re
     from collections import defaultdict
-    import pyreadr
     import pandas as pd
     out = defaultdict(dict)
     seen = set()
@@ -482,7 +481,11 @@ def archive_depth_by_team(archive_root, since='2026-08-01T00:00:00Z', extra_parq
     for path, captured in sources:
         if not path.exists():
             continue
-        d = (pd.read_parquet(path) if path.suffix == '.parquet' else list(pyreadr.read_r(str(path)).values())[0])
+        if path.suffix == '.parquet':
+            d = pd.read_parquet(path)
+        else:
+            import pyreadr  # only the dated .rds archives need it
+            d = list(pyreadr.read_r(str(path)).values())[0]
         d = d[d['gsis_id'].notna() & d['pos_rank'].notna()]
         d = d.assign(_dt=pd.to_datetime(d['dt'], utc=True))
         if captured is None:
