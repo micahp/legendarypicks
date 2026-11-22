@@ -116,6 +116,8 @@ def _reference_fingerprint(reference):
     if getattr(reference, 'timeout_policy', None) is not None:
         # Off (legacy source-row timeouts): the fingerprint and every seed's draws stay as they were.
         add(['timeout-decisions', reference.timeout_policy_manifest])
+        if reference.timeout_policy.get('clock') is not None:
+            add(['snap-clock-sha256', reference.timeout_policy['clock'].sha256])
     add(['blocked-kick-manifest-sha256', reference.blocked_kicks.get('manifest_sha256')])
     add(['blocked-kick-input-source-sha256', reference.blocked_kicks.get('source_hashes')])
     if reference.safety_kick_pool is not None:
@@ -744,7 +746,9 @@ def load(db=e1.DEFAULT_DB, regulation_only=True, try_policy=None, safety_kick_ta
         import timeout_decision as td
         model = td.TimeoutModel.load()
         followed = td.rows_followed_by_timeout(rows, td.team_timeout_keys(PLAY_EXTRAS))
-        reference.timeout_policy = {'model': model, 'runoff': td.RunoffSplit(pool, followed)}
+        import snap_clock
+        reference.timeout_policy = {'model': model, 'runoff': td.RunoffSplit(pool, followed),
+                                    'clock': snap_clock.SnapClock.load()}
         reference.timeout_policy_manifest = {'model': 'timeout_decisions_2022_2025', 'table_sha256': model.sha256,
                                              'pool_rows_followed_by_timeout': len(followed),
                                              'window': '2022-2025 regular season, fixed (not cut at eligible_before)'}

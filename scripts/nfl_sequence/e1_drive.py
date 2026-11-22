@@ -39,6 +39,7 @@ MODEL_VERSION = 'e1-empirical-v0'
 RULES_VERSION = 'e1-drive-2026-10-24'
 EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack', 'interception', 'fumble_lost', 'punt',
           'field_goal_attempt')
+CLOCK_EVENTS = ('run', 'pass_complete', 'pass_incomplete', 'sack')  # plays the snap clock times
 KICK_EVENTS = ('punt', 'field_goal_attempt', 'blocked_punt', 'blocked_field_goal')
 POSSESSION_TERMINALS = ('turnover', 'turnover_on_downs', 'punt')  # a play that hands the ball over; a score or a field goal does not
 MIN_POOL = 50  # 4th-down cells hold fewer observed plays than the others; sizes are recorded in each play
@@ -342,7 +343,21 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             timeout_rng = (rng if paired_random_streams is None
                            else paired_random_streams.rng('e1_timeout', drive_index, play_index))
             caller, timeout_record = timeouts.decide(timeout_rng, st, after, play_terminal, event, row)
-            if timeout_record is not None:
+            snap_clock = getattr(timeouts, 'clock', None)
+            if (timeout_record is not None and snap_clock is not None and event in CLOCK_EVENTS
+                    and play_terminal is None and after['offense'] == st['offense']):
+                # The offense keeps the ball in this quarter: live ball, clock rules and tempo set the runoff.
+                clock_rng = (rng if paired_random_streams is None
+                             else paired_random_streams.rng('e1_snap_clock', drive_index, play_index))
+                try:
+                    runoff, timeout_record['clock'] = snap_clock.runoff(
+                        clock_rng, quarter=st['quarter'], qsr=st['clock'], event=event,
+                        out_of_bounds=timeouts.out_of_bounds(row), timeout_called=caller is not None,
+                        margin=timeouts.margin(st['offense']))
+                except ValueError as unsupported:
+                    return halt(f'snap_clock_unavailable:{unsupported}')
+                timeout_record['runoff_source'] = 'snap_clock'
+            elif timeout_record is not None:
                 late = st['quarter'] in (2, 4) and st['clock'] <= 120
                 try:
                     runoff, timeout_record['runoff_source'] = timeouts.runoff(

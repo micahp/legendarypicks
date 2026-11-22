@@ -582,6 +582,7 @@ class _TimeoutDecisions:
 
     def __init__(self, policy, participants, timeouts, points):
         self.model, self.split = policy['model'], policy['runoff']
+        self.clock = policy.get('clock')  # snap_clock.SnapClock, or None to keep the sampled runoff
         self.participants = participants
         self.left = dict(timeouts)
         self.points = Counter(points)  # a team with no points yet reads 0
@@ -607,6 +608,15 @@ class _TimeoutDecisions:
 
     def runoff(self, rng, cell, event, row, runoff, called, late):
         return self.split.runoff(rng, cell, event, row, runoff, called, late)
+
+    def out_of_bounds(self, row):
+        """Whether the sampled source play ended out of bounds (play extras)."""
+        return bool(self.participants.get((row['game_id'], int(row['play_id'])), {}).get('out_of_bounds'))
+
+    def margin(self, team):
+        """`team`'s score minus the other team's, at the drive."""
+        other_team = next((t for t in self.points if t != team), None)
+        return self.points[team] - (self.points[other_team] if other_team else 0)
 
 
 class _TimeoutSamplingGuard:
