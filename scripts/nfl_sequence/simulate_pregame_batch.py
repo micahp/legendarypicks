@@ -127,6 +127,8 @@ def _reproduction_command(args, seed):
             command.extend(['--historical-streak-file', str(args.historical_streak_file)])
     if args.export_boxscores:
         command.append('--export-boxscores')
+    else:
+        command.append('--no-export-boxscores')
     if getattr(args, 'paired_randomness', False):
         command.append('--paired-randomness')
 
@@ -1226,8 +1228,10 @@ def main(argv=None):
                     help='print a progress line every N games; use 0 to disable')
     ap.add_argument('--resume', action='store_true',
                     help='continue the seed ledger next to --out (<out stem>.seeds.jsonl); refuses a ledger from other inputs')
-    ap.add_argument('--export-boxscores', action='store_true',
-                    help='write a versioned per-seed box-score JSONL sidecar and valid-game distributions')
+    ap.add_argument('--export-boxscores', dest='export_boxscores', action='store_true', default=True,
+                    help='write a versioned per-seed box-score JSONL sidecar and valid-game distributions (default on)')
+    ap.add_argument('--no-export-boxscores', dest='export_boxscores', action='store_false',
+                    help='leave out the per-seed box-score sidecar')
     ap.add_argument('--paired-randomness', action='store_true',
                     help='research evaluation mode: isolate random draws by game snapshot, drive, play and semantic event '
                          'so matched-seed ablations do not shift unrelated random streams')
