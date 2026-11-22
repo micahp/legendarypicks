@@ -203,11 +203,16 @@ def _credit_field_boundary_yards(event, sampled_yards, yardline):
 
 
 def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, partial=None, sampling_policy=None,
-             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None):
+             score_diff=None, play_index_start=1, drive_index=1, paired_random_streams=None, sampling_guard=None,
+             timeouts=None):
     """`clock` is an optional research clock (clock_d.BoundaryClock). None keeps the E2 runoff from the pool.
     `partial`, when given, receives the plays made before a block, so a blocked drive keeps its evidence.
     `sampling_policy`, when given, samples events and source plays using the current simulated teams' context.
-    `sampling_guard` may remove source rows that are illegal in the live simulation state."""
+    `sampling_guard` may remove source rows that are illegal in the live simulation state.
+    `timeouts`, when given, decides after each whistle whether a team calls a timeout (game_state._TimeoutDecisions),
+    and the play's runoff is made to agree with that decision. It needs the E2 runoff (`clock` None)."""
+    if timeouts is not None and clock is not None:
+        raise ValueError('the timeout decision uses the E2 runoff; it cannot run with the research clock')
     rng = random.Random(seed)
     start_offense, start_defense = start['offense'], start['defense']
     start_quarter, start_dir = start['quarter'], start['dir']
@@ -331,6 +336,21 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
             raise football_assertions.FootballAssertionError(
                 football_assertions.classify_failure(invalid), str(invalid), context=context) from invalid
         period_expired = bool(kick_outcome and kick_outcome.get('classification_status') == 'period_expired')
+        timeout_record = None
+        if timeouts is not None and not period_expired:
+            # After the whistle and before the clock runs: a team may call a timeout. Then the runoff agrees with it.
+            timeout_rng = (rng if paired_random_streams is None
+                           else paired_random_streams.rng('e1_timeout', drive_index, play_index))
+            caller, timeout_record = timeouts.decide(timeout_rng, st, after, play_terminal, event, row)
+            if timeout_record is not None:
+                late = st['quarter'] in (2, 4) and st['clock'] <= 120
+                try:
+                    runoff, timeout_record['runoff_source'] = timeouts.runoff(
+                        timeout_rng, key, selected_event, row, runoff, caller is not None, late)
+                except ValueError as unsupported:
+                    return halt(f'timeout_runoff_unavailable:{unsupported}')
+                if stream_keys is not None:
+                    stream_keys['timeout'] = paired_random_streams.key('e1_timeout', drive_index, play_index)
         if clock is not None:
             runoff, _, refusal = clock.draw(row, event, play_terminal, st['quarter'], st['clock'],
                                              drive_index=drive_index, play_index=play_index,
@@ -431,6 +451,8 @@ def simulate(start, seed, pool, simulation_id, special_teams=None, clock=None, p
                       'after': {'dir': after_dir,
                                 'los': e0.los(after_dir, yl_after) if after_has_position else None}},
         }
+        if timeout_record is not None:
+            play['outcome']['timeout_decision'] = timeout_record
         if kick_metadata:
             play['outcome'].update(kick_metadata)
         if kick_outcome:

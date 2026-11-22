@@ -570,8 +570,49 @@ def _try_after_touchdown(rng, kicks, p_two=None):
     return (TRY_POINTS[kind] if made else 0), try_record(kind, made), None
 
 
+class _TimeoutDecisions:
+    """One drive's timeout decisions at the whistle (timeout_decision.py), on the live score and timeout counts.
+
+    It keeps its own copy of the counts so a later play in the drive sees an earlier call; game_state applies the same
+    calls to its counts after the drive and checks the two agree. No decision follows a score or a field-goal attempt
+    (the next snap is a try or a kickoff) or a play with no next scrimmage state.
+    """
+
+    NO_DECISION_TERMINALS = ('touchdown', 'safety', 'field_goal_attempt')
+
+    def __init__(self, policy, participants, timeouts, points):
+        self.model, self.split = policy['model'], policy['runoff']
+        self.participants = participants
+        self.left = dict(timeouts)
+        self.points = Counter(points)  # a team with no points yet reads 0
+
+    def decide(self, rng, st, after, play_terminal, event, row):
+        if play_terminal in self.NO_DECISION_TERMINALS or after is None or after.get('down') is None:
+            return None, None
+        import build_timeout_decisions as table
+        facts = self.participants.get((row['game_id'], int(row['play_id'])), {})
+        state = table.clock_state('punt' if event in e1.KICK_EVENTS else 'run', event == 'pass_incomplete',
+                                  bool(facts.get('out_of_bounds')), event in ('interception', 'fumble_lost'))
+        offense, defense = after['offense'], after['defense']
+        role, record = self.model.decide(rng, quarter=st['quarter'], snap_clock=st['clock'], clock_state=state,
+                                         offense=offense, defense=defense,
+                                         margin=self.points[offense] - self.points[defense],
+                                         timeouts_left={'offense': self.left[offense], 'defense': self.left[defense]})
+        caller = {'offense': offense, 'defense': defense}.get(role)
+        if caller is not None:
+            self.left[caller] -= 1
+        record['caller_team'] = caller
+        record['source_row_timeout_ignored'] = bool(facts.get('timeout'))
+        return caller, record
+
+    def runoff(self, rng, cell, event, row, runoff, called, late):
+        return self.split.runoff(rng, cell, event, row, runoff, called, late)
+
+
 class _TimeoutSamplingGuard:
-    """Keep source-play timeout observations within each simulated team's remaining half allotment."""
+    """Keep source-play timeout observations within each simulated team's remaining half allotment.
+
+    Used only with the legacy source-row timeouts; the default timeout decision (_TimeoutDecisions) does not read them."""
 
     def __init__(self, participants, remaining):
         self.participants = participants
@@ -991,7 +1032,19 @@ class _Game:
             part['timeout_applied'] = False
             play['state_before']['home_timeouts'] = self.timeouts['A']
             play['state_before']['away_timeouts'] = self.timeouts['B']
-            if part['timeout']:
+            decision = play['outcome'].get('timeout_decision')
+            if getattr(self.ref, 'timeout_policy', None) is not None:
+                # the decided timeout replaces the source play's flag, which another game's coach called
+                caller = (decision or {}).get('caller_team')
+                part['timeout'] = caller is not None
+                if caller is not None:
+                    if self.timeouts[caller] > 0:
+                        self.timeouts[caller] -= 1
+                        part['timeout_applied'] = True
+                    else:
+                        self.block('timeout_limit_exceeded')
+                    part['timeout_charged_to'] = caller
+            elif part['timeout']:
                 sampled = part.get('sampled_play_context', part)
                 caller = sampled.get('timeout_team')
                 if caller not in (sampled.get('posteam'), sampled.get('defteam')):
@@ -1428,6 +1481,11 @@ class _Game:
         attempt = []  # the plays made before a block are evidence, kept apart from drives and stats
         sampler = self.ref.contextual_sampler
         timeout_guard = _TimeoutSamplingGuard(getattr(self.ref, 'participants', {}), self.timeouts)
+        timeout_policy = getattr(self.ref, 'timeout_policy', None)
+        timeout_decisions = (_TimeoutDecisions(timeout_policy, getattr(self.ref, 'participants', {}), self.timeouts,
+                                               self.points) if timeout_policy is not None else None)
+        if timeout_decisions is not None:
+            research['timeouts'] = timeout_decisions
         decision_log = getattr(sampler, 'decisions', None)
         decision_start = len(decision_log) if isinstance(decision_log, list) else None
         plays, terminal = e1.simulate(start, self.model_seed * 1000 + len(self.drives), self.ref.pool,
@@ -1437,7 +1495,7 @@ class _Game:
                                       play_index_start=self.next_play_sequence,
                                       drive_index=len(self.drives) + 1,
                                       paired_random_streams=self.paired_random_streams,
-                                      sampling_guard=timeout_guard, **research)
+                                      sampling_guard=timeout_guard if timeout_decisions is None else None, **research)
         if plays is None:
             self.blocked_attempt = {'drive_index': len(self.drives) + 1, 'offense_team': self.offense,
                                     'quarter_start': start['quarter'], 'clock_start': start['clock'],
@@ -1471,7 +1529,10 @@ class _Game:
             play['state_before']['drive_index'] = drive_index  # E1 writes 1 on every play; the game index is written here
             play['state_after']['drive_index'] = drive_index
         self._apply_timeouts(plays)
-        if timeout_guard.remaining != self.timeouts:
+        if timeout_decisions is not None:
+            if timeout_decisions.left != self.timeouts:
+                self.block('timeout_decision_count_mismatch')
+        elif timeout_guard.remaining != self.timeouts:
             self.block('timeout_sampling_guard_mismatch')
         self._record_clock_transitions(plays)
         last = plays[-1]['state_after']
@@ -1479,7 +1540,7 @@ class _Game:
                  'clock_start': self.clock, 'plays': plays, 'terminal': terminal,
                  'end_quarter': last['quarter'], 'end_clock': last['clock_seconds'],
                  'points_scored_on_drive': None, 'field_goal_made': None}
-        if timeout_guard.excluded or timeout_guard.remaining != self.timeouts:
+        if timeout_decisions is None and (timeout_guard.excluded or timeout_guard.remaining != self.timeouts):
             drive['timeout_sampling_guard'] = timeout_guard.describe()
         self.drives.append(drive)
         for play in plays:  # a quarter change inside a drive: the drive goes on (rules file, section 2)
