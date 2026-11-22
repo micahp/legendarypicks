@@ -81,6 +81,7 @@ def main(argv=None):
             "--playcall-streak-file", str(args.playcall_streak_file.resolve()),
             # run_scramble_backoff loads the QB decision table, a layer V1-Pure turns off; only the control keeps it
             "--slc-blocker-fix", "run_scramble_backoff",
+            "--legacy-source-row-timeouts",  # frozen V1 applies only a source row's own timeout
         ],
         "v1_pure": [
             "--slc-profile", "custom",
